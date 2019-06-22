@@ -84,13 +84,16 @@ open class SingleChangeListCommitWorkflow(
 
   private fun doCommitCustom(executor: CommitExecutor, session: CommitSession) {
     val cleaner = DefaultNameChangeListCleaner(project, commitState)
-    var success = false
-    try {
-      success = doCommitCustom(executor, session, commitState.changes, commitState.commitMessage)
-    }
-    finally {
-      if (success) cleaner.clean()
-      resultHandler?.let { if (success) it.onSuccess(commitState.commitMessage) else it.onFailure() }
+
+    with(CustomCommitter(project, session, commitState.changes, commitState.commitMessage)) {
+      addResultHandler(CommitHandlersNotifier(commitHandlers))
+      addResultHandler(CommitResultHandler {
+        eventDispatcher.multicaster.customCommitSucceeded()
+        cleaner.clean()
+      })
+      resultHandler?.let { addResultHandler(it) }
+
+      runCommit(executor.actionText)
     }
   }
 }

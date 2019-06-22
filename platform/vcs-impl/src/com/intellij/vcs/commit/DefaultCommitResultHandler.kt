@@ -23,7 +23,7 @@ private fun hasOnlyWarnings(exceptions: List<VcsException>) = exceptions.all { i
 class DefaultCommitResultHandler(private val committer: AbstractCommitter) : CommitResultHandler {
 
   override fun onSuccess(commitMessage: String) = reportResult()
-  override fun onFailure() = reportResult()
+  override fun onFailure(errors: List<VcsException>) = reportResult()
 
   private fun reportResult() {
     val allExceptions = committer.exceptions

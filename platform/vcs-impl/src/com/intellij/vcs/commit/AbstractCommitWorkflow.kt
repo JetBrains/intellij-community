@@ -5,7 +5,6 @@ import com.intellij.CommonBundle.getCancelButtonText
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages.*
 import com.intellij.openapi.util.Disposer
@@ -14,7 +13,6 @@ import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle.message
-import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction.addUnversionedFilesToVcs
@@ -211,30 +209,6 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   protected open fun processExecuteCustomChecksResult(executor: CommitExecutor,
                                                       session: CommitSession,
                                                       result: CheckinHandler.ReturnResult) = Unit
-
-  protected fun doCommitCustom(executor: CommitExecutor, session: CommitSession, changes: List<Change>, commitMessage: String): Boolean {
-    try {
-      val completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        { session.execute(changes, commitMessage) }, executor.actionText, true, project)
-
-      if (completed) {
-        LOG.debug("Commit successful")
-        commitHandlers.forEach { it.checkinSuccessful() }
-        eventDispatcher.multicaster.customCommitSucceeded()
-        return true
-      }
-
-      LOG.debug("Commit canceled")
-      session.executionCanceled()
-    }
-    catch (e: Throwable) {
-      showErrorDialog(message("error.executing.commit", executor.actionText, e.localizedMessage), executor.actionText)
-
-      val errors = listOf(VcsException(e))
-      commitHandlers.forEach { it.checkinFailed(errors) }
-    }
-    return false
-  }
 
   companion object {
     @JvmStatic

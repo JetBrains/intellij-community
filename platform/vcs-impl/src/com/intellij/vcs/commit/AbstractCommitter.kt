@@ -187,7 +187,7 @@ abstract class AbstractCommitter(val project: Project,
     else {
       handlers.forEach { it.checkinFailed(errors) }
       onFailure()
-      resultHandlers.forEach { it.onFailure() }
+      resultHandlers.forEach { it.onFailure(errors) }
     }
   }
 

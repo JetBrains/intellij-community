@@ -5,6 +5,7 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
@@ -37,9 +38,7 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
     executeCustom(executor, session, commitState.changes, commitState.commitMessage)
 
   override fun processExecuteCustomChecksResult(executor: CommitExecutor, session: CommitSession, result: CheckinHandler.ReturnResult) {
-    if (result == CheckinHandler.ReturnResult.COMMIT) {
-      doCommitCustom(executor, session, commitState.changes, commitState.commitMessage)
-    }
+    if (result == CheckinHandler.ReturnResult.COMMIT) doCommitCustom(executor, session)
   }
 
   override fun doRunBeforeCommitChecks(checks: Runnable) =
@@ -54,9 +53,17 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
     committer.runCommit("Commit Changes", false)
   }
 
+  private fun doCommitCustom(executor: CommitExecutor, session: CommitSession) =
+    with(CustomCommitter(project, session, commitState.changes, commitState.commitMessage)) {
+      addResultHandler(CommitHandlersNotifier(commitHandlers))
+      addResultHandler(CommitResultHandler { eventDispatcher.multicaster.customCommitSucceeded() })
+
+      runCommit(executor.actionText)
+    }
+
   private class ResultHandler(private val workflow: ChangesViewCommitWorkflow) : CommitResultHandler {
     override fun onSuccess(commitMessage: String) = resetState()
-    override fun onFailure() = resetState()
+    override fun onFailure(errors: List<VcsException>) = resetState()
 
     private fun resetState() = runInEdt {
       workflow.disposeCommitOptions()
