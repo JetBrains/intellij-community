@@ -93,7 +93,8 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
           forceFilterByVcs = true
         }
         is RangeFilterResult.InvalidRange -> {
-          return Pair(VisiblePack(DataPack.EMPTY, EmptyVisibleGraph.getInstance(), false, filters), CommitCountStage.ALL)
+          commitCandidates = null
+          forceFilterByVcs = true
         }
       }
 
@@ -304,6 +305,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
 
     val visibleRoots = VcsLogUtil.getAllVisibleRoots(providers.keys, filterCollection)
     for (root in visibleRoots) {
+      val provider = providers.getValue(root)
 
       val userFilter = filterCollection.get(VcsLogFilterCollection.USER_FILTER)
       if (userFilter != null && userFilter.getUsers(root).isEmpty()) {
@@ -312,14 +314,35 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
       }
 
       val filesForRoot = VcsLogUtil.getFilteredFilesForRoot(root, filterCollection)
-      val rootSpecificCollection = if (filesForRoot.isEmpty()) {
+      var actualFilterCollection = if (filesForRoot.isEmpty()) {
         filterCollection.without(VcsLogFilterCollection.STRUCTURE_FILTER)
       }
       else {
         filterCollection.with(VcsLogFilterObject.fromPaths(filesForRoot))
       }
 
-      val matchingCommits = providers.getValue(root).getCommitsMatchingFilter(root, rootSpecificCollection, maxCount)
+      val rangeFilter = filterCollection.get(VcsLogFilterCollection.RANGE_FILTER)
+      if (rangeFilter != null) {
+        val resolvedRanges = mutableListOf<VcsLogRangeFilter.RefRange>()
+        for ((exclusiveRef, inclusiveRef) in rangeFilter.ranges) {
+          val exclusiveHash = provider.resolveReference(exclusiveRef, root)
+          val inclusiveHash = provider.resolveReference(inclusiveRef, root)
+
+          if (exclusiveHash != null && inclusiveHash != null) {
+            resolvedRanges.add(VcsLogRangeFilter.RefRange(exclusiveHash.asString(), inclusiveHash.asString()))
+          }
+        }
+
+        if (resolvedRanges.isEmpty()) {
+          continue;
+        }
+
+        actualFilterCollection = filterCollection
+          .without(VcsLogFilterCollection.RANGE_FILTER)
+          .with(VcsLogFilterObject.fromRange(resolvedRanges))
+      }
+
+      val matchingCommits = provider.getCommitsMatchingFilter(root, actualFilterCollection, maxCount)
       commits.addAll(matchingCommits.map { commit -> CommitId(commit.id, root) })
     }
 
