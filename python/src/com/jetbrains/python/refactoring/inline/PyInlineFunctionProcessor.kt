@@ -121,6 +121,7 @@ class PyInlineFunctionProcessor(project: Project,
 
     val functionScope = ControlFlowCache.getScope(myFunction)
     PyClassRefactoringUtil.rememberNamedReferences(myFunction)
+    val hasDocstring = myFunction.docStringExpression != null
 
     references.forEach { usage ->
       val reference = usage.element as PyReferenceExpression
@@ -231,11 +232,19 @@ class PyInlineFunctionProcessor(project: Project,
 
       CodeStyleManager.getInstance(myProject).reformat(replacementFunction, true)
 
-      declarations.forEach { containingStatement.parent.addBefore(it, containingStatement) }
+      val insertElement = { elem: PsiElement -> containingStatement.parent.addBefore(elem, containingStatement) }
+
+      declarations.forEach { insertElement(it) }
       if (replacementFunction.firstChild != null) {
-        val statements = replacementFunction.statements
+        if (replacementFunction.firstChild is PsiComment) {
+          SyntaxTraverser.psiApi().children(replacementFunction)
+            .takeWhile { it is PsiComment || it is PsiWhiteSpace }
+            .filterIsInstance<PsiComment>()
+            .forEach { insertElement(it) }
+        }
+        val statements = if (hasDocstring) replacementFunction.statements.drop(1) else replacementFunction.statements.toList()
         statements.asSequence()
-          .map { containingStatement.parent.addBefore(it, containingStatement) }
+          .map { insertElement(it) }
           .forEach { PyClassRefactoringUtil.restoreNamedReferences(it) }
       }
 
