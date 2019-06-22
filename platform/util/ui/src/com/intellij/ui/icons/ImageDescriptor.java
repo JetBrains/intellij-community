@@ -86,7 +86,7 @@ public final class ImageDescriptor {
 
     if (resourceClass != null) {
       InputStream stream = resourceClass.getResourceAsStream(path);
-      return stream == null ? null : loadFromStream(stream, null, null);
+      return stream == null ? null : loadFromStream(stream, resourceClass.getResource(path), null);
     }
 
     String cacheKey = null;
