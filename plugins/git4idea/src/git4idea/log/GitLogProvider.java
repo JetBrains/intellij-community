@@ -27,6 +27,7 @@ import com.intellij.vcs.log.impl.VcsIndexableLogProvider;
 import com.intellij.vcs.log.impl.VcsLogIndexer;
 import com.intellij.vcs.log.util.StopWatch;
 import com.intellij.vcs.log.util.UserNameRegex;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogFiltersKt;
 import com.intellij.vcsUtil.VcsFileUtil;
@@ -34,6 +35,10 @@ import com.intellij.vcsUtil.VcsUtil;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBranchesCollection;
+import git4idea.commands.Git;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitCommandResult;
+import git4idea.commands.GitLineHandler;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.history.GitCommitRequirements;
 import git4idea.history.GitCommitRequirements.DiffInMergeCommits;
@@ -581,6 +586,29 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
   @Override
   public VcsLogFileHistoryHandler getFileHistoryHandler() {
     return new GitLogHistoryHandler(myProject);
+  }
+
+  @Nullable
+  @Override
+  public Hash resolveReference(@NotNull String ref, @NotNull VirtualFile root) {
+    GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.REV_PARSE);
+    handler.addParameters("--verify");
+    handler.addParameters(ref + "^{commit}");
+    GitCommandResult result = Git.getInstance().runCommand(handler);
+    String output = result.getOutputAsJoinedString();
+    if (result.success()) {
+      if (VcsLogUtil.HASH_REGEX.matcher(output).matches()) {
+        return HashImpl.build(output);
+      }
+      else {
+        LOG.error("Invalid output for git rev-parse " + ref + " in " + root + ": " + output);
+        return null;
+      }
+    }
+    else {
+      LOG.debug("Reference [" + ref + "] is unknown to Git in " + root);
+      return null;
+    }
   }
 
   @Nullable
