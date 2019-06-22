@@ -11,14 +11,6 @@ interface ChangesViewCommitWorkflowUi : CommitWorkflowUi {
   fun setCustomCommitActions(actions: List<AnAction>)
 
   var inclusionModel: InclusionModel?
-  // TODO Looks better to create "interface ItemInclusionModel" to which ChangesTree will delegate
-  //  And just pass such model to CommitWorkflowUi instead of adding include-related methods to CommitWorkflowUi directly
-  fun isInclusionEmpty(): Boolean
-
-  fun getInclusion(): Set<Any>
-
-  fun clearInclusion()
-  fun retainInclusion(items: Collection<*>)
 
   fun showCommitOptions(options: CommitOptions, isFromToolbar: Boolean, dataContext: DataContext)
 

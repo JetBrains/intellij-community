@@ -505,14 +505,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     getInclusionModel().setInclusion(changes);
   }
 
-  public void clearInclusion() {
-    getInclusionModel().clearInclusion();
-  }
-
-  public void retainInclusion(@NotNull Collection<?> changes) {
-    getInclusionModel().retainInclusion(changes);
-  }
-
   public void includeChange(@NotNull Object change) {
     includeChanges(Collections.singleton(change));
   }
@@ -544,10 +536,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     else {
       excludeChanges(changes);
     }
-  }
-
-  public boolean isInclusionEmpty() {
-    return getInclusionModel().isInclusionEmpty();
   }
 
   public boolean isIncluded(@NotNull Object change) {

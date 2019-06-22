@@ -240,10 +240,6 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
       changesView.setInclusionModel(value)
     }
 
-  override fun isInclusionEmpty(): Boolean = changesView.isInclusionEmpty
-  override fun getInclusion(): Set<Any> = changesView.includedSet
-  override fun clearInclusion() = changesView.clearInclusion()
-  override fun retainInclusion(items: Collection<*>) = changesView.retainInclusion(items)
   override fun includeIntoCommit(items: Collection<*>) = changesView.includeChanges(items)
 
   override fun addInclusionListener(listener: InclusionListener, parent: Disposable) =
