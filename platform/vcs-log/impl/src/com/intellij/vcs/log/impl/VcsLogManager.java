@@ -23,6 +23,7 @@ import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl;
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
@@ -187,6 +188,7 @@ public class VcsLogManager implements Disposable {
     // disposing of VcsLogManager is done by manually executing dispose(@Nullable Runnable callback)
     // the above method first disposes ui in EDT, than disposes everything else in background
     LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
+    LOG.debug("Disposed Vcs Log for " + VcsLogUtil.getProvidersMapText(myLogData.getLogProviders()));
   }
 
   private class MyFatalErrorsHandler implements FatalErrorHandler {

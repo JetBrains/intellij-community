@@ -35,6 +35,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
@@ -178,6 +179,7 @@ public class VcsProjectLog implements Disposable {
     @CalledInBackground
     public synchronized VcsLogManager getValue(@NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
       if (myValue == null) {
+        LOG.debug("Creating Vcs Log for " + VcsLogUtil.getProvidersMapText(logProviders));
         VcsLogManager value = compute(logProviders);
         myValue = value;
         ApplicationManager.getApplication().invokeLater(() -> {
@@ -202,6 +204,7 @@ public class VcsProjectLog implements Disposable {
 
     public synchronized void drop(@Nullable Runnable callback) {
       if (myValue != null) {
+        LOG.debug("Disposing Vcs Log for " + VcsLogUtil.getProvidersMapText(myValue.getDataManager().getLogProviders()));
         myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed(myValue);
         myValue.dispose(callback);
         myValue = null;
