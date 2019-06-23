@@ -113,6 +113,7 @@ public class StructuralSearchDialog extends DialogWrapper {
 
   public static final Key<StructuralSearchDialog> STRUCTURAL_SEARCH_DIALOG = Key.create("STRUCTURAL_SEARCH_DIALOG");
   public static final Key<String> STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID = Key.create("STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID");
+  private static final Key<Configuration> STRUCTURAL_SEARCH_PREVIOUS_CONFIGURATION = Key.create("STRUCTURAL_SEARCH_PREVIOUS_CONFIGURATION");
   public static final String USER_DEFINED = SSRBundle.message("new.template.defaultname");
 
   private final SearchContext mySearchContext;
@@ -337,9 +338,14 @@ public class StructuralSearchDialog extends DialogWrapper {
       }
     }
 
-    final Configuration configuration = ConfigurationManager.getInstance(getProject()).getMostRecentConfiguration();
-    if (configuration != null) {
-      loadConfiguration(configuration);
+    final Configuration previousConfiguration = getProject().getUserData(STRUCTURAL_SEARCH_PREVIOUS_CONFIGURATION);
+    if (previousConfiguration != null) {
+      loadConfiguration(previousConfiguration);
+    } else {
+      final Configuration configuration = ConfigurationManager.getInstance(getProject()).getMostRecentConfiguration();
+      if (configuration != null) {
+        loadConfiguration(configuration);
+      }
     }
   }
 
@@ -540,17 +546,20 @@ public class StructuralSearchDialog extends DialogWrapper {
           myFileType = item.getFileType();
           myDialect = item.getDialect();
           myPatternContext = item.getContext();
+          final String contextId = (myPatternContext == null) ? "" : myPatternContext.getId();
           final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
           assert profile != null;
+
           final Document searchDocument =
             UIUtil.createDocument(getProject(), myFileType, myDialect, myPatternContext, mySearchCriteriaEdit.getText(), profile);
           mySearchCriteriaEdit.setNewDocumentAndFileType(myFileType, searchDocument);
-          final String contextId = (myPatternContext == null) ? "" : myPatternContext.getId();
           searchDocument.putUserData(STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID, contextId);
+
           final Document replaceDocument =
             UIUtil.createDocument(getProject(), myFileType, myDialect, myPatternContext, myReplaceCriteriaEdit.getText(), profile);
           myReplaceCriteriaEdit.setNewDocumentAndFileType(myFileType, replaceDocument);
           replaceDocument.putUserData(STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID, contextId);
+
           myFilterPanel.setProfile(profile);
           initiateValidation();
         }
@@ -1114,6 +1123,8 @@ public class StructuralSearchDialog extends DialogWrapper {
 
   @Override
   public void dispose() {
+    getProject().putUserData(STRUCTURAL_SEARCH_PREVIOUS_CONFIGURATION, myConfiguration);
+
     if (myReplace) storeDimensions(REPLACE_DIMENSION_SERVICE_KEY, SEARCH_DIMENSION_SERVICE_KEY);
     else storeDimensions(SEARCH_DIMENSION_SERVICE_KEY, REPLACE_DIMENSION_SERVICE_KEY);
 
