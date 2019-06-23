@@ -26,7 +26,10 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.vcs.ViewUpdateInfoNotification;
-import git4idea.*;
+import git4idea.GitBranch;
+import git4idea.GitRevisionNumber;
+import git4idea.GitUtil;
+import git4idea.GitVcs;
 import git4idea.branch.GitBranchPair;
 import git4idea.commands.*;
 import git4idea.merge.GitConflictResolver;
@@ -43,7 +46,6 @@ import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.notification.NotificationType.INFORMATION;
@@ -164,9 +166,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
         }).buildAndShowNotification();
       }
       else {
-        List<VcsException> exceptions = new ArrayList<>();
-        showUpdates(project, exceptions, root, currentRev, beforeLabel, getActionName());
-        GitVcs.getInstance(project).showErrors(exceptions, getActionName());
+        showUpdates(project, root, currentRev, beforeLabel, getActionName());
       }
     }
     else if (localChangesDetector.wasMessageDetected()) {
@@ -184,24 +184,27 @@ abstract class GitMergeAction extends GitRepositoryAction {
   }
 
   private static void showUpdates(@NotNull Project project,
-                                  @NotNull List<? super VcsException> exceptions,
                                   @NotNull VirtualFile root,
                                   @NotNull GitRevisionNumber currentRev,
                                   @NotNull Label beforeLabel,
                                   @NotNull String actionName) {
-    UpdatedFiles files = UpdatedFiles.create();
-    MergeChangeCollector collector = new MergeChangeCollector(project, root, currentRev);
-    collector.collect(files, exceptions);
-    if (!exceptions.isEmpty()) return;
+    try {
+      UpdatedFiles files = UpdatedFiles.create();
+      MergeChangeCollector collector = new MergeChangeCollector(project, root, currentRev);
+      collector.collect(files);
 
-    GuiUtils.invokeLaterIfNeeded(() -> {
-      ProjectLevelVcsManagerEx manager = (ProjectLevelVcsManagerEx)ProjectLevelVcsManager.getInstance(project);
-      UpdateInfoTree tree = manager.showUpdateProjectInfo(files, actionName, ActionInfo.UPDATE, false);
-      if (tree != null) {
-        tree.setBefore(beforeLabel);
-        tree.setAfter(LocalHistory.getInstance().putSystemLabel(project, "After update"));
-        ViewUpdateInfoNotification.focusUpdateInfoTree(project, tree);
-      }
-    }, ModalityState.defaultModalityState());
+      GuiUtils.invokeLaterIfNeeded(() -> {
+        ProjectLevelVcsManagerEx manager = (ProjectLevelVcsManagerEx)ProjectLevelVcsManager.getInstance(project);
+        UpdateInfoTree tree = manager.showUpdateProjectInfo(files, actionName, ActionInfo.UPDATE, false);
+        if (tree != null) {
+          tree.setBefore(beforeLabel);
+          tree.setAfter(LocalHistory.getInstance().putSystemLabel(project, "After update"));
+          ViewUpdateInfoNotification.focusUpdateInfoTree(project, tree);
+        }
+      }, ModalityState.defaultModalityState());
+    }
+    catch (VcsException e) {
+      GitVcs.getInstance(project).showErrors(singletonList(e), actionName);
+    }
   }
 }
