@@ -46,11 +46,14 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
 
   private fun doCommit() {
     LOG.debug("Do actual commit")
-    val committer = LocalChangesCommitter(project, commitState.changes, commitState.commitMessage, commitContext, commitHandlers)
 
-    committer.addResultHandler(DefaultCommitResultHandler(committer))
-    committer.addResultHandler(ResultHandler(this))
-    committer.runCommit("Commit Changes", false)
+    with(LocalChangesCommitter(project, commitState.changes, commitState.commitMessage, commitContext)) {
+      addResultHandler(CommitHandlersNotifier(commitHandlers))
+      addResultHandler(DefaultCommitResultHandler(this))
+      addResultHandler(ResultHandler(this@ChangesViewCommitWorkflow))
+
+      runCommit("Commit Changes", false)
+    }
   }
 
   private fun doCommitCustom(executor: CommitExecutor, session: CommitSession) =

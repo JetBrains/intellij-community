@@ -12,7 +12,6 @@ import com.intellij.openapi.vcs.VcsShowConfirmationOption
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction
 import com.intellij.openapi.vcs.changes.ui.ChangelistMoveOfferDialog
-import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.util.ui.ConfirmationDialog.requestForConfirmation
 import org.jetbrains.annotations.CalledInAwt
 
@@ -22,11 +21,10 @@ class SingleChangeListCommitter(
   project: Project,
   private val commitState: ChangeListCommitState,
   commitContext: CommitContext,
-  handlers: List<CheckinHandler>,
   private val vcsToCommit: AbstractVcs<*>?,
   localHistoryActionName: String,
   private val isDefaultChangeListFullyIncluded: Boolean
-) : LocalChangesCommitter(project, commitState.changes, commitState.commitMessage, commitContext, handlers, localHistoryActionName) {
+) : LocalChangesCommitter(project, commitState.changes, commitState.commitMessage, commitContext, localHistoryActionName) {
 
   private val changeList get() = commitState.changeList
 

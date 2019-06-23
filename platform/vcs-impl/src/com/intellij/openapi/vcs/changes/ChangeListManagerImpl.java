@@ -74,7 +74,6 @@ import java.util.concurrent.*;
 
 import static com.intellij.openapi.progress.util.BackgroundTaskUtil.awaitWithCheckCanceled;
 import static com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED;
-import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static java.util.stream.Collectors.toSet;
 
 @State(name = "ChangeListManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
@@ -1225,7 +1224,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     String commitMessage = StringUtil.isEmpty(changeList.getComment()) ? changeList.getName() : changeList.getComment();
     ChangeListCommitState commitState = new ChangeListCommitState(changeList, changes, commitMessage);
     SingleChangeListCommitter committer =
-      new SingleChangeListCommitter(myProject, commitState, new CommitContext(), emptyList(), null, changeList.getName(), false);
+      new SingleChangeListCommitter(myProject, commitState, new CommitContext(), null, changeList.getName(), false);
 
     committer.addResultHandler(new DefaultCommitResultHandler(committer));
     committer.runCommit(changeList.getName(), synchronously);

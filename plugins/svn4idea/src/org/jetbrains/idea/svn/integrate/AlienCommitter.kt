@@ -5,15 +5,13 @@ import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.vcs.commit.AbstractCommitter
-import com.intellij.openapi.vcs.checkin.CheckinHandler
 
 class AlienCommitter(
   private val vcs: AbstractVcs<*>,
   changes: List<Change>,
   commitMessage: String,
-  commitContext: CommitContext,
-  handlers: List<CheckinHandler>
-) : AbstractCommitter(vcs.project, changes, commitMessage, commitContext, handlers) {
+  commitContext: CommitContext
+) : AbstractCommitter(vcs.project, changes, commitMessage, commitContext) {
 
   override fun commit() = commit(vcs, changes)
 

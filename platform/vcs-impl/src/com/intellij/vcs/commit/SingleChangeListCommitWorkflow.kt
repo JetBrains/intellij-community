@@ -75,11 +75,13 @@ open class SingleChangeListCommitWorkflow(
 
   protected open fun doCommit(commitState: ChangeListCommitState) {
     LOG.debug("Do actual commit")
-    val committer = SingleChangeListCommitter(project, commitState, commitContext, commitHandlers, vcsToCommit, DIALOG_TITLE,
-                                              isDefaultChangeListFullyIncluded)
 
-    committer.addResultHandler(resultHandler ?: DefaultCommitResultHandler(committer))
-    committer.runCommit(DIALOG_TITLE, false)
+    with(SingleChangeListCommitter(project, commitState, commitContext, vcsToCommit, DIALOG_TITLE, isDefaultChangeListFullyIncluded)) {
+      addResultHandler(CommitHandlersNotifier(commitHandlers))
+      addResultHandler(resultHandler ?: DefaultCommitResultHandler(this))
+
+      runCommit(DIALOG_TITLE, false)
+    }
   }
 
   private fun doCommitCustom(executor: CommitExecutor, session: CommitSession) {

@@ -6,10 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.util.NullableFunction;
-import com.intellij.vcs.commit.AbstractCommitter;
-import com.intellij.vcs.commit.ChangeListCommitState;
-import com.intellij.vcs.commit.DefaultCommitResultHandler;
-import com.intellij.vcs.commit.SingleChangeListCommitter;
+import com.intellij.vcs.commit.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,9 +37,9 @@ public class CommitHelper {
     // for compatibility with external plugins
     CommitContext commitContext =
       additionalData instanceof PseudoMap ? ((PseudoMap<Object, Object>)additionalData).getCommitContext() : new CommitContext();
-    myCommitter =
-      new SingleChangeListCommitter(project, commitState, commitContext, handlers, null, actionName, isDefaultChangeListFullyIncluded);
+    myCommitter = new SingleChangeListCommitter(project, commitState, commitContext, null, actionName, isDefaultChangeListFullyIncluded);
 
+    myCommitter.addResultHandler(new CommitHandlersNotifier(handlers));
     myCommitter.addResultHandler(notNull(resultHandler, new DefaultCommitResultHandler(myCommitter)));
   }
 

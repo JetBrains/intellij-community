@@ -4,8 +4,9 @@ package org.jetbrains.idea.svn.integrate
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitExecutor
-import com.intellij.vcs.commit.ChangeListCommitState
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.DIALOG_TITLE
+import com.intellij.vcs.commit.ChangeListCommitState
+import com.intellij.vcs.commit.CommitHandlersNotifier
 import com.intellij.vcs.commit.DefaultCommitResultHandler
 import com.intellij.vcs.commit.SingleChangeListCommitWorkflow
 
@@ -18,9 +19,11 @@ class AlienCommitWorkflow(val vcs: AbstractVcs<*>, changeListName: String, chang
   override fun canExecute(executor: CommitExecutor, changes: Collection<Change>) = true
 
   override fun doCommit(commitState: ChangeListCommitState) {
-    val committer = AlienCommitter(vcs, commitState.changes, commitState.commitMessage, commitContext, commitHandlers)
+    with(AlienCommitter(vcs, commitState.changes, commitState.commitMessage, commitContext)) {
+      addResultHandler(CommitHandlersNotifier(commitHandlers))
+      addResultHandler(DefaultCommitResultHandler(this))
 
-    committer.addResultHandler(DefaultCommitResultHandler(committer))
-    committer.runCommit(DIALOG_TITLE, false)
+      runCommit(DIALOG_TITLE, false)
+    }
   }
 }
