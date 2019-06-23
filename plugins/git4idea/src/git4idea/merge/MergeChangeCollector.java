@@ -80,6 +80,17 @@ public class MergeChangeCollector {
     addAll(updatedFiles, FileGroup.REMOVED_FROM_REPOSITORY_ID, removed);
   }
 
+  public int calcUpdatedFilesCount() throws VcsException {
+    String revisionsForDiff = getRevisionsForDiff();
+    if (revisionsForDiff == null) {
+      return 0;
+    }
+
+    Set<String> updated = new HashSet<>();
+    getChangedFilesExceptUnmerged(updated, updated, updated, revisionsForDiff);
+    return updated.size() + getUnmergedPaths().size();
+  }
+
   /**
    * Returns absolute paths to files which are currently unmerged, and also populates myUnmergedPaths with relative paths.
    */
