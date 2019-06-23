@@ -190,7 +190,7 @@ public abstract class IdeFrameDecorator implements Disposable {
     }
   }
 
-  public static boolean isCustomDecoration() {
+  public static boolean isCustomDecorationActive() {
     return SystemInfo.isWindows && Registry.is("ide.win.frame.decoration") && JdkEx.isCustomDecorationSupported();
   }
 }
