@@ -1874,7 +1874,7 @@
                      implementationClass="com.siyeh.ig.numeric.UnnecessaryUnaryMinusInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnpredictableBigDecimalConstructorCall" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="unpredictable.big.decimal.constructor.call.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.numeric.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.numeric.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.numeric.UnpredictableBigDecimalConstructorCallInspection"/>
 
     <!--group.names.packaging.issues-->
