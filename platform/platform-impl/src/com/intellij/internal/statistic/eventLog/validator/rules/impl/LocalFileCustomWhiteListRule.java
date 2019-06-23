@@ -4,17 +4,20 @@ package com.intellij.internal.statistic.eventLog.validator.rules.impl;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.CharsetUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.lang.ref.WeakReference;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -57,17 +60,20 @@ public abstract class LocalFileCustomWhiteListRule extends CustomWhiteListRule {
   @NotNull
   private CachedWhitelistedItems create() {
     try {
-      final URL stream = myResourceHolder.getResource(myRelativePath);
-      if (stream == null) {
+      //noinspection IOResourceOpenedButNotSafelyClosed
+      InputStream resourceStream = myResourceHolder.getResourceAsStream(myRelativePath);
+      if (resourceStream == null) {
         throw new IOException("Resource " + myRelativePath + " not found");
       }
 
-      final List<String> values = FileUtil.loadLines(new File(stream.toURI()));
-      if (!values.isEmpty()) {
-        return CachedWhitelistedItems.create(ContainerUtil.map2Set(values, value -> value.trim()));
+      try (BufferedReader reader = new BufferedReader(new InputStreamReader(resourceStream, StandardCharsets.UTF_8))) {
+        final List<String> values = FileUtil.loadLines(reader);
+        if (!values.isEmpty()) {
+          return CachedWhitelistedItems.create(ContainerUtil.map2Set(values, value -> value.trim()));
+        }
       }
     }
-    catch (IOException | URISyntaxException e) {
+    catch (IOException e) {
       LOG.info(e);
     }
     return CachedWhitelistedItems.empty();
