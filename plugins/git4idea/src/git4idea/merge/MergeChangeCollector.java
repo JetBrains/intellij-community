@@ -60,28 +60,24 @@ public class MergeChangeCollector {
   /**
    * Collects changed files during or after merge operation to the supplied container.
    */
-  public void collect(@NotNull UpdatedFiles updatedFiles, List<? super VcsException> exceptions) {
-    try {
-      // collect unmerged
-      Set<String> paths = getUnmergedPaths();
-      addAll(updatedFiles, FileGroup.MERGED_WITH_CONFLICT_ID, paths);
+  public void collect(@NotNull UpdatedFiles updatedFiles) throws VcsException {
+    // collect unmerged
+    Set<String> paths = getUnmergedPaths();
+    addAll(updatedFiles, FileGroup.MERGED_WITH_CONFLICT_ID, paths);
 
-      // collect other changes (ignoring unmerged)
-      TreeSet<String> updated = new TreeSet<>();
-      TreeSet<String> created = new TreeSet<>();
-      TreeSet<String> removed = new TreeSet<>();
+    // collect other changes (ignoring unmerged)
+    TreeSet<String> updated = new TreeSet<>();
+    TreeSet<String> created = new TreeSet<>();
+    TreeSet<String> removed = new TreeSet<>();
 
-      String revisionsForDiff = getRevisionsForDiff();
-      if (revisionsForDiff ==  null) {
-        return;
-      }
-      getChangedFilesExceptUnmerged(updated, created, removed, revisionsForDiff);
-      addAll(updatedFiles, FileGroup.UPDATED_ID, updated);
-      addAll(updatedFiles, FileGroup.CREATED_ID, created);
-      addAll(updatedFiles, FileGroup.REMOVED_FROM_REPOSITORY_ID, removed);
-    } catch (VcsException e) {
-      exceptions.add(e);
+    String revisionsForDiff = getRevisionsForDiff();
+    if (revisionsForDiff ==  null) {
+      return;
     }
+    getChangedFilesExceptUnmerged(updated, created, removed, revisionsForDiff);
+    addAll(updatedFiles, FileGroup.UPDATED_ID, updated);
+    addAll(updatedFiles, FileGroup.CREATED_ID, created);
+    addAll(updatedFiles, FileGroup.REMOVED_FROM_REPOSITORY_ID, removed);
   }
 
   /**
