@@ -34,8 +34,9 @@ import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcs.log.visible.VisiblePackChangeListener
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
-import git4idea.changes.GitChangeUtils
+import git4idea.GitRevisionNumber
 import git4idea.history.GitHistoryUtils
+import git4idea.merge.MergeChangeCollector
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.CalledInAwt
 import java.util.*
@@ -157,7 +158,7 @@ class GitUpdateInfoAsLog(private val project: Project,
 
   private fun calcUpdatedFilesCount(): Int {
     return calcCount { repository, range ->
-      GitChangeUtils.getDiffWithWorkingDir(project, repository.root, range.start.asString(), null, false, false).size
+      MergeChangeCollector(project, repository.root, GitRevisionNumber(range.start.asString())).calcUpdatedFilesCount()
     }
   }
 
