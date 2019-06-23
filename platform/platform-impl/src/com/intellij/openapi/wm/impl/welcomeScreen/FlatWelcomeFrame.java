@@ -103,7 +103,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     glassPane.setVisible(false);
 
     int defaultHeight = DEFAULT_HEIGHT;
-    if (IdeFrameDecorator.isCustomDecoration()) {
+    if (IdeFrameDecorator.isCustomDecorationActive()) {
       CustomFrameViewHolder holder =
         CustomFrameDialogContent.getCustomContentHolder(this, myScreen.getWelcomePanel(), UIManager.getColor("WelcomeScreen.background"));
       setContentPane(holder.getContent());
@@ -156,7 +156,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
   @Override
   public void addNotify() {
-    if (IdeFrameDecorator.isCustomDecoration()) {
+    if (IdeFrameDecorator.isCustomDecorationActive()) {
       JdkEx.setHasCustomDecoration(this);
     }
     super.addNotify();

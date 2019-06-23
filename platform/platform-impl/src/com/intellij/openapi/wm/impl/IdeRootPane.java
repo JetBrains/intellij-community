@@ -99,7 +99,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
     myContentPane.add(myStatusBar, BorderLayout.SOUTH);
 
     IdeMenuBar menu = new IdeMenuBar(actionManager, dataManager);
-    myDecoratedMenu = IdeFrameDecorator.isCustomDecoration() && frame instanceof IdeFrameEx;
+    myDecoratedMenu = IdeFrameDecorator.isCustomDecorationActive() && frame instanceof IdeFrameEx;
 
     if (!isDecoratedMenu() && !WindowManagerImpl.isFloatingMenuBarSupported()) {
       setJMenuBar(menu);
@@ -507,6 +507,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
   }
 
   private boolean isDecoratedMenu() {
-    return IdeFrameDecorator.isCustomDecoration() && myDecoratedMenu;
+    return IdeFrameDecorator.isCustomDecorationActive() && myDecoratedMenu;
   }
 }

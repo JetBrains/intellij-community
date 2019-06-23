@@ -394,8 +394,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     UIUtil.decorateWindowHeader(rootPane);
 
     Container contentPane = getContentPane();
-    if (IdeFrameDecorator.isCustomDecoration() && contentPane instanceof JComponent) {
-      setContentPane(CustomFrameDialogContent.Companion.getContent(getWindow(), (JComponent) contentPane));
+    if (IdeFrameDecorator.isCustomDecorationActive() && contentPane instanceof JComponent) {
+      setContentPane(CustomFrameDialogContent.getContent(getWindow(), (JComponent) contentPane));
     }
 
     anCancelAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, rootPane);
@@ -630,7 +630,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     @Override
     public void addNotify() {
-      if (IdeFrameDecorator.isCustomDecoration()) {
+      if (IdeFrameDecorator.isCustomDecorationActive()) {
         JdkEx.setHasCustomDecoration(this);
       }
       super.addNotify();

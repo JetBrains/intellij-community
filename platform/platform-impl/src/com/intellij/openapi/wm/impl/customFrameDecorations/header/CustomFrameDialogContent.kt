@@ -50,12 +50,8 @@ class CustomFrameDialogContent private constructor(window: Window, content: Cont
             header.background = it
         }
 
-        val pane = JPanel(MigLayout("fill, ins 0, novisualpadding", "[grow]"))
-        pane.isOpaque = false
-        pane.add(content, "grow")
-
         panel.add(header, "growx, wmin 100")
-        panel.add(pane, "wmin 0, grow")
+        panel.add(content, "grow")
     }
 
     override val content: JComponent

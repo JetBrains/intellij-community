@@ -221,7 +221,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
     mySplitter.setFirstComponent(left);
     mySplitter.setSecondComponent(right);
 
-    if (IdeFrameDecorator.isCustomDecoration()) {
+    if (IdeFrameDecorator.isCustomDecorationActive()) {
       mySplitter.getDivider().setOpaque(false);
     }
 
