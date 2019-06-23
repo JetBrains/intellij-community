@@ -115,6 +115,8 @@ abstract class GitMergeAction extends GitRepositoryAction {
           }
         }
 
+        String beforeRevision = repository.getCurrentRevision();
+
         try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, getActionName())) {
           GitCommandResult result = git.runCommand(() -> {
             GitLineHandler handler = handlerProvider.compute();
@@ -124,14 +126,11 @@ abstract class GitMergeAction extends GitRepositoryAction {
             return handler;
           });
 
-          String revision = repository.getCurrentRevision();
-          if (revision == null) {
-            return;
+          if (beforeRevision != null) {
+            GitRevisionNumber currentRev = new GitRevisionNumber(beforeRevision);
+            handleResult(result, project, mergeConflict, localChangesDetector, untrackedFilesDetector, repository, currentRev, beforeLabel,
+                         updatedRanges);
           }
-
-          GitRevisionNumber currentRev = new GitRevisionNumber(revision);
-          handleResult(result, project, mergeConflict, localChangesDetector, untrackedFilesDetector, repository, currentRev, beforeLabel,
-                       updatedRanges);
         }
       }
     }.queue();
