@@ -490,7 +490,11 @@ class BaseInterpreterInterface(BaseCodeExecutor):
             self.debugger = pydevd.PyDB()
             try:
                 pydevd.apply_debugger_options(debugger_options)
-                self.debugger.connect(debugger_host or pydev_localhost.get_localhost(), debuggerPort)
+                if debugger_host is None or pydev_localhost.is_localhost(debugger_host):
+                    host = pydev_localhost.get_localhost()
+                else:
+                    host = debugger_host
+                self.debugger.connect(host, debuggerPort)
                 self.debugger.prepare_to_run()
                 self.debugger.disable_tracing()
             except:
