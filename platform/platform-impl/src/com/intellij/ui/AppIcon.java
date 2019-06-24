@@ -171,6 +171,7 @@ public abstract class AppIcon {
 
         if (appImage == null) return null;
 
+        // [tav] expecting two resolution variants for the dock icon: 128x128, 256x256
         if (MultiResolutionImageWrapper.isMultiResolutionImage(appImage)) {
           List<Image> variants = MultiResolutionImageWrapper.wrap(appImage).getResolutionVariants();
           int width = appImage.getWidth(null);
