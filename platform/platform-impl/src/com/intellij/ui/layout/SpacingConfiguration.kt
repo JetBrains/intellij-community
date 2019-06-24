@@ -2,13 +2,14 @@
 package com.intellij.ui.layout
 
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 
 // https://jetbrains.github.io/ui/controls/input_field/#spacing
 fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
   return object : SpacingConfiguration {
-    override val isCompensateVisualPaddings = !SystemInfo.isLinux
+    override val isCompensateVisualPaddings = !SystemInfo.isLinux || Registry.`is`("ui.dsl.force.compensate.visual.padding")
 
     override val horizontalGap = JBUI.scale(8)
     override val verticalGap = JBUI.scale(5 * 2)
