@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.OrderedSet;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
@@ -323,7 +324,7 @@ class ClassfileAnalyzer {
 
     private final Set<MethodRepr> myMethods = new THashSet<>();
     private final Set<FieldRepr> myFields = new THashSet<>();
-    private final Set<UsageRepr.Usage> myUsages = new THashSet<>();
+    private final Set<UsageRepr.Usage> myUsages = new OrderedSet<>();
     private final Set<ElemType> myTargets = EnumSet.noneOf(ElemType.class);
     private RetentionPolicy myRetentionPolicy = null;
 

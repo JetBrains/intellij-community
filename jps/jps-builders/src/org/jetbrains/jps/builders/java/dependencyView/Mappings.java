@@ -736,7 +736,7 @@ public class Mappings {
     void affectStaticMemberOnDemandUsages(int ownerClass, final TIntHashSet classes, final Set<? super UsageRepr.Usage> affectedUsages, final TIntHashSet dependents) {
       debug("Affect static member on-demand import usage referenced of class ", ownerClass);
       affectedUsages.add(UsageRepr.createImportStaticOnDemandUsage(myContext, ownerClass));
-      
+
       classes.forEach(cls -> {
         final TIntHashSet deps = myClassToClassDependency.get(cls);
         if (deps != null) {
@@ -2696,7 +2696,7 @@ public class Mappings {
             }
           }
 
-          final TIntHashSet superClasses = new TIntHashSet();
+          final TIntArrayList superClasses = new TIntArrayList();
           final IntIntTransientMultiMaplet addedSuperClasses = delta.getAddedSuperClasses();
           final IntIntTransientMultiMaplet removedSuperClasses = delta.getRemovedSuperClasses();
 
@@ -2819,7 +2819,7 @@ public class Mappings {
 
         // updating classToClass dependencies
 
-        final TIntHashSet affectedClasses = new TIntHashSet();
+        final TIntArrayList affectedClasses = new TIntArrayList();
 
         addAllKeys(affectedClasses, dependenciesTrashBin);
         addAllKeys(affectedClasses, delta.myClassToClassDependency);
@@ -3034,7 +3034,7 @@ public class Mappings {
     return changed.get();
   }
 
-  private static void addAllKeys(final TIntHashSet whereToAdd, final IntIntMultiMaplet maplet) {
+  private static void addAllKeys(final TIntArrayList whereToAdd, final IntIntMultiMaplet maplet) {
     maplet.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
       @Override
       public boolean execute(int key, TIntHashSet b) {
