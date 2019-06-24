@@ -73,6 +73,10 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
     if (myErrorPopup != null && !myErrorPopup.isDisposed()) Disposer.dispose(myErrorPopup);
   }
 
+  public JTextField getTextField() {
+    return myTextField;
+  }
+
   @NotNull
   protected ExtendableTextField createTextField() {
     ExtendableTextField res = new ExtendableTextField();
