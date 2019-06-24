@@ -42,12 +42,12 @@ public class GroovyImportOptimizer implements ImportOptimizer {
 
   @Override
   @NotNull
-  public Runnable processFile(PsiFile file) {
+  public Runnable processFile(@NotNull PsiFile file) {
     return new MyProcessor(file).compute();
   }
 
   @Override
-  public boolean supports(PsiFile file) {
+  public boolean supports(@NotNull PsiFile file) {
     return file instanceof GroovyFile;
   }
 
