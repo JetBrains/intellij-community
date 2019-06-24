@@ -15,8 +15,7 @@ public abstract class IdeDocumentHistory {
   }
 
   public abstract void includeCurrentCommandAsNavigation();
-
-  public abstract void includeCurrentCommandHasMoves();
+  public abstract void setCurrentCommandHasMoves();
   public abstract void includeCurrentPlaceAsChangePlace();
   public abstract void clearHistory();
 
