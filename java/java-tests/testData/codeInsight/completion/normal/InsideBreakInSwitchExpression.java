@@ -3,9 +3,9 @@ public class ConstConfig {
         Boolean b;
         if ((b = switch (0) {
             case 1: {
-                break aaaa<caret>;
+                yield aaaa<caret>;
             }
-            default: break false;
+            default: yield false;
         }));
     }
 }
