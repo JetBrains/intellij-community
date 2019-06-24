@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.visible.filters;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogBranchFilter;
@@ -91,14 +92,17 @@ class VcsLogBranchFilterImpl implements VcsLogBranchFilter {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     VcsLogBranchFilterImpl filter = (VcsLogBranchFilterImpl)o;
-    return myBranches.equals(filter.myBranches) &&
-           myPatterns.equals(filter.myPatterns) &&
-           myExcludedBranches.equals(filter.myExcludedBranches) &&
-           myExcludedPatterns.equals(filter.myExcludedPatterns);
+    return Comparing.haveEqualElements(myBranches, filter.myBranches) &&
+           Comparing.haveEqualElements(myPatterns, filter.myPatterns) &&
+           Comparing.haveEqualElements(myExcludedBranches, filter.myExcludedBranches) &&
+           Comparing.haveEqualElements(myExcludedPatterns, filter.myExcludedPatterns);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(myBranches, myPatterns, myExcludedBranches, myExcludedPatterns);
+    return Objects.hash(Comparing.unorderedHashcode(myBranches),
+                        Comparing.unorderedHashcode(myPatterns),
+                        Comparing.unorderedHashcode(myExcludedBranches),
+                        Comparing.unorderedHashcode(myExcludedPatterns));
   }
 }
