@@ -22,6 +22,9 @@ public class JavaHighlightingLexer extends LayeredLexer {
     registerSelfStoppingLayer(new StringLiteralLexer('\'', JavaTokenType.STRING_LITERAL),
                               new IElementType[]{JavaTokenType.CHARACTER_LITERAL}, IElementType.EMPTY_ARRAY);
 
+    registerSelfStoppingLayer(new StringLiteralLexer(StringLiteralLexer.NO_QUOTE_CHAR, JavaTokenType.TEXT_BLOCK_LITERAL),
+                              new IElementType[]{JavaTokenType.TEXT_BLOCK_LITERAL}, IElementType.EMPTY_ARRAY);
+
     LayeredLexer docLexer = new LayeredLexer(JavaParserDefinition.createDocLexer(languageLevel));
     HtmlHighlightingLexer htmlLexer = new HtmlHighlightingLexer(null);
     htmlLexer.setHasNoEmbeddments(true);
