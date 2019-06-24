@@ -49,13 +49,17 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
 
   /**
    * @return created elements. Never null.
+   * @deprecated use async variant
+   * {@link CreateElementActionBase#invokeDialog(com.intellij.openapi.project.Project, com.intellij.psi.PsiDirectory, java.util.function.Consumer)} instead
    */
   @NotNull
   @Deprecated
-  protected abstract PsiElement[] invokeDialog(Project project, PsiDirectory directory);
+  protected PsiElement[] invokeDialog(Project project, PsiDirectory directory) {
+    return PsiElement.EMPTY_ARRAY;
+  }
 
   /**
-   * Overloaded version of {@link com.intellij.ide.actions.CreateElementActionBase#invokeDialog(com.intellij.openapi.project.Project, com.intellij.psi.PsiDirectory)}
+   * Overloaded version of {@link CreateElementActionBase#invokeDialog(com.intellij.openapi.project.Project, com.intellij.psi.PsiDirectory)}
    * adapted for asynchronous calls
    * @param elementsConsumer describes actions with created elements
    */
