@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -773,8 +773,10 @@ public class JavaKeywordCompletion {
     }
     if (psiElement().inside(PsiSwitchStatement.class).accepts(myPosition)) {
       addKeyword(br);
-    } else if (psiElement().inside(PsiSwitchExpression.class).accepts(myPosition)) {
-      addKeyword(TailTypeDecorator.withTail(createKeyword(PsiKeyword.BREAK), TailType.INSERT_SPACE));
+    }
+    else if (psiElement().inside(PsiSwitchExpression.class).accepts(myPosition)) {
+      addKeyword(TailTypeDecorator.withTail(br, TailType.INSERT_SPACE));
+      addKeyword(TailTypeDecorator.withTail(createKeyword(PsiKeyword.YIELD), TailType.INSERT_SPACE));
     }
 
     for (PsiLabeledStatement labeled : psiApi().parents(myPosition).takeWhile(notInstanceOf(PsiMember.class)).filter(PsiLabeledStatement.class)) {
