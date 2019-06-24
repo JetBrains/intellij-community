@@ -148,11 +148,37 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
   @NonNls
   private static String calculateSimplifiedPrefixExpression(GrUnaryExpression expression) {
     final GrExpression operand = expression.getOperand();
+    if (isUnaryNot(operand)) {
+      return booleanLiteral(((GrUnaryExpression)operand).getOperand());
+    }
+    else {
+      return negateBooleanLiteral(operand);
+    }
+  }
+
+  @NotNull
+  private static String negateBooleanLiteral(GrExpression operand) {
     if (isTrue(operand)) {
       return "false";
     }
-    else {
+    else if (isFalse(operand)) {
       return "true";
+    }
+    else {
+      throw new IllegalStateException(operand.getText());
+    }
+  }
+
+  @NotNull
+  private static String booleanLiteral(GrExpression operand) {
+    if (isTrue(operand)) {
+      return "true";
+    }
+    else if (isFalse(operand)) {
+      return "false";
+    }
+    else {
+      throw new IllegalStateException(operand.getText());
     }
   }
 
@@ -213,10 +239,20 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
 
     @Override
     public void visitUnaryExpression(@NotNull GrUnaryExpression expression) {
-      super.visitUnaryExpression(expression);
       final IElementType sign = expression.getOperationTokenType();
+      if (!sign.equals(T_NOT)) {
+        return;
+      }
       final GrExpression operand = expression.getOperand();
-      if (sign.equals(T_NOT) && notExpressionIsPointless(operand)) {
+      if (isBooleanLiteral(operand)) {
+        final PsiElement parent = expression.getParent();
+        if (parent instanceof GrExpression && isUnaryNot((GrExpression)parent)) {
+          // don't highlight inner unary in double negation
+          return;
+        }
+        registerError(expression);
+      }
+      else if (isUnaryNot(operand) && isBooleanLiteral(((GrUnaryExpression)operand).getOperand())) {
         registerError(expression);
       }
     }
@@ -267,7 +303,11 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
     return isTrue(lhs) || isTrue(rhs) || isFalse(lhs) || isFalse(rhs);
   }
 
-  private static boolean notExpressionIsPointless(GrExpression arg) {
+  private static boolean isUnaryNot(GrExpression arg) {
+    return arg instanceof GrUnaryExpression && ((GrUnaryExpression)arg).getOperationTokenType() == T_NOT;
+  }
+
+  private static boolean isBooleanLiteral(GrExpression arg) {
     return isFalse(arg) || isTrue(arg);
   }
 
