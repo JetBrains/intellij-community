@@ -5,7 +5,6 @@
  */
 package com.intellij.util;
 
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.util.PsiUtil;
@@ -57,8 +56,6 @@ public final class VisibilityIcons {
   }
 
   public static void setVisibilityIcon(@MagicConstant(intValues = {PsiUtil.ACCESS_LEVEL_PUBLIC, PsiUtil.ACCESS_LEVEL_PROTECTED, PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL, PsiUtil.ACCESS_LEVEL_PRIVATE}) int accessLevel, RowIcon baseIcon) {
-    if (!Registry.is("ide.completion.show.visibility.icon")) return;
-
     Icon icon;
     switch (accessLevel) {
       case PsiUtil.ACCESS_LEVEL_PUBLIC:
