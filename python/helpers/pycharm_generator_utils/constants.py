@@ -202,7 +202,6 @@ IS_JAVA = hasattr(os, "java")
 BUILTIN_MOD_NAME = the_builtins.__name__
 
 IDENT_PATTERN = "[A-Za-z_][0-9A-Za-z_]*" # re pattern for identifier
-NUM_IDENT_PATTERN = re.compile("([A-Za-z_]+)[0-9]?[A-Za-z_]*") # 'foo_123' -> $1 = 'foo_'
 STR_CHAR_PATTERN = "[0-9A-Za-z_.,\+\-&\*% ]"
 
 DOC_FUNC_RE = re.compile("(?:.*\.)?(\w+)\(([^\)]*)\).*") # $1 = function name, $2 = arglist
@@ -225,117 +224,6 @@ SIMPLE_VALUE_RE = re.compile(
     "(\(\))|" +
     "(True|False|None)"
 ) # $? = sane default value
-
-###########################   parsing   ###########################################################
-if version[0] < 3:
-    from pycharm_generator_utils.pyparsing_py2 import *
-else:
-    #noinspection PyUnresolvedReferences
-    from pycharm_generator_utils.pyparsing_py3 import *
-
-# grammar to parse parameter lists
-
-# // snatched from parsePythonValue.py, from pyparsing samples, copyright 2006 by Paul McGuire but under BSD license.
-# we don't suppress lots of punctuation because we want it back when we reconstruct the lists
-
-lparen, rparen, lbrack, rbrack, lbrace, rbrace, colon = map(Literal, "()[]{}:")
-
-integer = Combine(Optional(oneOf("+ -")) + Word(nums)).setName("integer")
-real = Combine(Optional(oneOf("+ -")) + Word(nums) + "." +
-               Optional(Word(nums)) +
-               Optional(oneOf("e E") + Optional(oneOf("+ -")) + Word(nums))).setName("real")
-tupleStr = Forward()
-listStr = Forward()
-dictStr = Forward()
-
-boolLiteral = oneOf("True False")
-noneLiteral = Literal("None")
-
-listItem = real | integer | quotedString | unicodeString | boolLiteral | noneLiteral | \
-           Group(listStr) | tupleStr | dictStr
-
-tupleStr << ( Suppress("(") + Optional(delimitedList(listItem)) +
-              Optional(Literal(",")) + Suppress(")") ).setResultsName("tuple")
-
-listStr << (lbrack + Optional(delimitedList(listItem) +
-                              Optional(Literal(","))) + rbrack).setResultsName("list")
-
-dictEntry = Group(listItem + colon + listItem)
-dictStr << (lbrace + Optional(delimitedList(dictEntry) + Optional(Literal(","))) + rbrace).setResultsName("dict")
-# \\ end of the snatched part
-
-# our output format is s-expressions:
-# (simple name optional_value) is name or name=value
-# (nested (simple ...) (simple ...)) is (name, name,...)
-# (opt ...) is [, ...] or suchlike.
-
-T_SIMPLE = 'Simple'
-T_NESTED = 'Nested'
-T_OPTIONAL = 'Opt'
-T_RETURN = "Ret"
-
-TRIPLE_DOT = '...'
-
-COMMA = Suppress(",")
-APOS = Suppress("'")
-QUOTE = Suppress('"')
-SP = Suppress(Optional(White()))
-
-ident = Word(alphas + "_", alphanums + "_-.").setName("ident") # we accept things like "foo-or-bar"
-decorated_ident = ident + Optional(Suppress(SP + Literal(":") + SP + ident)) # accept "foo: bar", ignore "bar"
-spaced_ident = Combine(decorated_ident + ZeroOrMore(Literal(' ') + decorated_ident)) # we accept 'list or tuple' or 'C struct'
-
-# allow quoted names, because __setattr__, etc docs use it
-paramname = spaced_ident | \
-            APOS + spaced_ident + APOS | \
-            QUOTE + spaced_ident + QUOTE
-
-parenthesized_tuple = ( Literal("(") + Optional(delimitedList(listItem, combine=True)) +
-                        Optional(Literal(",")) + Literal(")") ).setResultsName("(tuple)")
-
-initializer = (SP + Suppress("=") + SP + Combine(parenthesized_tuple | listItem | ident)).setName("=init") # accept foo=defaultfoo
-
-param = Group(Empty().setParseAction(replaceWith(T_SIMPLE)) + Combine(Optional(oneOf("* **")) + paramname) + Optional(initializer))
-
-ellipsis = Group(
-    Empty().setParseAction(replaceWith(T_SIMPLE)) + \
-    (Literal("..") +
-     ZeroOrMore(Literal('.'))).setParseAction(replaceWith(TRIPLE_DOT)) # we want to accept both 'foo,..' and 'foo, ...'
-)
-
-paramSlot = Forward()
-
-simpleParamSeq = ZeroOrMore(paramSlot + COMMA) + Optional(paramSlot + Optional(COMMA))
-nestedParamSeq = Group(
-    Suppress('(').setParseAction(replaceWith(T_NESTED)) + \
-    simpleParamSeq + Optional(ellipsis + Optional(COMMA) + Optional(simpleParamSeq)) + \
-    Suppress(')')
-) # we accept "(a1, ... an)"
-
-paramSlot << (param | nestedParamSeq)
-
-optionalPart = Forward()
-
-paramSeq = simpleParamSeq + Optional(optionalPart) # this is our approximate target
-
-optionalPart << (
-    Group(
-        Suppress('[').setParseAction(replaceWith(T_OPTIONAL)) + Optional(COMMA) +
-        paramSeq + Optional(ellipsis) +
-        Suppress(']')
-    )
-    | ellipsis
-)
-
-return_type = Group(
-    Empty().setParseAction(replaceWith(T_RETURN)) +
-    Suppress(SP + (Literal("->") | (Literal(":") + SP + Literal("return"))) + SP) +
-    ident
-)
-
-# this is our ideal target, with balancing paren and a multiline rest of doc.
-paramSeqAndRest = paramSeq + Suppress(')') + Optional(return_type) + Suppress(Optional(Regex(".*(?s)")))
-############################################################################################
 
 
 # Some values are known to be of no use in source and needs to be suppressed.

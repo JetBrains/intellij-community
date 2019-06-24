@@ -1,5 +1,7 @@
+from generator3 import OriginType
 from pycharm_generator_utils.util_methods import *
 from pycharm_generator_utils.util_methods import get_relative_path_by_qname
+from pycharm_generator_utils.docstring_parsing import *
 
 
 class emptylistdict(dict):
@@ -53,11 +55,6 @@ class ClassBuf(Buf):
     def __init__(self, name, indenter):
         super(ClassBuf, self).__init__(indenter)
         self.name = name
-
-class OriginType(object):
-    FILE = 'FILE'
-    BUILTIN = '(built-in)'
-    PREGENERATED = '(pre-generated)'
 
 
 #noinspection PyBroadException

@@ -3,7 +3,6 @@ import atexit
 import zipfile
 
 from pycharm_generator_utils.clr_tools import *
-from pycharm_generator_utils.module_redeclarator import *
 from pycharm_generator_utils.util_methods import *
 
 # TODO: Move all CLR-specific functions to clr_tools
@@ -64,6 +63,7 @@ def redo_module(module_name, module_file_name, doing_builtins, cache_dir, sdk_di
                 break
     if mod:
         action("restoring")
+        from pycharm_generator_utils.module_redeclarator import ModuleRedeclarator
         r = ModuleRedeclarator(mod, module_name, module_file_name, cache_dir=cache_dir, doing_builtins=doing_builtins)
         create_failed_version_stamp(cache_dir, module_name)
         r.redo(module_name, ".".join(mod_path[:-1]) in MODULES_INSPECT_DIR)
@@ -393,6 +393,12 @@ def physical_module_hash(mod_path):
 
 def version_to_tuple(version):
     return tuple(map(int, version.split('.')))
+
+
+class OriginType(object):
+    FILE = 'FILE'
+    BUILTIN = '(built-in)'
+    PREGENERATED = '(pre-generated)'
 
 
 class SkeletonStatus(object):
