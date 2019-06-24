@@ -16,6 +16,9 @@ public interface CommitResultHandler {
 
   void onSuccess(@NotNull String commitMessage);
 
+  default void onCancel() {
+  }
+
   /**
    * @deprecated Use {@link #onFailure(List<VcsException>)} instead.
    */

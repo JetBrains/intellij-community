@@ -21,8 +21,12 @@ private fun escape(s: String) = replace(s, FROM, TO)
 private fun hasOnlyWarnings(exceptions: List<VcsException>) = exceptions.all { it.isWarning }
 
 class DefaultCommitResultHandler(private val committer: AbstractCommitter) : CommitResultHandler {
+  private val notifier = VcsNotifier.getInstance(committer.project)
 
   override fun onSuccess(commitMessage: String) = reportResult()
+  override fun onCancel() {
+    notifier.notifyMinorWarning("", "Commit canceled")
+  }
   override fun onFailure(errors: List<VcsException>) = reportResult()
 
   private fun reportResult() {
@@ -30,8 +34,6 @@ class DefaultCommitResultHandler(private val committer: AbstractCommitter) : Com
     val errors = collectErrors(allExceptions)
     val errorsSize = errors.size
     val warningsSize = allExceptions.size - errorsSize
-
-    val notifier = VcsNotifier.getInstance(committer.project)
     val message = getCommitSummary()
 
     when {

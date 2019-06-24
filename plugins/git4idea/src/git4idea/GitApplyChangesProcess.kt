@@ -222,6 +222,11 @@ class GitApplyChangesProcess(private val project: Project,
               sem.release()
             }
 
+            override fun onCancel() {
+              commitSucceeded.set(false)
+              sem.release()
+            }
+
             override fun onFailure(errors: List<VcsException>) {
               commitSucceeded.set(false)
               sem.release()

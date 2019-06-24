@@ -66,6 +66,7 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
 
   private class ResultHandler(private val workflow: ChangesViewCommitWorkflow) : CommitResultHandler {
     override fun onSuccess(commitMessage: String) = resetState()
+    override fun onCancel() = Unit
     override fun onFailure(errors: List<VcsException>) = resetState()
 
     private fun resetState() = runInEdt {

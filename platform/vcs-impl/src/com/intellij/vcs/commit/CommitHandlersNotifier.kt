@@ -8,5 +8,7 @@ import com.intellij.openapi.vcs.checkin.CheckinHandler
 class CommitHandlersNotifier(private val handlers: List<CheckinHandler>) : CommitResultHandler {
   override fun onSuccess(commitMessage: String) = handlers.forEach { it.checkinSuccessful() }
 
+  override fun onCancel() = onFailure(emptyList())
+
   override fun onFailure(errors: List<VcsException>) = handlers.forEach { it.checkinFailed(errors) }
 }

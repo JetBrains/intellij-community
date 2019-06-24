@@ -39,6 +39,7 @@ class CustomCommitter(
     override fun onCancel() {
       LOG.debug("Commit canceled")
       session.executionCanceled()
+      resultHandlers.forEach { it.onCancel() }
     }
 
     override fun onThrowable(error: Throwable) {

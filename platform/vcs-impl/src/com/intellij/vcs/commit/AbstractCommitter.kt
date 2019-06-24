@@ -17,7 +17,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
-import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.containers.ContainerUtil.createLockFreeCopyOnWriteList
 
@@ -131,6 +130,11 @@ abstract class AbstractCommitter(
             doRunCommit()
           }, indicator)
       }
+      catch (ignored: ProcessCanceledException) {
+      }
+      catch (e: Throwable) {
+        LOG.error(e)
+      }
       finally {
         endSemaphore.up()
       }
@@ -143,6 +147,7 @@ abstract class AbstractCommitter(
   }
 
   private fun doRunCommit() {
+    var canceled = false
     try {
       runReadAction { markCommittingDocuments() }
       try {
@@ -154,26 +159,29 @@ abstract class AbstractCommitter(
 
       afterCommit()
     }
-    catch (pce: ProcessCanceledException) {
-      throw pce
+    catch (e: ProcessCanceledException) {
+      canceled = true
+      throw e
     }
     catch (e: Throwable) {
       LOG.error(e)
       _exceptions.add(VcsException(e))
-      ExceptionUtil.rethrow(e)
     }
     finally {
-      finishCommit()
+      finishCommit(canceled)
       onFinish()
     }
   }
 
-  private fun finishCommit() {
+  private fun finishCommit(canceled: Boolean) {
     val errors = collectErrors(_exceptions)
     val noErrors = errors.isEmpty()
     val noWarnings = _exceptions.isEmpty()
 
-    if (noErrors) {
+    if (canceled) {
+      resultHandlers.forEach { it.onCancel() }
+    }
+    else if (noErrors) {
       resultHandlers.forEach { it.onSuccess(commitMessage) }
       onSuccess()
 
