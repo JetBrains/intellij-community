@@ -43,7 +43,7 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
     }
 
     if (rows.size == 1) {
-      ui.jumpToRow(rows.single())
+      ui.jumpToRow(rows.single(), false)
     }
     else {
       val popup = JBPopupFactory.getInstance().createActionGroupPopup("Select ${if (parent) "Parent" else "Child"} to Navigate",
@@ -59,7 +59,7 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
       object : DumbAwareAction(text, "Navigate to $text", null) {
         override fun actionPerformed(e: AnActionEvent) {
           triggerUsage(e)
-          ui.jumpToRow(row)
+          ui.jumpToRow(row, false)
         }
       }
     }
