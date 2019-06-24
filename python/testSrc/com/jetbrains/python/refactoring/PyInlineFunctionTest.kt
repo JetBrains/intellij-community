@@ -90,6 +90,7 @@ class PyInlineFunctionTest : PyTestCase() {
   }
   fun testConstructor() = doTestError("Cannot inline constructor calls")
   fun testBuiltin() = doTestError("Cannot inline builtin functions")
+  fun testSpecialMethod() = doTestError("Cannot inline special methods")
   fun testDecorator() = doTestError("Cannot inline functions with decorators")
   fun testRecursive() = doTestError("Cannot inline functions that reference themselves")
   fun testStar() = doTestError("Cannot inline functions with * arguments")

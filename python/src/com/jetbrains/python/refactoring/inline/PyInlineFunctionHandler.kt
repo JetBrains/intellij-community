@@ -37,6 +37,7 @@ class PyInlineFunctionHandler : InlineActionHandler() {
       element.isGenerator -> "refactoring.inline.function.generator"
       PyNames.INIT == element.name -> "refactoring.inline.function.constructor"
       PyBuiltinCache.getInstance(element).isBuiltin(element) -> "refactoring.inline.function.builtin"
+      isSpecialMethod(element) -> "refactoring.inline.function.special.method"
       hasDecorators(element) -> "refactoring.inline.function.decorator"
       hasReferencesToSelf(element) -> "refactoring.inline.function.self.referrent"
       hasStarArgs(element) -> "refactoring.inline.function.star"
@@ -54,6 +55,10 @@ class PyInlineFunctionHandler : InlineActionHandler() {
     if (!ApplicationManager.getApplication().isUnitTestMode){
       PyInlineFunctionDialog(project, editor, element, TargetElementUtil.findReference(editor)).show()
     }
+  }
+
+  private fun isSpecialMethod(function: PyFunction): Boolean {
+    return function.containingClass != null && PyNames.getBuiltinMethods(LanguageLevel.forElement(function)).contains(function.name)
   }
 
   private fun hasNestedFunction(function: PyFunction): Boolean = SyntaxTraverser.psiTraverser(function.statementList).traverse().any { it is PyFunction }
