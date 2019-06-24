@@ -45,10 +45,10 @@ class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
 
     val historyUiConsumer = { ui: AbstractVcsLogUi, firstTime: Boolean ->
       if (hash != null) {
-        ui.jumpToNearestCommit(hash, root)
+        ui.jumpToNearestCommit(hash, root, true)
       }
       else if (firstTime) {
-        ui.jumpToRow(0)
+        ui.jumpToRow(0, true)
       }
     }
 
