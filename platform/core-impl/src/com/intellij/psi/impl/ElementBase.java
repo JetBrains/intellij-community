@@ -111,8 +111,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   protected Icon computeBaseIcon(@Iconable.IconFlags int flags) {
-    Icon baseIcon = isVisibilitySupported() && Registry.is("ide.completion.show.visibility.icon")
-                    ? getAdjustedBaseIcon(getBaseIcon(), flags) : getBaseIcon();
+    Icon baseIcon = isVisibilitySupported() ? getAdjustedBaseIcon(getBaseIcon(), flags) : getBaseIcon();
 
     // to prevent blinking, base icon should be created with the layers
     if (this instanceof PsiElement) {
