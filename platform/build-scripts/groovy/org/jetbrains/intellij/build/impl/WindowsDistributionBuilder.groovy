@@ -120,12 +120,12 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         new WinExeInstallerBuilder(buildContext, customizer, jreDirectoryPath64)
           .buildInstaller(winDistPath, productJsonDir,
                           buildContext.bundledJreManager.secondJreSuffix(),
-                          buildContext.bundledJreManager.secondBundledJreModular)
+                          !buildContext.bundledJreManager.secondBundledJreModular)
       }
       generateProductJson(productJsonDir, jreDirectoryPath != null)
       new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath, jreDirectoryPath], [])
       new WinExeInstallerBuilder(buildContext, customizer, jreDirectoryPath)
-        .buildInstaller(winDistPath, productJsonDir, '', buildContext.bundledJreManager.bundledJreModular)
+        .buildInstaller(winDistPath, productJsonDir, '', !buildContext.bundledJreManager.bundledJreModular)
     }
   }
 
