@@ -9,6 +9,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.ShellCommand;
+import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -60,7 +61,11 @@ public class HgExecutor {
     debug("hg " + command);
     HgCommandResult result;
     try {
-      result = new ShellCommand(split, pwd(), null).execute(false, false);
+      int attempt = 0;
+      do {
+        result = new ShellCommand(split, pwd(), null).execute(false, false);
+      }
+      while (HgErrorUtil.isWLockError(result) && attempt++ < 2);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
