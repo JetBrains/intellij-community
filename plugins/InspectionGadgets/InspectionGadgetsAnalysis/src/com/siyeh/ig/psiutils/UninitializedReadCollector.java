@@ -200,8 +200,13 @@ public class UninitializedReadCollector {
       }
       else if (statement instanceof PsiYieldStatement) {
         PsiExpression valueExpression = ((PsiYieldStatement)statement).getExpression();
-        if (expressionAssignsVariable(valueExpression, variable, stamp, checkedMethods)) {
-          assigns = true;
+        if (!assigns) {
+          if (expressionAssignsVariable(valueExpression, variable, stamp, checkedMethods)) {
+            assigns = true;
+          }
+          else {
+            return false;
+          }
         }
       }
       else {

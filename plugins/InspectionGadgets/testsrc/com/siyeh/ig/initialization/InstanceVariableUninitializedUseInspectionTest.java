@@ -15,7 +15,7 @@ public class InstanceVariableUninitializedUseInspectionTest extends LightJavaIns
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_12;
+    return JAVA_13;
   }
 
   public void testInstanceVariableUninitializedUse() { doTest(); }
