@@ -213,7 +213,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
     if (!DiffUtil.canMakeWritable(outputDocument)) throw new InvalidDiffRequestException("Output is read only");
 
     DocumentContent outputContent = myContentFactory.create(project, outputDocument, fileType);
-    CharSequence originalContent = ReadAction.compute(() -> outputDocument.getImmutableCharSequence());
+    CharSequence originalContent = outputDocument.getImmutableCharSequence();
 
     List<DocumentContent> contents = new ArrayList<>(3);
     for (String text : textContents) {
@@ -277,7 +277,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
     if (!DiffUtil.canMakeWritable(outputDocument)) throw new InvalidDiffRequestException("Output is read only: " + output.getPresentableUrl());
 
     DocumentContent outputContent = myContentFactory.create(project, outputDocument);
-    CharSequence originalContent = ReadAction.compute(() -> outputDocument.getImmutableCharSequence());
+    CharSequence originalContent = outputDocument.getImmutableCharSequence();
 
     List<DocumentContent> contents = new ArrayList<>(3);
     for (byte[] bytes : byteContents) {
