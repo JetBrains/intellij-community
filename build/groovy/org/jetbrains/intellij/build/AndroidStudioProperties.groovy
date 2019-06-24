@@ -259,10 +259,9 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
     buildContext.ant.copy(todir: "$androidPluginLib/layoutlib") {
       fileset(dir: "$root/prebuilts/studio/layoutlib") {
-        exclude(name: "PREBUILT")
-        exclude(name: "BUILD")
-        exclude(name: "data/layoutlib.jar")
-        exclude(name: "data/res/**")
+        include(name: "build.prop")
+        include(name: "data/framework_res.jar")
+        include(name: "data/fonts/**")
       }
     }
 
