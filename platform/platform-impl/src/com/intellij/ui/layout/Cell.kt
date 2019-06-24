@@ -33,7 +33,8 @@ annotation class CellMarker
 
 data class PropertyBinding<V>(val get: () -> V, val set: (V) -> Unit)
 
-private fun <T> createPropertyBinding(prop: KMutableProperty0<T>, propType: Class<T>): PropertyBinding<T> {
+@PublishedApi
+internal fun <T> createPropertyBinding(prop: KMutableProperty0<T>, propType: Class<T>): PropertyBinding<T> {
   if (prop is CallableReference) {
     val name = prop.name
     val receiver = (prop as CallableReference).boundReceiver
@@ -55,6 +56,10 @@ private fun <T> createPropertyBinding(prop: KMutableProperty0<T>, propType: Clas
     }
   }
   return PropertyBinding(prop.getter, prop.setter)
+}
+
+fun <T> PropertyBinding<T>.toNullable(): PropertyBinding<T?> {
+  return PropertyBinding<T?>({ get() }, { set(it!!) })
 }
 
 interface CellBuilder<T : JComponent> {
@@ -198,7 +203,15 @@ abstract class Cell {
       .withBinding(component::isSelected, component::setSelected, createPropertyBinding(prop, Boolean::class.javaPrimitiveType!!))
   }
 
-  fun <T> comboBox(model: ComboBoxModel<T>, getter: () -> T?, setter: (T?) -> Unit, growPolicy: GrowPolicy? = null, renderer: ListCellRenderer<T?>? = null): CellBuilder<ComboBox<T>> {
+  fun <T> comboBox(model: ComboBoxModel<T>, getter: () -> T?, setter: (T?) -> Unit, growPolicy: GrowPolicy? = null, renderer: ListCellRenderer<T?>? = null
+  ): CellBuilder<ComboBox<T>> {
+    return comboBox(model, PropertyBinding(getter, setter), growPolicy, renderer)
+  }
+
+  fun <T> comboBox(model: ComboBoxModel<T>,
+                   modelBinding: PropertyBinding<T?>,
+                   growPolicy: GrowPolicy?,
+                   renderer: ListCellRenderer<T?>?): CellBuilder<ComboBox<T>> {
     val component = ComboBox(model)
     if (renderer != null) {
       component.renderer = renderer
@@ -207,11 +220,11 @@ abstract class Cell {
       component.renderer = SimpleListCellRenderer.create("") { it.toString() }
     }
     val builder = component(growPolicy = growPolicy)
-    return builder.withBinding({ component.selectedItem as T? }, { component.setSelectedItem(it) }, PropertyBinding(getter, setter))
+    return builder.withBinding({ component.selectedItem as T? }, { component.setSelectedItem(it) }, modelBinding)
   }
 
-  fun <T> comboBox(model: ComboBoxModel<T>, prop: KMutableProperty0<T>, growPolicy: GrowPolicy? = null, renderer: ListCellRenderer<T?>? = null): CellBuilder<ComboBox<T>> {
-    return comboBox(model, prop.getter, { prop.set(it!!) }, growPolicy, renderer)
+  inline fun <reified T : Any> comboBox(model: ComboBoxModel<T>, prop: KMutableProperty0<T>, growPolicy: GrowPolicy? = null, renderer: ListCellRenderer<T?>? = null): CellBuilder<ComboBox<T>> {
+    return comboBox(model, createPropertyBinding(prop, T::class.javaPrimitiveType ?: T::class.java).toNullable(), growPolicy, renderer)
   }
 
   fun textField(prop: KMutableProperty0<String>, columns: Int? = null): CellBuilder<JTextField> {
