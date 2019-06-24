@@ -45,6 +45,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -112,11 +115,23 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
   @Override
   @NotNull
   public Set<String> getRootsToWatch() {
-    final File path = new File(getExternalResourcesPath());
-    if (!path.exists() && !path.mkdirs()) {
-      LOG.warn("Unable to create: " + path);
+    String path = getExternalResourcesPath();
+    Path file = checkExists(path);
+    return Collections.singleton(file.toAbsolutePath().toString());
+  }
+
+  @NotNull
+  private static Path checkExists(String dir) {
+    Path path = Paths.get(dir);
+    if (!path.toFile().isDirectory()) {
+      try {
+        Files.createDirectories(path);
+      }
+      catch (IOException e) {
+        LOG.warn("Unable to create: " + path, e);
+      }
     }
-    return Collections.singleton(path.getAbsolutePath());
+    return path;
   }
 
   static class FetchingResourceIOException extends IOException {
@@ -318,10 +333,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
       resPath += refname;
       int refNameSlashIndex = resPath.lastIndexOf('/');
       if (refNameSlashIndex != -1) {
-        final File parent = new File(resPath.substring(0, refNameSlashIndex));
-        if (!parent.mkdirs() || !parent.exists()) {
-          LOG.warn("Unable to create: " + parent);
-        }
+        checkExists(resPath.substring(0, refNameSlashIndex));
       }
     }
     else {
