@@ -85,14 +85,6 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
     return myId;
   }
 
-  public void requestFocus() {
-    // todo fix selection
-    VcsLogGraphTable graphTable = getTable();
-    if (graphTable.getRowCount() > 0) {
-      IdeFocusManager.getInstance(myProject).requestFocus(graphTable, true).doWhenProcessed(() -> graphTable.setRowSelectionInterval(0, 0));
-    }
-  }
-
   public void setVisiblePack(@NotNull VisiblePack pack) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 

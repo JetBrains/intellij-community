@@ -123,8 +123,6 @@ public class VcsLogManager implements Disposable {
       disposable = myPostponableRefresher.addLogWindow(ui.getRefresher());
     }
     Disposer.register(ui, disposable);
-
-    ui.requestFocus();
     return ui;
   }
 
