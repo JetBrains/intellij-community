@@ -18,6 +18,15 @@ class UnstableTypeUsedInSignatureTest : JavaCodeInsightFixtureTestCase() {
     inspection.unstableApiAnnotations.clear()
     inspection.unstableApiAnnotations.add(ApiStatus.Experimental::class.java.canonicalName)
     myFixture.enableInspections(inspection)
+    configureAnnotatedFiles()
+  }
+
+  private fun configureAnnotatedFiles() {
+    listOf(
+      "experimentalPackage/ClassInExperimentalPackage.java",
+      "experimentalPackage/package-info.java",
+      "experimentalPackage/NoWarnings.java"
+    ).forEach { myFixture.copyFileToProject(it) }
   }
 
   override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
@@ -30,6 +39,10 @@ class UnstableTypeUsedInSignatureTest : JavaCodeInsightFixtureTestCase() {
 
   fun `test java missing unstable annotation`() {
     myFixture.testHighlighting("unstableTypeUsedInSignature.java")
+  }
+
+  fun `test no warnings produced in experimental package`() {
+    myFixture.testHighlighting("experimentalPackage/NoWarnings.java")
   }
 
 }

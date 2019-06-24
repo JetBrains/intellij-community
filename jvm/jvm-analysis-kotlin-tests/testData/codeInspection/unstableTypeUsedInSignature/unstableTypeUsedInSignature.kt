@@ -3,6 +3,7 @@
 package test
 
 import org.jetbrains.annotations.ApiStatus
+import experimentalPackage.ClassInExperimentalPackage
 
 @ApiStatus.Experimental
 open class ExperimentalClass
@@ -40,6 +41,12 @@ class Warnings {
   fun <warning descr="Method must be marked with '@org.jetbrains.annotations.ApiStatus.Experimental' annotation because its signature references unstable type 'test.ExperimentalClass'">methodWithUnstableTypeParameterExtendsWildcard</warning>(list: List<ExperimentalClass>) {}
 
   fun <warning descr="Method must be marked with '@org.jetbrains.annotations.ApiStatus.Experimental' annotation because its signature references unstable type 'test.ExperimentalClass'">methodWithUnstableTypeParameterSuperWildcard</warning>(list: List<ExperimentalClass>) {}
+
+  var <warning descr="Field must be marked with '@org.jetbrains.annotations.ApiStatus.Experimental' annotation because its type references unstable type 'experimentalPackage.ClassInExperimentalPackage'">fieldWithTypeFromExperimentalPackage</warning>: ClassInExperimentalPackage? = null
+
+  fun <warning descr="Method must be marked with '@org.jetbrains.annotations.ApiStatus.Experimental' annotation because its signature references unstable type 'experimentalPackage.ClassInExperimentalPackage'">methodWithParamTypeFromExperimentalPackage</warning>(param: ClassInExperimentalPackage) {}
+
+  fun <warning descr="Method must be marked with '@org.jetbrains.annotations.ApiStatus.Experimental' annotation because its signature references unstable type 'experimentalPackage.ClassInExperimentalPackage'">methodWithReturnTypeFromExperimentalPackage</warning>(): ClassInExperimentalPackage? = null
 }
 
 class <warning descr="Class must be marked with '@org.jetbrains.annotations.ApiStatus.Experimental' annotation because its declaration references unstable type 'test.ExperimentalClass'">WarningTypeParameter</warning><T : ExperimentalClass>
@@ -58,7 +65,7 @@ class NoWarningsClassLevel {
   }
 }
 
-// No warnings should be produced because methods and fields are already marked with @ApiStatus.Experimental annotation.
+// No warnings should be produced because methods and fields are already marked with @ApiStatus.Experimental annotation or are inaccessible.
 
 class NoWarnings {
 
@@ -73,4 +80,10 @@ class NoWarnings {
   fun methodWithExperimentalReturnType(): ExperimentalClass? {
     return null
   }
+
+  private val privateField: ExperimentalClass? = null
+
+  private fun privateMethodWithParam(param: ExperimentalClass) {}
+
+  private fun privateMethodWithReturnType(): ExperimentalClass? = null
 }

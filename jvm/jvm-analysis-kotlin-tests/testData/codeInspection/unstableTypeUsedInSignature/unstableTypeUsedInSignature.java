@@ -2,7 +2,7 @@ package test;
 
 import java.util.List;
 import org.jetbrains.annotations.ApiStatus;
-
+import experimentalPackage.ClassInExperimentalPackage;
 
 @ApiStatus.Experimental
 class ExperimentalClass { }
@@ -45,6 +45,12 @@ class Warnings {
 
   public void <warning descr="Method must be marked with '@org.jetbrains.annotations.ApiStatus.Experimental' annotation because its signature references unstable type 'test.ExperimentalClass'">methodWithUnstableTypeParameterSuperWildcard</warning>(List<? super ExperimentalClass> list) {
   }
+
+  public ClassInExperimentalPackage <warning descr="Field must be marked with '@org.jetbrains.annotations.ApiStatus.Experimental' annotation because its type references unstable type 'experimentalPackage.ClassInExperimentalPackage'">fieldWithTypeFromExperimentalPackage</warning>;
+
+  public void <warning descr="Method must be marked with '@org.jetbrains.annotations.ApiStatus.Experimental' annotation because its signature references unstable type 'experimentalPackage.ClassInExperimentalPackage'">methodWithParamTypeFromExperimentalPackage</warning>(ClassInExperimentalPackage param) { }
+
+  public ClassInExperimentalPackage <warning descr="Method must be marked with '@org.jetbrains.annotations.ApiStatus.Experimental' annotation because its signature references unstable type 'experimentalPackage.ClassInExperimentalPackage'">methodWithReturnTypeFromExperimentalPackage</warning>() { return null; }
 }
 
 class <warning descr="Class must be marked with '@org.jetbrains.annotations.ApiStatus.Experimental' annotation because its declaration references unstable type 'test.ExperimentalClass'">WarningTypeParameter</warning><T extends ExperimentalClass> {
@@ -65,7 +71,7 @@ class NoWarningsClassLevel {
   }
 }
 
-// No warnings should be produced because methods and fields are already marked with @ApiStatus.Experimental annotation.
+// No warnings should be produced because methods and fields are already marked with @ApiStatus.Experimental annotation or are inaccessible.
 
 class NoWarnings {
 
@@ -80,4 +86,11 @@ class NoWarnings {
   public ExperimentalClass methodWithExperimentalReturnType() {
     return null;
   }
+
+  private ExperimentalClass privateField;
+
+  private void privateMethodWithParam(ExperimentalClass param) {
+  }
+
+  private ExperimentalClass privateMethodWithReturnType() { return null; }
 }

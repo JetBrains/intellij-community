@@ -4,10 +4,9 @@ package com.intellij.codeInspection
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInspection.UnstableApiUsageInspection.Companion.DEFAULT_UNSTABLE_API_ANNOTATIONS
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil
-import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiType
-import com.intellij.psi.PsiTypeParameterListOwner
-import com.intellij.psi.PsiWildcardType
+import com.intellij.lang.jvm.JvmModifier
+import com.intellij.psi.*
+import com.intellij.psi.util.PropertyUtil
 import com.intellij.uast.UastVisitorAdapter
 import com.intellij.util.ui.FormBuilder
 import com.siyeh.ig.ui.ExternalizableStringSet
@@ -37,7 +36,7 @@ class UnstableTypeUsedInSignatureInspection : LocalInspectionTool() {
   ) : AbstractUastNonRecursiveVisitor() {
 
     override fun visitClass(node: UClass): Boolean {
-      if (isMarkedUnstable(node)) {
+      if (!isAccessibleDeclaration(node) || isMarkedUnstable(node)) {
         return true
       }
       checkTypeParameters(node.javaPsi, node)
@@ -45,7 +44,7 @@ class UnstableTypeUsedInSignatureInspection : LocalInspectionTool() {
     }
 
     override fun visitMethod(node: UMethod): Boolean {
-      if (isMarkedUnstable(node)) {
+      if (!isAccessibleDeclaration(node) || isMarkedUnstable(node)) {
         return true
       }
       for (uastParameter in node.uastParameters) {
@@ -61,7 +60,7 @@ class UnstableTypeUsedInSignatureInspection : LocalInspectionTool() {
     }
 
     override fun visitField(node: UField): Boolean {
-      if (isMarkedUnstable(node)) {
+      if (!isAccessibleDeclaration(node) || isMarkedUnstable(node)) {
         return true
       }
       checkReferencesUnstableType(node.type, node)
@@ -80,12 +79,46 @@ class UnstableTypeUsedInSignatureInspection : LocalInspectionTool() {
       return false
     }
 
-    private tailrec fun isMarkedUnstable(node: UDeclaration): Boolean {
-      if (node.annotations.any { it.qualifiedName in unstableApiAnnotations }) {
-        return true
+    private fun isAccessibleDeclaration(node: UDeclaration): Boolean {
+      if (node.visibility == UastVisibility.PRIVATE) {
+        if (node is UField) {
+          //Kotlin properties are UField with accompanying getters\setters.
+          val psiField = node.javaPsi
+          if (psiField is PsiField) {
+            val getter = PropertyUtil.findGetterForField(psiField)
+            val setter = PropertyUtil.findSetterForField(psiField)
+            return getter != null && !getter.hasModifier(JvmModifier.PRIVATE) || setter != null && !setter.hasModifier(JvmModifier.PRIVATE)
+          }
+        }
+        return false
       }
-      val containingClass = node.getContainingUClass() ?: return false
-      return isMarkedUnstable(containingClass)
+      val containingUClass = node.getContainingUClass()
+      if (containingUClass != null) {
+        return isAccessibleDeclaration(containingUClass)
+      }
+      return true
+    }
+
+    private fun isMarkedUnstable(node: UDeclaration) = findUnstableAnnotation(node) != null
+
+    private fun findUnstableAnnotation(node: UDeclaration): String? {
+      val unstableAnnotation = node.annotations.find { it.qualifiedName in unstableApiAnnotations }
+      if (unstableAnnotation != null) {
+        return unstableAnnotation.qualifiedName
+      }
+      val containingClass = node.getContainingUClass()
+      if (containingClass != null) {
+        return findUnstableAnnotation(containingClass)
+      }
+      val containingUFile = node.getContainingUFile()
+      if (containingUFile != null) {
+        val packageName = containingUFile.packageName
+        val psiPackage = JavaPsiFacade.getInstance(problemsHolder.project).findPackage(packageName)
+        if (psiPackage != null) {
+          return unstableApiAnnotations.find { psiPackage.hasAnnotation(it) }
+        }
+      }
+      return null
     }
 
     private fun checkReferencesUnstableType(psiType: PsiType, declaration: UDeclaration): Boolean {
@@ -103,11 +136,11 @@ class UnstableTypeUsedInSignatureInspection : LocalInspectionTool() {
     //Returns <class name> and <unstable annotation name>
     private fun findReferencedUnstableType(psiType: PsiType): Pair<String, String>? {
       if (psiType is PsiClassType) {
-        val psiClass = psiType.resolve()
-        if (psiClass != null) {
-          val unstableApiAnnotation = unstableApiAnnotations.find { psiClass.hasAnnotation(it) }
+        val uClass = psiType.resolve()?.toUElement(UClass::class.java)
+        if (uClass != null) {
+          val unstableApiAnnotation = findUnstableAnnotation(uClass)
           if (unstableApiAnnotation != null) {
-            val className = psiClass.qualifiedName ?: psiType.className
+            val className = uClass.qualifiedName ?: psiType.className
             return className to unstableApiAnnotation
           }
         }
