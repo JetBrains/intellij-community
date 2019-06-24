@@ -1172,4 +1172,9 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
            "  }\n" +
            "}", "{\"q\": \"aA\", \"r\": \"Bb\", \"s\": <warning>\"aB\"</warning>}");
   }
+
+  public void testFunctionSchema() throws Exception {
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/functionSchema.json"));
+    doTest(schemaText, "{\"bindings\": [\"queueTrigger\"]}");
+  }
 }
