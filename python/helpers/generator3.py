@@ -501,10 +501,7 @@ def read_required_version(mod_qname):
     mod_id = '(built-in)' if mod_qname in sys.builtin_module_names else mod_qname
     versions = read_required_gen_version_file()
     # TODO use glob patterns here
-    for pattern, version in versions.items():
-        if mod_id == pattern:
-            return version
-    return versions.get('(default)')
+    return versions.get(mod_id, versions.get('(default)'))
 
 
 def read_required_gen_version_file():
