@@ -6,7 +6,9 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -85,14 +87,30 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
   @Nullable
   public Repository getRepositoryForFile(@NotNull VirtualFile file, boolean quick) {
     final VcsRoot vcsRoot = myVcsManager.getVcsRootObjectFor(file);
-    if (vcsRoot == null) return null;
+    if (vcsRoot == null) {
+      Map<VirtualFile, Repository> repositories = getExternalRepositories();
+      for (Map.Entry<VirtualFile, Repository> entry : repositories.entrySet()) {
+        if (entry.getKey().isValid() && VfsUtilCore.isAncestor(entry.getKey(), file, false)) {
+          return entry.getValue();
+        }
+      }
+      return null;
+    }
     return quick ? getRepositoryForRootQuick(vcsRoot.getPath()) : getRepositoryForRoot(vcsRoot.getPath());
   }
 
   @Nullable
   public Repository getRepositoryForFile(@NotNull FilePath file, boolean quick) {
     final VcsRoot vcsRoot = myVcsManager.getVcsRootObjectFor(file);
-    if (vcsRoot == null) return null;
+    if (vcsRoot == null) {
+      Map<VirtualFile, Repository> repositories = getExternalRepositories();
+      for (Map.Entry<VirtualFile, Repository> entry : repositories.entrySet()) {
+        if (entry.getKey().isValid() && FileUtil.isAncestor(entry.getKey().getPath(), file.getPath(), false)) {
+          return entry.getValue();
+        }
+      }
+      return null;
+    }
     return quick ? getRepositoryForRootQuick(vcsRoot.getPath()) : getRepositoryForRoot(vcsRoot.getPath());
   }
 
@@ -178,6 +196,17 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
     REPO_LOCK.readLock().lock();
     try {
       return new ArrayList<>(myRepositories.values());
+    }
+    finally {
+      REPO_LOCK.readLock().unlock();
+    }
+  }
+
+  @NotNull
+  private Map<VirtualFile, Repository> getExternalRepositories() {
+    REPO_LOCK.readLock().lock();
+    try {
+      return new HashMap<>(myExternalRepositories);
     }
     finally {
       REPO_LOCK.readLock().unlock();
