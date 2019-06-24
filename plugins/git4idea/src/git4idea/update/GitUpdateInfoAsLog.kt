@@ -108,12 +108,16 @@ class GitUpdateInfoAsLog(private val project: Project,
         })
         val logUiFactory = MyLogUiFactory(logManager, rangeFilter, updatedFilesCount, updatedCommitsCount)
         val logUi = logManager.createLogUi(logUiFactory, true)
-        val panel = VcsLogPanel(logManager, logUi)
-        val contentManager = ProjectLevelVcsManagerEx.getInstanceEx(project).contentManager!!
-        ContentUtilEx.addTabbedContent(contentManager, panel, "Update Info", DateFormatUtil.formatDateTime(System.currentTimeMillis()),
-                                       false, panel.getUi())
+        createTab(logManager, logUi, select = false)
       }
     }
+  }
+
+  private fun createTab(logManager: VcsLogManager, logUi: VcsLogUiImpl, select: Boolean) {
+    val panel = VcsLogPanel(logManager, logUi)
+    val contentManager = ProjectLevelVcsManagerEx.getInstanceEx(project).contentManager!!
+    ContentUtilEx.addTabbedContent(contentManager, panel, "Update Info", DateFormatUtil.formatDateTime(System.currentTimeMillis()),
+                                   select, panel.getUi())
   }
 
   private inner class MyLogUiFactory(val logManager: VcsLogManager,
@@ -133,7 +137,7 @@ class GitUpdateInfoAsLog(private val project: Project,
       // null for initial filters means that filters will be loaded from properties: saved filters + the range filter which we've just set
       val logUi = VcsLogUiImpl(logId, logData, logManager.colorManager, properties, refresher, null)
 
-      val listener = MyVisiblePackChangeListener(logUi, updatedFilesCount, updateCommitsCount, isPathFilterSet())
+      val listener = MyVisiblePackChangeListener(logManager, logUi, updatedFilesCount, updateCommitsCount, isPathFilterSet())
       refresher.addVisiblePackChangeListener(listener)
       return logUi
     }
@@ -183,7 +187,8 @@ class GitUpdateInfoAsLog(private val project: Project,
   }
 
 
-  inner class MyVisiblePackChangeListener(private val logUi: VcsLogUiImpl,
+  inner class MyVisiblePackChangeListener(private val logManager: VcsLogManager,
+                                          private val logUi: VcsLogUiImpl,
                                           private val updatedFilesCount: Int,
                                           private val updatedCommitsCount: Int,
                                           private val thereArePresetFilters: Boolean) : VisiblePackChangeListener {
@@ -197,7 +202,12 @@ class GitUpdateInfoAsLog(private val project: Project,
 
           val filteredCommitsNumber = if (thereArePresetFilters) visibleCommitCount else null
           val notification = notificationProducer(updatedFilesCount, updatedCommitsCount, filteredCommitsNumber,
-                                                  Runnable { VcsLogContentUtil.selectLogUi(project, logUi) })
+                                                  Runnable {
+                                                    val found = VcsLogContentUtil.selectLogUi(project, logUi)
+                                                    if (!found) {
+                                                      createTab(logManager, logUi, select = true)
+                                                    }
+                                                  })
           VcsNotifier.getInstance(project).notify(notification)
 
           logUi.refresher.removeVisiblePackChangeListener(this)
