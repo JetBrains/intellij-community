@@ -3,7 +3,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diff.impl.DiffRequestProcessor;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.JBSplitter;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.SideBorder;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,7 +12,7 @@ import javax.swing.*;
 import static com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT;
 import static com.intellij.util.ui.JBUI.emptySize;
 
-public class PreviewDiffSplitterComponent extends JBSplitter {
+public class PreviewDiffSplitterComponent extends OnePixelSplitter {
   @NotNull private final JComponent myFirstComponent;
   @NotNull private final DiffPreviewUpdateProcessor myProcessor;
   private boolean myDetailsOn;
@@ -47,8 +47,7 @@ public class PreviewDiffSplitterComponent extends JBSplitter {
 
   private void updateVisibility() {
     setSecondComponent(myDetailsOn ? myProcessor.getComponent() : null);
-    myFirstComponent.setBorder(myDetailsOn ? IdeBorderFactory.createBorder(SideBorder.RIGHT|SideBorder.LEFT) :
-                                             IdeBorderFactory.createBorder(SideBorder.LEFT));
+    myFirstComponent.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
     JComponent secondComponent = getSecondComponent();
     if (secondComponent != null) {
       secondComponent.setMinimumSize(emptySize());
