@@ -19,7 +19,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsListener;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ObjectUtils;
 import org.editorconfig.language.messages.EditorConfigBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -151,6 +150,7 @@ public class EditorConfigPreviewFileEditor implements FileEditor, CodeStyleSetti
       final Language language = myPreviewFile.getLanguage();
       myEditor.getSettings().setRightMargin(settings.getRightMargin(language));
       myEditor.getSettings().setSoftMargins(settings.getSoftMargins(language));
+      myEditor.getSettings().setTabSize(settings.getTabSize(myPreviewFile.getFileType()));
     }
   }
 
