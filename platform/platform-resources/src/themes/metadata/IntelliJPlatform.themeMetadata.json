@@ -25,8 +25,7 @@
     },
     {
       "key": "CompletionPopup.matchForeground",
-      "description": "The string in the completion suggestions list that matches the entered string ",
-      "deprecated": true
+      "description": "The string in the completion suggestions list that matches the entered string "
     },
     {
       "key": "CompletionPopup.matchSelectionForeground",
