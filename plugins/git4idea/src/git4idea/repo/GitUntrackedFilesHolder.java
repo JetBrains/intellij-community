@@ -73,13 +73,6 @@ import static com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase.getAf
  *   Also, if .git/index changes, then a full refresh is initiated. The reason is not only untracked files tracking, but also handling
  *   committing outside IDEA, etc.
  * </p>
- * <p>
- *   Synchronization policy used in this class:<br/>
- *   myDefinitelyUntrackedFiles is accessed under the myDefinitelyUntrackedFiles lock.<br/>
- *   myPossiblyUntrackedFiles and myReady is accessed under the LOCK lock.<br/>
- *   This is done so, because the latter two variables are accessed from the AWT in after() and we don't want to lock the AWT long,
- *   while myDefinitelyUntrackedFiles is modified along with native request to Git.
- * </p>
  */
 public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListener {
   private static final Logger LOG = Logger.getInstance(GitUntrackedFilesHolder.class);
