@@ -41,7 +41,7 @@ internal class GitVcsPanel(private val project: Project,
 
   private val pathSelector: VcsExecutablePathSelector = createPathSelector()
 
-  private fun createPathSelector() = VcsExecutablePathSelector { path ->
+  private fun createPathSelector() = VcsExecutablePathSelector("Git") { path ->
     val pathToGit = path ?: executableManager.detectedExecutable
     object : Task.Modal(project, GitBundle.getString("git.executable.version.progress.title"), true) {
       private lateinit var gitVersion: GitVersion
