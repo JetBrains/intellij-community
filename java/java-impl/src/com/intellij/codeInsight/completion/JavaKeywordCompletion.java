@@ -775,9 +775,12 @@ public class JavaKeywordCompletion {
       addKeyword(br);
     }
     else if (psiElement().inside(PsiSwitchExpression.class).accepts(myPosition)) {
-      addKeyword(TailTypeDecorator.withTail(PsiUtil.getLanguageLevel(myPosition) == LanguageLevel.JDK_12_PREVIEW 
-                                            ? createKeyword(PsiKeyword.BREAK) 
-                                            : createKeyword(PsiKeyword.YIELD), TailType.INSERT_SPACE));
+      if (PsiUtil.getLanguageLevel(myPosition) == LanguageLevel.JDK_12_PREVIEW) {
+        addKeyword(TailTypeDecorator.withTail(createKeyword(PsiKeyword.BREAK), TailType.INSERT_SPACE));
+      }
+      else if (PsiUtil.getLanguageLevel(myPosition).isAtLeast(LanguageLevel.JDK_13_PREVIEW)) {
+        addKeyword(TailTypeDecorator.withTail(createKeyword(PsiKeyword.YIELD), TailType.INSERT_SPACE));
+      }
     }
 
     for (PsiLabeledStatement labeled : psiApi().parents(myPosition).takeWhile(notInstanceOf(PsiMember.class)).filter(PsiLabeledStatement.class)) {
