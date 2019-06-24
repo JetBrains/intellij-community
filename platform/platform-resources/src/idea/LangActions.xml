@@ -1180,11 +1180,11 @@
     <group id="ServiceViewTreeToolbar">
       <group id="ServiceView.GroupBy" popup="true" text="Group By" icon="AllIcons.Actions.GroupBy"
              class="com.intellij.ide.actions.NonEmptyActionGroup">
-        <action id="ServiceView.GroupByType" class="com.intellij.execution.services.GroupByTypeAction"
-                text="Type"/>
+        <action id="ServiceView.GroupByContributor" class="com.intellij.execution.services.GroupByContributorAction"
+                text="Service Type"/>
+        <action id="ServiceView.GroupByServiceGroups" class="com.intellij.execution.services.GroupByServiceGroupsAction"
+                text="Service Groups"/>
       </group>
-      <action id="ServiceView.FlattenServices" class="com.intellij.execution.services.FlattenServicesAction"
-              text="Flatten Services" icon="AllIcons.Actions.ListFiles"/>
       <separator/>
       <action id="ServiceView.ShowInNewTab" class="com.intellij.execution.services.ShowInNewTabAction"
               text="Show in New Tab" icon="AllIcons.Actions.OpenNewTab"/>
@@ -1199,8 +1199,6 @@
     </group>
     <group id="ServiceViewNodePopup">
       <group class="com.intellij.execution.services.ServiceViewActionProvider$ItemPopupActionGroup" id="ServiceViewItemPopupGroup"/>
-      <separator/>
-      <reference id="ServiceView.FlattenServices"/>
       <separator/>
       <reference id="ServiceView.ShowInNewTab"/>
       <reference id="ServiceView.SplitToNewTabs"/>

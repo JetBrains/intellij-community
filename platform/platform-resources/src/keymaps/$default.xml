@@ -1176,6 +1176,10 @@
     <keyboard-shortcut first-keystroke="control alt O"/>
   </action>
 
+  <action id="ServiceView.GroupByServiceGroups">
+    <keyboard-shortcut first-keystroke="control alt P"/>
+  </action>
+
   <action id="ViewInplaceComments">
     <keyboard-shortcut first-keystroke="alt shift BACK_SLASH"/>
   </action>

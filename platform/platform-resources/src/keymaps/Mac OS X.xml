@@ -470,4 +470,8 @@
   <action id="TodoViewGroupByFlattenPackage">
     <keyboard-shortcut first-keystroke="control O"/>
   </action>
+
+  <action id="ServiceView.GroupByServiceGroups">
+    <keyboard-shortcut first-keystroke="control P"/>
+  </action>
 </keymap>
