@@ -251,7 +251,12 @@ class BundledJreManager {
 
   private String getExpectedJreBuild(String osName) {
     loadDependencyVersions()
-    return dependencyVersions.get("jreBuild_${osName}" as String, buildContext.options.bundledJreBuild ?: dependencyVersions.get("jdkBuild", ""))
+    if (buildContext.bundledJreModular) {
+      dependencyVersions.get('secondJreBuild')
+    }
+    else {
+      dependencyVersions.get("jreBuild_${osName}" as String, buildContext.options.bundledJreBuild ?: dependencyVersions.get("jdkBuild", ""))
+    }
   }
 
   private enum JreVendor {
