@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.enhancedSwitch;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
@@ -6,7 +6,6 @@ import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -35,10 +34,13 @@ public class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspecti
           PsiStatement bodyStatement = getSingleStatement(codeBlock);
 
           if (bodyStatement instanceof PsiBreakStatement) {
-            PsiBreakStatement breakStatement = (PsiBreakStatement)bodyStatement;
-            if (breakStatement.getValueExpression() != null) {
-              PsiKeyword breakKeyword = ObjectUtils.tryCast(breakStatement.getFirstChild(), PsiKeyword.class);
-              registerProblem(breakKeyword);
+            if (((PsiBreakStatement)bodyStatement).getValueExpression() != null) {
+              registerProblem(bodyStatement.getFirstChild());
+            }
+          }
+          else if (bodyStatement instanceof PsiYieldStatement) {
+            if (((PsiYieldStatement)bodyStatement).getExpression() != null) {
+              registerProblem(bodyStatement.getFirstChild());
             }
           }
           else if (bodyStatement instanceof PsiThrowStatement || bodyStatement instanceof PsiExpressionStatement) {
@@ -84,6 +86,9 @@ public class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspecti
         if (bodyStatement instanceof PsiBreakStatement) {
           unwrapBreakValue(body, (PsiBreakStatement)bodyStatement);
         }
+        else if (bodyStatement instanceof PsiYieldStatement) {
+          unwrapYieldValue(body, (PsiYieldStatement)bodyStatement);
+        }
         else if (bodyStatement instanceof PsiThrowStatement || bodyStatement instanceof PsiExpressionStatement) {
           unwrap(body, bodyStatement);
         }
@@ -98,7 +103,21 @@ public class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspecti
         statement.getExpression().replace(valueExpression);
 
         CommentTracker tracker = new CommentTracker();
-        // replaceAndRestoreComments() will work with a copy of the expression so it won't see the original comments
+        // replaceAndRestoreComments() will work with a copy of the expression, so it won't see the original comments
+        tracker.markUnchanged(valueExpression);
+        tracker.replaceAndRestoreComments(body, statement);
+      }
+    }
+
+    private static void unwrapYieldValue(PsiStatement body, PsiYieldStatement breakStatement) {
+      PsiExpression valueExpression = breakStatement.getExpression();
+      if (valueExpression != null) {
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(body.getProject());
+        PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText("x=1;", body);
+        statement.getExpression().replace(valueExpression);
+
+        CommentTracker tracker = new CommentTracker();
+        // replaceAndRestoreComments() will work with a copy of the expression, so it won't see the original comments
         tracker.markUnchanged(valueExpression);
         tracker.replaceAndRestoreComments(body, statement);
       }

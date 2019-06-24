@@ -294,6 +294,14 @@ public class ExpectedTypeUtils {
     }
 
     @Override
+    public void visitYieldStatement(PsiYieldStatement statement) {
+      PsiSwitchExpression expression = statement.findEnclosingExpression();
+      if (expression != null) {
+        expectedType = expression.getType();
+      }
+    }
+
+    @Override
     public void visitTypeCastExpression(PsiTypeCastExpression expression) {
       if (reportCasts) {
         expectedType = expression.getType();
