@@ -5,8 +5,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ColoredItem;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.BackgroundSupplier;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.tree.TreeNodeBackgroundSupplier;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.MouseEventAdapter;
@@ -71,9 +71,9 @@ public final class DefaultTreeUI extends BasicTreeUI {
       Color background = ((ColoredItem)node).getColor();
       if (background != null) return background;
     }
-    if (node instanceof TreeNodeBackgroundSupplier) {
-      TreeNodeBackgroundSupplier supplier = (TreeNodeBackgroundSupplier)node;
-      Color background = supplier.getNodeBackground(row);
+    if (node instanceof BackgroundSupplier) {
+      BackgroundSupplier supplier = (BackgroundSupplier)node;
+      Color background = supplier.getElementBackground(row);
       if (background != null) return background;
     }
     if (tree instanceof TreePathBackgroundSupplier) {
