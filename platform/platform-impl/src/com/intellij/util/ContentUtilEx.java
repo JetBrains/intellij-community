@@ -3,10 +3,7 @@ package com.intellij.util;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
@@ -38,10 +35,23 @@ public class ContentUtilEx extends ContentsUtil {
                                       @NotNull String tabName,
                                       boolean select,
                                       @Nullable Disposable childDisposable) {
+    addTabbedContent(manager, contentComponent, groupPrefix, tabName, select, childDisposable, null);
+  }
+
+  public static void addTabbedContent(@NotNull ContentManager manager,
+                                      @NotNull JComponent contentComponent,
+                                      @NotNull String groupPrefix,
+                                      @NotNull String tabName,
+                                      boolean select,
+                                      @Nullable Disposable childDisposable,
+                                      @Nullable Computable<? extends JComponent> preferredFocusedComponent) {
     if (PropertiesComponent.getInstance().getBoolean(TabbedContent.SPLIT_PROPERTY_PREFIX + groupPrefix)) {
       final Content content = ContentFactory.SERVICE.getInstance().createContent(contentComponent, getFullName(groupPrefix, tabName), true);
       content.putUserData(Content.TABBED_CONTENT_KEY, Boolean.TRUE);
       content.putUserData(Content.TAB_GROUP_NAME_KEY, groupPrefix);
+      if (preferredFocusedComponent != null) {
+        content.setPreferredFocusedComponent(preferredFocusedComponent);
+      }
 
       for (Content c : manager.getContents()) {
         if (c.getComponent() == contentComponent) {

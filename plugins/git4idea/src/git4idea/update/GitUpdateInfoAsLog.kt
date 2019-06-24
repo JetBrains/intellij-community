@@ -8,6 +8,7 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
@@ -117,7 +118,7 @@ class GitUpdateInfoAsLog(private val project: Project,
     val panel = VcsLogPanel(logManager, logUi)
     val contentManager = ProjectLevelVcsManagerEx.getInstanceEx(project).contentManager!!
     ContentUtilEx.addTabbedContent(contentManager, panel, "Update Info", DateFormatUtil.formatDateTime(System.currentTimeMillis()),
-                                   select, panel.getUi())
+                                   select, panel.getUi(), Computable { logUi.table })
   }
 
   private inner class MyLogUiFactory(val logManager: VcsLogManager,
