@@ -118,8 +118,8 @@ public class SimpleDiffChange {
   }
 
   protected void doInstallActionHighlighters() {
-    if (myIsExcluded) return;
-    
+    if (myIsSkipped) return;
+
     myOperations.add(new AcceptGutterOperation(Side.LEFT));
     myOperations.add(new AcceptGutterOperation(Side.RIGHT));
   }
