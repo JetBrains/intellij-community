@@ -521,7 +521,13 @@ public class JBUI {
       public static Color underlinedTabForeground() {
         return JBColor.namedColor("EditorTabs.underlinedTabForeground", DefaultTabs.underlinedTabForeground());
       }
+    }
 
+    public static class StatusBar {
+      @NotNull
+      public static Color hoverBackground() {
+        return JBColor.namedColor("StatusBar.hoverBackground", ActionButton.hoverBackground());
+      }
     }
 
     public static class ToolWindow {

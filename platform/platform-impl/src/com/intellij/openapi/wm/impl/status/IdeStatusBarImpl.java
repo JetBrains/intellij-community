@@ -515,7 +515,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
       myHoveredComponent.setBackground(null);
     }
     if (component != null && component.isEnabled()) {
-      component.setBackground(JBUI.CurrentTheme.ActionButton.hoverBackground());
+      component.setBackground(JBUI.CurrentTheme.StatusBar.hoverBackground());
     }
     myHoveredComponent = component;
   }
