@@ -104,6 +104,22 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
                               final boolean alignToRight,
                               @NotNull final TooltipGroup group,
                               @NotNull final HintHint hintHint) {
+    LightweightHint hint = createHint(editor, p, alignToRight, group, hintHint, true);
+    if (hint != null) {
+      HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, p, HintManager.HIDE_BY_ANY_KEY |
+                                                                        HintManager.HIDE_BY_TEXT_CHANGE |
+                                                                        HintManager.HIDE_BY_OTHER_HINT |
+                                                                        HintManager.HIDE_BY_SCROLLING, 0, false, hintHint);
+    }
+    return hint;
+  }
+
+  public LightweightHint createHint(@NotNull final Editor editor,
+                                    @NotNull final Point p,
+                                    final boolean alignToRight,
+                                    @NotNull final TooltipGroup group,
+                                    @NotNull final HintHint hintHint,
+                                    boolean highlightActions) {
     if (myText == null) return null;
 
     //setup text
@@ -112,7 +128,6 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
 
     final boolean expanded = myCurrentWidth > 0 && !dressedText.equals(tooltipPreText);
 
-    final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
     final JComponent contentComponent = editor.getContentComponent();
 
     final JComponent editorComponent = editor.getComponent();
@@ -226,7 +241,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       }
     });
 
-    fillPanel(editor, grid, hint, hintHint, actions, reloader);
+    fillPanel(editor, grid, hint, hintHint, actions, reloader, highlightActions);
 
 
     grid.addMouseListener(new MouseAdapter() {
@@ -267,10 +282,6 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       }
     });
 
-    hintManager.showEditorHint(hint, editor, p, HintManager.HIDE_BY_ANY_KEY |
-                                                HintManager.HIDE_BY_TEXT_CHANGE |
-                                                HintManager.HIDE_BY_OTHER_HINT |
-                                                HintManager.HIDE_BY_SCROLLING, 0, false, hintHint);
     return hint;
   }
 
@@ -304,7 +315,8 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
                            @NotNull LightweightHint hint,
                            @NotNull HintHint hintHint,
                            @NotNull ArrayList<AnAction> actions,
-                           @NotNull TooltipReloader expandCallback) {
+                           @NotNull TooltipReloader expandCallback,
+                           boolean highlightActions) {
     hintHint.setComponentBorder(JBUI.Borders.empty());
     hintHint.setBorderInsets(JBUI.insets(0));
   }

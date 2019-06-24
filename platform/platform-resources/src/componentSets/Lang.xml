@@ -22,6 +22,9 @@
       <implementation-class>com.intellij.codeInsight.preview.ImageOrColorPreviewManager</implementation-class>
       <headless-implementation-class/>
     </component>
+    <component>
+      <implementation-class>com.intellij.openapi.editor.EditorMouseHoverPopupManager</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
