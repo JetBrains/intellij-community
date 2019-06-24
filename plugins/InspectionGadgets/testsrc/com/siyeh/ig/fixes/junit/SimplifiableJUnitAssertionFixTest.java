@@ -72,7 +72,9 @@ public class SimplifiableJUnitAssertionFixTest extends IGQuickFixesTestCase {
     myFixture.addClass("package org.junit;" +
                        "public class Assert {" +
                        "    public static void assertTrue(boolean condition) {}" +
+                       "    public static void assertTrue(String message, boolean condition) {}" +
                        "    public static void assertFalse(boolean condition) {}" +
+                       "    public static void assertFalse(String message, boolean condition) {}" +
                        "    public static void assertEquals(boolean expected, boolean actual) {}" +
                        "    public static void assertNotEquals(long expected, long actual) {}" +
                        "    public static void assertArrayEquals(int[] expected, int[] actual) {}" +

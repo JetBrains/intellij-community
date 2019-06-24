@@ -5,6 +5,6 @@ class MyTest {
 
   @Test
   public void testObjectsEquals() {
-      assertFalse(1 == 2);
+      assertFalse("message", 1 == 2);
   }
 }

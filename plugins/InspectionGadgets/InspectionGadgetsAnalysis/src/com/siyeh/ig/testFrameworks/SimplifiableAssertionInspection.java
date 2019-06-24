@@ -177,7 +177,7 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
           replaceAssertLiteralWithAssertEquals(callExpression, position, assertTrueFalseHint.getMessage(), assertTrueFalseHint.getArgIndex(), "assertArrayEquals");
         }
         else if (BoolUtils.isNegation(position)) {
-          replaceWithNegatedBooleanAssertion(callExpression, (PsiPrefixExpression) position, assertTrue ? "assertFalse" : "assertTrue");
+          replaceWithNegatedBooleanAssertion(callExpression, (PsiPrefixExpression) position, assertTrue ? "assertFalse" : "assertTrue", assertTrueFalseHint.getMessage(), assertTrueFalseHint.getArgIndex());
         }
       }
     }
@@ -318,14 +318,17 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
              (PsiType.DOUBLE.equals(rhsType) && PsiType.FLOAT.equals(rhsType));
     }
 
-    private void replaceWithNegatedBooleanAssertion(PsiMethodCallExpression callExpression, PsiPrefixExpression expression, String newMethodName) {
+    private void replaceWithNegatedBooleanAssertion(PsiMethodCallExpression callExpression,
+                                                    PsiPrefixExpression expression,
+                                                    String newMethodName,
+                                                    PsiExpression message, 
+                                                    int positionIndex) {
       PsiExpression operand = PsiUtil.skipParenthesizedExprDown(expression.getOperand());
       if (operand == null) {
         return;
       }
       StringBuilder builder = new StringBuilder();
-      addStaticImportOrQualifier(newMethodName, callExpression, builder);
-      builder.append(newMethodName).append("(").append(operand.getText()).append(")");
+      compoundMethodCall(callExpression, newMethodName, message, positionIndex, operand.getText(), builder);
       PsiReplacementUtil.replaceExpressionAndShorten(callExpression, builder.toString());
     }
 
