@@ -17,7 +17,6 @@ class JavaSwitchExpressionsHighlightingTest : LightJavaCodeInsightFixtureTestCas
   fun testEnhancedSwitchDefinitelyAssigned() = doTest()
   fun testEnhancedSwitchUnreachable() = doTest()
   fun testSwitchExpressionHasResult() = doTest()
-
   fun testYieldStatements() = doTest()
 
   private fun doTest() {
