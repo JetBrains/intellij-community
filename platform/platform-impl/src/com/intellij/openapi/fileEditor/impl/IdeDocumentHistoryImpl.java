@@ -255,7 +255,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   }
 
   @Override
-  public void includeCurrentCommandHasMoves() {
+  public void setCurrentCommandHasMoves() {
     myCurrentCommandHasMoves = true;
   }
 
