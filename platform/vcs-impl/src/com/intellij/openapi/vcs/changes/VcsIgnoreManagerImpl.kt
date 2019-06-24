@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.isDirectoryBased
 import com.intellij.project.stateStore
 import com.intellij.util.PathUtil
-import com.intellij.vcsUtil.VcsImplUtil
 import com.intellij.vcsUtil.VcsImplUtil.findIgnoredFileContentProvider
 import com.intellij.vcsUtil.VcsUtil
 import java.io.IOException
@@ -37,7 +36,7 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
   }
 
   fun findIgnoreFileType(vcs: AbstractVcs<*>): IgnoreFileType? {
-    val ignoredFileContentProvider = VcsImplUtil.getIgnoredFileContentProvider(project, vcs) ?: return null
+    val ignoredFileContentProvider = findIgnoredFileContentProvider(project, vcs) ?: return null
     return FileTypeManager.getInstance().getFileTypeByFileName(ignoredFileContentProvider.fileName) as? IgnoreFileType
   }
 

@@ -19,7 +19,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.*
 import com.intellij.project.getProjectStoreDirectory
-import com.intellij.vcsUtil.VcsImplUtil.getIgnoredFileContentProvider
+import com.intellij.vcsUtil.VcsImplUtil.findIgnoredFileContentProvider
 import com.intellij.vcsUtil.VcsUtil
 import com.intellij.vfs.AsyncVfsEventsListener
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
@@ -98,7 +98,7 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs<*>
 
     for (potentiallyIgnoredFile in potentiallyIgnoredFiles) {
       VcsUtil.getVcsFor(project, potentiallyIgnoredFile)?.let { vcs ->
-        getIgnoredFileContentProvider(project, vcs)?.let { ignoredContentProvider ->
+        findIgnoredFileContentProvider(project, vcs)?.let { ignoredContentProvider ->
           findOrCreateIgnoreFileByFile(project, ignoredContentProvider, potentiallyIgnoredFile)?.let { ignoreFile ->
             for ((ignoredFileProvider, descriptors) in providerToDescriptorMap) {
               for (ignoredFileDescriptor in descriptors.filter { it.matchesFile(potentiallyIgnoredFile) }) {
@@ -176,7 +176,7 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs<*>
   override fun notificationTitle() = ""
   override fun notificationMessage(): String = VcsBundle.message("ignored.file.manage.with.files.message",
                                                                  ApplicationNamesInfo.getInstance().fullProductName,
-                                                                 getIgnoredFileContentProvider(project, vcs)?.fileName ?: "ignore file")
+                                                                 findIgnoredFileContentProvider(project, vcs)?.fileName ?: "ignore file")
 
   private fun isUnder(parents: Collection<VirtualFile>, child: VirtualFile) = generateSequence(child) { it.parent }.any { it in parents }
 

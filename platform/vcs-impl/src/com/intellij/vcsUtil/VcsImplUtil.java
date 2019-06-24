@@ -99,15 +99,6 @@ public class VcsImplUtil {
     ignoredFileGenerator.generateFile(ignoreFileRoot, vcs, notify);
   }
 
-  @Nullable
-  public static IgnoredFileContentProvider getIgnoredFileContentProvider(@NotNull Project project,
-                                                                          @NotNull AbstractVcs vcs) {
-    return IgnoredFileContentProvider.IGNORE_FILE_CONTENT_PROVIDER.extensions(project)
-      .filter((provider) -> provider.getSupportedVcs().equals(vcs.getKeyInstanceMethod()))
-      .findFirst()
-      .orElse(null);
-  }
-
   private static boolean isFileSharedInVcs(@NotNull Project project, @NotNull ChangeListManagerEx changeListManager, @NotNull String filePath) {
     VirtualFile file = LocalFileSystem.getInstance().findFileByPath(filePath);
     if (file == null) return false;
