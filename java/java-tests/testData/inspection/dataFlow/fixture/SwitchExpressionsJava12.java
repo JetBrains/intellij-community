@@ -10,13 +10,13 @@ public class SwitchExpressionsJava12 {
   }
 
   enum X {A, B, C};
-  
+
   static void testEnum(X x) {
     int i = switch(<error descr="'switch' expression does not cover all possible input values">x</error>) {
       case A -> 1;
       case B -> 2;
     };
-    
+
     if (i == 0) {} // default and case C is missing: we assume that any other result is also possible
 
     int i1 = switch(x) {
@@ -64,7 +64,7 @@ public class SwitchExpressionsJava12 {
         case 2 -> {
           if (<warning descr="Condition 'i == 1' is always 'false'">i == 1</warning>) {}
           throw new IllegalArgumentException();
-        }  
+        }
         default -> 1;
       };
       if (x != 1) {
@@ -78,14 +78,14 @@ public class SwitchExpressionsJava12 {
     int j = switch(i) {
       case 1 -> {
         System.out.println("Hello");
-        break 10;
+        yield 10;
       }
       case 2 -> {
         i = i+1;
-        break 20;
+        yield 20;
       }
       case 3 -> {
-        break 33-i;
+        yield 33-i;
       }
       default -> 0;
     };
@@ -103,7 +103,7 @@ public class SwitchExpressionsJava12 {
         case 2 -> 3;
         case 3 -> {
           System.out.println("hello");
-          break 1;
+          yield 1;
         }
         default -> 4;
       };
@@ -122,10 +122,10 @@ public class SwitchExpressionsJava12 {
       case 3 -> {
         try {
           System.out.println("hello");
-          break 1; // never happens
+          yield 1; // never happens
         }
         finally {
-          break 2;
+          yield 2;
         }
       }
       default -> 4;
@@ -146,14 +146,14 @@ public class SwitchExpressionsJava12 {
           switch (y) {
             default -> get(x);
           }
-          break 5;
+          yield 5;
         }
         default -> 10;
       };
     }).getAsInt();
     if (i != 10) {}
   }
-  
+
   void testSwitchWithCatch(int x) {
     int i = switch(x) {
       case 1, 2:
@@ -161,34 +161,34 @@ public class SwitchExpressionsJava12 {
           if (x == 1) throw new IllegalArgumentException();
         }
         catch (IllegalArgumentException ex) {
-          break 100;
+          yield 100;
         }
       case 3:
-        break 200;
+        yield 200;
       default:
-        break 300;
+        yield 300;
     };
     if (i == 100 && <warning descr="Condition 'x == 1' is always 'true' when reached">x == 1</warning>) {}
     if (i == 200 && (<warning descr="Condition 'x == 2 || x == 3' is always 'true' when reached">x == 2 || <warning descr="Condition 'x == 3' is always 'true' when reached">x == 3</warning></warning>)) {}
   }
 
   int i;
-  
+
   void testSwitchIncompleteBreak(X e) {
     int z;
     z = switch (e) {
       case A:
         i = 1;
-        break 2;
+        yield 2;
       case B:
         i = 2;
-        break 3;
+        yield 3;
       case C:
         i = 3;
-        <error descr="Missing break value">break;</error>
+        <error descr="Break outside of enclosing switch expression">break;</error>
       default: {
         i = 10;
-        break 10;/* todo one two */
+        yield 10;/* todo one two */
       }
     };
     System.out.println("i = " + i);

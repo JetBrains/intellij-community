@@ -21,7 +21,7 @@ class SwitchExpression {
         return switch (i) {
             default -> {
                 String <warning descr="Local variable 'trim' is redundant">trim</warning> = "foo".trim();
-                break trim;
+                yield trim;
             }
         };
     }

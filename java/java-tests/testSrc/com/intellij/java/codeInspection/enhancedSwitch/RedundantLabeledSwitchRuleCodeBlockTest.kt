@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInspection.enhancedSwitch
 
 import com.intellij.JavaTestUtil
@@ -10,14 +10,12 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
  * @author Pavel.Dolgov
  */
 class RedundantLabeledSwitchRuleCodeBlockTest  : LightJavaCodeInsightFixtureTestCase() {
-  val inspection = RedundantLabeledSwitchRuleCodeBlockInspection()
-
   override fun setUp() {
     super.setUp()
-    myFixture.enableInspections(inspection)
+    myFixture.enableInspections(RedundantLabeledSwitchRuleCodeBlockInspection())
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = LightJavaCodeInsightFixtureTestCase.JAVA_12
+  override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_13
 
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/redundantLabeledSwitchRuleCodeBlock"
 
