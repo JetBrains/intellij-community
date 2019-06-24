@@ -8,7 +8,10 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Computable;
@@ -17,11 +20,9 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.GuiUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -32,6 +33,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static com.intellij.vcs.log.util.PersistentUtil.LOG_CACHE;
 
@@ -48,6 +50,7 @@ public class VcsProjectLog implements Disposable {
   @NotNull private final LazyVcsLogManager myLogManager = new LazyVcsLogManager();
   @NotNull private final Disposable myMappingChangesDisposable = Disposer.newDisposable();
   @NotNull private final ExecutorService myExecutor;
+  private volatile boolean myDisposeStarted = false;
   private int myRecreatedLogCount = 0;
 
   public VcsProjectLog(@NotNull Project project,
@@ -59,11 +62,26 @@ public class VcsProjectLog implements Disposable {
     myTabsManager = new VcsLogTabsManager(project, messageBus, uiProperties, this);
 
     myExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Vcs Log Initialization/Dispose", 1);
-    Disposer.register(this, myMappingChangesDisposable);
+    myMessageBus.connect(this).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+      @Override
+      public void projectClosing(@NotNull Project project) {
+        myDisposeStarted = true;
+        Disposer.dispose(myMappingChangesDisposable);
+        disposeLog(false);
+        myExecutor.shutdown();
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+          try {
+            myExecutor.awaitTermination(5, TimeUnit.SECONDS);
+          }
+          catch (InterruptedException ignored) {
+          }
+        }, "Closing Vcs Log", false, project);
+      }
+    });
   }
 
   private void subscribeToMappingsChanges() {
-    myMessageBus.connect(myMappingChangesDisposable).subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this::recreateLog);
+    myMessageBus.connect(myMappingChangesDisposable).subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, () -> disposeLog(true));
   }
 
   @Nullable
@@ -94,7 +112,7 @@ public class VcsProjectLog implements Disposable {
   }
 
   @CalledInAny
-  private void recreateLog() {
+  private void disposeLog(boolean recreate) {
     myExecutor.execute(() -> {
       VcsLogManager logManager = invokeAndWait(() -> {
         VcsLogManager manager = myLogManager.dropValue();
@@ -106,7 +124,7 @@ public class VcsProjectLog implements Disposable {
       if (logManager != null) {
         Disposer.dispose(logManager);
       }
-      if (myProject.isDisposed()) return;
+      if (myProject.isDisposed() || !recreate) return;
       createLog(false);
     });
   }
@@ -129,7 +147,7 @@ public class VcsProjectLog implements Disposable {
       LOG.debug("Recreating VCS Log after storage corruption", t);
     }
 
-    recreateLog();
+    disposeLog(true);
   }
 
   @NotNull
@@ -140,6 +158,7 @@ public class VcsProjectLog implements Disposable {
   @Nullable
   @CalledInBackground
   private VcsLogManager createLog(boolean forceInit) {
+    if (myDisposeStarted) return null;
     Map<VirtualFile, VcsLogProvider> logProviders = getLogProviders();
     if (!logProviders.isEmpty()) {
       VcsLogManager logManager = myLogManager.getValue(logProviders);
@@ -182,11 +201,6 @@ public class VcsProjectLog implements Disposable {
 
   @Override
   public void dispose() {
-    VcsLogManager logManager = myLogManager.dropValue();
-    if (logManager != null) {
-      logManager.disposeUi();
-      myExecutor.submit(() -> Disposer.dispose(logManager));
-    }
   }
 
   private static <T> T invokeAndWait(@NotNull Computable<T> computable) {
