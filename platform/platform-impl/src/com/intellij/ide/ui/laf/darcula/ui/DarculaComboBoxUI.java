@@ -253,8 +253,9 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     else {
       Color bg = comboBox.getBackground();
       Object value = comboBox.getSelectedItem();
-      return value instanceof ColoredItem ? ((ColoredItem)value).getColor() :
-             !comboBox.isEnabled() || comboBox.isBackgroundSet() && !(bg instanceof UIResource) ? bg : NON_EDITABLE_BACKGROUND;
+      Color coloredItemColor = value instanceof ColoredItem ? ((ColoredItem)value).getColor(): null;
+      return ObjectUtils.notNull(coloredItemColor,
+              !comboBox.isEnabled() || comboBox.isBackgroundSet() && !(bg instanceof UIResource) ? bg : NON_EDITABLE_BACKGROUND);
     }
   }
 
@@ -274,11 +275,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     Component c = renderer.getListCellRendererComponent(listBox, value, -1, false, false);
 
     c.setFont(comboBox.getFont());
-    Color background0 = comboBox.getBackground();
-    Color background = comboBox.isBackgroundSet() && !(background0 instanceof UIResource) ? background0 :
-                       !comboBox.isEnabled() ? UIUtil.getPanelBackground() :
-                       ObjectUtils.notNull(value instanceof ColoredItem ? ((ColoredItem)value).getColor() : null, NON_EDITABLE_BACKGROUND);
-    c.setBackground(background);
+    c.setBackground(getBackgroundColor());
 
     if (hasFocus && !isPopupVisible(comboBox)) {
       c.setForeground(listBox.getForeground());
