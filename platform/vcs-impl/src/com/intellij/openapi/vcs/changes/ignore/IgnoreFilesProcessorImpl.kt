@@ -15,10 +15,12 @@ import com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.ASKED
 import com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.MANAGE_IGNORE_FILES_PROPERTY
 import com.intellij.openapi.vcs.changes.ignore.psi.util.addNewElementsToIgnoreBlock
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.*
 import com.intellij.project.getProjectStoreDirectory
+import com.intellij.project.stateStore
 import com.intellij.vcsUtil.VcsImplUtil.getIgnoredFileContentProvider
 import com.intellij.vcsUtil.VcsUtil
 import com.intellij.vfs.AsyncVfsEventsListener
@@ -54,11 +56,26 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs<*>
     val files = UNPROCESSED_FILES_LOCK.read { unprocessedFiles.toList() }
     if (files.isEmpty()) return
 
-    processFiles(files)
+    val restFiles = silentlyIgnoreFilesInsideConfigDir(files)
+    if (restFiles.isEmpty()) return
+
+    processFiles(restFiles)
 
     UNPROCESSED_FILES_LOCK.write {
       unprocessedFiles.clear()
     }
+  }
+
+  private fun silentlyIgnoreFilesInsideConfigDir(files: List<VirtualFile>): List<VirtualFile> {
+    val configDir = project.stateStore.projectConfigDir ?: return files
+    val configDirFile = LocalFileSystem.getInstance().findFileByPath(configDir) ?: return files
+    val filesInStoreDir = files.filter { VfsUtil.isAncestor(configDirFile, it, true) }
+
+    runInEdt {
+      writeIgnores(project, filesInStoreDir)
+    }
+
+    return files - filesInStoreDir
   }
 
   override fun filesChanged(events: List<VFileEvent>) {
