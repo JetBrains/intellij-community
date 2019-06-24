@@ -494,7 +494,9 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
   @Override
   public void updateDataModel() {
     ModuleBuilder builder = getSelectedBuilder();
-    myWizard.getSequence().addStepsForBuilder(builder, myContext, myModulesProvider);
+    if (builder != null) {
+      myWizard.getSequence().addStepsForBuilder(builder, myContext, myModulesProvider);
+    }
     ModuleWizardStep step = getCustomStep();
     if (step != null) {
       step.updateDataModel();
