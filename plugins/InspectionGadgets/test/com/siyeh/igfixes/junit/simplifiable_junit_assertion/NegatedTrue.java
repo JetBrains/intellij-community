@@ -4,6 +4,6 @@ class MyTest {
 
   @Test
   public void testObjectsEquals() {
-      <caret>assertTrue(!(1 == 2));
+      <caret>assertTrue("message", !(1 == 2));
   }
 }
