@@ -31,7 +31,7 @@ fun updateIgnoreBlock(project: Project,
                       ignoredGroupDescription: String,
                       vararg newEntries: IgnoredFileDescriptor): PsiFile? {
   val vcs = VcsUtil.getVcsFor(project, ignoreFile) ?: return null
-  val ignoredFileContentProvider = VcsImplUtil.findIgnoredFileContentProvider(project, vcs) ?: return null
+  val ignoredFileContentProvider = VcsImplUtil.findIgnoredFileContentProvider(vcs) ?: return null
   val ignoreFilePsi = ignoreFile.findIgnorePsi(project) ?: return null
   val psiFactory = PsiFileFactory.getInstance(project) as PsiFileFactoryImpl
   val psiParserFacade = PsiParserFacade.SERVICE.getInstance(project)
@@ -50,7 +50,7 @@ fun addNewElementsToIgnoreBlock(project: Project,
                                 ignoredGroupDescription: String,
                                 vararg newEntries: IgnoredFileDescriptor): PsiFile? {
   val vcs = VcsUtil.getVcsFor(project, ignoreFile) ?: return null
-  val ignoredFileContentProvider = VcsImplUtil.findIgnoredFileContentProvider(project, vcs) ?: return null
+  val ignoredFileContentProvider = VcsImplUtil.findIgnoredFileContentProvider(vcs) ?: return null
   val ignoreFilePsi = ignoreFile.findIgnorePsi(project) ?: return null
   val psiFactory = PsiFileFactory.getInstance(project) as PsiFileFactoryImpl
   val psiParserFacade = PsiParserFacade.SERVICE.getInstance(project)
@@ -68,7 +68,7 @@ fun addNewElementsToIgnoreBlock(project: Project,
 
 fun addNewElements(project: Project, ignoreFile: VirtualFile, vararg newEntries: IgnoredFileDescriptor): PsiFile? {
   val vcs = VcsUtil.getVcsFor(project, ignoreFile) ?: return null
-  val ignoredFileContentProvider = VcsImplUtil.findIgnoredFileContentProvider(project, vcs) ?: return null
+  val ignoredFileContentProvider = VcsImplUtil.findIgnoredFileContentProvider(vcs) ?: return null
   val ignoreFilePsi = ignoreFile.findIgnorePsi(project) ?: return null
   val psiFactory = PsiFileFactory.getInstance(project) as PsiFileFactoryImpl
   invokeAndWaitIfNeeded {

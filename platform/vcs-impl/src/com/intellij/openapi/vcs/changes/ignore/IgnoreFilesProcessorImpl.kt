@@ -98,7 +98,7 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs<*>
 
     for (potentiallyIgnoredFile in potentiallyIgnoredFiles) {
       VcsUtil.getVcsFor(project, potentiallyIgnoredFile)?.let { vcs ->
-        findIgnoredFileContentProvider(project, vcs)?.let { ignoredContentProvider ->
+        findIgnoredFileContentProvider(vcs)?.let { ignoredContentProvider ->
           findOrCreateIgnoreFileByFile(project, ignoredContentProvider, potentiallyIgnoredFile)?.let { ignoreFile ->
             for ((ignoredFileProvider, descriptors) in providerToDescriptorMap) {
               for (ignoredFileDescriptor in descriptors.filter { it.matchesFile(potentiallyIgnoredFile) }) {
@@ -176,7 +176,7 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs<*>
   override fun notificationTitle() = ""
   override fun notificationMessage(): String = VcsBundle.message("ignored.file.manage.with.files.message",
                                                                  ApplicationNamesInfo.getInstance().fullProductName,
-                                                                 findIgnoredFileContentProvider(project, vcs)?.fileName ?: "ignore file")
+                                                                 findIgnoredFileContentProvider(vcs)?.fileName ?: "ignore file")
 
   private fun isUnder(parents: Collection<VirtualFile>, child: VirtualFile) = generateSequence(child) { it.parent }.any { it in parents }
 

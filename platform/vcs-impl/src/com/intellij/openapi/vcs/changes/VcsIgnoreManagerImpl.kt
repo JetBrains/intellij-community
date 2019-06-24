@@ -36,7 +36,7 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
   }
 
   fun findIgnoreFileType(vcs: AbstractVcs<*>): IgnoreFileType? {
-    val ignoredFileContentProvider = findIgnoredFileContentProvider(project, vcs) ?: return null
+    val ignoredFileContentProvider = findIgnoredFileContentProvider(vcs) ?: return null
     return FileTypeManager.getInstance().getFileTypeByFileName(ignoredFileContentProvider.fileName) as? IgnoreFileType
   }
 
@@ -93,7 +93,7 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
       return
     }
 
-    val ignoreContentProvider = findIgnoredFileContentProvider(project, vcs)
+    val ignoreContentProvider = findIgnoredFileContentProvider(vcs)
     if (ignoreContentProvider == null) {
       LOG.debug("Cannot get ignore content provider for vcs " + vcs.name)
       return

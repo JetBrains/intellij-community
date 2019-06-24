@@ -71,7 +71,7 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
       return;
     }
 
-    IgnoredFileContentProvider ignoredFileContentProvider = VcsImplUtil.findIgnoredFileContentProvider(myProject, vcs);
+    IgnoredFileContentProvider ignoredFileContentProvider = VcsImplUtil.findIgnoredFileContentProvider(vcs);
     if (ignoredFileContentProvider == null) {
       LOG.debug("Cannot find content provider for vcs " + vcs.getName());
       return;
