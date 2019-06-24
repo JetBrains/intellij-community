@@ -1103,7 +1103,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
 
   @Nullable
-  private XSourcePosition getCurrentFrameSourcePosition() {
+  protected XSourcePosition getCurrentFrameSourcePosition() {
     try {
       PyStackFrame frame = currentFrame();
 
