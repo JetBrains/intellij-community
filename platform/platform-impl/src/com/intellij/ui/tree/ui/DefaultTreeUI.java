@@ -24,7 +24,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.beans.PropertyChangeListener;
 import java.lang.reflect.Method;
 import java.util.Collection;
 
@@ -39,16 +38,6 @@ public final class DefaultTreeUI extends BasicTreeUI {
   public static final Key<Boolean> SHRINK_LONG_RENDERER = Key.create("resize renderer component if it exceed a visible area");
   private static final Logger LOG = Logger.getInstance(DefaultTreeUI.class);
   private static final Collection<Class<?>> SUSPICIOUS = createWeakSet();
-
-  private static void logStackTrace(@NotNull String message) {
-    if (LOG.isDebugEnabled()) LOG.warn(new IllegalStateException(message));
-  }
-
-  private static boolean isEventDispatchThread() {
-    if (EventQueue.isDispatchThread()) return true;
-    logStackTrace("unexpected thread");
-    return false;
-  }
 
   @NotNull
   private static Control.Painter getPainter(@NotNull JTree tree) {
@@ -123,6 +112,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
   // non static
 
   private final Control control = new DefaultControl();
+  private final DispatchThreadValidator validator = new DispatchThreadValidator();
 
   @Nullable
   private JTree getTree() {
@@ -153,9 +143,9 @@ public final class DefaultTreeUI extends BasicTreeUI {
   }
 
   private boolean isValid(@Nullable JTree tree) {
-    if (!isEventDispatchThread()) return false;
+    if (!validator.isValidThread()) return false;
     if (tree != null && tree == getTree()) return true;
-    logStackTrace(tree != null ? "unexpected tree" : "undefined tree");
+    LOG.warn(new IllegalStateException(tree != null ? "unexpected tree" : "undefined tree"));
     return false;
   }
 
@@ -369,13 +359,6 @@ public final class DefaultTreeUI extends BasicTreeUI {
         return event;
       }
     };
-  }
-
-  @Override
-  protected PropertyChangeListener createPropertyChangeListener() {
-    // TODO: allow to change tree properties during instantiation
-    PropertyChangeListener listener = super.createPropertyChangeListener();
-    return event -> UIUtil.invokeLaterIfNeeded(() -> listener.propertyChange(event));
   }
 
   // TreeUI
