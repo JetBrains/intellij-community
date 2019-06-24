@@ -775,8 +775,9 @@ public class JavaKeywordCompletion {
       addKeyword(br);
     }
     else if (psiElement().inside(PsiSwitchExpression.class).accepts(myPosition)) {
-      addKeyword(TailTypeDecorator.withTail(br, TailType.INSERT_SPACE));
-      addKeyword(TailTypeDecorator.withTail(createKeyword(PsiKeyword.YIELD), TailType.INSERT_SPACE));
+      addKeyword(TailTypeDecorator.withTail(PsiUtil.getLanguageLevel(myPosition) == LanguageLevel.JDK_12_PREVIEW 
+                                            ? createKeyword(PsiKeyword.BREAK) 
+                                            : createKeyword(PsiKeyword.YIELD), TailType.INSERT_SPACE));
     }
 
     for (PsiLabeledStatement labeled : psiApi().parents(myPosition).takeWhile(notInstanceOf(PsiMember.class)).filter(PsiLabeledStatement.class)) {

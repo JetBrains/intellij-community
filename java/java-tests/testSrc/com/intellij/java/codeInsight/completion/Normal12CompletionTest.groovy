@@ -12,7 +12,7 @@ class Normal12CompletionTest extends NormalCompletionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_12
+    return JAVA_13
   }
 
   void testDefaultInRuleSwitch() throws Throwable { doTest() }
