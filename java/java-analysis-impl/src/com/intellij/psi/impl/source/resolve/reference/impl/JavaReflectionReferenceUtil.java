@@ -3,7 +3,6 @@ package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -373,11 +372,6 @@ public class JavaReflectionReferenceUtil {
   static String getMemberType(@Nullable PsiElement element) {
     final PsiMethodCallExpression methodCall = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
     return methodCall != null ? methodCall.getMethodExpression().getReferenceName() : null;
-  }
-
-  @NotNull
-  static LookupElement lookupField(@NotNull PsiField field) {
-    return JavaLookupElementBuilder.forField(field);
   }
 
   @Nullable
