@@ -14,46 +14,28 @@
  * limitations under the License.
  */
 
-package com.intellij.openapi.vcs.changes.ui;
+package com.intellij.openapi.vcs.changes.ui
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.changes.ChangeListOwner;
-import com.intellij.openapi.vcs.changes.IgnoredViewDialog;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.ChangeListOwner
+import com.intellij.openapi.vcs.changes.IgnoredViewDialog
+import com.intellij.openapi.vfs.VirtualFile
 
-import java.util.List;
+class ChangesBrowserIgnoredFilesNode(project: Project,
+                                     files: List<VirtualFile>,
+                                     private val myUpdatingMode: Boolean) : ChangesBrowserSpecificFilesNode(
+  ChangesBrowserNode.IGNORED_FILES_TAG, files, { if (!project.isDisposed) IgnoredViewDialog(project).show() }) {
 
-public class ChangesBrowserIgnoredFilesNode extends ChangesBrowserSpecificFilesNode {
-
-  private final boolean myUpdatingMode;
-
-  protected ChangesBrowserIgnoredFilesNode(Project project, @NotNull List<VirtualFile> files, boolean updatingMode) {
-    super(IGNORED_FILES_TAG, files, () -> {
-      if (!project.isDisposed()) new IgnoredViewDialog(project).show();
-    });
-    myUpdatingMode = updatingMode;
-  }
-
-  @Override
-  public void render(@NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
-    super.render(renderer, selected, expanded, hasFocus);
+  override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
+    super.render(renderer, selected, expanded, hasFocus)
     if (myUpdatingMode) {
-      appendUpdatingState(renderer);
+      appendUpdatingState(renderer)
     }
   }
 
-  @Override
-  public boolean canAcceptDrop(final ChangeListDragBean dragBean) {
-    return dragBean.getUnversionedFiles().size() > 0;
-  }
+  override fun canAcceptDrop(dragBean: ChangeListDragBean) = dragBean.unversionedFiles.isNotEmpty()
 
-  @Override
-  public void acceptDrop(final ChangeListOwner dragOwner, final ChangeListDragBean dragBean) {
-  }
+  override fun acceptDrop(dragOwner: ChangeListOwner, dragBean: ChangeListDragBean) {}
 
-  @Override
-  public int getSortWeight() {
-    return IGNORED_SORT_WEIGHT;
-  }
+  override fun getSortWeight() = ChangesBrowserNode.IGNORED_SORT_WEIGHT
 }
