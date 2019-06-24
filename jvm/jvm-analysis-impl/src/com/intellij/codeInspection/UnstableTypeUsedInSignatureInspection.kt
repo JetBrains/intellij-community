@@ -3,6 +3,7 @@ package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInspection.UnstableApiUsageInspection.Companion.DEFAULT_UNSTABLE_API_ANNOTATIONS
+import com.intellij.codeInspection.UnstableApiUsageInspection.Companion.findAnnotationOfItselfOrContainingDeclaration
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.*
@@ -122,32 +123,32 @@ class UnstableTypeUsedInSignatureInspection : LocalInspectionTool() {
     }
 
     private fun checkReferencesUnstableType(psiType: PsiType, declaration: UDeclaration): Boolean {
-      val (typeName, unstableAnnotationName) = findReferencedUnstableType(psiType.deepComponentType) ?: return false
+      val (unstableClass, unstableAnnotation) = findReferencedUnstableType(psiType.deepComponentType) ?: return false
+      val className = unstableClass.qualifiedName ?: return false
+      val annotationName = unstableAnnotation.qualifiedName ?: return false
       val message = when (declaration) {
-        is UMethod -> JvmAnalysisBundle.message("jvm.inspections.unstable.type.used.in.method.signature.description", unstableAnnotationName, typeName)
-        is UField -> JvmAnalysisBundle.message("jvm.inspections.unstable.type.used.in.field.signature.description", unstableAnnotationName, typeName)
-        else -> JvmAnalysisBundle.message("jvm.inspections.unstable.type.used.in.class.signature.description", unstableAnnotationName, typeName)
+        is UMethod -> JvmAnalysisBundle.message("jvm.inspections.unstable.type.used.in.method.signature.description", annotationName, className)
+        is UField -> JvmAnalysisBundle.message("jvm.inspections.unstable.type.used.in.field.signature.description", annotationName, className)
+        else -> JvmAnalysisBundle.message("jvm.inspections.unstable.type.used.in.class.signature.description", annotationName, className)
       }
       val elementToHighlight = declaration.uastAnchor.sourcePsiElement ?: return false
       problemsHolder.registerProblem(elementToHighlight, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
       return true
     }
 
-    //Returns <class name> and <unstable annotation name>
-    private fun findReferencedUnstableType(psiType: PsiType): Pair<String, String>? {
+    private fun findReferencedUnstableType(psiType: PsiType): Pair<PsiClass, PsiAnnotation>? {
       if (psiType is PsiClassType) {
-        val uClass = psiType.resolve()?.toUElement(UClass::class.java)
-        if (uClass != null) {
-          val unstableApiAnnotation = findUnstableAnnotation(uClass)
+        val psiClass = psiType.resolve()
+        if (psiClass != null) {
+          val unstableApiAnnotation = findAnnotationOfItselfOrContainingDeclaration(psiClass, unstableApiAnnotations, false)
           if (unstableApiAnnotation != null) {
-            val className = uClass.qualifiedName ?: psiType.className
-            return className to unstableApiAnnotation
+            return psiClass to unstableApiAnnotation
           }
         }
         for (parameterType in psiType.parameters) {
-          val unstableType = findReferencedUnstableType(parameterType)
-          if (unstableType != null) {
-            return unstableType
+          val parameterResult = findReferencedUnstableType(parameterType)
+          if (parameterResult != null) {
+            return parameterResult
           }
         }
       }

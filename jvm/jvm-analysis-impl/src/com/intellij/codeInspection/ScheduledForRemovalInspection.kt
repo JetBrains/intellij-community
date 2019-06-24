@@ -3,6 +3,7 @@ package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInsight.AnnotationUtil
+import com.intellij.codeInspection.UnstableApiUsageInspection.Companion.findAnnotationOfItselfOrContainingDeclaration
 import com.intellij.codeInspection.apiUsage.ApiUsageProcessor
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor
 import com.intellij.codeInspection.deprecation.DeprecationInspectionBase
@@ -36,14 +37,6 @@ private class ScheduledForRemovalApiUsageProcessor(
 
   private companion object {
     private val ANNOTATION_NAME = ApiStatus.ScheduledForRemoval::class.java.canonicalName
-
-    fun findScheduledForRemovalAnnotation(psiModifierListOwner: PsiModifierListOwner): PsiAnnotation? {
-      val ownAnnotation = AnnotationUtil.findAnnotation(psiModifierListOwner, listOf(ANNOTATION_NAME), false)
-      if (ownAnnotation != null) {
-        return ownAnnotation
-      }
-      return null
-    }
 
     fun isLibraryElement(element: PsiElement): Boolean {
       if (ApplicationManager.getApplication().isUnitTestMode) {
@@ -81,7 +74,10 @@ private class ScheduledForRemovalApiUsageProcessor(
     if (!isLibraryElement(target)) {
       return
     }
-    val scheduledForRemovalAnnotation = findScheduledForRemovalAnnotation(target) ?: return
+    val scheduledForRemovalAnnotation = findAnnotationOfItselfOrContainingDeclaration(target, listOf(ANNOTATION_NAME), false)
+    if (scheduledForRemovalAnnotation == null) {
+      return
+    }
     val elementToHighlight = (sourceNode as? UDeclaration)?.uastAnchor.sourcePsiElement ?: sourceNode.sourcePsi
     if (elementToHighlight != null) {
       val message = buildMessage(scheduledForRemovalAnnotation, target, isMethodOverriding)

@@ -1,6 +1,6 @@
 import pkg.<warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning>
-import pkg.<warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning>.NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS
-import pkg.<warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning>.staticNonAnnotatedMethodInAnnotatedClass
+import pkg.<warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning>.<warning descr="'NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is scheduled for removal in 123.456">NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning>
+import pkg.<warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning>.<warning descr="'staticNonAnnotatedMethodInAnnotatedClass()' is scheduled for removal in 123.456">staticNonAnnotatedMethodInAnnotatedClass</warning>
 import pkg.<warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning>.<warning descr="'ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is scheduled for removal in 123.456">ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning>
 import pkg.<warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning>.<warning descr="'staticAnnotatedMethodInAnnotatedClass()' is scheduled for removal in 123.456">staticAnnotatedMethodInAnnotatedClass</warning>
 
@@ -12,7 +12,7 @@ import pkg.NonAnnotatedClass.<warning descr="'staticAnnotatedMethodInNonAnnotate
 
 import pkg.<warning descr="'pkg.AnnotatedEnum' is scheduled for removal in 123.456">AnnotatedEnum</warning>
 import pkg.NonAnnotatedEnum 
-import pkg.<warning descr="'pkg.AnnotatedEnum' is scheduled for removal in 123.456">AnnotatedEnum</warning>.NON_ANNOTATED_VALUE_IN_ANNOTATED_ENUM
+import pkg.<warning descr="'pkg.AnnotatedEnum' is scheduled for removal in 123.456">AnnotatedEnum</warning>.<warning descr="'NON_ANNOTATED_VALUE_IN_ANNOTATED_ENUM' is scheduled for removal in 123.456">NON_ANNOTATED_VALUE_IN_ANNOTATED_ENUM</warning>
 import pkg.<warning descr="'pkg.AnnotatedEnum' is scheduled for removal in 123.456">AnnotatedEnum</warning>.<warning descr="'ANNOTATED_VALUE_IN_ANNOTATED_ENUM' is scheduled for removal in 123.456">ANNOTATED_VALUE_IN_ANNOTATED_ENUM</warning>
 import pkg.NonAnnotatedEnum.NON_ANNOTATED_VALUE_IN_NON_ANNOTATED_ENUM 
 import pkg.NonAnnotatedEnum.<warning descr="'ANNOTATED_VALUE_IN_NON_ANNOTATED_ENUM' is scheduled for removal in 123.456">ANNOTATED_VALUE_IN_NON_ANNOTATED_ENUM</warning>
@@ -20,18 +20,18 @@ import pkg.NonAnnotatedEnum.<warning descr="'ANNOTATED_VALUE_IN_NON_ANNOTATED_EN
 import pkg.<warning descr="'pkg.AnnotatedAnnotation' is scheduled for removal in 123.456">AnnotatedAnnotation</warning>
 import pkg.NonAnnotatedAnnotation
 
-import <warning descr="'annotatedPkg' is scheduled for removal in 123.456">annotatedPkg</warning>.ClassInAnnotatedPkg
+import <warning descr="'annotatedPkg' is scheduled for removal in 123.456">annotatedPkg</warning>.<warning descr="'annotatedPkg.ClassInAnnotatedPkg' is scheduled for removal in 123.456">ClassInAnnotatedPkg</warning>
 
 @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE", "UNUSED_VALUE")
 class ScheduledForRemovalElementsTest {
   fun test() {
-    var s = <warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning>.NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS
-    <warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning>.staticNonAnnotatedMethodInAnnotatedClass()
-    val annotatedClassInstanceViaNonAnnotatedConstructor : <warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning> = <warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning>()
-    s = annotatedClassInstanceViaNonAnnotatedConstructor.nonAnnotatedFieldInAnnotatedClass 
-    annotatedClassInstanceViaNonAnnotatedConstructor.nonAnnotatedMethodInAnnotatedClass() 
-    s = NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS 
-    staticNonAnnotatedMethodInAnnotatedClass() 
+    var s = <warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning>.<warning descr="'NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is scheduled for removal in 123.456">NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning>
+    <warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning>.<warning descr="'staticNonAnnotatedMethodInAnnotatedClass()' is scheduled for removal in 123.456">staticNonAnnotatedMethodInAnnotatedClass</warning>()
+    val annotatedClassInstanceViaNonAnnotatedConstructor : <warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning> = <warning descr="'AnnotatedClass()' is scheduled for removal in 123.456"><warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning></warning>()
+    s = annotatedClassInstanceViaNonAnnotatedConstructor.<warning descr="'nonAnnotatedFieldInAnnotatedClass' is scheduled for removal in 123.456">nonAnnotatedFieldInAnnotatedClass</warning>
+    annotatedClassInstanceViaNonAnnotatedConstructor.<warning descr="'nonAnnotatedMethodInAnnotatedClass()' is scheduled for removal in 123.456">nonAnnotatedMethodInAnnotatedClass</warning>()
+    s = <warning descr="'NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is scheduled for removal in 123.456">NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning>
+    <warning descr="'staticNonAnnotatedMethodInAnnotatedClass()' is scheduled for removal in 123.456">staticNonAnnotatedMethodInAnnotatedClass</warning>()
 
     s = <warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning>.<warning descr="'ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is scheduled for removal in 123.456">ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning>
     <warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning>.<warning descr="'staticAnnotatedMethodInAnnotatedClass()' is scheduled for removal in 123.456">staticAnnotatedMethodInAnnotatedClass</warning>()
@@ -61,8 +61,8 @@ class ScheduledForRemovalElementsTest {
 
     // ---------------------------------
 
-    var nonAnnotatedValueInAnnotatedEnum : <warning descr="'pkg.AnnotatedEnum' is scheduled for removal in 123.456">AnnotatedEnum</warning> = <warning descr="'pkg.AnnotatedEnum' is scheduled for removal in 123.456">AnnotatedEnum</warning>.NON_ANNOTATED_VALUE_IN_ANNOTATED_ENUM
-    nonAnnotatedValueInAnnotatedEnum = NON_ANNOTATED_VALUE_IN_ANNOTATED_ENUM 
+    var nonAnnotatedValueInAnnotatedEnum : <warning descr="'pkg.AnnotatedEnum' is scheduled for removal in 123.456">AnnotatedEnum</warning> = <warning descr="'pkg.AnnotatedEnum' is scheduled for removal in 123.456">AnnotatedEnum</warning>.<warning descr="'NON_ANNOTATED_VALUE_IN_ANNOTATED_ENUM' is scheduled for removal in 123.456">NON_ANNOTATED_VALUE_IN_ANNOTATED_ENUM</warning>
+    nonAnnotatedValueInAnnotatedEnum = <warning descr="'NON_ANNOTATED_VALUE_IN_ANNOTATED_ENUM' is scheduled for removal in 123.456">NON_ANNOTATED_VALUE_IN_ANNOTATED_ENUM</warning>
     var annotatedValueInAnnotatedEnum : <warning descr="'pkg.AnnotatedEnum' is scheduled for removal in 123.456">AnnotatedEnum</warning> = <warning descr="'pkg.AnnotatedEnum' is scheduled for removal in 123.456">AnnotatedEnum</warning>.<warning descr="'ANNOTATED_VALUE_IN_ANNOTATED_ENUM' is scheduled for removal in 123.456">ANNOTATED_VALUE_IN_ANNOTATED_ENUM</warning>
     annotatedValueInAnnotatedEnum = <warning descr="'ANNOTATED_VALUE_IN_ANNOTATED_ENUM' is scheduled for removal in 123.456">ANNOTATED_VALUE_IN_ANNOTATED_ENUM</warning>
 
@@ -74,7 +74,7 @@ class ScheduledForRemovalElementsTest {
     // ---------------------------------
 
     @<warning descr="'pkg.AnnotatedAnnotation' is scheduled for removal in 123.456">AnnotatedAnnotation</warning> class C1
-    @<warning descr="'pkg.AnnotatedAnnotation' is scheduled for removal in 123.456">AnnotatedAnnotation</warning>(nonAnnotatedAttributeInAnnotatedAnnotation = "123") class C2
+    @<warning descr="'pkg.AnnotatedAnnotation' is scheduled for removal in 123.456">AnnotatedAnnotation</warning>(<warning descr="'nonAnnotatedAttributeInAnnotatedAnnotation' is scheduled for removal in 123.456">nonAnnotatedAttributeInAnnotatedAnnotation</warning> = "123") class C2
     @<warning descr="'pkg.AnnotatedAnnotation' is scheduled for removal in 123.456">AnnotatedAnnotation</warning>(<warning descr="'annotatedAttributeInAnnotatedAnnotation' is scheduled for removal in 123.456">annotatedAttributeInAnnotatedAnnotation</warning> = "123") class C3
     @NonAnnotatedAnnotation class C4 
     @NonAnnotatedAnnotation(nonAnnotatedAttributeInNonAnnotatedAnnotation = "123") class C5 

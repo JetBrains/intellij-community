@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import pkg.<warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>;
-import static pkg.<warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>.NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS;
-import static pkg.<warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>.staticNonAnnotatedMethodInAnnotatedClass;
+import static pkg.<warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>.<warning descr="'NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is marked unstable">NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning>;
+import static pkg.<warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>.<warning descr="'staticNonAnnotatedMethodInAnnotatedClass()' is marked unstable">staticNonAnnotatedMethodInAnnotatedClass</warning>;
 import static pkg.<warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>.<warning descr="'ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is marked unstable">ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning>;
 import static pkg.<warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>.<warning descr="'staticAnnotatedMethodInAnnotatedClass()' is marked unstable">staticAnnotatedMethodInAnnotatedClass</warning>;
 
@@ -13,7 +13,7 @@ import static pkg.NonAnnotatedClass.<warning descr="'staticAnnotatedMethodInNonA
 
 import pkg.<warning descr="'pkg.AnnotatedEnum' is marked unstable">AnnotatedEnum</warning>;
 import pkg.NonAnnotatedEnum;
-import static pkg.<warning descr="'pkg.AnnotatedEnum' is marked unstable">AnnotatedEnum</warning>.NON_ANNOTATED_VALUE_IN_ANNOTATED_ENUM;
+import static pkg.<warning descr="'pkg.AnnotatedEnum' is marked unstable">AnnotatedEnum</warning>.<warning descr="'NON_ANNOTATED_VALUE_IN_ANNOTATED_ENUM' is marked unstable">NON_ANNOTATED_VALUE_IN_ANNOTATED_ENUM</warning>;
 import static pkg.<warning descr="'pkg.AnnotatedEnum' is marked unstable">AnnotatedEnum</warning>.<warning descr="'ANNOTATED_VALUE_IN_ANNOTATED_ENUM' is marked unstable">ANNOTATED_VALUE_IN_ANNOTATED_ENUM</warning>;
 import static pkg.NonAnnotatedEnum.NON_ANNOTATED_VALUE_IN_NON_ANNOTATED_ENUM;
 import static pkg.NonAnnotatedEnum.<warning descr="'ANNOTATED_VALUE_IN_NON_ANNOTATED_ENUM' is marked unstable">ANNOTATED_VALUE_IN_NON_ANNOTATED_ENUM</warning>;
@@ -21,17 +21,17 @@ import static pkg.NonAnnotatedEnum.<warning descr="'ANNOTATED_VALUE_IN_NON_ANNOT
 import pkg.<warning descr="'pkg.AnnotatedAnnotation' is marked unstable">AnnotatedAnnotation</warning>;
 import pkg.NonAnnotatedAnnotation;
 
-import <warning descr="'annotatedPkg' is marked unstable">annotatedPkg</warning>.ClassInAnnotatedPkg;
+import <warning descr="'annotatedPkg' is marked unstable">annotatedPkg</warning>.<warning descr="'annotatedPkg.ClassInAnnotatedPkg' is marked unstable">ClassInAnnotatedPkg</warning>;
 
 public class UnstableElementsTest {
   public void test() {
-    String s = <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>.NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS;
-    <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>.staticNonAnnotatedMethodInAnnotatedClass();
-    <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning> annotatedClassInstanceViaNonAnnotatedConstructor = new <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>();
-    s = annotatedClassInstanceViaNonAnnotatedConstructor.nonAnnotatedFieldInAnnotatedClass;
-    annotatedClassInstanceViaNonAnnotatedConstructor.nonAnnotatedMethodInAnnotatedClass();
-    s = NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS;
-    staticNonAnnotatedMethodInAnnotatedClass();
+    String s = <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>.<warning descr="'NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is marked unstable">NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning>;
+    <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>.<warning descr="'staticNonAnnotatedMethodInAnnotatedClass()' is marked unstable">staticNonAnnotatedMethodInAnnotatedClass</warning>();
+    <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning> annotatedClassInstanceViaNonAnnotatedConstructor = new <warning descr="'AnnotatedClass()' is marked unstable"><warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning></warning>();
+    s = annotatedClassInstanceViaNonAnnotatedConstructor.<warning descr="'nonAnnotatedFieldInAnnotatedClass' is marked unstable">nonAnnotatedFieldInAnnotatedClass</warning>;
+    annotatedClassInstanceViaNonAnnotatedConstructor.<warning descr="'nonAnnotatedMethodInAnnotatedClass()' is marked unstable">nonAnnotatedMethodInAnnotatedClass</warning>();
+    s = <warning descr="'NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is marked unstable">NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning>;
+    <warning descr="'staticNonAnnotatedMethodInAnnotatedClass()' is marked unstable">staticNonAnnotatedMethodInAnnotatedClass</warning>();
 
     s = <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>.<warning descr="'ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is marked unstable">ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning>;
     <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>.<warning descr="'staticAnnotatedMethodInAnnotatedClass()' is marked unstable">staticAnnotatedMethodInAnnotatedClass</warning>();
@@ -61,8 +61,8 @@ public class UnstableElementsTest {
 
     // ---------------------------------
 
-    <warning descr="'pkg.AnnotatedEnum' is marked unstable">AnnotatedEnum</warning> nonAnnotatedValueInAnnotatedEnum = <warning descr="'pkg.AnnotatedEnum' is marked unstable">AnnotatedEnum</warning>.NON_ANNOTATED_VALUE_IN_ANNOTATED_ENUM;
-    nonAnnotatedValueInAnnotatedEnum = NON_ANNOTATED_VALUE_IN_ANNOTATED_ENUM;
+    <warning descr="'pkg.AnnotatedEnum' is marked unstable">AnnotatedEnum</warning> nonAnnotatedValueInAnnotatedEnum = <warning descr="'pkg.AnnotatedEnum' is marked unstable">AnnotatedEnum</warning>.<warning descr="'NON_ANNOTATED_VALUE_IN_ANNOTATED_ENUM' is marked unstable">NON_ANNOTATED_VALUE_IN_ANNOTATED_ENUM</warning>;
+    nonAnnotatedValueInAnnotatedEnum = <warning descr="'NON_ANNOTATED_VALUE_IN_ANNOTATED_ENUM' is marked unstable">NON_ANNOTATED_VALUE_IN_ANNOTATED_ENUM</warning>;
     <warning descr="'pkg.AnnotatedEnum' is marked unstable">AnnotatedEnum</warning> annotatedValueInAnnotatedEnum = <warning descr="'pkg.AnnotatedEnum' is marked unstable">AnnotatedEnum</warning>.<warning descr="'ANNOTATED_VALUE_IN_ANNOTATED_ENUM' is marked unstable">ANNOTATED_VALUE_IN_ANNOTATED_ENUM</warning>;
     annotatedValueInAnnotatedEnum = <warning descr="'ANNOTATED_VALUE_IN_ANNOTATED_ENUM' is marked unstable">ANNOTATED_VALUE_IN_ANNOTATED_ENUM</warning>;
 
@@ -74,7 +74,7 @@ public class UnstableElementsTest {
     // ---------------------------------
 
     @<warning descr="'pkg.AnnotatedAnnotation' is marked unstable">AnnotatedAnnotation</warning> class C1 {}
-    @<warning descr="'pkg.AnnotatedAnnotation' is marked unstable">AnnotatedAnnotation</warning>(nonAnnotatedAttributeInAnnotatedAnnotation = "123") class C2 {}
+    @<warning descr="'pkg.AnnotatedAnnotation' is marked unstable">AnnotatedAnnotation</warning>(<warning descr="'nonAnnotatedAttributeInAnnotatedAnnotation' is marked unstable">nonAnnotatedAttributeInAnnotatedAnnotation</warning> = "123") class C2 {}
     @<warning descr="'pkg.AnnotatedAnnotation' is marked unstable">AnnotatedAnnotation</warning>(<warning descr="'annotatedAttributeInAnnotatedAnnotation' is marked unstable">annotatedAttributeInAnnotatedAnnotation</warning> = "123") class C3 {}
     @NonAnnotatedAnnotation class C4 {}
     @NonAnnotatedAnnotation(nonAnnotatedAttributeInNonAnnotatedAnnotation = "123") class C5 {}

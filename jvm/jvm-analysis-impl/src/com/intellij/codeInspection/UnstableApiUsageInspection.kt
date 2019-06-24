@@ -10,10 +10,7 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.ArrayUtilRt
 import com.siyeh.ig.ui.ExternalizableStringSet
@@ -35,6 +32,26 @@ class UnstableApiUsageInspection : LocalInspectionTool() {
       "org.apache.http.annotation.Beta",
       "org.gradle.api.Incubating"
     )
+
+    fun findAnnotationOfItselfOrContainingDeclaration(
+      listOwner: PsiModifierListOwner,
+      annotationNames: Collection<String>,
+      includeExternalAnnotations: Boolean
+    ): PsiAnnotation? {
+      val annotation = AnnotationUtil.findAnnotation(listOwner, annotationNames, !includeExternalAnnotations)
+      if (annotation != null) {
+        return annotation
+      }
+      if (listOwner is PsiMember) {
+        val containingClass = listOwner.containingClass
+        if (containingClass != null) {
+          return findAnnotationOfItselfOrContainingDeclaration(containingClass, annotationNames, includeExternalAnnotations)
+        }
+      }
+      val packageName = (listOwner.containingFile as? PsiClassOwner)?.packageName ?: return null
+      val psiPackage = JavaPsiFacade.getInstance(listOwner.project).findPackage(packageName) ?: return null
+      return findAnnotationOfItselfOrContainingDeclaration(psiPackage, annotationNames, includeExternalAnnotations)
+    }
   }
 
   @JvmField
@@ -70,7 +87,7 @@ class UnstableApiUsageInspection : LocalInspectionTool() {
 private class UnstableApiUsageProcessor(
   private val problemsHolder: ProblemsHolder,
   private val ignoreInsideImports: Boolean,
-  private val annotations: List<String>
+  private val unstableAnnotationNames: List<String>
 ) : ApiUsageProcessor {
 
   private companion object {
@@ -112,8 +129,8 @@ private class UnstableApiUsageProcessor(
     if (!isLibraryElement(target)) {
       return
     }
-    val annotations = AnnotationUtil.findAllAnnotations(target, annotations, false)
-    if (annotations.isEmpty()) {
+    val unstableAnnotation = UnstableApiUsageInspection.findAnnotationOfItselfOrContainingDeclaration(target, unstableAnnotationNames, true)
+    if (unstableAnnotation == null) {
       return
     }
     val targetName = getPresentableName(target)
