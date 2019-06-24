@@ -50,6 +50,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.RGBImageFilter;
@@ -117,7 +119,18 @@ public final class UIUtil extends StartupUiUtil {
                           ? JBColor.black
                           : JBColor.gray;
             graphics.setColor(color);
-            drawCenteredString(graphics, headerRectangle, getWindowTitle(window));
+            int controlButtonsWidth = 70;
+            String windowTitle = getWindowTitle(window);
+            double widthToFit = (controlButtonsWidth*2 + GraphicsUtil.stringWidth(windowTitle, g.getFont())) - c.getWidth();
+            if (widthToFit <= 0) {
+              drawCenteredString(graphics, headerRectangle, windowTitle);
+            } else {
+              FontMetrics fm = graphics.getFontMetrics();
+              Rectangle2D stringBounds = fm.getStringBounds(windowTitle, graphics);
+              Rectangle bounds =
+                AffineTransform.getTranslateInstance(controlButtonsWidth, fm.getAscent() + ((double)(headerRectangle.height - stringBounds.getHeight()))/2).createTransformedShape(stringBounds).getBounds();
+              drawCenteredString(graphics, bounds, windowTitle, false, true);
+            }
           }
           finally {
             graphics.dispose();
