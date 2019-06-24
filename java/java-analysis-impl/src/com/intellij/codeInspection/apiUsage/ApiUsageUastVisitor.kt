@@ -5,6 +5,7 @@ import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.uast.UastVisitorAdapter
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
@@ -12,6 +13,7 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
  * Non-recursive UAST visitor that detects usages of APIs in source code of UAST-supporting languages
  * and reports them via [ApiUsageProcessor] interface.
  */
+@ApiStatus.Experimental
 class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : AbstractUastNonRecursiveVisitor() {
 
   companion object {
