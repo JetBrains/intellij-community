@@ -39,7 +39,13 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
     scrollPane.setBorder(JBUI.Borders.empty());
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     templatesListHolder = new Box(BoxLayout.Y_AXIS);
-    templatesListHolder.setBorder(JBUI.Borders.emptyTop(JBUI.CurrentTheme.NewClassDialog.fieldsSeparatorWidth()));
+    Border border = JBUI.Borders.merge(
+      JBUI.Borders.emptyTop(JBUI.CurrentTheme.NewClassDialog.fieldsSeparatorWidth()),
+      JBUI.Borders.customLine(JBUI.CurrentTheme.NewClassDialog.bordersColor(), 1, 0, 0, 0),
+      true
+    );
+
+    templatesListHolder.setBorder(border);
     templatesListHolder.add(scrollPane);
 
     add(templatesListHolder, BorderLayout.CENTER);
