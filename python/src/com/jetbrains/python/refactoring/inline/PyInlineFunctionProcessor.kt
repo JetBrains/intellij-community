@@ -181,9 +181,12 @@ class PyInlineFunctionProcessor(project: Project,
       replacementFunction.accept(object : PyRecursiveElementVisitor() {
         override fun visitPyReferenceExpression(node: PyReferenceExpression) {
           if (!node.isQualified) {
-            when (val name = node.name) {
-              in mappedArguments -> argumentReplacements[node] = mappedArguments[name]!!
-              in nameClashes -> nameClashRefs.putValue(name!!, node)
+            val parentLambda = PsiTreeUtil.getParentOfType(node, PyLambdaExpression::class.java)
+            if (parentLambda == null  || parentLambda.parameterList.parameters.none { it.name == node.name }) {
+              when (val name = node.name) {
+                in mappedArguments -> argumentReplacements[node] = mappedArguments[name]!!
+                in nameClashes -> nameClashRefs.putValue(name!!, node)
+              }
             }
           }
           super.visitPyReferenceExpression(node)

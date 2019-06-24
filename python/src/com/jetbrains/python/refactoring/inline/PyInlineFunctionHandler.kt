@@ -43,7 +43,7 @@ class PyInlineFunctionHandler : InlineActionHandler() {
       isOverride(element, project) -> "refactoring.inline.function.overridden"
       functionScope.hasGlobals() -> "refactoring.inline.function.global"
       functionScope.hasNonLocals() -> "refactoring.inline.function.nonlocal"
-      functionScope.hasNestedScopes() -> "refactoring.inline.function.nested"
+      hasNestedFunction(element) -> "refactoring.inline.function.nested"
       hasNonExhaustiveIfs(element) -> "refactoring.inline.function.interrupts.flow"
       else -> null
     }
@@ -55,6 +55,8 @@ class PyInlineFunctionHandler : InlineActionHandler() {
       PyInlineFunctionDialog(project, editor, element, TargetElementUtil.findReference(editor)).show()
     }
   }
+
+  private fun hasNestedFunction(function: PyFunction): Boolean = SyntaxTraverser.psiTraverser(function.statementList).traverse().any { it is PyFunction }
 
   private fun hasNonExhaustiveIfs(function: PyFunction): Boolean {
     val returns = mutableListOf<PyReturnStatement>()
