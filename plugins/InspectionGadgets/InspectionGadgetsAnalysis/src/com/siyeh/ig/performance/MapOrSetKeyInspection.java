@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.performance;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NonNls;
@@ -13,6 +13,34 @@ import java.util.HashSet;
 import java.util.Set;
 
 public abstract class MapOrSetKeyInspection extends BaseInspection {
+
+
+  private static final Set<String> SET_METHOD_NAMES = new HashSet<String>() {
+    {
+      add("add");
+      add("addAll");
+      add("containsAll");
+      add("removeAll");
+      add("retainAll");
+    }
+  };
+
+  private static final Set<String> MAP_METHOD_NAMES = new HashSet<String>() {
+    {
+      add("put");
+      add("putIfAbsent");
+      add("compute");
+      add("computeIfAbsent");
+      add("computeIfPresent");
+      add("replace");
+      add("remove");
+      add("merge");
+      add("get");
+      add("getOrDefault");
+      add("containsKey");
+      add("putAll");
+    }
+  };
 
   protected abstract boolean shouldTriggerOnKeyType(PsiType argumentType);
 
@@ -139,11 +167,14 @@ public abstract class MapOrSetKeyInspection extends BaseInspection {
     }
 
     @Override
-    public void visitMethodCallExpression(
-      PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       if (valueOfInterestAdded) {
         return;
       }
+      if (ClassType.OTHER == collectionType) {
+        return;
+      }
+
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression =
         expression.getMethodExpression();
@@ -156,14 +187,14 @@ public abstract class MapOrSetKeyInspection extends BaseInspection {
         (PsiReferenceExpression)qualifierExpression;
       @NonNls final String methodName =
         methodExpression.getReferenceName();
-      if (collectionType == ClassType.SET &&
-          !"add".equals(methodName)) {
+
+      if (ClassType.SET == collectionType && !SET_METHOD_NAMES.contains(methodName)) {
         return;
       }
-      if (collectionType == ClassType.MAP &&
-          !"put".equals(methodName)) {
+      if (ClassType.MAP == collectionType && !MAP_METHOD_NAMES.contains(methodName)) {
         return;
       }
+
       final PsiExpressionList argumentList = expression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
 
@@ -181,6 +212,26 @@ public abstract class MapOrSetKeyInspection extends BaseInspection {
         }
         valueOfInterestAdded = true;
       }
+      else if (methodName.endsWith("All")) {
+        PsiClass classNameN = PsiUtil.resolveClassInClassTypeOnly(argumentType);
+        PsiType[] parameterList = ((PsiClassType)argumentType).getParameters();
+        if (parameterList.length == 0) {
+          return;
+        }
+        ClassType argumentClassType = isMapOrSet(classNameN, new HashSet<>());
+        if (ClassType.MAP == argumentClassType || ClassType.SET == argumentClassType) {
+          if (parameterList[0] != null) {
+            PsiType keyType = parameterList[0];
+            if (shouldTriggerOnKeyType(keyType)) {
+              final PsiElement element = referenceExpression.resolve();
+              if (!variable.equals(element)) {
+                return;
+              }
+              valueOfInterestAdded = true;
+            }
+          }
+        }
+      }
     }
 
     boolean isValueOfInterestAdded() {
@@ -188,4 +239,3 @@ public abstract class MapOrSetKeyInspection extends BaseInspection {
     }
   }
 }
-

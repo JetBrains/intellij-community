@@ -2,12 +2,8 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
@@ -20,7 +16,7 @@ import javax.swing.*;
  */
 public class FunctionalExpressionsIdentityInspection extends MapOrSetKeyInspection {
 
-  @SuppressWarnings({"PublicField", "WeakerAccess", "CanBeFinal"}) 
+  @SuppressWarnings({"PublicField", "WeakerAccess", "CanBeFinal"})
   public boolean ignoreFuncInterfaceAnnotation = true;
 
   @Override
@@ -57,9 +53,11 @@ public class FunctionalExpressionsIdentityInspection extends MapOrSetKeyInspecti
           && ignoreFuncInterfaceAnnotation) {
         return false;
       }
-      return LambdaHighlightingUtil.checkInterfaceFunctional(className) == null
-             && className.isInterface();
+      return ((LambdaUtil.isFunctionalClass(className)
+               && className.isInterface()));
     }
+
+
     return false;
   }
 }
