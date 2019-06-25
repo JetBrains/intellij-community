@@ -55,16 +55,21 @@ public class UnknownFileTypeDiffRequest extends ComponentDiffRequest {
   @NotNull
   @Override
   public JComponent getComponent(@NotNull final DiffContext context) {
+    return createComponent(myFileName, context);
+  }
+
+  @NotNull
+  public static JComponent createComponent(@Nullable String fileName, @Nullable DiffContext context) {
     final SimpleColoredComponent label = new SimpleColoredComponent();
     label.setTextAlign(SwingConstants.CENTER);
     label.append("Can't show diff for unknown file type. ");
-    if (myFileName != null) {
+    if (fileName != null) {
       EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
       Color linkColor = chooseNotNull(scheme.getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR).getForegroundColor(),
                                       JBUI.CurrentTheme.Link.linkColor());
       label.append("Associate", new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, linkColor), (Runnable)() -> {
-        FileType type = FileTypeChooser.associateFileType(myFileName);
-        if (type != null) onSuccess(context);
+        FileType type = FileTypeChooser.associateFileType(fileName);
+        if (type != null && context != null) tryReloadRequest(context);
       });
       LinkMouseListenerBase.installSingleTagOn(label);
     }
@@ -82,7 +87,7 @@ public class UnknownFileTypeDiffRequest extends ComponentDiffRequest {
     return myTitle;
   }
 
-  protected void onSuccess(@NotNull DiffContext context) {
+  private static void tryReloadRequest(@NotNull DiffContext context) {
     if (context instanceof DiffContextEx) ((DiffContextEx)context).reloadDiffRequest();
   }
 }
