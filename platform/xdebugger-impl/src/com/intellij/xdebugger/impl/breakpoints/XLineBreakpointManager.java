@@ -58,7 +58,7 @@ import java.util.stream.Stream;
 /**
  * @author nik
  */
-public class XLineBreakpointManager {
+public final class XLineBreakpointManager {
   private final BidirectionalMap<XLineBreakpointImpl, String> myBreakpoints = new BidirectionalMap<>();
   private final MergingUpdateQueue myBreakpointsUpdateQueue;
   private final Project myProject;
