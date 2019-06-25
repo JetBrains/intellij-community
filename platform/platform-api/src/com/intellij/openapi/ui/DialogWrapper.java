@@ -480,6 +480,9 @@ public abstract class DialogWrapper {
     if (isRemoveHelpButton()) {
       actions.remove(helpAction);
     }
+    else if (!actions.contains(helpAction) && getHelpId() == null) {
+      helpAction.setEnabled(false);
+    }
     else if (isMoveHelpButtonLeft() && actions.remove(helpAction) && !leftSideActions.contains(helpAction)) {
       addHelpToLeftSide = true;
     }
