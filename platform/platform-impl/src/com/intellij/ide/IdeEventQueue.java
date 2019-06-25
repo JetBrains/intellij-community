@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.actions.MaximizeActiveDialogAction;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDManagerImpl;
@@ -354,104 +355,116 @@ public final class IdeEventQueue extends EventQueue {
   @Override
   public void dispatchEvent(@NotNull AWTEvent e) {
     long startedAt = System.currentTimeMillis();
-    if (SystemProperties.getBooleanProperty("skip.typed.event", true) && skipTypedKeyEventsIfFocusReturnsToOwner(e)) {
-      return;
-    }
+    PerformanceWatcher performanceWatcher = PerformanceWatcher.getInstance();
+    try {
+      if (performanceWatcher != null) {
+        performanceWatcher.edtEventStarted(startedAt);
+      }
+
+      if (SystemProperties.getBooleanProperty("skip.typed.event", true) && skipTypedKeyEventsIfFocusReturnsToOwner(e)) {
+        return;
+      }
 
     if (isMetaKeyPressedOnLinux(e)) return;
     if (isSpecialSymbolMatchingShortcut(e)) return;
 
-    if (e.getSource() instanceof TrayIcon) {
-      if (e instanceof ActionEvent) {
-        for (ActionListener listener : ((TrayIcon)e.getSource()).getActionListeners()) {
-          listener.actionPerformed((ActionEvent)e);
+      if (e.getSource() instanceof TrayIcon) {
+        if (e instanceof ActionEvent) {
+          for (ActionListener listener : ((TrayIcon)e.getSource()).getActionListeners()) {
+            listener.actionPerformed((ActionEvent)e);
+          }
         }
+        return;
       }
-      return;
-    }
 
-    checkForTimeJump();
+      checkForTimeJump();
 
-    if (!appIsLoaded()) {
-      try {
-        super.dispatchEvent(e);
+      if (!appIsLoaded()) {
+        try {
+          super.dispatchEvent(e);
+        }
+        catch (Throwable t) {
+          processException(t);
+        }
+        return;
+      }
+
+      e = mapEvent(e);
+      AWTEvent metaEvent = mapMetaState(e);
+      if (Registry.is("keymap.windows.as.meta") && metaEvent != null) {
+        e = metaEvent;
+      }
+      if (JAVA11_ON_MAC && e instanceof InputEvent) {
+        // disable AltGr on Mac because this key is not supported by macOS
+        if (e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT_GRAPH) ((KeyEvent)e).setKeyCode(KeyEvent.VK_ALT);
+        IdeKeyEventDispatcher.removeAltGraph((InputEvent)e);
+      }
+
+      boolean wasInputEvent = myIsInInputEvent;
+      myIsInInputEvent = isInputEvent(e);
+      AWTEvent oldEvent = myCurrentEvent;
+      myCurrentEvent = e;
+
+      try (AccessToken ignored = startActivity(e)) {
+        ProgressManager progressManager = obtainProgressManager();
+        if (progressManager != null) {
+          progressManager.computePrioritized(() -> {
+            _dispatchEvent(myCurrentEvent);
+            return null;
+          });
+        }
+        else {
+          _dispatchEvent(myCurrentEvent);
+        }
       }
       catch (Throwable t) {
         processException(t);
       }
-      return;
-    }
+      finally {
+        myIsInInputEvent = wasInputEvent;
+        myCurrentEvent = oldEvent;
 
-    e = mapEvent(e);
-    AWTEvent metaEvent = mapMetaState(e);
-    if (Registry.is("keymap.windows.as.meta") && metaEvent != null) {
-      e = metaEvent;
-    }
-    if (JAVA11_ON_MAC && e instanceof InputEvent) {
-      // disable AltGr on Mac because this key is not supported by macOS
-      if (e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT_GRAPH) ((KeyEvent)e).setKeyCode(KeyEvent.VK_ALT);
-      IdeKeyEventDispatcher.removeAltGraph((InputEvent)e);
-    }
+        for (EventDispatcher each : myPostProcessors) {
+          each.dispatch(e);
+        }
 
-    boolean wasInputEvent = myIsInInputEvent;
-    myIsInInputEvent = isInputEvent(e);
-    AWTEvent oldEvent = myCurrentEvent;
-    myCurrentEvent = e;
-
-    try (AccessToken ignored = startActivity(e)) {
-      ProgressManager progressManager = obtainProgressManager();
-      if (progressManager != null) {
-        progressManager.computePrioritized(() -> {
-          _dispatchEvent(myCurrentEvent);
-          return null;
-        });
-      } else {
-        _dispatchEvent(myCurrentEvent);
-      }
-    }
-    catch (Throwable t) {
-      processException(t);
-    }
-    finally {
-      myIsInInputEvent = wasInputEvent;
-      myCurrentEvent = oldEvent;
-
-      for (EventDispatcher each : myPostProcessors) {
-        each.dispatch(e);
+        if (e instanceof KeyEvent) {
+          maybeReady();
+        }
+        TransactionGuardImpl.logTimeMillis(startedAt, e);
       }
 
-      if (e instanceof KeyEvent) {
-        maybeReady();
-      }
-      TransactionGuardImpl.logTimeMillis(startedAt, e);
-    }
+      if (isFocusEvent(e)) {
+        TouchBarsManager.onFocusEvent(e);
 
-    if (isFocusEvent(e)) {
-      TouchBarsManager.onFocusEvent(e);
-
-      if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
-        FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list (execute on focus event): " + runnablesWaitingForFocusChangeState());
+        if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
+          FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list (execute on focus event): " + runnablesWaitingForFocusChangeState());
+        }
+        List<AWTEvent> events = new ArrayList<>();
+        while (!focusEventsList.isEmpty()) {
+          AWTEvent f = focusEventsList.poll();
+          events.add(f);
+          if (f.equals(e)) break;
+        }
+        events.stream()
+          .map(entry -> myRunnablesWaitingFocusChange.remove(entry))
+          .filter(lor -> lor != null)
+          .flatMap(listOfRunnables -> listOfRunnables.stream())
+          .filter(r -> r != null)
+          .filter(r -> !(r instanceof ExpirableRunnable && ((ExpirableRunnable)r).isExpired()))
+          .forEach(runnable -> {
+            try {
+              runnable.run();
+            }
+            catch (Exception ex) {
+              LOG.error(ex);
+            }
+          });
       }
-      List<AWTEvent> events = new ArrayList<>();
-      while (!focusEventsList.isEmpty()) {
-        AWTEvent f = focusEventsList.poll();
-        events.add(f);
-        if (f.equals(e)) break;
+    } finally {
+      if (performanceWatcher != null) {
+        performanceWatcher.edtEventFinished();
       }
-      events.stream()
-        .map(entry -> myRunnablesWaitingFocusChange.remove(entry))
-        .filter(lor -> lor != null)
-        .flatMap(listOfRunnables -> listOfRunnables.stream())
-        .filter(r -> r != null)
-        .filter(r -> !(r instanceof ExpirableRunnable && ((ExpirableRunnable)r).isExpired()))
-        .forEach(runnable -> {
-          try {
-            runnable.run();
-          }
-          catch (Exception ex) {
-            LOG.error(ex);
-          }
-        });
     }
   }
 
