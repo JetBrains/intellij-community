@@ -129,7 +129,12 @@ private class UnstableApiUsageProcessor(
     }
     val annotationName = annotatedContainingDeclaration.psiAnnotation.qualifiedName ?: return
     val messageProvider = knownAnnotationMessageProviders[annotationName] ?: DefaultUnstableApiUsageMessageProvider
-    val message = messageProvider.buildMessage(annotatedContainingDeclaration, isMethodOverriding)
+    val message = if (isMethodOverriding) {
+      messageProvider.buildUnstableMethodOverriddenMessage(annotatedContainingDeclaration)
+    }
+    else {
+      messageProvider.buildMessage(annotatedContainingDeclaration)
+    }
     val elementToHighlight = (sourceNode as? UDeclaration)?.uastAnchor.sourcePsiElement ?: sourceNode.sourcePsi
     if (elementToHighlight != null) {
       problemsHolder.registerProblem(elementToHighlight, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
@@ -185,73 +190,94 @@ private fun findAnnotatedContainingDeclaration(
 }
 
 private interface UnstableApiUsageMessageProvider {
-  fun buildMessage(
-    annotatedContainingDeclaration: AnnotatedContainingDeclaration,
-    isMethodOverriding: Boolean
-  ): String
+
+  fun buildMessage(annotatedContainingDeclaration: AnnotatedContainingDeclaration): String
+
+  fun buildUnstableMethodOverriddenMessage(annotatedContainingDeclaration: AnnotatedContainingDeclaration): String
 }
 
 private object DefaultUnstableApiUsageMessageProvider : UnstableApiUsageMessageProvider {
-  override fun buildMessage(
-    annotatedContainingDeclaration: AnnotatedContainingDeclaration,
-    isMethodOverriding: Boolean
-  ): String = with(annotatedContainingDeclaration) {
-    when {
-      isMethodOverriding && isOwnAnnotation -> JvmAnalysisBundle.message(
-        "jvm.inspections.unstable.api.usage.overridden.method.is.marked.unstable.itself", targetName
-      )
-      isMethodOverriding && !isOwnAnnotation -> JvmAnalysisBundle.message(
-        "jvm.inspections.unstable.api.usage.overridden.method.is.declared.in.unstable.api",
-        targetName,
-        containingDeclarationType,
-        containingDeclarationName
-      )
-      !isMethodOverriding && !isOwnAnnotation -> JvmAnalysisBundle.message(
-        "jvm.inspections.unstable.api.usage.api.is.declared.in.unstable.api",
-        targetName,
-        containingDeclarationType,
-        containingDeclarationName
-      )
-      else -> JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.api.is.marked.unstable.itself", targetName)
+  override fun buildUnstableMethodOverriddenMessage(annotatedContainingDeclaration: AnnotatedContainingDeclaration): String =
+    with(annotatedContainingDeclaration) {
+      if (isOwnAnnotation) {
+        JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.overridden.method.is.marked.unstable.itself", targetName)
+      }
+      else {
+        JvmAnalysisBundle.message(
+          "jvm.inspections.unstable.api.usage.overridden.method.is.declared.in.unstable.api",
+          targetName,
+          containingDeclarationType,
+          containingDeclarationName
+        )
+      }
     }
-  }
+
+  override fun buildMessage(annotatedContainingDeclaration: AnnotatedContainingDeclaration): String =
+    with(annotatedContainingDeclaration) {
+      if (isOwnAnnotation) {
+        JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.api.is.marked.unstable.itself", targetName)
+      }
+      else {
+        JvmAnalysisBundle.message(
+          "jvm.inspections.unstable.api.usage.api.is.declared.in.unstable.api",
+          targetName,
+          containingDeclarationType,
+          containingDeclarationName
+        )
+      }
+    }
 }
 
 private class ScheduledForRemovalMessageProvider : UnstableApiUsageMessageProvider {
-  override fun buildMessage(
-    annotatedContainingDeclaration: AnnotatedContainingDeclaration,
-    isMethodOverriding: Boolean
-  ): String {
-    val versionValue = AnnotationUtil.getDeclaredStringAttributeValue(annotatedContainingDeclaration.psiAnnotation, "inVersion")
-    val versionMessage = if (versionValue.isNullOrEmpty()) {
-      JvmAnalysisBundle.message("jvm.inspections.scheduled.for.removal.future.version")
-    }
-    else {
-      JvmAnalysisBundle.message("jvm.inspections.scheduled.for.removal.predefined.version", versionValue)
-    }
+  override fun buildUnstableMethodOverriddenMessage(annotatedContainingDeclaration: AnnotatedContainingDeclaration): String {
+    val versionMessage = getVersionMessage(annotatedContainingDeclaration)
     return with(annotatedContainingDeclaration) {
-      when {
-        isMethodOverriding && isOwnAnnotation -> JvmAnalysisBundle.message(
-          "jvm.inspections.scheduled.for.removal.method.overridden.marked.itself", targetName, versionMessage
+      if (isOwnAnnotation) {
+        JvmAnalysisBundle.message(
+          "jvm.inspections.scheduled.for.removal.method.overridden.marked.itself",
+          targetName,
+          versionMessage
         )
-        isMethodOverriding && !isOwnAnnotation -> JvmAnalysisBundle.message(
+      }
+      else {
+        JvmAnalysisBundle.message(
           "jvm.inspections.scheduled.for.removal.method.overridden.declared.in.marked.api",
           targetName,
           containingDeclarationType,
           containingDeclarationName,
-          versionValue
+          versionMessage
         )
-        !isMethodOverriding && !isOwnAnnotation -> JvmAnalysisBundle.message(
+      }
+    }
+  }
+
+  override fun buildMessage(annotatedContainingDeclaration: AnnotatedContainingDeclaration): String {
+    val versionMessage = getVersionMessage(annotatedContainingDeclaration)
+    return with(annotatedContainingDeclaration) {
+      if (!isOwnAnnotation) {
+        JvmAnalysisBundle.message(
           "jvm.inspections.scheduled.for.removal.api.is.declared.in.marked.api",
           targetName,
           containingDeclarationType,
           containingDeclarationName,
-          versionValue
-        )
-        else -> JvmAnalysisBundle.message(
-          "jvm.inspections.scheduled.for.removal.api.is.marked.itself", targetName, versionValue
+          versionMessage
         )
       }
+      else {
+        JvmAnalysisBundle.message(
+          "jvm.inspections.scheduled.for.removal.api.is.marked.itself", targetName, versionMessage
+        )
+      }
+    }
+  }
+
+  private fun getVersionMessage(annotatedContainingDeclaration: AnnotatedContainingDeclaration): String {
+    val versionValue = AnnotationUtil.getDeclaredStringAttributeValue(annotatedContainingDeclaration.psiAnnotation, "inVersion")
+    return if (versionValue.isNullOrEmpty()) {
+      JvmAnalysisBundle.message("jvm.inspections.scheduled.for.removal.future.version")
+    }
+    else {
+      JvmAnalysisBundle.message("jvm.inspections.scheduled.for.removal.predefined.version", versionValue)
     }
   }
 }
