@@ -6,20 +6,20 @@ class Z {
       case 0 -> false;
       case 1 -> {
         System.out.println("oops");
-        break true;
+        yield true;
       }
       case 2 -> {
         System.out.println("bar");
-        break Math.random() > 0.5 && new Foo().getBar();
+        yield Math.random() > 0.5 && new Foo().getBar();
       }
       case 3 -> {
-        if(Math.random() > 0.5) break true;
-        else break false;
+        if(Math.random() > 0.5) yield true;
+        else yield false;
       }
       case 4 -> {
-        if(Math.random() > 0.5) break true;
+        if(Math.random() > 0.5) yield true;
         System.out.println("four");
-        break false;
+        yield false;
       }
       default -> "foo"+(new Foo());
     }) {}
