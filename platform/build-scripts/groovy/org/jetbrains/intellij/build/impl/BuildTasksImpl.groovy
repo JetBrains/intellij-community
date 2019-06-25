@@ -395,7 +395,7 @@ idea.fatal.error.notification=disabled
         if (paths.size() == 3) {
           buildContext.executeStep("Build cross-platform distribution", BuildOptions.CROSS_PLATFORM_DISTRIBUTION_STEP) {
             def crossPlatformBuilder = new CrossPlatformDistributionBuilder(buildContext)
-            def monsterZip = crossPlatformBuilder.buildCrossPlatformZip(paths[0], paths[1], paths[2], ".portable")
+            def monsterZip = crossPlatformBuilder.buildCrossPlatformZip(paths[0], paths[1], paths[2])
 
             Map<String, String> checkerConfig = buildContext.productProperties.versionCheckerConfig
             if (checkerConfig != null) {
