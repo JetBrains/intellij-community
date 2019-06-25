@@ -1,11 +1,11 @@
 package org.jetbrains.plugins.textmate.language.syntax.lexer;
 
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,7 +33,7 @@ import static com.intellij.openapi.util.io.FileUtilRt.getExtension;
 @RunWith(com.intellij.testFramework.Parameterized.class)
 abstract public class LexerTestCase extends UsefulTestCase {
   private static final String TEST_DATA_BASE_DIR =
-    PathManager.getHomePath() + "/plugins/textmate/tests/org/jetbrains/plugins/textmate/language/syntax/lexer/data";
+    PlatformTestUtil.getCommunityPath() + "/plugins/textmate/tests/org/jetbrains/plugins/textmate/language/syntax/lexer/data";
 
   private final Map<String, String> myLanguageDescriptors = new HashMap<>();
   private String myRootScope;
