@@ -41,6 +41,7 @@ public interface ProjectDataManager {
                       @NotNull Project project,
                       boolean synchronous);
 
+  @Nullable
   List<ProjectDataService<?, ?>> findService(@NotNull Key<?> key);
 
   void ensureTheDataIsReadyToUse(@Nullable DataNode dataNode);
