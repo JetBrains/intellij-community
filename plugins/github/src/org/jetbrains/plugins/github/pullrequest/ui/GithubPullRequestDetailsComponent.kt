@@ -9,7 +9,9 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.ui.frame.ProgressStripe
-import org.jetbrains.plugins.github.api.data.*
+import org.jetbrains.plugins.github.api.data.GHPullRequest
+import org.jetbrains.plugins.github.api.data.GHPullRequestMergeableState
+import org.jetbrains.plugins.github.api.data.GHPullRequestState
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
@@ -17,8 +19,8 @@ import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoade
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsMetadataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateService
-import org.jetbrains.plugins.github.pullrequest.ui.details.GithubPullRequestDetailsModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.GithubPullRequestDetailsPanel
+import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import java.awt.BorderLayout
 
 internal class GithubPullRequestDetailsComponent(private val dataLoader: GithubPullRequestsDataLoader,
@@ -29,7 +31,7 @@ internal class GithubPullRequestDetailsComponent(private val dataLoader: GithubP
                                                  iconProviderFactory: CachingGithubAvatarIconsProvider.Factory)
   : GithubDataLoadingComponent<GHPullRequest>(), Disposable {
 
-  private val detailsModel = GithubPullRequestDetailsModel()
+  private val detailsModel = SingleValueModel<GHPullRequest?>(null)
   private val detailsPanel = GithubPullRequestDetailsPanel(detailsModel, securityService, busyStateTracker, metadataService, stateService,
                                                            iconProviderFactory)
 
@@ -48,19 +50,17 @@ internal class GithubPullRequestDetailsComponent(private val dataLoader: GithubP
     loadingPanel.add(detailsPanel)
     setContent(backgroundLoadingPanel)
     Disposer.register(this, detailsPanel)
-
-    detailsModel.details = null
   }
 
   override fun extractRequest(provider: GithubPullRequestDataProvider) = provider.detailsRequest
 
   override fun resetUI() {
     detailsPanel.emptyText.text = DEFAULT_EMPTY_TEXT
-    detailsModel.details = null
+    detailsModel.value = null
   }
 
   override fun handleResult(result: GHPullRequest) {
-    detailsModel.details = result
+    detailsModel.value = result
     if (result.state == GHPullRequestState.OPEN && result.mergeable == GHPullRequestMergeableState.UNKNOWN) {
       ApplicationManager.getApplication().invokeLater {
         dataLoader.findDataProvider(result.number)?.reloadDetails()
@@ -79,7 +79,7 @@ internal class GithubPullRequestDetailsComponent(private val dataLoader: GithubP
 
   override fun setBusy(busy: Boolean) {
     if (busy) {
-      if (detailsModel.details == null) {
+      if (detailsModel.value == null) {
         detailsPanel.emptyText.clear()
         loadingPanel.startLoading()
       }

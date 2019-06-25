@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.openapi.Disposable
@@ -15,18 +15,20 @@ import com.intellij.util.ui.StatusText
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.plugins.github.api.data.GHPullRequest
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsMetadataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateService
+import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import java.awt.Graphics
 import java.awt.event.AdjustmentListener
 import javax.swing.BorderFactory
 import javax.swing.JPanel
 
 
-internal class GithubPullRequestDetailsPanel(model: GithubPullRequestDetailsModel,
+internal class GithubPullRequestDetailsPanel(model: SingleValueModel<GHPullRequest?>,
                                              securityService: GithubPullRequestsSecurityService,
                                              busyStateTracker: GithubPullRequestsBusyStateTracker,
                                              metadataService: GithubPullRequestsMetadataService,
@@ -35,7 +37,7 @@ internal class GithubPullRequestDetailsPanel(model: GithubPullRequestDetailsMode
   : JPanel(), ComponentWithEmptyText, Disposable {
 
   private val emptyText = object : StatusText(this) {
-    override fun isStatusVisible() = model.details == null
+    override fun isStatusVisible() = model.value == null
   }
   private val iconsProvider = iconProviderFactory.create(JBValue.UIInteger("Profile.Icon.Size", 20), this)
 

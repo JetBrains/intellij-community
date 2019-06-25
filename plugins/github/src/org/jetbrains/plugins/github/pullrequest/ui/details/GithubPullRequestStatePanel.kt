@@ -12,17 +12,19 @@ import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import icons.GithubIcons
+import org.jetbrains.plugins.github.api.data.GHPullRequest
 import org.jetbrains.plugins.github.api.data.GHPullRequestMergeableState
 import org.jetbrains.plugins.github.api.data.GHPullRequestState
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateService
+import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
 import java.awt.FlowLayout
 import java.awt.event.ActionEvent
 import javax.swing.*
 
-internal class GithubPullRequestStatePanel(private val model: GithubPullRequestDetailsModel,
+internal class GithubPullRequestStatePanel(private val model: SingleValueModel<GHPullRequest?>,
                                            private val securityService: GithubPullRequestsSecurityService,
                                            private val busyStateTracker: GithubPullRequestsBusyStateTracker,
                                            private val stateService: GithubPullRequestsStateService)
@@ -67,7 +69,7 @@ internal class GithubPullRequestStatePanel(private val model: GithubPullRequestD
   private val mergeButton = JBOptionButton(null, null)
 
   private val browseButton = LinkLabel.create("Open on GitHub") {
-    model.details?.run { BrowserUtil.browse(url) }
+    model.value?.run { BrowserUtil.browse(url) }
   }.apply {
     icon = AllIcons.Ide.External_link_arrow
     setHorizontalTextPosition(SwingConstants.LEFT)
@@ -86,14 +88,19 @@ internal class GithubPullRequestStatePanel(private val model: GithubPullRequestD
     }
   }
 
+  private var state: State? by equalVetoingObservable<State?>(null) {
+    updateText(it)
+    updateActions(it)
+  }
+
   init {
     isOpaque = false
     add(stateLabel)
     add(accessDeniedPanel)
     add(buttonsPanel)
 
-    model.addDetailsChangedListener(this) {
-      state = model.details?.let {
+    fun update() {
+      state = model.value?.let {
         State(it.number, it.state, GHPullRequestMergeableState.MERGEABLE,
               it.viewerCanUpdate, it.viewerDidAuthor,
               securityService.isMergeAllowed(),
@@ -104,15 +111,15 @@ internal class GithubPullRequestStatePanel(private val model: GithubPullRequestD
       }
     }
 
+    model.addValueChangedListener(this) {
+      update()
+    }
+    update()
+
     busyStateTracker.addPullRequestBusyStateListener(this) {
       if (it == state?.number)
         state = state?.copy(busy = busyStateTracker.isBusy(it))
     }
-  }
-
-  private var state: State? by equalVetoingObservable<State?>(null) {
-    updateText(it)
-    updateActions(it)
   }
 
   private fun updateText(state: State?) {

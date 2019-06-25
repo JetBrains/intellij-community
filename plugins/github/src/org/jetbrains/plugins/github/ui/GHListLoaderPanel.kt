@@ -69,7 +69,7 @@ internal abstract class GHListLoaderPanel<L : GHListLoader>(protected val listLo
   }
 
   private fun displayErrorStatus(emptyText: StatusText, error: Throwable) {
-    emptyText.appendText(getErrorPrefix(listLoader.hasLoadedItems), SimpleTextAttributes.ERROR_ATTRIBUTES)
+    emptyText.appendText(getErrorPrefix(!listLoader.hasLoadedItems), SimpleTextAttributes.ERROR_ATTRIBUTES)
       .appendSecondaryText(getLoadingErrorText(error), SimpleTextAttributes.ERROR_ATTRIBUTES, null)
       .appendSecondaryText("  ", SimpleTextAttributes.ERROR_ATTRIBUTES, null)
       .appendSecondaryText("Retry", SimpleTextAttributes.LINK_ATTRIBUTES) { listLoader.reset() }
@@ -85,7 +85,7 @@ internal abstract class GHListLoaderPanel<L : GHListLoader>(protected val listLo
   protected open fun updateInfoPanel() {
     val error = listLoader.error
     if (error != null && listLoader.hasLoadedItems) {
-      infoPanel.setInfo("<html><body>${getErrorPrefix(false)}<br/>" +
+      infoPanel.setInfo("<html><body>${getErrorPrefix(!listLoader.hasLoadedItems)}<br/>" +
                         "${getLoadingErrorText(error, "<br/>")}<a href=''>Retry</a></body></html>",
                         HtmlInfoPanel.Severity.ERROR) { listLoader.reset() }
     }

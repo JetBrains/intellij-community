@@ -14,6 +14,7 @@ import org.jetbrains.plugins.github.api.data.GHPullRequest
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
 import org.jetbrains.plugins.github.ui.WrapLayout
+import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
 import java.awt.Cursor
 import java.awt.FlowLayout
@@ -24,7 +25,7 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-internal abstract class LabeledListPanelHandle<T>(private val model: GithubPullRequestDetailsModel,
+internal abstract class LabeledListPanelHandle<T>(private val model: SingleValueModel<GHPullRequest?>,
                                                   private val securityService: GithubPullRequestsSecurityService,
                                                   private val busyStateTracker: GithubPullRequestsBusyStateTracker,
                                                   emptyText: String, notEmptyText: String)
@@ -78,17 +79,22 @@ internal abstract class LabeledListPanelHandle<T>(private val model: GithubPullR
   }
 
   init {
-    model.addDetailsChangedListener(this) {
-      list = model.details?.let(::extractItems)
+    fun update() {
+      list = model.value?.let(::extractItems)
       updateButton()
+    }
+
+    model.addValueChangedListener(this) {
+      update()
     }
     busyStateTracker.addPullRequestBusyStateListener(this) {
       updateButton()
     }
+    update()
   }
 
   private fun updateButton() {
-    editButton.isEnabled = !(model.details?.number?.let(busyStateTracker::isBusy) ?: true)
+    editButton.isEnabled = !(model.value?.number?.let(busyStateTracker::isBusy) ?: true)
   }
 
   private fun getListItemComponent(item: T, last: Boolean = false) =

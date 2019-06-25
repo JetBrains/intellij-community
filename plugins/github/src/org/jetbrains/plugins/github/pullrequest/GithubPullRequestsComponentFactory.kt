@@ -7,11 +7,13 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.*
+import com.intellij.util.ui.JBSwingUtilities
 import git4idea.commands.Git
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
@@ -35,7 +37,11 @@ import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubImageResizer
 import org.jetbrains.plugins.github.util.GithubSharedProjectSettings
 import java.awt.Component
+import java.awt.event.KeyEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import javax.swing.JComponent
+import javax.swing.KeyStroke
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 import javax.swing.event.ListSelectionEvent
@@ -50,7 +56,8 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
                                                   private val actionManager: ActionManager,
                                                   private val autoPopupController: AutoPopupController,
                                                   private val sharedProjectSettings: GithubSharedProjectSettings,
-                                                  private val pullRequestUiSettings: GithubPullRequestsProjectUISettings) {
+                                                  private val pullRequestUiSettings: GithubPullRequestsProjectUISettings,
+                                                  private val fileEditorManager: FileEditorManager) {
 
   fun createComponent(requestExecutor: GithubApiRequestExecutor,
                       repository: GitRepository, remote: GitRemote,
@@ -115,6 +122,16 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
       list.emptyText.clear()
       installPopup(list)
       installSelectionSaver(list)
+      list.addMouseListener(object : MouseAdapter() {
+        override fun mouseClicked(e: MouseEvent) {
+          if (JBSwingUtilities.isLeftMouseButton(e) && e.clickCount >= 2 && ListUtil.isPointOnSelection(list, e.x, e.y)) {
+            openTimelineForSelection(list)
+            e.consume()
+          }
+        }
+      })
+      list.registerKeyboardAction({ openTimelineForSelection(list) }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
+                                  JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
 
       val search = GithubPullRequestSearchPanel(project, autoPopupController, searchHolder).apply {
         border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
@@ -153,6 +170,12 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
         Disposer.dispose(changes)
         Disposer.dispose(details)
       }
+    }
+
+    private fun openTimelineForSelection(list: GithubPullRequestsList) {
+      val pullRequest = list.selectedValue
+      val file = GHPRVirtualFile(pullRequest, dataLoader.getDataProvider(pullRequest.number))
+      fileEditorManager.openFile(file, true)
     }
 
     private val dataContext = GithubPullRequestsDataContext(requestExecutor, repoDataLoader, listLoader, listSelectionHolder, dataLoader,

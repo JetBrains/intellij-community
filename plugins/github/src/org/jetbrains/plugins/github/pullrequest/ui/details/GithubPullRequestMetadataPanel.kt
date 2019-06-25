@@ -16,12 +16,13 @@ import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIcons
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsMetadataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
+import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
-internal class GithubPullRequestMetadataPanel(private val model: GithubPullRequestDetailsModel,
+internal class GithubPullRequestMetadataPanel(private val model: SingleValueModel<GHPullRequest?>,
                                               private val securityService: GithubPullRequestsSecurityService,
                                               private val busyStateTracker: GithubPullRequestsBusyStateTracker,
                                               private val metadataService: GithubPullRequestsMetadataService,
@@ -48,9 +49,14 @@ internal class GithubPullRequestMetadataPanel(private val model: GithubPullReque
     addListPanel(assigneesHandle)
     addListPanel(labelsHandle)
 
-    model.addDetailsChangedListener(this) {
-      directionPanel.direction = model.details?.let { it.headLabel to it.baseRefName }
+    fun update() {
+      directionPanel.direction = model.value?.let { it.headLabel to it.baseRefName }
     }
+
+    model.addValueChangedListener(this) {
+      update()
+    }
+    update()
 
     Disposer.register(this, reviewersHandle)
     Disposer.register(this, assigneesHandle)
@@ -72,7 +78,7 @@ internal class GithubPullRequestMetadataPanel(private val model: GithubPullReque
     override fun getItemComponent(item: GHUser) = createUserLabel(item)
 
     override fun editList() {
-      model.details?.run { metadataService.adjustReviewers(number, editButton) }
+      model.value?.run { metadataService.adjustReviewers(number, editButton) }
     }
   }
 
@@ -84,7 +90,7 @@ internal class GithubPullRequestMetadataPanel(private val model: GithubPullReque
     override fun getItemComponent(item: GHUser) = createUserLabel(item)
 
     override fun editList() {
-      model.details?.run { metadataService.adjustAssignees(number, editButton) }
+      model.value?.run { metadataService.adjustAssignees(number, editButton) }
     }
   }
 
@@ -102,7 +108,7 @@ internal class GithubPullRequestMetadataPanel(private val model: GithubPullReque
     override fun getItemComponent(item: GHLabel) = createLabelLabel(item)
 
     override fun editList() {
-      model.details?.run { metadataService.adjustLabels(number, editButton) }
+      model.value?.run { metadataService.adjustLabels(number, editButton) }
     }
   }
 
