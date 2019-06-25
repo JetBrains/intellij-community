@@ -84,8 +84,8 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
   private fun refine(controller: LinearGraphController,
                      startCommit: Int?,
                      permanentGraphInfo: PermanentGraphInfo<Int>): Map<Int, MaybeDeletedFilePath> {
-    if (fileHistoryData.hasRenames && Registry.`is`("vcs.history.refine")) {
-      val visibleLinearGraph = controller.compiledGraph
+    val visibleLinearGraph = controller.compiledGraph
+    if (visibleLinearGraph.nodesCount() > 0 && fileHistoryData.hasRenames && Registry.`is`("vcs.history.refine")) {
 
       val (row, path) = startCommit?.let {
         findAncestorRowAffectingFile(startCommit, visibleLinearGraph, permanentGraphInfo)
