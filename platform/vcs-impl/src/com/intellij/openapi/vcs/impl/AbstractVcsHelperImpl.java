@@ -695,7 +695,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       myLocation = location;
       mySettings = settings;
       myDlg = dlg;
-      myExceptions = new LinkedList<>();
+      myExceptions = new ArrayList<>();
     }
 
     public void cancel() {

@@ -50,7 +50,7 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
   protected Collection<PatchApplier> getPatchAppliers(@NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> patchGroups,
                                                       @Nullable LocalChangeList localList,
                                                       @NotNull CommitContext commitContext) {
-    final Collection<PatchApplier> appliers = new LinkedList<>();
+    final Collection<PatchApplier> appliers = new ArrayList<>();
     for (VirtualFile base : patchGroups.keySet()) {
       appliers.add(new PatchApplier<BinaryFilePatch>(myProject, base,
                                                      ContainerUtil

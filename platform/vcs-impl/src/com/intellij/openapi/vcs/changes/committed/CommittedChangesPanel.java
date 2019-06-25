@@ -36,7 +36,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -383,7 +382,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
 
   public void passCachedListsToListener(final VcsConfigurationChangeListener.DetailedNotification notification,
                                         final Project project, final VirtualFile root) {
-    final LinkedList<CommittedChangeList> resultList = new LinkedList<>();
+    final List<CommittedChangeList> resultList = new ArrayList<>();
     myBrowser.reportLoadedLists(new CommittedChangeListsListener() {
       @Override
       public void onBeforeStartReport() {

@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
@@ -77,7 +76,7 @@ public class ChangesViewContentManager implements ChangesViewContentI, Disposabl
   }
 
   private void loadExtensionTabs() {
-    final List<Content> contentList = new LinkedList<>();
+    final List<Content> contentList = new ArrayList<>();
     for(ChangesViewContentEP ep: ChangesViewContentEP.EP_NAME.getExtensionList(myProject)) {
       final NotNullFunction<Project,Boolean> predicate = ep.newPredicateInstance(myProject);
       if (predicate == null || predicate.fun(myProject).equals(Boolean.TRUE)) {

@@ -17,9 +17,9 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
 
 public class RemoteRevisionsCache implements VcsListener {
@@ -142,8 +142,8 @@ public class RemoteRevisionsCache implements VcsListener {
     synchronized (myLock) {
       strategyMap = new HashMap<>(myKinds);
     }
-    final Collection<String> newForTree = new LinkedList<>();
-    final Collection<String> newForUsual = new LinkedList<>();
+    final Collection<String> newForTree = new ArrayList<>();
+    final Collection<String> newForUsual = new ArrayList<>();
     UpdateFilesHelper.iterateAffectedFiles(updatedFiles, pair -> {
       final String vcsName = pair.getSecond();
       RemoteDifferenceStrategy strategy = strategyMap.get(vcsName);

@@ -613,7 +613,7 @@ public class PathsVerifier {
       myProject = project;
       myOverrideExisting = new HashMap<>();
       mySkipDeleted = new HashMap<>();
-      myOverridenPaths = new LinkedList<>();
+      myOverridenPaths = new ArrayList<>();
     }
 
     public void addSkip(final FilePath path, final FilePatch filePatch) {
@@ -628,7 +628,7 @@ public class PathsVerifier {
 
     // returns those to be skipped
     public Collection<FilePatch> doDelayed() {
-      final List<FilePatch> result = new LinkedList<>();
+      final List<FilePatch> result = new ArrayList<>();
       if (! myOverrideExisting.isEmpty()) {
         final String title = "Overwrite Existing Files";
         List<FilePath> files = new ArrayList<>(myOverrideExisting.keySet());

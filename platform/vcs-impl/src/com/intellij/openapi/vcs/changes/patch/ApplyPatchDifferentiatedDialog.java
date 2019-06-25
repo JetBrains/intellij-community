@@ -143,7 +143,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     descriptor.setTitle(VcsBundle.message("patch.apply.select.title"));
 
     myProject = project;
-    myPatches = new LinkedList<>();
+    myPatches = new ArrayList<>();
     myRecentPathFileChange = new AtomicReference<>();
     myBinaryShelvedPatches = binaryShelvedPatches;
     myPreselectedChanges = preselectedChanges;
@@ -730,7 +730,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     final NamedLegendStatuses totalNameStatuses = new NamedLegendStatuses();
     final NamedLegendStatuses includedNameStatuses = new NamedLegendStatuses();
 
-    final Collection<AbstractFilePatchInProgress.PatchChange> included = new LinkedList<>();
+    final Collection<AbstractFilePatchInProgress.PatchChange> included = new ArrayList<>();
     if (doInitCheck) {
       for (AbstractFilePatchInProgress.PatchChange change : changes) {
         acceptChange(totalNameStatuses, change);

@@ -78,7 +78,7 @@ public class VcsRootIterator {
       myRoot = root;
       myVcsName = vcsName;
 
-      myExcludedByOthers = new LinkedList<>();
+      myExcludedByOthers = new ArrayList<>();
     }
 
     private void init(final VcsRoot[] allRoots) {
