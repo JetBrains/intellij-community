@@ -100,8 +100,14 @@ public final class XLineBreakpointManager {
   }
 
   void updateBreakpointsUI() {
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
-      (DumbAwareRunnable)() -> breakpoints().forEach(XLineBreakpointImpl::updateUI));
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+
+    //noinspection CodeBlock2Expr
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
+      myBreakpoints.keySet().forEach(XLineBreakpointImpl::updateUI);
+    });
   }
 
   public void registerBreakpoint(XLineBreakpointImpl breakpoint, final boolean initUI) {
