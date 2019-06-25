@@ -190,7 +190,6 @@ public class JBTabsImpl extends JComponent
     return myTabPainter;
   }
 
-  private Lifetime lifetime = createLifetime(this);
   private TabLabel tabLabelAtMouse;
 
   public JBTabsImpl(@NotNull Project project) {
@@ -208,7 +207,7 @@ public class JBTabsImpl extends JComponent
   public JBTabsImpl(@Nullable Project project, @NotNull ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
     myProject = project;
     myActionManager = actionManager;
-    myFocusManager = focusManager != null ? focusManager : IdeFocusManager.getGlobalInstance();
+    myFocusManager = focusManager != null ? focusManager : getGlobalInstance();
 
     setOpaque(true);
     setBackground(myTabPainter.getBackgroundColor());
