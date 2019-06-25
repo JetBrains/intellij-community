@@ -14,6 +14,7 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.ArrayUtilRt
 import com.siyeh.ig.ui.ExternalizableStringSet
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import java.awt.BorderLayout
 import javax.swing.JPanel
@@ -21,7 +22,11 @@ import javax.swing.JPanel
 class UnstableApiUsageInspection : LocalInspectionTool() {
 
   companion object {
+
+    private val SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME: String = ApiStatus.ScheduledForRemoval::class.java.canonicalName
+
     val DEFAULT_UNSTABLE_API_ANNOTATIONS: List<String> = listOf(
+      SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME,
       "org.jetbrains.annotations.ApiStatus.Experimental",
       "org.jetbrains.annotations.ApiStatus.Internal",
       "com.google.common.annotations.Beta",
@@ -33,25 +38,7 @@ class UnstableApiUsageInspection : LocalInspectionTool() {
       "org.gradle.api.Incubating"
     )
 
-    fun findAnnotationOfItselfOrContainingDeclaration(
-      listOwner: PsiModifierListOwner,
-      annotationNames: Collection<String>,
-      includeExternalAnnotations: Boolean
-    ): PsiAnnotation? {
-      val annotation = AnnotationUtil.findAnnotation(listOwner, annotationNames, !includeExternalAnnotations)
-      if (annotation != null) {
-        return annotation
-      }
-      if (listOwner is PsiMember) {
-        val containingClass = listOwner.containingClass
-        if (containingClass != null) {
-          return findAnnotationOfItselfOrContainingDeclaration(containingClass, annotationNames, includeExternalAnnotations)
-        }
-      }
-      val packageName = (listOwner.containingFile as? PsiClassOwner)?.packageName ?: return null
-      val psiPackage = JavaPsiFacade.getInstance(listOwner.project).findPackage(packageName) ?: return null
-      return findAnnotationOfItselfOrContainingDeclaration(psiPackage, annotationNames, includeExternalAnnotations)
-    }
+    private val knownAnnotationMessageProviders = mapOf(SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME to ScheduledForRemovalMessageProvider())
   }
 
   @JvmField
@@ -62,9 +49,14 @@ class UnstableApiUsageInspection : LocalInspectionTool() {
   @JvmField
   var myIgnoreInsideImports: Boolean = true
 
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
     ApiUsageUastVisitor.createPsiElementVisitor(
-      UnstableApiUsageProcessor(holder, myIgnoreInsideImports, unstableApiAnnotations.toList())
+      UnstableApiUsageProcessor(
+        holder,
+        myIgnoreInsideImports,
+        unstableApiAnnotations.toList(),
+        knownAnnotationMessageProviders
+      )
     )
 
   override fun createOptionsPanel(): JPanel {
@@ -87,7 +79,8 @@ class UnstableApiUsageInspection : LocalInspectionTool() {
 private class UnstableApiUsageProcessor(
   private val problemsHolder: ProblemsHolder,
   private val ignoreInsideImports: Boolean,
-  private val unstableAnnotationNames: List<String>
+  private val unstableApiAnnotations: List<String>,
+  private val knownAnnotationMessageProviders: Map<String, UnstableApiUsageMessageProvider>
 ) : ApiUsageProcessor {
 
   private companion object {
@@ -129,21 +122,99 @@ private class UnstableApiUsageProcessor(
     if (!isLibraryElement(target)) {
       return
     }
-    val unstableAnnotation = UnstableApiUsageInspection.findAnnotationOfItselfOrContainingDeclaration(target, unstableAnnotationNames, true)
-    if (unstableAnnotation == null) {
+    val annotatedContainingDeclaration = findAnnotatedContainingDeclaration(target, unstableApiAnnotations, true)
+    if (annotatedContainingDeclaration == null) {
       return
     }
-    val targetName = getPresentableName(target)
-    val message = if (isMethodOverriding) {
-      JvmAnalysisBundle.message("jvm.inspections.unstable.method.overridden.description", targetName)
-    }
-    else {
-      JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.description", targetName)
-    }
+    val annotationName = annotatedContainingDeclaration.psiAnnotation.qualifiedName ?: return
+    val messageProvider = knownAnnotationMessageProviders[annotationName] ?: DefaultUnstableApiUsageMessageProvider
+    val message = messageProvider.buildMessage(annotatedContainingDeclaration, isMethodOverriding)
     val elementToHighlight = (sourceNode as? UDeclaration)?.uastAnchor.sourcePsiElement ?: sourceNode.sourcePsi
     if (elementToHighlight != null) {
       problemsHolder.registerProblem(elementToHighlight, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
     }
   }
 
+}
+
+data class AnnotatedContainingDeclaration(
+  val target: PsiModifierListOwner,
+  val containingDeclaration: PsiModifierListOwner,
+  val psiAnnotation: PsiAnnotation
+)
+
+fun findAnnotatedContainingDeclaration(
+  target: PsiModifierListOwner,
+  annotationNames: Collection<String>,
+  includeExternalAnnotations: Boolean
+): AnnotatedContainingDeclaration? =
+  findAnnotatedContainingDeclaration(target, target, annotationNames, includeExternalAnnotations)
+
+private fun findAnnotatedContainingDeclaration(
+  target: PsiModifierListOwner,
+  listOwner: PsiModifierListOwner,
+  annotationNames: Collection<String>,
+  includeExternalAnnotations: Boolean
+): AnnotatedContainingDeclaration? {
+  val annotation = AnnotationUtil.findAnnotation(listOwner, annotationNames, !includeExternalAnnotations)
+  if (annotation != null) {
+    return AnnotatedContainingDeclaration(target, listOwner, annotation)
+  }
+  if (listOwner is PsiMember) {
+    val containingClass = listOwner.containingClass
+    if (containingClass != null) {
+      return findAnnotatedContainingDeclaration(target, containingClass, annotationNames, includeExternalAnnotations)
+    }
+  }
+  val packageName = (listOwner.containingFile as? PsiClassOwner)?.packageName ?: return null
+  val psiPackage = JavaPsiFacade.getInstance(listOwner.project).findPackage(packageName) ?: return null
+  return findAnnotatedContainingDeclaration(target, psiPackage, annotationNames, includeExternalAnnotations)
+}
+
+private interface UnstableApiUsageMessageProvider {
+  fun buildMessage(
+    annotatedContainingDeclaration: AnnotatedContainingDeclaration,
+    isMethodOverriding: Boolean
+  ): String
+}
+
+private object DefaultUnstableApiUsageMessageProvider : UnstableApiUsageMessageProvider {
+  override fun buildMessage(
+    annotatedContainingDeclaration: AnnotatedContainingDeclaration,
+    isMethodOverriding: Boolean
+  ): String {
+    val targetName = getPresentableName(annotatedContainingDeclaration.target)
+    return if (isMethodOverriding) {
+      JvmAnalysisBundle.message("jvm.inspections.unstable.method.overridden.description", targetName)
+    }
+    else {
+      JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.description", targetName)
+    }
+  }
+}
+
+private class ScheduledForRemovalMessageProvider : UnstableApiUsageMessageProvider {
+  override fun buildMessage(
+    annotatedContainingDeclaration: AnnotatedContainingDeclaration,
+    isMethodOverriding: Boolean
+  ): String {
+    val inVersion = AnnotationUtil.getDeclaredStringAttributeValue(annotatedContainingDeclaration.psiAnnotation, "inVersion")
+    val targetName = getPresentableName(annotatedContainingDeclaration.target)
+    val isEmptyVersion = inVersion == null || inVersion.isEmpty()
+    return when {
+      isEmptyVersion && isMethodOverriding -> JvmAnalysisBundle.message(
+        "jvm.inspections.scheduled.for.removal.method.overridden.no.version.description", targetName
+      )
+
+      !isEmptyVersion && isMethodOverriding -> JvmAnalysisBundle.message(
+        "jvm.inspections.scheduled.for.removal.method.overridden.with.version.description", targetName, inVersion
+      )
+
+      !isEmptyVersion && !isMethodOverriding -> JvmAnalysisBundle.message(
+        "jvm.inspections.scheduled.for.removal.description.with.version", targetName, inVersion
+      )
+
+      else -> JvmAnalysisBundle.message("jvm.inspections.scheduled.for.removal.description.no.version", targetName)
+    }
+  }
 }

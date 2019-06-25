@@ -11,12 +11,12 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.PathUtil
 import org.jetbrains.annotations.ApiStatus
 
-@TestDataPath("\$CONTENT_ROOT/testData/codeInspection/unstableApiUsage")
+@TestDataPath("\$CONTENT_ROOT/testData/codeInspection/unstableApiUsage/experimental")
 class UnstableApiUsageInspectionTest : JavaCodeInsightFixtureTestCase() {
 
   private val inspection = UnstableApiUsageInspection()
 
-  override fun getBasePath() = "${JvmAnalysisKtTestsUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH}/codeInspection/unstableApiUsage"
+  override fun getBasePath() = "${JvmAnalysisKtTestsUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH}/codeInspection/unstableApiUsage/experimental"
 
   override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
     moduleBuilder.addLibrary("util", PathUtil.getJarPathForClass(ApiStatus::class.java))
@@ -43,23 +43,66 @@ class UnstableApiUsageInspectionTest : JavaCodeInsightFixtureTestCase() {
     ).forEach { myFixture.copyFileToProject(it) }
   }
 
-  fun testJavaInspection() {
+  fun `test java unstable api usages`() {
     inspection.myIgnoreInsideImports = false
     myFixture.testHighlighting(true, false, false, "UnstableElementsTest.java")
   }
 
-  fun testJavaIgnoreImports() {
+  fun `test java do not report unstable api usages inside import statements`() {
     inspection.myIgnoreInsideImports = true
     myFixture.testHighlighting(true, false, false, "UnstableElementsIgnoreImportsTest.java")
   }
 
-  fun testKotlinInspection() {
+  fun `test kotlin unstable api usages`() {
     inspection.myIgnoreInsideImports = false
     myFixture.testHighlighting("UnstableElementsTest.kt")
   }
 
-  fun testKotlinIgnoreImports() {
+  fun `test kotlin do not report unstable api usages inside import statements`() {
     inspection.myIgnoreInsideImports = true
     myFixture.testHighlighting("UnstableElementsIgnoreImportsTest.kt")
+  }
+}
+
+@TestDataPath("\$CONTENT_ROOT/testData/codeInspection/unstableApiUsage/scheduledForRemoval")
+class ScheduledForRemovalApiUsageTest: JavaCodeInsightFixtureTestCase() {
+
+  private val inspection = UnstableApiUsageInspection()
+
+  override fun getBasePath() = "${JvmAnalysisKtTestsUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH}/codeInspection/unstableApiUsage/scheduledForRemoval"
+
+  override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
+    moduleBuilder.addLibrary("util", PathUtil.getJarPathForClass(ApiStatus::class.java))
+  }
+
+  override fun setUp() {
+    super.setUp()
+    // otherwise assertion in PsiFileImpl ("Access to tree elements not allowed") will not pass
+    myFixture.enableInspections(inspection)
+    (myFixture as CodeInsightTestFixtureImpl).setVirtualFileFilter(VirtualFileFilter.NONE)
+    configureAnnotatedFiles()
+  }
+
+  private fun configureAnnotatedFiles() {
+    listOf(
+      "annotatedPkg/ClassInAnnotatedPkg.java",
+      "annotatedPkg/package-info.java",
+      "pkg/AnnotatedAnnotation.java",
+      "pkg/AnnotatedClass.java",
+      "pkg/AnnotatedEnum.java",
+      "pkg/NonAnnotatedAnnotation.java",
+      "pkg/NonAnnotatedClass.java",
+      "pkg/NonAnnotatedEnum.java"
+    ).forEach { myFixture.copyFileToProject(it) }
+  }
+
+  fun testKotlinInspection() {
+    inspection.myIgnoreInsideImports = false
+    myFixture.testHighlighting("ScheduledForRemovalElementsTest.kt")
+  }
+
+  fun testJavaInspection() {
+    inspection.myIgnoreInsideImports = false
+    myFixture.testHighlighting(true, false, false, "ScheduledForRemovalElementsTest.java")
   }
 }

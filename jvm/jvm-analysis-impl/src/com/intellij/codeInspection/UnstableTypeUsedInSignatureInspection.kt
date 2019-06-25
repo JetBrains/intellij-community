@@ -3,7 +3,6 @@ package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInspection.UnstableApiUsageInspection.Companion.DEFAULT_UNSTABLE_API_ANNOTATIONS
-import com.intellij.codeInspection.UnstableApiUsageInspection.Companion.findAnnotationOfItselfOrContainingDeclaration
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.*
@@ -140,9 +139,9 @@ class UnstableTypeUsedInSignatureInspection : LocalInspectionTool() {
       if (psiType is PsiClassType) {
         val psiClass = psiType.resolve()
         if (psiClass != null) {
-          val unstableApiAnnotation = findAnnotationOfItselfOrContainingDeclaration(psiClass, unstableApiAnnotations, false)
+          val unstableApiAnnotation = findAnnotatedContainingDeclaration(psiClass, unstableApiAnnotations, false)
           if (unstableApiAnnotation != null) {
-            return psiClass to unstableApiAnnotation
+            return psiClass to unstableApiAnnotation.psiAnnotation
           }
         }
         for (parameterType in psiType.parameters) {
