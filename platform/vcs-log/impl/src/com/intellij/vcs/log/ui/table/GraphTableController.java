@@ -300,6 +300,7 @@ public class GraphTableController {
 
     @Override
     public void mouseMoved(MouseEvent e) {
+      if (myTable.getRowCount() == 0) return;
       if (myTable.isResizingColumns()) return;
       myTable.getExpandableItemsHandler().setEnabled(true);
 
