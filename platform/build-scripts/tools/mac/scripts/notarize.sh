@@ -4,6 +4,7 @@ APP_DIRECTORY=$1
 APPL_USER=$2
 APPL_PASSWORD=$3
 APP_NAME=$4
+BUNDLE_ID=$5
 
 if [[ -z "$APP_DIRECTORY" ]] || [[ -z "$APPL_USER" ]] || [[ -z "$APPL_PASSWORD" ]]; then
   echo "Usage: $0 AppDirectory Username Password"
@@ -38,7 +39,7 @@ rm -rf "altool.init.out" "altool.check.out"
 # For some reason altool prints everything to stderr, not stdout
 xcrun altool --notarize-app \
   --username "$APPL_USER" --password "$APPL_PASSWORD" \
-  --primary-bundle-id com.jetbrains.intellij \
+  --primary-bundle-id "$BUNDLE_ID" \
   -itc_provider JetBrainssro --file "$file" >"altool.init.out" 2>&1 || true
 cat "altool.init.out"
 
