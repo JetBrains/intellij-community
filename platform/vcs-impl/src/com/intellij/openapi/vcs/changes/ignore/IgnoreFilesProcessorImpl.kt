@@ -69,13 +69,14 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs<*>
   private fun silentlyIgnoreFilesInsideConfigDir(files: List<VirtualFile>): List<VirtualFile> {
     val configDir = project.stateStore.projectConfigDir ?: return files
     val configDirFile = LocalFileSystem.getInstance().findFileByPath(configDir) ?: return files
-    val filesInStoreDir = files.filter { VfsUtil.isAncestor(configDirFile, it, true) }
+    val filesInConfigDir = files.filter { VfsUtil.isAncestor(configDirFile, it, true) }
+    val unversionedFilesInConfigDir = doFilterFiles(filesInConfigDir)
 
     runInEdt {
-      writeIgnores(project, filesInStoreDir)
+      writeIgnores(project, unversionedFilesInConfigDir)
     }
 
-    return files - filesInStoreDir
+    return files - filesInConfigDir
   }
 
   override fun filesChanged(events: List<VFileEvent>) {
