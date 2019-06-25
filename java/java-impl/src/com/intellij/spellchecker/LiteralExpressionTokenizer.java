@@ -32,6 +32,9 @@ public class LiteralExpressionTokenizer extends EscapeSequenceTokenizer<PsiLiter
     else if (literalElementType == JavaTokenType.RAW_STRING_LITERAL) {
       text = literalExpression.getRawString();
     }
+    else if (literalElementType == JavaTokenType.TEXT_BLOCK_LITERAL) {
+      text = literalExpression.getText();
+    }
     else {
       text = null;
     }
