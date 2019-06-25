@@ -13,7 +13,9 @@ fun createCacheWriteConfiguration() = WriteConfiguration(allowAnySubTypes = true
 
 private fun createDataClassResolver(log: Logger): (name: String, hostObject: DataNode<*>) -> Class<*>? {
   val projectDataManager = ProjectDataManager.getInstance()
-  val allManagers = ExternalSystemApiUtil.getAllManagers()
+  val managerClassLoaders = ExternalSystemApiUtil.getAllManagers().asSequence()
+    .map { it.javaClass.classLoader }
+    .toSet()
   return fun(name: String, hostObject: DataNode<*>): Class<*>? {
     val services = projectDataManager!!.findService(hostObject.key)
     if (services != null) {
@@ -26,9 +28,9 @@ private fun createDataClassResolver(log: Logger): (name: String, hostObject: Dat
       }
     }
 
-    for (manager in allManagers) {
+    for (classLoader in managerClassLoaders) {
       try {
-        return manager.javaClass.classLoader.loadClass(name)
+        return classLoader.loadClass(name)
       }
       catch (e: ClassNotFoundException) {
       }
