@@ -59,7 +59,6 @@ public class JBTabsImpl extends JComponent
   static final int MIN_TAB_WIDTH = JBUIScale.scale(75);
   public static final int DEFAULT_MAX_TAB_WIDTH = JBUIScale.scale(300);
 
-  public static final Color MAC_AQUA_BG_COLOR = Gray._200;
   private static final Comparator<TabInfo> ABC_COMPARATOR = (o1, o2) -> StringUtil.naturalCompare(o1.getText(), o2.getText());
   private static final JBValue ACTIVE_TAB_UNDERLINE_HEIGHT = new JBValue.Float(4);
 
@@ -170,7 +169,6 @@ public class JBTabsImpl extends JComponent
   private SelectionChangeHandler mySelectionChangeHandler;
 
   private Runnable myDeferredFocusRequest;
-  private boolean myAlwaysPaintSelectedTab;
   private int myFirstTabOffset;
   private boolean myAlphabeticalMode = false;
   private boolean mySupportsCompression = false;
@@ -1800,7 +1798,7 @@ public class JBTabsImpl extends JComponent
     final int alpha;
     int paintTopY = shapeInfo.labelTopY;
     int paintBottomY = shapeInfo.labelBottomY;
-    final boolean paintFocused = myPaintFocus && (myFocused || myActivePopup != null || myAlwaysPaintSelectedTab);
+    final boolean paintFocused = myPaintFocus && (myFocused || myActivePopup != null);
     Color bgPreFill = null;
     if (paintFocused) {
       final Color bgColor = getActiveTabColor(getActiveTabFillIn());
@@ -2909,12 +2907,6 @@ public class JBTabsImpl extends JComponent
   @Override
   public JBTabsPresentation setPaintFocus(final boolean paintFocus) {
     myPaintFocus = paintFocus;
-    return this;
-  }
-
-  @Override
-  public JBTabsPresentation setAlwaysPaintSelectedTab(final boolean paintSelected) {
-    myAlwaysPaintSelectedTab = paintSelected;
     return this;
   }
 
