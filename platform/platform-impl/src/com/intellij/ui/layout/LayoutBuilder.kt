@@ -7,44 +7,19 @@ import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBRadioButton
-import com.intellij.ui.components.Label
-import com.intellij.ui.layout.migLayout.*
 import java.awt.event.ActionListener
 import javax.swing.ButtonGroup
+import javax.swing.JComponent
 import javax.swing.JLabel
 import kotlin.reflect.KMutableProperty0
-import kotlin.reflect.KProperty0
 
-open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal val builder: LayoutBuilderImpl, val buttonGroup: ButtonGroup? = null) {
-  inline fun row(label: String, init: Row.() -> Unit) = row(label = Label(label), init = init)
-
-  inline fun row(label: JLabel? = null, separated: Boolean = false, init: Row.() -> Unit): Row {
-    val row = builder.newRow(label, buttonGroup, separated)
-    row.init()
-    return row
+open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal val builder: LayoutBuilderImpl, override val buttonGroup: ButtonGroup? = null) : RowBuilder {
+  override fun createChildRow(label: JLabel?, buttonGroup: ButtonGroup?, isSeparated: Boolean, noGrid: Boolean, title: String?): Row {
+    return builder.rootRow.createChildRow(label, buttonGroup, isSeparated, noGrid, title)
   }
 
-  inline fun titledRow(title: String, init: Row.() -> Unit): Row {
-    val row = builder.newTitledRow(title)
-    row.init()
-    return row
-  }
-
-  // linkHandler is not an optional for backward compatibility
-  /**
-   * Hyperlinks are supported (`<a href=""></a>`), new lines and <br> are supported only if no links (file issue if need).
-   */
-  @JvmOverloads
-  fun noteRow(text: String, linkHandler: ((url: String) -> Unit)? = null) {
-    builder.noteRow(text, linkHandler)
-  }
-
-  fun commentRow(text: String) {
-    builder.commentRow(text)
-  }
-
-  inline fun buttonGroup(init: LayoutBuilder.() -> Unit) {
-    LayoutBuilder(builder, ButtonGroup()).init()
+  override fun createNoteOrCommentRow(component: JComponent): Row {
+    return builder.rootRow.createNoteOrCommentRow(component)
   }
 
   fun <T : Any> buttonGroup(prop: KMutableProperty0<T>, init: LayoutBuilderWithButtonGroupProperty<T>.() -> Unit) {

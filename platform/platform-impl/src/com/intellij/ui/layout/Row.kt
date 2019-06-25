@@ -3,14 +3,50 @@ package com.intellij.ui.layout
 
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.ui.components.Label
-import com.intellij.ui.components.RadioButton
 import com.intellij.ui.components.noteComponent
-import com.intellij.util.ui.UIUtil.ComponentStyle
-import com.intellij.util.ui.UIUtil.FontColor
 import javax.swing.ButtonGroup
 import javax.swing.JComponent
+import javax.swing.JLabel
 
-abstract class Row : Cell() {
+interface RowBuilder {
+  val buttonGroup: ButtonGroup?
+
+  fun createChildRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null,
+                     isSeparated: Boolean = false,
+                     noGrid: Boolean = false,
+                     title: String? = null): Row
+
+  fun createNoteOrCommentRow(component: JComponent): Row
+
+  fun row(label: JLabel? = null, separated: Boolean = false, init: Row.() -> Unit): Row {
+    return createChildRow(label = label, isSeparated = separated, buttonGroup = buttonGroup).apply(init)
+  }
+
+  fun row(label: String?, separated: Boolean = false, init: Row.() -> Unit): Row {
+    return createChildRow(label?.let { Label(it) }, isSeparated = separated, buttonGroup = buttonGroup).apply(init)
+  }
+
+  fun titledRow(title: String, init: Row.() -> Unit): Row {
+    return createChildRow(isSeparated = true, title = title).apply(init)
+  }
+
+  /**
+   * Hyperlinks are supported (`<a href=""></a>`), new lines and <br> are supported only if no links (file issue if need).
+   */
+  fun noteRow(text: String, linkHandler: ((url: String) -> Unit)? = null) {
+    createNoteOrCommentRow(noteComponent(text, linkHandler))
+  }
+
+  fun commentRow(text: String) {
+    createNoteOrCommentRow(ComponentPanelBuilder.createCommentComponent(text, true))
+  }
+
+  fun buttonGroup(init: Row.() -> Unit): Row {
+    return createChildRow(buttonGroup = ButtonGroup()).apply(init)
+  }
+}
+
+abstract class Row : Cell(), RowBuilder {
   abstract var enabled: Boolean
 
   abstract var visible: Boolean
@@ -34,24 +70,6 @@ abstract class Row : Cell() {
 
   abstract fun largeGapAfter()
 
-  inline fun row(label: String, init: Row.() -> Unit): Row {
-    val row = createRow(label)
-    row.init()
-    return row
-  }
-
-  inline fun row(init: Row.() -> Unit): Row {
-    val row = createRow(null)
-    row.init()
-    return row
-  }
-
-  inline fun buttonGroup(init: Row.() -> Unit): Row {
-    val row = createRow(null, ButtonGroup())
-    row.init()
-    return row
-  }
-
   /**
    * Shares cell between components.
    */
@@ -62,13 +80,7 @@ abstract class Row : Cell() {
   }
 
   @PublishedApi
-  internal abstract fun createRow(label: String?): Row
-
-  @PublishedApi
   internal abstract fun createRow(label: String?, buttonGroup: ButtonGroup?): Row
-
-  @PublishedApi
-  internal abstract fun createNoteOrCommentRow(component: JComponent): Row
 
   @PublishedApi
   internal abstract fun setCellMode(value: Boolean, isVerticalFlow: Boolean)
@@ -79,7 +91,8 @@ abstract class Row : Cell() {
     invoke(constraints = *constraints, gapLeft = gapLeft, growPolicy = growPolicy, comment = null)
   }
 
-  @Deprecated(level = DeprecationLevel.ERROR, message = "Do not create standalone panel, if you want layout components in vertical flow mode, use cell(isVerticalFlow = true)")
+  @Deprecated(level = DeprecationLevel.ERROR,
+              message = "Do not create standalone panel, if you want layout components in vertical flow mode, use cell(isVerticalFlow = true)")
   fun panel(vararg constraints: LCFlags, title: String? = null, init: LayoutBuilder.() -> Unit) {
   }
 }

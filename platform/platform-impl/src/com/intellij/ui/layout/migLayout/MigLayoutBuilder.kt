@@ -3,8 +3,6 @@ package com.intellij.ui.layout.migLayout
 
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.ui.panel.ComponentPanelBuilder
-import com.intellij.ui.components.noteComponent
 import com.intellij.ui.layout.*
 import com.intellij.ui.layout.migLayout.patched.*
 import com.intellij.ui.scale.JBUIScale
@@ -12,9 +10,7 @@ import com.intellij.util.containers.ContainerUtil
 import net.miginfocom.layout.*
 import java.awt.Component
 import java.awt.Container
-import javax.swing.ButtonGroup
 import javax.swing.JComponent
-import javax.swing.JLabel
 
 internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagic: Boolean = true) : LayoutBuilderImpl {
   companion object {
@@ -52,7 +48,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
    * Map of component to constraints shared among rows (since components are unique)
    */
   private val componentConstraints: MutableMap<Component, CC> = ContainerUtil.newIdentityTroveMap()
-  private val rootRow = MigLayoutRow(parent = null, componentConstraints = componentConstraints, builder = this, indent = 0)
+  override val rootRow = MigLayoutRow(parent = null, componentConstraints = componentConstraints, builder = this, indent = 0)
 
   override var preferredFocusedComponent: JComponent? = null
   override var validateCallbacks: MutableList<() -> ValidationInfo?> = mutableListOf()
@@ -65,22 +61,6 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
   // keep in mind - MigLayout always creates one more than need column constraints (i.e. for 2 will be 3)
   // it doesn't lead to any issue.
   val columnConstraints = AC()
-
-  override fun newRow(label: JLabel?, buttonGroup: ButtonGroup?, isSeparated: Boolean): Row {
-    return rootRow.createChildRow(label = label, buttonGroup = buttonGroup, isSeparated = isSeparated)
-  }
-
-  override fun newTitledRow(title: String): Row {
-    return rootRow.createChildRow(isSeparated = true, title = title)
-  }
-
-  override fun noteRow(text: String, linkHandler: ((url: String) -> Unit)?) {
-    rootRow.createNoteOrCommentRow(noteComponent(text, linkHandler))
-  }
-
-  override fun commentRow(text: String) {
-    rootRow.createNoteOrCommentRow(ComponentPanelBuilder.createCommentComponent(text, true))
-  }
 
   fun updateComponentConstraints(component: Component, callback: CC.() -> Unit) {
     componentConstraints.getOrPut(component) { CC() }.callback()

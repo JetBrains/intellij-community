@@ -24,7 +24,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
                             override val builder: MigLayoutBuilder,
                             val labeled: Boolean = false,
                             val noGrid: Boolean = false,
-                            private val buttonGroup: ButtonGroup? = null,
+                            override val buttonGroup: ButtonGroup? = null,
                             private val indent: Int /* level number (nested rows) */) : Row() {
   companion object {
     // as static method to ensure that members of current row are not used
@@ -137,7 +137,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   internal val columnIndexIncludingSubRows: Int
     get() = Math.max(columnIndex, subRows?.maxBy { it.columnIndex }?.columnIndex ?: 0)
 
-  fun createChildRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null, isSeparated: Boolean = false, noGrid: Boolean = false, title: String? = null): MigLayoutRow {
+  override fun createChildRow(label: JLabel?, buttonGroup: ButtonGroup?, isSeparated: Boolean, noGrid: Boolean, title: String?): MigLayoutRow {
     val subRows = getOrCreateSubRowsList()
 
     val row = MigLayoutRow(this, componentConstraints, builder,
@@ -321,10 +321,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
   override fun largeGapAfter() {
     gapAfter = "${spacing.largeVerticalGap * 2}px!"
-  }
-
-  override fun createRow(label: String?): Row {
-    return createChildRow(label = label?.let { Label(it) })
   }
 
   override fun createRow(label: String?, buttonGroup: ButtonGroup?): Row {
