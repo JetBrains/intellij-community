@@ -4,10 +4,7 @@ import java.util.List;
 import org.jetbrains.annotations.ApiStatus;
 import experimentalPackage.ClassInExperimentalPackage;
 
-@ApiStatus.Experimental
-class ExperimentalClass { }
-
-class Warnings {
+public class UnstableTypeUsedInSignature {
 
   public ExperimentalClass <warning descr="Field must be marked with '@org.jetbrains.annotations.ApiStatus.Experimental' annotation because its type references unstable type 'test.ExperimentalClass'">field</warning>;
 
@@ -51,46 +48,4 @@ class Warnings {
   public void <warning descr="Method must be marked with '@org.jetbrains.annotations.ApiStatus.Experimental' annotation because its signature references unstable type 'experimentalPackage.ClassInExperimentalPackage'">methodWithParamTypeFromExperimentalPackage</warning>(ClassInExperimentalPackage param) { }
 
   public ClassInExperimentalPackage <warning descr="Method must be marked with '@org.jetbrains.annotations.ApiStatus.Experimental' annotation because its signature references unstable type 'experimentalPackage.ClassInExperimentalPackage'">methodWithReturnTypeFromExperimentalPackage</warning>() { return null; }
-}
-
-class <warning descr="Class must be marked with '@org.jetbrains.annotations.ApiStatus.Experimental' annotation because its declaration references unstable type 'test.ExperimentalClass'">WarningTypeParameter</warning><T extends ExperimentalClass> {
-}
-
-// No warnings should be produced because the declaring class is experimental itself.
-
-@ApiStatus.Experimental
-class NoWarningsClassLevel {
-
-  public ExperimentalClass field;
-
-  public void methodWithExperimentalParam(ExperimentalClass param) {
-  }
-
-  public ExperimentalClass methodWithExperimentalReturnType() {
-    return null;
-  }
-}
-
-// No warnings should be produced because methods and fields are already marked with @ApiStatus.Experimental annotation or are inaccessible.
-
-class NoWarnings {
-
-  @ApiStatus.Experimental
-  public ExperimentalClass field;
-
-  @ApiStatus.Experimental
-  public void methodWithExperimentalParam(ExperimentalClass param) {
-  }
-
-  @ApiStatus.Experimental
-  public ExperimentalClass methodWithExperimentalReturnType() {
-    return null;
-  }
-
-  private ExperimentalClass privateField;
-
-  private void privateMethodWithParam(ExperimentalClass param) {
-  }
-
-  private ExperimentalClass privateMethodWithReturnType() { return null; }
 }

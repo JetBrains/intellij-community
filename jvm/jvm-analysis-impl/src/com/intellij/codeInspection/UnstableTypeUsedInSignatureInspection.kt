@@ -80,14 +80,14 @@ private class UnstableTypeUsedInSignatureVisitor(
   }
 
   private fun isAccessibleDeclaration(node: UDeclaration): Boolean {
-    if (node.visibility == UastVisibility.PRIVATE) {
+    if (node.visibility == UastVisibility.PRIVATE || node.visibility == UastVisibility.PACKAGE_LOCAL) {
       if (node is UField) {
-        //Kotlin properties are UField with accompanying getters\setters.
+        //Kotlin properties are private UFields with accompanying getters\setters.
         val psiField = node.javaPsi
         if (psiField is PsiField) {
-          val getter = PropertyUtil.findGetterForField(psiField)
-          val setter = PropertyUtil.findSetterForField(psiField)
-          return getter != null && !getter.hasModifier(JvmModifier.PRIVATE) || setter != null && !setter.hasModifier(JvmModifier.PRIVATE)
+          val getter = PropertyUtil.findGetterForField(psiField)?.toUElement(UMethod::class.java)
+          val setter = PropertyUtil.findSetterForField(psiField)?.toUElement(UMethod::class.java)
+          return getter != null && isAccessibleDeclaration(getter) || setter != null && isAccessibleDeclaration(setter)
         }
       }
       return false

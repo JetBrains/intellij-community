@@ -25,7 +25,8 @@ class UnstableTypeUsedInSignatureTest : JavaCodeInsightFixtureTestCase() {
     listOf(
       "experimentalPackage/ClassInExperimentalPackage.java",
       "experimentalPackage/package-info.java",
-      "experimentalPackage/NoWarnings.java"
+      "experimentalPackage/NoWarnings.java",
+      "test/ExperimentalClass.java"
     ).forEach { myFixture.copyFileToProject(it) }
   }
 
@@ -34,11 +35,24 @@ class UnstableTypeUsedInSignatureTest : JavaCodeInsightFixtureTestCase() {
   }
 
   fun `test kotlin missing unstable annotation`() {
-    myFixture.testHighlighting("unstableTypeUsedInSignature.kt")
+    myFixture.testHighlighting("UnstableTypeUsedInSignature.kt")
+    myFixture.testHighlighting("UnstableTypeUsedInTypeParameter.kt")
   }
 
   fun `test java missing unstable annotation`() {
-    myFixture.testHighlighting("unstableTypeUsedInSignature.java")
+    myFixture.testHighlighting("UnstableTypeUsedInSignature.java")
+    myFixture.testHighlighting("UnstableTypeUsedInTypeParameter.java")
+  }
+
+  fun `test java no extra warnings are produced`() {
+    myFixture.testHighlighting("noWarnings/NoWarningsAlreadyMarked.java")
+    myFixture.testHighlighting("noWarnings/NoWarningsInaccessible.java")
+    myFixture.testHighlighting("noWarnings/NoWarningsMembersAlreadyMarked.java")
+  }
+
+  fun `test kotlin no extra warnings are produced`() {
+    myFixture.testHighlighting("noWarnings/NoWarningsAlreadyMarked.kt")
+    myFixture.testHighlighting("noWarnings/NoWarningsInaccessible.kt")
   }
 
   fun `test no warnings produced in experimental package`() {
