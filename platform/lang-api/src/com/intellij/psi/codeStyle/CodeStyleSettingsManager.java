@@ -14,6 +14,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -202,7 +203,8 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
     fireCodeStyleSettingsChanged(null);
   }
 
-  private void updateSettingsTracker() {
+  @ApiStatus.Internal
+  public void updateSettingsTracker() {
     CodeStyleSettings settings = getCurrentSettings();
     settings.getModificationTracker().incModificationCount();
   }
