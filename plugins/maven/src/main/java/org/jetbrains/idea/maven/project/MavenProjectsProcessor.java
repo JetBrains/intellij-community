@@ -70,13 +70,17 @@ public class MavenProjectsProcessor {
     if (isStopped) return;
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      synchronized (myQueue) {
-        while (!myQueue.isEmpty()) {
-          startProcessing(myQueue.poll());
+      while (true) {
+        MavenProjectsProcessorTask task;
+        synchronized (myQueue) {
+          task = myQueue.poll();
+          if(task == null){
+            return;
+          }
+        }
+        startProcessing(task);
         }
       }
-      return;
-    }
 
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
