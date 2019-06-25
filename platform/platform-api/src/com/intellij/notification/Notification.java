@@ -266,6 +266,9 @@ public class Notification {
     myCollapseActionsDirection = collapseActionsDirection;
   }
 
+  /**
+   * @see NotificationAction
+   */
   @NotNull
   public Notification addAction(@NotNull AnAction action) {
     if (myActions == null) {
