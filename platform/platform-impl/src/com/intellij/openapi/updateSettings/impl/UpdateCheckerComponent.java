@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -71,15 +70,10 @@ public final class UpdateCheckerComponent implements Runnable {
 
   private static void checkIfPreviousUpdateFailed() {
     PropertiesComponent properties = PropertiesComponent.getInstance();
-    if (ApplicationInfo.getInstance().getBuild().asString().equals(properties.getValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY))) {
-      File updateErrorsLog = new File(PathManager.getLogPath(), ERROR_LOG_FILE_NAME);
-      try {
-        if (updateErrorsLog.isFile() && !StringUtil.isEmptyOrSpaces(FileUtil.loadFile(updateErrorsLog))) {
-          IdeUpdateUsageTriggerCollector.trigger("update.failed");
-          LOG.info("The previous IDE update failed");
-        }
-      }
-      catch (IOException ignored) { }
+    if (ApplicationInfo.getInstance().getBuild().asString().equals(properties.getValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY)) &&
+        new File(PathManager.getLogPath(), ERROR_LOG_FILE_NAME).length() > 0) {
+      IdeUpdateUsageTriggerCollector.trigger("update.failed");
+      LOG.info("The previous IDE update failed");
     }
     properties.setValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY, null);
   }
