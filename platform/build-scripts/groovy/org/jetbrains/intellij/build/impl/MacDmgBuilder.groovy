@@ -195,7 +195,8 @@ class MacDmgBuilder {
                            macHostProperties.password,
                            "\"${macHostProperties.codesignString}\"",
                            (customizer.helpId != null ? "${customizer.helpId}.help" : "no-help"),
-                           notarize ? "yes" : "no"
+                           notarize ? "yes" : "no",
+                           customizer.bundleIdentifier
       ]
       if (jreArchivePath != null) {
         args += '"' + PathUtilRt.getFileName(jreArchivePath) + '"'
