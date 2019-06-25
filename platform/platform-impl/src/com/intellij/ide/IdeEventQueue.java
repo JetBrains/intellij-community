@@ -113,6 +113,7 @@ public final class IdeEventQueue extends EventQueue {
     myPostEventListeners = com.intellij.util.EventDispatcher.create(PostEventHook.class);
 
   private final Map<AWTEvent, List<Runnable>> myRunnablesWaitingFocusChange = new THashMap<>();
+  private KeyEvent myLastShortcut;
 
   public void executeWhenAllFocusEventsLeftTheQueue(@NotNull Runnable runnable) {
     ifFocusEventsInTheQueue(e -> {
@@ -358,6 +359,7 @@ public final class IdeEventQueue extends EventQueue {
     }
 
     if (isMetaKeyPressedOnLinux(e)) return;
+    if (isSpecialSymbolMatchingShortcut(e)) return;
 
     if (e.getSource() instanceof TrayIcon) return;
 
@@ -444,6 +446,32 @@ public final class IdeEventQueue extends EventQueue {
           }
         });
     }
+  }
+
+  /**
+   * Checks if typed key event should be ignored. This method solves a problem with international keyboards,
+   * when special symbols will be typed just after invoking an action with the corresponding shortcut.
+   * Example: In German keyboard to enter the symbol 'µ' one can press Ctrl+Alt+M. This shortcut is also mapped on
+   * Extract Method feature. As a result, two events will be put into Event Queue. The first is 'Ctrl+Alt+M', and it triggers
+   * Extract Method dialog to show up. The second is KeyEvent with ID KeyEvent.KEY_TYPED with symbol 'µ' inside,
+   * and it will insert 'µ' the focused text component in Extract Method dialog.
+   *
+   * See more examples here: https://youtrack.jetbrains.com/issue/IDEA-187355
+   */
+  private boolean isSpecialSymbolMatchingShortcut(AWTEvent e) {
+    final KeyEvent shortcut = myLastShortcut;
+    if (shortcut != null && e instanceof KeyEvent && e.getID() == KeyEvent.KEY_TYPED) {
+      KeyEvent symbol = (KeyEvent)e;
+      long time = symbol.getWhen() - shortcut.getWhen();
+      //todo[kb] this is a double check based on time of events. We assume that the shortcut and special symbol will be received one by one.
+      // Try to avoid using timing checks and create a more solid solution
+      return time < 17 && shortcut.getKeyChar() == symbol.getKeyChar();
+    }
+    return false;
+  }
+
+  public void onActionInvoked(@NotNull KeyEvent e) {
+    myLastShortcut = e;
   }
 
   @Nullable
