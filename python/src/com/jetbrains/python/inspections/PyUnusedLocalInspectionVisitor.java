@@ -170,6 +170,9 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         if (parameterInMethodWithFixedSignature(owner, element)) {
           continue;
         }
+        if (isTypeDeclarationTarget(element)) {
+          continue;
+        }
         if (!myUsedElements.contains(element)) {
           myUnusedElements.add(element);
         }
@@ -254,6 +257,10 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
       else if (inst instanceof ReadWriteInstruction) {
         final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)inst;
         if (rwInstruction.getAccess().isWriteAccess() && name.equals(rwInstruction.getName())) {
+          // Look up higher in CFG for actual definitions
+          if (instElement != null && isTypeDeclarationTarget(instElement)) {
+            return ControlFlowUtil.Operation.NEXT;
+          }
           // For elements in scope
           if (instElement != null && PsiTreeUtil.isAncestor(owner, instElement, false)) {
             myUsedElements.add(instElement);
@@ -264,6 +271,10 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
       }
       return ControlFlowUtil.Operation.NEXT;
     });
+  }
+
+  private static boolean isTypeDeclarationTarget(@NotNull PsiElement element) {
+    return element instanceof PyTargetExpression && element.getParent() instanceof PyTypeDeclarationStatement;
   }
 
   static class DontPerformException extends RuntimeException {}
