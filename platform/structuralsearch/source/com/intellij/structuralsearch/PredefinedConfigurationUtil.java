@@ -14,12 +14,22 @@ public class PredefinedConfigurationUtil {
   }
 
   public static Configuration createSearchTemplateInfo(String name, @NonNls String criteria, String category, LanguageFileType fileType) {
+    return createSearchTemplateInfo(name, criteria, category, fileType, null);
+  }
+
+  public static Configuration createSearchTemplateInfo(String name,
+                                                       @NonNls String criteria,
+                                                       String category,
+                                                       LanguageFileType fileType,
+                                                       PatternContext context) {
     final SearchConfiguration config = new SearchConfiguration(name, category);
     config.setPredefined(true);
+
     final MatchOptions options = config.getMatchOptions();
     options.fillSearchCriteria(criteria);
     options.setFileType(fileType);
     options.setCaseSensitiveMatch(true);
+    options.setPatternContext(context);
 
     return config;
   }
