@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -32,14 +33,14 @@ public interface RegionPainter<T> {
    * @param height height of the area to paint
    * @param object an optional configuration parameter
    */
-  void paint(Graphics2D g, int x, int y, int width, int height, @Nullable T object);
+  void paint(@NotNull Graphics2D g, int x, int y, int width, int height, @Nullable T object);
 
   /**
    * This class provides a base functionality to paint a region with the specified alpha.
    */
   abstract class Alpha implements RegionPainter<Float> {
     @Override
-    public void paint(Graphics2D g, int x, int y, int width, int height, Float value) {
+    public void paint(@NotNull Graphics2D g, int x, int y, int width, int height, Float value) {
       float alpha = getAlpha(value);
       if (alpha > 0) {
         Composite composite = g.getComposite();
@@ -118,7 +119,7 @@ public interface RegionPainter<T> {
     }
 
     @Override
-    public void paint(Graphics2D g, int x, int y, int width, int height, Object object) {
+    public void paint(@NotNull Graphics2D g, int x, int y, int width, int height, Object object) {
       if (width > 0 && height > 0) {
         if (myImage == null || width != ImageUtil.getUserWidth(myImage) || height != ImageUtil.getUserHeight(myImage)) {
           myImage = createImage(width, height);

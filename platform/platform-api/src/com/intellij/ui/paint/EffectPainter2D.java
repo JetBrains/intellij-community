@@ -42,7 +42,7 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
      * @param font   optional font to calculate line metrics
      */
     @Override
-    public void paint(Graphics2D g, double x, double y, double width, double height, Font font) {
+    public void paint(@NotNull Graphics2D g, double x, double y, double width, double height, Font font) {
       if (!Registry.is("ide.text.effect.new")) {
         LinePainter2D.paint(g, x, y + 1, x + width, y + 1);
       }
@@ -66,7 +66,7 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
      * @param font   optional font to calculate line metrics
      */
     @Override
-    public void paint(Graphics2D g, double x, double y, double width, double height, Font font) {
+    public void paint(@NotNull Graphics2D g, double x, double y, double width, double height, Font font) {
       if (!Registry.is("ide.text.effect.new")) {
         int h = JBUIScale.scale(Registry.intValue("editor.bold.underline.height", 2));
         RectanglePainter2D.FILL.paint(g, x, y, width, h);
@@ -91,7 +91,7 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
      * @param font   optional font to calculate line metrics
      */
     @Override
-    public void paint(Graphics2D g, double x, double y, double width, double height, Font font) {
+    public void paint(@NotNull Graphics2D g, double x, double y, double width, double height, Font font) {
       paintUnderline(g, x, y, width, height, font, 2, this);
     }
   },
@@ -110,7 +110,7 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
      * @param font   optional font to calculate line metrics
      */
     @Override
-    public void paint(Graphics2D g, double x, double y, double width, double height, Font font) {
+    public void paint(@NotNull Graphics2D g, double x, double y, double width, double height, Font font) {
       if (!Registry.is("ide.text.effect.new")) {
         WavePainter2D.forColor(g.getColor()).paint(g, x, x + width, y + height);
       }
@@ -137,7 +137,7 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
      * @param font   optional font to calculate line metrics
      */
     @Override
-    public void paint(Graphics2D g, double x, double y, double width, double height, Font font) {
+    public void paint(@NotNull Graphics2D g, double x, double y, double width, double height, Font font) {
       if (width > 0 && height > 0) {
         if (!Registry.is("ide.text.effect.new.metrics")) {
           drawLineCentered(g, x, y - height, width, height, 1, this);
@@ -214,7 +214,7 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
   private static void drawLineCentered(Graphics2D g, double x, double y, double width, double height, double thickness, EffectPainter2D painter) {
     double offset = height - thickness;
     if (offset > 0) {
-      y += offset - (offset / 2);
+      y += offset / 2;
       height = thickness;
     }
     drawLine(g, x, y, width, height, painter);
@@ -260,7 +260,6 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
 
       @Override
       void paintImage(Graphics2D g, double width, double height, double period) {
-        double dx = 0;
         double lower = height - 1;
         double upper = lower - period;
         if (Registry.is("ide.text.effect.new.metrics")) {
@@ -280,6 +279,7 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
           }
         }
         Path2D path = new Path2D.Double();
+        double dx = 0;
         path.moveTo(dx, lower);
         if (height < 6) {
           g.setStroke(THIN_STROKE);
@@ -347,7 +347,7 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
     }
 
     @Override
-    public void paint(Graphics2D g, double x, double y, double width, double height, Paint paint) {
+    public void paint(@NotNull Graphics2D g, double x, double y, double width, double height, Paint paint) {
       if (paint == null) paint = g.getPaint();
       g = (Graphics2D)g.create();
       g.translate(x, y);

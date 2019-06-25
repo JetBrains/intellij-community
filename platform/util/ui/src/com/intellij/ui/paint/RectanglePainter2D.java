@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.paint;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.ui.paint.LinePainter2D.Align;
 import com.intellij.ui.paint.LinePainter2D.StrokeType;
 import com.intellij.ui.scale.ScaleContext;
@@ -30,7 +29,7 @@ import static com.intellij.ui.paint.PaintUtil.alignToInt;
 public enum RectanglePainter2D implements RegionPainter2D<Double> {
   DRAW {
     @Override
-    public void paint(Graphics2D g, double x, double y, double width, double height, @Nullable Double arc) {
+    public void paint(@NotNull Graphics2D g, double x, double y, double width, double height, @Nullable Double arc) {
       paint(g, x, y, width, height, arc, StrokeType.INSIDE, 1, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
     }
 
@@ -47,12 +46,11 @@ public enum RectanglePainter2D implements RegionPainter2D<Double> {
      */
     @Override
     public void paint(@NotNull final Graphics2D g,
-                      Rectangle2D rect,
+                      @NotNull Rectangle2D rect,
                       @Nullable Double arc,
                       @NotNull StrokeType strokeType,
                       double strokeWidth,
-                      @NotNull Object valueAA)
-    {
+                      @NotNull Object valueAA) {
       paint(g, rect.getX(), rect.getY(), rect.getWidth(), rect.getHeight(), arc, strokeType, strokeWidth, valueAA);
     }
 
@@ -63,8 +61,7 @@ public enum RectanglePainter2D implements RegionPainter2D<Double> {
     public void paint(@NotNull Graphics2D g,
                       double x, double y, double width, double height,
                       @NotNull StrokeType strokeType,
-                      double strokeWidth)
-    {
+                      double strokeWidth) {
       paint(g, x, y, width, height, null, strokeType, strokeWidth, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
     }
 
@@ -88,25 +85,22 @@ public enum RectanglePainter2D implements RegionPainter2D<Double> {
                       @Nullable final Double arc,
                       @NotNull StrokeType strokeType,
                       double strokeWidth,
-                      @NotNull Object valueAA)
-    {
+                      @NotNull Object valueAA) {
       if (width < 0 || height < 0) return;
 
       double sw = alignToInt(strokeWidth, g);
       double dsw = sw * 2;
-      double sw_1, sw_2;
-      double a_out;
 
       if (width > dsw && height > dsw) {
         // align conforms to LinePainter2D
         x = alignToInt(x, g);
         y = alignToInt(y, g);
 
-        Pair<Double, Double> strokeSplit = LinePainter2D.getStrokeSplit(ScaleContext.create(g), strokeType, sw, false);
-        sw_1 = strokeSplit.first;
-        sw_2 = strokeSplit.second;
+        double[] strokeSplit = LinePainter2D.getStrokeSplit(ScaleContext.create(g), strokeType, sw, false);
+        double sw_1 = strokeSplit[0];
+        double sw_2 = strokeSplit[1];
 
-        a_out = strokeType == StrokeType.CENTERED ? sw : strokeType == StrokeType.OUTSIDE ? dsw : 0;
+        double a_out = strokeType == StrokeType.CENTERED ? sw : strokeType == StrokeType.OUTSIDE ? dsw : 0;
 
         double x_out = x - sw_1;
         double y_out = y - sw_1;
@@ -133,7 +127,7 @@ public enum RectanglePainter2D implements RegionPainter2D<Double> {
 
   FILL {
     @Override
-    public void paint(Graphics2D g, double x, double y, double width, double height, @Nullable Double arc) {
+    public void paint(@NotNull Graphics2D g, double x, double y, double width, double height, @Nullable Double arc) {
       paint(g, x, y, width, height, arc, StrokeType.INSIDE, 1, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
     }
 
@@ -150,12 +144,11 @@ public enum RectanglePainter2D implements RegionPainter2D<Double> {
      */
     @Override
     public void paint(@NotNull final Graphics2D g,
-                      Rectangle2D rect,
+                      @NotNull Rectangle2D rect,
                       @Nullable Double arc,
                       @NotNull StrokeType strokeType,
                       double strokeWidth,
-                      @NotNull Object valueAA)
-    {
+                      @NotNull Object valueAA) {
       paint(g, rect.getX(), rect.getY(), rect.getWidth(), rect.getHeight(), arc, strokeType, strokeWidth, valueAA);
     }
 
@@ -166,8 +159,7 @@ public enum RectanglePainter2D implements RegionPainter2D<Double> {
     public void paint(@NotNull Graphics2D g,
                       double x, double y, double width, double height,
                       @NotNull StrokeType strokeType,
-                      double strokeWidth)
-    {
+                      double strokeWidth) {
       paint(g, x, y, width, height, null, strokeType, strokeWidth, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
     }
 
@@ -191,22 +183,20 @@ public enum RectanglePainter2D implements RegionPainter2D<Double> {
                       @Nullable Double arc,
                       @NotNull StrokeType strokeType,
                       double strokeWidth,
-                      @NotNull Object valueAA)
-    {
+                      @NotNull Object valueAA) {
       if (width < 0 || height < 0) return;
 
       double sw = alignToInt(strokeWidth, g);
-      double dsw = sw * 2;
-      double sw_1, sw_2;
 
       // align conforms to LinePainter2D
       x = alignToInt(x, g);
       y = alignToInt(y, g);
 
-      Pair<Double, Double> strokeSplit = LinePainter2D.getStrokeSplit(ScaleContext.create(g), strokeType, sw, false);
-      sw_1 = strokeSplit.first;
-      sw_2 = strokeSplit.second;
+      double[] strokeSplit = LinePainter2D.getStrokeSplit(ScaleContext.create(g), strokeType, sw, false);
+      double sw_1 = strokeSplit[0];
+      double sw_2 = strokeSplit[1];
 
+      double dsw = sw * 2;
       if (strokeType == StrokeType.INSIDE) dsw = 0;
 
       double x_out = x - sw_1;
@@ -244,20 +234,20 @@ public enum RectanglePainter2D implements RegionPainter2D<Double> {
    * @param strokeWidth the stroke width
    * @return the rectangle with aligned coordinates and size with adjusted parity
    */
-  public static @NotNull Rectangle2D align(@NotNull Graphics2D g,
-                                           @NotNull EnumSet<Align> align,
-                                           double x, double y, double prefWidth, double prefHeight,
-                                           @NotNull StrokeType strokeType, double strokeWidth)
-  {
+  @NotNull
+  public static Rectangle2D align(@NotNull Graphics2D g,
+                                  @NotNull EnumSet<Align> align,
+                                  double x, double y, double prefWidth, double prefHeight,
+                                  @NotNull StrokeType strokeType, double strokeWidth) {
     if (align.contains(Align.CENTER_X) && prefWidth >= strokeWidth * 2) {
-      Pair<Double, Double> p = LinePainter2D.alignSizeXY(g, x, prefWidth, strokeType, strokeWidth, true);
-      x = p.first;
-      prefWidth = p.second;
+      double[] p = LinePainter2D.alignSizeXY(g, x, prefWidth, strokeType, strokeWidth, true);
+      x = p[0];
+      prefWidth = p[1];
     }
     if (align.contains(Align.CENTER_Y) && prefHeight >= strokeWidth * 2) {
-      Pair<Double, Double> p = LinePainter2D.alignSizeXY(g, y, prefHeight, strokeType, strokeWidth, true);
-      y = p.first;
-      prefHeight = p.second;
+      double[] p = LinePainter2D.alignSizeXY(g, y, prefHeight, strokeType, strokeWidth, true);
+      y = p[0];
+      prefHeight = p[1];
     }
     return new Rectangle2D.Double(x, y, prefWidth, prefHeight);
   }
@@ -266,19 +256,15 @@ public enum RectanglePainter2D implements RegionPainter2D<Double> {
    * Paints on the given {@link Graphics2D} object.
    * Renders to the given {@link Graphics2D} object.
    *
-   * @param g the {@code Graphics2D} object to render to
-   * @param x X position of the area to paint
-   * @param y Y position of the area to paint
-   * @param width width of the area to paint
-   * @param g      the {@code Graphics2D} object to render to
-   * @param x      X position of the area to paint
-   * @param y      Y position of the area to paint
-   * @param width  width of the area to paint
-   * @param height height of the area to paint
-   * @param arc an optional configuration parameter
-   * @param strokeType the stroke type
+   * @param g           the {@code Graphics2D} object to render to
+   * @param x           X position of the area to paint
+   * @param y           Y position of the area to paint
+   * @param width       width of the area to paint
+   * @param height      height of the area to paint
+   * @param arc         an optional configuration parameter
+   * @param strokeType  the stroke type
    * @param strokeWidth the stroke width
-   * @param valueAA overrides current {@link RenderingHints#KEY_ANTIALIASING} to {@code valueAA}
+   * @param valueAA     overrides current {@link RenderingHints#KEY_ANTIALIASING} to {@code valueAA}
    */
   public abstract void paint(@NotNull Graphics2D g,
                              double x, double y, double width, double height,
@@ -295,7 +281,7 @@ public enum RectanglePainter2D implements RegionPainter2D<Double> {
   public abstract void paint(@NotNull Graphics2D g, double x, double y, double width, double height);
 
   public abstract void paint(@NotNull final Graphics2D g,
-                             Rectangle2D rect,
+                             @NotNull Rectangle2D rect,
                              @Nullable Double arc,
                              @NotNull StrokeType strokeType,
                              double strokeWidth,
