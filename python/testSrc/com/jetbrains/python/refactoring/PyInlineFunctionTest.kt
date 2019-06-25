@@ -74,6 +74,7 @@ class PyInlineFunctionTest : PyTestCase() {
   fun testCallFromClassMethod() = doTest()
   fun testComplexQualifier() = doTest()
   fun testFunctionWithLambda() = doTest()
+  fun testRefInDunderAll() = doTest(inlineThis = false, remove = true)
   fun testRemovingDocstring() = doTest()
   fun testKeepFirstComment() = doTest()
   //fun testInlineImportedAs() = doTest(inlineThis = false)

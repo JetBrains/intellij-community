@@ -49,6 +49,10 @@ class PyInlineFunctionProcessor(project: Project,
     val (imports, usages) = usagesAndImports.partition { PsiTreeUtil.getParentOfType(it.element, PyImportStatementBase::class.java) != null }
     val filteredUsages = usages.filter { usage ->
       val element = usage.element!!
+      if (element is PyStringLiteralExpression) {
+        val file = element.containingFile as? PyFile
+        if (file?.dunderAll?.contains(element.stringValue) == true) return@filter true
+      }
       if (element.parent is PyDecorator) {
         if (!handleUsageError(element, "refactoring.inline.function.is.decorator", conflicts)) return false
         return@filter false
@@ -115,8 +119,9 @@ class PyInlineFunctionProcessor(project: Project,
 
   private fun doRefactor(usages: Array<out UsageInfo>) {
     val (unsortedRefs, imports) = usages.partition { PsiTreeUtil.getParentOfType(it.element, PyImportStatementBase::class.java) == null }
+    val (callRefs, dunderAll) = unsortedRefs.partition { it.element is PyReferenceExpression }
 
-    val references = unsortedRefs.sortedByDescending { usage ->
+    val references = callRefs.sortedByDescending { usage ->
       SyntaxTraverser.psiApi().parents(usage.element).asSequence().filter { it is PyCallExpression }.count()
     }
 
@@ -270,6 +275,7 @@ class PyInlineFunctionProcessor(project: Project,
         stubFunction.delete()
       }
       myFunction.delete()
+      dunderAll.forEach { it.element?.delete() }
     }
   }
 
