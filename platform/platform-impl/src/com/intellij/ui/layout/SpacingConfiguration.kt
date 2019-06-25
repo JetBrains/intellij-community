@@ -6,29 +6,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 
-// https://jetbrains.github.io/ui/controls/input_field/#spacing
-fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
-  return object : SpacingConfiguration {
-    override val isCompensateVisualPaddings = !SystemInfo.isLinux || Registry.`is`("ui.dsl.force.compensate.visual.padding")
-
-    override val horizontalGap = JBUI.scale(8)
-    override val verticalGap = JBUI.scale(5 * 2)
-    override val labelColumnHorizontalGap = JBUI.scale(6)
-    override val largeVerticalGap = JBUI.scale(UIUtil.LARGE_VGAP)
-
-    override val shortTextWidth = JBUI.scale(250)
-    override val maxShortTextWidth = JBUI.scale(350)
-
-    override val unitSize = JBUI.scale(4)
-
-    override val dialogTopBottom = JBUI.scale(8)
-    override val dialogLeftRight = JBUI.scale(12)
-
-    override val commentVerticalTopGap = JBUI.scale(6)
-    override val indentLevel: Int get() = horizontalGap * 3
-  }
-}
-
 interface SpacingConfiguration {
   /**
    * Horizontal space between two components (in terms of layout grid - cells).
@@ -81,3 +58,27 @@ interface SpacingConfiguration {
    */
   val indentLevel: Int
 }
+
+// https://jetbrains.github.io/ui/controls/input_field/#spacing
+fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
+  return object : SpacingConfiguration {
+    override val isCompensateVisualPaddings = !SystemInfo.isLinux || Registry.`is`("ui.dsl.force.compensate.visual.padding")
+
+    override val horizontalGap = JBUI.scale(8)
+    override val verticalGap = JBUI.scale(5 * 2)
+    override val labelColumnHorizontalGap = JBUI.scale(6)
+    override val largeVerticalGap = JBUI.scale(UIUtil.LARGE_VGAP)
+
+    override val shortTextWidth = JBUI.scale(250)
+    override val maxShortTextWidth = JBUI.scale(350)
+
+    override val unitSize = JBUI.scale(4)
+
+    override val dialogTopBottom = JBUI.scale(8)
+    override val dialogLeftRight = JBUI.scale(12)
+
+    override val commentVerticalTopGap = JBUI.scale(6)
+    override val indentLevel: Int get() = horizontalGap * 3
+  }
+}
+
