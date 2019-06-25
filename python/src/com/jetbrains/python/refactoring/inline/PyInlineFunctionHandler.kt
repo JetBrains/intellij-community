@@ -17,6 +17,7 @@ import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
+import com.jetbrains.python.psi.search.PyOverridingMethodsSearch
 import com.jetbrains.python.psi.search.PySuperMethodsSearch
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiFile
@@ -41,7 +42,8 @@ class PyInlineFunctionHandler : InlineActionHandler() {
       hasDecorators(element) -> "refactoring.inline.function.decorator"
       hasReferencesToSelf(element) -> "refactoring.inline.function.self.referrent"
       hasStarArgs(element) -> "refactoring.inline.function.star"
-      isOverride(element, project) -> "refactoring.inline.function.overridden"
+      overridesMethod(element, project) -> "refactoring.inline.function.overrides.method"
+      isOverridden(element) -> "refactoring.inline.function.is.overridden"
       functionScope.hasGlobals() -> "refactoring.inline.function.global"
       functionScope.hasNonLocals() -> "refactoring.inline.function.nonlocal"
       hasNestedFunction(element) -> "refactoring.inline.function.nested"
@@ -108,9 +110,13 @@ class PyInlineFunctionHandler : InlineActionHandler() {
 
   private fun hasDecorators(function: PyFunction): Boolean = function.decoratorList?.decorators?.isNotEmpty() == true
 
-  private fun isOverride(function: PyFunction, project: Project): Boolean {
+  private fun overridesMethod(function: PyFunction, project: Project): Boolean {
     return function.containingClass != null
            && PySuperMethodsSearch.search(function, TypeEvalContext.codeAnalysis(project, function.containingFile)).any()
+  }
+
+  private fun isOverridden(function: PyFunction): Boolean {
+    return function.containingClass != null && PyOverridingMethodsSearch.search(function, true).any()
   }
 
   private fun hasStarArgs(function: PyFunction): Boolean {
