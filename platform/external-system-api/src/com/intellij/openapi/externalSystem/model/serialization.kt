@@ -17,18 +17,16 @@ private fun createDataClassResolver(log: Logger): (name: String, hostObject: Dat
     .map { it.javaClass.classLoader }
     .toSet()
   return fun(name: String, hostObject: DataNode<*>): Class<*>? {
+    var classLoadersToSearch = managerClassLoaders
     val services = projectDataManager!!.findService(hostObject.key)
-    if (services != null) {
-      for (dataService in services) {
-        try {
-          return dataService.javaClass.classLoader.loadClass(name)
-        }
-        catch (e: ClassNotFoundException) {
-        }
-      }
+    if (!services.isNullOrEmpty()) {
+      val set = LinkedHashSet<ClassLoader>(managerClassLoaders.size + services.size)
+      set.addAll(managerClassLoaders)
+      services.mapTo(set) { it.javaClass.classLoader }
+      classLoadersToSearch = set
     }
 
-    for (classLoader in managerClassLoaders) {
+    for (classLoader in classLoadersToSearch) {
       try {
         return classLoader.loadClass(name)
       }
