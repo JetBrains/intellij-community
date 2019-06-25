@@ -7,6 +7,7 @@ import com.intellij.lang.refactoring.InlineActionHandler
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.util.PsiTreeUtil
@@ -21,6 +22,8 @@ import com.jetbrains.python.psi.search.PyOverridingMethodsSearch
 import com.jetbrains.python.psi.search.PySuperMethodsSearch
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiFile
+import com.jetbrains.python.sdk.PySdkUtil
+import com.jetbrains.python.sdk.pythonSdk
 
 /**
  * @author Aleksei.Kniazev
@@ -39,6 +42,7 @@ class PyInlineFunctionHandler : InlineActionHandler() {
       PyNames.INIT == element.name -> "refactoring.inline.function.constructor"
       PyBuiltinCache.getInstance(element).isBuiltin(element) -> "refactoring.inline.function.builtin"
       isSpecialMethod(element) -> "refactoring.inline.function.special.method"
+      isUnderSkeletonDir(element, project) -> "refactoring.inline.function.skeleton.only"
       hasDecorators(element) -> "refactoring.inline.function.decorator"
       hasReferencesToSelf(element) -> "refactoring.inline.function.self.referrent"
       hasStarArgs(element) -> "refactoring.inline.function.star"
@@ -127,6 +131,11 @@ class PyInlineFunctionHandler : InlineActionHandler() {
 
   private fun hasReferencesToSelf(function: PyFunction): Boolean = SyntaxTraverser.psiTraverser(function.statementList)
     .any { it is PyReferenceExpression && it.reference.isReferenceTo(function) }
+
+  private fun isUnderSkeletonDir(function: PyFunction, project: Project): Boolean {
+    val skeletonsDir = PySdkUtil.findSkeletonsDir(project.pythonSdk ?: return false) ?: return false
+    return VfsUtil.isAncestor(skeletonsDir, function.containingFile.virtualFile, true)
+  }
 
   companion object {
     @JvmStatic
