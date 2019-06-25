@@ -11,16 +11,11 @@ import com.intellij.serialization.WriteConfiguration
 // do not use SkipNullAndEmptySerializationFilter for now because can lead to issues
 fun createCacheWriteConfiguration() = WriteConfiguration(allowAnySubTypes = true)
 
-fun createCacheReadConfiguration(log: Logger): ReadConfiguration {
+private fun createDataClassResolver(log: Logger): (name: String, hostObject: DataNode<*>) -> Class<*>? {
   val projectDataManager = ProjectDataManager.getInstance()
-
   val allManagers = ExternalSystemApiUtil.getAllManagers()
-  return createDataNodeReadConfiguration(fun(name: String, hostObject: Any): Class<*>? {
-    if (hostObject !is DataNode<*>) {
-      return hostObject.javaClass.classLoader.loadClass(name)
-    }
-
-    val services = projectDataManager.findService(hostObject.key)
+  return fun(name: String, hostObject: DataNode<*>): Class<*>? {
+    val services = projectDataManager!!.findService(hostObject.key)
     if (services != null) {
       for (dataService in services) {
         try {
@@ -41,6 +36,18 @@ fun createCacheReadConfiguration(log: Logger): ReadConfiguration {
 
     log.warn("Cannot find class `$name`")
     return null
+  }
+}
+
+@JvmOverloads
+fun createCacheReadConfiguration(log: Logger, testOnlyClassLoader: ClassLoader? = null): ReadConfiguration {
+  val dataNodeResolver = if (testOnlyClassLoader == null) createDataClassResolver(log) else null
+  return createDataNodeReadConfiguration(fun(name: String, hostObject: Any): Class<*>? {
+    return when {
+      hostObject !is DataNode<*> -> hostObject.javaClass.classLoader.loadClass(name)
+      dataNodeResolver == null -> testOnlyClassLoader!!.loadClass(name)
+      else -> dataNodeResolver(name, hostObject)
+    }
   })
 }
 
