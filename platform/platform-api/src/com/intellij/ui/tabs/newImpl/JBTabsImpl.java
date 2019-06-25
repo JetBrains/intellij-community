@@ -2659,7 +2659,7 @@ public class JBTabsImpl extends JComponent
     @Override
     @NotNull
     public UiDecoration getDecoration() {
-        return new UiDecoration(null, new JBInsets(6, 12, 8, 12));
+        return new UiDecoration(null, new JBInsets(5, 12, 5, 12));
     }
   }
 
