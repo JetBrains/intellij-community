@@ -28,137 +28,7 @@ class UnstableTypeUsedInSignatureInspection : LocalInspectionTool() {
   val unstableApiAnnotations: MutableList<String> = ExternalizableStringSet(*DEFAULT_UNSTABLE_API_ANNOTATIONS.toTypedArray())
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
-    UastVisitorAdapter(UnstableTypeUsedInSignatureInspection(holder, unstableApiAnnotations.toList()), true)
-
-  private class UnstableTypeUsedInSignatureInspection(
-    private val problemsHolder: ProblemsHolder,
-    private val unstableApiAnnotations: List<String>
-  ) : AbstractUastNonRecursiveVisitor() {
-
-    override fun visitClass(node: UClass): Boolean {
-      if (!isAccessibleDeclaration(node) || isMarkedUnstable(node)) {
-        return true
-      }
-      checkTypeParameters(node.javaPsi, node)
-      return true
-    }
-
-    override fun visitMethod(node: UMethod): Boolean {
-      if (!isAccessibleDeclaration(node) || isMarkedUnstable(node)) {
-        return true
-      }
-      for (uastParameter in node.uastParameters) {
-        if (checkReferencesUnstableType(uastParameter.type.deepComponentType, node)) {
-          return true
-        }
-      }
-      val returnType = node.returnType ?: return true
-      checkReferencesUnstableType(returnType, node)
-
-      checkTypeParameters(node.javaPsi, node)
-      return true
-    }
-
-    override fun visitField(node: UField): Boolean {
-      if (!isAccessibleDeclaration(node) || isMarkedUnstable(node)) {
-        return true
-      }
-      checkReferencesUnstableType(node.type, node)
-      return true
-    }
-
-    private fun checkTypeParameters(typeParameterListOwner: PsiTypeParameterListOwner, declaration: UDeclaration): Boolean {
-      for (typeParameter in typeParameterListOwner.typeParameters) {
-        val referencedTypes = typeParameter.extendsList.referencedTypes
-        for (referencedType in referencedTypes) {
-          if (checkReferencesUnstableType(referencedType, declaration)) {
-            return true
-          }
-        }
-      }
-      return false
-    }
-
-    private fun isAccessibleDeclaration(node: UDeclaration): Boolean {
-      if (node.visibility == UastVisibility.PRIVATE) {
-        if (node is UField) {
-          //Kotlin properties are UField with accompanying getters\setters.
-          val psiField = node.javaPsi
-          if (psiField is PsiField) {
-            val getter = PropertyUtil.findGetterForField(psiField)
-            val setter = PropertyUtil.findSetterForField(psiField)
-            return getter != null && !getter.hasModifier(JvmModifier.PRIVATE) || setter != null && !setter.hasModifier(JvmModifier.PRIVATE)
-          }
-        }
-        return false
-      }
-      val containingUClass = node.getContainingUClass()
-      if (containingUClass != null) {
-        return isAccessibleDeclaration(containingUClass)
-      }
-      return true
-    }
-
-    private fun isMarkedUnstable(node: UDeclaration) = findUnstableAnnotation(node) != null
-
-    private fun findUnstableAnnotation(node: UDeclaration): String? {
-      val unstableAnnotation = node.annotations.find { it.qualifiedName in unstableApiAnnotations }
-      if (unstableAnnotation != null) {
-        return unstableAnnotation.qualifiedName
-      }
-      val containingClass = node.getContainingUClass()
-      if (containingClass != null) {
-        return findUnstableAnnotation(containingClass)
-      }
-      val containingUFile = node.getContainingUFile()
-      if (containingUFile != null) {
-        val packageName = containingUFile.packageName
-        val psiPackage = JavaPsiFacade.getInstance(problemsHolder.project).findPackage(packageName)
-        if (psiPackage != null) {
-          return unstableApiAnnotations.find { psiPackage.hasAnnotation(it) }
-        }
-      }
-      return null
-    }
-
-    private fun checkReferencesUnstableType(psiType: PsiType, declaration: UDeclaration): Boolean {
-      val annotatedContainingDeclaration = findReferencedUnstableType(psiType.deepComponentType) ?: return false
-      val unstableClass = annotatedContainingDeclaration.target as? PsiClass ?: return false
-      val className = unstableClass.qualifiedName ?: return false
-      val annotationName = annotatedContainingDeclaration.psiAnnotation.qualifiedName ?: return false
-      val message = when (declaration) {
-        is UMethod -> JvmAnalysisBundle.message("jvm.inspections.unstable.type.used.in.method.signature.description", annotationName, className)
-        is UField -> JvmAnalysisBundle.message("jvm.inspections.unstable.type.used.in.field.signature.description", annotationName, className)
-        else -> JvmAnalysisBundle.message("jvm.inspections.unstable.type.used.in.class.signature.description", annotationName, className)
-      }
-      val elementToHighlight = declaration.uastAnchor.sourcePsiElement ?: return false
-      problemsHolder.registerProblem(elementToHighlight, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
-      return true
-    }
-
-    private fun findReferencedUnstableType(psiType: PsiType): AnnotatedContainingDeclaration? {
-      if (psiType is PsiClassType) {
-        val psiClass = psiType.resolve()
-        if (psiClass != null) {
-          val unstableContainingDeclaration = findAnnotatedContainingDeclaration(psiClass, unstableApiAnnotations, false)
-          if (unstableContainingDeclaration != null) {
-            return unstableContainingDeclaration
-          }
-        }
-        for (parameterType in psiType.parameters) {
-          val parameterResult = findReferencedUnstableType(parameterType)
-          if (parameterResult != null) {
-            return parameterResult
-          }
-        }
-      }
-      if (psiType is PsiWildcardType) {
-        return findReferencedUnstableType(psiType.extendsBound) ?: findReferencedUnstableType(psiType.superBound)
-      }
-      return null
-    }
-
-  }
+    UastVisitorAdapter(UnstableTypeUsedInSignatureVisitor(holder, unstableApiAnnotations.toList()), true)
 
   override fun createOptionsPanel(): JPanel {
     val annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
@@ -173,4 +43,131 @@ class UnstableTypeUsedInSignatureInspection : LocalInspectionTool() {
     container.add(formBuilder.panel, BorderLayout.NORTH)
     return container
   }
+}
+
+private class UnstableTypeUsedInSignatureVisitor(
+  private val problemsHolder: ProblemsHolder,
+  private val unstableApiAnnotations: List<String>
+) : AbstractUastNonRecursiveVisitor() {
+
+  override fun visitClass(node: UClass): Boolean {
+    if (!isAccessibleDeclaration(node) || isInsideUnstableDeclaration(node)) {
+      return true
+    }
+    checkTypeParameters(node.javaPsi, node)
+    return true
+  }
+
+  override fun visitMethod(node: UMethod): Boolean {
+    if (!isAccessibleDeclaration(node) || isInsideUnstableDeclaration(node)) {
+      return true
+    }
+    for (uastParameter in node.uastParameters) {
+      if (checkReferencesUnstableType(uastParameter.type.deepComponentType, node)) {
+        return true
+      }
+    }
+    val returnType = node.returnType ?: return true
+    checkReferencesUnstableType(returnType, node)
+
+    checkTypeParameters(node.javaPsi, node)
+    return true
+  }
+
+  override fun visitField(node: UField): Boolean {
+    if (!isAccessibleDeclaration(node) || isInsideUnstableDeclaration(node)) {
+      return true
+    }
+    checkReferencesUnstableType(node.type, node)
+    return true
+  }
+
+  private fun checkTypeParameters(typeParameterListOwner: PsiTypeParameterListOwner, declaration: UDeclaration): Boolean {
+    for (typeParameter in typeParameterListOwner.typeParameters) {
+      val referencedTypes = typeParameter.extendsList.referencedTypes
+      for (referencedType in referencedTypes) {
+        if (checkReferencesUnstableType(referencedType, declaration)) {
+          return true
+        }
+      }
+    }
+    return false
+  }
+
+  private fun isAccessibleDeclaration(node: UDeclaration): Boolean {
+    if (node.visibility == UastVisibility.PRIVATE) {
+      if (node is UField) {
+        //Kotlin properties are UField with accompanying getters\setters.
+        val psiField = node.javaPsi
+        if (psiField is PsiField) {
+          val getter = PropertyUtil.findGetterForField(psiField)
+          val setter = PropertyUtil.findSetterForField(psiField)
+          return getter != null && !getter.hasModifier(JvmModifier.PRIVATE) || setter != null && !setter.hasModifier(JvmModifier.PRIVATE)
+        }
+      }
+      return false
+    }
+    val containingUClass = node.getContainingUClass()
+    if (containingUClass != null) {
+      return isAccessibleDeclaration(containingUClass)
+    }
+    return true
+  }
+
+  private fun isInsideUnstableDeclaration(node: UDeclaration): Boolean {
+    if (node.annotations.any { it.qualifiedName in unstableApiAnnotations }) {
+      return true
+    }
+    val containingClass = node.getContainingUClass()
+    if (containingClass != null) {
+      return isInsideUnstableDeclaration(containingClass)
+    }
+    val containingUFile = node.getContainingUFile()
+    if (containingUFile != null) {
+      val packageName = containingUFile.packageName
+      val psiPackage = JavaPsiFacade.getInstance(problemsHolder.project).findPackage(packageName)
+      if (psiPackage != null) {
+        return unstableApiAnnotations.any { psiPackage.hasAnnotation(it) }
+      }
+    }
+    return false
+  }
+
+  private fun checkReferencesUnstableType(psiType: PsiType, declaration: UDeclaration): Boolean {
+    val annotatedContainingDeclaration = findReferencedUnstableType(psiType.deepComponentType) ?: return false
+    val unstableClass = annotatedContainingDeclaration.target as? PsiClass ?: return false
+    val className = unstableClass.qualifiedName ?: return false
+    val annotationName = annotatedContainingDeclaration.psiAnnotation.qualifiedName ?: return false
+    val message = when (declaration) {
+      is UMethod -> JvmAnalysisBundle.message("jvm.inspections.unstable.type.used.in.method.signature.description", annotationName, className)
+      is UField -> JvmAnalysisBundle.message("jvm.inspections.unstable.type.used.in.field.signature.description", annotationName, className)
+      else -> JvmAnalysisBundle.message("jvm.inspections.unstable.type.used.in.class.signature.description", annotationName, className)
+    }
+    val elementToHighlight = declaration.uastAnchor.sourcePsiElement ?: return false
+    problemsHolder.registerProblem(elementToHighlight, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+    return true
+  }
+
+  private fun findReferencedUnstableType(psiType: PsiType): AnnotatedContainingDeclaration? {
+    if (psiType is PsiClassType) {
+      val psiClass = psiType.resolve()
+      if (psiClass != null) {
+        val unstableContainingDeclaration = findAnnotatedContainingDeclaration(psiClass, unstableApiAnnotations, false)
+        if (unstableContainingDeclaration != null) {
+          return unstableContainingDeclaration
+        }
+      }
+      for (parameterType in psiType.parameters) {
+        val parameterResult = findReferencedUnstableType(parameterType)
+        if (parameterResult != null) {
+          return parameterResult
+        }
+      }
+    }
+    if (psiType is PsiWildcardType) {
+      return findReferencedUnstableType(psiType.extendsBound) ?: findReferencedUnstableType(psiType.superBound)
+    }
+    return null
+  }
+
 }
