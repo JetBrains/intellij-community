@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import pkg.<warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning>;
-import static pkg.<warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning>.<warning descr="'NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is scheduled for removal in 123.456">NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning>;
-import static pkg.<warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning>.<warning descr="'staticNonAnnotatedMethodInAnnotatedClass()' is scheduled for removal in 123.456">staticNonAnnotatedMethodInAnnotatedClass</warning>;
+import static pkg.<warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning>.<warning descr="'NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is declared in class 'pkg.AnnotatedClass' scheduled for removal in 123.456">NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning>;
+import static pkg.<warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning>.<warning descr="'staticNonAnnotatedMethodInAnnotatedClass()' is declared in class 'pkg.AnnotatedClass' scheduled for removal in 123.456">staticNonAnnotatedMethodInAnnotatedClass</warning>;
 import static pkg.<warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning>.<warning descr="'ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is scheduled for removal in 123.456">ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning>;
 import static pkg.<warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning>.<warning descr="'staticAnnotatedMethodInAnnotatedClass()' is scheduled for removal in 123.456">staticAnnotatedMethodInAnnotatedClass</warning>;
 
@@ -13,7 +13,7 @@ import static pkg.NonAnnotatedClass.<warning descr="'staticAnnotatedMethodInNonA
 
 import pkg.<warning descr="'pkg.AnnotatedEnum' is scheduled for removal in 123.456">AnnotatedEnum</warning>;
 import pkg.NonAnnotatedEnum;
-import static pkg.<warning descr="'pkg.AnnotatedEnum' is scheduled for removal in 123.456">AnnotatedEnum</warning>.<warning descr="'NON_ANNOTATED_VALUE_IN_ANNOTATED_ENUM' is scheduled for removal in 123.456">NON_ANNOTATED_VALUE_IN_ANNOTATED_ENUM</warning>;
+import static pkg.<warning descr="'pkg.AnnotatedEnum' is scheduled for removal in 123.456">AnnotatedEnum</warning>.<warning descr="'NON_ANNOTATED_VALUE_IN_ANNOTATED_ENUM' is declared in enum 'pkg.AnnotatedEnum' scheduled for removal in 123.456">NON_ANNOTATED_VALUE_IN_ANNOTATED_ENUM</warning>;
 import static pkg.<warning descr="'pkg.AnnotatedEnum' is scheduled for removal in 123.456">AnnotatedEnum</warning>.<warning descr="'ANNOTATED_VALUE_IN_ANNOTATED_ENUM' is scheduled for removal in 123.456">ANNOTATED_VALUE_IN_ANNOTATED_ENUM</warning>;
 import static pkg.NonAnnotatedEnum.NON_ANNOTATED_VALUE_IN_NON_ANNOTATED_ENUM;
 import static pkg.NonAnnotatedEnum.<warning descr="'ANNOTATED_VALUE_IN_NON_ANNOTATED_ENUM' is scheduled for removal in 123.456">ANNOTATED_VALUE_IN_NON_ANNOTATED_ENUM</warning>;
@@ -21,17 +21,17 @@ import static pkg.NonAnnotatedEnum.<warning descr="'ANNOTATED_VALUE_IN_NON_ANNOT
 import pkg.<warning descr="'pkg.AnnotatedAnnotation' is scheduled for removal in 123.456">AnnotatedAnnotation</warning>;
 import pkg.NonAnnotatedAnnotation;
 
-import <warning descr="'annotatedPkg' is scheduled for removal in 123.456">annotatedPkg</warning>.<warning descr="'annotatedPkg.ClassInAnnotatedPkg' is scheduled for removal in 123.456">ClassInAnnotatedPkg</warning>;
+import <warning descr="'annotatedPkg' is scheduled for removal in 123.456">annotatedPkg</warning>.<warning descr="'annotatedPkg.ClassInAnnotatedPkg' is declared in package 'annotatedPkg' scheduled for removal in 123.456">ClassInAnnotatedPkg</warning>;
 
 public class ScheduledForRemovalElementsTest {
   public void test() {
-    String s = <warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning>.<warning descr="'NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is scheduled for removal in 123.456">NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning>;
-    <warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning>.<warning descr="'staticNonAnnotatedMethodInAnnotatedClass()' is scheduled for removal in 123.456">staticNonAnnotatedMethodInAnnotatedClass</warning>();
-    <warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning> annotatedClassInstanceViaNonAnnotatedConstructor = new <warning descr="'AnnotatedClass()' is scheduled for removal in 123.456"><warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning></warning>();
-    s = annotatedClassInstanceViaNonAnnotatedConstructor.<warning descr="'nonAnnotatedFieldInAnnotatedClass' is scheduled for removal in 123.456">nonAnnotatedFieldInAnnotatedClass</warning>;
-    annotatedClassInstanceViaNonAnnotatedConstructor.<warning descr="'nonAnnotatedMethodInAnnotatedClass()' is scheduled for removal in 123.456">nonAnnotatedMethodInAnnotatedClass</warning>();
-    s = <warning descr="'NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is scheduled for removal in 123.456">NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning>;
-    <warning descr="'staticNonAnnotatedMethodInAnnotatedClass()' is scheduled for removal in 123.456">staticNonAnnotatedMethodInAnnotatedClass</warning>();
+    String s = <warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning>.<warning descr="'NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is declared in class 'pkg.AnnotatedClass' scheduled for removal in 123.456">NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning>;
+    <warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning>.<warning descr="'staticNonAnnotatedMethodInAnnotatedClass()' is declared in class 'pkg.AnnotatedClass' scheduled for removal in 123.456">staticNonAnnotatedMethodInAnnotatedClass</warning>();
+    <warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning> annotatedClassInstanceViaNonAnnotatedConstructor = new <warning descr="'AnnotatedClass()' is declared in class 'pkg.AnnotatedClass' scheduled for removal in 123.456"><warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning></warning>();
+    s = annotatedClassInstanceViaNonAnnotatedConstructor.<warning descr="'nonAnnotatedFieldInAnnotatedClass' is declared in class 'pkg.AnnotatedClass' scheduled for removal in 123.456">nonAnnotatedFieldInAnnotatedClass</warning>;
+    annotatedClassInstanceViaNonAnnotatedConstructor.<warning descr="'nonAnnotatedMethodInAnnotatedClass()' is declared in class 'pkg.AnnotatedClass' scheduled for removal in 123.456">nonAnnotatedMethodInAnnotatedClass</warning>();
+    s = <warning descr="'NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is declared in class 'pkg.AnnotatedClass' scheduled for removal in 123.456">NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning>;
+    <warning descr="'staticNonAnnotatedMethodInAnnotatedClass()' is declared in class 'pkg.AnnotatedClass' scheduled for removal in 123.456">staticNonAnnotatedMethodInAnnotatedClass</warning>();
 
     s = <warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning>.<warning descr="'ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is scheduled for removal in 123.456">ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning>;
     <warning descr="'pkg.AnnotatedClass' is scheduled for removal in 123.456">AnnotatedClass</warning>.<warning descr="'staticAnnotatedMethodInAnnotatedClass()' is scheduled for removal in 123.456">staticAnnotatedMethodInAnnotatedClass</warning>();
@@ -61,8 +61,8 @@ public class ScheduledForRemovalElementsTest {
 
     // ---------------------------------
 
-    <warning descr="'pkg.AnnotatedEnum' is scheduled for removal in 123.456">AnnotatedEnum</warning> nonAnnotatedValueInAnnotatedEnum = <warning descr="'pkg.AnnotatedEnum' is scheduled for removal in 123.456">AnnotatedEnum</warning>.<warning descr="'NON_ANNOTATED_VALUE_IN_ANNOTATED_ENUM' is scheduled for removal in 123.456">NON_ANNOTATED_VALUE_IN_ANNOTATED_ENUM</warning>;
-    nonAnnotatedValueInAnnotatedEnum = <warning descr="'NON_ANNOTATED_VALUE_IN_ANNOTATED_ENUM' is scheduled for removal in 123.456">NON_ANNOTATED_VALUE_IN_ANNOTATED_ENUM</warning>;
+    <warning descr="'pkg.AnnotatedEnum' is scheduled for removal in 123.456">AnnotatedEnum</warning> nonAnnotatedValueInAnnotatedEnum = <warning descr="'pkg.AnnotatedEnum' is scheduled for removal in 123.456">AnnotatedEnum</warning>.<warning descr="'NON_ANNOTATED_VALUE_IN_ANNOTATED_ENUM' is declared in enum 'pkg.AnnotatedEnum' scheduled for removal in 123.456">NON_ANNOTATED_VALUE_IN_ANNOTATED_ENUM</warning>;
+    nonAnnotatedValueInAnnotatedEnum = <warning descr="'NON_ANNOTATED_VALUE_IN_ANNOTATED_ENUM' is declared in enum 'pkg.AnnotatedEnum' scheduled for removal in 123.456">NON_ANNOTATED_VALUE_IN_ANNOTATED_ENUM</warning>;
     <warning descr="'pkg.AnnotatedEnum' is scheduled for removal in 123.456">AnnotatedEnum</warning> annotatedValueInAnnotatedEnum = <warning descr="'pkg.AnnotatedEnum' is scheduled for removal in 123.456">AnnotatedEnum</warning>.<warning descr="'ANNOTATED_VALUE_IN_ANNOTATED_ENUM' is scheduled for removal in 123.456">ANNOTATED_VALUE_IN_ANNOTATED_ENUM</warning>;
     annotatedValueInAnnotatedEnum = <warning descr="'ANNOTATED_VALUE_IN_ANNOTATED_ENUM' is scheduled for removal in 123.456">ANNOTATED_VALUE_IN_ANNOTATED_ENUM</warning>;
 
@@ -74,7 +74,7 @@ public class ScheduledForRemovalElementsTest {
     // ---------------------------------
 
     @<warning descr="'pkg.AnnotatedAnnotation' is scheduled for removal in 123.456">AnnotatedAnnotation</warning> class C1 {}
-    @<warning descr="'pkg.AnnotatedAnnotation' is scheduled for removal in 123.456">AnnotatedAnnotation</warning>(<warning descr="'nonAnnotatedAttributeInAnnotatedAnnotation' is scheduled for removal in 123.456">nonAnnotatedAttributeInAnnotatedAnnotation</warning> = "123") class C2 {}
+    @<warning descr="'pkg.AnnotatedAnnotation' is scheduled for removal in 123.456">AnnotatedAnnotation</warning>(<warning descr="'nonAnnotatedAttributeInAnnotatedAnnotation' is declared in @interface 'pkg.AnnotatedAnnotation' scheduled for removal in 123.456">nonAnnotatedAttributeInAnnotatedAnnotation</warning> = "123") class C2 {}
     @<warning descr="'pkg.AnnotatedAnnotation' is scheduled for removal in 123.456">AnnotatedAnnotation</warning>(<warning descr="'annotatedAttributeInAnnotatedAnnotation' is scheduled for removal in 123.456">annotatedAttributeInAnnotatedAnnotation</warning> = "123") class C3 {}
     @NonAnnotatedAnnotation class C4 {}
     @NonAnnotatedAnnotation(nonAnnotatedAttributeInNonAnnotatedAnnotation = "123") class C5 {}
@@ -84,7 +84,7 @@ public class ScheduledForRemovalElementsTest {
 
 class DirectOverrideAnnotatedMethod extends NonAnnotatedClass {
   @Override
-  public void <warning descr="Overridden method 'annotatedMethodInNonAnnotatedClass()' is scheduled for removal in 123.456">annotatedMethodInNonAnnotatedClass</warning>() {}
+  public void <warning descr="Overridden method 'annotatedMethodInNonAnnotatedClass()' is scheduled for removal in version 123.456">annotatedMethodInNonAnnotatedClass</warning>() {}
 }
 
 class IndirectOverrideAnnotatedMethod extends DirectOverrideAnnotatedMethod {

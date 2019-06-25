@@ -5,9 +5,10 @@ import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInspection.apiUsage.ApiUsageProcessor
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor
-import com.intellij.codeInspection.deprecation.DeprecationInspectionBase.getPresentableName
+import com.intellij.codeInspection.deprecation.DeprecationInspection
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil
+import com.intellij.lang.findUsages.LanguageFindUsages
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.*
@@ -61,7 +62,7 @@ class UnstableApiUsageInspection : LocalInspectionTool() {
 
   override fun createOptionsPanel(): JPanel {
     val checkboxPanel = SingleCheckboxOptionsPanel(
-      JvmAnalysisBundle.message("jvm.inspections.api.usage.ignore.inside.imports"), this, "myIgnoreInsideImports"
+      JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.ignore.inside.imports"), this, "myIgnoreInsideImports"
     )
 
     //TODO in add annotation window "Include non-project items" should be enabled by default
@@ -141,7 +142,19 @@ data class AnnotatedContainingDeclaration(
   val target: PsiModifierListOwner,
   val containingDeclaration: PsiModifierListOwner,
   val psiAnnotation: PsiAnnotation
-)
+) {
+  val targetName: String
+    get() = DeprecationInspection.getPresentableName(target)
+
+  val containingDeclarationName: String
+    get() = DeprecationInspection.getPresentableName(containingDeclaration)
+
+  val containingDeclarationType: String
+    get() = LanguageFindUsages.getType(containingDeclaration)
+
+  val isOwnAnnotation: Boolean
+    get() = target == containingDeclaration
+}
 
 fun findAnnotatedContainingDeclaration(
   target: PsiModifierListOwner,
@@ -182,13 +195,24 @@ private object DefaultUnstableApiUsageMessageProvider : UnstableApiUsageMessageP
   override fun buildMessage(
     annotatedContainingDeclaration: AnnotatedContainingDeclaration,
     isMethodOverriding: Boolean
-  ): String {
-    val targetName = getPresentableName(annotatedContainingDeclaration.target)
-    return if (isMethodOverriding) {
-      JvmAnalysisBundle.message("jvm.inspections.unstable.method.overridden.description", targetName)
-    }
-    else {
-      JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.description", targetName)
+  ): String = with(annotatedContainingDeclaration) {
+    when {
+      isMethodOverriding && isOwnAnnotation -> JvmAnalysisBundle.message(
+        "jvm.inspections.unstable.api.usage.overridden.method.is.marked.unstable.itself", targetName
+      )
+      isMethodOverriding && !isOwnAnnotation -> JvmAnalysisBundle.message(
+        "jvm.inspections.unstable.api.usage.overridden.method.is.declared.in.unstable.api",
+        targetName,
+        containingDeclarationType,
+        containingDeclarationName
+      )
+      !isMethodOverriding && !isOwnAnnotation -> JvmAnalysisBundle.message(
+        "jvm.inspections.unstable.api.usage.api.is.declared.in.unstable.api",
+        targetName,
+        containingDeclarationType,
+        containingDeclarationName
+      )
+      else -> JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.api.is.marked.unstable.itself", targetName)
     }
   }
 }
@@ -198,23 +222,36 @@ private class ScheduledForRemovalMessageProvider : UnstableApiUsageMessageProvid
     annotatedContainingDeclaration: AnnotatedContainingDeclaration,
     isMethodOverriding: Boolean
   ): String {
-    val inVersion = AnnotationUtil.getDeclaredStringAttributeValue(annotatedContainingDeclaration.psiAnnotation, "inVersion")
-    val targetName = getPresentableName(annotatedContainingDeclaration.target)
-    val isEmptyVersion = inVersion == null || inVersion.isEmpty()
-    return when {
-      isEmptyVersion && isMethodOverriding -> JvmAnalysisBundle.message(
-        "jvm.inspections.scheduled.for.removal.method.overridden.no.version.description", targetName
-      )
-
-      !isEmptyVersion && isMethodOverriding -> JvmAnalysisBundle.message(
-        "jvm.inspections.scheduled.for.removal.method.overridden.with.version.description", targetName, inVersion
-      )
-
-      !isEmptyVersion && !isMethodOverriding -> JvmAnalysisBundle.message(
-        "jvm.inspections.scheduled.for.removal.description.with.version", targetName, inVersion
-      )
-
-      else -> JvmAnalysisBundle.message("jvm.inspections.scheduled.for.removal.description.no.version", targetName)
+    val versionValue = AnnotationUtil.getDeclaredStringAttributeValue(annotatedContainingDeclaration.psiAnnotation, "inVersion")
+    val versionMessage = if (versionValue.isNullOrEmpty()) {
+      JvmAnalysisBundle.message("jvm.inspections.scheduled.for.removal.future.version")
+    }
+    else {
+      JvmAnalysisBundle.message("jvm.inspections.scheduled.for.removal.predefined.version", versionValue)
+    }
+    return with(annotatedContainingDeclaration) {
+      when {
+        isMethodOverriding && isOwnAnnotation -> JvmAnalysisBundle.message(
+          "jvm.inspections.scheduled.for.removal.method.overridden.marked.itself", targetName, versionMessage
+        )
+        isMethodOverriding && !isOwnAnnotation -> JvmAnalysisBundle.message(
+          "jvm.inspections.scheduled.for.removal.method.overridden.declared.in.marked.api",
+          targetName,
+          containingDeclarationType,
+          containingDeclarationName,
+          versionValue
+        )
+        !isMethodOverriding && !isOwnAnnotation -> JvmAnalysisBundle.message(
+          "jvm.inspections.scheduled.for.removal.api.is.declared.in.marked.api",
+          targetName,
+          containingDeclarationType,
+          containingDeclarationName,
+          versionValue
+        )
+        else -> JvmAnalysisBundle.message(
+          "jvm.inspections.scheduled.for.removal.api.is.marked.itself", targetName, versionValue
+        )
+      }
     }
   }
 }

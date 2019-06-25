@@ -122,9 +122,10 @@ class UnstableTypeUsedInSignatureInspection : LocalInspectionTool() {
     }
 
     private fun checkReferencesUnstableType(psiType: PsiType, declaration: UDeclaration): Boolean {
-      val (unstableClass, unstableAnnotation) = findReferencedUnstableType(psiType.deepComponentType) ?: return false
+      val annotatedContainingDeclaration = findReferencedUnstableType(psiType.deepComponentType) ?: return false
+      val unstableClass = annotatedContainingDeclaration.target as? PsiClass ?: return false
       val className = unstableClass.qualifiedName ?: return false
-      val annotationName = unstableAnnotation.qualifiedName ?: return false
+      val annotationName = annotatedContainingDeclaration.psiAnnotation.qualifiedName ?: return false
       val message = when (declaration) {
         is UMethod -> JvmAnalysisBundle.message("jvm.inspections.unstable.type.used.in.method.signature.description", annotationName, className)
         is UField -> JvmAnalysisBundle.message("jvm.inspections.unstable.type.used.in.field.signature.description", annotationName, className)
@@ -135,13 +136,13 @@ class UnstableTypeUsedInSignatureInspection : LocalInspectionTool() {
       return true
     }
 
-    private fun findReferencedUnstableType(psiType: PsiType): Pair<PsiClass, PsiAnnotation>? {
+    private fun findReferencedUnstableType(psiType: PsiType): AnnotatedContainingDeclaration? {
       if (psiType is PsiClassType) {
         val psiClass = psiType.resolve()
         if (psiClass != null) {
-          val unstableApiAnnotation = findAnnotatedContainingDeclaration(psiClass, unstableApiAnnotations, false)
-          if (unstableApiAnnotation != null) {
-            return psiClass to unstableApiAnnotation.psiAnnotation
+          val unstableContainingDeclaration = findAnnotatedContainingDeclaration(psiClass, unstableApiAnnotations, false)
+          if (unstableContainingDeclaration != null) {
+            return unstableContainingDeclaration
           }
         }
         for (parameterType in psiType.parameters) {
