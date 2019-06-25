@@ -81,7 +81,7 @@ public class PyRedeclarationInspection extends PyInspection {
 
     @Override
     public void visitPyTargetExpression(final PyTargetExpression node) {
-      if (node.isQualified() || PyNames.UNDERSCORE.equals(node.getText())) return;
+      if (node.isQualified() || PyNames.UNDERSCORE.equals(node.getText()) || isTypeDeclarationTarget(node)) return;
       final ScopeOwner owner = ScopeUtil.getScopeOwner(node);
       if (owner instanceof PyFile || owner instanceof PyClass) {
         processElement(node);
@@ -136,7 +136,7 @@ public class PyRedeclarationInspection extends PyInspection {
                   readElementRef.set(originalElement);
                 }
                 if (rwInstruction.getAccess().isWriteAccess() && originalElement != element) {
-                  if (PyiUtil.isOverload(originalElement, myTypeEvalContext)) {
+                  if (PyiUtil.isOverload(originalElement, myTypeEvalContext) || isTypeDeclarationTarget(originalElement)) {
                     return ControlFlowUtil.Operation.NEXT;
                   }
                   else if (!underPossiblyFalseCondition.get()) {
@@ -204,5 +204,9 @@ public class PyRedeclarationInspection extends PyInspection {
       }
       return true;
     }
+  }
+
+  private static boolean isTypeDeclarationTarget(@NotNull PsiElement element) {
+    return element instanceof PyTargetExpression && element.getParent() instanceof PyTypeDeclarationStatement;
   }
 }

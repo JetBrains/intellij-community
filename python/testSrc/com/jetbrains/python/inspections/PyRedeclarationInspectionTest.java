@@ -183,6 +183,21 @@ public class PyRedeclarationInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-22117
+  public void testForwardTypeDeclaration() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-22117
+  public void testTypeDeclarationAfterDefinition() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-22117
+  public void testTypeDeclarationPrecedesRedeclaredDefinition() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
