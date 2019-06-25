@@ -37,7 +37,7 @@ public class TextMateLexerDataStorage extends ShortBasedStorage {
     if (tokenType instanceof TextMateElementType) {
       synchronized (tokenTypeMap) {
         if (tokenTypeMap.contains(tokenType)) {
-          return tokenTypeMap.get((TextMateElementType)tokenType);
+          return tokenTypeMap.get((TextMateElementType)tokenType) * (isRestartableState ? 1 : -1);
         }
         int data = tokenTypes.size() + 1;
         tokenTypes.add((TextMateElementType)tokenType);
