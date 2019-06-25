@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.push.ui;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.*;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
@@ -32,6 +33,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvider {
 
@@ -72,7 +75,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     updateOkActions();
     setOKButtonText("Push");
     setOKButtonMnemonic('P');
-    setTitle("Push Commits");
+    setTitle("Push Commits " + (allRepos.size() == 1 ? "to " + DvcsUtil.getShortRepositoryName(getFirstItem(allRepos)) : ""));
   }
 
   @Override
