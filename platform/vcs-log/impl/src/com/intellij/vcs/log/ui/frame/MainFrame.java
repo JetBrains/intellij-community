@@ -23,7 +23,12 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsLogFilterCollection;
+import com.intellij.vcs.log.VcsLogFilterUi;
+import com.intellij.vcs.log.data.DataPack;
+import com.intellij.vcs.log.data.DataPackBase;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
@@ -371,7 +376,12 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       StatusText statusText = getEmptyText();
       VisiblePack visiblePack = getModel().getVisiblePack();
 
-      if (visiblePack.getVisibleGraph().getVisibleCommitCount() == 0) {
+      DataPackBase dataPack = visiblePack.getDataPack();
+      if (dataPack instanceof DataPack.ErrorDataPack) {
+        getEmptyText().setText(((DataPack.ErrorDataPack)dataPack).getError().getMessage())
+          .appendSecondaryText("Refresh", VcsLogUiUtil.getLinkAttributes(), e -> myLogData.refresh(myLogData.getLogProviders().keySet()));
+      }
+      else if (visiblePack.getVisibleGraph().getVisibleCommitCount() == 0) {
         if (visiblePack.getFilters().isEmpty()) {
           statusText.setText("No changes committed.").
             appendSecondaryText("Commit local changes", VcsLogUiUtil.getLinkAttributes(),

@@ -38,7 +38,6 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
   @NotNull private final VcsUserRegistryImpl myUserRegistry;
   @NotNull private final VcsLogModifiableIndex myIndex;
   @NotNull private final TopCommitsCache myTopCommitsDetailsCache;
-  @NotNull private final Consumer<? super Exception> myExceptionHandler;
   @NotNull private final VcsLogProgress myProgress;
 
   private final int myRecentCommitCount;
@@ -55,7 +54,6 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
                              @NotNull VcsLogProgress progress,
                              @NotNull TopCommitsCache topCommitsDetailsCache,
                              @NotNull Consumer<? super DataPack> dataPackUpdateHandler,
-                             @NotNull Consumer<? super Exception> exceptionHandler,
                              int recentCommitsCount) {
     myProject = project;
     myStorage = storage;
@@ -63,7 +61,6 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     myUserRegistry = userRegistry;
     myIndex = index;
     myTopCommitsDetailsCache = topCommitsDetailsCache;
-    myExceptionHandler = exceptionHandler;
     myRecentCommitCount = recentCommitsCount;
     myProgress = progress;
 
@@ -106,8 +103,8 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
       return myDataPack;
     }
     catch (VcsException e) {
-      myExceptionHandler.consume(e);
-      return DataPack.EMPTY;
+      LOG.info(e);
+      return new DataPack.ErrorDataPack(e);
     }
   }
 
@@ -256,8 +253,8 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
         return loadFullLog();
       }
       catch (Exception e) {
-        myExceptionHandler.consume(e);
-        return DataPack.EMPTY;
+        LOG.info(e);
+        return new DataPack.ErrorDataPack(e);
       }
       finally {
         sw.report();

@@ -117,7 +117,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     myDetailsGetter = new CommitDetailsGetter(myStorage, logProviders, myIndex, this);
 
     myRefresher = new VcsLogRefresherImpl(myProject, myStorage, myLogProviders, myUserRegistry, myIndex, progress, myTopCommitsDetailsCache,
-                                          this::fireDataPackChangeEvent, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT);
+                                          this::fireDataPackChangeEvent, RECENT_COMMITS_COUNT);
     Disposer.register(this, myRefresher);
 
     myContainingBranchesGetter = new ContainingBranchesGetter(this, this);

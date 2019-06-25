@@ -202,7 +202,7 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
       new VcsLogRefresherImpl(myProject, myLogData.getStorage(), myLogProviders, myLogData.getUserRegistry(),
                               myLogData.getModifiableIndex(),
                               new VcsLogProgress(myProject, myLogData),
-                              myLogData.getTopCommitsCache(), dataPackConsumer, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT
+                              myLogData.getTopCommitsCache(), dataPackConsumer, RECENT_COMMITS_COUNT
       ) {
         @Override
         protected SingleTaskController.SingleTask startNewBackgroundTask(@NotNull final Task.Backgroundable refreshTask) {
