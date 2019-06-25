@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -118,7 +117,6 @@ import java.util.concurrent.atomic.AtomicReference;
  *</ul>
  */
 class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener, DataProvider, Accessible {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorGutterComponentImpl");
   private static final JBValueGroup JBVG = new JBValueGroup();
   private static final JBValue START_ICON_AREA_WIDTH = JBVG.value(17);
   private static final JBValue FREE_PAINTERS_LEFT_AREA_WIDTH = JBVG.value(8);
@@ -252,7 +250,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       })
       .setImageProvider((NullableFunction<DnDActionInfo, DnDImage>)info -> {
         // [tav] temp workaround for JRE-224
-        boolean inUserScale = !SystemInfo.isWindows || !UIUtil.isJreHiDPI(myEditor.getComponent());
+        boolean inUserScale = !SystemInfo.isWindows || !StartupUiUtil.isJreHiDPI(myEditor.getComponent());
         Image image = ImageUtil.toBufferedImage(getDragImage(getGutterRenderer(info.getPoint())), inUserScale);
         return new DnDImage(image, new Point(image.getWidth(null) / 2, image.getHeight(null) / 2));
       })
@@ -352,7 +350,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
       if (focusModeRange != null) {
         int startY = Math.max(myEditor.visualLineToY(startVisualLine), clip.y);
-        int endY = Math.min(myEditor.visualLineToY(endVisualLine), (clip.y + clip.height));
+        int endY = Math.min(myEditor.visualLineToY(endVisualLine), clip.y + clip.height);
         g.setClip(clip.x, startY, clip.width, endY - startY);
       }
 
@@ -501,7 +499,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return font;
   }
 
-  private void paintFoldingTree(Graphics g, Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {
+  private void paintFoldingTree(@NotNull Graphics g, @NotNull Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {
     if (isFoldingOutlineShown()) {
       doPaintFoldingTree((Graphics2D)g, clip, firstVisibleOffset, lastVisibleOffset);
     }
@@ -1137,7 +1135,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return new ArrayList<>(myTextAnnotationGutters);
   }
 
-  private void doPaintFoldingTree(final Graphics2D g, final Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {
+  private void doPaintFoldingTree(@NotNull Graphics2D g, @NotNull Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {
     final double width = getFoldingAnchorWidth2D();
 
     Collection<DisplayedFoldingAnchor> anchorsToDisplay =
@@ -1203,8 +1201,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return getLineCenterY(myEditor.offsetToVisualLine(foldRange.getStartOffset()));
   }
 
-  private void drawFoldingAnchor(double width, Rectangle clip, Graphics2D g, int visualLine,
-                                 DisplayedFoldingAnchor.Type type, boolean active) {
+  private void drawFoldingAnchor(double width, @NotNull Rectangle clip, @NotNull Graphics2D g, int visualLine,
+                                 @NotNull DisplayedFoldingAnchor.Type type, boolean active) {
     double off = width / 4;
     double height = width + off;
     double baseHeight = height - width / 2;
@@ -1276,13 +1274,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     LinePainter2D.paint(g, line, StrokeType.CENTERED, strokeWidth, RenderingHints.VALUE_ANTIALIAS_OFF);
   }
 
-  private void drawSquareWithPlusOrMinus(Graphics2D g,
+  private void drawSquareWithPlusOrMinus(@NotNull Graphics2D g,
                                          double centerX,
                                          double centerY,
                                          double width,
                                          boolean plus,
-                                         boolean active)
-  {
+                                         boolean active) {
     double sw = getStrokeWidth();
     Rectangle2D rect = RectanglePainter2D.align(g,
                                                 EnumSet.of(LinePainter2D.Align.CENTER_X, LinePainter2D.Align.CENTER_Y),
@@ -1696,9 +1693,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       if (group == null) {
         return Collections.singletonList(foldingAtCursor);
       }
-      else {
-        return myEditor.getFoldingModel().getGroupedRegions(group);
-      }
+      return myEditor.getFoldingModel().getGroupedRegions(group);
     }
   }
 
@@ -2145,8 +2140,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private static class ClickInfo {
-    public final int myLogicalLineAtCursor;
-    public final Point myIconCenterPosition;
+    final int myLogicalLineAtCursor;
+    final Point myIconCenterPosition;
 
     private ClickInfo(int logicalLineAtCursor, Point iconCenterPosition) {
       myLogicalLineAtCursor = logicalLineAtCursor;
