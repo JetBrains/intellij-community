@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.MasterDetails;
+import com.intellij.openapi.ui.DialogPanel;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.CardLayoutPanel;
 import com.intellij.ui.ScrollPaneFactory;
@@ -82,7 +83,7 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
         reset(configurable);
         if (ConfigurableWrapper.cast(MasterDetails.class, configurable) == null) {
           if (ConfigurableWrapper.cast(Configurable.NoMargin.class, configurable) == null) {
-            if (!component.getClass().equals(JPanel.class)) {
+            if (!component.getClass().equals(JPanel.class) && !component.getClass().equals(DialogPanel.class)) {
               // some custom components do not support borders
               JPanel panel = new JPanel(new BorderLayout());
               panel.add(BorderLayout.CENTER, component);
