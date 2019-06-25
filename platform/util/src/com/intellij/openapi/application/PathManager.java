@@ -625,7 +625,14 @@ public class PathManager {
     String logXmlPath = System.getProperty(PROPERTY_LOG_CONFIG_FILE);
     if (logXmlPath == null) return null;
 
-    File logXmlFile = new File(logXmlPath);
+    File logXmlFile;
+    if (logXmlPath.indexOf('/') < 0 && logXmlPath.indexOf('\\') < 0) {
+      logXmlFile = new File(getBinPath(), logXmlPath);
+    }
+    else {
+      logXmlFile = new File(logXmlPath);
+    }
+
     if (logXmlFile.exists()) return logXmlFile;
 
     return null;
