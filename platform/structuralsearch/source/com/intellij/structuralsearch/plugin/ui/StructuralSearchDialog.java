@@ -722,6 +722,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     myDoingOkAction = true;
+    removeMatchHighlights();
     final CompiledPattern compiledPattern = compilePattern();
     myDoingOkAction = false;
     if (compiledPattern == null) return;
@@ -823,28 +824,23 @@ public class StructuralSearchDialog extends DialogWrapper {
     if (myEditConfigOnly) {
       return;
     }
-    if (myDoingOkAction) {
-      removeMatchHighlights();
+    final Project project = getProject();
+    final Editor editor = myEditor;
+    if (editor == null) {
+      return;
     }
-    else {
-      final Project project = getProject();
-      final Editor editor = myEditor;
-      if (editor == null) {
-        return;
-      }
-      final Document document = editor.getDocument();
-      final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-      if (file == null) {
-        return;
-      }
-      final MatchOptions matchOptions = getConfiguration().getMatchOptions();
-      matchOptions.setScope(new LocalSearchScope(file, IdeBundle.message("scope.current.file")));
-      final CollectingMatchResultSink sink = new CollectingMatchResultSink();
-      new Matcher(project).findMatches(sink, matchOptions);
-      final List<MatchResult> matches = sink.getMatches();
-      removeMatchHighlights();
-      addMatchHighlights(matches, editor, file, matches.size() + " results found in current file");
+    final Document document = editor.getDocument();
+    final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    if (file == null) {
+      return;
     }
+    final MatchOptions matchOptions = getConfiguration().getMatchOptions();
+    matchOptions.setScope(new LocalSearchScope(file, IdeBundle.message("scope.current.file")));
+    final CollectingMatchResultSink sink = new CollectingMatchResultSink();
+    new Matcher(project).findMatches(sink, matchOptions);
+    final List<MatchResult> matches = sink.getMatches();
+    removeMatchHighlights();
+    addMatchHighlights(matches, editor, file, matches.size() + " results found in current file");
   }
 
   private void addMatchHighlights(@NotNull List<MatchResult> matchResults,
