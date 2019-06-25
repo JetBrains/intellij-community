@@ -28,7 +28,7 @@ class JavaPredefinedConfigurations {
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.new.expressions"), "new 'Constructor('_Argument*)", EXPRESSION_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.lambdas"), "('_Parameter*) -> {}", EXPRESSION_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.field.selections"),"'_Instance?.'Field",EXPRESSION_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.array.access"),"'_Field['_Index]",EXPRESSION_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.array.access"),"'_Array['_Index]",EXPRESSION_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.assignments"),"'_Inst = '_Expr",EXPRESSION_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.casts"),"('_Type)'_Expr",EXPRESSION_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.instanceof"),"'_Expr instanceof '_Type",EXPRESSION_TYPE),
@@ -53,12 +53,12 @@ class JavaPredefinedConfigurations {
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.methods.of.the.class"),
         "'_ReturnType? '_Method('_ParameterType '_Parameter*);",
-        CLASS_TYPE
+        CLASS_TYPE, StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.deprecated.methods"),
         "@Deprecated\n'_ReturnType '_Method('_ParameterType '_Parameter*);",
-        CLASS_TYPE
+        CLASS_TYPE, StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.fields.of.the.class"),
@@ -78,17 +78,17 @@ class JavaPredefinedConfigurations {
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.instance.fields.of.the.class"),
         "class '_Class { \n  @Modifier(\"Instance\") '_FieldType 'Field+ = '_Init?;\n}",
-        CLASS_TYPE
+        CLASS_TYPE, StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.packagelocal.fields.of.the.class"),
         "@Modifier(\"packageLocal\") '_FieldType 'Field = '_Init?;",
-        CLASS_TYPE
+        CLASS_TYPE, StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.constructors.of.the.class"),
         "'Class('_ParameterType '_Parameter*) {\n  '_Statement*;\n}",
-        CLASS_TYPE
+        CLASS_TYPE, StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.classes"),
@@ -137,18 +137,18 @@ class JavaPredefinedConfigurations {
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.class.static.blocks"),
-        "class '_A {\n  static {\n    'Statement*;\n  }\n}",
-        CLASS_TYPE
+        "static {\n  '_Statement*;\n}",
+        CLASS_TYPE, StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.class.instance.initialization.blocks"),
         "@Modifier(\"Instance\") {\n  '_Statement*;\n}",
-        CLASS_TYPE
+        CLASS_TYPE, StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.class.any.initialization.blocks"),
-        "class '_A {\n  {\n    'Statement*;\n  }\n}",
-        CLASS_TYPE
+        "{\n  '_Statement*;\n}",
+        CLASS_TYPE, StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT
       ),
 
       createSearchTemplateInfo(
@@ -165,8 +165,8 @@ class JavaPredefinedConfigurations {
 
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.static.fields.without.final"),
-        "class '_Class {\n  static '_Type 'Variable+:[ script( \"!__context__.hasModifierProperty(\"final\")\" ) ] = '_Init?;\n}",
-        CLASS_TYPE
+        "static '_Type 'Variable+:[ script( \"!__context__.hasModifierProperty(\"final\")\" ) ] = '_Init?;",
+        CLASS_TYPE, StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT
       ),
 
       createSearchTemplateInfo(
@@ -183,31 +183,52 @@ class JavaPredefinedConfigurations {
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.type.var.substitutions.in.intanceof.with.generic.types"),"'_Expr instanceof '_Type <'Substitutions+> ", GENERICS_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.variables.of.generic.types"),"'_Type <'_GenericArgument+>  'Var = '_Init?;", GENERICS_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.diamond.operators"), "new 'Class<>('_Argument*)", GENERICS_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.method.returns.bounded.wildcard"), "[script( \"!Method.hasModifierProperty(com.intellij.psi.PsiModifier.ABSTRACT)\" )]'_Type<? extends '_Bound> 'Method('_ParameterType '_Parameter*);", GENERICS_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.generic.constructors"), "<'_TypeParameter+> 'Class('_ParameterType '_Parameter*) {\n  '_Statement*;\n}", GENERICS_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.method.returns.bounded.wildcard"),
+                               "[script( \"!Method.hasModifierProperty(com.intellij.psi.PsiModifier.ABSTRACT)\" )]'_Type<? extends '_Bound> 'Method('_ParameterType '_Parameter*);",
+                               GENERICS_TYPE, StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.generic.constructors"), "<'_TypeParameter+> 'Class('_ParameterType '_Parameter*) {\n  '_Statement*;\n}",
+                               GENERICS_TYPE, StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT),
 
       // Add comments and metadata
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.comments"),"/* 'CommentContent */", METADATA_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.javadoc.annotated.class"),"/** @'_Tag+ '_TagValue* */\nclass '_Class {\n}", METADATA_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.javadoc.annotated.methods"),"/** @'_Tag+ '_TagValue* */\n'_Type '_Method('_ParameterType '_Parameter*);", METADATA_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.javadoc.annotated.fields"),"class '_Class {\n  /** @'_Tag+ '_TagValue* */\n  '_Type+ 'Field+ = '_Init*;\n}", METADATA_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.javadoc.annotated.class"),
+                               "/**\n" +
+                               " * '_Comment\n" +
+                               " * @'_Tag* '_TagValue*\n" +
+                               " */\n" +
+                               "class '_Class {\n}", METADATA_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.javadoc.annotated.methods"),
+                               "/**\n" +
+                               " * '_Comment\n" +
+                               " * @'_Tag* '_TagValue*\n" +
+                               " */\n" +
+                               "'_Type? '_Method('_ParameterType '_Parameter*);",
+                               METADATA_TYPE, StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.javadoc.annotated.fields"),
+                               "/**\n" +
+                               " * '_Comment\n" +
+                               " * @'_Tag* '_TagValue*\n" +
+                               " */\n" +
+                               "'_Type+ 'Field+ = '_Init*;",
+                               METADATA_TYPE, StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.javadoc.tags"),"/** @'Tag+ '_TagValue* */", METADATA_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.xdoclet.metadata"),"/** @'Tag \n  '_Property+\n*/", METADATA_TYPE),
 
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.annotations"), "@'_Annotation", METADATA_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.annotated.class"),
-                               "@'_Annotation( )\n" +
+                               "@'_Annotation\n" +
                                "class 'Class {}", METADATA_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.annotated.fields"),
-                               "class '_Class {\n" +
-                               "  @'_Annotation+( )\n" +
-                               "  '_FieldType 'Field+ = '_Init?;\n" +
-                               "}", METADATA_TYPE),
+                               "@'_Annotation+\n" +
+                               "'_FieldType 'Field+ = '_Init?;\n",
+                               METADATA_TYPE, StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.annotated.methods"),
-                               "@'_Annotation+( )\n'_MethodType '_Method('_ParameterType '_Parameter*);", METADATA_TYPE),
+                               "@'_Annotation+\n'_MethodType '_Method('_ParameterType '_Parameter*);",
+                               METADATA_TYPE, StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT),
 
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.not.annotated.methods"),
-                               "@'_Annotation{0,0}\n'_MethodType '_Method('_ParameterType '_Parameter*);", METADATA_TYPE),
+                               "@'_Annotation{0,0}\n'_MethodType '_Method('_ParameterType '_Parameter*);",
+                               METADATA_TYPE, StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT),
 
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.annotation.declarations"),
                                "@interface 'Interface {}", METADATA_TYPE),
@@ -290,7 +311,7 @@ class JavaPredefinedConfigurations {
                                "    '_CatchStatement*;\n" +
                                "    throw new 'ExceptionType('_ExceptionConstructorArgs*);\n" +
                                "  }\n" +
-                               "}", MISC_TYPE),
+                               "}", MISC_TYPE, StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.bean.info.classes"),
                                "class 'A implements '_:*java\\.beans\\.BeanInfo {\n" +
                                "}", MISC_TYPE),
@@ -317,7 +338,8 @@ class JavaPredefinedConfigurations {
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.switch.with.branches"), "switch ('_expression) {\n  case '_value{0,4}\\: '_statement*;\n}", INTERESTING_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.labeled.break"), "break '_label;", INTERESTING_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.methods.with.final.parameters"),
-                               "'_ReturnType '_Method('_BeforeType '_BeforeParameter*, final '_ParameterType '_Parameter, '_AfterType '_AfterParameter*);", INTERESTING_TYPE),
+                               "'_ReturnType? '_Method('_BeforeType '_BeforeParameter*, final '_ParameterType '_Parameter, '_AfterType '_AfterParameter*);",
+                               INTERESTING_TYPE, StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT),
       //createSearchTemplateInfo("methods called","'_?.'_:[ref('Method)] ('_*)", INTERESTING_TYPE),
       //createSearchTemplateInfo("fields selected","'_?.'_:[ref('Field)] ", INTERESTING_TYPE),
       //createSearchTemplateInfo("symbols used","'_:[ref('Symbol)] ", INTERESTING_TYPE),
