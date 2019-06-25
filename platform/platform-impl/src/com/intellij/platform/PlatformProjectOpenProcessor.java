@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform;
 
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.ProjectUtil;
@@ -26,11 +28,12 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.projectImport.ProjectOpenedCallback;
-import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -186,6 +189,12 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     }
 
     Pair<Project, Module> result = null;
+    if (frame == null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      Activity activity = StartUpMeasurer.start("show frame");
+      frame = ((WindowManagerImpl)WindowManager.getInstance()).showFrame();
+      activity.end();
+    }
+
     if (frame == null) {
       result = prepareAndOpenProject(virtualFile, options, baseDir, dummyProject, dummyProjectName);
     }
@@ -194,10 +203,8 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
       VirtualFile finalBaseDir = baseDir;
       boolean finalDummyProject = dummyProject;
       String finalDummyProjectName = dummyProjectName;
-      boolean progressCompleted = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        () -> refResult.set(prepareAndOpenProject(virtualFile, options, finalBaseDir, finalDummyProject, finalDummyProjectName)),
-        "Loading Project...", true, null, frame.getComponent()
-      );
+      Runnable process = () -> refResult.set(prepareAndOpenProject(virtualFile, options, finalBaseDir, finalDummyProject, finalDummyProjectName));
+      boolean progressCompleted = ProgressManager.getInstance().runProcessWithProgressSynchronously(process, "Loading Project...", true, null, frame.getComponent());
       if (progressCompleted) {
         result = refResult.get();
       }
@@ -228,7 +235,8 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     boolean newProject = false;
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     Project project;
-    if (PathKt.exists(Paths.get(FileUtil.toSystemDependentName(baseDir.getPath()), Project.DIRECTORY_STORE_FOLDER))) {
+    VirtualFile dotIdeaDir = baseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
+    if (dotIdeaDir != null && dotIdeaDir.isDirectory()) {
       project = tryLoadProject(baseDir);
     }
     else {

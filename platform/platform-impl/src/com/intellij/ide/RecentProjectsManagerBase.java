@@ -2,8 +2,6 @@
 package com.intellij.ide;
 
 import com.intellij.configurationStore.StorageUtilKt;
-import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -24,9 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.SystemDock;
-import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectPanel;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.project.ProjectKt;
@@ -629,12 +625,6 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
         openPaths = ContainerUtil.createMaybeSingletonSet(myState.lastPath);
         forceNewFrame = false;
       }
-    }
-
-    if (!openPaths.isEmpty() && frame == null) {
-      Activity activity = StartUpMeasurer.start("showFrame");
-      frame = ((WindowManagerImpl)WindowManager.getInstance()).showFrame();
-      activity.end();
     }
 
     try {
