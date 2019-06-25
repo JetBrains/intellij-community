@@ -83,4 +83,9 @@ public class RefsModel implements VcsLogRefs {
     assert !ApplicationManager.getApplication().isDispatchThread();
     return myRefs.values().stream().flatMap(CompressedRefs::stream);
   }
+
+  @NotNull
+  public static RefsModel createEmptyInstance(@NotNull VcsLogStorage storage) {
+    return new RefsModel(Collections.emptyMap(), Collections.emptySet(), storage, Collections.emptyMap());
+  }
 }
