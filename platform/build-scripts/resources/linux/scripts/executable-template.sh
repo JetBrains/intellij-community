@@ -1,13 +1,13 @@
 #!/bin/sh
 #
 # ---------------------------------------------------------------------
-# @@product_full@@ startup script.
+# __product_full__ startup script.
 # ---------------------------------------------------------------------
 #
 
 message()
 {
-  TITLE="Cannot start @@product_full@@"
+  TITLE="Cannot start __product_full__"
   if [ -n "`which zenity`" ]; then
     zenity --error --title="$TITLE" --text="$1"
   elif [ -n "`which kdialog`" ]; then
@@ -57,14 +57,14 @@ cd "$OLDPWD"
 
 # ---------------------------------------------------------------------
 # Locate a JDK installation directory which will be used to run the IDE.
-# Try (in order): @@product_uc@@_JDK, @@vm_options@@.jdk, ./jre64, JDK_HOME, JAVA_HOME, "java" in PATH.
+# Try (in order): __product_uc___JDK, __vm_options__.jdk, ./jre64, JDK_HOME, JAVA_HOME, "java" in PATH.
 # ---------------------------------------------------------------------
-if [ -n "$@@product_uc@@_JDK" -a -x "$@@product_uc@@_JDK/bin/java" ]; then
-  JDK="$@@product_uc@@_JDK"
+if [ -n "$__product_uc___JDK" -a -x "$__product_uc___JDK/bin/java" ]; then
+  JDK="$__product_uc___JDK"
 fi
 
-if [ -z "$JDK" -a -s "$HOME/.@@system_selector@@/config/@@vm_options@@.jdk" ]; then
-  USER_JRE=`"$CAT" $HOME/.@@system_selector@@/config/@@vm_options@@.jdk`
+if [ -z "$JDK" -a -s "$HOME/.__system_selector__/config/__vm_options__.jdk" ]; then
+  USER_JRE=`"$CAT" $HOME/.__system_selector__/config/__vm_options__.jdk`
   if [ ! -d "$USER_JRE" ]; then
     USER_JRE="$IDE_HOME/$USER_JRE"
   fi
@@ -134,7 +134,7 @@ fi
 
 JAVA_BIN="$JDK/bin/java"
 if [ -z "$JDK" -o ! -x "$JAVA_BIN" ]; then
-  message "No JDK found. Please validate either @@product_uc@@_JDK, JDK_HOME or JAVA_HOME environment variable points to valid JDK installation."
+  message "No JDK found. Please validate either __product_uc___JDK, JDK_HOME or JAVA_HOME environment variable points to valid JDK installation."
   exit 1
 fi
 
@@ -148,17 +148,17 @@ test ${BITS} -eq 0 && BITS="64" || BITS=""
 # ---------------------------------------------------------------------
 # Collect JVM options and IDE properties.
 # ---------------------------------------------------------------------
-if [ -n "$@@product_uc@@_PROPERTIES" ]; then
-  IDE_PROPERTIES_PROPERTY="-Didea.properties.file=$@@product_uc@@_PROPERTIES"
+if [ -n "$__product_uc___PROPERTIES" ]; then
+  IDE_PROPERTIES_PROPERTY="-Didea.properties.file=$__product_uc___PROPERTIES"
 fi
 
 # Android Studio: we allow multiple vmoptions files to be included when determining JVM flags.
 VM_OPTIONS=""
 for VM_OPTIONS_FILE in \
-    $IDE_BIN_HOME/@@vm_options@@$BITS.vmoptions \
-    $HOME/.@@system_selector@@/config/@@vm_options@@$BITS.vmoptions \
+    $IDE_BIN_HOME/__vm_options__$BITS.vmoptions \
+    $HOME/.__system_selector__/config/__vm_options__$BITS.vmoptions \
     $IDE_HOME.vmoptions \
-    $@@product_uc@@_VM_OPTIONS; do
+    $__product_uc___VM_OPTIONS; do
   if [ -r "$VM_OPTIONS_FILE" ]; then
     VM_OPTIONS_TO_ADD=`"$CAT" "$VM_OPTIONS_FILE" | "$GREP" -v "^#.*"`
     VM_OPTIONS="${VM_OPTIONS:-}${VM_OPTIONS:+	}${VM_OPTIONS_TO_ADD}"  # tab-delimited; see IFS below
@@ -166,9 +166,9 @@ for VM_OPTIONS_FILE in \
   fi
 done
 
-@@class_path@@
-if [ -n "$@@product_uc@@_CLASSPATH" ]; then
-  CLASSPATH="$CLASSPATH:$@@product_uc@@_CLASSPATH"
+__class_path__
+if [ -n "$__product_uc___CLASSPATH" ]; then
+  CLASSPATH="$CLASSPATH:$__product_uc___CLASSPATH"
 fi
 
 # ---------------------------------------------------------------------
@@ -178,11 +178,11 @@ IFS="$(printf '\n\t')"
 "$JAVA_BIN" \
   -classpath "$CLASSPATH" \
   ${VM_OPTIONS} \
-  "-XX:ErrorFile=$HOME/java_error_in_@@product_uc@@_%p.log" \
-  "-XX:HeapDumpPath=$HOME/java_error_in_@@product_uc@@.hprof" \
-  -Didea.paths.selector=@@system_selector@@ \
+  "-XX:ErrorFile=$HOME/java_error_in___product_uc___%p.log" \
+  "-XX:HeapDumpPath=$HOME/java_error_in___product_uc__.hprof" \
+  -Didea.paths.selector=__system_selector__ \
   "-Djb.vmOptionsFile=$VM_OPTIONS_FILES" \
   ${IDE_PROPERTIES_PROPERTY} \
-  @@ide_jvm_args@@ \
+  __ide_jvm_args__ \
   com.intellij.idea.Main \
   "$@"
