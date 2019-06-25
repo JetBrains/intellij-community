@@ -411,18 +411,15 @@ private fun getCommentLeftInset(spacing: SpacingConfiguration, component: JCompo
 
   // as soon as ComponentPanelBuilder will also compensate visual paddings (instead of compensating on LaF level),
   // this logic will be moved into computeCommentInsets
-  val componentBorderVisualLeftPadding = when {
-    spacing.isCompensateVisualPaddings -> {
-      val border = component.border
-      if (border is VisualPaddingsProvider) {
-        border.getVisualPaddings(component)?.left ?: 0
-      }
-      else {
-        0
-      }
+  val border = component.border
+  val componentBorderVisualLeftPadding =
+    if (border is VisualPaddingsProvider) {
+      border.getVisualPaddings(component)?.left ?: 0
     }
-    else -> 0
-  }
+    else {
+      0
+    }
+
   val insets = ComponentPanelBuilder.computeCommentInsets(component, true)
   return insets.left - componentBorderVisualLeftPadding
 }
