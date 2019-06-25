@@ -13,12 +13,11 @@ fun createCacheWriteConfiguration() = WriteConfiguration(allowAnySubTypes = true
 
 fun createCacheReadConfiguration(log: Logger): ReadConfiguration {
   val projectDataManager = ProjectDataManager.getInstance()
-  val defaultClassLoader = DataNode::class.java.classLoader
 
   val allManagers = ExternalSystemApiUtil.getAllManagers()
   return createDataNodeReadConfiguration(fun(name: String, hostObject: Any): Class<*>? {
     if (hostObject !is DataNode<*>) {
-      return defaultClassLoader.loadClass(name)
+      return hostObject.javaClass.classLoader.loadClass(name)
     }
 
     val services = projectDataManager.findService(hostObject.key)
