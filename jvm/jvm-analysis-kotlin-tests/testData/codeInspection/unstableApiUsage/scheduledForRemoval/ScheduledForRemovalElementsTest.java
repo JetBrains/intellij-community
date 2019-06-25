@@ -91,3 +91,35 @@ class IndirectOverrideAnnotatedMethod extends DirectOverrideAnnotatedMethod {
   @Override
   public void annotatedMethodInNonAnnotatedClass() {}
 }
+
+class ClassWithScheduledForRemovalTypeInSignature<T extends <warning descr="'pkg.AnnotatedClass' is scheduled for removal in version 123.456">AnnotatedClass</warning>> { }
+
+class OwnerOfMembersWithScheduledForRemovalTypesInSignature {
+  public <warning descr="'pkg.AnnotatedClass' is scheduled for removal in version 123.456">AnnotatedClass</warning> field;
+
+  public <warning descr="'annotatedPkg.ClassInAnnotatedPkg' is declared in package 'annotatedPkg' scheduled for removal in version 123.456">ClassInAnnotatedPkg</warning> fieldPkg;
+
+  public void parameterType(<warning descr="'pkg.AnnotatedClass' is scheduled for removal in version 123.456">AnnotatedClass</warning> param) { }
+
+  public void parameterTypePkg(<warning descr="'annotatedPkg.ClassInAnnotatedPkg' is declared in package 'annotatedPkg' scheduled for removal in version 123.456">ClassInAnnotatedPkg</warning> param) { }
+
+  public <warning descr="'pkg.AnnotatedClass' is scheduled for removal in version 123.456">AnnotatedClass</warning> returnType() { return null; }
+
+  public <warning descr="'pkg.AnnotatedClass' is scheduled for removal in version 123.456">AnnotatedClass</warning> returnTypePkg() { return null; }
+}
+
+class WarningsOfScheduledForRemovalTypesInSignature {
+  public void classUsage() {
+    new <warning descr="'ClassWithScheduledForRemovalTypeInSignature' is scheduled for removal because its signature references class 'pkg.AnnotatedClass' scheduled for removal in version 123.456">ClassWithScheduledForRemovalTypeInSignature<<warning descr="'pkg.AnnotatedClass' is scheduled for removal in version 123.456">AnnotatedClass</warning>></warning>();
+  }
+
+  public void membersUsages(OwnerOfMembersWithScheduledForRemovalTypesInSignature owner) {
+    Object field = owner.<warning descr="'field' is scheduled for removal because its signature references class 'pkg.AnnotatedClass' scheduled for removal in version 123.456">field</warning>;
+    owner.<warning descr="'parameterType(pkg.AnnotatedClass)' is scheduled for removal because its signature references class 'pkg.AnnotatedClass' scheduled for removal in version 123.456">parameterType</warning>(null);
+    owner.<warning descr="'returnType()' is scheduled for removal because its signature references class 'pkg.AnnotatedClass' scheduled for removal in version 123.456">returnType</warning>();
+
+    Object fieldPkg = owner.<warning descr="'field' is scheduled for removal because its signature references class 'pkg.AnnotatedClass' scheduled for removal in version 123.456">field</warning>;
+    owner.<warning descr="'parameterTypePkg(annotatedPkg.ClassInAnnotatedPkg)' is scheduled for removal because its signature references class 'annotatedPkg.ClassInAnnotatedPkg' scheduled for removal in version 123.456">parameterTypePkg</warning>(null);
+    owner.<warning descr="'returnTypePkg()' is scheduled for removal because its signature references class 'pkg.AnnotatedClass' scheduled for removal in version 123.456">returnTypePkg</warning>();
+  }
+}

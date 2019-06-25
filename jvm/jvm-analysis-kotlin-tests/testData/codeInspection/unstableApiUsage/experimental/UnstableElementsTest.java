@@ -92,3 +92,35 @@ class IndirectOverrideAnnotatedMethod extends DirectOverrideAnnotatedMethod {
   @Override
   public void annotatedMethodInNonAnnotatedClass() {}
 }
+
+class ClassWithExperimentalTypeInSignature<T extends <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>> { }
+
+class OwnerOfMembersWithExperimentalTypesInSignature {
+  public <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning> field;
+
+  public <warning descr="'annotatedPkg.ClassInAnnotatedPkg' is declared in unstable package 'annotatedPkg'">ClassInAnnotatedPkg</warning> fieldPkg;
+
+  public void parameterType(<warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning> param) { }
+
+  public void parameterTypePkg(<warning descr="'annotatedPkg.ClassInAnnotatedPkg' is declared in unstable package 'annotatedPkg'">ClassInAnnotatedPkg</warning> param) { }
+
+  public <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning> returnType() { return null; }
+
+  public <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning> returnTypePkg() { return null; }
+}
+
+class WarningsOfExperimentalTypesInSignature {
+  public void classUsage() {
+    new <warning descr="'ClassWithExperimentalTypeInSignature' is unstable because its signature references unstable class 'pkg.AnnotatedClass'">ClassWithExperimentalTypeInSignature<<warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>></warning>();
+  }
+
+  public void membersUsages(OwnerOfMembersWithExperimentalTypesInSignature owner) {
+    Object field = owner.<warning descr="'field' is unstable because its signature references unstable class 'pkg.AnnotatedClass'">field</warning>;
+    owner.<warning descr="'parameterType(pkg.AnnotatedClass)' is unstable because its signature references unstable class 'pkg.AnnotatedClass'">parameterType</warning>(null);
+    owner.<warning descr="'returnType()' is unstable because its signature references unstable class 'pkg.AnnotatedClass'">returnType</warning>();
+
+    Object fieldPkg = owner.<warning descr="'field' is unstable because its signature references unstable class 'pkg.AnnotatedClass'">field</warning>;
+    owner.<warning descr="'parameterTypePkg(annotatedPkg.ClassInAnnotatedPkg)' is unstable because its signature references unstable class 'annotatedPkg.ClassInAnnotatedPkg'">parameterTypePkg</warning>(null);
+    owner.<warning descr="'returnTypePkg()' is unstable because its signature references unstable class 'pkg.AnnotatedClass'">returnTypePkg</warning>();
+  }
+}

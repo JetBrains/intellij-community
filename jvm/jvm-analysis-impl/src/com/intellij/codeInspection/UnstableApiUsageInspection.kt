@@ -3,12 +3,13 @@ package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInsight.AnnotationUtil
+import com.intellij.codeInspection.AnnotatedApiUsageUtil.findAnnotatedContainingDeclaration
+import com.intellij.codeInspection.AnnotatedApiUsageUtil.findAnnotatedTypeUsedInDeclarationSignature
 import com.intellij.codeInspection.apiUsage.ApiUsageProcessor
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor
 import com.intellij.codeInspection.deprecation.DeprecationInspection
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil
-import com.intellij.lang.findUsages.LanguageFindUsages
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.*
@@ -119,85 +120,64 @@ private class UnstableApiUsageProcessor(
     checkUnstableApiUsage(overriddenMethod, method, true)
   }
 
-  private fun checkUnstableApiUsage(target: PsiModifierListOwner, sourceNode: UElement, isMethodOverriding: Boolean) {
+  private fun getMessageProvider(psiAnnotation: PsiAnnotation): UnstableApiUsageMessageProvider? {
+    val annotationName = psiAnnotation.qualifiedName ?: return null
+    return knownAnnotationMessageProviders[annotationName] ?: DefaultUnstableApiUsageMessageProvider
+  }
+
+  private fun getElementToHighlight(sourceNode: UElement): PsiElement? =
+    (sourceNode as? UDeclaration)?.uastAnchor.sourcePsiElement ?: sourceNode.sourcePsi
+
+  private fun checkUnstableApiUsage(
+    target: PsiModifierListOwner,
+    sourceNode: UElement,
+    isMethodOverriding: Boolean
+  ) {
     if (!isLibraryElement(target)) {
       return
     }
     val annotatedContainingDeclaration = findAnnotatedContainingDeclaration(target, unstableApiAnnotations, true)
-    if (annotatedContainingDeclaration == null) {
+    if (annotatedContainingDeclaration != null) {
+      val messageProvider = getMessageProvider(annotatedContainingDeclaration.psiAnnotation) ?: return
+      val message = if (isMethodOverriding) {
+        messageProvider.buildMessageUnstableMethodOverridden(annotatedContainingDeclaration)
+      }
+      else {
+        messageProvider.buildMessage(annotatedContainingDeclaration)
+      }
+      val elementToHighlight = getElementToHighlight(sourceNode) ?: return
+      problemsHolder.registerProblem(elementToHighlight, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
       return
     }
-    val annotationName = annotatedContainingDeclaration.psiAnnotation.qualifiedName ?: return
-    val messageProvider = knownAnnotationMessageProviders[annotationName] ?: DefaultUnstableApiUsageMessageProvider
-    val message = if (isMethodOverriding) {
-      messageProvider.buildUnstableMethodOverriddenMessage(annotatedContainingDeclaration)
-    }
-    else {
-      messageProvider.buildMessage(annotatedContainingDeclaration)
-    }
-    val elementToHighlight = (sourceNode as? UDeclaration)?.uastAnchor.sourcePsiElement ?: sourceNode.sourcePsi
-    if (elementToHighlight != null) {
-      problemsHolder.registerProblem(elementToHighlight, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
-    }
-  }
 
-}
-
-data class AnnotatedContainingDeclaration(
-  val target: PsiModifierListOwner,
-  val containingDeclaration: PsiModifierListOwner,
-  val psiAnnotation: PsiAnnotation
-) {
-  val targetName: String
-    get() = DeprecationInspection.getPresentableName(target)
-
-  val containingDeclarationName: String
-    get() = DeprecationInspection.getPresentableName(containingDeclaration)
-
-  val containingDeclarationType: String
-    get() = LanguageFindUsages.getType(containingDeclaration)
-
-  val isOwnAnnotation: Boolean
-    get() = target == containingDeclaration
-}
-
-fun findAnnotatedContainingDeclaration(
-  target: PsiModifierListOwner,
-  annotationNames: Collection<String>,
-  includeExternalAnnotations: Boolean
-): AnnotatedContainingDeclaration? =
-  findAnnotatedContainingDeclaration(target, target, annotationNames, includeExternalAnnotations)
-
-private fun findAnnotatedContainingDeclaration(
-  target: PsiModifierListOwner,
-  listOwner: PsiModifierListOwner,
-  annotationNames: Collection<String>,
-  includeExternalAnnotations: Boolean
-): AnnotatedContainingDeclaration? {
-  val annotation = AnnotationUtil.findAnnotation(listOwner, annotationNames, !includeExternalAnnotations)
-  if (annotation != null) {
-    return AnnotatedContainingDeclaration(target, listOwner, annotation)
-  }
-  if (listOwner is PsiMember) {
-    val containingClass = listOwner.containingClass
-    if (containingClass != null) {
-      return findAnnotatedContainingDeclaration(target, containingClass, annotationNames, includeExternalAnnotations)
+    if (!isMethodOverriding) {
+      val declaration = target.toUElement(UDeclaration::class.java) ?: return
+      val unstableTypeUsedInSignature = findAnnotatedTypeUsedInDeclarationSignature(declaration, unstableApiAnnotations)
+      if (unstableTypeUsedInSignature != null) {
+        val messageProvider = getMessageProvider(unstableTypeUsedInSignature.psiAnnotation) ?: return
+        val message = messageProvider.buildMessageUnstableTypeIsUsedInSignatureOfReferencedApi(target, unstableTypeUsedInSignature)
+        val elementToHighlight = getElementToHighlight(sourceNode) ?: return
+        problemsHolder.registerProblem(elementToHighlight, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+      }
     }
   }
-  val packageName = (listOwner.containingFile as? PsiClassOwner)?.packageName ?: return null
-  val psiPackage = JavaPsiFacade.getInstance(listOwner.project).findPackage(packageName) ?: return null
-  return findAnnotatedContainingDeclaration(target, psiPackage, annotationNames, includeExternalAnnotations)
+
 }
 
 private interface UnstableApiUsageMessageProvider {
 
   fun buildMessage(annotatedContainingDeclaration: AnnotatedContainingDeclaration): String
 
-  fun buildUnstableMethodOverriddenMessage(annotatedContainingDeclaration: AnnotatedContainingDeclaration): String
+  fun buildMessageUnstableMethodOverridden(annotatedContainingDeclaration: AnnotatedContainingDeclaration): String
+
+  fun buildMessageUnstableTypeIsUsedInSignatureOfReferencedApi(
+    referencedApi: PsiModifierListOwner,
+    annotatedTypeUsedInSignature: AnnotatedContainingDeclaration
+  ): String
 }
 
 private object DefaultUnstableApiUsageMessageProvider : UnstableApiUsageMessageProvider {
-  override fun buildUnstableMethodOverriddenMessage(annotatedContainingDeclaration: AnnotatedContainingDeclaration): String =
+  override fun buildMessageUnstableMethodOverridden(annotatedContainingDeclaration: AnnotatedContainingDeclaration): String =
     with(annotatedContainingDeclaration) {
       if (isOwnAnnotation) {
         JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.overridden.method.is.marked.unstable.itself", targetName)
@@ -226,10 +206,20 @@ private object DefaultUnstableApiUsageMessageProvider : UnstableApiUsageMessageP
         )
       }
     }
+
+  override fun buildMessageUnstableTypeIsUsedInSignatureOfReferencedApi(
+    referencedApi: PsiModifierListOwner,
+    annotatedTypeUsedInSignature: AnnotatedContainingDeclaration
+  ): String = JvmAnalysisBundle.message(
+    "jvm.inspections.unstable.api.usage.unstable.type.is.used.in.signature.of.referenced.api",
+    DeprecationInspection.getPresentableName(referencedApi),
+    annotatedTypeUsedInSignature.targetType,
+    annotatedTypeUsedInSignature.targetName
+  )
 }
 
 private class ScheduledForRemovalMessageProvider : UnstableApiUsageMessageProvider {
-  override fun buildUnstableMethodOverriddenMessage(annotatedContainingDeclaration: AnnotatedContainingDeclaration): String {
+  override fun buildMessageUnstableMethodOverridden(annotatedContainingDeclaration: AnnotatedContainingDeclaration): String {
     val versionMessage = getVersionMessage(annotatedContainingDeclaration)
     return with(annotatedContainingDeclaration) {
       if (isOwnAnnotation) {
@@ -269,6 +259,20 @@ private class ScheduledForRemovalMessageProvider : UnstableApiUsageMessageProvid
         )
       }
     }
+  }
+
+  override fun buildMessageUnstableTypeIsUsedInSignatureOfReferencedApi(
+    referencedApi: PsiModifierListOwner,
+    annotatedTypeUsedInSignature: AnnotatedContainingDeclaration
+  ): String {
+    val versionMessage = getVersionMessage(annotatedTypeUsedInSignature)
+    return JvmAnalysisBundle.message(
+      "jvm.inspections.scheduled.for.removal.scheduled.for.removal.type.is.used.in.signature.of.referenced.api",
+      DeprecationInspection.getPresentableName(referencedApi),
+      annotatedTypeUsedInSignature.targetType,
+      annotatedTypeUsedInSignature.targetName,
+      versionMessage
+    )
   }
 
   private fun getVersionMessage(annotatedContainingDeclaration: AnnotatedContainingDeclaration): String {
