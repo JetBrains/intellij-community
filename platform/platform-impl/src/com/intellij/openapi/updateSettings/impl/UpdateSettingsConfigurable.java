@@ -72,7 +72,7 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
     boolean wasEnabled = mySettings.isCheckNeeded();
     mySettings.setCheckNeeded(myPanel.myCheckForUpdates.isSelected());
     if (wasEnabled != mySettings.isCheckNeeded()) {
-      UpdateCheckerService checker = UpdateCheckerService.getInstance();
+      UpdateCheckerComponent checker = UpdateCheckerComponent.getInstance();
       if (checker != null) {
         if (wasEnabled) {
           checker.cancelChecks();
