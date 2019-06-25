@@ -31,12 +31,12 @@ public final class UpdateCheckerComponent implements Runnable {
     return ApplicationManager.getApplication().getComponent(UpdateCheckerComponent.class);
   }
 
+  static final String SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY = "ide.self.update.started.for.build";
+
   private static final Logger LOG = Logger.getInstance(UpdateCheckerComponent.class);
 
   private static final long CHECK_INTERVAL = DateFormatUtil.DAY;
-  static final String SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY = "ide.self.update.started.for.build";
-  private static final String ERROR_LOG_FILE_NAME = "idea_updater_error.log";
-    //must be equal to com.intellij.updater.Runner.ERROR_LOG_FILE_NAME
+  private static final String ERROR_LOG_FILE_NAME = "idea_updater_error.log"; // must be equal to com.intellij.updater.Runner.ERROR_LOG_FILE_NAME
 
   private volatile ScheduledFuture<?> myScheduledCheck;
 
@@ -58,6 +58,30 @@ public final class UpdateCheckerComponent implements Runnable {
   @Override
   public void run() {
     UpdateChecker.updateAndShowResult().doWhenProcessed(() -> queueNextCheck(CHECK_INTERVAL));
+  }
+
+  public void queueNextCheck() {
+    queueNextCheck(CHECK_INTERVAL);
+  }
+
+  public void cancelChecks() {
+    ScheduledFuture<?> future = myScheduledCheck;
+    if (future != null) future.cancel(false);
+  }
+
+  private static void checkIfPreviousUpdateFailed() {
+    PropertiesComponent properties = PropertiesComponent.getInstance();
+    if (ApplicationInfo.getInstance().getBuild().asString().equals(properties.getValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY))) {
+      File updateErrorsLog = new File(PathManager.getLogPath(), ERROR_LOG_FILE_NAME);
+      try {
+        if (updateErrorsLog.isFile() && !StringUtil.isEmptyOrSpaces(FileUtil.loadFile(updateErrorsLog))) {
+          IdeUpdateUsageTriggerCollector.trigger("update.failed");
+          LOG.info("The previous IDE update failed");
+        }
+      }
+      catch (IOException ignored) { }
+    }
+    properties.setValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY, null);
   }
 
   private static void updateDefaultChannel() {
@@ -104,31 +128,6 @@ public final class UpdateCheckerComponent implements Runnable {
     myScheduledCheck = AppExecutorUtil.getAppScheduledExecutorService().schedule(this, delay, TimeUnit.MILLISECONDS);
   }
 
-  private static void checkIfPreviousUpdateFailed() {
-    PropertiesComponent properties = PropertiesComponent.getInstance();
-    if (ApplicationInfo.getInstance().getBuild().asString().equals(properties.getValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY))) {
-      File updateErrorsLog = new File(PathManager.getLogPath(), ERROR_LOG_FILE_NAME);
-      try {
-        if (updateErrorsLog.isFile() && !StringUtil.isEmptyOrSpaces(FileUtil.loadFile(updateErrorsLog))) {
-          IdeUpdateUsageTriggerCollector.trigger("update.failed");
-          LOG.info("Previous update of the IDE failed");
-        }
-      }
-      catch (IOException ignored) {
-      }
-    }
-    properties.setValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY, null);
-  }
-
-  public void queueNextCheck() {
-    queueNextCheck(CHECK_INTERVAL);
-  }
-
-  public void cancelChecks() {
-    ScheduledFuture<?> future = myScheduledCheck;
-    if (future != null) future.cancel(false);
-  }
-
   private static void snapPackageNotification() {
     UpdateSettings settings = UpdateSettings.getInstance();
     if (!settings.isCheckNeeded() || ExternalUpdateManager.ACTUAL != ExternalUpdateManager.SNAP) {
@@ -155,7 +154,7 @@ public final class UpdateCheckerComponent implements Runnable {
 
       String blogPost = null;
       if (updatesInfo != null) {
-        final Product product = updatesInfo.get(currentBuild.getProductCode());
+        Product product = updatesInfo.get(currentBuild.getProductCode());
         if (product != null) {
           outer:
           for (UpdateChannel channel : product.getChannels()) {
@@ -169,14 +168,11 @@ public final class UpdateCheckerComponent implements Runnable {
         }
       }
 
-      String message = ((blogPost == null) ? IdeBundle.message("update.snap.message")
-                                           : IdeBundle
-                          .message("update.snap.message.with.blog.post", StringUtil.escapeXmlEntities(blogPost)));
-
-      UpdateChecker.NOTIFICATIONS.createNotification(IdeBundle.message("update.notifications.title"),
-                                                     message,
-                                                     NotificationType.INFORMATION,
-                                                     NotificationListener.URL_OPENING_LISTENER).notify(null);
+      String title = IdeBundle.message("update.notifications.title");
+      String message = blogPost == null ? IdeBundle.message("update.snap.message")
+                                        : IdeBundle.message("update.snap.message.with.blog.post", StringUtil.escapeXmlEntities(blogPost));
+      UpdateChecker.NOTIFICATIONS.createNotification(
+        title, message, NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER).notify(null);
 
       UpdateSettings.getInstance().saveLastCheckedInfo();
     }
