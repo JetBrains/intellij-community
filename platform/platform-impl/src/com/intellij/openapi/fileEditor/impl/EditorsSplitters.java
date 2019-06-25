@@ -864,14 +864,14 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
           if (virtualFile == null) throw new InvalidDataException("No file exists: " + entry.getFilePointer().getUrl());
           Document document = ReadAction.compute(() -> virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null);
 
+          boolean isCurrentTab = Boolean.valueOf(file.getAttributeValue(CURRENT_IN_TAB)).booleanValue();
           FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
             .withPin(Boolean.valueOf(file.getAttributeValue(PINNED)))
-            .withCurrentTab(Boolean.valueOf(file.getAttributeValue(CURRENT_IN_TAB)).booleanValue())
             .withIndex(i)
             .withReopeningEditorsOnStartup();
 
           fileEditorManager.openFileImpl4(window, virtualFile, entry, openOptions);
-          if (openOptions.isCurrentTab()) {
+          if (isCurrentTab) {
             focusedFile = virtualFile;
           }
           if (document != null) {
