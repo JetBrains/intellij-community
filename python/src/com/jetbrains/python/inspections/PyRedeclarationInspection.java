@@ -44,6 +44,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.jetbrains.python.psi.impl.PyTypeDeclarationStatementNavigator.*;
+
 /**
  * Annotates declarations that unconditionally override others without these being used.
  *
@@ -204,9 +206,5 @@ public class PyRedeclarationInspection extends PyInspection {
       }
       return true;
     }
-  }
-
-  private static boolean isTypeDeclarationTarget(@NotNull PsiElement element) {
-    return element instanceof PyTargetExpression && element.getParent() instanceof PyTypeDeclarationStatement;
   }
 }
