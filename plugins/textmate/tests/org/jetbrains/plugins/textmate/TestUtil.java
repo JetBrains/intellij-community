@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.textmate;
 
-import com.intellij.util.ResourceUtil;
-import com.intellij.util.io.URLUtil;
+import com.intellij.openapi.application.PathManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.textmate.bundles.Bundle;
 import org.jetbrains.plugins.textmate.bundles.BundleFactory;
@@ -12,6 +11,7 @@ import java.io.File;
 
 public class TestUtil {
   @NonNls public static final String BAT = "bat";
+  @NonNls public static final String JAVA = "java";
   @NonNls public static final String JAVASCRIPT = "javascript";
   @NonNls public static final String CHEF = "chef";
   @NonNls public static final String HTML = "html";
@@ -35,12 +35,12 @@ public class TestUtil {
   public static final PlistReader PLIST_READER = new CompositePlistReader();
   private static final BundleFactory BUNDLE_FACTORY = new BundleFactory(PLIST_READER);
 
-  public static String getBundleDirectoryPath(String bundleName) {
-    return URLUtil.decode(ResourceUtil.getResource(TestUtil.class, "/bundles/", bundleName).getFile());
-  }
-
   public static File getBundleDirectory(String bundleName) {
-    return new File(getBundleDirectoryPath(bundleName));
+    File bundleDirectory = new File(PathManager.getCommunityHomePath() + "/plugins/textmate/testData/bundles", bundleName);
+    if (bundleDirectory.exists()) {
+      return bundleDirectory;
+    }
+    return new File(PathManager.getCommunityHomePath() + "/plugins/textmate/lib/bundles", bundleName);
   }
 
   public static Bundle getBundle(String bundleName) {
