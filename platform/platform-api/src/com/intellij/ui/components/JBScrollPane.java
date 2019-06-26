@@ -39,8 +39,10 @@ public class JBScrollPane extends JScrollPane {
    *
    * @see UIUtil#putClientProperty(JComponent, Key, Object)
    * @see UIUtil#isUnderDarcula
+   * @deprecated unsupported approach to control a scroll bar painting
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public static final Key<Boolean> BRIGHTNESS_FROM_VIEW = Key.create("JB_SCROLL_PANE_BRIGHTNESS_FROM_VIEW");
 
   /**
@@ -236,7 +238,11 @@ public class JBScrollPane extends JScrollPane {
     return new JBViewport();
   }
 
+  /**
+   * @deprecated unsupported old implementation
+   */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   protected boolean isOverlaidScrollbar(@Nullable JScrollBar scrollbar) {
     ScrollBarUI vsbUI = scrollbar == null ? null : scrollbar.getUI();
     return vsbUI instanceof ButtonlessScrollBarUI && !((ButtonlessScrollBarUI)vsbUI).alwaysShowTrack();
