@@ -113,7 +113,7 @@ public final class IdeEventQueue extends EventQueue {
     myPostEventListeners = com.intellij.util.EventDispatcher.create(PostEventHook.class);
 
   private final Map<AWTEvent, List<Runnable>> myRunnablesWaitingFocusChange = new THashMap<>();
-  private KeyEvent myLastShortcut;
+  private MyLastShortcut myLastShortcut;
 
   public void executeWhenAllFocusEventsLeftTheQueue(@NotNull Runnable runnable) {
     ifFocusEventsInTheQueue(e -> {
@@ -459,19 +459,19 @@ public final class IdeEventQueue extends EventQueue {
    * See more examples here: https://youtrack.jetbrains.com/issue/IDEA-187355
    */
   private boolean isSpecialSymbolMatchingShortcut(AWTEvent e) {
-    final KeyEvent shortcut = myLastShortcut;
+    final MyLastShortcut shortcut = myLastShortcut;
     if (shortcut != null && e instanceof KeyEvent && e.getID() == KeyEvent.KEY_TYPED) {
       KeyEvent symbol = (KeyEvent)e;
-      long time = symbol.getWhen() - shortcut.getWhen();
+      long time = symbol.getWhen() - shortcut.when;
       //todo[kb] this is a double check based on time of events. We assume that the shortcut and special symbol will be received one by one.
       // Try to avoid using timing checks and create a more solid solution
-      return time < 17 && shortcut.getKeyChar() == symbol.getKeyChar();
+      return time < 17 && shortcut.keyChar == symbol.getKeyChar();
     }
     return false;
   }
 
   public void onActionInvoked(@NotNull KeyEvent e) {
-    myLastShortcut = e;
+    myLastShortcut = new MyLastShortcut(e.getWhen(), e.getKeyChar());
   }
 
   @Nullable
@@ -1457,5 +1457,15 @@ public final class IdeEventQueue extends EventQueue {
       }
     }
     r.run();
+  }
+
+  private class MyLastShortcut {
+    public final long when;
+    public final char keyChar;
+
+    private MyLastShortcut(long when, char keyChar) {
+      this.when = when;
+      this.keyChar = keyChar;
+    }
   }
 }
