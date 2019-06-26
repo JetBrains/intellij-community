@@ -72,6 +72,10 @@ public final class SyntaxMatchUtils {
     List<SyntaxNodeDescriptor> children = syntaxNodeDescriptor.getChildren();
     for (SyntaxNodeDescriptor child : children) {
       resultState = moreImportantState(resultState, matchFirstChild(child, line, position, priority, currentScope));
+      if (resultState.matchData.matched() && resultState.matchData.offset().getStartOffset() == position) {
+        // optimization. There cannot be anything more `important` than current state matched from the very beginning
+        break;
+      }
     }
     return moreImportantState(resultState, matchInjections(syntaxNodeDescriptor, line, position, currentScope));
   }
