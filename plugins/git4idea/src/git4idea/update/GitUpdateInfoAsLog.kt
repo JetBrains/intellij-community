@@ -67,7 +67,7 @@ class GitUpdateInfoAsLog(private val project: Project,
       return null
     }
 
-    val logManager = VcsLogContentUtil.getOrCreateLog(project)
+    val logManager = VcsLogContentUtil.getOrCreateLog(project) ?: return null
     if (!isPathFilterSet()) {
       // if no path filters is set, we don't need the log to show the notification
       // => schedule the log tab and return the data

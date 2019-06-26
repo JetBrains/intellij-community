@@ -27,6 +27,7 @@ import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.concurrent.Future;
 
 import static com.intellij.vcs.log.util.PersistentUtil.LOG_CACHE;
 
@@ -115,9 +116,14 @@ public class VcsProjectLog implements Disposable {
     recreateLog();
   }
 
+  @NotNull
+  Future<VcsLogManager> createLogInBackground(boolean forceInit) {
+    return ApplicationManager.getApplication().executeOnPooledThread(() -> createLog(forceInit));
+  }
+
   @Nullable
   @CalledInBackground
-  VcsLogManager createLog(boolean forceInit) {
+  private VcsLogManager createLog(boolean forceInit) {
     Map<VirtualFile, VcsLogProvider> logProviders = getLogProviders();
     if (!logProviders.isEmpty()) {
       VcsLogManager logManager = myLogManager.getValue(logProviders);
@@ -153,8 +159,15 @@ public class VcsProjectLog implements Disposable {
   private void disposeLog(@Nullable Runnable callback) {
     VcsLogManager logManager = myLogManager.dropValue();
     if (logManager != null) {
-      logManager.dispose(callback);
+      logManager.disposeUi();
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        Disposer.dispose(logManager);
+        if (callback != null) {
+          callback.run();
+        }
+      });
     }
+
     else if (callback != null) {
       ApplicationManager.getApplication().executeOnPooledThread(callback);
     }
@@ -233,10 +246,8 @@ public class VcsProjectLog implements Disposable {
 
       VcsProjectLog projectLog = getInstance(project);
 
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        projectLog.subscribeToMappingsChanges();
-        projectLog.createLog(false);
-      });
+      projectLog.subscribeToMappingsChanges();
+      projectLog.createLogInBackground(false);
     }
   }
 

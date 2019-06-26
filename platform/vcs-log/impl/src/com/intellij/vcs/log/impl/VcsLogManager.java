@@ -160,6 +160,12 @@ public class VcsLogManager implements Disposable {
     return logProviders;
   }
 
+  @CalledInAwt
+  void disposeUi() {
+    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    Disposer.dispose(myTabsLogRefresher);
+  }
+
   /**
    * Dispose VcsLogManager and execute some activity after it.
    *
@@ -167,9 +173,7 @@ public class VcsLogManager implements Disposable {
    */
   @CalledInAwt
   public void dispose(@Nullable Runnable callback) {
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
-
-    Disposer.dispose(myTabsLogRefresher);
+    disposeUi();
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       Disposer.dispose(this);
       if (callback != null) {
