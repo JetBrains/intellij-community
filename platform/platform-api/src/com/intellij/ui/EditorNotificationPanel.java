@@ -104,11 +104,23 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   }
 
   public HyperlinkLabel createActionLabel(final String text, @NonNls final String actionId) {
-    return createActionLabel(text, () -> executeAction(actionId));
+    return createActionLabel(text, actionId, true);
+  }
+
+  public HyperlinkLabel createActionLabel(final String text,
+                                          @NonNls final String actionId,
+                                          boolean showInIntentionMenu) {
+    return createActionLabel(text, () -> executeAction(actionId), showInIntentionMenu);
   }
 
   public HyperlinkLabel createActionLabel(final String text, final Runnable action) {
-    HyperlinkLabel label = new HyperlinkLabel(text, getBackground());
+    return createActionLabel(text, action, true);
+  }
+
+  public HyperlinkLabel createActionLabel(final String text,
+                                          final Runnable action,
+                                          boolean showInIntentionMenu) {
+    ActionHyperlinkLabel label = new ActionHyperlinkLabel(text, getBackground(), showInIntentionMenu);
     label.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(HyperlinkEvent e) {
@@ -151,12 +163,24 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     return 0;
   }
 
+  private static class ActionHyperlinkLabel extends HyperlinkLabel {
+    private final boolean myShowInIntentionMenu;
+
+    private ActionHyperlinkLabel(String text, Color background, boolean showInIntentionMenu) {
+      super(text, background);
+      myShowInIntentionMenu = showInIntentionMenu;
+    }
+  }
+
   private class MyIntentionAction implements IntentionActionWithOptions, Iconable {
     private final List<IntentionAction> myOptions = new ArrayList<>();
 
     private MyIntentionAction() {
       for (Component component : myLinksPanel.getComponents()) {
         if (component instanceof HyperlinkLabel) {
+          if (component instanceof ActionHyperlinkLabel && !((ActionHyperlinkLabel)component).myShowInIntentionMenu) {
+            continue;
+          }
           myOptions.add(new MyLinkOption(((HyperlinkLabel)component)));
         }
       }
