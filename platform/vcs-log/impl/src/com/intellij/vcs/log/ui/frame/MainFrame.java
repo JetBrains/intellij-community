@@ -10,6 +10,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -378,8 +379,10 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
       DataPackBase dataPack = visiblePack.getDataPack();
       if (dataPack instanceof DataPack.ErrorDataPack) {
-        getEmptyText().setText(((DataPack.ErrorDataPack)dataPack).getError().getMessage())
-          .appendSecondaryText("Refresh", VcsLogUiUtil.getLinkAttributes(), e -> myLogData.refresh(myLogData.getLogProviders().keySet()));
+        String message = ((DataPack.ErrorDataPack)dataPack).getError().getMessage();
+        message = StringUtil.shortenTextWithEllipsis(message, 150, 0, true).replace('\n', ' ');
+        getEmptyText().setText(message).appendSecondaryText("Refresh", VcsLogUiUtil.getLinkAttributes(),
+                                                            e -> myLogData.refresh(myLogData.getLogProviders().keySet()));
       }
       else if (visiblePack.getVisibleGraph().getVisibleCommitCount() == 0) {
         if (visiblePack.getFilters().isEmpty()) {
