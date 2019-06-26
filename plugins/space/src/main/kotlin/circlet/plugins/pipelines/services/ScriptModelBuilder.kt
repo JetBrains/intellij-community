@@ -9,6 +9,7 @@ import circlet.plugins.pipelines.utils.*
 import circlet.plugins.pipelines.viewmodel.*
 import circlet.utils.*
 import com.intellij.openapi.project.*
+import com.intellij.openapi.vfs.*
 import klogging.*
 import org.slf4j.event.*
 import org.slf4j.helpers.*
@@ -38,11 +39,21 @@ class ScriptModelBuilder {
             return createEmptyScriptViewModel(lifetime)
         }
 
-        val expectedFileName = "Circlet.kts"
-        val expectedFile = File(basePath, expectedFileName)
-        if (!expectedFile.exists())
+        val baseDirFile = LocalFileSystem.getInstance().findFileByPath(basePath)
+
+        if (baseDirFile == null) {
+            logger.info("Can't find file for base dir")
+            return createEmptyScriptViewModel(lifetime)
+        }
+
+        val expectedFileName = "circlet.kts"
+        val dslFile = baseDirFile.children.firstOrNull {
+            expectedFileName.equals(it.name, true)
+        }
+
+        if (dslFile == null)
         {
-            logger.info("Can't find `circlet.kts`")
+            logger.info("Can't find `$expectedFileName`")
             return createEmptyScriptViewModel(lifetime)
         }
 
@@ -57,7 +68,7 @@ class ScriptModelBuilder {
             val url = find(ScriptModelBuilder::class, "pipelines-config-dsl-scriptdefinition")
 
             val targetJar = createTempDir().absolutePath + "/compiledJar.jar"
-            DslJarCompiler(logger).compile(DslSourceFileDelegatingFileProvider(expectedFile.absolutePath), targetJar, kotlinCompilerPath, url.file)
+            DslJarCompiler(logger).compile(DslSourceFileDelegatingFileProvider(dslFile.path), targetJar, kotlinCompilerPath, url.file)
 
             val config = DslScriptExecutor().evaluateModel(targetJar, "", "", "")
 
