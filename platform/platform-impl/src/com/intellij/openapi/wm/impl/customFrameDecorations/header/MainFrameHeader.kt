@@ -48,7 +48,7 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
     val pane = JPanel(MigLayout("fillx, ins 0, novisualpadding", "[pref!][]"))
     pane.isOpaque = false
     setCustomFrameTopBorder({ myState != Frame.MAXIMIZED_VERT && myState != Frame.MAXIMIZED_BOTH }, {true})
-    mySelectedEditorFilePath = CustomDecorationPath()
+    mySelectedEditorFilePath = CustomDecorationPath(frame)
     relayoutFrameHeader(pane, true)
 
     val mainMenuUpdater = UISettingsListener {

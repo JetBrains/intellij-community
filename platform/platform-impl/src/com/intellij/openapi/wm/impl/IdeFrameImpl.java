@@ -397,6 +397,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
 
       if (IdeFrameDecorator.isCustomDecorationActive()) {
         frame.getRootPane().putClientProperty("Window.CustomDecoration.documentFile", currentFile);
+        frame.getRootPane().putClientProperty("Window.CustomDecoration.title", title);
       }
 
       if (Registry.is("ide.show.fileType.icon.in.titleBar")) {
