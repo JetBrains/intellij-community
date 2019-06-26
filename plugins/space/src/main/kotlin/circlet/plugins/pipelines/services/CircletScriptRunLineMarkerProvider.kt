@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.*
 import com.intellij.psi.*
 import org.jetbrains.kotlin.idea.refactoring.fqName.*
 import org.jetbrains.kotlin.idea.references.*
+import org.jetbrains.kotlin.psi.*
 
 class CircletScriptRunLineMarkerProvider : RunLineMarkerContributor() {
 
@@ -21,12 +22,16 @@ class CircletScriptRunLineMarkerProvider : RunLineMarkerContributor() {
                     val fqnName = resolveResult.getKotlinFqName()
                     if (fqnName != null) {
                         if (fqnName.asString() == "circlet.pipelines.config.dsl.api.Project.task") {
-                            val runAction = object : AnAction(ExecutionBundle.message("run.configurable.display.name"), null, AllIcons.RunConfigurations.TestState.Run) {
-                                override fun actionPerformed(e: AnActionEvent) {
-                                    Messages.showInfoMessage("run task", "circlet")
+                            val valueArgumentList = element.nextSibling as KtValueArgumentList
+                            val taskName = valueArgumentList.arguments.firstOrNull()?.children?.firstOrNull()?.reference?.canonicalText
+                            if (taskName != null) {
+                                val runAction = object : AnAction(ExecutionBundle.message("run.configurable.display.name"), null, AllIcons.RunConfigurations.TestState.Run) {
+                                    override fun actionPerformed(e: AnActionEvent) {
+                                        Messages.showInfoMessage("run task: $taskName", "circlet")
+                                    }
                                 }
+                                return Info(runAction)
                             }
-                            return Info(runAction)
                         }
                     }
                 }
