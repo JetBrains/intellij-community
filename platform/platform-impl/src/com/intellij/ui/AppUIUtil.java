@@ -118,13 +118,6 @@ public final class AppUIUtil {
     }
   }
 
-  @Nullable
-  public static Image loadApplicationIcon16() {
-    String svgIconUrl = ApplicationInfoImpl.getShadowInstance().getApplicationSvgIconUrl();
-    ScaleContext context = ScaleContext.create(JOptionPane.getRootFrame());
-    return loadApplicationIconImage(svgIconUrl, context, 16, null);
-  }
-
   public static boolean isWindowIconAlreadyExternallySet() {
     if (SystemInfo.isMac) {
       return ourMacDocIconSet || !PluginManagerCore.isRunningFromSources();
