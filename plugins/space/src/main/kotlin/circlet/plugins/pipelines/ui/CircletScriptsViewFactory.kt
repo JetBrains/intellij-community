@@ -60,6 +60,15 @@ class CircletScriptsViewFactory {
         TreeUtil.expandAll(tree)
         tree.isRootVisible = false
 
+        viewModel.script.forEach(lifetime) {
+            launch(lifetime, ApplicationUiDispatch.coroutineContext) {
+                val model = viewModel.script.value
+                resetNodes(root, model)
+                (tree.model as DefaultTreeModel).reload()
+                viewModel.modelBuildIsRunning.value = false
+            }
+        }
+
         val scriptModelBuilder = ScriptModelBuilder()
         val refreshAction = object : DumbAwareActionButton(IdeBundle.message("action.refresh"), AllIcons.Actions.Refresh) {
             override fun actionPerformed(e: AnActionEvent) {
@@ -73,15 +82,6 @@ class CircletScriptsViewFactory {
                     viewModel.logBuildData.value = logBuildData
                     val model = scriptModelBuilder.build(lt, project, logBuildData)
                     viewModel.script.value = model
-
-                }.invokeOnCompletion {
-                    launch(lt, ApplicationUiDispatch.coroutineContext) {
-                        val model = viewModel.script.value
-                        resetNodes(root, model)
-                        //tree.updateUI()
-                        (tree.model as DefaultTreeModel).reload()
-                        viewModel.modelBuildIsRunning.value = false
-                    }
                 }
             }
         }
