@@ -46,6 +46,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.KeyboardLayoutUtil;
 import com.intellij.util.ui.MacUIUtil;
@@ -709,8 +710,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     // search in main keymap
-    Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
-    String[] actionIds = keymap.getActionIds(sc);
+    KeymapManager keymapManager = KeymapManager.getInstance();
+    Keymap keymap = keymapManager == null ? null : keymapManager.getActiveKeymap();
+    String[] actionIds = keymap == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : keymap.getActionIds(sc);
     ActionManager actionManager = ActionManager.getInstance();
     for (String actionId : actionIds) {
       AnAction action = actionManager.getAction(actionId);
@@ -732,7 +734,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
       if (secondKeyStroke != null && secondKeyStroke.getModifiers() != 0 && firstKeyStroke.getModifiers() != 0) {
         final KeyboardShortcut altShortCut = new KeyboardShortcut(firstKeyStroke, KeyStroke.getKeyStroke(secondKeyStroke.getKeyCode(), 0));
-        final String[] additionalActions = keymap.getActionIds(altShortCut);
+        final String[] additionalActions = keymap == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : keymap.getActionIds(altShortCut);
         for (final String actionId : additionalActions) {
           AnAction action = actionManager.getAction(actionId);
           if (action != null) {
@@ -924,26 +926,30 @@ public final class IdeKeyEventDispatcher implements Disposable {
   private static final String POPUP_MENU_PREFIX = "PopupMenu-"; // see PlatformActions.xml
 
   private static boolean processMenuActions(KeyEvent event, MenuElement element) {
-    if (KeyEvent.KEY_PRESSED == event.getID() && Registry.is("ide.popup.navigation.via.actions")) {
-      KeymapManager manager = KeymapManager.getInstance();
-      if (manager != null) {
-        JRootPane pane = getMenuActionsHolder(element.getComponent());
-        if (pane != null) {
-          Keymap keymap = manager.getActiveKeymap();
-          if (keymap != null) {
-            // iterate through actions for the specified event
-            for (String id : keymap.getActionIds(KeyStroke.getKeyStrokeForEvent(event))) {
-              if (id.startsWith(POPUP_MENU_PREFIX)) {
-                String actionId = id.substring(POPUP_MENU_PREFIX.length());
-                Action action = pane.getActionMap().get(actionId);
-                if (action != null) {
-                  action.actionPerformed(new ActionEvent(pane, ActionEvent.ACTION_PERFORMED, actionId));
-                  event.consume();
-                  return true; // notify dispatcher that event is processed
-                }
-              }
-            }
-          }
+    if (KeyEvent.KEY_PRESSED != event.getID() || !Registry.is("ide.popup.navigation.via.actions")) {
+      return false;
+    }
+
+    KeymapManager manager = KeymapManager.getInstance();
+    if (manager == null) {
+      return false;
+    }
+
+    JRootPane pane = getMenuActionsHolder(element.getComponent());
+    if (pane == null) {
+      return false;
+    }
+
+    Keymap keymap = manager.getActiveKeymap();
+    // iterate through actions for the specified event
+    for (String id : keymap.getActionIds(KeyStroke.getKeyStrokeForEvent(event))) {
+      if (id.startsWith(POPUP_MENU_PREFIX)) {
+        String actionId = id.substring(POPUP_MENU_PREFIX.length());
+        Action action = pane.getActionMap().get(actionId);
+        if (action != null) {
+          action.actionPerformed(new ActionEvent(pane, ActionEvent.ACTION_PERFORMED, actionId));
+          event.consume();
+          return true; // notify dispatcher that event is processed
         }
       }
     }
