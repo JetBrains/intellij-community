@@ -245,9 +245,10 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     if (step instanceof ListPopupStepEx) {
       ((ListPopupStepEx)step).setEmptyText(myList.getEmptyText());
     }
-    myList.setSelectionMode(isMultiSelectionEnabled() ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
 
-    myList.setSelectedIndex(0);
+    myList.setSelectionModel(new MyListSelectionModel());
+
+    selectFirstSelectableItem();
     Insets padding = UIUtil.getListViewportPadding();
     myList.setBorder(new EmptyBorder(padding));
 
@@ -580,6 +581,37 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
         }
       }
       return null;
+    }
+  }
+
+  private class MyListSelectionModel extends DefaultListSelectionModel {
+    private MyListSelectionModel() {
+      setSelectionMode(isMultiSelectionEnabled() ? MULTIPLE_INTERVAL_SELECTION : SINGLE_SELECTION);
+    }
+
+    @Override
+    public void setSelectionInterval(int index0, int index1) {
+      if (getSelectionMode() == SINGLE_SELECTION) {
+        if (index0 > getLeadSelectionIndex()) {
+          for (int i = index0; i < myListModel.getSize(); i++) {
+            if (getListStep().isSelectable(myListModel.getElementAt(i))) {
+              super.setSelectionInterval(i, i);
+              break;
+            }
+          }
+        }
+        else {
+          for (int i = index0; i >= 0; i--) {
+            if (getListStep().isSelectable(myListModel.getElementAt(i))) {
+              super.setSelectionInterval(i, i);
+              break;
+            }
+          }
+        }
+      }
+      else {
+        super.setSelectionInterval(index0, index1); // TODO: support when needed
+      }
     }
   }
 
