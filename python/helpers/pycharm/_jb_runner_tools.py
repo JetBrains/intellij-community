@@ -51,6 +51,9 @@ class _TreeManagerHolder(object):
         return self._manager_imp
 
     def _fill_manager(self):
+        path = os.path.dirname(os.path.realpath(__file__))
+        if path not in sys.path:
+            sys.path.append(path)
         if self.parallel:
             from _jb_parallel_tree_manager import ParallelTreeManager
             self._manager_imp = ParallelTreeManager()
