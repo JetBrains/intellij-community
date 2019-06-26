@@ -129,17 +129,6 @@ def build():
                 env.update(get_environment_from_batch_command(
                     [vcvarsall, 'x86'],
                     initial=os.environ.copy()))
-
-        elif sys.version_info[:2] == (3, 4):
-            if is_python_64bit():
-                env.update(get_environment_from_batch_command(
-                    [r"C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd", '/x64'],
-                    initial=os.environ.copy()))
-            else:
-                env.update(get_environment_from_batch_command(
-                    [r"C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd", '/x86'],
-                    initial=os.environ.copy()))
-
         else:
             raise AssertionError('Unable to setup environment for Python: %s' % (sys.version,))
 

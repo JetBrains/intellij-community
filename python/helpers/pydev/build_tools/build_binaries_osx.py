@@ -8,7 +8,6 @@ import sys
 miniconda64_envs = os.getenv('MINICONDA64_ENVS')
 python_installations = [
     r'%s/py27_64/bin/python' % miniconda64_envs,
-    r'%s/py34_64/bin/python' % miniconda64_envs,
     r'%s/py35_64/bin/python' % miniconda64_envs,
     r'%s/py36_64/bin/python' % miniconda64_envs,
     r'%s/py37_64/bin/python' % miniconda64_envs,
