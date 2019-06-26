@@ -1134,7 +1134,7 @@ public final class TreeUtil {
   public static void invalidateCacheAndRepaint(@Nullable TreeUI ui) {
     if (ui instanceof BasicTreeUI) {
       BasicTreeUI basic = (BasicTreeUI)ui;
-      basic.setLeftChildIndent(basic.getLeftChildIndent());
+      UIUtil.invokeLaterIfNeeded(() -> basic.setLeftChildIndent(basic.getLeftChildIndent()));
     }
   }
 
