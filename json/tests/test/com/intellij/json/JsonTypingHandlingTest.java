@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.json;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import org.jetbrains.annotations.NotNull;
 
 public class JsonTypingHandlingTest extends JsonTestCase {
@@ -27,6 +28,16 @@ public class JsonTypingHandlingTest extends JsonTestCase {
                             @NotNull String extension) {
     myFixture.configureByText("test." + extension, before);
     myFixture.type(c);
+    myFixture.checkResult(expected);
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  private void doTypingTest(String s,
+                            @NotNull String before,
+                            @NotNull String expected,
+                            @NotNull String extension) {
+    myFixture.configureByText("test." + extension, before);
+    myFixture.type(s);
     myFixture.checkResult(expected);
   }
 
@@ -114,5 +125,37 @@ public class JsonTypingHandlingTest extends JsonTestCase {
                             "    '<caret>'\n" +
                             "  }\n" +
                             "}", "json");
+  }
+
+  private static void testWithPairQuotes(boolean on, Runnable test) {
+    CodeInsightSettings settings = CodeInsightSettings.getInstance();
+    boolean oldQuote = settings.AUTOINSERT_PAIR_QUOTE;
+    try {
+      settings.AUTOINSERT_PAIR_QUOTE = on;
+      test.run();
+    }
+    finally {
+      settings.AUTOINSERT_PAIR_QUOTE = oldQuote;
+    }
+  }
+
+  public void testNoCommaInNextQuotes() {
+    testWithPairQuotes(false,
+                       () -> doTypingTest("\"ccc\": \"", "{<caret>\"aaa\": \"bbb\"}", "{\"ccc\": \"<caret>\"aaa\": \"bbb\"}", "json"));
+  }
+
+  public void testNoCommaAfterArray() {
+    testWithPairQuotes(false, () ->
+      doTypingTest('"', "[\n" +
+                                    "  {\"aaa\": [<caret>]},\n" +
+                                    "  {}\n" +
+                                    "]", "[\n" +
+                                         "  {\"aaa\": [\"<caret>]},\n" +
+                                         "  {}\n" +
+                                         "]", "json"));
+  }
+
+  public void testAddCommaWithPairedQuotes() {
+    testWithPairQuotes(true, () -> doTypingTest("\"ccc\": \"", "{<caret>\"aaa\": \"bbb\"}", "{\"ccc\": \"<caret>\",\"aaa\": \"bbb\"}", "json"));
   }
 }
