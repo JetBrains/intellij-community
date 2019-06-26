@@ -159,25 +159,10 @@ public class PsiLiteralExpressionImpl
   }
 
   private String getTextBlockText() {
-    String rawText = getText();
-    if (rawText.length() < 7 || !rawText.endsWith("\"\"\"")) return null;
-    int start = 3;
-    while (true) {
-      char c = rawText.charAt(start++);
-      if (c == '\n') break;
-      if (!Character.isWhitespace(c) || start == rawText.length()) return null;
-    }
-    String innerText = rawText.substring(start, rawText.length() - 3);
-    String[] lines = StringUtil.splitByLinesDontTrim(innerText);
+    String[] lines = getTextBlockLines();
+    if (lines == null) return null;
 
-    int prefix = Integer.MAX_VALUE;
-    for (int i = 0; i < lines.length; i++) {
-      String line = lines[i];
-      int indent = 0;
-      while (indent < line.length() && Character.isWhitespace(line.charAt(indent))) indent++;
-      if (indent == line.length() && i < lines.length - 1) lines[i] = "";
-      else if (indent < prefix) prefix = indent;
-    }
+    int prefix = getTextBlockIndent(lines);
 
     StringBuilder sb = new StringBuilder();
     for (int i = 0; i < lines.length; i++) {
@@ -190,6 +175,37 @@ public class PsiLiteralExpressionImpl
       }
     }
     return sb.toString();
+  }
+
+  public int getTextBlockIndent() {
+    String[] lines = getTextBlockLines();
+    if (lines == null) return -1;
+    return getTextBlockIndent(lines);
+  }
+  
+  private static int getTextBlockIndent(String[] lines) {
+    int prefix = Integer.MAX_VALUE;
+    for (int i = 0; i < lines.length; i++) {
+      String line = lines[i];
+      int indent = 0;
+      while (indent < line.length() && Character.isWhitespace(line.charAt(indent))) indent++;
+      if (indent == line.length() && i < lines.length - 1) lines[i] = "";
+      else if (indent < prefix) prefix = indent;
+    }
+    return prefix;
+  }
+
+  private String[] getTextBlockLines() {
+    String rawText = getText();
+    if (rawText.length() < 7 || !rawText.endsWith("\"\"\"")) return null;
+    int start = 3;
+    while (true) {
+      char c = rawText.charAt(start++);
+      if (c == '\n') break;
+      if (!Character.isWhitespace(c) || start == rawText.length()) return null;
+    }
+    String innerText = rawText.substring(start, rawText.length() - 3);
+    return StringUtil.splitByLinesDontTrim(innerText);
   }
 
   public String getRawString() {

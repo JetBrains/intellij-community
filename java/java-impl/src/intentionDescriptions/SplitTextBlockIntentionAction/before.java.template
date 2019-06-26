@@ -1,0 +1,3 @@
+String s = <spot>"""
+                 Hello, <caret>world!
+                 """</spot>;
