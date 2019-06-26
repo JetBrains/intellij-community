@@ -7,9 +7,12 @@ import circlet.runtime.*
 import com.intellij.execution.*
 import com.intellij.icons.*
 import com.intellij.ide.*
+import com.intellij.ide.util.*
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.ui.*
+import com.intellij.openapi.vfs.*
 import com.intellij.ui.*
 import com.intellij.ui.components.labels.*
 import com.intellij.ui.treeStructure.*
@@ -19,9 +22,8 @@ import runtime.async.*
 import runtime.reactive.*
 import java.awt.*
 import javax.swing.*
-import javax.swing.tree.*
 import javax.swing.BoxLayout
-
+import javax.swing.tree.*
 
 
 class CircletScriptsViewFactory {
@@ -33,14 +35,13 @@ class CircletScriptsViewFactory {
         val missedDslCompName = "empty"
         val treeView = createModelTreeView(lifetime, project, viewModel)
         panel.add(treeView, treeCompName)
-        panel.add(createViewForMissedDsl(), missedDslCompName)
+        panel.add(createViewForMissedDsl(project), missedDslCompName)
         viewModel.script.forEach(lifetime) {script ->
             if (script == null) {
                 layout.show(panel, missedDslCompName)
             }
             else {
                 layout.show(panel, treeCompName)
-
             }
         }
         return panel
@@ -105,7 +106,7 @@ class CircletScriptsViewFactory {
             }
         }
 
-        val colapseAllAction = object : DumbAwareActionButton(IdeBundle.message("action.collapse.all"), AllIcons.Actions.Collapseall) {
+        val collapseAllAction = object : DumbAwareActionButton(IdeBundle.message("action.collapse.all"), AllIcons.Actions.Collapseall) {
             override fun actionPerformed(e: AnActionEvent) {
                 if (viewModel.modelBuildIsRunning.value) {
                     return
@@ -139,7 +140,7 @@ class CircletScriptsViewFactory {
             .addExtraAction(refreshAction)
             .addExtraAction(runAction)
             .addExtraAction(expandAllAction)
-            .addExtraAction(colapseAllAction)
+            .addExtraAction(collapseAllAction)
             .createPanel()
     }
 
@@ -187,7 +188,7 @@ class CircletScriptsViewFactory {
         }
     }
 
-    private fun createViewForMissedDsl(): JComponent {
+    private fun createViewForMissedDsl(project: Project): JComponent {
         val panel = JPanel()
         panel.layout = BoxLayout(panel, BoxLayout.Y_AXIS)
 
@@ -197,7 +198,20 @@ class CircletScriptsViewFactory {
         panel.add(infoText)
 
         val createDslLink = LinkLabel.create("Add automation DSL script") {
-            Messages.showInfoMessage("create dsl", "circlet")
+            val basePath = project.basePath
+            if (basePath != null) {
+                val baseDirFile = LocalFileSystem.getInstance().findFileByPath(basePath)
+                if (baseDirFile != null) {
+                    val application = ApplicationManager.getApplication();
+                    application.runWriteAction {
+                        val file = baseDirFile.createChildData(this, "circlet.kts")
+                        val newLine = System.getProperty("line.separator", "\n")
+                        val newFileContent = "//todo add link to help/tutorial${newLine}task(\"My First Task\") {$newLine  run(\"hello-world\")$newLine}"
+                        VfsUtil.saveText(file, newFileContent)
+                        PsiNavigationSupport.getInstance().createNavigatable(project, file, -1).navigate(true)
+                    }
+                }
+            }
         }
 
         createDslLink.alignmentX = Component.CENTER_ALIGNMENT
