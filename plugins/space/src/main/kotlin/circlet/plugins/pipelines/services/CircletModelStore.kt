@@ -16,8 +16,10 @@ class CircletModelStore(val project: Project): LifetimedComponent by SimpleLifet
 
         fun refreshScript() {
             ApplicationManager.getApplication().runReadAction {
-                val dslFileExists = checkIsDslFileExists()
-                viewModel.script.value = if (dslFileExists) createEmptyScriptViewModel(viewModel.scriptLifetimes.next()) else null
+                if (!project.isDisposed) {
+                    val dslFileExists = checkIsDslFileExists()
+                    viewModel.script.value = if (dslFileExists) createEmptyScriptViewModel(viewModel.scriptLifetimes.next()) else null
+                }
             }
         }
 
