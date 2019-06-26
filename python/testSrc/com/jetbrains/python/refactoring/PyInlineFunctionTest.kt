@@ -66,6 +66,7 @@ class PyInlineFunctionTest : PyTestCase() {
   fun testNoReturnsAsCallExpression() = doTest()
   fun testInlineAll() = doTest(inlineThis = false)
   fun testRemoving() = doTest(inlineThis = false, remove = true)
+  fun testRemoveTypingOverrides() = doTest(inlineThis = false, remove = true)
   fun testDefaultValues() = doTest()
   fun testPositionalOnlyArgs() = doTest()
   fun testKeywordOnlyArgs() = doTest()
