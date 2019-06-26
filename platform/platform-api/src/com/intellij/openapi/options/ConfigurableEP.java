@@ -3,6 +3,7 @@ package com.intellij.openapi.options;
 
 import com.intellij.AbstractBundle;
 import com.intellij.CommonBundle;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
@@ -59,8 +60,8 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
 
   public String getDisplayName() {
     if (displayName == null) {
-      if (bundle != null) {
-        ResourceBundle resourceBundle = AbstractBundle.getResourceBundle(bundle, myPluginDescriptor.getPluginClassLoader());
+      ResourceBundle resourceBundle = findBundle();
+      if (resourceBundle != null) {
         displayName = CommonBundle.message(resourceBundle, key);
       }
       else {
@@ -74,10 +75,21 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
   /**
    * @return a resource bundle using the specified base name or {@code null}
    */
+  @Nullable
   public ResourceBundle findBundle() {
-    return bundle == null ? null : AbstractBundle.getResourceBundle(bundle, myPluginDescriptor != null
-                                                                            ? myPluginDescriptor.getPluginClassLoader()
-                                                                            : getClass().getClassLoader());
+    String pathToBundle = findPathToBundle();
+    if (pathToBundle == null) return null; // a path to bundle is not specified or cannot be found
+    ClassLoader loader = myPluginDescriptor == null ? null : myPluginDescriptor.getPluginClassLoader();
+    return AbstractBundle.getResourceBundle(pathToBundle, loader != null ? loader : getClass().getClassLoader());
+  }
+
+  @Nullable
+  private String findPathToBundle() {
+    if (bundle == null && myPluginDescriptor instanceof IdeaPluginDescriptor) {
+      IdeaPluginDescriptor descriptor = (IdeaPluginDescriptor)myPluginDescriptor;
+      return descriptor.getResourceBundleBaseName(); // can be unspecified
+    }
+    return bundle;
   }
 
   @Property(surroundWithTag = false)
