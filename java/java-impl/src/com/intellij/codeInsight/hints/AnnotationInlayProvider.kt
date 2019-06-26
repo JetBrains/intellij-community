@@ -47,9 +47,12 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
               presentations.add(createPresentation(it, element))
             }
           }
-          val offset = element.modifierList!!.textRange.startOffset
-          if (presentations.isNotEmpty()) {
-            sink.addInlineElement(offset, false, SequencePresentation(SmartList(presentations)))
+          val modifierList = element.modifierList
+          if (modifierList != null) {
+            val offset = modifierList.textRange.startOffset
+            if (presentations.isNotEmpty()) {
+              sink.addInlineElement(offset, false, SequencePresentation(SmartList(presentations)))
+            }
           }
           presentations.clear()
         }
