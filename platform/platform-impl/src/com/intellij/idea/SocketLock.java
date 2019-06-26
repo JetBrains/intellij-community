@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.BuiltInServer;
 import org.jetbrains.io.MessageDecoder;
 
+import java.awt.*;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -37,6 +38,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
+import java.util.List;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
@@ -201,6 +203,13 @@ public final class SocketLock {
         boolean result = ContainerUtil.intersects(paths, stringList);
 
         if (result) {
+          // Update property right now, without scheduling on AWT. This allows to avoid shown-and-immediately-hidden splash in some cases.
+          System.setProperty(SplashManager.NO_SPLASH, "true");
+          EventQueue.invokeLater(() -> {
+            Runnable hideSplashTask = SplashManager.getHideTask();
+            if (hideSplashTask != null) hideSplashTask.run();
+          });
+
           try {
             String token = FileUtil.loadFile(new File(mySystemPath, TOKEN_FILE));
             @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") DataOutputStream out = new DataOutputStream(socket.getOutputStream());
