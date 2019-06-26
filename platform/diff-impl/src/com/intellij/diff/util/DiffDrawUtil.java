@@ -118,30 +118,31 @@ public class DiffDrawUtil {
                                         int start2, int end2,
                                         @Nullable Color fillColor,
                                         @Nullable Color borderColor) {
-    Shape upperCurve = makeCurve(x1, x2, start1, start2, true);
-    Shape lowerCurve = makeCurve(x1, x2, end1 + 1, end2 + 1, false);
-    Shape lowerCurveBorder = makeCurve(x1, x2, end1, end2, false);
-    Shape middleCurve = makeCurve(x1, x2, start1 + (end1 - start1) / 2, start2 + (end2 - start2) / 2, true);
-
     if (fillColor != null) {
-      Path2D path = new Path2D.Double();
-      path.append(upperCurve, true);
-      path.append(lowerCurve, true);
-
       g.setColor(fillColor);
-      g.fill(path);
+      g.fill(makeCurvePath(x1, x2, start1, start2, end1 + 1, end2 + 1));
 
       Stroke oldStroke = g.getStroke();
       g.setStroke(new BasicStroke(JBUIScale.scale(1f)));
-      g.draw(middleCurve);
+      g.draw(makeCurve(x1, x2, (start1 + end1) / 2, (start2 + end2) / 2, true));
       g.setStroke(oldStroke);
     }
 
     if (borderColor != null) {
       g.setColor(borderColor);
-      g.draw(upperCurve);
-      g.draw(lowerCurveBorder);
+      g.draw(makeCurve(x1, x2, start1, start2, true));
+      g.draw(makeCurve(x1, x2, end1, end2, true));
     }
+  }
+
+  @NotNull
+  private static Path2D makeCurvePath(int x1, int x2,
+                                      int y11, int y12, int y21, int y22) {
+    Path2D path = new Path2D.Double();
+    path.append(makeCurve(x1, x2, y11, y12, true), true);
+    path.append(makeCurve(x1, x2, y21, y22, false), true);
+    path.closePath();
+    return path;
   }
 
   private static Shape makeCurve(int x1, int x2, int y1, int y2, boolean forward) {
