@@ -42,7 +42,7 @@ class ScriptModelBuilder {
         val expectedFile = File(basePath, expectedFileName)
         if (!expectedFile.exists())
         {
-            logger.info("Can't build model for default project")
+            logger.info("Can't find `circlet.kts`")
             return createEmptyScriptViewModel(lifetime)
         }
 
