@@ -46,14 +46,11 @@ class ScriptModelBuilder {
             return createEmptyScriptViewModel(lifetime)
         }
 
-        val expectedFileName = "circlet.kts"
-        val dslFile = baseDirFile.children.firstOrNull {
-            expectedFileName.equals(it.name, true)
-        }
+        val dslFile = DslFileFinder.find(baseDirFile)
 
         if (dslFile == null)
         {
-            logger.info("Can't find `$expectedFileName`")
+            logger.info("Can't find `circlet.kts`")
             return createEmptyScriptViewModel(lifetime)
         }
 

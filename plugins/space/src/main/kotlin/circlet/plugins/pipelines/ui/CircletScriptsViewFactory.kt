@@ -16,12 +16,30 @@ import com.intellij.util.ui.tree.*
 import kotlinx.coroutines.*
 import runtime.async.*
 import runtime.reactive.*
+import java.awt.*
 import javax.swing.*
 import javax.swing.tree.*
 
 class CircletScriptsViewFactory {
     fun createView(lifetime: Lifetime, project: Project, viewModel: ScriptWindowViewModel) : JComponent {
-        return createModelTreeView(lifetime, project, viewModel)
+
+        val layout = CardLayout()
+        val panel = JPanel(layout)
+        val treeCompName = "tree"
+        val missedDslCompName = "empty"
+        val treeView = createModelTreeView(lifetime, project, viewModel)
+        panel.add(treeView, treeCompName)
+        panel.add(JLabel("circlet.kts doesn't exist"), missedDslCompName)
+        viewModel.script.forEach(lifetime) {script ->
+            if (script == null) {
+                layout.show(panel, missedDslCompName)
+            }
+            else {
+                layout.show(panel, treeCompName)
+
+            }
+        }
+        return panel
     }
 
     private fun createModelTreeView(lifetime: Lifetime, project: Project, viewModel: ScriptWindowViewModel) : JComponent {
@@ -56,7 +74,8 @@ class CircletScriptsViewFactory {
                     launch(lt, ApplicationUiDispatch.coroutineContext) {
                         val model = viewModel.script.value
                         resetNodes(root, model)
-                        tree.updateUI()
+                        //tree.updateUI()
+                        (tree.model as DefaultTreeModel).reload()
                         viewModel.modelBuildIsRunning.value = false
                     }
                 }
