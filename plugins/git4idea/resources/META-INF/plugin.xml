@@ -185,7 +185,7 @@
     </group>
 
     <action id="git4idea.commands.TestGitHttpLoginDialogAction" class="git4idea.commands.TestGitHttpLoginDialogAction"
-            text="Test Git login dialog"/>
+            text="Test Git login dialog" internal="true"/>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
