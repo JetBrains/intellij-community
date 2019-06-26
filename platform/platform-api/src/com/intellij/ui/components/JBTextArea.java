@@ -3,15 +3,24 @@ package com.intellij.ui.components;
 
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.BooleanFunction;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.ComponentWithEmptyText;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.Document;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 
-public class JBTextArea extends JTextArea {
+public class JBTextArea extends JTextArea implements ComponentWithEmptyText {
   //private final DefaultBoundedRangeModel visibility;
+
+  private final TextComponentEmptyText myEmptyText;
 
   public JBTextArea() {
     this(null, null, 0, 0);
@@ -35,6 +44,30 @@ public class JBTextArea extends JTextArea {
 
   public JBTextArea(Document doc, String text, int rows, int columns) {
     super(doc, text, rows, columns);
+
+    myEmptyText = new TextComponentEmptyText(this) {
+      @Override
+      protected boolean isStatusVisible() {
+        Object function = getClientProperty("StatusVisibleFunction");
+        if (function instanceof BooleanFunction) {
+          //noinspection unchecked
+          return ((BooleanFunction<JTextComponent>)function).fun(JBTextArea.this);
+        }
+        return super.isStatusVisible();
+      }
+
+      @Override
+      protected Rectangle getTextComponentBound() {
+        Insets insets = ObjectUtils.notNull(getInsets(), JBUI.emptyInsets());
+        Insets margin = ObjectUtils.notNull(getMargin(), JBUI.emptyInsets());
+        Insets ipad = getComponent().getIpad();
+        Dimension size = getPreferredSize();
+        int left = insets.left + margin.left - ipad.left;
+        int top = insets.top + margin.top - ipad.top;
+        return new Rectangle(left, top, size.width, size.height);
+      }
+    };
+
     getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
@@ -75,5 +108,25 @@ public class JBTextArea extends JTextArea {
     }
   }
 
+  @NotNull
+  @Override
+  public StatusText getEmptyText() {
+    return myEmptyText;
+  }
 
+  @Override
+  protected void paintComponent(Graphics g) {
+    super.paintComponent(g);
+    if (!myEmptyText.getStatusTriggerText().isEmpty() && myEmptyText.isStatusVisible()) {
+      g.setColor(getBackground());
+
+      Rectangle rect = new Rectangle(getSize());
+      JBInsets.removeFrom(rect, getInsets());
+      JBInsets.removeFrom(rect, getMargin());
+      ((Graphics2D)g).fill(rect);
+
+      g.setColor(getForeground());
+    }
+    myEmptyText.paintStatusText(g);
+  }
 }
