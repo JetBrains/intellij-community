@@ -20,7 +20,6 @@
 
   <extensionPoints>
 
-    <!-- EP to block language injection into script tag-->
     <extensionPoint name="html.htmlScriptInjectionBlocker" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.impl.source.html.HtmlScriptInjectionBlocker"/>
     </extensionPoint>
