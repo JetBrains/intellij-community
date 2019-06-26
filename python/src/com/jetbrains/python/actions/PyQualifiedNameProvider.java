@@ -73,8 +73,6 @@ public class PyQualifiedNameProvider implements QualifiedNameProvider {
       aClass = PyClassNameIndex.findClass(className, project);
       if (aClass != null) {
         final String memberName = StringUtil.getShortName(fqn, CLASS_MEMBER_SEPARATOR);
-        final PyClass nestedClass = aClass.findNestedClass(memberName, false);
-        if (nestedClass != null) return nestedClass;
         final PyFunction methodByName = aClass.findMethodByName(memberName, false, null);
         if (methodByName != null) return methodByName;
       }
