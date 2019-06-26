@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.ui.*
 import com.intellij.ui.*
+import com.intellij.ui.components.labels.*
 import com.intellij.ui.treeStructure.*
 import com.intellij.util.ui.tree.*
 import kotlinx.coroutines.*
@@ -19,6 +20,9 @@ import runtime.reactive.*
 import java.awt.*
 import javax.swing.*
 import javax.swing.tree.*
+import javax.swing.BoxLayout
+
+
 
 class CircletScriptsViewFactory {
     fun createView(lifetime: Lifetime, project: Project, viewModel: ScriptWindowViewModel) : JComponent {
@@ -29,7 +33,7 @@ class CircletScriptsViewFactory {
         val missedDslCompName = "empty"
         val treeView = createModelTreeView(lifetime, project, viewModel)
         panel.add(treeView, treeCompName)
-        panel.add(JLabel("circlet.kts doesn't exist"), missedDslCompName)
+        panel.add(createViewForMissedDsl(), missedDslCompName)
         viewModel.script.forEach(lifetime) {script ->
             if (script == null) {
                 layout.show(panel, missedDslCompName)
@@ -155,8 +159,8 @@ class CircletScriptsViewFactory {
                 val triggers = it.triggers
                 if (triggers.any()) {
                     val triggersNode = CircletModelTreeNode("triggers")
-                    triggers.forEach {
-                        triggersNode.add(CircletModelTreeNode(it::class.java.simpleName))
+                    triggers.forEach { trigger ->
+                        triggersNode.add(CircletModelTreeNode(trigger::class.java.simpleName))
                     }
 
                     taskNode.add(triggersNode)
@@ -181,6 +185,37 @@ class CircletScriptsViewFactory {
             val child = CircletModelTreeNode("pipelines + ${it.name}. not implemented in UI yet")
             root.add(child)
         }
+    }
+
+    private fun createViewForMissedDsl(): JComponent {
+        val panel = JPanel()
+        panel.layout = BoxLayout(panel, BoxLayout.Y_AXIS)
+
+        val infoText = JLabel("Automation is not configured")
+        infoText.isEnabled = false
+        infoText.alignmentX = Component.CENTER_ALIGNMENT
+        panel.add(infoText)
+
+        val createDslLink = LinkLabel.create("Add automation DSL script") {
+            Messages.showInfoMessage("create dsl", "circlet")
+        }
+
+        createDslLink.alignmentX = Component.CENTER_ALIGNMENT
+        panel.add(createDslLink)
+
+        panel.add(JLabel(" ")) // just separator
+
+        val showHelpLink = LinkLabel.create("Getting started with automation") {
+            Messages.showInfoMessage("show help", "circlet")
+        }
+        showHelpLink.icon = AllIcons.General.ContextHelp
+        showHelpLink.alignmentX = Component.CENTER_ALIGNMENT
+        panel.add(showHelpLink)
+
+        val rootPanel = JPanel()
+        rootPanel.layout = GridBagLayout()
+        rootPanel.add(panel, GridBagConstraints())
+        return rootPanel
     }
 }
 
