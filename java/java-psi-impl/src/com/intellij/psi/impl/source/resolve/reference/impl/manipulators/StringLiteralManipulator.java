@@ -66,6 +66,10 @@ public class StringLiteralManipulator extends AbstractElementManipulator<PsiLite
 
         return length >= leadingSeq + trailingSeq ? TextRange.from(leadingSeq, length - trailingSeq - leadingSeq) : TextRange.from(0, length);
       }
+      
+      if (type == JavaTokenType.TEXT_BLOCK_LITERAL) {
+        return length < 7 ? TextRange.from(0, length) : new TextRange(4, Math.max(4, length - 3));
+      }
 
       isQuoted = type == JavaTokenType.STRING_LITERAL || type == JavaTokenType.CHARACTER_LITERAL;
     }
