@@ -1334,20 +1334,18 @@ public final class IdeEventQueue extends EventQueue {
     KeymapManager keymapManager = KeymapManager.getInstance();
     if (keymapManager != null) {
       Keymap keymap = keymapManager.getActiveKeymap();
-      if (keymap != null) {
-        if (!keymap.equals(lastActiveKeymap.get())) {
-          String actionsAwareTypeaheadActionsList = Registry.get("action.aware.typeahead.actions.list").asString();
-          shortcutsShowingPopups.clear();
-          actionsShowingPopupsList.addAll(StringUtil.split(actionsAwareTypeaheadActionsList, ","));
-          actionsShowingPopupsList.forEach(actionId -> {
-            List<Shortcut> shortcuts = Arrays.asList(keymap.getShortcuts(actionId));
-            if (TYPEAHEAD_LOG.isDebugEnabled()) {
-              shortcuts.forEach(s -> TYPEAHEAD_LOG.debug("Typeahead for " + actionId + " : Shortcuts: " + s));
-            }
-            shortcutsShowingPopups.addAll(shortcuts);
-          });
-          lastActiveKeymap = new WeakReference<>(keymap);
-        }
+      if (!keymap.equals(lastActiveKeymap.get())) {
+        String actionsAwareTypeaheadActionsList = Registry.get("action.aware.typeahead.actions.list").asString();
+        shortcutsShowingPopups.clear();
+        actionsShowingPopupsList.addAll(StringUtil.split(actionsAwareTypeaheadActionsList, ","));
+        actionsShowingPopupsList.forEach(actionId -> {
+          List<Shortcut> shortcuts = Arrays.asList(keymap.getShortcuts(actionId));
+          if (TYPEAHEAD_LOG.isDebugEnabled()) {
+            shortcuts.forEach(s -> TYPEAHEAD_LOG.debug("Typeahead for " + actionId + " : Shortcuts: " + s));
+          }
+          shortcutsShowingPopups.addAll(shortcuts);
+        });
+        lastActiveKeymap = new WeakReference<>(keymap);
       }
     }
     return shortcutsShowingPopups;
