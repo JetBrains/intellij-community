@@ -15,16 +15,16 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.psi.PsiElement;
 import com.jetbrains.python.actions.PyQualifiedNameProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.Test;
 
 /**
  * @author Mikhail Golubev
  */
 public class PyQualifiedNameProviderTest extends PyTestCase {
-  @Test
   public void testTopLevelFunctionReference() {
     myFixture.copyDirectoryToProject(getTestName(true) + "/a", "a");
     myFixture.configureByFile("a/b/c/module.py");
@@ -34,6 +34,25 @@ public class PyQualifiedNameProviderTest extends PyTestCase {
   @Nullable
   private String getQualifiedNameOfElementUnderCaret() {
     return new PyQualifiedNameProvider().getQualifiedName(myFixture.getElementAtCaret());
+  }
+
+  public void testNestedClassReference() {
+    doDirectoryTest("pkg/subpkg/mod.py", "pkg.subpkg.mod.MyClass.Nested");
+  }
+
+  public void testMethodReference() {
+    doDirectoryTest("pkg/subpkg/mod.py", "pkg.subpkg.mod.MyClass.method");
+  }
+
+  private void doDirectoryTest(@NotNull String targetFile, @NotNull String expectedQualifiedName) {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile(targetFile);
+    final PsiElement target = myFixture.getElementAtCaret();
+    final PyQualifiedNameProvider provider = new PyQualifiedNameProvider();
+    final String actualQualifiedName = provider.getQualifiedName(myFixture.getElementAtCaret());
+    assertEquals(expectedQualifiedName, actualQualifiedName);
+    final PsiElement element = provider.qualifiedNameToElement(expectedQualifiedName, myFixture.getProject());
+    assertEquals(target, element);
   }
 
   @Override
