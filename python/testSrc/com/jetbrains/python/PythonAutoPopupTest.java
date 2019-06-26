@@ -60,4 +60,17 @@ public class PythonAutoPopupTest extends PyTestCase {
     myTester.typeWithPauses("f");
     assertNull(myTester.getLookup());
   }
+
+  // PY-36639
+  public void testNoAutoPopupOnTypingPrefixesOfGluedStringElements() {
+    myFixture.configureByText("a.py", "s = (<caret>'foo'\n" +
+                                      "     'bar')");
+    myTester.typeWithPauses("r");
+    assertNull(myTester.getLookup());
+
+    myFixture.configureByText("a.py", "s = ('foo'\n" +
+                                      "     <caret>'bar')");
+    myTester.typeWithPauses("r");
+    assertNull(myTester.getLookup());
+  }
 }
