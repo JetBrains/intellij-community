@@ -3,6 +3,7 @@ package circlet.plugins.pipelines.services
 import circlet.plugins.pipelines.utils.*
 import circlet.plugins.pipelines.viewmodel.*
 import circlet.utils.*
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
@@ -14,8 +15,10 @@ class CircletModelStore(val project: Project): LifetimedComponent by SimpleLifet
         listener.listen(viewModel)
 
         fun refreshScript() {
-            val dslFileExists = checkIsDslFileExists()
-            viewModel.script.value = if (dslFileExists) createEmptyScriptViewModel(viewModel.scriptLifetimes.next()) else null
+            ApplicationManager.getApplication().runReadAction {
+                val dslFileExists = checkIsDslFileExists()
+                viewModel.script.value = if (dslFileExists) createEmptyScriptViewModel(viewModel.scriptLifetimes.next()) else null
+            }
         }
 
         fun handleFileChanged(name: String) {
@@ -25,7 +28,6 @@ class CircletModelStore(val project: Project): LifetimedComponent by SimpleLifet
         }
 
         val fileListener = object: VirtualFileListener {
-
             override fun propertyChanged(event: VirtualFilePropertyEvent) {
                 if (event.propertyName == "name") {
                     handleFileChanged(event.oldValue.toString())

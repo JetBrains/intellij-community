@@ -17,7 +17,6 @@ import com.intellij.ui.*
 import com.intellij.ui.components.labels.*
 import com.intellij.ui.treeStructure.*
 import com.intellij.util.ui.tree.*
-import kotlinx.coroutines.*
 import runtime.async.*
 import runtime.reactive.*
 import java.awt.*
@@ -36,12 +35,18 @@ class CircletScriptsViewFactory {
         val treeView = createModelTreeView(lifetime, project, viewModel)
         panel.add(treeView, treeCompName)
         panel.add(createViewForMissedDsl(project), missedDslCompName)
+        var shouldBuild = true
         viewModel.script.forEach(lifetime) {script ->
             if (script == null) {
                 layout.show(panel, missedDslCompName)
+                shouldBuild = true
             }
             else {
                 layout.show(panel, treeCompName)
+                if (shouldBuild) {
+                    ScriptModelBuilder.updateModel(project, viewModel)
+                }
+                shouldBuild = false
             }
         }
         return panel
@@ -69,20 +74,9 @@ class CircletScriptsViewFactory {
             }
         }
 
-        val scriptModelBuilder = ScriptModelBuilder()
         val refreshAction = object : DumbAwareActionButton(IdeBundle.message("action.refresh"), AllIcons.Actions.Refresh) {
             override fun actionPerformed(e: AnActionEvent) {
-                if (viewModel.modelBuildIsRunning.value) {
-                    return
-                }
-                viewModel.modelBuildIsRunning.value = true
-                val lt = viewModel.scriptLifetimes.next()
-                GlobalScope.launch {
-                    val logBuildData = LogData("")
-                    viewModel.logBuildData.value = logBuildData
-                    val model = scriptModelBuilder.build(lt, project, logBuildData)
-                    viewModel.script.value = model
-                }
+                ScriptModelBuilder.updateModel(project, viewModel)
             }
         }
 
@@ -201,7 +195,7 @@ class CircletScriptsViewFactory {
             if (basePath != null) {
                 val baseDirFile = LocalFileSystem.getInstance().findFileByPath(basePath)
                 if (baseDirFile != null) {
-                    val application = ApplicationManager.getApplication();
+                    val application = ApplicationManager.getApplication()
                     application.runWriteAction {
                         val file = baseDirFile.createChildData(this, "circlet.kts")
                         val newLine = System.getProperty("line.separator", "\n")

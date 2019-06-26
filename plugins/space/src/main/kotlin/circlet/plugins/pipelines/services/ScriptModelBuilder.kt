@@ -2,7 +2,6 @@ package circlet.plugins.pipelines.services
 
 import circlet.components.*
 import circlet.pipelines.config.dsl.compile.*
-import circlet.pipelines.config.dsl.compile.util.*
 import circlet.pipelines.config.dsl.script.exec.common.*
 import circlet.pipelines.config.utils.*
 import circlet.plugins.pipelines.utils.*
@@ -11,19 +10,29 @@ import circlet.utils.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
 import klogging.*
+import kotlinx.coroutines.*
 import org.slf4j.event.*
 import org.slf4j.helpers.*
 import runtime.reactive.*
 import java.io.*
-import java.io.PrintWriter
-import java.io.StringWriter
 
 
+object ScriptModelBuilder : KLogging() {
+    fun updateModel(project: Project, viewModel: ScriptWindowViewModel) {
+        if (viewModel.modelBuildIsRunning.value) {
+            return
+        }
+        viewModel.modelBuildIsRunning.value = true
+        val lt = viewModel.scriptLifetimes.next()
+        GlobalScope.launch {
+            val logBuildData = LogData("")
+            viewModel.logBuildData.value = logBuildData
+            val model = build(lt, project, logBuildData)
+            viewModel.script.value = model
+        }
+    }
 
-class ScriptModelBuilder {
-    companion object : KLogging()
-
-    fun build(lifetime: Lifetime, project: Project, logBuildData: LogData): ScriptViewModel {
+    private fun build(lifetime: Lifetime, project: Project, logBuildData: LogData): ScriptViewModel {
 
         val events = ObservableQueue.mutable<SubstituteLoggingEvent>()
         events.change.forEach(lifetime) {
