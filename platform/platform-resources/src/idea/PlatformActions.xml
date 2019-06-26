@@ -802,6 +802,7 @@
         <action id="Performance.ActivityMonitor" class="com.intellij.ide.actions.ActivityMonitorAction"
                 text="Activity Monitor..." description="A tool to check which plugins and subsystems consume most resources">
         </action>
+        <action id="Performance.DumpThreads" class="com.intellij.ide.actions.DumpThreadsAction" text="Dump Threads"/>
 
         <action id="TechnicalSupport" class="com.intellij.ide.actions.TechnicalSupportAction"/>
         <action id="ReportProblem" class="com.intellij.ide.actions.ReportProblemAction"/>
@@ -1026,7 +1027,6 @@
       <group id="Internal.Performance" text="Performance" popup="true">
         <action id="LaggingMode" internal="true" class="com.intellij.internal.ToggleLaggingModeAction" text="Lagging mode"/>
       </group>
-      <action internal="true" id="Internal.DumpThreads" class="com.intellij.internal.DumpThreadsAction" text="Dump Threads"/>
       <separator/>
       <group id="Internal.UI" popup="true" text="&amp;UI">
         <action id="NotificationTestAction" internal="true" class="com.intellij.notification.impl.actions.NotificationTestAction"
