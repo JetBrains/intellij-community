@@ -19,11 +19,13 @@ import com.intellij.ide.actions.QualifiedNameProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -63,9 +65,9 @@ public class PyQualifiedNameProvider implements QualifiedNameProvider {
     if (aClass != null) {
       return aClass;
     }
-    final Collection<PyFunction> functions = PyFunctionNameIndex.find(fqn, project);
-    if (!functions.isEmpty()) {
-      return ContainerUtil.getFirstItem(functions);
+    final PyFunction func = findFunctionByQualifiedName(fqn, project);
+    if (func != null) {
+      return func;
     }
 
     if (StringUtil.containsChar(fqn, CLASS_MEMBER_SEPARATOR)) {
@@ -78,5 +80,13 @@ public class PyQualifiedNameProvider implements QualifiedNameProvider {
       }
     }
     return null;
+  }
+
+  // TODO make it part of PyPsiFacade similarly to createClassByQName()
+  @Nullable
+  private static PyFunction findFunctionByQualifiedName(@NotNull String qname, @NotNull Project project) {
+    final QualifiedName qualifiedName = QualifiedName.fromDottedString(qname);
+    final Collection<PyFunction> shortNameMatches = PyFunctionNameIndex.find(qualifiedName.getLastComponent(), project);
+    return ContainerUtil.find(shortNameMatches, func -> qname.equals(func.getQualifiedName()));
   }
 }

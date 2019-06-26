@@ -19,21 +19,13 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.python.actions.PyQualifiedNameProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mikhail Golubev
  */
 public class PyQualifiedNameProviderTest extends PyTestCase {
   public void testTopLevelFunctionReference() {
-    myFixture.copyDirectoryToProject(getTestName(true) + "/a", "a");
-    myFixture.configureByFile("a/b/c/module.py");
-    assertEquals("a.b.c.module.func", getQualifiedNameOfElementUnderCaret());
-  }
-
-  @Nullable
-  private String getQualifiedNameOfElementUnderCaret() {
-    return new PyQualifiedNameProvider().getQualifiedName(myFixture.getElementAtCaret());
+    doDirectoryTest("a/b/c/module.py", "a.b.c.module.func");
   }
 
   public void testNestedClassReference() {
