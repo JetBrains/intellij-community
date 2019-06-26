@@ -210,6 +210,7 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
 
   public void setSwingPopup(boolean swingPopup) {
     putClientProperty("ComboBox.jbPopup", swingPopup ? null : true);
+    super.setEditor(null);
     updateUI();
   }
 
