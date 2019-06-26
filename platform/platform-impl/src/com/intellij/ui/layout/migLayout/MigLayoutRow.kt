@@ -118,7 +118,10 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       }
 
       field = value
-      subRows?.forEach { it.enabled = value }
+      subRows?.forEach {
+        it.enabled = value
+        it.subRowsEnabled = value
+      }
     }
 
   override var subRowsVisible = true
@@ -128,7 +131,10 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       }
 
       field = value
-      subRows?.forEach { it.visible = value }
+      subRows?.forEach {
+        it.visible = value
+        it.subRowsVisible = value
+      }
     }
 
   internal val isLabeledIncludingSubRows: Boolean
