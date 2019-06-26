@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 import static com.intellij.vcs.log.util.PersistentUtil.LOG_CACHE;
@@ -43,6 +45,7 @@ public class VcsProjectLog implements Disposable {
 
   @NotNull private final LazyVcsLogManager myLogManager = new LazyVcsLogManager();
   @NotNull private final Disposable myMappingChangesDisposable = Disposer.newDisposable();
+  @NotNull private final ExecutorService myExecutor;
   private int myRecreatedLogCount = 0;
 
   public VcsProjectLog(@NotNull Project project,
@@ -53,6 +56,7 @@ public class VcsProjectLog implements Disposable {
     myUiProperties = uiProperties;
     myTabsManager = new VcsLogTabsManager(project, messageBus, uiProperties, this);
 
+    myExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Vcs Log Initialization/Dispose", 1);
     Disposer.register(this, myMappingChangesDisposable);
   }
 
@@ -117,8 +121,9 @@ public class VcsProjectLog implements Disposable {
   }
 
   @NotNull
+  @CalledInAwt
   Future<VcsLogManager> createLogInBackground(boolean forceInit) {
-    return ApplicationManager.getApplication().executeOnPooledThread(() -> createLog(forceInit));
+    return myExecutor.submit(() -> createLog(forceInit));
   }
 
   @Nullable
@@ -160,16 +165,16 @@ public class VcsProjectLog implements Disposable {
     VcsLogManager logManager = myLogManager.dropValue();
     if (logManager != null) {
       logManager.disposeUi();
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        Disposer.dispose(logManager);
-        if (callback != null) {
-          callback.run();
-        }
-      });
+      myExecutor.submit(() -> {
+          Disposer.dispose(logManager);
+          if (callback != null) {
+            callback.run();
+          }
+        });
     }
 
     else if (callback != null) {
-      ApplicationManager.getApplication().executeOnPooledThread(callback);
+      myExecutor.submit(callback);
     }
   }
 
