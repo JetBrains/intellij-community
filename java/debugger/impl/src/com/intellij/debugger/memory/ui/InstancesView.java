@@ -36,7 +36,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
-import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionEditor;
@@ -383,31 +382,6 @@ class InstancesView extends InstancesViewBase {
     @Override
     public JavaReferenceInfo get(int index) {
       return myRefs.get(index);
-    }
-  }
-  private class MyFilteringWorker extends SwingWorker<Void, Void> {
-    private final FilteringTask myTask;
-
-    MyFilteringWorker(@NotNull List<JavaReferenceInfo> refs,
-                      @NotNull XExpression expression,
-                      @NotNull EvaluationContextImpl evaluationContext) {
-      myTask = new FilteringTask(myClassName, myDebugProcess, expression, new MyValuesList(refs),
-        new MyFilteringCallback(evaluationContext));
-    }
-
-    @Override
-    protected Void doInBackground() {
-      try {
-        myTask.run();
-      } catch (Throwable e) {
-        LOG.error(e);
-      }
-      return null;
-    }
-
-    public void cancel() {
-      myTask.cancel();
-      super.cancel(false);
     }
   }
 }
