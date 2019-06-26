@@ -33,7 +33,7 @@ import static com.intellij.openapi.util.io.FileUtilRt.getExtension;
 @RunWith(com.intellij.testFramework.Parameterized.class)
 abstract public class LexerTestCase extends UsefulTestCase {
   private static final String TEST_DATA_BASE_DIR =
-    PlatformTestUtil.getCommunityPath() + "/plugins/textmate/tests/org/jetbrains/plugins/textmate/language/syntax/lexer/data";
+    PlatformTestUtil.getCommunityPath() + "/plugins/textmate/testData/lexer";
 
   private final Map<String, String> myLanguageDescriptors = new HashMap<>();
   private String myRootScope;
