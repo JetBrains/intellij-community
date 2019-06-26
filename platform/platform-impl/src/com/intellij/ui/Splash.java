@@ -76,7 +76,7 @@ public class Splash extends JDialog implements StartupProgress {
     contentPane.setLayout(new BorderLayout());
     contentPane.add(myLabel, BorderLayout.CENTER);
     Dimension size = getPreferredSize();
-    if (Registry.is("suppress.focus.stealing") && Registry.is("suppress.focus.stealing.auto.request.focus")) {
+    if (UIUtil.SUPPRESS_FOCUS_STEALING && Registry.is("suppress.focus.stealing.auto.request.focus")) {
       setAutoRequestFocus(false);
     }
     setSize(size);

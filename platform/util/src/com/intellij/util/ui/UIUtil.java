@@ -89,6 +89,8 @@ public class UIUtil {
 
   private static final StyleSheet DEFAULT_HTML_KIT_CSS;
 
+  public static final boolean SUPPRESS_FOCUS_STEALING = Registry.is("suppress.focus.stealing.linux") && Registry.is("suppress.focus.stealing");
+
   public static final Key<Boolean> LAF_WITH_THEME_KEY = Key.create("Laf.with.ui.theme");
 
   static {
