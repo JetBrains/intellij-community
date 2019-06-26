@@ -44,6 +44,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -227,6 +228,13 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
           if (baseUrl == null) baseUrl = url;
 
           resourceUrl = baseUrl.substring(0, baseUrl.lastIndexOf('/') + 1) + s;
+          try {
+            URL base = new URL(baseUrl);
+            resourceUrl = new URL(base, s).toString();
+          }
+          catch (MalformedURLException e) {
+            LOG.warn(e);
+          }
         }
 
         String refName = s;

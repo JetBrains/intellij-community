@@ -48,6 +48,20 @@ public class RealFetchTest extends BasePlatformTestCase {
     ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().removeResource(url));
   }
 
+  public void testAbsolutePath() {
+    String url = "https://csrc.nist.gov/schema/xccdf/1.2/xc<caret>cdf_1.2.xsd";
+    myFixture.configureByText(XmlFileType.INSTANCE,
+                              "<Benchmark xmlns=\"http://checklists.nist.gov/xccdf/1.2\"\n" +
+                              "           xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+                              "           xsi:schemaLocation=\"http://checklists.nist.gov/xccdf/1.2 https://csrc.nist.gov/schema/xccdf/1.2/xc<caret>cdf_1.2.xsd\" id=\"xccdf_N_benchmark_S\">\n" +
+                              "</Benchmark>");
+    IntentionAction intention = myFixture.getAvailableIntention(XmlBundle.message("fetch.external.resource"));
+    assertNotNull(intention);
+    intention.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
+    myFixture.testHighlighting();
+    ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().removeResource(url));
+  }
+
   public void testOverwriteFetchDtd() throws Exception {
     final String url = "http://java.sun.com/dtd/preferences.dtd";
     VirtualFile virtualFile = myFixture.getTempDirFixture().createFile("images.dtd", "");
