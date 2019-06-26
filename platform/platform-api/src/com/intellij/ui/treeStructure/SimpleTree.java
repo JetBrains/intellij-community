@@ -15,6 +15,7 @@ import com.intellij.ui.TreeUIHelper;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -556,14 +557,22 @@ public class SimpleTree extends Tree implements CellEditorListener {
     myEmptyHandle = null;
   }
 
+  /**
+   * @deprecated old way to configure tree icons
+   */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public Icon getHandleIcon(DefaultMutableTreeNode node, TreePath path) {
     if (node.getChildCount() == 0) return getEmptyHandle();
     return isExpanded(path) ? getExpandedHandle() : getCollapsedHandle();
 
   }
 
+  /**
+   * @deprecated use UIUtil.getTreeExpandedIcon(...) instead
+   */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public Icon getExpandedHandle() {
     if (myExpandedHandle == null) {
       myExpandedHandle = UIUtil.getTreeExpandedIcon();
@@ -571,7 +580,11 @@ public class SimpleTree extends Tree implements CellEditorListener {
     return myExpandedHandle;
   }
 
+  /**
+   * @deprecated use UIUtil.getTreeCollapsedIcon(...) instead
+   */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public Icon getCollapsedHandle() {
     if (myCollapsedHandle == null) {
       myCollapsedHandle = UIUtil.getTreeCollapsedIcon();
@@ -579,7 +592,11 @@ public class SimpleTree extends Tree implements CellEditorListener {
     return myCollapsedHandle;
   }
 
+  /**
+   * @deprecated use EmptyIcon.create(...) instead
+   */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public Icon getEmptyHandle() {
     if (myEmptyHandle == null) {
       final Icon expand = getExpandedHandle();

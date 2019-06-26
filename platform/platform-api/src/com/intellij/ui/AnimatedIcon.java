@@ -94,7 +94,11 @@ public class AnimatedIcon implements Icon {
       AllIcons.Ide.Macro.Recording_4);
   }
 
+  /**
+   * @deprecated icons are not applicable for our user interface and will be removed
+   */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public static class Grey extends AnimatedIcon {
     public Grey() {
       super(DELAY, ICONS.toArray(new Icon[0]));

@@ -6,13 +6,16 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.ConfigurableGroup;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
+ * @deprecated needed for IdeConfigurablesGroup
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
 abstract class ConfigurablesGroupBase implements ConfigurableGroup {
   private Configurable[] myChildren;
   private final ExtensionPointName<ConfigurableEP<Configurable>> myConfigurablesExtensionPoint;
