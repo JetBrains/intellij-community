@@ -276,15 +276,22 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
   private static Module configureNewProject(Project project, VirtualFile baseDir, @NotNull VirtualFile dummyFileContentRoot,
                                             boolean dummyProject, boolean newProject) {
     boolean runConfigurators = newProject || ModuleManager.getInstance(project).getModules().length == 0;
-    Module module = runConfigurators ? runDirectoryProjectConfigurators(baseDir, project) : ModuleManager.getInstance(project).getModules()[0];
+    final Ref<Module> module = new Ref<>();
+    if (runConfigurators) {
+      ApplicationManager.getApplication().invokeAndWait(() -> module.set(runDirectoryProjectConfigurators(baseDir, project)));
+    }
+    else {
+      module.set(ModuleManager.getInstance(project).getModules()[0]);
+    }
+
     if (runConfigurators && dummyProject) { // add content root for chosen (single) file
-      ModuleRootModificationUtil.updateModel(module, model -> {
+      ModuleRootModificationUtil.updateModel(module.get(), model -> {
         ContentEntry[] entries = model.getContentEntries();
         if (entries.length == 1) model.removeContentEntry(entries[0]); // remove custom content entry created for temp directory
         model.addContentEntry(dummyFileContentRoot);
       });
     }
-    return module;
+    return module.get();
   }
 
   private static boolean checkExistingProjectOnOpen(@NotNull Project projectToClose, @Nullable ProjectOpenedCallback callback, VirtualFile baseDir) {
@@ -322,9 +329,9 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     return false;
   }
 
-  public static Module runDirectoryProjectConfigurators(VirtualFile baseDir, Project project) {
+  public static Module runDirectoryProjectConfigurators(@NotNull VirtualFile baseDir, @NotNull Project project) {
     final Ref<Module> moduleRef = new Ref<>();
-    for (DirectoryProjectConfigurator configurator: DirectoryProjectConfigurator.EP_NAME.getExtensionList()) {
+    for (DirectoryProjectConfigurator configurator: DirectoryProjectConfigurator.EP_NAME.getIterable()) {
       try {
         configurator.configureProject(project, baseDir, moduleRef);
       }
