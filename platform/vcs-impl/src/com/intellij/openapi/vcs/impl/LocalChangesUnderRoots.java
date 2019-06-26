@@ -15,10 +15,14 @@
  */
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,14 +47,14 @@ public class LocalChangesUnderRoots {
     myVcsManager = projectLevelVcsManager;
   }
 
+  @NotNull
   public Map<String, Map<VirtualFile, Collection<Change>>> getChangesByLists(@NotNull Collection<? extends VirtualFile> rootsToSave) {
     final Map<String, Map<VirtualFile, Collection<Change>>> result = new HashMap<>();
     myRoots = myVcsManager.getAllVcsRoots();
 
     final List<LocalChangeList> changeLists = myChangeManager.getChangeListsCopy();
     for (LocalChangeList list : changeLists) {
-      final HashMap<VirtualFile, Collection<Change>> subMap = new HashMap<>();
-      addChangesToMap(rootsToSave, subMap, list.getChanges());
+      Map<VirtualFile, Collection<Change>> subMap = groupChanges(rootsToSave, list.getChanges());
       result.put(list.getName(), subMap);
     }
     return result;
@@ -59,39 +63,48 @@ public class LocalChangesUnderRoots {
   /**
    * Sort all changes registered in the {@link ChangeListManager} by VCS roots,
    * filtering out any roots except the specified ones.
+   *
    * @param rootsToSave roots to search for changes only in them.
    * @return a map, whose keys are VCS roots (from the specified list) and values are {@link Change changes} from these roots.
    */
   @NotNull
   public Map<VirtualFile, Collection<Change>> getChangesUnderRoots(@NotNull Collection<? extends VirtualFile> rootsToSave) {
-    Map<VirtualFile, Collection<Change>> result = new HashMap<>();
     final Collection<Change> allChanges = myChangeManager.getAllChanges();
     myRoots = myVcsManager.getAllVcsRoots();
+    return groupChanges(rootsToSave, allChanges);
+  }
 
-    addChangesToMap(rootsToSave, result, allChanges);
+  @NotNull
+  private Map<VirtualFile, Collection<Change>> groupChanges(@NotNull Collection<? extends VirtualFile> rootsToSave,
+                                                            @NotNull Collection<? extends Change> allChanges) {
+    Map<VirtualFile, Collection<Change>> result = new HashMap<>();
+    for (Change change : allChanges) {
+      VirtualFile root = getRootForChange(change);
+      if (root != null && rootsToSave.contains(root)) {
+        Collection<Change> changes = result.computeIfAbsent(root, key -> new HashSet<>());
+        changes.add(change);
+      }
+    }
     return result;
   }
 
-  private void addChangesToMap(Collection<? extends VirtualFile> rootsToSave,
-                               Map<VirtualFile, Collection<Change>> result,
-                               Collection<? extends Change> allChanges) {
-    for (Change change : allChanges) {
-      if (change.getBeforeRevision() != null) {
-        addChangeToMap(result, change, change.getBeforeRevision(), rootsToSave);
-      }
-      if (change.getAfterRevision() != null) {
-        addChangeToMap(result, change, change.getAfterRevision(), rootsToSave);
-      }
-    }
-  }
+  @Nullable
+  private VirtualFile getRootForChange(@NotNull Change change) {
+    FilePath bPath = ChangesUtil.getBeforePath(change);
+    FilePath aPath = ChangesUtil.getAfterPath(change);
 
-  private void addChangeToMap(@NotNull Map<VirtualFile, Collection<Change>> result, @NotNull Change change, @NotNull ContentRevision revision, @NotNull Collection<? extends VirtualFile> rootsToSave) {
-    VirtualFile root = getRootForPath(revision.getFile(), rootsToSave);
-    addChangeToMap(result, root, change);
+    VirtualFile root = getRootForPath(aPath);
+    if (root == null && !Comparing.equal(bPath, aPath)) {
+      root = getRootForPath(bPath);
+    }
+    return root;
   }
 
   @Nullable
-  private VirtualFile getRootForPath(@NotNull FilePath file, @NotNull Collection<? extends VirtualFile> rootsToSave) {
+  private VirtualFile getRootForPath(@Nullable FilePath file) {
+    if (file == null) {
+      return null;
+    }
     final VirtualFile vf = ChangesUtil.findValidParentUnderReadAction(file);
     if (vf == null) {
       return null;
@@ -104,20 +117,6 @@ public class LocalChangesUnderRoots {
         }
       }
     }
-    if (! rootsToSave.contains(rootCandidate)) return null;
     return rootCandidate;
   }
-
-  private static void addChangeToMap(@NotNull Map<VirtualFile, Collection<Change>> result, @Nullable VirtualFile root, @NotNull Change change) {
-    if (root == null) {
-      return;
-    }
-    Collection<Change> changes = result.get(root);
-    if (changes == null) {
-      changes = new HashSet<>();
-      result.put(root, changes);
-    }
-    changes.add(change);
-  }
-
 }
