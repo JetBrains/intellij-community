@@ -12,6 +12,7 @@ import com.intellij.ui.TitledSeparator
 import com.intellij.ui.components.Label
 import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
+import net.miginfocom.layout.BoundSize
 import net.miginfocom.layout.CC
 import java.awt.Component
 import javax.swing.*
@@ -270,6 +271,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       if (siblings != null && siblings.size > 1) {
         if (siblings.get(siblings.size - 2).labeled && component.text == CommonBundle.message("checkbox.remember.password")) {
           cc.value.skip(1)
+          cc.value.horizontal.gapBefore = BoundSize.NULL_SIZE
         }
         else if (siblings.any { it.labeled }) {
           cc.value.spanX(2)
