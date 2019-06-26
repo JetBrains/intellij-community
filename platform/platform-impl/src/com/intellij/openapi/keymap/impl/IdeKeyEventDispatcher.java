@@ -607,6 +607,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
     @Override
     public void performAction(@NotNull InputEvent e, @NotNull AnAction action, @NotNull AnActionEvent actionEvent) {
       e.consume();
+      if (e instanceof KeyEvent) {
+        IdeEventQueue.getInstance().onActionInvoked((KeyEvent)e);
+      }
 
       DataContext ctx = actionEvent.getDataContext();
       if (action instanceof ActionGroup && !((ActionGroup)action).canBePerformed(ctx)) {
