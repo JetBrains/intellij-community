@@ -1,5 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import pkg.<warning descr="'pkg.AnnotatedClass' is scheduled for removal in version 123.456">AnnotatedClass</warning>;
+import pkg.<warning descr="'pkg.ClassWithScheduledForRemovalTypeInSignature' is scheduled for removal because its signature references class 'pkg.AnnotatedClass' scheduled for removal in version 123.456">ClassWithScheduledForRemovalTypeInSignature</warning>;
+import pkg.OwnerOfMembersWithScheduledForRemovalTypesInSignature;
 import static pkg.<warning descr="'pkg.AnnotatedClass' is scheduled for removal in version 123.456">AnnotatedClass</warning>.<warning descr="'NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is declared in class 'pkg.AnnotatedClass' scheduled for removal in version 123.456">NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning>;
 import static pkg.<warning descr="'pkg.AnnotatedClass' is scheduled for removal in version 123.456">AnnotatedClass</warning>.<warning descr="'staticNonAnnotatedMethodInAnnotatedClass()' is declared in class 'pkg.AnnotatedClass' scheduled for removal in version 123.456">staticNonAnnotatedMethodInAnnotatedClass</warning>;
 import static pkg.<warning descr="'pkg.AnnotatedClass' is scheduled for removal in version 123.456">AnnotatedClass</warning>.<warning descr="'ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is scheduled for removal in version 123.456">ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning>;
@@ -92,25 +94,9 @@ class IndirectOverrideAnnotatedMethod extends DirectOverrideAnnotatedMethod {
   public void annotatedMethodInNonAnnotatedClass() {}
 }
 
-class ClassWithScheduledForRemovalTypeInSignature<T extends <warning descr="'pkg.AnnotatedClass' is scheduled for removal in version 123.456">AnnotatedClass</warning>> { }
-
-class OwnerOfMembersWithScheduledForRemovalTypesInSignature {
-  public <warning descr="'pkg.AnnotatedClass' is scheduled for removal in version 123.456">AnnotatedClass</warning> field;
-
-  public <warning descr="'annotatedPkg.ClassInAnnotatedPkg' is declared in package 'annotatedPkg' scheduled for removal in version 123.456">ClassInAnnotatedPkg</warning> fieldPkg;
-
-  public void parameterType(<warning descr="'pkg.AnnotatedClass' is scheduled for removal in version 123.456">AnnotatedClass</warning> param) { }
-
-  public void parameterTypePkg(<warning descr="'annotatedPkg.ClassInAnnotatedPkg' is declared in package 'annotatedPkg' scheduled for removal in version 123.456">ClassInAnnotatedPkg</warning> param) { }
-
-  public <warning descr="'pkg.AnnotatedClass' is scheduled for removal in version 123.456">AnnotatedClass</warning> returnType() { return null; }
-
-  public <warning descr="'pkg.AnnotatedClass' is scheduled for removal in version 123.456">AnnotatedClass</warning> returnTypePkg() { return null; }
-}
-
 class WarningsOfScheduledForRemovalTypesInSignature {
   public void classUsage() {
-    new <warning descr="'ClassWithScheduledForRemovalTypeInSignature' is scheduled for removal because its signature references class 'pkg.AnnotatedClass' scheduled for removal in version 123.456">ClassWithScheduledForRemovalTypeInSignature<<warning descr="'pkg.AnnotatedClass' is scheduled for removal in version 123.456">AnnotatedClass</warning>></warning>();
+    new <warning descr="'pkg.ClassWithScheduledForRemovalTypeInSignature' is scheduled for removal because its signature references class 'pkg.AnnotatedClass' scheduled for removal in version 123.456">ClassWithScheduledForRemovalTypeInSignature<<warning descr="'pkg.AnnotatedClass' is scheduled for removal in version 123.456">AnnotatedClass</warning>></warning>();
   }
 
   public void membersUsages(OwnerOfMembersWithScheduledForRemovalTypesInSignature owner) {

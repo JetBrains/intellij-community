@@ -1,6 +1,8 @@
 @file:Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE", "UNUSED_VALUE", "UNUSED_PARAMETER", "UNUSED_VARIABLE")
 
 import pkg.<warning descr="'pkg.AnnotatedClass' is scheduled for removal in version 123.456">AnnotatedClass</warning>
+import pkg.<warning descr="'pkg.ClassWithScheduledForRemovalTypeInSignature' is scheduled for removal because its signature references class 'pkg.AnnotatedClass' scheduled for removal in version 123.456">ClassWithScheduledForRemovalTypeInSignature</warning>
+import pkg.OwnerOfMembersWithScheduledForRemovalTypesInSignature
 import pkg.<warning descr="'pkg.AnnotatedClass' is scheduled for removal in version 123.456">AnnotatedClass</warning>.<warning descr="'NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is declared in class 'pkg.AnnotatedClass' scheduled for removal in version 123.456">NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning>
 import pkg.<warning descr="'pkg.AnnotatedClass' is scheduled for removal in version 123.456">AnnotatedClass</warning>.<warning descr="'staticNonAnnotatedMethodInAnnotatedClass()' is declared in class 'pkg.AnnotatedClass' scheduled for removal in version 123.456">staticNonAnnotatedMethodInAnnotatedClass</warning>
 import pkg.<warning descr="'pkg.AnnotatedClass' is scheduled for removal in version 123.456">AnnotatedClass</warning>.<warning descr="'ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is scheduled for removal in version 123.456">ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning>
@@ -93,37 +95,17 @@ class IndirectOverrideAnnotatedMethod : DirectOverrideAnnotatedMethod() {
   override fun annotatedMethodInNonAnnotatedClass() {}
 }
 
-class ClassWithScheduledForRemovalTypeInSignature<T : <warning descr="'pkg.AnnotatedClass' is scheduled for removal in version 123.456">AnnotatedClass</warning>>
-
-class OwnerOfMembersWithScheduledForRemovalTypesInSignature {
-  var field: <warning descr="'pkg.AnnotatedClass' is scheduled for removal in version 123.456">AnnotatedClass</warning>? = null
-
-  var fieldPkg: <warning descr="'annotatedPkg.ClassInAnnotatedPkg' is declared in package 'annotatedPkg' scheduled for removal in version 123.456">ClassInAnnotatedPkg</warning>? = null
-
-  fun parameterType(param: <warning descr="'pkg.AnnotatedClass' is scheduled for removal in version 123.456">AnnotatedClass</warning>?) {}
-
-  fun parameterTypePkg(param: <warning descr="'annotatedPkg.ClassInAnnotatedPkg' is declared in package 'annotatedPkg' scheduled for removal in version 123.456">ClassInAnnotatedPkg</warning>?) {}
-
-  fun returnType(): <warning descr="'pkg.AnnotatedClass' is scheduled for removal in version 123.456">AnnotatedClass</warning>? {
-    return null
-  }
-
-  fun returnTypePkg(): <warning descr="'pkg.AnnotatedClass' is scheduled for removal in version 123.456">AnnotatedClass</warning>? {
-    return null
-  }
-}
-
 class WarningsOfScheduledForRemovalTypesInSignature {
   fun classUsage() {
-    <warning descr="'ClassWithScheduledForRemovalTypeInSignature' is scheduled for removal because its signature references class 'pkg.AnnotatedClass' scheduled for removal in version 123.456">ClassWithScheduledForRemovalTypeInSignature</warning><<warning descr="'pkg.AnnotatedClass' is scheduled for removal in version 123.456">AnnotatedClass</warning>>()
+    <warning descr="'pkg.ClassWithScheduledForRemovalTypeInSignature' is scheduled for removal because its signature references class 'pkg.AnnotatedClass' scheduled for removal in version 123.456">ClassWithScheduledForRemovalTypeInSignature</warning><<warning descr="'pkg.AnnotatedClass' is scheduled for removal in version 123.456">AnnotatedClass</warning>>()
   }
 
   fun membersUsages(owner: OwnerOfMembersWithScheduledForRemovalTypesInSignature) {
-    val field = owner.<warning descr="'getField()' is scheduled for removal because its signature references class 'pkg.AnnotatedClass' scheduled for removal in version 123.456">field</warning>
+    val field = owner.<warning descr="'field' is scheduled for removal because its signature references class 'pkg.AnnotatedClass' scheduled for removal in version 123.456">field</warning>
     owner.<warning descr="'parameterType(pkg.AnnotatedClass)' is scheduled for removal because its signature references class 'pkg.AnnotatedClass' scheduled for removal in version 123.456">parameterType</warning>(null)
     owner.<warning descr="'returnType()' is scheduled for removal because its signature references class 'pkg.AnnotatedClass' scheduled for removal in version 123.456">returnType</warning>()
 
-    val fieldPkg = owner.<warning descr="'getField()' is scheduled for removal because its signature references class 'pkg.AnnotatedClass' scheduled for removal in version 123.456">field</warning>
+    val fieldPkg = owner.<warning descr="'field' is scheduled for removal because its signature references class 'pkg.AnnotatedClass' scheduled for removal in version 123.456">field</warning>
     owner.<warning descr="'parameterTypePkg(annotatedPkg.ClassInAnnotatedPkg)' is scheduled for removal because its signature references class 'annotatedPkg.ClassInAnnotatedPkg' scheduled for removal in version 123.456">parameterTypePkg</warning>(null)
     owner.<warning descr="'returnTypePkg()' is scheduled for removal because its signature references class 'pkg.AnnotatedClass' scheduled for removal in version 123.456">returnTypePkg</warning>()
   }

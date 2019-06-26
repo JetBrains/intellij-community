@@ -102,7 +102,9 @@ class ScheduledForRemovalApiUsageTest: JavaCodeInsightFixtureTestCase() {
       "pkg/AnnotatedEnum.java",
       "pkg/NonAnnotatedAnnotation.java",
       "pkg/NonAnnotatedClass.java",
-      "pkg/NonAnnotatedEnum.java"
+      "pkg/NonAnnotatedEnum.java",
+      "pkg/ClassWithScheduledForRemovalTypeInSignature.java",
+      "pkg/OwnerOfMembersWithScheduledForRemovalTypesInSignature.java"
     ).forEach { myFixture.copyFileToProject(it) }
   }
 
