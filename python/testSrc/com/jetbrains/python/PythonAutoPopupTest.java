@@ -54,4 +54,10 @@ public class PythonAutoPopupTest extends PyTestCase {
     assertFalse(lookup2.isFocused());
   }
 
+  // PY-32808
+  public void testNoAutoPopupOnTypingFStringPrefix() {
+    myFixture.configureByText("a.py", "s = <caret>'foo'");
+    myTester.typeWithPauses("f");
+    assertNull(myTester.getLookup());
+  }
 }
