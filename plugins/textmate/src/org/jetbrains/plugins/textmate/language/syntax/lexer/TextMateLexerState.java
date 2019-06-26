@@ -45,14 +45,14 @@ class TextMateLexerState implements LexerState {
     TextMateLexerState state = (TextMateLexerState)o;
 
     if (!matchData.equals(state.matchData)) return false;
-    if (!syntaxRule.getScopeName().equals(state.syntaxRule.getScopeName())) return false;
+    if (!syntaxRule.equals(state.syntaxRule)) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = syntaxRule.getScopeName().hashCode();
+    int result = syntaxRule.hashCode();
     result = 31 * result + matchData.hashCode();
     return result;
   }
