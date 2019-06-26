@@ -375,7 +375,8 @@ public class DiffDrawUtil {
 
     private boolean ignored = false;
     private boolean resolved = false;
-    private boolean excluded = false;
+    private boolean excludedInEditor = false;
+    private boolean excludedInGutter = false;
     private boolean hideWithoutLineNumbers = false;
     private boolean hideStripeMarkers = false;
 
@@ -400,7 +401,20 @@ public class DiffDrawUtil {
 
     @NotNull
     public LineHighlighterBuilder withExcluded(boolean excluded) {
-      this.excluded = excluded;
+      this.excludedInEditor = excluded;
+      this.excludedInGutter = excluded;
+      return this;
+    }
+
+    @NotNull
+    public LineHighlighterBuilder withExcludedInEditor(boolean excluded) {
+      this.excludedInEditor = excluded;
+      return this;
+    }
+
+    @NotNull
+    public LineHighlighterBuilder withExcludedInGutter(boolean excluded) {
+      this.excludedInGutter = excluded;
       return this;
     }
 
@@ -420,23 +434,20 @@ public class DiffDrawUtil {
     public List<RangeHighlighter> done() {
       List<RangeHighlighter> highlighters = new ArrayList<>();
 
-      PaintMode editorMode;
-      PaintMode gutterMode;
-      if (excluded) {
+      PaintMode editorMode = PaintMode.DEFAULT;
+      PaintMode gutterMode = PaintMode.DEFAULT;
+      if (ignored) {
+        editorMode = PaintMode.IGNORED;
+      }
+      if (excludedInEditor) {
         editorMode = PaintMode.EXCLUDED_EDITOR;
+      }
+      if (excludedInGutter) {
         gutterMode = PaintMode.EXCLUDED_GUTTER;
       }
-      else if (ignored) {
-        editorMode = PaintMode.IGNORED;
-        gutterMode = PaintMode.DEFAULT;
-      }
-      else if (resolved) {
+      if (resolved) {
         editorMode = PaintMode.RESOLVED;
         gutterMode = PaintMode.RESOLVED;
-      }
-      else {
-        editorMode = PaintMode.DEFAULT;
-        gutterMode = PaintMode.DEFAULT;
       }
 
       boolean isEmptyRange = startLine == endLine;
@@ -448,7 +459,7 @@ public class DiffDrawUtil {
       int end = offsets.getEndOffset();
 
       TextAttributes attributes = isEmptyRange ? null : getTextAttributes(type, editor, editorMode.background);
-      TextAttributes stripeAttributes = isEmptyRange || hideStripeMarkers || resolved || excluded
+      TextAttributes stripeAttributes = isEmptyRange || hideStripeMarkers || resolved || excludedInEditor
                                         ? null : getStripeTextAttributes(type, editor);
       boolean dottedLine = editorMode.border == BorderType.DOTTED;
 
