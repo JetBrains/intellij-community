@@ -62,6 +62,10 @@ fun <T> PropertyBinding<T>.toNullable(): PropertyBinding<T?> {
   return PropertyBinding<T?>({ get() }, { set(it!!) })
 }
 
+fun KMutableProperty0<Boolean>.asBooleanBinding(): PropertyBinding<Boolean> {
+  return createPropertyBinding(this, Boolean::class.javaPrimitiveType!!)
+}
+
 interface CellBuilder<T : JComponent> {
   val component: T
 
