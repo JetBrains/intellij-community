@@ -97,7 +97,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
   @NotNull
   public List<CommittedChangeList> filterChangeLists(List<? extends CommittedChangeList> changeLists) {
     if (mySelection.size() == 0) {
-      return ContainerUtil.immutableList(changeLists);
+      return new ArrayList<>(changeLists);
     }
     final ArrayList<CommittedChangeList> result = new ArrayList<>();
     for (CommittedChangeList list : changeLists) {
