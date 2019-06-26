@@ -6,8 +6,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.OrderedSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
@@ -89,9 +88,9 @@ public class FormsBindingManager extends FormsBuilder {
       return exitCode;
     }
 
-    final Map<File, ModuleBuildTarget> filesToCompile = new THashMap<>(FileUtil.FILE_HASHING_STRATEGY);
-    final Map<File, ModuleBuildTarget> formsToCompile = new THashMap<>(FileUtil.FILE_HASHING_STRATEGY);
-    final Map<File, Collection<File>> srcToForms = new THashMap<>(FileUtil.FILE_HASHING_STRATEGY);
+    final Map<File, ModuleBuildTarget> filesToCompile = new LinkedHashMap<>();
+    final Map<File, ModuleBuildTarget> formsToCompile = new LinkedHashMap<>();
+    final Map<File, Collection<File>> srcToForms = new LinkedHashMap<>();
 
     if (!JavaBuilderUtil.isForcedRecompilationAllJavaModules(context) && config.isInstrumentClasses() && FORCE_FORMS_REBUILD_FLAG.get(context, Boolean.FALSE)) {
       // force compilation of all forms, but only once per chunk
@@ -209,7 +208,7 @@ public class FormsBindingManager extends FormsBuilder {
       }
     }
 
-    final Set<File> candidates = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+    final Set<File> candidates = new OrderedSet<>(FileUtil.FILE_HASHING_STRATEGY);
     for (JavaSourceRootDescriptor rd : targetRoots) {
       candidates.addAll(findPossibleSourcesForClass(rd, className));
     }

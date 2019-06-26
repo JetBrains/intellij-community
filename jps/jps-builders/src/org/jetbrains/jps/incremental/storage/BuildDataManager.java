@@ -120,7 +120,7 @@ public class BuildDataManager implements StorageOwner {
                           boolean useMemoryTempCaches) throws IOException {
     myDataPaths = dataPaths;
     myTargetsState = targetsState;
-    mySrcToFormMap = new OneToManyPathsMapping(new File(getSourceToFormsRoot(), "data"));
+    mySrcToFormMap = new OneToManyPathsMapping(new File(getSourceToFormsRoot(), "data"), relativizer);
     myOutputToTargetRegistry = new OutputToTargetRegistry(new File(getOutputToSourceRegistryRoot(), "data"), relativizer);
     myMappings = new Mappings(getMappingsRoot(myDataPaths.getDataStorageRoot()), relativizer, useMemoryTempCaches);
     myVersionFile = new File(myDataPaths.getDataStorageRoot(), "version.dat");
