@@ -53,7 +53,6 @@ class UnstableTypeUsedInSignatureTest : JavaCodeInsightFixtureTestCase() {
   fun `test kotlin no extra warnings are produced`() {
     myFixture.testHighlighting("noWarnings/NoWarningsAlreadyMarked.kt")
     myFixture.testHighlighting("noWarnings/NoWarningsInaccessible.kt")
-    myFixture.testHighlighting("noWarnings/NoWarningsKotlinFileMarked.kt")
   }
 
   fun `test no warnings produced in experimental package`() {

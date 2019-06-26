@@ -5,9 +5,8 @@ import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInspection.AnnotatedApiUsageUtil.findAnnotatedTypeUsedInDeclarationSignature
 import com.intellij.codeInspection.UnstableApiUsageInspection.Companion.DEFAULT_UNSTABLE_API_ANNOTATIONS
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiField
+import com.intellij.lang.jvm.JvmModifier
+import com.intellij.psi.*
 import com.intellij.psi.util.PropertyUtil
 import com.intellij.uast.UastVisitorAdapter
 import com.intellij.util.ui.FormBuilder
@@ -110,9 +109,6 @@ private class UnstableTypeUsedInSignatureVisitor(
     }
     val containingUFile = node.getContainingUFile()
     if (containingUFile != null) {
-      if (containingUFile.annotations.any { it.qualifiedName in unstableApiAnnotations }) {
-        return true
-      }
       val packageName = containingUFile.packageName
       val psiPackage = JavaPsiFacade.getInstance(problemsHolder.project).findPackage(packageName)
       if (psiPackage != null) {
