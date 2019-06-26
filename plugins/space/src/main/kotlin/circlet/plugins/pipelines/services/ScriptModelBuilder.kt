@@ -57,8 +57,7 @@ class ScriptModelBuilder {
             val url = find(ScriptModelBuilder::class, "pipelines-config-dsl-scriptdefinition")
 
             val targetJar = createTempDir().absolutePath + "/compiledJar.jar"
-            val sourceCodeResolver = LocalSourceCodeResolver()
-            DslJarCompiler(logger).compile(expectedFile.absolutePath, targetJar, sourceCodeResolver, kotlinCompilerPath, url.file)
+            DslJarCompiler(logger).compile(DslSourceFileDelegatingFileProvider(expectedFile.absolutePath), targetJar, kotlinCompilerPath, url.file)
 
             val config = DslScriptExecutor().evaluateModel(targetJar, "", "", "")
 
