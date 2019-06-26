@@ -39,18 +39,28 @@ class UnstableApiUsageInspectionTest : JavaCodeInsightFixtureTestCase() {
       "pkg/AnnotatedEnum.java",
       "pkg/NonAnnotatedAnnotation.java",
       "pkg/NonAnnotatedClass.java",
-      "pkg/NonAnnotatedEnum.java"
+      "pkg/NonAnnotatedEnum.java",
+      "pkg/ClassWithExperimentalTypeInSignature.java",
+      "pkg/OwnerOfMembersWithExperimentalTypesInSignature.java"
     ).forEach { myFixture.copyFileToProject(it) }
   }
 
   fun `test java unstable api usages`() {
     inspection.myIgnoreInsideImports = false
-    myFixture.testHighlighting(true, false, false, "UnstableElementsTest.java")
+    myFixture.testHighlighting("UnstableElementsTest.java")
   }
 
   fun `test java do not report unstable api usages inside import statements`() {
     inspection.myIgnoreInsideImports = true
-    myFixture.testHighlighting(true, false, false, "UnstableElementsIgnoreImportsTest.java")
+    myFixture.testHighlighting("UnstableElementsIgnoreImportsTest.java")
+  }
+
+  fun `test java no warnings on access to members of the same file`() {
+    myFixture.testHighlighting("NoWarningsMembersOfTheSameFile.java")
+  }
+
+  fun `test kotlin no warnings on access to members of the same file`() {
+    myFixture.testHighlighting("NoWarningsMembersOfTheSameFile.kt")
   }
 
   fun `test kotlin unstable api usages`() {

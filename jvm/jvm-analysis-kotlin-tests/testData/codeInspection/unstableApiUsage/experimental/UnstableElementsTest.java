@@ -1,5 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import pkg.<warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>;
+import pkg.<warning descr="'pkg.ClassWithExperimentalTypeInSignature' is unstable because its signature references unstable class 'pkg.AnnotatedClass'">ClassWithExperimentalTypeInSignature</warning>;
+import pkg.OwnerOfMembersWithExperimentalTypesInSignature;
 import static pkg.<warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>.<warning descr="'NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is declared in unstable class 'pkg.AnnotatedClass'">NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning>;
 import static pkg.<warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>.<warning descr="'staticNonAnnotatedMethodInAnnotatedClass()' is declared in unstable class 'pkg.AnnotatedClass'">staticNonAnnotatedMethodInAnnotatedClass</warning>;
 import static pkg.<warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>.<warning descr="'ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is marked unstable">ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning>;
@@ -93,25 +95,9 @@ class IndirectOverrideAnnotatedMethod extends DirectOverrideAnnotatedMethod {
   public void annotatedMethodInNonAnnotatedClass() {}
 }
 
-class ClassWithExperimentalTypeInSignature<T extends <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>> { }
-
-class OwnerOfMembersWithExperimentalTypesInSignature {
-  public <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning> field;
-
-  public <warning descr="'annotatedPkg.ClassInAnnotatedPkg' is declared in unstable package 'annotatedPkg'">ClassInAnnotatedPkg</warning> fieldPkg;
-
-  public void parameterType(<warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning> param) { }
-
-  public void parameterTypePkg(<warning descr="'annotatedPkg.ClassInAnnotatedPkg' is declared in unstable package 'annotatedPkg'">ClassInAnnotatedPkg</warning> param) { }
-
-  public <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning> returnType() { return null; }
-
-  public <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning> returnTypePkg() { return null; }
-}
-
 class WarningsOfExperimentalTypesInSignature {
   public void classUsage() {
-    new <warning descr="'ClassWithExperimentalTypeInSignature' is unstable because its signature references unstable class 'pkg.AnnotatedClass'">ClassWithExperimentalTypeInSignature<<warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>></warning>();
+    new <warning descr="'pkg.ClassWithExperimentalTypeInSignature' is unstable because its signature references unstable class 'pkg.AnnotatedClass'">ClassWithExperimentalTypeInSignature<<warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>></warning>();
   }
 
   public void membersUsages(OwnerOfMembersWithExperimentalTypesInSignature owner) {

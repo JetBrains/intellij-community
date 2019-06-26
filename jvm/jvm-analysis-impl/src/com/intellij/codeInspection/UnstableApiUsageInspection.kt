@@ -128,30 +128,41 @@ private class UnstableApiUsageProcessor(
   private fun getElementToHighlight(sourceNode: UElement): PsiElement? =
     (sourceNode as? UDeclaration)?.uastAnchor.sourcePsiElement ?: sourceNode.sourcePsi
 
-  private fun checkUnstableApiUsage(
-    target: PsiModifierListOwner,
-    sourceNode: UElement,
-    isMethodOverriding: Boolean
-  ) {
+  private fun checkUnstableApiUsage(target: PsiModifierListOwner, sourceNode: UElement, isMethodOverriding: Boolean) {
     if (!isLibraryElement(target)) {
       return
     }
+
+    if (checkTargetIsUnstableItself(target, sourceNode, isMethodOverriding)) {
+      return
+    }
+
+    checkTargetReferencesUnstableTypeInSignature(target, sourceNode, isMethodOverriding)
+  }
+
+  private fun checkTargetIsUnstableItself(target: PsiModifierListOwner, sourceNode: UElement, isMethodOverriding: Boolean): Boolean {
     val annotatedContainingDeclaration = findAnnotatedContainingDeclaration(target, unstableApiAnnotations, true)
     if (annotatedContainingDeclaration != null) {
-      val messageProvider = getMessageProvider(annotatedContainingDeclaration.psiAnnotation) ?: return
+      val messageProvider = getMessageProvider(annotatedContainingDeclaration.psiAnnotation) ?: return false
       val message = if (isMethodOverriding) {
         messageProvider.buildMessageUnstableMethodOverridden(annotatedContainingDeclaration)
       }
       else {
         messageProvider.buildMessage(annotatedContainingDeclaration)
       }
-      val elementToHighlight = getElementToHighlight(sourceNode) ?: return
+      val elementToHighlight = getElementToHighlight(sourceNode) ?: return false
       problemsHolder.registerProblem(elementToHighlight, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
-      return
+      return true
     }
+    return false
+  }
 
-    if (!isMethodOverriding) {
-      val declaration = target.toUElement(UDeclaration::class.java) ?: return
+  private fun checkTargetReferencesUnstableTypeInSignature(target: PsiModifierListOwner, sourceNode: UElement, isMethodOverriding: Boolean) {
+    if (!isMethodOverriding && !arePsiElementsFromTheSameFile(sourceNode.sourcePsi, target.containingFile)) {
+      val declaration = target.toUElement(UDeclaration::class.java)
+      if (declaration !is UClass && declaration !is UMethod && declaration !is UField) {
+        return
+      }
       val unstableTypeUsedInSignature = findAnnotatedTypeUsedInDeclarationSignature(declaration, unstableApiAnnotations)
       if (unstableTypeUsedInSignature != null) {
         val messageProvider = getMessageProvider(unstableTypeUsedInSignature.psiAnnotation) ?: return
@@ -160,6 +171,12 @@ private class UnstableApiUsageProcessor(
         problemsHolder.registerProblem(elementToHighlight, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
       }
     }
+  }
+
+  private fun arePsiElementsFromTheSameFile(one: PsiElement?, two: PsiElement?): Boolean {
+    //For Kotlin: naive comparison of PSI containingFile-s does not work because one of the PSI elements might be light PSI element
+    // coming from a light PSI file, and another element would be physical PSI file, and they are not "equals()".
+    return one?.containingFile?.virtualFile == two?.containingFile?.virtualFile
   }
 
 }

@@ -1,6 +1,8 @@
 @file:Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE", "UNUSED_VALUE", "UNUSED_PARAMETER", "UNUSED_VARIABLE")
 
 import pkg.<warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>
+import pkg.<warning descr="'pkg.ClassWithExperimentalTypeInSignature' is unstable because its signature references unstable class 'pkg.AnnotatedClass'">ClassWithExperimentalTypeInSignature</warning>
+import pkg.OwnerOfMembersWithExperimentalTypesInSignature
 import pkg.<warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>.<warning descr="'NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is declared in unstable class 'pkg.AnnotatedClass'">NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning>
 import pkg.<warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>.<warning descr="'staticNonAnnotatedMethodInAnnotatedClass()' is declared in unstable class 'pkg.AnnotatedClass'">staticNonAnnotatedMethodInAnnotatedClass</warning>
 import pkg.<warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>.<warning descr="'ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is marked unstable">ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning>
@@ -92,37 +94,17 @@ class IndirectOverrideAnnotatedMethod : DirectOverrideAnnotatedMethod() {
   override fun annotatedMethodInNonAnnotatedClass() {}
 }
 
-class ClassWithExperimentalTypeInSignature<T : <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>>
-
-class OwnerOfMembersWithExperimentalTypesInSignature {
-  var field: <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>? = null
-
-  var fieldPkg: <warning descr="'annotatedPkg.ClassInAnnotatedPkg' is declared in unstable package 'annotatedPkg'">ClassInAnnotatedPkg</warning>? = null
-
-  fun parameterType(param: <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>?) {}
-
-  fun parameterTypePkg(param: <warning descr="'annotatedPkg.ClassInAnnotatedPkg' is declared in unstable package 'annotatedPkg'">ClassInAnnotatedPkg</warning>?) {}
-
-  fun returnType(): <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>? {
-    return null
-  }
-
-  fun returnTypePkg(): <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>? {
-    return null
-  }
-}
-
 class WarningsOfExperimentalTypesInSignature {
   fun classUsage() {
-    <warning descr="'ClassWithExperimentalTypeInSignature' is unstable because its signature references unstable class 'pkg.AnnotatedClass'">ClassWithExperimentalTypeInSignature</warning><<warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>>()
+    <warning descr="'pkg.ClassWithExperimentalTypeInSignature' is unstable because its signature references unstable class 'pkg.AnnotatedClass'">ClassWithExperimentalTypeInSignature</warning><<warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>>()
   }
 
   fun membersUsages(owner: OwnerOfMembersWithExperimentalTypesInSignature) {
-    val field = owner.<warning descr="'getField()' is unstable because its signature references unstable class 'pkg.AnnotatedClass'">field</warning>
+    val field = owner.<warning descr="'field' is unstable because its signature references unstable class 'pkg.AnnotatedClass'">field</warning>
     owner.<warning descr="'parameterType(pkg.AnnotatedClass)' is unstable because its signature references unstable class 'pkg.AnnotatedClass'">parameterType</warning>(null)
     owner.<warning descr="'returnType()' is unstable because its signature references unstable class 'pkg.AnnotatedClass'">returnType</warning>()
 
-    val fieldPkg = owner.<warning descr="'getField()' is unstable because its signature references unstable class 'pkg.AnnotatedClass'">field</warning>
+    val fieldPkg = owner.<warning descr="'field' is unstable because its signature references unstable class 'pkg.AnnotatedClass'">field</warning>
     owner.<warning descr="'parameterTypePkg(annotatedPkg.ClassInAnnotatedPkg)' is unstable because its signature references unstable class 'annotatedPkg.ClassInAnnotatedPkg'">parameterTypePkg</warning>(null)
     owner.<warning descr="'returnTypePkg()' is unstable because its signature references unstable class 'pkg.AnnotatedClass'">returnTypePkg</warning>()
   }
