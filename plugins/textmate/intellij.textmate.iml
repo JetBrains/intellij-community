@@ -15,15 +15,15 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module-library">
       <library name="joni" type="repository">
-        <properties maven-id="org.jruby.joni:joni:2.1.26" />
+        <properties maven-id="org.jruby.joni:joni:2.1.29" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jruby/joni/joni/2.1.26/joni-2.1.26.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1.0.43/jcodings-1.0.43.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jruby/joni/joni/2.1.29/joni-2.1.29.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1.0.44/jcodings-1.0.44.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jruby/joni/joni/2.1.26/joni-2.1.26-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1.0.43/jcodings-1.0.43-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jruby/joni/joni/2.1.29/joni-2.1.29-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1.0.44/jcodings-1.0.44-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
