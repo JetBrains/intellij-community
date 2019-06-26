@@ -137,7 +137,7 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
   public List<CommittedChangeList> filterChangeLists(List<? extends CommittedChangeList> changeLists) {
     final Object[] selection = myValueList.getSelectedValues();
     if (myValueList.getSelectedIndex() == 0 || selection.length == 0) {
-      return ContainerUtil.immutableList(changeLists);
+      return new ArrayList<>(changeLists);
     }
     List<CommittedChangeList> result = new ArrayList<>();
     for (CommittedChangeList changeList : changeLists) {
