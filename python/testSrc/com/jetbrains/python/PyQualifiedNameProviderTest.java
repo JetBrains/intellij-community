@@ -28,6 +28,10 @@ public class PyQualifiedNameProviderTest extends PyTestCase {
     doDirectoryTest("a/b/c/module.py", "a.b.c.module.func");
   }
 
+  public void testTopLevelClassReference() {
+    doDirectoryTest("pkg/subpkg/mod.py",  "pkg.subpkg.mod.MyClass");
+  }
+
   public void testNestedClassReference() {
     doDirectoryTest("pkg/subpkg/mod.py", "pkg.subpkg.mod.MyClass.Nested");
   }
