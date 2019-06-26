@@ -48,6 +48,9 @@ public class PyCompletionConfidence extends CompletionConfidence {
       if (isSequenceOfDots(contextElement)) {
         return ThreeState.YES;
       }
+      if (elementType == PyTokenTypes.FSTRING_START) {
+        return ThreeState.YES;
+      }
       if (PyTokenTypes.STRING_NODES.contains(elementType)) {
         final PsiElement parent = contextElement.getParent();
         if (parent instanceof PyStringLiteralExpression) {
