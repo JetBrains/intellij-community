@@ -127,7 +127,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   @Override
   public ActionCallback requestFocusInProject(@NotNull Component c, @Nullable Project project) {
-    if (ApplicationManagerEx.getApplicationEx().isActive() || !Registry.is("suppress.focus.stealing")) {
+    if (ApplicationManager.getApplication().isActive() || !UIUtil.SUPPRESS_FOCUS_STEALING) {
       c.requestFocus();
     }
     else {
@@ -426,7 +426,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     }
 
     if (toFocus != null) {
-      if (ApplicationManagerEx.getApplicationEx().isActive() || !Registry.is("suppress.focus.stealing")) {
+      if (ApplicationManager.getApplication().isActive() || !UIUtil.SUPPRESS_FOCUS_STEALING) {
         toFocus.requestFocus();
       }
       else {
