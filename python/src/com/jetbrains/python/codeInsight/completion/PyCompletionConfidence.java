@@ -17,19 +17,19 @@ package com.jetbrains.python.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.CompletionConfidence;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ThreeState;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyStringElement;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.Objects;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author yole
@@ -52,11 +52,10 @@ public class PyCompletionConfidence extends CompletionConfidence {
         return ThreeState.YES;
       }
       if (PyTokenTypes.STRING_NODES.contains(elementType)) {
-        final PsiElement parent = contextElement.getParent();
-        if (parent instanceof PyStringLiteralExpression) {
-          final List<TextRange> ranges = ((PyStringLiteralExpression)parent).getStringValueTextRanges();
-          final int relativeOffset = offset - parent.getTextRange().getStartOffset();
-          if (ranges.size() > 0 && relativeOffset < ranges.get(0).getStartOffset()) {
+        final PyStringElement stringElement = as(contextElement, PyStringElement.class);
+        if (stringElement != null) {
+          final int relativeOffset = offset - stringElement.getTextRange().getStartOffset();
+          if (relativeOffset < stringElement.getContentRange().getStartOffset()) {
             return ThreeState.YES;
           }
         }
