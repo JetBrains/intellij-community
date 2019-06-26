@@ -48,7 +48,7 @@ public interface Job<T> {
     }
 
     @Override
-    public void waitForCompletion(int millis) throws InterruptedException, ExecutionException, TimeoutException {
+    public void waitForCompletion(int millis) {
 
     }
 

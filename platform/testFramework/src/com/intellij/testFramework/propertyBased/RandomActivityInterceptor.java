@@ -8,6 +8,7 @@ import com.intellij.ui.UiInterceptors;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jetCheck.Generator;
 import org.jetbrains.jetCheck.ImperativeCommand;
 
@@ -33,7 +34,7 @@ class RandomActivityInterceptor extends UiInterceptors.UiInterceptor<Object> {
   }
 
   @Override
-  protected void doIntercept(Object component) {
+  protected void doIntercept(@NotNull Object component) {
     if (component == SINK) {
       return;
     }

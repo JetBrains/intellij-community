@@ -43,6 +43,7 @@ public class EmptyQuery<R> implements Query<R> {
     return findAll().toArray(a);
   }
 
+  @NotNull
   @Override
   public Iterator<R> iterator() {
     return findAll().iterator();

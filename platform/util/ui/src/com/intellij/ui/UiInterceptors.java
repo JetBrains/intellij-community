@@ -5,10 +5,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class UiInterceptors {
-  private static final ConcurrentLinkedQueue<UiInterceptor<?>> ourInterceptors = new ConcurrentLinkedQueue<>();
+  private static final Queue<UiInterceptor<?>> ourInterceptors = new ConcurrentLinkedQueue<>();
 
   /**
    * Called from UI component
@@ -29,7 +31,7 @@ public class UiInterceptors {
    * @param interceptor interceptor to register
    */
   @TestOnly
-  public static void register(UiInterceptor<?> interceptor) {
+  public static void register(@NotNull UiInterceptor<?> interceptor) {
     ourInterceptors.offer(interceptor);
   }
 
@@ -38,7 +40,7 @@ public class UiInterceptors {
    */
   @TestOnly
   public static void clear() {
-    ArrayList<UiInterceptor<?>> interceptors = new ArrayList<>(ourInterceptors);
+    List<UiInterceptor<?>> interceptors = new ArrayList<>(ourInterceptors);
     ourInterceptors.clear();
     if (!interceptors.isEmpty()) {
       throw new IllegalStateException("Expected UI was not shown: " + interceptors);
@@ -60,7 +62,7 @@ public class UiInterceptors {
       doIntercept(myClass.cast(component));
     }
 
-    protected abstract void doIntercept(T component);
+    protected abstract void doIntercept(@NotNull T component);
 
     @Override
     public String toString() {

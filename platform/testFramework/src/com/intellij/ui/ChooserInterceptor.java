@@ -36,7 +36,7 @@ public class ChooserInterceptor extends UiInterceptors.UiInterceptor<JBPopup> {
   }
 
   @Override
-  protected void doIntercept(JBPopup popup) {
+  protected void doIntercept(@NotNull JBPopup popup) {
     JBList<?> content = popup.isDisposed() ? null : UIUtil.findComponentOfType(popup.getContent(), JBList.class);
     if (content == null) {
       fail("JBList not found under " + popup.getContent());
