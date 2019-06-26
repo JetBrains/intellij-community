@@ -8,6 +8,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -16,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.lang.management.ThreadInfo;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public class IdeaFreezeReporter {
@@ -124,15 +127,28 @@ public class IdeaFreezeReporter {
         if (reasonStacks.isEmpty()) {
           reasonStacks = edts(myCurrentDumps).map(ThreadInfo::getStackTrace).toList(); // fallback EDT threads
         }
-        List<StackTraceElement> commonStack = findDominantCommonStack(reasonStacks);
+        CallTreeNode root = buildTree(reasonStacks);
+        List<StackTraceElement> commonStack = findDominantCommonStack(root, reasonStacks.size() / 2);
         if (ContainerUtil.isEmpty(commonStack)) {
           commonStack = myStacktraceCommonPart; // fallback to simple EDT common
         }
+
+        // dump tree
+        StringBuilder sb = new StringBuilder();
+        LinkedList<CallTreeNode> nodes = new LinkedList<>(root.myChildren);
+        while (!nodes.isEmpty()) {
+          CallTreeNode node = nodes.removeFirst();
+          node.appendIndentedString(sb);
+          nodes.addAll(0, node.myChildren);
+        }
+        Attachment attachment = new Attachment("report.txt", sb.toString());
+        attachment.setIncluded(true);
+
         if (!ContainerUtil.isEmpty(commonStack)) {
           String edtNote = allInEdt ? "in EDT " : "";
           return LogMessage.createEvent(new Freeze(commonStack),
                                         "Freeze " + edtNote + "for " + lengthInSeconds + " seconds",
-                                        attachments);
+                                        ArrayUtil.append(attachments, attachment));
         }
         return null;
       }
@@ -146,24 +162,15 @@ public class IdeaFreezeReporter {
   }
 
   @Nullable
-  private static List<StackTraceElement> findDominantCommonStack(List<StackTraceElement[]> stacks) {
-    CallTreeNode root = new CallTreeNode(null, null);
-    // build tree
-    for (StackTraceElement[] stack : stacks) {
-      CallTreeNode node = root;
-      for (int i = stack.length - 1; i >= 0; i--) {
-        node = node.addCallee(stack[i]);
-      }
-    }
+  private static List<StackTraceElement> findDominantCommonStack(CallTreeNode root, int threshold) {
     // find dominant
-    int half = stacks.size() / 2;
     CallTreeNode node = root.getMostHitChild();
     if (node == null) {
       return null;
     }
     while (!node.myChildren.isEmpty()) {
       CallTreeNode mostHitChild = node.getMostHitChild();
-      if (mostHitChild != null && mostHitChild.myTotalHits > half) {
+      if (mostHitChild != null && mostHitChild.myTotalHits > threshold) {
         node = mostHitChild;
       }
       else {
@@ -179,25 +186,40 @@ public class IdeaFreezeReporter {
     return res;
   }
 
+  @NotNull
+  private static CallTreeNode buildTree(List<StackTraceElement[]> stacks) {
+    CallTreeNode root = new CallTreeNode(null, null, 0);
+    for (StackTraceElement[] stack : stacks) {
+      CallTreeNode node = root;
+      int depth = 1;
+      for (int i = stack.length - 1; i >= 0; i--) {
+        node = node.addCallee(stack[i], depth++);
+      }
+    }
+    return root;
+  }
+
   private static class CallTreeNode {
     final StackTraceElement myStackTraceElement;
     final CallTreeNode myParent;
     final List<CallTreeNode> myChildren = ContainerUtil.newSmartList();
     int myTotalHits = 1;
+    final int myDepth;
 
-    private CallTreeNode(StackTraceElement element, CallTreeNode parent) {
+    private CallTreeNode(StackTraceElement element, CallTreeNode parent, int depth) {
       myStackTraceElement = element;
       myParent = parent;
+      myDepth = depth;
     }
 
-    CallTreeNode addCallee(StackTraceElement e) {
+    CallTreeNode addCallee(StackTraceElement e, int depth) {
       for (CallTreeNode child : myChildren) {
         if (PerformanceWatcher.compareStackTraceElements(child.myStackTraceElement, e)) {
           child.myTotalHits++;
           return child;
         }
       }
-      CallTreeNode child = new CallTreeNode(e, this);
+      CallTreeNode child = new CallTreeNode(e, this, depth);
       myChildren.add(child);
       return child;
     }
@@ -216,6 +238,12 @@ public class IdeaFreezeReporter {
     @Override
     public String toString() {
       return myTotalHits + " " + myStackTraceElement;
+    }
+
+    public void appendIndentedString(StringBuilder builder) {
+      StringUtil.repeatSymbol(builder, ' ', myDepth);
+      builder.append(myStackTraceElement.getClassName()).append(".").append(myStackTraceElement.getMethodName())
+        .append(" ").append(myTotalHits).append("\n");
     }
   }
 }
