@@ -9,6 +9,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -793,8 +794,7 @@ public class JBScrollPane extends JScrollPane {
     ~InputEvent.SHIFT_MASK & ~InputEvent.SHIFT_DOWN_MASK & // for horizontal scrolling
     ~InputEvent.BUTTON1_MASK & ~InputEvent.BUTTON1_DOWN_MASK; // for selection
 
-  @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
+  @ApiStatus.Experimental
   public static RegionPainter<Float> getThumbPainter(@NotNull Supplier<? extends Component> supplier) {
     return new ScrollBarPainter.Thumb(supplier, SystemInfo.isMac);
   }

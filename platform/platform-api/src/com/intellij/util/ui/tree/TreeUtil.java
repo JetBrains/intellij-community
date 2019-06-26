@@ -23,6 +23,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1090,7 +1091,7 @@ public final class TreeUtil {
     static final Method METHOD = getDeclaredMethod(BasicTreeUI.class, "getRowX", int.class, int.class);
   }
 
-  @Deprecated
+  @ApiStatus.Experimental
   public static int getNodeRowX(@NotNull JTree tree, int row) {
     if (LazyRowX.METHOD == null) return -1; // system error
     TreePath path = tree.getPathForRow(row);
@@ -1110,14 +1111,13 @@ public final class TreeUtil {
     static final Method METHOD = getDeclaredMethod(BasicTreeUI.class, "isLocationInExpandControl", TreePath.class, int.class, int.class);
   }
 
-  @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
+  @ApiStatus.Experimental
   public static boolean isLocationInExpandControl(@NotNull JTree tree, int x, int y) {
     if (LazyLocationInExpandControl.METHOD == null) return false; // system error
     return isLocationInExpandControl(tree, tree.getClosestPathForLocation(x, y), x, y);
   }
 
-  @Deprecated
+  @ApiStatus.Experimental
   public static boolean isLocationInExpandControl(@NotNull JTree tree, @Nullable TreePath path, int x, int y) {
     if (LazyLocationInExpandControl.METHOD == null || path == null) return false; // system error or undefined path
     try {
@@ -1129,8 +1129,7 @@ public final class TreeUtil {
     }
   }
 
-  @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
+  @ApiStatus.Experimental
   public static void invalidateCacheAndRepaint(@Nullable TreeUI ui) {
     if (ui instanceof BasicTreeUI) {
       BasicTreeUI basic = (BasicTreeUI)ui;
@@ -1377,6 +1376,7 @@ public final class TreeUtil {
    * @return a promise that will be succeed only if path are found and made visible
    */
   @NotNull
+  @SuppressWarnings("unused")
   public static Promise<List<TreePath>> promiseMakeVisible(@NotNull JTree tree, @NotNull Stream<? extends TreeVisitor> visitors) {
     return promiseMakeVisibleAll(tree, visitors, null);
   }
