@@ -213,7 +213,7 @@ class CircletScriptsViewFactory {
         panel.add(JLabel(" ")) // just separator
 
         val showHelpLink = LinkLabel.create("Getting started with automation") {
-            Messages.showInfoMessage("show help", "circlet")
+            BrowserUtil.browse("https://jetbrains.team")
         }
         showHelpLink.icon = AllIcons.General.ContextHelp
         showHelpLink.alignmentX = Component.CENTER_ALIGNMENT
