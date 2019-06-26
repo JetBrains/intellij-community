@@ -130,7 +130,7 @@ public abstract class IdeFrameDecorator implements Disposable {
         }
       });
 
-      if (SystemInfo.isKDE && Registry.is("suppress.focus.stealing")) {
+      if (SystemInfo.isKDE && UIUtil.SUPPRESS_FOCUS_STEALING) {
         // KDE sends an unexpected MapNotify event if a window is deiconified.
         // suppress.focus.stealing fix handles the MapNotify event differently
         // if the application is not active
