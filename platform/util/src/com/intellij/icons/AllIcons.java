@@ -858,6 +858,10 @@ public class AllIcons {
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon Watches = AllIcons.Debugger.Watch;
 
+    public final static class Reveal {
+      /** 16x16 */ public static final Icon RevealOn = load("/debugger/reveal/revealOn.svg");
+      /** 16x16 */ public static final Icon RevealOff = load("/debugger/reveal/revealOff.svg");
+    }
   }
 
   public final static class Diff {
