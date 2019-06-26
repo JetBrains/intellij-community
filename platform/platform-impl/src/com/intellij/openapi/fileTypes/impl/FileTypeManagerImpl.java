@@ -1710,6 +1710,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @Override
   public void dispose() {
-    LOG.info("FileTypeManager: "+ counterAutoDetect +" auto-detected files\nElapsed time on auto-detect: "+elapsedAutoDetect+" ms");
+    LOG.info("FileTypeManager: "+ counterAutoDetect +" auto-detected files. Elapsed time on auto-detect: "+elapsedAutoDetect+" ms");
   }
 }
