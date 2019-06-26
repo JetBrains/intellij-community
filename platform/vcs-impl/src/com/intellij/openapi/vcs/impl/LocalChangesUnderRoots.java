@@ -18,18 +18,18 @@ package com.intellij.openapi.vcs.impl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 
 /**
  * Utility class to sort changes by roots.
@@ -40,7 +40,6 @@ import java.util.*;
 public class LocalChangesUnderRoots {
   private final ChangeListManager myChangeManager;
   private final ProjectLevelVcsManager myVcsManager;
-  private VcsRoot[] myRoots;
 
   public LocalChangesUnderRoots(@NotNull ChangeListManager changeListManager, @NotNull ProjectLevelVcsManager projectLevelVcsManager) {
     myChangeManager = changeListManager;
@@ -49,13 +48,9 @@ public class LocalChangesUnderRoots {
 
   @NotNull
   public Map<String, Map<VirtualFile, Collection<Change>>> getChangesByLists(@NotNull Collection<? extends VirtualFile> rootsToSave) {
-    final Map<String, Map<VirtualFile, Collection<Change>>> result = new HashMap<>();
-    myRoots = myVcsManager.getAllVcsRoots();
-
-    final List<LocalChangeList> changeLists = myChangeManager.getChangeListsCopy();
-    for (LocalChangeList list : changeLists) {
-      Map<VirtualFile, Collection<Change>> subMap = groupChanges(rootsToSave, list.getChanges());
-      result.put(list.getName(), subMap);
+    Map<String, Map<VirtualFile, Collection<Change>>> result = new HashMap<>();
+    for (LocalChangeList list : myChangeManager.getChangeListsCopy()) {
+      result.put(list.getName(), groupChanges(rootsToSave, list.getChanges()));
     }
     return result;
   }
@@ -69,9 +64,7 @@ public class LocalChangesUnderRoots {
    */
   @NotNull
   public Map<VirtualFile, Collection<Change>> getChangesUnderRoots(@NotNull Collection<? extends VirtualFile> rootsToSave) {
-    final Collection<Change> allChanges = myChangeManager.getAllChanges();
-    myRoots = myVcsManager.getAllVcsRoots();
-    return groupChanges(rootsToSave, allChanges);
+    return groupChanges(rootsToSave, myChangeManager.getAllChanges());
   }
 
   @NotNull
@@ -102,21 +95,7 @@ public class LocalChangesUnderRoots {
 
   @Nullable
   private VirtualFile getRootForPath(@Nullable FilePath file) {
-    if (file == null) {
-      return null;
-    }
-    final VirtualFile vf = ChangesUtil.findValidParentUnderReadAction(file);
-    if (vf == null) {
-      return null;
-    }
-    VirtualFile rootCandidate = null;
-    for (VcsRoot root : myRoots) {
-      if (VfsUtilCore.isAncestor(root.getPath(), vf, false)) {
-        if (rootCandidate == null || VfsUtil.isAncestor(rootCandidate, root.getPath(), true)) { // in the case of nested roots choose the closest root
-          rootCandidate = root.getPath();
-        }
-      }
-    }
-    return rootCandidate;
+    if (file == null) return null;
+    return myVcsManager.getVcsRootFor(file);
   }
 }
