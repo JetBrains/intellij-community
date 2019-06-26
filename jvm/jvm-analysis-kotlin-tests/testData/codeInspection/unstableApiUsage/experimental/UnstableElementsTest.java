@@ -89,11 +89,22 @@ class DirectOverrideAnnotatedMethod extends NonAnnotatedClass {
   public void <warning descr="Overridden method 'annotatedMethodInNonAnnotatedClass()' is marked unstable">annotatedMethodInNonAnnotatedClass</warning>() {}
 }
 
-//No warning should be produced.
 class IndirectOverrideAnnotatedMethod extends DirectOverrideAnnotatedMethod {
   @Override
   public void annotatedMethodInNonAnnotatedClass() {}
 }
+
+class <warning descr="'AnnotatedClass()' is declared in unstable class 'pkg.AnnotatedClass'">DirectOverrideNonAnnotatedMethodInAnnotatedClass</warning> extends <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning> {
+  @Override
+  public void <warning descr="Overridden method 'nonAnnotatedMethodInAnnotatedClass()' is declared in unstable class 'pkg.AnnotatedClass'">nonAnnotatedMethodInAnnotatedClass</warning>() {}
+}
+
+class <warning descr="'AnnotatedClass()' is declared in unstable class 'pkg.AnnotatedClass'">DirectOverrideAnnotatedMethodInAnnotatedClass</warning> extends <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning> {
+  @Override
+  public void <warning descr="Overridden method 'annotatedMethodInAnnotatedClass()' is marked unstable">annotatedMethodInAnnotatedClass</warning>() {}
+}
+
+//No warning should be produced.
 
 class WarningsOfExperimentalTypesInSignature {
   public void classUsage() {

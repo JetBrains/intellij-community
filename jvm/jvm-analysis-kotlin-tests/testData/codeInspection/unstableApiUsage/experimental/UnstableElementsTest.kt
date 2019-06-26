@@ -94,6 +94,14 @@ class IndirectOverrideAnnotatedMethod : DirectOverrideAnnotatedMethod() {
   override fun annotatedMethodInNonAnnotatedClass() {}
 }
 
+class DirectOverrideNonAnnotatedMethodInAnnotatedClass : <warning descr="'AnnotatedClass()' is declared in unstable class 'pkg.AnnotatedClass'"><warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning></warning>() {
+  override fun <warning descr="Overridden method 'nonAnnotatedMethodInAnnotatedClass()' is declared in unstable class 'pkg.AnnotatedClass'">nonAnnotatedMethodInAnnotatedClass</warning>() {}
+}
+
+class DirectOverrideAnnotatedMethodInAnnotatedClass : <warning descr="'AnnotatedClass()' is declared in unstable class 'pkg.AnnotatedClass'"><warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning></warning>() {
+  override fun <warning descr="Overridden method 'annotatedMethodInAnnotatedClass()' is marked unstable">annotatedMethodInAnnotatedClass</warning>() {}
+}
+
 class WarningsOfExperimentalTypesInSignature {
   fun classUsage() {
     <warning descr="'pkg.ClassWithExperimentalTypeInSignature' is unstable because its signature references unstable class 'pkg.AnnotatedClass'">ClassWithExperimentalTypeInSignature</warning><<warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>>()
