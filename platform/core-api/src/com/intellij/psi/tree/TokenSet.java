@@ -234,7 +234,10 @@ public class TokenSet {
 
     @Override
     public boolean matches(@NotNull IElementType t) {
-      return Arrays.stream(myComponents).anyMatch(component -> component.matches(t));
+      for (IElementType.Predicate component : myComponents) {
+        if (component.matches(t)) return true;
+      }
+      return false;
     }
   }
 }
