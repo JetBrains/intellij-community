@@ -25,10 +25,7 @@ import com.jetbrains.python.inspections.quickfix.AddFieldQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyRemoveParameterQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyRemoveStatementQuickFix;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyForStatementNavigator;
-import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
+import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
@@ -170,7 +167,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         if (parameterInMethodWithFixedSignature(owner, element)) {
           continue;
         }
-        if (isTypeDeclarationTarget(element)) {
+        if (PyTypeDeclarationStatementNavigator.isTypeDeclarationTarget(element)) {
           continue;
         }
         if (!myUsedElements.contains(element)) {
@@ -258,7 +255,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)inst;
         if (rwInstruction.getAccess().isWriteAccess() && name.equals(rwInstruction.getName())) {
           // Look up higher in CFG for actual definitions
-          if (instElement != null && isTypeDeclarationTarget(instElement)) {
+          if (instElement != null && PyTypeDeclarationStatementNavigator.isTypeDeclarationTarget(instElement)) {
             return ControlFlowUtil.Operation.NEXT;
           }
           // For elements in scope
@@ -271,10 +268,6 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
       }
       return ControlFlowUtil.Operation.NEXT;
     });
-  }
-
-  private static boolean isTypeDeclarationTarget(@NotNull PsiElement element) {
-    return element instanceof PyTargetExpression && element.getParent() instanceof PyTypeDeclarationStatement;
   }
 
   static class DontPerformException extends RuntimeException {}
