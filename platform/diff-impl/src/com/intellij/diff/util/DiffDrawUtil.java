@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
@@ -122,6 +123,7 @@ public class DiffDrawUtil {
       g.setColor(fillColor);
       g.fill(makeCurvePath(x1, x2, start1, start2, end1 + 1, end2 + 1));
 
+      // 'g.fill' above draws thin line when used with high slopes. Here we ensure that background is never less than 1px thick.
       Stroke oldStroke = g.getStroke();
       g.setStroke(new BasicStroke(JBUIScale.scale(1f)));
       g.draw(makeCurve(x1, x2, (start1 + end1) / 2, (start2 + end2) / 2, true));
@@ -130,9 +132,37 @@ public class DiffDrawUtil {
 
     if (borderColor != null) {
       g.setColor(borderColor);
-      g.draw(makeCurve(x1, x2, start1, start2, true));
-      g.draw(makeCurve(x1, x2, end1, end2, true));
+      drawCurveLine(g, x1, x2, start1, start2);
+      drawCurveLine(g, x1, x2, end1, end2);
     }
+  }
+
+  /**
+   * {@link Graphics2D#fill} uses different aliasing than {@link Graphics2D#draw}.
+   * We want this curve to look similar to {@link #drawChunkBorderLine}, that is using {@link com.intellij.ui.paint.LinePainter2D}.
+   * Here we mock a hack from LinePainter2D, using 'fill' instead of 'draw' to draw a line.
+   * <p>
+   * It's hard to build 'parallel curve' for a given cubic curve.
+   * We're using a simple approach that looks OK for almost-horizontal lines,
+   * when the difference between 'draw' and 'fill' is most noticeable.
+   */
+  private static void drawCurveLine(@NotNull Graphics2D g, int x1, int x2, int y1, int y2) {
+    boolean isHighSlope = Math.abs(x2 - x1) < Math.abs(y2 - y1);
+    if (!isHighSlope && isThickSimpleStroke(g)) {
+      g.fill(makeCurvePath(x1, x2, y1, y2, y1 + 1, y2 + 1));
+    }
+    else {
+      g.draw(makeCurve(x1, x2, y1, y2, true));
+    }
+  }
+
+  private static boolean isThickSimpleStroke(@NotNull Graphics2D g) {
+    Stroke stroke = g.getStroke();
+    if (stroke instanceof BasicStroke) {
+      float strokeWidth = ((BasicStroke)stroke).getLineWidth();
+      return strokeWidth == 1.0 && PaintUtil.devValue(strokeWidth, g) > 1;
+    }
+    return false;
   }
 
   @NotNull
