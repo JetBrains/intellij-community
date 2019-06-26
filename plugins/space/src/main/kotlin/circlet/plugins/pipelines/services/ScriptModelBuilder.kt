@@ -7,10 +7,10 @@ import circlet.pipelines.config.utils.*
 import circlet.plugins.pipelines.utils.*
 import circlet.plugins.pipelines.viewmodel.*
 import circlet.utils.*
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
 import klogging.*
-import kotlinx.coroutines.*
 import org.slf4j.event.*
 import org.slf4j.helpers.*
 import runtime.reactive.*
@@ -22,14 +22,20 @@ object ScriptModelBuilder : KLogging() {
         if (viewModel.modelBuildIsRunning.value) {
             return
         }
-        viewModel.modelBuildIsRunning.value = true
-        val lt = viewModel.scriptLifetimes.next()
-        GlobalScope.launch {
-            val logBuildData = LogData("")
-            viewModel.logBuildData.value = logBuildData
-            val model = build(lt, project, logBuildData)
-            viewModel.script.value = model
-        }
+
+        ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Build DSL Model", false) {
+            override fun run(indicator: ProgressIndicator) {
+                if (viewModel.modelBuildIsRunning.value) {
+                    return
+                }
+                viewModel.modelBuildIsRunning.value = true
+                val lt = viewModel.scriptLifetimes.next()
+                val logBuildData = LogData("")
+                viewModel.logBuildData.value = logBuildData
+                val model = build(lt, project, logBuildData)
+                viewModel.script.value = model
+            }
+        })
     }
 
     private fun build(lifetime: Lifetime, project: Project, logBuildData: LogData): ScriptViewModel {
