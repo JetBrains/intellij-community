@@ -11,7 +11,18 @@ class NoWarningsInaccessible {
   private fun privateMethodWithParam(param: ExperimentalClass) {}
 
   private fun privateMethodWithReturnType(): ExperimentalClass? = null
+
+  fun anonymousClassNoWarnings() {
+    object {
+      var anonymousField: ExperimentalClass? = null
+
+      fun anonymousMethodWithParamType(param: ExperimentalClass) {
+      }
+
+      fun anonymousMethodWithReturnType(): ExperimentalClass? = null
+    }
+  }
 }
 
-private class PrivateKotlinClass {
+private class PrivateKotlinClass<T : ExperimentalClass> {
 }

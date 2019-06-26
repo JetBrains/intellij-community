@@ -93,9 +93,9 @@ private class UnstableTypeUsedInSignatureVisitor(
       }
       return false
     }
-    val containingUClass = node.getContainingUClass()
-    if (containingUClass != null) {
-      return isAccessibleDeclaration(containingUClass)
+    val containingDeclaration = node.getParentOfType<UDeclaration>()
+    if (containingDeclaration != null) {
+      return isAccessibleDeclaration(containingDeclaration)
     }
     return true
   }

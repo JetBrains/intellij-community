@@ -10,6 +10,19 @@ public class NoWarningsInaccessible {
   ExperimentalClass packageLocalField;
   void packageLocalMethodWithParam(ExperimentalClass param) { }
   ExperimentalClass packageLocalMethodWithReturnType() { return null; }
+
+  public void anonymousClassNoWarnings() {
+    new Object() {
+      public ExperimentalClass anonymousField;
+
+      public void anonymousMethodWithParamType(ExperimentalClass param) {
+      }
+
+      public ExperimentalClass anonymousMethodWithReturnType() {
+        return null;
+      }
+    };
+  }
 }
 
 class NoWarningsPackageLocalClass<T extends ExperimentalClass> {
