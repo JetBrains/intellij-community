@@ -1565,6 +1565,9 @@ public class JBTabsImpl extends JComponent
       if (isSingleRow()) {
         mySingleRowLayout.scrollSelectionInView();
         myLastLayoutPass = mySingleRowLayout.layoutSingleRow(visible);
+        // This second layout is a workaround for tricky problem of partially hidden selected tab
+        mySingleRowLayout.scrollSelectionInView();
+        myLastLayoutPass = mySingleRowLayout.layoutSingleRow(visible);
         myTableLayout.myLastTableLayout = null;
         OnePixelDivider divider = mySplitter.getDivider();
         if (divider.getParent() == this) {
