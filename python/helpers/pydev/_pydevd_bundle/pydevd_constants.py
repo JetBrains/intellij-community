@@ -77,10 +77,10 @@ else:
         # Only available for CPython!
         if (
             (sys.version_info[0] == 2 and sys.version_info[1] >= 7)
-            or (sys.version_info[0] == 3 and sys.version_info[1] >= 4)
+            or (sys.version_info[0] == 3 and sys.version_info[1] >= 5)
             or (sys.version_info[0] > 3)
             ):
-            # Supported in 2.7 or 3.4 onwards (32 or 64)
+            # Supported in 2.7 or 3.5 onwards (32 or 64)
             CYTHON_SUPPORTED = True
 
 #=======================================================================================================================
