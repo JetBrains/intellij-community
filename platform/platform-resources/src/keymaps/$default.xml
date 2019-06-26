@@ -1173,7 +1173,7 @@
     <keyboard-shortcut first-keystroke="control alt P"/>
   </action>
   <action id="TodoViewGroupByFlattenPackage">
-    <keyboard-shortcut first-keystroke="control alt O"/>
+    <keyboard-shortcut first-keystroke="control alt C"/>
   </action>
 
   <action id="ServiceView.GroupByServiceGroups">

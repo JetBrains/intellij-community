@@ -135,7 +135,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     final JComponent component = impl.getComponent();
     final GroupByFileStructureAction groupByFileStructureAction = new GroupByFileStructureAction(impl);
     KeyStroke stroke = SystemInfo.isMac
-                       ? KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK)
+                       ? KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK)
                        : KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK);
     groupByFileStructureAction.registerCustomShortcutSet(new CustomShortcutSet(stroke), component, impl);
 
