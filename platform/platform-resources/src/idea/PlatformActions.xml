@@ -1026,6 +1026,7 @@
       <group id="Internal.Performance" text="Performance" popup="true">
         <action id="LaggingMode" internal="true" class="com.intellij.internal.ToggleLaggingModeAction" text="Lagging mode"/>
       </group>
+      <action internal="true" id="DumpThreads" class="com.intellij.internal.DumpThreadsAction" text="Dump Threads"/>
       <separator/>
       <group id="Internal.UI" popup="true" text="&amp;UI">
         <action id="NotificationTestAction" internal="true" class="com.intellij.notification.impl.actions.NotificationTestAction"
