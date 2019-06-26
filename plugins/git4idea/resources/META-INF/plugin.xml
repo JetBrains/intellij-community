@@ -184,6 +184,8 @@
       <add-to-group group-id="Unversioned.Files.Dialog.Popup" anchor="after" relative-to-action="$Delete"/>
     </group>
 
+    <action id="git4idea.commands.TestGitHttpLoginDialogAction" class="git4idea.commands.TestGitHttpLoginDialogAction"
+            text="Test Git login dialog"/>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
