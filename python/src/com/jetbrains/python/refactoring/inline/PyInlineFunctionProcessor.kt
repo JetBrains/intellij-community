@@ -41,6 +41,7 @@ class PyInlineFunctionProcessor(project: Project,
   private val myFunctionClass = myFunction.containingClass
   private val myGenerator = PyElementGenerator.getInstance(myProject)
   private var myRemoveDeclaration = !myInlineThis && removeDeclaration
+  private var mySelfUsed: Boolean? = null
 
   override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
     if (refUsages.isNull) return false
@@ -284,24 +285,23 @@ class PyInlineFunctionProcessor(project: Project,
     val context = PyResolveContext.noImplicits().withTypeEvalContext(TypeEvalContext.userInitiated(myProject, reference.containingFile))
     val mapping = PyCallExpressionHelper.mapArguments(callSite, context).firstOrNull() ?: error("Can't map arguments for ${reference.name}")
     val mappedParams = mapping.mappedParameters
+    val firstImplicit = mapping.implicitParameters.firstOrNull()
 
-    val self = mapping.implicitParameters.firstOrNull()?.let { first ->
-      val implicitName = first.name!!
-      val selfReplacement = reference.qualifier?.let { qualifier ->
-        myFunctionClass?.let {
-          when {
-            qualifier is PyReferenceExpression && !qualifier.isQualified -> qualifier
-            else ->  {
-              val qualifierDeclaration = generateUniqueAssignment(languageLevel, myFunctionClass.name!!, generatedNames, scopeAnchor)
-              val newRef = qualifierDeclaration.assignedValue!!.copy() as PyExpression
-              qualifierDeclaration.assignedValue!!.replace(qualifier)
-              declarations.add(qualifierDeclaration)
-              newRef
-            }
-          }
-        }
+    if (mySelfUsed == null && firstImplicit != null) {
+      mySelfUsed = SyntaxTraverser.psiTraverser(myFunction.statementList).traverse()
+        .filter(PyReferenceExpression::class.java)
+        .filter { !it.isQualified }
+        .any { it.name == firstImplicit.name }
+    }
+
+    val self = firstImplicit?.let { first ->
+      val qualifier = reference.qualifier ?: error("Function $myFunction has first implicit parameter, but no qualifier")
+      val selfReplacement = when {
+        mySelfUsed == false -> qualifier
+        qualifier is PyReferenceExpression && !qualifier.isQualified -> qualifier
+        else -> extractDeclaration(myFunctionClass?.name!!, qualifier, declarations, generatedNames, scopeAnchor, languageLevel).second
       }
-      mapOf(implicitName to selfReplacement!!)
+      mapOf(first.name!! to selfReplacement)
     } ?: emptyMap()
 
     val passedArguments = mappedParams.asSequence()
@@ -323,13 +323,17 @@ class PyInlineFunctionProcessor(project: Project,
   private fun tryExtractDeclaration(paramName: String, arg: PyExpression, declarations: MutableList<PyAssignmentStatement>, generatedNames: MutableSet<String>,
                                     scopeAnchor: PsiElement, languageLevel: LanguageLevel): Pair<String, PyExpression> {
     if (arg !is PyReferenceExpression && arg !is PyLiteralExpression) {
-      val statement = generateUniqueAssignment(languageLevel, paramName, generatedNames, scopeAnchor)
-      statement.assignedValue!!.replace(arg)
-      declarations.add(statement)
-      return paramName to statement.targets[0]
+      return extractDeclaration(paramName, arg, declarations, generatedNames, scopeAnchor, languageLevel)
     }
     return paramName to arg
+  }
 
+  private fun extractDeclaration(paramName: String, arg: PyExpression, declarations: MutableList<PyAssignmentStatement>, generatedNames: MutableSet<String>,
+                                 scopeAnchor: PsiElement, languageLevel: LanguageLevel): Pair<String, PyExpression> {
+    val statement = generateUniqueAssignment(languageLevel, paramName, generatedNames, scopeAnchor)
+    statement.assignedValue!!.replace(arg)
+    declarations.add(statement)
+    return paramName to statement.targets[0]
   }
 
   private fun generateUniqueAssignment(level: LanguageLevel, name: String, previouslyGeneratedNames: MutableSet<String>, scopeAnchor: PsiElement): PyAssignmentStatement {
