@@ -145,7 +145,7 @@ public class CoreApplicationEnvironment {
   protected JobLauncher createJobLauncher() {
     return new JobLauncher() {
       @Override
-      public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<T> things,
+      public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
                                                          ProgressIndicator progress,
                                                          boolean runInReadAction,
                                                          boolean failFastOnAcquireReadAction,

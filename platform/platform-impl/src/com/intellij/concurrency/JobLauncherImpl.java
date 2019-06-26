@@ -29,7 +29,7 @@ public class JobLauncherImpl extends JobLauncher {
   static final int CORES_FORK_THRESHOLD = 1;
 
   @Override
-  public <T> boolean invokeConcurrentlyUnderProgress(@NotNull final List<T> things,
+  public <T> boolean invokeConcurrentlyUnderProgress(@NotNull final List<? extends T> things,
                                                      ProgressIndicator progress,
                                                      boolean runInReadAction,
                                                      boolean failFastOnAcquireReadAction,
@@ -93,7 +93,7 @@ public class JobLauncherImpl extends JobLauncher {
 
   // if {@code things} are too few to be processed in the real pool, returns TRUE if processed successfully, FALSE if not
   // returns null if things need to be processed in the real pool
-  private static <T> Boolean processImmediatelyIfTooFew(@NotNull final List<T> things,
+  private static <T> Boolean processImmediatelyIfTooFew(@NotNull final List<? extends T> things,
                                                         @NotNull final ProgressIndicator progress,
                                                         boolean runInReadAction,
                                                         @NotNull final Processor<? super T> thingProcessor) {

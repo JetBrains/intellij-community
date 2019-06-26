@@ -48,7 +48,7 @@ class ApplierCompleter<T> extends CountedCompleter<Void> {
   private final boolean failFastOnAcquireReadAction;
   private final ProgressIndicator progressIndicator;
   @NotNull
-  private final List<T> array;
+  private final List<? extends T> array;
   @NotNull
   private final Processor<? super T> processor;
   private final int lo;
@@ -72,7 +72,7 @@ class ApplierCompleter<T> extends CountedCompleter<Void> {
                    boolean runInReadAction,
                    boolean failFastOnAcquireReadAction,
                    @NotNull ProgressIndicator progressIndicator,
-                   @NotNull List<T> array,
+                   @NotNull List<? extends T> array,
                    @NotNull Processor<? super T> processor,
                    int lo,
                    int hi,
