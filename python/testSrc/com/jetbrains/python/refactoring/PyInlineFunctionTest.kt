@@ -59,6 +59,7 @@ class PyInlineFunctionTest : PyTestCase() {
   fun testArgumentExtraction() = doTest()
   fun testMultipleReturns() = doTest()
   fun testImporting() = doTest()
+  fun testImportAs() = doTest()
   //fun testExistingImports() = doTest()
   fun testMethodInsideClass() = doTest()
   fun testMethodOutsideClass() = doTest()

@@ -148,7 +148,9 @@ class PyInlineFunctionProcessor(project: Project,
 
       val argumentReplacements = mutableMapOf<PyReferenceExpression, PyExpression>()
       val nameClashes = mutableSetOf<String>()
+      val importAsTargets = mutableSetOf<String>()
       val nameClashRefs = MultiMap.create<String, PyExpression>()
+      val importAsRefs = MultiMap.create<String, PyReferenceExpression>()
       val returnStatements = mutableListOf<PyReturnStatement>()
 
       val mappedArguments = prepareArguments(callSite, declarations, generatedNames, scopeAnchor, reference, languageLevel)
@@ -157,11 +159,12 @@ class PyInlineFunctionProcessor(project: Project,
         override fun visitPyReferenceExpression(node: PyReferenceExpression) {
           if (!node.isQualified) {
             val name = node.name!!
-            if (name in namesInOuterScope && name !in mappedArguments && !PyClassRefactoringUtil.hasEncodedTarget(node)) {
+            if (name in namesInOuterScope && name !in mappedArguments) {
               val resolved = node.reference.resolve()
               val target = (resolved as? PyFunction)?.containingClass ?: resolved
               if (!builtinCache.isBuiltin(target) && target !in PyResolveUtil.resolveLocally(refScopeOwner, name)) {
-                nameClashes.add(name)
+                if (PyClassRefactoringUtil.hasEncodedTarget(node)) importAsTargets.add(name)
+                else nameClashes.add(name)
               }
             }
           }
@@ -192,6 +195,7 @@ class PyInlineFunctionProcessor(project: Project,
               when (val name = node.name) {
                 in mappedArguments -> argumentReplacements[node] = mappedArguments[name]!!
                 in nameClashes -> nameClashRefs.putValue(name!!, node)
+                in importAsTargets -> importAsRefs.putValue(name!!, node)
               }
             }
           }
@@ -223,6 +227,10 @@ class PyInlineFunctionProcessor(project: Project,
           }
       }
 
+      importAsRefs.entrySet().forEach { (name, elements) ->
+        val newRef = generateUniqueAssignment(languageLevel, name, generatedNames, scopeAnchor).assignedValue as PyReferenceExpression
+        elements.forEach { PyClassRefactoringUtil.forceAsName(it, newRef.name!!, newRef) }
+      }
 
       if (returnStatements.size == 1 && returnStatements[0].expression !is PyTupleExpression) {
         // replace single return with expression itself
