@@ -12,6 +12,7 @@ import com.intellij.openapi.project.*
 import com.intellij.openapi.ui.*
 import com.intellij.ui.*
 import com.intellij.ui.treeStructure.*
+import com.intellij.util.ui.tree.*
 import kotlinx.coroutines.*
 import runtime.async.*
 import runtime.reactive.*
@@ -33,7 +34,7 @@ class CircletScriptsViewFactory {
 
         }
         resetNodes(root, viewModel.script.value)
-        expandTree(tree)
+        TreeUtil.expandAll(tree)
         tree.isRootVisible = false
 
         val refreshLifetimes = SequentialLifetimes(lifetime)
@@ -71,6 +72,26 @@ class CircletScriptsViewFactory {
             }
         }
 
+        val expandAllAction = object : DumbAwareActionButton(IdeBundle.message("action.expand.all"), AllIcons.Actions.Expandall) {
+            override fun actionPerformed(e: AnActionEvent) {
+                if (viewModel.modelBuildIsRunning.value) {
+                    return
+                }
+
+                TreeUtil.expandAll(tree)
+            }
+        }
+
+        val colapseAllAction = object : DumbAwareActionButton(IdeBundle.message("action.collapse.all"), AllIcons.Actions.Collapseall) {
+            override fun actionPerformed(e: AnActionEvent) {
+                if (viewModel.modelBuildIsRunning.value) {
+                    return
+                }
+
+                TreeUtil.collapseAll(tree, 0)
+            }
+        }
+
         fun updateActionsIsEnabledStates() {
             val smthIsRunning = viewModel.modelBuildIsRunning.value || viewModel.taskIsRunning.value
             val isSelectedNodeRunnable = viewModel.selectedNode.value?.isRunnable ?: false
@@ -94,19 +115,9 @@ class CircletScriptsViewFactory {
             .createDecorator(tree)
             .addExtraAction(refreshAction)
             .addExtraAction(runAction)
+            .addExtraAction(expandAllAction)
+            .addExtraAction(colapseAllAction)
             .createPanel()
-    }
-
-    private fun expandTree(tree: JTree) {
-        var oldRowCount = 0
-        do {
-            val rowCount = tree.rowCount
-            if (rowCount == oldRowCount) break
-            oldRowCount = rowCount
-            for (i in 0 until rowCount) {
-                tree.expandRow(i)
-            }
-        } while (true)
     }
 
     private fun resetNodes(root: DefaultMutableTreeNode, model: ScriptViewModel?) {
