@@ -133,12 +133,13 @@ public class SimpleDiffChange {
 
     myHighlighters.addAll(new DiffDrawUtil.LineHighlighterBuilder(editor, startLine, endLine, type)
                             .withIgnored(ignored)
-                            .withExcluded(myIsExcluded)
+                            .withExcludedInEditor(myIsSkipped)
+                            .withExcludedInGutter(myIsExcluded)
                             .done());
   }
 
   private void createInlineHighlighter(@NotNull DiffFragment fragment, @NotNull Side side) {
-    if (myIsExcluded) return;
+    if (myIsSkipped) return;
 
     int start = side.getStartOffset(fragment);
     int end = side.getEndOffset(fragment);
