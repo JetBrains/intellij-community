@@ -36,7 +36,9 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.ComponentsKt;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.JBTextArea;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.BooleanFunction;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
@@ -82,14 +84,13 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private JLabel myCountLabel;
   private JTextComponent myInfoLabel;
+  private JLabel myDetailsLabel;
   private JTextComponent myForeignPluginWarningLabel;
-  private JTextArea myCommentArea;
+  private JBTextArea myCommentArea;
   private AttachmentsList myAttachmentsList;
   private JTextArea myAttachmentArea;
   private JPanel myAssigneePanel;
-  private JPanel myNoticePanel;
-  private HideableDecorator myNoticeDecorator;
-  private JEditorPane myNoticeArea;
+  private PrivacyNoticeComponent myPrivacyNotice;
   private ComboBox<Developer> myAssigneeCombo;
   private JTextComponent myCredentialsLabel;
 
@@ -101,6 +102,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     setTitle(DiagnosticBundle.message("error.list.title"));
     setModal(false);
+    getOKAction().putValue(FOCUSED_ACTION, Boolean.TRUE);
     init();
     setCancelButtonText(CommonBundle.message("close.action.name"));
 
@@ -192,17 +194,20 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         BrowserHyperlinkListener.INSTANCE.hyperlinkUpdate(e);
       }
     });
+    myDetailsLabel = new JBLabel();
+    myDetailsLabel.setForeground(UIUtil.getContextHelpForeground());
     myForeignPluginWarningLabel = ComponentsKt.htmlComponent();
 
     JPanel controls = new JPanel(new BorderLayout());
     controls.add(actionToolbar("IdeErrorsBack", new BackAction()), BorderLayout.WEST);
-    controls.add(myCountLabel, BorderLayout.CENTER);
     controls.add(actionToolbar("IdeErrorsForward", new ForwardAction()), BorderLayout.EAST);
 
     JPanel panel = new JPanel(new GridBagLayout());
-    panel.add(controls, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, CENTER, NONE, JBUI.insets(2), 0, 0));
-    panel.add(myInfoLabel, new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, WEST, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
-    panel.add(myForeignPluginWarningLabel, new GridBagConstraints(1, 1, 3, 1, 1.0, 0.0, WEST, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
+    panel.add(controls, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, NORTH, NONE, JBUI.emptyInsets(), 0, 0));
+    panel.add(myCountLabel, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, NORTH, HORIZONTAL, JBUI.insets(0, 10), 0, 2));
+    panel.add(myInfoLabel, new GridBagConstraints(2, 0, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
+    panel.add(myDetailsLabel, new GridBagConstraints(3, 0, 1, 1, 1.0, 0.0, NORTHEAST, NONE, JBUI.emptyInsets(), 0, 0));
+    panel.add(myForeignPluginWarningLabel, new GridBagConstraints(1, 1, 4, 1, 1.0, 0.0, WEST, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
     return panel;
   }
 
@@ -215,9 +220,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   @Override
   protected JComponent createCenterPanel() {
-    JBLabel commentLabel = new JBLabel(DiagnosticBundle.message("error.dialog.comment.prompt"));
-
-    myCommentArea = new JTextArea(5, 0);
+    myCommentArea = new JBTextArea(5, 0);
+    myCommentArea.getEmptyText().setText(DiagnosticBundle.message("error.dialog.comment.prompt"));
     myCommentArea.setMargin(JBUI.insets(2));
     myCommentArea.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
@@ -225,8 +229,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         selectedMessage().setAdditionalInfo(myCommentArea.getText().trim());
       }
     });
-
-    JBLabel attachmentsLabel = new JBLabel(DiagnosticBundle.message("error.dialog.attachments.prompt"));
 
     myAttachmentsList = new AttachmentsList();
     myAttachmentsList.addListSelectionListener(e -> {
@@ -282,47 +284,39 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       myAssigneePanel.add(myAssigneeCombo);
     }
 
-    myCredentialsLabel = ComponentsKt.htmlComponent("", null, null, null, false, e -> {
+    myCredentialsLabel = ComponentsKt.htmlComponent("height sample", null, null, null, false, e -> {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
         JetBrainsAccountDialogKt.askJBAccountCredentials(getRootPane(), null);
         updateControls();
       }
     });
+    if (myAssigneeVisible) {
+      int topOffset = (myAssigneePanel.getPreferredSize().height - myCredentialsLabel.getPreferredSize().height) / 2;
+      myCredentialsLabel.setBorder(JBUI.Borders.emptyTop(topOffset));
+    }
 
-    myNoticeArea = new JEditorPane();
-    myNoticeArea.setEditable(false);
-    myNoticeArea.setFocusable(false);
-    myNoticeArea.setBackground(UIUtil.getPanelBackground());
-    myNoticeArea.setEditorKit(UIUtil.getHTMLEditorKit());
-    myNoticeArea.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
-
-    JPanel decoratorPanel = new JPanel(new BorderLayout());
-    myNoticeDecorator = new NoticeDecorator(decoratorPanel);
-    myNoticeDecorator.setContentComponent(myNoticeArea);
+    myPrivacyNotice = new PrivacyNoticeComponent(DiagnosticBundle.message("error.dialog.notice.label"), DiagnosticBundle.message("error.dialog.notice.label.expanded"));
 
     JPanel commentPanel = new JPanel(new BorderLayout());
     commentPanel.setBorder(JBUI.Borders.emptyTop(5));
-    commentPanel.add(commentLabel, BorderLayout.NORTH);
     commentPanel.add(scrollPane(myCommentArea, 0, 0), BorderLayout.CENTER);
 
     JPanel attachmentsPanel = new JPanel(new BorderLayout(JBUIScale.scale(5), 0));
     attachmentsPanel.setBorder(JBUI.Borders.emptyTop(5));
-    attachmentsPanel.add(attachmentsLabel, BorderLayout.NORTH);
     attachmentsPanel.add(scrollPane(myAttachmentsList, 150, 350), BorderLayout.WEST);
     attachmentsPanel.add(scrollPane(myAttachmentArea, 500, 350), BorderLayout.CENTER);
 
-    JPanel accountRow = new JPanel(new BorderLayout());
-    if (myAssigneeVisible) accountRow.add(myAssigneePanel, BorderLayout.WEST);
-    accountRow.add(myCredentialsLabel, BorderLayout.EAST);
-    myNoticePanel = new JPanel(new GridBagLayout());
-    myNoticePanel.add(new JBLabel(UIUtil.getBalloonWarningIcon()), new GridBagConstraints(0, 0, 1, 1, 0, 0, NORTH, NONE, JBUI.insets(7, 0, 0, 5), 0, 0));
-    myNoticePanel.add(decoratorPanel, new GridBagConstraints(1, 0, 1, 1, 1.0, 0, CENTER, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
+    JPanel accountRow = new JPanel(new GridBagLayout());
+    accountRow.setBorder(JBUI.Borders.empty(6, 0));
+    accountRow.add(myCredentialsLabel, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
+    if (myAssigneeVisible) accountRow.add(myAssigneePanel, new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, NORTHEAST, NONE, JBUI.emptyInsets(), 0, 0));
     JPanel bottomRow = new JPanel(new BorderLayout());
     bottomRow.add(accountRow, BorderLayout.NORTH);
-    bottomRow.add(myNoticePanel, BorderLayout.CENTER);
+    bottomRow.add(myPrivacyNotice, BorderLayout.CENTER);
 
     JPanel rootPanel = new JPanel(new BorderLayout());
     rootPanel.setPreferredSize(JBUI.size(800, 400));
+    rootPanel.setMinimumSize(JBUI.size(680, 400));
     rootPanel.add(commentPanel, BorderLayout.NORTH);
     rootPanel.add(attachmentsPanel, BorderLayout.CENTER);
     rootPanel.add(bottomRow, BorderLayout.SOUTH);
@@ -340,22 +334,19 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   @NotNull
   @Override
   protected Action[] createActions() {
-    List<Action> actions = new ArrayList<>();
+    return new Action[]{new ClearErrorsAction(), getCancelAction(), getOKAction()};
+  }
+
+  @NotNull
+  @Override
+  protected Action[] createLeftSideActions() {
     if (myAssigneeVisible && myProject != null && !myProject.isDefault()) {
       AnAction action = ActionManager.getInstance().getAction("Unscramble");
       if (action != null) {
-        actions.add(new AnalyzeAction(action));
+        return new Action[]{new AnalyzeAction(action)};
       }
     }
-    actions.add(new ClearErrorsAction());
-    actions.add(getOKAction());
-    actions.add(getCancelAction());
-    return actions.toArray(new Action[0]);
-  }
-
-  @Override
-  public JComponent getPreferredFocusedComponent() {
-    return myCommentArea;
+    return new Action[0];
   }
 
   @Override
@@ -429,8 +420,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     Throwable t = message.getThrowable();
     if (t instanceof MessagePool.TooManyErrorsException) {
       myInfoLabel.setText(t.getMessage());
+      myDetailsLabel.setVisible(false);
       myForeignPluginWarningLabel.setVisible(false);
-      myNoticePanel.setVisible(false);
+      myPrivacyNotice.setVisible(false);
       return;
     }
 
@@ -458,10 +450,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       info.append(DiagnosticBundle.message("error.list.message.blame.core", ApplicationNamesInfo.getInstance().getProductName()));
     }
 
-    int count = cluster.messages.size();
-    String date = DateFormatUtil.formatPrettyDateTime(cluster.messages.get(count - 1).getDate());
-    info.append(' ').append(DiagnosticBundle.message("error.list.message.info", date, count));
-
     if (message.isSubmitted()) {
       SubmittedReportInfo submissionInfo = message.getSubmissionInfo();
       appendSubmissionInformation(submissionInfo, info);
@@ -476,6 +464,10 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
 
     myInfoLabel.setText(info.toString());
+
+    int count = cluster.messages.size();
+    String date = DateFormatUtil.formatPrettyDateTime(cluster.messages.get(count - 1).getDate());
+    myDetailsLabel.setText(DiagnosticBundle.message("error.list.message.info", date, count));
 
     ErrorReportSubmitter submitter = cluster.submitter;
     if (submitter == null && plugin != null && !PluginManagerMain.isDevelopedByJetBrains(plugin)) {
@@ -504,13 +496,13 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     String notice = submitter != null ? submitter.getPrivacyNoticeText() : null;
     if (notice != null) {
-      myNoticePanel.setVisible(true);
+      myPrivacyNotice.setVisible(true);
       String hash = Integer.toHexString(StringUtil.stringHashCodeIgnoreWhitespaces(notice));
-      myNoticeDecorator.setOn(!myAcceptedNotices.contains(hash));
-      myNoticeArea.setText(notice);
+      myPrivacyNotice.setExpanded(!myAcceptedNotices.contains(hash));
+      myPrivacyNotice.setPrivacyPolicy(notice);
     }
     else {
-      myNoticePanel.setVisible(false);
+      myPrivacyNotice.setVisible(false);
     }
   }
 
@@ -532,6 +524,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
 
     myCommentArea.setEditable(canReport);
+    myCommentArea.putClientProperty("StatusVisibleFunction", canReport ? null : (BooleanFunction<JBTextArea>) c -> false);
     myAttachmentsList.setEditable(canReport);
   }
 
@@ -721,24 +714,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     @Override
     protected boolean isEnabled(int index) {
       return myEditable && index > 0;
-    }
-  }
-
-  private static class NoticeDecorator extends HideableDecorator {
-    private NoticeDecorator(JPanel panel) {
-      super(panel, "...", false);
-    }
-
-    @Override
-    protected void on() {
-      super.on();
-      setTitle(DiagnosticBundle.message("error.dialog.notice.label.expanded"));
-    }
-
-    @Override
-    protected void off() {
-      super.off();
-      setTitle(DiagnosticBundle.message("error.dialog.notice.label"));
     }
   }
 
