@@ -48,7 +48,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenPomPathModuleService;
@@ -880,27 +879,28 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private void completeMavenSyncOnImportCompletion(MavenSyncConsole console) {
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      if (myReadingProcessor != null) {
-        myReadingProcessor.waitForCompletion();
-      }
-      if (myArtifactsDownloadingProcessor != null) {
-        myArtifactsDownloadingProcessor.waitForCompletion();
-      }
-      if (myFoldersResolvingProcessor != null) {
-        myFoldersResolvingProcessor.waitForCompletion();
-      }
-      if (myPluginsResolvingProcessor != null) {
-        myPluginsResolvingProcessor.waitForCompletion();
-      }
-      if (myResolvingProcessor != null) {
-        myResolvingProcessor.waitForCompletion();
-      }
-      if(myPostProcessor!=null){
-        myPostProcessor.waitForCompletion();
-      }
-      console.finishImport();
-    });
+    MavenUtil.runInBackground(myProject, "waiting for maven import completion", false,
+                              indicator -> {
+                                if (myReadingProcessor != null) {
+                                  myReadingProcessor.waitForCompletion();
+                                }
+                                if (myArtifactsDownloadingProcessor != null) {
+                                  myArtifactsDownloadingProcessor.waitForCompletion();
+                                }
+                                if (myFoldersResolvingProcessor != null) {
+                                  myFoldersResolvingProcessor.waitForCompletion();
+                                }
+                                if (myPluginsResolvingProcessor != null) {
+                                  myPluginsResolvingProcessor.waitForCompletion();
+                                }
+                                if (myResolvingProcessor != null) {
+                                  myResolvingProcessor.waitForCompletion();
+                                }
+                                if (myPostProcessor != null) {
+                                  myPostProcessor.waitForCompletion();
+                                }
+                                console.finishImport();
+                              });
   }
 
   private AsyncPromise<List<Module>> scheduleResolve() {
