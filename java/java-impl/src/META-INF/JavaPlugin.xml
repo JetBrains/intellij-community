@@ -1686,6 +1686,10 @@
       <category>Java/Strings</category>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.SplitTextBlockIntentionAction</className>
+      <category>Java/Strings</category>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ReplaceCastWithVariableAction</className>
       <category>Java/Imports</category>
     </intentionAction>
