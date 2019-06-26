@@ -78,6 +78,8 @@ public final class UIUtil extends StartupUiUtil {
 
   public static final Key<Boolean> LAF_WITH_THEME_KEY = Key.create("Laf.with.ui.theme");
 
+  public static final boolean SUPPRESS_FOCUS_STEALING = Registry.is("suppress.focus.stealing.linux") && Registry.is("suppress.focus.stealing");
+
   @NotNull
   // cannot be static because logging maybe not configured yet
   private static Logger getLogger() {
@@ -3228,7 +3230,7 @@ public final class UIUtil extends StartupUiUtil {
   public static void suppressFocusStealing (@NotNull Window window) {
     // Focus stealing is not a problem on Mac
     if (SystemInfo.isMac) return;
-    if (Registry.is("suppress.focus.stealing") && Registry.is("suppress.focus.stealing.auto.request.focus")) {
+    if (SUPPRESS_FOCUS_STEALING && Registry.is("suppress.focus.stealing.auto.request.focus")) {
       setAutoRequestFocus(window, false);
     }
   }

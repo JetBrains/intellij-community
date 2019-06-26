@@ -127,7 +127,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     setLocationRelativeTo(null);
     setMinimumSize(new Dimension(340, getMinimumSize().height));
 
-    if (Registry.is("suppress.focus.stealing") &&
+    if (UIUtil.SUPPRESS_FOCUS_STEALING &&
         Registry.is("suppress.focus.stealing.auto.request.focus") &&
         !ApplicationManager.getApplication().isActive()) {
       setAutoRequestFocus(false);
