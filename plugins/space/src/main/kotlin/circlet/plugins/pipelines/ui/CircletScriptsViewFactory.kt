@@ -60,7 +60,6 @@ class CircletScriptsViewFactory {
         TreeUtil.expandAll(tree)
         tree.isRootVisible = false
 
-        val refreshLifetimes = SequentialLifetimes(lifetime)
         val scriptModelBuilder = ScriptModelBuilder()
         val refreshAction = object : DumbAwareActionButton(IdeBundle.message("action.refresh"), AllIcons.Actions.Refresh) {
             override fun actionPerformed(e: AnActionEvent) {
@@ -68,7 +67,7 @@ class CircletScriptsViewFactory {
                     return
                 }
                 viewModel.modelBuildIsRunning.value = true
-                val lt = refreshLifetimes.next()
+                val lt = viewModel.scriptLifetimes.next()
                 GlobalScope.launch {
                     val logBuildData = LogData("")
                     viewModel.logBuildData.value = logBuildData

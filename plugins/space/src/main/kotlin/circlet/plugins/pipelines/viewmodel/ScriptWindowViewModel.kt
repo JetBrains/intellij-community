@@ -6,6 +6,7 @@ import runtime.reactive.*
 import javax.swing.tree.*
 
 class ScriptWindowViewModel(private val lifetime: Lifetime, private val project: Project) {
+    val scriptLifetimes = SequentialLifetimes(lifetime)
     val modelBuildIsRunning = mutableProperty(false)
     val taskIsRunning = mutableProperty(false)
     val script = mutableProperty<ScriptViewModel?>(null)
@@ -21,7 +22,7 @@ class ScriptWindowViewModel(private val lifetime: Lifetime, private val project:
 }
 
 
-class ScriptViewModel(
+class ScriptViewModel internal constructor(
     private val lifetime: Lifetime,
     val config: ProjectConfig) {
 }
