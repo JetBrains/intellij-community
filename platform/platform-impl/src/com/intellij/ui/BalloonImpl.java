@@ -1694,7 +1694,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaTracker.Sc
       Wrapper contentWrapper = new Wrapper(content);
       if (myTitle != null) {
         myTitleLabel = new JLabel(myTitle, SwingConstants.CENTER);
-        myTitleLabel.setForeground(UIManager.getColor("List.background"));
+        myTitleLabel.setForeground(UIUtil.getListBackground());
         myTitleLabel.setBorder(JBUI.Borders.empty(0, 4));
         myContent.add(myTitleLabel, BorderLayout.NORTH);
         contentWrapper.setBorder(JBUI.Borders.empty(1));
