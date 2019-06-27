@@ -30,8 +30,6 @@ open class SelectedEditorFilePath {
     const val fileSeparatorChar = '\\'
     const val ellipsisSymbol = "\u2026"
     const val delimiterSymbol = " - "
-
-    var a = 0
   }
 
   private var clippedText: String? = null
@@ -92,7 +90,6 @@ open class SelectedEditorFilePath {
 
   private val resizedListener = object : ComponentAdapter() {
     override fun componentResized(e: ComponentEvent?) {
-      a++
       update()
     }
   }
@@ -168,7 +165,8 @@ open class SelectedEditorFilePath {
       val fileEditorManager = FileEditorManager.getInstance(it)
 
       val file = if (fileEditorManager is FileEditorManagerEx) {
-        fileEditorManager.currentFile
+        val splittersFor = fileEditorManager.getSplittersFor(pane)
+        splittersFor.currentFile
       }
       else {
         fileEditorManager?.selectedEditor?.file
@@ -194,7 +192,7 @@ open class SelectedEditorFilePath {
     update()
   }
 
-  protected open fun getProjectName(project: Project) = project.name
+  protected open fun getProjectName(project: Project) = FrameTitleBuilder.getInstance().getProjectTitle(project)
   protected open fun getShortProjectName(project: Project) = project.name
 
   private fun update() {

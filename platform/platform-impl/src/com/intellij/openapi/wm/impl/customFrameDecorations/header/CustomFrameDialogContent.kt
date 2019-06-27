@@ -1,25 +1,25 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
-import com.intellij.jdkEx.JdkEx
+import com.intellij.openapi.project.Project
 import net.miginfocom.swing.MigLayout
 import java.awt.Color
 import java.awt.Container
 import java.awt.Window
 import javax.swing.*
 
-class CustomFrameDialogContent private constructor(window: Window, content: Container, titleBackgroundColor: Color? = null): CustomFrameViewHolder {
+class CustomFrameDialogContent private constructor(window: Window, project: Project, content: Container, titleBackgroundColor: Color? = null): CustomFrameViewHolder {
     companion object {
         @JvmStatic
-        fun getContent(window: Window, content: JComponent) = getContent(window, content, null)
+        fun getContent(window: Window, project: Project, content: JComponent) = getContent(window, project, content, null)
 
         @JvmStatic
-        fun getContent(window: Window, content: JComponent, titleBackgroundColor: Color? = null): JComponent {
-            return getCustomContentHolder(window, content, titleBackgroundColor).content
+        fun getContent(window: Window, project: Project, content: JComponent, titleBackgroundColor: Color? = null): JComponent {
+            return getCustomContentHolder(window, project, content, titleBackgroundColor).content
         }
 
         @JvmStatic
-        fun getCustomContentHolder(window: Window, content: JComponent, titleBackgroundColor: Color? = null): CustomFrameViewHolder {
+        fun getCustomContentHolder(window: Window, project: Project, content: JComponent, titleBackgroundColor: Color? = null): CustomFrameViewHolder {
             val rootPane: JRootPane? = when (window) {
                 is JWindow -> window.rootPane
                 is JDialog -> {
@@ -37,7 +37,7 @@ class CustomFrameDialogContent private constructor(window: Window, content: Cont
                     get() = 0
             }
 
-            return CustomFrameDialogContent(window, content, titleBackgroundColor)
+            return CustomFrameDialogContent(window, project, content, titleBackgroundColor)
 
         }
     }
@@ -49,6 +49,8 @@ class CustomFrameDialogContent private constructor(window: Window, content: Cont
         titleBackgroundColor?.let {
             header.background = it
         }
+
+        header.setProject(project)
 
         panel.add(header, "growx, wmin 100")
         panel.add(content, "grow")
