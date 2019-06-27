@@ -80,7 +80,8 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
     add(buttonPanes.getView(), "top, wmin pref")
   }
 
-  fun setProject(project: Project) {
+  override fun setProject(project: Project) {
+    super.setProject(project)
     mySelectedEditorFilePath.setProject(project)
   }
 

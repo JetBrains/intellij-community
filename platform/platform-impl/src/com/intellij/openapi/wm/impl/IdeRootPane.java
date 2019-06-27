@@ -101,7 +101,7 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
         JFrame jframe = (JFrame) frame;
         JdkEx.setHasCustomDecoration(jframe);
 
-        myCustomFrameTitlePane = CustomHeader.Companion.createMainFrameHeader(jframe);
+        myCustomFrameTitlePane = CustomHeader.createMainFrameHeader(jframe);
         getLayeredPane().add(myCustomFrameTitlePane, JLayeredPane.DEFAULT_LAYER - 2);
         menu.setVisible(false);
       }

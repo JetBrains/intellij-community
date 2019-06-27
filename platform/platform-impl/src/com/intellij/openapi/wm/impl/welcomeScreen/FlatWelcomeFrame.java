@@ -102,7 +102,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     int defaultHeight = DEFAULT_HEIGHT;
     if (IdeFrameDecorator.isCustomDecorationActive()) {
       CustomFrameViewHolder holder =
-        CustomFrameDialogContent.getCustomContentHolder(this, myScreen.getWelcomePanel(), UIManager.getColor("WelcomeScreen.background"));
+        CustomFrameDialogContent.getCustomContentHolder(this, getProject(), myScreen.getWelcomePanel(), UIManager.getColor("WelcomeScreen.background"));
       setContentPane(holder.getContent());
 
       defaultHeight+=holder.getHeaderHeight();

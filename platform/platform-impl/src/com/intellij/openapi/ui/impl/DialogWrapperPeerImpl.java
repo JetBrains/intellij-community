@@ -391,7 +391,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     Container contentPane = getContentPane();
     if (IdeFrameDecorator.isCustomDecorationActive() && contentPane instanceof JComponent) {
-      setContentPane(CustomFrameDialogContent.getContent(getWindow(), (JComponent) contentPane));
+      setContentPane(CustomFrameDialogContent.getContent(getWindow(), myProject, (JComponent) contentPane));
     }
 
     anCancelAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, rootPane);

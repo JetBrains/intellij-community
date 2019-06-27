@@ -37,17 +37,12 @@ class CustomDecorationPath(val frame: JFrame) : SelectedEditorFilePath() {
 
   override fun installListeners() {
     super.installListeners()
-    frame.rootPane.addPropertyChangeListener("Window.CustomDecoration.title", titleChangeListener)
+    frame.addPropertyChangeListener("title", titleChangeListener)
   }
 
   override fun unInstallListeners() {
     super.unInstallListeners()
-    frame.rootPane.removePropertyChangeListener(titleChangeListener)
-  }
-
-  override fun getProjectName(project: Project): String {
-    val clientProperty = frame.rootPane.getClientProperty("Window.CustomDecoration.title")
-    return if(clientProperty is String) clientProperty else super.getProjectName(project)
+    frame.removePropertyChangeListener(titleChangeListener)
   }
 
   private fun getMouseInsetList(view: JComponent,

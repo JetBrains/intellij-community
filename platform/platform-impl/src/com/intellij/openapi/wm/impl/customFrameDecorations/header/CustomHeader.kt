@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header
 import com.intellij.icons.AllIcons
 import com.intellij.jdkEx.JdkEx
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.WindowsRegistryUtil
 import com.intellij.openapi.wm.impl.IdeRootPane
@@ -42,6 +43,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         }
 
         private fun createFrameHeader(frame: JFrame): DefaultFrameHeader = DefaultFrameHeader(frame)
+        @JvmStatic
         fun createMainFrameHeader(frame: JFrame): MainFrameHeader = MainFrameHeader(frame)
     }
 
@@ -75,7 +77,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         createButtonsPane()
     }
 
-
+    open fun setProject(project: Project) {}
 
     init {
         isOpaque = true
