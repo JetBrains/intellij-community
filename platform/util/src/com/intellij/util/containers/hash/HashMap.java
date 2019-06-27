@@ -18,7 +18,9 @@ package com.intellij.util.containers.hash;
 import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
-/** Use {@link java.util.HashMap} */
+/**
+ * @deprecated Use {@link java.util.HashMap}
+ */
 @Deprecated
 public class HashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   private Entry<K, V>[] table;

@@ -17,6 +17,7 @@
 package com.intellij.util.containers;
 
 import com.intellij.util.DeprecatedMethodException;
+import com.intellij.util.Function;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
@@ -67,15 +68,21 @@ public final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V
     return new WeakKey<>(key, hashingStrategy.computeHashCode(key), hashingStrategy, myReferenceQueue);
   }
 
+  /**
+   * @deprecated use {@link ConcurrentFactoryMap#createWeakMap(Function)}
+   */
   @Deprecated
   public ConcurrentWeakHashMap(int initialCapacity) {
     super(initialCapacity);
-    DeprecatedMethodException.report("Use com.intellij.util.containers.ConcurrentFactoryMap.createConcurrentWeakMap instead");
+    DeprecatedMethodException.report("Use com.intellij.util.containers.ConcurrentFactoryMap.createWeakMap instead");
   }
 
+  /**
+   * @deprecated use {@link ConcurrentFactoryMap#createWeakMap(Function)}
+   */
   @Deprecated
   public ConcurrentWeakHashMap() {
-    DeprecatedMethodException.report("Use com.intellij.util.containers.ConcurrentFactoryMap.createConcurrentWeakMap instead");
+    DeprecatedMethodException.report("Use com.intellij.util.containers.ConcurrentFactoryMap.createWeakMap instead");
   }
 
   ConcurrentWeakHashMap(float loadFactor) {

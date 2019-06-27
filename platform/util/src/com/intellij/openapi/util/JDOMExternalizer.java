@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.xmlb.Constants;
+import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @deprecated Use XmlSerializer instead.
+ * @deprecated Use {@link XmlSerializer} instead.
  */
 @Deprecated
 public class JDOMExternalizer {
@@ -24,7 +25,7 @@ public class JDOMExternalizer {
   }
 
   /**
-   * @deprecated Use XmlSerializer instead.
+   * @deprecated Use {@link XmlSerializer} instead.
    */
   @Deprecated
   public static void write(Element root, @NonNls String name, String value) {
@@ -34,11 +35,17 @@ public class JDOMExternalizer {
     root.addContent(element);
   }
 
+  /**
+   * @deprecated Use {@link XmlSerializer} instead.
+   */
   @Deprecated
   public static void write(Element root, @NonNls String name, boolean value) {
     write(root, name, Boolean.toString(value));
   }
 
+  /**
+   * @deprecated Use {@link XmlSerializer} instead.
+   */
   @Deprecated
   public static void write(Element root, String name, int value) {
     write(root, name, Integer.toString(value));

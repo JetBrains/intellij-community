@@ -13,13 +13,20 @@ import org.jetbrains.annotations.Nullable;
  * {@link UserDataHolder} doesn't make any restrictions on thread-safety, so it's now used in PsiBuilder instead,
  * and this interface is left for binary compatibility.
  */
+@SuppressWarnings("DeprecatedIsStillUsed")
 @Deprecated
 public interface UserDataHolderUnprotected {
 
+  /**
+   * @deprecated use {@link UserDataHolder}
+   */
   @Deprecated
   @Nullable
   <T> T getUserDataUnprotected(@NotNull Key<T> key);
 
+  /**
+   * @deprecated use {@link UserDataHolder}
+   */
   @Deprecated
   <T> void putUserDataUnprotected(@NotNull Key<T> key, @Nullable T value);
 }

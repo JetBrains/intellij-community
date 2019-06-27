@@ -236,8 +236,8 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
   }
 
   /**
-   * Since weak references can be collected at any time,
-   * this method considered dangerous, misleading, error-inducing and are is not supported.
+   * @deprecated Since weak references can be collected at any time,
+   * this method considered dangerous, misleading, error-inducing and is not supported.
    * Instead, please use {@link #add(T)} and {@link #iterator()}.
    */
   @Override

@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * @deprecated {@link com.intellij.util.xmlb.XmlSerializer} should be used instead
+ * @deprecated use {@link com.intellij.util.xmlb.XmlSerializer} instead
  * @author mike
  */
 @Deprecated

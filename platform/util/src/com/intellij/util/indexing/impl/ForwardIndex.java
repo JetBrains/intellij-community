@@ -17,12 +17,15 @@ package com.intellij.util.indexing.impl;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
 import java.util.Map;
 
 /**
  * Represents a <a href="https://en.wikipedia.org/wiki/Search_engine_indexing#The_forward_index">forward index data structure</>:
  * an index intended to hold a mappings of inputId-s to contained keys.
+ *
+ * @deprecated see {@link com.intellij.util.indexing.impl.forward.ForwardIndex}
  */
 @Deprecated
 @ApiStatus.Experimental

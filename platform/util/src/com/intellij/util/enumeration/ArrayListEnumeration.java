@@ -19,6 +19,9 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.NoSuchElementException;
 
+/**
+ * @deprecated obsolete
+ */
 @Deprecated
 public class ArrayListEnumeration implements Enumeration {
   private final ArrayList myArrayList;
