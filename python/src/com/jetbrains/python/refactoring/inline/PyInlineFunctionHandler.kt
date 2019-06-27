@@ -22,6 +22,7 @@ import com.jetbrains.python.psi.search.PyOverridingMethodsSearch
 import com.jetbrains.python.psi.search.PySuperMethodsSearch
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiFile
+import com.jetbrains.python.pyi.PyiUtil
 import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.pythonSdk
 
@@ -31,7 +32,13 @@ import com.jetbrains.python.sdk.pythonSdk
 class PyInlineFunctionHandler : InlineActionHandler() {
   override fun isEnabledForLanguage(l: Language?) = l is PythonLanguage
 
-  override fun canInlineElement(element: PsiElement?) = element is PyFunction && element.containingFile !is PyiFile
+  override fun canInlineElement(element: PsiElement?): Boolean {
+    if (element is PyFunction) {
+      val containingFile = if (element.containingFile is PyiFile) PyiUtil.getOriginalElement(element)?.containingFile else element.containingFile
+      return containingFile is PyFile
+    }
+    return false
+  }
 
   override fun inlineElement(project: Project?, editor: Editor?, element: PsiElement?) {
     if (project == null || editor == null || element !is PyFunction) return
