@@ -3649,6 +3649,18 @@ public final class UIUtil extends StartupUiUtil {
   }
 
 
+  private static final Color BACKGROUND = new JBColor(0xFFFFFF, 0x3C3F41);
+  private static final Color LIST_BACKGROUND = JBColor.namedColor("List.background", BACKGROUND);
+  private static final Color TREE_BACKGROUND = JBColor.namedColor("Tree.background", BACKGROUND);
+  private static final Color TABLE_BACKGROUND = JBColor.namedColor("Table.background", BACKGROUND);
+
+  private static final class FocusedSelection {
+    private static final Color BACKGROUND = new JBColor(0x3875D6, 0x2F65CA);
+    private static final Color LIST_BACKGROUND = JBColor.namedColor("List.selectionBackground", BACKGROUND);
+    private static final Color TREE_BACKGROUND = JBColor.namedColor("Tree.selectionBackground", BACKGROUND);
+    private static final Color TABLE_BACKGROUND = JBColor.namedColor("Table.selectionBackground", BACKGROUND);
+  }
+
   private static final class UnfocusedSelection {
     private static final Color BACKGROUND = new JBColor(0xD4D4D4, 0x0D293E);
     private static final Color LIST_BACKGROUND = JBColor.namedColor("List.selectionInactiveBackground", BACKGROUND);
@@ -3666,8 +3678,6 @@ public final class UIUtil extends StartupUiUtil {
   }
 
   // background
-
-  private static final Color LIST_BACKGROUND = JBColor.namedColor("List.background", new JBColor(0xffffff, 0x3c3f41));
 
   @NotNull
   public static Color getListBackground() {
@@ -3773,13 +3783,12 @@ public final class UIUtil extends StartupUiUtil {
 
   @NotNull
   public static Color getTreeBackground() {
-    return UIManager.getColor("Tree.background");
+    return TREE_BACKGROUND;
   }
 
   @NotNull
   public static Color getTreeSelectionBackground(boolean focused) {
-    if (!focused) return UnfocusedSelection.TREE_BACKGROUND;
-    return UIManager.getColor("Tree.selectionBackground");
+    return focused ? FocusedSelection.TREE_BACKGROUND : UnfocusedSelection.TREE_BACKGROUND;
   }
 
   @NotNull
@@ -3834,13 +3843,12 @@ public final class UIUtil extends StartupUiUtil {
 
   @NotNull
   public static Color getTableBackground() {
-    return UIManager.getColor("Table.background");
+    return TABLE_BACKGROUND;
   }
 
   @NotNull
   public static Color getTableSelectionBackground(boolean focused) {
-    if (!focused) return UnfocusedSelection.TABLE_BACKGROUND;
-    return UIManager.getColor("Table.selectionBackground");
+    return focused ? FocusedSelection.TABLE_BACKGROUND : UnfocusedSelection.TABLE_BACKGROUND;
   }
 
   @NotNull

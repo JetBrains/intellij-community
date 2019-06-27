@@ -518,7 +518,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   private static JLabel createInitializingLabel() {
     JLabel label = new JLabel("Initializing...", SwingConstants.CENTER);
     label.setOpaque(true);
-    final Color treeBg = UIManager.getColor("Tree.background");
+    final Color treeBg = UIUtil.getTreeBackground();
     label.setBackground(ColorUtil.toAlpha(treeBg, 180));
     final Color treeFg = UIUtil.getTreeForeground();
     label.setForeground(ColorUtil.toAlpha(treeFg, 180));
