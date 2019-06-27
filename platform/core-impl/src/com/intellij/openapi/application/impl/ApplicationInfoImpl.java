@@ -768,7 +768,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     Element iconEap = getChild(parentNode, "icon-eap");
     if (iconEap != null) {
       mySvgEapIconUrl = iconEap.getAttributeValue("svg");
-      mySmallSvgEapIconUrl = iconElement.getAttributeValue("svg-small");
+      mySmallSvgEapIconUrl = iconEap.getAttributeValue("svg-small");
     }
 
     Element packageElement = getChild(parentNode, ELEMENT_PACKAGE);

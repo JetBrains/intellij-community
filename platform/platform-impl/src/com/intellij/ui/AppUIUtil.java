@@ -85,6 +85,7 @@ public final class AppUIUtil {
 
       ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
       String svgIconUrl = appInfo.getApplicationSvgIconUrl();
+      String smallSvgIconUrl = appInfo.getSmallApplicationSvgIconUrl();
       ScaleContext ctx = ScaleContext.create(window);
 
       if (SystemInfo.isUnix) {
@@ -93,7 +94,7 @@ public final class AppUIUtil {
       }
 
       @SuppressWarnings("deprecation") String fallback = appInfo.getIconUrl();
-      ContainerUtil.addIfNotNull(images, loadApplicationIconImage(svgIconUrl, ctx, 32, fallback));
+      ContainerUtil.addIfNotNull(images, loadApplicationIconImage(smallSvgIconUrl, ctx, 32, fallback));
 
       if (SystemInfo.isWindows) {
         ContainerUtil.addIfNotNull(images, loadSmallApplicationIconImage(ctx));
