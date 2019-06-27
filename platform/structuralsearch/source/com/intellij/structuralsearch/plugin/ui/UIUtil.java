@@ -294,7 +294,7 @@ public class UIUtil {
 
   @NotNull
   public static Editor createEditor(@NotNull Project project, @NotNull LanguageFileType fileType, Language dialect, @NotNull String text,
-                                    @NotNull StructuralSearchProfile profile) {
+                                    boolean editable, @NotNull StructuralSearchProfile profile) {
     PsiFile codeFragment = profile.createCodeFragment(project, text, null);
     if (codeFragment == null) {
       codeFragment = createFileFragment(project, fileType, dialect, text);
@@ -309,7 +309,7 @@ public class UIUtil {
     else {
       doc = EditorFactory.getInstance().createDocument("");
     }
-    return createEditor(doc, project, true, getTemplateContextType(profile));
+    return createEditor(doc, project, editable, getTemplateContextType(profile));
   }
 
   private static PsiFile createFileFragment(@NotNull Project project, @NotNull LanguageFileType fileType, Language dialect, @NotNull String text) {
