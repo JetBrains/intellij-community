@@ -18,10 +18,12 @@ class PyInlineFunctionDialog(project: Project,
                              private val myFunction: PyFunction,
                              private val myReference: PsiReference?) : InlineOptionsDialog(project, true, myFunction) {
   private val isMethod = myFunction.asMethod() != null
+  private val myFunctionName = myFunction.name
+  private val myNumberOfOccurrences: Int = getNumberOfOccurrences(myFunction)
 
   init {
     myInvokedOnReference = myReference != null
-    title = if (isMethod) "Inline method ${myFunction.name}" else "Inline function ${myFunction.name}"
+    title = if (isMethod) "Inline method $myFunctionName" else "Inline function $myFunctionName"
     init()
   }
 
@@ -29,7 +31,13 @@ class PyInlineFunctionDialog(project: Project,
     invokeRefactoring(PyInlineFunctionProcessor(myProject, myEditor, myFunction, myReference, isInlineThisOnly, !isKeepTheDeclaration))
   }
 
-  override fun getNameLabelText(): String = "The number of occurrences: ${getNumberOfOccurrences(myFunction)}"
+  override fun getNameLabelText(): String {
+    val text = if (isMethod) "Method ${myFunctionName}" else "Function $myFunctionName"
+    if (myNumberOfOccurrences != -1) {
+      return "$text has $myNumberOfOccurrences occurrence${if (myNumberOfOccurrences == 1) "" else "s"}"
+    }
+    return text
+  }
   override fun getBorderTitle(): String  = "Inline"
   override fun getInlineAllText(): String = PyBundle.message("refactoring.inline.all.remove.declaration")
   override fun getKeepTheDeclarationText(): String = PyBundle.message("refactoring.inline.all.keep.declaration")
