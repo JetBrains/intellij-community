@@ -5,8 +5,10 @@ package org.jetbrains.idea.maven.dom.model.completion;
 
 import org.jetbrains.annotations.ApiStatus;
 
+/**
+ * @deprecated use MavenDependenciesCompletionContributor instead
+ */
 @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
 @Deprecated
-/*use MavenDependenciesCompletionContributor instead*/
 public class MavenDependenciesCompletionProvider extends MavenDependenciesCompletionContributor {
 }

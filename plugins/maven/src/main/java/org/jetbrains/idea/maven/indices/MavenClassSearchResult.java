@@ -5,11 +5,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
 
 public class MavenClassSearchResult extends MavenArtifactSearchResult {
+  /**
+   * @deprecated use {@link #getClassName()}
+   */
   @Deprecated
-  /* @deprecated use getClassName */
   public String className;
+
+  /**
+   * @deprecated use {@link #getPackageName()}
+   */
   @Deprecated
-  /* @deprecated  use getPackageName */
   public String packageName;
 
   public MavenClassSearchResult(@NotNull MavenRepositoryArtifactInfo results, String className, String packageName) {

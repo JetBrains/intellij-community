@@ -116,9 +116,12 @@ public class MavenGeneralSettings implements Cloneable {
     changed();
   }
 
+  /**
+   * @deprecated use {@link #getOutputLevel()}
+   */
   @Transient
   @NotNull
-  @Deprecated // Use getOutputLevel()
+  @Deprecated
   public MavenExecutionOptions.LoggingLevel getLoggingLevel() {
     return getOutputLevel();
   }

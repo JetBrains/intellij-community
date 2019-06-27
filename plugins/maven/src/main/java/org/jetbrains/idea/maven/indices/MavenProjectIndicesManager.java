@@ -179,7 +179,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
   }
 
   /**
-   * @deprecated use {@link OfflineSearchService#findGroupCandidates} or{@link OfflineSearchService#findByTemplate} instead
+   * @deprecated use {@link OfflineSearchService#findGroupCandidates} or {@link OfflineSearchService#findByTemplate} instead
    **/
   @Deprecated
   public Set<String> getGroupIds(String pattern) {
@@ -192,7 +192,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
   }
 
   /**
-   * @deprecated use {@link OfflineSearchService#findArtifactCandidates} or{@link OfflineSearchService#findByTemplate} instead
+   * @deprecated use {@link OfflineSearchService#findArtifactCandidates} or {@link OfflineSearchService#findByTemplate} instead
    **/
   @Deprecated
   public Set<String> getArtifactIds(String groupId) {
@@ -203,7 +203,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
   }
 
   /**
-   * @deprecated use {@link OfflineSearchService#findAllVersions or{@link OfflineSearchService#findByTemplate} instead
+   * @deprecated use {@link OfflineSearchService#findAllVersions or {@link OfflineSearchService#findByTemplate} instead
    **/
   @Deprecated
   public Set<String> getVersions(String groupId, String artifactId) {
@@ -213,6 +213,9 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
         Collectors.toSet());
   }
 
+  /**
+   * @deprecated use {@link #hasProjectGroupId(String)}
+   */
   @Deprecated
   public boolean hasGroupId(String groupId) {
     if (groupId == null) {
@@ -231,6 +234,9 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
 
   }
 
+  /**
+   * @deprecated use {@link #hasProjectArtifactId(String, String)}
+   */
   @Deprecated
   public boolean hasArtifactId(String groupId, String artifactId) {
     if (groupId == null || artifactId == null) {
@@ -248,6 +254,9 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
     }
   }
 
+  /**
+   * @deprecated use {@link #hasProjectVersion(String, String, String)}
+   */
   @Deprecated
   public boolean hasVersion(String groupId, String artifactId, String version) {
     if (hasProjectVersion(groupId, artifactId, version)) return true;
