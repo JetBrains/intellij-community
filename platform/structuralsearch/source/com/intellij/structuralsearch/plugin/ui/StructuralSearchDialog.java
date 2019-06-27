@@ -100,7 +100,7 @@ import static com.intellij.openapi.util.text.StringUtil.*;
  *
  * @author Bas Leijdekkers
  */
-public class StructuralSearchDialog extends DialogWrapper {
+public class StructuralSearchDialog extends DialogWrapper implements ProjectManagerListener, DocumentListener {
   @NonNls private static final String SEARCH_DIMENSION_SERVICE_KEY = "#com.intellij.structuralsearch.plugin.ui.StructuralSearchDialog";
   @NonNls private static final String REPLACE_DIMENSION_SERVICE_KEY = "#com.intellij.structuralsearch.plugin.ui.StructuralReplaceDialog";
 
@@ -176,19 +176,13 @@ public class StructuralSearchDialog extends DialogWrapper {
         addMatchHighlights();
       }
     };
-    searchContext.getProject().getMessageBus().connect(getDisposable()).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
+    getProject().getMessageBus().connect(getDisposable()).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
     myConfiguration = createConfiguration(null);
     setTitle(getDefaultTitle());
 
     init();
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
-    ProjectManager.getInstance().addProjectManagerListener(searchContext.getProject(), new ProjectManagerListener() {
-      @Override
-      public void projectClosing(@NotNull Project project) {
-        close(CANCEL_EXIT_CODE);
-        ProjectManager.getInstance().removeProjectManagerListener(searchContext.getProject(), this);
-      }
-    });
+    ProjectManager.getInstance().addProjectManagerListener(getProject(), this);
   }
 
   public void setUseLastConfiguration(boolean useLastConfiguration) {
@@ -199,6 +193,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
     assert profile != null;
     final Document document = UIUtil.createDocument(getProject(), myFileType, myDialect, myPatternContext, "", profile);
+    document.addDocumentListener(this, myDisposable);
     document.putUserData(STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID, (myPatternContext == null) ? "" : myPatternContext.getId());
 
     final EditorTextField textField = new EditorTextField(document, getProject(), myFileType, false, false) {
@@ -249,13 +244,12 @@ public class StructuralSearchDialog extends DialogWrapper {
     textField.setFont(scheme.getFont(EditorFontType.PLAIN));
     textField.setPreferredSize(new Dimension(550, 150));
     textField.setMinimumSize(new Dimension(200, 50));
-    textField.addDocumentListener(new DocumentListener() {
-      @Override
-      public void documentChanged(@NotNull final DocumentEvent event) {
-        initiateValidation();
-      }
-    });
     return textField;
+  }
+
+  @Override
+  public void documentChanged(@NotNull final DocumentEvent event) {
+    initiateValidation();
   }
 
   void initiateValidation() {
@@ -552,11 +546,13 @@ public class StructuralSearchDialog extends DialogWrapper {
 
           final Document searchDocument =
             UIUtil.createDocument(getProject(), myFileType, myDialect, myPatternContext, mySearchCriteriaEdit.getText(), profile);
+          searchDocument.addDocumentListener(StructuralSearchDialog.this, myDisposable);
           mySearchCriteriaEdit.setNewDocumentAndFileType(myFileType, searchDocument);
           searchDocument.putUserData(STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID, contextId);
 
           final Document replaceDocument =
             UIUtil.createDocument(getProject(), myFileType, myDialect, myPatternContext, myReplaceCriteriaEdit.getText(), profile);
+          replaceDocument.addDocumentListener(StructuralSearchDialog.this, myDisposable);
           myReplaceCriteriaEdit.setNewDocumentAndFileType(myFileType, replaceDocument);
           replaceDocument.putUserData(STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID, contextId);
 
@@ -1118,8 +1114,14 @@ public class StructuralSearchDialog extends DialogWrapper {
   }
 
   @Override
+  public void projectClosing(@NotNull Project project) {
+    close(CANCEL_EXIT_CODE);
+  }
+
+  @Override
   public void dispose() {
     getProject().putUserData(STRUCTURAL_SEARCH_PREVIOUS_CONFIGURATION, myConfiguration);
+    ProjectManager.getInstance().removeProjectManagerListener(getProject(), this);
 
     if (myReplace) storeDimensions(REPLACE_DIMENSION_SERVICE_KEY, SEARCH_DIMENSION_SERVICE_KEY);
     else storeDimensions(SEARCH_DIMENSION_SERVICE_KEY, REPLACE_DIMENSION_SERVICE_KEY);
