@@ -21,14 +21,14 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
- * Use {@link ConcurrentFactoryMap#createWeakMap(Function)} instead
+ * @deprecated Use {@link ConcurrentFactoryMap#createWeakMap(Function)} instead
  * TODO to remove in IDEA 2018
  */
 @Deprecated
 @ApiStatus.ScheduledForRemoval(inVersion = "2018")
 public abstract class ConcurrentWeakFactoryMap<K,V> extends ConcurrentFactoryMap<K,V> {
   /**
-   * Use {@link ConcurrentFactoryMap#createWeakMap(Function)} instead
+   * @deprecated Use {@link ConcurrentFactoryMap#createWeakMap(Function)} instead
    * TODO to remove in IDEA 2018
    */
   @Deprecated
