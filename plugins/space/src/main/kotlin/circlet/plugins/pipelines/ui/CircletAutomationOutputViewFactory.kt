@@ -14,8 +14,6 @@ class CircletAutomationOutputViewFactory {
         val splitPanel = Splitter(false)
         splitPanel.firstComponent = buildLogView.component
         splitPanel.secondComponent = runLogView.component
-        return CircletAutomationOutputView(buildLogView, runLogView)
+        return CircletAutomationOutputView(buildLogView)
     }
 }
-
-

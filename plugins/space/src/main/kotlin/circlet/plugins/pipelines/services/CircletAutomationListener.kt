@@ -3,10 +3,18 @@ package circlet.plugins.pipelines.services
 import circlet.plugins.pipelines.ui.*
 import circlet.plugins.pipelines.viewmodel.*
 import circlet.utils.*
+import com.intellij.build.*
+import com.intellij.build.events.*
+import com.intellij.build.events.impl.*
 import com.intellij.execution.ui.*
 import com.intellij.icons.*
 import com.intellij.ide.impl.*
+import com.intellij.openapi.application.*
+import com.intellij.openapi.components.*
+import com.intellij.openapi.externalSystem.model.*
+import com.intellij.openapi.externalSystem.model.task.*
 import com.intellij.openapi.project.*
+import com.intellij.openapi.util.*
 import com.intellij.openapi.wm.*
 import com.intellij.ui.content.*
 import runtime.reactive.*
@@ -29,22 +37,33 @@ class CircletAutomationListener(val project: Project, val toolWindowManager: Too
             view.print(data?.dummy ?: "empty", ConsoleViewContentType.NORMAL_OUTPUT)
         }
 
-        val logBuildLifetims = SequentialLifetimes(lifetime)
+        val logBuildLifetimes = SequentialLifetimes(lifetime)
         viewModel.logBuildData.forEach(lifetime) {
             val data = it
-            val view = viewContext.view.buildLogView
-            view.clear()
-            val lt = logBuildLifetims.next()
+            val lt = logBuildLifetimes.next()
 
             if (data != null) {
+
+                val projectSystemId = ProjectSystemId("CircletAutomation")
+                val taskId = ExternalSystemTaskId.create(projectSystemId, ExternalSystemTaskType.RESOLVE_PROJECT, project)
+                val descriptor = DefaultBuildDescriptor(taskId, "Sync DSL", project.basePath!!, System.currentTimeMillis())
+                val result = Ref<BuildProgressListener>()
+                ApplicationManager.getApplication().invokeAndWait { result.set(ServiceManager.getService(project, SyncDslViewManager::class.java)) }
+                val view = result.get()
+                view.onEvent(StartBuildEventImpl(descriptor, "Sync DSL ${project.name}"))
+                viewModel.modelBuildIsRunning.forEach(lt) {buildIsRunning ->
+                    if (!buildIsRunning) {
+                        view.onEvent(FinishBuildEventImpl(descriptor.id, null, System.currentTimeMillis(), "finished", SuccessResultImpl(false)))
+                        //view.onEvent(FinishBuildEventImpl(descriptor.id, null, System.currentTimeMillis(), "finished", FailureResultImpl(emptyList())))
+                    }
+                }
+
                 data.messages.change.forEach(lt) {
                     //todo reimplement work with getting new message
                     val message = data.messages[it.index]
-                    view.print(message + "\n", ConsoleViewContentType.NORMAL_OUTPUT)
+                    val detailedMessage = if (message.length > 50) message else null
+                    view.onEvent(MessageEventImpl(descriptor.id, MessageEvent.Kind.SIMPLE, "log", message, detailedMessage))
                 }
-            }
-            else {
-                view.print( "empty", ConsoleViewContentType.NORMAL_OUTPUT)
             }
         }
 
@@ -54,7 +73,6 @@ class CircletAutomationListener(val project: Project, val toolWindowManager: Too
         val toolWindow = getOrRegisterToolWindow()
         val contentManager = toolWindow.contentManager
         val view = CircletAutomationOutputViewFactory().create(project)
-        toolWindow.contentManager.addContent(contentManager.factory.createContent(view.buildLogView, "Build", false))
         toolWindow.contentManager.addContent(contentManager.factory.createContent(view.runLogView, "Run", false))
         return CircletAutomationOutputViewContext(view)
     }
