@@ -255,16 +255,13 @@ class PyInlineFunctionProcessor(project: Project,
 
       declarations.forEach { insertElement(it) }
       if (replacementFunction.firstChild != null) {
-        if (replacementFunction.firstChild is PsiComment) {
-          SyntaxTraverser.psiApi().children(replacementFunction)
-            .takeWhile { it is PsiComment || it is PsiWhiteSpace }
-            .filterIsInstance<PsiComment>()
-            .forEach { insertElement(it) }
-        }
-        val statements = if (hasDocstring) replacementFunction.statements.drop(1) else replacementFunction.statements.toList()
+        val directChildren = SyntaxTraverser.psiApi().children(replacementFunction).filter { it !is PsiWhiteSpace }.toList()
+        val statementsAndComments = if (hasDocstring) directChildren.drop(1) else directChildren
+        val statements = statementsAndComments.filterIsInstance<PyStatement>()
         if (statements.size > 1 || statements.firstOrNull() !is PyPassStatement) {
-          statements.asSequence()
+          statementsAndComments.asSequence()
             .map { insertElement(it) }
+            .filterIsInstance<PyStatement>()
             .forEach { PyClassRefactoringUtil.restoreNamedReferences(it) }
         }
       }
