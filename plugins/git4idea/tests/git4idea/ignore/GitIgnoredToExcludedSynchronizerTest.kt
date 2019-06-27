@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
 import git4idea.test.GitSingleRepoTest
@@ -82,7 +83,8 @@ class GitIgnoredToExcludedSynchronizerTest : GitSingleRepoTest() {
   private fun createGitignoreAndWait(gitignoreContent: String) {
     val ignoredHolderWaiter = (repo.ignoredFilesHolder as VcsRepositoryIgnoredFilesHolderBase<*>).createWaiter()
 
-    file(GITIGNORE).create(gitignoreContent)
+    val gitIgnore = file(GITIGNORE).create(gitignoreContent)
+    VfsUtil.findFileByIoFile(gitIgnore.file, true) //trigger VFS create event explicitly
 
     ignoredHolderWaiter.waitFor()
   }
