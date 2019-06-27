@@ -28,6 +28,8 @@ class ProjectExcludesIgnoredFileProvider : IgnoredFileProvider {
   override fun getIgnoredGroupDescription() = "Project exclude paths"
 
   private fun getProjectExcludePaths(project: Project): Set<IgnoredFileDescriptor> {
+    if (!VcsApplicationSettings.getInstance().MARK_EXCLUDED_AS_IGNORED) return emptySet()
+
     val excludes = sortedSetOf(ChangesComparator.getVirtualFileComparator(false))
 
     val fileIndex = ProjectFileIndex.SERVICE.getInstance(project)
