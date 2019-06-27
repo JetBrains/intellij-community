@@ -105,6 +105,9 @@ DONT_TRACE = {
 %(pydev_files)s
 }
 
+DONT_TRACE['pydev_jupyter_plugin.py'] = PYDEV_FILE
+DONT_TRACE['pydev_jupyter_utils.py'] = PYDEV_FILE
+
 if IS_PY3K:
     # if we try to trace io.py it seems it can get halted (see http://bugs.python.org/issue4716)
     DONT_TRACE['io.py'] = LIB_FILE
