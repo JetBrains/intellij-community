@@ -10,6 +10,7 @@ import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,37 +40,8 @@ final class SystemTrayNotifications implements SystemNotificationsImpl.Notifier 
 
   @NotNull
   private static Image createImage() {
-    String iconUrl = ApplicationInfoImpl.getShadowInstance().getSmallApplicationSvgIconUrl();
-    Icon icon;
-
-    if (iconUrl == null) {
-      getLogger().info("=== SmallApplicationSvgIconUrl not defined ===");
-      return createStubImage();
-    }
-
-    icon = IconLoader.findIcon(iconUrl);
-    if (icon == null) {
-      getLogger().info("=== Icon (" + iconUrl + ") not found ===");
-      return createStubImage();
-    }
-
-    float scale = 16 / (float)icon.getIconWidth();
-    icon = IconUtil.scale(icon, null, scale);
-
-    ScaleContext context = ScaleContext.create();
-    int width = PaintUtil.RoundingMode.ROUND.round(context.apply(icon.getIconWidth(), DerivedScaleType.DEV_SCALE));
-    int height = PaintUtil.RoundingMode.ROUND.round(context.apply(icon.getIconHeight(), DerivedScaleType.DEV_SCALE));
-    BufferedImage image = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration()
-      .createCompatibleImage(width, height, Transparency.TRANSLUCENT);
-
-    Graphics2D g = image.createGraphics();
-    try {
-      icon.paintIcon(null, g, 0, 0);
-    }
-    finally {
-      g.dispose();
-    }
-    return image;
+    Icon icon = AppUIUtil.loadSmallApplicationIcon(ScaleContext.create());
+    return ImageUtil.toBufferedImage(IconUtil.toImage(icon));
   }
 
   @NotNull
@@ -98,7 +70,9 @@ final class SystemTrayNotifications implements SystemNotificationsImpl.Notifier 
     myType = type;
 
     String tooltip = ApplicationInfoImpl.getShadowInstance().getFullApplicationName();
-    SystemTray.getSystemTray().add(myTrayIcon = new TrayIcon(image, tooltip));
+    myTrayIcon = new TrayIcon(image, tooltip);
+    myTrayIcon.setImageAutoSize(true);
+    SystemTray.getSystemTray().add(myTrayIcon);
 
     myTrayIcon.addActionListener(e -> {
       IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
