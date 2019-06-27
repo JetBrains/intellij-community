@@ -251,7 +251,7 @@ class VisiblePackBuilderTest {
 
   inner class MultiRootGraph(private val graphsByRoots: Map<VirtualFile, SingleRootGraph>) {
 
-    val providers: Map<VirtualFile, TestVcsLogProvider> = graphsByRoots.mapValues { TestVcsLogProvider(it.key) }
+    val providers: Map<VirtualFile, TestVcsLogProvider> = graphsByRoots.mapValues { TestVcsLogProvider() }
 
     val commits: Map<VirtualFile, List<GraphCommit<Int>>> = graphsByRoots.mapValues { it.value.commits }
     val allCommits = commits.values.flatten()

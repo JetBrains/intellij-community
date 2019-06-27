@@ -49,7 +49,7 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
   public void setUp() throws Exception {
     super.setUp();
 
-    myLogProvider = new TestVcsLogProvider(projectRoot);
+    myLogProvider = new TestVcsLogProvider();
     myLogProviders = Collections.singletonMap(projectRoot, myLogProvider);
 
     myCommits = Arrays.asList("3|-a2|-a1", "2|-a1|-a", "1|-a|-");
