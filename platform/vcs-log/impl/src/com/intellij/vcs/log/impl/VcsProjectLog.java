@@ -86,7 +86,7 @@ public class VcsProjectLog implements Disposable {
 
   @CalledInAny
   private void recreateLog() {
-    UIUtil.invokeLaterIfNeeded(() -> myLogManager.drop(() -> {
+    UIUtil.invokeLaterIfNeeded(() -> disposeLog(() -> {
       if (myProject.isDisposed()) return;
       createLog(false);
     }));
@@ -147,6 +147,16 @@ public class VcsProjectLog implements Disposable {
     });
   }
 
+  @CalledInAwt
+  private void disposeLog(@Nullable Runnable callback) {
+    VcsLogManager logManager = myLogManager.dropValue();
+    if (logManager != null) {
+      logManager.dispose(callback);
+    } else if (callback != null) {
+      ApplicationManager.getApplication().executeOnPooledThread(callback);
+    }
+  }
+
   @NotNull
   private Map<VirtualFile, VcsLogProvider> getLogProviders() {
     return VcsLogManager.findLogProviders(Arrays.asList(ProjectLevelVcsManager.getInstance(myProject).getAllVcsRoots()), myProject);
@@ -170,7 +180,7 @@ public class VcsProjectLog implements Disposable {
 
   @Override
   public void dispose() {
-    myLogManager.drop(null);
+    disposeLog(null);
   }
 
   private class LazyVcsLogManager {
@@ -197,18 +207,20 @@ public class VcsProjectLog implements Disposable {
                                VcsProjectLog.this::recreateOnError);
     }
 
+    @Nullable
     @CalledInAwt
-    public synchronized void drop(@Nullable Runnable callback) {
+    public synchronized VcsLogManager dropValue() {
       LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
       if (myValue != null) {
-        LOG.debug("Disposing Vcs Log for " + VcsLogUtil.getProvidersMapText(myValue.getDataManager().getLogProviders()));
-        myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed(myValue);
-        myValue.dispose(callback);
+        VcsLogManager oldValue = myValue;
+
+        LOG.debug("Disposing Vcs Log for " + VcsLogUtil.getProvidersMapText(oldValue.getDataManager().getLogProviders()));
+        myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed(oldValue);
         myValue = null;
+
+        return oldValue;
       }
-      else if (callback != null) {
-        ApplicationManager.getApplication().executeOnPooledThread(callback);
-      }
+      return null;
     }
 
     @Nullable
