@@ -123,7 +123,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   }
 
   /**
-   * Use {@link #getReferences(PsiReferenceService.Hints)} instead of calling or overriding this method.
+   * @deprecated use {@link #getReferences(PsiReferenceService.Hints)} instead of calling or overriding this method.
    */
   @Deprecated
   @NotNull

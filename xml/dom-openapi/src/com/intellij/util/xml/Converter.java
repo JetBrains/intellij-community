@@ -49,7 +49,7 @@ public abstract class Converter<T> {
 
 
   /**
-   * @deprecated {@link com.intellij.util.xml.converters.values.NumberValueConverter}
+   * @deprecated not necessary for Integer, use {@link com.intellij.util.xml.converters.values.NumberValueConverter}
    */
   @Deprecated
   public static final Converter<Integer> INTEGER_CONVERTER = new Converter<Integer>() {
@@ -75,6 +75,9 @@ public abstract class Converter<T> {
     }
   };
 
+  /**
+   * @deprecated unnecessary
+   */
   @Deprecated
   public static final Converter<String> EMPTY_CONVERTER = new Converter<String>() {
     @Override

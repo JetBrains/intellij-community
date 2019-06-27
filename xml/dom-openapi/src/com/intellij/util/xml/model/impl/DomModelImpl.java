@@ -39,8 +39,7 @@ public class DomModelImpl<T extends DomElement> implements DomModel<T> {
   private Project myProject;
 
   /**
-   * Using this method may result in a large memory usage, since it will keep all the DOM and PSI for all the config files
-   * @return
+   * @deprecated Using this method may result in a large memory usage, since it will keep all the DOM and PSI for all the config files
    */
   @Deprecated
   public DomModelImpl(T mergedModel, @NotNull Set<XmlFile> configFiles) {
