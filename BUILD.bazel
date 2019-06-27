@@ -109,6 +109,7 @@ iml_project(
         "//tools/adt/idea/build-attribution:intellij.android.build-attribution",
         "//tools/adt/idea/build-attribution:intellij.android.build-attribution.tests",
         "//tools/adt/idea/build-common:intellij.android.buildCommon",
+        "//tools/adt/idea/compose-designer:intellij.android.compose-designer",
         "//tools/adt/idea/connection-assistant",
         "//tools/adt/idea/connection-assistant:connection-assistant-test",
         "//tools/adt/idea/databinding:intellij.android.databinding",
