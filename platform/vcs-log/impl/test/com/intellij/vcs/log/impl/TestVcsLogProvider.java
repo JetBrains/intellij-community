@@ -22,8 +22,6 @@ import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.Assert.assertEquals;
-
 public class TestVcsLogProvider implements VcsLogProvider {
 
   private static final Logger LOG = Logger.getInstance(TestVcsLogProvider.class);
@@ -43,7 +41,6 @@ public class TestVcsLogProvider implements VcsLogProvider {
   private static final String SAMPLE_SUBJECT = "Sample subject";
   public static final VcsUser DEFAULT_USER = new VcsUserImpl("John Smith", "John.Smith@mail.com");
 
-  @NotNull private final VirtualFile myRoot;
   @NotNull private final List<TimedVcsCommit> myCommits;
   @NotNull private final Set<VcsRef> myRefs;
   @NotNull private final MockRefManager myRefManager;
@@ -51,18 +48,9 @@ public class TestVcsLogProvider implements VcsLogProvider {
   @NotNull private final ReducibleSemaphore myRefreshSemaphore;
   @NotNull private final AtomicInteger myReadFirstBlockCounter = new AtomicInteger();
 
-  private final Function<TimedVcsCommit, VcsCommitMetadata> myCommitToMetadataConvertor =
-    new Function<TimedVcsCommit, VcsCommitMetadata>() {
-      @Override
-      public VcsCommitMetadata fun(TimedVcsCommit commit) {
-        return new VcsCommitMetadataImpl(commit.getId(), commit.getParents(), commit.getTimestamp(), myRoot, SAMPLE_SUBJECT, DEFAULT_USER,
-                                         SAMPLE_SUBJECT, DEFAULT_USER, commit.getTimestamp());
-      }
-    };
   private Function<? super VcsLogFilterCollection, ? extends List<TimedVcsCommit>> myFilteredCommitsProvider;
 
-  public TestVcsLogProvider(@NotNull VirtualFile root) {
-    myRoot = root;
+  public TestVcsLogProvider() {
     myCommits = new ArrayList<>();
     myRefs = new HashSet<>();
     myRefManager = new MockRefManager();
@@ -84,10 +72,15 @@ public class TestVcsLogProvider implements VcsLogProvider {
     }
     int readFirstBlockCounter = myReadFirstBlockCounter.incrementAndGet();
     LOG.debug("readFirstBlock passed the semaphore: " + readFirstBlockCounter);
-    assertRoot(root);
     List<VcsCommitMetadata> metadatas = ContainerUtil.map(myCommits.subList(0, requirements.getCommitCount()),
-                                                          myCommitToMetadataConvertor);
+                                                          commit -> createDefaultMetadataForCommit(root, commit));
     return new LogDataImpl(Collections.emptySet(), metadatas);
+  }
+
+  @NotNull
+  private static VcsCommitMetadataImpl createDefaultMetadataForCommit(@NotNull VirtualFile root, TimedVcsCommit commit) {
+    return new VcsCommitMetadataImpl(commit.getId(), commit.getParents(), commit.getTimestamp(), root, SAMPLE_SUBJECT,
+                                     DEFAULT_USER, SAMPLE_SUBJECT, DEFAULT_USER, commit.getTimestamp());
   }
 
   @NotNull
@@ -101,7 +94,6 @@ public class TestVcsLogProvider implements VcsLogProvider {
       throw new RuntimeException(e);
     }
     LOG.debug("readAllHashes passed the semaphore");
-    assertRoot(root);
     for (TimedVcsCommit commit : myCommits) {
       commitConsumer.consume(commit);
     }
@@ -113,10 +105,6 @@ public class TestVcsLogProvider implements VcsLogProvider {
                               @NotNull List<String> hashes,
                               @NotNull Consumer<? super VcsFullCommitDetails> commitConsumer) {
     throw new UnsupportedOperationException();
-  }
-
-  private void assertRoot(@NotNull VirtualFile root) {
-    assertEquals("Requested data for unknown root", myRoot, root);
   }
 
   @NotNull
