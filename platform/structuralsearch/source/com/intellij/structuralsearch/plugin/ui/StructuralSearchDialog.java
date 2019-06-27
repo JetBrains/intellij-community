@@ -215,7 +215,7 @@ public class StructuralSearchDialog extends DialogWrapper {
           if (isFilterPanelVisible()) {
             myConfiguration.setCurrentVariableName(variableName);
           }
-        });
+        }, myDisposable);
         editor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
         if (profile.highlightProblemsInEditor()) {
           profile.setProblemCallback(() -> {

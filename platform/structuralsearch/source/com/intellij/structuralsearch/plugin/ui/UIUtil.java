@@ -74,16 +74,7 @@ public class UIUtil {
   }
 
   @NotNull
-  public static Editor createEditor(Document doc, final Project project, boolean editable, @Nullable TemplateContextType contextType) {
-    return createEditor(doc, project, editable, false, contextType);
-  }
-
-  @NotNull
-  public static Editor createEditor(@NotNull Document doc,
-                                    final Project project,
-                                    boolean editable,
-                                    boolean addToolTipForVariableHandler,
-                                    @Nullable TemplateContextType contextType) {
+  public static Editor createEditor(@NotNull Document doc, Project project, boolean editable, @Nullable TemplateContextType contextType) {
     final Editor editor =
         editable ? EditorFactory.getInstance().createEditor(doc, project) : EditorFactory.getInstance().createViewer(doc, project);
 
@@ -110,11 +101,6 @@ public class UIUtil {
     }
 
     TemplateEditorUtil.setHighlighter(editor, contextType);
-
-    if (addToolTipForVariableHandler) {
-      SubstitutionShortInfoHandler.install(editor, null);
-    }
-
     return editor;
   }
 
@@ -314,18 +300,16 @@ public class UIUtil {
       codeFragment = createFileFragment(project, fileType, dialect, text);
     }
 
+    final Document doc;
     if (codeFragment != null) {
-      final Document doc = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
+      doc = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
       assert doc != null : "code fragment element should be physical";
       DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(codeFragment, false);
-      return createEditor(doc, project, true, true, getTemplateContextType(profile));
     }
-
-    final EditorFactory factory = EditorFactory.getInstance();
-    final Document document = factory.createDocument(text);
-    final EditorEx editor = (EditorEx)factory.createEditor(document, project);
-    editor.getSettings().setFoldingOutlineShown(false);
-    return editor;
+    else {
+      doc = EditorFactory.getInstance().createDocument("");
+    }
+    return createEditor(doc, project, true, getTemplateContextType(profile));
   }
 
   private static PsiFile createFileFragment(@NotNull Project project, @NotNull LanguageFileType fileType, Language dialect, @NotNull String text) {

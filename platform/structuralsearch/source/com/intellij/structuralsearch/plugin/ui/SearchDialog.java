@@ -140,6 +140,7 @@ public class SearchDialog extends DialogWrapper {
         final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
         if (profile != null) {
           editor = UIUtil.createEditor(searchContext.getProject(), fileType, dialect, text, profile);
+          SubstitutionShortInfoHandler.install(editor, null, myDisposable);
         }
       }
     }

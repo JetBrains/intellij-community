@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateImplUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -234,11 +235,11 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     return editor == null ? null : editor.getUserData(LISTENER_KEY);
   }
 
-  static void install(Editor editor, @Nullable Consumer<? super String> currentVariableCallback) {
+  static void install(Editor editor, @Nullable Consumer<? super String> currentVariableCallback, Disposable disposable) {
     final SubstitutionShortInfoHandler handler = new SubstitutionShortInfoHandler(editor, currentVariableCallback);
-    editor.addEditorMouseMotionListener(handler);
-    editor.getDocument().addDocumentListener(handler);
-    editor.getCaretModel().addCaretListener(handler);
+    editor.addEditorMouseMotionListener(handler, disposable);
+    editor.getDocument().addDocumentListener(handler, disposable);
+    editor.getCaretModel().addCaretListener(handler, disposable);
     editor.putUserData(LISTENER_KEY, handler);
   }
 
