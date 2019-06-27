@@ -5,8 +5,9 @@ import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInspection.AnnotatedApiUsageUtil.findAnnotatedTypeUsedInDeclarationSignature
 import com.intellij.codeInspection.UnstableApiUsageInspection.Companion.DEFAULT_UNSTABLE_API_ANNOTATIONS
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil
-import com.intellij.lang.jvm.JvmModifier
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiField
 import com.intellij.psi.util.PropertyUtil
 import com.intellij.uast.UastVisitorAdapter
 import com.intellij.util.ui.FormBuilder
