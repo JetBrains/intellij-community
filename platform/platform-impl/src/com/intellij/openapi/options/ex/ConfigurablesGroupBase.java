@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
- * @deprecated needed for IdeConfigurablesGroup
+ * @deprecated needed for {@link IdeConfigurablesGroup}
  */
 @Deprecated
 @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")

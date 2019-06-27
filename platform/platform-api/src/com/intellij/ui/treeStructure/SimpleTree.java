@@ -569,7 +569,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
   }
 
   /**
-   * @deprecated use UIUtil.getTreeExpandedIcon(...) instead
+   * @deprecated use {@link UIUtil#getTreeExpandedIcon} instead
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
@@ -581,7 +581,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
   }
 
   /**
-   * @deprecated use UIUtil.getTreeCollapsedIcon(...) instead
+   * @deprecated use {@link UIUtil#getTreeCollapsedIcon} instead
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
@@ -593,7 +593,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
   }
 
   /**
-   * @deprecated use EmptyIcon.create(...) instead
+   * @deprecated use {@link EmptyIcon#create} instead
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
