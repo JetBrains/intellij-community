@@ -25,7 +25,7 @@ public class RemoveAttributeIntentionFix implements LocalQuickFix, IntentionActi
   private final String myLocalName;
 
   /**
-   * To be removed in 2018.3
+   * @deprecated use {@link #RemoveAttributeIntentionFix(String)}. To be removed in 2018.3
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2018.3")
