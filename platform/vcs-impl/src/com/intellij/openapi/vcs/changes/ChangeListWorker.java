@@ -389,10 +389,10 @@ public class ChangeListWorker {
   }
 
   private static boolean isChangeUnder(@NotNull FilePath parent, @NotNull Change change) {
-    ContentRevision after = change.getAfterRevision();
-    ContentRevision before = change.getBeforeRevision();
-    return after != null && after.getFile().isUnder(parent, false) ||
-           before != null && before.getFile().isUnder(parent, false);
+    FilePath after = ChangesUtil.getAfterPath(change);
+    FilePath before = ChangesUtil.getBeforePath(change);
+    return after != null && after.isUnder(parent, false) ||
+           !Comparing.equal(before, after) && before != null && before.isUnder(parent, false);
   }
 
   @Nullable
