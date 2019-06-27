@@ -399,11 +399,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     if (action.displayTextInToolbar()) {
       int mnemonic = KeyEvent.getExtendedKeyCodeForChar(action.getTemplatePresentation().getMnemonic());
 
-      ActionButtonWithText buttonWithText = new ActionButtonWithText(action, presentation, place, minimumSize) {
-        @Override protected HelpTooltip.Alignment getTooltipLocation() {
-          return tooltipLocation();
-        }
-      };
+      ActionButtonWithText buttonWithText = new ActionButtonWithText(action, presentation, place, minimumSize);
 
       if (mnemonic != KeyEvent.VK_UNDEFINED) {
         buttonWithText.registerKeyboardAction(__ -> buttonWithText.click(), KeyStroke.getKeyStroke(mnemonic,
@@ -420,22 +416,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       }
 
       @Override
-      protected HelpTooltip.Alignment getTooltipLocation() {
-        return tooltipLocation();
-      }
-
-      @Override
       protected Icon getFallbackIcon(boolean enabled) {
         return enabled ? AllIcons.Toolbar.Unknown : IconLoader.getDisabledIcon(AllIcons.Toolbar.Unknown);
       }
     };
     actionButton.setLook(look);
     return actionButton;
-  }
-
-  @NotNull
-  private HelpTooltip.Alignment tooltipLocation() {
-    return myOrientation == SwingConstants.VERTICAL ? HelpTooltip.Alignment.RIGHT: HelpTooltip.Alignment.BOTTOM;
   }
 
   @NotNull

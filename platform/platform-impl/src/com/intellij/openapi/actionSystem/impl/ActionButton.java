@@ -343,7 +343,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       HelpTooltip.dispose(this);
       String shortcut = KeymapUtil.getFirstKeyboardShortcutText(myAction);
       if (StringUtil.isNotEmpty(text) || StringUtil.isNotEmpty(description)) {
-        HelpTooltip ht = new HelpTooltip().setTitle(text).setShortcut(shortcut).setLocation(getTooltipLocation());
+        HelpTooltip ht = new HelpTooltip().setTitle(text).setShortcut(shortcut);
         if (!StringUtil.equals(text, description)) {
           ht.setDescription(description);
         }
@@ -352,10 +352,6 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     } else {
       setToolTipText(text == null ? description : text);
     }
-  }
-
-  protected HelpTooltip.Alignment getTooltipLocation() {
-    return HelpTooltip.Alignment.BOTTOM;
   }
 
   @Override

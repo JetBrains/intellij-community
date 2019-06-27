@@ -286,6 +286,9 @@
       "key": "HelpTooltip.shortcutForeground"
     },
     {
+      "key": "HelpTooltip.infoForeground"
+    },
+    {
       "key": "InformationHint.borderColor"
     },
     {

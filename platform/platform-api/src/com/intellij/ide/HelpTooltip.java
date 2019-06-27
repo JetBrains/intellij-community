@@ -91,10 +91,18 @@ import java.util.function.BooleanSupplier;
  */
 
 public class HelpTooltip {
-  private static final Color BACKGROUND_COLOR = JBColor.namedColor("HelpTooltip.background", 0xf7f7f7);
-  private static final Color FONT_COLOR = JBColor.namedColor("HelpTooltip.foreground", 0x1a1a1a);
-  private static final Color SHORTCUT_COLOR = JBColor.namedColor("HelpTooltip.shortcutForeground", 0x787878);
-  private static final Color BORDER_COLOR = JBColor.namedColor("HelpTooltip.borderColor", 0xadadad);
+  private static final Color BACKGROUND_COLOR = JBColor.namedColor("HelpTooltip.background", new JBColor(0xf7f7f7, 0x474a4c));
+  private static final Color FOREGROUND_COLOR = JBColor.namedColor("HelpTooltip.foreground", new JBColor(0x1a1a1a, 0xbfbfbf));
+  private static final Color SHORTCUT_COLOR = JBColor.namedColor("HelpTooltip.shortcutForeground", new JBColor(0x787878, 0x878787));
+  private static final Color INFO_COLOR = JBColor.namedColor("HelpTooltip.infoForeground", UIUtil.getContextHelpForeground());
+  private static final Color BORDER_COLOR = JBColor.namedColor("HelpTooltip.borderColor", new JBColor(0xadadad, 0x636569));
+
+  private static final JBValue VGAP = new JBValue.UIInteger("HelpTooltip.verticalGap", 2);
+  private static final JBValue HGAP = new JBValue.UIInteger("HelpTooltip.horizontalGap", 8);
+  private static final JBValue MAX_WIDTH = new JBValue.UIInteger("HelpTooltip.maxWidth", 250);
+  private static final JBValue X_OFFSET = new JBValue.UIInteger("HelpTooltip.xOffset", 0);
+  private static final JBValue Y_OFFSET = new JBValue.UIInteger("HelpTooltip.yOffset", 0);
+  private static final JBValue FONT_DELTA_SIZE = new JBValue.UIInteger("HelpTooltip.fontSizeDelta", 0);
 
   private static final String DOTS = "...";
   private static final String PARAGRAPH_SPLITTER = "<p/?>";
@@ -106,7 +114,7 @@ public class HelpTooltip {
   private String description;
   private LinkLabel link;
   private boolean neverHide;
-  private Alignment alignment = Alignment.BOTTOM;
+  private Alignment alignment = Alignment.CURSOR;
 
   private BooleanSupplier masterPopupOpenCondition;
 
@@ -125,27 +133,34 @@ public class HelpTooltip {
    */
   public enum Alignment {
     RIGHT {
-      @Override public Point getPointFor(JComponent owner, Dimension popupSize) {
+      @Override public Point getPointFor(Component owner, Dimension popupSize, Point mouseLocation) {
         Dimension size = owner.getSize();
         return new Point(size.width + JBUIScale.scale(5) - X_OFFSET.get(), JBUIScale.scale(1) + Y_OFFSET.get());
       }
     },
 
     BOTTOM {
-      @Override public Point getPointFor(JComponent owner, Dimension popupSize) {
+      @Override public Point getPointFor(Component owner, Dimension popupSize, Point mouseLocation) {
         Dimension size = owner.getSize();
         return new Point(JBUIScale.scale(1) + X_OFFSET.get(), JBUIScale.scale(5) + size.height - Y_OFFSET.get());
       }
     },
 
     HELP_BUTTON {
-      @Override public Point getPointFor(JComponent owner, Dimension popupSize) {
-        Insets i  = owner.getInsets();
+      @Override public Point getPointFor(Component owner, Dimension popupSize, Point mouseLocation) {
+        Insets i  = ((JComponent)owner).getInsets();
         return new Point(X_OFFSET.get() - JBUIScale.scale(40), i.top + Y_OFFSET.get() - JBUIScale.scale(6) - popupSize.height);
+      }
+    },
+
+    CURSOR {
+      @Override public Point getPointFor(Component owner, Dimension popupSize, Point mouseLocation) {
+        mouseLocation.y += JBUIScale.scale(20);
+        return mouseLocation;
       }
     };
 
-    public abstract Point getPointFor(JComponent owner, Dimension popupSize);
+    public abstract Point getPointFor(Component owner, Dimension popupSize, Point mouseLocation);
   }
 
   /**
@@ -233,7 +248,7 @@ public class HelpTooltip {
         if (myPopup != null && !myPopup.isDisposed()){
           myPopup.cancel();
         }
-        scheduleShow((JComponent)e.getComponent(), Registry.intValue("ide.tooltip.initialReshowDelay"));
+        scheduleShow(e, Registry.intValue("ide.tooltip.initialReshowDelay"));
       }
 
       @Override public void mouseExited(MouseEvent e) {
@@ -242,7 +257,7 @@ public class HelpTooltip {
 
       @Override public void mouseMoved(MouseEvent e) {
         if (myPopup == null || myPopup.isDisposed()) {
-          scheduleShow((JComponent)e.getComponent(), Registry.intValue("ide.tooltip.reshowDelay"));
+          scheduleShow(e, Registry.intValue("ide.tooltip.reshowDelay"));
         }
       }
     };
@@ -257,7 +272,7 @@ public class HelpTooltip {
     JComponent tipPanel = createTipPanel();
     myPopupSize = tipPanel.getPreferredSize();
     myPopupBuilder = JBPopupFactory.getInstance().
-        createComponentPopupBuilder(tipPanel, null).setBorderColor(BORDER_COLOR).setShowShadow(false);
+        createComponentPopupBuilder(tipPanel, null).setBorderColor(BORDER_COLOR).setShowShadow(true);
   }
 
   private JPanel createTipPanel() {
@@ -384,12 +399,14 @@ public class HelpTooltip {
     }
   }
 
-  private void scheduleShow(JComponent owner, int delay) {
+  private void scheduleShow(MouseEvent e, int delay) {
     popupAlarm.cancelAllRequests();
     popupAlarm.addRequest(() -> {
       if (masterPopupOpenCondition == null || masterPopupOpenCondition.getAsBoolean()) {
         myPopup = myPopupBuilder.createPopup();
-        myPopup.show(new RelativePoint(owner, alignment.getPointFor(owner, myPopupSize)));
+
+        Component owner = e.getComponent();
+        myPopup.show(new RelativePoint(owner, alignment.getPointFor(owner, myPopupSize, e.getPoint())));
         if (!neverHide) {
           scheduleHide(true, myDismissDelay);
         }
@@ -410,15 +427,8 @@ public class HelpTooltip {
     }
   }
 
-  private static final JBValue VGAP = new JBValue.UIInteger("HelpTooltip.verticalGap", 4);
-  private static final JBValue HGAP = new JBValue.UIInteger("HelpTooltip.horizontalGap", 10);
-  private static final JBValue MAX_WIDTH = new JBValue.UIInteger("HelpTooltip.maxWidth", 250);
-  private static final JBValue X_OFFSET = new JBValue.UIInteger("HelpTooltip.xOffset", 0);
-  private static final JBValue Y_OFFSET = new JBValue.UIInteger("HelpTooltip.yOffset", 0);
-  private static final JBValue FONT_DELTA_SIZE = new JBValue.UIInteger("HelpTooltip.fontSizeDelta", 0);
-
-  private static Border textBorder(boolean isDefault) {
-    Insets i = UIManager.getInsets(isDefault ? "HelpTooltip.defaultTextBorderInsets" : "HelpTooltip.smallTextBorderInsets");
+  private static Border textBorder(boolean multiline) {
+    Insets i = UIManager.getInsets(multiline ? "HelpTooltip.defaultTextBorderInsets" : "HelpTooltip.smallTextBorderInsets");
     return i != null ? new JBEmptyBorder(i) : JBUI.Borders.empty();
   }
 
@@ -469,7 +479,7 @@ public class HelpTooltip {
     @Override public void paintComponent(Graphics g) {
       Graphics2D g2 = (Graphics2D)g.create();
       try {
-        g2.setColor(FONT_COLOR);
+        g2.setColor(FOREGROUND_COLOR);
         GraphicsUtil.setupAntialiasing(g2);
         if (lineMeasurer == null) {
           FontRenderContext frc = g2.getFontRenderContext();
@@ -539,7 +549,7 @@ public class HelpTooltip {
     }
 
     private void init(String text) {
-      setForeground(FONT_COLOR);
+      setForeground(FOREGROUND_COLOR);
       setFont(modifyFont(getFont()));
 
       View v = BasicHTML.createHTMLView(this, String.format("<html>%s</html>", text));
