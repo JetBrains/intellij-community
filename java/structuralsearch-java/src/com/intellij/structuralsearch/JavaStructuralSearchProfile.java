@@ -14,6 +14,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -64,6 +65,10 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     PsiKeyword.INT, PsiKeyword.FLOAT,
     PsiKeyword.CHAR, PsiKeyword.BYTE
   ));
+
+  private static final Key<List<PsiErrorElement>> ERRORS = new Key<>("STRUCTURAL_SEARCH_ERRORS");
+  private static final Comparator<PsiErrorElement> ERROR_COMPARATOR =
+    Comparator.comparingInt(PsiErrorElement::getTextOffset).thenComparing(PsiErrorElement::getErrorDescription);
 
   @Override
   public String getText(PsiElement match, int start, int end) {
@@ -490,7 +495,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       return false;
     }
 
-    final PsiErrorElement error = findErrorElementAt(file, highlightInfo.startOffset);
+    final PsiErrorElement error = findErrorElementAt(file, highlightInfo.startOffset, highlightInfo.getDescription());
     if (error == null) {
       return false;
     }
@@ -539,34 +544,22 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     return true;
   }
 
-  private static PsiErrorElement findErrorElementAt(PsiFile file, int offset) {
-    final PsiElement element1 = file.findElementAt(offset);
-    if (element1 != null) {
-      final PsiElement leaf = PsiTreeUtil.prevLeaf(element1);
-      if (leaf instanceof PsiErrorElement) {
-        return (PsiErrorElement)leaf;
-      }
-      final PsiErrorElement parent = PsiTreeUtil.getParentOfType(element1, PsiErrorElement.class);
-      if (parent != null && parent.getTextRange().getStartOffset() == offset) {
-        return parent;
-      }
-    }
-    if (offset > 0) {
-      final PsiElement element2 = file.findElementAt(offset - 1);
-      if (element2 != null) {
-        PsiElement leaf = PsiTreeUtil.nextLeaf(element2);
-        if (leaf instanceof PsiErrorElement) {
-          return (PsiErrorElement)leaf;
-        }
-        if (leaf != null && leaf.getTextLength() == 0) {
-          leaf = PsiTreeUtil.nextLeaf(leaf);
-        }
-        if (leaf instanceof PsiErrorElement) {
-          return (PsiErrorElement)leaf;
-        }
+  private static PsiErrorElement findErrorElementAt(PsiFile file, int offset, String description) {
+    final List<PsiErrorElement> errorList = ERRORS.get(file, findErrors(file));
+    for (PsiErrorElement element : errorList) {
+      if (element.getTextOffset() == offset && description.equals(element.getErrorDescription())) {
+        return element;
       }
     }
     return null;
+  }
+
+  private static List<PsiErrorElement> findErrors(PsiFile file) {
+    final Collection<PsiErrorElement> errors = PsiTreeUtil.findChildrenOfType(file, PsiErrorElement.class);
+    final List<PsiErrorElement> errorList = new ArrayList<>(errors);
+    Collections.sort(errorList, ERROR_COMPARATOR);
+    file.putUserData(ERRORS, errorList);
+    return errorList;
   }
 
   @Override
