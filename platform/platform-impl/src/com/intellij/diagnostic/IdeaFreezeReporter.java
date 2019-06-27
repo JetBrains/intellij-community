@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.lang.management.ThreadInfo;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -139,7 +140,7 @@ public class IdeaFreezeReporter {
         while (!nodes.isEmpty()) {
           CallTreeNode node = nodes.removeFirst();
           node.appendIndentedString(sb);
-          nodes.addAll(0, node.myChildren);
+          nodes.addAll(0, ContainerUtil.sorted(node.myChildren, CallTreeNode.TIME_COMPARATOR));
         }
         Attachment attachment = new Attachment("report.txt", sb.toString());
         attachment.setIncluded(true);
@@ -170,7 +171,7 @@ public class IdeaFreezeReporter {
     }
     while (!node.myChildren.isEmpty()) {
       CallTreeNode mostHitChild = node.getMostHitChild();
-      if (mostHitChild != null && mostHitChild.myTotalHits > threshold) {
+      if (mostHitChild != null && mostHitChild.myTime > threshold) {
         node = mostHitChild;
       }
       else {
@@ -188,12 +189,11 @@ public class IdeaFreezeReporter {
 
   @NotNull
   private static CallTreeNode buildTree(List<StackTraceElement[]> stacks) {
-    CallTreeNode root = new CallTreeNode(null, null, 0);
+    CallTreeNode root = new CallTreeNode(null, null, 0, 0);
     for (StackTraceElement[] stack : stacks) {
       CallTreeNode node = root;
-      int depth = 1;
       for (int i = stack.length - 1; i >= 0; i--) {
-        node = node.addCallee(stack[i], depth++);
+        node = node.addCallee(stack[i], 1);
       }
     }
     return root;
@@ -203,23 +203,26 @@ public class IdeaFreezeReporter {
     final StackTraceElement myStackTraceElement;
     final CallTreeNode myParent;
     final List<CallTreeNode> myChildren = ContainerUtil.newSmartList();
-    int myTotalHits = 1;
+    long myTime;
     final int myDepth;
 
-    private CallTreeNode(StackTraceElement element, CallTreeNode parent, int depth) {
+    static final Comparator<CallTreeNode> TIME_COMPARATOR = Comparator.<CallTreeNode>comparingLong(n -> n.myTime).reversed();
+
+    private CallTreeNode(StackTraceElement element, CallTreeNode parent, int depth, long time) {
       myStackTraceElement = element;
       myParent = parent;
       myDepth = depth;
+      myTime = time;
     }
 
-    CallTreeNode addCallee(StackTraceElement e, int depth) {
+    CallTreeNode addCallee(StackTraceElement e, long time) {
       for (CallTreeNode child : myChildren) {
         if (PerformanceWatcher.compareStackTraceElements(child.myStackTraceElement, e)) {
-          child.myTotalHits++;
+          child.myTime += time;
           return child;
         }
       }
-      CallTreeNode child = new CallTreeNode(e, this, depth);
+      CallTreeNode child = new CallTreeNode(e, this, myDepth + 1, time);
       myChildren.add(child);
       return child;
     }
@@ -228,7 +231,7 @@ public class IdeaFreezeReporter {
     CallTreeNode getMostHitChild() {
       CallTreeNode currentMax = null;
       for (CallTreeNode child : myChildren) {
-        if (currentMax == null || child.myTotalHits > currentMax.myTotalHits) {
+        if (currentMax == null || child.myTime > currentMax.myTime) {
           currentMax = child;
         }
       }
@@ -237,13 +240,13 @@ public class IdeaFreezeReporter {
 
     @Override
     public String toString() {
-      return myTotalHits + " " + myStackTraceElement;
+      return myTime + " " + myStackTraceElement;
     }
 
     public void appendIndentedString(StringBuilder builder) {
       StringUtil.repeatSymbol(builder, ' ', myDepth);
       builder.append(myStackTraceElement.getClassName()).append(".").append(myStackTraceElement.getMethodName())
-        .append(" ").append(myTotalHits).append("\n");
+        .append(" ").append(myTime).append("\n");
     }
   }
 }
