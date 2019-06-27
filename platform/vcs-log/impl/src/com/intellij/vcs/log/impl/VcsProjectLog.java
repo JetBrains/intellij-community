@@ -12,7 +12,6 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
@@ -25,7 +24,6 @@ import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Map;
 
 import static com.intellij.vcs.log.util.PersistentUtil.LOG_CACHE;
@@ -167,7 +165,7 @@ public class VcsProjectLog implements Disposable {
 
   @Override
   public void dispose() {
-    myLogManager.drop();
+    myLogManager.drop(null);
   }
 
   private class LazyVcsLogManager {
@@ -195,12 +193,8 @@ public class VcsProjectLog implements Disposable {
     }
 
     @CalledInAwt
-    public synchronized void drop() {
-      LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
-      drop(null);
-    }
-
     public synchronized void drop(@Nullable Runnable callback) {
+      LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
       if (myValue != null) {
         LOG.debug("Disposing Vcs Log for " + VcsLogUtil.getProvidersMapText(myValue.getDataManager().getLogProviders()));
         myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed(myValue);
