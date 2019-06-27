@@ -126,20 +126,30 @@ public class VcsProjectLog implements Disposable {
   @CalledInBackground
   private VcsLogManager createLog(@NotNull Map<VirtualFile, VcsLogProvider> logProviders, boolean forceInit) {
     VcsLogManager logManager = myLogManager.getValue(logProviders);
+    initialize(logManager, forceInit);
+    return logManager;
+  }
+
+  @CalledInBackground
+  private static void initialize(@NotNull VcsLogManager logManager, boolean force) {
+    if (force) {
+      logManager.scheduleInitialization();
+      return;
+    }
+
+    if (PostponableLogRefresher.keepUpToDate()) {
+      VcsLogCachesInvalidator invalidator = CachesInvalidator.EP_NAME.findExtension(VcsLogCachesInvalidator.class);
+      if (invalidator.isValid()) {
+        HeavyAwareExecutor.executeOutOfHeavyProcessLater(logManager::scheduleInitialization, 5000);
+        return;
+      }
+    }
 
     ApplicationManager.getApplication().invokeLater(() -> {
-      if (logManager.isLogVisible() || forceInit) {
+      if (logManager.isLogVisible()) {
         logManager.scheduleInitialization();
       }
-      else if (PostponableLogRefresher.keepUpToDate()) {
-        VcsLogCachesInvalidator invalidator = CachesInvalidator.EP_NAME.findExtension(VcsLogCachesInvalidator.class);
-        if (invalidator.isValid()) {
-          HeavyAwareExecutor.executeOutOfHeavyProcessLater(logManager::scheduleInitialization, 5000);
-        }
-      }
     });
-
-    return logManager;
   }
 
   @NotNull
