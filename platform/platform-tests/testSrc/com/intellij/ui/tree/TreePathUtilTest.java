@@ -10,6 +10,7 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
 import static com.intellij.ui.tree.TreeTestUtil.node;
+import static java.util.Arrays.asList;
 
 public class TreePathUtilTest {
   @Test
@@ -87,20 +88,26 @@ public class TreePathUtilTest {
   }
 
   @Test
+  public void convertCollectionToTreePath() {
+    assertTreePath210(TreePathUtil.convertCollectionToTreePath(asList("2", "1", "0")));
+  }
+
+  @Test
+  public void convertCollectionToTreePathConverter() {
+    assertTreePath210(TreePathUtil.convertCollectionToTreePath(asList(2, 1, 0), Object::toString));
+  }
+
+  @Test
   public void convertArrayToTreePath() {
-    TreePath path = TreePathUtil.convertArrayToTreePath("2", "1", "0");
-    Assert.assertNotNull(path);
-    Assert.assertEquals("0", path.getLastPathComponent());
-    Assert.assertNotNull(path.getParentPath());
-    Assert.assertEquals("1", path.getParentPath().getLastPathComponent());
-    Assert.assertNotNull(path.getParentPath().getParentPath());
-    Assert.assertEquals("2", path.getParentPath().getParentPath().getLastPathComponent());
-    Assert.assertNull(path.getParentPath().getParentPath().getParentPath());
+    assertTreePath210(TreePathUtil.convertArrayToTreePath("2", "1", "0"));
   }
 
   @Test
   public void convertArrayToTreePathConverter() {
-    TreePath path = TreePathUtil.convertArrayToTreePath(new Object[]{2, 1, 0}, Object::toString);
+    assertTreePath210(TreePathUtil.convertArrayToTreePath(new Object[]{2, 1, 0}, Object::toString));
+  }
+
+  private static void assertTreePath210(TreePath path) {
     Assert.assertNotNull(path);
     Assert.assertEquals("0", path.getLastPathComponent());
     Assert.assertNotNull(path.getParentPath());
