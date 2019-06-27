@@ -15,9 +15,7 @@ internal class MavenExternalSystemImportProvider : AbstractExternalSystemImportP
     return MavenUtil.isPomFile(file)
   }
 
-  override fun doQuickImport(projectDirectory: String, project: Project) {}
-
-  override fun doImportProject(projectDirectory: String, project: Project) {
+  override fun linkAndRefreshProject(projectDirectory: String, project: Project) {
     try {
       builder.isUpdate = false
       builder.fileToImport = projectDirectory

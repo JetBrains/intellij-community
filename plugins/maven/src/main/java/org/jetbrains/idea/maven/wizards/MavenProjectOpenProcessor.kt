@@ -16,7 +16,7 @@ class MavenProjectOpenProcessor : ProjectOpenProcessor() {
     importProvider.builder.icon
 
   override fun canOpenProject(file: VirtualFile): Boolean =
-    importProvider.canImportProjectFrom(file)
+    importProvider.canSetupProjectFrom(file)
 
   override fun doOpenProject(projectFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? =
     importProvider.openProject(projectFile, projectToClose, forceOpenInNewFrame)
