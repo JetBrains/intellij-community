@@ -38,6 +38,7 @@ interface InlayHintsProvider<T : Any> {
   @get:Nls(capitalization = Nls.Capitalization.Sentence)
     /**
    * Name of this kind of hints. It will be used in settings and in context menu.
+   * Please, do not use word "hints" to avoid duplication
    */
   val name: String
 
