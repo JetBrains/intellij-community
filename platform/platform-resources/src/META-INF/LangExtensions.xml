@@ -17,6 +17,8 @@
                         serviceImplementation="com.intellij.model.psi.impl.PsiSymbolServiceImpl"/>
     <applicationService serviceInterface="com.intellij.model.presentation.SymbolPresentationService"
                         serviceImplementation="com.intellij.model.presentation.impl.SymbolPresentationServiceImpl"/>
+    <applicationService serviceInterface="com.intellij.navigation.SymbolNavigationService"
+                        serviceImplementation="com.intellij.codeInsight.navigation.impl.SymbolNavigationServiceImpl"/>
 
     <psi.declarationProvider implementation="com.intellij.model.psi.impl.DefaultPsiSymbolDeclarationProvider" order="last"/>
 
