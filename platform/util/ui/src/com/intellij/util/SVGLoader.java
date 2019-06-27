@@ -179,6 +179,10 @@ public final class SVGLoader {
   }
 
   public interface SvgColorPatcher {
+
+    /**
+     * @deprecated use {@link #patchColors(URL, Element)}
+     */
     @SuppressWarnings("DeprecatedIsStillUsed")
     @Deprecated
     default void patchColors(@SuppressWarnings("unused") Element svg) {}

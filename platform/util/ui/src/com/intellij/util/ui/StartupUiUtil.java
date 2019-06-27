@@ -168,7 +168,7 @@ public class StartupUiUtil {
   /**
    * A hidpi-aware wrapper over {@link Graphics#drawImage(Image, int, int, int, int, ImageObserver)}.
    * <p>
-   * Note, the method interprets [x,y,width,height] as the destination and source bounds which doesn't conform
+   * @deprecated Note, the method interprets [x,y,width,height] as the destination and source bounds which doesn't conform
    * to the {@link Graphics#drawImage(Image, int, int, int, int, ImageObserver)} method contract. This works
    * just fine for the general-purpose one-to-one drawing, however when the dst and src bounds need to be specific,
    * use {@link #drawImage(Graphics, Image, Rectangle, Rectangle, BufferedImageOp, ImageObserver)}.

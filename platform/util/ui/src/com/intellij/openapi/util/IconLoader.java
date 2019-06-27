@@ -126,6 +126,9 @@ public final class IconLoader {
     updateTransform(transform -> transform.withoutPathPatcher(patcher));
   }
 
+  /**
+   * @deprecated use {@link JBImageIcon}
+   */
   @Deprecated
   @NotNull
   public static Icon getIcon(@NotNull final Image image) {
