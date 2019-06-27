@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
+import com.intellij.diagnostic.hprof.action.HeapDumpSnapshotRunnable;
+import com.intellij.diagnostic.report.MemoryReportReason;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.IdeBundle;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
@@ -55,6 +57,14 @@ public class LowMemoryNotifier implements Disposable {
                                                    IdeBundle.message("low.memory.notification.title"),
                                                    IdeBundle.message("low.memory.notification.content"),
                                                    NotificationType.WARNING);
+      notification.addAction(new NotificationAction(IdeBundle.message("low.memory.notification.analyze.action")) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+          new HeapDumpSnapshotRunnable(MemoryReportReason.LowMemory, HeapDumpSnapshotRunnable.AnalysisOption.SCHEDULE_ON_NEXT_START).run();
+          notification.expire();
+        }
+      });
+
       notification.addAction(new NotificationAction(IdeBundle.message("low.memory.notification.action")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
