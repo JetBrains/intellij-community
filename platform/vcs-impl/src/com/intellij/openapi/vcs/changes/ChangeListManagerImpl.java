@@ -38,10 +38,7 @@ import com.intellij.openapi.vcs.changes.actions.ChangeListRemoveConfirmation;
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction;
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
-import com.intellij.vcs.commit.ChangeListCommitState;
 import com.intellij.openapi.vcs.changes.ui.ChangeListDeltaListener;
-import com.intellij.vcs.commit.DefaultCommitResultHandler;
-import com.intellij.vcs.commit.SingleChangeListCommitter;
 import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
@@ -62,6 +59,9 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.commit.ChangeListCommitState;
+import com.intellij.vcs.commit.DefaultCommitResultHandler;
+import com.intellij.vcs.commit.SingleChangeListCommitter;
 import com.intellij.vcsUtil.VcsUtil;
 import kotlin.text.StringsKt;
 import org.jdom.Element;
@@ -75,6 +75,7 @@ import java.util.concurrent.*;
 import static com.intellij.openapi.progress.util.BackgroundTaskUtil.awaitWithCheckCanceled;
 import static com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED;
 import static com.intellij.util.containers.ContainerUtil.emptyList;
+import static java.util.stream.Collectors.toSet;
 
 @State(name = "ChangeListManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ChangeListManagerImpl extends ChangeListManagerEx implements ProjectComponent, ChangeListOwner, PersistentStateComponent<Element> {
@@ -1165,9 +1166,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Override
   @NotNull
   public Collection<Change> getChangesIn(@NotNull FilePath dirPath) {
-    synchronized (myDataLock) {
-      return myWorker.getChangesUnder(dirPath);
-    }
+    return getAllChanges().stream().filter(change -> isChangeUnder(dirPath, change)).collect(toSet());
+  }
+
+  private static boolean isChangeUnder(@NotNull FilePath parent, @NotNull Change change) {
+    FilePath after = ChangesUtil.getAfterPath(change);
+    FilePath before = ChangesUtil.getBeforePath(change);
+    return after != null && after.isUnder(parent, false) ||
+           !Comparing.equal(before, after) && before != null && before.isUnder(parent, false);
   }
 
   @Override
