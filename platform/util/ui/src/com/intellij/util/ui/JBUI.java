@@ -32,16 +32,26 @@ import java.lang.ref.WeakReference;
  */
 @SuppressWarnings("UseJBColor")
 public class JBUI {
+
+  /**
+   * @deprecated use {@link JBUIScale#sysScale()}
+   */
   @Deprecated
   public static float sysScale() {
     return JBUIScale.sysScale();
   }
 
+  /**
+   * @deprecated use {@link JBUIScale#sysScale(Graphics2D)}
+   */
   @Deprecated
   public static float sysScale(@Nullable Graphics2D g) {
     return JBUIScale.sysScale(g);
   }
 
+  /**
+   * @deprecated use {@link JBUIScale#sysScale(Component)}
+   */
   @Deprecated
   public static float sysScale(@Nullable Component comp) {
     return JBUIScale.sysScale(comp);
@@ -77,11 +87,17 @@ public class JBUI {
     return pixScale(comp != null ? comp.getGraphicsConfiguration() : null);
   }
 
+  /**
+   * @deprecated use {@link JBUIScale#setUserScaleFactor(float)}
+   */
   @Deprecated
   public static float setUserScaleFactor(float scale) {
     return JBUIScale.setUserScaleFactor(scale);
   }
 
+  /**
+   * @deprecated use {@link JBUIScale#scale(float)}
+   */
   @Deprecated
   public static float scale(float f) {
     return JBUIScale.scale(f);
@@ -207,6 +223,9 @@ public class JBUI {
     return JBUIScale.isUsrHiDPI();
   }
 
+  /**
+   * @deprecated use {@link JBUIScale#isUsrHiDPI()}
+   */
   @Deprecated
   public static boolean isUsrHiDPI() {
     return JBUIScale.isUsrHiDPI();
@@ -640,6 +659,9 @@ public class JBUI {
         return getInt("ToolWindow.HeaderTab.verticalPadding", JBUIScale.scale(6));
       }
 
+      /**
+       * @deprecated obsolete UI
+       */
       @NotNull
       @Deprecated
       public static Border tabBorder() {

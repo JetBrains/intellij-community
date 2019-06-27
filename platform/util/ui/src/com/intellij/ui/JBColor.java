@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.util.NotNullProducer;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -96,6 +97,9 @@ public class JBColor extends Color {
     return null;
   }
 
+  /**
+   * @deprecated use {@link JBUI.CurrentTheme.Link#linkColor()}
+   */
   @NotNull
   @Deprecated
   public static Color link() {

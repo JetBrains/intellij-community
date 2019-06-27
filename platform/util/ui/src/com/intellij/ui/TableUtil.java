@@ -220,7 +220,7 @@ public class TableUtil {
   }
 
   /**
-   * Deprecated because doesn't take into account column margin.
+   * @deprecated doesn't take into account column margin.
    * Use {@link #setupCheckboxColumn(JTable, int)} instead.
    * Or use {@link #setupCheckboxColumn(TableColumn, int)} with {@link TableColumnModel#getColumnMargin()} accounted for.
    */
