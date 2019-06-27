@@ -5,6 +5,7 @@ import com.intellij.ide.caches.CachesInvalidator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -14,6 +15,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
@@ -86,10 +88,10 @@ public class VcsProjectLog implements Disposable {
 
   @CalledInAny
   private void recreateLog() {
-    UIUtil.invokeLaterIfNeeded(() -> disposeLog(() -> {
+    GuiUtils.invokeLaterIfNeeded(() -> disposeLog(() -> {
       if (myProject.isDisposed()) return;
       createLog(false);
-    }));
+    }), ModalityState.any());
   }
 
   @CalledInAwt
@@ -144,7 +146,7 @@ public class VcsProjectLog implements Disposable {
       if (logManager.isLogVisible()) {
         logManager.scheduleInitialization();
       }
-    });
+    }, ModalityState.any());
   }
 
   @CalledInAwt
@@ -152,7 +154,8 @@ public class VcsProjectLog implements Disposable {
     VcsLogManager logManager = myLogManager.dropValue();
     if (logManager != null) {
       logManager.dispose(callback);
-    } else if (callback != null) {
+    }
+    else if (callback != null) {
       ApplicationManager.getApplication().executeOnPooledThread(callback);
     }
   }
@@ -196,7 +199,7 @@ public class VcsProjectLog implements Disposable {
         myValue = value;
         ApplicationManager.getApplication().invokeLater(() -> {
           if (!myProject.isDisposed()) myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logCreated(value);
-        });
+        }, ModalityState.any());
       }
       return myValue;
     }
