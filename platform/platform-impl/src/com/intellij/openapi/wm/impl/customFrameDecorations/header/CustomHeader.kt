@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.ui.UISettings
 import com.intellij.jdkEx.JdkEx
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
@@ -49,7 +50,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
 
     private var windowListener: WindowAdapter
     private val myComponentListener: ComponentListener
-    private val myIconProvider = ScaleContext.Cache { ctx -> AppUIUtil.loadSmallApplicationIcon(ctx) }
+    private val myIconProvider = ScaleContext.Cache { ctx -> AppUIUtil.loadSmallApplicationIcon(ctx, (16 * UISettings.defFontScale).toInt()) }
 
     protected var myActive = false
     protected val windowRootPane: JRootPane? = when (window) {
@@ -64,7 +65,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     private val icon: Icon
         get() {
             val ctx = ScaleContext.create(window)
-            ctx.overrideScale(ScaleType.USR_SCALE.of(1.0))
+            ctx.overrideScale(ScaleType.USR_SCALE.of(UISettings.defFontScale.toDouble()))
             return myIconProvider.getOrProvide(ctx)!!
         }
 
