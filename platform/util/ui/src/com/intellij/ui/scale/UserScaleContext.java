@@ -18,6 +18,7 @@ import java.util.function.Function;
  *
  * @see ScaleContextAware
  * @see ScaleContext
+ * @author tav
  */
 public class UserScaleContext {
   protected Scale usrScale = ScaleType.USR_SCALE.of(JBUIScale.scale(1f));
@@ -154,6 +155,13 @@ public class UserScaleContext {
    * Applies the scale of the provided type to {@code value} and returns the result.
    */
   public double apply(double value, DerivedScaleType type) {
+    return value * getScale(type);
+  }
+
+  /**
+   * Applies the scale of the provided type to {@code value} and returns the result.
+   */
+  public double apply(double value, ScaleType type) {
     return value * getScale(type);
   }
 

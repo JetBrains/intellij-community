@@ -40,6 +40,8 @@ import java.awt.image.ImageObserver;
  * @see com.intellij.util.ui.UIUtil#createImage(GraphicsConfiguration, int, int, int)
  * @see com.intellij.util.ui.UIUtil#createImage(int, int, int)
  * @see ScaleContext
+ *
+ * @author tav
  */
 public enum ScaleType {
   /**

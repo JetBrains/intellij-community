@@ -5,6 +5,8 @@ import java.awt.*;
 
 /**
  * The scale factors derived from the {@link ScaleType} scale factors. Used for convenience.
+ *
+ * @author tav
  */
 public enum DerivedScaleType {
   /**
