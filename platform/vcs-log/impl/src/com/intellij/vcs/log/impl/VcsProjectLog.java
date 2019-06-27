@@ -118,16 +118,11 @@ public class VcsProjectLog implements Disposable {
   VcsLogManager createLog(boolean forceInit) {
     Map<VirtualFile, VcsLogProvider> logProviders = getLogProviders();
     if (!logProviders.isEmpty()) {
-      return createLog(logProviders, forceInit);
+      VcsLogManager logManager = myLogManager.getValue(logProviders);
+      initialize(logManager, forceInit);
+      return logManager;
     }
     return null;
-  }
-
-  @CalledInBackground
-  private VcsLogManager createLog(@NotNull Map<VirtualFile, VcsLogProvider> logProviders, boolean forceInit) {
-    VcsLogManager logManager = myLogManager.getValue(logProviders);
-    initialize(logManager, forceInit);
-    return logManager;
   }
 
   @CalledInBackground
