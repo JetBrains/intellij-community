@@ -122,8 +122,12 @@ class MacDmgBuilder {
     }
 
     ftpAction("mkdir") {}
-    signMacZip(sitFile, jreArchivePath, notarize)
-    buildDmg(targetName)
+    try {
+      signMacZip(sitFile, jreArchivePath, notarize)
+      buildDmg(targetName)
+    } finally {
+      deleteRemoteDir()
+    }
   }
 
   private void buildDmg(String targetFileName) {
@@ -149,7 +153,6 @@ class MacDmgBuilder {
         include(name: "**/${targetFileName}.dmg")
       }
     }
-    deleteRemoteDir()
     def dmgFilePath = "$artifactsPath/${targetFileName}.dmg"
     if (!new File(dmgFilePath).exists()) {
       buildContext.messages.error("Failed to build .dmg file")
