@@ -16,6 +16,7 @@
 package com.intellij.openapi.diff.impl.patch.formove;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -90,7 +91,9 @@ public class TriggerAdditionOrDeletion {
         }
         askUserIfNeeded(vcs, filePaths, VcsConfiguration.StandardConfirmation.REMOVE);
         myAffected.addAll(filePaths);
-        localChangesProvider.scheduleMissingFileForDeletion(filePaths);
+        ProgressManager.getInstance()
+          .runProcessWithProgressSynchronously(() -> localChangesProvider.scheduleMissingFileForDeletion(filePaths),
+                                               "Removing Files from VCS...", true, myProject);
       }
     }
     if (myPreparedAddition != null) {
@@ -117,8 +120,9 @@ public class TriggerAdditionOrDeletion {
           }
           return true;
         });
-        //virtual files collection shouldn't contain 'null' vf
-        localChangesProvider.scheduleUnversionedFilesForAddition(virtualFiles);
+        ProgressManager.getInstance()
+          .runProcessWithProgressSynchronously(() -> localChangesProvider.scheduleUnversionedFilesForAddition(virtualFiles),
+                                               "Adding Files to VCS...", true, myProject);
       }
       //if some errors occurred  -> notify
       if (!incorrectFilePath.isEmpty()) {
