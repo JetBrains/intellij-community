@@ -38,6 +38,8 @@
             id="circletScriptRunLineMarkerProvider"
             implementationClass="circlet.plugins.pipelines.services.CircletScriptRunLineMarkerProvider"/>
 
+        <configurationType implementation="circlet.plugins.pipelines.services.run.CircletRunConfigurationType"/>
+
     </extensions>
 
     <!--pipelines-->
