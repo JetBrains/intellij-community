@@ -55,7 +55,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   protected final int myCurrentWidth;
 
   @FunctionalInterface
-  protected interface TooltipReloader {
+  public interface TooltipReloader {
     void reload(boolean toExpand);
   }
 
@@ -104,7 +104,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
                               final boolean alignToRight,
                               @NotNull final TooltipGroup group,
                               @NotNull final HintHint hintHint) {
-    LightweightHint hint = createHint(editor, p, alignToRight, group, hintHint, true);
+    LightweightHint hint = createHint(editor, p, alignToRight, group, hintHint, true, null);
     if (hint != null) {
       HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, p, HintManager.HIDE_BY_ANY_KEY |
                                                                         HintManager.HIDE_BY_TEXT_CHANGE |
@@ -119,7 +119,8 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
                                     final boolean alignToRight,
                                     @NotNull final TooltipGroup group,
                                     @NotNull final HintHint hintHint,
-                                    boolean highlightActions) {
+                                    boolean highlightActions,
+                                    @Nullable TooltipReloader tooltipReloader) {
     if (myText == null) return null;
 
     //setup text
@@ -194,7 +195,9 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     };
 
 
-    TooltipReloader reloader = toExpand -> reloadFor(hint, editor, p, editorPane, alignToRight, group, hintHint, toExpand);
+    TooltipReloader reloader = tooltipReloader == null
+                               ? toExpand -> reloadFor(hint, editor, p, editorPane, alignToRight, group, hintHint, toExpand)
+                               : tooltipReloader;
 
     actions.add(new AnAction() {
       // an action to expand description when tooltip was shown after mouse move; need to unregister from editor component
@@ -417,7 +420,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   }
 
   @NotNull
-  protected LineTooltipRenderer createRenderer(@Nullable String text, int width) {
+  public LineTooltipRenderer createRenderer(@Nullable String text, int width) {
     return new LineTooltipRenderer(text, width, getEqualityObjects());
   }
 
