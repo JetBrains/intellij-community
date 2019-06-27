@@ -910,4 +910,18 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
            "    }\n" +
            "  }}", "<weak_warning descr=\"Key 'myPropertyXxx' is deprecated: Baz\">myPropertyXxx</weak_warning>: a");
   }
+
+  public void testPropertyNameSchema() throws Exception {
+    doTest("{\n" +
+           "  \"type\": \"object\",\n" +
+           "  \"patternProperties\": {\n" +
+           "    \".*\": {\n" +
+           "      \"type\": \"boolean\"\n" +
+           "    }\n" +
+           "  },\n" +
+           "  \"propertyNames\": {\n" +
+           "    \"enum\": [\"a\", \"b\"]\n" +
+           "  }\n" +
+           "}", "<warning>r</warning>: true");
+  }
 }
