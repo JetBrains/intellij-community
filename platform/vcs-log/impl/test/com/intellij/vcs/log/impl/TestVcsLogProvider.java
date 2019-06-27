@@ -3,12 +3,12 @@ package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import org.jetbrains.annotations.NotNull;
@@ -47,8 +47,6 @@ public class TestVcsLogProvider implements VcsLogProvider {
   @NotNull private final ReducibleSemaphore myFullLogSemaphore;
   @NotNull private final ReducibleSemaphore myRefreshSemaphore;
   @NotNull private final AtomicInteger myReadFirstBlockCounter = new AtomicInteger();
-
-  private Function<? super VcsLogFilterCollection, ? extends List<TimedVcsCommit>> myFilteredCommitsProvider;
 
   public TestVcsLogProvider() {
     myCommits = new ArrayList<>();
@@ -131,17 +129,12 @@ public class TestVcsLogProvider implements VcsLogProvider {
     throw new UnsupportedOperationException();
   }
 
-  public void setFilteredCommitsProvider(@NotNull Function<? super VcsLogFilterCollection, ? extends List<TimedVcsCommit>> provider) {
-    myFilteredCommitsProvider = provider;
-  }
-
   @NotNull
   @Override
   public List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull VirtualFile root,
                                                        @NotNull VcsLogFilterCollection filterCollection,
-                                                       int maxCount) {
-    if (myFilteredCommitsProvider == null) throw new UnsupportedOperationException();
-    return myFilteredCommitsProvider.fun(filterCollection);
+                                                       int maxCount) throws VcsException {
+    throw new UnsupportedOperationException();
   }
 
   @Nullable

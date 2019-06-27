@@ -89,15 +89,17 @@ class VisiblePackBuilderTest {
       4()              +null
     }
 
-    val func = Function<VcsLogFilterCollection, MutableList<TimedVcsCommit>> {
-      ArrayList(listOf(2, 3, 4).map { commitId ->
-        graph.allCommits.firstOrNull { commit ->
-          commit.id == commitId
-        }!!.toVcsCommit(graph.hashMap)
-      })
+    val provider = object : TestVcsLogProvider() {
+      override fun getCommitsMatchingFilter(root: VirtualFile,
+                                            filterCollection: VcsLogFilterCollection,
+                                            maxCount: Int): List<TimedVcsCommit> {
+        return listOf(2, 3, 4).map { commitId ->
+          graph.allCommits.first { it.id == commitId }.toVcsCommit(graph.hashMap)
+        }
+      }
     }
+    graph.providers = graph.roots.associateWith { provider }
 
-    graph.providers.entries.iterator().next().value.setFilteredCommitsProvider(func)
     val visiblePack = graph.build(VcsLogFilterObject.collection(VcsLogFilterObject.fromBranchPatterns(setOf("-master"), setOf("master")),
                                                                 VcsLogFilterObject.fromUser((DEFAULT_USER))))
     val visibleGraph = visiblePack.visibleGraph
@@ -153,13 +155,14 @@ class VisiblePackBuilderTest {
     val filters = VcsLogFilterObject.collection(VcsLogFilterObject.fromRange("master", "feature"),
                                                 VcsLogFilterObject.fromPaths(listOf(filePath)))
 
-    graph.providers.entries.first().value.setFilteredCommitsProvider(Function<VcsLogFilterCollection, List<TimedVcsCommit>> {
-      listOf(2).map { commitId ->
-        graph.allCommits.firstOrNull { commit ->
-          commit.id == commitId
-        }!!.toVcsCommit(graph.hashMap)
+    val provider = object : TestVcsLogProvider() {
+      override fun getCommitsMatchingFilter(root: VirtualFile,
+                                            filterCollection: VcsLogFilterCollection,
+                                            maxCount: Int): List<TimedVcsCommit> {
+        return listOf(graph.allCommits.first { it.id == 2 }.toVcsCommit(graph.hashMap))
       }
-    })
+    }
+    graph.providers = graph.roots.associateWith { provider }
 
     val visiblePack = graph.build(filters)
     assertCommits(visiblePack.visibleGraph, 2)
@@ -251,7 +254,8 @@ class VisiblePackBuilderTest {
 
   inner class MultiRootGraph(private val graphsByRoots: Map<VirtualFile, SingleRootGraph>) {
 
-    val providers: Map<VirtualFile, TestVcsLogProvider> = graphsByRoots.mapValues { TestVcsLogProvider() }
+    val roots = graphsByRoots.keys
+    var providers: Map<VirtualFile, TestVcsLogProvider> = graphsByRoots.mapValues { TestVcsLogProvider() }
 
     val commits: Map<VirtualFile, List<GraphCommit<Int>>> = graphsByRoots.mapValues { it.value.commits }
     val allCommits = commits.values.flatten()
@@ -442,4 +446,3 @@ class VisiblePackBuilderTest {
     }
   }
 }
-
