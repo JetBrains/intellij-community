@@ -15,6 +15,12 @@ public class FunctionalExpressionsIdentityInspectionTest extends LightInspection
   public void testFunctionalExpressionsIdentity() {
     doTest();
   }
+  public void testFunctionalExpressionsIdentityAddAll() {
+    doTest();
+  }
+  public void testFunctionalExpressionsIdentityInheritance() {
+    doTest();
+  }
 
   @Override
   protected String[] getEnvironmentClasses() {

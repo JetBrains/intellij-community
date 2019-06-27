@@ -21,6 +21,5 @@ public class FunctionalExpressionsIdentity {
 
     Set <warning descr="Set 'set2' may contain key of functional interface type">set2</warning> = new HashSet();
     set2.add(func);
-
   }
 }

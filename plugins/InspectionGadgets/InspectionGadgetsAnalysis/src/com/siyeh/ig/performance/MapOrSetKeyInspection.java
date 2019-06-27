@@ -213,12 +213,12 @@ public abstract class MapOrSetKeyInspection extends BaseInspection {
         valueOfInterestAdded = true;
       }
       else if (methodName.endsWith("All")) {
-        PsiClass classNameN = PsiUtil.resolveClassInClassTypeOnly(argumentType);
+        PsiClass className = PsiUtil.resolveClassInClassTypeOnly(argumentType);
         PsiType[] parameterList = ((PsiClassType)argumentType).getParameters();
         if (parameterList.length == 0) {
           return;
         }
-        ClassType argumentClassType = isMapOrSet(classNameN, new HashSet<>());
+        ClassType argumentClassType = isMapOrSet(className, new HashSet<>());
         if (ClassType.MAP == argumentClassType || ClassType.SET == argumentClassType) {
           if (parameterList[0] != null) {
             PsiType keyType = parameterList[0];
