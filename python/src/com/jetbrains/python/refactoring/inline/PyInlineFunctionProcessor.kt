@@ -235,7 +235,8 @@ class PyInlineFunctionProcessor(project: Project,
       if (returnStatements.size == 1 && returnStatements[0].expression !is PyTupleExpression) {
         // replace single return with expression itself
         val statement = returnStatements[0]
-        callSite.replace(statement.expression!!)
+        val replaced = callSite.replace(statement.expression!!)
+        PyClassRefactoringUtil.restoreNamedReferences(replaced)
         statement.delete()
       }
       else if (returnStatements.isNotEmpty())  {
@@ -261,9 +262,11 @@ class PyInlineFunctionProcessor(project: Project,
             .forEach { insertElement(it) }
         }
         val statements = if (hasDocstring) replacementFunction.statements.drop(1) else replacementFunction.statements.toList()
-        statements.asSequence()
-          .map { insertElement(it) }
-          .forEach { PyClassRefactoringUtil.restoreNamedReferences(it) }
+        if (statements.size > 1 || statements.firstOrNull() !is PyPassStatement) {
+          statements.asSequence()
+            .map { insertElement(it) }
+            .forEach { PyClassRefactoringUtil.restoreNamedReferences(it) }
+        }
       }
 
       if (returnStatements.isEmpty()) {
