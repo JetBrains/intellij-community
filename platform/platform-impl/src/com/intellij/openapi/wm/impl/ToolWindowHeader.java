@@ -15,7 +15,8 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.tabs.impl.TabsHeightController;
+import com.intellij.ui.tabs.JBTabsFactory;
+import com.intellij.ui.tabs.newImpl.TabsHeightController;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -58,13 +59,75 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
 
     myToolWindow = toolWindow;
 
-    setLayout(new MigLayout("novisualpadding, ins 0, gap 0, fill", "[grow][pref!]"));
-    myWestPanel = new NonOpaquePanel(new MigLayout("filly, novisualpadding, ins 0, gap 0"));
+    if (JBTabsFactory.getUseNewTabs()) {
+      setLayout(new MigLayout("novisualpadding, ins 0, gap 0, fill", "[grow][pref!]"));
+      myWestPanel = new NonOpaquePanel(new MigLayout("filly, novisualpadding, ins 0, gap 0"));
 
-    add(myWestPanel, "grow");
-    myWestPanel.add(toolWindow.getContentUI().getTabComponent(), "growy");
+      add(myWestPanel, "grow");
+      myWestPanel.add(toolWindow.getContentUI().getTabComponent(), "growy");
 
-    TabsHeightController.registerActive(this, this);
+      TabsHeightController.registerActive(this, this);
+    }
+    else {
+      setLayout(new BorderLayout());
+
+      myWestPanel = new NonOpaquePanel() {
+        @Override
+        public void doLayout() {
+          if (getComponentCount() == 1) {
+            Rectangle r = getBounds();
+
+            Insets insets = getInsets();
+
+            Component c = getComponent(0);
+            Dimension size = c.getPreferredSize();
+            if (size.width < r.width - insets.left - insets.right) {
+              c.setBounds(insets.left, insets.top, size.width, r.height - insets.top - insets.bottom);
+            }
+            else {
+              c.setBounds(insets.left, insets.top, r.width - insets.left - insets.right, r.height - insets.top - insets.bottom);
+            }
+          }
+          else if (getComponentCount() > 1) {
+            Rectangle r = getBounds();
+
+            Component c = getComponent(0);
+
+            Dimension min = c.getMinimumSize();
+            Dimension size = c.getPreferredSize();
+
+            int width2 = getComponentCount() > 1 ? getComponent(1).getMinimumSize().width : 0;
+
+            if (min.width > r.width - width2) {
+              c.setBounds(0, 0, min.width, r.height);
+            }
+            else if (size.width < r.width - width2) {
+              c.setBounds(0, 0, size.width, r.height);
+            }
+            else {
+              c.setBounds(0, 0, r.width - width2, r.height);
+            }
+
+            if (getComponentCount() > 1) {
+              getComponent(1).setBounds(c.getWidth(), 0, getComponent(1).getMinimumSize().width, r.height);
+            }
+          }
+        }
+
+        @Override
+        public Dimension getMinimumSize() {
+          Dimension size = super.getMinimumSize();
+          if (getComponentCount() > 0) {
+            size.width = Math.max(size.width, getComponent(0).getMinimumSize().width +
+                                              (getComponentCount() > 1 ? getComponent(1).getMinimumSize().width : 0));
+          }
+          return size;
+        }
+      };
+
+      add(myWestPanel, BorderLayout.CENTER);
+      myWestPanel.add(toolWindow.getContentUI().getTabComponent());
+    }
 
     ToolWindowContentUi.initMouseListeners(myWestPanel, toolWindow.getContentUI(), true);
 
@@ -77,9 +140,18 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     myToolbar.setReservePlaceAutoPopupIcon(false);
 
     JComponent component = myToolbar.getComponent();
-    component.setBorder(JBUI.Borders.empty(2, 0));
-    component.setOpaque(false);
-    add(component);
+
+    if (JBTabsFactory.getUseNewTabs()) {
+      component.setBorder(JBUI.Borders.empty(2, 0));
+      component.setOpaque(false);
+      add(component);
+    }
+    else {
+      int padding = JBUI.CurrentTheme.ToolWindow.tabVerticalPaddingOld();
+      component.setBorder(BorderFactory.createEmptyBorder(padding, 0, padding, 0));
+      component.setOpaque(false);
+      add(component, BorderLayout.EAST);
+    }
 
     myWestPanel.addMouseListener(new PopupHandler() {
       @Override
@@ -115,7 +187,12 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     });
 
     setOpaque(true);
-    setBorder(JBUI.Borders.empty(0));
+    if (JBTabsFactory.getUseNewTabs()) {
+      setBorder(JBUI.Borders.empty(0));
+    }
+    else {
+      setBorder(JBUI.CurrentTheme.ToolWindow.tabBorder());
+    }
 
     new DoubleClickListener() {
       @Override
@@ -147,7 +224,13 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
 
     JComponent component = myToolbarWest.getComponent();
     component.setOpaque(false);
-    component.setBorder(JBUI.Borders.empty());
+    if (JBTabsFactory.getUseNewTabs()) {
+      component.setBorder(JBUI.Borders.empty());
+    }
+    else {
+      int padding = JBUI.CurrentTheme.ToolWindow.tabVerticalPaddingOld();
+      component.setBorder(BorderFactory.createEmptyBorder(padding, 0, padding, 0));
+    }
 
     westPanel.add(component);
   }

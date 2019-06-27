@@ -4,29 +4,39 @@ package com.intellij.ui.tabs
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.ui.tabs.impl.JBEditorTabs
-import com.intellij.ui.tabs.impl.JBTabsImpl
+import com.intellij.ui.tabs.newImpl.JBEditorTabs
+import com.intellij.ui.tabs.newImpl.JBTabsImpl
 
 /**
  * @author yole
  */
 object JBTabsFactory {
   @JvmStatic
-  val useNewTabs = true //todo remove this legacy flag
+  val useNewTabs = Registry.`is`("ide.new.tabs")
 
   @JvmStatic
   fun createTabs(project: Project): JBTabs {
-    return JBTabsImpl(project)
+    if (useNewTabs) {
+      return JBTabsImpl(project)
+    }
+    return com.intellij.ui.tabs.impl.JBTabsImpl(project)
   }
 
   @JvmStatic
   fun createTabs(project: Project?, parentDisposable: Disposable): JBTabs {
-    return JBTabsImpl(project, ActionManager.getInstance(), project?.let { IdeFocusManager.getInstance(it) }, parentDisposable)
+    if (useNewTabs) {
+      return JBTabsImpl(project, ActionManager.getInstance(), project?.let { IdeFocusManager.getInstance(it) }, parentDisposable)
+    }
+    return com.intellij.ui.tabs.impl.JBTabsImpl(project, ActionManager.getInstance(), project?.let { IdeFocusManager.getInstance(it) }, parentDisposable)
   }
 
   @JvmStatic
   fun createEditorTabs(project: Project?, parentDisposable: Disposable): JBEditorTabsBase {
-    return JBEditorTabs(project, ActionManager.getInstance(), project?.let { IdeFocusManager.getInstance(it) }, parentDisposable)
+    if (useNewTabs) {
+      return JBEditorTabs(project, ActionManager.getInstance(), project?.let { IdeFocusManager.getInstance(it) }, parentDisposable)
+    }
+    return com.intellij.ui.tabs.impl.JBEditorTabs(project, ActionManager.getInstance(), project?.let { IdeFocusManager.getInstance(it) }, parentDisposable)
   }
 }

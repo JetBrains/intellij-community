@@ -16,10 +16,12 @@ import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tabs.JBTabPainter;
+import com.intellij.ui.tabs.JBTabsFactory;
 import com.intellij.ui.tabs.JBTabsPosition;
-import com.intellij.ui.tabs.impl.singleRow.MoreTabsIcon;
+import com.intellij.ui.tabs.newImpl.singleRow.MoreTabsIcon;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.BaseButtonBehavior;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -274,18 +276,34 @@ class TabContentLayout extends ContentLayout {
 
     Graphics2D g2d = (Graphics2D)g.create();
     for (ContentTabLabel each : myTabs) {
-      //TODO set borderThickness
-      int borderThickness = JBUIScale.scale(1);
-      Rectangle r = each.getBounds();
+      if (JBTabsFactory.getUseNewTabs()) {
+        //TODO set borderThickness
+        int borderThickness = JBUIScale.scale(1);
+        Rectangle r = each.getBounds();
 
-      g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-      if (each.isSelected()) {
-        tabPainter.paintSelectedTab(JBTabsPosition.top, g2d, r, borderThickness, null, myUi.myWindow.isActive(), each.isHovered(),
-                                    myTabs.size() == 1);
+        if (each.isSelected()) {
+          tabPainter.paintSelectedTab(JBTabsPosition.top, g2d, r, borderThickness, null, myUi.myWindow.isActive(), each.isHovered(), myTabs.size() == 1);
+        }
+        else {
+          tabPainter.paintTab(JBTabsPosition.top, g2d, r, borderThickness, null, each.isHovered());
+        }
       }
       else {
-        tabPainter.paintTab(JBTabsPosition.top, g2d, r, borderThickness, null, each.isHovered());
+        if (each.isSelected() || each.isHovered()) {
+          Color color = each.isSelected() ?
+                        JBUI.CurrentTheme.ToolWindow.tabSelectedBackground(myUi.myWindow.isActive()) :
+                        JBUI.CurrentTheme.ToolWindow.tabHoveredBackground(myUi.myWindow.isActive());
+
+          Rectangle r = each.getBounds();
+          g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+          g2d.setColor(color);
+
+          g2d.fillRect(isIdVisible() ? r.x : r.x - 2, r.y, r.width, r.height);
+          g2d.dispose();
+        }
       }
     }
     g2d.dispose();
