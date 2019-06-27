@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.uast.java
 
@@ -25,7 +25,7 @@ open class JavaUMethod(
     getLanguagePlugin().convertElement(body, this) as? UExpression
   }
 
-  override val annotations: List<JavaUAnnotation> by lz { sourcePsi.annotations.map { JavaUAnnotation(it, this) } }
+  override val uAnnotations: List<JavaUAnnotation> by lz { sourcePsi.annotations.map { JavaUAnnotation(it, this) } }
 
   override val uastParameters: List<JavaUParameter> by lz {
     sourcePsi.parameterList.parameters.map { JavaUParameter(it, this) }

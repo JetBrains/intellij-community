@@ -101,7 +101,7 @@ private class UnstableTypeUsedInSignatureVisitor(
   }
 
   private fun isInsideUnstableDeclaration(node: UDeclaration): Boolean {
-    if (node.annotations.any { it.qualifiedName in unstableApiAnnotations }) {
+    if (node.uAnnotations.any { it.qualifiedName in unstableApiAnnotations }) {
       return true
     }
     val containingClass = node.getContainingUClass()

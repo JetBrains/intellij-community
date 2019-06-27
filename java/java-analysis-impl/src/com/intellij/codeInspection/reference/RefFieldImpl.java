@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -126,7 +126,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
     if (uField != null) {
       final RefJavaUtil refUtil = RefJavaUtil.getInstance();
       refUtil.addReferencesTo(uField, this, uField.getUastInitializer());
-      refUtil.addReferencesTo(uField, this, ((UAnnotated)uField).getAnnotations().toArray(UElementKt.EMPTY_ARRAY));
+      refUtil.addReferencesTo(uField, this, ((UAnnotated)uField).getUAnnotations().toArray(UElementKt.EMPTY_ARRAY));
       if (uField instanceof UEnumConstant) {
         refUtil.addReferencesTo(uField, this, uField);
       }
