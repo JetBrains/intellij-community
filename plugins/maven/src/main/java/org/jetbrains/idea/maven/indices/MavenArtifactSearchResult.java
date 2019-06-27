@@ -14,13 +14,18 @@ import java.util.List;
 
 
 public class MavenArtifactSearchResult {
+  /**
+   *  @deprecated use getSearchResults instead
+   */
   @Deprecated
-  /* @deprecated use getSearchResults instead */
   public List<MavenArtifactInfo> versions;
 
   private  MavenRepositoryArtifactInfo myInfo;
 
 
+  /**
+   * @deprecated use {@link #MavenArtifactSearchResult(MavenRepositoryArtifactInfo)}
+   */
   @Deprecated
   public MavenArtifactSearchResult() {
     this(new MavenRepositoryArtifactInfo("", "", new MavenDependencyCompletionItem[0]));

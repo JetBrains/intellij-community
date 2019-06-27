@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.projectImport.SelectImportedProjectsStep;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -20,7 +21,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 
-@Deprecated
+@ApiStatus.Experimental
 public final class MavenProjectImportProvider extends ProjectImportProvider {
   @Override
   protected ProjectImportBuilder doGetBuilder() {

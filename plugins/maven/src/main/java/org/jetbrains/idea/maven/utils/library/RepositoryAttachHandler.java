@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 
 /**
  * This class is deprecated and is to be removed in future releases
- * Use {@link JarRepositoryManager} instead
+ * @deprecated Use {@link JarRepositoryManager} instead
  */
 @ApiStatus.ScheduledForRemoval
 @Deprecated

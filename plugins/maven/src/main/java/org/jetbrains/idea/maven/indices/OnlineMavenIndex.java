@@ -8,7 +8,10 @@ import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 import java.io.File;
 
-/*this class used only for backward compatibility for legacy code, which expect to get MavenIndices. To be removed in future releases*/
+/**
+ * @deprecated this class used only for backward compatibility for legacy code, which expect to get MavenIndices. To be removed in future releases
+ */
+@Deprecated
 @ApiStatus.ScheduledForRemoval
 public class OnlineMavenIndex implements MavenSearchIndex {
   private final String myRepositoryId;
