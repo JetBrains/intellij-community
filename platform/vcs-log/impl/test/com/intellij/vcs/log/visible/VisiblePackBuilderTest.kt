@@ -161,6 +161,14 @@ class VisiblePackBuilderTest {
                                             maxCount: Int): List<TimedVcsCommit> {
         return listOf(graph.allCommits.first { it.id == 2 }.toVcsCommit(graph.hashMap))
       }
+
+      override fun resolveReference(ref: String, root: VirtualFile): Hash? {
+        return when (ref) {
+          "master" -> graph.getHash(1)
+          "feature" -> graph.getHash(2)
+          else -> null
+        }
+      }
     }
     graph.providers = graph.roots.associateWith { provider }
 
@@ -310,7 +318,7 @@ class VisiblePackBuilderTest {
 
   fun VcsLogStorage.getHashes(ids: List<Int>) = ids.map { getCommitId(it)!!.hash }
 
-  private fun graph(f: GraphBuilder.() -> Unit): VisiblePackBuilderTest.MultiRootGraph {
+  private fun graph(f: GraphBuilder.() -> Unit): MultiRootGraph {
     return multiRootGraph {
       root(MockVirtualFile("root")) {
         f()
