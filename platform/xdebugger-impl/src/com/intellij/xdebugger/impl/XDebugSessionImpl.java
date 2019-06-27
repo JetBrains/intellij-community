@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.execution.ExecutionManager;
@@ -708,7 +708,7 @@ public class XDebugSessionImpl implements XDebugSession {
       if (timestamp != 0 && XDebuggerUtilImpl.getVerifiedIcon(breakpoint).equals(icon)) {
         long delay = System.currentTimeMillis() - timestamp;
         presentation.setTimestamp(0);
-        BreakpointsUsageCollector.reportUsage(breakpoint, "verified." + (int)Math.pow(10, (int)Math.log10(delay)) + "+");
+        BreakpointsUsageCollector.reportBreakpointVerified(breakpoint, delay);
       }
     }
     myDebuggerManager.getBreakpointManager().getLineBreakpointManager().queueBreakpointUpdate((XLineBreakpointImpl<?>)breakpoint);
@@ -1006,7 +1006,7 @@ public class XDebugSessionImpl implements XDebugSession {
         CustomizedBreakpointPresentation presentation = getBreakpointPresentation(breakpoint);
         if (presentation != null) {
           if (XDebuggerUtilImpl.getVerifiedIcon(breakpoint).equals(presentation.getIcon())) {
-            BreakpointsUsageCollector.reportUsage(breakpoint, "verified.0");
+            BreakpointsUsageCollector.reportBreakpointVerified(breakpoint, 0);
           }
           else {
             presentation.setTimestamp(System.currentTimeMillis());
