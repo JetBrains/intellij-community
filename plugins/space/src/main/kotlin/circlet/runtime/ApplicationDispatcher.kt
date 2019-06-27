@@ -1,8 +1,8 @@
 package circlet.runtime
 
 import com.intellij.openapi.application.*
-import klogging.*
 import kotlinx.coroutines.*
+import libraries.klogging.*
 import runtime.*
 import java.util.concurrent.*
 import kotlin.coroutines.*

@@ -9,7 +9,7 @@ import circlet.utils.*
 import circlet.workspaces.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.options.*
-import klogging.*
+import libraries.klogging.*
 import runtime.*
 import runtime.async.*
 import runtime.persistence.*

@@ -6,7 +6,7 @@ import circlet.klogging.impl.*
 import circlet.platform.api.serialization.*
 import circlet.runtime.*
 import com.intellij.openapi.components.*
-import klogging.impl.*
+import libraries.klogging.KLoggerStaticFactory
 import runtime.*
 
 class CircletApplicationComponent : ApplicationComponent {

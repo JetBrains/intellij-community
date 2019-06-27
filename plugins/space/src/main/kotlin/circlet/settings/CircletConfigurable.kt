@@ -10,7 +10,7 @@ import com.intellij.openapi.options.*
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.wm.*
 import com.intellij.ui.*
-import klogging.*
+import libraries.klogging.*
 import runtime.*
 import runtime.async.*
 import runtime.reactive.*
