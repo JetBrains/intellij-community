@@ -1292,8 +1292,8 @@
       <add-to-group group-id="Internal"/>
     </group>
 
-    <action class="com.intellij.diagnostic.PluginStartupCostAction" internal="true" text="Show Plugin Startup Cost">
-      <add-to-group group-id="Internal"/>
+    <action class="com.intellij.diagnostic.PluginStartupCostAction" text="Analyze Plugin Startup Performance">
+      <add-to-group group-id="HelpMenu" anchor="after" relative-to-action="Performance.ActivityMonitor"/>
     </action>
 
     <action class="com.intellij.diagnostic.GenerateJarAccessLogAction" internal="true" text="Generate Jar Access Log"/>

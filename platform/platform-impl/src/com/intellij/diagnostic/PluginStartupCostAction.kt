@@ -3,29 +3,48 @@ package com.intellij.diagnostic
 
 import com.intellij.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter
 import com.intellij.ide.plugins.PluginManager
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.table.JBTable
+import com.intellij.ui.table.TableView
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
+import java.awt.event.ActionEvent
 import java.util.concurrent.TimeUnit
+import javax.swing.AbstractAction
+import javax.swing.Action
 import javax.swing.JComponent
 
-internal class PluginStartupCostAction : AnAction() {
+internal class PluginStartupCostAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     PluginStartupCostDialog(project).show()
   }
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabled = e.project != null
+  }
 }
 
-data class PluginStartupCostEntry(val pluginName: String, val cost: Long, val costDetails: String)
+data class PluginStartupCostEntry(
+  val pluginId: String,
+  val pluginName: String,
+  val cost: Long,
+  val costDetails: String
+)
 
-class PluginStartupCostDialog(project: Project) : DialogWrapper(project) {
+class PluginStartupCostDialog(private val project: Project) : DialogWrapper(project) {
+  val pluginsToDisable = mutableSetOf<String>()
+  lateinit var tableModel: ListTableModel<PluginStartupCostEntry>
+  lateinit var table: TableView<PluginStartupCostEntry>
+
   init {
     title = "Startup Time Cost per Plugin"
     init()
@@ -36,6 +55,11 @@ class PluginStartupCostDialog(project: Project) : DialogWrapper(project) {
       StartUpPerformanceReporter::class.java).pluginCostMap!!
     val tableData = pluginCostMap
       .mapNotNull { (pluginId, costMap) ->
+        if (!ApplicationManager.getApplication().isInternal &&
+            (ApplicationInfo.getInstance() as ApplicationInfoImpl).isEssentialPlugin(pluginId)) {
+          return@mapNotNull null
+        }
+
         val name = PluginManager.getPlugin(PluginId.getId(pluginId))?.name ?: return@mapNotNull null
 
         var totalCost = 0L
@@ -53,26 +77,50 @@ class PluginStartupCostDialog(project: Project) : DialogWrapper(project) {
           costDetails.append('\n')
         }
 
-        PluginStartupCostEntry(name, totalCost, costDetails.toString())
+        PluginStartupCostEntry(pluginId, name, totalCost, costDetails.toString())
       }
       .sortedByDescending { it.cost }
 
-    val model = ListTableModel<PluginStartupCostEntry>(
-      arrayOf(
-        object : ColumnInfo<PluginStartupCostEntry, String>("Plugin") {
-          override fun valueOf(item: PluginStartupCostEntry) = item.pluginName
-        },
-        object : ColumnInfo<PluginStartupCostEntry, Int>("Cost (ms)") {
-          override fun valueOf(item: PluginStartupCostEntry) = TimeUnit.NANOSECONDS.toMillis(item.cost).toInt()
-        },
-        object : ColumnInfo<PluginStartupCostEntry, String>("Cost Details") {
-          override fun valueOf(item: PluginStartupCostEntry) = item.costDetails
-        }
-      ), tableData)
+    val pluginColumn = object : ColumnInfo<PluginStartupCostEntry, String>("Plugin") {
+      override fun valueOf(item: PluginStartupCostEntry) =
+        item.pluginName + (if (item.pluginId in pluginsToDisable) " (will be disabled)" else "")
+    }
+    val costColumn = object : ColumnInfo<PluginStartupCostEntry, Int>("Startup Time (ms)") {
+      override fun valueOf(item: PluginStartupCostEntry) = TimeUnit.NANOSECONDS.toMillis(item.cost).toInt()
+    }
+    val costDetailsColumn = object : ColumnInfo<PluginStartupCostEntry, String>("Cost Details") {
+      override fun valueOf(item: PluginStartupCostEntry) = item.costDetails
+    }
 
-    val table = JBTable(model).apply {
+    val columns = if (ApplicationManager.getApplication().isInternal) {
+      arrayOf(pluginColumn, costColumn, costDetailsColumn)
+    } else {
+      arrayOf(pluginColumn, costColumn)
+    }
+
+    tableModel = ListTableModel(columns, tableData)
+
+    table = TableView(tableModel).apply {
       setShowColumns(true)
     }
     return JBScrollPane(table)
+  }
+
+  override fun createLeftSideActions(): Array<Action> {
+    val disableAction = object : AbstractAction("Disable Selected Plugins") {
+      override fun actionPerformed(e: ActionEvent?) {
+        for (costEntry in table.selectedObjects) {
+          pluginsToDisable.add(costEntry.pluginId)
+        }
+        tableModel.fireTableDataChanged()
+      }
+    }
+    return arrayOf(disableAction)
+  }
+
+  override fun doOKAction() {
+    super.doOKAction()
+    val plugins = pluginsToDisable.map { PluginManager.getPlugin(PluginId.getId(it)) }
+    PluginManager.confirmDisablePlugins(project, plugins)
   }
 }
