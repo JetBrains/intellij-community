@@ -172,11 +172,6 @@ public class TestDataUtil {
   }
 
   @Nullable
-  static VirtualFile getFileByPath(String path) {
-    return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-  }
-
-  @Nullable
   private static Pair<String, String> getModuleOrProjectRelativePath(Project project, String filePath) {
     String currentPath = PathUtil.getParentPath(filePath);
     if (currentPath.isEmpty()) {
