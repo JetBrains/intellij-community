@@ -96,15 +96,6 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       if (customizer.buildZipArchive) {
          buildWinZip(jreDirectoryPaths.findAll { it != null }, "${jreSuffix}.win", winDistPath, [])
       }
-      if (arch != null && customizer.buildZipWithBundledOracleJre && arch != JvmArchitecture.x32) {
-        String oracleJrePath = buildContext.bundledJreManager.extractSecondBundledOracleJreForWin(arch)
-        if (oracleJrePath != null) {
-          buildWinZip([oracleJrePath], "${jreSuffix}-oracle-win", winDistPath)
-        }
-        else {
-          buildContext.messages.warning("Skipping building Windows zip archive with bundled Oracle JRE because JRE archive is missing")
-        }
-      }
     }
 
     def jreDirectoryPath = buildContext.bundledJreManager.extractJre("windows")

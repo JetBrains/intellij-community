@@ -55,7 +55,7 @@ class BundledJreManager {
       buildContext.messages.info("JRE is already extracted to $targetDir")
       return targetDir
     }
-    File archive = findArchive(osName, getJreBuild(osName), getJreVersion(), jrePrefix(), JvmArchitecture.x64, JreVendor.JetBrains)
+    File archive = findArchive(osName, getJreBuild(osName), getJreVersion(), jrePrefix(), JvmArchitecture.x64)
     if (archive == null) {
       return null
     }
@@ -77,14 +77,6 @@ class BundledJreManager {
   }
 
   /**
-   * Extract Oracle JRE for Windows distribution of the product
-   * @return path to the directory containing 'jre' subdirectory with extracted JRE
-   */
-  String extractSecondBundledOracleJreForWin(JvmArchitecture arch) {
-    return extractSecondBundledJre("windows", arch, JreVendor.Oracle)
-  }
-
-  /**
    * Return path to a .tar.gz archive containing distribution of JRE for macOS which will be bundled with the product
    */
   String findSecondBundledJreArchiveForMac() {
@@ -99,24 +91,23 @@ class BundledJreManager {
   }
 
   File findJreArchive(String osName, JvmArchitecture arch = JvmArchitecture.x64) {
-    return findArchive(osName, getJreBuild(osName), getJreVersion(), jrePrefix(), arch, JreVendor.JetBrains)
+    return findArchive(osName, getJreBuild(osName), getJreVersion(), jrePrefix(), arch)
   }
 
   String archiveNameJre(BuildContext buildContext) {
     return "jre-for-${buildContext.buildNumber}.tar.gz"
   }
 
-  private String extractSecondBundledJre(String osName, JvmArchitecture arch = JvmArchitecture.x64, JreVendor vendor = JreVendor.JetBrains) {
-    String vendorSuffix = vendor == JreVendor.Oracle ? ".oracle" : ""
+  private String extractSecondBundledJre(String osName, JvmArchitecture arch = JvmArchitecture.x64) {
     String targetDir = arch == JvmArchitecture.x64 ?
-                       "$baseDirectoryForJre/jre.$osName$arch.fileSuffix$vendorSuffix" :
-                       "$baseDirectoryForJre/jre.${osName}32$vendorSuffix"
+                       "$baseDirectoryForJre/jre.$osName$arch.fileSuffix" :
+                       "$baseDirectoryForJre/jre.${osName}32"
     if (new File(targetDir).exists()) {
       buildContext.messages.info("JRE is already extracted to $targetDir")
       return targetDir
     }
 
-    File archive = findSecondBundledJreArchive(osName, arch, vendor)
+    File archive = findSecondBundledJreArchive(osName, arch)
     if (archive == null) {
       return null
     }
@@ -198,18 +189,17 @@ class BundledJreManager {
     "${update}-${osName}-${arch == JvmArchitecture.x32 ? 'i586' : 'x64'}-${build}.tar.gz"
   }
 
-  private File findSecondBundledJreArchive(String osName, JvmArchitecture arch = JvmArchitecture.x64, JreVendor vendor = JreVendor.JetBrains) {
-    return findArchive(osName, secondBundledJreBuild, secondBundledJreVersion, null, arch, vendor)
+  private File findSecondBundledJreArchive(String osName, JvmArchitecture arch = JvmArchitecture.x64) {
+    return findArchive(osName, secondBundledJreBuild, secondBundledJreVersion, null, arch)
   }
 
   private File findArchive(String osName, String jreBuild,
                            int jreVersion, String jrePrefix,
-                           JvmArchitecture arch, JreVendor vendor) {
+                           JvmArchitecture arch) {
     def jreDir = jreDir()
     String suffix = jreArchiveSuffix(jreBuild, jreVersion, arch, osName)
     if (jrePrefix == null) {
-      jrePrefix = jreVersion >= 9 ? vendor.jreNamePrefix :
-               buildContext.productProperties.toolsJarRequired ? vendor.jreWithToolsJarNamePrefix : vendor.jreNamePrefix
+      jrePrefix = jreVersion < 9 && buildContext.productProperties.toolsJarRequired ? "jbrx-" : "jbr-"
     }
     def jreArchive = new File(jreDir, "$jrePrefix$suffix")
     if (!jreArchive.file || !jreArchive.exists()) {
@@ -252,19 +242,6 @@ class BundledJreManager {
       build = dependencyVersions.get('secondJreBuild')
     }
     return build
-  }
-
-  private enum JreVendor {
-    Oracle("jre", "jdk"),
-    JetBrains("jbr-", "jbrx-")
-
-    final String jreNamePrefix
-    final String jreWithToolsJarNamePrefix
-
-    JreVendor(String jreNamePrefix, String jreWithToolsJarNamePrefix) {
-      this.jreNamePrefix = jreNamePrefix
-      this.jreWithToolsJarNamePrefix = jreWithToolsJarNamePrefix
-    }
   }
 
   String jrePrefix() {
