@@ -3,9 +3,11 @@ package com.siyeh.ig.testFrameworks;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -13,12 +15,12 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -86,6 +88,37 @@ public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends Base
     return AssertHint.create(expression, methodName -> methodNames.contains(methodName) ? 2 : null, checkTestNG());
   }
 
+  static boolean isOnlyLibraryCodeUsed(PsiExpression expression) {
+    if (expression == null) {
+      return false;
+    }
+
+    final Ref<Boolean> libraryCode = Ref.create(Boolean.TRUE);
+    final List<PsiExpression> expressions = new SmartList<>();
+    expressions.add(expression);
+    while (!expressions.isEmpty()) {
+      expressions.remove(expressions.size() - 1).accept(new JavaRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitReferenceExpression(PsiReferenceExpression referenceExpression) {
+          if (!libraryCode.get().booleanValue()) {
+            return;
+          }
+          super.visitReferenceExpression(referenceExpression);
+          final PsiElement target = referenceExpression.resolve();
+          if (target instanceof PsiLocalVariable) {
+            final PsiVariable variable = (PsiLocalVariable)target;
+            final PsiExpression definition = DeclarationSearchUtils.findDefinition(referenceExpression, variable);
+            expressions.add(definition);
+          }
+          else if (!(target instanceof PsiCompiledElement)) {
+            libraryCode.set(Boolean.FALSE);
+          }
+        }
+      });
+    }
+    return libraryCode.get().booleanValue();
+  }
+
   @Override
   public final BaseInspectionVisitor buildVisitor() {
     return new MisorderedAssertEqualsParametersVisitor();
@@ -144,7 +177,7 @@ public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends Base
               return false;
             }
           }
-          if (LibraryUtil.isOnlyLibraryCodeUsed(definition)) {
+          if (isOnlyLibraryCodeUsed(definition)) {
             return true;
           }
         }
@@ -153,7 +186,7 @@ public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends Base
         final PsiClassType classType = (PsiClassType)type;
         final PsiClass aClass = classType.resolve();
         if (aClass instanceof PsiCompiledElement) {
-            return LibraryUtil.isOnlyLibraryCodeUsed(expression);
+            return isOnlyLibraryCodeUsed(expression);
         }
       }
       return false;

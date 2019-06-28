@@ -1,8 +1,9 @@
 import org.junit.Assert;
 
 import java.util.concurrent.TimeUnit;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 class Simple {
 
@@ -34,5 +35,11 @@ class Simple {
     Integer m() {
       return null;
     }
+  }
+
+  void testAssert() {
+    String[] expected = {"bar", "baz", "foo"};
+    List<String> actual = Stream.of("foo", "bar", "baz").sorted().collect(Collectors.toList()); // or some other complex method call which result is actually tested
+    org.junit.Assert.assertEquals(Arrays.asList(expected), actual); // warning: "Arguments to 'assertEquals()' in wrong order"
   }
 }
