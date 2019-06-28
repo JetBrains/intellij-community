@@ -1,11 +1,11 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.testFrameworks;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.DefUseUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -70,16 +70,20 @@ public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends Base
         return;
       }
 
-      final ExpectedActual expectedActual = ExpectedActual.create(callExpression, checkTestNG());
-      if (expectedActual == null) {
+      final AssertHint hint = createAssertHint(callExpression);
+      if (hint == null) {
         return;
       }
-      final PsiExpression expectedArgument = expectedActual.getExpected();
-      final PsiExpression actualArgument = expectedActual.getActual();
+      final PsiExpression expectedArgument = hint.getExpected(checkTestNG());
+      final PsiExpression actualArgument = hint.getActual(checkTestNG());
       final PsiElement copy = expectedArgument.copy();
       expectedArgument.replace(actualArgument);
       actualArgument.replace(copy);
     }
+  }
+
+  AssertHint createAssertHint(@NotNull PsiMethodCallExpression expression) {
+    return AssertHint.create(expression, methodName -> methodNames.contains(methodName) ? 2 : null, checkTestNG());
   }
 
   @Override
@@ -87,51 +91,16 @@ public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends Base
     return new MisorderedAssertEqualsParametersVisitor();
   }
 
-  private static class ExpectedActual {
-    private final PsiExpression myExpected;
-    private final PsiExpression myActual;
-
-    private ExpectedActual(PsiExpression expected, PsiExpression actual) {
-      myExpected = expected;
-      myActual = actual;
-    }
-
-    public PsiExpression getExpected() {
-      return myExpected;
-    }
-
-    public PsiExpression getActual() {
-      return myActual;
-    }
-
-    private static ExpectedActual create(PsiMethodCallExpression callExpression, boolean checkTestNG) {
-      AssertHint hint = AssertHint.create(callExpression, methodName -> methodNames.contains(methodName) ? 2 : null, checkTestNG);
-      if (hint == null) {
-        return null;
-      }
-
-      PsiExpression[] arguments = callExpression.getArgumentList().getExpressions();
-
-      int index = hint.getArgIndex();
-      final PsiExpression expectedArgument = arguments[checkTestNG ? index + 1 : index];
-      final PsiExpression actualArgument = arguments[checkTestNG ? index : index + 1];
-
-      return new ExpectedActual(expectedArgument, actualArgument);
-    }
-
-  }
-
   private class MisorderedAssertEqualsParametersVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final ExpectedActual expectedActual = ExpectedActual.create(expression, checkTestNG());
-      if (expectedActual == null) {
+      final AssertHint hint = createAssertHint(expression);
+      if (hint == null) {
         return;
       }
-
-      if (looksLikeExpectedArgument(expectedActual.getExpected()) || !looksLikeExpectedArgument(expectedActual.getActual())) {
+      if (looksLikeExpectedArgument(hint.getExpected(checkTestNG())) || !looksLikeExpectedArgument(hint.getActual(checkTestNG()))) {
         return;
       }
       registerMethodCallError(expression);
@@ -160,13 +129,27 @@ public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends Base
         }
         else if (target instanceof PsiLocalVariable) {
           final PsiVariable variable = (PsiLocalVariable)target;
+          final PsiCodeBlock block = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+          if (block == null) {
+            return false;
+          }
           final PsiExpression definition = DeclarationSearchUtils.findDefinition(referenceExpression, variable);
+          if (definition == null) {
+            return false;
+          }
+          final PsiElement[] refs = DefUseUtil.getRefs(block, variable, definition);
+          final int offset = referenceExpression.getTextOffset();
+          for (PsiElement ref : refs) {
+            if (ref.getTextOffset() < offset) {
+              return false;
+            }
+          }
           if (LibraryUtil.isOnlyLibraryCodeUsed(definition)) {
             return true;
           }
         }
       }
-      if (expression instanceof PsiCallExpression && type instanceof PsiClassType) {
+      else if (expression instanceof PsiCallExpression && type instanceof PsiClassType) {
         final PsiClassType classType = (PsiClassType)type;
         final PsiClass aClass = classType.resolve();
         if (aClass instanceof PsiCompiledElement) {
