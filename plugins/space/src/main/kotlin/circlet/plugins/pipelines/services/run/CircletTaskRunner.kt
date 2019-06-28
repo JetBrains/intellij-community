@@ -5,9 +5,13 @@ import circlet.plugins.pipelines.viewmodel.*
 import com.intellij.execution.process.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
+import klogging.*
 import java.io.*
 
 class CircletTaskRunner(val project: Project) {
+
+    companion object : KLogging()
+
     fun run(taskName: String): ProcessHandler {
         val circletModelStore = ServiceManager.getService(project, CircletModelStore::class.java)
         val viewModel = circletModelStore.viewModel
@@ -29,19 +33,24 @@ class CircletTaskRunner(val project: Project) {
 
         val processHandler = object : ProcessHandler() {
             override fun getProcessInput(): OutputStream? {
+                logger.warn("getProcessInput")
                 return stream
             }
 
             override fun detachIsDefault(): Boolean {
+                logger.warn("detachIsDefault")
                 return false
             }
 
             override fun detachProcessImpl() {
+                logger.warn("detachProcessImpl")
                 stream.write("detachProcessImpl".toByteArray())
             }
 
             override fun destroyProcessImpl() {
+                logger.warn("destroyProcessImpl")
                 stream.write("destroyProcessImpl".toByteArray())
+                notifyProcessTerminated(0)
             }
         }
 
