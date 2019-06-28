@@ -396,7 +396,10 @@ public class IconUtil {
       g = g.create();
       try {
         Rectangle iconClip = new Rectangle(x - myCrop.x, y - myCrop.y, myCrop.width, myCrop.height);
-        Rectangle2D.intersect(iconClip, g.getClipBounds(), iconClip);
+        Rectangle gClip = g.getClipBounds();
+        if (gClip != null) {
+          Rectangle2D.intersect(iconClip, gClip, iconClip);
+        }
         g.setClip(iconClip);
         mySrc.paintIcon(c, g, x - myCrop.x, y - myCrop.y);
       }
