@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -14,7 +15,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -145,7 +145,7 @@ public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends Base
         return false;
       }
       final PsiType type = expression.getType();
-      if (ExpressionUtils.computeConstantExpression(expression) != null || PsiType.NULL.equals(type)) {
+      if (PsiUtil.isConstantExpression(expression) || PsiType.NULL.equals(type)) {
         return true;
       }
       if (expression instanceof PsiReferenceExpression) {
@@ -169,6 +169,9 @@ public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends Base
           final PsiExpression definition = DeclarationSearchUtils.findDefinition(referenceExpression, variable);
           if (definition == null) {
             return false;
+          }
+          if (PsiUtil.isConstantExpression(definition) || PsiType.NULL.equals(definition.getType())) {
+            return true;
           }
           final PsiElement[] refs = DefUseUtil.getRefs(block, variable, definition);
           final int offset = referenceExpression.getTextOffset();
