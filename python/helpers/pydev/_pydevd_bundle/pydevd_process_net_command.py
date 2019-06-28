@@ -681,7 +681,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                     else:
                         raise NameError(exception_type)
 
-                py_db.on_breakpoints_changed(remove=True)
+                py_db.on_breakpoints_changed(removed=True)
 
             elif cmd_id == CMD_LOAD_SOURCE:
                 path = text
