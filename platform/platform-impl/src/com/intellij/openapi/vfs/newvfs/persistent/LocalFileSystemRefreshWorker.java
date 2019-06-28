@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VFileProperty;
@@ -33,6 +32,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
+import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.openapi.vfs.newvfs.persistent.VfsEventGenerationHelper.LOG;
 
 class LocalFileSystemRefreshWorker {
@@ -187,14 +187,13 @@ class LocalFileSystemRefreshWorker {
   }
 
   static Pair<String[], VirtualFile[]> getDirectorySnapshot(@NotNull PersistentFS persistence, @NotNull VirtualDirectoryImpl dir) {
-    return ReadAction.compute(() -> ApplicationManager.getApplication().isDisposed() ? null : Pair.create(persistence.list(dir), dir.getChildren()));
+    return ReadAction.compute(() -> ApplicationManager.getApplication().isDisposed() ? null : pair(persistence.list(dir), dir.getChildren()));
   }
 
   private void partialDirRefresh(@NotNull VirtualDirectoryImpl dir, @NotNull RefreshContext refreshContext) {
     while (true) {
       // obtaining directory snapshot
-      Pair<List<VirtualFile>, List<String>> result =
-        ReadAction.compute(() -> Pair.create(dir.getCachedChildren(), dir.getSuspiciousNames()));
+      Pair<List<VirtualFile>, List<String>> result = ReadAction.compute(() -> pair(dir.getCachedChildren(), dir.getSuspiciousNames()));
 
       List<VirtualFile> cached = result.getFirst();
       List<String> wanted = result.getSecond();
@@ -335,7 +334,7 @@ class LocalFileSystemRefreshWorker {
     }
 
     @Override
-    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+    public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) throws IOException {
       String name = file.getName(file.getNameCount() - 1).toString();
 
       if (!acceptsFileName(name)) {
@@ -343,33 +342,33 @@ class LocalFileSystemRefreshWorker {
       }
 
       NewVirtualFile child = (NewVirtualFile)myPersistentChildren.remove(name);
-      boolean isDirectory = attrs.isDirectory();
-      boolean isSpecial = attrs.isOther();
-      boolean isLink = attrs.isSymbolicLink();
+      boolean isDirectory = attributes.isDirectory();
+      boolean isSpecial = attributes.isOther();
+      boolean isLink = attributes.isSymbolicLink();
 
       if (isSpecial && isDirectory && SystemInfo.isWindows) {
-        // Windows junction is special directory, handle it as symlink
+        // Windows junction is a special directory, handle it as symlink
         isSpecial = false;
         isLink = true;
       }
 
       if (isLink) {
         try {
-          attrs = Files.readAttributes(file, BasicFileAttributes.class);
+          attributes = Files.readAttributes(file, BasicFileAttributes.class);
         }
         catch (FileSystemException ignore) {
-          attrs = BROKEN_SYMLINK_ATTRIBUTES;
+          attributes = BROKEN_SYMLINK_ATTRIBUTES;
         }
-        isDirectory = attrs.isDirectory();
+        isDirectory = attributes.isDirectory();
       }
       else if (myFileOrDir.is(VFileProperty.SYMLINK)) {
         try {
-          attrs = Files.readAttributes(file, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+          attributes = Files.readAttributes(file, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
         }
         catch (NoSuchFileException | AccessDeniedException ignore) {
-          attrs = BROKEN_SYMLINK_ATTRIBUTES;
+          attributes = BROKEN_SYMLINK_ATTRIBUTES;
         }
-        isLink = attrs.isSymbolicLink();
+        isLink = attributes.isSymbolicLink();
       }
 
       if (child == null) { // new file is created
@@ -377,7 +376,8 @@ class LocalFileSystemRefreshWorker {
 
         String symlinkTarget = isLink ? file.toRealPath().toString() : null;
         try {
-          myHelper.scheduleCreation(parent, name, toFileAttributes(file, attrs, isLink), symlinkTarget, ()-> checkCancelled(myFileOrDir, myRefreshContext));
+          FileAttributes fa = toFileAttributes(file, attributes, isLink);
+          myHelper.scheduleCreation(parent, name, fa, symlinkTarget, ()-> checkCancelled(myFileOrDir, myRefreshContext));
         }
         catch (RefreshWorker.RefreshCancelledException e) {
           return FileVisitResult.TERMINATE;
@@ -404,7 +404,8 @@ class LocalFileSystemRefreshWorker {
         VirtualFile parent = myFileOrDir.isDirectory() ? myFileOrDir : myFileOrDir.getParent();
         String symlinkTarget = isLink ? file.toRealPath().toString() : null;
         try {
-          myHelper.scheduleCreation(parent, child.getName(), toFileAttributes(file, attrs, isLink), symlinkTarget, ()-> checkCancelled(myFileOrDir, myRefreshContext));
+          FileAttributes fa = toFileAttributes(file, attributes, isLink);
+          myHelper.scheduleCreation(parent, child.getName(), fa, symlinkTarget, ()-> checkCancelled(myFileOrDir, myRefreshContext));
         }
         catch (RefreshWorker.RefreshCancelledException e) {
           return FileVisitResult.TERMINATE;
@@ -421,14 +422,14 @@ class LocalFileSystemRefreshWorker {
 
       if (!isDirectory) {
         myHelper.checkContentChanged(child,
-                                     myRefreshContext.persistence.getTimeStamp(child), attrs.lastModifiedTime().toMillis(),
-                                     myRefreshContext.persistence.getLastRecordedLength(child), attrs.size());
+                                     myRefreshContext.persistence.getTimeStamp(child), attributes.lastModifiedTime().toMillis(),
+                                     myRefreshContext.persistence.getLastRecordedLength(child), attributes.size());
       }
 
-      myHelper.checkWritableAttributeChange(child, myRefreshContext.persistence.isWritable(child), isWritable(file, attrs, isDirectory));
+      myHelper.checkWritableAttributeChange(child, myRefreshContext.persistence.isWritable(child), isWritable(file, attributes, isDirectory));
 
-      if (attrs instanceof DosFileAttributes) {
-        myHelper.checkHiddenAttributeChange(child, child.is(VFileProperty.HIDDEN), ((DosFileAttributes)attrs).isHidden());
+      if (attributes instanceof DosFileAttributes) {
+        myHelper.checkHiddenAttributeChange(child, child.is(VFileProperty.HIDDEN), ((DosFileAttributes)attributes).isHidden());
       }
 
       if (isLink) {
@@ -501,8 +502,8 @@ class LocalFileSystemRefreshWorker {
   @NotNull
   private static Path fixCaseIfNeeded(@NotNull Path path, @NotNull VirtualFile file) throws IOException {
     if (SystemInfo.isFileSystemCaseSensitive) return path;
-    // Mac: toRealPath() will return current file's name wrt case
-    // Win: toRealPath(LinkOption.NOFOLLOW_LINKS) will return current file's name wrt case
+    // Mac: toRealPath() will return the current file's name w.r.t. case
+    // Win: toRealPath(LinkOption.NOFOLLOW_LINKS) will return the current file's name w.r.t. case
     return file.is(VFileProperty.SYMLINK) ? path.toRealPath(LinkOption.NOFOLLOW_LINKS) : path.toRealPath();
   }
 
@@ -530,12 +531,13 @@ class LocalFileSystemRefreshWorker {
 
     long lastModified = a.lastModifiedTime().toMillis();
     boolean writable = isWritable(path, a, a.isDirectory());
-
     if (SystemInfo.isWindows) {
       boolean hidden = path.getParent() != null && ((DosFileAttributes)a).isHidden();
       return new FileAttributes(a.isDirectory(), a.isOther(), isSymlink, hidden, a.size(), lastModified, writable);
     }
-    return new FileAttributes(a.isDirectory(), a.isOther(), isSymlink, false, a.size(), lastModified, writable);
+    else {
+      return new FileAttributes(a.isDirectory(), a.isOther(), isSymlink, false, a.size(), lastModified, writable);
+    }
   }
 
   private static final BasicFileAttributes BROKEN_SYMLINK_ATTRIBUTES = new BasicFileAttributes() {
