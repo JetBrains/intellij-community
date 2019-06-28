@@ -659,6 +659,10 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
     myFixture.testHighlighting(true, true, true, "pluginIconFound.xml")
   }
 
+  void testPluginIconNotNecessaryForImplementationDetail() {
+    myFixture.testHighlighting(true, true, true, "pluginIconNotNecessaryForImplementationDetail.xml")
+  }
+
   void testPluginIconNotFound() {
     myFixture.testHighlighting(true, true, true, "pluginIconNotFound.xml")
   }
