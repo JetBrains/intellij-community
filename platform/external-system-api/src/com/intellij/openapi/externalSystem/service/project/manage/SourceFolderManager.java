@@ -3,9 +3,12 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
+
+import java.util.stream.Stream;
 
 @ApiStatus.Experimental
 public interface SourceFolderManager {
@@ -23,4 +26,7 @@ public interface SourceFolderManager {
                        boolean generated);
 
   void removeSourceFolders(@NotNull Module module);
+
+  @NotNull
+  Stream<Pair<String, JpsModuleSourceRootType<?>>> getSourceFolders();
 }
