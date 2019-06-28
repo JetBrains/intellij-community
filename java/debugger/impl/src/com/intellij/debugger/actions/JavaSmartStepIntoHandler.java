@@ -148,6 +148,10 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
         @Override
         public void visitAnonymousClass(PsiAnonymousClass aClass) {
+          PsiExpressionList argumentList = aClass.getArgumentList();
+          if (argumentList != null) {
+            argumentList.accept(this);
+          }
           for (PsiMethod psiMethod : aClass.getMethods()) {
             targets.add(0, new MethodSmartStepTarget(psiMethod, getCurrentParamName(), psiMethod.getBody(), true, null));
           }
