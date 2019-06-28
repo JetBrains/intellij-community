@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
 import static javax.swing.tree.TreeSelectionModel.SINGLE_TREE_SELECTION;
 
 /**
@@ -123,7 +124,7 @@ public class TreeSmartSelectProvider implements SmartSelectProvider<JTree> {
       return true; // visit all descendants
     });
     if (list.isEmpty()) return false; // selection is not changed
-    consumer.accept(list.toArray(new TreePath[0]));
+    consumer.accept(toTreePathArray(list));
     return true;
   }
 }
