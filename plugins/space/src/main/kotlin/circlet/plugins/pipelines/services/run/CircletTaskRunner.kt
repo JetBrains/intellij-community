@@ -6,6 +6,7 @@ import com.intellij.execution.process.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
 import klogging.*
+import runtime.*
 import java.io.*
 
 class CircletTaskRunner(val project: Project) {
@@ -29,34 +30,39 @@ class CircletTaskRunner(val project: Project) {
             throw com.intellij.execution.ExecutionException("Task $taskName doesn't exist")
         }
 
-        val stream = ByteArrayOutputStream()
+        logger.info("Run task $taskName")
+
+        var timer : Cancellable? = null
 
         val processHandler = object : ProcessHandler() {
             override fun getProcessInput(): OutputStream? {
-                logger.warn("getProcessInput")
-                return stream
+                return null
             }
 
             override fun detachIsDefault(): Boolean {
-                logger.warn("detachIsDefault")
                 return false
             }
 
             override fun detachProcessImpl() {
-                logger.warn("detachProcessImpl")
-                stream.write("detachProcessImpl".toByteArray())
+                logger.info("detachProcessImpl for task $taskName")
             }
 
             override fun destroyProcessImpl() {
-                logger.warn("destroyProcessImpl")
-                stream.write("destroyProcessImpl".toByteArray())
+                logger.info("destroyProcessImpl for task $taskName")
                 notifyProcessTerminated(0)
+                timer?.cancel()
             }
+        }
+
+        var messageCounter = 0
+        val newLine = System.getProperty("line.separator", "\n")
+        timer = UiDispatch.dispatchInterval(1000) {
+            processHandler.notifyTextAvailable("Dummy message for task: $taskName. message #${messageCounter++}$newLine", ProcessOutputTypes.STDOUT)
         }
 
         viewModel.taskIsRunning.value = true
         logData.add("Run task $taskName")
-        stream.write("Run task $taskName".toByteArray())
+        processHandler.notifyTextAvailable("Run task $taskName", ProcessOutputTypes.SYSTEM)
         viewModel.taskIsRunning.value = false
         return processHandler
     }
