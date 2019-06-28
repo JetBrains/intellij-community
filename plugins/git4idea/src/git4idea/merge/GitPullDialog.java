@@ -162,9 +162,6 @@ public class GitPullDialog extends DialogWrapper {
   public GitLineHandler makeHandler(@NotNull List<String> urls) {
     GitLineHandler h = new GitLineHandler(myProject, gitRoot(), GitCommand.PULL);
     h.setUrls(urls);
-    if(GitVersionSpecialty.ABLE_TO_USE_PROGRESS_IN_REMOTE_COMMANDS.existsIn(myProject)) {
-      h.addParameters("--progress");
-    }
     h.addParameters("--no-stat");
     if (myNoCommitCheckBox.isSelected()) {
       h.addParameters("--no-commit");
