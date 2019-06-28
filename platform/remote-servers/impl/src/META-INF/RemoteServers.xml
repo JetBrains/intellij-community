@@ -9,6 +9,8 @@
                     interface="com.intellij.remoteServer.util.CloudDeploymentRuntimeProvider"/>
     <extensionPoint name="remoteServer.runConfigurationExtension"
                     interface="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfigurationExtension"/>
+    <extensionPoint name="ir.runnerConfigurablesProvider"
+                    interface="com.intellij.remoteServer.ir.configuration.RemoteRunnerConfigurablesProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -37,6 +39,9 @@
 
     <projectService serviceImplementation="com.intellij.remoteServer.impl.runtime.ui.RemoteServersDeploymentManager"/>
     <serviceViewContributor implementation="com.intellij.remoteServer.impl.runtime.ui.DefaultRemoteServersServiceViewContributor"/>
+
+    <projectConfigurable groupId="build" instance="com.intellij.remoteServer.ir.configuration.RemoteRunnersConfigurable"/>
+    <executionTargetProvider implementation="com.intellij.remoteServer.ir.target.RemoteRunnersExecutionTargetProvider"/>
   </extensions>
 
   <actions>
