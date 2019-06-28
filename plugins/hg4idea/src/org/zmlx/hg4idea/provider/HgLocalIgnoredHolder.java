@@ -20,7 +20,7 @@ import java.util.Set;
 public class HgLocalIgnoredHolder extends VcsRepositoryIgnoredFilesHolderBase<HgRepository> {
 
   public HgLocalIgnoredHolder(@NotNull HgRepository repository, @NotNull HgRepositoryManager repositoryManager) {
-    super(repository, repositoryManager, "HgIgnoreUpdate", "hgRescanIgnored");
+    super(repository, repositoryManager);
   }
 
   @NotNull
