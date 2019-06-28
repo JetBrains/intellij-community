@@ -339,11 +339,12 @@ public class BreakpointManager {
             if (breakpointElement != null) {
               XBreakpointManager manager = XDebuggerManager.getInstance(myProject).getBreakpointManager();
               JavaExceptionBreakpointType type = XDebuggerUtil.getInstance().findBreakpointType(JavaExceptionBreakpointType.class);
-              XBreakpoint<JavaExceptionBreakpointProperties> xBreakpoint = manager.getDefaultBreakpoint(type);
-              Breakpoint breakpoint = getJavaBreakpoint(xBreakpoint);
-              if (breakpoint != null) {
-                breakpoint.readExternal(breakpointElement);
-                addBreakpoint(breakpoint);
+              for (XBreakpoint<JavaExceptionBreakpointProperties> defaultBreakpoint : manager.getDefaultBreakpoints(type)) {
+                Breakpoint breakpoint = getJavaBreakpoint(defaultBreakpoint);
+                if (breakpoint != null) {
+                  breakpoint.readExternal(breakpointElement);
+                  addBreakpoint(breakpoint);
+                }
               }
             }
           }
