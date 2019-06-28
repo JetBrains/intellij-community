@@ -29,7 +29,7 @@ public class SnapShooter {
   }
 
   public static void main(String[] args) throws Throwable {
-    int origClassPathSize = Integer.parseInt(args [0]);
+    int snapLibsCount = Integer.parseInt(args [0]);
     int port = Integer.parseInt(args [1]);
 
     ClassLoader loader = SnapShooter.class.getClassLoader();
@@ -37,9 +37,10 @@ public class SnapShooter {
       URLClassLoader ucl = (URLClassLoader) loader;
 
       URL[] oldURLs = ucl.getURLs();
-      URL[] newURLs = new URL[origClassPathSize];
-      final int startIndex = oldURLs.length - origClassPathSize;
-      System.arraycopy(oldURLs, startIndex, newURLs, 0, origClassPathSize);
+      final int libsCount = oldURLs.size() - snapLibsCount;
+      URL[] newURLs = new URL[libsCount];
+      System.arraycopy(oldURLs, snapLibsCount, newURLs, 0, libsCount);
+      
       loader = new URLClassLoader(newURLs, null);
       Thread.currentThread().setContextClassLoader(loader);
     }
