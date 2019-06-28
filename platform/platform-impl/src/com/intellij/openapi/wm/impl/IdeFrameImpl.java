@@ -108,7 +108,6 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     setRootPane(myRootPane);
     setBackground(UIUtil.getPanelBackground());
     LafManager.getInstance().addLafManagerListener(myLafListener = src -> setBackground(UIUtil.getPanelBackground()));
-    AppUIUtil.updateWindowIcon(this);
 
     resizedListener = new ComponentAdapter() {
       @Override
@@ -165,17 +164,11 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
 
     myBalloonLayout = new BalloonLayoutImpl(myRootPane, JBUI.insets(8));
 
-    // to show window thumbnail under Macs
-    // http://lists.apple.com/archives/java-dev/2009/Dec/msg00240.html
-    if (SystemInfo.isMac) {
-      setIconImage(null);
-    }
-
     MouseGestureManager.getInstance().add(this);
 
     myFrameDecorator = IdeFrameDecorator.decorate(this);
 
-    setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt()    {
+    setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt() {
       @Override
       protected Component getDefaultComponentImpl(Container focusCycleRoot) {
         Component component = findNextFocusComponent();
@@ -212,6 +205,21 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
         return component == null ? super.getComponentBeforeImpl(focusCycleRoot, aComponent) : component;
       }
     });
+  }
+
+  // purpose of delayed init - to show project frame as earlier as possible (and start loading of project too) and use it as project loading "splash"
+  // show frame -> start project loading (performed in a pooled thread) -> do UI tasks while project loading
+  public void init() {
+    myRootPane.init(this);
+
+    // to show window thumbnail under Macs
+    // http://lists.apple.com/archives/java-dev/2009/Dec/msg00240.html
+    if (SystemInfo.isMac) {
+      setIconImage(null);
+    }
+
+    // in production (not from sources) makes sense only on Linux
+    AppUIUtil.updateWindowIcon(this);
   }
 
   private Component findNextFocusComponent() {
