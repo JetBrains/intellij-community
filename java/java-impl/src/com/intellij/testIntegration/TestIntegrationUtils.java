@@ -40,10 +40,22 @@ public class TestIntegrationUtils {
         return framework.getSetUpMethodFileTemplateDescriptor();
       }
     },
+    SET_UP_CLASS("setUpClass") {
+      @Override
+      public FileTemplateDescriptor getFileTemplateDescriptor(@NotNull TestFramework framework) {
+        return framework.getSetUpClassMethodFileTemplateDescriptor();
+      }
+    },
     TEAR_DOWN("tearDown") {
       @Override
       public FileTemplateDescriptor getFileTemplateDescriptor(@NotNull TestFramework framework) {
         return framework.getTearDownMethodFileTemplateDescriptor();
+      }
+    },
+    TEAR_DOWN_CLASS("tearDownClass") {
+      @Override
+      public FileTemplateDescriptor getFileTemplateDescriptor(@NotNull TestFramework framework) {
+        return framework.getTearDownClassMethodFileTemplateDescriptor();
       }
     },
     TEST("test") {

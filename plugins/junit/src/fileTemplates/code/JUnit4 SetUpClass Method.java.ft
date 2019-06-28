@@ -1,0 +1,4 @@
+@org.junit.BeforeClass
+public static void setUpClass() throws Exception {
+  ${BODY}
+}

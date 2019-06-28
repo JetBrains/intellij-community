@@ -55,6 +55,12 @@ public interface TestFramework {
   PsiElement findTearDownMethod(@NotNull PsiElement clazz);
 
   @Nullable
+  PsiElement findSetUpClassMethod(@NotNull PsiElement clazz);
+
+  @Nullable
+  PsiElement findTearDownClassMethod(@NotNull PsiElement clazz);
+
+  @Nullable
   PsiElement findOrCreateSetUpMethod(@NotNull PsiElement clazz) throws IncorrectOperationException;
 
   FileTemplateDescriptor getSetUpMethodFileTemplateDescriptor();
@@ -63,6 +69,10 @@ public interface TestFramework {
 
   @NotNull
   FileTemplateDescriptor getTestMethodFileTemplateDescriptor();
+
+  FileTemplateDescriptor getSetUpClassMethodFileTemplateDescriptor();
+
+  FileTemplateDescriptor getTearDownClassMethodFileTemplateDescriptor();
 
   /**
    * should be checked for abstract method error

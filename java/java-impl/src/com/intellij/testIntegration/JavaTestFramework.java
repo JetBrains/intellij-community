@@ -85,6 +85,38 @@ public abstract class JavaTestFramework implements TestFramework {
 
   @Nullable
   protected abstract PsiMethod findTearDownMethod(@NotNull PsiClass clazz);
+  
+  @Nullable
+  @Override
+  public PsiElement findSetUpClassMethod(@NotNull PsiElement clazz) {
+    return clazz instanceof PsiClass ? findSetUpClassMethod((PsiClass)clazz) : null;
+  }
+
+  @Nullable
+  protected PsiMethod findSetUpClassMethod(@NotNull PsiClass clazz) {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public PsiElement findTearDownClassMethod(@NotNull PsiElement clazz) {
+    return clazz instanceof PsiClass ? findTearDownClassMethod((PsiClass)clazz) : null;
+  }
+
+  @Nullable
+  protected PsiMethod findTearDownClassMethod(@NotNull PsiClass clazz) {
+    return null;
+  }
+
+  @Override
+  public FileTemplateDescriptor getSetUpClassMethodFileTemplateDescriptor() {
+    return null;
+  }
+
+  @Override
+  public FileTemplateDescriptor getTearDownClassMethodFileTemplateDescriptor() {
+    return null;
+  }
 
   @Override
   public PsiElement findOrCreateSetUpMethod(@NotNull PsiElement clazz) throws IncorrectOperationException {

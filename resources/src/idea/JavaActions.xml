@@ -316,6 +316,8 @@
       <action id="GenerateTestMethod" class="com.intellij.testIntegration.GenerateTestMethodAction"/>
       <action id="GenerateSetUpMethod" class="com.intellij.testIntegration.GenerateSetUpMethodAction"/>
       <action id="GenerateTearDownMethod" class="com.intellij.testIntegration.GenerateTearDownMethodAction"/>
+      <action id="GenerateSetUpClassMethod" class="com.intellij.testIntegration.GenerateSetUpClassMethodAction"/>       
+      <action id="GenerateTearDownClassMethod" class="com.intellij.testIntegration.GenerateTearDownClassMethodAction"/> 
       <action id="GenerateDataMethod" class="com.intellij.testIntegration.GenerateDataMethodAction"/>
       <separator/>
       <action id="GenerateConstructor" class="com.intellij.codeInsight.generation.actions.GenerateConstructorAction"/>

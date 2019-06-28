@@ -66,9 +66,29 @@ public class JUnit4Framework extends JavaTestFramework {
 
   @Nullable
   @Override
+  protected PsiMethod findSetUpClassMethod(@NotNull PsiClass clazz) {
+    for (PsiMethod each : clazz.getMethods()) {
+      if (each.hasModifierProperty(PsiModifier.STATIC)
+          && AnnotationUtil.isAnnotated(each, JUnitUtil.BEFORE_ANNOTATION_NAME, 0)) return each;
+    }
+    return null;
+  }
+
+  @Nullable
+  @Override
   protected PsiMethod findTearDownMethod(@NotNull PsiClass clazz) {
     for (PsiMethod each : clazz.getMethods()) {
       if (AnnotationUtil.isAnnotated(each, JUnitUtil.AFTER_ANNOTATION_NAME, 0)) return each;
+    }
+    return null;
+  }
+
+  @Nullable
+  @Override
+  protected PsiMethod findTearDownClassMethod(@NotNull PsiClass clazz) {
+    for (PsiMethod each : clazz.getMethods()) {
+      if (each.hasModifierProperty(PsiModifier.STATIC)
+          && AnnotationUtil.isAnnotated(each, JUnitUtil.AFTER_CLASS_ANNOTATION_NAME, 0)) return each;
     }
     return null;
   }
@@ -140,8 +160,18 @@ public class JUnit4Framework extends JavaTestFramework {
   }
 
   @Override
+  public FileTemplateDescriptor getSetUpClassMethodFileTemplateDescriptor() {
+    return new FileTemplateDescriptor("JUnit4 SetUpClass Method.java");
+  }
+
+  @Override
   public FileTemplateDescriptor getTearDownMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("JUnit4 TearDown Method.java");
+  }
+  
+  @Override
+  public FileTemplateDescriptor getTearDownClassMethodFileTemplateDescriptor() {
+    return new FileTemplateDescriptor("JUnit4 TearDownClass Method.java");
   }
 
   @Override
