@@ -45,7 +45,7 @@ import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.Collections.unmodifiableList;
 
 public class NewMappings implements Disposable {
-  private static final Comparator<MappedRoot> ROOT_COMPARATOR = Comparator.comparingInt(it -> -it.root.getPath().length());
+  private static final Comparator<MappedRoot> ROOT_COMPARATOR = Comparator.comparingInt(it -> -it.rootPath.length());
   private static final Comparator<VcsDirectoryMapping> MAPPINGS_COMPARATOR = Comparator.comparing(VcsDirectoryMapping::getDirectory);
 
   private final static Logger LOG = Logger.getInstance(NewMappings.class);
@@ -373,7 +373,7 @@ public class NewMappings implements Disposable {
 
   private void dumpMappedRootsToLog() {
     for (MappedRoot root : myMappedRoots) {
-      LOG.info(String.format("Mapped Root: [%s] - [%s]", root.vcs, root.root.getPath()));
+      LOG.info(String.format("Mapped Root: [%s] - [%s]", root.vcs, root.rootPath));
     }
   }
 
@@ -411,7 +411,7 @@ public class NewMappings implements Disposable {
     @SystemIndependent String filePath = file.getPath();
     // ROOT_COMPARATOR ensures we'll find "inner" matching root before "outer" one
     for (MappedRoot mapping : mappings) {
-      if (mapping.root.isValid() && FileUtil.isAncestor(mapping.root.getPath(), filePath, false)) {
+      if (mapping.root.isValid() && FileUtil.isAncestor(mapping.rootPath, filePath, false)) {
         return mapping;
       }
     }
@@ -568,11 +568,13 @@ public class NewMappings implements Disposable {
     @Nullable public final AbstractVcs vcs;
     @NotNull public final VcsDirectoryMapping mapping;
     @NotNull public final VirtualFile root;
+    @NotNull public final String rootPath;
 
     private MappedRoot(@Nullable AbstractVcs vcs, @NotNull VcsDirectoryMapping mapping, @NotNull VirtualFile root) {
       this.vcs = vcs;
       this.mapping = mapping;
       this.root = root;
+      rootPath = root.getPath();
     }
   }
 
