@@ -256,6 +256,11 @@ abstract class Cell {
     return component().withBinding(component::getNumber, component::setNumber, createPropertyBinding(prop, Int::class.javaPrimitiveType!!))
   }
 
+  fun spinner(getter: () -> Int, setter: (Int) -> Unit, minValue: Int, maxValue: Int, step: Int = 1): CellBuilder<JBIntSpinner> {
+    val component = JBIntSpinner(getter(), minValue, maxValue, step)
+    return component().withBinding(component::getNumber, component::setNumber, PropertyBinding(getter, setter))
+  }
+
   fun textFieldWithHistoryWithBrowseButton(browseDialogTitle: String,
                                            value: String? = null,
                                            project: Project? = null,

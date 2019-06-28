@@ -1,0 +1,6 @@
+<idea-plugin>
+  <actions>
+    <action class="org.jetbrains.idea.devkit.formConversion.ConvertFormToDslAction"
+            text="Convert Form to UI DSL"/>
+  </actions>
+</idea-plugin>
