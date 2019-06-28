@@ -393,13 +393,16 @@ public class IconUtil {
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
-      Rectangle iconClip = new Rectangle(x - myCrop.x, y - myCrop.y, myCrop.width, myCrop.height);
-      Rectangle gClip = g.getClipBounds();
-      Rectangle2D.intersect(iconClip, gClip, iconClip);
-      g.setClip(iconClip);
-      mySrc.paintIcon(c, g, x - myCrop.x, y - myCrop.y);
-
-      g.setClip(gClip);
+      g = g.create();
+      try {
+        Rectangle iconClip = new Rectangle(x - myCrop.x, y - myCrop.y, myCrop.width, myCrop.height);
+        Rectangle2D.intersect(iconClip, g.getClipBounds(), iconClip);
+        g.setClip(iconClip);
+        mySrc.paintIcon(c, g, x - myCrop.x, y - myCrop.y);
+      }
+      finally {
+        g.dispose();
+      }
     }
 
     @Override
