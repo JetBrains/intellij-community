@@ -154,12 +154,13 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
   VcsLogIndexer.PathsEncoder getPathsEncoder() {
     return new VcsLogIndexer.PathsEncoder() {
       @Override
-      public int encode(@NotNull String path, boolean isDirectory) throws VcsException {
+      public int encode(@NotNull String path, boolean isDirectory) {
         try {
           return myPathsIndexer.myPathsEnumerator.enumerate(new LightFilePath(path, isDirectory));
         }
         catch (IOException e) {
-          throw new VcsException(e);
+          myPathsIndexer.myFatalErrorConsumer.consume(e);
+          return 0;
         }
       }
     };
