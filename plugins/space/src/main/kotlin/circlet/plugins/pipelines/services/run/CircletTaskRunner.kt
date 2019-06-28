@@ -5,7 +5,7 @@ import circlet.plugins.pipelines.viewmodel.*
 import com.intellij.execution.process.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
-import klogging.*
+import libraries.klogging.*
 import runtime.*
 import java.io.*
 
