@@ -10,7 +10,7 @@ import circlet.utils.*
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
-import klogging.*
+import libraries.klogging.*
 import org.slf4j.event.*
 import org.slf4j.helpers.*
 import runtime.reactive.*

@@ -1,7 +1,7 @@
 package circlet.klogging.impl
 
 import com.intellij.openapi.diagnostic.*
-import klogging.impl.*
+import libraries.klogging.*
 
 class ApplicationLogger(private val logger: Logger) : BaseLogger {
 
