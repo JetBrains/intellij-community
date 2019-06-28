@@ -19,11 +19,13 @@ threadingCurrentThread = threading.currentThread
 DONT_TRACE_THREADING = ['threading.py', 'pydevd.py']
 INNER_METHODS = ['_stop']
 INNER_FILES = ['threading.py']
-THREAD_METHODS = ['start', '_stop', 'join']
+# Tread method `start` is removed, because it's being handled in `pydev_monkey` thread creation patching
+THREAD_METHODS = ['_stop', 'join']
 LOCK_METHODS = ['__init__', 'acquire', 'release', '__enter__', '__exit__']
 QUEUE_METHODS = ['put', 'get']
 
-from _pydevd_bundle.pydevd_comm import GlobalDebuggerHolder, NetCommand
+from _pydevd_bundle.pydevd_comm import NetCommand
+from _pydevd_bundle.pydevd_constants import GlobalDebuggerHolder
 import traceback
 
 import time
@@ -87,6 +89,8 @@ def get_text_list_for_frame(frame):
 
 def send_message(event_class, time, name, thread_id, type, event, file, line, frame, lock_id=0, parent=None):
     dbg = GlobalDebuggerHolder.global_dbg
+    if dbg is None:
+        return
     cmdTextList = ['<xml>']
 
     cmdTextList.append('<' + event_class)
@@ -111,8 +115,7 @@ def send_message(event_class, time, name, thread_id, type, event, file, line, fr
         dbg.writer.add_command(NetCommand(145, 0, text))
 
 
-def log_new_thread(global_debugger):
-    t = threadingCurrentThread()
+def log_new_thread(global_debugger, t):
     event_time = cur_time() - global_debugger.thread_analyser.start_time
     send_message("threading_event", event_time, t.getName(), get_thread_id(t), "thread",
              "start", "code_name", 0, None, parent=get_thread_id(t))
@@ -173,8 +176,6 @@ class ThreadingLogger:
                             name = t.getName()
                             self_obj._pydev_join_called = True
 
-                        if real_method == "start":
-                            parent = get_thread_id(t)
                         send_message("threading_event", event_time, name, thread_id, "thread",
                         real_method, back.f_code.co_filename, back.f_lineno, back, parent=parent)
                         # print(event_time, self_obj.getName(), thread_id, "thread",

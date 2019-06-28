@@ -24,8 +24,8 @@ import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.duplicates.Match;
-import com.intellij.testFramework.LightCodeInsightTestCase;
-import com.intellij.util.ArrayUtil;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class ExtractMethodTest extends LightCodeInsightTestCase {
+public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
   @NonNls private static final String BASE_PATH = "/refactoring/extractMethod/";
   private boolean myCatchOnNewLine = true;
 
@@ -559,7 +559,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   public void testNullableCheck() throws Exception {
     doTest();
   }
-  
+
   public void testNullableCheck1() throws Exception {
     doTest();
   }
@@ -663,10 +663,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   public void testRedundantCast() throws Exception {
     doTest();
   }
-  
+
   public void testDisabledParam() throws Exception {
     doTestDisabledParam();
-  } 
+  }
 
   public void testTypeParamsList() throws Exception {
     doTest();
@@ -691,7 +691,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   public void testFromLambdaBodyToAnonymous() throws Exception {
     doTest();
   }
-  
+
   public void testFromLambdaBodyToToplevelInsideCodeBlock() throws Exception {
     doTest();
   }
@@ -707,7 +707,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   public void testMethod2Interface() throws Exception {
     doTestWithLanguageLevel(LanguageLevel.JDK_1_8);
   }
-  
+
   public void testMethod2InterfaceFromStatic() throws Exception {
     doTest();
   }
@@ -951,7 +951,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   public void testTargetAnonymous() throws Exception {
     doTest();
   }
-  
+
   public void testSimpleMethodsInOneLine() throws Exception {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     CommonCodeStyleSettings javaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
@@ -1008,7 +1008,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testMultipleVarsInMethodNoReturnStatementAndAssignment() throws Exception {
-    //return type should not be suggested but still 
+    //return type should not be suggested but still
     doTestReturnTypeChanged(PsiType.INT);
   }
 
@@ -1348,8 +1348,8 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
       checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
     }
     finally {
-      nullManager.setNullables(ArrayUtil.toStringArray(nullables));
-      nullManager.setNotNulls(ArrayUtil.toStringArray(notNulls));
+      nullManager.setNullables(ArrayUtilRt.toStringArray(nullables));
+      nullManager.setNotNulls(ArrayUtilRt.toStringArray(notNulls));
       nullManager.setDefaultNullable(defaultNullable);
       nullManager.setDefaultNotNull(defaultNotNull);
     }
@@ -1380,6 +1380,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testFromStaticMethodInInterface() throws Exception {
+    doTest();
+  }
+
+  public void testDisjunctionType() throws Exception {
     doTest();
   }
 
@@ -1466,7 +1470,8 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   public static boolean performExtractMethod(boolean doRefactor, boolean replaceAllDuplicates, Editor editor, PsiFile file, Project project,
                                              final boolean extractChainedConstructor)
     throws PrepareFailedException, IncorrectOperationException {
-    return performExtractMethod(doRefactor, replaceAllDuplicates, editor, file, project, extractChainedConstructor, ArrayUtil.EMPTY_INT_ARRAY);
+    return performExtractMethod(doRefactor, replaceAllDuplicates, editor, file, project, extractChainedConstructor,
+                                ArrayUtilRt.EMPTY_INT_ARRAY);
   }
 
   public static boolean performExtractMethod(boolean doRefactor,

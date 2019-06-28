@@ -31,9 +31,9 @@ internal fun getOsFolderName() = when {
 }
 
 internal fun toRepositoryPath(path: String, roamingType: RoamingType, projectKey: String? = null): String {
-  fun String.osIfNeed() = if (roamingType == RoamingType.PER_OS) "${getOsFolderName()}/$this" else this
+  fun String.osIfNeeded() = if (roamingType == RoamingType.PER_OS) "${getOsFolderName()}/$this" else this
 
-  return if (projectKey == null) path.osIfNeed() else "$PROJECTS_DIR_NAME$projectKey/$path"
+  return if (projectKey == null) path.osIfNeeded() else "$PROJECTS_DIR_NAME$projectKey/$path"
 }
 
 internal fun toIdeaPath(path: String): String {

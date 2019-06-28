@@ -22,6 +22,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.impl.ConsoleBuffer;
 import com.intellij.execution.testframework.*;
+import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.progress.ProgressManager;
@@ -50,6 +51,9 @@ public class TestResultsXmlFormatter {
   public static final String ELEM_COUNT = "count";
   public static final String ATTR_VALUE = "value";
   public static final String ELEM_OUTPUT = "output";
+  public static final String DIFF = "diff";
+  public static final String EXPECTED = "expected";
+  public static final String ACTUAL = "actual";
   public static final String ATTR_OUTPUT_TYPE = "type";
   public static final String ATTR_STATUS = "status";
   public static final String TOTAL_STATUS = "total";
@@ -258,6 +262,22 @@ public class TestResultsXmlFormatter {
 
       @Override
       public void printHyperlink(String text, HyperlinkInfo info) {
+        if (info instanceof DiffHyperlink.DiffHyperlinkInfo) {
+          final DiffHyperlink diffHyperlink = ((DiffHyperlink.DiffHyperlinkInfo)info).getPrintable();
+          try {
+            HashMap<String, String> attributes = new HashMap<>();
+            attributes.put(EXPECTED, diffHyperlink.getLeft());
+            attributes.put(ACTUAL, diffHyperlink.getRight());
+            startElement(DIFF, attributes);
+            endElement(DIFF);
+          }
+          catch (SAXException e) {
+            error.set(e);
+          }
+        }
+        else {
+          print(text, ConsoleViewContentType.NORMAL_OUTPUT);
+        }
       }
 
       @Override

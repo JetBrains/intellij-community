@@ -1,3 +1,6 @@
+echo ") \\"
+echo "    ((r)->direct) ? \\"
+echo -n "	bus_${n}((r)->res"
 ""
 "abc"
 "abc""abc"

@@ -174,7 +174,7 @@ public class CreateResourceBundleDialogComponent {
                                                                                     return myDirectory.createFile(n);
                                                                                   }
                                                                                 })));
-    combineToResourceBundleIfNeed(createdFiles);
+    combineToResourceBundleIfNeeded(createdFiles);
     return createdFiles;
   }
 
@@ -187,7 +187,7 @@ public class CreateResourceBundleDialogComponent {
                                    .getOrDefault(locale, locale.toString()))) + suffix);
   }
 
-  private void combineToResourceBundleIfNeed(Collection<PsiFile> files) {
+  private void combineToResourceBundleIfNeeded(Collection<PsiFile> files) {
     Collection<PropertiesFile> createdFiles = ContainerUtil.map(files, (NotNullFunction<PsiFile, PropertiesFile>)dom -> {
       final PropertiesFile file = PropertiesImplUtil.getPropertiesFile(dom);
       LOG.assertTrue(file != null, dom.getName());

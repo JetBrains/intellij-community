@@ -7,13 +7,17 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 
 /**
- * Represents a logical position in the editor. Logical positions ignore folding -
- * for example, if the top 10 lines of the document are folded, the 10th line in the document
- * will have the line number 10 in its logical position.
+ * Represents a logical position in the editor, including line and column values (both zero-based). Line value relates to the corresponding
+ * line in the editor's {@link Document}. Column value counts characters from the beginning of the logical line (tab character can occupy
+ * multiple columns - up to the tab size set for editor, surrogate pairs of characters are counted as one column). Positions beyond the end
+ * of line can be represented (in this case column number will be larger than the number of characters in the line).
  * <p>
  * Logical position corresponds to a boundary between two characters and can be associated with either a preceding or succeeding character
  * (see {@link #leansForward}). This association makes a difference in a bidirectional text, where a mapping from logical to visual position 
  * is not continuous.
+ * <p>
+ * Logical position of caret in current editor is displayed in IDE's status bar (displayed line and column values are one-based, so they are
+ * incremented before showing).
  * <p>
  * <b>Note:</b> two objects of this class are considered equal if their logical line and column are equal. I.e. all logical positions
  * for soft wrap-introduced virtual space and the first document symbol after soft wrap are considered to be equal. Value of 
@@ -50,29 +54,6 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
     this.line = line;
     this.column = column;
     this.leansForward = leansForward;
-  }
-
-  /**
-   * @deprecated Use {@link #LogicalPosition(int, int)} instead.
-   *             Additional fields are not used since 2018.2. To be removed in 2019.2.
-   */
-  @Deprecated
-  @SuppressWarnings("unused")
-  public LogicalPosition(int line, int column, int softWrapLinesBeforeCurrentLogicalLine, int softWrapLinesOnCurrentLogicalLine,
-                         int softWrapColumnDiff, int foldedLines, int foldingColumnDiff) throws IllegalArgumentException {
-    this(line, column, false);
-  }
-
-  /**
-   * @deprecated Use {@link #LogicalPosition(int, int, boolean)} instead.
-   *             Additional fields are not used since 2018.2. To be removed in 2019.2.
-   */
-  @Deprecated
-  @SuppressWarnings("unused")
-  public LogicalPosition(int line, int column, int softWrapLinesBeforeCurrentLogicalLine, int softWrapLinesOnCurrentLogicalLine,
-                         int softWrapColumnDiff, int foldedLines, int foldingColumnDiff, boolean leansForward,
-                         boolean visualPositionLeansRight) throws IllegalArgumentException {
-    this(line, column, leansForward);
   }
 
   /**

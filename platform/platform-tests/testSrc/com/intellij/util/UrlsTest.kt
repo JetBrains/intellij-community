@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util
 
-import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.SystemInfo
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
@@ -27,7 +27,7 @@ internal class UrlsTest {
 
   @Test
   fun windowsFilePath() {
-    if (!SystemInfoRt.isWindows) {
+    if (!SystemInfo.isWindows) {
       return
     }
 

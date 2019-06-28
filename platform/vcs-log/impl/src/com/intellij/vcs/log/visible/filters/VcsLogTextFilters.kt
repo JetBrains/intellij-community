@@ -5,7 +5,7 @@ import com.intellij.vcs.log.VcsLogDetailsFilter
 import com.intellij.vcs.log.VcsLogTextFilter
 import java.util.regex.Pattern
 
-class VcsLogRegexTextFilter internal constructor(private val pattern: Pattern) : VcsLogDetailsFilter, VcsLogTextFilter {
+data class VcsLogRegexTextFilter internal constructor(private val pattern: Pattern) : VcsLogDetailsFilter, VcsLogTextFilter {
   override fun matches(message: String): Boolean = pattern.matcher(message).find()
 
   override fun getText(): String = pattern.pattern()
@@ -19,8 +19,8 @@ class VcsLogRegexTextFilter internal constructor(private val pattern: Pattern) :
   }
 }
 
-class VcsLogMultiplePatternsTextFilter internal constructor(val patterns: List<String>,
-                                                            private val isMatchCase: Boolean) : VcsLogDetailsFilter, VcsLogTextFilter {
+data class VcsLogMultiplePatternsTextFilter internal constructor(val patterns: List<String>,
+                                                                 private val isMatchCase: Boolean) : VcsLogDetailsFilter, VcsLogTextFilter {
   override fun getText(): String = if (patterns.size == 1) patterns.single() else patterns.joinToString("|") { Pattern.quote(it) }
 
   override fun isRegex(): Boolean = patterns.size > 1
@@ -32,7 +32,6 @@ class VcsLogMultiplePatternsTextFilter internal constructor(val patterns: List<S
   override fun toString(): String {
     return "containing at least one of the ${patterns.joinToString(", ") { s -> "'$s'" }} ${caseSensitiveText()}"
   }
-
 }
 
 internal fun VcsLogTextFilter.caseSensitiveText() = "(case ${if (matchesCase()) "sensitive" else "insensitive"})"

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter.java2groovy;
 
@@ -17,7 +17,7 @@ import com.intellij.refactoring.introduceParameter.IntroduceParameterMethodUsage
 import com.intellij.refactoring.introduceParameter.IntroduceParameterUtil;
 import com.intellij.refactoring.util.javadoc.MethodJavaDocHelper;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
@@ -291,7 +291,7 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
     PsiClass aClass = (PsiClass)usage.getElement();
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(data.getProject());
     GrMethod constructor =
-      factory.createConstructorFromText(aClass.getName(), ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY, "{}");
+      factory.createConstructorFromText(aClass.getName(), ArrayUtilRt.EMPTY_STRING_ARRAY, ArrayUtilRt.EMPTY_STRING_ARRAY, "{}");
     constructor = (GrMethod)aClass.add(constructor);
     constructor.getModifierList().setModifierProperty(VisibilityUtil.getVisibilityModifier(aClass.getModifierList()), true);
     processAddSuperCall(data, new UsageInfo(constructor), usages);

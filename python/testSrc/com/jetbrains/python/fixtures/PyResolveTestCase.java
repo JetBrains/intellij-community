@@ -1,11 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.fixtures;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.*;
@@ -33,7 +33,7 @@ public abstract class PyResolveTestCase extends PyTestCase {
 
     String fileText;
     try {
-      fileText = StringUtil.convertLineSeparators(VfsUtil.loadText(file));
+      fileText = StringUtil.convertLineSeparators(VfsUtilCore.loadText(file));
     }
     catch (IOException e) {
       throw new RuntimeException(e);

@@ -1,20 +1,18 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.InferredAnnotationsManager;
-import com.intellij.codeInsight.NullableNotNullDialog;
-import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInspection.AnnotateMethodFix;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.*;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -98,7 +96,7 @@ public class ReturnNullInspection extends BaseInspection {
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(elt.getProject());
     return new DelegatingFix(new AnnotateMethodFix(
       manager.getDefaultNullable(),
-      ArrayUtil.toStringArray(manager.getNotNulls())));
+      ArrayUtilRt.toStringArray(manager.getNotNulls())));
   }
 
   @Override
@@ -165,7 +163,7 @@ public class ReturnNullInspection extends BaseInspection {
         method = (PsiMethod)element;
         returnType = method.getReturnType();
         lambda = false;
-      } 
+      }
       else if (element instanceof PsiLambdaExpression) {
         final PsiType functionalInterfaceType = ((PsiLambdaExpression)element).getFunctionalInterfaceType();
         method = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
@@ -200,17 +198,12 @@ public class ReturnNullInspection extends BaseInspection {
         }
       }
       final Project project = method.getProject();
-      final NullableNotNullManager nullableNotNullManager = NullableNotNullManager.getInstance(project);
-      final PsiAnnotation annotation = nullableNotNullManager.getNullableAnnotation(method, false);
-      final InferredAnnotationsManager inferredAnnotationsManager = InferredAnnotationsManager.getInstance(project);
-      if (annotation != null && !inferredAnnotationsManager.isInferredAnnotation(annotation)) {
+      final NullabilityAnnotationInfo info = NullableNotNullManager.getInstance(project).findEffectiveNullabilityInfo(method);
+      if (info != null && info.getNullability() == Nullability.NULLABLE && !info.isInferred()) {
         return;
       }
-      for (PsiAnnotation typeAnnotation : returnType.getAnnotations()) {
-        if (NullableNotNullManager.isNullabilityAnnotation(typeAnnotation) &&
-            !inferredAnnotationsManager.isInferredAnnotation(typeAnnotation)) {
-          return;
-        }
+      if (DfaPsiUtil.getTypeNullability(returnType) == Nullability.NULLABLE) {
+        return;
       }
 
       if (CollectionUtils.isCollectionClassOrInterface(returnType)) {

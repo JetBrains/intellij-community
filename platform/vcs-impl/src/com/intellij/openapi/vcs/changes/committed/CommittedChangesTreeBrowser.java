@@ -31,6 +31,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
@@ -92,7 +93,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   private final MessageBusConnection myConnection;
   private TreeState myState;
 
-  public CommittedChangesTreeBrowser(final Project project, final List<CommittedChangeList> changeLists) {
+  public CommittedChangesTreeBrowser(final Project project, final List<? extends CommittedChangeList> changeLists) {
     super(new BorderLayout());
 
     myProject = project;
@@ -186,10 +187,10 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     }
   }
 
-  private TreeModel buildTreeModel(final List<? extends CommittedChangeList> filteredChangeLists) {
+  private TreeModel buildTreeModel(List<? extends CommittedChangeList> filteredChangeLists) {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     DefaultTreeModel model = new DefaultTreeModel(root);
-    Collections.sort(filteredChangeLists, myGroupingStrategy.getComparator());
+    filteredChangeLists = ContainerUtil.sorted(filteredChangeLists, myGroupingStrategy.getComparator());
     myGroupingStrategy.beforeStart();
     DefaultMutableTreeNode lastGroupNode = null;
     String lastGroupName = null;
@@ -200,7 +201,6 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
         lastGroupNode = new DefaultMutableTreeNode(lastGroupName);
         root.add(lastGroupNode);
       }
-      assert lastGroupNode != null;
       lastGroupNode.add(new DefaultMutableTreeNode(list));
     }
     return model;
@@ -226,7 +226,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     mySplitterProportionsData.externalizeToDimensionService("CommittedChanges.SplitterProportions");
   }
 
-  public void setItems(@NotNull List<CommittedChangeList> items, final CommittedChangesBrowserUseCase useCase) {
+  public void setItems(@NotNull List<? extends CommittedChangeList> items, final CommittedChangesBrowserUseCase useCase) {
     myDetailsView.setUseCase(useCase);
     myChangeLists = new ArrayList<>(items);
     myFilteringStrategy.setFilterBase(items);
@@ -487,7 +487,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     updateModel();
   }
 
-  public void append(final List<CommittedChangeList> list) {
+  public void append(final List<? extends CommittedChangeList> list) {
     final TreeState state = myChangeLists.isEmpty() && myState != null ? myState :
       TreeState.createOn(myChangesTree, (DefaultMutableTreeNode)myChangesTree.getModel().getRoot());
     state.setScrollToSelection(false);

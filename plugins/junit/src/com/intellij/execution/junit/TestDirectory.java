@@ -3,6 +3,7 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.Location;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -95,7 +96,7 @@ class TestDirectory extends TestPackage {
   }
 
   @Override
-  protected void searchTests5(Module module, TestClassFilter classFilter, Set<PsiMember> classes) throws CantRunException {
+  protected void searchTests5(Module module, TestClassFilter classFilter, Set<Location<?>> classes) throws CantRunException {
     if (module != null) {
       PsiDirectory directory = getDirectory(getConfiguration().getPersistentData());
       PsiPackage aPackage = JavaRuntimeConfigurationProducerBase.checkPackage(directory);
@@ -110,12 +111,12 @@ class TestDirectory extends TestPackage {
   }
 
   @Override
-  protected boolean filterOutputByDirectoryForJunit5(Set<PsiMember> classNames) {
+  protected boolean filterOutputByDirectoryForJunit5(Set<Location<?>> classNames) {
     return true;
   }
 
   @Override
-  protected String getFilters(Set<PsiMember> foundClasses, String packageName) {
+  protected String getFilters(Set<Location<?>> foundClasses, String packageName) {
     return foundClasses.isEmpty()
            ? super.getFilters(foundClasses, packageName)
            : StringUtil.join(foundClasses, CLASS_NAME_FUNCTION, "||");
@@ -124,14 +125,14 @@ class TestDirectory extends TestPackage {
   @Override
   protected void collectClassesRecursively(TestClassFilter classFilter,
                                            Condition<? super PsiClass> acceptClassCondition,
-                                           Set<? super PsiClass> classes) throws CantRunException {
+                                           Set<Location<?>> classes) throws CantRunException {
     collectClassesRecursively(getDirectory(getConfiguration().getPersistentData()), acceptClassCondition, classes);
   }
 
 
   private static void collectClassesRecursively(PsiDirectory directory,
                                                 Condition<? super PsiClass> acceptAsTest,
-                                                Set<? super PsiClass> classes) {
+                                                Set<Location<?>> classes) {
     PsiDirectory[] subDirectories = ReadAction.compute(() -> directory.getSubdirectories());
     for (PsiDirectory subDirectory : subDirectories) {
       collectClassesRecursively(subDirectory, acceptAsTest, classes);

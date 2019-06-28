@@ -20,6 +20,9 @@ public interface ExtensionsArea  {
                               @NotNull ExtensionPoint.Kind kind,
                               @NotNull Disposable parentDisposable);
 
+  /**
+   * @deprecated use {@link ExtensionsArea#registerExtensionPoint(BaseExtensionPointName, String, ExtensionPoint.Kind, Disposable)}
+   */
   @TestOnly
   @Deprecated
   default void registerExtensionPoint(@NonNls @NotNull String extensionPointName, @NotNull String extensionPointBeanClass) {
@@ -49,11 +52,17 @@ public interface ExtensionsArea  {
 
   void addAvailabilityListener(@NotNull String extensionPointName, @NotNull ExtensionPointAvailabilityListener listener, @Nullable Disposable parentDisposable);
 
+  /**
+   * @deprecated use {@link #addAvailabilityListener(String, ExtensionPointAvailabilityListener, Disposable)}
+   */
   @Deprecated
   default void addAvailabilityListener(@NotNull String extensionPointName, @NotNull ExtensionPointAvailabilityListener listener) {
     addAvailabilityListener(extensionPointName, listener, null);
   }
 
+  /**
+   * @deprecated use {@link #addAvailabilityListener(String, ExtensionPointAvailabilityListener, Disposable)}
+   */
   @Deprecated
   void removeAvailabilityListener(@NotNull String extensionPointName, @NotNull ExtensionPointAvailabilityListener listener);
 

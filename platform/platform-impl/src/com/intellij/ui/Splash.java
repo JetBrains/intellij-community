@@ -1,20 +1,19 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.intellij.ide.StartupProgress;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ProgressSlide;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.scale.ScaleContext;
+import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,68 +21,90 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-
 /**
  * To customize your IDE splash go to YourIdeNameApplicationInfo.xml and edit 'logo' tag. For more information see documentation for
  * the tag attributes in ApplicationInfo.xsd file.
- *
- * @author Konstantin Bulenkov
  */
-public class Splash extends JDialog implements StartupProgress {
-  @Nullable public static Rectangle BOUNDS;
+public final class Splash extends Window {
+  private static final float JBUI_INIT_SCALE = JBUIScale.scale(1f);
 
-  private final Icon myImage;
   private final ApplicationInfoEx myInfo;
-  private int myProgressHeight;
-  private Color myProgressColor = null;
-  private int myProgressY;
-  private float myProgress;
-  private boolean mySplashIsVisible;
+  private final int myWidth;
+  private final int myHeight;
+  private final int myProgressHeight;
+  private final int myProgressY;
+  private double myProgress;
   private int myProgressLastPosition = 0;
-  private final JLabel myLabel;
-  private Icon myProgressTail;
+  private final Icon myProgressTail;
+  private final List<ProgressSlideAndImage> myProgressSlideImages = new ArrayList<>();
+  private final Image myImage;
+
+  private final NotNullLazyValue<Font> myFont = createFont();
 
   public Splash(@NotNull ApplicationInfoEx info) {
-    super((Frame)null, false);
+    super(null);
 
     myInfo = info;
-    if (info instanceof ApplicationInfoImpl) {
-      final ApplicationInfoImpl appInfo = (ApplicationInfoImpl)info;
-      myProgressHeight = appInfo.getProgressHeight();
-      myProgressColor = appInfo.getProgressColor();
-      myProgressY = appInfo.getProgressY();
-      myProgressTail = appInfo.getProgressTailIcon();
-    }
-    setUndecorated(true);
-    if (!(SystemInfo.isLinux)) {
-      setResizable(false);
-    }
+    myProgressHeight = uiScale(info.getProgressHeight());
+    myProgressY = uiScale(info.getProgressY());
+    myProgressTail = info.getProgressTailIcon();
+
     setFocusableWindowState(false);
 
-    String splashImageUrl = info.getSplashImageUrl();
-    Icon originalImage = IconLoader.getIcon(splashImageUrl);
-    myImage = new SplashImage(IconLoader.getIconSnapshot(originalImage), info.getSplashTextColor());
-    myLabel = new JLabel(myImage) {
-      @Override
-      protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        mySplashIsVisible = true;
-        myProgressLastPosition = 0;
-        paintProgress(g);
-      }
-    };
-    Container contentPane = getContentPane();
-    contentPane.setLayout(new BorderLayout());
-    contentPane.add(myLabel, BorderLayout.CENTER);
-    Dimension size = getPreferredSize();
-    if (Registry.is("suppress.focus.stealing") && Registry.is("suppress.focus.stealing.auto.request.focus")) {
+    myImage = loadImage(info.getSplashImageUrl());
+    myWidth = myImage.getWidth(null);
+    myHeight = myImage.getHeight(null);
+    Dimension size = new Dimension(myWidth, myHeight);
+    if (UIUtil.SUPPRESS_FOCUS_STEALING && Registry.is("suppress.focus.stealing.auto.request.focus")) {
       setAutoRequestFocus(false);
     }
     setSize(size);
-    pack();
     setLocationInTheCenterOfScreen();
 
     initImages();
+
+    setVisible(true);
+    paint(getGraphics());
+    toFront();
+  }
+
+  @Override
+  public void dispose() {
+    super.dispose();
+  }
+
+  @NotNull
+  private static Image loadImage(@NotNull String path) {
+    Image result = ImageLoader.loadFromUrl(path, Splash.class, ImageLoader.ALLOW_FLOAT_SCALING, null, ScaleContext.create());
+    if (result == null) {
+      throw new IllegalStateException("Cannot find image: " + path);
+    }
+    return result;
+  }
+
+  @NotNull
+  public static NotNullLazyValue<Font> createFont() {
+    return NotNullLazyValue.createValue(() -> {
+      Font font;
+      if (SystemInfo.isMacOSElCapitan) {
+        font = createFont(".SF NS Text");
+      }
+      else {
+        //noinspection SpellCheckingInspection
+        font = SystemInfo.isMacOSYosemite ? createFont("HelveticaNeue-Regular") : null;
+      }
+
+      if (font == null || UIUtil.isDialogFont(font)) {
+        font = createFont(UIUtil.ARIAL_FONT_NAME);
+      }
+      return font;
+    });
+  }
+
+  @Override
+  public void paint(Graphics g) {
+    StartupUiUtil.drawImage(g, myImage, 0, 0, null);
+    paintProgress(g);
   }
 
   private void initImages() {
@@ -93,176 +114,125 @@ public class Splash extends JDialog implements StartupProgress {
     }
 
     for (ProgressSlide progressSlide : progressSlides) {
-      String url = progressSlide.getUrl();
-      Icon icon = IconLoader.getIcon(url);
-      progressSlide.setImageIcon(icon);
-      myProgressSlideImages.add(progressSlide);
+      myProgressSlideImages.add(new ProgressSlideAndImage(progressSlide, loadImage(progressSlide.getUrl())));
     }
-
-    myProgressSlideImages.sort(Comparator.comparing(ProgressSlide::getProgressRation));
+    myProgressSlideImages.sort(Comparator.comparing(t -> t.slide.getProgressRation()));
   }
-
-  private ArrayList<ProgressSlide> myProgressSlideImages = new ArrayList<>();
 
   private void setLocationInTheCenterOfScreen() {
     Rectangle bounds = getGraphicsConfiguration().getBounds();
     if (SystemInfo.isWindows) {
       JBInsets.removeFrom(bounds, ScreenUtil.getScreenInsets(getGraphicsConfiguration()));
     }
-    setLocation(UIUtil.getCenterPoint(bounds, getSize()));
+    setLocation(StartupUiUtil.getCenterPoint(bounds, getSize()));
   }
 
-  @Override
-  @SuppressWarnings("deprecation")
-  public void show() {
-    super.show();
-    toFront();
-    //noinspection AssignmentToStaticFieldFromInstanceMethod
-    BOUNDS = getBounds();
-    //Sometimes this causes deadlock in EDT
-    // http://bugs.sun.com/view_bug.do?bug_id=6724890
-    //
-    //myLabel.paintImmediately(0, 0, myImage.getIconWidth(), myImage.getIconHeight());
-  }
+  public void showProgress(double progress) {
+    if (myInfo.getProgressColor() == null) {
+      return;
+    }
 
-  @Override
-  public void showProgress(String message, float progress) {
-    if (getProgressColor() == null) return;
-    if (progress - myProgress > 0.01 || progress > 0.99) {
+    if (((progress - myProgress) > 0.01) || (progress > 0.99)) {
       myProgress = progress;
-      myLabel.paintImmediately(0, 0, myImage.getIconWidth(), myImage.getIconHeight());
+      paintProgress(getGraphics());
     }
   }
 
-  @Override
-  public void dispose() {
-    super.dispose();
-    removeAll();
-    DialogWrapper.cleanupRootPane(rootPane);
-    rootPane = null;
-  }
-
-  private void paintProgress(Graphics g) {
-    boolean hasSlides = myProgressSlideImages.size() > 0;
-    if (hasSlides)
+  private void paintProgress(@NotNull Graphics g) {
+    boolean hasSlides = !myProgressSlideImages.isEmpty();
+    if (hasSlides) {
       paintSlides(g);
-
-    final Color color = getProgressColor();
-    if (color == null) return;
-
-    if (!mySplashIsVisible) {
-      myImage.paintIcon(this, g, 0, 0);
-      mySplashIsVisible = true;
     }
 
-    int totalWidth = myImage.getIconWidth() + 3;
-    final int progressWidth = (int)(totalWidth * myProgress);
-    final int width = progressWidth - myProgressLastPosition;
+    Color color = myInfo.getProgressColor();
+    if (color == null) {
+      return;
+    }
+
+    final int progressWidth = (int)(myWidth * myProgress);
+    int currentWidth = progressWidth - myProgressLastPosition;
+    if (currentWidth == 0) {
+      return;
+    }
+
     g.setColor(color);
-    int y = hasSlides ? myLabel.getHeight() - getProgressHeight() : getProgressY();
-    g.fillRect(0, y, width, getProgressHeight());
+    int y = hasSlides ? myHeight - myProgressHeight : myProgressY;
+    g.fillRect(myProgressLastPosition, y, currentWidth, myProgressHeight);
     if (myProgressTail != null) {
-      myProgressTail.paintIcon(this, g, (int)(width - (myProgressTail.getIconWidth() / uiScale(1f) / 2f * uiScale(1f))),
-                               (int)(getProgressY() - (myProgressTail.getIconHeight() - getProgressHeight()) / uiScale(1f) / 2f * uiScale(1f))); //I'll buy you a beer if you understand this line without playing with it
+      float onePixel = JBUI_INIT_SCALE;
+      myProgressTail.paintIcon(this, g, (int)(currentWidth - (myProgressTail.getIconWidth() / onePixel / 2f * onePixel)),
+                               (int)(myProgressY - (myProgressTail.getIconHeight() - myProgressHeight) / onePixel / 2f * onePixel)); //I'll buy you a beer if you understand this line without playing with it
     }
     myProgressLastPosition = progressWidth;
   }
 
-  private void paintSlides(Graphics g) {
-    for (ProgressSlide progressSlide : myProgressSlideImages) {
-      if (progressSlide.getProgressRation() <= myProgress) {
-        progressSlide.getLoadedImage().paintIcon(this, g, 0, 0);
+  private void paintSlides(@NotNull Graphics g) {
+    for (ProgressSlideAndImage progressSlide : myProgressSlideImages) {
+      if (progressSlide.slide.getProgressRation() <= myProgress) {
+        if(progressSlide.isDrawn)
+          continue;
+
+        StartupUiUtil.drawImage(g, progressSlide.image, 0, 0, null);
+        progressSlide.isDrawn = true;
       }
     }
   }
 
-  private Color getProgressColor() {
-    return myProgressColor;
+  public void paintLicenseeInfo() {
+    showLicenseeInfo(getGraphics(), 0, 0, myHeight, myInfo, myFont);
   }
 
-  private int getProgressHeight() {
-    return (int)uiScale((float)myProgressHeight);
-  }
+  public static boolean showLicenseeInfo(@NotNull Graphics g, int x, int y, final int height, @NotNull ApplicationInfoEx info, @NotNull NotNullLazyValue<? extends Font> font) {
+    if (!info.showLicenseeInfo()) {
+      return false;
+    }
 
-  private int getProgressY() {
-    return (int)uiScale((float)myProgressY);
-  }
-
-  public static boolean showLicenseeInfo(Graphics g, int x, int y, final int height, final Color textColor, ApplicationInfo info) {
-    if (ApplicationInfoImpl.getShadowInstance().showLicenseeInfo()) {
-      final LicensingFacade provider = LicensingFacade.getInstance();
-      if (provider != null) {
-        UIUtil.applyRenderingHints(g);
-        final String licensedToMessage = provider.getLicensedToMessage();
-        final List<String> licenseRestrictionsMessages = provider.getLicenseRestrictionsMessages();
-
-        Font font = SystemInfo.isMacOSElCapitan ? createFont(".SF NS Text") :
-                    SystemInfo.isMacOSYosemite ? createFont("HelveticaNeue-Regular") :
-                    null;
-        if (font == null || UIUtil.isDialogFont(font)) {
-          font = createFont(UIUtil.ARIAL_FONT_NAME);
-        }
-
-        g.setFont(UIUtil.getFontWithFallback(font));
-        g.setColor(textColor);
-        if (!(info instanceof ApplicationInfoImpl)) {
-          return false;
-        }
-        int offsetX = Math.max(uiScale(15), uiScale(((ApplicationInfoImpl)info).getLicenseOffsetX()));
-        int offsetY = ((ApplicationInfoImpl)info).getLicenseOffsetY();
-        if (licensedToMessage != null) {
-          g.drawString(licensedToMessage, x + offsetX, y + height - uiScale(offsetY));
-        }
-        if (licenseRestrictionsMessages.size() > 0) {
-          g.drawString(licenseRestrictionsMessages.get(0), x + offsetX, y + height - uiScale(offsetY - 16));
-        }
-      }
+    LicensingFacade provider = LicensingFacade.getInstance();
+    if (provider == null) {
       return true;
     }
-    return false;
+
+    String licensedToMessage = provider.getLicensedToMessage();
+    List<String> licenseRestrictionsMessages = provider.getLicenseRestrictionsMessages();
+    if (licensedToMessage == null && licenseRestrictionsMessages.isEmpty()) {
+      return true;
+    }
+
+    UIUtil.applyRenderingHints(g);
+    g.setFont(font.getValue());
+    g.setColor(info.getSplashTextColor());
+
+    int offsetX = Math.max(uiScale(15), uiScale(info.getLicenseOffsetX()));
+    int offsetYUnscaled = info.getLicenseOffsetY();
+
+    if (licensedToMessage != null) {
+      g.drawString(licensedToMessage, x + offsetX, y + height - uiScale(offsetYUnscaled));
+    }
+
+    if (!licenseRestrictionsMessages.isEmpty()) {
+      g.drawString(licenseRestrictionsMessages.get(0), x + offsetX, y + height - uiScale(offsetYUnscaled - 16));
+    }
+    return true;
   }
 
   @NotNull
-  protected static Font createFont(String name) {
+  private static Font createFont(String name) {
     return new Font(name, Font.PLAIN, uiScale(12));
   }
 
-  private static final float JBUI_INIT_SCALE = JBUI.scale(1f);
-  private static float uiScale(float f) { return f * JBUI_INIT_SCALE; }
-  private static int uiScale(int i) { return (int)(i * JBUI_INIT_SCALE); }
-
-  private final class SplashImage implements Icon {
-    private final Icon myIcon;
-    private final Color myTextColor;
-    private boolean myRedrawing;
-
-    SplashImage(Icon originalIcon, Color textColor) {
-      myIcon = originalIcon;
-      myTextColor = textColor;
-    }
-
-    @Override
-    public void paintIcon(Component c, Graphics g, int x, int y) {
-      if (!myRedrawing) {
-        try {
-          Thread.sleep(10);
-        } catch (InterruptedException ignore) {}
-        myRedrawing = true;
-      }
-
-      myIcon.paintIcon(c, g, x, y);
-
-      showLicenseeInfo(g, x, y, getIconHeight(), myTextColor, myInfo);
-    }
-
-    @Override
-    public int getIconWidth() {
-      return myIcon.getIconWidth();
-    }
-
-    @Override
-    public int getIconHeight() {
-      return myIcon.getIconHeight();
-    }
+  private static int uiScale(int i) {
+    return (int)(i * JBUI_INIT_SCALE);
   }
+}
+
+final class ProgressSlideAndImage {
+  public final ProgressSlide slide;
+  public final Image image;
+
+  ProgressSlideAndImage(@NotNull ProgressSlide slide, @NotNull Image image) {
+    this.slide = slide;
+    this.image = image;
+  }
+
+  boolean isDrawn = false;
 }

@@ -22,6 +22,9 @@ import java.io.IOException;
 
 import static com.intellij.util.io.NettyKt.readUtf8;
 
+/**
+ * @deprecated left for API compatibility
+ */
 @SuppressWarnings("unused")
 @Deprecated
 public final class ChannelBufferToString {

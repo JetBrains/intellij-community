@@ -3,13 +3,13 @@ package com.intellij.sh.completion;
 
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class ShKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
+public class ShKeywordCompletionTest extends BasePlatformTestCase {
   public void testIfCompletion() {
     myFixture.configureByText("a.sh", "if<caret>");
     myFixture.completeBasic();
@@ -355,6 +355,32 @@ public class ShKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.configureByText("a.sh", ".<caret>");
     assertEmpty(myFixture.completeBasic());
     myFixture.configureByText("a.sh", "#.<caret>");
+    assertEmpty(myFixture.completeBasic());
+  }
+
+  public void testBashShebang() {
+    final String completionRule = "#!/usr/bin/env bash";
+    myFixture.configureByText("a.sh", "#!/usr<caret>");
+    completeByRule(completionRule);
+    myFixture.checkResult("#!/usr/bin/env bash");
+  }
+
+  public void testShShebang() {
+    final String completionRule = "#!/usr/bin/env sh";
+    myFixture.configureByText("a.sh", "#!/usr<caret>");
+    completeByRule(completionRule);
+    myFixture.checkResult("#!/usr/bin/env sh");
+  }
+
+  public void testZshShebang() {
+    final String completionRule = "#!/usr/bin/env zsh";
+    myFixture.configureByText("a.sh", "#!/usr<caret>");
+    completeByRule(completionRule);
+    myFixture.checkResult("#!/usr/bin/env zsh");
+  }
+
+  public void testNoShebang() {
+    myFixture.configureByText("a.sh", "\n #!<caret>");
     assertEmpty(myFixture.completeBasic());
   }
 

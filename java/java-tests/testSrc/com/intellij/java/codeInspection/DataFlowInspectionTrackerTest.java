@@ -11,8 +11,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import one.util.streamex.StreamEx;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -20,10 +19,9 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.Set;
 
-public class DataFlowInspectionTrackerTest extends LightCodeInsightFixtureTestCase {
+public class DataFlowInspectionTrackerTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/tracker/";
@@ -55,8 +53,9 @@ public class DataFlowInspectionTrackerTest extends LightCodeInsightFixtureTestCa
     assertTrue("Selected element is not an expression: " + selectedText, element instanceof PsiExpression);
     PsiExpression expression = (PsiExpression)element;
     TrackingRunner.DfaProblemType problemType = getProblemType(selectedText, expression);
-    List<TrackingRunner.CauseItem> items = TrackingRunner.findProblemCause(true, false, expression, problemType);
-    String dump = StreamEx.of(items).map(item -> item.dump(getEditor().getDocument())).joining("\n----\n");
+    TrackingRunner.CauseItem item = TrackingRunner.findProblemCause(true, false, expression, problemType);
+    assertNotNull(item);
+    String dump = item.dump(getEditor().getDocument());
     PsiComment firstComment = PsiTreeUtil.findChildOfType(file, PsiComment.class);
     if (firstComment == null) {
       fail("Comment not found");
@@ -174,4 +173,9 @@ public class DataFlowInspectionTrackerTest extends LightCodeInsightFixtureTestCa
   public void testAndAllTrue() { doTest(); }
   public void testConstructorSimple() { doTest(); }
   public void testConstructorDependOnInitializer() { doTest(); }
+  public void testBasedOnPreviousRelation() { doTest(); }
+  public void testBasedOnPreviousRelationContracts() { doTest(); }
+  public void testFinalFieldInitialized() { doTest(); }
+  public void testFinalFieldInitializedCtor() { doTest(); }
+  public void testEqualsNull() { doTest(); }
 }

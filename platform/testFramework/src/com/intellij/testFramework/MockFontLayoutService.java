@@ -62,6 +62,11 @@ public class MockFontLayoutService extends FontLayoutService {
   }
 
   @Override
+  public int stringWidth(@NotNull FontMetrics fontMetrics, @NotNull String str) {
+    return myCharWidth * str.codePointCount(0, str.length());
+  }
+
+  @Override
   public int getHeight(@NotNull FontMetrics fontMetrics) {
     return myLineHeight;
   }

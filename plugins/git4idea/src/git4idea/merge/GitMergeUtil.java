@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.merge;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -27,7 +27,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.vcs.ViewUpdateInfoNotification;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitRevisionNumber;
@@ -131,47 +131,6 @@ public class GitMergeUtil {
     listener.elementMarkChanged(null, true);
     branchChooser.addElementsMarkListener(listener);
   }
-
-  /**
-   * Show updates caused by git operation
-   *
-   * @param project     the context project
-   * @param exceptions  the exception list
-   * @param root        the git root
-   * @param currentRev  the revision before update
-   * @param beforeLabel the local history label before update
-   * @param actionName  the action name
-   * @param actionInfo  the information about the action
-   */
-  public static void showUpdates(final Project project,
-                                 final List<VcsException> exceptions,
-                                 final VirtualFile root,
-                                 final GitRevisionNumber currentRev,
-                                 final Label beforeLabel,
-                                 final String actionName,
-                                 final ActionInfo actionInfo) {
-    UpdatedFiles files = UpdatedFiles.create();
-    MergeChangeCollector collector = new MergeChangeCollector(project, root, currentRev);
-    collector.collect(files, exceptions);
-    if (!exceptions.isEmpty()) return;
-
-    GuiUtils.invokeLaterIfNeeded(() -> {
-      ProjectLevelVcsManagerEx manager = (ProjectLevelVcsManagerEx)ProjectLevelVcsManager.getInstance(project);
-      UpdateInfoTree tree = manager.showUpdateProjectInfo(files, actionName, actionInfo, false);
-      if (tree != null) {
-        tree.setBefore(beforeLabel);
-        tree.setAfter(LocalHistory.getInstance().putSystemLabel(project, "After update"));
-        ViewUpdateInfoNotification.focusUpdateInfoTree(project, tree);
-      }
-    }, ModalityState.defaultModalityState());
-
-    Collection<String> unmergedNames = files.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).getFiles();
-    if (!unmergedNames.isEmpty()) {
-      List<VirtualFile> unmerged = mapNotNull(unmergedNames, name -> LocalFileSystem.getInstance().findFileByPath(name));
-      GuiUtils.invokeLaterIfNeeded(() -> AbstractVcsHelper.getInstance(project).showMergeDialog(unmerged, GitVcs.getInstance(project).getMergeProvider()), ModalityState.defaultModalityState());
-    }
-  }
-
 
   public static MergeData loadMergeData(@NotNull Project project,
                                         @NotNull VirtualFile root,
@@ -298,7 +257,7 @@ public class GitMergeUtil {
           VirtualFile file = path.getVirtualFile();
           if (file == null || !file.isValid()) {
             LOG.debug("File not found: " + path);
-            return ArrayUtil.EMPTY_BYTE_ARRAY;
+            return ArrayUtilRt.EMPTY_BYTE_ARRAY;
           }
 
           return file.contentsToByteArray();
@@ -306,7 +265,7 @@ public class GitMergeUtil {
       }
       catch (IOException e) {
         LOG.error(e);
-        return ArrayUtil.EMPTY_BYTE_ARRAY;
+        return ArrayUtilRt.EMPTY_BYTE_ARRAY;
       }
     }
   }
@@ -326,7 +285,7 @@ public class GitMergeUtil {
           || m.contains("is in the index, but not at stage ")
           || m.contains("bad revision")
           || m.startsWith("fatal: Not a valid object name")) {
-        return ArrayUtil.EMPTY_BYTE_ARRAY;
+        return ArrayUtilRt.EMPTY_BYTE_ARRAY;
       }
       else {
         throw e;
@@ -452,7 +411,7 @@ public class GitMergeUtil {
 
   public static void acceptOneVersion(@NotNull Project project,
                                       @NotNull VirtualFile root,
-                                      @NotNull Collection<GitConflict> conflicts,
+                                      @NotNull Collection<? extends GitConflict> conflicts,
                                       @NotNull GitConflict.ConflictSide side) throws VcsException {
     boolean isCurrent = side == GitConflict.ConflictSide.OURS;
 
@@ -466,7 +425,7 @@ public class GitMergeUtil {
       GitConflict.Status status = conflict.getStatus(side);
       FilePath filePath = conflict.getFilePath();
 
-      if (status == GitConflict.Status.MODIFIED) {
+      if (status != GitConflict.Status.DELETED) {
         toCheckout.add(filePath);
       }
     }
@@ -487,7 +446,7 @@ public class GitMergeUtil {
    */
   public static void markConflictResolved(@NotNull Project project,
                                           @NotNull VirtualFile root,
-                                          @NotNull Collection<GitConflict> conflicts,
+                                          @NotNull Collection<? extends GitConflict> conflicts,
                                           @Nullable GitConflict.ConflictSide side) throws VcsException {
     List<FilePath> toAdd = new ArrayList<>();
     List<FilePath> toDelete = new ArrayList<>();
@@ -495,7 +454,7 @@ public class GitMergeUtil {
     for (GitConflict conflict : conflicts) {
       FilePath filePath = conflict.getFilePath();
 
-      if (side == null || conflict.getStatus(side) == GitConflict.Status.MODIFIED) {
+      if (side == null || conflict.getStatus(side) != GitConflict.Status.DELETED) {
         toAdd.add(filePath);
       }
       else {

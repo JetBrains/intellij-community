@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.documentation.docstrings;
 
 import com.intellij.lang.ASTNode;
@@ -27,6 +13,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
@@ -52,7 +39,7 @@ public class DocStringUtil {
    * Attempts to detect docstring format from given text and parses it into corresponding structured docstring.
    * It's recommended to use more reliable {@link #parse(String, PsiElement)} that fallbacks to format specified in settings.
    *
-   * @param text docstring text <em>with both quotes and string prefix stripped</em> 
+   * @param text docstring text <em>with both quotes and string prefix stripped</em>
    * @return structured docstring for one of supported formats or instance of {@link PlainDocString} if none was recognized.
    * @see #parse(String, PsiElement)
    */
@@ -77,7 +64,7 @@ public class DocStringUtil {
   }
 
   /**
-   * Attempts to detects docstring format first from the text of given string node, next from settings using given expression as an anchor 
+   * Attempts to detects docstring format first from the text of given string node, next from settings using given expression as an anchor
    * and parses text into corresponding structured docstring.
    *
    * @param stringLiteral supposedly result of {@link PyDocStringOwner#getDocStringExpression()}
@@ -137,11 +124,11 @@ public class DocStringUtil {
     final TextRange contentRange = PyStringLiteralUtil.getContentRange(text);
     return new Substring(text, contentRange.getStartOffset(), contentRange.getEndOffset());
   }
-  
+
   /**
-   * @return docstring format inferred heuristically solely from its content. For more reliable result use anchored version 
+   * @return docstring format inferred heuristically solely from its content. For more reliable result use anchored version
    * {@link #guessDocStringFormat(String, PsiElement)} of this method.
-   * @see #guessDocStringFormat(String, PsiElement) 
+   * @see #guessDocStringFormat(String, PsiElement)
    */
   @NotNull
   public static DocStringFormat guessDocStringFormat(@NotNull String text) {
@@ -255,7 +242,7 @@ public class DocStringUtil {
   }
 
   /**
-   * Returns containing docstring expression of class definition, function definition or module. 
+   * Returns containing docstring expression of class definition, function definition or module.
    * Useful to test whether particular PSI element is or belongs to such docstring.
    */
   @Nullable
@@ -342,7 +329,7 @@ public class DocStringUtil {
     if (module != null) {
       return module;
     }
-    
+
     return ArrayUtil.getFirstElement(ModuleManager.getInstance(element.getProject()).getModules());
   }
 
@@ -351,7 +338,7 @@ public class DocStringUtil {
     if (settings.isPlain(file)) {
       final List<String> values = DocStringFormat.ALL_NAMES_BUT_PLAIN;
       final int i =
-        Messages.showChooseDialog("Docstring format:", "Select Docstring Type", ArrayUtil.toStringArray(values), values.get(0), null);
+        Messages.showChooseDialog("Docstring format:", "Select Docstring Type", ArrayUtilRt.toStringArray(values), values.get(0), null);
       if (i < 0) {
         return false;
       }

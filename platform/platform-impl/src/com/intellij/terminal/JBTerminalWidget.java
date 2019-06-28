@@ -40,7 +40,6 @@ import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.model.JediTerminal;
 import com.jediterm.terminal.model.StyleState;
 import com.jediterm.terminal.model.TerminalTextBuffer;
-import com.jediterm.terminal.model.hyperlinks.HyperlinkFilter;
 import com.jediterm.terminal.model.hyperlinks.LinkInfo;
 import com.jediterm.terminal.model.hyperlinks.LinkResult;
 import com.jediterm.terminal.model.hyperlinks.LinkResultItem;
@@ -123,21 +122,18 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
   protected JScrollBar createScrollBar() {
     JBScrollBar bar = new JBScrollBar();
     bar.putClientProperty(JBScrollPane.Alignment.class, JBScrollPane.Alignment.RIGHT);
-    bar.putClientProperty(JBScrollBar.TRACK, new RegionPainter<Object>() {
-      @Override
-      public void paint(Graphics2D g, int x, int y, int width, int height, Object object) {
-        SubstringFinder.FindResult result = myTerminalPanel.getFindResult();
-        if (result != null) {
-          int modelHeight = bar.getModel().getMaximum() - bar.getModel().getMinimum();
-          int anchorHeight = Math.max(2, height / modelHeight);
+    bar.putClientProperty(JBScrollBar.TRACK, (RegionPainter<Object>)(g, x, y, width, height, object) -> {
+      SubstringFinder.FindResult result = myTerminalPanel.getFindResult();
+      if (result != null) {
+        int modelHeight = bar.getModel().getMaximum() - bar.getModel().getMinimum();
 
-          Color color = mySettingsProvider.getTerminalColorPalette()
-            .getColor(mySettingsProvider.getFoundPatternColor().getBackground());
-          g.setColor(color);
-          for (SubstringFinder.FindResult.FindItem r : result.getItems()) {
-            int where = height * r.getStart().y / modelHeight;
-            g.fillRect(x, y + where, width, anchorHeight);
-          }
+        Color color = mySettingsProvider.getTerminalColorPalette()
+          .getColor(mySettingsProvider.getFoundPatternColor().getBackground());
+        g.setColor(color);
+        int anchorHeight = Math.max(2, height / modelHeight);
+        for (SubstringFinder.FindResult.FindItem r : result.getItems()) {
+          int where = height * r.getStart().y / modelHeight;
+          g.fillRect(x, y + where, width, anchorHeight);
         }
       }
     });
@@ -242,20 +238,14 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
   }
 
   public void addMessageFilter(Project project, Filter filter) {
-    addHyperlinkFilter(new HyperlinkFilter() {
-      @Override
-      public LinkResult apply(String line) {
-        Filter.Result r = filter.applyFilter(line, line.length());
-        if (r != null) {
-          return new LinkResult(ContainerUtil.map(r.getResultItems(),
-                                                  (item -> new LinkResultItem(item.getHighlightStartOffset(), item.getHighlightEndOffset(),
-                                                                              new LinkInfo(
-                                                                                () -> item.getHyperlinkInfo().navigate(project))))));
-        }
-        else {
-          return null;
-        }
+    addHyperlinkFilter(line -> {
+      Filter.Result r = filter.applyFilter(line, line.length());
+      if (r != null) {
+        return new LinkResult(ContainerUtil.map(r.getResultItems(),
+                                                item -> new LinkResultItem(item.getHighlightStartOffset(), item.getHighlightEndOffset(),
+                                                                            new LinkInfo(() -> item.getHyperlinkInfo().navigate(project)))));
       }
+      return null;
     });
   }
 

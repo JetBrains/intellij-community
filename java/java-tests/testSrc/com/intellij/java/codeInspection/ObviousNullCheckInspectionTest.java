@@ -21,10 +21,10 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ObviousNullCheckInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class ObviousNullCheckInspectionTest extends LightInspectionTestCase {
+public class ObviousNullCheckInspectionTest extends LightJavaInspectionTestCase {
   static final String TEST_DATA_DIR = "/inspection/obviousNotNull/";
 
   public void testObviousNullCheck() {

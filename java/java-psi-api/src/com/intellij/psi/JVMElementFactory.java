@@ -19,6 +19,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -214,6 +215,7 @@ public interface JVMElementFactory {
   PsiClassType createType(@NotNull PsiClass resolve, @NotNull PsiSubstitutor substitutor, @NotNull LanguageLevel languageLevel);
 
   /** @deprecated use {@link PsiType#annotate(TypeAnnotationProvider)} (to be removed in IDEA 18) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   @Deprecated
   PsiClassType createType(@NotNull PsiClass resolve,
                           @NotNull PsiSubstitutor substitutor,

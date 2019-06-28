@@ -28,7 +28,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.openapi.vcs.changes.ignore.psi.IgnoreFile;
 import com.intellij.psi.FileViewProvider;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,31 +36,26 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class IgnoreLanguage extends Language {
-
   public static final IgnoreLanguage INSTANCE = new IgnoreLanguage();
 
   @NonNls
   private static final String DOT = ".";
 
   @NotNull
-  private final String extension;
-
-  @Nullable
-  private final Icon icon;
+  private final String myExtension;
 
   protected IgnoreLanguage() {
-    this("IgnoreLang", "ignore", AllIcons.Vcs.Ignore_file);
+    this("IgnoreLang", "ignore");
   }
 
-  protected IgnoreLanguage(@NotNull String name, @NotNull String extension, @Nullable Icon icon) {
-    super(INSTANCE, name, ArrayUtil.EMPTY_STRING_ARRAY);
-    this.extension = extension;
-    this.icon = icon;
+  protected IgnoreLanguage(@NotNull String name, @NotNull String extension) {
+    super(INSTANCE, name, ArrayUtilRt.EMPTY_STRING_ARRAY);
+    myExtension = extension;
   }
 
   @NotNull
   public String getExtension() {
-    return extension;
+    return myExtension;
   }
 
   /**
@@ -81,7 +76,7 @@ public class IgnoreLanguage extends Language {
 
   @Nullable
   public Icon getIcon() {
-    return icon;
+    return AllIcons.Vcs.Ignore_file;
   }
 
   @NotNull

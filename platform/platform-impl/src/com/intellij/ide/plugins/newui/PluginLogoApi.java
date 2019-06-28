@@ -6,7 +6,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -106,7 +106,7 @@ public class PluginLogoApi {
 
   @Nullable
   private Icon tryLoadJarIcon(@NotNull File path) {
-    if (!FileUtil.isJarOrZip(path) || !path.exists()) {
+    if (!FileUtilRt.isJarOrZip(path) || !path.exists()) {
       return null;
     }
     try (ZipFile zipFile = new ZipFile(path)) {

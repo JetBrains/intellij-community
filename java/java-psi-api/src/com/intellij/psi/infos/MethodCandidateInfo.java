@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -183,21 +182,15 @@ public class MethodCandidateInfo extends CandidateInfo{
         .map(expression -> PsiUtil.skipParenthesizedExprDown(expression))
         .filter(expression -> expression != null && !(expression instanceof PsiFunctionalExpression))
         .toArray(PsiExpression[]::new);
-      Map<PsiElement, PsiType> expressionTypes = LambdaUtil.getFunctionalTypeMap();
-      try {
+      return ThreadLocalTypes.performWithTypes(expressionTypes -> {
         PsiMethod method = getElement();
         boolean varargs = isVarargs();
         for (PsiExpression context : expressions) {
-          expressionTypes.put(context,
-                              PsiTypesUtil.getTypeByMethod(context, argumentList, method, varargs, substitutor, false));
+          expressionTypes.forceType(context,
+                                    PsiTypesUtil.getTypeByMethod(context, argumentList, method, varargs, substitutor, false));
         }
         return computable.compute();
-      }
-      finally {
-        for (PsiExpression context : expressions) {
-          expressionTypes.remove(context);
-        }
-      }
+      });
     }
     else {
       return computable.compute();
@@ -209,8 +202,8 @@ public class MethodCandidateInfo extends CandidateInfo{
     return myArgumentList == argumentList;
   }
 
-  public void setErased(boolean erased) {
-    myErased = erased;
+  public void setErased() {
+    myErased = true;
   }
 
   public boolean isErased() {
@@ -454,10 +447,14 @@ public class MethodCandidateInfo extends CandidateInfo{
         .inferTypeArguments(typeParameters, method.getParameterList().getParameters(), arguments, this, parent, policy,
                             myLanguageLevel);
     };
-    PsiSubstitutor substitutor = !includeReturnConstraint
-                                 ? ourOverloadGuard.doPreventingRecursion(myArgumentList, false, computable)
-                                 : computable.compute();
-    return ObjectUtils.assertNotNull(substitutor);
+    if (!includeReturnConstraint) {
+      return myArgumentList == null
+             ? PsiSubstitutor.EMPTY
+             : ObjectUtils.assertNotNull(ourOverloadGuard.doPreventingRecursion(myArgumentList, false, computable));
+    }
+    else {
+      return computable.compute();
+    }
   }
 
   public boolean isRawSubstitution() {

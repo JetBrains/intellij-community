@@ -7,7 +7,7 @@ import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.LangDataKeys
-import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -38,10 +38,9 @@ class DumpUastTreeAction : AnAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible =
-      ApplicationManagerEx.getApplicationEx().isInternal && run {
-        val file = e.getData(LangDataKeys.PSI_FILE) ?: return@run false
-        UastLanguagePlugin.byLanguage(file.language) != null
-      }
+    e.presentation.isEnabledAndVisible = ApplicationManager.getApplication().isInternal && run {
+      val file = e.getData(LangDataKeys.PSI_FILE) ?: return@run false
+      UastLanguagePlugin.byLanguage(file.language) != null
+    }
   }
 }

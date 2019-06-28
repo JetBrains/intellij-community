@@ -9,13 +9,13 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiTreeChangeAdapter;
 import com.intellij.psi.PsiTreeChangeEvent;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
  */
-public class GroovyPsiEventsTest extends LightCodeInsightFixtureTestCase {
+public class GroovyPsiEventsTest extends LightJavaCodeInsightFixtureTestCase {
   public void testEditingInDocComment() {
     Ref<Boolean> gotIt = new Ref<>(false);
     PsiTreeChangeAdapter listener = new PsiTreeChangeAdapter() {

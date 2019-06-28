@@ -109,6 +109,8 @@ public class Diamond8HighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testNestedDiamondsInsideAssignmentInMethodsCall() { doTest();}
+
   private void doTest() {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
   }

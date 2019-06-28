@@ -55,10 +55,10 @@ import java.util.stream.Collectors;
  * @author Irina.Chernushina on 10/1/2015.
  */
 public class JsonSchemaCompletionContributor extends CompletionContributor {
-  private static final String BUILTIN_USAGE_KEY = "json.schema.builtin.completion";
-  private static final String SCHEMA_USAGE_KEY = "json.schema.schema.completion";
-  private static final String USER_USAGE_KEY = "json.schema.user.completion";
-  private static final String REMOTE_USAGE_KEY = "json.schema.remote.completion";
+  private static final String BUILTIN_USAGE_KEY = "builtin";
+  private static final String SCHEMA_USAGE_KEY = "schema";
+  private static final String USER_USAGE_KEY = "user";
+  private static final String REMOTE_USAGE_KEY = "remote";
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
@@ -393,7 +393,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                                  @Nullable final String altText,
                                  @Nullable InsertHandler<LookupElement> handler) {
       String unquoted = StringUtil.unquoteString(key);
-      LookupElementBuilder builder = LookupElementBuilder.create(!shouldWrapInQuotes(unquoted) ? unquoted : key);
+      LookupElementBuilder builder = LookupElementBuilder.create(!shouldWrapInQuotes(unquoted, true) ? unquoted : key);
       if (altText != null) {
         builder = builder.withPresentableText(altText);
       }
@@ -406,8 +406,11 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       myVariants.add(builder);
     }
 
-    private boolean shouldWrapInQuotes(String key) {
-      return myWrapInQuotes && myWalker != null && (myWalker.requiresNameQuotes() || !myWalker.isValidIdentifier(key, myProject));
+    private boolean shouldWrapInQuotes(String key, boolean isValue) {
+      return myWrapInQuotes && myWalker != null &&
+             (isValue && myWalker.requiresValueQuotes()
+                || !isValue && myWalker.requiresNameQuotes()
+                || !myWalker.isValidIdentifier(key, myProject));
     }
 
     private void addPropertyVariant(@NotNull String key,
@@ -416,7 +419,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                                     boolean insertComma) {
       final Collection<JsonSchemaObject> variants = new JsonSchemaResolver(myProject, jsonSchemaObject).resolve();
       jsonSchemaObject = ObjectUtils.coalesce(ContainerUtil.getFirstItem(variants), jsonSchemaObject);
-      key = !shouldWrapInQuotes(key) ? key : StringUtil.wrapWithDoubleQuote(key);
+      key = !shouldWrapInQuotes(key, false) ? key : StringUtil.wrapWithDoubleQuote(key);
       LookupElementBuilder builder = LookupElementBuilder.create(key);
 
       final String typeText = JsonSchemaDocumentationProvider.getBestDocumentation(true, jsonSchemaObject);

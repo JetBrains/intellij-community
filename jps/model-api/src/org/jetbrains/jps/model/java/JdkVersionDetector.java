@@ -4,11 +4,12 @@ package org.jetbrains.jps.model.java;
 import com.intellij.openapi.util.Bitness;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.lang.JavaVersion;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.service.JpsServiceManager;
 
-import java.util.concurrent.Future;
+import java.util.concurrent.ExecutorService;
 
 /**
  * @author nik
@@ -19,6 +20,7 @@ public abstract class JdkVersionDetector {
   }
 
   /** @deprecated use {@link #detectJdkVersionInfo(String)} (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   @Nullable
   public String detectJdkVersion(@NotNull String homePath) {
@@ -26,10 +28,11 @@ public abstract class JdkVersionDetector {
     return info != null ? info.getVersion() : null;
   }
 
-  /** @deprecated use {@link #detectJdkVersionInfo(String, ActionRunner)} (to be removed in IDEA 2019) */
+  /** @deprecated use {@link #detectJdkVersionInfo(String, ExecutorService)} (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   @Nullable
-  public String detectJdkVersion(@NotNull String homePath, @NotNull ActionRunner runner) {
+  public String detectJdkVersion(@NotNull String homePath, @NotNull ExecutorService runner) {
     JdkVersionInfo info = detectJdkVersionInfo(homePath, runner);
     return info != null ? info.getVersion() : null;
   }
@@ -38,12 +41,7 @@ public abstract class JdkVersionDetector {
   public abstract JdkVersionInfo detectJdkVersionInfo(@NotNull String homePath);
 
   @Nullable
-  public abstract JdkVersionInfo detectJdkVersionInfo(@NotNull String homePath, @NotNull ActionRunner actionRunner);
-
-  //todo[nik] replace with a service with different implementations for IDE process and for JPS process (need to exclude intellij.platform.jps.build module from IDEA classpath)
-  public interface ActionRunner {
-    Future<?> run(Runnable runnable);
-  }
+  public abstract JdkVersionInfo detectJdkVersionInfo(@NotNull String homePath, @NotNull ExecutorService actionRunner);
 
   public static final class JdkVersionInfo {
     public final JavaVersion version;
@@ -60,12 +58,14 @@ public abstract class JdkVersionDetector {
     }
 
     /** @deprecated use {@link #version} (to be removed in IDEA 2019) */
+    @ApiStatus.ScheduledForRemoval(inVersion = "2019")
     @Deprecated
     public String getVersion() {
       return formatVersionString(version);
     }
 
     /** @deprecated use {@link #bitness} (to be removed in IDEA 2019) */
+    @ApiStatus.ScheduledForRemoval(inVersion = "2019")
     @Deprecated
     public Bitness getBitness() {
       return bitness;

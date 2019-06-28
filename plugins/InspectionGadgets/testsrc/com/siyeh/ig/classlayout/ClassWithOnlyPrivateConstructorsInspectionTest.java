@@ -2,10 +2,10 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class ClassWithOnlyPrivateConstructorsInspectionTest extends LightInspectionTestCase {
+public class ClassWithOnlyPrivateConstructorsInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
     doTest("class /*Class 'X' with only 'private' constructors should be declared 'final'*/X/**/ {" +

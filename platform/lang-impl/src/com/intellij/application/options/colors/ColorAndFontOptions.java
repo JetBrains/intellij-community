@@ -35,7 +35,6 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -801,6 +800,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
   private static class EditorSettingColorDescription extends ColorAndFontDescription {
     private final ColorKey myColorKey;
+    @NotNull
     private final ColorDescriptor.Kind myKind;
     private final Color myInitialColor;
 
@@ -817,26 +817,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       super(name, group, colorKey.getExternalName(), scheme, null, null);
       myColorKey = colorKey;
       myKind = kind;
-      ColorKey fallbackKey = myColorKey.getFallbackColorKey();
-      Color fallbackColor = null;
-      if (fallbackKey != null) {
-        fallbackColor = scheme.getColor(fallbackKey);
-        myBaseAttributeDescriptor = ColorSettingsPages.getInstance().getColorDescriptor(fallbackKey);
-        if (myBaseAttributeDescriptor == null) {
-          myBaseAttributeDescriptor = Pair.create(null, new ColorDescriptor(fallbackKey.getExternalName(), fallbackKey, myKind));
-        }
-        myFallbackAttributes = new TextAttributes(myKind == ColorDescriptor.Kind.FOREGROUND ? fallbackColor : null,
-                                                  myKind == ColorDescriptor.Kind.BACKGROUND ? fallbackColor : null,
-                                                  null, null, Font.PLAIN);
-      }
       myColor = scheme.getColor(myColorKey);
-      myInitialColor = ObjectUtils.chooseNotNull(fallbackColor, myColor);
+      myInitialColor = myColor;
 
-      myIsInheritedInitial = scheme.isInherited(myColorKey);
+      myIsInheritedInitial = false;
       setInherited(myIsInheritedInitial);
-      if (myIsInheritedInitial) {
-        //setInheritedAttributes(getTextAttributes());
-      }
       initCheckedStatus();
     }
 
@@ -870,24 +855,24 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
     @Override
     public Color getExternalForeground() {
-      return myKind == ColorDescriptor.Kind.FOREGROUND ? myColor : null;
+      return isForegroundEnabled() ? myColor : null;
     }
 
     @Override
     public void setExternalForeground(Color col) {
-      if (myKind != ColorDescriptor.Kind.FOREGROUND) return;
+      if (!myKind.isForeground()) return;
       if (myColor != null && myColor.equals(col)) return;
       myColor = col;
     }
 
     @Override
     public Color getExternalBackground() {
-      return myKind == ColorDescriptor.Kind.BACKGROUND ? myColor : null;
+      return isBackgroundEnabled() ? myColor : null;
     }
 
     @Override
     public void setExternalBackground(Color col) {
-      if (myKind != ColorDescriptor.Kind.BACKGROUND) return;
+      if (!myKind.isBackground()) return;
       if (myColor != null && myColor.equals(col)) return;
       myColor = col;
     }
@@ -908,12 +893,17 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
     @Override
     public boolean isForegroundEnabled() {
-      return myKind == ColorDescriptor.Kind.FOREGROUND;
+      return myKind.isForeground();
     }
 
     @Override
     public boolean isBackgroundEnabled() {
-      return myKind == ColorDescriptor.Kind.BACKGROUND;
+      return myKind.isBackground();
+    }
+
+    @Override
+    public boolean isTransparencyEnabled() {
+      return myKind.isWithTransparency();
     }
 
     @Override
@@ -1116,24 +1106,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
         if (attributes != null) {
           TextAttributes fallbackAttributes = getAttributes(fallbackKey);
           return attributes == fallbackAttributes;
-        }
-      }
-      return false;
-    }
-
-    public boolean isInherited(ColorKey key) {
-      ColorKey fallbackKey = key.getFallbackColorKey();
-      if (fallbackKey != null) {
-        if (myParentScheme instanceof AbstractColorsScheme) {
-          Color ownAttrs = ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedColor(key);
-          if (ownAttrs != null) {
-            return ownAttrs == AbstractColorsScheme.INHERITED_COLOR_MARKER;
-          }
-        }
-        Color attributes = getColor(key);
-        if (attributes != null) {
-          Color fallback = getColor(fallbackKey);
-          return attributes == fallback;
         }
       }
       return false;

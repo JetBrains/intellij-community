@@ -16,12 +16,12 @@
 package org.jetbrains.plugins.groovy.lang
 
 import com.intellij.codeInsight.unwrap.UnwrapHandler
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
  * @author Sergey Evdokimov
  */
-class GroovyUnwrapTest extends LightCodeInsightFixtureTestCase {
+class GroovyUnwrapTest extends LightJavaCodeInsightFixtureTestCase {
 
   private void assertUnwrapped(String codeBefore, String expectedCodeAfter) {
     myFixture.configureByText("A.groovy", codeBefore)

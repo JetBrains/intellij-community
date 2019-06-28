@@ -2,7 +2,7 @@
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtilRt;
 import org.jetbrains.annotations.NotNull;
@@ -83,7 +83,7 @@ public class Attachment {
       }
     }
 
-    return ArrayUtil.EMPTY_BYTE_ARRAY;
+    return ArrayUtilRt.EMPTY_BYTE_ARRAY;
   }
 
   @NotNull
@@ -101,7 +101,7 @@ public class Attachment {
       }
     }
 
-    return new ByteArrayInputStream(ArrayUtil.EMPTY_BYTE_ARRAY);
+    return new ByteArrayInputStream(ArrayUtilRt.EMPTY_BYTE_ARRAY);
   }
 
   public boolean isIncluded() {

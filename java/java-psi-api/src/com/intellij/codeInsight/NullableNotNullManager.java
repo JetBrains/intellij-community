@@ -12,6 +12,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +55,9 @@ public abstract class NullableNotNullManager {
     "org.checkerframework.checker.nullness.compatqual.NonNullType",
     "com.android.annotations.NonNull",
   };
-  private static final List<String> DEFAULT_ALL = Arrays.asList(ArrayUtil.mergeArrays(DEFAULT_NULLABLES, DEFAULT_NOT_NULLS));
+  private static final List<String> DEFAULT_ALL = Arrays.asList(
+    ArrayUtil.append(ArrayUtil.mergeArrays(DEFAULT_NULLABLES, DEFAULT_NOT_NULLS), 
+                     "org.checkerframework.checker.nullness.qual.MonotonicNonNull"));
 
   protected NullableNotNullManager(Project project) {
     myProject = project;
@@ -78,6 +81,10 @@ public abstract class NullableNotNullManager {
   @NotNull
   public abstract String getDefaultNullable();
 
+  /**
+   * Returns an annotation which marks given element as Nullable, if any. Usage of this method is discouraged.
+   * Use {@link #findEffectiveNullabilityInfo(PsiModifierListOwner)} instead.
+   */
   @Nullable
   public PsiAnnotation getNullableAnnotation(@NotNull PsiModifierListOwner owner, boolean checkBases) {
     return findNullityAnnotationWithDefault(owner, checkBases, true);
@@ -88,6 +95,10 @@ public abstract class NullableNotNullManager {
   @NotNull
   public abstract String getDefaultNotNull();
 
+  /**
+   * Returns an annotation which marks given element as NotNull, if any. Usage of this method is discouraged.
+   * Use {@link #findEffectiveNullabilityInfo(PsiModifierListOwner)} instead.
+   */
   @Nullable
   public PsiAnnotation getNotNullAnnotation(@NotNull PsiModifierListOwner owner, boolean checkBases) {
     return findNullityAnnotationWithDefault(owner, checkBases, false);
@@ -139,6 +150,7 @@ public abstract class NullableNotNullManager {
 
   /** @deprecated use {@link #copyNotNullAnnotation(PsiModifierListOwner, PsiModifierListOwner)} (to be removed in IDEA 17) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2017")
   public PsiAnnotation copyNotNullAnnotation(@NotNull PsiModifierListOwner owner) {
     NullabilityAnnotationInfo info = findOwnNullabilityInfo(owner);
     if (info == null || info.getNullability() != Nullability.NOT_NULL) return null;
@@ -251,22 +263,18 @@ public abstract class NullableNotNullManager {
 
   @Nullable
   private NullabilityAnnotationInfo doFindEffectiveNullabilityAnnotation(@NotNull PsiModifierListOwner owner) {
-    List<String> nullables = getNullablesWithNickNames();
     Set<String> annotationNames = getAllNullabilityAnnotationsWithNickNames();
     Set<String> extraAnnotations = new HashSet<>(DEFAULT_ALL);
-    extraAnnotations.removeAll(annotationNames);
-    if (!extraAnnotations.isEmpty()) {
-      annotationNames = new HashSet<>(annotationNames);
-      annotationNames.addAll(extraAnnotations);
-    }
+    extraAnnotations.addAll(annotationNames);
 
-    PsiAnnotation annotation = findPlainAnnotation(owner, true, annotationNames);
+    PsiAnnotation annotation = findPlainAnnotation(owner, true, extraAnnotations);
     if (annotation != null) {
-      if (extraAnnotations.contains(annotation.getQualifiedName())) {
+      if (!annotationNames.contains(annotation.getQualifiedName())) {
         // Deliberately excluded known standard annotation still has precedence over default class-level or package-level annotation:
         // return null in this case
         return null;
       }
+      List<String> nullables = getNullablesWithNickNames();
       return new NullabilityAnnotationInfo(annotation,
                                            nullables.contains(annotation.getQualifiedName()) ? Nullability.NULLABLE : Nullability.NOT_NULL,
                                            false);
@@ -276,7 +284,7 @@ public abstract class NullableNotNullManager {
       List<PsiParameter> superParameters = getSuperAnnotationOwners((PsiParameter)owner);
       if (!superParameters.isEmpty()) {
         for (PsiParameter parameter: superParameters) {
-          PsiAnnotation plain = findPlainAnnotation(parameter, false, annotationNames);
+          PsiAnnotation plain = findPlainAnnotation(parameter, false, extraAnnotations);
           // Plain not null annotation is not inherited
           if (plain != null) return null;
           NullabilityAnnotationInfo defaultInfo = findNullityDefaultInHierarchy(parameter);

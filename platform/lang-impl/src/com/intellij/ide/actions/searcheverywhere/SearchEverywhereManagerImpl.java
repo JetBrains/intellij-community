@@ -42,6 +42,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   private Dimension myBalloonFullSize;
 
   private final SearchHistoryList myHistoryList = new SearchHistoryList();
+  private final Map<String, Object> myPrevSelections = new HashMap<>();
   private HistoryIterator myHistoryIterator;
   private boolean myEverywhere;
 
@@ -221,7 +222,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
       }
 
       ApplicationManager.getApplication().invokeLater(() -> {
-        if (myBalloon == null || myBalloon.getContent() == null) return;
+        if (myBalloon == null || myBalloon.isDisposed()) return;
 
         Dimension minSize = view.getMinimumSize();
         JBInsets.addTo(minSize, myBalloon.getContent().getInsets());
@@ -269,6 +270,12 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     if (!searchText.isEmpty()) {
       myHistoryList.saveText(searchText, mySearchEverywhereUI.getSelectedContributorID());
     }
+    myPrevSelections.put(mySearchEverywhereUI.getSelectedContributorID(), mySearchEverywhereUI.getSelectionIdentity());
+  }
+
+  @Nullable
+  Object getPrevSelection(String contributorID) {
+    return myPrevSelections.remove(contributorID);
   }
 
   private void saveSize() {

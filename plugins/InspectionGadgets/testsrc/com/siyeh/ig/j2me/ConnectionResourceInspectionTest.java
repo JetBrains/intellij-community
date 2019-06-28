@@ -16,14 +16,13 @@
 package com.siyeh.ig.j2me;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
-import junit.framework.TestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ConnectionResourceInspectionTest extends LightInspectionTestCase {
+public class ConnectionResourceInspectionTest extends LightJavaInspectionTestCase {
 
   public void testConnectionResource() {
     doTest();

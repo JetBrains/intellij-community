@@ -23,9 +23,9 @@ import com.intellij.codeInspection.DeprecationUtil
 import com.intellij.codeInspection.deprecation.MarkedForRemovalInspection
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-class MarkedForRemovalInspectionTest : LightCodeInsightFixtureTestCase() {
+class MarkedForRemovalInspectionTest : LightJavaCodeInsightFixtureTestCase() {
 
   override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/inspection/forRemoval"
 

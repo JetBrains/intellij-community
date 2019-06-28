@@ -17,12 +17,12 @@ package com.jetbrains.rest;
 
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 /**
  * @author traff
  */
-public class RestTodoTest extends LightPlatformCodeInsightFixtureTestCase {
+public class RestTodoTest extends BasePlatformTestCase {
   public void testTodo() {
     myFixture.configureByText(RestFileType.INSTANCE, ".. TODO whatever \n");
     TodoItem[] items = PsiTodoSearchHelper.SERVICE.getInstance(getProject()).findTodoItems(myFixture.getFile());

@@ -19,11 +19,11 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.JavaInspectionTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-public class NullableStuffInspectionAncientTest extends InspectionTestCase {
+public class NullableStuffInspectionAncientTest extends JavaInspectionTestCase {
   private NullableStuffInspection myInspection = new NullableStuffInspection();
 
   @Override

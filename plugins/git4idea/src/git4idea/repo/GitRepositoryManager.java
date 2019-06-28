@@ -114,7 +114,7 @@ public class GitRepositoryManager extends AbstractRepositoryManager<GitRepositor
    * <p>If repositories are independent of each other, they are sorted {@link DvcsUtil#REPOSITORY_COMPARATOR by path}.</p>
    */
   @NotNull
-  public List<GitRepository> sortByDependency(@NotNull Collection<GitRepository> repositories) {
+  public List<GitRepository> sortByDependency(@NotNull Collection<? extends GitRepository> repositories) {
     return ContainerUtil.sorted(repositories, DEPENDENCY_COMPARATOR);
   }
 }

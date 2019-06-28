@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -9,6 +10,8 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 
 /** @deprecated not particularly useful wrapper around {@link TabbedPaneWrapper} (to be removed in IDEA 2019) */
+@ApiStatus.ScheduledForRemoval(inVersion = "2019")
+@Deprecated
 @SuppressWarnings("ALL")
 public class HeaderlessTabbedPane extends JPanel {
   private final TabbedPaneWrapper myTabbedPane;

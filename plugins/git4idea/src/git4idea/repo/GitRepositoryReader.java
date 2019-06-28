@@ -116,7 +116,7 @@ class GitRepositoryReader {
   @Nullable
   private GitLocalBranch findCurrentBranch(@NotNull HeadInfo headInfo,
                                            @NotNull Repository.State state,
-                                           @NotNull Set<GitLocalBranch> localBranches) {
+                                           @NotNull Set<? extends GitLocalBranch> localBranches) {
     final String currentBranchName = findCurrentBranchName(state, headInfo);
     if (currentBranchName == null) {
       return null;

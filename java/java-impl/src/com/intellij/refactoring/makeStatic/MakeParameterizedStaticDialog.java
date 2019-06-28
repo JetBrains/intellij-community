@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.makeStatic;
 
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
@@ -13,6 +13,7 @@ import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -113,7 +114,7 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
 
     JPanel panel = new JPanel(new GridBagLayout());
 
-    gbConstraints.insets = JBUI.insets(4, 8);
+    gbConstraints.insets = JBInsets.create(4, 8);
     gbConstraints.weighty = 0;
     gbConstraints.weightx = 0;
     gbConstraints.gridx = 0;
@@ -158,7 +159,7 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
     gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
 
     if(myVariableData.length > 0) {
-      gbConstraints.insets = JBUI.insets(4, 8);
+      gbConstraints.insets = JBInsets.create(4, 8);
       gbConstraints.weighty = 0;
       gbConstraints.weightx = 0;
       gbConstraints.gridheight = 1;

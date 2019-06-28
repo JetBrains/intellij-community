@@ -5,7 +5,7 @@ import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.SkipSlowTestLocally;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.propertyBased.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jetCheck.Generator;
@@ -15,7 +15,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 @SkipSlowTestLocally
-public class PropertiesCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
+public class PropertiesCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testIncrementalHighlighterUpdate() {
     PropertyChecker.checkScenarios(actionsOnPropertiesFiles(CheckHighlighterConsistency.randomEditsWithHighlighterChecks));

@@ -16,11 +16,14 @@
 
 package com.intellij.psi.impl.cache.impl.id;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * @deprecated left for compatibility, use IdIndexer interface instead. To be removed in IntelliJ 2018.3
  *
  * @author Eugene Zhuravlev
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2018.3")
 public abstract class FileTypeIdIndexer implements IdIndexer {
 }

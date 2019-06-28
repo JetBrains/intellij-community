@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.icons;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.images.thumbnail.ThumbnailView;
 import org.intellij.images.thumbnail.actions.ThemeFilter;
@@ -11,7 +11,7 @@ public enum Theme implements ThemeFilter{
   WHITE(null, "Default") {
     @Override
     public boolean accepts(VirtualFile fileName) {
-      String nameWithoutExtension = FileUtil.getNameWithoutExtension(fileName.getName());
+      String nameWithoutExtension = FileUtilRt.getNameWithoutExtension(fileName.getName());
       for (Theme theme : values()) {
         String extension = theme.getExtension();
         if (extension != null && nameWithoutExtension.endsWith(extension)) {
@@ -25,13 +25,13 @@ public enum Theme implements ThemeFilter{
   HIGH_DPI_WHITE("@2x", "Default HiDPI") {
     @Override
     public boolean accepts(VirtualFile fileName) {
-      return FileUtil.getNameWithoutExtension(fileName.getName()).endsWith(getExtension());
+      return FileUtilRt.getNameWithoutExtension(fileName.getName()).endsWith(getExtension());
     }
   },
   DARK("_dark", "Darcula") {
     @Override
     public boolean accepts(VirtualFile file) {
-      String name = FileUtil.getNameWithoutExtension(file.getName());
+      String name = FileUtilRt.getNameWithoutExtension(file.getName());
       if (name.endsWith(getExtension()) && !name.endsWith(HIGH_DPI_DARK.getExtension())) {
         return true;
       }
@@ -45,7 +45,7 @@ public enum Theme implements ThemeFilter{
   HIGH_DPI_DARK("@2x_dark", "Darcula HiDPI") {
     @Override
     public boolean accepts(VirtualFile file) {
-      String name = FileUtil.getNameWithoutExtension(file.getName());
+      String name = FileUtilRt.getNameWithoutExtension(file.getName());
       if (name.endsWith(getExtension())) {
         return true;
       }

@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 public class IncorrectOperationException extends RuntimeException {
@@ -36,6 +37,7 @@ public class IncorrectOperationException extends RuntimeException {
 
   /** @deprecated use {@link #IncorrectOperationException(String, Throwable)} (to be removed in IDEA 18) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   public IncorrectOperationException(@NonNls String message, Exception e) {
     super(message, e);
   }

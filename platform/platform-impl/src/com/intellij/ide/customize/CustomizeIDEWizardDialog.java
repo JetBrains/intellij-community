@@ -2,6 +2,7 @@
 package com.intellij.ide.customize;
 
 import com.intellij.ide.startup.StartupActionScriptManager;
+import com.intellij.idea.SplashManager;
 import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -38,6 +39,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
   private final CardLayout myButtonWrapperLayout = new CardLayout();
   private final JPanel myButtonWrapper = new JPanel(myButtonWrapperLayout);
   private JPanel myContentPanel;
+  private boolean myHideSkipButton;
 
   public CustomizeIDEWizardDialog(@NotNull CustomizeIDEWizardStepsProvider stepsProvider) {
     this(stepsProvider, null);
@@ -48,6 +50,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     setTitle("Customize " + ApplicationNamesInfo.getInstance().getFullProductName());
     getPeer().setAppIcons();
 
+    myHideSkipButton = stepsProvider.hideSkipButton();
     stepsProvider.initSteps(this, mySteps);
 
     if (appStarter != null) {
@@ -71,6 +74,11 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     initCurrentStep(true);
     setSize(400, 300);
     System.setProperty(StartupActionScriptManager.STARTUP_WIZARD_MODE, "true");
+  }
+
+  @Override
+  public final void show() {
+    SplashManager.executeWithHiddenSplash(getWindow(), () -> super.show());
   }
 
   @Override
@@ -105,7 +113,10 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     gbc.fill = GridBagConstraints.BOTH;
     gbc.gridx = 0;
     gbc.gridy = 0;
-    buttonPanel.add(mySkipButton, gbc);
+
+    if (!myHideSkipButton)
+      buttonPanel.add(mySkipButton, gbc);
+
     gbc.gridx++;
     buttonPanel.add(myBackButton, gbc);
     gbc.gridx++;

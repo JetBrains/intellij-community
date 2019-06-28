@@ -12,11 +12,17 @@
 // limitations under the License.
 package org.zmlx.hg4idea.test;
 
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.testng.annotations.Test;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiManager;
+import com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler;
+import org.jetbrains.annotations.NotNull;
+import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 
 public class HgCopyTest extends HgSingleUserTest {
 
@@ -42,7 +48,7 @@ public class HgCopyTest extends HgSingleUserTest {
   public void testCopyUnversionedFile() throws Exception {
     VirtualFile file = makeFile(new File(myWorkingCopyDir.getPath(), "a.txt"));
     copyFileInCommand(file, "b.txt");
-    verify(runHgOnProjectRepo("status"), HgTestOutputParser.unknown("a.txt"), HgTestOutputParser.unknown("b.txt"));
+    verify(runHgOnProjectRepo("status"), HgTestOutputParser.added("b.txt"), HgTestOutputParser.unknown("a.txt"));
   }
 
   @Test
@@ -59,8 +65,15 @@ public class HgCopyTest extends HgSingleUserTest {
     VirtualFile parent = createDirInCommand(myWorkingCopyDir, "com");
     createFileInCommand(parent, "a.txt", "new file content");
     runHgOnProjectRepo("commit", "-m", "added file");
-    copyFileInCommand(parent, "org");
+    copyDir(parent, "org");
     verify(runHgOnProjectRepo("status"), HgTestOutputParser.added("org", "a.txt"));
   }
 
+
+  private void copyDir(@NotNull VirtualFile vDir, @NotNull String newName) throws IOException {
+    WriteCommandAction.writeCommandAction(myProject).run(() -> {
+      PsiDirectory psiDirectory = PsiManager.getInstance(myProject).findDirectory(vDir);
+      CopyFilesOrDirectoriesHandler.copyToDirectory(psiDirectory, newName, psiDirectory.getParentDirectory());
+    });
+  }
 }

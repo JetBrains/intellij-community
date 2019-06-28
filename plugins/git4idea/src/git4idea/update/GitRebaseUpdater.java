@@ -12,7 +12,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.impl.LocalChangesUnderRoots;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.util.containers.ContainerUtil;
-import git4idea.GitBranch;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchPair;
 import git4idea.commands.Git;
@@ -74,10 +73,7 @@ public class GitRebaseUpdater extends GitUpdater {
 
   @NotNull
   private String getRemoteBranchToMerge() {
-    GitBranch dest = myBranchPair.getDest();
-    LOG.assertTrue(dest != null, String.format("Destination branch is null for source branch %s in %s",
-                                               myBranchPair.getBranch().getName(), myRoot));
-    return dest.getName();
+    return myBranchPair.getTarget().getName();
   }
 
   public void cancel() {

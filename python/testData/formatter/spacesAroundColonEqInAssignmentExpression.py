@@ -1,0 +1,1 @@
+partial_sums = [total :=                  1 + v for v in [1]]

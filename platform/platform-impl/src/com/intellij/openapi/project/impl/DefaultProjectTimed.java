@@ -21,6 +21,7 @@ public abstract class DefaultProjectTimed extends TimedReference<Project> {
 
   @NotNull
   abstract Project compute();
+
   abstract void init(Project project);
 
   @NotNull
@@ -43,11 +44,8 @@ public abstract class DefaultProjectTimed extends TimedReference<Project> {
   public void dispose() {
     // project must be disposed in EDT in write action
     Runnable doDispose = () -> {
-      if (!ApplicationManager.getApplication().isDisposed()) {
-        WriteCommandAction.runWriteCommandAction(null, () -> {
-          super.dispose();
-          set(null);
-        });
+      if (!ApplicationManager.getApplication().isDisposed() && isCached()) {
+        WriteCommandAction.runWriteCommandAction(null, () -> super.dispose());
       }
     };
     if (ApplicationManager.getApplication().isDispatchThread()) {

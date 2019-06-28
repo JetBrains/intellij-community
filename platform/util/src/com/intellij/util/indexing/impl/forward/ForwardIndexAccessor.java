@@ -2,18 +2,17 @@
 package com.intellij.util.indexing.impl.forward;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
+import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Map;
 
-/**
- *
- * @param <DataType> should not hold strong reference to Input because it may lead to OOMs
- */
-public interface ForwardIndexAccessor<Key, Value, DataType, Input> {
+@ApiStatus.Experimental
+public interface ForwardIndexAccessor<Key, Value> {
   /**
    * creates a diff builder for given inputId.
    */
@@ -21,13 +20,8 @@ public interface ForwardIndexAccessor<Key, Value, DataType, Input> {
   InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId, @Nullable ByteArraySequence sequence) throws IOException;
 
   /**
-   * convert mapped key-values and input to a data type before it will be serialized
-   */
-  DataType convertToDataType(@Nullable Map<Key, Value> map, @Nullable Input content);
-
-  /**
    * serialize indexed data to forward index format.
    */
   @Nullable
-  ByteArraySequence serializeIndexedData(@Nullable DataType data) throws IOException;
+  ByteArraySequence serializeIndexedData(@NotNull InputData<Key, Value> data) throws IOException;
 }

@@ -84,6 +84,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   public static final Key<Boolean> IS_ENABLED = Key.create("_java_compiler_enabled_");
   public static final FileFilter JAVA_SOURCES_FILTER = FileFilters.withExtension(JAVA_EXTENSION);
 
+  private static final int RETIRE_POLICY_VERSIONS_COUNT = 5;
   private static final Key<Boolean> PREFER_TARGET_JDK_COMPILER = GlobalContextKey.create("_prefer_target_jdk_javac_");
   private static final Key<JavaCompilingTool> COMPILING_TOOL = Key.create("_java_compiling_tool_");
   private static final Key<ConcurrentMap<String, Collection<String>>> COMPILER_USAGE_STATISTICS = Key.create("_java_compiler_usage_stats_");
@@ -603,7 +604,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     // compiler version is 9+ here, so:
     //  - java 5 and older are not supported for sure
     //  - applying '5 versions back' policy deduced from the current behavior of those JDKs
-    return chunkLanguageLevel < 6 || Math.abs(compilerSdkVersion - chunkLanguageLevel) > 5;
+    return chunkLanguageLevel < 6 || Math.abs(compilerSdkVersion - chunkLanguageLevel) > RETIRE_POLICY_VERSIONS_COUNT;
   }
 
   private static boolean isJavac(final JavaCompilingTool compilingTool) {
@@ -689,7 +690,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
           @NotNull
           @Override
           public Future<?> executeTask(@NotNull Runnable task) {
-            return SharedThreadPool.getInstance().executeOnPooledThread(task);
+            return SharedThreadPool.getInstance().submit(task);
           }
         };
       }
@@ -1026,7 +1027,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final Pair<JpsSdk<JpsDummyElement>, Integer> sdkVersionPair = getAssociatedSdk(chunk);
     if (sdkVersionPair != null) {
       final int sdkVersion = sdkVersionPair.second;
-      if (sdkVersion >= 6 && (sdkVersion < 9 || Math.abs(sdkVersion - targetLanguageLevel) <= 3)) {
+      if (sdkVersion >= 6 && (sdkVersion < 9 || Math.abs(sdkVersion - targetLanguageLevel) <= RETIRE_POLICY_VERSIONS_COUNT)) {
         // current javac compiler does support required language level
         return pair(sdkVersionPair.first.getHomePath(), sdkVersion);
       }

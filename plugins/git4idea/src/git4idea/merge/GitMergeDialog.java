@@ -2,6 +2,7 @@
 package git4idea.merge;
 
 import com.intellij.ide.util.ElementsChooser;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsException;
@@ -117,7 +118,7 @@ public class GitMergeDialog extends DialogWrapper {
     final ElementsChooser.ElementsMarkListener<String> listener = new ElementsChooser.ElementsMarkListener<String>() {
       @Override
       public void elementMarkChanged(final String element, final boolean isMarked) {
-        setOKActionEnabled(myBranchChooser.getMarkedElements().size() != 0);
+        setOKActionEnabled(getSelectedBranches().size() != 0);
       }
     };
     listener.elementMarkChanged(null, true);
@@ -136,9 +137,10 @@ public class GitMergeDialog extends DialogWrapper {
   public void updateBranches() throws VcsException {
     VirtualFile root = getSelectedRoot();
     GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.BRANCH);
-    handler.setSilent(true);
     handler.addParameters("--no-color", "-a", "--no-merged");
-    String output = Git.getInstance().runCommand(handler).getOutputOrThrow();
+    String output = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> Git.getInstance().runCommand(handler).getOutputOrThrow(),
+      "Preparing List of Branches", true, myProject);
     myBranchChooser.clear();
     for (StringTokenizer lines = new StringTokenizer(output, "\n", false); lines.hasMoreTokens();) {
       String branch = lines.nextToken().substring(2);
@@ -175,12 +177,16 @@ public class GitMergeDialog extends DialogWrapper {
     if (!GitMergeUtil.DEFAULT_STRATEGY.equals(strategy)) {
       h.addParameters("--strategy", strategy);
     }
-    for (String branch : myBranchChooser.getMarkedElements()) {
+    for (String branch : getSelectedBranches()) {
       h.addParameters(branch);
     }
     return h;
   }
 
+  @NotNull
+  public List<String> getSelectedBranches() {
+    return myBranchChooser.getMarkedElements();
+  }
 
   @Override
   protected JComponent createCenterPanel() {

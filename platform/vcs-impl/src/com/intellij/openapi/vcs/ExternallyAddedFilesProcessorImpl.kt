@@ -7,6 +7,9 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.VcsConfiguration.StandardConfirmation.ADD
+import com.intellij.openapi.vcs.VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY
+import com.intellij.openapi.vcs.VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY
 import com.intellij.openapi.vcs.changes.ChangeListListener
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager
@@ -21,7 +24,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
-private const val ADD_EXTERNAL_FILES_PROPERTY = "ADD_EXTERNAL_FILES"
 private const val ASKED_ADD_EXTERNAL_FILES_PROPERTY = "ASKED_ADD_EXTERNAL_FILES"
 
 private val LOG = logger<ExternallyAddedFilesProcessorImpl>()
@@ -59,7 +61,7 @@ class ExternallyAddedFilesProcessorImpl(project: Project,
     val files = UNPROCESSED_FILES_LOCK.read { unprocessedFiles.toList() }
     if (files.isEmpty()) return
 
-    if (needAddSilently()) {
+    if (needDoForCurrentProject()) {
       LOG.debug("Add external files to ${vcs.displayName} silently ", files)
       addChosenFiles(doFilterFiles(files))
     }
@@ -91,13 +93,7 @@ class ExternallyAddedFilesProcessorImpl(project: Project,
     }
   }
 
-  private fun needAddSilently() =
-    vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD,
-                                       vcs).value == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY
-    && VcsConfiguration.getInstance(project).ADD_EXTERNAL_FILES_SILENTLY
-
-  private fun doNothingSilently() = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD,
-                                                                       vcs).value == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY
+  private fun doNothingSilently() = vcsManager.getStandardConfirmation(ADD, vcs).value == DO_NOTHING_SILENTLY
 
   private fun needProcessExternalFiles(): Boolean {
     if (doNothingSilently()) return false
@@ -113,12 +109,14 @@ class ExternallyAddedFilesProcessorImpl(project: Project,
   }
 
   override val askedBeforeProperty = ASKED_ADD_EXTERNAL_FILES_PROPERTY
-  override val doForCurrentProjectProperty = ADD_EXTERNAL_FILES_PROPERTY
+  override val doForCurrentProjectProperty: String? = null
 
   override val showActionText: String = VcsBundle.message("external.files.add.notification.action.view")
   override val forCurrentProjectActionText: String = VcsBundle.message("external.files.add.notification.action.add")
   override val forAllProjectsActionText: String? = null
   override val muteActionText: String = VcsBundle.message("external.files.add.notification.action.mute")
+
+  override val viewFilesDialogTitle: String? = VcsBundle.message("external.files.add.view.dialog.title", vcs.displayName)
 
   override fun notificationTitle() = ""
 
@@ -127,6 +125,15 @@ class ExternallyAddedFilesProcessorImpl(project: Project,
   override fun doActionOnChosenFiles(files: Collection<VirtualFile>) {
     addChosenFiles(files)
   }
+
+  override fun rememberForCurrentProject() {
+    vcsManager.getStandardConfirmation(ADD, vcs).value = DO_ACTION_SILENTLY
+    VcsConfiguration.getInstance(project).ADD_EXTERNAL_FILES_SILENTLY = true
+  }
+
+  override fun needDoForCurrentProject() =
+    vcsManager.getStandardConfirmation(ADD, vcs).value == DO_ACTION_SILENTLY
+    && VcsConfiguration.getInstance(project).ADD_EXTERNAL_FILES_SILENTLY
 
   override fun doFilterFiles(files: Collection<VirtualFile>): Collection<VirtualFile> =
     changeListManager.unversionedFiles

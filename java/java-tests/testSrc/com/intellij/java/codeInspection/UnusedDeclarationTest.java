@@ -254,6 +254,10 @@ public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
     doTest();
   }
 
+  public void testMethodParametersIfMethodReferenceUsed() {
+    doTest();
+  }
+
   private void doTest5() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_5, () -> doTest());
   }

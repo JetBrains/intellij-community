@@ -6,10 +6,8 @@ import com.intellij.codeInsight.daemon.impl.IntentionsUI;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.CachedIntentions;
-import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 import java.util.List;
 import java.util.Set;
@@ -20,7 +18,7 @@ import static com.intellij.testFramework.assertions.Assertions.assertThat;
 /**
  * @author Dmitry Avdeev
  */
-public class GutterIntentionsTest extends LightCodeInsightFixtureTestCase {
+public class GutterIntentionsTest extends LightJavaCodeInsightFixtureTestCase {
   public void testEmptyIntentions() {
     myFixture.configureByText(JavaFileType.INSTANCE, "class Foo {\n" +
                                                      "  <caret>   private String test() {\n" +

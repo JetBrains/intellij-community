@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.StorageScheme;
@@ -38,8 +36,6 @@ public interface IProjectStore extends IComponentStore {
   @Nullable
   String getWorkspaceFilePath();
 
-  void loadProjectFromTemplate(@NotNull Project project);
-
   void clearStorages();
 
   boolean isOptimiseTestLoadSpeed();
@@ -69,4 +65,6 @@ public interface IProjectStore extends IComponentStore {
   @NotNull
   @SystemIndependent
   String getDirectoryStorePathOrBase();
+
+  void setPath(@NotNull @SystemIndependent String path, boolean isRefreshVfsNeeded, @Nullable Project template);
 }

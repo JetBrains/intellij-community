@@ -160,7 +160,7 @@ class JsonSchemaAnnotatorChecker {
     if (type != null) {
       JsonSchemaType schemaType = getMatchingSchemaType(schema, type);
       if (schemaType != null && !schemaType.equals(type)) {
-        typeError(value.getDelegate(), type, schemaType);
+        typeError(value.getDelegate(), value.substituteTypeForErrorMessage(type), schemaType);
       }
       else {
         if (JsonSchemaType._string_number.equals(type)) {
@@ -474,7 +474,9 @@ class JsonSchemaAnnotatorChecker {
     final JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(value, schema);
     if (walker == null) return;
     final String text = StringUtil.notNullize(walker.getNodeTextForValidation(value));
-    BiFunction<String, String, Boolean> eq = myOptions.isCaseInsensitiveEnumCheck() ? String::equalsIgnoreCase : String::equals;
+    BiFunction<String, String, Boolean> eq = myOptions.isCaseInsensitiveEnumCheck() || schema.isForceCaseInsensitive()
+                                             ? String::equalsIgnoreCase
+                                             : String::equals;
     for (Object object : enumItems) {
       if (checkEnumValue(object, walker, walker.createValueAdapter(value), text, eq)) return;
     }
@@ -521,7 +523,7 @@ class JsonSchemaAnnotatorChecker {
         if (!areSchemaTypesCompatible(schema, type)) continue;
         filtered.add(schema);
       }
-      if (filtered.isEmpty()) checker.typeError(value.getDelegate(), type, getExpectedTypes(collection));
+      if (filtered.isEmpty()) checker.typeError(value.getDelegate(), value.substituteTypeForErrorMessage(type), getExpectedTypes(collection));
       else if (filtered.size() == 1) {
         selected = filtered.get(0);
         checker.checkByScheme(value, selected);

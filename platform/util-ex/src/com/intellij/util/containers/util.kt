@@ -59,22 +59,14 @@ inline fun <T, R> List<T>.computeIfAny(processor: (T) -> R): R? {
 fun <T> List<T>?.nullize(): List<T>? = if (isNullOrEmpty()) null else this
 
 inline fun <T> Array<out T>.forEachGuaranteed(operation: (T) -> Unit) {
-  var errors: MutableList<Throwable>? = null
-  for (element in this) {
-    try {
-      operation(element)
-    }
-    catch (e: Throwable) {
-      if (errors == null) {
-        errors = SmartList()
-      }
-      errors.add(e)
-    }
-  }
-  CompoundRuntimeException.throwIfNotEmpty(errors)
+  return iterator().forEachGuaranteed(operation)
 }
 
 inline fun <T> Collection<T>.forEachGuaranteed(operation: (T) -> Unit) {
+  return iterator().forEachGuaranteed(operation)
+}
+
+inline fun <T> Iterator<T>.forEachGuaranteed(operation: (T) -> Unit) {
   var errors: MutableList<Throwable>? = null
   for (element in this) {
     try {
@@ -97,10 +89,10 @@ fun <T> Stream<T>?.isEmpty(): Boolean = this == null || !this.findAny().isPresen
 fun <T> Stream<T>?.notNullize(): Stream<T> = this ?: Stream.empty()
 
 fun <T> Stream<T>?.getIfSingle(): T? =
-    this?.limit(2)
-        ?.map { Optional.ofNullable(it) }
-        ?.reduce(Optional.empty()) { a, b -> if (a.isPresent xor b.isPresent) b else Optional.empty() }
-        ?.orElse(null)
+  this?.limit(2)
+    ?.map { Optional.ofNullable(it) }
+    ?.reduce(Optional.empty()) { a, b -> if (a.isPresent xor b.isPresent) b else Optional.empty() }
+    ?.orElse(null)
 
 /**
  * There probably could be some performance issues if there is lots of streams to concat. See
@@ -120,8 +112,7 @@ inline fun MutableList<Throwable>.catch(runnable: () -> Unit) {
 }
 
 inline fun <T, R> Array<out T>.mapSmart(transform: (T) -> R): List<R> {
-  val size = size
-  return when (size) {
+  return when (val size = size) {
     1 -> SmartList(transform(this[0]))
     0 -> SmartList()
     else -> mapTo(ArrayList(size), transform)
@@ -129,8 +120,7 @@ inline fun <T, R> Array<out T>.mapSmart(transform: (T) -> R): List<R> {
 }
 
 inline fun <T, R> Collection<T>.mapSmart(transform: (T) -> R): List<R> {
-  val size = size
-  return when (size) {
+  return when (val size = size) {
     1 -> SmartList(transform(first()))
     0 -> emptyList()
     else -> mapTo(ArrayList(size), transform)
@@ -141,8 +131,7 @@ inline fun <T, R> Collection<T>.mapSmart(transform: (T) -> R): List<R> {
  * Not mutable set will be returned.
  */
 inline fun <T, R> Collection<T>.mapSmartSet(transform: (T) -> R): Set<R> {
-  val size = size
-  return when (size) {
+  return when (val size = size) {
     1 -> {
       val result = SmartHashSet<R>()
       result.add(transform(first()))
@@ -190,4 +179,32 @@ inline fun <reified E : Enum<E>, V> enumMapOf(): MutableMap<E, V> = EnumMap<E, V
 fun <E> Collection<E>.toArray(empty: Array<E>): Array<E> {
   @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "UNCHECKED_CAST")
   return (this as java.util.Collection<E>).toArray(empty)
+}
+
+/**
+ * Given a collection of elements S returns collection of minimal elements M as ordered by [comparator].
+ *
+ * Let S = M ∪ R; M ∩ R = ∅. Then:
+ * - ∀ m1 ∈ M, ∀ m2 ∈ M : m1 = m2;
+ * - ∀ m ∈ M, ∀ r ∈ R : m < r.
+ */
+fun <T> Collection<T>.minimalElements(comparator: Comparator<in T>): Collection<T> {
+  if (isEmpty() || size == 1) return this
+  val result = SmartList<T>()
+  for (item in this) {
+    if (result.isEmpty()) {
+      result.add(item)
+    }
+    else {
+      val comparison = comparator.compare(result[0], item)
+      if (comparison > 0) {
+        result.clear()
+        result.add(item)
+      }
+      else if (comparison == 0) {
+        result.add(item)
+      }
+    }
+  }
+  return result
 }

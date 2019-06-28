@@ -137,7 +137,7 @@ public abstract class JBEditorTabsPainter {
   public abstract Color getBackgroundColor();
 
   public Color getEmptySpaceColor() {
-    return UIUtil.isUnderAquaLookAndFeel() ? Gray.xC8 : UIUtil.getPanelBackground();
+    return UIUtil.getPanelBackground();
   }
 
   public void setDefaultTabColor(Color color) {

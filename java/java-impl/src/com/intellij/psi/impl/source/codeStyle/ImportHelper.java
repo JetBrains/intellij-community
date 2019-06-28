@@ -44,6 +44,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toSet;
 
@@ -67,7 +69,15 @@ public class ImportHelper{
   }
 
   @Nullable("null means no need to replace the import list because they are the same")
-  PsiImportList prepareOptimizeImportsResult(@NotNull final PsiJavaFile file) {
+  public PsiImportList prepareOptimizeImportsResult(@NotNull final PsiJavaFile file) {
+    return prepareOptimizeImportsResult(file, pair -> true);
+  }
+
+  /**
+   * @param filter pretend some references do not exist so the corresponding imports may be deleted
+   */
+  @Nullable("null means no need to replace the import list because they are the same")
+  public PsiImportList prepareOptimizeImportsResult(@NotNull final PsiJavaFile file, Predicate<? super Pair<String, Boolean>> filter) {
     PsiImportList oldList = file.getImportList();
     if (oldList == null) return null;
 
@@ -78,8 +88,12 @@ public class ImportHelper{
     // We want to preserve those comments then.
     List<PsiElement> nonImports = new NotNullList<>();
     // Note: this array may contain "<packageOrClassName>.*" for unresolved imports!
-    List<Pair<String, Boolean>> names = new ArrayList<>(collectNamesToImport(file, nonImports));
-    Collections.sort(names, Comparator.comparing(o -> o.getFirst()));
+    List<Pair<String, Boolean>> names =
+      collectNamesToImport(file, nonImports)
+        .stream()
+        .filter(filter)
+        .sorted(Comparator.comparing(o -> o.getFirst()))
+        .collect(Collectors.toList());
 
     List<Pair<String, Boolean>> resultList = sortItemsAccordingToSettings(names, mySettings);
 

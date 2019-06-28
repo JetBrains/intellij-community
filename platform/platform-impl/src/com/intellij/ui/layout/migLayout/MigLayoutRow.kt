@@ -17,8 +17,6 @@ import net.miginfocom.layout.CC
 import java.awt.Component
 import javax.swing.*
 import javax.swing.border.LineBorder
-import kotlin.reflect.KMutableProperty0
-import kotlin.reflect.KProperty0
 
 private const val COMPONENT_ENABLED_STATE_KEY = "MigLayoutRow.enabled"
 
@@ -27,7 +25,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
                             override val builder: MigLayoutBuilder,
                             val labeled: Boolean = false,
                             val noGrid: Boolean = false,
-                            private val buttonGroup: ButtonGroup? = null,
+                            override val buttonGroup: ButtonGroup? = null,
                             private val indent: Int /* level number (nested rows) */) : Row() {
   companion object {
     // as static method to ensure that members of current row are not used
@@ -121,7 +119,10 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       }
 
       field = value
-      subRows?.forEach { it.enabled = value }
+      subRows?.forEach {
+        it.enabled = value
+        it.subRowsEnabled = value
+      }
     }
 
   override var subRowsVisible = true
@@ -131,7 +132,10 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       }
 
       field = value
-      subRows?.forEach { it.visible = value }
+      subRows?.forEach {
+        it.visible = value
+        it.subRowsVisible = value
+      }
     }
 
   internal val isLabeledIncludingSubRows: Boolean
@@ -140,7 +144,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   internal val columnIndexIncludingSubRows: Int
     get() = Math.max(columnIndex, subRows?.maxBy { it.columnIndex }?.columnIndex ?: 0)
 
-  fun createChildRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null, isSeparated: Boolean = false, noGrid: Boolean = false, title: String? = null): MigLayoutRow {
+  override fun createChildRow(label: JLabel?, buttonGroup: ButtonGroup?, isSeparated: Boolean, noGrid: Boolean, title: String?): MigLayoutRow {
     val subRows = getOrCreateSubRowsList()
 
     val row = MigLayoutRow(this, componentConstraints, builder,
@@ -230,7 +234,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       component.isEnabled = false
     }
 
-    if (!shareCellWithPreviousComponentIfNeed(component, cc)) {
+    if (!shareCellWithPreviousComponentIfNeeded(component, cc)) {
       // increase column index if cell mode not enabled or it is a first component of cell
       if (componentIndexWhenCellModeWasEnabled == -1 || componentIndexWhenCellModeWasEnabled == (components.size - 1)) {
         columnIndex++
@@ -267,6 +271,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       if (siblings != null && siblings.size > 1) {
         if (siblings.get(siblings.size - 2).labeled && component.text == CommonBundle.message("checkbox.remember.password")) {
           cc.value.skip(1)
+          cc.value.horizontal.gapBefore = BoundSize.NULL_SIZE
         }
         else if (siblings.any { it.labeled }) {
           cc.value.spanX(2)
@@ -290,7 +295,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
   }
 
-  private fun shareCellWithPreviousComponentIfNeed(component: JComponent, componentCC: Lazy<CC>): Boolean {
+  private fun shareCellWithPreviousComponentIfNeeded(component: JComponent, componentCC: Lazy<CC>): Boolean {
     if (components.size > 1 && component is JLabel && component.icon === AllIcons.General.GearPlain) {
       componentCC.value.horizontal.gapBefore = builder.defaultComponentConstraintCreator.horizontalUnitSizeGap
 
@@ -324,10 +329,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
   override fun largeGapAfter() {
     gapAfter = "${spacing.largeVerticalGap * 2}px!"
-  }
-
-  override fun createRow(label: String?): Row {
-    return createChildRow(label = label?.let { Label(it) })
   }
 
   override fun createRow(label: String?, buttonGroup: ButtonGroup?): Row {
@@ -418,18 +419,15 @@ private fun getCommentLeftInset(spacing: SpacingConfiguration, component: JCompo
 
   // as soon as ComponentPanelBuilder will also compensate visual paddings (instead of compensating on LaF level),
   // this logic will be moved into computeCommentInsets
-  val componentBorderVisualLeftPadding = when {
-    spacing.isCompensateVisualPaddings -> {
-      val border = component.border
-      if (border is VisualPaddingsProvider) {
-        border.getVisualPaddings(component)?.left ?: 0
-      }
-      else {
-        0
-      }
+  val border = component.border
+  val componentBorderVisualLeftPadding =
+    if (border is VisualPaddingsProvider) {
+      border.getVisualPaddings(component)?.left ?: 0
     }
-    else -> 0
-  }
+    else {
+      0
+    }
+
   val insets = ComponentPanelBuilder.computeCommentInsets(component, true)
   return insets.left - componentBorderVisualLeftPadding
 }

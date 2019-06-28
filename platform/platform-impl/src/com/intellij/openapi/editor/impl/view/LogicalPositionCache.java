@@ -107,20 +107,20 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
       // (use case - com.intellij.openapi.editor.impl.CaretImpl.PositionMarker.changedUpdateImpl())
       int lineStartOffset = myDocument.getLineStartOffset(line);
       int lineEndOffset = myDocument.getLineEndOffset(line);
-      return calcOffset(myDocument, column, 0, lineStartOffset, lineEndOffset, myTabSize);
+      return calcOffset(myDocument.getImmutableCharSequence(), column, 0, lineStartOffset, lineEndOffset, myTabSize);
     }
     LineData lineData = getLineInfo(line);
     return lineData.logicalColumnToOffset(myDocument, line, myTabSize, column);
   }
 
-  private static int calcOffset(@NotNull Document document, int column, int startColumn, int startOffset, int endOffset, int tabSize) {
+  static int calcOffset(@NotNull CharSequence text, int column, int startColumn, int startOffset, int endOffset, int tabSize) {
     int currentColumn = startColumn;
-    CharSequence text = document.getImmutableCharSequence();
     for (int i = startOffset; i < endOffset; i++) {
-      if (text.charAt(i) == '\t') {
+      char c = text.charAt(i);
+      if (c == '\t') {
         currentColumn = (currentColumn / tabSize + 1) * tabSize;
       }
-      else if (DocumentUtil.isSurrogatePair(document, i)) {
+      else if (i + 1 < text.length() && Character.isHighSurrogate(c) && Character.isLowSurrogate(text.charAt(i + 1))) {
         if (currentColumn == column) return i;
       }
       else {
@@ -287,7 +287,7 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
       }
       int startOffset = lineStartOffset + (- pos - 1) * CACHE_FREQUENCY;
       int column = pos == -1 ? 0 : columnCache[- pos - 2];
-      return calcOffset(document, logicalColumn, column, startOffset, lineEndOffset, tabSize);
+      return calcOffset(document.getImmutableCharSequence(), logicalColumn, column, startOffset, lineEndOffset, tabSize);
     }
   }
 }

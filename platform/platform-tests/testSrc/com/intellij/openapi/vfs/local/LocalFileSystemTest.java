@@ -5,6 +5,7 @@ import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -629,7 +630,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     assertNotNull(topDir);
     Set<VirtualFile> files = new HashSet<>();
     VfsUtilCore.processFilesRecursively(topDir, file -> { if (!file.isDirectory()) files.add(file); return true; });
-    assertEquals(39, files.size());  // 13 dirs of 3 files
+    assertThat(files).hasSize(39);  // 13 dirs of 3 files
     topDir.refresh(false, true);
 
     Set<VirtualFile> processed = new HashSet<>();
@@ -645,17 +646,22 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
       files.forEach(f -> IoTestUtil.updateFile(new File(f.getPath()), "+++"));
       ((NewVirtualFile)topDir).markDirtyRecursively();
 
-      RefreshWorker.setCancellingCondition(file -> file.getPath().endsWith(top.getName() + "/sub_2/file_2"));
-      topDir.refresh(false, true);
+      RefreshSession session = RefreshQueue.getInstance().createSession(false, true, null);
+      String stopAt = top.getName() + "/sub_2/file_2";
+      RefreshWorker.setTestListener(file -> {
+        if (file.getPath().endsWith(stopAt)) RefreshQueue.getInstance().cancelSession(session.getId());
+      });
+      session.addFile(topDir);
+      session.launch();
       assertThat(processed).hasSizeBetween(1, files.size() - 1);
 
-      RefreshWorker.setCancellingCondition(null);
+      RefreshWorker.setTestListener(null);
       topDir.refresh(false, true);
       assertThat(processed).isEqualTo(files);
     }
     finally {
       connection.disconnect();
-      RefreshWorker.setCancellingCondition(null);
+      RefreshWorker.setTestListener(null);
     }
   }
 

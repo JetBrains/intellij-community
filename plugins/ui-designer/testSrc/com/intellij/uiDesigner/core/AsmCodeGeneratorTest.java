@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.core;
 
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
@@ -21,8 +7,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.components.BaseState;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.compiler.FormErrorInfo;
@@ -30,14 +17,16 @@ import com.intellij.uiDesigner.compiler.NestedFormLoader;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.PathUtil;
+import com.intellij.util.*;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.UIUtilities;
 import com.sun.tools.javac.Main;
 import gnu.trove.TIntObjectHashMap;
-import junit.framework.TestCase;
 import kotlin.reflect.KDeclarationContainer;
+import org.jetbrains.jps.builders.JpsBuildTestCase;
+import org.jetbrains.jps.model.JpsDummyElement;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
+import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 
 import javax.swing.*;
@@ -51,15 +40,15 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author yole
  */
-public class AsmCodeGeneratorTest extends TestCase {
+public class AsmCodeGeneratorTest extends JpsBuildTestCase {
   private MyNestedFormLoader myNestedFormLoader;
   private MyClassFinder myClassFinder;
 
@@ -68,14 +57,22 @@ public class AsmCodeGeneratorTest extends TestCase {
     super.setUp();
     myNestedFormLoader = new MyNestedFormLoader();
 
-    final String swingPath = PathUtil.getJarPathForClass(AbstractButton.class);
+    URL url;
+    JpsSdk<JpsDummyElement> jdk = getJdk();
+    if (JpsJavaSdkType.getJavaVersion(jdk) >= 9) {
+      url = InstrumentationClassFinder.createJDKPlatformUrl(jdk.getHomePath());
+    }
+    else {
+      String swingPath = PathUtil.getJarPathForClass(AbstractButton.class);
+      url = new File(swingPath).toURI().toURL();
+    }
 
     List<URL> cp = new ArrayList<>();
     appendPath(cp, JBTabbedPane.class);
     appendPath(cp, TIntObjectHashMap.class);
     appendPath(cp, UIUtil.class);
     appendPath(cp, UIUtilities.class);
-    appendPath(cp, SystemInfoRt.class);
+    appendPath(cp, SystemInfo.class);
     appendPath(cp, ApplicationManager.class);
     appendPath(cp, PathManager.getResourceRoot(this.getClass(), "/messages/UIBundle.properties"));
     appendPath(cp, PathManager.getResourceRoot(this.getClass(), "/RuntimeBundle.properties"));
@@ -83,10 +80,10 @@ public class AsmCodeGeneratorTest extends TestCase {
     appendPath(cp, DataProvider.class);
     appendPath(cp, BaseState.class);
     appendPath(cp, KDeclarationContainer.class);
-    myClassFinder = new MyClassFinder(
-      new URL[] {new File(swingPath).toURI().toURL()},
-      cp.toArray(new URL[0])
-    );
+    appendPath(cp, NotNullProducer.class);
+    appendPath(cp, NotNullFunction.class);  // intellij.platform.util.rt
+    appendPath(cp, SimpleTextAttributes.class);
+    myClassFinder = new MyClassFinder(new URL[]{url}, cp.toArray(new URL[0]));
   }
 
   private static void appendPath(Collection<URL> container, Class cls) throws MalformedURLException {
@@ -123,14 +120,14 @@ public class AsmCodeGeneratorTest extends TestCase {
     String formPath = testDataPath + formFileName;
     String javaPath = testDataPath + className + ".java";
     final int rc = Main.compile(new String[]{"-d", tmpPath, javaPath});
-    
+
     assertEquals(0, rc);
 
     final String classPath = tmpPath + "/" + className + ".class";
     final File classFile = new File(classPath);
-    
+
     assertTrue(classFile.exists());
-    
+
     final LwRootContainer rootContainer = loadFormData(formPath);
     final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, myClassFinder, myNestedFormLoader, false, new ClassWriter(ClassWriter.COMPUTE_FRAMES));
     final FileInputStream classStream = new FileInputStream(classFile);
@@ -239,7 +236,7 @@ public class AsmCodeGeneratorTest extends TestCase {
   }
 
   private static Object invokeMethod(Object obj, String methodName) throws InvocationTargetException, IllegalAccessException {
-    return invokeMethod(obj, methodName, ArrayUtil.EMPTY_CLASS_ARRAY, ArrayUtil.EMPTY_OBJECT_ARRAY);
+    return invokeMethod(obj, methodName, ArrayUtil.EMPTY_CLASS_ARRAY, ArrayUtilRt.EMPTY_OBJECT_ARRAY);
   }
 
   private static Object invokeMethod(Object obj, String methodName, Class[] params, Object[] args) throws
@@ -451,6 +448,13 @@ public class AsmCodeGeneratorTest extends TestCase {
     assert instance != null : mainClass;
   }
 
+  // For JDK 11 `TestProperties` bundle try load over class
+  public static class MyTestProperties extends PropertyResourceBundle {
+    public MyTestProperties() throws IOException {
+      super(new StringReader(MyClassFinder.TEST_PROPERTY_CONTENT));
+    }
+  }
+
   private static class MyClassFinder extends InstrumentationClassFinder {
     private static final String TEST_PROPERTY_CONTENT = "test=Test Value\nmnemonic=Mne&monic";
     private final byte[] myTestProperties = Charset.defaultCharset().encode(TEST_PROPERTY_CONTENT).array();
@@ -469,6 +473,14 @@ public class AsmCodeGeneratorTest extends TestCase {
       final byte[] bytes = myClassData.get(internalClassName);
       if (bytes != null) {
         return new ByteArrayInputStream(bytes);
+      }
+      return null;
+    }
+
+    @Override
+    protected Class findClass(String name) {
+      if ("TestProperties".equals(name)) {
+        return MyTestProperties.class;
       }
       return null;
     }

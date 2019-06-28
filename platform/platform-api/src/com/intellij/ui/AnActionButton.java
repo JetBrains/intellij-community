@@ -8,7 +8,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.SmartHashSet;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -132,7 +131,8 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
 
   private boolean isContextComponentOk() {
     return myContextComponent == null
-           || (myContextComponent.isVisible() && UIUtil.getParentOfType(JLayeredPane.class, myContextComponent) != null);
+           || (myContextComponent.isVisible() && ComponentUtil.getParentOfType((Class<? extends JLayeredPane>)JLayeredPane.class,
+                                                                               (Component)myContextComponent) != null);
   }
 
   @Nullable

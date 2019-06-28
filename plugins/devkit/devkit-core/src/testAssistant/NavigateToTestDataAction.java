@@ -106,7 +106,7 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(findTargetMethod(e.getDataContext()) != null || findParametrizedClass(e.getDataContext()) != null);
+    e.getPresentation().setEnabledAndVisible(findTargetMethod(e.getDataContext()) != null || findParametrizedClass(e.getDataContext()) != null);
   }
 
   @Nullable

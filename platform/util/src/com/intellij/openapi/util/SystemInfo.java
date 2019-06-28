@@ -4,6 +4,7 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.util.io.PathExecLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.lang.JavaVersion;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -41,7 +42,7 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isFreeBSD = SystemInfoRt.isFreeBSD;
   public static final boolean isSolaris = SystemInfoRt.isSolaris;
   public static final boolean isUnix = SystemInfoRt.isUnix;
-  public static final boolean isChromeOS = SystemInfoRt.isLinux && isCrostini();
+  public static final boolean isChromeOS = isLinux && isCrostini();
 
   public static final boolean isAppleJvm = containsIgnoreCase(JAVA_VENDOR, "Apple");
   public static final boolean isOracleJvm = containsIgnoreCase(JAVA_VENDOR, "Oracle");
@@ -118,6 +119,7 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isMacOSSierra = isMac && isOsVersionAtLeast("10.12");
   public static final boolean isMacOSHighSierra = isMac && isOsVersionAtLeast("10.13");
   public static final boolean isMacOSMojave = isMac && isOsVersionAtLeast("10.14");
+  public static final boolean isMacOSCatalina = isMac && isOsVersionAtLeast("10.15");
 
   @NotNull
   public static String getMacOSMajorVersion() {
@@ -191,6 +193,10 @@ public class SystemInfo extends SystemInfoRt {
     }
   }
 
+  public static boolean isJavaVersionAtLeast(int major) {
+    return isJavaVersionAtLeast(major, 0, 0);
+  }
+
   public static boolean isJavaVersionAtLeast(int major, int minor, int update) {
     return JavaVersion.current().compareTo(JavaVersion.compose(major, minor, update, 0, false)) >= 0;
   }
@@ -198,14 +204,17 @@ public class SystemInfo extends SystemInfoRt {
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link #isJavaVersionAtLeast(int, int, int)} (to be removed in IDEA 2020) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
   public static boolean isJavaVersionAtLeast(String v) {
     return StringUtil.compareVersionNumbers(JAVA_RUNTIME_VERSION, v) >= 0;
   }
 
   /** @deprecated use {@link #isWinXpOrNewer} (to be removed in IDEA 2018) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   @Deprecated public static final boolean isWindowsXP = isWindows && (OS_VERSION.equals("5.1") || OS_VERSION.equals("5.2"));
 
   /** @deprecated use {@link #is32Bit} or {@link #is64Bit} (to be removed in IDEA 2018) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   @Deprecated public static final boolean isAMD64 = "amd64".equals(OS_ARCH);
 
   //</editor-fold>

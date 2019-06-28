@@ -23,10 +23,6 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ide.PooledThreadExecutor;
-import org.jetbrains.ide.script.IdeScriptEngine;
-import org.jetbrains.ide.script.IdeScriptEngineManager;
-import org.jetbrains.ide.script.IdeScriptException;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,7 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
 
-class IdeStartupScripts implements ApplicationInitializedListener {
+final class IdeStartupScripts implements ApplicationInitializedListener {
   private static final Logger LOG = Logger.getInstance(IdeStartupScripts.class);
 
   private static final String SCRIPT_DIR = "startup";
@@ -50,7 +46,7 @@ class IdeStartupScripts implements ApplicationInitializedListener {
       @Override
       public void projectOpened(@NotNull Project project) {
         if (future == null) {
-          future = PooledThreadExecutor.INSTANCE.submit(() -> prepareScriptsAndEngines());
+          future = ApplicationManager.getApplication().executeOnPooledThread(() -> prepareScriptsAndEngines());
         }
         StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
           if (!project.isOpen()) return;
@@ -71,7 +67,7 @@ class IdeStartupScripts implements ApplicationInitializedListener {
     List<Pair<File, IdeScriptEngine>> result = new ArrayList<>();
     for (File script : scripts) {
       String extension = FileUtilRt.getExtension(script.getName());
-      IdeScriptEngine engine = extension.isEmpty() ? null : scriptEngineManager.getEngineForFileExtension(extension, null);
+      IdeScriptEngine engine = extension.isEmpty() ? null : scriptEngineManager.getEngineByFileExtension(extension, null);
       result.add(Pair.create(script, engine));
     }
     return result;

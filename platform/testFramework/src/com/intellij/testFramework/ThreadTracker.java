@@ -69,6 +69,7 @@ public class ThreadTracker {
     "AWT-Windows",
     "Batik CleanerThread",
     "CompilerThread0",
+    "dockerjava-netty",
     "External compiler",
     "Finalizer",
     FlushingDaemon.NAME,
@@ -83,7 +84,8 @@ public class ThreadTracker {
     "Netty ",
     "ObjectCleanerThread",
     "Reference Handler",
-    "RMI TCP Connection",
+    "RMI GC Daemon",
+    "RMI TCP ",
     "Signal Dispatcher",
     "timer-int", //serverIm,
     "timer-sys", //clientim,
@@ -101,7 +103,7 @@ public class ThreadTracker {
     wellKnownOffenders.addAll(offenders);
     Application application = ApplicationManager.getApplication();
     // LeakHunter might be accessed first time after Application is already disposed (during test framework shutdown).
-    if (!application.isDisposed()) {
+    if (application != null && !application.isDisposed()) {
       longRunningThreadCreated(application,
                                "Periodic tasks thread",
                                "ApplicationImpl pooled thread ",

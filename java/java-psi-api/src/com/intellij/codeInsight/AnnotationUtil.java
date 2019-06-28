@@ -11,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,8 +75,8 @@ public class AnnotationUtil {
    *
    * @param listOwner element to search annotations of
    * @param annotationNames fully-qualified annotations names to search for
-   * @param skipExternal {@code true} if external and inferred annotations must also be searched,
-   * {@code false} only to search for own annotations declared in source code
+   * @param skipExternal {@code false} if external and inferred annotations must also be searched,
+   * {@code true} only to search for own annotations declared in source code
    * @return all annotations of {@code listOwner}, including repeatable annotation
    * and annotations from several source roots, having FQ names from {@code annotationNames}.
    */
@@ -105,7 +106,7 @@ public class AnnotationUtil {
     }
     List<PsiAnnotation> result = null;
     for (PsiAnnotation annotation : list.getAnnotations()) {
-      if (annotationNames.contains(annotation.getQualifiedName()) && isApplicableToDeclaration(annotation, list)) {
+      if (ContainerUtil.exists(annotationNames, annotation::hasQualifiedName) && isApplicableToDeclaration(annotation, list)) {
         if (result == null) {
           result = new SmartList<>();
         }
@@ -304,6 +305,14 @@ public class AnnotationUtil {
       PsiType type = null;
       if (listOwner instanceof PsiMethod) {
         type = ((PsiMethod)listOwner).getReturnType();
+      }
+      else if (listOwner instanceof PsiParameter &&
+               listOwner.getParent() instanceof PsiParameterList &&
+               listOwner.getParent().getParent() instanceof PsiLambdaExpression) {        
+        if (((PsiParameter)listOwner).getTypeElement() != null) {
+          // Avoid lambda parameter type inference: anyway it doesn't have any explicit annotations
+          type = ((PsiParameter)listOwner).getType();
+        }
       }
       else if (listOwner instanceof PsiVariable) {
         type = ((PsiVariable)listOwner).getType();
@@ -678,6 +687,7 @@ public class AnnotationUtil {
     {"NotNull", "Nullable", "NonNls", "PropertyKey", "TestOnly", "Language", "Identifier", "Pattern", "PrintFormat", "RegExp", "Subst"};
 
   /** @deprecated simple name is not enough for reliable identification (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   public static boolean isJetbrainsAnnotation(@NotNull String simpleName) {
     return ArrayUtil.find(SIMPLE_NAMES, simpleName) != -1;
@@ -685,12 +695,14 @@ public class AnnotationUtil {
 
   /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, Collection, int)} (to be removed in IDEA 2019) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull Collection<String> annotations) {
     return isAnnotated(listOwner, annotations, CHECK_TYPE);
   }
 
   /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, Collection, int)} (to be removed in IDEA 2019) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
                                     @NotNull Collection<String> annotations,
                                     boolean checkHierarchy) {
@@ -699,6 +711,7 @@ public class AnnotationUtil {
 
   /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, Collection, int)} (to be removed in IDEA 2019) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
                                     @NotNull Collection<String> annotations,
                                     boolean checkHierarchy,
@@ -708,12 +721,14 @@ public class AnnotationUtil {
 
   /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, String, int)} (to be removed in IDEA 2019) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN, boolean checkHierarchy) {
     return isAnnotated(listOwner, annotationFQN, flags(checkHierarchy, true, true));
   }
 
   /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, String, int)} (to be removed in IDEA 2019) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
                                     @NotNull String annotationFQN,
                                     boolean checkHierarchy,

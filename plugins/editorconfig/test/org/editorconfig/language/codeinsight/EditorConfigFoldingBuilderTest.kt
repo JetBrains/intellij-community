@@ -2,9 +2,9 @@
 package org.editorconfig.language.codeinsight
 
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
-class EditorConfigFoldingBuilderTest : LightPlatformCodeInsightFixtureTestCase() {
+class EditorConfigFoldingBuilderTest : BasePlatformTestCase() {
   override fun getTestDataPath() =
     "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testData/org/editorconfig/language/codeinsight/folding/"
 

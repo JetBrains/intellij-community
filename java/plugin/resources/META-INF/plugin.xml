@@ -1,21 +1,34 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" use-idea-classloader="true">
-  <!-- we need to use the platform classloader to make the plugin compatible with CLion until IDEA-209728 is fixed,
-       see cidr-external-system/resources/META-INF/plugin.xml for details -->
   <id>com.intellij.java</id>
   <name>Java</name>
-  <description>Experimental plugin for Java language support.</description>
+  <description>Java language support.</description>
   <vendor>JetBrains</vendor>
   <resource-bundle>messages.ActionsBundle</resource-bundle>
+
   <depends>com.intellij.modules.platform</depends>
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.vcs</depends>
   <depends>com.intellij.modules.xdebugger</depends>
   <depends>com.intellij.modules.xml</depends>
-  <depends>com.intellij.modules.cidr.lang</depends><!-- this is a temporary dependency to enable the plugin in CLion/AppCode only -->
+
   <xi:include href="/META-INF/JavaPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+  <!-- todo: these files are present in Java plugin for IDEA Ultimate only, they should be extract to a different plugin.xml -->
+  <xi:include href="/META-INF/duplicates-java.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
+  <xi:include href="/META-INF/duplicates-detection-java.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
+  <xi:include href="/META-INF/JamSupport.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
+
+  <depends optional="true" config-file="profiler-java.xml">com.intellij.modules.profiler</depends>
   <depends optional="true" config-file="structuralsearch-java.xml">com.intellij.modules.structuralsearch</depends>
   <depends optional="true" config-file="RemoteServersJava.xml">com.intellij.modules.remoteServers</depends>
-  <depends optional="true" config-file="JavaCMakeActionPatcher.xml">com.intellij.modules.clion.cmake</depends> <!-- this is a workaround for IDEA-209728 -->
+  <depends optional="true" config-file="JavaCMakeActionPatcher.xml">com.intellij.modules.clion.cmake</depends> <!-- a workaround for IDEA-209728 -->
+
   <extensions defaultExtensionNs="com.intellij">
     <moduleType id="JAVA_MODULE" classpathProvider="true" implementationClass="com.intellij.openapi.module.JavaModuleType"/>
   </extensions>

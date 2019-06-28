@@ -1,7 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.predicates;
 
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -18,7 +18,7 @@ public class WithinPredicate extends MatchPredicate {
 
   private final Matcher matcher;
 
-  public WithinPredicate(String within, FileType fileType, Project project) {
+  public WithinPredicate(String within, LanguageFileType fileType, Project project) {
     matcher = Matcher.buildMatcher(project, fileType, within);
   }
 

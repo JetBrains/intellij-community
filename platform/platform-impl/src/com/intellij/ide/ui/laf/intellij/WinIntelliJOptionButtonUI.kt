@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.intellij
 
 import com.intellij.ide.ui.laf.intellij.WinIntelliJButtonUI.DISABLED_ALPHA_LEVEL
@@ -37,6 +37,7 @@ class WinIntelliJOptionButtonUI : BasicOptionButtonUI() {
   override fun configureMainButton(): Unit = super.configureMainButton().also {
     mainButton.isOpaque = false
     mainButtonBorder = mainButton.border
+    mainButton.border = if (isSimpleButton) mainButtonBorder else ButtonBorder()
 
     mainButtonChangeListener = createInnerButtonChangeListener().apply(mainButton::addChangeListener)
   }
@@ -73,6 +74,7 @@ class WinIntelliJOptionButtonUI : BasicOptionButtonUI() {
   override fun configureArrowButton(): Unit = super.configureArrowButton().also {
     arrowButton.isOpaque = false
     arrowButtonBorder = arrowButton.border
+    arrowButton.border = if (isSimpleButton) arrowButtonBorder else ButtonBorder()
 
     arrowButtonChangeListener = createInnerButtonChangeListener().apply(arrowButton::addChangeListener)
   }

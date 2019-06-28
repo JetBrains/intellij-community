@@ -5,15 +5,14 @@ import java.util.concurrent.TimeUnit
 task setupJbre()
 
 def targetOs = System.getProperty("intellij.build.target.os", "all")
-def jreVersion = System.getProperty("intellij.build.bundled.jre.version", "8").toInteger()
+def jreVersion = System.getProperty("intellij.build.bundled.jre.version", "11").toInteger()
 def jreBuild = System.getProperty("intellij.build.bundled.jre.build", jdkBuild)
 def jrePrefix = System.getProperty("intellij.build.bundled.jre.prefix")
 createJbreTasks(jreBuild, jreVersion, targetOs, jrePrefix)
 
 if (System.getProperty('intellij.build.bundle.second.jre', 'false').toBoolean()) {
   def secondJreBuild = System.getProperty("intellij.build.bundled.second.jre.build", secondJreBuild)
-  def secondJreVersion = System.getProperty("intellij.build.bundled.second.jre.version", secondJreVersion).toInteger()
-  createJbreTasks(secondJreBuild, secondJreVersion, targetOs)
+  createJbreTasks(secondJreBuild, 8, targetOs)
 }
 
 /**

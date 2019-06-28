@@ -12,6 +12,6 @@ class SetRepositoryChangesGroupingAction : SetChangesGroupingAction() {
   override fun update(e: AnActionEvent): Unit = super.update(e).also {
     val colorManager = e.project?.let(::getColorManager)
 
-    e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && colorManager?.isMultipleRoots ?: false
+    e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && colorManager?.hasMultiplePaths() ?: false
   }
 }

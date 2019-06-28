@@ -10,7 +10,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.merge.MergeData;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -52,12 +51,9 @@ public class GitMergeHandler {
   }
 
   @NotNull
-  public Resolver resolveConflict(@NotNull GitConflict conflict, boolean isReversed) throws VcsException {
+  public Resolver resolveConflict(@NotNull GitConflict conflict, @NotNull VirtualFile file, boolean isReversed) throws VcsException {
     VirtualFile root = conflict.getRoot();
     FilePath path = conflict.getFilePath();
-
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.getPath());
-    if (file == null) throw new VcsException("Can't find file for " + path);
 
     MergeData mergeData = GitMergeUtil.loadMergeData(myProject, root, path, isReversed);
 
@@ -70,8 +66,8 @@ public class GitMergeHandler {
                         windowTitle, Arrays.asList(leftTitle, centerTitle, rightTitle));
   }
 
-  public void acceptOneVersion(@NotNull Collection<GitConflict> conflicts,
-                               @NotNull Collection<VirtualFile> reversedRoots,
+  public void acceptOneVersion(@NotNull Collection<? extends GitConflict> conflicts,
+                               @NotNull Collection<? extends VirtualFile> reversedRoots,
                                boolean takeTheirs) throws VcsException {
     try {
       MultiMap<VirtualFile, GitConflict> byRoot = groupConflictsByRoot(conflicts);
@@ -91,7 +87,7 @@ public class GitMergeHandler {
   }
 
   @NotNull
-  public static MultiMap<VirtualFile, GitConflict> groupConflictsByRoot(@NotNull Collection<GitConflict> conflicts) {
+  public static MultiMap<VirtualFile, GitConflict> groupConflictsByRoot(@NotNull Collection<? extends GitConflict> conflicts) {
     MultiMap<VirtualFile, GitConflict> byRoot = MultiMap.create();
     for (GitConflict conflict : conflicts) {
       byRoot.putValue(conflict.getRoot(), conflict);

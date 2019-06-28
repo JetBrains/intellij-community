@@ -16,12 +16,12 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ForLoopWithMissingComponentInspectionTest extends LightInspectionTestCase {
+public class ForLoopWithMissingComponentInspectionTest extends LightJavaInspectionTestCase {
 
   public void testMissingAllComponents() {
     doStatementTest("/*'for' statement lacks initializer, condition and update*/for/**/ (;;) {}");

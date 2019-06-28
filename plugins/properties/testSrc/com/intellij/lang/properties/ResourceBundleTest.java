@@ -6,12 +6,12 @@ import com.intellij.lang.properties.refactoring.rename.ResourceBundleRenamerFact
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 /**
  * @author Dmitry Batkovich
  */
-public class ResourceBundleTest extends LightPlatformCodeInsightFixtureTestCase {
+public class ResourceBundleTest extends BasePlatformTestCase {
 
   public void testDefaultPropertyFile() {
     final PsiFile rawDefault = myFixture.addFileToProject("p.properties", "");

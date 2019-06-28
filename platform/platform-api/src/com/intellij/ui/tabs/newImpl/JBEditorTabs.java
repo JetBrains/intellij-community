@@ -27,7 +27,7 @@ import java.util.function.Supplier;
  */
 public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
   /**
-   * @Deprecated use {@link #myTabPainter}.
+   * @deprecated use {@link #myTabPainter}.
    */
   @Deprecated
   protected JBEditorTabsPainter myDefaultPainter = new DefaultEditorTabsPainter(this);
@@ -46,7 +46,7 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
 
   @Override
   protected SingleRowLayout createSingleRowLayout() {
-    if (!UISettings.getInstance().getHideTabsIfNeed() && supportsCompression()) {
+    if (!UISettings.getInstance().getHideTabsIfNeeded() && supportsCompression()) {
       return new CompressibleSingleRowLayout(this);
     }
     else if (ApplicationManager.getApplication().isInternal() || Registry.is("editor.use.scrollable.tabs")) {

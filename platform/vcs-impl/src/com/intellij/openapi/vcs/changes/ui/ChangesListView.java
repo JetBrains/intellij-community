@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.dnd.DnDAware;
@@ -53,6 +53,7 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
 
   public ChangesListView(@NotNull Project project, boolean showCheckboxes) {
     super(project, showCheckboxes, true);
+
     setDragEnabled(true);
   }
 
@@ -89,7 +90,8 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
     setModel(newModel);
     ChangesBrowserNode newRoot = getRoot();
     state.applyTo(this, newRoot);
-    expandDefaultChangeList(oldRoot, newRoot);
+
+    initTreeStateIfNeeded(oldRoot, newRoot);
   }
 
   @Override
@@ -97,25 +99,33 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
     // currently not used in ChangesListView code flow
   }
 
-  private void expandDefaultChangeList(ChangesBrowserNode oldRoot, ChangesBrowserNode root) {
-    if (oldRoot.getFileCount() != 0) return;
-    if (TreeUtil.collectExpandedPaths(this).size() != 0) return;
+  private void initTreeStateIfNeeded(ChangesBrowserNode oldRoot, ChangesBrowserNode newRoot) {
+    ChangesBrowserNode defaultListNode = getDefaultChangelistNode(newRoot);
+    if (defaultListNode == null) return;
 
+    if (getSelectionCount() == 0) {
+      TreeUtil.selectNode(this, defaultListNode);
+    }
+
+    if (oldRoot.getFileCount() == 0 && TreeUtil.collectExpandedPaths(this).size() == 0) {
+      // expanding lots of nodes is a slow operation (and result is not very useful)
+      if (defaultListNode.getChildCount() <= 10000) {
+        expandPath(TreeUtil.getPath(newRoot, defaultListNode));
+      }
+    }
+  }
+
+  @Nullable
+  private static ChangesBrowserNode getDefaultChangelistNode(@NotNull ChangesBrowserNode root) {
     //noinspection unchecked
     Iterator<ChangesBrowserNode> nodes = ContainerUtil.<ChangesBrowserNode>iterate(root.children());
-    ChangesBrowserNode defaultListNode = ContainerUtil.find(nodes, node -> {
+    return ContainerUtil.find(nodes, node -> {
       if (node instanceof ChangesBrowserChangeListNode) {
         ChangeList list = ((ChangesBrowserChangeListNode)node).getUserObject();
         return list instanceof LocalChangeList && ((LocalChangeList)list).isDefault();
       }
       return false;
     });
-
-    if (defaultListNode == null) return;
-    if (defaultListNode.getChildCount() == 0) return;
-    if (defaultListNode.getChildCount() > 10000) return; // expanding lots of nodes is a slow operation (and result is not very useful)
-
-    expandPath(new TreePath(new Object[]{root, defaultListNode}));
   }
 
   @Nullable

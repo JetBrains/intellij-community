@@ -1,9 +1,9 @@
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
-public class MagicNumberInspectionTest extends LightInspectionTestCase {
+public class MagicNumberInspectionTest extends LightJavaInspectionTestCase {
 
   public void testMagicNumber() {
     doTest();

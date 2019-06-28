@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
@@ -115,7 +116,7 @@ public final class CellTooltipManager {
           Rectangle cellRect = cellComponentProvider.getCellRect(e);
           if (!cellRect.equals(this.cellRect)) {
             this.cellRect = cellRect;
-            Point point = new Point(this.cellRect.x + JBUI.scale(40), this.cellRect.y - JBUI.scale(6) - popupSize.height);
+            Point point = new Point(this.cellRect.x + JBUIScale.scale(40), this.cellRect.y - JBUIScale.scale(6) - popupSize.height);
             SwingUtilities.convertPointToScreen(point, cellComponentProvider.getOwner());
             cellPopup.setLocation(point);
           }
@@ -138,7 +139,7 @@ public final class CellTooltipManager {
       JComponent c = cellComponentProvider.getCellRendererComponent(e);
 
       Insets i = c != null ? c.getInsets() : JBUI.emptyInsets();
-      Point point = new Point(cellRect.x + JBUI.scale(40), cellRect.y + i.top - JBUI.scale(6) - popupSize.height);
+      Point point = new Point(cellRect.x + JBUIScale.scale(40), cellRect.y + i.top - JBUIScale.scale(6) - popupSize.height);
       cellPopup.show(new RelativePoint(cellComponentProvider.getOwner(), point));
     }
   }

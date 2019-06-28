@@ -8,8 +8,7 @@ import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.xml.XmlBundle;
 
 import java.util.List;
@@ -17,7 +16,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class RealFetchTest extends LightPlatformCodeInsightFixtureTestCase {
+public class RealFetchTest extends BasePlatformTestCase {
 
   public void testFetchDtd() {
     final String url = "http://java.sun.com/dtd/preferences.dtd";
@@ -42,6 +41,20 @@ public class RealFetchTest extends LightPlatformCodeInsightFixtureTestCase {
                               "        </qos_profile>\n" +
                               "    </qos_library>\n" +
                               "</dds>");
+    IntentionAction intention = myFixture.getAvailableIntention(XmlBundle.message("fetch.external.resource"));
+    assertNotNull(intention);
+    intention.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
+    myFixture.testHighlighting();
+    ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().removeResource(url));
+  }
+
+  public void testAbsolutePath() {
+    String url = "https://csrc.nist.gov/schema/xccdf/1.2/xc<caret>cdf_1.2.xsd";
+    myFixture.configureByText(XmlFileType.INSTANCE,
+                              "<Benchmark xmlns=\"http://checklists.nist.gov/xccdf/1.2\"\n" +
+                              "           xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+                              "           xsi:schemaLocation=\"http://checklists.nist.gov/xccdf/1.2 https://csrc.nist.gov/schema/xccdf/1.2/xc<caret>cdf_1.2.xsd\" id=\"xccdf_N_benchmark_S\">\n" +
+                              "</Benchmark>");
     IntentionAction intention = myFixture.getAvailableIntention(XmlBundle.message("fetch.external.resource"));
     assertNotNull(intention);
     intention.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());

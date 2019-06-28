@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.editor.impl;
 
@@ -9,7 +9,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.*;
@@ -32,6 +31,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBScrollBar;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
@@ -62,27 +62,27 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private static final int EDITOR_FRAGMENT_POPUP_BORDER = 1;
 
   private int getMinMarkHeight() {
-    return JBUI.scale(myMinMarkHeight);
+    return JBUIScale.scale(myMinMarkHeight);
   }
 
   private static int getErrorIconWidth() {
-    return JBUI.scale(14);
+    return JBUIScale.scale(14);
   }
 
   private static int getErrorIconHeight() {
-    return JBUI.scale(14);
+    return JBUIScale.scale(14);
   }
 
   private static int getThinGap() {
-    return JBUI.scale(2);
+    return JBUIScale.scale(2);
   }
 
   private static int getMaxStripeSize() {
-    return JBUI.scale(4);
+    return JBUIScale.scale(4);
   }
 
   private static int getMaxMacThumbWidth() {
-    return JBUI.scale(10);
+    return JBUIScale.scale(10);
   }
 
   @NotNull private final EditorImpl myEditor;
@@ -385,7 +385,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   @Override
   public void setErrorStripeRenderer(@Nullable ErrorStripeRenderer renderer) {
-    assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (myErrorStripeRenderer instanceof Disposable) {
       Disposer.dispose((Disposable)myErrorStripeRenderer);
     }
@@ -396,10 +396,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     myEditor.getVerticalScrollBar()
       .updateUI(); // re-create increase/decrease buttons, in case of not-null renderer it will show traffic light icon
     repaintVerticalScrollBar();
-  }
-
-  private static void assertIsDispatchThread() {
-    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread();
   }
 
   @Nullable
@@ -575,7 +571,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     protected int getThumbOffset(int value) {
-      if (SystemInfo.isMac || Registry.is("editor.full.width.scrollbar")) return getMinMarkHeight() + JBUI.scale(2);
+      if (SystemInfo.isMac || Registry.is("editor.full.width.scrollbar")) return getMinMarkHeight() + JBUIScale.scale(2);
       return super.getThumbOffset(value);
     }
 
@@ -995,6 +991,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         if (tooltipObject == null) continue;
 
         final String text = tooltipObject instanceof HighlightInfo ? ((HighlightInfo)tooltipObject).getToolTip() : tooltipObject.toString();
+        if (text == null) continue;
+
         if (tooltips == null) {
           tooltips = new THashSet<>();
         }
@@ -1164,7 +1162,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                                 boolean alignToRight,
                                 @NotNull TooltipGroup group,
                                 @NotNull final HintHint hintInfo) {
-      int contentInsets = JBUI.scale(2); // BalloonPopupBuilderImpl.myContentInsets
+      int contentInsets = JBUIScale.scale(2); // BalloonPopupBuilderImpl.myContentInsets
       final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
       boolean needDelay = false;
       if (myEditorPreviewHint == null) {
@@ -1177,7 +1175,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           public Dimension getPreferredSize() {
             int width = myEditor.getGutterComponentEx().getWidth() + myEditor.getScrollingModel().getVisibleArea().width
                         - myEditor.getVerticalScrollBar().getWidth();
-            width -= JBUI.scale(EDITOR_FRAGMENT_POPUP_BORDER) * 2 + contentInsets;
+            width -= JBUIScale.scale(EDITOR_FRAGMENT_POPUP_BORDER) * 2 + contentInsets;
             return new Dimension(width - BalloonImpl.POINTER_LENGTH.get(),
                                  Math.min(2 * myPreviewLines * myEditor.getLineHeight(),
                                           myEditor.visualLineToY(myEndVisualLine) - myEditor.visualLineToY(myStartVisualLine)));
@@ -1207,7 +1205,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               EditorUIUtil.setupAntialiasing(cg);
               int lineShift = - cacheStartY;
 
-              int shift = JBUI.scale(EDITOR_FRAGMENT_POPUP_BORDER) + contentInsets;
+              int shift = JBUIScale.scale(EDITOR_FRAGMENT_POPUP_BORDER) + contentInsets;
               AffineTransform gutterAT = AffineTransform.getTranslateInstance(-shift, lineShift);
               AffineTransform contentAT = AffineTransform.getTranslateInstance(gutterWidth - shift, lineShift);
               gutterAT.preConcatenate(t);

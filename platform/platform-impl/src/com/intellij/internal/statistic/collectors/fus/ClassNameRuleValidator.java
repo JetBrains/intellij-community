@@ -3,12 +3,15 @@ package com.intellij.internal.statistic.collectors.fus;
 
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomUtilsWhiteListRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
+import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.internal.statistic.utils.PluginType;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ClassNameRuleValidator extends CustomUtilsWhiteListRule {
+public class ClassNameRuleValidator extends CustomWhiteListRule {
   @Override
   public boolean acceptRuleId(@Nullable String ruleId) {
     return "dialog_class".equals(ruleId) || "quick_fix_class_name".equals(ruleId) || "class_name".equals(ruleId);
@@ -17,8 +20,18 @@ public class ClassNameRuleValidator extends CustomUtilsWhiteListRule {
   @NotNull
   @Override
   protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
-    if (data.equals("third.party")) return ValidationResultType.ACCEPTED;
-    final boolean isFromPluginRepository = PluginInfoDetectorKt.getPluginInfo(data).isSafeToReport();
-    return isFromPluginRepository ? ValidationResultType.ACCEPTED : ValidationResultType.REJECTED;
+    if (isThirdPartyValue(data)) return ValidationResultType.ACCEPTED;
+
+    final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(data);
+    if (StringUtil.equals(context.eventId, data)) {
+      // set plugin info only if it's coming from event id otherwise behavior might be non-deterministic
+      context.setPluginInfo(info);
+    }
+
+    if (info.getType() == PluginType.UNKNOWN) {
+      // if we can't detect a plugin then probably it's not a class name
+      return ValidationResultType.REJECTED;
+    }
+    return info.isSafeToReport() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
   }
 }

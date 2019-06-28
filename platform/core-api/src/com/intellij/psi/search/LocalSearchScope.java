@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class LocalSearchScope extends SearchScope {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.LocalSearchScope");
@@ -198,16 +199,8 @@ public class LocalSearchScope extends SearchScope {
 
   @Override
   public String toString() {
-    StringBuilder result = new StringBuilder();
-    for (int i = 0; i < myScope.length; i++) {
-      final PsiElement element = myScope[i];
-      if (i > 0) {
-        result.append(",");
-      }
-      result.append(element);
-    }
     //noinspection HardCodedStringLiteral
-    return "LocalSearchScope:" + result;
+    return Arrays.stream(myScope).map(String::valueOf).collect(Collectors.joining(",", "LocalSearchScope:", ""));
   }
 
   @Override

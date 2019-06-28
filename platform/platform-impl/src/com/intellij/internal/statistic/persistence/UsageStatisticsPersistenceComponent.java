@@ -4,7 +4,6 @@ package com.intellij.internal.statistic.persistence;
 import com.intellij.ide.gdpr.ConsentOptions;
 import com.intellij.internal.statistic.configurable.SendPeriod;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
@@ -34,7 +33,7 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
   }
 
   public UsageStatisticsPersistenceComponent() {
-    if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+    if (ApplicationManager.getApplication().isInternal()) {
       isShowNotification = false;
     }
   }

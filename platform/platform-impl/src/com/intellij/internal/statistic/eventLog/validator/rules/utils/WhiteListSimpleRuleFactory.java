@@ -6,6 +6,8 @@ import com.intellij.internal.statistic.eventLog.validator.rules.FUSRegexpAwareRu
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupContextData;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.*;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
@@ -61,12 +63,16 @@ public class WhiteListSimpleRuleFactory {
                             Pair.create(REGEXP_REF_PREFIX, s -> new RegexpWhiteListRule(contextData.getRegexp(s)))); }
 
   @Nullable
-  private static CustomUtilsWhiteListRule getCustomUtilRule(String s) {
-    for (CustomUtilsWhiteListRule extension : CustomUtilsWhiteListRule.EP_NAME.getExtensions()) {
-      if (extension.acceptRuleId(s)) return extension;
+  private static CustomWhiteListRule getCustomUtilRule(String s) {
+    for (CustomWhiteListRule extension : CustomWhiteListRule.EP_NAME.getExtensions()) {
+      if (isDevelopedByJetBrains(extension) && extension.acceptRuleId(s)) return extension;
     }
 
     return null;
+  }
+
+  private static boolean isDevelopedByJetBrains(CustomWhiteListRule extension) {
+    return ApplicationManager.getApplication().isUnitTestMode() || PluginInfoDetectorKt.getPluginInfo(extension.getClass()).isDevelopedByJetBrains();
   }
 
   @Nullable
@@ -141,8 +147,8 @@ public class WhiteListSimpleRuleFactory {
         if (!string.contains(UTIL_PREFIX)) return UNPARSED_EXPRESSION;
 
         FUSRule simpleRule = createRule(unwrapRuleNode(string));
-        if (simpleRule instanceof CustomUtilsWhiteListRule) {
-          fusRule = (CustomUtilsWhiteListRule)simpleRule;
+        if (simpleRule instanceof CustomWhiteListRule) {
+          fusRule = (CustomWhiteListRule)simpleRule;
         }
         else {
           return UNPARSED_EXPRESSION;

@@ -195,8 +195,8 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
       addSdk(new SimpleJavaSdkType().createJdk(DEFAULT_SDK, SystemProperties.getJavaHome()));
       addSdk(new SimpleJavaSdkType().createJdk("_other", SystemProperties.getJavaHome()));
 
-      System.out.println("ProjectWizardTestCase.configureJdk:");
-      System.out.println(Arrays.asList(ProjectJdkTable.getInstance().getAllJdks()));
+      LOG.debug("ProjectWizardTestCase.configureJdk:");
+      LOG.debug(String.valueOf(Arrays.asList(ProjectJdkTable.getInstance().getAllJdks())));
     });
   }
 

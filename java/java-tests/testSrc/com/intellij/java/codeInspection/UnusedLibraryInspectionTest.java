@@ -23,13 +23,13 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.IntelliJProjectConfiguration;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.JavaInspectionTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-public class UnusedLibraryInspectionTest extends InspectionTestCase {
+public class UnusedLibraryInspectionTest extends JavaInspectionTestCase {
 
   private final DefaultLightProjectDescriptor myProjectDescriptor = new DefaultLightProjectDescriptor() {
     @Override

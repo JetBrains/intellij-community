@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -67,7 +67,7 @@ public class PsiLabelReference implements PsiReference {
   @NotNull
   @Override
   public String[] getVariants() {
-    return ArrayUtil.toStringArray(PsiImplUtil.findAllEnclosingLabels(myStatement));
+    return ArrayUtilRt.toStringArray(PsiImplUtil.findAllEnclosingLabels(myStatement));
   }
 
   @Override

@@ -119,7 +119,7 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
     val mouseZone = if (isSecond) JBUI.scale(Registry.intValue("ide.splitter.mouseZone")) else 0
     val left = if (expandControlRange == null || expandControlRange.from < 0) bounds.x else bounds.x - expandControlRange.from
     val leftBorder = if (left < mouseZone) mouseZone else left
-    val shift = bounds.width / 4
+    val shift = 20
     val selectPointX = when {
       expandControlRange == null -> leftBorder + shift
       expandControlRange.from < 0 -> leftBorder - expandControlRange.from + shift

@@ -19,6 +19,7 @@ import com.intellij.sh.psi.ShCommand;
 import com.intellij.sh.psi.ShCommandsList;
 import com.intellij.sh.psi.ShCompositeElement;
 import com.intellij.sh.psi.ShFile;
+import com.intellij.sh.statistics.ShFeatureUsagesCollector;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +30,8 @@ import java.util.List;
 import java.util.Set;
 
 public class ShExplainShellIntention extends BaseIntentionAction {
+  private static final String FEATURE_ACTION_ID = "ExplainShellUsed";
+
   @NotNull
   @Override
   public String getFamilyName() {
@@ -97,6 +100,7 @@ public class ShExplainShellIntention extends BaseIntentionAction {
           }
         }, PsiElement::getText, "Command to Explain");
       }
+      ShFeatureUsagesCollector.logFeatureUsage(FEATURE_ACTION_ID);
     }
   }
 

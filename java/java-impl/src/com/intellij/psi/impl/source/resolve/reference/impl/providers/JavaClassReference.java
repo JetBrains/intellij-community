@@ -37,7 +37,7 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.ClassKind;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -259,8 +259,11 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
 
   @Nullable
   public PsiElement getCompletionContext() {
-    PsiElement context = getContext();
-    return context == null ? JavaPsiFacade.getInstance(getElement().getProject()).findPackage("") : context;
+    final PsiReference contextRef = getContextReference();
+    if (contextRef == null) {
+      return JavaPsiFacade.getInstance(getElement().getProject()).findPackage("");
+    }
+    return contextRef.resolve();
   }
 
   /** @deprecated use {@link #getSuperClasses()} instead */
@@ -268,7 +271,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   @Nullable
   public String[] getExtendClassNames() {
     List<String> result = getSuperClasses();
-    return result.isEmpty() ? null : ArrayUtil.toStringArray(result);
+    return result.isEmpty() ? null : ArrayUtilRt.toStringArray(result);
   }
 
   @NotNull

@@ -4,7 +4,6 @@ package com.intellij.testFramework
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.util.ExceptionUtil
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.annotations.TestOnly
 import java.lang.reflect.InvocationTargetException
@@ -54,7 +53,8 @@ fun runInEdtAndWait(runnable: () -> Unit) {
           exception = e
         }
       }
-      ExceptionUtil.rethrowAllAsUnchecked(exception)
+
+      exception?.let { throw it }
     }
     return
   }

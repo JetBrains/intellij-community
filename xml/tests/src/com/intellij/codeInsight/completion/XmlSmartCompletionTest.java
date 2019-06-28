@@ -19,7 +19,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.io.File;
@@ -29,7 +29,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class XmlSmartCompletionTest extends LightPlatformCodeInsightFixtureTestCase {
+public class XmlSmartCompletionTest extends BasePlatformTestCase {
 
   public void testCompletion() {
     doTest(new String[]{"testCompletion.xml", "test.xsd"}, "b");

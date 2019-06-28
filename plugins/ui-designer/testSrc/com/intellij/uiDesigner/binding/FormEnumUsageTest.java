@@ -13,11 +13,11 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.IncorrectOperationException;
 
-public class FormEnumUsageTest extends PsiTestCase {
+public class FormEnumUsageTest extends JavaPsiTestCase {
   private VirtualFile myTestProjectRoot;
 
   @Override

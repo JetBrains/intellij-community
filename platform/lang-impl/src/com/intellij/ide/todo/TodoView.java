@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.todo;
 
 import com.intellij.ide.IdeBundle;
@@ -35,21 +35,25 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 
-@State(
-  name = "TodoView",
-  storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
-)
+@State(name = "TodoView", storages = {
+  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
+  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
+})
 public class TodoView implements PersistentStateComponent<TodoView.State>, Disposable {
   private final Project myProject;
 
   private ContentManager myContentManager;
   private TodoPanel myAllTodos;
+  private ChangeListTodosPanel myChangeListTodosPanel;
+  private CurrentFileTodosPanel myCurrentFileTodosPanel;
+  private ScopeBasedTodosPanel myScopeBasedTodosPanel;
   private final List<TodoPanel> myPanels = new ArrayList<>();
   private final List<Content> myNotAddedContent = new ArrayList<>();
 
@@ -106,6 +110,36 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
   public void dispose() {
   }
 
+  @TestOnly
+  public enum Scope {
+    AllTodos,
+    ChangeList,
+    CurrentFile,
+    ScopeBased
+  }
+
+  @TestOnly
+  public TodoTreeBuilder getBuilderAndAllowUpdatesOnIt(Scope scope) {
+    TodoTreeBuilder builder = null;
+    switch (scope) {
+      case AllTodos:
+        builder = myAllTodos.myTodoTreeBuilder;
+        break;
+      case ChangeList:
+        builder = myChangeListTodosPanel.myTodoTreeBuilder;
+        break;
+      case CurrentFile:
+        builder = myCurrentFileTodosPanel.myTodoTreeBuilder;
+        break;
+      case ScopeBased:
+        builder = myScopeBasedTodosPanel.myTodoTreeBuilder;
+        break;
+    }
+
+    builder.setUpdatable(true);
+    return builder;
+  }
+
   public void initToolWindow(@NotNull ToolWindow toolWindow) {
     // Create panels
     ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
@@ -135,7 +169,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     }
 
     Content currentFileTodosContent = contentFactory.createContent(null, IdeBundle.message("title.todo.current.file"), false);
-    CurrentFileTodosPanel currentFileTodos = new CurrentFileTodosPanel(myProject, state.current, currentFileTodosContent) {
+    myCurrentFileTodosPanel = new CurrentFileTodosPanel(myProject, state.current, currentFileTodosContent) {
       @Override
       protected TodoTreeBuilder createTreeBuilder(JTree tree, Project project) {
         CurrentFileTodosTreeBuilder builder = new CurrentFileTodosTreeBuilder(tree, project);
@@ -143,12 +177,12 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
         return builder;
       }
     };
-    Disposer.register(this, currentFileTodos);
-    currentFileTodosContent.setComponent(currentFileTodos);
+    Disposer.register(this, myCurrentFileTodosPanel);
+    currentFileTodosContent.setComponent(myCurrentFileTodosPanel);
 
     String tabName = getTabNameForChangeList(ChangeListManager.getInstance(myProject).getDefaultChangeList().getName());
     myChangeListTodosContent = contentFactory.createContent(null, tabName, false);
-    ChangeListTodosPanel changeListTodos = new ChangeListTodosPanel(myProject, state.current, myChangeListTodosContent) {
+    myChangeListTodosPanel = new ChangeListTodosPanel(myProject, state.current, myChangeListTodosContent) {
       @Override
       protected TodoTreeBuilder createTreeBuilder(JTree tree, Project project) {
         ChangeListTodosTreeBuilder builder = new ChangeListTodosTreeBuilder(tree, project);
@@ -156,13 +190,13 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
         return builder;
       }
     };
-    Disposer.register(this, changeListTodos);
-    myChangeListTodosContent.setComponent(changeListTodos);
+    Disposer.register(this, myChangeListTodosPanel);
+    myChangeListTodosContent.setComponent(myChangeListTodosPanel);
 
     Content scopeBasedTodoContent = contentFactory.createContent(null, "Scope Based", false);
-    ScopeBasedTodosPanel scopeBasedTodos = new ScopeBasedTodosPanel(myProject, state.current, scopeBasedTodoContent);
-    Disposer.register(this, scopeBasedTodos);
-    scopeBasedTodoContent.setComponent(scopeBasedTodos);
+    myScopeBasedTodosPanel = new ScopeBasedTodosPanel(myProject, state.current, scopeBasedTodoContent);
+    Disposer.register(this, myScopeBasedTodosPanel);
+    scopeBasedTodoContent.setComponent(myScopeBasedTodosPanel);
 
     myContentManager = toolWindow.getContentManager();
 
@@ -186,9 +220,17 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     myContentManager.setSelectedContent(content == null ? allTodosContent : content);
 
     myPanels.add(myAllTodos);
-    myPanels.add(changeListTodos);
-    myPanels.add(currentFileTodos);
-    myPanels.add(scopeBasedTodos);
+    myPanels.add(myChangeListTodosPanel);
+    myPanels.add(myCurrentFileTodosPanel);
+    myPanels.add(myScopeBasedTodosPanel);
+  }
+
+  @TestOnly
+  public void disposePanels() {
+    Disposer.dispose(myAllTodos);
+    Disposer.dispose(myChangeListTodosPanel);
+    Disposer.dispose(myCurrentFileTodosPanel);
+    Disposer.dispose(myScopeBasedTodosPanel);
   }
 
   @NotNull
@@ -277,10 +319,15 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
         for (TodoPanel panel : myPanels) {
           panel.rebuildCache(ObjectUtils.notNull(files.get(panel), new HashSet<>()));
           panel.updateTree();
+          notifyUpdateFinished();
         }
       })
       .inSmartMode(myProject)
       .submit(NonUrgentExecutor.getInstance());
+  }
+
+  protected void notifyUpdateFinished() {
+    //do nothing
   }
 
   public void addCustomTodoView(final TodoTreeBuilderFactory factory, final String title, final TodoPanelSettings settings) {

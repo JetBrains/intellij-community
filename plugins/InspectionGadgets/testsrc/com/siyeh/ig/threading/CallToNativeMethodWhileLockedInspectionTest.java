@@ -16,13 +16,13 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class CallToNativeMethodWhileLockedInspectionTest extends LightInspectionTestCase {
+public class CallToNativeMethodWhileLockedInspectionTest extends LightJavaInspectionTestCase {
 
   public void testCallToNativeMethodWhileLocked() {
     doTest();

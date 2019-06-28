@@ -1,9 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.onlinecompletion.model;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenId;
 
+@ApiStatus.Experimental
 public class MavenDependencyCompletionItem extends MavenId {
 
   private final Type myType;
@@ -22,6 +24,7 @@ public class MavenDependencyCompletionItem extends MavenId {
       return myWeight;
     }
   }
+
 
   public MavenDependencyCompletionItem(@Nullable String groupId,
                                        @Nullable String artifactId,
@@ -72,4 +75,5 @@ public class MavenDependencyCompletionItem extends MavenId {
   public String getClassifier() {
     return classifier;
   }
+
 }

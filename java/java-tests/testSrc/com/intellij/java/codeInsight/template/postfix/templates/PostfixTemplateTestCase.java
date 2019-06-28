@@ -16,10 +16,10 @@
 package com.intellij.java.codeInsight.template.postfix.templates;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-abstract public class PostfixTemplateTestCase extends LightCodeInsightFixtureTestCase {
+abstract public class PostfixTemplateTestCase extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/template/postfix/templates/" + getSuffix();

@@ -1,13 +1,17 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.parser;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.sh.ShTypes;
 import com.intellij.sh.psi.ShFile;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -17,6 +21,23 @@ public class ShShebangParserUtil {
   private static final String PREFIX = "#!";
 
   private ShShebangParserUtil() {
+  }
+
+  @Nullable
+  public static String getShebangExecutable(@NotNull ShFile file) {
+    VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile != null && virtualFile.exists()) {
+      ASTNode shebang = file.getNode().findChildByType(ShTypes.SHEBANG);
+      String prefix = "#!";
+      if (shebang != null && shebang.getText().startsWith(prefix)) {
+        String path = shebang.getText().substring(prefix.length()).trim();
+        File ioFile = new File(path);
+        if (ioFile.isAbsolute() && ioFile.canExecute()) {
+          return ioFile.getAbsolutePath();
+        }
+      }
+    }
+    return null;
   }
 
   @NotNull

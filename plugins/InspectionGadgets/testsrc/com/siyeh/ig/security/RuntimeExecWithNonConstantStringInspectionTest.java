@@ -16,13 +16,13 @@
 package com.siyeh.ig.security;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class RuntimeExecWithNonConstantStringInspectionTest extends LightInspectionTestCase {
+public class RuntimeExecWithNonConstantStringInspectionTest extends LightJavaInspectionTestCase {
 
   public void testRuntimeExecWithNonConstantString() {
     doTest();

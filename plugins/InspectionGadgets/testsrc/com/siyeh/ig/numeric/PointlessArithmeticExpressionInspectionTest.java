@@ -3,10 +3,10 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class PointlessArithmeticExpressionInspectionTest extends LightInspectionTestCase {
+public class PointlessArithmeticExpressionInspectionTest extends LightJavaInspectionTestCase {
 
   public void testPointlessArithmeticExpression() { doTest(); }
   public void testComments() { doQuickFixTest(); }

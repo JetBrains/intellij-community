@@ -4,6 +4,7 @@ package com.intellij.refactoring.util;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,7 +14,7 @@ public class VariableData extends AbstractVariableData {
 
   public VariableData(@NotNull PsiVariable var) {
     variable = var;
-    type = var.getType();
+    type = correctType(var.getType()); 
   }
 
   public VariableData(@Nullable PsiVariable var, PsiType type) {
@@ -22,11 +23,18 @@ public class VariableData extends AbstractVariableData {
       if (LambdaUtil.notInferredType(type)) {
         type = PsiType.getJavaLangObject(var.getManager(), GlobalSearchScope.allScope(var.getProject()));
       }
-      this.type = SmartTypePointerManager.getInstance(var.getProject()).createSmartTypePointer(type).getType();
+      this.type = correctType(SmartTypePointerManager.getInstance(var.getProject()).createSmartTypePointer(type).getType());
     }
     else {
-      this.type = type;
+      this.type = correctType(type);
     }
+  }
+
+  private static PsiType correctType(PsiType varType) {
+    if (varType instanceof PsiDisjunctionType) {
+      return PsiTypesUtil.getLowestUpperBoundClassType((PsiDisjunctionType)varType);
+    }
+    return varType;
   }
 
   @NotNull

@@ -61,7 +61,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
    * do not match because default font name on linux in headless environment falls back to FALLBACK_FONT_FAMILY
    */
   private static String substLinuxFontName(@NotNull String fontName) {
-    return SystemInfo.isLinux && GraphicsEnvironment.isHeadless() && FontPreferences.LINUX_DEFAULT_FONT_FAMILY.equals(fontName)?
+    return SystemInfo.isLinux && GraphicsEnvironment.isHeadless() && FontPreferences.LINUX_DEFAULT_FONT_FAMILY.equals(fontName) ?
            FontPreferences.FALLBACK_FONT_FAMILY :
            fontName;
   }

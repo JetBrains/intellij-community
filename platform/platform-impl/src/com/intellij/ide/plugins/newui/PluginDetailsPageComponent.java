@@ -17,6 +17,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
@@ -52,10 +53,12 @@ public class PluginDetailsPageComponent extends MultiPanel {
   private JButton myUpdateButton;
   private JButton myEnableDisableButton;
   private JBOptionButton myEnableDisableUninstallButton;
+  private JButton myUninstallButton;
   private JComponent myErrorComponent;
   private JTextField myVersion;
   private JLabel myVersionSize;
   private TagPanel myTagPanel;
+  private JLabel myDate;
   private JLabel myRating;
   private JLabel myDownloads;
   private JLabel mySize;
@@ -92,7 +95,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private void createPluginPanel() {
-    myPanel = new OpaquePanel(new BorderLayout(0, JBUI.scale(32)), PluginManagerConfigurableNew.MAIN_BG_COLOR);
+    myPanel = new OpaquePanel(new BorderLayout(0, JBUIScale.scale(32)), PluginManagerConfigurableNew.MAIN_BG_COLOR);
     myPanel.setBorder(new CustomLineBorder(new JBColor(0xC5C5C5, 0x515151), JBUI.insets(1, 0, 0, 0)) {
       @Override
       public Insets getBorderInsets(Component c) {
@@ -106,7 +109,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   @NotNull
   private JPanel createHeaderPanel() {
-    JPanel header = new NonOpaquePanel(new BorderLayout(JBUI.scale(20), 0));
+    JPanel header = new NonOpaquePanel(new BorderLayout(JBUIScale.scale(20), 0));
     header.setBorder(JBUI.Borders.emptyRight(20));
     myPanel.add(header, BorderLayout.NORTH);
 
@@ -123,7 +126,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     int offset = PluginManagerConfigurableNew.offset5();
     JPanel centerPanel = new NonOpaquePanel(new VerticalLayout(offset));
 
-    myNameAndButtons.setYOffset(JBUI.scale(3));
+    myNameAndButtons.setYOffset(JBUIScale.scale(3));
     myNameAndButtons.add(myNameComponent);
     createButtons();
     centerPanel.add(myNameAndButtons, VerticalLayout.FILL_HORIZONTAL);
@@ -191,6 +194,11 @@ public class PluginDetailsPageComponent extends MultiPanel {
     };
     myNameAndButtons.addButtonComponent(myEnableDisableUninstallButton = new MyOptionButton(enableDisableAction, uninstallAction));
 
+    myUninstallButton = new JButton("Uninstall");
+    myUninstallButton.addActionListener(e -> doUninstall());
+    ColorButton.setWidth72(myUninstallButton);
+    myNameAndButtons.addButtonComponent(myUninstallButton);
+
     for (Component component : myNameAndButtons.getButtonComponents()) {
       component.setBackground(PluginManagerConfigurableNew.MAIN_BG_COLOR);
     }
@@ -219,7 +227,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myVersionSize.setFont(UIUtil.getLabelFont());
     PluginManagerConfigurableNew.installTiny(myVersionSize);
 
-    int offset = JBUI.scale(10);
+    int offset = JBUIScale.scale(10);
     JPanel panel1 = new NonOpaquePanel(new TextHorizontalLayout(offset));
     centerPanel.add(panel1);
     if (myMarketplace) {
@@ -231,16 +239,24 @@ public class PluginDetailsPageComponent extends MultiPanel {
     }
     myVendor = new LinkPanel(panel1, false, null, TextHorizontalLayout.FIX_LABEL);
 
-    JPanel panel2 = new NonOpaquePanel(new HorizontalLayout(myMarketplace ? offset : JBUI.scale(7)) {
+    JPanel panel2 = new NonOpaquePanel(new TextHorizontalLayout(myMarketplace ? offset : JBUIScale.scale(7)) {
       @Override
       public void layoutContainer(Container parent) {
         super.layoutContainer(parent);
         if (myTagPanel != null && myTagPanel.isVisible()) {
           int baseline = myTagPanel.getBaseline(-1, -1);
           if (baseline != -1) {
-            Rectangle bounds = myVersion.getBounds();
-            int newY = myTagPanel.getY() + baseline - myVersion.getBaseline(bounds.width, bounds.height);
-            myVersion.setBounds(bounds.x, newY, bounds.width, bounds.height);
+            Rectangle versionBounds = myVersion.getBounds();
+            Dimension versionSize = myVersion.getPreferredSize();
+            int versionY = myTagPanel.getY() + baseline - myVersion.getBaseline(versionSize.width, versionSize.height);
+            myVersion.setBounds(versionBounds.x, versionY, versionBounds.width, versionBounds.height);
+
+            if (myDate.isVisible()) {
+              Rectangle dateBounds = myDate.getBounds();
+              Dimension dateSize = myDate.getPreferredSize();
+              int dateY = myTagPanel.getY() + baseline - myDate.getBaseline(dateSize.width, dateSize.height);
+              myDate.setBounds(dateBounds.x - JBUIScale.scale(4), dateY, dateBounds.width, dateBounds.height);
+            }
           }
         }
       }
@@ -249,6 +265,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
       panel2.add(myTagPanel = new TagPanel(mySearchListener));
     }
     panel2.add(myVersion);
+    myDate =
+      GridCellPluginComponent.createRatingLabel(panel2, TextHorizontalLayout.FIX_LABEL, "", null, CellPluginComponent.GRAY_COLOR, true);
     centerPanel.add(panel2);
   }
 
@@ -278,7 +296,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myDescriptionComponent.setEditorKit(kit);
     myDescriptionComponent.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
 
-    bottomPanel.add(myDescriptionComponent, JBUI.scale(700), -1);
+    bottomPanel.add(myDescriptionComponent, JBUIScale.scale(700), -1);
 
     JLabel separator = new JLabel();
     separator.setBorder(JBUI.Borders.emptyTop(20));
@@ -301,7 +319,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
       setEmptyState(multiSelection);
     }
     else {
-      myPlugin = component.getPluginDescriptor();
+      myPlugin = component.myPlugin;
       myUpdateDescriptor = ((NewListPluginComponent)component).myUpdateDescriptor;
       showPlugin();
       select(0, true);
@@ -334,6 +352,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
       myUpdateButton.setVisible(false);
       myEnableDisableButton.setVisible(false);
       myEnableDisableUninstallButton.setVisible(false);
+      myUninstallButton.setVisible(false);
     }
     else {
       myInstallButton.setVisible(false);
@@ -350,20 +369,24 @@ public class PluginDetailsPageComponent extends MultiPanel {
         myUpdateButton.setVisible(false);
         myEnableDisableButton.setVisible(false);
         myEnableDisableUninstallButton.setVisible(false);
+        myUninstallButton.setVisible(false);
       }
       else {
         myRestartButton.setVisible(false);
 
-        myUpdateButton.setVisible(myUpdateDescriptor != null);
-
         boolean bundled = myPlugin.isBundled();
         String title = myPluginModel.getEnabledTitle(myPlugin);
+        boolean errors = myPluginModel.hasErrors(myPlugin);
 
-        myEnableDisableButton.setVisible(bundled);
+        myUpdateButton.setVisible(myUpdateDescriptor != null && !errors);
+
+        myEnableDisableButton.setVisible(bundled && !errors);
         myEnableDisableButton.setText(title);
 
-        myEnableDisableUninstallButton.setVisible(!bundled);
+        myEnableDisableUninstallButton.setVisible(!bundled && !errors);
         myEnableDisableUninstallButton.setText(title);
+
+        myUninstallButton.setVisible(!bundled && errors);
       }
 
       updateEnableForNameAndIcon();
@@ -378,7 +401,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
     myVersion.setText(version);
     myVersionSize.setText(version);
-    myVersion.setPreferredSize(new Dimension(myVersionSize.getPreferredSize().width + JBUI.scale(4), myVersion.getPreferredSize().height));
+    myVersion
+      .setPreferredSize(new Dimension(myVersionSize.getPreferredSize().width + JBUIScale.scale(4), myVersion.getPreferredSize().height));
 
     myVersion.setVisible(!StringUtil.isEmptyOrSpaces(version));
 
@@ -415,7 +439,11 @@ public class PluginDetailsPageComponent extends MultiPanel {
                                                                   URLUtil.encodeURIComponent(myPlugin.getPluginId().getIdString())));
     }
 
-    String description = getDescriptionAndChangeNotes();
+    String date = PluginManagerConfigurableNew.getLastUpdatedDate(myUpdateDescriptor == null ? myPlugin : myUpdateDescriptor);
+    myDate.setText(date);
+    myDate.setVisible(date != null);
+
+    String description = getDescription();
     if (description != null) {
       myDescriptionComponent.setText(XmlStringUtil.wrapInHtml(description));
       if (myDescriptionComponent.getCaret() != null) {
@@ -510,13 +538,16 @@ public class PluginDetailsPageComponent extends MultiPanel {
     updateEnableForNameAndIcon();
     updateErrors();
 
+    boolean bundled = myPlugin.isBundled();
+    boolean errors = myPluginModel.hasErrors(myPlugin);
     String title = myPluginModel.getEnabledTitle(myPlugin);
-    if (myEnableDisableButton != null) {
-      myEnableDisableButton.setText(title);
-    }
-    if (myEnableDisableUninstallButton != null) {
-      myEnableDisableUninstallButton.setText(title);
-    }
+
+    myEnableDisableButton.setText(title);
+    myEnableDisableUninstallButton.setText(title);
+    myUpdateButton.setVisible(myUpdateDescriptor != null && !errors);
+    myEnableDisableButton.setVisible(bundled && !errors);
+    myEnableDisableUninstallButton.setVisible(!bundled && !errors);
+    myUninstallButton.setVisible(!bundled && errors);
 
     fullRepaint();
   }
@@ -532,23 +563,13 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myUpdateButton.setVisible(false);
     myEnableDisableButton.setVisible(false);
     myEnableDisableUninstallButton.setVisible(false);
+    myUninstallButton.setVisible(false);
     myRestartButton.setVisible(true);
   }
 
   @Nullable
-  private String getDescriptionAndChangeNotes() {
-    StringBuilder result = new StringBuilder();
-
+  private String getDescription() {
     String description = myPlugin.getDescription();
-    if (!StringUtil.isEmptyOrSpaces(description)) {
-      result.append(description);
-    }
-
-    String notes = myPlugin.getChangeNotes();
-    if (!StringUtil.isEmptyOrSpaces(notes)) {
-      result.append("<h4>Change Notes</h4>").append(notes);
-    }
-
-    return result.length() > 0 ? result.toString() : null;
+    return StringUtil.isEmptyOrSpaces(description) ? null : description;
   }
 }

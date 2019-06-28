@@ -13,7 +13,7 @@ import io.netty.handler.stream.ChunkedStream
 import org.jetbrains.builtInWebServer.ssi.SsiExternalResolver
 import org.jetbrains.builtInWebServer.ssi.SsiProcessor
 import org.jetbrains.io.FileResponses
-import org.jetbrains.io.addKeepAliveIfNeed
+import org.jetbrains.io.addKeepAliveIfNeeded
 import org.jetbrains.io.flushChunkedResponse
 import java.nio.file.Files
 import java.nio.file.Path
@@ -41,7 +41,7 @@ private class StaticFileHandler : WebServerFileHandler() {
     val file = pathInfo.file!!
     val response = FileResponses.prepareSend(request, channel, file.timeStamp, file.name, extraHeaders) ?: return true
 
-    val isKeepAlive = response.addKeepAliveIfNeed(request)
+    val isKeepAlive = response.addKeepAliveIfNeeded(request)
     if (request.method() != HttpMethod.HEAD) {
       HttpUtil.setContentLength(response, file.length)
     }
@@ -67,7 +67,7 @@ private class StaticFileHandler : WebServerFileHandler() {
     try {
       val lastModified = ssiProcessor!!.process(SsiExternalResolver(project, request, path, file.parent), file, ByteBufUtf8Writer(buffer))
       val response = FileResponses.prepareSend(request, channel, lastModified, file.fileName.toString(), extraHeaders) ?: return
-      isKeepAlive = response.addKeepAliveIfNeed(request)
+      isKeepAlive = response.addKeepAliveIfNeeded(request)
       if (request.method() != HttpMethod.HEAD) {
         HttpUtil.setContentLength(response, buffer.readableBytes().toLong())
       }

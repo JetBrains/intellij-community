@@ -118,8 +118,8 @@ public class SimpleDiffChange {
   }
 
   protected void doInstallActionHighlighters() {
-    if (myIsExcluded) return;
-    
+    if (myIsSkipped) return;
+
     myOperations.add(new AcceptGutterOperation(Side.LEFT));
     myOperations.add(new AcceptGutterOperation(Side.RIGHT));
   }
@@ -131,11 +131,15 @@ public class SimpleDiffChange {
     int startLine = side.getStartLine(myFragment);
     int endLine = side.getEndLine(myFragment);
 
-    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, startLine, endLine, type, ignored, false, myIsExcluded, false, false));
+    myHighlighters.addAll(new DiffDrawUtil.LineHighlighterBuilder(editor, startLine, endLine, type)
+                            .withIgnored(ignored)
+                            .withExcludedInEditor(myIsSkipped)
+                            .withExcludedInGutter(myIsExcluded)
+                            .done());
   }
 
   private void createInlineHighlighter(@NotNull DiffFragment fragment, @NotNull Side side) {
-    if (myIsExcluded) return;
+    if (myIsSkipped) return;
 
     int start = side.getStartOffset(fragment);
     int end = side.getEndOffset(fragment);
@@ -228,17 +232,6 @@ public class SimpleDiffChange {
     }
 
     return newRange.damaged;
-  }
-
-  //
-  // Change applying
-  //
-
-  public boolean isSelectedByLine(int line, @NotNull Side side) {
-    int line1 = getStartLine(side);
-    int line2 = getEndLine(side);
-
-    return DiffUtil.isSelectedByLine(line, line1, line2);
   }
 
   //

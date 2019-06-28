@@ -9,17 +9,15 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.gdpr.Consent;
 import com.intellij.ide.gdpr.ConsentOptions;
 import com.intellij.ide.gdpr.ConsentSettingsUi;
-import com.intellij.ide.gdpr.EndUserAgreement;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.Main;
+import com.intellij.idea.SplashManager;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,13 +29,16 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.AppIcon.MacAppIcon;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.SwingHelper;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.AWTAccessor;
@@ -50,24 +51,23 @@ import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
-/**
- * @author yole
- */
-public class AppUIUtil {
+public final class AppUIUtil {
   private static final String VENDOR_PREFIX = "jetbrains-";
-  private static final boolean DEBUG_MODE = PluginManagerCore.isRunningFromSources();
   private static List<Image> ourIcons = null;
-  private static boolean ourMacDocIconSet = false;
+  private static volatile boolean ourMacDocIconSet = false;
 
   @NotNull
   private static Logger getLogger() {
@@ -75,9 +75,8 @@ public class AppUIUtil {
   }
 
   public static void updateWindowIcon(@NotNull Window window) {
-    // todo[tav] 'jbre.win.app.icon.supported' is defined by JBRE, remove when OpenJDK supports it as well
-    if (SystemInfo.isWindows && Boolean.getBoolean("ide.native.launcher") && Boolean.getBoolean("jbre.win.app.icon.supported")) {
-      return;  // JDK will load icon from the exe resource
+    if (isWindowIconAlreadyExternallySet()) {
+      return;
     }
 
     List<Image> images = ourIcons;
@@ -86,18 +85,19 @@ public class AppUIUtil {
 
       ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
       String svgIconUrl = appInfo.getApplicationSvgIconUrl();
+      String smallSvgIconUrl = appInfo.getSmallApplicationSvgIconUrl();
       ScaleContext ctx = ScaleContext.create(window);
 
       if (SystemInfo.isUnix) {
         @SuppressWarnings("deprecation") String fallback = appInfo.getBigIconUrl();
-        ContainerUtil.addIfNotNull(images, loadApplicationIcon(svgIconUrl, ctx, 128, fallback));
+        ContainerUtil.addIfNotNull(images, loadApplicationIconImage(svgIconUrl, ctx, 128, fallback));
       }
 
       @SuppressWarnings("deprecation") String fallback = appInfo.getIconUrl();
-      ContainerUtil.addIfNotNull(images, loadApplicationIcon(svgIconUrl, ctx, 32, fallback));
+      ContainerUtil.addIfNotNull(images, loadApplicationIconImage(smallSvgIconUrl, ctx, 32, fallback));
 
       if (SystemInfo.isWindows) {
-        ContainerUtil.addIfNotNull(images, ImageLoader.loadFromResource(appInfo.getSmallIconUrl()));
+        ContainerUtil.addIfNotNull(images, loadSmallApplicationIconImage(ctx, 16));
       }
 
       for (int i = 0; i < images.size(); i++) {
@@ -112,28 +112,56 @@ public class AppUIUtil {
       if (!SystemInfo.isMac) {
         window.setIconImages(images);
       }
-      else if (DEBUG_MODE && !ourMacDocIconSet) {
+      else if (!ourMacDocIconSet && PluginManagerCore.isRunningFromSources()) {
         MacAppIcon.setDockIcon(ImageUtil.toBufferedImage(images.get(0)));
         ourMacDocIconSet = true;
       }
     }
   }
 
-  @Nullable
-  public static Icon loadHiDPIApplicationIcon(@NotNull ScaleContext ctx, int size) {
-    Image image = loadApplicationIcon(ApplicationInfoImpl.getShadowInstance().getApplicationSvgIconUrl(), ctx, size, null);
-    return image != null ? new JBImageIcon(ImageUtil.ensureHiDPI(image, ctx)) : null;
+  public static boolean isWindowIconAlreadyExternallySet() {
+    if (SystemInfo.isMac) {
+      return ourMacDocIconSet || !PluginManagerCore.isRunningFromSources();
+    }
+
+    // todo[tav] 'jbre.win.app.icon.supported' is defined by JBRE, remove when OpenJDK supports it as well
+    return SystemInfo.isWindows && Boolean.getBoolean("ide.native.launcher") && Boolean.getBoolean("jbre.win.app.icon.supported");
   }
 
+  @NotNull
+  private static Image loadSmallApplicationIconImage(@NotNull ScaleContext ctx, int size) {
+    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+    @SuppressWarnings("deprecation") String fallbackSmallIconUrl = appInfo.getSmallIconUrl();
+    return loadApplicationIconImage(appInfo.getSmallApplicationSvgIconUrl(), ctx, size, fallbackSmallIconUrl);
+  }
+
+  @NotNull
+  public static Icon loadSmallApplicationIcon(@NotNull ScaleContext ctx) {
+    Image image = loadSmallApplicationIconImage(ctx, 16);
+    return new JBImageIcon(image);
+  }
+
+  @NotNull
+  public static Icon loadSmallApplicationIcon(@NotNull ScaleContext ctx, int size) {
+    Image image = loadSmallApplicationIconImage(ctx, size);
+    return new JBImageIcon(image);
+  }
+
+  /**
+   * Returns a hidpi-aware image.
+   */
+  @Contract("_, _, _, !null -> !null")
   @Nullable
-  private static Image loadApplicationIcon(String svgPath, ScaleContext ctx, int size, String fallbackPath) {
+  private static Image loadApplicationIconImage(String svgPath, ScaleContext ctx, int size, String fallbackPath) {
     if (svgPath != null) {
-      try (InputStream stream = AppUIUtil.class.getResourceAsStream(svgPath)) {
-        return SVGLoader.load(null, stream, ctx, size, size);
+      Icon icon = IconLoader.findIcon(svgPath);
+      if (icon != null) {
+        int width = icon.getIconWidth();
+        float scale = size / (float)width;
+        icon = IconUtil.scale(icon, null, scale); // performs vector scaling of a wrapped svg icon source
+        return IconUtil.toImage(icon, ctx);
       }
-      catch (IOException e) {
-        getLogger().info("Cannot load SVG application icon from " + svgPath, e);
-      }
+      getLogger().info("Cannot load SVG application icon from " + svgPath);
     }
 
     if (fallbackPath != null) {
@@ -195,13 +223,21 @@ public class AppUIUtil {
       .replace("intellij-idea", "idea").replace("android-studio", "studio")  // backward compatibility
       .replace("-community-edition", "-ce").replace("-ultimate-edition", "").replace("-professional-edition", "");
     String wmClass = name.startsWith(VENDOR_PREFIX) ? name : VENDOR_PREFIX + name;
-    if (DEBUG_MODE) wmClass += "-debug";
+    if (PluginManagerCore.isRunningFromSources()) wmClass += "-debug";
     return wmClass;
   }
 
   public static void registerBundledFonts() {
     if (!SystemProperties.getBooleanProperty("ide.register.bundled.fonts", true)) {
       return;
+    }
+
+    String jvmVersion = System.getProperty("java.runtime.version");
+    if (jvmVersion.startsWith("11.") && "JetBrains s.r.o".equals(System.getProperty("java.vm.vendor"))) {
+      Matcher matcher = Pattern.compile("-b([\\d]+)(?:.([\\d])+)?$").matcher(jvmVersion);
+      if (matcher.find() && Integer.parseInt(matcher.group(1)) >= 296) {
+        return;
+      }
     }
 
     Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.REGISTER_BUNDLED_FONTS);
@@ -261,7 +297,7 @@ public class AppUIUtil {
   @Nullable
   public static String findIcon() {
     String iconsPath = PathManager.getBinPath();
-    String[] childFiles = ObjectUtils.notNull(new File(iconsPath).list(), ArrayUtil.EMPTY_STRING_ARRAY);
+    String[] childFiles = ObjectUtils.notNull(new File(iconsPath).list(), ArrayUtilRt.EMPTY_STRING_ARRAY);
 
     // 1. look for .svg icon
     for (String child : childFiles) {
@@ -293,41 +329,41 @@ public class AppUIUtil {
     return iconPath;
   }
 
-  public static void showUserAgreementAndConsentsIfNeeded(@NotNull Logger log) {
-    if (ApplicationInfoImpl.getShadowInstance().isVendorJetBrains()) {
-      EndUserAgreement.Document agreement = EndUserAgreement.getLatestDocument();
-      if (!agreement.isAccepted()) {
-        try {
-          // todo: does not seem to request focus when shown
-          SwingUtilities.invokeAndWait(() -> showEndUserAgreementText(agreement.getText(), agreement.isPrivacyPolicy()));
-          EndUserAgreement.setAccepted(agreement);
-        }
-        catch (Exception e) {
-          log.warn(e);
-        }
-      }
-      showConsentsAgreementIfNeed(log);
-    }
+  /** @deprecated use {@link #showConsentsAgreementIfNeeded(Logger)} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static boolean showConsentsAgreementIfNeed(@NotNull Logger log) {
+    return showConsentsAgreementIfNeeded(log);
   }
 
-  public static boolean showConsentsAgreementIfNeed(@NotNull Logger log) {
-    final Pair<List<Consent>, Boolean> consentsToShow = ConsentOptions.getInstance().getConsents();
-    final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
-    if (consentsToShow.second) {
-      Runnable runnable = () -> result.set(confirmConsentOptions(consentsToShow.first));
-      if (SwingUtilities.isEventDispatchThread()) {
-        runnable.run();
+  public static boolean showConsentsAgreementIfNeeded(@NotNull Logger log) {
+    return showConsentsAgreementIfNeeded(command -> {
+      if (EventQueue.isDispatchThread()) {
+        command.run();
       }
       else {
         try {
-          SwingUtilities.invokeAndWait(runnable);
+          EventQueue.invokeAndWait(command);
         }
-        catch (Exception e) {
+        catch (InterruptedException | InvocationTargetException e) {
           log.warn(e);
         }
       }
+    });
+  }
+
+  public static boolean showConsentsAgreementIfNeeded(@NotNull Executor edtExecutor) {
+    final Pair<List<Consent>, Boolean> consentsToShow = ConsentOptions.getInstance().getConsents();
+    final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
+    if (consentsToShow.second) {
+      edtExecutor.execute(() -> result.set(confirmConsentOptions(consentsToShow.first)));
     }
     return result.get();
+  }
+
+  public static void updateForDarcula(boolean isDarcula) {
+    JBColor.setDark(isDarcula);
+    IconLoader.setUseDarkIcons(isDarcula);
   }
 
   /**
@@ -338,20 +374,12 @@ public class AppUIUtil {
    * @param isPrivacyPolicy  true if this document is a privacy policy
    */
   public static void showEndUserAgreementText(@NotNull String htmlText, final boolean isPrivacyPolicy) {
-    final String title = isPrivacyPolicy
-                         ? ApplicationInfoImpl.getShadowInstance().getShortCompanyName() + " Privacy Policy"
-                         : ApplicationNamesInfo.getInstance().getFullProductName() + " User Agreement";
-    showEndUserAgreementText(title, htmlText);
-  }
-
-  public static void showEndUserAgreementText(String title, @NotNull String htmlText) {
-      DialogWrapper dialog = new DialogWrapper(true) {
-
+    DialogWrapper dialog = new DialogWrapper(true) {
       private JEditorPane myViewer;
 
       @Override
       protected JComponent createCenterPanel() {
-        JPanel centerPanel = new JPanel(new BorderLayout(0, JBUI.scale(8)));
+        JPanel centerPanel = new JPanel(new BorderLayout(0, JBUIScale.scale(8)));
         myViewer = SwingHelper.createHtmlViewer(true, null, JBColor.WHITE, JBColor.BLACK);
         myViewer.setFocusable(true);
         myViewer.addHyperlinkListener(new HyperlinkAdapter() {
@@ -370,12 +398,12 @@ public class AppUIUtil {
         StyleSheet styleSheet = ((HTMLDocument)myViewer.getDocument()).getStyleSheet();
         styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, sans-serif;}");
         styleSheet.addRule("body {margin-top:0;padding-top:0;}");
-        styleSheet.addRule("body {font-size:" + JBUI.scaleFontSize(13) + "pt;}");
-        styleSheet.addRule("h2, em {margin-top:" + JBUI.scaleFontSize(20) + "pt;}");
+        styleSheet.addRule("body {font-size:" + JBUIScale.scaleFontSize((float)13) + "pt;}");
+        styleSheet.addRule("h2, em {margin-top:" + JBUIScale.scaleFontSize((float)20) + "pt;}");
         styleSheet.addRule("h1, h2, h3, p, h4, em {margin-bottom:0;padding-bottom:0;}");
-        styleSheet.addRule("p, h1 {margin-top:0;padding-top:"+JBUI.scaleFontSize(6)+"pt;}");
-        styleSheet.addRule("li {margin-bottom:" + JBUI.scaleFontSize(6) + "pt;}");
-        styleSheet.addRule("h2 {margin-top:0;padding-top:"+JBUI.scaleFontSize(13)+"pt;}");
+        styleSheet.addRule("p, h1 {margin-top:0;padding-top:" + JBUIScale.scaleFontSize((float)6) + "pt;}");
+        styleSheet.addRule("li {margin-bottom:" + JBUIScale.scaleFontSize((float)6) + "pt;}");
+        styleSheet.addRule("h2 {margin-top:0;padding-top:" + JBUIScale.scaleFontSize((float)13) + "pt;}");
         myViewer.setCaretPosition(0);
         myViewer.setBorder(JBUI.Borders.empty(0, 5, 5, 5));
         centerPanel.add(JBUI.Borders.emptyTop(8).wrap(
@@ -388,12 +416,14 @@ public class AppUIUtil {
           eapPanel.setBorder(JBUI.Borders.empty(8));
           //noinspection UseJBColor
           eapPanel.setBackground(new Color(0xDCE4E8));
-          IconLoader.activate();
           JLabel label = new JLabel(AllIcons.General.BalloonInformation);
           label.setVerticalAlignment(SwingConstants.TOP);
           eapPanel.add(label, BorderLayout.WEST);
-          JEditorPane html = SwingHelper.createHtmlLabel("EAP builds report usage statistics by default per the <a href=\"https://www.jetbrains.com/company/privacy.html\">JetBrains Privacy Policy</a>." +
-                                                  "\nNo personal or sensitive data are sent. You may disable this in the settings.", null, null);
+          JEditorPane html = SwingHelper.createHtmlLabel(
+            "EAP builds report usage statistics by default per "+
+            (isPrivacyPolicy? "this Privacy Policy." : "the <a href=\"https://www.jetbrains.com/company/privacy.html\">JetBrains Privacy Policy</a>.") +
+            "<br/>No personal or sensitive data are sent. You may disable this in the settings.", null, null
+          );
           eapPanel.add(html, BorderLayout.CENTER);
           bottomPanel.add(eapPanel, BorderLayout.NORTH);
         }
@@ -401,6 +431,7 @@ public class AppUIUtil {
         bottomPanel.add(JBUI.Borders.empty(24, 0, 16, 0).wrap(checkBox), BorderLayout.CENTER);
         centerPanel.add(JBUI.Borders.emptyTop(8).wrap(bottomPanel), BorderLayout.SOUTH);
         checkBox.addActionListener(e -> setOKActionEnabled(checkBox.isSelected()));
+        centerPanel.setPreferredSize(JBUI.size(520, 450));
         return centerPanel;
       }
 
@@ -423,7 +454,7 @@ public class AppUIUtil {
       @Override
       public void doCancelAction() {
         super.doCancelAction();
-        ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+        Application application = ApplicationManager.getApplication();
         if (application == null) {
           System.exit(Main.PRIVACY_POLICY_REJECTION);
         }
@@ -433,9 +464,14 @@ public class AppUIUtil {
       }
     };
     dialog.setModal(true);
-    dialog.setTitle(title);
-    dialog.setSize(JBUI.scale(550), JBUI.scale(500));
-    dialog.show();
+    dialog.setTitle(
+      isPrivacyPolicy
+      ? ApplicationInfoImpl.getShadowInstance().getShortCompanyName() + " Privacy Policy"
+      : ApplicationNamesInfo.getInstance().getFullProductName() + " User Agreement"
+    );
+    dialog.pack();
+
+    SplashManager.executeWithHiddenSplash(dialog.getWindow(), () -> dialog.show());
   }
 
   public static boolean confirmConsentOptions(@NotNull List<Consent> consents) {
@@ -497,7 +533,7 @@ public class AppUIUtil {
     dialog.setTitle("Data Sharing");
     dialog.pack();
     if (consents.size() < 2) {
-      dialog.setSize(dialog.getWindow().getWidth(), dialog.getWindow().getHeight() + JBUI.scale(75));
+      dialog.setSize(dialog.getWindow().getWidth(), dialog.getWindow().getHeight() + JBUIScale.scale(75));
     }
     dialog.show();
 

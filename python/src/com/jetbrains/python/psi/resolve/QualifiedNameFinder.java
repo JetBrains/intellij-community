@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.resolve;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -229,7 +229,7 @@ public class QualifiedNameFinder {
       final List<String> result = new ArrayList<>(StringUtil.split(relativePath, "/"));
       if (!result.isEmpty()) {
         final int lastIndex = result.size() - 1;
-        final String nameWithoutExtension = FileUtil.getNameWithoutExtension(result.get(lastIndex));
+        final String nameWithoutExtension = FileUtilRt.getNameWithoutExtension(result.get(lastIndex));
 
         if (myVFile.isDirectory() || !nameWithoutExtension.equals(PyNames.INIT)) {
           result.set(lastIndex, nameWithoutExtension);

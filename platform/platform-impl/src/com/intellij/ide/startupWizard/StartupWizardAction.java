@@ -8,10 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
-public class StartupWizardAction extends AnAction implements DumbAware {
+public final class StartupWizardAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     new CustomizeIDEWizardDialog(new CustomizeIdeaWizardStepsProvider()).show();

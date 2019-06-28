@@ -62,7 +62,8 @@ public class ShParser implements PsiParser, LightPsiParser {
       CONDITIONAL_COMMAND, EVAL_COMMAND, FOR_COMMAND, FUNCTION_DEFINITION,
       GENERIC_COMMAND_DIRECTIVE, IF_COMMAND, INCLUDE_COMMAND, INCLUDE_DIRECTIVE,
       LET_COMMAND, PIPELINE_COMMAND, SELECT_COMMAND, SHELL_COMMAND,
-      SIMPLE_COMMAND, SUBSHELL_COMMAND, UNTIL_COMMAND, WHILE_COMMAND),
+      SIMPLE_COMMAND, SUBSHELL_COMMAND, TEST_COMMAND, UNTIL_COMMAND,
+      WHILE_COMMAND),
     create_token_set_(ADD_EXPRESSION, ARRAY_EXPRESSION, ASSIGNMENT_EXPRESSION, BITWISE_AND_EXPRESSION,
       BITWISE_EXCLUSIVE_OR_EXPRESSION, BITWISE_OR_EXPRESSION, BITWISE_SHIFT_EXPRESSION, COMMA_EXPRESSION,
       COMPARISON_EXPRESSION, CONDITIONAL_EXPRESSION, EQUALITY_EXPRESSION, EXPRESSION,
@@ -1882,15 +1883,17 @@ public class ShParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // '!'? pipeline
+  //                     | '!'? eval_command
+  //                     | '!'? test_command
   //                     | let_command
-  //                     | eval_command
   public static boolean pipeline_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pipeline_command")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _COLLAPSE_, PIPELINE_COMMAND, "<pipeline command>");
     r = pipeline_command_0(b, l + 1);
+    if (!r) r = pipeline_command_1(b, l + 1);
+    if (!r) r = pipeline_command_2(b, l + 1);
     if (!r) r = let_command(b, l + 1);
-    if (!r) r = eval_command(b, l + 1);
     exit_section_(b, l, m, r, false, ShParser::pipeline_recover);
     return r;
   }
@@ -1909,6 +1912,42 @@ public class ShParser implements PsiParser, LightPsiParser {
   // '!'?
   private static boolean pipeline_command_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pipeline_command_0_0")) return false;
+    consumeToken(b, BANG);
+    return true;
+  }
+
+  // '!'? eval_command
+  private static boolean pipeline_command_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pipeline_command_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = pipeline_command_1_0(b, l + 1);
+    r = r && eval_command(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // '!'?
+  private static boolean pipeline_command_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pipeline_command_1_0")) return false;
+    consumeToken(b, BANG);
+    return true;
+  }
+
+  // '!'? test_command
+  private static boolean pipeline_command_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pipeline_command_2")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = pipeline_command_2_0(b, l + 1);
+    r = r && test_command(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // '!'?
+  private static boolean pipeline_command_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pipeline_command_2_0")) return false;
     consumeToken(b, BANG);
     return true;
   }
@@ -2483,6 +2522,35 @@ public class ShParser implements PsiParser, LightPsiParser {
     r = p && consumeToken(b, RIGHT_PAREN) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  /* ********************************************************** */
+  // test simple_command_element+
+  public static boolean test_command(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "test_command")) return false;
+    if (!nextTokenIs(b, TEST)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, TEST_COMMAND, null);
+    r = consumeToken(b, TEST);
+    p = r; // pin = 1
+    r = r && test_command_1(b, l + 1);
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  // simple_command_element+
+  private static boolean test_command_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "test_command_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = simple_command_element(b, l + 1);
+    while (r) {
+      int c = current_position_(b);
+      if (!simple_command_element(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "test_command_1", c)) break;
+    }
+    exit_section_(b, m, null, r);
+    return r;
   }
 
   /* ********************************************************** */

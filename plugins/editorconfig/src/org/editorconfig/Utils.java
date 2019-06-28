@@ -41,6 +41,8 @@ import java.util.*;
 
 public class Utils {
 
+  public static final String EDITOR_CONFIG_FILE_NAME = ".editorconfig";
+
   public static final  String FULL_SETTINGS_SUPPORT_REG_KEY = "editor.config.full.settings.support";
 
   private static boolean ourIsFullSettingsSupportEnabledInTest;

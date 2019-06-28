@@ -16,13 +16,13 @@
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class IntegerMultiplicationImplicitCastToLongInspectionTest extends LightInspectionTestCase {
+public class IntegerMultiplicationImplicitCastToLongInspectionTest extends LightJavaInspectionTestCase {
 
   public void testIntegerMultiplicationImplicitCastToLong() {
     doTest();

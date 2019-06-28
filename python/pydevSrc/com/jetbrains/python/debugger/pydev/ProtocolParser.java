@@ -276,12 +276,13 @@ public class ProtocolParser {
     final String isReturnedValue = readString(reader, "isRetVal", "");
     final String isIPythonHidden = readString(reader, "isIPythonHidden", "");
     final String isErrorOnEval = readString(reader, "isErrorOnEval", "");
+    String shape = readString(reader, "shape", "");
 
     if (value.startsWith(type + ": ")) {  // drop unneeded prefix
       value = value.substring(type.length() + 2);
     }
-
-    return new PyDebugValue(name, type, qualifier, value, "True".equals(isContainer), "True".equals(isReturnedValue),
+    if (shape.isEmpty()) shape = null;
+    return new PyDebugValue(name, type, qualifier, value, "True".equals(isContainer), shape, "True".equals(isReturnedValue),
                             "True".equals(isIPythonHidden), "True".equals(isErrorOnEval), frameAccessor);
   }
 
@@ -301,7 +302,7 @@ public class ProtocolParser {
       result.setType(readString(reader, "type", null));
       result.setMax(readString(reader, "max", null));
       result.setMin(readString(reader, "min", null));
-      result.setValue(new PyDebugValue(slice, null, null, null, false, false, false, false, frameAccessor));
+      result.setValue(new PyDebugValue(slice, null, null, null, false, null, false, false, false, frameAccessor));
       reader.moveUp();
     }
     if ("headerdata".equals(reader.peekNextChild())) {

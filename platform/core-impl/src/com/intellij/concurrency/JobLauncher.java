@@ -52,7 +52,7 @@ public abstract class JobLauncher {
    *         or we were unable to start read action in at least one thread
    * @throws ProcessCanceledException if at least one task has thrown ProcessCanceledException
    */
-  public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<T> things,
+  public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
                                                      ProgressIndicator progress,
                                                      @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException {
     return invokeConcurrentlyUnderProgress(things, progress, ApplicationManager.getApplication().isReadAccessAllowed(),
@@ -74,7 +74,7 @@ public abstract class JobLauncher {
    * @deprecated use {@link #invokeConcurrentlyUnderProgress(List, ProgressIndicator, Processor)} instead
    */
   @Deprecated
-  public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<T> things,
+  public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
                                                      ProgressIndicator progress,
                                                      boolean failFastOnAcquireReadAction,
                                                      @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException {
@@ -83,7 +83,7 @@ public abstract class JobLauncher {
   }
 
 
-  public abstract <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<T> things,
+  public abstract <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
                                                               ProgressIndicator progress,
                                                               boolean runInReadAction,
                                                               boolean failFastOnAcquireReadAction,
@@ -92,7 +92,7 @@ public abstract class JobLauncher {
   /**
    * NEVER EVER submit runnable which can lock itself for indeterminate amount of time.
    * This will cause deadlock since this thread pool is an easily exhaustible resource.
-   * Use {@link com.intellij.openapi.application.Application#executeOnPooledThread(java.lang.Runnable)} instead
+   * Use {@link com.intellij.openapi.application.Application#executeOnPooledThread(Runnable)} instead
    */
   @NotNull
   public abstract Job<Void> submitToJobThread(@NotNull final Runnable action, @Nullable Consumer<? super Future<?>> onDoneCallback);

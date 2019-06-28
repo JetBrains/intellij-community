@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.roots;
 
+import org.jetbrains.annotations.ApiStatus;
+
+@ApiStatus.NonExtendable
 public interface OrderEnumeratorSettings {
   boolean isProductionOnly();
   boolean isCompileOnly();

@@ -16,10 +16,10 @@
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class CastThatLosesPrecisionInspectionTest extends LightInspectionTestCase {
+public class CastThatLosesPrecisionInspectionTest extends LightJavaInspectionTestCase {
 
   public void testCastThatLosesPrecision()  {
     doTest();

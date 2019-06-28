@@ -48,6 +48,8 @@ import org.jetbrains.jps.model.java.JdkVersionDetector;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -84,7 +86,7 @@ public class MemoryAgentUtil {
     ParametersList parametersList = parameters.getVMParametersList();
     if (parametersList.getParameters().stream().anyMatch(x -> x.contains("memory_agent"))) return;
     boolean isInDebugMode = Registry.is("debugger.memory.agent.debug");
-    File agentFile = null;
+    Path agentFile = null;
     String errorMessage = null;
     long start = System.currentTimeMillis();
     try {
@@ -109,9 +111,8 @@ public class MemoryAgentUtil {
     }
 
     LOG.info("Memory agent extracting took " + (System.currentTimeMillis() - start) + " ms");
-    String agentFileName = agentFile.getName();
-    String path = JavaExecutionUtil.handleSpacesInAgentPath(agentFile.getAbsolutePath(), "debugger-memory-agent",
-                                                            MEMORY_AGENT_EXTRACT_DIRECTORY, f -> agentFileName.equals(f.getName()));
+    String path = JavaExecutionUtil.handleSpacesInAgentPath(agentFile.toAbsolutePath().toString(), "debugger-memory-agent",
+                                                            MEMORY_AGENT_EXTRACT_DIRECTORY);
     if (path == null) {
       return;
     }
@@ -181,13 +182,13 @@ public class MemoryAgentUtil {
     return vendor != null && StringUtil.containsIgnoreCase(vendor, "ibm");
   }
 
-  private static File getAgentFile(boolean isInDebugMode, String jdkPath)
+  private static Path getAgentFile(boolean isInDebugMode, String jdkPath)
     throws InterruptedException, ExecutionException, TimeoutException {
     if (isInDebugMode) {
       String debugAgentPath = Registry.get("debugger.memory.agent.debug.path").asString();
       if (!debugAgentPath.isEmpty()) {
         LOG.info("Local memory agent will be used: " + debugAgentPath);
-        return new File(debugAgentPath);
+        return Paths.get(debugAgentPath);
       }
     }
 

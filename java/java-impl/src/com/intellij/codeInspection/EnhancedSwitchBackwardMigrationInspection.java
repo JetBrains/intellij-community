@@ -224,10 +224,20 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
     private String generateBranch(PsiSwitchLabeledRuleStatement rule,
                                          CommentTracker ct,
                                          PsiSwitchBlock switchBlock) {
-      StreamEx.ofTree((PsiElement)rule, el -> StreamEx.of(el.getChildren()))
-        .select(PsiBreakStatement.class)
-        .filter(breakStatement -> breakStatement.getValueExpression() != null && breakStatement.findExitedElement() == switchBlock)
-        .forEach(breakStatement -> handleBreakInside(breakStatement, ct));
+      StreamEx.ofTree((PsiElement)rule, el -> StreamEx.of(el.getChildren())).forEach(e -> {
+        if (e instanceof PsiBreakStatement) {
+          PsiBreakStatement breakStatement = (PsiBreakStatement)e;
+          if (breakStatement.getValueExpression() != null && breakStatement.findExitedElement() == switchBlock) {
+            handleBreakInside(breakStatement, ct);
+          }
+        }
+        else if (e instanceof PsiYieldStatement) {
+          PsiYieldStatement yieldStatement = (PsiYieldStatement)e;
+          if (yieldStatement.getExpression() != null && yieldStatement.findEnclosingExpression() == switchBlock) {
+            handleYieldInside(yieldStatement, ct);
+          }
+        }
+      });
       PsiExpressionList caseValues = rule.getCaseValues();
       String caseExpressionsText;
       if (caseValues == null || caseValues.isEmpty()) {
@@ -260,6 +270,7 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
     }
 
     abstract void handleBreakInside(@NotNull PsiBreakStatement breakStatement, CommentTracker ct);
+    abstract void handleYieldInside(@NotNull PsiYieldStatement yieldStatement, CommentTracker ct);
 
     abstract String generateExpressionBranch(@NotNull PsiStatement statement, CommentTracker ct);
   }
@@ -275,6 +286,14 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
       assert valueExpression != null;
       PsiStatement replacement = myFactory.createStatementFromText("return " + ct.text(valueExpression) + ";", breakStatement);
       ct.replace(breakStatement, replacement);
+    }
+
+    @Override
+    void handleYieldInside(@NotNull PsiYieldStatement yieldStatement, CommentTracker ct) {
+      PsiExpression valueExpression = yieldStatement.getExpression();
+      assert valueExpression != null;
+      PsiStatement replacement = myFactory.createStatementFromText("return " + ct.text(valueExpression) + ";", yieldStatement);
+      ct.replace(yieldStatement, replacement);
     }
 
     @Override
@@ -303,6 +322,16 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
     }
 
     @Override
+    void handleYieldInside(@NotNull PsiYieldStatement yieldStatement, CommentTracker ct) {
+      PsiExpression valueExpression = yieldStatement.getExpression();
+      assert valueExpression != null;
+      String assignText = myVariable.getName() + " = " + ct.text(valueExpression) + ";\n";
+      PsiStatement assignment = myFactory.createStatementFromText(assignText, valueExpression);
+      PsiStatement newAssignment = (PsiStatement)ct.replace(yieldStatement, assignment);
+      BlockUtils.addAfter(newAssignment, myFactory.createStatementFromText("break;", null));
+    }
+
+    @Override
     String generateExpressionBranch(@NotNull PsiStatement statement, CommentTracker ct) {
       if (statement instanceof PsiThrowStatement) {
         return ct.text(statement);
@@ -318,6 +347,11 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
 
     @Override
     void handleBreakInside(@NotNull PsiBreakStatement breakStatement, CommentTracker ct) {
+      // impossible, only if code is already broken, it can happen
+    }
+
+    @Override
+    void handleYieldInside(@NotNull PsiYieldStatement yieldStatement, CommentTracker ct) {
       // impossible, only if code is already broken, it can happen
     }
 

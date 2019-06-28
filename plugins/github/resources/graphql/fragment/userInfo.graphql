@@ -1,0 +1,5 @@
+fragment userInfo on User {
+  ...nodeInfo
+  ...actorInfo
+  name
+}

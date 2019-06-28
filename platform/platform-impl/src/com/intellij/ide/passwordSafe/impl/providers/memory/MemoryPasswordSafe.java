@@ -22,6 +22,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * The provider that stores passwords in memory in encrypted from. It does not stores passwords on the disk,
  * so all passwords are forgotten after application exit. Some efforts are done to complicate retrieving passwords
  * from page file. However the passwords could be still retrieved from the memory using debugger or full memory dump.
+ *
+ * @deprecated potentially unsafe
  */
 @Deprecated
 // used in https://github.com/groboclown/p4ic4idea, cannot be deleted

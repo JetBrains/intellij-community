@@ -40,11 +40,6 @@ public class PsiAnnotationMethodImpl extends PsiMethodImpl implements PsiAnnotat
   }
 
   @Override
-  public boolean hasModifierProperty(@NotNull String name) {
-    return PsiModifier.ABSTRACT.equals(name) || PsiModifier.PUBLIC.equals(name) || super.hasModifierProperty(name);
-  }
-
-  @Override
   protected void dropCached() {
     myCachedDefaultValue = null;
   }

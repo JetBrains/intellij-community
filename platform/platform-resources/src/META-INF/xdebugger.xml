@@ -47,8 +47,9 @@
 
     <virtualFileSystem key="lazyAttachVfs" implementationClass="com.intellij.xdebugger.attach.fs.LazyAttachVirtualFS"/>
 
+    <statistics.validation.customWhiteListRule implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointsUtilValidator"/>
     <statistics.projectUsagesCollector implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointsStatisticsCollector"/>
-    <statistics.counterUsagesCollector groupId="debugger.breakpoints.usage" version="1"/>
+    <statistics.counterUsagesCollector groupId="debugger.breakpoints.usage" version="2"/>
 
     <editorActionHandler action="EditorUp" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$UpHandler"
                          id="smart-step-into-up"/>
@@ -66,12 +67,28 @@
                          order="first" id="smart-step-into-enter"/>
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$EscHandler"
                          order="before hide-search" id="smart-step-into-escape"/>
+    <applicationService serviceImplementation="com.intellij.xdebugger.memory.component.MemoryViewManager"/>
+
+    <projectService serviceImplementation="com.intellij.xdebugger.memory.component.InstancesTracker" />
   </extensions>
   
   <actions>
     <group id="XDebugger.AttachGroup">
       <action id="XDebugger.AttachToProcess" class="com.intellij.xdebugger.impl.actions.AttachToProcessAction"/>
       <add-to-group group-id="RunMenu" anchor="before" relative-to-action="editRunConfigurations"/>
+    </group>
+
+    <group id="MemoryView.SettingsPopupActionGroup">
+      <action class="com.intellij.xdebugger.memory.action.ShowClassesWithDiffAction"
+              id="MemoryView.ShowOnlyWithDiff"
+              text="Show Non-Zero Diff Only"/>
+
+      <separator/>
+
+      <action class="com.intellij.xdebugger.memory.action.SwitchUpdateModeAction"
+              id="MemoryView.SwitchUpdateMode"
+              text="Update Loaded Classes On Debugger Stop"
+              description="Load classes on debugger pause (may increase overhead on debugger stepping)"/>
     </group>
   </actions>
 </idea-plugin>

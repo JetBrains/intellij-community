@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema;
 
-import com.intellij.codeInsight.completion.CompletionTestCase;
+import com.intellij.codeInsight.completion.JavaCompletionTestCase;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.project.Project;
@@ -17,7 +17,7 @@ import java.util.Map;
 /**
  * @author Irina.Chernushina on 12/5/2016.
  */
-public abstract class JsonSchemaHeavyAbstractTest extends CompletionTestCase {
+public abstract class JsonSchemaHeavyAbstractTest extends JavaCompletionTestCase {
   private Map<String, UserDefinedJsonSchemaConfiguration> mySchemas;
   protected boolean myDoCompletion = true;
 

@@ -28,6 +28,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.List;
@@ -108,7 +109,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     final DefaultActionGroup entriesActions = new DefaultActionGroup();
 
     final RenameAction rename = new RenameAction();
-    rename.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F6, KeyEvent.SHIFT_DOWN_MASK)), this);
+    rename.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F6, InputEvent.SHIFT_DOWN_MASK)), this);
     entriesActions.add(rename);
 
     final MergeAction merge = new MergeAction();
@@ -240,15 +241,11 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
       final Collection<? extends DetectedProjectRoot> sourceRoots = moduleDescriptor.getSourceRoots();
       if (sourceRoots.size() > 0) {
-        builder.append(" [");
-        for (Iterator<? extends DetectedProjectRoot> it = sourceRoots.iterator(); it.hasNext();) {
-          DetectedProjectRoot root = it.next();
-          builder.append(root.getDirectory().getName());
-          if (it.hasNext()) {
-            builder.append(",");
-          }
+        StringJoiner joiner = new StringJoiner(",", " [", "]");
+        for (DetectedProjectRoot root : sourceRoots) {
+          joiner.add(root.getDirectory().getName());
         }
-        builder.append("]");
+        builder.append(joiner);
       }
       return builder.toString();
     }
@@ -297,6 +294,25 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     return false;
   }
 
+  @NotNull
+  private InputValidator getValidator() {
+    return new InputValidator() {
+      @Override
+      public boolean checkInput(final String inputString) {
+        return true;
+      }
+
+      @Override
+      public boolean canClose(final String inputString) {
+        if (isNameAlreadyUsed(inputString.trim())) {
+          Messages.showErrorDialog(getNameAlreadyUsedMessage(inputString), "");
+          return false;
+        }
+        return true;
+      }
+    };
+  }
+
   private class MergeAction extends AnAction {
     private MergeAction() {
       super("Merge", "", AllIcons.Modules.Merge); // todo
@@ -310,21 +326,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
           ProjectLayoutPanel.this,
           "Enter new name for merge result:",
           "Merge",
-          Messages.getQuestionIcon(), getElementName(elements.get(0)), new InputValidator() {
-          @Override
-          public boolean checkInput(final String inputString) {
-            return true;
-          }
-
-          @Override
-          public boolean canClose(final String inputString) {
-            if (isNameAlreadyUsed(inputString.trim())) {
-              Messages.showErrorDialog(getNameAlreadyUsedMessage(inputString), "");
-              return false;
-            }
-            return true;
-          }
-        });
+          Messages.getQuestionIcon(), getElementName(elements.get(0)), getValidator());
         if (newName != null) {
           final T merged = merge(elements);
           setElementName(merged, newName);
@@ -396,21 +398,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
           "Rename " + StringUtil.capitalize(getElementTypeName()),
           Messages.getQuestionIcon(),
           getElementName(element),
-          new InputValidator() {
-            @Override
-            public boolean checkInput(final String inputString) {
-              return true;
-            }
-
-            @Override
-            public boolean canClose(final String inputString) {
-              if (isNameAlreadyUsed(inputString.trim())) {
-                Messages.showErrorDialog(getNameAlreadyUsedMessage(inputString), "");
-                return false;
-              }
-              return true;
-            }
-          }
+          getValidator()
         );
         if (newName != null) {
           setElementName(element, newName);

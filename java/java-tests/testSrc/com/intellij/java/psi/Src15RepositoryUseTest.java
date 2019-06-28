@@ -15,7 +15,7 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +28,7 @@ import java.util.Set;
  * @author dsl
  */
 @PlatformTestCase.WrapInCommand
-public class Src15RepositoryUseTest extends PsiTestCase {
+public class Src15RepositoryUseTest extends JavaPsiTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();

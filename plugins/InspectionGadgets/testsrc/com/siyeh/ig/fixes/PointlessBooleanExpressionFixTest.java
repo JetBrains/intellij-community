@@ -19,6 +19,7 @@ public class PointlessBooleanExpressionFixTest extends IGQuickFixesTestCase {
 
   public void testNegation() { doTest(); }
   public void testNoBodyCase() { doTest(); }
+  public void testNoBodySideEffect() { doTest(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix.sideEffect")); }
   public void testPolyadic() { doTest(); }
   public void testBoxed() { doTest(); }
   public void testSideEffects() { doTest(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix.sideEffect")); }

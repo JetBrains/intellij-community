@@ -186,7 +186,7 @@ public class HtmlParsing {
           continue;
         }
 
-        if (originalTagName != null && isSingleTag(tagName, originalTagName)) {
+        if (isSingleTag(tagName, originalTagName)) {
           final PsiBuilder.Marker footer = mark();
           while (token() == XmlTokenType.XML_REAL_WHITE_SPACE) {
             advance();
@@ -308,7 +308,7 @@ public class HtmlParsing {
     return !myTagNamesStack.isEmpty();
   }
 
-  private PsiBuilder.Marker closeTag() {
+  protected PsiBuilder.Marker closeTag() {
     myTagNamesStack.pop();
     myOriginalTagNamesStack.pop();
     return myTagMarkersStack.pop();
@@ -316,6 +316,10 @@ public class HtmlParsing {
 
   protected String peekTagName() {
     return myTagNamesStack.peek();
+  }
+
+  protected PsiBuilder.Marker peekTagMarker() {
+    return myTagMarkersStack.peek();
   }
 
   private void doneTag(PsiBuilder.Marker tag) {
@@ -482,11 +486,8 @@ public class HtmlParsing {
     if (token() == XmlTokenType.XML_EQ) {
       advance();
       parseAttributeValue();
-      att.done(XmlElementType.XML_ATTRIBUTE);
     }
-    else {
-      att.done(XmlElementType.XML_ATTRIBUTE);
-    }
+    att.done(XmlElementType.XML_ATTRIBUTE);
   }
 
   protected void parseAttributeValue() {

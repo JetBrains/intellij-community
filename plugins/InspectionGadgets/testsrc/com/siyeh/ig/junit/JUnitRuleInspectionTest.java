@@ -17,10 +17,10 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class JUnitRuleInspectionTest extends LightCodeInsightFixtureTestCase {
+public class JUnitRuleInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testWrongsignature() {
     myFixture.addClass("package org.junit.rules;\n" +
                        "public interface TestRule {}");

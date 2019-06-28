@@ -18,7 +18,7 @@ package com.intellij.java.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.refactoring.anonymousToInner.AnonymousToInnerHandler;
 import com.intellij.refactoring.anonymousToInner.VariableInfo;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 @TestDataPath("$CONTENT_ROOT/testData")
-public class AnonymousToInnerTest extends LightCodeInsightTestCase {
+public class AnonymousToInnerTest extends LightJavaCodeInsightTestCase {
   private static final String TEST_ROOT = "/refactoring/anonymousToInner/";
 
   @NotNull

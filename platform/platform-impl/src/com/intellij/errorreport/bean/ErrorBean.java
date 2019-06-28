@@ -3,13 +3,14 @@ package com.intellij.errorreport.bean;
 
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.util.ExceptionUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Collections;
 import java.util.List;
 
 /** @deprecated trivial and not particularly helpful, could be replaced with {@link java.util.Map} (to be removed in IDEA 2020) */
 @Deprecated
-@SuppressWarnings({"unused", "DeprecatedIsStillUsed"})
+@ApiStatus.ScheduledForRemoval(inVersion = "2020")
 public class ErrorBean {
   private final String stackTrace;
   private final String lastAction;

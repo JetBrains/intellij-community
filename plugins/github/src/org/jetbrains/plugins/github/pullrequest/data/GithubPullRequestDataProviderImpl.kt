@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.Change
 import com.intellij.util.EventDispatcher
 import git4idea.GitCommit
 import git4idea.commands.Git
@@ -15,12 +16,14 @@ import git4idea.history.GitLogUtil
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
-import org.jetbrains.plugins.github.api.GithubApiRequests
-import org.jetbrains.plugins.github.api.GithubServerPath
+import org.jetbrains.plugins.github.api.*
+import org.jetbrains.plugins.github.api.data.GHPullRequest
 import org.jetbrains.plugins.github.api.data.GithubCommit
-import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailedWithHtml
+import org.jetbrains.plugins.github.api.data.GithubPullRequestCommentWithHtml
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
+import org.jetbrains.plugins.github.pullrequest.GHNotFoundException
+import org.jetbrains.plugins.github.pullrequest.comment.GithubPullRequestCommentsUtil
+import org.jetbrains.plugins.github.pullrequest.data.model.GithubPullRequestFileCommentsThreadMapping
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import java.util.concurrent.CancellationException
@@ -36,20 +39,21 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
                                                  private val serverPath: GithubServerPath,
                                                  private val username: String,
                                                  private val repositoryName: String,
-                                                 override val number: Long)
-  : GithubPullRequestDataProvider, Disposable {
+                                                 override val number: Long) : GithubPullRequestDataProvider {
+
 
   private val requestsChangesEventDispatcher = EventDispatcher.create(GithubPullRequestDataProvider.RequestsChangedListener::class.java)
 
   private var lastKnownHeadSha: String? = null
 
-  private val detailsRequestValue = object : LazyCancellableBackgroundProcessValue<GithubPullRequestDetailedWithHtml>(progressManager) {
-    override fun compute(indicator: ProgressIndicator): GithubPullRequestDetailedWithHtml {
+  private val detailsRequestValue = object : LazyCancellableBackgroundProcessValue<GHPullRequest>(progressManager) {
+    override fun compute(indicator: ProgressIndicator): GHPullRequest {
       val details = requestExecutor.execute(indicator,
-                                            GithubApiRequests.Repos.PullRequests.getHtml(serverPath, username, repositoryName, number))
+                                            GHGQLRequests.PullRequest.findOne(serverPath, username, repositoryName, number))
+                    ?: throw GHNotFoundException("Pull request $number does not exist")
       invokeAndWaitIfNeeded {
-        lastKnownHeadSha?.run { if (this != details.head.sha) reloadCommits() }
-        lastKnownHeadSha = details.head.sha
+        lastKnownHeadSha?.run { if (this != details.headRefOid) reloadCommits() }
+        lastKnownHeadSha = details.headRefOid
       }
       return details
     }
@@ -91,6 +95,32 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
   override val logCommitsRequest
     get() = GithubAsyncUtil.futureOfMutable { invokeAndWaitIfNeeded { logCommitsRequestValue.value } }
 
+  private val diffFileRequestValue = object : LazyCancellableBackgroundProcessValue<String>(progressManager) {
+    override fun compute(indicator: ProgressIndicator): String {
+      return requestExecutor.execute(indicator, GithubApiRequests.Repos.PullRequests.getDiff(serverPath, username, repositoryName, number))
+    }
+  }
+
+  private val commentsRequestValue = object : LazyCancellableBackgroundProcessValue<List<GithubPullRequestCommentWithHtml>>(
+    progressManager) {
+    override fun compute(indicator: ProgressIndicator): List<GithubPullRequestCommentWithHtml> {
+      return GithubApiPagesLoader.loadAll(requestExecutor, indicator,
+                                          GithubApiRequests.Repos.PullRequests.Comments.pages(serverPath, username, repositoryName, number))
+    }
+  }
+
+  private val filesCommentsRequestValue =
+    object : LazyCancellableBackgroundProcessValue<Map<Change, List<GithubPullRequestFileCommentsThreadMapping>>>(progressManager) {
+      override fun compute(indicator: ProgressIndicator): Map<Change, List<GithubPullRequestFileCommentsThreadMapping>> {
+        return GithubPullRequestCommentsUtil.buildThreadsAndMapLines(repository,
+                                                                     logCommitsRequestValue.value.joinCancellable(),
+                                                                     diffFileRequestValue.value.joinCancellable(),
+                                                                     commentsRequestValue.value.joinCancellable())
+      }
+    }
+  override val filesCommentThreadsRequest: CompletableFuture<Map<Change, List<GithubPullRequestFileCommentsThreadMapping>>>
+    get() = GithubAsyncUtil.futureOfMutable { invokeAndWaitIfNeeded { filesCommentsRequestValue.value } }
+
   @CalledInAwt
   override fun reloadDetails() {
     detailsRequestValue.drop()
@@ -103,14 +133,15 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
     apiCommitsRequestValue.drop()
     logCommitsRequestValue.drop()
     requestsChangesEventDispatcher.multicaster.commitsRequestChanged()
+    reloadComments()
   }
 
   @CalledInAwt
-  override fun dispose() {
-    detailsRequestValue.drop()
-    branchFetchRequestValue.drop()
-    apiCommitsRequestValue.drop()
-    logCommitsRequestValue.drop()
+  override fun reloadComments() {
+    diffFileRequestValue.drop()
+    commentsRequestValue.drop()
+    filesCommentsRequestValue.drop()
+    requestsChangesEventDispatcher.multicaster.commentsRequestChanged()
   }
 
   @Throws(ProcessCanceledException::class)
@@ -129,6 +160,9 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
 
   override fun addRequestsChangesListener(listener: GithubPullRequestDataProvider.RequestsChangedListener) =
     requestsChangesEventDispatcher.addListener(listener)
+
+  override fun addRequestsChangesListener(disposable: Disposable, listener: GithubPullRequestDataProvider.RequestsChangedListener) =
+    requestsChangesEventDispatcher.addListener(listener, disposable)
 
   override fun removeRequestsChangesListener(listener: GithubPullRequestDataProvider.RequestsChangedListener) =
     requestsChangesEventDispatcher.removeListener(listener)

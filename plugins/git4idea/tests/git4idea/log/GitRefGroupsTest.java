@@ -29,7 +29,7 @@ public class GitRefGroupsTest extends GitRefManagerTest {
           Pair.create("origin/...", Arrays.asList("origin/master", "origin/remote_branch")));
   }
 
-  private void check(@NotNull Collection<VcsRef> actual,
+  private void check(@NotNull Collection<? extends VcsRef> actual,
                      @NotNull List<String> expectedSingleGroups,
                      Pair<String, List<String>>... expectedOtherGroups) {
 

@@ -57,6 +57,7 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupOwner;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewManagerImpl;
@@ -447,7 +448,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     myTextFieldPanel.add(myTextField);
     Font editorFont = EditorUtil.getEditorFont();
     myTextField.setFont(editorFont);
-    myTextField.putClientProperty("caretWidth", JBUI.scale(EditorUtil.getDefaultCaretWidth()));
+    myTextField.putClientProperty("caretWidth", JBUIScale.scale(EditorUtil.getDefaultCaretWidth()));
 
     if (checkBoxName != null) {
       if (myCheckBoxShortcut != null) {
@@ -858,6 +859,9 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     else if (window instanceof JDialog) {
       layeredPane = ((JDialog)window).getLayeredPane();
     }
+    else if (window instanceof JWindow) {
+      layeredPane = ((JWindow)window).getLayeredPane();
+    }
     else {
       throw new IllegalStateException("cannot find parent window: project=" + myProject +
                                       (myProject != null ? "; open=" + myProject.isOpen() : "") +
@@ -1042,6 +1046,9 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
   }
 
+  /**
+   * @deprecated unused
+   */
   @Deprecated
   public boolean hasPostponedAction() {
     return false;

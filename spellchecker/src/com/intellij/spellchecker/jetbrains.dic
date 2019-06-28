@@ -72,6 +72,7 @@ btree
 buffered
 buffering
 bugprone
+bugzilla
 buildable
 builtin
 bzip
@@ -80,6 +81,7 @@ calc
 callee
 callouts
 camelcase
+cancellability
 cancelable
 cancellable
 capath
@@ -124,6 +126,7 @@ commonjs
 comonad
 comparision
 concat
+concatenable
 cond
 conda
 conf
@@ -319,6 +322,7 @@ initializer
 initrans
 injectable
 inline
+inlining
 innodb
 inode
 inode's
@@ -417,6 +421,7 @@ lossy
 lucene
 lvalue
 lvalues
+LVTI
 macrodef
 mailto
 makefile
@@ -461,6 +466,7 @@ mongodb
 monoid
 monoidal
 monoids
+monorepo
 monospaced
 msql
 mssql
@@ -715,6 +721,7 @@ sftp
 shader
 sharding
 shellcheck
+shfmt
 sigabrt
 sigaio
 sigalrm

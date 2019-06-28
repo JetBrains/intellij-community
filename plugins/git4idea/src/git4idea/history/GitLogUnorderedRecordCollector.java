@@ -36,7 +36,7 @@ class GitLogUnorderedRecordCollector extends GitLogRecordCollector<GitCompressed
 
   protected GitLogUnorderedRecordCollector(@NotNull Project project,
                                            @NotNull VirtualFile root,
-                                           @NotNull Consumer<List<GitCompressedRecord>> consumer) {
+                                           @NotNull Consumer<? super List<GitCompressedRecord>> consumer) {
     super(project, root, consumer);
   }
 
@@ -75,7 +75,7 @@ class GitLogUnorderedRecordCollector extends GitLogRecordCollector<GitCompressed
 
   @Override
   protected GitCompressedRecord createEmptyCopy(@NotNull GitCompressedRecord record) {
-    return new GitCompressedRecord(record.getOptions(), new TIntObjectHashMap<>(), new TIntIntHashMap(), 0, record.isSupportsRawBody());
+    return new GitCompressedRecord(record.getOptions(), new TIntObjectHashMap<>(), new TIntIntHashMap(), record.isSupportsRawBody());
   }
 
   @Override

@@ -34,7 +34,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.RepeatCount;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -448,7 +448,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     if (idsElement != null) {
       List<String> ids = new ArrayList<>();
       idsElement.getChildren("uniqueId").forEach(uniqueIdElement -> ids.add(uniqueIdElement.getAttributeValue("value")));
-      getPersistentData().setUniqueIds(ArrayUtil.toStringArray(ids));
+      getPersistentData().setUniqueIds(ArrayUtilRt.toStringArray(ids));
     }
 
     Element tagElement = element.getChild("tag");
@@ -605,7 +605,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     public String PACKAGE_NAME;
     public String MAIN_CLASS_NAME;
     public String METHOD_NAME;
-    private String[] UNIQUE_ID = ArrayUtil.EMPTY_STRING_ARRAY;
+    private String[] UNIQUE_ID = ArrayUtilRt.EMPTY_STRING_ARRAY;
     private String TAGS;
     public String TEST_OBJECT = TEST_CLASS;
     public String VM_PARAMETERS = "-ea";

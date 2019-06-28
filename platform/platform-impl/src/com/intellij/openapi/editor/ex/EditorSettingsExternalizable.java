@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -247,6 +248,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
    * @deprecated Not used, to be removed in version 2020.1.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @SuppressWarnings({"UnusedDeclaration", "SpellCheckingInspection"})
   public int getAdditinalColumnsCount() {
     return myAdditionalColumnsCount;
@@ -256,6 +258,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
    * @deprecated Not used, to be removed in version 2020.1.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public void setAdditionalColumnsCount(int value) {
     myAdditionalColumnsCount = value;
   }
@@ -264,6 +267,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
    * @deprecated Not used, to be removed in version 2020.1.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public boolean isLineMarkerAreaShown() {
     return myLineMarkerAreaShown;
   }
@@ -272,6 +276,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
    * @deprecated Not used, to be removed in version 2020.1.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public void setLineMarkerAreaShown(boolean lineMarkerAreaShown) {
     myLineMarkerAreaShown = lineMarkerAreaShown;
   }

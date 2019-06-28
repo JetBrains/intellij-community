@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.CompressionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.SLRUMap;
@@ -72,7 +59,7 @@ public class CompressedAppendableFile {
     myAppendBufferLength = bufferSize;
     assert bufferSize <= MAX_PAGE_LENGTH; // length of compressed buffer size should be in short range
     file.getParentFile().mkdirs();
-    
+
     myLowMemoryWatcher = LowMemoryWatcher.register(() -> {
       dropCaches();
 
@@ -154,7 +141,7 @@ public class CompressedAppendableFile {
       }
     }
     else {
-      myChunkLengthTable = ArrayUtil.EMPTY_SHORT_ARRAY;
+      myChunkLengthTable = ArrayUtilRt.EMPTY_SHORT_ARRAY;
       myChunkTableLength = 0;
       myChunkOffsetTable = ArrayUtil.EMPTY_LONG_ARRAY;
       myFileLength = 0;
@@ -190,7 +177,7 @@ public class CompressedAppendableFile {
       }
 
       assert false:"data corruption detected:"+chunkNumber + "," + myChunkTableLength;
-      return ArrayUtil.EMPTY_BYTE_ARRAY;
+      return ArrayUtilRt.EMPTY_BYTE_ARRAY;
     }
     catch (RuntimeException | AssertionError e) { // CorruptedException, ArrayIndexOutofBounds, etc
       throw new IOException(e);
@@ -503,7 +490,7 @@ public class CompressedAppendableFile {
     public int read(@NotNull byte[] b, int off, int len) throws IOException {
       if (bytesFromCompressedBlock == null) {
         byte[] decompressedBytes = myCurrentPageNumber < myChunkLengthTableSnapshotLength ?
-                                   ourDecompressedCache.get(CompressedAppendableFile.this, myCurrentPageNumber) : ArrayUtil.EMPTY_BYTE_ARRAY;
+                                   ourDecompressedCache.get(CompressedAppendableFile.this, myCurrentPageNumber) : ArrayUtilRt.EMPTY_BYTE_ARRAY;
         bytesFromCompressedBlock = new ByteArrayInputStream(decompressedBytes, myPageOffset, decompressedBytes.length);
       }
       int readBytesCount = 0;

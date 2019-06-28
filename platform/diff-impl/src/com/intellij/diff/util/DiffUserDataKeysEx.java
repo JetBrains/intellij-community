@@ -50,6 +50,8 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   Key<Pair<FilePath, VcsRevisionNumber>> REVISION_INFO = Key.create("Diff.RevisionInfo");
   Key<String> FILE_NAME = Key.create("Diff.FileName");
 
+  Key<Boolean> DIFF_IN_EDITOR = Key.create("Diff.DiffInEditor");
+
   //
   // DiffRequest
   //

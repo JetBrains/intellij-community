@@ -2,31 +2,43 @@
 package com.intellij.ide.plugins.cl;
 
 import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.lang.UrlClassLoader;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.List;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Eugene Zhuravlev
  */
-public class PluginClassLoader extends UrlClassLoader {
-  static { 
-    if (registerAsParallelCapable()) markParallelCapable(PluginClassLoader.class); 
+public final class PluginClassLoader extends UrlClassLoader {
+  static {
+    if (registerAsParallelCapable()) markParallelCapable(PluginClassLoader.class);
   }
+
   private final ClassLoader[] myParents;
   private final PluginId myPluginId;
   private final String myPluginVersion;
   private final List<String> myLibDirectories;
+
+  private final AtomicLong edtTime = new AtomicLong();
+  private final AtomicLong backgroundTime = new AtomicLong();
+
+  private final AtomicInteger loadedClassCounter = new AtomicInteger();
 
   public PluginClassLoader(@NotNull List<URL> urls,
                            @NotNull ClassLoader[] parents,
@@ -44,6 +56,18 @@ public class PluginClassLoader extends UrlClassLoader {
     }
   }
 
+  public long getEdtTime() {
+    return edtTime.get();
+  }
+
+  public long getBackgroundTime() {
+    return backgroundTime.get();
+  }
+
+  public long getLoadedClassCount() {
+    return loadedClassCounter.get();
+  }
+
   @Override
   public Class loadClass(@NotNull String name, boolean resolve) throws ClassNotFoundException {
     Class c = tryLoadingClass(name, resolve, null);
@@ -59,8 +83,8 @@ public class PluginClassLoader extends UrlClassLoader {
 
   private abstract static class ActionWithPluginClassLoader<Result, ParameterType> {
     Result execute(String name, PluginClassLoader classloader, Set<ClassLoader> visited,
-                   ActionWithPluginClassLoader<Result, ParameterType> actionWithPluginClassLoader, 
-                   ActionWithClassloader<Result, ParameterType> actionWithClassloader, 
+                   ActionWithPluginClassLoader<Result, ParameterType> actionWithPluginClassLoader,
+                   ActionWithClassloader<Result, ParameterType> actionWithClassloader,
                    ParameterType parameter) {
       Result resource = doExecute(name, classloader, parameter);
       if (resource != null) return resource;
@@ -76,7 +100,11 @@ public class PluginClassLoader extends UrlClassLoader {
                                                                    ActionWithClassloader<Result, ParameterType> actionWithClassloader,
                                                                    Set<ClassLoader> visited, ParameterType parameter) {
     for (ClassLoader parent : myParents) {
-      if (visited == null) visited = ContainerUtilRt.newHashSet(this);
+      if (visited == null) {
+        visited = new THashSet<>();
+        visited.add(this);
+      }
+
       if (!visited.add(parent)) {
         continue;
       }
@@ -126,11 +154,12 @@ public class PluginClassLoader extends UrlClassLoader {
       return null;
     }
   };
-  
+
   // Changed sequence in which classes are searched, this is essential if plugin uses library,
   // a different version of which is used in IDEA.
   @Nullable
   private Class tryLoadingClass(@NotNull String name, boolean resolve, @Nullable Set<ClassLoader> visited) {
+    long startTime = StartUpMeasurer.getCurrentTime();
     Class c = null;
     if (!mustBeLoadedByPlatform(name)) {
       c = loadClassInsideSelf(name);
@@ -144,10 +173,15 @@ public class PluginClassLoader extends UrlClassLoader {
       if (resolve) {
         resolveClass(c);
       }
-      return c;
     }
 
-    return null;
+    if (myPluginId != null && StartUpMeasurer.measuringPluginStartupCosts) {
+      Application app = ApplicationManager.getApplication();
+      // JDK impl is not so fast as ours, use it only if no application
+      boolean isEdt = app == null ? EventQueue.isDispatchThread() : app.isDispatchThread();
+      (isEdt ? edtTime : backgroundTime).addAndGet(StartUpMeasurer.getCurrentTime() - startTime);
+    }
+    return c;
   }
 
   private static final Set<String> KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES = ContainerUtil.set(
@@ -182,31 +216,31 @@ public class PluginClassLoader extends UrlClassLoader {
       try {
         c = _findClass(name);
       }
-      catch (IncompatibleClassChangeError | UnsupportedClassVersionError e) {
+      catch (LinkageError e) {
         throw new PluginException("While loading class " + name + ": " + e.getMessage(), e, myPluginId);
       }
       if (c != null) {
-        PluginManagerCore.addPluginClass(myPluginId);
+        loadedClassCounter.incrementAndGet();
       }
 
       return c;
     }
   }
-  
+
   private static final ActionWithPluginClassLoader<URL, Void> findResourceInPluginCL = new ActionWithPluginClassLoader<URL, Void>() {
     @Override
     protected URL doExecute(String name, PluginClassLoader classloader, Void parameter) {
       return classloader.findOwnResource(name);
     }
   };
-  
+
   private static final ActionWithClassloader<URL, Void> findResourceInCl = new ActionWithClassloader<URL, Void>() {
     @Override
     public URL execute(String name, ClassLoader classloader, Void parameter) {
       return classloader.getResource(name);
     }
   };
-  
+
   @Override
   public URL findResource(String name) {
     URL resource = findOwnResource(name);
@@ -236,7 +270,7 @@ public class PluginClassLoader extends UrlClassLoader {
       return classloader.getResourceAsStream(name);
     }
   };
-  
+
   @Override
   public InputStream getResourceAsStream(String name) {
     InputStream stream = getOwnResourceAsStream(name);
@@ -271,16 +305,18 @@ public class PluginClassLoader extends UrlClassLoader {
     public Void execute(String name, ClassLoader classloader, List<Enumeration<URL>> enumerations) {
       try {
         enumerations.add(classloader.getResources(name));
-      } catch (IOException ignore) {}
+      }
+      catch (IOException ignore) {}
       return null;
     }
   };
-  
+
   @Override
   public Enumeration<URL> findResources(String name) throws IOException {
-    @SuppressWarnings("unchecked") List<Enumeration<URL>> resources = new ArrayList<>();
+    List<Enumeration<URL>> resources = new ArrayList<>();
     resources.add(findOwnResources(name));
     processResourcesInParents(name, findResourcesInPluginCL, findResourcesInCl, null, resources);
+    //noinspection unchecked,ToArrayCallWithZeroLengthArrayArgument
     return new DeepEnumeration(resources.toArray(new Enumeration[resources.size()]));
   }
 
@@ -311,6 +347,10 @@ public class PluginClassLoader extends UrlClassLoader {
 
   public PluginId getPluginId() {
     return myPluginId;
+  }
+
+  public String getPluginIdString() {
+    return myPluginId != null ? myPluginId.getIdString() : "com.intellij";
   }
 
   @Override

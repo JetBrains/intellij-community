@@ -9,7 +9,8 @@ class FeaturesInfo(private val knownFeatures: Set<String>,
                    override val binary: List<BinaryFeature>,
                    override val float: List<DoubleFeature>,
                    override val categorical: List<CategoricalFeature>,
-                   override val featuresOrder: Map<String, Int>) : ModelMetadataEx {
+                   override val featuresOrder: Map<String, Int>,
+                   override val version: String?) : ModelMetadataEx {
 
   companion object {
     private val gson = Gson()
@@ -21,14 +22,14 @@ class FeaturesInfo(private val knownFeatures: Set<String>,
 
       val knownFeatures = reader.allKnown().fromJson<List<String>>().toSet()
 
-      val binaryFactors = reader.binaryFeatures().fromJson<Map<String, Map<String, Double>>>()
+      val binaryFactors = reader.binaryFeatures().fromJson<Map<String, Map<String, Any>>>()
         .map { (name, description) -> interpreter.binary(name, description, order) }
-      val doubleFactors = reader.floatFeatures().fromJson<Map<String, Double>>()
+      val doubleFactors = reader.floatFeatures().fromJson<Map<String, Map<String, Any>>>()
         .map { (name, defaultValue) -> interpreter.double(name, defaultValue, order) }
       val categoricalFactors = reader.categoricalFeatures().fromJson<Map<String, List<String>>>()
         .map { (name, categories) -> interpreter.categorical(name, categories, order) }
 
-      return FeaturesInfo(knownFeatures, binaryFactors, doubleFactors, categoricalFactors, order)
+      return FeaturesInfo(knownFeatures, binaryFactors, doubleFactors, categoricalFactors, order, reader.extractVersion())
     }
 
     private fun <T> String.fromJson(): T {

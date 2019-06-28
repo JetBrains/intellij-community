@@ -481,3 +481,5 @@ internal fun assertGitignoreValid(ignoreFile: File, gitIgnoreExpectedContent: St
   PlatformTestCase.assertFalse("Generated ignore file content should be system-independent", generatedGitIgnoreContent.contains('\\'))
   PlatformTestCase.assertContainsOrdered(generatedGitIgnoreContent.lines(), gitIgnoreExpectedContentList)
 }
+
+internal fun VirtualFile.findOrCreateDir(dirName: String) = this.findChild(dirName) ?: createChildDirectory(this, dirName)

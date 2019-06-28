@@ -162,10 +162,6 @@ public final class FileTreeModel extends AbstractTreeModel implements Identifiab
     return -1;
   }
 
-  @Override
-  public void valueForPathChanged(TreePath path, Object newValue) {
-  }
-
   private boolean hasEntry(VirtualFile file) {
     if (roots != null) {
       for (Root root : roots) {

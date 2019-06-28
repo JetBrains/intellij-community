@@ -22,12 +22,12 @@ import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 /**
  * @author Dmitry Avdeev
  */
-public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCase {
+public class XmlTypedHandlersTest extends BasePlatformTestCase {
   public void testClosingTag() {
     doTest("<foo><<caret>", '/', "<foo></foo>");
   }

@@ -3,9 +3,9 @@ package com.jetbrains.rest
 
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PlatformTestUtil.assertTreeEqual
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
-class RestStructureViewTest : LightPlatformCodeInsightFixtureTestCase() {
+class RestStructureViewTest : BasePlatformTestCase() {
 
   fun `test plain structure`() {
     doTest("-plain structure.rst\n" +

@@ -2,10 +2,10 @@
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 @SuppressWarnings("MethodMayBeStatic")
-public class MethodOnlyUsedFromInnerClassInspectionTest extends LightInspectionTestCase {
+public class MethodOnlyUsedFromInnerClassInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
     doTest("class X {\n" +

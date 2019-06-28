@@ -16,13 +16,12 @@
 package com.intellij.java.psi.util;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
-public class PropertyUtilTest extends LightCodeInsightTestCase {
+public class PropertyUtilTest extends LightJavaCodeInsightTestCase {
   public void testSuggestGetterName() {
     assertEquals("isValid", PropertyUtilBase.suggestGetterName("valid", getType("boolean")));
     assertEquals("getValid", PropertyUtilBase.suggestGetterName("valid", getType("Object")));

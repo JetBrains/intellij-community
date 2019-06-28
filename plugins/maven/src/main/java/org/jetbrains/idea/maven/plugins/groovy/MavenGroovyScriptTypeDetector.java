@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.plugins.groovy;
 
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageSchemaDescriptor;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -41,6 +42,6 @@ public class MavenGroovyScriptTypeDetector extends GroovyScriptTypeDetector impl
   }
 
   private static boolean isMavenGroovyScript(@NotNull VirtualFile file) {
-    return file.getFileType() == GroovyFileType.GROOVY_FILE_TYPE && "pom".equals(file.getNameWithoutExtension());
+    return FileTypeRegistry.getInstance().isFileOfType(file, GroovyFileType.GROOVY_FILE_TYPE) && "pom".equals(file.getNameWithoutExtension());
   }
 }

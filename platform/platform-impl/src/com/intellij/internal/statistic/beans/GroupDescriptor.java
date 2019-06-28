@@ -15,7 +15,10 @@
  */
 package com.intellij.internal.statistic.beans;
 
+import org.jetbrains.annotations.ApiStatus;
+
 @Deprecated // to be removed in 2018.2
+@ApiStatus.ScheduledForRemoval(inVersion = "2018.2")
 public class GroupDescriptor {
   public static final double DEFAULT_PRIORITY = 0.0;
   public static final double HIGHER_PRIORITY = 100.0;

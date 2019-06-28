@@ -5,12 +5,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.testFramework.ModuleTestCase;
+import com.intellij.testFramework.JavaModuleTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
 import java.util.*;
 
-public class FindReachableExportedDependenciesTest extends ModuleTestCase {
+public class FindReachableExportedDependenciesTest extends JavaModuleTestCase {
   public void testModuleDependency() {
     Module a = createModule("a");
     Module b = createModule("b");

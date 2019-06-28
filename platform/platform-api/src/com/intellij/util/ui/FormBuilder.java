@@ -20,6 +20,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.ui.components.JBLabel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -270,6 +271,7 @@ public class FormBuilder {
    * @deprecated use {@link #setHorizontalGap} or {@link #setFormLeftIndent}, to be removed in IDEA 16
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2016")
   public FormBuilder setIndent(int indent) {
     myIndent = indent;
     return this;

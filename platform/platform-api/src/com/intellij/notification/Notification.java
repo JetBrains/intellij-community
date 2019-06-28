@@ -39,6 +39,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Alexander Lobas
  */
 public class Notification {
+  /**
+   * Which actions to keep and which to show under the "Actions" dropdown link if actions do not fit horizontally
+   * into the width of the notification.
+   */
+  public enum CollapseActionsDirection { KEEP_LEFTMOST, KEEP_RIGHTMOST }
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.notification.Notification");
   private static final DataKey<Notification> KEY = DataKey.create("Notification");
 
@@ -54,6 +60,7 @@ public class Notification {
   private NotificationListener myListener;
   private String myDropDownText;
   private List<AnAction> myActions;
+  private CollapseActionsDirection myCollapseActionsDirection = CollapseActionsDirection.KEEP_RIGHTMOST;
   private AnAction myContextHelpAction;
 
   private final AtomicBoolean myExpired = new AtomicBoolean(false);
@@ -251,6 +258,17 @@ public class Notification {
     return this;
   }
 
+  public CollapseActionsDirection getCollapseActionsDirection() {
+    return myCollapseActionsDirection;
+  }
+
+  public void setCollapseActionsDirection(CollapseActionsDirection collapseActionsDirection) {
+    myCollapseActionsDirection = collapseActionsDirection;
+  }
+
+  /**
+   * @see NotificationAction
+   */
   @NotNull
   public Notification addAction(@NotNull AnAction action) {
     if (myActions == null) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -28,6 +14,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +25,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
   private static final Logger LOG = Logger.getInstance(CodeStyleSettingsManager.class);
 
   /**
-   * Use {@link #setMainProjectCodeStyle(CodeStyleSettings)} or {@link #getMainProjectCodeStyle()} instead
+   * @deprecated Use {@link #setMainProjectCodeStyle(CodeStyleSettings)} or {@link #getMainProjectCodeStyle()} instead
    */
   @Deprecated
   @Nullable
@@ -51,8 +38,10 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
   private final List<CodeStyleSettingsListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public static CodeStyleSettingsManager getInstance(@Nullable Project project) {
-    if (project == null || project.isDefault()) //noinspection deprecation
+    if (project == null || project.isDefault()) {
       return getInstance();
+    }
+
     ProjectCodeStyleSettingsManager projectSettingsManager = ServiceManager.getService(project, ProjectCodeStyleSettingsManager.class);
     projectSettingsManager.initProjectSettings(project);
     return projectSettingsManager;
@@ -136,7 +125,6 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
    * @param settings The code style settings which can be assigned to project.
    */
   public void setMainProjectCodeStyle(@Nullable CodeStyleSettings settings) {
-    //noinspection deprecation
     PER_PROJECT_SETTINGS = settings;
   }
 
@@ -145,10 +133,12 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
    */
   @Nullable
   public CodeStyleSettings getMainProjectCodeStyle() {
-    //noinspection deprecation
     return PER_PROJECT_SETTINGS;
   }
 
+  /**
+   * @deprecated unused
+   */
   @Deprecated
   public boolean isLoaded() {
     return true;
@@ -182,7 +172,6 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
 
   public static void removeListener(@Nullable Project project, @NotNull CodeStyleSettingsListener listener) {
     if (project == null || project.isDefault()) {
-      //noinspection deprecation
       getInstance().removeListener(listener);
     }
     else {
@@ -214,10 +203,9 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
     fireCodeStyleSettingsChanged(null);
   }
 
-  private void updateSettingsTracker() {
-    @SuppressWarnings("deprecation") // allowed internally
+  @ApiStatus.Internal
+  public void updateSettingsTracker() {
     CodeStyleSettings settings = getCurrentSettings();
     settings.getModificationTracker().incModificationCount();
   }
-
 }

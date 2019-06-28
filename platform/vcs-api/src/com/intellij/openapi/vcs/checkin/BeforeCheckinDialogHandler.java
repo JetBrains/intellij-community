@@ -28,7 +28,7 @@ public abstract class BeforeCheckinDialogHandler {
    * @return false to cancel commit
    */
   @Deprecated
-  public boolean beforeCommitDialogShownCallback(Iterable<CommitExecutor> executors, boolean showVcsCommit) {
+  public boolean beforeCommitDialogShownCallback(Iterable<? extends CommitExecutor> executors, boolean showVcsCommit) {
     throw new AbstractMethodError();
   }
 

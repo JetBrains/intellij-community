@@ -1,8 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.push.ui;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.*;
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -32,6 +34,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
+
 public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvider {
 
   private static final String ID = "Vcs.Push.Dialog";
@@ -47,9 +51,17 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   public VcsPushDialog(@NotNull Project project,
                        @NotNull List<? extends Repository> selectedRepositories,
                        @Nullable Repository currentRepo) {
+    this(project, VcsRepositoryManager.getInstance(project).getRepositories(), selectedRepositories, currentRepo, null);
+  }
+
+  public VcsPushDialog(@NotNull Project project,
+                       Collection<? extends Repository> allRepos, @NotNull List<? extends Repository> selectedRepositories,
+                       @Nullable Repository currentRepo, @Nullable PushSource pushSource) {
     super(project, true, (Registry.is("ide.perProjectModality")) ? IdeModalityType.PROJECT : IdeModalityType.IDE);
     myProject = project;
-    myController = new PushController(project, this, selectedRepositories, currentRepo);
+    myController =
+      new PushController(project, this, allRepos, selectedRepositories, currentRepo,
+                         pushSource);
     myAdditionalPanels = myController.createAdditionalPanels();
     myListPanel = myController.getPushPanelLog();
 
@@ -63,7 +75,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     updateOkActions();
     setOKButtonText("Push");
     setOKButtonMnemonic('P');
-    setTitle("Push Commits");
+    setTitle("Push Commits " + (allRepos.size() == 1 ? "to " + DvcsUtil.getShortRepositoryName(getFirstItem(allRepos)) : ""));
   }
 
   @Override

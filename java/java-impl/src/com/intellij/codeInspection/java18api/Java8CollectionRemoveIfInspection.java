@@ -3,6 +3,8 @@ package com.intellij.codeInspection.java18api;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.util.ForEachCollectionTraversal;
+import com.intellij.codeInspection.util.IterableTraversal;
 import com.intellij.codeInspection.util.IteratorDeclaration;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.openapi.project.Project;
@@ -15,13 +17,15 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 public class Java8CollectionRemoveIfInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
@@ -33,9 +37,7 @@ public class Java8CollectionRemoveIfInspection extends AbstractBaseJavaLocalInsp
     return new JavaElementVisitor() {
       void handleIteratorLoop(PsiLoopStatement statement, PsiJavaToken endToken, IteratorDeclaration declaration) {
         if (endToken == null || declaration == null || !declaration.isCollection()) return;
-        PsiStatement body = statement.getBody();
-        if(!(body instanceof PsiBlockStatement)) return;
-        PsiStatement[] statements = ((PsiBlockStatement)body).getCodeBlock().getStatements();
+        PsiStatement[] statements = ControlFlowUtils.unwrapBlock(statement.getBody());
         if (statements.length == 2 && statements[1] instanceof PsiIfStatement) {
           PsiVariable element = declaration.getNextElementVariable(statements[0]);
           if (element == null) return;
@@ -79,16 +81,15 @@ public class Java8CollectionRemoveIfInspection extends AbstractBaseJavaLocalInsp
       }
 
       @Nullable
-      private PsiExpression checkAndExtractCondition(IteratorDeclaration declaration,
-                                                     PsiIfStatement ifStatement) {
+      private PsiExpression checkAndExtractCondition(IterableTraversal traversal, PsiIfStatement ifStatement) {
         PsiExpression condition = ifStatement.getCondition();
         if (condition == null || ifStatement.getElseBranch() != null) return null;
         PsiStatement thenStatement = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
         if (!(thenStatement instanceof PsiExpressionStatement)) return null;
-        if (!declaration.isIteratorMethodCall(((PsiExpressionStatement)thenStatement).getExpression(), "remove")) return null;
+        if (!traversal.isRemoveCall(((PsiExpressionStatement)thenStatement).getExpression())) return null;
         if (!LambdaGenerationUtil.canBeUncheckedLambda(condition)) return null;
-        PsiReferenceExpression iterable = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(declaration.getIterable()), PsiReferenceExpression.class);
-        PsiVariable iterableVariable = iterable != null ? ObjectUtils.tryCast(iterable.resolve(), PsiVariable.class) : null;
+        PsiReferenceExpression iterable = tryCast(PsiUtil.skipParenthesizedExprDown(traversal.getIterable()), PsiReferenceExpression.class);
+        PsiVariable iterableVariable = iterable != null ? tryCast(iterable.resolve(), PsiVariable.class) : null;
         if (iterableVariable != null && VariableAccessUtils.variableIsUsed(iterableVariable, condition)) return null;
         return condition;
       }
@@ -106,6 +107,20 @@ public class Java8CollectionRemoveIfInspection extends AbstractBaseJavaLocalInsp
         IteratorDeclaration declaration = IteratorDeclaration.fromLoop(statement);
         handleIteratorLoop(statement, statement.getRParenth(), declaration);
       }
+
+      @Override
+      public void visitForeachStatement(PsiForeachStatement statement) {
+        super.visitForeachStatement(statement);
+        ForEachCollectionTraversal traversal = ForEachCollectionTraversal.fromLoop(statement);
+        if (traversal == null) return;
+        PsiIfStatement ifStatement = tryCast(ControlFlowUtils.stripBraces(statement.getBody()), PsiIfStatement.class);
+        if (ifStatement == null) return;
+        PsiExpression condition = checkAndExtractCondition(traversal, ifStatement);
+        if (condition == null) return;
+        PsiJavaToken endToken = statement.getRParenth();
+        if (endToken == null) return;
+        registerProblem(statement, endToken);
+      }
     };
   }
 
@@ -122,51 +137,56 @@ public class Java8CollectionRemoveIfInspection extends AbstractBaseJavaLocalInsp
       PsiElement element = descriptor.getStartElement();
       if(!(element instanceof PsiLoopStatement)) return;
       PsiLoopStatement loop = (PsiLoopStatement)element;
-      IteratorDeclaration declaration;
-      declaration = IteratorDeclaration.fromLoop(loop);
-      if(declaration == null) return;
-      PsiStatement body = loop.getBody();
-      if(!(body instanceof PsiBlockStatement)) return;
-      PsiStatement[] statements = ((PsiBlockStatement)body).getCodeBlock().getStatements();
-      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      String replacement = null;
+      PsiStatement[] statements = ControlFlowUtils.unwrapBlock(loop.getBody());
+      PsiIfStatement ifStatement = tryCast(ArrayUtil.getLastElement(statements), PsiIfStatement.class);
+      if (ifStatement == null) return;
+      PsiExpression condition = ifStatement.getCondition();
+      if (condition == null) return;
+      String replacement;
       CommentTracker ct = new CommentTracker();
-      if (statements.length == 2 && statements[1] instanceof PsiIfStatement) {
-        PsiVariable variable = declaration.getNextElementVariable(statements[0]);
-        if (variable == null) return;
-        PsiExpression condition = ((PsiIfStatement)statements[1]).getCondition();
-        if (condition == null) return;
-        replacement = generateRemoveIf(declaration, ct, condition, variable.getName());
+      if (loop instanceof PsiForeachStatement) {
+        ForEachCollectionTraversal traversal = ForEachCollectionTraversal.fromLoop((PsiForeachStatement)loop);
+        if (traversal == null || statements.length != 1) return;
+        replacement = generateRemoveIf(traversal, ct, condition, traversal.getParameter().getName());
       }
-      else if (statements.length == 1 && statements[0] instanceof PsiIfStatement){
-        PsiExpression condition = ((PsiIfStatement)statements[0]).getCondition();
-        if (condition == null) return;
-        PsiElement ref = declaration.findOnlyIteratorRef(condition);
-        if(ref != null) {
-          PsiElement call = ref.getParent().getParent();
-          if(!declaration.isIteratorMethodCall(call, "next")) return;
-          PsiType type = ((PsiExpression)call).getType();
-          JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
-          SuggestedNameInfo info = javaCodeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, type);
-          if(info.names.length == 0) {
-            info = javaCodeStyleManager.suggestVariableName(VariableKind.PARAMETER, "value", null, type);
-          }
-          String paramName = javaCodeStyleManager.suggestUniqueVariableName(info, condition, true).names[0];
-          ct.replace(call, factory.createIdentifier(paramName));
-          replacement = generateRemoveIf(declaration, ct, condition, paramName);
+      else {
+        IteratorDeclaration declaration = IteratorDeclaration.fromLoop(loop);
+        if (declaration == null) return;
+        switch (statements.length) {
+          case 1:
+            PsiElement ref = declaration.findOnlyIteratorRef(condition);
+            if (ref == null) return;
+            PsiElement call = ref.getParent().getParent();
+            if (!declaration.isIteratorMethodCall(call, "next")) return;
+            PsiType type = ((PsiExpression)call).getType();
+            JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
+            SuggestedNameInfo info = javaCodeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, type);
+            if (info.names.length == 0) {
+              info = javaCodeStyleManager.suggestVariableName(VariableKind.PARAMETER, "value", null, type);
+            }
+            String paramName = javaCodeStyleManager.suggestUniqueVariableName(info, condition, true).names[0];
+            ct.replace(call, JavaPsiFacade.getElementFactory(project).createIdentifier(paramName));
+            replacement = generateRemoveIf(declaration, ct, condition, paramName);
+            break;
+          case 2:
+            PsiVariable variable = declaration.getNextElementVariable(statements[0]);
+            if (variable == null) return;
+            replacement = generateRemoveIf(declaration, ct, condition, variable.getName());
+            break;
+          default:
+            return;
         }
+        ct.delete(declaration.getIterator());
       }
-      if (replacement == null) return;
-      ct.delete(declaration.getIterator());
       PsiElement result = ct.replaceAndRestoreComments(loop, replacement);
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
       CodeStyleManager.getInstance(project).reformat(result);
     }
 
     @NotNull
-    private static String generateRemoveIf(IteratorDeclaration declaration, CommentTracker ct,
+    private static String generateRemoveIf(IterableTraversal traversal, CommentTracker ct,
                                            PsiExpression condition, String paramName) {
-      return (declaration.getIterable() == null ? "" : ct.text(declaration.getIterable()) + ".") +
+      return (traversal.getIterable() == null ? "" : ct.text(traversal.getIterable()) + ".") +
              "removeIf(" + paramName + "->" + ct.text(condition) + ");";
     }
   }

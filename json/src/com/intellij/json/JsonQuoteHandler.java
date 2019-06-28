@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.json;
 
 import com.intellij.codeInsight.editorActions.MultiCharQuoteHandler;
@@ -33,7 +34,7 @@ public class JsonQuoteHandler extends SimpleTokenSetQuoteHandler implements Mult
   }
 
   @Override
-  public void insertClosingQuote(@NotNull Editor editor, int offset, PsiFile file, @NotNull CharSequence closingQuote) {
+  public void insertClosingQuote(@NotNull Editor editor, int offset, @NotNull PsiFile file, @NotNull CharSequence closingQuote) {
     editor.getDocument().insertString(offset, closingQuote);
     JsonTypedHandler.processPairedBracesComma(closingQuote.charAt(0), editor, file);
   }

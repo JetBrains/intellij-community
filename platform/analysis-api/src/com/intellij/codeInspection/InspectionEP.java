@@ -15,6 +15,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +43,7 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
   @Attribute("shortName")
   public String shortName;
 
+  @NonNls
   @NotNull
   public String getShortName() {
     if (implementationClass == null) {
@@ -50,14 +52,14 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
     return shortName == null ? shortName = InspectionProfileEntry.getShortName(StringUtil.getShortName(implementationClass)) : shortName;
   }
 
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   @Nullable
-  @Nls
   public String getDisplayName() {
     return displayName == null ? displayName = getLocalizedString(bundle, key) : displayName;
   }
 
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   @Nullable
-  @Nls
   public String getGroupDisplayName() {
     return groupDisplayName == null ? groupDisplayName = getLocalizedString(groupBundle, groupKey) : groupDisplayName;
   }
@@ -98,7 +100,7 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
 
   /**
    * Message bundle, e.g. {@code "messages.InspectionsBundle"}.
-   * If unspecified, plugin's {@code <resource-bundle>} is used.
+   * If unspecified, will use {@link #bundle}, then plugin's {@code <resource-bundle>} as fallback.
    *
    * @see #groupKey
    */

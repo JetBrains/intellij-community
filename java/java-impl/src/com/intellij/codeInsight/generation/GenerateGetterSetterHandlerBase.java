@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -53,7 +53,7 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
 
   static {
     GenerateAccessorProviderRegistrar.registerProvider(s -> {
-      if (s.getLanguage() != StdLanguages.JAVA) return Collections.emptyList();
+      if (s.getLanguage() != JavaLanguage.INSTANCE) return Collections.emptyList();
       final List<EncapsulatableClassMember> result = new ArrayList<>();
       for (PsiField field : s.getFields()) {
         if (!(field instanceof PsiEnumConstant)) {

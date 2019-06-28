@@ -1,14 +1,17 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
+import com.intellij.execution.Executor
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext
 import com.intellij.internal.statistic.utils.PluginInfo
+import com.intellij.internal.statistic.utils.addPluginInfoTo
 import com.intellij.internal.statistic.utils.getPluginType
 import com.intellij.internal.statistic.utils.getProjectId
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
@@ -34,6 +37,7 @@ import java.util.*
  * </p>
  */
 class FeatureUsageData {
+  private val LOG = Logger.getInstance(FeatureUsageData::class.java)
   private var data: MutableMap<String, Any> = HashMap()
 
   companion object {
@@ -50,6 +54,13 @@ class FeatureUsageData {
     return this
   }
 
+  /**
+   * Project data is added automatically for project state collectors and project-wide counter events.
+   *
+   * @see com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
+   * @see com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger.logEvent(Project, String, String)
+   * @see com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger.logEvent(Project, String, String, FeatureUsageData)
+   */
   fun addProject(project: Project?): FeatureUsageData {
     if (project != null) {
       data["project"] = getProjectId(project)
@@ -72,6 +83,10 @@ class FeatureUsageData {
     return this
   }
 
+  /**
+   * Group by OS will be available without adding OS explicitly to event data.
+   */
+  @Deprecated("Don't add OS to event data")
   fun addOS(): FeatureUsageData {
     data["os"] = getOS()
     return this
@@ -83,10 +98,16 @@ class FeatureUsageData {
     return if (SystemInfo.isLinux) "Linux" else "Other"
   }
 
-  fun addPluginInfo(info: PluginInfo): FeatureUsageData {
-    data["plugin_type"] = info.type.name
-    if (info.type.isSafeToReport() && info.id != null && StringUtil.isNotEmpty(info.id)) {
-      data["plugin"] = info.id
+  fun addPluginInfo(info: PluginInfo?): FeatureUsageData {
+    info?.let {
+      addPluginInfoTo(info, data)
+    }
+    return this
+  }
+
+  fun addLanguage(id: String?): FeatureUsageData {
+    id?.let {
+      addLanguage(Language.findLanguageByID(id))
     }
     return this
   }
@@ -154,6 +175,25 @@ class FeatureUsageData {
     return ActionPlaces.isCommonPlace(place) || ToolWindowContentUi.POPUP_PLACE == place
   }
 
+  fun addExecutor(executor: Executor): FeatureUsageData {
+    return addData("executor", executor.id)
+  }
+
+  fun addValue(value: Any): FeatureUsageData {
+    if (value is String || value is Boolean || value is Int || value is Long || value is Float || value is Double) {
+      return addDataInternal("value", value)
+    }
+    return addData("value", value.toString())
+  }
+
+  fun addEnabled(enabled: Boolean): FeatureUsageData {
+    return addData("enabled", enabled)
+  }
+
+  fun addCount(count: Int): FeatureUsageData {
+    return addData("count", count)
+  }
+
   fun addData(key: String, value: Boolean): FeatureUsageData {
     return addDataInternal(key, value)
   }
@@ -166,13 +206,25 @@ class FeatureUsageData {
     return addDataInternal(key, value)
   }
 
+  fun addData(key: String, value: Float): FeatureUsageData {
+    return addDataInternal(key, value)
+  }
+
+  fun addData(key: String, value: Double): FeatureUsageData {
+    return addDataInternal(key, value)
+  }
+
   fun addData(key: String, value: String): FeatureUsageData {
     return addDataInternal(key, value)
   }
 
   private fun addDataInternal(key: String, value: Any): FeatureUsageData {
-    if (ApplicationManager.getApplication().isUnitTestMode || !platformDataKeys.contains(key)) data[key] = value
+    if (!ApplicationManager.getApplication().isUnitTestMode && platformDataKeys.contains(key)) {
+      LOG.warn("Collectors should not reuse platform keys: $key")
+      return this
+    }
 
+    data[key] = value
     return this
   }
 
@@ -212,6 +264,10 @@ class FeatureUsageData {
 
   override fun hashCode(): Int {
     return data.hashCode()
+  }
+
+  override fun toString(): String {
+    return data.toString()
   }
 }
 

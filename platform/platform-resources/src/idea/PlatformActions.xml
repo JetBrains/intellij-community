@@ -26,10 +26,10 @@
     <group id="ListActions" text="List Actions">
       <action id="List-selectFirstRow" text="Select First Row"
               description="Selects the first row."
-              class="com.intellij.ui.ListActions$Home" use-shortcut-of="EditorTextStart"/>
+              class="com.intellij.ui.ListActions$Home" use-shortcut-of="EditorLineStart"/>
       <action id="List-selectFirstRowExtendSelection" text="Extend Selection to First Row"
               description="Scrolls to the first row and adds corresponding rows to selection."
-              class="com.intellij.ui.ListActions$ShiftHome" use-shortcut-of="EditorTextStartWithSelection"/>
+              class="com.intellij.ui.ListActions$ShiftHome" use-shortcut-of="EditorLineStartWithSelection"/>
       <action id="List-selectLastRow" text="Select Last Row"
               description="Selects the last row."
               class="com.intellij.ui.ListActions$End" use-shortcut-of="EditorTextEnd"/>
@@ -130,10 +130,10 @@
     <group id="TreeActions" text="Tree Actions">
       <action id="Tree-selectFirst" text="Select First Node"
               description="Selects the first node."
-              class="com.intellij.ui.TreeActions$Home" use-shortcut-of="EditorTextStart"/>
+              class="com.intellij.ui.TreeActions$Home" use-shortcut-of="EditorLineStart"/>
       <action id="Tree-selectFirstExtendSelection" text="Extend Selection to First Node"
               description="Scrolls to the first node and adds corresponding nodes to selection."
-              class="com.intellij.ui.TreeActions$ShiftHome" use-shortcut-of="EditorTextStartWithSelection"/>
+              class="com.intellij.ui.TreeActions$ShiftHome" use-shortcut-of="EditorLineStartWithSelection"/>
       <action id="Tree-selectLast" text="Select Last Node"
               description="Selects the last node."
               class="com.intellij.ui.TreeActions$End" use-shortcut-of="EditorTextEnd"/>
@@ -203,9 +203,9 @@
 
     <group id="NavBarActions" text="Navigation Bar Actions">
       <action id="NavBar-selectHome" text="Select First Item"
-              class="com.intellij.ide.navigationToolbar.NavBarActions$Home" use-shortcut-of="EditorTextStart"/>
+              class="com.intellij.ide.navigationToolbar.NavBarActions$Home" use-shortcut-of="EditorLineStart"/>
       <action id="NavBar-selectEnd" text="Select Last Item"
-              class="com.intellij.ide.navigationToolbar.NavBarActions$End" use-shortcut-of="EditorTextEnd"/>
+              class="com.intellij.ide.navigationToolbar.NavBarActions$End" use-shortcut-of="EditorLineEnd"/>
       <action id="NavBar-selectUp" text="Open Corresponding Popup Menu"
               class="com.intellij.ide.navigationToolbar.NavBarActions$Up" use-shortcut-of="EditorUp"/>
       <action id="NavBar-selectDown" text="Open Corresponding Popup Menu"
@@ -420,7 +420,10 @@
 
     <action id="SelectNextOccurrence" class="com.intellij.openapi.editor.actions.SelectNextOccurrenceAction"/>
 
-    <action id="Refresh" class="com.intellij.ide.actions.RefreshAction"/>
+    <action id="Refresh" class="com.intellij.ide.actions.RefreshAction"
+            text="Refresh" icon="AllIcons.Actions.Refresh"/>
+    <action id="ForceRefresh" class="com.intellij.openapi.actionSystem.EmptyAction"
+            text="Force Refresh" icon="AllIcons.Actions.ForceRefresh"/>
 
     <group id="Diff.KeymapGroup" text="Diff \&amp;\&amp; Merge">
       <action id="Diff.ShowDiff" class="com.intellij.diff.actions.ShowDiffAction"
@@ -628,7 +631,22 @@
       <!-- View -->
       <group id="ViewMenu" popup="true" compact="true">
         <group id="ToolWindowsGroup" class="com.intellij.ide.actions.ToolWindowsGroup" popup="true"/>
-
+        <group id="ViewAppearanceGroup" popup="true">
+          <group id="ToggleFullScreenGroup">
+            <separator/>
+            <action id="TogglePresentationMode" class="com.intellij.ide.actions.TogglePresentationModeAction"/>
+            <action id="ToggleDistractionFreeMode" class="com.intellij.ide.actions.ToggleDistractionFreeModeAction"/>
+            <action id="ToggleFullScreen" class="com.intellij.ide.actions.ToggleFullScreenAction"/>
+          </group>
+          <group id="UIToggleActions">
+            <separator/>
+            <action id="ViewToolBar" class="com.intellij.ide.actions.ViewToolbarAction"/>
+            <action id="ViewToolButtons" class="com.intellij.ide.actions.ViewToolWindowButtonsAction"/>
+            <action id="ViewStatusBar" class="com.intellij.ide.actions.ViewStatusBarAction"/>
+            <action id="ViewMainMenu" class="com.intellij.ide.actions.ViewMainMenuAction"/>
+            <action id="ViewInplaceComments" class="com.intellij.ide.actions.ViewInplaceCommentsAction"/>
+          </group>
+        </group>
         <action id="EditSource" class="com.intellij.ide.actions.EditSourceAction" icon="AllIcons.Actions.EditSource"/>
         <action id="ViewSource" class="com.intellij.ide.actions.ViewSourceAction"/>
         <separator/>
@@ -649,14 +667,6 @@
         </group>
         <separator/>
         <action id="QuickChangeScheme" class="com.intellij.ide.actions.QuickChangeSchemesAction"/>
-        <group id="UIToggleActions">
-          <separator/>
-          <action id="ViewToolBar" class="com.intellij.ide.actions.ViewToolbarAction"/>
-          <action id="ViewToolButtons" class="com.intellij.ide.actions.ViewToolWindowButtonsAction"/>
-          <action id="ViewStatusBar" class="com.intellij.ide.actions.ViewStatusBarAction"/>
-          <action id="ViewInplaceComments" class="com.intellij.ide.actions.ViewInplaceCommentsAction"/>
-        </group>
-
         <group id="EditorToggleActions" popup="true">
           <action id="EditorToggleUseSoftWraps" class="com.intellij.openapi.editor.actions.ToggleUseSoftWrapsMenuAction"
                   icon="AllIcons.Actions.ToggleSoftWrap"/>
@@ -677,14 +687,6 @@
           <action id="EditorSetRtlBidiTextDirection" class="com.intellij.openapi.editor.actions.SetEditorBidiTextDirectionAction$Rtl"/>
         </group>
         <separator/>
-
-        <!-- Mac OS Lion: In native apps toggle full screen mode is the last action in "View" menu -->
-        <group id="ToggleFullScreenGroup">
-          <separator/>
-          <action id="TogglePresentationMode" class="com.intellij.ide.actions.TogglePresentationModeAction"/>
-          <action id="ToggleDistractionFreeMode" class="com.intellij.ide.actions.ToggleDistractionFreeModeAction"/>
-          <action id="ToggleFullScreen" class="com.intellij.ide.actions.ToggleFullScreenAction"/>
-        </group>
       </group>
 
       <!-- Go to -->
@@ -800,6 +802,7 @@
         <action id="Performance.ActivityMonitor" class="com.intellij.ide.actions.ActivityMonitorAction"
                 text="Activity Monitor..." description="A tool to check which plugins and subsystems consume most resources">
         </action>
+        <action id="Performance.DumpThreads" class="com.intellij.ide.actions.DumpThreadsAction" text="Dump Threads"/>
 
         <action id="TechnicalSupport" class="com.intellij.ide.actions.TechnicalSupportAction"/>
         <action id="ReportProblem" class="com.intellij.ide.actions.ReportProblemAction"/>
@@ -808,6 +811,10 @@
         <action id="CollectTroubleshootingInformation" class="com.intellij.ide.actions.CollectTroubleshootingInformationAction"
                 text="Collect Troubleshooting Information"/>
         <action id="CollectZippedLogs" class="com.intellij.ide.actions.CollectZippedLogsAction"/>
+        <action class="com.intellij.diagnostic.ShowMemoryDialogAction"
+                id="performancePlugin.ShowMemoryDialogAction" text="Change Memory Settings"
+                description="Show change memory dialog">
+        </action>
         <action id="EditCustomProperties" class="com.intellij.ide.actions.EditCustomPropertiesAction"/>
         <action id="EditCustomVmOptions" class="com.intellij.ide.actions.EditCustomVmOptionsAction"/>
         <action id="LogDebugConfigure" class="com.intellij.ide.actions.DebugLogConfigureAction"/>
@@ -915,6 +922,8 @@
               icon="AllIcons.ToolbarDecorator.Import"/>
       <action id="WelcomeScreen.Configure.Export" class="com.intellij.configurationStore.ExportSettingsAction"
               icon="AllIcons.ToolbarDecorator.Export"/>
+
+      <action id="WelcomeScreen.Configure.CollectZippedLogs" class="com.intellij.ide.actions.CollectZippedLogsAction"/>
 
       <action id="WelcomeScreen.Configure.Properties" class="com.intellij.ide.actions.EditCustomPropertiesAction"/>
       <action id="WelcomeScreen.Configure.VMOptions" class="com.intellij.ide.actions.EditCustomVmOptionsAction"/>
@@ -1088,6 +1097,8 @@
         <action id="ShowSouthPanelTestDialogAction" internal="true"
                 class="com.intellij.openapi.wm.impl.status.ShowSouthPanelTestDialogAction" text="Test DialogWrapper South Panel"/>
         <action id="TestTextFieldAction" internal="true" class="com.intellij.ui.components.TestTextFieldAction" text="Test Text Fields"/>
+        <action id="ShowNotificationIconsDialogAction" internal="true" class="com.intellij.notification.impl.ShowNotificationIconsDialogAction"
+                text="Test Notification Icons"/>
         <separator/>
         <action id="DebugMigLayoutAction" internal="true" class="com.intellij.ui.layout.migLayout.DebugMigLayoutAction"
                 text="UI DSL Debug Mode"/>
@@ -1272,5 +1283,20 @@
 
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
+
+    <group id="Internal.HeapAnalysis" text="Heap Analysis" popup="true" internal="true">
+      <action class="com.intellij.diagnostic.hprof.action.InternalUserInvokedFullAnalysisAction" id="UserInvokedFullAnalysis"
+              text="Create And Immediately Analyze Heap Dump" internal="true"/>
+      <action class="com.intellij.diagnostic.hprof.action.InternalNonuserInvokedHeapDumpSnapshotAction" id="SilentHeapDumpSnapshot"
+              text="Create And Schedule Heap Dump Analysis (Non-user invoked)" internal="true"/>
+      <add-to-group group-id="Internal"/>
+    </group>
+
+    <action class="com.intellij.diagnostic.PluginStartupCostAction" text="Analyze Plugin Startup Performance">
+      <add-to-group group-id="HelpMenu" anchor="after" relative-to-action="Performance.ActivityMonitor"/>
+    </action>
+
+    <action class="com.intellij.diagnostic.GenerateJarAccessLogAction" internal="true" text="Generate Jar Access Log"/>
+    <action class="com.intellij.diagnostic.TriggerLowMemoryNotificationAction" internal="true" text="Trigger Low Memory Notification"/>
   </actions>
 </idea-plugin>

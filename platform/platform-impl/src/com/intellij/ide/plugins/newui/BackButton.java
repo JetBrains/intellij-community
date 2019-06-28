@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.util.ui.JBUI;
+import com.intellij.ui.scale.JBUIScale;
 
 import javax.swing.*;
 import java.awt.*;
@@ -20,12 +20,12 @@ public class BackButton extends JButton {
     setIcon(new Icon() {
       @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {
-        AllIcons.Actions.Back.paintIcon(c, g, x + JBUI.scale(7), y);
+        AllIcons.Actions.Back.paintIcon(c, g, x + JBUIScale.scale(7), y);
       }
 
       @Override
       public int getIconWidth() {
-        return AllIcons.Actions.Back.getIconWidth() + JBUI.scale(7);
+        return AllIcons.Actions.Back.getIconWidth() + JBUIScale.scale(7);
       }
 
       @Override
@@ -37,8 +37,8 @@ public class BackButton extends JButton {
     setHorizontalAlignment(SwingConstants.LEFT);
 
     Dimension size = getPreferredSize();
-    size.width -= JBUI.scale(15);
-    size.height = JBUI.scale(27);
+    size.width -= JBUIScale.scale(15);
+    size.height = JBUIScale.scale(27);
     setPreferredSize(size);
   }
 

@@ -6,9 +6,10 @@ import com.google.common.collect.Multimap;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.ui.*;
 import com.intellij.dvcs.repo.Repository;
-import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.ide.util.DelegatingProgressIndicator;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -19,10 +20,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.ui.CheckedTreeNode;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +42,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.containers.ContainerUtil.map2Map;
 import static java.util.Collections.*;
 
@@ -49,30 +50,36 @@ public class PushController implements Disposable {
   private static final Logger LOG = Logger.getInstance(PushController.class);
 
   @NotNull private final Project myProject;
+  @Nullable private final PushSource myPushSource;
+  @NotNull private final Collection<? extends Repository> myAllRepos;
   @NotNull private final List<? extends Repository> myPreselectedRepositories;
-  @NotNull private final VcsRepositoryManager myGlobalRepositoryManager;
   @NotNull private final List<PushSupport<Repository, PushSource, PushTarget>> myPushSupports;
   @NotNull private final PushLog myPushLog;
   @NotNull private final VcsPushDialog myDialog;
+  @NotNull private final ModalityState myModalityState;
   @Nullable private final Repository myCurrentlyOpenedRepository;
   private final List<PrePushHandler> myHandlers = new ArrayList<>();
   private final boolean mySingleRepoProject;
   private static final int DEFAULT_CHILDREN_PRESENTATION_NUMBER = 20;
-  private final ExecutorService myExecutorService = ConcurrencyUtil.newSingleThreadExecutor("DVCS Push");
+  private final ExecutorService myExecutorService = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("DVCS Push");
 
   private final Map<RepositoryNode, MyRepoModel<?, ?, ?>> myView2Model = new TreeMap<>();
 
   public PushController(@NotNull Project project,
                         @NotNull VcsPushDialog dialog,
-                        @NotNull List<? extends Repository> preselectedRepositories, @Nullable Repository currentRepo) {
+                        @NotNull Collection<? extends Repository> allRepos,
+                        @NotNull List<? extends Repository> preselectedRepositories,
+                        @Nullable Repository currentRepo, @Nullable PushSource pushSource) {
     myProject = project;
     ContainerUtil.addAll(myHandlers, PrePushHandler.EP_NAME.getExtensions(project));
-    myGlobalRepositoryManager = VcsRepositoryManager.getInstance(project);
+    myAllRepos = allRepos;
     myPreselectedRepositories = preselectedRepositories;
     myCurrentlyOpenedRepository = currentRepo;
+    myPushSource = pushSource;
     myPushSupports = getAffectedSupports();
     mySingleRepoProject = isSingleRepoProject();
     myDialog = dialog;
+    myModalityState = ModalityState.stateForComponent(myDialog.getRootPane());
     CheckedTreeNode rootNode = new CheckedTreeNode(null);
     createTreeModel(rootNode);
     myPushLog = new PushLog(myProject, rootNode, isSyncStrategiesAllowed());
@@ -94,13 +101,12 @@ public class PushController implements Disposable {
   }
 
   private boolean isSingleRepoProject() {
-    return myGlobalRepositoryManager.getRepositories().size() == 1;
+    return myAllRepos.size() == 1;
   }
 
   @NotNull
   private <R extends Repository, S extends PushSource, T extends PushTarget> List<PushSupport<R, S, T>> getAffectedSupports() {
-    Collection<Repository> repositories = myGlobalRepositoryManager.getRepositories();
-    Collection<AbstractVcs> vcss = ContainerUtil.map2Set(repositories, repository -> repository.getVcs());
+    Collection<AbstractVcs> vcss = ContainerUtil.map2Set(myAllRepos, repository -> repository.getVcs());
     return ContainerUtil.map(vcss, (Function<AbstractVcs, PushSupport<R, S, T>>)vcs -> {
       //noinspection unchecked
       return DvcsUtil.getPushSupport(vcs);
@@ -165,8 +171,11 @@ public class PushController implements Disposable {
   }
 
   private void createTreeModel(@NotNull CheckedTreeNode rootNode) {
-    for (Repository repository : DvcsUtil.sortRepositories(myGlobalRepositoryManager.getRepositories())) {
-      createRepoNode(repository, rootNode);
+    for (Repository repository : DvcsUtil.sortRepositories(myAllRepos)) {
+      PushSupport<Repository, PushSource, PushTarget> support = getPushSupportByRepository(repository);
+      if (support != null) {
+        createRepoNode(repository, rootNode, chooseNotNull(myPushSource, support.getSource(repository)), support);
+      }
     }
   }
 
@@ -179,21 +188,19 @@ public class PushController implements Disposable {
   }
 
   private <R extends Repository, S extends PushSource, T extends PushTarget> void createRepoNode(@NotNull final R repository,
-                                                                                                 @NotNull final CheckedTreeNode rootNode) {
+                                                                                                 @NotNull final CheckedTreeNode rootNode,
+                                                                                                 @NotNull S source,
+                                                                                                 @NotNull PushSupport<R, S, T> pushSupport) {
 
-    PushSupport<R, S, T> support = getPushSupportByRepository(repository);
-    if (support == null) return;
-
-    T target = support.getDefaultTarget(repository);
+    T target = pushSupport.getDefaultTarget(repository, source);
     String repoName = getDisplayedRepoName(repository);
-    S source = support.getSource(repository);
-    final MyRepoModel<R, S, T> model = new MyRepoModel<>(repository, support, mySingleRepoProject,
+    final MyRepoModel<R, S, T> model = new MyRepoModel<>(repository, pushSupport, mySingleRepoProject,
                                                          source, target);
     if (target == null) {
       model.setError(VcsError.createEmptyTargetError(repoName));
     }
 
-    final PushTargetPanel<T> pushTargetPanel = support.createTargetPanel(repository, target);
+    final PushTargetPanel<T> pushTargetPanel = pushSupport.createTargetPanel(repository, source, target);
     final RepositoryWithBranchPanel<T> repoPanel = new RepositoryWithBranchPanel<>(myProject, repoName,
                                                                                    source.getPresentation(), pushTargetPanel);
     CheckBoxModel checkBoxModel = model.getCheckBoxModel();
@@ -251,8 +258,7 @@ public class PushController implements Disposable {
   }
 
   private boolean containedInOtherNames(@NotNull final Repository except, final String candidate) {
-    return ContainerUtil.exists(myGlobalRepositoryManager.getRepositories(),
-                                repository -> !repository.equals(except) && repository.getRoot().getName().equals(candidate));
+    return ContainerUtil.exists(myAllRepos, repository -> !repository.equals(except) && repository.getRoot().getName().equals(candidate));
   }
 
   public boolean isPushAllowed() {
@@ -295,7 +301,7 @@ public class PushController implements Disposable {
         .getOutgoingCommits(repository, new PushSpec<>(model.getSource(), model.getTarget()), initial);
       result.compareAndSet(null, outgoing);
       try {
-        EdtInvocationManager.getInstance().invokeAndWait(() -> {
+        ApplicationManager.getApplication().invokeAndWait(() -> {
           OutgoingResult outgoing1 = result.get();
           List<VcsError> errors = outgoing1.getErrors();
           boolean shouldBeSelected;
@@ -340,10 +346,9 @@ public class PushController implements Disposable {
             node.setChecked(false);
           }
           myDialog.updateOkActions();
-        });
+        }, myModalityState);
       }
-      catch (InterruptedException e) {
-        // ignore
+      catch (ProcessCanceledException ignore) {
       }
       catch (Exception e) {
         LOG.error(e);

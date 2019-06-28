@@ -210,7 +210,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       if (child.getElementType() == JavaTokenType.C_STYLE_COMMENT) {
         return new CStyleCommentBlock(child, actualIndent);
       }
-      final LeafBlock block = new LeafBlock(child, wrap, alignment, actualIndent);
+      LeafBlock block = new LeafBlock(child, wrap, alignment, actualIndent);
       block.setStartOffset(startOffset);
       return block;
     }
@@ -227,7 +227,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       return new DocCommentBlock(child, wrap, alignment, actualIndent, settings, javaSettings, formattingMode);
     }
 
-    final SimpleJavaBlock simpleJavaBlock = new SimpleJavaBlock(child, wrap, alignmentStrategy, actualIndent, settings, javaSettings, myFormattingMode);
+    SimpleJavaBlock simpleJavaBlock = new SimpleJavaBlock(child, wrap, alignmentStrategy, actualIndent, settings, javaSettings, myFormattingMode);
     simpleJavaBlock.setStartOffset(startOffset);
     return simpleJavaBlock;
   }
@@ -681,11 +681,12 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                final Indent childIndent) {
     ASTNode lastFieldInGroup = findLastFieldInGroup(child);
     if (lastFieldInGroup == child) {
-      result.add(createJavaBlock(child, getSettings(), myJavaSettings, childIndent, arrangeChildWrap(child, defaultWrap), alignmentStrategy, myFormattingMode));
+      Wrap wrap = arrangeChildWrap(child, defaultWrap);
+      result.add(createJavaBlock(child, getSettings(), myJavaSettings, childIndent, wrap, alignmentStrategy, myFormattingMode));
       return child;
     }
     else {
-      final ArrayList<Block> localResult = new ArrayList<>();
+      List<Block> localResult = new ArrayList<>();
       while (child != null) {
         if (!FormatterUtil.containsWhiteSpacesOnly(child)) {
           localResult.add(createJavaBlock(

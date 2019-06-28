@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.util;
 
@@ -19,6 +19,7 @@ import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -38,6 +39,7 @@ import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import gnu.trove.THashSet;
@@ -397,7 +399,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
       final Set<String> array = new THashSet<>();
       Collections.addAll(array, fileNames);
 
-      final String[] result = ArrayUtil.toStringArray(array);
+      final String[] result = ArrayUtilRt.toStringArray(array);
       Arrays.sort(result);
       return result;
     }
@@ -457,7 +459,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
       boolean accepted = myFileType == null || psiFile.getFileType() == myFileType;
       VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile != null && !accepted) {
-        accepted = virtualFile.getFileType() == myFileType;
+        accepted = FileTypeRegistry.getInstance().isFileOfType(virtualFile, myFileType);
       }
       return accepted;
     };

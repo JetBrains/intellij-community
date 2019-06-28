@@ -10,15 +10,19 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
+import com.intellij.util.ui.UIUtil;
 import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
@@ -216,6 +220,15 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
           }
         });
         myDispatcher.addListener(new FSAdapter() {
+
+          @Override
+          public void windowEnteringFullScreen(AppEvent.FullScreenEvent event) {
+            JRootPane rootPane = frame.getRootPane();
+            if (rootPane != null && rootPane.getBorder() != null && Registry.is("ide.mac.transparentTitleBarAppearance")) {
+              rootPane.setBorder(null);
+            }
+          }
+
           @Override
           public void windowEnteredFullScreen(AppEvent.FullScreenEvent event) {
             // We can get the notification when the frame has been disposed
@@ -229,6 +242,11 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
           public void windowExitedFullScreen(AppEvent.FullScreenEvent event) {
             // We can get the notification when the frame has been disposed
             if (myFrame == null/* || ORACLE_BUG_ID_8003173*/) return;
+            JRootPane rootPane = frame.getRootPane();
+            if (rootPane instanceof IdeRootPane && Registry.is("ide.mac.transparentTitleBarAppearance")) {
+              IdeRootPane ideRootPane = (IdeRootPane)rootPane;
+              UIUtil.setCustomTitleBar(frame, ideRootPane, runnable -> Disposer.register(ideRootPane, () -> runnable.run()));
+            }
             exitFullscreen();
             myFrame.validate();
           }

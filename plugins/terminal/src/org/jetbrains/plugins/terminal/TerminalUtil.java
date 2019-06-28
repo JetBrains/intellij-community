@@ -26,7 +26,6 @@ import org.jvnet.winp.WinProcess;
 import org.jvnet.winp.WinpException;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.StringTokenizer;
 
 public class TerminalUtil {
@@ -89,7 +88,7 @@ public class TerminalUtil {
         throw new IllegalStateException(e);
       }
     }
-    throw new IllegalStateException("Cannot determine if there are running processes: "  + SystemInfo.OS_NAME +
+    throw new IllegalStateException("Cannot determine if there are running processes: " + SystemInfo.OS_NAME +
                                     ", " + process.getClass().getName());
   }
 

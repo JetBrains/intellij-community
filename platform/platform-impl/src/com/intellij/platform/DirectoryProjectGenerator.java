@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +41,7 @@ public interface DirectoryProjectGenerator<T> {
 
   // to be removed in 2017.3
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2017.3")
   default boolean isPrimaryGenerator() {
     return true;
   }

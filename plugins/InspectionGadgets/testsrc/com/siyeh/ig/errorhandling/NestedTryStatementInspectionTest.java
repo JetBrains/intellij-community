@@ -16,9 +16,9 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
-public class NestedTryStatementInspectionTest extends LightInspectionTestCase {
+public class NestedTryStatementInspectionTest extends LightJavaInspectionTestCase {
 
   @Override
   protected LocalInspectionTool getInspection() {

@@ -17,7 +17,6 @@
 package com.jetbrains.completion.feature
 
 import com.jetbrains.completion.feature.impl.FeatureUtils
-import org.junit.Assert
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -98,8 +97,10 @@ abstract class ModelMetadataTest {
     fun `test features fill features array properly`() {
         val metadata = modelMetadata()
         val revertedFeatureOrder = mutableMapOf<Int, Feature>()
-        fun MutableMap<Int, Feature>.checkAndPut(index: Int, feature: Feature) {
-            assertFeaturesNotStoreValueBySameIndex(index, put(index, feature), feature)
+        fun MutableMap<Int, Feature>.checkAndPut(index: Int?, feature: Feature) {
+            if (index != null) {
+              assertFeaturesNotStoreValueBySameIndex(index, put(index, feature), feature)
+            }
         }
         for (feature in metadata.binary) {
             revertedFeatureOrder.checkAndPut(feature.index, feature)
@@ -120,6 +121,12 @@ abstract class ModelMetadataTest {
         assertEquals("features should totally cover the features array", metadata.featuresOrder.size, revertedFeatureOrder.size)
         assertEquals(0, revertedFeatureOrder.keys.min())
         assertEquals(metadata.featuresOrder.size - 1, revertedFeatureOrder.keys.max())
+    }
+
+    @Test
+    fun `extract model version`() {
+        val meta = modelMetadata()
+        assertNotNull(meta.version)
     }
 
     private fun assertFeaturesNotStoreValueBySameIndex(index: Int, old: Feature?, new: Feature) {

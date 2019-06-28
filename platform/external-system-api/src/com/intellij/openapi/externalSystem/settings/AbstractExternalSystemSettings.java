@@ -106,7 +106,7 @@ public abstract class AbstractExternalSystemSettings<
     PS existing = getLinkedProjectSettings(settings.getExternalProjectPath());
     if (existing != null) {
       throw new IllegalArgumentException(String.format(
-        "Can't link external project '%s'. Reason: it's already registered at the current ide project",
+        "Can't link project '%s'. Reason: it's already linked to the IDE project",
         settings.getExternalProjectPath()
       ));
     }
@@ -158,10 +158,6 @@ public abstract class AbstractExternalSystemSettings<
             listener.onUseAutoImportChange(current.isUseAutoImport(), current.getExternalProjectPath());
           }
           getPublisher().onUseAutoImportChange(current.isUseAutoImport(), current.getExternalProjectPath());
-        }
-        if (old.isCreateEmptyContentRootDirectories() != current.isCreateEmptyContentRootDirectories() ||
-            old.isUseQualifiedModuleNames() != current.isUseQualifiedModuleNames()) {
-          ExternalProjectsManager.getInstance(getProject()).getExternalProjectsWatcher().markDirty(current.getExternalProjectPath());
         }
         checkSettings(old, current);
       }

@@ -15,7 +15,7 @@
  */
 package com.intellij.java.psi.impl.source.tree.java;
 
-import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -35,7 +35,7 @@ import java.io.File;
  * @author dsl
  */
 @PlatformTestCase.WrapInCommand
-public class BindToElementTest extends CodeInsightTestCase {
+public class BindToElementTest extends JavaCodeInsightTestCase {
   public static final String TEST_ROOT = PathManagerEx.getTestDataPath() + "/psi/impl/bindToElementTest/".replace('/', File.separatorChar);
 
   @Override

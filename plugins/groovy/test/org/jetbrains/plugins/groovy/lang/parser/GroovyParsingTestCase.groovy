@@ -17,13 +17,13 @@ package org.jetbrains.plugins.groovy.lang.parser
 
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.DebugUtil
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author peter
  */
-abstract class GroovyParsingTestCase extends LightCodeInsightFixtureTestCase {
+abstract class GroovyParsingTestCase extends LightJavaCodeInsightFixtureTestCase {
 
   String getBasePath() {
     TestUtils.testDataPath + "parsing/groovy/"

@@ -45,6 +45,7 @@ public interface XAttachPresentationGroup<T> extends Comparator<T> {
    */
   @Deprecated
   @NotNull
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018.2")
   Icon getProcessIcon(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder);
 
   /**
@@ -62,6 +63,7 @@ public interface XAttachPresentationGroup<T> extends Comparator<T> {
    */
   @Deprecated
   @NotNull
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018.2")
   String getProcessDisplayText(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder);
 
   /**
@@ -93,6 +95,7 @@ public interface XAttachPresentationGroup<T> extends Comparator<T> {
    *                   and use it for comparison
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018.2")
   default int compare(@NotNull Project project, @NotNull T a, @NotNull T b, @NotNull UserDataHolder dataHolder) {
     return compare(a, b);
   }

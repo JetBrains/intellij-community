@@ -1,7 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.statistics;
 
+import com.intellij.internal.statistic.beans.MetricEvent;
+import com.intellij.internal.statistic.beans.MetricEventFactoryKt;
+import com.intellij.internal.statistic.beans.MetricEventUtilKt;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -29,27 +33,23 @@ public class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
 
   @NotNull
   @Override
-  public Set<UsageDescriptor> getUsages(@NotNull Project project) {
+  public Set<MetricEvent> getMetrics(@NotNull Project project) {
     VcsProjectLog projectLog = VcsProjectLog.getInstance(project);
     VcsLogData logData = projectLog.getDataManager();
     if (logData != null) {
       DataPack dataPack = logData.getDataPack();
       if (dataPack.isFull()) {
         PermanentGraph<Integer> permanentGraph = dataPack.getPermanentGraph();
+
+        Set<MetricEvent> usages = ContainerUtil.newHashSet(new MetricEvent("dataInitialized"));
+        usages.add(MetricEventFactoryKt.newCounterMetric("commit.count", permanentGraph.getAllCommits().size()));
+        usages.add(MetricEventFactoryKt.newCounterMetric("branches.count", dataPack.getRefsModel().getBranches().size()));
+        usages.add(MetricEventFactoryKt.newCounterMetric("users.count", logData.getAllUsers().size()));
+
         MultiMap<VcsKey, VirtualFile> groupedRoots = groupRootsByVcs(dataPack.getLogProviders());
-
-        Set<UsageDescriptor> usages = ContainerUtil.newHashSet(new UsageDescriptor("dataInitialized"));
-        usages.add(StatisticsUtilKt.getCountingUsage("commit.count", permanentGraph.getAllCommits().size(),
-                                                     asList(0, 1, 100, 1000, 10 * 1000, 100 * 1000, 500 * 1000, 1000 * 1000)));
-        usages.add(StatisticsUtilKt.getCountingUsage("branches.count", dataPack.getRefsModel().getBranches().size(),
-                                                     asList(0, 1, 10, 50, 100, 500, 1000, 5 * 1000, 10 * 1000, 20 * 1000, 50 * 1000)));
-        usages.add(StatisticsUtilKt.getCountingUsage("users.count", logData.getAllUsers().size(),
-                                                     asList(0, 1, 10, 50, 100, 500, 1000, 5 * 1000, 10 * 1000, 20 * 1000, 50 * 1000)));
-
         for (VcsKey vcs : groupedRoots.keySet()) {
-          String vcsKey = getVcsKeySafe(vcs);
-          usages.add(StatisticsUtilKt.getCountingUsage(vcsKey + ".root.count", groupedRoots.get(vcs).size(),
-                                                       asList(0, 1, 2, 5, 8, 15, 30, 50, 100, 300, 500)));
+          FeatureUsageData vcsData = new FeatureUsageData().addData("vcs", getVcsKeySafe(vcs));
+          usages.add(MetricEventFactoryKt.newCounterMetric("root.count", groupedRoots.get(vcs).size(), vcsData));
         }
         return usages;
       }
@@ -80,5 +80,10 @@ public class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
   @Override
   public String getGroupId() {
     return "vcs.log.data";
+  }
+
+  @Override
+  public int getVersion() {
+    return 2;
   }
 }

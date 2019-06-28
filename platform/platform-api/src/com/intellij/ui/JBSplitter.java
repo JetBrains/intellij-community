@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Major difference between the parent class and {@code JBSplitter} is an ability to save proportion
+ * Major difference between the parent class and {@code JBSplitter} is an ability to save proportion.
  *
  * @author Konstantin Bulenkov
  * @see Splitter
@@ -77,7 +77,7 @@ public class JBSplitter extends Splitter {
   }
 
   /**
-   * Splitter proportion unique key
+   * Splitter proportion unique key.
    *
    * @return non empty unique String or {@code null} if splitter does not require proportion saving
    */
@@ -87,7 +87,7 @@ public class JBSplitter extends Splitter {
   }
 
   /**
-   * Sets proportion key
+   * Sets proportion key.
    *
    * @param key non empty unique String or {@code null} if splitter does not require proportion saving
    */
@@ -97,7 +97,8 @@ public class JBSplitter extends Splitter {
 
   /**
    * Sets proportion key and load from settings.
-   * @param key
+   *
+   * @see #setSplitterProportionKey(String)
    */
   public final void setAndLoadSplitterProportionKey(@NotNull String key) {
     setSplitterProportionKey(key);

@@ -8,8 +8,7 @@ import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import git4idea.push.GitPushTagMode;
@@ -20,6 +19,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import static git4idea.config.GitIncomingCheckStrategy.Never;
 
 /**
  * Git VCS settings
@@ -84,7 +85,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsOptions>, 
   }
 
   public String[] getCommitAuthors() {
-    return ArrayUtil.toStringArray(myState.getPreviousCommitAuthors());
+    return ArrayUtilRt.toStringArray(myState.getPreviousCommitAuthors());
   }
 
   @Override
@@ -100,6 +101,15 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsOptions>, 
   @Override
   public void loadState(@NotNull GitVcsOptions state) {
     myState = state;
+    migrateUpdateIncomingBranchInfo(state);
+  }
+
+  private void migrateUpdateIncomingBranchInfo(@NotNull GitVcsOptions state) {
+    if (!state.isUpdateBranchesInfo()) {
+      myState.setIncomingCheckStrategy(Never);
+      //set default value
+      myState.setUpdateBranchesInfo(true);
+    }
   }
 
   @Nullable
@@ -215,20 +225,13 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsOptions>, 
     myState.setSignOffCommit(value);
   }
 
-  public boolean shouldUpdateBranchInfo() {
-    return Registry.is("git.update.incoming.outgoing.info") && myState.isUpdateBranchesInfo();
+  @NotNull
+  public GitIncomingCheckStrategy getIncomingCheckStrategy() {
+    return myState.getIncomingCheckStrategy();
   }
 
-  public void setUpdateBranchInfo(boolean value) {
-    myState.setUpdateBranchesInfo(value);
-  }
-
-  public int getBranchInfoUpdateTime() {
-    return myState.getBranchInfoUpdateTime();
-  }
-
-  public void setBranchInfoUpdateTime(int value) {
-    myState.setBranchInfoUpdateTime(value);
+  public void setIncomingCheckStrategy(@NotNull GitIncomingCheckStrategy strategy) {
+    myState.setIncomingCheckStrategy(strategy);
   }
 
   public boolean shouldPreviewPushOnCommitAndPush() {
@@ -244,7 +247,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsOptions>, 
   }
 
   public void setPreviewPushProtectedOnly(boolean value) {
-    myState.setPreviewPushOnCommitAndPush(value);
+    myState.setPreviewPushProtectedOnly(value);
   }
 
   public boolean isCommitRenamesSeparately() {

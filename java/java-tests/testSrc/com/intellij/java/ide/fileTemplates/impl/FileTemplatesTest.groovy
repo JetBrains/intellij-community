@@ -16,7 +16,7 @@ import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiManager
-import com.intellij.testFramework.IdeaTestCase
+import com.intellij.testFramework.JavaProjectTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.io.PathKt
@@ -26,7 +26,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 
-class FileTemplatesTest extends IdeaTestCase {
+class FileTemplatesTest extends JavaProjectTestCase {
   private Path myTestConfigDir
 
   @Override

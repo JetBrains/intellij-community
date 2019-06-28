@@ -2,9 +2,9 @@
 package com.intellij.sh.editing;
 
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
-public class ShTypingTest extends LightCodeInsightFixtureTestCase {
+public class ShTypingTest extends BasePlatformTestCase {
   // @formatter:off
   public void testString()              { doTypingTest("<caret>", "\"", "\"<caret>\"");         }
   public void testRawString()           { doTypingTest("<caret>", "'", "'<caret>'");            }
@@ -35,7 +35,7 @@ public class ShTypingTest extends LightCodeInsightFixtureTestCase {
 
   private void doBackspaceTest(String before, String after) {
     myFixture.configureByText("a.sh", before);
-    LightPlatformCodeInsightTestCase.backspace(getEditor(), getProject());
+    LightPlatformCodeInsightTestCase.backspace(myFixture.getEditor(), getProject());
     myFixture.checkResult(after);
   }
 }

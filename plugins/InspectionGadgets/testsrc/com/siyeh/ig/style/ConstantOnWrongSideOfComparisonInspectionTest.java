@@ -3,13 +3,13 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ConstantOnWrongSideOfComparisonInspectionTest extends LightInspectionTestCase {
+public class ConstantOnWrongSideOfComparisonInspectionTest extends LightJavaInspectionTestCase {
 
   public void testConstantOnLHS() {
     doTest();

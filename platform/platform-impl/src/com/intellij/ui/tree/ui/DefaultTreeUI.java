@@ -2,9 +2,11 @@
 package com.intellij.ui.tree.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ColoredItem;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.BackgroundSupplier;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.tree.TreeNodeBackgroundSupplier;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.MouseEventAdapter;
@@ -13,19 +15,18 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.lang.reflect.Method;
-import java.util.Collection;
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.AbstractLayoutCache;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
+import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.lang.reflect.Method;
+import java.util.Collection;
 
-import static com.intellij.openapi.util.SystemInfo.isMac;
 import static com.intellij.openapi.util.registry.Registry.is;
 import static com.intellij.ui.components.JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS;
 import static com.intellij.util.ReflectionUtil.getMethod;
@@ -37,16 +38,6 @@ public final class DefaultTreeUI extends BasicTreeUI {
   public static final Key<Boolean> SHRINK_LONG_RENDERER = Key.create("resize renderer component if it exceed a visible area");
   private static final Logger LOG = Logger.getInstance(DefaultTreeUI.class);
   private static final Collection<Class<?>> SUSPICIOUS = createWeakSet();
-
-  private static void logStackTrace(@NotNull String message) {
-    if (LOG.isDebugEnabled()) LOG.warn(new IllegalStateException(message));
-  }
-
-  private static boolean isEventDispatchThread() {
-    if (EventQueue.isDispatchThread()) return true;
-    logStackTrace("unexpected thread");
-    return false;
-  }
 
   @NotNull
   private static Control.Painter getPainter(@NotNull JTree tree) {
@@ -65,9 +56,13 @@ public final class DefaultTreeUI extends BasicTreeUI {
       return UIUtil.getTreeSelectionBackground(tree.hasFocus() || Boolean.TRUE.equals(property));
     }
     Object node = TreeUtil.getLastUserObject(path);
-    if (node instanceof TreeNodeBackgroundSupplier) {
-      TreeNodeBackgroundSupplier supplier = (TreeNodeBackgroundSupplier)node;
-      Color background = supplier.getNodeBackground(row);
+    if (node instanceof ColoredItem) {
+      Color background = ((ColoredItem)node).getColor();
+      if (background != null) return background;
+    }
+    if (node instanceof BackgroundSupplier) {
+      BackgroundSupplier supplier = (BackgroundSupplier)node;
+      Color background = supplier.getElementBackground(row);
       if (background != null) return background;
     }
     if (tree instanceof TreePathBackgroundSupplier) {
@@ -117,6 +112,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
   // non static
 
   private final Control control = new DefaultControl();
+  private final DispatchThreadValidator validator = new DispatchThreadValidator();
 
   @Nullable
   private JTree getTree() {
@@ -147,9 +143,9 @@ public final class DefaultTreeUI extends BasicTreeUI {
   }
 
   private boolean isValid(@Nullable JTree tree) {
-    if (!isEventDispatchThread()) return false;
+    if (!validator.isValidThread()) return false;
     if (tree != null && tree == getTree()) return true;
-    logStackTrace(tree != null ? "unexpected tree" : "undefined tree");
+    LOG.warn(new IllegalStateException(tree != null ? "unexpected tree" : "undefined tree"));
     return false;
   }
 
@@ -188,7 +184,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
             JScrollBar vsb = pane.getVerticalScrollBar();
             if (vsb != null && vsb.isVisible() && !vsb.isOpaque()) {
               Boolean property = UIUtil.getClientProperty(vsb, IGNORE_SCROLLBAR_IN_INSETS);
-              if (isMac ? Boolean.FALSE.equals(property) : !Boolean.TRUE.equals(property)) {
+              if (SystemInfo.isMac ? Boolean.FALSE.equals(property) : !Boolean.TRUE.equals(property)) {
                 vsbWidth = vsb.getWidth(); // to calculate a right margin of a renderer component
               }
             }
@@ -247,6 +243,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
     super.installDefaults();
     JTree tree = getTree();
     if (tree != null) {
+      LookAndFeel.installBorder(tree, "Tree.border");
       if (tree.isForegroundSet()) tree.setForeground(null);
       if (UIManager.get("Tree.showsRootHandles") == null) {
         LookAndFeel.installProperty(tree, JTree.SHOWS_ROOT_HANDLES_PROPERTY, Boolean.TRUE);

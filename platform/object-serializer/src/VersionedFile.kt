@@ -41,10 +41,9 @@ data class VersionedFile @JvmOverloads constructor(val file: Path, val version: 
 
   @Throws(IOException::class, SerializationException::class)
   @JvmOverloads
-  fun <T> readList(itemClass: Class<T>, beanConstructed: BeanConstructed? = null): List<T>? {
-    val configuration = ReadConfiguration(beanConstructed = beanConstructed)
+  fun <T> readList(itemClass: Class<T>, configuration: ReadConfiguration = ReadConfiguration(), renameToCorruptedOnError: Boolean = true): List<T>? {
     @Suppress("UNCHECKED_CAST")
-    return readAndHandleErrors(ArrayList::class.java, configuration, originalType = ParameterizedTypeImpl(ArrayList::class.java, itemClass)) as List<T>?
+    return readAndHandleErrors(ArrayList::class.java, configuration, originalType = ParameterizedTypeImpl(ArrayList::class.java, itemClass), renameToCorruptedOnError = renameToCorruptedOnError) as List<T>?
   }
 
   @Throws(IOException::class, SerializationException::class)
@@ -53,20 +52,22 @@ data class VersionedFile @JvmOverloads constructor(val file: Path, val version: 
     return readAndHandleErrors(objectClass, ReadConfiguration(beanConstructed = beanConstructed))
   }
 
-  private fun <T : Any> readAndHandleErrors(objectClass: Class<T>, configuration: ReadConfiguration, originalType: Type? = null): T? {
+  private fun <T : Any> readAndHandleErrors(objectClass: Class<T>, configuration: ReadConfiguration, originalType: Type? = null, renameToCorruptedOnError: Boolean = true): T? {
     return readPossiblyCompressedIonFile(file) { input ->
       val result = try {
         ObjectSerializer.instance.serializer.readVersioned(objectClass, input, file, version, originalType = originalType,
                                                            configuration = configuration)
       }
       catch (e: Exception) {
-        renameSilentlyToCorrupted()
+        if (renameToCorruptedOnError) {
+          renameSilentlyToCorrupted()
+        }
         // in tests log will throw error, renameSilentlyToCorrupted is called before
         LOG.error(e)
         return null
       }
 
-      if (result == null) {
+      if (result == null && renameToCorruptedOnError) {
         renameSilentlyToCorrupted()
       }
       return result

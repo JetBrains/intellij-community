@@ -14,7 +14,7 @@ import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.testFramework.ModuleTestCase
+import com.intellij.testFramework.JavaModuleTestCase
 import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.util.*
@@ -22,7 +22,7 @@ import java.util.*
 /**
  * @author nik
  */
-class AutomaticModuleUnloaderTest : ModuleTestCase() {
+class AutomaticModuleUnloaderTest : JavaModuleTestCase() {
   fun `test unload simple module`() = runBlocking {
     createModule("a")
     createModule("b")
@@ -33,7 +33,7 @@ class AutomaticModuleUnloaderTest : ModuleTestCase() {
     val moduleFiles = createNewModuleFiles(listOf("d")) {}
     reloadProjectWithNewModules(moduleFiles)
 
-    ModuleTestCase.assertSameElements(moduleManager.unloadedModuleDescriptions.map { it.name }, "a", "d")
+    JavaModuleTestCase.assertSameElements(moduleManager.unloadedModuleDescriptions.map { it.name }, "a", "d")
   }
 
   fun `test unload modules with dependencies between them`() = runBlocking {
@@ -101,7 +101,7 @@ class AutomaticModuleUnloaderTest : ModuleTestCase() {
       File(deletedIml.moduleFilePath).delete()
     }
 
-    ModuleTestCase.assertSameElements(moduleManager.unloadedModuleDescriptions.map { it.name }, "a", "d")
+    JavaModuleTestCase.assertSameElements(moduleManager.unloadedModuleDescriptions.map { it.name }, "a", "d")
   }
 
 
@@ -115,7 +115,7 @@ class AutomaticModuleUnloaderTest : ModuleTestCase() {
     val moduleFiles = createNewModuleFiles(newModulesName, setup)
     reloadProjectWithNewModules(moduleFiles)
 
-    ModuleTestCase.assertSameElements(moduleManager.unloadedModuleDescriptions.map { it.name }, *expectedUnloadedModules)
+    JavaModuleTestCase.assertSameElements(moduleManager.unloadedModuleDescriptions.map { it.name }, *expectedUnloadedModules)
 
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.junit2.configuration;
 
@@ -41,7 +41,7 @@ import com.intellij.rt.execution.junit.RepeatCount;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.fields.ExpandableTextField;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
@@ -281,7 +281,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       aModel.addElement(JUnitConfigurationModel.CATEGORY);
     }
 
-    if (JUnitUtil.isJUnit5(searchScope, myProject) || 
+    if (JUnitUtil.isJUnit5(searchScope, myProject) ||
         TestObject.hasJUnit5EnginesAPI(searchScope, JavaPsiFacade.getInstance(myProject))) {
       aModel.addElement(JUnitConfigurationModel.UNIQUE_ID);
       aModel.addElement(JUnitConfigurationModel.TAGS);
@@ -339,7 +339,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   protected String[] setArrayFromText(LabeledComponent<RawCommandLineEditor> field) {
     String text = field.getComponent().getText();
     if (text.isEmpty()) {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
+      return ArrayUtilRt.EMPTY_STRING_ARRAY;
     }
     return text.split(" ");
   }

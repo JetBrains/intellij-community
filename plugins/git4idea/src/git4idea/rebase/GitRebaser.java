@@ -112,7 +112,7 @@ public class GitRebaser {
    * Runs 'git rebase --continue' on several roots consequently.
    * @return true if rebase successfully finished.
    */
-  public boolean continueRebase(@NotNull Collection<VirtualFile> rebasingRoots) {
+  public boolean continueRebase(@NotNull Collection<? extends VirtualFile> rebasingRoots) {
     try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, "Rebase")) {
       boolean success = true;
       for (VirtualFile root : rebasingRoots) {

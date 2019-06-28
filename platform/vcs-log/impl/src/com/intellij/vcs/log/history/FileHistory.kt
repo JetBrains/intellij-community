@@ -2,7 +2,6 @@
 package com.intellij.vcs.log.history
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.Couple
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.UnorderedPair
 import com.intellij.openapi.util.io.FileUtil
@@ -23,10 +22,25 @@ import gnu.trove.*
 import java.util.*
 import java.util.function.BiConsumer
 
+class FileHistory internal constructor(val commitsToPathsMap: Map<Int, MaybeDeletedFilePath>,
+                                       internal val processedAdditionsDeletions: Set<AdditionDeletion> = emptySet(),
+                                       internal val unmatchedAdditionsDeletions: Set<AdditionDeletion> = emptySet(),
+                                       internal val commitToRename: MultiMap<UnorderedPair<Int>, Rename> = MultiMap.empty())
+
+internal val EMPTY_HISTORY = FileHistory(emptyMap())
+
 internal class FileHistoryBuilder(private val startCommit: Int?,
                                   private val startPath: FilePath,
-                                  private val fileHistoryData: FileHistoryData) : BiConsumer<LinearGraphController, PermanentGraphInfo<Int>> {
-  val pathsMap = mutableMapOf<Int, MaybeDeletedFilePath>()
+                                  private val fileHistoryData: FileHistoryData,
+                                  private val oldFileHistory: FileHistory,
+                                  private val commitsToHide: Set<Int> = emptySet()) : BiConsumer<LinearGraphController, PermanentGraphInfo<Int>> {
+  private val pathsMap = mutableMapOf<Int, MaybeDeletedFilePath>()
+  private val processedAdditionsDeletions = mutableSetOf<AdditionDeletion>()
+  private val unmatchedAdditionsDeletions = mutableSetOf<AdditionDeletion>()
+  private val commitToRename = MultiMap.createSmart<UnorderedPair<Int>, Rename>()
+
+  val fileHistory: FileHistory
+    get() = FileHistory(pathsMap, processedAdditionsDeletions, unmatchedAdditionsDeletions, commitToRename)
 
   override fun accept(controller: LinearGraphController, permanentGraphInfo: PermanentGraphInfo<Int>) {
     val needToRepeat = removeTrivialMerges(controller, permanentGraphInfo, fileHistoryData, this::reportTrivialMerges)
@@ -37,6 +51,30 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
       LOG.info("Some merge commits were not excluded from file history for ${startPath.path}")
       removeTrivialMerges(controller, permanentGraphInfo, fileHistoryData, this::reportTrivialMerges)
     }
+
+    collectAdditionsDeletions(controller, permanentGraphInfo)
+    commitToRename.putAllValues(fileHistoryData.commitToRename)
+
+    if (commitsToHide.isNotEmpty()) hideCommits(controller, permanentGraphInfo, commitsToHide)
+  }
+
+  private fun collectAdditionsDeletions(controller: LinearGraphController, permanentGraphInfo: PermanentGraphInfo<Int>) {
+    processedAdditionsDeletions.addAll(oldFileHistory.processedAdditionsDeletions)
+    processedAdditionsDeletions.addAll(oldFileHistory.unmatchedAdditionsDeletions)
+
+    val additionsDeletions = mutableSetOf<AdditionDeletion>()
+    fileHistoryData.iterateUnmatchedAdditionsDeletions { ad ->
+      if (!processedAdditionsDeletions.contains(ad)) {
+        additionsDeletions.add(ad)
+      }
+    }
+    if (additionsDeletions.isNotEmpty()) {
+      val grouped = additionsDeletions.groupBy { it.child }
+      for (row in 0 until controller.compiledGraph.nodesCount()) {
+        val commitId = permanentGraphInfo.permanentCommitsInfo.getCommitId(controller.compiledGraph.getNodeId(row))
+        grouped[commitId]?.let { unmatchedAdditionsDeletions.addAll(it) }
+      }
+    }
   }
 
   private fun reportTrivialMerges(trivialMerges: Set<Int>) {
@@ -46,8 +84,8 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
   private fun refine(controller: LinearGraphController,
                      startCommit: Int?,
                      permanentGraphInfo: PermanentGraphInfo<Int>): Map<Int, MaybeDeletedFilePath> {
-    if (fileHistoryData.hasRenames && Registry.`is`("vcs.history.refine")) {
-      val visibleLinearGraph = controller.compiledGraph
+    val visibleLinearGraph = controller.compiledGraph
+    if (visibleLinearGraph.nodesCount() > 0 && fileHistoryData.hasRenames && Registry.`is`("vcs.history.refine")) {
 
       val (row, path) = startCommit?.let {
         findAncestorRowAffectingFile(startCommit, visibleLinearGraph, permanentGraphInfo)
@@ -235,10 +273,10 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
   }
 }
 
-abstract class FileHistoryData(startPaths: Collection<FilePath>) {
+abstract class FileHistoryData(internal val startPaths: Collection<FilePath>) {
   // file -> (commitId -> (parent commitId -> change kind))
   private val affectedCommits = THashMap<FilePath, TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>>(FILE_PATH_HASHING_STRATEGY)
-  private val commitToRename = MultiMap.createSmart<UnorderedPair<Int>, Rename>()
+  internal val commitToRename = MultiMap.createSmart<UnorderedPair<Int>, Rename>()
 
   val isEmpty: Boolean
     get() = affectedCommits.isEmpty
@@ -249,7 +287,7 @@ abstract class FileHistoryData(startPaths: Collection<FilePath>) {
 
   constructor(startPath: FilePath) : this(listOf(startPath))
 
-  init {
+  internal fun build(oldRenames: MultiMap<UnorderedPair<Int>, Rename>): FileHistoryData {
     val newPaths = THashSet<FilePath>(FILE_PATH_HASHING_STRATEGY)
     newPaths.addAll(startPaths)
 
@@ -259,10 +297,9 @@ abstract class FileHistoryData(startPaths: Collection<FilePath>) {
       affectedCommits.putAll(commits)
       newPaths.clear()
 
-      collectAdditionsDeletions(commits) { ad ->
-        if (commitToRename[ad.commits].any { rename -> ad.matches(rename) }) return@collectAdditionsDeletions
-        findRename(ad.parent, ad.child, ad.filePath, ad.isAddition)?.let { files ->
-          val rename = Rename(files.first, files.second, ad.parent, ad.child)
+      iterateUnmatchedAdditionsDeletions(commits) { ad ->
+        val rename = oldRenames.get(ad.commits).find { ad.matches(it) } ?: findRename(ad)
+        if (rename != null) {
           commitToRename.putValue(ad.commits, rename)
           val otherPath = rename.getOtherPath(ad)!!
           if (!affectedCommits.containsKey(otherPath)) {
@@ -271,23 +308,36 @@ abstract class FileHistoryData(startPaths: Collection<FilePath>) {
         }
       }
     }
+    return this
   }
 
-  private fun collectAdditionsDeletions(commits: Map<FilePath, TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>>,
-                                        action: (AdditionDeletion) -> Unit) {
+  private fun findRename(ad: AdditionDeletion): Rename? {
+    return findRename(ad.parent, ad.child, ad.filePath, ad.isAddition)?.let { files ->
+      Rename(files.parent, files.child, ad.parent, ad.child)
+    }
+  }
+
+  fun build(): FileHistoryData = build(MultiMap.empty())
+
+  private fun iterateUnmatchedAdditionsDeletions(commits: Map<FilePath, TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>>,
+                                                 action: (AdditionDeletion) -> Unit) {
     commits.forEach { path, commit, changes ->
       changes.forEachEntry { parent, change ->
-        createAdditionDeletion(parent, commit, change, path)?.let { ad -> action(ad) }
+        if (parent != commit && (change == ChangeKind.ADDED || change == ChangeKind.REMOVED)) {
+          val ad = AdditionDeletion(path, commit, parent, change == ChangeKind.ADDED)
+          if (!commitToRename[ad.commits].any { rename -> ad.matches(rename) }) {
+            action(ad)
+          }
+        }
         true
       }
     }
   }
 
-  private fun createAdditionDeletion(parent: Int, commit: Int, change: ChangeKind, path: FilePath): AdditionDeletion? {
-    if (parent != commit && (change == ChangeKind.ADDED || change == ChangeKind.REMOVED)) {
-      return AdditionDeletion(path, commit, parent, change == ChangeKind.ADDED)
+  internal fun iterateUnmatchedAdditionsDeletions(action: (AdditionDeletion) -> Unit) {
+    iterateUnmatchedAdditionsDeletions(affectedCommits) {
+      action(it)
     }
-    return null
   }
 
   fun getPathInParentRevision(commit: Int, parent: Int, childPath: MaybeDeletedFilePath): MaybeDeletedFilePath {
@@ -354,6 +404,10 @@ abstract class FileHistoryData(startPaths: Collection<FilePath>) {
     return result
   }
 
+  fun getCommitsWithRenames(): Set<Int> {
+    return commitToRename.values().mapTo(mutableSetOf()) { rename -> rename.childCommit }
+  }
+
   fun buildPathsMap(): Map<Int, MaybeDeletedFilePath> {
     val result = mutableMapOf<Int, MaybeDeletedFilePath>()
     affectedCommits.forEach { filePath, commit, changes ->
@@ -368,22 +422,22 @@ abstract class FileHistoryData(startPaths: Collection<FilePath>) {
     affectedCommits.forEach { _, commitsMap -> commitsMap.removeAll(commits) }
   }
 
-  abstract fun findRename(parent: Int, child: Int, path: FilePath, isChildPath: Boolean): Couple<FilePath>?
+  abstract fun findRename(parent: Int, child: Int, path: FilePath, isChildPath: Boolean): EdgeData<FilePath>?
   abstract fun getAffectedCommits(path: FilePath): TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>
 }
 
-private class AdditionDeletion(val filePath: FilePath, val child: Int, val parent: Int, val isAddition: Boolean) {
+internal class AdditionDeletion(val filePath: FilePath, val child: Int, val parent: Int, val isAddition: Boolean) {
   val commits
     get() = UnorderedPair(parent, child)
 
   fun matches(rename: Rename): Boolean {
-    if (rename.commit1 == parent && rename.commit2 == child) {
-      return if (isAddition) FILE_PATH_HASHING_STRATEGY.equals(rename.filePath2, filePath)
-      else FILE_PATH_HASHING_STRATEGY.equals(rename.filePath1, filePath)
+    if (rename.parentCommit == parent && rename.childCommit == child) {
+      return if (isAddition) FILE_PATH_HASHING_STRATEGY.equals(rename.childPath, filePath)
+      else FILE_PATH_HASHING_STRATEGY.equals(rename.parentPath, filePath)
     }
-    else if (rename.commit2 == parent && rename.commit1 == child) {
-      return if (isAddition) FILE_PATH_HASHING_STRATEGY.equals(rename.filePath1, filePath)
-      else FILE_PATH_HASHING_STRATEGY.equals(rename.filePath2, filePath)
+    else if (rename.childCommit == parent && rename.parentCommit == child) {
+      return if (isAddition) FILE_PATH_HASHING_STRATEGY.equals(rename.parentPath, filePath)
+      else FILE_PATH_HASHING_STRATEGY.equals(rename.childPath, filePath)
     }
     return false
   }
@@ -411,11 +465,13 @@ private class AdditionDeletion(val filePath: FilePath, val child: Int, val paren
   }
 }
 
-private class Rename(val filePath1: FilePath, val filePath2: FilePath, val commit1: Int, val commit2: Int) {
+internal class Rename(val parentPath: FilePath, val childPath: FilePath, val parentCommit: Int, val childCommit: Int) {
+  val commits
+    get() = UnorderedPair(parentCommit, childCommit)
 
   fun getOtherPath(commit: Int, filePath: FilePath): FilePath? {
-    if (commit == commit1 && FILE_PATH_HASHING_STRATEGY.equals(filePath, filePath1)) return filePath2
-    if (commit == commit2 && FILE_PATH_HASHING_STRATEGY.equals(filePath, filePath2)) return filePath1
+    if (commit == parentCommit && FILE_PATH_HASHING_STRATEGY.equals(filePath, parentPath)) return childPath
+    if (commit == childCommit && FILE_PATH_HASHING_STRATEGY.equals(filePath, childPath)) return parentPath
     return null
   }
 
@@ -429,19 +485,19 @@ private class Rename(val filePath1: FilePath, val filePath2: FilePath, val commi
 
     other as Rename
 
-    if (!FILE_PATH_HASHING_STRATEGY.equals(filePath1, other.filePath1)) return false
-    if (!FILE_PATH_HASHING_STRATEGY.equals(filePath2, other.filePath2)) return false
-    if (commit1 != other.commit1) return false
-    if (commit2 != other.commit2) return false
+    if (!FILE_PATH_HASHING_STRATEGY.equals(parentPath, other.parentPath)) return false
+    if (!FILE_PATH_HASHING_STRATEGY.equals(childPath, other.childPath)) return false
+    if (parentCommit != other.parentCommit) return false
+    if (childCommit != other.childCommit) return false
 
     return true
   }
 
   override fun hashCode(): Int {
-    var result = FILE_PATH_HASHING_STRATEGY.computeHashCode(filePath1)
-    result = 31 * result + FILE_PATH_HASHING_STRATEGY.computeHashCode(filePath2)
-    result = 31 * result + commit1
-    result = 31 * result + commit2
+    var result = FILE_PATH_HASHING_STRATEGY.computeHashCode(parentPath)
+    result = 31 * result + FILE_PATH_HASHING_STRATEGY.computeHashCode(childPath)
+    result = 31 * result + parentCommit
+    result = 31 * result + childCommit
     return result
   }
 }
@@ -519,3 +575,5 @@ internal class FilePathCaseSensitiveStrategy : TObjectHashingStrategy<FilePath> 
     return result
   }
 }
+
+data class EdgeData<T>(val parent: T, val child: T)

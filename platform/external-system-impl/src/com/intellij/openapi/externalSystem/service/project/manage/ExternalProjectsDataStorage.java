@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.configurationStore.SettingsSavingComponentJavaAdapter;
+import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.openapi.application.PathManagerEx;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -205,7 +206,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
     merged.setLastSuccessfulImportTimestamp(lastSuccessfulImportTimestamp);
     myExternalRootProjects.put(key, merged);
 
-    changed.set(true);
+    markAsChangedAndScheduleSave();
   }
 
   synchronized void restoreInclusionSettings(@Nullable DataNode<ProjectData> projectDataNode) {
@@ -260,7 +261,13 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
     }
 
     myState.map.put(projectDataNode.getData().getLinkedExternalProjectPath(), projectState);
-    changed.set(true);
+    markAsChangedAndScheduleSave();
+  }
+
+  private void markAsChangedAndScheduleSave() {
+    if (changed.compareAndSet(false, true)) {
+      SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask.projectIncludingAllSettings(myProject), false);
+    }
   }
 
   @Nullable
@@ -271,7 +278,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
   synchronized void remove(@NotNull ProjectSystemId projectSystemId, @NotNull String externalProjectPath) {
     final InternalExternalProjectInfo removed = myExternalRootProjects.remove(Pair.create(projectSystemId, new File(externalProjectPath)));
     if (removed != null) {
-      changed.set(true);
+      markAsChangedAndScheduleSave();
     }
   }
 
@@ -299,7 +306,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
           myExternalRootProjects.put(key, externalProjectInfo);
           ExternalProjectsManager.getInstance(myProject).getExternalProjectsWatcher().markDirty(externalProjectPath);
 
-          changed.set(true);
+          markAsChangedAndScheduleSave();
         }
 
         // restore linked project sub-modules
@@ -332,28 +339,15 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
     return projectDataNode;
   }
 
-  private static void doSave(@NotNull Project project, @NotNull Collection<InternalExternalProjectInfo> externalProjects)
-    throws IOException {
+  private static void doSave(@NotNull Project project, @NotNull Collection<InternalExternalProjectInfo> externalProjects) throws IOException {
     for (Iterator<InternalExternalProjectInfo> iterator = externalProjects.iterator(); iterator.hasNext(); ) {
       InternalExternalProjectInfo externalProject = iterator.next();
       if (!validate(externalProject)) {
         iterator.remove();
-        continue;
       }
-
-      WriteAndCompressSession buffer = new WriteAndCompressSession();
-      ExternalSystemApiUtil.visit(externalProject.getExternalProjectStructure(), dataNode -> {
-        try {
-          dataNode.serializeData(buffer);
-        }
-        catch (Exception e) {
-          LOG.warn(e);
-          dataNode.clear(true);
-        }
-      });
     }
 
-    getCacheFile(project).writeList(externalProjects, InternalExternalProjectInfo.class);
+    getCacheFile(project).writeList(externalProjects, InternalExternalProjectInfo.class, SerializationKt.createCacheWriteConfiguration());
   }
 
   @SuppressWarnings("unchecked")
@@ -381,7 +375,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
       LOG.debug("External projects data storage was invalidated");
       return null;
     }
-    return cacheFile.readList(InternalExternalProjectInfo.class, SerializationKt.getExternalSystemBeanConstructed());
+    return cacheFile.readList(InternalExternalProjectInfo.class, SerializationKt.createCacheReadConfiguration(LOG));
   }
 
   private static boolean isInvalidated(@NotNull Path configurationFile, @NotNull BasicFileAttributes fileAttributes) throws IOException {

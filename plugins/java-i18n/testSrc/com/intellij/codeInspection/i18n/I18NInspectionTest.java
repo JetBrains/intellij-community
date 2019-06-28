@@ -7,11 +7,11 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-import static com.intellij.testFramework.LightCodeInsightTestCase.getJavaFacade;
+import static com.intellij.testFramework.LightJavaCodeInsightTestCase.getJavaFacade;
 
-public class I18NInspectionTest extends LightCodeInsightFixtureTestCase {
+public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
 
   I18nInspection myTool = new I18nInspection();
   

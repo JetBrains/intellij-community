@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.LafIconLookup;
 import com.intellij.util.ui.MacUIUtil;
@@ -51,7 +38,7 @@ public class MacIntelliJCheckBoxUI extends DarculaCheckBoxUI {
 
   @Override
   protected int textIconGap() {
-    return scale(3);
+    return JBUIScale.scale(3);
   }
 
   @Override
@@ -69,9 +56,11 @@ public class MacIntelliJCheckBoxUI extends DarculaCheckBoxUI {
         DarculaUIUtil.Outline.valueOf(op.toString()).setGraphicsColor(g2, b.hasFocus());
         Path2D outline = new Path2D.Float(Path2D.WIND_EVEN_ODD);
         outline.append(new RoundRectangle2D.Float(
-          iconRect.x + scale(1), iconRect.y + scale(1), scale(20), scale(20), scale(12), scale(12)), false);
+          iconRect.x + JBUIScale.scale(1), iconRect.y + JBUIScale.scale(1), JBUIScale.scale(20), JBUIScale.scale(20), JBUIScale.scale(12),
+          JBUIScale.scale(12)), false);
         outline.append(new RoundRectangle2D.Float(
-          iconRect.x + scale(4.5f), iconRect.y + scale(4.5f), scale(13), scale(13), scale(5), scale(5)), false);
+          iconRect.x + JBUIScale.scale(4.5f), iconRect.y + JBUIScale.scale(4.5f), JBUIScale.scale(13), JBUIScale.scale(13), JBUIScale.scale(5),
+          JBUIScale.scale(5)), false);
 
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,

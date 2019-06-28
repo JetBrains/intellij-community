@@ -9,7 +9,7 @@
       ],
       "rules": {
         "event_id": [
-          "JUST_TEXT[_{regexp:\\d+(\\+)?}_],xxx:{enum:AAA|BBB|CCC},zzz{enum#myEnum},yyy"
+          "JUST_TEXT[_{regexp:\\d+(\\+)?}_]_xxx_{enum:AAA|BBB|CCC}_zzz{enum#myEnum}_yyy"
         ],
         "enums": {
           "myEnum": [

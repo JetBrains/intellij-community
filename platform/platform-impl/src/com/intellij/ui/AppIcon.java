@@ -9,12 +9,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.IconUtil;
+import com.intellij.util.MethodInvocator;
 import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.ImageUtil.MultiResolutionImageWrapper;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.platform.win32.WinDef;
 import org.apache.commons.imaging.common.BinaryOutputStream;
@@ -34,6 +37,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.ByteOrder;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public abstract class AppIcon {
@@ -137,7 +141,9 @@ public abstract class AppIcon {
         myAppListener = new ApplicationActivationListener() {
           @Override
           public void applicationActivated(@NotNull IdeFrame ideFrame) {
-            hideProgress(ideFrame.getProject(), myCurrentProcessId);
+            if (Registry.is("ide.appIcon.progress")) {
+              _hideProgress(ideFrame, myCurrentProcessId);
+            }
             _setOkBadge(ideFrame, false);
             _setTextBadge(ideFrame, null);
           }
@@ -164,6 +170,17 @@ public abstract class AppIcon {
         Image appImage = (Image)getAppMethod("getDockIconImage").invoke(app);
 
         if (appImage == null) return null;
+
+        // [tav] expecting two resolution variants for the dock icon: 128x128, 256x256
+        if (MultiResolutionImageWrapper.isMultiResolutionImage(appImage)) {
+          List<Image> variants = MultiResolutionImageWrapper.wrap(appImage).getResolutionVariants();
+          int width = appImage.getWidth(null);
+          for (Image img : variants) {
+              if (img.getWidth(null) > width) {
+                appImage = img;
+              }
+          }
+        }
         myAppImage = ImageUtil.toBufferedImage(appImage);
       }
       catch (NoSuchMethodException e) {

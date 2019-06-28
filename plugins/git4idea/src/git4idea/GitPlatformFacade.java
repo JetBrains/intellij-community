@@ -17,6 +17,7 @@ package git4idea;
 
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -28,6 +29,7 @@ public interface GitPlatformFacade {
   /**
    * @deprecated To remove in IDEA 2017. Use {@link VfsUtil#markDirtyAndRefresh(boolean, boolean, boolean, VirtualFile...)}.
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2017")
   @Deprecated
   void hardRefresh(@NotNull VirtualFile root);
 }

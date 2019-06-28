@@ -44,6 +44,9 @@ cdef extern from "frameobject.h":
         char f_executing;           #/* whether the frame is still executing */
         PyObject *f_localsplus[1];
 
+cdef extern from "release_mem.h":
+    void release_co_extra(void *) 
+
 cdef extern from "code.h":
     ctypedef void freefunc(void *)
     int _PyCode_GetExtra(PyObject *code, Py_ssize_t index, void **extra)

@@ -1,31 +1,20 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi;
 
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ComponentTreeWatcher;
+import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,6 +27,7 @@ import java.beans.PropertyChangeListener;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.IntPredicate;
 
 /**
  * Automatically locates &amp; characters in texts of buttons and labels on a component or dialog,
@@ -46,11 +36,13 @@ import java.util.Map;
  * @author lesya
  */
 public class MnemonicHelper extends ComponentTreeWatcher {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.MnemonicHelper");
+  private static final Logger LOG = Logger.getInstance(MnemonicHelper.class);
 
-  public static final String TEXT_CHANGED_PROPERTY = "text";
+  public static final Key<IntPredicate> MNEMONIC_CHECKER = Key.create("MNEMONIC_CHECKER");
 
-  public static final PropertyChangeListener ourTextPropertyListener = new PropertyChangeListener() {
+  private static final String TEXT_CHANGED_PROPERTY = "text";
+
+  private static final PropertyChangeListener ourTextPropertyListener = new PropertyChangeListener() {
     @Override
     public void propertyChange(PropertyChangeEvent event) {
       Object source = event.getSource();
@@ -176,6 +168,24 @@ public class MnemonicHelper extends ComponentTreeWatcher {
     else {
       ourMnemonicFixer.addTo(component);
     }
+  }
+
+  public static boolean hasMnemonic(@Nullable Component component, int keyCode) {
+    if (component instanceof AbstractButton) {
+      AbstractButton button = (AbstractButton)component;
+      if (button instanceof JBOptionButton) {
+        return ((JBOptionButton)button).isOkToProcessDefaultMnemonics() ||
+               button.getMnemonic() == keyCode;
+      }
+      else {
+        return button.getMnemonic() == keyCode;
+      }
+    }
+    if (component instanceof JLabel) {
+      return ((JLabel)component).getDisplayedMnemonic() == keyCode;
+    }
+    IntPredicate checker = UIUtil.getClientProperty(component, MNEMONIC_CHECKER);
+    return checker != null && checker.test(keyCode);
   }
 
   private static final MnemonicFixer ourMnemonicFixer = new MnemonicFixer();

@@ -1,14 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcsesForFiles
-import com.intellij.openapi.vcs.changes.CommitExecutor
-import com.intellij.openapi.vcs.changes.CommitExecutorBase
-import com.intellij.openapi.vcs.changes.CommitSession
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 
@@ -27,6 +25,8 @@ class SingleChangeListCommitWorkflowHandler(
     }
   }
 
+  override val amendCommitHandler: AmendCommitHandlerImpl = AmendCommitHandlerImpl(this)
+
   private fun getChangeList() = ui.getChangeList()
 
   private fun getCommitState() = ChangeListCommitState(getChangeList(), getIncludedChanges(), getCommitMessage())
@@ -34,6 +34,7 @@ class SingleChangeListCommitWorkflowHandler(
   private val commitMessagePolicy get() = workflow.commitMessagePolicy
 
   init {
+    Disposer.register(this, Disposable { workflow.disposeCommitOptions() })
     Disposer.register(ui, this)
 
     workflow.addListener(this, this)
@@ -54,6 +55,8 @@ class SingleChangeListCommitWorkflowHandler(
     initCommitMessage()
     initCommitOptions()
 
+    amendCommitHandler.initialMessage = getCommitMessage()
+
     return ui.activate()
   }
 
@@ -69,11 +72,6 @@ class SingleChangeListCommitWorkflowHandler(
     updateCommitOptions()
   }
 
-  override fun getExecutor(executorId: String): CommitExecutor? = workflow.executors.find { it.id == executorId }
-
-  override fun isExecutorEnabled(executor: CommitExecutor): Boolean =
-    !isCommitEmpty() || (executor is CommitExecutorBase && !executor.areChangesRequired())
-
   override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CheckinHandler.ReturnResult) {
     super.beforeCommitChecksEnded(isDefaultCommit, result)
     if (isDefaultCommit && result == CheckinHandler.ReturnResult.COMMIT) ui.deactivate()
@@ -86,11 +84,6 @@ class SingleChangeListCommitWorkflowHandler(
   }
 
   override fun addUnversionedFiles() = addUnversionedFiles(getChangeList())
-
-  override fun canExecute(executor: CommitExecutor): Boolean = workflow.canExecute(executor, getIncludedChanges())
-
-  override fun doExecuteCustom(executor: CommitExecutor, session: CommitSession) =
-    workflow.executeCustom(executor, session, getCommitState())
 
   private fun initCommitMessage() {
     commitMessagePolicy.init(getChangeList(), getIncludedChanges())

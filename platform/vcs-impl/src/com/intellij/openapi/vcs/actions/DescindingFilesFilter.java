@@ -17,7 +17,7 @@ public class DescindingFilesFilter {
 
   @NotNull
   public static FilePath[] filterDescindingFiles(@NotNull FilePath[] roots, Project project) {
-    final List<FilePath> result = new LinkedList<>();
+    final List<FilePath> result = new ArrayList<>();
     ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
 
     Arrays.sort(roots, FilePathComparator.getInstance());
@@ -34,7 +34,7 @@ public class DescindingFilesFilter {
 
       final List<FilePath> chain = chains.get(vcs.getKeyInstanceMethod());
       if (chain == null) {
-        final LinkedList<FilePath> newList = new LinkedList<>();
+        final List<FilePath> newList = new ArrayList<>();
         newList.add(root);
         chains.put(vcs.getKeyInstanceMethod(), newList);
       } else {

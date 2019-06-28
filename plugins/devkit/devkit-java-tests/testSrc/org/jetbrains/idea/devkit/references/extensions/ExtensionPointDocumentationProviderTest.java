@@ -3,10 +3,10 @@ package org.jetbrains.idea.devkit.references.extensions;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
-public class ExtensionPointDocumentationProviderTest extends LightCodeInsightFixtureTestCase {
+public class ExtensionPointDocumentationProviderTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   public String getBasePath() {

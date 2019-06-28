@@ -25,7 +25,7 @@ SHELL_SCRIPT
             LITERAL
               PsiElement(word)('echo')
           PsiWhiteSpace(' ')
-          LITERAL
+          SIMPLE_COMMAND_ELEMENT
             PsiElement(word)('test')
           PsiWhiteSpace(' ')
           LITERAL
@@ -42,18 +42,14 @@ SHELL_SCRIPT
           PsiElement(if)('if')
           PsiWhiteSpace(' ')
           COMPOUND_LIST
-            PIPELINE_COMMAND
-              PIPELINE
-                SIMPLE_COMMAND
-                  GENERIC_COMMAND_DIRECTIVE
-                    LITERAL
-                      PsiElement(word)('test')
-                  PsiWhiteSpace(' ')
-                  LITERAL
-                    PsiElement(word)('-a')
-                  PsiWhiteSpace(' ')
-                  LITERAL
-                    PsiElement(word)('foo.txt')
+            TEST_COMMAND
+              PsiElement(test)('test')
+              PsiWhiteSpace(' ')
+              LITERAL
+                PsiElement(word)('-a')
+              PsiWhiteSpace(' ')
+              LITERAL
+                PsiElement(word)('foo.txt')
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
           THEN_CLAUSE

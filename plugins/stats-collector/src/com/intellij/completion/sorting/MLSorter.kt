@@ -21,7 +21,10 @@ import com.intellij.stats.completion.prefixLength
 import com.intellij.stats.experiment.EmulatedExperiment
 import com.intellij.stats.experiment.WebServiceStatus
 import com.intellij.stats.personalization.UserFactorsManager
+import com.intellij.stats.personalization.session.SessionFactorsUtils
+import com.intellij.ui.JBColor
 import com.jetbrains.completion.feature.impl.FeatureUtils
+import java.awt.Color
 import java.util.*
 
 @Suppress("DEPRECATION")
@@ -67,14 +70,17 @@ class MLSorter : CompletionFinalSorter() {
     score?.mlRank == null
   }
 
-  override fun sort(items: MutableIterable<LookupElement>, parameters: CompletionParameters): Iterable<LookupElement> {
-    val languageRanker = RankingSupport.getRanker(parameters.language())
-    if (languageRanker == null || !shouldSortByMlRank()) return items
-
+  override fun sort(items: MutableIterable<LookupElement?>, parameters: CompletionParameters): Iterable<LookupElement?> {
     val lookup = LookupManager.getActiveLookup(parameters.editor) as? LookupImpl ?: return items
 
     val startTime = System.currentTimeMillis()
-    val sorted = sortByMLRanking(languageRanker, parameters, items, lookup) ?: return items
+
+    val itemsToSort = items.filterNotNull()
+    SessionFactorsUtils.updateSessionFactors(lookup, itemsToSort)
+    val languageRanker = RankingSupport.getRanker(parameters.language())
+    if (languageRanker == null || !shouldSortByMlRank()) return items
+
+    val sorted = sortByMLRanking(languageRanker, parameters, itemsToSort, lookup) ?: return items
     val timeSpent = System.currentTimeMillis() - startTime
 
     if (ApplicationManager.getApplication().isDispatchThread) {
@@ -101,7 +107,7 @@ class MLSorter : CompletionFinalSorter() {
    */
   private fun sortByMLRanking(ranker: RankingSupport.LanguageRanker,
                               parameters: CompletionParameters,
-                              items: MutableIterable<LookupElement>,
+                              items: Iterable<LookupElement>,
                               lookup: LookupImpl): Iterable<LookupElement>? {
     val relevanceObjects = lookup.getRelevanceObjects(items, false)
     val prefixLength = lookup.prefixLength()
@@ -110,8 +116,8 @@ class MLSorter : CompletionFinalSorter() {
     return items
       .mapIndexed { position, lookupElement ->
         positionsBefore[lookupElement] = position
-        val relevance = buildRelevanceMap(lookupElement, relevanceObjects[lookupElement],
-                                          lookup.prefixLength(), position, parameters) ?: return null
+        val relevance = buildRelevanceMap(lookup, lookupElement, relevanceObjects[lookupElement], prefixLength,
+                                          position, parameters, ranker.useSessionFeatures()) ?: return null
         val rank: Double = calculateElementRank(ranker, lookupElement, position, relevance, userFactors, prefixLength) ?: return null
 
         lookupElement to rank
@@ -121,14 +127,16 @@ class MLSorter : CompletionFinalSorter() {
       .addDiagnosticsIfNeeded(positionsBefore)
   }
 
-  private fun buildRelevanceMap(lookupElement: LookupElement,
+  private fun buildRelevanceMap(lookup: LookupImpl,
+                                lookupElement: LookupElement,
                                 relevanceObjects: List<Pair<String, Any?>>?,
                                 prefixLength: Int,
                                 position: Int,
-                                parameters: CompletionParameters): Map<String, Any>? {
+                                parameters: CompletionParameters,
+                                useSessionFeatures: Boolean): Map<String, Any>? {
     if (relevanceObjects == null) return null
 
-    val relevanceMap = RelevanceUtil.asRelevanceMap(relevanceObjects)
+    val relevanceMap = RelevanceUtil.asRelevanceMap(lookup, lookupElement, relevanceObjects, useSessionFeatures)
 
     relevanceMap["position"] = position
     relevanceMap["query_length"] = prefixLength
@@ -142,7 +150,15 @@ class MLSorter : CompletionFinalSorter() {
 
   private fun Iterable<LookupElement>.addDiagnosticsIfNeeded(positionsBefore: Map<LookupElement, Int>): Iterable<LookupElement> {
     if (Registry.`is`("completion.stats.show.ml.ranking.diff")) {
-      return this.mapIndexed { position, element -> MyMovedLookupElement(element, positionsBefore.getValue(element), position) }
+      return this.mapIndexed { position, element ->
+        val diff = position - positionsBefore.getValue(element)
+        if (diff != 0) {
+          MyMovedLookupElement(element, diff)
+        }
+        else {
+          element
+        }
+      }
     }
 
     return this
@@ -177,14 +193,22 @@ class MLSorter : CompletionFinalSorter() {
 }
 
 private class MyMovedLookupElement(delegate: LookupElement,
-                                   private val before: Int,
-                                   private val after: Int) : LookupElementDecorator<LookupElement>(delegate) {
+                                   private val diff: Int) : LookupElementDecorator<LookupElement>(delegate) {
+  private companion object {
+    val ML_RANK_DIFF_GREEN_COLOR = JBColor(JBColor.GREEN.darker(), JBColor.GREEN.brighter())
+  }
+
   override fun renderElement(presentation: LookupElementPresentation) {
     super.renderElement(presentation)
-    val diff = after - before
-    val diffText = if (diff < 0) diff.toString() else "+$diff"
-    val oldText = presentation.itemText
-    presentation.itemText = "$oldText (${diffText})"
+    if (!presentation.isReal) return
+    val text = if (diff < 0) " ↑${-diff} " else " ↓$diff "
+    val color: Color = if (diff < 0) ML_RANK_DIFF_GREEN_COLOR else JBColor.RED
+
+    val fragments = presentation.tailFragments
+    presentation.setTailText(text, color)
+    for (fragment in fragments) {
+      presentation.appendTailText(fragment.text, fragment.isGrayed)
+    }
   }
 }
 

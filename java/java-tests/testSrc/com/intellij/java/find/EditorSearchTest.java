@@ -18,12 +18,12 @@ package com.intellij.java.find;
 import com.intellij.find.EditorSearchSession;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
 
-public class EditorSearchTest extends LightPlatformCodeInsightFixtureTestCase {
+public class EditorSearchTest extends BasePlatformTestCase {
   private static final String THE_CODE = "public class A {\n" +
                                    "  //First comment ABC, ABCD, abc\n" +
                                    "  int ABC = 3;\n" +

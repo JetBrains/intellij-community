@@ -1022,6 +1022,9 @@
       "key": "StatusBar.borderColor"
     },
     {
+      "key": "StatusBar.hoverBackground"
+    },
+    {
       "key": "StatusBar.bottomColor",
       "deprecated": true
     },

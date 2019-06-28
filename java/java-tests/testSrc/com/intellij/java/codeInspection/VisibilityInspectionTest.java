@@ -29,12 +29,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.JavaInspectionTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-public class VisibilityInspectionTest extends InspectionTestCase {
+public class VisibilityInspectionTest extends JavaInspectionTestCase {
   private VisibilityInspection myTool = new VisibilityInspection();
 
   @Override

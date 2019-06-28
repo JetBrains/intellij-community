@@ -3,13 +3,13 @@ package org.jetbrains.yaml.structure;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.yaml.structureView.YAMLAliasResolveNodeProvider;
 
 import javax.swing.tree.TreePath;
 
-public class YAMLStructureTest extends LightPlatformCodeInsightFixtureTestCase {
+public class YAMLStructureTest extends BasePlatformTestCase {
   @Override
   protected String getTestDataPath() {
     return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/structure/data/";

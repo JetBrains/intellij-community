@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.icons.AllIcons;
@@ -7,6 +7,7 @@ import com.intellij.ide.actions.*;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -549,7 +550,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     @NonNls static final String HIDE_ACTIVE_WINDOW_ACTION_ID = InternalDecorator.HIDE_ACTIVE_WINDOW_ACTION_ID;
 
     HideAction() {
-      copyFrom(ActionManager.getInstance().getAction(HIDE_ACTIVE_WINDOW_ACTION_ID));
+      ActionUtil.copyFrom(this, HIDE_ACTIVE_WINDOW_ACTION_ID);
       getTemplatePresentation().setText(UIBundle.message("tool.window.hide.action.name"));
     }
 
@@ -570,7 +571,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     private boolean myHadSeveralContents;
 
     private ToggleContentUiTypeAction() {
-      copyFrom(ActionManager.getInstance().getAction(TOGGLE_CONTENT_UI_TYPE_ACTION_ID));
+      ActionUtil.copyFrom(this, TOGGLE_CONTENT_UI_TYPE_ACTION_ID);
     }
 
     @Override

@@ -21,14 +21,14 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.application.WriteAction
 
 /**
  * @author mike
  */
-class XmlXIncludeTest extends LightCodeInsightFixtureTestCase {
+class XmlXIncludeTest extends LightJavaCodeInsightFixtureTestCase {
   private static final String BASE_PATH = "/psi/xi"
 
   void testBasicXi() throws Exception {

@@ -17,7 +17,8 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.lang.StdLanguages;
+import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
@@ -49,7 +50,7 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
 
   @Override
   public boolean canInlineElement(PsiElement element) {
-    return element instanceof PsiField && StdLanguages.JAVA.equals(element.getLanguage());
+    return element instanceof PsiField && JavaLanguage.INSTANCE.equals(element.getLanguage());
   }
 
   @Override
@@ -80,8 +81,7 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
       final Ref<Boolean> hasWriteUsages = new Ref<>(false);
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
         for (PsiReference reference : ReferencesSearch.search(field)) {
-          final PsiElement referenceElement = reference.getElement();
-          if (!(referenceElement instanceof PsiExpression) || PsiUtil.isAccessedForWriting((PsiExpression)referenceElement)) {
+          if (isAccessedForWriting(reference.getElement())) {
             hasWriteUsages.set(true);
             break;
           }
@@ -116,6 +116,22 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
     dialog.show();
   }
 
+  private static boolean isAccessedForWriting(PsiElement referenceElement) {
+    if (referenceElement.getLanguage() == JavaLanguage.INSTANCE) {
+      if (!(referenceElement instanceof PsiExpression) || PsiUtil.isAccessedForWriting((PsiExpression)referenceElement)) {
+        return true;
+      }
+    }
+    else {
+      for (ReadWriteAccessDetector detector : ReadWriteAccessDetector.EP_NAME.getExtensionList()) {
+        if (detector.getExpressionAccess(referenceElement) != ReadWriteAccessDetector.Access.Read) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+  
   @Nullable
   public static PsiExpression getInitializer(PsiField field) {
     if (field.hasInitializer()) {

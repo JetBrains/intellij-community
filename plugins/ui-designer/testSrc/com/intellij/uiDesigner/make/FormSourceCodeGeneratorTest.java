@@ -12,7 +12,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.IOException;
@@ -20,7 +20,7 @@ import java.io.IOException;
 /**
  * @author yole
  */
-public class FormSourceCodeGeneratorTest extends PsiTestCase {
+public class FormSourceCodeGeneratorTest extends JavaPsiTestCase {
   private VirtualFile myTestProjectRoot;
   private FormSourceCodeGenerator myGenerator;
 

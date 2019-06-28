@@ -4,8 +4,11 @@ package com.intellij.ide.fileTemplates.impl;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplatesScheme;
+import com.intellij.ide.fileTemplates.InternalTemplateBean;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.extensions.DefaultPluginDescriptor;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.JDOMUtil;
@@ -117,7 +120,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
       PlatformTestUtil.saveProject(project, true);
       closeProject(project);
 
-      reloaded = ProjectManager.getInstance().loadAndOpenProject(foo.getPath());
+      reloaded = ProjectManager.getInstance().loadAndOpenProject(foo);
       assertNotNull(reloaded);
       manager = FileTemplateManager.getInstance(reloaded);
       assertThat(manager.getCurrentScheme()).isEqualTo(manager.getProjectScheme());
@@ -223,6 +226,21 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     assertNotNull(state);
     template.setLiveTemplateEnabled(true);
     assertEquals(0, settings.getState().getContentSize());
+  }
+
+  public void testInternalTemplatePlugin() {
+    ExtensionPoint<InternalTemplateBean> point = InternalTemplateBean.EP_NAME.getPoint(null);
+    InternalTemplateBean bean = new InternalTemplateBean();
+    bean.name = "Unknown";
+    bean.setPluginDescriptor(new DefaultPluginDescriptor("test"));
+    point.registerExtension(bean, getTestRootDisposable());
+    try {
+      myTemplateManager.getInternalTemplates();
+      fail();
+    }
+    catch (Throwable e) {
+      assertEquals("Can't find template Unknown from test", e.getMessage());
+    }
   }
 
   private FileTemplateManagerImpl myTemplateManager;

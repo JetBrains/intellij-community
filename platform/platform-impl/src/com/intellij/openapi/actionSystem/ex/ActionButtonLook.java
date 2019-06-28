@@ -87,14 +87,13 @@ public abstract class ActionButtonLook {
   }
 
   public void paintBackground(Graphics g, JComponent component, @ActionButtonComponent.ButtonState int state) {
-    if (state != ActionButtonComponent.NORMAL) {
-      Rectangle rect = new Rectangle(component.getSize());
-      JBInsets.removeFrom(rect, component.getInsets());
-
-      Color color = state == ActionButtonComponent.PUSHED ?
-                    JBUI.CurrentTheme.ActionButton.pressedBackground() : JBUI.CurrentTheme.ActionButton.hoverBackground();
-      paintLookBackground(g, rect, color);
-    }
+    if (state == ActionButtonComponent.NORMAL && !component.isBackgroundSet()) return;
+    Rectangle rect = new Rectangle(component.getSize());
+    JBInsets.removeFrom(rect, component.getInsets());
+    Color color = state == ActionButtonComponent.NORMAL ? component.getBackground() :
+                  state == ActionButtonComponent.PUSHED ? JBUI.CurrentTheme.ActionButton.pressedBackground() :
+                  JBUI.CurrentTheme.ActionButton.hoverBackground();
+    paintLookBackground(g, rect, color);
   }
 
   public void paintBackground(Graphics g, JComponent component, Color color) {
@@ -104,14 +103,12 @@ public abstract class ActionButtonLook {
   }
 
   public void paintBorder(Graphics g, JComponent component, @ActionButtonComponent.ButtonState int state) {
-    if (state != ActionButtonComponent.NORMAL) {
-      Rectangle rect = new Rectangle(component.getSize());
-      JBInsets.removeFrom(rect, component.getInsets());
-
-      Color color = state == ActionButtonComponent.PUSHED ?
-                    JBUI.CurrentTheme.ActionButton.pressedBorder() : JBUI.CurrentTheme.ActionButton.hoverBorder();
-      paintLookBorder(g, rect, color);
-    }
+    if (state == ActionButtonComponent.NORMAL && !component.isBackgroundSet()) return;
+    Rectangle rect = new Rectangle(component.getSize());
+    JBInsets.removeFrom(rect, component.getInsets());
+    Color color = state == ActionButtonComponent.PUSHED ? JBUI.CurrentTheme.ActionButton.pressedBorder() :
+                  JBUI.CurrentTheme.ActionButton.hoverBorder();
+    paintLookBorder(g, rect, color);
   }
 
   public void paintBorder(Graphics g, JComponent component, Color color) {

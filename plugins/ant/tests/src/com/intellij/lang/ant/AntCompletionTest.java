@@ -8,14 +8,14 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.TestDataFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class AntCompletionTest extends LightCodeInsightTestCase {
+public class AntCompletionTest extends LightJavaCodeInsightTestCase {
 
   @NotNull
   @Override

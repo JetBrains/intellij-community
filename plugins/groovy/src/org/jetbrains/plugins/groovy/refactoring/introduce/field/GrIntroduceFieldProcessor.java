@@ -8,6 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -263,7 +264,7 @@ public class GrIntroduceFieldProcessor {
     LOG.assertTrue(name != null, scope.getText());
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myContext.getProject());
     final GrMethod
-      constructor = factory.createConstructorFromText(name, ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY, "{}", scope);
+      constructor = factory.createConstructorFromText(name, ArrayUtilRt.EMPTY_STRING_ARRAY, ArrayUtilRt.EMPTY_STRING_ARRAY, "{}", scope);
     if (scope instanceof GroovyScriptClass) constructor.getModifierList().setModifierProperty(GrModifier.DEF, true);
     return (PsiMethod)scope.add(constructor);
   }
@@ -373,7 +374,7 @@ public class GrIntroduceFieldProcessor {
     if (!PsiModifier.PACKAGE_LOCAL.equals(modifier)) modifiers.add(modifier);
     if (mySettings.declareFinal()) modifiers.add(PsiModifier.FINAL);
 
-    final String[] arr_modifiers = ArrayUtil.toStringArray(modifiers);
+    final String[] arr_modifiers = ArrayUtilRt.toStringArray(modifiers);
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myContext.getProject());
     if (targetClass instanceof GroovyScriptClass) {
       return factory.createVariableDeclaration(arr_modifiers, ((GrExpression)null), type, name);

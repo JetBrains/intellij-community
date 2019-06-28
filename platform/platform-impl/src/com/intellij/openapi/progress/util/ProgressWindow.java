@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,7 +82,8 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     this(shouldShowCancel, shouldShowBackground, project, null);
   }
 
-  public ProgressWindow(boolean shouldShowCancel, boolean shouldShowBackground, @Nullable Project project, @Nullable String cancelText) {
+  public ProgressWindow(boolean shouldShowCancel, boolean shouldShowBackground, @Nullable Project project,
+                        @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText) {
     this(shouldShowCancel, shouldShowBackground, project, null, cancelText);
   }
 
@@ -89,7 +91,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
                         boolean shouldShowBackground,
                         @Nullable Project project,
                         @Nullable JComponent parentComponent,
-                        @Nullable String cancelText) {
+                        @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText) {
     myProject = project;
     myShouldShowCancel = shouldShowCancel;
     myCancelText = cancelText;

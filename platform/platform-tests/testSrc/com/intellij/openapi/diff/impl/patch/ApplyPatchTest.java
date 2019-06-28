@@ -104,12 +104,7 @@ public class ApplyPatchTest extends PlatformTestCase {
   }
 
   public void testRenameDir() throws Exception {
-    doTest(1, ApplyPatchStatus.SUCCESS, new VirtualFileFilter() {
-      @Override
-      public boolean accept(final VirtualFile file) {
-        return !"empty".equals(file.getNameWithoutExtension());
-      }
-    });
+    doTest(1, ApplyPatchStatus.SUCCESS, file -> !"empty".equals(file.getNameWithoutExtension()));
   }
 
   public void testDeleteLastLineWithLineBreak() throws Exception {

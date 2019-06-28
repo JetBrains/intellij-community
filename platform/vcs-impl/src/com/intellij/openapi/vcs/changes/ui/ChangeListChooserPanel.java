@@ -11,8 +11,8 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.changes.committed.CommittedChangeListRenderer;
 import com.intellij.ui.*;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
@@ -50,23 +50,9 @@ public class ChangeListChooserPanel extends JPanel {
                                            boolean selected,
                                            boolean hasFocus) {
         if (value != null) {
-          String name = value.getName();
-          int visibleWidth = list.getSize().width;
-          if (visibleWidth == 0) {
-            visibleWidth = MyEditorComboBox.PREF_WIDTH;
-          }
-          final FontMetrics fm = list.getFontMetrics(list.getFont());
-          final int width = fm.stringWidth(name);
-          if (width > visibleWidth) {
-            final String truncated = CommittedChangeListRenderer
-              .truncateDescription(name, fm, visibleWidth - fm.stringWidth(" ...") - 7);
-            if (truncated.length() > 5) {
-              name = truncated + " ...";
-            }
-          }
-          append(name, value instanceof LocalChangeList && ((LocalChangeList)value).isDefault()
-                       ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
-                       : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          append(value.getName(), value instanceof LocalChangeList && ((LocalChangeList)value).isDefault()
+                                  ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
+                                  : SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
       }
     });
@@ -230,9 +216,9 @@ public class ChangeListChooserPanel extends JPanel {
       super(PREF_WIDTH);
       JBColor fg = new JBColor(0x00b53d, 0x6ba65d);
       JBColor bg = new JBColor(0xebfcf1, 0x313b32);
-      TextIcon icon = new TextIcon("New", fg, bg, JBUI.scale(2));
+      TextIcon icon = new TextIcon("New", fg, bg, JBUIScale.scale(2));
       icon.setFont(RelativeFont.TINY.derive(getFont()));
-      icon.setRound(JBUI.scale(4));
+      icon.setRound(JBUIScale.scale(4));
       JLabel label = new JLabel(icon);
       JPanel panel = new JPanel(new BorderLayout());
       panel.setOpaque(true);

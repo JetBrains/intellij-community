@@ -4,7 +4,6 @@ package org.jetbrains.plugins.terminal
 import com.intellij.internal.statistic.collectors.fus.os.OsVersionUsageCollector
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
-import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.PathUtil
@@ -12,12 +11,6 @@ import java.util.*
 
 class TerminalUsageTriggerCollector {
   companion object {
-    @Deprecated("To be removed")
-    @JvmStatic
-    fun trigger(project: Project, featureId: String, context: FUSUsageContext) {
-      FUCounterUsageLogger.getInstance().logEvent(project, GROUP_ID, featureId, FeatureUsageData().addFeatureContext(context))
-    }
-
     @JvmStatic
     fun triggerSshShellStarted(project: Project) {
       FUCounterUsageLogger.getInstance().logEvent(project, GROUP_ID, "ssh.exec", FeatureUsageData().addOS())

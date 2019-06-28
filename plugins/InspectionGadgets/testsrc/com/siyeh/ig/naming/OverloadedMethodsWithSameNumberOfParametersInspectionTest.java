@@ -2,14 +2,14 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class OverloadedMethodsWithSameNumberOfParametersInspectionTest extends LightCodeInsightFixtureTestCase {
+public class OverloadedMethodsWithSameNumberOfParametersInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    return LightInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/naming/overloaded_methods_with_same_number_of_parameters";
+    return LightJavaInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/naming/overloaded_methods_with_same_number_of_parameters";
   }
 
   @NotNull

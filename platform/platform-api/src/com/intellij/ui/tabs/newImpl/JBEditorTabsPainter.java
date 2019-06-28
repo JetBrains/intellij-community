@@ -9,6 +9,7 @@ import com.intellij.util.ui.UIUtil;
 import java.awt.*;
 
 /**
+ * @deprecated left for API compatibility
  * @author Konstantin Bulenkov
  */
 @Deprecated
@@ -52,7 +53,7 @@ public abstract class JBEditorTabsPainter {
   public abstract Color getBackgroundColor();
 
   public Color getEmptySpaceColor() {
-    return UIUtil.isUnderAquaLookAndFeel() ? Gray.xC8 : UIUtil.getPanelBackground();
+    return UIUtil.getPanelBackground();
   }
 
   public void setDefaultTabColor(Color color) {

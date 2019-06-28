@@ -25,7 +25,7 @@ import com.intellij.refactoring.IntroduceParameterRefactoring
 import com.intellij.refactoring.introduceField.ElementToWorkOn
 import com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor
 import com.intellij.refactoring.introduceParameter.Util
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import gnu.trove.TIntArrayList
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.Nullable
@@ -33,7 +33,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Maxim.Medvedev
  */
-class IntroduceParameterTest extends LightCodeInsightFixtureTestCase {
+class IntroduceParameterTest extends LightJavaCodeInsightFixtureTestCase {
   final String getBasePath() {
     return TestUtils.testDataPath + 'refactoring/introduceParameter/' + getTestName(true) + '/'
   }

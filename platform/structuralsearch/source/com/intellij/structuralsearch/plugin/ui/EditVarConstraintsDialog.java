@@ -15,10 +15,7 @@ import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
@@ -101,13 +98,13 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
   private final Project myProject;
 
-  EditVarConstraintsDialog(final Project project, Configuration configuration, List<String> _variables, final FileType fileType) {
+  EditVarConstraintsDialog(Project project, Configuration configuration, List<String> _variables, LanguageFileType fileType) {
     super(project, true);
     myProject = project;
     variables = _variables;
     myConfiguration = configuration;
     final MatchOptions matchOptions = myConfiguration.getMatchOptions();
-    myCompiledPattern = PatternCompiler.compilePattern(project, matchOptions, false);
+    myCompiledPattern = PatternCompiler.compilePattern(project, matchOptions, false, false);
     myProfile = StructuralSearchUtil.getProfileByFileType(fileType);
 
     setTitle(SSRBundle.message("editvarcontraints.edit.variables"));
@@ -570,14 +567,14 @@ class EditVarConstraintsDialog extends DialogWrapper {
   }
 
   Editor createEditor(final Project project, final String text, final String fileName) {
-    Language groovy = Language.findLanguageByID("Groovy");
+    final Language groovy = Language.findLanguageByID("Groovy");
     Document doc = null;
     final FileType fileType = getFileType(fileName);
     if (groovy != null) {
       // there is no right way to create a code fragment for generic language, so we use this hole since we need extend resolve scope
       for (StructuralSearchProfile profile : StructuralSearchProfile.EP_NAME.getExtensions()) {
         if (profile.isMyLanguage(groovy)) {
-          PsiCodeFragment fragment = Objects.requireNonNull(profile.createCodeFragment(project, text, null));
+          final PsiCodeFragment fragment = Objects.requireNonNull(profile.createCodeFragment(project, text, null));
           fragment.forceResolveScope(new StructuralSearchScriptScope(myProject));
           doc = PsiDocumentManager.getInstance(project).getDocument(fragment);
           break;

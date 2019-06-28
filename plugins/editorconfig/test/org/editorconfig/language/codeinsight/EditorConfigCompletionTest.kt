@@ -4,13 +4,13 @@ package org.editorconfig.language.codeinsight
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.editorconfig.EditorConfigRegistry
 import org.editorconfig.language.assertIterableEquals
 import org.editorconfig.language.services.EditorConfigOptionDescriptorManager
 import org.editorconfig.language.services.impl.EditorConfigOptionDescriptorManagerImpl
 
-class EditorConfigCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
+class EditorConfigCompletionTest : BasePlatformTestCase() {
   override fun getTestDataPath() =
     "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testData/org/editorconfig/language/codeinsight/completion/"
 

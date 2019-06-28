@@ -2,11 +2,11 @@
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
@@ -16,7 +16,9 @@ import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.PathUtil
+import com.intellij.util.io.readChars
 import com.intellij.util.io.readText
+import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -28,6 +30,7 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.attribute.PosixFilePermission
@@ -46,7 +49,12 @@ internal class ProjectStoreTest {
 
   @Language("XML")
   private val iprFileContent =
-    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project version=\"4\">\n  <component name=\"AATestComponent\">\n    <option name=\"value\" value=\"customValue\" />\n  </component>\n</project>"
+    """<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AATestComponent">
+    <option name="AAvalue" value="customValue" />
+  </component>
+</project>""".trimIndent()
 
   @State(name = "AATestComponent")
   private class TestComponent : PersistentStateComponent<TestState> {
@@ -59,7 +67,7 @@ internal class ProjectStoreTest {
     }
   }
 
-  private data class TestState(var value: String = "default")
+  private data class TestState(var AAvalue: String = "default")
 
   @Test
   fun directoryBasedStorage() = runBlocking {
@@ -73,18 +81,18 @@ internal class ProjectStoreTest {
 
       // test reload on external change
       val file = Paths.get(project.stateStore.storageManager.expandMacros(PROJECT_FILE))
-      file.write(file.readText().replace("""<option name="value" value="foo" />""", """<option name="value" value="newValue" />"""))
+      file.write(file.readText().replace("""<option name="AAvalue" value="foo" />""", """<option name="AAvalue" value="newValue" />"""))
 
       refreshProjectConfigDir(project)
       StoreReloadManager.getInstance().reloadChangedStorageFiles()
 
       assertThat(testComponent.state).isEqualTo(TestState("newValue"))
 
-      testComponent.state!!.value = "s".repeat(FileUtilRt.LARGE_FOR_CONTENT_LOADING + 1024)
+      testComponent.state!!.AAvalue = "s".repeat(FileUtilRt.LARGE_FOR_CONTENT_LOADING + 1024)
       project.stateStore.save()
 
       // we should save twice (first call - virtual file size is not yet set)
-      testComponent.state!!.value = "b".repeat(FileUtilRt.LARGE_FOR_CONTENT_LOADING + 1024)
+      testComponent.state!!.AAvalue = "b".repeat(FileUtilRt.LARGE_FOR_CONTENT_LOADING + 1024)
       project.stateStore.save()
     }
   }
@@ -102,10 +110,6 @@ internal class ProjectStoreTest {
 
   @Test
   fun saveProjectName() = runBlocking {
-    if (UsefulTestCase.IS_UNDER_TEAMCITY) {
-      assumeTrue("Normal OS is required", !SystemInfo.isWindows)
-    }
-
     loadAndUseProjectInLoadComponentStateMode(tempDirManager, {
       // test BOM
       val out = ByteArrayOutputStream()
@@ -125,7 +129,7 @@ internal class ProjectStoreTest {
       assertThat(store.nameFile).hasContent(newName)
 
       project.setProjectName("clear-read-only")
-      Files.setPosixFilePermissions(store.nameFile, setOf(PosixFilePermission.OWNER_READ))
+      File(store.nameFile.toUri()).setReadOnly()
 
       val handler = ReadonlyStatusHandler.getInstance(project) as ReadonlyStatusHandlerImpl
       try {
@@ -175,14 +179,14 @@ internal class ProjectStoreTest {
   fun `remove stalled data`() = runBlocking {
     loadAndUseProjectInLoadComponentStateMode(tempDirManager, {
       it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/misc.xml", iprFileContent)
-      it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/foo.xml", """
-      <?xml version="1.0" encoding="UTF-8"?>
-      <project version="4">
-        <component name="ValidComponent" foo="some data" />
-        <component name="AppLevelLoser" foo="old?" />
-        <component name="ProjectLevelLoser" foo="old?" />
-      </project>
-    """.trimIndent())
+      @Language("XML")
+      val expected = """<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ValidComponent" foo="some data" />
+  <component name="AppLevelLoser" foo="old?" />
+  <component name="ProjectLevelLoser" foo="old?" />
+</project>""".trimIndent()
+      it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/foo.xml", expected)
       it.path
     }) { project ->
       val obsoleteStorageBean = ObsoleteStorageBean()
@@ -207,13 +211,14 @@ internal class ProjectStoreTest {
 
       componentStore.save()
 
-      assertThat(Paths.get(project.stateStore.storageManager.expandMacros(PROJECT_CONFIG_DIR)).resolve(obsoleteStorageBean.file)).isEqualTo("""
-      <?xml version="1.0" encoding="UTF-8"?>
-      <project version="4">
-        <component name="AppLevelLoser" foo="old?" />
-        <component name="ValidComponent" foo="some data" />
-      </project>
-    """.trimIndent())
+      @Language("XML")
+      val expected = """<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AppLevelLoser" foo="old?" />
+  <component name="ValidComponent" foo="some data" />
+</project>""".trimIndent()
+      assertThat(Paths.get(project.stateStore.storageManager.expandMacros(PROJECT_CONFIG_DIR)).resolve(obsoleteStorageBean.file)).isEqualTo(
+        expected)
     }
   }
 
@@ -225,7 +230,7 @@ internal class ProjectStoreTest {
         it.path
       }) { project ->
         val testComponent = test(project as ProjectEx)
-        testComponent.state!!.value = "s"
+        testComponent.state!!.AAvalue = "s"
         launch {
           project.stateStore.save()
         }
@@ -235,12 +240,35 @@ internal class ProjectStoreTest {
     }
   }
 
+  // heavy test that uses ProjectManagerImpl directly to test (opposite to DefaultProjectStoreTest)
+  @Test
+  fun `just created project must inherit settings from the default project`() {
+    val projectManager = ProjectManagerEx.getInstanceEx()
+
+    val testComponent = TestComponent()
+    testComponent.loadState(TestState(AAvalue = "foo"))
+    (projectManager.defaultProject as ComponentManager).stateStore.initComponent(testComponent, null)
+
+    val newProjectPath = tempDirManager.newPath()
+    val newProject = projectManager.newProject("foo", newProjectPath.systemIndependentPath, true, false)!!
+    try {
+      val miscXml = newProjectPath.resolve(".idea/misc.xml").readChars()
+      assertThat(miscXml).contains("AATestComponent")
+      assertThat(miscXml).contains("""<option name="AAvalue" value="foo" />""")
+    }
+    finally {
+      runInEdt {
+        PlatformTestUtil.forceCloseProjectWithoutSaving(newProject)
+      }
+    }
+  }
+
   private suspend fun test(project: Project): TestComponent {
     val testComponent = TestComponent()
     project.stateStore.initComponent(testComponent, null)
     assertThat(testComponent.state).isEqualTo(TestState("customValue"))
 
-    testComponent.state!!.value = "foo"
+    testComponent.state!!.AAvalue = "foo"
     project.stateStore.save()
 
     val file = Paths.get(project.stateStore.storageManager.expandMacros(PROJECT_FILE))

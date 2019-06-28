@@ -16,13 +16,13 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Danila Ponomarenko
  */
-public class PointlessBooleanExpressionInspectionTest extends LightInspectionTestCase {
+public class PointlessBooleanExpressionInspectionTest extends LightJavaInspectionTestCase {
 
   public void testPointlessBooleanExpression() {
     doTest();

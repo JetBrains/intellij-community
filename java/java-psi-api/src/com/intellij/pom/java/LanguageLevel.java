@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.pom.java;
 
 import com.intellij.core.JavaCoreBundle;
@@ -7,13 +7,14 @@ import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.lang.JavaVersion;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a language level (i.e. features available) of a Java code.
- * {@code org.jetbrains.jps.model.java.LanguageLevel} is a compiler-side counterpart of this enum.
+ * The {@link org.jetbrains.jps.model.java.LanguageLevel} class is a compiler-side counterpart of this enum.
  *
  * @author dsl
  * @see LanguageLevelProjectExtension
@@ -32,7 +33,9 @@ public enum LanguageLevel {
   JDK_11(JavaCoreBundle.message("jdk.11.language.level.description"), 11),
   JDK_12(JavaCoreBundle.message("jdk.12.language.level.description"), 12),
   JDK_12_PREVIEW(JavaCoreBundle.message("jdk.12.preview.language.level.description"), 12),
-  JDK_X(JavaCoreBundle.message("jdk.X.language.level.description"), 12);
+  JDK_13(JavaCoreBundle.message("jdk.13.language.level.description"), 13),
+  JDK_13_PREVIEW(JavaCoreBundle.message("jdk.13.preview.language.level.description"), 13),
+  JDK_X(JavaCoreBundle.message("jdk.X.language.level.description"), 14);
 
   public static final LanguageLevel HIGHEST = JDK_12;
   public static final Key<LanguageLevel> KEY = Key.create("LANGUAGE_LEVEL");
@@ -71,6 +74,7 @@ public enum LanguageLevel {
   }
 
   /** @deprecated use {@link org.jetbrains.jps.model.java.JpsJavaSdkType#complianceOption(JavaVersion)} (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   public String getCompilerComplianceDefaultOption() {
     return myVersion.feature <= 8 ? "1." + myVersion.feature : String.valueOf(myVersion.feature);

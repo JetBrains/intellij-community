@@ -62,7 +62,7 @@ public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransfera
     holder.append("\\par");
     holder.append(HEADER_SUFFIX);
   }
-  
+
   private static int[] getAdjustedColorComponents(Color color) {
     ColorSpace genericRgbSpace;
     if (SystemInfo.isMac && (genericRgbSpace = MacColorSpaceLoader.getGenericRgbColorSpace()) != null) {
@@ -78,7 +78,7 @@ public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransfera
       return new int[]{color.getRed(), color.getGreen(), color.getBlue()};
     }
   }
-  
+
   private static int colorComponentFloatToInt(float component) {
     return (int)(component * 255 + 0.5f);
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
 import com.intellij.openapi.util.SystemInfoRt;
@@ -64,9 +64,14 @@ public abstract class BundleBase {
 
     if (params.length > 0 && value.indexOf('{') >= 0) {
       Locale locale = bundle.getLocale();
-      MessageFormat format = locale != null ? new MessageFormat(value, locale) : new MessageFormat(value);
-      OrdinalFormat.apply(format);
-      value = format.format(params);
+      try {
+        MessageFormat format = locale != null ? new MessageFormat(value, locale) : new MessageFormat(value);
+        OrdinalFormat.apply(format);
+        value = format.format(params);
+      }
+      catch (IllegalArgumentException e) {
+        value = "!invalid format: `" + value + "`!";
+      }
     }
 
     return value;

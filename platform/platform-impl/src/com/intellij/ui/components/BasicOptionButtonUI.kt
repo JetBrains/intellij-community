@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 
 package com.intellij.ui.components
@@ -16,8 +16,8 @@ import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Condition
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.components.JBOptionButton.PROP_OPTIONS
-import com.intellij.ui.components.JBOptionButton.PROP_OPTION_TOOLTIP
+import com.intellij.ui.components.JBOptionButton.Companion.PROP_OPTIONS
+import com.intellij.ui.components.JBOptionButton.Companion.PROP_OPTION_TOOLTIP
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.PopupFactoryImpl.ActionGroupPopup.getActionItems
@@ -101,6 +101,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     configureArrowButton()
 
     configureOptionButton()
+    updateTooltip()
   }
 
   protected open fun uninstallButtons() {
@@ -125,9 +126,11 @@ open class BasicOptionButtonUI : OptionButtonUI() {
 
   protected open fun configureMainButton() {
     mainButton.isFocusable = false
+    mainButton.action = optionButton.action
   }
 
   protected open fun unconfigureMainButton() {
+    mainButton.action = null
   }
 
   protected open fun createArrowButton(): JButton = ArrowButton().apply { icon = AllIcons.General.ArrowDown }
@@ -136,6 +139,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     arrowButton.isFocusable = false
     arrowButton.preferredSize = arrowButtonPreferredSize
     arrowButton.isVisible = !isSimpleButton
+    arrowButton.isEnabled = optionButton.isEnabled
 
     arrowButtonActionListener = createArrowButtonActionListener()?.apply(arrowButton::addActionListener)
     arrowButtonMouseListener = createArrowButtonMouseListener()?.apply(arrowButton::addMouseListener)
@@ -308,6 +312,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
   open inner class BaseButton : JButton() {
     override fun hasFocus(): Boolean = optionButton.hasFocus()
     override fun isDefaultButton(): Boolean = optionButton.isDefaultButton
+    override fun getBackground(): Color? = optionButton.background
 
     override fun paint(g: Graphics): Unit = if (isSimpleButton) super.paint(g) else cloneAndPaint(g) { paintNotSimple(it) }
     open fun paintNotSimple(g: Graphics2D): Unit = super.paint(g)

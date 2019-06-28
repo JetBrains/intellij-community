@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -18,23 +18,22 @@ import java.util.List;
 @SuppressWarnings("ALL")
 public class StructuralSearchTest extends StructuralSearchTestCase {
   @Override
-  protected int findMatchesCount(@Language("JAVA") String in, String pattern, FileType fileType) {
+  protected int findMatchesCount(@Language("JAVA") String in, String pattern, LanguageFileType fileType) {
     return super.findMatchesCount(in, pattern, fileType);
   }
 
   @Override
   protected List<MatchResult> findMatches(@Language("JAVA") String in,
                                           String pattern,
-                                          FileType patternFileType,
+                                          LanguageFileType patternFileType,
                                           com.intellij.lang.Language patternLanguage,
-                                          FileType sourceFileType,
-                                          String sourceExtension,
+                                          LanguageFileType sourceFileType,
                                           boolean physicalSourceFile) {
-    return super.findMatches(in, pattern, patternFileType, patternLanguage, sourceFileType, sourceExtension, physicalSourceFile);
+    return super.findMatches(in, pattern, patternFileType, patternLanguage, sourceFileType, physicalSourceFile);
   }
 
   @Override
-  protected List<MatchResult> findMatches(@Language("JAVA") String in, String pattern, FileType patternFileType) {
+  protected List<MatchResult> findMatches(@Language("JAVA") String in, String pattern, LanguageFileType patternFileType) {
     return super.findMatches(in, pattern, patternFileType);
   }
 
@@ -693,6 +692,8 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                  findMatchesCount(s143, "class '_a { '_d{0,0}:[ script( \"__context__.constructor\" ) ]('_b '_c+); }"));
     assertEquals("parameterless constructor search 2", 2,
                  findMatchesCount(s143, "'_Constructor() { '_st*; }"));
+    assertEquals("method & constructor search", 5,
+                 findMatchesCount(s143, "'_T? '_identifier('_PT '_p*);"));
   }
 
   public void testScriptSearch() {
@@ -2391,6 +2392,35 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "}";
     String pattern8 = "String '_x;";
     assertEquals("avoid IncorrectOperationException", 0, findMatchesCount(source3, pattern8));
+
+    String source4 = "class Main2 {\n" +
+                     "    public static void main(String[] args) {\n" +
+                     "        //need to match this\n" +
+                     "        JSTestUtils.testES6(\"myProject\", () -> {\n" +
+                     "            doTest1();\n" +
+                     "            doTest2();\n" +
+                     "        });\n" +
+                     "    }\n" +
+                     "\n" +
+                     "    private static void doTest1() {\n" +
+                     "    }\n" +
+                     "\n" +
+                     "    private static void doTest2() {\n" +
+                     "    }\n" +
+                     "\n" +
+                     "    static class JSTestUtils {\n" +
+                     "        private JSTestUtils() {\n" +
+                     "        }\n" +
+                     "\n" +
+                     "        static void testES6(Object project, Runnable runnable) {\n" +
+                     "            runnable.run();\n" +
+                     "        }\n" +
+                     "    }\n" +
+                     "}";
+    String pattern9 = "JSTestUtils.testES6('_expression, () -> {\n" +
+                      "    '_statements*;\n" +
+                      "})";
+    assertEquals("match lambda body correctly", 1, findMatchesCount(source4, pattern9));
   }
 
   public void testFindDefaultMethods() {
@@ -2586,6 +2616,10 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String pattern3 = "'_st;" +
                       "// tokamak";
     assertEquals("find statement followed by comment", 1, findMatchesCount(source3, pattern3));
+
+    String source4 = "/*";
+    String pattern4 = "//'_comment:[regex( .* )]";
+    assertEquals("no error on broken code", 1, findMatchesCount(source4, pattern4));
   }
 
   public void testCaseInsensitive() {

@@ -24,7 +24,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.roots.impl.ModuleOrderEntryImpl;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
@@ -149,7 +148,7 @@ public class ClassInheritorsTest extends JavaCodeInsightFixtureTestCase {
     Module mod2 = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod2"));
 
     ModuleRootModificationUtil.updateModel(mod2, model ->
-      ((ModuleOrderEntryImpl)model.addModuleOrderEntry(getModule())).setProductionOnTestDependency(true));
+      model.addModuleOrderEntry(getModule()).setProductionOnTestDependency(true));
 
     assertSize(1, ClassInheritorsSearch.search(myFixture.findClass("B")).findAll());
   }

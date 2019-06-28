@@ -6,9 +6,12 @@ import com.intellij.ide.actions.ImportSettingsFilenameFilter;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.idea.Main;
+import com.intellij.idea.SplashManager;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -19,6 +22,8 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.io.PathKt;
+import com.intellij.util.text.VersionComparatorUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +31,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -43,11 +49,7 @@ import static com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY;
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.openapi.util.text.StringUtil.startsWithIgnoreCase;
 
-/**
- * @author max
- * @noinspection SSBasedInspection
- */
-public class ConfigImportHelper {
+public final class ConfigImportHelper {
   private static final String FIRST_SESSION_KEY = "intellij.first.ide.session";
   private static final String CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY = "intellij.config.imported.in.current.session";
 
@@ -72,11 +74,16 @@ public class ConfigImportHelper {
     ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(guessedOldConfigDirs, f -> findConfigDirectoryByPath(f));
     dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
     AppUIUtil.updateWindowIcon(dialog);
-    dialog.setVisible(true);
 
-    Pair<Path, Path> result = dialog.getSelectedFile();
-    if (result != null) {
-      doImport(result.first, newConfigDir, result.second, log);
+    Ref<Pair<Path, Path>> result = new Ref<>();
+    SplashManager.executeWithHiddenSplash(dialog, () -> {
+      dialog.setVisible(true);
+      result.set(dialog.getSelectedFile());
+      dialog.dispose();
+    });
+
+    if (!result.isNull()) {
+      doImport(result.get().first, newConfigDir, result.get().second, log);
       if (settings != null) {
         settings.importFinished(newConfigDir);
       }
@@ -95,7 +102,7 @@ public class ConfigImportHelper {
    * Simple check by file type, content is not checked.
    */
   public static boolean isSettingsFile(@NotNull VirtualFile file) {
-    return ArchiveFileType.INSTANCE.equals(file.getFileType());
+    return FileTypeRegistry.getInstance().isFileOfType(file, ArchiveFileType.INSTANCE);
   }
 
   public static boolean isValidSettingsFile(@NotNull File file) {
@@ -141,9 +148,7 @@ public class ConfigImportHelper {
 
     List<Path> homes = new ArrayList<>(2);
     homes.add((isMacOs ? newConfigDir : newConfigDir.getParent()).getParent());
-    String nameWithSelector = StringUtil.notNullize(
-      PathManager.getPathsSelector(),
-      (isMacOs ? newConfigDir : newConfigDir.getParent()).getFileName().toString());
+    String nameWithSelector = StringUtil.notNullize(PathManager.getPathsSelector(), getNameWithVersion(newConfigDir, isMacOs));
     String prefix = getPrefixFromSelector(nameWithSelector, isMacOs);
 
     String defaultPrefix = StringUtil.replace(StringUtil.notNullize(
@@ -177,7 +182,7 @@ public class ConfigImportHelper {
       return Collections.emptyList();
     }
 
-    HashMap<Path, FileTime> lastModified = new HashMap<>();
+    Map<Path, FileTime> lastModified = new THashMap<>();
     for (Path child : candidates) {
       Path candidate = isMacOs ? child : child.resolve(CONFIG);
       FileTime max = null;
@@ -203,6 +208,11 @@ public class ConfigImportHelper {
       return diff;
     });
     return result;
+  }
+
+  @NotNull
+  private static String getNameWithVersion(@NotNull Path configDir, boolean isMacOs) {
+    return (isMacOs ? configDir : configDir.getParent()).getFileName().toString();
   }
 
   @Nullable
@@ -369,6 +379,10 @@ public class ConfigImportHelper {
       // the filter prevents web token reuse and accidental overwrite of files already created by this instance (port/lock/tokens etc.)
       FileUtil.copyDir(oldConfigDir.toFile(), newConfigDir.toFile(), path -> !blockImport(path.toPath(), oldConfigDir, newConfigDir));
 
+      if (SystemInfo.isMac) {
+        setKeymapIfNeeded(oldConfigDir, newConfigDir, log);
+      }
+
       // on macOS, plugins are normally not under the config directory
       Path oldPluginsDir = oldConfigDir.resolve(PLUGINS);
       if (SystemInfo.isMac && !Files.isDirectory(oldPluginsDir)) {
@@ -408,6 +422,31 @@ public class ConfigImportHelper {
       log.warn(e);
       String message = ApplicationBundle.message("error.unable.to.import.settings", e.getMessage());
       Main.showMessage(ApplicationBundle.message("title.settings.import.failed"), message, false);
+    }
+  }
+
+  public static void setKeymapIfNeeded(@NotNull Path oldConfigDir, @NotNull Path newConfigDir, @NotNull Logger log) {
+    String nameWithVersion = getNameWithVersion(oldConfigDir, true);
+    Matcher m = Pattern.compile("\\.?[^\\d]+(\\d+\\.\\d+)?").matcher(nameWithVersion);
+    if (!m.matches() || VersionComparatorUtil.compare("2019.1", m.group(1)) < 0) {
+      return;
+    }
+
+    Path keymapOptionFile = newConfigDir.resolve("options/keymap.xml");
+    if (Files.exists(keymapOptionFile)) {
+      return;
+    }
+
+    try {
+      Files.createDirectories(keymapOptionFile.getParent());
+      Files.write(keymapOptionFile, ("<application>\n" +
+                                    "  <component name=\"KeymapManager\">\n" +
+                                    "    <active_keymap name=\"Mac OS X\" />\n" +
+                                    "  </component>\n" +
+                                    "</application>").getBytes(StandardCharsets.UTF_8));
+    }
+    catch (IOException e) {
+      log.error("Cannot set keymap", e);
     }
   }
 

@@ -9,7 +9,7 @@
       ],
       "rules": {
         "event_id": [
-          "regexp:(.+)\\s*:\\s*(.*)"
+          "regexp:(.+)\\s*/\\s*(.*)"
           ]}
         },
           {
@@ -21,7 +21,7 @@
             ],
             "rules": {
               "event_id": [
-                "{regexp:(.+)\\s*:\\s*(.*)}"
+                "{regexp:(.+)\\s*/\\s*(.*)}"
               ]
             }
           },
@@ -37,7 +37,7 @@
                 "regexp#regexp_ref"
               ],
               "regexps": {
-                "regexp_ref": "(.+)\\s*:\\s*(.*)"
+                "regexp_ref": "(.+)\\s*/\\s*(.*)"
               }
             }
           },
@@ -53,7 +53,7 @@
                 "{regexp#regexp_ref}"
               ],
               "regexps": {
-                "regexp_ref": "(.+)\\s*:\\s*(.*)"
+                "regexp_ref": "(.+)\\s*/\\s*(.*)"
               }
             }
           }

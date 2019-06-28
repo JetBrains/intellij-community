@@ -36,8 +36,7 @@ private val MACRO_PATTERN = Pattern.compile("(\\$[^$]*\\$)")
 open class StateStorageManagerImpl(private val rootTagName: String,
                                    final override val macroSubstitutor: PathMacroSubstitutor? = null,
                                    override val componentManager: ComponentManager? = null,
-                                   private val virtualFileTracker: StorageVirtualFileTracker? = createDefaultVirtualTracker(componentManager)) : StateStorageManager,
-                                                                                                                                                 FileBasedStorageConfiguration by defaultFileBasedStorageConfiguration {
+                                   private val virtualFileTracker: StorageVirtualFileTracker? = createDefaultVirtualTracker(componentManager)) : StateStorageManager {
   private val macros: MutableList<Macro> = ContainerUtil.createLockFreeCopyOnWriteList()
   private val storageLock = ReentrantReadWriteLock()
   private val storages = THashMap<String, StateStorage>()
@@ -62,12 +61,14 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
   // access under storageLock
   @Suppress("LeakingThis")
-  private var isUseVfsListener = if (componentManager == null || !isUseVfsForWrite) ThreeState.NO else ThreeState.UNSURE // unsure because depends on stream provider state
+  private var isUseVfsListener = when (componentManager) {
+    null, is Application -> ThreeState.NO
+    else -> ThreeState.UNSURE // unsure because depends on stream provider state
+  }
+
+  open fun getFileBasedStorageConfiguration(fileSpec: String): FileBasedStorageConfiguration = defaultFileBasedStorageConfiguration
 
   protected open val isUseXmlProlog: Boolean
-    get() = true
-
-  override val isUseVfsForWrite: Boolean
     get() = true
 
   companion object {
@@ -157,23 +158,13 @@ open class StateStorageManagerImpl(private val rootTagName: String,
                          storageCustomizer: (StateStorage.() -> Unit)? = null,
                          storageCreator: StorageCreator? = null): StateStorage {
     val normalizedCollapsedPath = normalizeFileSpec(collapsedPath)
-    val key: String
-    if (storageClass == StateStorage::class.java) {
-      if (normalizedCollapsedPath.isEmpty()) {
-        throw Exception("Normalized path is empty, raw path '$collapsedPath'")
-      }
-      key = storageCreator?.key ?: normalizedCollapsedPath
-    }
-    else {
-      key = storageClass.name!!
-    }
-
+    val key = computeStorageKey(storageClass, normalizedCollapsedPath, collapsedPath, storageCreator)
     val storage = storageLock.read { storages.get(key) } ?: return storageLock.write {
       storages.getOrPut(key) {
-        @Suppress("IfThenToElvis")
-        val storage = if (storageCreator == null) createStateStorage(storageClass, normalizedCollapsedPath, roamingType, stateSplitter,
-                                                                     exclusive)
-        else storageCreator.create(this)
+        val storage = when (storageCreator) {
+          null -> createStateStorage(storageClass, normalizedCollapsedPath, roamingType, stateSplitter, exclusive)
+          else -> storageCreator.create(this)
+        }
         storageCustomizer?.let { storage.it() }
         storage
       }
@@ -181,6 +172,16 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
     storageCustomizer?.let { storage.it() }
     return storage
+  }
+
+  private fun computeStorageKey(storageClass: Class<out StateStorage>, normalizedCollapsedPath: String, collapsedPath: String, storageCreator: StorageCreator?): String {
+    if (storageClass != StateStorage::class.java) {
+      return storageClass.name!!
+    }
+    if (normalizedCollapsedPath.isEmpty()) {
+      throw Exception("Normalized path is empty, raw path '$collapsedPath'")
+    }
+    return storageCreator?.key ?: normalizedCollapsedPath
   }
 
   fun getCachedFileStorages(): Set<StateStorage> = storageLock.read { storages.values.toSet() }
@@ -216,7 +217,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
         val storage = storages.get(path)
         if (storage is FileBasedStorage) {
           if (result == null) {
-            result = SmartList<FileBasedStorage>()
+            result = SmartList()
           }
           result.add(storage)
         }
@@ -305,10 +306,10 @@ open class StateStorageManagerImpl(private val rootTagName: String,
                                                                                           roamingType,
                                                                                           provider), StorageVirtualFileTracker.TrackedStorage {
     override val isUseXmlProlog: Boolean
-      get() = rootElementName != null && storageManager.isUseXmlProlog
+      get() = rootElementName != null && storageManager.isUseXmlProlog && !isSpecialStorage(fileSpec)
 
     override val configuration: FileBasedStorageConfiguration
-      get() = storageManager
+      get() = storageManager.getFileBasedStorageConfiguration(fileSpec)
 
     override fun beforeElementSaved(elements: MutableList<Element>, rootAttributes: MutableMap<String, String>) {
       if (rootElementName != null) {
@@ -450,7 +451,7 @@ internal val Storage.path: String
   get() = if (value.isEmpty()) file else value
 
 internal fun getEffectiveRoamingType(roamingType: RoamingType, collapsedPath: String): RoamingType {
-  if (roamingType != RoamingType.DISABLED && (collapsedPath == StoragePathMacros.WORKSPACE_FILE || collapsedPath == StoragePathMacros.NON_ROAMABLE_FILE || collapsedPath == StoragePathMacros.CACHE_FILE)) {
+  if (roamingType != RoamingType.DISABLED && (collapsedPath == StoragePathMacros.WORKSPACE_FILE || collapsedPath == StoragePathMacros.NON_ROAMABLE_FILE || isSpecialStorage(collapsedPath))) {
     return RoamingType.DISABLED
   }
   else {

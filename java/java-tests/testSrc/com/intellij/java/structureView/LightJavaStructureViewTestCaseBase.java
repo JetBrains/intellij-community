@@ -1,10 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.structureView;
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.intellij.lang.annotations.Language;
 
-public abstract class LightJavaStructureViewTestCaseBase extends LightCodeInsightFixtureTestCase {
+public abstract class LightJavaStructureViewTestCaseBase extends LightJavaCodeInsightFixtureTestCase {
   @Language("JAVA")
   public static final String INTERFACE = "interface Interface {" + "\n" +
                                          " void g();" + "\n" +

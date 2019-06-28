@@ -16,10 +16,10 @@
 package org.jetbrains.lang.manifest;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.lang.manifest.highlighting.MissingFinalNewlineInspection;
 
-public class MissingFinalNewlineInspectionTest extends LightCodeInsightFixtureTestCase {
+public class MissingFinalNewlineInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();

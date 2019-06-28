@@ -16,14 +16,14 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 /**
  * @author Dmitry Batkovich
  */
 @TestDataPath("$CONTENT_ROOT/testData/inspections/getFamilyNameViolation")
-public class QuickFixGetFamilyNameViolationInspectionTest extends LightCodeInsightFixtureTestCase {
+public class QuickFixGetFamilyNameViolationInspectionTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {

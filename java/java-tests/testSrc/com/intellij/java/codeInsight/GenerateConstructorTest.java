@@ -28,7 +28,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -36,7 +36,7 @@ import java.util.List;
 /**
  * @author ven
  */
-public class GenerateConstructorTest extends LightCodeInsightFixtureTestCase {
+public class GenerateConstructorTest extends LightJavaCodeInsightFixtureTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {

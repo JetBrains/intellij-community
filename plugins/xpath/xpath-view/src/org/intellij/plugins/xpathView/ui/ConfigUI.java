@@ -72,7 +72,7 @@ public class ConfigUI extends JPanel {
         showInMainMenu.setToolTipText("Uncheck to remove XPath-related actions from the Main-Menubar");
 
         JPanel settings = new JPanel(new BorderLayout());
-        settings.setBorder(IdeBorderFactory.createTitledBorder("Settings", true));
+        settings.setBorder(IdeBorderFactory.createTitledBorder("Settings"));
         c.add(c = new JPanel(new BorderLayout()), BorderLayout.NORTH);
         c.add(settings, BorderLayout.NORTH);
 
@@ -90,7 +90,7 @@ public class ConfigUI extends JPanel {
         settings.add(/*settings = */new JPanel(new BorderLayout()), BorderLayout.SOUTH);
 
         JPanel colors = new JPanel(new GridBagLayout());
-        colors.setBorder(IdeBorderFactory.createTitledBorder("Colors", true));
+        colors.setBorder(IdeBorderFactory.createTitledBorder("Colors"));
         c.add(c = new JPanel(new BorderLayout()), BorderLayout.SOUTH);
         c.add(colors, BorderLayout.NORTH);
 

@@ -97,7 +97,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   public void loadCommittedChanges(@NotNull ChangeBrowserSettings settings,
                                    @NotNull RepositoryLocation location,
                                    int maxCount,
-                                   @NotNull AsynchConsumer<CommittedChangeList> consumer) throws VcsException {
+                                   @NotNull AsynchConsumer<? super CommittedChangeList> consumer) throws VcsException {
     try {
       SvnRepositoryLocation svnLocation = (SvnRepositoryLocation)location;
       Url repositoryRoot = getRepositoryRoot(svnLocation);

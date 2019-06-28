@@ -15,6 +15,7 @@
  */
 package com.intellij.dvcs.repo;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,7 +31,7 @@ public abstract class VcsRepositoryCreator {
     ExtensionPointName.create("com.intellij.vcsRepositoryCreator");
 
   @Nullable
-  public abstract Repository createRepositoryIfValid(@NotNull VirtualFile root);
+  public abstract Repository createRepositoryIfValid(@NotNull VirtualFile root, @NotNull Disposable parentDisposable);
 
   @NotNull
   public abstract VcsKey getVcsKey();

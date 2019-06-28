@@ -5,6 +5,7 @@ import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -20,7 +21,8 @@ public class DeduplicationCollectorTest extends UsefulTestCase {
       asList(remote)}
     );
 
-    List<MavenDependencyCompletionItem> result = stream.collect(new DeduplicationCollector<>(m -> m.getDisplayString()));
+    List<MavenDependencyCompletionItem> result =
+      stream.flatMap(Collection::stream).collect(new DeduplicationCollector<>(m -> m.getDisplayString()));
     assertSize(1, result);
     assertEquals(MavenDependencyCompletionItem.Type.LOCAL, result.get(0).getType());
   }
@@ -33,7 +35,8 @@ public class DeduplicationCollectorTest extends UsefulTestCase {
       asList(local)}
     );
 
-    List<MavenDependencyCompletionItem> result = stream.collect(new DeduplicationCollector<>(m -> m.getDisplayString()));
+    List<MavenDependencyCompletionItem> result =
+      stream.flatMap(Collection::stream).collect(new DeduplicationCollector<>(m -> m.getDisplayString()));
     assertSize(1, result);
     assertEquals(MavenDependencyCompletionItem.Type.LOCAL, result.get(0).getType());
   }
@@ -47,7 +50,7 @@ public class DeduplicationCollectorTest extends UsefulTestCase {
     );
 
     List<MavenDependencyCompletionItem> result =
-      stream.collect(new DeduplicationCollector<>(m -> m.getGroupId() + ":" + m.getArtifactId()));
+      stream.flatMap(Collection::stream).collect(new DeduplicationCollector<>(m -> m.getGroupId() + ":" + m.getArtifactId()));
     assertSize(1, result);
     assertEquals(MavenDependencyCompletionItem.Type.LOCAL, result.get(0).getType());
   }
@@ -60,7 +63,8 @@ public class DeduplicationCollectorTest extends UsefulTestCase {
       asList(local)}
     );
 
-    List<MavenDependencyCompletionItem> result = stream.collect(new DeduplicationCollector<>(m -> m.getDisplayString()));
+    List<MavenDependencyCompletionItem> result =
+      stream.flatMap(Collection::stream).collect(new DeduplicationCollector<>(m -> m.getDisplayString()));
     assertSize(2, result);
   }
 }

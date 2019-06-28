@@ -106,7 +106,7 @@ public class JavaFindUsagesHelper {
             final PsiElement element1 = info.getElement();
             boolean isWrite = element1 instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)element1);
             if (isWrite == varOptions.isWriteAccess) {
-              if (!processor.process(info)) return false;
+              return processor.process(info);
             }
             return true;
           })) return false;
@@ -176,7 +176,7 @@ public class JavaFindUsagesHelper {
       final PsiMethod psiMethod = (PsiMethod)element;
       boolean isAbstract = ReadAction.compute(() -> psiMethod.hasModifierProperty(PsiModifier.ABSTRACT));
       final JavaMethodFindUsagesOptions methodOptions = (JavaMethodFindUsagesOptions)options;
-      if (isAbstract && methodOptions.isImplementingMethods || !isAbstract && methodOptions.isOverridingMethods) {
+      if (isAbstract ? methodOptions.isImplementingMethods : methodOptions.isOverridingMethods) {
         if (!processOverridingMethods(psiMethod, processor, methodOptions)) return false;
         FunctionalExpressionSearch.search(psiMethod, methodOptions.searchScope).forEach(new PsiElementProcessorAdapter<>(
           expression -> addResult(expression, options, processor)));
@@ -193,7 +193,7 @@ public class JavaFindUsagesHelper {
     if (!isSearchable && options.isSearchForTextOccurrences && options.searchScope instanceof GlobalSearchScope) {
       Collection<String> stringsToSearch = ReadAction.compute(() -> getElementNames(element));
       // todo add to fastTrack
-      if (!FindUsagesHelper.processUsagesInText(element, stringsToSearch, (GlobalSearchScope)options.searchScope, processor)) return false;
+      return FindUsagesHelper.processUsagesInText(element, stringsToSearch, false, (GlobalSearchScope)options.searchScope, processor);
     }
     return true;
   }
@@ -429,7 +429,7 @@ public class JavaFindUsagesHelper {
       PsiClass usedClass = getFieldOrMethodAccessedClass((PsiReferenceExpression)refElement, methodClass);
       if (usedClass != null) {
         if (manager.areElementsEquivalent(usedClass, aClass) || usedClass.isInheritor(aClass, true)) {
-          if (!addResult(refElement, options, processor)) return false;
+          return addResult(refElement, options, processor);
         }
       }
     }
@@ -522,9 +522,7 @@ public class JavaFindUsagesHelper {
         while(parent instanceof PsiJavaCodeReferenceElement){
           parent = parent.getParent();
         }
-        if (parent instanceof PsiPackageStatement){
-          return false;
-        }
+        return !(parent instanceof PsiPackageStatement);
       }
     }
     return true;

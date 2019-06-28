@@ -23,6 +23,7 @@ import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl;
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
@@ -49,19 +50,18 @@ public class VcsLogManager implements Disposable {
   @NotNull private final PostponableLogRefresher myPostponableRefresher;
 
   public VcsLogManager(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties, @NotNull Collection<? extends VcsRoot> roots) {
-    this(project, uiProperties, roots, true, null);
+    this(project, uiProperties, findLogProviders(roots, project), true, null);
   }
 
   public VcsLogManager(@NotNull Project project,
                        @NotNull VcsLogTabsProperties uiProperties,
-                       @NotNull Collection<? extends VcsRoot> roots,
+                       @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
                        boolean scheduleRefreshImmediately,
                        @Nullable Consumer<? super Throwable> recreateHandler) {
     myProject = project;
     myUiProperties = uiProperties;
     myRecreateMainLogHandler = recreateHandler;
 
-    Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders(roots, myProject);
     MyFatalErrorsHandler fatalErrorsHandler = new MyFatalErrorsHandler();
     myLogData = new VcsLogData(myProject, logProviders, fatalErrorsHandler, this);
     myPostponableRefresher = new PostponableLogRefresher(myLogData);
@@ -123,8 +123,6 @@ public class VcsLogManager implements Disposable {
       disposable = myPostponableRefresher.addLogWindow(ui.getRefresher());
     }
     Disposer.register(ui, disposable);
-
-    ui.requestFocus();
     return ui;
   }
 
@@ -188,6 +186,7 @@ public class VcsLogManager implements Disposable {
     // disposing of VcsLogManager is done by manually executing dispose(@Nullable Runnable callback)
     // the above method first disposes ui in EDT, than disposes everything else in background
     LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
+    LOG.debug("Disposed Vcs Log for " + VcsLogUtil.getProvidersMapText(myLogData.getLogProviders()));
   }
 
   private class MyFatalErrorsHandler implements FatalErrorHandler {

@@ -36,13 +36,11 @@ import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.HttpConfigurable;
-import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -137,6 +135,9 @@ public class PluginManagerConfigurableNewLayout
     myTabHeaderComponent = new TabbedPaneHeaderComponent(createGearActions(), index -> {
       myCardPanel.select(index, true);
       storeSelectionTab(index);
+
+      String query = (index == MARKETPLACE_TAB ? myInstalledTab : myMarketplaceTab).getSearchQuery();
+      (index == MARKETPLACE_TAB ? myMarketplaceTab : myInstalledTab).setSearchQuery(query);
     });
 
     myUpdateAll.setVisible(false);
@@ -275,7 +276,7 @@ public class PluginManagerConfigurableNewLayout
 
           @Override
           protected Border getDefaultItemComponentBorder() {
-            return new EmptyBorder(JBUI.insets(UIUtil.getListCellVPadding(), 15));
+            return new EmptyBorder(JBInsets.create(UIUtil.getListCellVPadding(), 15));
           }
         };
       }
@@ -541,7 +542,7 @@ public class PluginManagerConfigurableNewLayout
           }
         }); // TODO: icon
         myMarketplaceSortByAction.setPaintUnderline(false);
-        myMarketplaceSortByAction.setIconTextGap(JBUI.scale(4));
+        myMarketplaceSortByAction.setIconTextGap(JBUIScale.scale(4));
         myMarketplaceSortByAction.setHorizontalTextPosition(SwingConstants.LEFT);
         myMarketplaceSortByAction.setForeground(PluginsGroupComponent.SECTION_HEADER_FOREGROUND);
 
@@ -647,6 +648,7 @@ public class PluginManagerConfigurableNewLayout
                       result.descriptors.add(descriptor);
                     }
                   }
+                  ContainerUtil.removeDuplicates(result.descriptors);
                   result.sortByName();
                   return;
                 }
@@ -668,6 +670,7 @@ public class PluginManagerConfigurableNewLayout
                       }
                     }
                   }
+                  ContainerUtil.removeDuplicates(result.descriptors);
                   result.sortByName();
                   return;
                 }
@@ -695,6 +698,8 @@ public class PluginManagerConfigurableNewLayout
 
                   result.descriptors.addAll(0, builtinList);
                 }
+
+                ContainerUtil.removeDuplicates(result.descriptors);
 
                 if (!result.descriptors.isEmpty()) {
                   String title = "Sort By";
@@ -868,6 +873,7 @@ public class PluginManagerConfigurableNewLayout
             ((InstalledSearchOptionAction)action).setState(null);
           }
         }
+        myPluginModel.setInvalidFixCallback(null);
       }
 
       @NotNull
@@ -962,7 +968,16 @@ public class PluginManagerConfigurableNewLayout
 
         myInstalledSearchPanel = new SearchResultPanel(installedController, panel, 0, 0) {
           @Override
+          protected void setEmptyText() {
+            myPanel.getEmptyText().setText("Nothing found.");
+            myPanel.getEmptyText().appendSecondaryText("Search in marketplace", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
+                                                       e -> myTabHeaderComponent.setSelectionWithEvents(MARKETPLACE_TAB));
+          }
+
+          @Override
           protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result) {
+            myPluginModel.setInvalidFixCallback(null);
+
             SearchQueryParser.InstalledWithVendor parser = new SearchQueryParser.InstalledWithVendor(query);
 
             if (myInstalledSearchSetState) {
@@ -1002,6 +1017,31 @@ public class PluginManagerConfigurableNewLayout
               }
 
               if (!result.descriptors.isEmpty()) {
+                if (parser.invalid) {
+                  myPluginModel.setInvalidFixCallback(() -> {
+                    PluginsGroup group = myInstalledSearchPanel.getGroup();
+                    if (group.ui == null) {
+                      myPluginModel.setInvalidFixCallback(null);
+                      return;
+                    }
+
+                    PluginsGroupComponent resultPanel = myInstalledSearchPanel.getPanel();
+
+                    for (IdeaPluginDescriptor descriptor : new ArrayList<>(group.descriptors)) {
+                      if (!myPluginModel.hasErrors(descriptor)) {
+                        resultPanel.removeFromGroup(group, descriptor);
+                      }
+                    }
+
+                    group.titleWithCount();
+                    myInstalledSearchPanel.fullRepaint();
+
+                    if (group.descriptors.isEmpty()) {
+                      myPluginModel.setInvalidFixCallback(null);
+                    }
+                  });
+                }
+
                 Collection<PluginDownloader> updates = PluginUpdatesService.getUpdates();
                 if (!ContainerUtil.isEmpty(updates)) {
                   myPostFillGroupCallback = () -> {
@@ -1307,6 +1347,12 @@ public class PluginManagerConfigurableNewLayout
                         @NotNull String query,
                         @NotNull String showAllQuery) throws IOException {
     addGroup(groups, name, showAllQuery, descriptors -> PluginManagerConfigurableNew.loadPlugins(descriptors, allRepositoriesMap, query));
+  }
+
+  @Override
+  @NotNull
+  public String getHelpTopic() {
+    return PluginManagerConfigurable.ID;
   }
 
   @Override

@@ -93,6 +93,11 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
 
   @Override
   protected void recomputeToLayout(SingleRowPassInfo data) {
+    TabInfo info = myTabs.getSelectedInfo();
+    if (info != null && myScrollSelectionInViewPending) {
+      TabLabel label = myTabs.getTabLabel(info);
+      label.setActionPanelVisible(true);
+    }
     calculateRequiredLength(data);
     clampScrollOffsetToBounds(data);
     if (myScrollSelectionInViewPending || myLastSingRowLayout == null || !data.layoutSize.equals(myLastSingRowLayout.layoutSize)) {

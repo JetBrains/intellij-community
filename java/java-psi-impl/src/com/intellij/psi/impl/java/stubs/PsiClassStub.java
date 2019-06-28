@@ -21,6 +21,7 @@ package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 public interface PsiClassStub<T extends PsiClass> extends PsiMemberStub<T> {
@@ -49,5 +50,6 @@ public interface PsiClassStub<T extends PsiClass> extends PsiMemberStub<T> {
    * @deprecated use {@link PsiJavaFileStub#getLanguageLevel()} (to be removed in IDEA 18)
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   LanguageLevel getLanguageLevel();
 }

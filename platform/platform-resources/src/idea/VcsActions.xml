@@ -85,8 +85,11 @@
     <action id="ChangesView.Revert" class="com.intellij.openapi.vcs.changes.actions.RollbackAction"
             icon="AllIcons.Actions.Rollback"/>
 
+    <group id="ChangesView.ViewOptions"/>
+
     <group id="ChangesView.GroupBy" text="Group By" icon="AllIcons.Actions.GroupBy" popup="true"
            class="com.intellij.openapi.vcs.changes.actions.SelectChangesGroupingActionGroup">
+      <separator text="Group By"/>
       <action id="ChangesView.GroupBy.Directory" text="Directory"
               class="com.intellij.openapi.vcs.changes.actions.SetDirectoryChangesGroupingAction"/>
       <add-to-group group-id="Vcs.KeymapGroup"/>
@@ -168,7 +171,7 @@
       <reference ref="$Delete"/>
       <separator/>
       <action id="ShelvedChanges.ShowHideDeleted" class="com.intellij.openapi.vcs.changes.shelf.ShowHideRecycledAction"
-              description="Show/Hide Already Unshelved"/>
+              description="Show/Hide already unshelved"/>
       <action id="ShelvedChanges.ShowRecentlyDeleted" class="com.intellij.openapi.vcs.changes.shelf.ShowRecentlyDeletedShelvesAction"
               description="Show recently deleted shelves" text="Show Recently Deleted"/>
       <action id="ShelvedChanges.CleanMarkedToDelete" class="com.intellij.openapi.vcs.changes.shelf.CleanUnshelvedAction"
@@ -294,6 +297,9 @@
     <group id="Vcs.CommitExecutor.Actions"/>
 
     <group id="ChangesView.CommitToolbar">
+      <action id="Vcs.ToggleAmendCommitMode" icon="AllIcons.Actions.Amend" text="Amend Commit"
+              description="Modify the latest commit of the current branch"
+              class="com.intellij.vcs.commit.ToggleAmendCommitModeAction"/>
       <action id="ChangesView.ShowCommitOptions" text="Show Commit Options"
               class="com.intellij.openapi.vcs.actions.ShowCommitOptionsAction"/>
       <reference id="Vcs.MessageActionGroup"/>

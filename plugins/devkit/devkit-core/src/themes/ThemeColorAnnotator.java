@@ -2,8 +2,8 @@
 package org.jetbrains.idea.devkit.themes;
 
 import com.intellij.codeInsight.daemon.LineMarkerSettings;
-import com.intellij.json.psi.JsonElementGenerator;
-import com.intellij.json.psi.JsonStringLiteral;
+import com.intellij.json.psi.*;
+import com.intellij.json.psi.impl.JsonPsiImplUtils;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
@@ -20,6 +20,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColorChooser;
 import com.intellij.ui.ColorLineMarkerProvider;
 import com.intellij.ui.ColorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -29,6 +30,7 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
@@ -60,8 +62,13 @@ public class ThemeColorAnnotator implements Annotator {
     if (!(element instanceof JsonStringLiteral)) return false;
     if (!ThemeJsonUtil.isThemeFilename(containingFile.getName())) return false;
 
+    if (JsonPsiImplUtils.isPropertyName((JsonStringLiteral)element)) return false;
     String text = ((JsonStringLiteral)element).getValue();
-    return isColorCode(text);
+    return isColorCode(text) || isNamedColor(text);
+  }
+
+  private static boolean isNamedColor(String text) {
+    return StringUtil.isLatinAlphanumeric(text);
   }
 
   private static boolean isColorCode(@Nullable String text) {
@@ -75,19 +82,19 @@ public class ThemeColorAnnotator implements Annotator {
   private static class MyRenderer extends GutterIconRenderer {
     private static final int ICON_SIZE = 12;
 
-    private final String myColorHex;
+    private final String myColorText;
     private final JsonStringLiteral myLiteral;
 
 
-    private MyRenderer(@NotNull String colorHex, @NotNull JsonStringLiteral literal) {
-      myColorHex = colorHex;
+    private MyRenderer(@NotNull String colorText, @NotNull JsonStringLiteral literal) {
+      myColorText = colorText;
       myLiteral = literal;
     }
 
     @NotNull
     @Override
     public Icon getIcon() {
-      Color color = getColor(myColorHex);
+      Color color = getColor(myColorText);
       if (color != null) {
         return JBUI.scale(new ColorIcon(ICON_SIZE, color));
       }
@@ -96,28 +103,30 @@ public class ThemeColorAnnotator implements Annotator {
 
     @Override
     public boolean isNavigateAction() {
-      return true;
+      return canChooseColor();
     }
 
     @Nullable
     @Override
     public String getTooltipText() {
-      return "Choose Color";
+      return canChooseColor() ? "Choose Color" : null;
     }
 
     @Nullable
     @Override
     public AnAction getClickAction() {
+      if (!canChooseColor()) return null;
+
       return new AnAction("Choose Color...") {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           Editor editor = e.getData(CommonDataKeys.EDITOR);
           if (editor == null) return;
 
-          Color currentColor = getColor(myColorHex);
+          Color currentColor = getColor(myColorText);
           if (currentColor == null) return;
 
-          boolean withAlpha = isRgbaColorHex(myColorHex);
+          boolean withAlpha = isRgbaColorHex(myColorText);
           Color newColor = ColorChooser.chooseColor(editor.getProject(),
                                                     editor.getComponent(),
                                                     DevKitBundle.message("theme.choose.color.dialog.title"),
@@ -134,8 +143,21 @@ public class ThemeColorAnnotator implements Annotator {
       };
     }
 
+    private boolean canChooseColor() {
+      return isColorCode(myColorText);
+    }
+
     @Nullable
-    private static Color getColor(@NotNull String colorHex) {
+    private Color getColor(@NotNull String colorText) {
+      if (!isColorCode(colorText)) {
+        return findNamedColor(colorText);
+      }
+
+      return parseColor(colorText);
+    }
+
+    @Nullable
+    private static Color parseColor(@NotNull String colorHex) {
       boolean isRgba = isRgbaColorHex(colorHex);
       if (!isRgba && !isRgbColorHex(colorHex)) return null;
 
@@ -154,6 +176,19 @@ public class ThemeColorAnnotator implements Annotator {
       }
     }
 
+    @Nullable
+    private Color findNamedColor(String colorText) {
+      final PsiFile file = myLiteral.getContainingFile();
+      if (!(file instanceof JsonFile)) return null;
+      final List<JsonProperty> colors = ThemeJsonUtil.getNamedColors((JsonFile)file);
+      final JsonProperty namedColor = ContainerUtil.find(colors, property -> property.getName().equals(colorText));
+      if (namedColor == null) return null;
+
+      final JsonValue value = namedColor.getValue();
+      if (!(value instanceof JsonStringLiteral)) return null;
+      return parseColor(((JsonStringLiteral)value).getValue());
+    }
+
     private static boolean isRgbaColorHex(@NotNull String colorHex) {
       return colorHex.length() == HEX_COLOR_LENGTH_RGBA;
     }
@@ -167,13 +202,13 @@ public class ThemeColorAnnotator implements Annotator {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       MyRenderer renderer = (MyRenderer)o;
-      return myColorHex.equals(renderer.myColorHex) &&
+      return myColorText.equals(renderer.myColorText) &&
              myLiteral.equals(renderer.myLiteral);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(myColorHex, myLiteral);
+      return Objects.hash(myColorText, myLiteral);
     }
   }
 }

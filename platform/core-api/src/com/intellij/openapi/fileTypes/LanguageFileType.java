@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,17 +71,16 @@ public abstract class LanguageFileType implements FileType{
   }
 
   /**
-   * Callers: use {@link CharsetUtil#extractCharsetFromFileContent(Project, VirtualFile, FileType, CharSequence)}
+   * @deprecated Callers: use {@link CharsetUtil#extractCharsetFromFileContent(Project, VirtualFile, FileType, CharSequence)}
    * Overriders: override {@link #extractCharsetFromFileContent(Project, VirtualFile, CharSequence)} instead
-   * @deprecated 
    */
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   public Charset extractCharsetFromFileContent(@Nullable Project project, @Nullable VirtualFile file, @NotNull String content) {
     return null;
   }
   
   public Charset extractCharsetFromFileContent(@Nullable Project project, @Nullable VirtualFile file, @NotNull CharSequence content) {
-    //noinspection deprecation
     return extractCharsetFromFileContent(project, file, content.toString());
   }
 }

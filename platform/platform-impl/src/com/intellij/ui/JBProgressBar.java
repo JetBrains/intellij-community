@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,14 @@
  */
 package com.intellij.ui;
 
+import org.jetbrains.annotations.ApiStatus;
+
 import javax.swing.*;
 
+/**
+ * @deprecated use {@link JProgressBar}
+ */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
 public class JBProgressBar extends JProgressBar {
-  // TODO: Remove this class. Left for compatibility.
 }

@@ -18,7 +18,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
@@ -35,6 +34,7 @@ import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.mac.TouchbarDataKeys;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
@@ -56,6 +56,8 @@ import java.util.*;
 import java.util.stream.IntStream;
 
 import static com.intellij.openapi.util.Pair.pair;
+import static com.intellij.ui.components.JBOptionButton.getDefaultShowPopupShortcut;
+import static com.intellij.ui.components.JBOptionButton.getDefaultTooltip;
 import static javax.swing.JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT;
 import static javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW;
 
@@ -130,7 +132,6 @@ public abstract class DialogWrapper {
   public static final Border ourDefaultBorder = new JBEmptyBorder(UIUtil.PANEL_REGULAR_INSETS);
 
   private static final String NO_AUTO_RESIZE = "NoAutoResizeAndFit";
-  private static final KeyStroke SHOW_OPTION_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.ALT_MASK | InputEvent.SHIFT_MASK);
 
   protected final @NotNull Disposable myDisposable = new Disposable() {
     @Override
@@ -265,7 +266,7 @@ public abstract class DialogWrapper {
    * when we do not have a project to figure out which window
    * is more suitable as an owner for the dialog.
    * <p/>
-   * Instead, use {@link DialogWrapper#DialogWrapper(Project, boolean, boolean)}
+   * @deprecated use {@link DialogWrapper#DialogWrapper(Project, boolean, boolean)}
    */
   @Deprecated
   protected DialogWrapper(boolean canBeParent, boolean applicationModalIfPossible) {
@@ -479,6 +480,9 @@ public abstract class DialogWrapper {
     if (isRemoveHelpButton()) {
       actions.remove(helpAction);
     }
+    else if (!actions.contains(helpAction) && getHelpId() == null) {
+      helpAction.setEnabled(false);
+    }
     else if (isMoveHelpButtonLeft() && actions.remove(helpAction) && !leftSideActions.contains(helpAction)) {
       addHelpToLeftSide = true;
     }
@@ -607,7 +611,7 @@ public abstract class DialogWrapper {
     JComponent doNotAskCheckbox = createDoNotAskCheckbox();
 
     JPanel lrButtonsPanel = new NonOpaquePanel(new GridBagLayout());
-    Insets insets = SystemInfo.isMacOSLeopard && UIUtil.isUnderIntelliJLaF() ? JBUI.insets(0, 8) : JBUI.emptyInsets();
+    Insets insets = SystemInfo.isMacOSLeopard && UIUtil.isUnderIntelliJLaF() ? JBInsets.create(0, 8) : JBUI.emptyInsets();
 
     if (!rightSideButtons.isEmpty() || !leftSideButtons.isEmpty()) {
       GridBag bag = new GridBag().setDefaultInsets(insets);
@@ -694,7 +698,8 @@ public abstract class DialogWrapper {
 
       buttonsPanel.add(button);
       if (i < buttons.size() - 1) {
-        int gap = UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() ? BASE_BUTTON_GAP.get() - insets.left - insets.right : JBUI.scale(8);
+        int gap = UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() ? BASE_BUTTON_GAP.get() - insets.left - insets.right : JBUIScale
+          .scale(8);
         buttonsPanel.add(Box.createRigidArea(new Dimension(gap, 0)));
       }
     }
@@ -786,8 +791,7 @@ public abstract class DialogWrapper {
   @NotNull
   private static JButton createJOptionsButton(@NotNull OptionAction action) {
     JBOptionButton optionButton = new JBOptionButton(action, action.getOptions());
-    String tooltip = String.format("Show drop-down menu (%s)", KeymapUtil.getKeystrokeText(SHOW_OPTION_KEYSTROKE));
-    optionButton.setOptionTooltipText(tooltip);
+    optionButton.setOptionTooltipText(getDefaultTooltip());
     optionButton.setOkToProcessDefaultMnemonics(false);
     return optionButton;
   }
@@ -826,7 +830,7 @@ public abstract class DialogWrapper {
     return DialogWrapperPeerFactory.getInstance().createPeer(this, parent, canBeParent);
   }
 
-  /** Dialogs with no parents are discouraged. */
+  /** @deprecated Dialogs with no parents are discouraged. */
   @Deprecated
   @NotNull
   protected DialogWrapperPeer createPeer(boolean canBeParent, boolean applicationModalIfPossible) {
@@ -1283,9 +1287,8 @@ public abstract class DialogWrapper {
     //};
     myPeer.setContentPane(root);
 
-    final CustomShortcutSet sc = new CustomShortcutSet(SHOW_OPTION_KEYSTROKE);
     AnAction toggleShowOptions = DumbAwareAction.create(e -> expandNextOptionButton());
-    toggleShowOptions.registerCustomShortcutSet(sc, root, myDisposable);
+    toggleShowOptions.registerCustomShortcutSet(getDefaultShowPopupShortcut(), root, myDisposable);
 
     JComponent titlePane = createTitlePane();
     if (titlePane != null) {
@@ -1421,18 +1424,27 @@ public abstract class DialogWrapper {
     }
   }
 
+  /**
+   * @deprecated unused
+   */
   @Deprecated
   @SuppressWarnings("SpellCheckingInspection")
   protected boolean isNorthStrictedToPreferredSize() {
     return true;
   }
 
+  /**
+   * @deprecated unused
+   */
   @Deprecated
   @SuppressWarnings("SpellCheckingInspection")
   protected boolean isCenterStrictedToPreferredSize() {
     return false;
   }
 
+  /**
+   * @deprecated unused
+   */
   @Deprecated
   @SuppressWarnings("SpellCheckingInspection")
   protected boolean isSouthStrictedToPreferredSize() {
@@ -1753,7 +1765,7 @@ public abstract class DialogWrapper {
     return 0L;
   }
 
-  /** deprecated pointless (equals {@link #isOK} */
+  /** @deprecated unused (equals {@link #isOK}) */
   @Deprecated
   public boolean isToDispatchTypeAhead() {
     return isOK();
@@ -2038,7 +2050,7 @@ public abstract class DialogWrapper {
     private Border createErrorTextBorder() {
       Border border = createContentPaneBorder();
       Insets contentInsets = border != null ? border.getBorderInsets(null) : JBUI.emptyInsets();
-      Insets baseInsets = JBUI.insets(16, 13);
+      Insets baseInsets = JBInsets.create(16, 13);
 
       //noinspection UseDPIAwareBorders: Insets are already scaled, so use raw version.
       return new EmptyBorder(baseInsets.top,

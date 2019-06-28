@@ -16,6 +16,7 @@
 package com.intellij.internal.statistic.beans;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -26,6 +27,7 @@ import java.util.Set;
  * This class is also used on jetbrains web site
  */
 @Deprecated // to be removed in 2018.2
+@ApiStatus.ScheduledForRemoval(inVersion = "2018.2")
 public class ConvertUsagesUtil {
   static final char GROUP_SEPARATOR = ':';
   static final char GROUPS_SEPARATOR = ';';

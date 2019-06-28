@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
+import com.intellij.ide.CliResult;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -8,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.concurrent.Future;
 
 /**
  * @author Konstantin Bulenkov
@@ -37,18 +39,20 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
     return true;
   }
 
+  @NotNull
   @Override
-  public void processExternalCommandLine(@NotNull String[] args, @Nullable String currentDirectory) {
+  public Future<? extends CliResult> processExternalCommandLineAsync(@NotNull String[] args, @Nullable String currentDirectory) {
     if (!checkArguments(args)) {
       Messages.showMessageDialog(getUsageMessage(), StringUtil.toTitleCase(getCommandName()), Messages.getInformationIcon());
-      return;
+      return CliResult.error(1, getUsageMessage());
     }
     try {
-      processCommand(args, currentDirectory);
+      return processCommand(args, currentDirectory);
     }
     catch (Exception e) {
       String message = String.format("Error executing %s: %s", getCommandName(), e.getMessage());
       Messages.showMessageDialog(message, StringUtil.toTitleCase(getCommandName()), Messages.getErrorIcon());
+      return CliResult.error(1, message);
     }
     finally {
       saveAll();
@@ -66,7 +70,8 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
 
   public abstract String getUsageMessage();
 
-  protected abstract void processCommand(@NotNull String[] args, @Nullable String currentDirectory) throws Exception;
+  @NotNull
+  protected abstract Future<? extends CliResult> processCommand(@NotNull String[] args, @Nullable String currentDirectory) throws Exception;
 
   @Override
   public void premain(String[] args) {
@@ -78,8 +83,14 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
 
   @Override
   public void main(String[] args) {
+    int exitCode = 0;
     try {
-      processCommand(args, null);
+      Future<? extends CliResult> commandFuture = processCommand(args, null);
+      CliResult result = commandFuture.get();
+      if (result.getMessage() != null) {
+        System.out.println(result.getMessage());
+      }
+      exitCode = result.getReturnCode();
     }
     catch (Exception e) {
       e.printStackTrace();
@@ -93,6 +104,6 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
       saveAll();
     }
 
-    System.exit(0);
+    System.exit(exitCode);
   }
 }

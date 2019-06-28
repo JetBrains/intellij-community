@@ -16,6 +16,7 @@ import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.apache.http.conn.ssl.BrowserCompatHostnameVerifier;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,6 +78,7 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
    * @deprecated To be removed in IDEA 18. Use specific host name verifiers from httpclient-4.x instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   public static final HostnameVerifier HOSTNAME_VERIFIER = new HostnameVerifier() {
     private volatile HostnameVerifier myHostnameVerifier; 
     @Override
@@ -126,10 +128,8 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
     try {
       // Don't do this: protocol created this way will ignore SSL tunnels. See IDEA-115708.
       // Protocol.registerProtocol("https", CertificateManager.createDefault().createProtocol());
-      if (Registry.is("ide.certificate.manager")) {
-        SSLContext.setDefault(getSslContext());
-        LOG.info("Default SSL context initialized");
-      }
+      SSLContext.setDefault(getSslContext());
+      LOG.info("Default SSL context initialized");
     }
     catch (Exception e) {
       LOG.error(e);
@@ -155,25 +155,14 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
   public synchronized SSLContext getSslContext() {
     if (mySslContext == null) {
       SSLContext context = getSystemSslContext();
-      if (Registry.is("ide.certificate.manager")) {
-        try {
-          // SSLContext context = SSLContext.getDefault();
-          // NOTE: existence of default trust manager can be checked here as
-          // assert systemManager.getAcceptedIssuers().length != 0
-          context.init(getDefaultKeyManagers(), new TrustManager[]{getTrustManager()}, null);
-        }
-        catch (KeyManagementException e) {
-          LOG.error(e);
-        }
+      try {
+        // SSLContext context = SSLContext.getDefault();
+        // NOTE: existence of default trust manager can be checked here as
+        // assert systemManager.getAcceptedIssuers().length != 0
+        context.init(getDefaultKeyManagers(), new TrustManager[]{getTrustManager()}, null);
       }
-      else {
-        // IDEA-124057 Do not touch default context at all if certificate manager was disabled.
-
-        // For some reason passing `null` as first parameter of SSLContext#init is not enough to
-        // use -Djavax.net.ssl.keyStore VM parameters, although -Djavax.net.ssl.trustStore is used
-        // successfully. See this question on Stackoverflow for details
-        // http://stackoverflow.com/questions/23205266/java-key-store-is-not-found-when-default-ssl-context-is-redefined
-        context = getDefaultSslContext();
+      catch (KeyManagementException e) {
+        LOG.error(e);
       }
       mySslContext = context;
     }
@@ -197,17 +186,6 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
     catch (KeyManagementException e) {
       LOG.error(e);
       throw new AssertionError("Cannot initialize system SSL context");
-    }
-  }
-
-  @NotNull
-  private static SSLContext getDefaultSslContext() {
-    try {
-      return SSLContext.getDefault();
-    }
-    catch (NoSuchAlgorithmException e) {
-      LOG.error("Default SSL context not available. Using system instead.");
-      return getSystemSslContext();
     }
   }
 

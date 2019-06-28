@@ -1,0 +1,6 @@
+<?
+echo "hi";
+$value = <<<HTML
+<!-- <html> -->
+>>>
+echo "world";

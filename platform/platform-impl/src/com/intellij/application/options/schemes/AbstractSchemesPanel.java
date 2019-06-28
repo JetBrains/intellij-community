@@ -29,7 +29,6 @@ import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBDimension;
@@ -102,6 +101,10 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
       horizontalContainer.add(rightCustomComponent);
       add(horizontalContainer);
     }
+    JComponent bottomComponent = createBottomComponent();
+    if (bottomComponent != null) {
+      add(bottomComponent);
+    }
     mySettingsPanelSeparator = new JSeparator();
     add(mySettingsPanelSeparator);
     if (vGap > 0) {
@@ -119,6 +122,11 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     JPanel container = new JPanel();
     container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
     return container;
+  }
+
+  @Nullable
+  protected JComponent createBottomComponent() {
+    return null;
   }
 
   @NotNull

@@ -2,9 +2,9 @@ package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.sameReturnValue.SameReturnValueInspection;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.JavaInspectionTestCase;
 
-public class SameReturnValueInspectionKtTest extends InspectionTestCase {
+public class SameReturnValueInspectionKtTest extends JavaInspectionTestCase {
   private final SameReturnValueInspection myGlobalTool = new SameReturnValueInspection();
 
   @Override

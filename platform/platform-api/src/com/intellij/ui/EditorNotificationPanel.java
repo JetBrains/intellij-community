@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.intention.*;
@@ -36,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -58,7 +45,7 @@ import java.util.List;
 public class EditorNotificationPanel extends JPanel implements IntentionActionProvider, Weighted {
   protected final JLabel myLabel = new JLabel();
   protected final JLabel myGearLabel = new JLabel();
-  protected final JPanel myLinksPanel = new NonOpaquePanel(new HorizontalLayout(JBUI.scale(16)));
+  protected final JPanel myLinksPanel = new NonOpaquePanel(new HorizontalLayout(JBUIScale.scale(16)));
   protected Color myBackgroundColor;
   protected ColorKey myBackgroundColorKey;
 
@@ -117,11 +104,23 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   }
 
   public HyperlinkLabel createActionLabel(final String text, @NonNls final String actionId) {
-    return createActionLabel(text, () -> executeAction(actionId));
+    return createActionLabel(text, actionId, true);
+  }
+
+  public HyperlinkLabel createActionLabel(final String text,
+                                          @NonNls final String actionId,
+                                          boolean showInIntentionMenu) {
+    return createActionLabel(text, () -> executeAction(actionId), showInIntentionMenu);
   }
 
   public HyperlinkLabel createActionLabel(final String text, final Runnable action) {
-    HyperlinkLabel label = new HyperlinkLabel(text, getBackground());
+    return createActionLabel(text, action, true);
+  }
+
+  public HyperlinkLabel createActionLabel(final String text,
+                                          final Runnable action,
+                                          boolean showInIntentionMenu) {
+    ActionHyperlinkLabel label = new ActionHyperlinkLabel(text, getBackground(), showInIntentionMenu);
     label.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(HyperlinkEvent e) {
@@ -164,18 +163,40 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     return 0;
   }
 
-  private class MyIntentionAction extends AbstractEmptyIntentionAction implements IntentionActionWithOptions, Iconable {
+  private static class ActionHyperlinkLabel extends HyperlinkLabel {
+    private final boolean myShowInIntentionMenu;
+
+    private ActionHyperlinkLabel(String text, Color background, boolean showInIntentionMenu) {
+      super(text, background);
+      myShowInIntentionMenu = showInIntentionMenu;
+    }
+  }
+
+  private class MyIntentionAction implements IntentionActionWithOptions, Iconable {
     private final List<IntentionAction> myOptions = new ArrayList<>();
 
     private MyIntentionAction() {
       for (Component component : myLinksPanel.getComponents()) {
         if (component instanceof HyperlinkLabel) {
+          if (component instanceof ActionHyperlinkLabel && !((ActionHyperlinkLabel)component).myShowInIntentionMenu) {
+            continue;
+          }
           myOptions.add(new MyLinkOption(((HyperlinkLabel)component)));
         }
       }
       if (myGearLabel.getIcon() != null) {
         myOptions.add(new MySettingsOption(myGearLabel));
       }
+    }
+
+    @Override
+    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+      myOptions.get(0).invoke(project, editor, file);
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return myOptions.get(0).startInWriteAction();
     }
 
     @NotNull
@@ -213,10 +234,10 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
       return AllIcons.Actions.IntentionBulb;
     }
   }
-  
+
   private static class MyLinkOption implements IntentionAction {
     private final HyperlinkLabel myLabel;
-    
+
     private MyLinkOption(HyperlinkLabel label) {
       myLabel = label;
     }
@@ -250,7 +271,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
       return false;
     }
   }
-  
+
   private static class MySettingsOption implements IntentionAction, Iconable, LowPriorityAction {
     private final JLabel myLabel;
 

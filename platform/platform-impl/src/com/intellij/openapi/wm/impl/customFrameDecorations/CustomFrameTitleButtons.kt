@@ -2,13 +2,14 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.ComponentStyle
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.ComponentStyleState
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.StyleManager
 import com.intellij.ui.JBColor
+import com.intellij.ui.scale.ScaleType
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.JBUIScale
 import net.miginfocom.swing.MigLayout
 import java.awt.Color
 import java.awt.Dimension
@@ -30,7 +31,7 @@ open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
     }
 
     fun freezeIconUserSize(icon: Icon): Icon {
-      return IconUtil.overrideScale(IconUtil.deepCopy(icon, null), JBUIScale.ScaleType.USR_SCALE.of(1.0))
+      return IconUtil.overrideScale(IconUtil.deepCopy(icon, null), ScaleType.USR_SCALE.of(UISettings.defFontScale.toDouble()))
     }
   }
 
@@ -109,7 +110,7 @@ open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
   }
 
   protected fun addComponent(component: JComponent) {
-    component.preferredSize = Dimension(47, 28)
+    component.preferredSize = Dimension((47 * UISettings.defFontScale).toInt(), (28 * UISettings.defFontScale).toInt())
     panel.add(component, "top")
   }
 

@@ -353,13 +353,18 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
 
   @Override
   public int getVersion() {
-    return 3;
+    return 4;
   }
 
   @NotNull
   @Override
   public ID<FunctionalExpressionKey, Map<Integer, FunExprOccurrence>> getName() {
     return INDEX_ID;
+  }
+
+  @Override
+  public boolean hasSnapshotMapping() {
+    return true;
   }
 
   @NotNull
@@ -373,7 +378,7 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
       if (offsets.length == 0) return Collections.emptyMap();
 
       Map<FunctionalExpressionKey, Map<Integer, FunExprOccurrence>> result = new HashMap<>();
-      LighterAST tree = ((FileContentImpl)inputData).getLighterASTForPsiDependentIndex();
+      LighterAST tree = ((PsiDependentFileContent)inputData).getLighterAST();
       FileLocalResolver resolver = new FileLocalResolver(tree);
 
       LightTreeUtil.processLeavesAtOffsets(offsets, tree, (leaf, offset) -> {

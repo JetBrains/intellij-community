@@ -17,7 +17,7 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 public class Modifier19Test extends LightQuickFixParameterizedTestCase {
@@ -29,6 +29,6 @@ public class Modifier19Test extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return LightCodeInsightFixtureTestCase.JAVA_9;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_9;
   }
 }

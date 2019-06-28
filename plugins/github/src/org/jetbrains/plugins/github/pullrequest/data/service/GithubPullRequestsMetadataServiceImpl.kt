@@ -24,10 +24,9 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubFullPath
 import org.jetbrains.plugins.github.api.GithubServerPath
-import org.jetbrains.plugins.github.api.data.GithubIssueLabel
-import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailed
-import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailedWithHtml
-import org.jetbrains.plugins.github.api.data.GithubUser
+import org.jetbrains.plugins.github.api.data.GHLabel
+import org.jetbrains.plugins.github.api.data.GHPullRequest
+import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
@@ -61,7 +60,12 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
 
   override fun adjustReviewers(pullRequest: Long, parentComponent: JComponent) {
     showUsersChooser(pullRequest, "Reviewers", parentComponent,
-                     { _, details -> repoDataLoader.collaboratorsWithPushAccess.filter { details.user != it } }) { it.requestedReviewers }
+                     { _, details ->
+                       repoDataLoader.collaboratorsWithPushAccess
+                         .map { GHUser(it.nodeId, it.login, it.htmlUrl, it.avatarUrl.orEmpty(), null) }
+                         .filter { it != details.author }
+                     },
+                     { details -> details.reviewRequests.map { it.requestedReviewer }.filterIsInstance(GHUser::class.java) })
       .handleOnEdt(getAdjustmentHandler(pullRequest, "reviewer") { delta, indicator ->
         if (delta.removedItems.isNotEmpty()) {
           indicator.text2 = "Removing reviewers"
@@ -81,7 +85,11 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
   }
 
   override fun adjustAssignees(pullRequest: Long, parentComponent: JComponent) {
-    showUsersChooser(pullRequest, "Assignees", parentComponent, { _, _ -> repoDataLoader.issuesAssignees }) { it.assignees }
+    showUsersChooser(pullRequest, "Assignees", parentComponent,
+                     { _, _ ->
+                       repoDataLoader.issuesAssignees.map { GHUser(it.nodeId, it.login, it.htmlUrl, it.avatarUrl.orEmpty(), null) }
+                     },
+                     { it.assignees })
       .handleOnEdt(getAdjustmentHandler(pullRequest, "assignee") { delta, indicator ->
         requestExecutor.execute(indicator,
                                 GithubApiRequests.Repos.Issues
@@ -92,7 +100,9 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
 
   override fun adjustLabels(pullRequest: Long, parentComponent: JComponent) {
     showChooser(pullRequest, "Labels", parentComponent,
-                { SelectionListCellRenderer.Labels() }, { _, _ -> repoDataLoader.issuesLabels }, { it.labels.orEmpty() })
+                { SelectionListCellRenderer.Labels() },
+                { _, _ -> repoDataLoader.issuesLabels.map { GHLabel(it.nodeId, it.url, it.name, it.color) } },
+                { it.labels })
       .handleOnEdt(getAdjustmentHandler(pullRequest, "label") { delta, indicator ->
         requestExecutor.execute(indicator,
                                 GithubApiRequests.Repos.Issues.Labels
@@ -104,9 +114,9 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
   private fun showUsersChooser(pullRequest: Long,
                                popupTitle: String,
                                parentComponent: JComponent,
-                               availableListProvider: (ProgressIndicator, GithubPullRequestDetailed) -> List<GithubUser>,
-                               currentListExtractor: (GithubPullRequestDetailed) -> List<GithubUser>)
-    : CompletableFuture<CollectionDelta<GithubUser>> {
+                               availableListProvider: (ProgressIndicator, GHPullRequest) -> List<GHUser>,
+                               currentListExtractor: (GHPullRequest) -> List<GHUser>)
+    : CompletableFuture<CollectionDelta<GHUser>> {
     return showChooser(pullRequest, popupTitle, parentComponent, { list ->
       val avatarIconsProvider = avatarIconsProviderFactory.create(JBUI.uiIntValue("GitHub.Avatars.Size", 20), list)
       SelectionListCellRenderer.Users(avatarIconsProvider)
@@ -117,8 +127,8 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
                               popupTitle: String,
                               parentComponent: JComponent,
                               cellRendererFactory: (JList<SelectableWrapper<T>>) -> SelectionListCellRenderer<T>,
-                              availableListProvider: (ProgressIndicator, GithubPullRequestDetailed) -> List<T>,
-                              currentListExtractor: (GithubPullRequestDetailed) -> List<T>)
+                              availableListProvider: (ProgressIndicator, GHPullRequest) -> List<T>,
+                              currentListExtractor: (GHPullRequest) -> List<T>)
     : CompletableFuture<CollectionDelta<T>> {
 
     val listModel = CollectionListModel<SelectableWrapper<T>>()
@@ -207,7 +217,7 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
           val progressIndicator = EmptyProgressIndicator()
 
           loadingFuture = dataLoader.getDataProvider(pullRequest).detailsRequest
-            .thenComposeAsync(Function { details: GithubPullRequestDetailedWithHtml ->
+            .thenComposeAsync(Function { details: GHPullRequest ->
               originalSelection = currentListExtractor(details).toHashSet()
               progressManager.submitBackgroundTask(project, "Load List Of Possibilities", true, progressIndicator) { indicator ->
                 availableListProvider(indicator, details)
@@ -283,8 +293,9 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
 
         override fun onFinished() {
           busyStateTracker.release(pullRequest)
-          dataLoader.findDataProvider(pullRequest)?.reloadDetails()
-          listLoader.outdated = true
+          val dataProvider = dataLoader.findDataProvider(pullRequest) ?: return
+          dataProvider.reloadDetails()
+          listLoader.reloadData(dataProvider.detailsRequest)
         }
       })
     }
@@ -331,18 +342,17 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
     abstract fun getIcon(value: T): Icon
 
     class Users(private val iconsProvider: CachingGithubAvatarIconsProvider)
-      : SelectionListCellRenderer<GithubUser>() {
+      : SelectionListCellRenderer<GHUser>() {
 
-      override fun getText(value: GithubUser) = value.login
-      override fun getIcon(value: GithubUser) = iconsProvider.getIcon(value)
+      override fun getText(value: GHUser) = value.login
+      override fun getIcon(value: GHUser) = iconsProvider.getIcon(value.avatarUrl)
 
     }
 
-    class Labels
-      : SelectionListCellRenderer<GithubIssueLabel>() {
+    class Labels : SelectionListCellRenderer<GHLabel>() {
 
-      override fun getText(value: GithubIssueLabel) = value.name
-      override fun getIcon(value: GithubIssueLabel) = ColorIcon(16, ColorUtil.fromHex(value.color))
+      override fun getText(value: GHLabel) = value.name
+      override fun getIcon(value: GHLabel) = ColorIcon(16, ColorUtil.fromHex(value.color))
 
     }
   }

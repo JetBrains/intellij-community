@@ -36,17 +36,17 @@ public interface ImplicitUsageProvider {
   /**
    * @return true if element should not be reported as unused
    */
-  boolean isImplicitUsage(PsiElement element);
+  boolean isImplicitUsage(@NotNull PsiElement element);
 
   /**
    * @return true if element should not be reported as "assigned but not used"
    */
-  boolean isImplicitRead(PsiElement element);
+  boolean isImplicitRead(@NotNull PsiElement element);
 
   /**
    * @return true if element should not be reported as "referenced but never assigned"
    */
-  boolean isImplicitWrite(PsiElement element);
+  boolean isImplicitWrite(@NotNull PsiElement element);
 
   /**
    * @return true if the given element is implicitly initialized to a non-null value

@@ -36,7 +36,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -262,7 +261,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     }
   }
 
-  private void updateFilteredModel(List<CommittedChangeList> committedChangeLists, final boolean reset) {
+  private void updateFilteredModel(List<? extends CommittedChangeList> committedChangeLists, final boolean reset) {
     if (committedChangeLists == null) {
       return;
     }
@@ -340,7 +339,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
       return null;
     }
     @Override
-    public void setFilterBase(List<CommittedChangeList> changeLists) {
+    public void setFilterBase(List<? extends CommittedChangeList> changeLists) {
     }
     @Override
     public void addChangeListener(ChangeListener listener) {
@@ -354,11 +353,11 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     public void resetFilterBase() {
     }
     @Override
-    public void appendFilterBase(List<CommittedChangeList> changeLists) {
+    public void appendFilterBase(List<? extends CommittedChangeList> changeLists) {
     }
     @Override
     @NotNull
-    public List<CommittedChangeList> filterChangeLists(List<CommittedChangeList> changeLists) {
+    public List<CommittedChangeList> filterChangeLists(List<? extends CommittedChangeList> changeLists) {
       final FilterHelper filterHelper;
       setEmptyMessage(myChangesLoaded);
       if (myRegexCheckbox.isSelected()) {
@@ -383,7 +382,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
 
   public void passCachedListsToListener(final VcsConfigurationChangeListener.DetailedNotification notification,
                                         final Project project, final VirtualFile root) {
-    final LinkedList<CommittedChangeList> resultList = new LinkedList<>();
+    final List<CommittedChangeList> resultList = new ArrayList<>();
     myBrowser.reportLoadedLists(new CommittedChangeListsListener() {
       @Override
       public void onBeforeStartReport() {

@@ -16,12 +16,12 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class StaticFieldReferenceOnSubclassInspectionTest extends LightInspectionTestCase {
+public class StaticFieldReferenceOnSubclassInspectionTest extends LightJavaInspectionTestCase {
   @Override
   protected InspectionProfileEntry getInspection() {
     return new StaticFieldReferenceOnSubclassInspection();

@@ -124,13 +124,14 @@ RegexWordWithWhiteSpace  = [^\"'] | {EscapedChar}
 RegexInQuotes            = '{RegexWordWithWhiteSpace}+' | \"{RegexWordWithWhiteSpace}+\" | {RegexWord}+
 
 HereString               = [^\r\n$` \"';()|>&] | {EscapedChar}
-StringContent            = [^$\"`(] | {EscapedChar}
-EvalContent              = [^\r\n$\"`'() ] | {EscapedChar}
+StringContent            = [^$\"`(\\] | {EscapedChar}
+EvalContent              = [^\r\n$\"`'() ;] | {EscapedChar}
 
 %state ARITHMETIC_EXPRESSION
 %state OLD_ARITHMETIC_EXPRESSION
 %state LET_EXPRESSION
 %state EVAL_EXPRESSION
+%state TEST_EXPRESSION
 %state CONDITIONAL_EXPRESSION
 
 %state IF_CONDITION
@@ -164,7 +165,7 @@ EvalContent              = [^\r\n$\"`'() ] | {EscapedChar}
                                    else { pushState(BACKQUOTE_COMMAND_SUBSTITUTION); isBackquoteOpen = true; return OPEN_BACKQUOTE; } }
    {WhiteSpace}+                 { return WHITESPACE; }
    {RawString}                   { return RAW_STRING; }
-   ")"                           |
+   ")" | ";"                     |
    {LineTerminator}              { popState(); yypushback(yylength()); }
    "$" | "(" | {EvalContent}+    { return EVAL_CONTENT; }
 }
@@ -185,6 +186,12 @@ EvalContent              = [^\r\n$\"`'() ] | {EscapedChar}
     "let"                         { return LET; }
     {Quote}                       { if (isQuoteOpen) { isQuoteOpen = false; return CLOSE_QUOTE; }
                                     else { isQuoteOpen = true; return OPEN_QUOTE; } }
+    ";"                           { popState(); return SEMI; }
+    {LineTerminator}              { popState(); return LINEFEED; }
+}
+
+<TEST_EXPRESSION> {
+    "!="                          { return WORD; }
     ";"                           { popState(); return SEMI; }
     {LineTerminator}              { popState(); return LINEFEED; }
 }
@@ -320,10 +327,11 @@ EvalContent              = [^\r\n$\"`'() ] | {EscapedChar}
     "while"                       { pushState(OTHER_CONDITIONS); return WHILE; }
     "let"                         { pushState(LET_EXPRESSION); return LET; }
     "eval"                        { pushState(EVAL_EXPRESSION); return EVAL; }
+    "test"                        { pushState(TEST_EXPRESSION); return TEST; }
 }
 
-<YYINITIAL, ARITHMETIC_EXPRESSION, OLD_ARITHMETIC_EXPRESSION, LET_EXPRESSION, CONDITIONAL_EXPRESSION, HERE_DOC_PIPELINE, CASE_CONDITION,
-  CASE_PATTERN, IF_CONDITION, OTHER_CONDITIONS, PARENTHESES_COMMAND_SUBSTITUTION, BACKQUOTE_COMMAND_SUBSTITUTION, HERE_STRING> {
+<YYINITIAL, ARITHMETIC_EXPRESSION, OLD_ARITHMETIC_EXPRESSION, LET_EXPRESSION, TEST_EXPRESSION, CONDITIONAL_EXPRESSION, HERE_DOC_PIPELINE,
+  CASE_CONDITION, CASE_PATTERN, IF_CONDITION, OTHER_CONDITIONS, PARENTHESES_COMMAND_SUBSTITUTION, BACKQUOTE_COMMAND_SUBSTITUTION, HERE_STRING> {
     {AssignmentWord} / {AssigOp}  { return WORD; }
     {Filedescriptor}              { return FILEDESCRIPTOR; }
 
@@ -409,7 +417,7 @@ EvalContent              = [^\r\n$\"`'() ] | {EscapedChar}
 }
 
 <YYINITIAL, CONDITIONAL_EXPRESSION, HERE_DOC_PIPELINE, CASE_CONDITION, CASE_PATTERN, IF_CONDITION,
-  OTHER_CONDITIONS, PARENTHESES_COMMAND_SUBSTITUTION, BACKQUOTE_COMMAND_SUBSTITUTION> {
+  OTHER_CONDITIONS, PARENTHESES_COMMAND_SUBSTITUTION, BACKQUOTE_COMMAND_SUBSTITUTION, TEST_EXPRESSION> {
     {PatternExt}+                 |
     {Word}                        { return WORD; }
 }

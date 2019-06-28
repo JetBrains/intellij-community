@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl
 
 import com.google.common.collect.HashMultiset
@@ -14,7 +14,6 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.components.BaseComponent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -49,6 +48,7 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.ui.UIUtil
+import com.intellij.vcs.commit.isNonModalCommit
 import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
@@ -66,7 +66,7 @@ class LineStatusTrackerManager(
   private val fileDocumentManager: FileDocumentManager,
   private val fileEditorManager: FileEditorManagerEx,
   @Suppress("UNUSED_PARAMETER") makeSureIndexIsInitializedFirst: DirectoryIndex
-) : BaseComponent, LineStatusTrackerManagerI, Disposable {
+) : LineStatusTrackerManagerI, Disposable {
 
   private val LOCK = Any()
   private var isDisposed = false
@@ -99,18 +99,18 @@ class LineStatusTrackerManager(
     }
   }
 
-  override fun initComponent() {
+  init {
+    val busConnection = project.messageBus.connect(this)
+    busConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, MyLineStatusTrackerSettingListener())
+    busConnection.subscribe(VcsFreezingProcess.Listener.TOPIC, MyFreezeListener())
+    busConnection.subscribe(CommandListener.TOPIC, MyCommandListener())
+
     StartupManager.getInstance(project).registerPreStartupActivity {
       if (isDisposed) return@registerPreStartupActivity
 
       application.addApplicationListener(MyApplicationListener(), this)
 
-      val busConnection = project.messageBus.connect(this)
-      busConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, MyLineStatusTrackerSettingListener())
-      busConnection.subscribe(VcsFreezingProcess.Listener.TOPIC, MyFreezeListener())
-
-      val fsManager = FileStatusManager.getInstance(project)
-      fsManager.addFileStatusListener(MyFileStatusListener(), this)
+      FileStatusManager.getInstance(project).addFileStatusListener(MyFileStatusListener(), this)
 
       val editorFactory = EditorFactory.getInstance()
       editorFactory.addEditorFactoryListener(MyEditorFactoryListener(), this)
@@ -118,10 +118,7 @@ class LineStatusTrackerManager(
 
       changeListManager.addChangeListListener(MyChangeListListener())
 
-      val virtualFileManager = VirtualFileManager.getInstance()
-      virtualFileManager.addVirtualFileListener(MyVirtualFileListener(), this)
-
-      busConnection.subscribe(CommandListener.TOPIC, MyCommandListener())
+      VirtualFileManager.getInstance().addVirtualFileListener(MyVirtualFileListener(), this)
     }
   }
 
@@ -131,7 +128,7 @@ class LineStatusTrackerManager(
     synchronized(LOCK) {
       for ((document, multiset) in forcedDocuments) {
         for (requester in multiset.elementSet()) {
-          warn("Tracker for is being held on dispose by $requester", document)
+          warn("Tracker is being held on dispose by $requester", document)
         }
       }
       forcedDocuments.clear()
@@ -621,6 +618,8 @@ class LineStatusTrackerManager(
     }
 
     private fun isTrackedEditor(editor: Editor): Boolean {
+      // can't filter out "!isInLocalFileSystem" files, custom VcsBaseContentProvider can handle them
+      if (fileDocumentManager.getFile(editor.document) == null) return false
       return editor.project == null || editor.project == project
     }
   }
@@ -766,7 +765,8 @@ class LineStatusTrackerManager(
 
         private fun resetExcludedFromCommit() {
           runInEdt {
-            if (!project.isDisposed) getInstanceImpl(project).resetExcludedFromCommitMarkers()
+            // TODO Move this to SingleChangeListCommitWorkflow
+            if (!project.isDisposed && !panel.isNonModalCommit) getInstanceImpl(project).resetExcludedFromCommitMarkers()
           }
         }
       }

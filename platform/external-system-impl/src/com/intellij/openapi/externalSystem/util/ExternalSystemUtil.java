@@ -15,10 +15,7 @@ import com.intellij.build.events.impl.SuccessResultImpl;
 import com.intellij.build.events.impl.*;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.rmi.RemoteUtil;
@@ -73,8 +70,10 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -83,6 +82,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowEP;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
@@ -95,7 +95,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import gnu.trove.TObjectHashingStrategy;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -111,12 +110,6 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.doW
  * @author Denis Zhdanov
  */
 public class ExternalSystemUtil {
-
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
-  @NotNull public static final Key<ExternalSystemTaskId> EXTERNAL_SYSTEM_TASK_ID_KEY =
-    Key.create("com.intellij.openapi.externalSystem.util.taskId");
-
   private static final Logger LOG = Logger.getInstance(ExternalSystemUtil.class);
 
   @NotNull private static final Map<String, String> RUNNER_IDS = new HashMap<>();
@@ -136,7 +129,9 @@ public class ExternalSystemUtil {
 
   static {
     RUNNER_IDS.put(DefaultRunExecutor.EXECUTOR_ID, ExternalSystemConstants.RUNNER_ID);
-    RUNNER_IDS.put(DefaultDebugExecutor.EXECUTOR_ID, ExternalSystemConstants.DEBUG_RUNNER_ID);
+    // DebugExecutor ID  - com.intellij.execution.executors.DefaultDebugExecutor.EXECUTOR_ID
+    String debugExecutorId = ToolWindowId.DEBUG;
+    RUNNER_IDS.put(debugExecutorId, ExternalSystemConstants.DEBUG_RUNNER_ID);
   }
 
   private ExternalSystemUtil() {
@@ -473,7 +468,7 @@ public class ExternalSystemUtil {
 
               if (isPreviewMode) return;
               String message = "syncing...";
-              eventDispatcher.onEvent(
+              eventDispatcher.onEvent(id,
                 new StartBuildEventImpl(new DefaultBuildDescriptor(id, projectName, externalProjectPath, eventTime), message)
                   .withProcessHandler(processHandler, null)
                   .withRestartAction(rerunImportAction)
@@ -522,11 +517,11 @@ public class ExternalSystemUtil {
               if (isPreviewMode) return;
               if (event instanceof ExternalSystemBuildEvent) {
                 BuildEvent buildEvent = ((ExternalSystemBuildEvent)event).getBuildEvent();
-                eventDispatcher.onEvent(buildEvent);
+                eventDispatcher.onEvent(event.getId(), buildEvent);
               }
               else if (event instanceof ExternalSystemTaskExecutionEvent) {
                 BuildEvent buildEvent = convert(((ExternalSystemTaskExecutionEvent)event));
-                eventDispatcher.onEvent(buildEvent);
+                eventDispatcher.onEvent(event.getId(), buildEvent);
               }
             }
 
@@ -606,12 +601,12 @@ public class ExternalSystemUtil {
           }
         }
         if (finishBuildEvent != null) {
-          ServiceManager.getService(project, SyncViewManager.class).onEvent(finishBuildEvent);
+          ServiceManager.getService(project, SyncViewManager.class).onEvent(resolveProjectTask.getId(), finishBuildEvent);
         }
         else {
           String message = "Sync finish event has not been received";
           LOG.warn(message, exception);
-          ServiceManager.getService(project, SyncViewManager.class).onEvent(
+          ServiceManager.getService(project, SyncViewManager.class).onEvent(resolveProjectTask.getId(),
             new FinishBuildEventImpl(resolveProjectTask.getId(), null, System.currentTimeMillis(), "failed",
                                      new FailureResultImpl(new Exception(message, exception))));
         }
@@ -854,17 +849,13 @@ public class ExternalSystemUtil {
           }
 
           @Override
-          public void processStarted(@NotNull final String executorIdLocal,
-                                     @NotNull final ExecutionEnvironment environmentLocal,
-                                     @NotNull final ProcessHandler handler) {
+          public void processTerminated(@NotNull String executorIdLocal,
+                                        @NotNull ExecutionEnvironment environmentLocal,
+                                        @NotNull ProcessHandler handler,
+                                        int exitCode) {
             if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
-              handler.addProcessListener(new ProcessAdapter() {
-                @Override
-                public void processTerminated(@NotNull ProcessEvent event) {
-                  result.set(event.getExitCode() == 0);
-                  targetDone.up();
-                }
-              });
+              result.set(exitCode == 0);
+              targetDone.up();
             }
           }
         });
@@ -896,6 +887,14 @@ public class ExternalSystemUtil {
           else {
             callback.onFailure();
           }
+        }
+        if (!result.get()) {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(environment.getExecutor().getToolWindowId());
+            if (window != null) {
+              window.activate(null, false, false);
+            }
+          }, project.getDisposed());
         }
       }
     };
@@ -1006,6 +1005,11 @@ public class ExternalSystemUtil {
                                          boolean isPreviewMode,
                                          @NotNull final ProgressExecutionMode progressExecutionMode) {
     AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(project, externalSystemId);
+    ExternalProjectSettings existingSettings = systemSettings.getLinkedProjectSettings(projectSettings.getExternalProjectPath());
+    if (existingSettings != null) {
+      return;
+    }
+
     //noinspection unchecked
     systemSettings.linkProject(projectSettings);
     ensureToolWindowInitialized(project, externalSystemId);

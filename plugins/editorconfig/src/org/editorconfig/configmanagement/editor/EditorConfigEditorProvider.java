@@ -8,18 +8,22 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.AsyncFileEditorProvider;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorPolicy;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
-import org.editorconfig.configmanagement.EditorConfigNavigationActionsFactory;
 import org.editorconfig.language.filetype.EditorConfigFileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +33,7 @@ import java.io.IOException;
 public class EditorConfigEditorProvider implements AsyncFileEditorProvider, DumbAware {
   private final static String EDITOR_TYPE_ID = "org.editorconfig.configmanagement.editor";
 
-  private final static int MAX_PREVIEW_LENGTH = 10000;
+  final static int MAX_PREVIEW_LENGTH = 10000;
 
   private final static PsiAwareTextEditorProvider myMainEditorProvider = new PsiAwareTextEditorProvider();
 
@@ -42,7 +46,7 @@ public class EditorConfigEditorProvider implements AsyncFileEditorProvider, Dumb
 
   @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
-    return EditorConfigFileType.INSTANCE.equals(file.getFileType());
+    return FileTypeRegistry.getInstance().isFileOfType(file, EditorConfigFileType.INSTANCE);
   }
 
   @NotNull
@@ -74,8 +78,7 @@ public class EditorConfigEditorProvider implements AsyncFileEditorProvider, Dumb
 
     @Override
     public FileEditor build() {
-      FileEditor currEditor = FileEditorManager.getInstance(myProject).getSelectedEditor();
-      VirtualFile contextFile = getContextFile(currEditor);
+      VirtualFile contextFile = EditorConfigPreviewManager.getInstance(myProject).getAssociatedPreviewFile(myFile);
       if (contextFile != null) {
         Document document =EditorFactory.getInstance().createDocument(getPreviewText(contextFile));
         final EditorConfigPreviewFile previewFile = new EditorConfigPreviewFile(myProject, contextFile, document);
@@ -90,34 +93,27 @@ public class EditorConfigEditorProvider implements AsyncFileEditorProvider, Dumb
       }
     }
 
-    @Nullable
-    private static VirtualFile getContextFile(@Nullable FileEditor currEditor) {
-      VirtualFile contextFile = currEditor != null ? currEditor.getFile() : null;
-      return contextFile != null && EditorConfigNavigationActionsFactory.getInstance(contextFile).isNavigating() ? contextFile : null;
-    }
-
-    private FileEditor createPreviewEditor(@NotNull Document document, @NotNull VirtualFile previewFile) {
+    private FileEditor createPreviewEditor(@NotNull Document document, @NotNull EditorConfigPreviewFile previewFile) {
       Editor previewEditor = EditorFactory.getInstance().createEditor(document, myProject);
       if (previewEditor instanceof EditorEx) {
         EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, previewFile);
         ((EditorEx)previewEditor).setHighlighter(highlighter);
       }
-      return new EditorConfigPreviewFileEditor(previewEditor);
+      return new EditorConfigPreviewFileEditor(previewEditor, previewFile);
     }
 
     @NotNull
     private static String getPreviewText(@NotNull VirtualFile file) {
       if (file.getLength() <= MAX_PREVIEW_LENGTH) {
         try {
-          return VfsUtilCore.loadText(file);
+          return StringUtil.convertLineSeparators(VfsUtilCore.loadText(file));
         }
         catch (IOException e) {
           // Ignore
         }
       }
-      FileType fileType = file.getFileType();
-      if (fileType instanceof LanguageFileType) {
-        Language language = ((LanguageFileType)fileType).getLanguage();
+      Language language = getLanguage(file);
+      if (language != null) {
         LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(language);
         if (provider != null) {
           String sample = provider.getCodeSample(LanguageCodeStyleSettingsProvider.SettingsType.INDENT_SETTINGS);
@@ -126,5 +122,11 @@ public class EditorConfigEditorProvider implements AsyncFileEditorProvider, Dumb
       }
       return "No preview";
     }
+  }
+
+  @Nullable
+  static Language getLanguage(@NotNull VirtualFile virtualFile) {
+    FileType fileType = virtualFile.getFileType();
+    return fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : null;
   }
 }

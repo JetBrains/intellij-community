@@ -8,7 +8,7 @@
     <p>Shell Script support for IntelliJ IDEA, RubyMine, WebStorm, etc.</p>
     ]]></description>
   <extensions defaultExtensionNs="com.intellij">
-    <fileTypeFactory implementation="com.intellij.sh.ShFileTypeFactory"/>
+    <fileType language="Shell Script" extensions="sh;bash;zsh;fish" fieldName="INSTANCE" name="Shell Script" implementationClass="com.intellij.sh.ShFileType"/>
     <lang.parserDefinition language="Shell Script" implementationClass="com.intellij.sh.parser.ShParserDefinition"/>
     <lang.commenter language="Shell Script" implementationClass="com.intellij.sh.ShCommenter"/>
     <lang.quoteHandler language="Shell Script" implementationClass="com.intellij.sh.ShQuoteHandler"/>
@@ -23,12 +23,15 @@
 
     <psi.referenceContributor language="Shell Script" implementation="com.intellij.sh.ShUrlReferenceContributor"/>
 
-    <completion.contributor language="Shell Script" implementationClass="com.intellij.sh.completion.ShKeywordCompletionContributor" order="after bashFilePathCompletionContributor"/>
-    <completion.contributor id="bashFilePathCompletionContributor" language="Shell Script" implementationClass="com.intellij.sh.completion.ShFilePathCompletionContributor"/>
+    <typedHandler implementation="com.intellij.sh.ShTypedHandler"/>
+    <completion.contributor language="Shell Script" implementationClass="com.intellij.sh.completion.ShShebangCompletionContributor" order="first"/>
     <completion.contributor language="Shell Script" implementationClass="com.intellij.sh.completion.ShCommandCompletionContributor"/>
+    <completion.contributor id="shFilePathCompletionContributor" language="Shell Script" implementationClass="com.intellij.sh.completion.ShFilePathCompletionContributor"/>
+    <completion.contributor language="Shell Script" implementationClass="com.intellij.sh.completion.ShKeywordCompletionContributor" order="after shFilePathCompletionContributor"/>
     <lang.braceMatcher language="Shell Script" implementationClass="com.intellij.sh.ShBraceMatcher"/>
     <lang.documentationProvider language="Shell Script" implementationClass="com.intellij.sh.ShDocumentationProvider"/>
     <runLineMarkerContributor language="Shell Script" implementationClass="com.intellij.sh.run.ShRunLineMarkerContributor"/>
+    <configurationType implementation="com.intellij.sh.run.ShConfigurationType"/>
 
     <defaultLiveTemplatesProvider implementation="com.intellij.sh.template.ShTemplateProvider"/>
     <liveTemplateContext implementation="com.intellij.sh.template.ShContextType"/>
@@ -45,9 +48,11 @@
     <localInspection language="Shell Script" groupName="Shell Script" shortName="ShellCheck" displayName="ShellCheck" enabledByDefault="true"
                      level="ERROR" unfair="true" implementationClass="com.intellij.sh.shellcheck.ShShellcheckInspection"/>
 
-    <fileTypeDetector implementation="com.intellij.sh.ShFileTypeDetector"/>
+    <fileTypeDetector implementation="com.intellij.sh.ShFileTypeDetector" order="first"/>
     <highlightErrorFilter implementation="com.intellij.sh.ShErrorFilter"/>
     <daemon.highlightInfoFilter implementation="com.intellij.sh.ShErrorFilter"/>
+
+    <statistics.counterUsagesCollector groupId="shell.script" version="1"/>
 
     <highlightUsagesHandlerFactory implementation="com.intellij.sh.highlighting.ShOccurrencesHighlightingFactory"/>
     <renameHandler implementation="com.intellij.sh.ShRenameHandler"/>
@@ -62,7 +67,21 @@
     </intentionAction>
   </extensions>
   <actions>
-    <action id="runShellFileAction" class="com.intellij.sh.run.ShRunFileAction" text="Run File"
+    <action id="runShellFileAction" class="com.intellij.sh.run.ShRunFileAction"
+            text="Run File"
             description="Run current shell file in the terminal" use-shortcut-of="RunClass"/>
+
+    <group id="ShGenerateGroup">
+      <action id="ShGenerateForLoop" class="com.intellij.sh.actions.ShGenerateForLoop"
+              text="For Loop"
+              description="Creates for loop"/>
+      <action id="ShGenerateWhileLoop" class="com.intellij.sh.actions.ShGenerateWhileLoop"
+              text="While Loop"
+              description="Creates while loop"/>
+      <action id="ShGenerateUntilLoop" class="com.intellij.sh.actions.ShGenerateUntilLoop"
+              text="Until Loop"
+              description="Creates until loop"/>
+      <add-to-group group-id="GenerateGroup" anchor="first"/>
+    </group>
   </actions>
 </idea-plugin>

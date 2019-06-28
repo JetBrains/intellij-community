@@ -4,14 +4,14 @@ package com.siyeh.ig.performance;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ObjectEqualsCanBeEqualityInspectionTest extends LightInspectionTestCase {
+public class ObjectEqualsCanBeEqualityInspectionTest extends LightJavaInspectionTestCase {
 
   public void testTopLevel() {
     doTest("class X {" +

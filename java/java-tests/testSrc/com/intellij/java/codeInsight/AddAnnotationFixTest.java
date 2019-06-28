@@ -230,6 +230,14 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     assertNotAvailable("NotNull");
     assertNotAvailable("Nullable");
   }
+  
+  public void testAvailableFixesOnReference() {
+    myFixture.configureByText("Foo.java", "public class Foo {" +
+                                          " {\"\".sub<caret>string(1);} " +
+                                          "}");
+    assertNotAvailable("Deprecated");
+    assertNotAvailable("NonNls");
+  }
 
   private void assertNotAvailable(String shortName) {
     AnnotateIntentionAction action = new AnnotateIntentionAction();
@@ -273,7 +281,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     final DeannotateIntentionAction deannotateFix = new DeannotateIntentionAction();
     assertTrue(deannotateFix.isAvailable(myFixture.getProject(), editor, file));
 
-    final PsiModifierListOwner container = DeannotateIntentionAction.getContainer(editor, file);
+    final PsiModifierListOwner container = AddAnnotationPsiFix.getContainer(file, editor.getCaretModel().getOffset());
     assertNotNull(container);
     startListening(container, AnnotationUtil.NOT_NULL, true);
     ExternalAnnotationsManager.getInstance(myFixture.getProject()).deannotate(container, AnnotationUtil.NOT_NULL);

@@ -30,7 +30,7 @@ import java.util.concurrent.Future;
  * Write actions can be called only from the Swing thread using {@link #runWriteAction} method.
  * If there are read actions running at this moment {@code runWriteAction} is blocked until they are completed.
  * <p>
- * See also <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>.
+ * See also <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>.
  */
 public interface Application extends ComponentManager {
 
@@ -421,11 +421,7 @@ public interface Application extends ComponentManager {
   AccessToken acquireReadActionLock();
 
   /**
-   * Returns lock used for write operations, should be closed in finally block
-   *
-   * @see #runWriteAction
-   * @see WriteAction#run(ThrowableRunnable)
-   * @see WriteAction#compute(ThrowableComputable)
+   * @deprecated use {@link #runWriteAction}, {@link WriteAction#run(ThrowableRunnable)} or {@link WriteAction#compute(ThrowableComputable)} instead
    */
   @NotNull
   @Deprecated

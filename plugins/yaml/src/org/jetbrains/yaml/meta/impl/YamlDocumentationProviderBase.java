@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.meta.impl;
 
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
@@ -28,11 +26,6 @@ import java.util.Objects;
 
 @ApiStatus.Experimental
 public abstract class YamlDocumentationProviderBase extends AbstractDocumentationProvider {
-  @Override
-  @Nullable
-  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
-    return null;
-  }
 
   @Override
   public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {

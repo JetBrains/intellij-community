@@ -77,22 +77,18 @@ internal class DefaultComponentConstraintCreator(private val spacing: SpacingCon
       applyGrowPolicy(cc.value, growPolicy)
     }
     else {
-      addGrowIfNeed(cc, component, spacing)
+      addGrowIfNeeded(cc, component, spacing)
     }
 
     return if (cc.isInitialized()) cc.value else null
   }
 
-  private fun addGrowIfNeed(cc: Lazy<CC>, component: Component, spacing: SpacingConfiguration) {
+  private fun addGrowIfNeeded(cc: Lazy<CC>, component: Component, spacing: SpacingConfiguration) {
     when {
       component is ComponentWithBrowseButton<*> -> {
         // yes, no max width. approved by UI team (all path fields stretched to the width of the window)
         cc.value.minWidth("${spacing.maxShortTextWidth}px")
         cc.value.growX()
-      }
-
-      component is JPasswordField -> {
-        applyGrowPolicy(cc.value, GrowPolicy.SHORT_TEXT)
       }
 
       component is JTextField && component.columns != 0 ->

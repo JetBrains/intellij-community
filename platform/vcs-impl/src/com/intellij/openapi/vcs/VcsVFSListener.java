@@ -8,6 +8,7 @@ import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
@@ -17,6 +18,8 @@ import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
 import com.intellij.openapi.vcs.changes.ignore.IgnoreFilesProcessorImpl;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -102,11 +105,12 @@ public abstract class VcsVFSListener implements Disposable {
 
   protected void installListeners() {
     VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(), this);
+    VirtualFileManager.getInstance().addAsyncFileListener(new MyAsyncVfsListener(), this);
     myProject.getMessageBus().connect(this).subscribe(CommandListener.TOPIC, new MyCommandAdapter());
 
     myProjectConfigurationFilesProcessor.install();
     myExternalFilesProcessor.install();
-    new IgnoreFilesProcessorImpl(myProject, this).install();
+    new IgnoreFilesProcessorImpl(myProject, myVcs, this).install();
   }
 
   @Override
@@ -413,7 +417,7 @@ public abstract class VcsVFSListener implements Disposable {
         }
       }
       else {
-        final List<VirtualFile> list = new LinkedList<>();
+        final List<VirtualFile> list = new ArrayList<>();
         VcsUtil.collectFiles(file, list, true, isDirectoryVersioningSupported());
         for (VirtualFile child : list) {
           if (!myChangeListManager.isIgnoredFile(child)) {
@@ -459,13 +463,32 @@ public abstract class VcsVFSListener implements Disposable {
       }
     }
 
+  }
+
+  private class MyAsyncVfsListener implements AsyncFileListener {
+    @Nullable
     @Override
-    public void beforeContentsChange(@NotNull VirtualFileEvent event) {
-      VirtualFile file = event.getFile();
-      assert !file.isDirectory();
-      if (isUnderMyVcs(file)) {
-        VcsVFSListener.this.beforeContentsChange(event, file);
+    public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
+      List<VirtualFileEvent> filtered = new ArrayList<>();
+      for (VFileEvent event : events) {
+        if (event instanceof VFileContentChangeEvent) {
+          ProgressManager.checkCanceled();
+          VirtualFile file = Objects.requireNonNull(event.getFile());
+          if (isUnderMyVcs(file)) {
+            VFileContentChangeEvent ce = (VFileContentChangeEvent)event;
+            filtered.add(
+              new VirtualFileEvent(event.getRequestor(), file, file.getParent(), ce.getOldModificationStamp(), ce.getModificationStamp()));
+          }
+        }
       }
+      return filtered.isEmpty() ? null : new ChangeApplier() {
+        @Override
+        public void beforeVfsChange() {
+          for (VirtualFileEvent event : filtered) {
+            beforeContentsChange(event, event.getFile());
+          }
+        }
+      };
     }
   }
 

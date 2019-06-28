@@ -23,7 +23,6 @@ import java.util.function.Supplier;
  * @author anna
  */
 public class LambdaUtil {
-  private static final ThreadLocal<Map<PsiElement, PsiType>> ourFunctionTypes = new ThreadLocal<>();
   private static final Logger LOG = Logger.getInstance(LambdaUtil.class);
 
   @Nullable
@@ -122,6 +121,12 @@ public class LambdaUtil {
       PsiElement element = ((PsiBreakStatement)context).findExitedElement();
       if (element instanceof PsiSwitchExpression) {
         return isValidLambdaContext(element.getParent());
+      }
+    }
+    if (context instanceof PsiYieldStatement) {
+      PsiSwitchExpression switchExpression = ((PsiYieldStatement)context).findEnclosingExpression();
+      if (switchExpression != null) {
+        return isValidLambdaContext(switchExpression.getParent());
       }
     }
     if (context instanceof PsiExpressionStatement) {
@@ -355,12 +360,10 @@ public class LambdaUtil {
       parent = parent.getParent();
     }
 
-    final Map<PsiElement, PsiType> map = ourFunctionTypes.get();
-    if (map != null) {
-      final PsiType type = ObjectUtils.chooseNotNull(map.get(expression), map.get(element));
-      if (type != null) {
-        return type;
-      }
+    PsiType type = ThreadLocalTypes.getElementType(expression);
+    if (type == null) type = ThreadLocalTypes.getElementType(element);
+    if (type != null) {
+      return type;
     }
 
     if (parent instanceof PsiArrayInitializerExpression) {
@@ -648,16 +651,6 @@ public class LambdaUtil {
     return false;
   }
 
-  @NotNull
-  public static Map<PsiElement, PsiType> getFunctionalTypeMap() {
-    Map<PsiElement, PsiType> map = ourFunctionTypes.get();
-    if (map == null) {
-      map = new HashMap<>();
-      ourFunctionTypes.set(map);
-    }
-    return map;
-  }
-
   public static Map<PsiElement, String> checkReturnTypeCompatible(PsiLambdaExpression lambdaExpression, PsiType functionalInterfaceReturnType) {
     Map<PsiElement, String> errors = new LinkedHashMap<>();
     if (PsiType.VOID.equals(functionalInterfaceReturnType)) {
@@ -728,10 +721,11 @@ public class LambdaUtil {
                                                     PsiLambdaExpression.class,
                                                     PsiConditionalExpression.class,
                                                     PsiSwitchExpression.class,
+                                                    PsiAssignmentExpression.class,
                                                     PsiCodeBlock.class,
                                                     PsiCall.class);
     while (true) {
-      if (parent instanceof PsiCall) {
+      if (parent instanceof PsiCall || parent instanceof PsiAssignmentExpression) {
         break;
       }
 
@@ -750,7 +744,7 @@ public class LambdaUtil {
             break;
           }
 
-          if (getFunctionalTypeMap().containsKey(lambdaExpression)) {
+          if (ThreadLocalTypes.hasBindingFor(lambdaExpression)) {
             break;
           }
         }
@@ -760,7 +754,7 @@ public class LambdaUtil {
         break;
       }
 
-      if (parent instanceof PsiLambdaExpression && getFunctionalTypeMap().containsKey(parent)) {
+      if (parent instanceof PsiLambdaExpression && ThreadLocalTypes.hasBindingFor(parent)) {
         break;
       }
 
@@ -769,13 +763,13 @@ public class LambdaUtil {
         break;
       }
       if (MethodCandidateInfo.isOverloadCheck(psiCall.getArgumentList()) ||
-          lambdaExpression != null && getFunctionalTypeMap().containsKey(lambdaExpression)) {
+          lambdaExpression != null && ThreadLocalTypes.hasBindingFor(lambdaExpression)) {
         break;
       }
 
       top = psiCall;
       if (top instanceof PsiExpression && PsiPolyExpressionUtil.isPolyExpression((PsiExpression)top)) {
-        parent = PsiTreeUtil.getParentOfType(parent.getParent(), PsiExpressionList.class, PsiLambdaExpression.class, PsiCodeBlock.class);
+        parent = PsiTreeUtil.getParentOfType(parent.getParent(), PsiExpressionList.class, PsiLambdaExpression.class, PsiAssignmentExpression.class, PsiCodeBlock.class);
       }
       else {
         break;
@@ -833,7 +827,7 @@ public class LambdaUtil {
   public static <T> T performWithSubstitutedParameterBounds(final PsiTypeParameter[] typeParameters,
                                                             final PsiSubstitutor substitutor,
                                                             final Supplier<? extends T> producer) {
-    try {
+    return ThreadLocalTypes.performWithTypes(map -> {
       for (PsiTypeParameter parameter : typeParameters) {
         final PsiClassType[] types = parameter.getExtendsListTypes();
         if (types.length > 0) {
@@ -841,31 +835,18 @@ public class LambdaUtil {
           //don't glb to avoid flattening = Object&Interface would be preserved
           //otherwise methods with different signatures could get same erasure
           final PsiType upperBound = PsiIntersectionType.createIntersection(false, conjuncts.toArray(PsiType.EMPTY_ARRAY));
-          getFunctionalTypeMap().put(parameter, upperBound);
+          map.forceType(parameter, upperBound);
         }
       }
       return producer.get();
-    }
-    finally {
-      for (PsiTypeParameter parameter : typeParameters) {
-        getFunctionalTypeMap().remove(parameter);
-      }
-    }
+    });
   }
 
   public static <T> T performWithTargetType(@NotNull PsiElement element, @NotNull PsiType targetType, @NotNull Supplier<? extends T> producer) {
-    Map<PsiElement, PsiType> map = getFunctionalTypeMap();
-    PsiType prev = map.put(element, targetType);
-    try {
+    return ThreadLocalTypes.performWithTypes(types -> {
+      types.forceType(element, targetType);
       return producer.get();
-    }
-    finally {
-      if (prev == null) {
-        map.remove(element);
-      } else {
-        map.put(element, prev);
-      }
-    }
+    });
   }
 
   /**
@@ -929,10 +910,17 @@ public class LambdaUtil {
         if (function instanceof PsiFunctionalExpression && ((PsiFunctionalExpression)function).getFunctionalInterfaceType() == null) {
           return false;
         }
-        PsiType newType = copyCall instanceof PsiExpression ? ((PsiExpression)copyCall).getType() : null;
-        if (origType instanceof PsiClassType && newType instanceof PsiClassType &&
-            ((PsiClassType)origType).isRaw() != ((PsiClassType)newType).isRaw()) {
-          return false;
+        if (origType instanceof PsiClassType && !((PsiClassType)origType).isRaw() && 
+            //when lambda has no formal parameter types, it's ignored during applicability check
+            //so unchecked warnings inside lambda's body won't lead to erasure of the type of the containing call 
+            //but after replacement of lambda with the equivalent method call, unchecked warning won't be ignored anymore
+            //and the type of the call would be erased => red code may appear
+            !lambda.hasFormalParameterTypes()) {
+          PsiExpression expressionFromBody = extractSingleExpressionFromBody(body);
+          if (expressionFromBody instanceof PsiMethodCallExpression &&
+              PsiTypesUtil.isUncheckedCall(((PsiMethodCallExpression)expressionFromBody).resolveMethodGenerics())) {
+            return false;
+          }
         }
       }
     }

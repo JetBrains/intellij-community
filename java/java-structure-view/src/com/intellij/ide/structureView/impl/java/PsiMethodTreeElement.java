@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -29,7 +15,7 @@ import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -80,9 +66,9 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
     final PsiMethod psiMethod = getElement();
     if (psiMethod == null) return "";
     final boolean dumb = DumbService.isDumb(psiMethod.getProject());
-    String method = PsiFormatUtil.formatMethod(psiMethod, 
+    String method = PsiFormatUtil.formatMethod(psiMethod,
                                                PsiSubstitutor.EMPTY,
-                                               SHOW_NAME | TYPE_AFTER | SHOW_PARAMETERS | (dumb ? 0 : SHOW_TYPE), 
+                                               SHOW_NAME | TYPE_AFTER | SHOW_PARAMETERS | (dumb ? 0 : SHOW_TYPE),
                                                dumb ? SHOW_NAME : SHOW_TYPE);
     return StringUtil.replace(method, ":", ": ");
   }
@@ -116,7 +102,7 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
         myLocation = "";
       } else {
         char upArrow = '\u2191';
-        myLocation = UIUtil.getLabelFont().canDisplay(upArrow) ? upArrow + myLocation : myLocation;
+        myLocation = StartupUiUtil.getLabelFont().canDisplay(upArrow) ? upArrow + myLocation : myLocation;
       }
       }
     }

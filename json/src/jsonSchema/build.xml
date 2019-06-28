@@ -96,6 +96,15 @@
                    replace="&quot;jscsConfig&quot; : {&quot;$ref&quot;: &quot;http://json.schemastore.org/jscsrc#&quot;},${line.separator}  &quot;publishConfig&quot;" />
     <replaceregexp file="${idea.project.home}/plugins/NodeJS/src/com/jetbrains/nodejs/packageJson/packageJsonSchema.json"
                    match="&quot;publishConfig&quot;"
+                   replace="&quot;nodemonConfig&quot; : {&quot;$ref&quot;: &quot;http://json.schemastore.org/nodemon#&quot;},${line.separator}  &quot;publishConfig&quot;" />
+    <replaceregexp file="${idea.project.home}/plugins/NodeJS/src/com/jetbrains/nodejs/packageJson/packageJsonSchema.json"
+                   match="&quot;publishConfig&quot;"
+                   replace="&quot;husky&quot; : {&quot;$ref&quot;: &quot;http://json.schemastore.org/huskyrc#&quot;},${line.separator}  &quot;publishConfig&quot;" />
+    <replaceregexp file="${idea.project.home}/plugins/NodeJS/src/com/jetbrains/nodejs/packageJson/packageJsonSchema.json"
+                   match="&quot;publishConfig&quot;"
+                   replace="&quot;renovate&quot; : {&quot;$ref&quot;: &quot;http://json.schemastore.org/renovate#&quot;},${line.separator}  &quot;publishConfig&quot;" />
+    <replaceregexp file="${idea.project.home}/plugins/NodeJS/src/com/jetbrains/nodejs/packageJson/packageJsonSchema.json"
+                   match="&quot;publishConfig&quot;"
                    replace="&quot;browserslist&quot; : {&quot;oneOf&quot;: [{&quot;type&quot;: &quot;array&quot;, &quot;items&quot;: {&quot;type&quot;: &quot;string&quot;}}, {&quot;type&quot;: &quot;object&quot;, &quot;additionalProperties&quot;: {&quot;type&quot;: &quot;array&quot;, &quot;items&quot;: {&quot;type&quot;: &quot;string&quot;}}}] , &quot;description&quot;: &quot;List of Browserslist queries&quot;},${line.separator}  &quot;publishConfig&quot;" />
   </target>
 

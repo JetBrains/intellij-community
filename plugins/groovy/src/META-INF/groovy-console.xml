@@ -8,8 +8,8 @@
 
   <actions>
     <action id="Groovy.Console"
-            class="org.jetbrains.plugins.groovy.console.actions.GrNewConsoleAction"
-            text="Groovy Console..." description="Launch Groovy Console"
+            class="org.jetbrains.plugins.groovy.console.GrNewConsoleAction"
+            text="Groovy Console..." description="Launch Groovy console"
             icon="JetgroovyIcons.Groovy.Groovy_16x16">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>

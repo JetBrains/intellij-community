@@ -15,7 +15,7 @@
  */
 package com.intellij.refactoring;
 
-import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -32,7 +32,7 @@ import java.io.File;
 /**
  * Heavy weight: creates project for each test method. Consider using {@link LightMultiFileTestCase} instead
  */
-public abstract class MultiFileTestCase extends CodeInsightTestCase {
+public abstract class MultiFileTestCase extends JavaCodeInsightTestCase {
   protected boolean myDoCompare = true;
 
   protected void doTest(final PerformAction performAction) {

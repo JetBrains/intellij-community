@@ -18,13 +18,11 @@ import com.intellij.openapi.util.Key
 import com.intellij.ui.components.CheckBox
 import com.intellij.ui.components.dialog
 import com.intellij.ui.layout.*
-import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.xml.XmlBundle
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 import javax.swing.Icon
-import javax.swing.border.EmptyBorder
 
 internal class LaunchBrowserBeforeRunTaskProvider : BeforeRunTaskProvider<LaunchBrowserBeforeRunTask>() {
   companion object {
@@ -47,9 +45,6 @@ internal class LaunchBrowserBeforeRunTaskProvider : BeforeRunTaskProvider<Launch
 
     val browserSelector = BrowserSelector()
     val browserComboBox = browserSelector.mainComponent
-    if (UIUtil.isUnderAquaLookAndFeel()) {
-      browserComboBox.border = EmptyBorder(3, 0, 0, 0)
-    }
     state.browser?.let {
       browserSelector.selected = it
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.openapi.util.Comparing;
@@ -13,6 +13,7 @@ import com.intellij.uiDesigner.propertyInspector.renderers.FontRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -121,7 +122,7 @@ public class IntroFontProperty extends IntrospectedProperty<FontDescriptor> {
         if (componentFont instanceof FontUIResource) {
           final Constructor constructor = component.getClass().getConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);
           constructor.setAccessible(true);
-          JComponent newComponent = (JComponent)constructor.newInstance(ArrayUtil.EMPTY_OBJECT_ARRAY);
+          JComponent newComponent = (JComponent)constructor.newInstance(ArrayUtilRt.EMPTY_OBJECT_ARRAY);
           Font defaultFont = (Font) myReadMethod.invoke(newComponent, EMPTY_OBJECT_ARRAY);
 
           if (defaultFont == componentFont) {

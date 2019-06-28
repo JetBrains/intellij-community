@@ -13,9 +13,9 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubFullPath
 import org.jetbrains.plugins.github.api.GithubServerPath
+import org.jetbrains.plugins.github.api.data.GHPullRequest
 import org.jetbrains.plugins.github.api.data.GithubCommit
 import org.jetbrains.plugins.github.api.data.GithubIssueState
-import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailed
 import org.jetbrains.plugins.github.pullrequest.action.ui.GithubMergeCommitMessageDialog
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
@@ -89,7 +89,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
 
     val dataProvider = dataLoader.getDataProvider(pullRequest)
     progressManager.run(object : Task.Backgroundable(project, "Merging Pull Request...", true) {
-      private lateinit var details: GithubPullRequestDetailed
+      private lateinit var details: GHPullRequest
 
       override fun run(indicator: ProgressIndicator) {
         indicator.text2 = "Loading details"
@@ -106,9 +106,9 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
         } ?: throw ProcessCanceledException()
 
         indicator.text2 = "Merging"
-        requestExecutor.execute(indicator, GithubApiRequests.Repos.PullRequests.merge(details,
+        requestExecutor.execute(indicator, GithubApiRequests.Repos.PullRequests.merge(serverPath, repoPath, details.number,
                                                                                       commitMessage.first, commitMessage.second,
-                                                                                      details.head.sha))
+                                                                                      details.headRefOid))
       }
 
       override fun onSuccess() {
@@ -131,7 +131,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
 
     val dataProvider = dataLoader.getDataProvider(pullRequest)
     progressManager.run(object : Task.Backgroundable(project, "Merging Pull Request...", true) {
-      lateinit var details: GithubPullRequestDetailed
+      private lateinit var details: GHPullRequest
 
       override fun run(indicator: ProgressIndicator) {
         indicator.text2 = "Loading details"
@@ -139,7 +139,8 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
         indicator.checkCanceled()
 
         indicator.text2 = "Merging"
-        requestExecutor.execute(indicator, GithubApiRequests.Repos.PullRequests.rebaseMerge(details, details.head.sha))
+        requestExecutor.execute(indicator, GithubApiRequests.Repos.PullRequests.rebaseMerge(serverPath, repoPath, details.number,
+                                                                                            details.headRefOid))
       }
 
       override fun onSuccess() {
@@ -163,8 +164,8 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
 
     val dataProvider = dataLoader.getDataProvider(pullRequest)
     progressManager.run(object : Task.Backgroundable(project, "Merging Pull Request...", true) {
-      lateinit var details: GithubPullRequestDetailed
-      lateinit var commits: List<GithubCommit>
+      private lateinit var details: GHPullRequest
+      private lateinit var commits: List<GithubCommit>
 
 
       override fun run(indicator: ProgressIndicator) {
@@ -187,9 +188,9 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
         } ?: throw ProcessCanceledException()
 
         indicator.text2 = "Merging"
-        requestExecutor.execute(indicator, GithubApiRequests.Repos.PullRequests.squashMerge(details,
+        requestExecutor.execute(indicator, GithubApiRequests.Repos.PullRequests.squashMerge(serverPath, repoPath, details.number,
                                                                                             commitMessage.first, commitMessage.second,
-                                                                                            details.head.sha))
+                                                                                            details.headRefOid))
       }
 
       override fun onSuccess() {
@@ -209,7 +210,8 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
 
   private fun releaseAndRefreshData(pullRequest: Long) {
     busyStateTracker.release(pullRequest)
-    dataLoader.findDataProvider(pullRequest)?.reloadDetails()
-    listLoader.outdated = true
+    val dataProvider = dataLoader.findDataProvider(pullRequest) ?: return
+    dataProvider.reloadDetails()
+    listLoader.reloadData(dataProvider.detailsRequest)
   }
 }

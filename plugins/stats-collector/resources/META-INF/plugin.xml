@@ -7,8 +7,6 @@
       Collects data about your usage of code completion, anonymizes and sends it to JetBrains.
       Note, the plugin doesn't send any of your personal data or code. All it sends is just numbers
       calculated based on your completion usage patterns. The plugin does not send more than 15MB of data per day.
-      It will not send anything until you explicitly allow it in the settings/preferences: Editor | General | Code Completion,
-      "Machine Learning Assistant Code Completion" section.
     ]]></description>
 
   <depends>com.intellij.modules.lang</depends>
@@ -51,6 +49,13 @@
     <applicationService serviceInterface="com.intellij.completion.tracker.LookupElementPositionTracker"
                         serviceImplementation="com.intellij.completion.tracker.UserDataLookupElementPositionTracker"/>
 
+    <applicationService serviceImplementation="com.intellij.stats.personalization.impl.ApplicationUserFactorStorage"/>
+
+    <applicationService serviceInterface="com.intellij.stats.personalization.UserFactorsManager"
+                        serviceImplementation="com.intellij.stats.personalization.impl.UserFactorsManagerImpl"/>
+
+    <projectService serviceImplementation="com.intellij.stats.personalization.impl.ProjectUserFactorStorage"/>
+
     <registryKey key="completion.stats.exit.experiment" defaultValue="false"
                  description="Do not perform A/B experiment for code completion on this installation"/>
 
@@ -62,6 +67,9 @@
 
     <registryKey key="completion.stats.send.logs" defaultValue="true"
                  description="Send anonymous logs about completion usage"/>
+
+    <registryKey key="completion.stats.enable.session.factors" defaultValue="true"
+                 description="Use inside single session factors"/>
   </extensions>
 
   <application-components>
@@ -72,23 +80,6 @@
     <component>
       <implementation-class>com.intellij.stats.completion.CompletionTrackerInitializer</implementation-class>
     </component>
-
-    <component>
-      <implementation-class>
-        com.intellij.stats.personalization.impl.ApplicationUserFactorStorage
-      </implementation-class>
-    </component>
   </application-components>
-
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.stats.personalization.impl.ProjectUserFactorStorage</implementation-class>
-    </component>
-
-    <component>
-      <interface-class>com.intellij.stats.personalization.UserFactorsManager</interface-class>
-      <implementation-class>com.intellij.stats.personalization.impl.UserFactorsManagerImpl</implementation-class>
-    </component>
-  </project-components>
 
 </idea-plugin>

@@ -169,6 +169,7 @@ class EnsureCodeBlockImpl {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     if (body == null) {
       PsiWhileStatement newWhileStatement = (PsiWhileStatement)factory.createStatementFromText("while(true) {}", whileStatement);
+      Objects.requireNonNull(newWhileStatement.getCondition()).replace(oldCondition);
       whileStatement = (PsiWhileStatement)whileStatement.replace(newWhileStatement);
       blockBody = (PsiBlockStatement)Objects.requireNonNull(whileStatement.getBody());
       oldCondition = Objects.requireNonNull(whileStatement.getCondition());

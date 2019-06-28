@@ -1,9 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package icons;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.IconManager;
 
 import javax.swing.*;
+
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 
 /**
  * NOTE THIS FILE IS AUTO-GENERATED
@@ -11,11 +13,11 @@ import javax.swing.*;
  */
 public final class MavenIcons {
   private static Icon load(String path) {
-    return IconLoader.getIcon(path, MavenIcons.class);
+    return IconManager.getInstance().getIcon(path, MavenIcons.class);
   }
 
   private static Icon load(String path, Class<?> clazz) {
-    return IconLoader.getIcon(path, clazz);
+    return IconManager.getInstance().getIcon(path, clazz);
   }
 
   /** 12x12 */ public static final Icon ChildrenProjects = load("/images/childrenProjects.svg");
@@ -32,20 +34,24 @@ public final class MavenIcons {
   /** @deprecated to be removed in IDEA 2020 - use OpenapiIcons.RepositoryLibraryLogo */
   @SuppressWarnings("unused")
   @Deprecated
+  @ScheduledForRemoval(inVersion = "2020.1")
   public static final Icon MavenLogo = load("/icons/repositoryLibraryLogo.svg", icons.OpenapiIcons.class);
 
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.OfflineMode */
   @SuppressWarnings("unused")
   @Deprecated
+  @ScheduledForRemoval(inVersion = "2020.1")
   public static final Icon OfflineMode = load("/actions/offlineMode.svg", com.intellij.icons.AllIcons.class);
 
   /** @deprecated to be removed in IDEA 2020 - use ExternalSystemIcons.Task */
   @SuppressWarnings("unused")
   @Deprecated
+  @ScheduledForRemoval(inVersion = "2020.1")
   public static final Icon Phase = load("/icons/task.svg", icons.ExternalSystemIcons.class);
 
   /** @deprecated to be removed in IDEA 2020 - use ExternalSystemIcons.TaskGroup */
   @SuppressWarnings("unused")
   @Deprecated
+  @ScheduledForRemoval(inVersion = "2020.1")
   public static final Icon PhasesClosed = load("/icons/taskGroup.svg", icons.ExternalSystemIcons.class);
 }

@@ -233,8 +233,8 @@ inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
   }
 }
 
-fun createHeavyProject(path: String, isUseDefaultProjectSettings: Boolean = false): Project {
-  return ProjectManagerEx.getInstanceEx().newProject(null, path, isUseDefaultProjectSettings, false)!!
+fun createHeavyProject(path: String, useDefaultProjectSettings: Boolean = false): Project {
+  return ProjectManagerEx.getInstanceEx().newProject(null, path, useDefaultProjectSettings, false)!!
 }
 
 suspend fun Project.use(task: suspend (Project) -> Unit) {
@@ -310,13 +310,18 @@ suspend fun <T> runNonUndoableWriteAction(file: VirtualFile, runnable: suspend (
   return runUndoTransparentWriteAction {
     val result = runBlocking { runnable() }
     val documentReference = DocumentReferenceManager.getInstance().create(file)
-    val undoManager = com.intellij.openapi.command.undo.UndoManager.getGlobalInstance() as UndoManagerImpl
+    val undoManager = UndoManager.getGlobalInstance() as UndoManagerImpl
     undoManager.nonundoableActionPerformed(documentReference, false)
     result
   }
 }
 
-suspend fun createOrLoadProject(tempDirManager: TemporaryDirectory, projectCreator: (suspend (VirtualFile) -> String)? = null, directoryBased: Boolean = true, loadComponentState: Boolean = false, task: suspend (Project) -> Unit) {
+suspend fun createOrLoadProject(tempDirManager: TemporaryDirectory,
+                                projectCreator: (suspend (VirtualFile) -> String)? = null,
+                                directoryBased: Boolean = true,
+                                loadComponentState: Boolean = false,
+                                useDefaultProjectSettings: Boolean = true,
+                                task: suspend (Project) -> Unit) {
   withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
     val filePath = if (projectCreator == null) {
       tempDirManager.newPath("test${if (directoryBased) "" else ProjectFileType.DOT_DEFAULT_EXTENSION}", refreshVfs = true).systemIndependentPath
@@ -329,9 +334,10 @@ suspend fun createOrLoadProject(tempDirManager: TemporaryDirectory, projectCreat
     }
 
     val project = when (projectCreator) {
-      null -> createHeavyProject(filePath, isUseDefaultProjectSettings = true)
+      null -> createHeavyProject(filePath, useDefaultProjectSettings = useDefaultProjectSettings)
       else -> ProjectManagerEx.getInstanceEx().loadProject(filePath)!!
     }
+
     if (loadComponentState) {
       project.runInLoadComponentStateMode {
         project.use(task)
@@ -352,6 +358,24 @@ class DisposableRule : ExternalResource() {
   override fun after() {
     if (_disposable.isInitialized()) {
       Disposer.dispose(_disposable.value)
+    }
+  }
+}
+
+class SystemPropertyRule(private val name: String, private val value: String = "true") : ExternalResource() {
+  private var oldValue: String? = null
+
+  public override fun before() {
+    oldValue = System.getProperty(name)
+    System.setProperty(name, value)
+  }
+
+  public override fun after() {
+    if (oldValue == null) {
+      System.clearProperty(name)
+    }
+    else {
+      System.setProperty(name, oldValue)
     }
   }
 }

@@ -40,6 +40,7 @@ public class JsonSchemaObject {
   @NonNls public static final String ADDITIONAL_ITEMS = "additionalItems";
   @NonNls public static final String X_INTELLIJ_HTML_DESCRIPTION = "x-intellij-html-description";
   @NonNls public static final String X_INTELLIJ_LANGUAGE_INJECTION = "x-intellij-language-injection";
+  @NonNls public static final String X_INTELLIJ_CASE_INSENSITIVE = "x-intellij-case-insensitive";
   @Nullable private final String myFileUrl;
   @NotNull private final String myPointer;
   @Nullable private final VirtualFile myRawFile;
@@ -114,8 +115,18 @@ public class JsonSchemaObject {
   @Nullable private String myDeprecationMessage;
   @Nullable private Map<String, String> myIdsMap;
 
+  private boolean myForceCaseInsensitive = false;
+
   public boolean isValidByExclusion() {
     return myIsValidByExclusion;
+  }
+
+  public boolean isForceCaseInsensitive() {
+    return myForceCaseInsensitive;
+  }
+
+  public void setForceCaseInsensitive(boolean forceCaseInsensitive) {
+    myForceCaseInsensitive = forceCaseInsensitive;
   }
 
   private boolean myIsValidByExclusion = true;
@@ -218,7 +229,7 @@ public class JsonSchemaObject {
     if (selfType == null) return otherType;
     if (otherType == null) {
       if (otherTypeVariants != null && !otherTypeVariants.isEmpty()) {
-        Set<JsonSchemaType> filteredVariants = new HashSet<>(otherTypeVariants.size());
+        Set<JsonSchemaType> filteredVariants = EnumSet.noneOf(JsonSchemaType.class);
         for (JsonSchemaType variant : otherTypeVariants) {
           JsonSchemaType subtype = getSubtypeOfBoth(selfType, variant);
           if (subtype != null) filteredVariants.add(subtype);
@@ -247,7 +258,7 @@ public class JsonSchemaObject {
     if (self == null) return other;
     if (other == null) return self;
 
-    Set<JsonSchemaType> resultSet = new HashSet<>(self.size());
+    Set<JsonSchemaType> resultSet = EnumSet.noneOf(JsonSchemaType.class);
     for (JsonSchemaType type : self) {
       JsonSchemaType merged = mergeTypes(type, null, other);
       if (merged != null) resultSet.add(merged);
@@ -335,6 +346,8 @@ public class JsonSchemaObject {
       else myIfThenElse = ContainerUtil.concat(myIfThenElse, other.myIfThenElse);
     }
     myShouldValidateAgainstJSType |= other.myShouldValidateAgainstJSType;
+    if (myLanguageInjection == null) myLanguageInjection = other.myLanguageInjection;
+    myForceCaseInsensitive = myForceCaseInsensitive || other.myForceCaseInsensitive;
   }
 
   private static void mergeProperties(@NotNull JsonSchemaObject thisObject, @NotNull JsonSchemaObject otherObject) {

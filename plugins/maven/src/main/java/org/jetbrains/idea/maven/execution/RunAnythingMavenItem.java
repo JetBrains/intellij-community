@@ -36,6 +36,7 @@ public class RunAnythingMavenItem extends RunAnythingItemBase {
         if (description != null) {
           SimpleColoredComponent descriptionComponent = new SimpleColoredComponent();
           descriptionComponent.append(" " + shortenTextWithEllipsis(description, 200, 0), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
+          component.add(descriptionComponent, BorderLayout.EAST);
         }
       }
     }

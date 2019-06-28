@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -29,6 +30,7 @@ import java.util.Map;
  * Supposed to be used ONLY by plugin allowing to sort completion using ml-ranking algorithm.
  * Needed to sort items from different sorters together.
  */
+@ApiStatus.Internal
 public abstract class CompletionFinalSorter {
 
 
@@ -36,20 +38,19 @@ public abstract class CompletionFinalSorter {
   public abstract Iterable<LookupElement> sort(@NotNull Iterable<LookupElement> initial, @NotNull CompletionParameters parameters);
 
   /**
-   * For debugging purposes, provide weights by which completion will be sorted  
+   * For debugging purposes, provide weights by which completion will be sorted.
    */
   @NotNull
   public abstract Map<LookupElement, List<Pair<String, Object>>> getRelevanceObjects(@NotNull Iterable<LookupElement> elements);
-  
-  
-  @Deprecated
+
+
+  @ApiStatus.Internal
   public interface Factory {
     @NotNull
     CompletionFinalSorter newSorter();
   }
 
   @NotNull
-  @SuppressWarnings("deprecation")
   public static CompletionFinalSorter newSorter() {
     Factory factory = ServiceManager.getService(Factory.class);
     return factory != null ? factory.newSorter() : EMPTY_SORTER;
@@ -69,8 +70,6 @@ public abstract class CompletionFinalSorter {
       return Collections.emptyMap();
     }
   };
-  
-  
 }
 
 

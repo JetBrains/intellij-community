@@ -38,7 +38,7 @@ public class ColorProgressBar extends JComponent {
   public static final Color RED_TEXT = new JBColor(new Color(0xb81708), new Color(0xdb5c5c));
   public static final Color BLUE = new JBColor(new Color(1, 68, 208), JBColor.blue);
   public static final Color YELLOW = new JBColor(new Color(0xa67a21), new Color(0x91703a));
-  private static final Color SHADOW1 = new JBColor(Gray._190, UIUtil.getBorderColor()) ;
+  private static final Color SHADOW1 = new JBColor(Gray._190, JBColor.border());
   private static final Color SHADOW2 = Gray._105;
 
   private static final int BRICK_WIDTH = 6;
@@ -124,7 +124,7 @@ public class ColorProgressBar extends JComponent {
     Rectangle2D rect = new Rectangle2D.Double(2, 2, size.width - 4, size.height - 4);
     g2.fill(rect);
 
-    g2.setPaint(new JBColor(SHADOW1, UIUtil.getBorderColor()));
+    g2.setPaint(new JBColor(SHADOW1, JBColor.border()));
     rect.setRect(1, 1, size.width - 2, size.height - 2);
     g2.drawRoundRect(1, 1, size.width - 2, size.height - 2, 5, 5);
     g2.setPaint(SHADOW2);

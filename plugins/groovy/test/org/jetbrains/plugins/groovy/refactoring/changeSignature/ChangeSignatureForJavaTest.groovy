@@ -21,7 +21,7 @@ import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.IncorrectOperationException
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NonNls
@@ -32,7 +32,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  * @author Maxim.Medvedev
  */
 @CompileStatic
-class ChangeSignatureForJavaTest extends LightCodeInsightFixtureTestCase {
+class ChangeSignatureForJavaTest extends LightJavaCodeInsightFixtureTestCase {
 
   final String basePath = TestUtils.testDataPath + "/refactoring/changeSignatureForJava/"
 

@@ -18,6 +18,8 @@ package com.siyeh.ig.javadoc;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -27,6 +29,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.MethodUtils;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,10 +69,12 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     final boolean annotationWarning = ((Boolean)infos[0]).booleanValue();
-    if (!annotationWarning) {
-      return null;
+    if (annotationWarning) {
+      return new MissingDeprecatedAnnotationFix();
     }
-    return new MissingDeprecatedAnnotationFix();
+    else {
+      return new MissingDeprecatedTagFix();
+    }
   }
 
   private static class MissingDeprecatedAnnotationFix extends InspectionGadgetsFix {
@@ -94,6 +99,57 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
         return;
       }
       modifierList.addAfter(annotation, null);
+    }
+  }
+
+  private static class MissingDeprecatedTagFix extends InspectionGadgetsFix {
+
+    private final static String DEPRECATED_TAG_NAME = "deprecated";
+
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return InspectionGadgetsBundle.message("missing.add.deprecated.javadoc.tag.quickfix");
+    }
+
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      PsiElement parent = descriptor.getPsiElement().getParent();
+      if (!(parent instanceof PsiJavaDocumentedElement)) {
+        return;
+      }
+      PsiJavaDocumentedElement documentedElement = (PsiJavaDocumentedElement)parent;
+      PsiDocComment docComment = documentedElement.getDocComment();
+      if (docComment != null) {
+        PsiDocTag existingTag = docComment.findTagByName(DEPRECATED_TAG_NAME);
+        if (existingTag != null) {
+          moveCaretAfter(existingTag);
+          return;
+        }
+        PsiDocTag deprecatedTag = JavaPsiFacade.getElementFactory(project).createDocTagFromText("@" + DEPRECATED_TAG_NAME + " TODO: explain");
+        PsiElement addedTag = docComment.add(deprecatedTag);
+        moveCaretAfter(addedTag);
+      }
+      else {
+        PsiDocComment newDocComment = JavaPsiFacade.getElementFactory(project).createDocCommentFromText(
+          StringUtil.join("/**\n", " * ", "@" + DEPRECATED_TAG_NAME + " TODO: explain", "\n */")
+        );
+        PsiElement addedComment = documentedElement.addBefore(newDocComment, documentedElement.getFirstChild());
+        if (addedComment instanceof PsiDocComment) {
+          PsiDocTag addedTag = ((PsiDocComment)addedComment).findTagByName(DEPRECATED_TAG_NAME);
+          if (addedTag != null) {
+            moveCaretAfter(addedTag);
+          }
+        }
+      }
+    }
+
+    private static void moveCaretAfter(PsiElement newCaretPosition) {
+      PsiElement sibling = newCaretPosition.getNextSibling();
+      if (sibling instanceof Navigatable) {
+        ((Navigatable)sibling).navigate(true);
+      }
     }
   }
 

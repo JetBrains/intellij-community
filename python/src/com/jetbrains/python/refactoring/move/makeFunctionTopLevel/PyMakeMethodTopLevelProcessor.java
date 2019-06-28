@@ -229,7 +229,7 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
       final PsiElement anchor = ContainerUtil.getFirstItem(reads);
       //noinspection ConstantConditions
       if (!PyRefactoringUtil.isValidNewName(name, anchor)) {
-        final String indexedName = PyRefactoringUtil.appendNumberUntilValid(name, anchor);
+        final String indexedName = PyRefactoringUtil.appendNumberUntilValid(name, anchor, PyRefactoringUtil::isValidNewName);
         myAttributeToParameterName.put(name, indexedName);
       }
       else {

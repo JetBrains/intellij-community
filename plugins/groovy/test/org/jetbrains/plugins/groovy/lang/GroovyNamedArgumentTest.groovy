@@ -18,7 +18,7 @@ package org.jetbrains.plugins.groovy.lang
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiType
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 /**
  * @author Sergey Evdokimov
  */
-class GroovyNamedArgumentTest extends LightCodeInsightFixtureTestCase {
+class GroovyNamedArgumentTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testNamedArgumentsFromJavaClass() {
     myFixture.addClass("""

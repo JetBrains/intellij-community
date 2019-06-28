@@ -3,14 +3,14 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class SwitchStatementWithTooManyBranchesInspectionTest extends LightInspectionTestCase {
+public class SwitchStatementWithTooManyBranchesInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
     doMemberTest("    public void foo(int x) {\n" +

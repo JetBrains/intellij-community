@@ -5,6 +5,7 @@ import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,14 +67,12 @@ public interface IdeaPluginDescriptor extends PluginDescriptor {
 
   String getUrl();
 
-  @NotNull
-  HelpSetPath[] getHelpSets();
-
   String getVendorLogoPath();
 
   boolean getUseIdeaClassLoader();
 
   /** @deprecated doesn't make sense for installed plugins; use PluginNode#getDownloads (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   String getDownloads();
 

@@ -17,10 +17,10 @@ package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.UsedColors;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class LightRainbowHighlightingTest extends LightCodeInsightFixtureTestCase {
+public class LightRainbowHighlightingTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testRainbowOff() {
     checkRainbow(

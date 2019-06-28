@@ -2,19 +2,22 @@
 package org.jetbrains.idea.maven.indices;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
-
-import java.util.List;
+import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
 
 public class MavenClassSearchResult extends MavenArtifactSearchResult {
+  /**
+   * @deprecated use {@link #getClassName()}
+   */
   @Deprecated
-  /* @deprecated use getClassName */
   public String className;
+
+  /**
+   * @deprecated use {@link #getPackageName()}
+   */
   @Deprecated
-  /* @deprecated  use getPackageName */
   public String packageName;
 
-  public MavenClassSearchResult(@NotNull List<MavenDependencyCompletionItem> results, String className, String packageName) {
+  public MavenClassSearchResult(@NotNull MavenRepositoryArtifactInfo results, String className, String packageName) {
     super(results);
     this.className = className;
     this.packageName = packageName;

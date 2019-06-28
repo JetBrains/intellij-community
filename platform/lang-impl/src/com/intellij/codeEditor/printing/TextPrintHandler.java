@@ -34,6 +34,7 @@ import java.awt.print.PrinterJob;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class TextPrintHandler extends PrintActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeEditor.printing.PrintManager");
@@ -108,7 +109,7 @@ public class TextPrintHandler extends PrintActionHandler {
     else if (printSettings.getPrintScope() == PrintSettings.PRINT_DIRECTORY) {
       List<PsiFile> filesList = new ArrayList<>();
       boolean isRecursive = printSettings.isIncludeSubdirectories();
-      addToPsiFileList(psiDirectory, filesList, isRecursive);
+      addToPsiFileList(Objects.requireNonNull(psiDirectory), filesList, isRecursive);
       painter = new MultiFilePainter(filesList, printSettings.EVEN_NUMBER_OF_PAGES);
     }
     else {
@@ -175,11 +176,7 @@ public class TextPrintHandler extends PrintActionHandler {
 
   private static String generateFileName(DataContext dataContext) {
     RunProfile runProfile = dataContext.getData(LangDataKeys.RUN_PROFILE);
-    if (runProfile != null) {
-      String name = runProfile.getName();
-      if (name != null) return name;
-    }
-    return "unknown";
+    return runProfile == null ? "unknown" : runProfile.getName();
   }
 
   private static void addToPsiFileList(PsiDirectory psiDirectory, List<? super PsiFile> filesList, boolean isRecursive) {
@@ -248,10 +245,10 @@ public class TextPrintHandler extends PrintActionHandler {
     if (virtualFile == null) return null;
     DocumentEx doc = (DocumentEx)PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
     if (doc == null) return null;
-    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(virtualFile, EditorColorsUtil.getColorSchemeForPrinting(), psiFile.getProject());
-    highlighter.setText(doc.getCharsSequence());
+    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(virtualFile, EditorColorsUtil.getColorSchemeForPrinting(),
+                                                                         psiFile.getProject());
     return new TextPainter(doc, highlighter, virtualFile.getPresentableUrl(), virtualFile.getPresentableName(),
-                           psiFile, psiFile.getFileType());
+                           psiFile.getFileType(), psiFile.getProject(), CodeStyle.getSettings(psiFile));
   }
 
   private static TextPainter initTextPainter(@NotNull final DocumentEx doc, final @NotNull Project project,
@@ -267,7 +264,6 @@ public class TextPrintHandler extends PrintActionHandler {
 
   private static TextPainter doInitTextPainter(@NotNull final DocumentEx doc, @NotNull Project project, @NotNull String fileName) {
     EditorHighlighter highlighter = HighlighterFactory.createHighlighter(EditorColorsUtil.getColorSchemeForPrinting(), "unknown", project);
-    highlighter.setText(doc.getCharsSequence());
     return new TextPainter(doc, highlighter, fileName, fileName, FileTypes.PLAIN_TEXT, null, CodeStyle.getSettings(project));
   }
 }

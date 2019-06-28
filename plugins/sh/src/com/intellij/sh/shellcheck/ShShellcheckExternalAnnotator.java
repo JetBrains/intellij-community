@@ -9,6 +9,7 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
@@ -42,6 +43,8 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<PsiFile, Sh
   private static final List<String> KNOWN_SHELLS = asList("bash", "dash", "ksh", "sh");
   private static final String DEFAULT_SHELL = "bash";
 
+  private final static Logger LOG = Logger.getInstance(ShShellcheckExternalAnnotator.class);
+
   @Override
   public String getPairedBatchInspectionShortName() {
     return ShShellcheckInspection.SHORT_NAME;
@@ -63,7 +66,7 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<PsiFile, Sh
   @Override
   public ShellcheckResponse doAnnotate(@NotNull PsiFile file) {
     String shellcheckExecutable = ShSettings.getShellcheckPath();
-    if (!ShShellcheckUtil.isValidPath(shellcheckExecutable)) return null;
+    if (!ShShellcheckUtil.isExecutionValidPath(shellcheckExecutable)) return null;
 
     String fileContent = file.getText();
     try {
@@ -83,7 +86,7 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<PsiFile, Sh
       return null;
     }
     catch (IOException | ExecutionException | InterruptedException e) {
-      // todo: add notification
+      LOG.error(e);
       return null;
     }
   }
@@ -122,7 +125,7 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<PsiFile, Sh
   }
 
   @NotNull
-  private HighlightSeverity severity(@Nullable String level) {
+  private static HighlightSeverity severity(@Nullable String level) {
     if ("error".equals(level)) {
       return HighlightSeverity.ERROR;
     }
@@ -133,7 +136,7 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<PsiFile, Sh
   }
 
   @NotNull
-  private List<String> getShellcheckExecutionParams(@NotNull PsiFile file) {
+  private static List<String> getShellcheckExecutionParams(@NotNull PsiFile file) {
     String interpreter = getInterpreter(file);
     List<String> params = ContainerUtil.newSmartList();
     ShShellcheckInspection inspection = ShShellcheckInspection.findShShellcheckInspection(file);

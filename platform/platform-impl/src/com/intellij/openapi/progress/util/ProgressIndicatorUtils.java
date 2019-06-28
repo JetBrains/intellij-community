@@ -49,7 +49,7 @@ public class ProgressIndicatorUtils {
   }
 
   public static void scheduleWithWriteActionPriority(@NotNull ReadTask task) {
-    scheduleWithWriteActionPriority(new ProgressIndicatorBase(), task);
+    scheduleWithWriteActionPriority(new ProgressIndicatorBase(false, false), task);
   }
 
   @NotNull
@@ -59,7 +59,7 @@ public class ProgressIndicatorUtils {
 
   @NotNull
   public static CompletableFuture<?> scheduleWithWriteActionPriority(@NotNull Executor executor, @NotNull ReadTask task) {
-    return scheduleWithWriteActionPriority(new ProgressIndicatorBase(), executor, task);
+    return scheduleWithWriteActionPriority(new ProgressIndicatorBase(false, false), executor, task);
   }
 
   /**
@@ -70,7 +70,7 @@ public class ProgressIndicatorUtils {
                                                                @Nullable ProgressIndicator progressIndicator) {
     final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
     runWithWriteActionPriority(() -> result.set(ApplicationManagerEx.getApplicationEx().tryRunReadAction(action)),
-                               progressIndicator == null ? new ProgressIndicatorBase() : progressIndicator);
+                               progressIndicator == null ? new ProgressIndicatorBase(false, false) : progressIndicator);
     return result.get();
   }
 
@@ -254,7 +254,7 @@ public class ProgressIndicatorUtils {
   @Nullable
   public static <T> T withTimeout(long timeoutMs, @NotNull Computable<T> computable) {
     ProgressManager.checkCanceled();
-    ProgressIndicatorBase progress = new ProgressIndicatorBase();
+    ProgressIndicatorBase progress = new ProgressIndicatorBase(false, false);
     ScheduledFuture<?> cancelProgress = AppExecutorUtil.getAppScheduledExecutorService().schedule(progress::cancel, timeoutMs, TimeUnit.MILLISECONDS);
     try {
       return ProgressManager.getInstance().runProcess(computable, progress);

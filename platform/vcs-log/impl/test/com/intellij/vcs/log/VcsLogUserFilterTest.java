@@ -5,7 +5,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.impl.HashImpl;
@@ -55,7 +55,7 @@ public abstract class VcsLogUserFilterTest {
       names.add(name + "@company.com");
     }
 
-    MultiMap<VcsUser, String> commits = generateHistory(ArrayUtil.toStringArray(names));
+    MultiMap<VcsUser, String> commits = generateHistory(ArrayUtilRt.toStringArray(names));
     List<VcsCommitMetadata> metadata = generateMetadata(commits);
 
     StringBuilder builder = new StringBuilder();
@@ -93,7 +93,7 @@ public abstract class VcsLogUserFilterTest {
     names.add("User Userovich Userov");
     names.add("UserUserovich@company.com");
 
-    MultiMap<VcsUser, String> commits = generateHistory(ArrayUtil.toStringArray(names));
+    MultiMap<VcsUser, String> commits = generateHistory(ArrayUtilRt.toStringArray(names));
     List<VcsCommitMetadata> metadata = generateMetadata(commits);
 
     List<String> synonymCommits = new ArrayList<>();

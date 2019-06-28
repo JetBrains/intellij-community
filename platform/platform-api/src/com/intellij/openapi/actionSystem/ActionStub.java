@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,12 +28,13 @@ import java.util.function.Supplier;
  *
  * @author Vladimir Kondratyev
  */
-public class ActionStub extends AnAction{
-  private static final Logger LOG=Logger.getInstance("#com.intellij.openapi.actionSystem.ActionStub");
+@SuppressWarnings("ComponentNotRegistered")
+public class ActionStub extends AnAction implements ActionStubBase {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.ActionStub");
 
   private final String myClassName;
   private final String myProjectType;
-  private final Supplier<? extends Presentation> myTemplatePresentation;
+  private final Supplier<Presentation> myTemplatePresentation;
   private final String myId;
   private final ClassLoader myLoader;
   private final PluginId myPluginId;
@@ -44,13 +45,13 @@ public class ActionStub extends AnAction{
                     ClassLoader loader,
                     PluginId pluginId,
                     String iconPath, String projectType,
-                    @NotNull Supplier<? extends Presentation> templatePresentation) {
+                    @NotNull Supplier<Presentation> templatePresentation) {
     myLoader = loader;
-    myClassName=actionClass;
+    myClassName = actionClass;
     myProjectType = projectType;
     myTemplatePresentation = templatePresentation;
     LOG.assertTrue(!id.isEmpty());
-    myId=id;
+    myId = id;
     myPluginId = pluginId;
     myIconPath = iconPath;
   }
@@ -62,12 +63,13 @@ public class ActionStub extends AnAction{
   }
 
   @NotNull
-  public String getClassName(){
+  public String getClassName() {
     return myClassName;
   }
 
+  @Override
   @NotNull
-  public String getId(){
+  public String getId() {
     return myId;
   }
 
@@ -75,27 +77,30 @@ public class ActionStub extends AnAction{
     return myLoader;
   }
 
+  @Override
   public PluginId getPluginId() {
     return myPluginId;
   }
 
+  @Override
   public String getIconPath() {
     return myIconPath;
   }
 
   @Override
-  public void actionPerformed(@NotNull AnActionEvent e){
+  public void actionPerformed(@NotNull AnActionEvent e) {
     throw new UnsupportedOperationException();
   }
 
   /**
    * Copies template presentation and shortcuts set to {@code targetAction}.
-   *
-   * @param targetAction cannot be {@code null}
    */
   public final void initAction(@NotNull AnAction targetAction) {
-    Presentation sourcePresentation = getTemplatePresentation();
-    Presentation targetPresentation = targetAction.getTemplatePresentation();
+    copyTemplatePresentation(this.getTemplatePresentation(), targetAction.getTemplatePresentation());
+    targetAction.setShortcutSet(getShortcutSet());
+  }
+
+  public static void copyTemplatePresentation(Presentation sourcePresentation, Presentation targetPresentation) {
     if (targetPresentation.getIcon() == null && sourcePresentation.getIcon() != null) {
       targetPresentation.setIcon(sourcePresentation.getIcon());
     }
@@ -105,8 +110,6 @@ public class ActionStub extends AnAction{
     if (targetPresentation.getDescription() == null && sourcePresentation.getDescription() != null) {
       targetPresentation.setDescription(sourcePresentation.getDescription());
     }
-    targetAction.setShortcutSet(getShortcutSet());
-    targetAction.markAsGlobal();
   }
 
   public String getProjectType() {

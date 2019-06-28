@@ -15,7 +15,7 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +24,7 @@ import java.util.Collection;
 /**
  * @author dsl
  */
-public class IntroduceVariableTest extends LightCodeInsightTestCase {
+public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {
@@ -190,6 +190,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("mi5", false, false, false, "int"));
   }
 
+  public void testSkipErroneousParen() {
+    doTest(new MockIntroduceVariableHandler("x", false, false, false, CommonClassNames.JAVA_LANG_STRING));
+  }
+
   public void testInsideIf() {
     doTest(new MockIntroduceVariableHandler("s1", false, false, false, CommonClassNames.JAVA_LANG_STRING));
   }
@@ -210,6 +214,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, "Node"));
   }
   
+  public void testWhileConditionIncomplete() {
+    doTest(new MockIntroduceVariableHandler("temp", true, false, false, "boolean"));
+  }
+
   public void testField() {
     doTest(new MockIntroduceVariableHandler("temp", false, false, false, CommonClassNames.JAVA_LANG_STRING));
   }
@@ -243,6 +251,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
       return;
     }
     fail("Should not be able to perform refactoring");
+  }
+  
+  public void testTernaryBothBranches() {
+    doTest(new MockIntroduceVariableHandler("temp", true, false, false, "int"));
   }
 
   public void testIfConditionAndChain() {
@@ -358,6 +370,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
 
   public void testSubExpressionFromIntellijidearulezzz() {
     doTest(new MockIntroduceVariableHandler("str", false, false, false, CommonClassNames.JAVA_LANG_STRING));
+  }
+
+  public void testSubExpressionFromPrimitiveWithConversion() {
+    doTest(new MockIntroduceVariableHandler("i", false, false, false, "int"));
   }
 
   public void testSubPrimitiveLiteral() {

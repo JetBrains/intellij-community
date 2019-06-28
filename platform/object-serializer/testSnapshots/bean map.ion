@@ -1,29 +1,24 @@
 {
   '@id':0,
-  map:[
-  ],
+  map:{
+  },
   beanMap:[
     {
       '@id':1,
-      map:[
-        A,
-        VB,
-        Z,
-        '123',
-        'a-A',
-        '123',
-        foo,
-        bar
-      ],
+      map:{
+        A:VB,
+        Z:'123',
+        'a-A':'123',
+        foo:bar
+      },
       beanMap:[
       ]
     },
     {
       '@id':2,
-      map:[
-        'some key',
-        'some value'
-      ],
+      map:{
+        'some key':'some value'
+      },
       beanMap:[
       ]
     }

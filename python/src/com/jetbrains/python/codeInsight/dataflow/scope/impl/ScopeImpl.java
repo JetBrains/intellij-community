@@ -75,6 +75,15 @@ public class ScopeImpl implements Scope {
   }
 
   @Override
+  public boolean hasGlobals() {
+    if (myGlobals == null || myNestedScopes == null) {
+      collectDeclarations();
+    }
+    if (!myGlobals.isEmpty()) return true;
+    return myNestedScopes.stream().anyMatch(scope -> scope.hasGlobals());
+  }
+
+  @Override
   public boolean isGlobal(final String name) {
     if (myGlobals == null || myNestedScopes == null) {
       collectDeclarations();
@@ -91,11 +100,28 @@ public class ScopeImpl implements Scope {
   }
 
   @Override
+  public boolean hasNonLocals() {
+    if (myNonlocals == null || myNestedScopes == null) {
+      collectDeclarations();
+    }
+    if (!myNonlocals.isEmpty()) return true;
+    return myNestedScopes.stream().anyMatch(scope -> scope.hasNonLocals());
+  }
+
+  @Override
   public boolean isNonlocal(final String name) {
     if (myNonlocals == null || myNestedScopes == null) {
       collectDeclarations();
     }
     return myNonlocals.contains(name);
+  }
+
+  @Override
+  public boolean hasNestedScopes() {
+    if (myNestedScopes == null) {
+      collectDeclarations();
+    }
+    return !myNestedScopes.isEmpty();
   }
 
   private boolean isAugAssignment(final String name) {
@@ -110,7 +136,7 @@ public class ScopeImpl implements Scope {
     if (myNamedElements == null || myImportedNameDefiners == null) {
       collectDeclarations();
     }
-    if (isNonlocal(name)) {
+    if (isNonlocal(name) || isGlobal(name)) {
       return false;
     }
     if (!getNamedElements(name, true).isEmpty()) {

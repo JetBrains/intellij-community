@@ -62,8 +62,9 @@ public class SearchUtil {
         Set<OptionDescription> configurableOptions = new TreeSet<>();
         options.put(searchableConfigurable, configurableOptions);
 
-        for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensions())
+        for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensions()) {
           extension.beforeConfigurable(searchableConfigurable, configurableOptions);
+        }
 
         if (configurable instanceof MasterDetails) {
           final MasterDetails md = (MasterDetails)configurable;
@@ -94,8 +95,9 @@ public class SearchUtil {
           }
         }
 
-        for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensions())
+        for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensions()) {
           extension.afterConfigurable(searchableConfigurable, configurableOptions);
+        }
       }
     }
   }
@@ -120,19 +122,23 @@ public class SearchUtil {
 
   private static void processComponent(SearchableConfigurable configurable, Set<? super OptionDescription> configurableOptions, JComponent component) {
     if (component != null) {
-      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensions())
+      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensions()) {
         extension.beforeComponent(configurable, component, configurableOptions);
+      }
 
       processUILabel(configurable.getDisplayName(), configurableOptions, null);
       processComponent(component, configurableOptions, null);
 
-      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensions())
+      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensions()) {
         extension.afterComponent(configurable, component, configurableOptions);
+      }
     }
   }
 
   private static void processComponent(JComponent component, Set<? super OptionDescription> configurableOptions, String path) {
-    if (component instanceof SkipSelfSearchComponent) return;
+    if (component instanceof SkipSelfSearchComponent) {
+      return;
+    }
     final Border border = component.getBorder();
     if (border instanceof TitledBorder) {
       final TitledBorder titledBorder = (TitledBorder)border;
@@ -209,7 +215,9 @@ public class SearchUtil {
   @NotNull
   public static List<String> getItemsFromComboBox(@NotNull JComboBox comboBox) {
     ListCellRenderer renderer = comboBox.getRenderer();
-    if (renderer == null) renderer = new DefaultListCellRenderer();
+    if (renderer == null) {
+      renderer = new DefaultListCellRenderer();
+    }
 
     JList jList = new BasicComboPopup(comboBox).getList();
 
@@ -221,7 +229,9 @@ public class SearchUtil {
       //noinspection unchecked
       Component labelComponent = renderer.getListCellRendererComponent(jList, value, i, false, false);
       String label = getLabelFromComponent(labelComponent);
-      if (label != null) result.add(label);
+      if (label != null) {
+        result.add(label);
+      }
     }
 
     return result;
@@ -250,7 +260,9 @@ public class SearchUtil {
       if (!pathWords.isEmpty()) {
         final Set<String> titleWords = searchableOptionsRegistrar.getProcessedWords(title);
         pathWords.removeAll(titleWords);
-        if (pathWords.isEmpty()) return i;
+        if (pathWords.isEmpty()) {
+          return i;
+        }
       }
       else if (tabIdx.equalsIgnoreCase(title)) { //e.g. only stop words
         return i;
@@ -266,7 +278,9 @@ public class SearchUtil {
       final String title = tabbedPane.getTitleAt(i);
       final Set<String> titleWords = searchableOptionsRegistrar.getProcessedWords(title);
       pathWords.removeAll(titleWords);
-      if (pathWords.isEmpty()) return i;
+      if (pathWords.isEmpty()) {
+        return i;
+      }
     }
     return -1;
   }
@@ -277,7 +291,9 @@ public class SearchUtil {
                                                 boolean force) {
     rootComponent.putClientProperty(HIGHLIGHT_WITH_BORDER, null);
 
-    if (option == null || option.trim().length() == 0) return false;
+    if (option == null || option.trim().length() == 0) {
+      return false;
+    }
     String label = getLabelFromComponent(rootComponent);
     if (label != null) {
       if (isComponentHighlighted(label, option, force, configurable)) {
@@ -338,7 +354,9 @@ public class SearchUtil {
   }
 
   public static boolean isComponentHighlighted(String text, String option, boolean force, final SearchableConfigurable configurable) {
-    if (text == null || option == null || option.length() == 0) return false;
+    if (text == null || option == null || option.length() == 0) {
+      return false;
+    }
     final SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
     final Set<String> words = searchableOptionsRegistrar.getProcessedWords(option);
     final Set<String> options = configurable != null ? searchableOptionsRegistrar.replaceSynonyms(words, configurable) : words;
@@ -392,7 +410,9 @@ public class SearchUtil {
       }
     }
     for (String stripped : quoted) {
-      if (registrar.isStopWord(stripped)) continue;
+      if (registrar.isStopWord(stripped)) {
+        continue;
+      }
       textToMarkup = markup(textToMarkup, insideHtmlTagPattern, stripped);
     }
     return head + textToMarkup + foot;
@@ -449,7 +469,9 @@ public class SearchUtil {
                                      final Color foreground,
                                      final Color background,
                                      final SimpleColoredComponent textRenderer) {
-    if (text == null) return;
+    if (text == null) {
+      return;
+    }
     if (filter == null || filter.length() == 0) {
       textRenderer.append(text, new SimpleTextAttributes(background, foreground, JBColor.RED, style));
     }
@@ -490,7 +512,9 @@ public class SearchUtil {
       for (String word : selectedWords) {
         text = text.substring(idx);
         final String before = text.substring(0, text.indexOf(word));
-        if (before.length() > 0) textRenderer.append(before, new SimpleTextAttributes(background, foreground, null, style));
+        if (before.length() > 0) {
+          textRenderer.append(before, new SimpleTextAttributes(background, foreground, null, style));
+        }
         idx = text.indexOf(word) + word.length();
         textRenderer.append(text.substring(idx - word.length(), idx), new SimpleTextAttributes(background,
                                                                                                foreground, null,
@@ -498,7 +522,9 @@ public class SearchUtil {
                                                                                                SimpleTextAttributes.STYLE_SEARCH_MATCH));
       }
       final String after = text.substring(idx);
-      if (after.length() > 0) textRenderer.append(after, new SimpleTextAttributes(background, foreground, null, style));
+      if (after.length() > 0) {
+        textRenderer.append(after, new SimpleTextAttributes(background, foreground, null, style));
+      }
     }
   }
 

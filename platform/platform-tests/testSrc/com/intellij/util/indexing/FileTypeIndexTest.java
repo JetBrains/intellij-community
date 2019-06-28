@@ -6,13 +6,13 @@ import com.intellij.openapi.fileTypes.ex.FakeFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.FileTypeIndexImpl;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
  */
-public class FileTypeIndexTest extends LightPlatformCodeInsightFixtureTestCase {
+public class FileTypeIndexTest extends BasePlatformTestCase {
 
   public void testAddFileType() {
     addAndRemoveFileType();

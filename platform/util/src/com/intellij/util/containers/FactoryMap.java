@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +37,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   private Map<K, V> myMap;
 
   /**
-   * Use {@link #create(Function)} instead
+   * @deprecated Use {@link #create(Function)} instead
    */
   @Deprecated
   public FactoryMap() {
@@ -169,8 +170,9 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   }
 
   /**
-   * Use {@link #create(Function)} instead. TODO to be removed in IDEA 2018
+   * @deprecated Use {@link #create(Function)} instead. TODO to be removed in IDEA 2018
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   @Deprecated
   @NotNull
   public static <K, V> FactoryMap<K, V> createMap(@NotNull final Function<? super K, ? extends V> computeValue) {
@@ -179,7 +181,6 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
 
   @NotNull
   public static <K, V> Map<K, V> create(@NotNull final Function<? super K, ? extends V> computeValue) {
-    //noinspection deprecation
     return new FactoryMap<K, V>() {
       @Nullable
       @Override
@@ -191,7 +192,6 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
 
   @NotNull
   public static <K, V> Map<K, V> createMap(@NotNull final Function<? super K, ? extends V> computeValue, @NotNull final Supplier<? extends Map<K, V>> mapCreator) {
-    //noinspection deprecation
     return new FactoryMap<K, V>() {
       @Nullable
       @Override

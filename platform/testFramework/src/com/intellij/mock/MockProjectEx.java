@@ -14,8 +14,4 @@ public class MockProjectEx  extends MockProject implements ProjectEx {
   @Override
   public void setProjectName(@NotNull String name) {
   }
-
-  @Override
-  public void init() {
-  }
 }

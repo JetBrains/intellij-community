@@ -19,9 +19,9 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.unusedReturnValue.UnusedReturnValue;
 import com.intellij.psi.PsiModifier;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.JavaInspectionTestCase;
 
-public class UnusedReturnValueTest extends InspectionTestCase {
+public class UnusedReturnValueTest extends JavaInspectionTestCase {
   private UnusedReturnValue myTool = new UnusedReturnValue();
 
   @Override

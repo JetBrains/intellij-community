@@ -3,8 +3,12 @@ package com.intellij.xdebugger.impl.actions.handlers;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.highlighting.HighlightManagerImpl;
+import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.execution.impl.EditorHyperlinkSupport;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
@@ -26,6 +30,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListActions;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.ListPopupImpl;
@@ -34,6 +39,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
@@ -62,6 +68,7 @@ import java.util.List;
 public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandler {
   private static final Ref<Boolean> SHOW_AD = new Ref<>(true);
   private static final Logger LOG = Logger.getInstance(XDebuggerSmartStepIntoHandler.class);
+  private static final String COUNTER_PROPERTY = "debugger.smart.chooser.counter";
 
   @Override
   protected boolean isEnabled(@NotNull XDebugSession session, DataContext dataContext) {
@@ -216,6 +223,8 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     session.updateExecutionPosition();
     IdeFocusManager.getGlobalInstance().requestFocus(editor.getContentComponent(), true);
 
+    showInfoHint(editor, data);
+
     session.addSessionListener(new XDebugSessionListener() {
       void onAnyEvent() {
         session.removeSessionListener(this);
@@ -253,6 +262,20 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
       }
     });
  }
+
+  private static <V extends XSmartStepIntoVariant> void showInfoHint(Editor editor, SmartStepData<V> data) {
+    PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
+    int counter = propertiesComponent.getInt(COUNTER_PROPERTY, 0);
+    if (counter < 3) {
+      LightweightHint hint = new LightweightHint(HintUtil.createInformationLabel(XDebuggerBundle.message("message.smart.step")));
+      JComponent component = HintManagerImpl.getExternalComponent(editor);
+      Point convertedPoint = SwingUtilities.convertPoint(editor.getContentComponent(), data.myCurrentVariant.myStartPoint, component);
+      HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, convertedPoint, HintManager.HIDE_BY_TEXT_CHANGE |
+                                                                                     HintManager.HIDE_BY_SCROLLING,
+                                                       0, false, HintManager.ABOVE);
+      propertiesComponent.setValue(COUNTER_PROPERTY, counter + 1, 0);
+    }
+  }
 
   static final Key<SmartStepData> SMART_STEP_INPLACE_DATA = Key.create("SMART_STEP_INPLACE_DATA");
 

@@ -378,8 +378,13 @@ public final class PsiUtil extends PsiUtilCore {
   private static void collectSwitchResultExpressions(@NotNull List<? super PsiExpression> result, @NotNull PsiElement container) {
     List<PsiBreakStatement> breaks = new ArrayList<>();
     addStatements(breaks, container, PsiBreakStatement.class, element -> element instanceof PsiSwitchBlock);
-    for (PsiBreakStatement aBreak : breaks) {
-      ContainerUtil.addIfNotNull(result, aBreak.getExpression());
+    for (PsiBreakStatement statement : breaks) {
+      ContainerUtil.addIfNotNull(result, statement.getExpression());
+    }
+    List<PsiYieldStatement> yields = new ArrayList<>();
+    addStatements(yields, container, PsiYieldStatement.class, element -> element instanceof PsiSwitchExpression);
+    for (PsiYieldStatement statement : yields) {
+      ContainerUtil.addIfNotNull(result, statement.getExpression());
     }
   }
 

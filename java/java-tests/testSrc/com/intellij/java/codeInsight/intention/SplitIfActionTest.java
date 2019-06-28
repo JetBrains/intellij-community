@@ -20,12 +20,12 @@ import com.intellij.codeInsight.intention.impl.SplitIfAction;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 
 /**
  * @author mike
  */
-public class SplitIfActionTest extends LightCodeInsightTestCase {
+public class SplitIfActionTest extends LightJavaCodeInsightTestCase {
   public void test1() {
     CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE).ELSE_ON_NEW_LINE = true;
     doTest();

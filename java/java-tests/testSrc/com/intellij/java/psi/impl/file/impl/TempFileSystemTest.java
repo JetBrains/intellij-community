@@ -23,9 +23,9 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
-public class TempFileSystemTest extends LightPlatformCodeInsightFixtureTestCase {
+public class TempFileSystemTest extends BasePlatformTestCase {
   public void testMove() {
     ProjectRootManager rootManager = ProjectRootManager.getInstance(getProject());
     VirtualFile sourceRoot = rootManager.getContentSourceRoots()[0];

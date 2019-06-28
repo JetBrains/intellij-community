@@ -63,8 +63,8 @@ public class MarkdownUtilTest {
     MarkdownUtil.replaceCodeBlock(markdown);
     Assert.assertEquals(Arrays.asList(" Create the app:",
                                       "",
-                                      "<pre><code>$ npm install -g express",
-                                      "$ express /tmp/foo && cd /tmp/foo</code></pre>"), markdown);
+                                      "<pre><code>    $ npm install -g express",
+                                      "    $ express /tmp/foo && cd /tmp/foo</code></pre>"), markdown);
   }
 
   @Test
@@ -84,13 +84,13 @@ public class MarkdownUtilTest {
     Assert.assertEquals(
       Arrays.asList(
         "   text",
-        "<pre><code>code block</code></pre>",
+        "<pre><code>    code block</code></pre>",
         "<pre><code>",
         " code block too",
         "</code></pre>",
         "simple text",
-        "<pre><code>$ code",
-        "$ code continues</code></pre>",
+        "<pre><code>    $ code",
+        "\t$ code continues</code></pre>",
         "code done"
       ),
       markdown

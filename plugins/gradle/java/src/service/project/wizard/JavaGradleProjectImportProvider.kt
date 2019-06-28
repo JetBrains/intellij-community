@@ -5,10 +5,14 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalProjectImportProvider
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.plugins.gradle.service.project.open.canImportProjectFrom
+import org.jetbrains.plugins.gradle.service.project.open.canSetupGradleProjectFrom
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 
+/**
+ * Do not use this import provider directly.
+ * @see JavaGradleProjectImportBuilder
+ */
 class JavaGradleProjectImportProvider : AbstractExternalProjectImportProvider(JavaGradleProjectImportBuilder(), SYSTEM_ID) {
 
   override fun createSteps(context: WizardContext): Array<ModuleWizardStep> {
@@ -17,7 +21,7 @@ class JavaGradleProjectImportProvider : AbstractExternalProjectImportProvider(Ja
 
   override fun getPathToBeImported(file: VirtualFile): String = getDefaultPath(file)
 
-  override fun canImportFromFile(file: VirtualFile) = canImportProjectFrom(file)
+  override fun canImportFromFile(file: VirtualFile) = canSetupGradleProjectFrom(file)
 
   override fun getFileSample() = "<b>Gradle</b> build script (${GradleConstants.BUILD_FILE_EXTENSIONS.joinToString { "*.$it" }})"
 }

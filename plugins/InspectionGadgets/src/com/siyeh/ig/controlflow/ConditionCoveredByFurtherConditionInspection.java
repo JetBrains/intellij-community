@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -16,6 +16,7 @@ import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ThreeState;
 import com.siyeh.ig.fixes.RemoveRedundantPolyadicOperandFix;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
@@ -102,14 +103,14 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
       assert !operands.isEmpty();
       if (operands.size() == 1) {
         Object value = DfaUtil.computeValue(operands.get(0));
-        return Boolean.valueOf(and).equals(value) ? new int[]{0} : ArrayUtil.EMPTY_INT_ARRAY;
+        return Boolean.valueOf(and).equals(value) ? new int[]{0} : ArrayUtilRt.EMPTY_INT_ARRAY;
       }
       String text = StreamEx.ofReversed(operands)
         .map(expression -> ParenthesesUtils.getText(expression, PsiPrecedenceUtil.AND_PRECEDENCE)).joining(and ? " && " : " || ");
       PsiExpression expression = JavaPsiFacade.getElementFactory(context.getProject()).createExpressionFromText(text, context);
       if (!(expression instanceof PsiPolyadicExpression)) {
         LOG.error("Unexpected expression type: " + expression.getClass().getName(), new Attachment("reversed.txt", text));
-        return ArrayUtil.EMPTY_INT_ARRAY;
+        return ArrayUtilRt.EMPTY_INT_ARRAY;
       }
       PsiPolyadicExpression expressionToAnalyze = (PsiPolyadicExpression)expression;
       List<PsiExpression> reversedOperands = Arrays.asList(expressionToAnalyze.getOperands());
@@ -121,7 +122,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
         .toArray();
     }
   }
-  
+
   @NotNull
   private static Map<PsiExpression, ThreeState> computeOperandValues(PsiPolyadicExpression expressionToAnalyze) {
     DataFlowRunner runner = new StandardDataFlowRunner(false, expressionToAnalyze);

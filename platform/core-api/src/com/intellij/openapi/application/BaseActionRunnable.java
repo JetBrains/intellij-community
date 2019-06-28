@@ -17,6 +17,7 @@ package com.intellij.openapi.application;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class BaseActionRunnable<T> {
@@ -51,6 +52,7 @@ public abstract class BaseActionRunnable<T> {
 
   /** @deprecated use {@link ApplicationManager#getApplication()} (to be removed in IDEA 2018) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   protected Application getApplication() {
     return ApplicationManager.getApplication();
   }

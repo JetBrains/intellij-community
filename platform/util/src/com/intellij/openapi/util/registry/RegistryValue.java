@@ -4,7 +4,7 @@ package com.intellij.openapi.util.registry;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ColorHexUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,7 +92,7 @@ public class RegistryValue {
   Color asColor(Color defaultValue) {
     final String s = get(myKey, null, true);
     if (s != null) {
-      Color color = ColorUtil.fromHex(s, null);
+      Color color = ColorHexUtil.fromHex(s, null);
       if (color != null && myKey.contains("color")) {
         return color;
       }

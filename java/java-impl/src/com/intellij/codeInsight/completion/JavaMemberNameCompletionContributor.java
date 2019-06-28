@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
@@ -22,7 +22,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.introduceField.InplaceIntroduceFieldPopup;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -105,7 +105,9 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
       }
     }
 
-    final PsiType type = var.getType();
+    PsiType type = var.getType();
+    if (type instanceof PsiClassType && ((PsiClassType)type).resolve() == null) return;
+    
     SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(variableKind, propertyName, null, type, StringUtil.isEmpty(matcher.getPrefix()));
     suggestedNameInfo = codeStyleManager.suggestUniqueVariableName(suggestedNameInfo, var, false);
     final String[] suggestedNames = suggestedNameInfo.names;
@@ -207,7 +209,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
         newSuggestions.add(suggestion);
       }
     }
-    return ArrayUtil.toStringArray(newSuggestions);
+    return ArrayUtilRt.toStringArray(newSuggestions);
   }
 
   private static int getOverlap(final String propertyName, final String prefix) {
@@ -223,7 +225,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
   }
 
   private static String[] getUnresolvedReferences(final PsiElement parentOfType, final boolean referenceOnMethod, PrefixMatcher matcher) {
-    if (parentOfType != null && parentOfType.getTextLength() > MAX_SCOPE_SIZE_TO_SEARCH_UNRESOLVED) return ArrayUtil.EMPTY_STRING_ARRAY;
+    if (parentOfType != null && parentOfType.getTextLength() > MAX_SCOPE_SIZE_TO_SEARCH_UNRESOLVED) return ArrayUtilRt.EMPTY_STRING_ARRAY;
     final Set<String> unresolvedRefs = new LinkedHashSet<>();
 
     if (parentOfType != null) {
@@ -239,7 +241,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
         }
       });
     }
-    return ArrayUtil.toStringArray(unresolvedRefs);
+    return ArrayUtilRt.toStringArray(unresolvedRefs);
   }
 
   private static void completeFieldName(Set<LookupElement> set, PsiField var, final PrefixMatcher matcher, boolean includeOverlapped) {
@@ -322,7 +324,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
 
 
     }
-    return ArrayUtil.toStringArray(result);
+    return ArrayUtilRt.toStringArray(result);
   }
 
   private static void completeMethodName(Set<LookupElement> set, PsiElement element, final PrefixMatcher matcher){
@@ -400,7 +402,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
       }
     }
 
-    return ArrayUtil.toStringArray(propertyHandlers);
+    return ArrayUtilRt.toStringArray(propertyHandlers);
   }
 
   private static void addLookupItems(Set<LookupElement> lookupElements, @Nullable final SuggestedNameInfo callback, PrefixMatcher matcher, Project project, String... strings) {

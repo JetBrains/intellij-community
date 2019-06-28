@@ -16,12 +16,12 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class DoubleCheckedLockingInspectionTest extends LightInspectionTestCase {
+public class DoubleCheckedLockingInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
     doTest("class A {" +

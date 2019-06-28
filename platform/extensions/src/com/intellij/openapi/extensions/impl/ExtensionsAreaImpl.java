@@ -56,7 +56,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
       processedEPs.add(point.getName());
     }
     // this code is required because we have a lot of static extensions e.g. LanguageExtension that are initialized only once
-    // for the extensions AvailabilityListeners will be broken if the initialization happened in "fake" area which doesn't have required EP
+    // for the extensions AvailabilityListeners will be broken if the initialization happened in a "fake" area, which doesn't have required EP
     if (!myAvailabilityListeners.isEmpty()) {
       for (Map.Entry<String, Collection<ExtensionPointAvailabilityListener>> entry : myAvailabilityListeners.entrySet()) {
         String key = entry.getKey();
@@ -288,7 +288,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   @Nullable
-  private static PluginId extractPluginId(@NotNull PluginDescriptor descriptor) {
+  private static PluginId id(@NotNull PluginDescriptor descriptor) {
     return descriptor instanceof UndefinedPluginDescriptor ? null : descriptor.getPluginId();
   }
 
@@ -297,13 +297,12 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
       return;
     }
 
-    String message = "Duplicate registration for EP: " + pointName + ": original plugin " +
-                     extractPluginId(getExtensionPoint(pointName).getDescriptor()) +
-                     ", new plugin " + extractPluginId(pluginDescriptor);
+    PluginId id1 = id(getExtensionPoint(pointName).getDescriptor()), id2 = id(pluginDescriptor);
+    String message = "Duplicate registration for EP '" + pointName + "': first in " + id1 + ", second in " + id2;
     if (DEBUG_REGISTRATION) {
       LOG.error(message, myEPTraces.get(pointName));
     }
-    throw new PicoPluginExtensionInitializationException(message, null, extractPluginId(pluginDescriptor));
+    throw new PicoPluginExtensionInitializationException(message, null, id2);
   }
 
   public void registerExtensionPoint(@NotNull ExtensionPointImpl<?> point) {
@@ -326,11 +325,10 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     }
   }
 
-  @Override
   @NotNull
+  @Override
   public <T> ExtensionPointImpl<T> getExtensionPoint(@NotNull String extensionPointName) {
-    //noinspection unchecked
-    ExtensionPointImpl<T> extensionPoint = myExtensionPoints.get(extensionPointName);
+    @SuppressWarnings("unchecked") ExtensionPointImpl<T> extensionPoint = myExtensionPoints.get(extensionPointName);
     if (extensionPoint == null) {
       throw new IllegalArgumentException("Missing extension point: " + extensionPointName + " in area " + myAreaInstance);
     }
@@ -340,8 +338,8 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   @Nullable
   @Override
   public <T> ExtensionPoint<T> getExtensionPointIfRegistered(@NotNull String extensionPointName) {
-    //noinspection unchecked
-    return myExtensionPoints.get(extensionPointName);
+    @SuppressWarnings("unchecked") ExtensionPointImpl<T> extensionPoint = myExtensionPoints.get(extensionPointName);
+    return extensionPoint;
   }
 
   @NotNull

@@ -17,10 +17,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.HashSet;
 
 public class ShShellcheckInspection extends LocalInspectionTool implements ExternalAnnotatorBatchInspection {
   public static final String SHORT_NAME = "ShellCheck";
@@ -33,6 +32,12 @@ public class ShShellcheckInspection extends LocalInspectionTool implements Exter
   @Override
   public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
     return SuppressQuickFix.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  @Override
+  public String getShortName() {
+    return SHORT_NAME;
   }
 
   @Override
@@ -65,8 +70,8 @@ public class ShShellcheckInspection extends LocalInspectionTool implements Exter
   }
 
   @NotNull
-  List<String> getDisabledInspections() {
-    return new ArrayList<>(myDisabledInspections);
+  Set<String> getDisabledInspections() {
+    return new HashSet<>(myDisabledInspections);
   }
 
   public void disableInspection(String inspectionCode) {

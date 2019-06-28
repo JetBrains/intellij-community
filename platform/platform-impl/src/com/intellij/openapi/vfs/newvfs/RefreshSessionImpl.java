@@ -4,20 +4,23 @@ package com.intellij.openapi.vfs.newvfs;
 import com.intellij.codeInsight.daemon.impl.FileStatusMap;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -36,11 +39,11 @@ class RefreshSessionImpl extends RefreshSession {
   private final Semaphore mySemaphore = new Semaphore();
 
   private List<VirtualFile> myWorkQueue = new ArrayList<>();
-  private List<VFileEvent> myEvents = new ArrayList<>();
-  private volatile boolean myHaveEventsToFire;
+  private final List<VFileEvent> myEvents = new ArrayList<>();
   private volatile RefreshWorker myWorker;
   private volatile boolean myCancelled;
   private final TransactionId myTransaction;
+  private boolean myLaunched;
 
   RefreshSessionImpl(boolean async, boolean recursive, @Nullable Runnable finishRunnable, @NotNull ModalityState context) {
     myIsAsync = async;
@@ -83,6 +86,9 @@ class RefreshSessionImpl extends RefreshSession {
 
   @Override
   public void addFile(@NotNull VirtualFile file) {
+    if (myLaunched) {
+      throw new IllegalStateException("Adding files is only allowed before launch");
+    }
     if (file instanceof NewVirtualFile) {
       myWorkQueue.add(file);
     }
@@ -98,6 +104,10 @@ class RefreshSessionImpl extends RefreshSession {
 
   @Override
   public void launch() {
+    if (myLaunched) {
+      throw new IllegalStateException("launch() can be called only once");
+    }
+    myLaunched = true;
     mySemaphore.down();
     ((RefreshQueueImpl)RefreshQueue.getInstance()).execute(this);
   }
@@ -105,7 +115,6 @@ class RefreshSessionImpl extends RefreshSession {
   void scan() {
     List<VirtualFile> workQueue = myWorkQueue;
     myWorkQueue = new ArrayList<>();
-    boolean haveEventsToFire = myFinishRunnable != null || !myEvents.isEmpty();
     boolean forceRefresh = !myIsRecursive && !myIsAsync;  // shallow sync refresh (e.g. project config files on open)
 
     if (!workQueue.isEmpty()) {
@@ -131,11 +140,14 @@ class RefreshSessionImpl extends RefreshSession {
           if (forceRefresh) {
             nvf.markDirty();
           }
+          else if (!nvf.isDirty()) {
+            continue;
+          }
 
           RefreshWorker worker = new RefreshWorker(nvf, myIsRecursive);
           myWorker = worker;
           worker.scan();
-          haveEventsToFire |= myEvents.addAll(worker.getEvents());
+          myEvents.addAll(worker.getEvents());
         }
 
         count++;
@@ -150,7 +162,6 @@ class RefreshSessionImpl extends RefreshSession {
     }
 
     myWorker = null;
-    myHaveEventsToFire = haveEventsToFire;
   }
 
   void cancel() {
@@ -162,30 +173,24 @@ class RefreshSessionImpl extends RefreshSession {
     }
   }
 
-  void fireEvents() {
-    if (!myHaveEventsToFire || ApplicationManager.getApplication().isDisposed()) {
-      mySemaphore.up();
-      return;
-    }
-
+  void fireEvents(@NotNull List<? extends VFileEvent> events, @Nullable List<? extends AsyncFileListener.ChangeApplier> appliers) {
     try {
-      if (LOG.isDebugEnabled()) LOG.debug("events are about to fire: " + myEvents);
-      WriteAction.run(this::fireEventsInWriteAction);
+      if ((myFinishRunnable != null || !events.isEmpty()) && !ApplicationManager.getApplication().isDisposed()) {
+        if (LOG.isDebugEnabled()) LOG.debug("events are about to fire: " + events);
+        WriteAction.run(() -> fireEventsInWriteAction(events, appliers));
+      }
     }
     finally {
       mySemaphore.up();
     }
   }
 
-  private void fireEventsInWriteAction() {
+  private void fireEventsInWriteAction(List<? extends VFileEvent> events, @Nullable List<? extends AsyncFileListener.ChangeApplier> appliers) {
     final VirtualFileManagerEx manager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
 
     manager.fireBeforeRefreshStart(myIsAsync);
     try {
-      while (!myWorkQueue.isEmpty() || !myEvents.isEmpty()) {
-        PersistentFS.getInstance().processEvents(mergeEventsAndReset());
-        scan();
-      }
+      AsyncEventSupport.processEvents(events, appliers);
     }
     catch (AssertionError e) {
       if (FileStatusMap.CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING.equals(e.getMessage())) {
@@ -209,14 +214,6 @@ class RefreshSessionImpl extends RefreshSession {
     mySemaphore.waitFor();
   }
 
-  @NotNull
-  private List<VFileEvent> mergeEventsAndReset() {
-    Set<VFileEvent> mergedEvents = new LinkedHashSet<>(myEvents);
-    List<VFileEvent> events = new ArrayList<>(mergedEvents);
-    myEvents = new ArrayList<>();
-    return events;
-  }
-
   @Nullable
   TransactionId getTransaction() {
     return myTransaction;
@@ -225,5 +222,10 @@ class RefreshSessionImpl extends RefreshSession {
   @Override
   public String toString() {
     return myWorkQueue.size() <= 1 ? "" : myWorkQueue.size() + " roots in queue.";
+  }
+
+  @NotNull
+  List<? extends VFileEvent> getEvents() {
+    return new ArrayList<>(new LinkedHashSet<>(myEvents));
   }
 }

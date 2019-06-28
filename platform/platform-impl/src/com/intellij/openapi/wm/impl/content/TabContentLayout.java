@@ -14,6 +14,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.TabbedContent;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tabs.JBTabPainter;
 import com.intellij.ui.tabs.JBTabsFactory;
 import com.intellij.ui.tabs.JBTabsPosition;
@@ -276,16 +277,17 @@ class TabContentLayout extends ContentLayout {
     Graphics2D g2d = (Graphics2D)g.create();
     for (ContentTabLabel each : myTabs) {
       if (JBTabsFactory.getUseNewTabs()) {
+        //TODO set borderThickness
+        int borderThickness = JBUIScale.scale(1);
         Rectangle r = each.getBounds();
 
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         if (each.isSelected()) {
-          tabPainter.paintSelectedTab(JBTabsPosition.top, g2d, r, null, myUi.myWindow.isActive(), each.isHovered());
+          tabPainter.paintSelectedTab(JBTabsPosition.top, g2d, r, borderThickness, null, myUi.myWindow.isActive(), each.isHovered(), myTabs.size() == 1);
         }
         else {
-          //TODO set borderThickness
-          tabPainter.paintTab(JBTabsPosition.top, g2d, r, 1, null, each.isHovered());
+          tabPainter.paintTab(JBTabsPosition.top, g2d, r, borderThickness, null, each.isHovered());
         }
       }
       else {

@@ -6,6 +6,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
+import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,32 +14,33 @@ import java.util.List;
 
 
 public class MavenArtifactSearchResult {
+  /**
+   *  @deprecated use getSearchResults instead
+   */
   @Deprecated
-  /* @deprecated use getSearchResults instead */
   public List<MavenArtifactInfo> versions;
 
-  private List<MavenDependencyCompletionItem> myResults;
+  private  MavenRepositoryArtifactInfo myInfo;
 
 
+  /**
+   * @deprecated use {@link #MavenArtifactSearchResult(MavenRepositoryArtifactInfo)}
+   */
   @Deprecated
   public MavenArtifactSearchResult() {
-    this(new ArrayList<>());
-  }
-  public MavenArtifactSearchResult(@NotNull List<MavenDependencyCompletionItem> results) {
-    setVersions(results);
-    this.myResults = results;
+    this(new MavenRepositoryArtifactInfo("", "", new MavenDependencyCompletionItem[0]));
   }
 
-  public void setResults(List<MavenDependencyCompletionItem> results) {
-    setVersions(results);
-    myResults = results;
+  public MavenArtifactSearchResult(@NotNull MavenRepositoryArtifactInfo info) {
+    setVersions(info);
+    this.myInfo = info;
   }
 
-  private void setVersions(@NotNull List<MavenDependencyCompletionItem> results) {
-    versions = ContainerUtil.map(results, d -> new MavenArtifactInfo(d, d.getPackaging(), d.getClassifier()));
+  private void setVersions(@NotNull MavenRepositoryArtifactInfo info) {
+    versions = ContainerUtil.map(info.getItems(), d -> new MavenArtifactInfo(d, d.getPackaging(), d.getClassifier()));
   }
 
-  public List<MavenDependencyCompletionItem> getSearchResults(){
-    return myResults;
+  public MavenRepositoryArtifactInfo getSearchResults(){
+    return myInfo;
   }
 }

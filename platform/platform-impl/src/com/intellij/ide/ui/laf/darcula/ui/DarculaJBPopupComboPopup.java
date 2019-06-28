@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.TitledSeparator;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.ui.JBUI;
@@ -19,12 +20,13 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
@@ -33,24 +35,32 @@ import java.util.ArrayList;
 @ApiStatus.Experimental
 public class DarculaJBPopupComboPopup<T> implements ComboPopup,
                                                     ItemListener, MouseListener, MouseMotionListener, MouseWheelListener,
-                                                    PropertyChangeListener, Serializable {
+                                                    PropertyChangeListener, AncestorListener {
 
   public static final String CLIENT_PROP = "ComboBox.jbPopup";
 
   private final JComboBox<T> myComboBox;
   private final JList<T> myProxyList = new JBList<>();
   private ListPopupImpl myPopup;
+  private boolean myJustClosedViaClick;
 
   public DarculaJBPopupComboPopup(@NotNull JComboBox<T> comboBox) {
     myComboBox = comboBox;
     myProxyList.setModel(comboBox.getModel());
     myComboBox.addPropertyChangeListener(this);
     myComboBox.addItemListener(this);
+    myComboBox.addAncestorListener(this);
   }
 
   @Override
   public void show() {
-    if (myPopup != null) return;
+    myJustClosedViaClick = false;
+    if (myPopup != null) {
+      if (myPopup.isVisible()) return;
+      // onClosed() was not called for some reason
+      myPopup.cancel();
+    }
+
     ArrayList<T> items = new ArrayList<>(myComboBox.getModel().getSize());
     for (int i = 0, size = myComboBox.getModel().getSize(); i < size; i++) {
       items.add(myComboBox.getModel().getElementAt(i));
@@ -91,7 +101,19 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
     };
     step.setDefaultOptionIndex(myComboBox.getSelectedIndex());
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myComboBox));
-    myPopup = new ListPopupImpl(project, step);
+    myPopup = new ListPopupImpl(project, step) {
+      @Override
+      public void cancel(InputEvent e) {
+        if (e instanceof MouseEvent) {
+          // we want the second click on combo-box just to close
+          // and not to instantly show the popup again in the following
+          // DarculaJBPopupComboPopup#mousePressed()
+          Point point = new RelativePoint((MouseEvent)e).getPoint(myComboBox);
+          myJustClosedViaClick = new Rectangle(myComboBox.getSize()).contains(point);
+        }
+        super.cancel(e);
+      }
+    };
     myPopup.setMaxRowCount(10);
     myPopup.setRequestFocus(false);
     myPopup.addListener(new JBPopupListener() {
@@ -141,6 +163,7 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
 
   @Override
   public void hide() {
+    myJustClosedViaClick = false;
     if (myPopup == null) return;
     myPopup.cancel();
   }
@@ -174,6 +197,7 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
   public void uninstallingUI() {
     myComboBox.removePropertyChangeListener(this);
     myComboBox.removeItemListener(this);
+    myComboBox.removeAncestorListener(this);
   }
 
   @Override
@@ -210,6 +234,10 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
     else if (myComboBox.isRequestFocusEnabled()) {
       myComboBox.requestFocus();
     }
+    if (myJustClosedViaClick) {
+      myJustClosedViaClick = false;
+      return;
+    }
     if (isVisible()) {
       hide();
     }
@@ -240,6 +268,21 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
 
   @Override
   public void mouseWheelMoved(MouseWheelEvent e) {
+  }
+
+  @Override
+  public void ancestorAdded(AncestorEvent event) {
+
+  }
+
+  @Override
+  public void ancestorRemoved(AncestorEvent event) {
+
+  }
+
+  @Override
+  public void ancestorMoved(AncestorEvent event) {
+    hide();
   }
 
   private class MyDelegateRenderer implements ListCellRenderer {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,8 +55,7 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
   }
 
   /**
-   * use {@link #setModelAndUpdateColumns(com.intellij.util.ui.ListTableModel<Item>)} instead
-   * @param model
+   * @deprecated use {@link #setModelAndUpdateColumns(ListTableModel<Item>)} instead
    */
   @Deprecated
   public void setModel(final ListTableModel<Item> model) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -41,6 +41,7 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -473,7 +474,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     if (root instanceof ArchivePackagingElement) {
       String oldFileName = ArtifactUtil.suggestArtifactFileName(oldArtifactName);
       final String name = ((ArchivePackagingElement)root).getArchiveFileName();
-      final String fileName = FileUtil.getNameWithoutExtension(name);
+      final String fileName = FileUtilRt.getNameWithoutExtension(name);
       final String extension = FileUtilRt.getExtension(name);
       if (fileName.equals(oldFileName) && extension.length() > 0) {
         myLayoutTreeComponent.editLayout(

@@ -20,7 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 import junit.framework.Assert;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -39,7 +39,7 @@ import java.util.List;
 /**
  * @author ilyas
  */
-public class IntroduceVariableValidatorTest extends LightCodeInsightFixtureTestCase {
+public class IntroduceVariableValidatorTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {

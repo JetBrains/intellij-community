@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,9 +17,9 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
 
 public class RemoteRevisionsCache implements VcsListener {
@@ -33,7 +33,7 @@ public class RemoteRevisionsCache implements VcsListener {
 
   private final ProjectLevelVcsManager myVcsManager;
 
-  private final RemoteStatusChangeNodeDecorator myChangeDecorator;
+  @NotNull private final RemoteStatusChangeNodeDecorator myChangeDecorator;
   private final Project myProject;
   private final Object myLock;
   private final Map<String, RemoteDifferenceStrategy> myKinds;
@@ -142,8 +142,8 @@ public class RemoteRevisionsCache implements VcsListener {
     synchronized (myLock) {
       strategyMap = new HashMap<>(myKinds);
     }
-    final Collection<String> newForTree = new LinkedList<>();
-    final Collection<String> newForUsual = new LinkedList<>();
+    final Collection<String> newForTree = new ArrayList<>();
+    final Collection<String> newForUsual = new ArrayList<>();
     UpdateFilesHelper.iterateAffectedFiles(updatedFiles, pair -> {
       final String vcsName = pair.getSecond();
       RemoteDifferenceStrategy strategy = strategyMap.get(vcsName);
@@ -186,6 +186,7 @@ public class RemoteRevisionsCache implements VcsListener {
     }
   }
 
+  @NotNull
   public RemoteStatusChangeNodeDecorator getChangesNodeDecorator() {
     return myChangeDecorator;
   }

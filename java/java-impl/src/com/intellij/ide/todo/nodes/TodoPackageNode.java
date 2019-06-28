@@ -56,7 +56,7 @@ public final class TodoPackageNode extends PackageElementNode {
                          @Nullable String name) {
     super(project, element, ViewSettings.DEFAULT);
     myBuilder = builder;
-    if (element != null && name == null){
+    if (name == null){
       final PsiPackage aPackage = element.getPackage();
       myPresentationName = aPackage.getName();
     }
@@ -169,11 +169,13 @@ public final class TodoPackageNode extends PackageElementNode {
   public Collection<AbstractTreeNode> getChildren() {
     ArrayList<AbstractTreeNode> children = new ArrayList<>();
     final Project project = getProject();
-    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    final PsiPackage psiPackage = getValue().getPackage();
-    final Module module = getValue().getModule();
-    if (!getStructure().getIsFlattenPackages() || psiPackage == null) {
-      final Iterator<PsiFile> iterator = getFiles(getValue());
+    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(Objects.requireNonNull(project)).getFileIndex();
+    PackageElement value = getValue();
+    if (value == null) return children;
+    final PsiPackage psiPackage = value.getPackage();
+    final Module module = value.getModule();
+    final Iterator<PsiFile> iterator = getFiles(value);
+    if (!getStructure().getIsFlattenPackages()) {
       while (iterator.hasNext()) {
         final PsiFile psiFile = iterator.next();
         final Module psiFileModule = projectFileIndex.getModuleForFile(psiFile.getVirtualFile());
@@ -181,11 +183,14 @@ public final class TodoPackageNode extends PackageElementNode {
         if (module != null && psiFileModule != null && !module.equals(psiFileModule)){
           continue;
         }
+        final GlobalSearchScope scope = module != null ? GlobalSearchScope.moduleScope(module) : GlobalSearchScope.projectScope(project);
         // Add files
         final PsiDirectory containingDirectory = psiFile.getContainingDirectory();
         TodoFileNode todoFileNode = new TodoFileNode(project, psiFile, myBuilder, false);
-        if (ArrayUtil.find(psiPackage.getDirectories(), containingDirectory) > -1 && !children.contains(todoFileNode)) {
-          children.add(todoFileNode);
+        if (ArrayUtil.find(psiPackage.getDirectories(scope), containingDirectory) > -1) {
+          if (!children.contains(todoFileNode)) {
+            children.add(todoFileNode);
+          }
           continue;
         }
         // Add packages
@@ -194,10 +199,9 @@ public final class TodoPackageNode extends PackageElementNode {
           final PsiDirectory parentDirectory = _dir.getParentDirectory();
           if (parentDirectory != null){
             PsiPackage _package = JavaDirectoryService.getInstance().getPackage(_dir);
-            if (_package != null && _package.getParentPackage() != null && psiPackage.equals(_package.getParentPackage())) {
-              final GlobalSearchScope scope = module != null ? GlobalSearchScope.moduleScope(module) : GlobalSearchScope.projectScope(project);
+            if (_package != null && psiPackage.equals(_package.getParentPackage())) {
               _package = TodoJavaTreeHelper.findNonEmptyPackage(_package, module, project, myBuilder, scope); //compact empty middle packages
-              final String name = _package.getParentPackage().equals(psiPackage)
+              final String name = psiPackage.equals(Objects.requireNonNull(_package).getParentPackage())
                                   ? null //non compacted
                                   : _package.getQualifiedName().substring(psiPackage.getQualifiedName().length() + 1);
               TodoPackageNode todoPackageNode = new TodoPackageNode(project, new PackageElement(module, _package, false), myBuilder, name);
@@ -212,7 +216,6 @@ public final class TodoPackageNode extends PackageElementNode {
       }
     }
     else { // flatten packages
-      final Iterator<PsiFile> iterator = getFiles(getValue());
       while (iterator.hasNext()) {
         final PsiFile psiFile = iterator.next();
          //group by module

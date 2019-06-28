@@ -626,7 +626,7 @@ variable_declaration_tail ::= variable (',' mb_nl variable)*
 }
 variable ::= var { elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrVariableElementType' }
 
-tuple_var_declaration ::= non_empty_modifier_list tuple_var_declaration_tuple tuple_initializer
+tuple_var_declaration ::= non_empty_modifier_list tuple_var_declaration_tuple mb_nl tuple_initializer
 {
   elementType = variable_declaration
   pin = tuple_var_declaration_tuple
@@ -926,9 +926,9 @@ new_expression ::= 'new' type_argument_list? new_expression_creator { pin = 1 }
 private new_expression_creator ::= new_expression_type (l_paren_variant | new_expression_tail) { pin = 1 }
 private new_expression_type ::= primitive_type_element | <<allowDiamond code_reference>>
 private l_paren_variant ::= &'(' fail // adds a variant, to achieve "'(' expected" generated message
-private new_expression_tail ::= array_initializer_tail | array_declaration | call_argument_list
+private new_expression_tail ::= array_initializer_tail | array_declaration | (mb_nl call_argument_list)
 
-private array_initializer_tail ::= array_initializer_declaration array_initializer
+private array_initializer_tail ::= array_initializer_declaration mb_nl array_initializer
 array_initializer_declaration ::= array_dimensions+ { elementType = array_declaration }
 private array_dimensions ::= '['(']') { consumeTokenMethod = 'consumeTokenFast' }
 array_initializer ::= '{' mb_nl '}' | array_initializer_pin
@@ -1062,40 +1062,40 @@ prefix_unary_expression ::= ('++' | '--' | '-' | '+') mb_nl expression
   elementType = unary_expression
 }
 
-multiplicative_expression ::= expression ('*' | '/' | '%') mb_nl expression
+multiplicative_expression ::= expression mb_nl ('*' | '/' | '%') mb_nl expression
 
 additive_expression ::= expression ('+' | '-') mb_nl expression
 
 private shift_or_range ::= shift_expression | range_expression
-shift_expression ::= expression shift_sign mb_nl expression
+shift_expression ::= expression mb_nl shift_sign mb_nl expression
 private shift_sign ::= left_shift_sign | right_shift_unsigned_sign | right_shift_sign { consumeTokenMethod = 'consumeTokenFast' }
 left_shift_sign ::= '<' '<'
 right_shift_sign ::= '>' '>'
 right_shift_unsigned_sign ::= '>' '>' '>'
-range_expression ::= expression ('..' | '..<') mb_nl expression
+range_expression ::= expression mb_nl ('..' | '..<') mb_nl expression
 
 private priority7 ::= relational_expression | in_expression | instanceof_expression | as_expression
-relational_expression ::= expression relational_operator mb_nl expression
+relational_expression ::= expression mb_nl relational_operator mb_nl expression
 private relational_operator ::= '<' !'<' | '<=' | '>' !'>' | '>=' { consumeTokenMethod = 'consumeTokenFast' }
-in_expression ::= expression mb_not ('in') mb_nl expression
-instanceof_expression ::= expression instanceof_expression_tail
+in_expression ::= expression mb_nl mb_not ('in') mb_nl expression
+instanceof_expression ::= expression mb_nl instanceof_expression_tail
 private instanceof_expression_tail ::= mb_not ('instanceof') mb_nl (type_element | expect_type) { pin = 2 }
-as_expression ::= expression 'as' mb_nl type_element
+as_expression ::= expression mb_nl ('as') mb_nl type_element
 
 private priority8 ::= equality_expression | compare_expression | regex_find_expression | regex_match_expression
-equality_expression ::= expression <<equalityOperator>> mb_nl expression
-compare_expression ::= expression '<=>' mb_nl expression
+equality_expression ::= expression mb_nl <<equalityOperator>> mb_nl expression
+compare_expression ::= expression mb_nl ('<=>') mb_nl expression
 {
   elementType = relational_expression
 }
-regex_find_expression ::= expression '=~' mb_nl expression
-regex_match_expression ::= expression '==~' mb_nl expression
+regex_find_expression ::= expression mb_nl ('=~') mb_nl expression
+regex_match_expression ::= expression mb_nl ('==~') mb_nl expression
 
-band_expression ::= expression '&' mb_nl expression
-xor_expression ::= expression '^' mb_nl expression
-bor_expression ::= expression '|' mb_nl expression
-land_expression ::= expression '&&' mb_nl expression
-lor_expression ::= expression '||' mb_nl expression
+band_expression ::= expression mb_nl ('&') mb_nl expression
+xor_expression ::= expression mb_nl ('^') mb_nl expression
+bor_expression ::= expression mb_nl ('|') mb_nl expression
+land_expression ::= expression mb_nl ('&&') mb_nl expression
+lor_expression ::= expression mb_nl ('||') mb_nl expression
 
 private conditionals ::= ternary_expression | elvis_expression
 ternary_expression ::= expression mb_nl (ternary_tail_pin | ternary_tail)
@@ -1107,13 +1107,13 @@ elvis_expression ::= expression mb_nl ('?:' mb_nl) expression
 }
 
 private priority15 ::= assignment_expression | tuple_assignment_expression
-assignment_expression ::= expression assignment_expression_rvalue { rightAssociative = true }
+assignment_expression ::= expression mb_nl assignment_expression_rvalue { rightAssociative = true }
 private assignment_expression_rvalue ::= (<<assignmentOperator>> mb_nl) expression_or_application { pin = 1 }
 
 tuple_assignment_expression ::= single_tuple_assignment | multi_tuple_assignment
-private single_tuple_assignment ::= single_tuple tuple_initializer // don't pin because "(foo)" may be a parenthesized expression
-private multi_tuple_assignment ::= tuple !'->' tuple_initializer { // pin only if it's not a part of "(foo, bar) -> baz"
-  pin = 2
+private single_tuple_assignment ::= single_tuple mb_nl tuple_initializer // don't pin because "(foo)" may be a parenthesized expression
+private multi_tuple_assignment ::= tuple  mb_nl !'->' tuple_initializer { // pin only if it's not a part of "(foo, bar) -> baz"
+  pin = 3
 }
 single_tuple ::= '(' unqualified_reference_expression ')' { elementType = tuple }
 tuple ::= '(' unqualified_reference_expression (',' unqualified_reference_expression)+ ')'
@@ -1265,9 +1265,9 @@ left doc_reference_tail ::= '.' code_reference_part { elementType = code_referen
 
 // region Variables
 private var ::= IDENTIFIER mb_initializer
-private mb_initializer ::= ['=' mb_nl expression_or_application]
+private mb_initializer ::= [mb_nl ('=') mb_nl expression_or_application]
 {
-  pin('.*') = 1
+  pin('.*') = 2
   consumeTokenMethod = 'consumeTokenFast'
 }
 // endregion

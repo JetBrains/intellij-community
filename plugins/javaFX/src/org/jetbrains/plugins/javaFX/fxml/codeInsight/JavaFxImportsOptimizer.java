@@ -45,13 +45,13 @@ import java.util.*;
 
 public class JavaFxImportsOptimizer implements ImportOptimizer {
   @Override
-  public boolean supports(PsiFile file) {
+  public boolean supports(@NotNull PsiFile file) {
     return JavaFxFileTypeFactory.isFxml(file);
   }
 
   @NotNull
   @Override
-  public Runnable processFile(final PsiFile file) {
+  public Runnable processFile(@NotNull final PsiFile file) {
     VirtualFile vFile = file.getVirtualFile();
     if (vFile instanceof VirtualFileWindow) vFile = ((VirtualFileWindow)vFile).getDelegate();
     final Project project = file.getProject();

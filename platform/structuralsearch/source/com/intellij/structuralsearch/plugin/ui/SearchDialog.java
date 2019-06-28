@@ -17,7 +17,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -77,9 +77,9 @@ public class SearchDialog extends DialogWrapper {
   public static final String USER_DEFINED = SSRBundle.message("new.template.defaultname");
   private boolean useLastConfiguration;
 
-  @NonNls private FileType ourFtSearchVariant = StructuralSearchUtil.getDefaultFileType();
+  @NonNls private LanguageFileType ourFtSearchVariant = StructuralSearchUtil.getDefaultFileType();
   private static Language ourDialect = null;
-  private static String ourContext = null;
+  private static PatternContext ourContext = null;
 
   private final boolean myShowScopePanel;
   private final boolean myRunFindActionOnClose;
@@ -134,12 +134,12 @@ public class SearchDialog extends DialogWrapper {
     if (fileTypes != null) {
       final FileTypeInfo info = fileTypes.getSelectedItem();
       if (info != null) {
-        final FileType fileType = info.getFileType();
+        final LanguageFileType fileType = info.getFileType();
         final Language dialect = info.getDialect();
 
         final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
         if (profile != null) {
-          editor = profile.createEditor(searchContext.getProject(), fileType, dialect, text);
+          editor = UIUtil.createEditor(searchContext.getProject(), fileType, dialect, text, profile);
         }
       }
     }
@@ -183,7 +183,7 @@ public class SearchDialog extends DialogWrapper {
 
   private boolean isCompiled() {
     try {
-      return PatternCompiler.compilePattern(getProject(), myConfiguration.getMatchOptions(), false) != null;
+      return PatternCompiler.compilePattern(getProject(), myConfiguration.getMatchOptions(), false, false) != null;
     } catch (MalformedPatternException e) {
       return false;
     }
@@ -320,8 +320,7 @@ public class SearchDialog extends DialogWrapper {
 
     JPanel searchOptions = new JPanel();
     searchOptions.setLayout(new GridLayout(getRowsCount(), 1, 0, 0));
-    searchOptions.setBorder(IdeBorderFactory.createTitledBorder(SSRBundle.message("ssdialog.options.group.border"),
-                                                                true));
+    searchOptions.setBorder(IdeBorderFactory.createTitledBorder(SSRBundle.message("ssdialog.options.group.border")));
 
     JPanel allOptions = new JPanel(new BorderLayout());
     if (myShowScopePanel) {
@@ -506,7 +505,7 @@ public class SearchDialog extends DialogWrapper {
 
   @Override
   public void show() {
-    StructuralSearchPlugin.getInstance(getProject()).setDialogVisible(true);
+    StructuralSearchPlugin.getInstance(getProject()).setDialog(this);
 
     if (!useLastConfiguration) {
       final Editor editor = searchContext.getEditor();
@@ -615,11 +614,10 @@ public class SearchDialog extends DialogWrapper {
     options.setRecursiveSearch(isRecursiveSearchEnabled() && recursiveMatching.isSelected());
 
     final FileTypeInfo info = fileTypes.getSelectedItem();
-    ourFtSearchVariant = info != null ? info.getFileType() : null;
+    ourFtSearchVariant = (info != null) ? info.getFileType() : null;
     ourDialect = info != null ? info.getDialect() : null;
     ourContext = info != null ? info.getContext() : null;
-    FileType fileType = ourFtSearchVariant;
-    options.setFileType(fileType);
+    options.setFileType(ourFtSearchVariant);
     options.setDialect(ourDialect);
     options.setPatternContext(ourContext);
 
@@ -638,8 +636,8 @@ public class SearchDialog extends DialogWrapper {
 
     myAlarm.cancelAllRequests();
 
+    StructuralSearchPlugin.getInstance(getProject()).setDialog(null);
     super.dispose();
-    StructuralSearchPlugin.getInstance(getProject()).setDialogVisible(false);
   }
 
   protected void disposeEditorContent() {

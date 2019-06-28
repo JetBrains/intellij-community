@@ -217,8 +217,8 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     public String getReadonlyFilesMessage() {
       if (hasReadonlyFiles()) {
         if (!isEmpty(myReadOnlyReason)) return myReadOnlyReason;
-        StringBuilder buf = new StringBuilder();
         if (myReadonlyFiles.length > 1) {
+          StringBuilder buf = new StringBuilder();
           for (VirtualFile file : myReadonlyFiles) {
             buf.append('\n');
             buf.append(file.getPresentableUrl());
@@ -227,7 +227,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
           return CommonBundle.message("failed.to.make.the.following.files.writable.error.message", buf.toString());
         }
         else {
-          return CommonBundle.message("failed.to.make.file.writeable.error.message", myReadonlyFiles[0].getPresentableUrl());
+          return CommonBundle.message("failed.to.make.file.writable.error.message", myReadonlyFiles[0].getPresentableUrl());
         }
       }
       throw new RuntimeException("No readonly files");

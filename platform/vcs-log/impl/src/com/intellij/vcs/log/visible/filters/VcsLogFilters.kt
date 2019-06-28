@@ -10,11 +10,8 @@ import com.intellij.vcs.log.*
 import com.intellij.vcs.log.VcsLogFilterCollection.FilterKey
 import com.intellij.vcs.log.VcsLogFilterCollection.HASH_FILTER
 import com.intellij.vcs.log.VcsLogRangeFilter.RefRange
-import com.intellij.vcs.log.data.VcsLogBranchFilterImpl
 import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.data.VcsLogDateFilterImpl
 import com.intellij.vcs.log.data.VcsLogStructureFilterImpl
-import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl
 import com.intellij.vcs.log.ui.filter.VcsLogTextFilterImpl
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.VcsUserUtil
@@ -48,11 +45,11 @@ object VcsLogFilterObject {
 
   @JvmStatic
   fun fromBranch(branchName: String): VcsLogBranchFilter {
-    return object : VcsLogBranchFilterImpl(listOf(branchName), emptyList(), emptyList(), emptyList()) {}
+    return VcsLogBranchFilterImpl(listOf(branchName), emptyList(), emptyList(), emptyList())
   }
 
   @JvmStatic
-  fun fromRange(exclusiveRef: String, inclusiveRef: String) : VcsLogRangeFilter {
+  fun fromRange(exclusiveRef: String, inclusiveRef: String): VcsLogRangeFilter {
     return fromRange(listOf(RefRange(exclusiveRef, inclusiveRef)))
   }
 
@@ -105,7 +102,7 @@ object VcsLogFilterObject {
       }
     }
 
-    return object : VcsLogBranchFilterImpl(branchNames, patterns, excludedBranches, excludedPatterns) {}
+    return VcsLogBranchFilterImpl(branchNames, patterns, excludedBranches, excludedPatterns)
   }
 
   @JvmStatic
@@ -192,8 +189,11 @@ object VcsLogFilterObject {
         if (filterSet.replace(f)) LOG.warn("Two filters with the same key ${f.key} in filter collection. Keeping only ${f}.")
       }
     }
-    return MyVcsLogFilterCollectionImpl(filterSet)
+    return VcsLogFilterCollectionImpl(filterSet)
   }
+
+  @JvmField
+  val EMPTY_COLLECTION = collection()
 }
 
 fun VcsLogFilterCollection.with(filter: VcsLogFilter?): VcsLogFilterCollection {
@@ -202,13 +202,13 @@ fun VcsLogFilterCollection.with(filter: VcsLogFilter?): VcsLogFilterCollection {
   val filterSet = createFilterSet()
   filterSet.addAll(this.filters)
   filterSet.replace(filter)
-  return MyVcsLogFilterCollectionImpl(filterSet)
+  return VcsLogFilterCollectionImpl(filterSet)
 }
 
 fun VcsLogFilterCollection.without(filterKey: FilterKey<*>): VcsLogFilterCollection {
   val filterSet = createFilterSet()
   this.filters.forEach { if (it.key != filterKey) filterSet.add(it) }
-  return MyVcsLogFilterCollectionImpl(filterSet)
+  return VcsLogFilterCollectionImpl(filterSet)
 }
 
 fun VcsLogFilterCollection.matches(vararg filterKey: FilterKey<*>): Boolean {
@@ -244,8 +244,6 @@ private fun <T> OpenTHashSet<T>.replace(element: T): Boolean {
   add(element)
   return isModified
 }
-
-private class MyVcsLogFilterCollectionImpl(filterSet: OpenTHashSet<VcsLogFilter>) : VcsLogFilterCollectionImpl(filterSet)
 
 internal class FilterByKeyHashingStrategy : TObjectHashingStrategy<VcsLogFilter> {
   override fun computeHashCode(`object`: VcsLogFilter): Int {

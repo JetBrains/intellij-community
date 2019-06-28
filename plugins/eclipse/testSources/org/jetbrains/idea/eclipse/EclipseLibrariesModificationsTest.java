@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.eclipse;
 
@@ -13,7 +13,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 
 public class EclipseLibrariesModificationsTest extends EclipseVarsTest {
 
@@ -48,7 +48,7 @@ public class EclipseLibrariesModificationsTest extends EclipseVarsTest {
   }
 
   public void testReplacedExistingWithVariablesCantReplaceSrc() throws Exception {
-    doTestExisting(new String[]{"/variableidea/test.jar!/"}, new String[]{"/srcvariableidea1/test.jar!/"}, ArrayUtil.EMPTY_STRING_ARRAY);
+    doTestExisting(new String[]{"/variableidea/test.jar!/"}, new String[]{"/srcvariableidea1/test.jar!/"}, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   public void testReplacedExistingWithMultipleJavadocs() throws Exception {

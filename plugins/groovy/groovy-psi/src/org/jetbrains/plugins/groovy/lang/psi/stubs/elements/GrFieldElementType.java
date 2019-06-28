@@ -6,7 +6,7 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
@@ -46,7 +46,7 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
     }
 
     return new GrFieldStub(parentStub, StringRef.fromString(psi.getName()), annNames,
-                           ArrayUtil.toStringArray(namedParameters),
+                           ArrayUtilRt.toStringArray(namedParameters),
                            GroovyStubElementTypes.FIELD, GrFieldStub.buildFlags(psi),
                            GrStubUtils.getTypeText(psi.getTypeElementGroovy()));
   }

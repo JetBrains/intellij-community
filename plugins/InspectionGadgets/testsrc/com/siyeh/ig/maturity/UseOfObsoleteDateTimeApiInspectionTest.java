@@ -16,13 +16,12 @@
 package com.siyeh.ig.maturity;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
-import com.siyeh.ig.junit.UseOfObsoleteAssertInspection;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class UseOfObsoleteDateTimeApiInspectionTest extends LightInspectionTestCase {
+public class UseOfObsoleteDateTimeApiInspectionTest extends LightJavaInspectionTestCase {
 
   public void testUseOfObsoleteDateTimeApi() {
     doTest();

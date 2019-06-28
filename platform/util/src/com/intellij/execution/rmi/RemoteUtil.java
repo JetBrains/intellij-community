@@ -223,8 +223,8 @@ public class RemoteUtil {
     return false;
   }
 
-  public static <T> T executeWithClassLoader(ThrowableComputable<T, Exception> action, ClassLoader classLoader) throws Exception {
-    return ClassLoaderUtil.runWithClassLoader(classLoader, action);
+  public static <T> T executeWithClassLoader(ThrowableComputable<T, ? extends Exception> action, ClassLoader classLoader) throws Exception {
+    return ClassLoaderUtil.computeWithClassLoader(classLoader, action);
   }
 
   /**

@@ -8,7 +8,7 @@ import com.intellij.codeInspection.unsorted.AlphaUnsortedPropertiesFileInspectio
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 import java.util.Collections;
 import java.util.Locale;
@@ -16,7 +16,7 @@ import java.util.Locale;
 /**
  * @author Dmitry Batkovich
  */
-public class AlphaUnsortedInspectionTest extends LightPlatformCodeInsightFixtureTestCase {
+public class AlphaUnsortedInspectionTest extends BasePlatformTestCase {
   public void testUnsorted() {
     doTest();
   }

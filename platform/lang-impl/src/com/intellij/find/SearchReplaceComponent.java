@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find;
 
 import com.intellij.find.editorHeaderActions.*;
@@ -23,6 +23,7 @@ import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.mac.TouchbarDataKeys;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
@@ -158,7 +159,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     searchToolbarWrapper1.setHorizontalSizeReferent(replaceToolbarWrapper1);
 
     JLabel closeLabel = new JLabel(null, AllIcons.Actions.Close, SwingConstants.RIGHT);
-    closeLabel.setBorder(JBUI.Borders.empty(5));
+    closeLabel.setBorder(JBUI.Borders.empty(2 ));
     closeLabel.setVerticalAlignment(SwingConstants.TOP);
     closeLabel.addMouseListener(new MouseAdapter() {
       @Override
@@ -173,7 +174,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
       @Override
       public Dimension getMinimumSize() {
         Dimension size = super.getMinimumSize();
-        size.width += JBUI.scale(16);//looks like hack but we need this extra space in case of lack of width
+        size.width += JBUIScale.scale(16);//looks like hack but we need this extra space in case of lack of width
         return size;
       }
     };
@@ -325,7 +326,8 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
                                                        addTextToRecent(mySearchTextComponent);
                                                      }
                                                    }
-                                                 }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfo.isMac ? META_DOWN_MASK : CTRL_DOWN_MASK),
+                                                 }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfo.isMac
+                                                                                              ? META_DOWN_MASK : CTRL_DOWN_MASK),
                                                  JComponent.WHEN_FOCUSED);
 
     new VariantsCompletionAction(mySearchTextComponent); // It registers a shortcut set automatically on construction
@@ -435,7 +437,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
 
     UIUtil.addUndoRedoActions(textComponent);
 
-    textComponent.putClientProperty("AuxEditorComponent", Boolean.TRUE);
+    textComponent.putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, Boolean.TRUE);
     textComponent.setBackground(UIUtil.getTextFieldBackground());
     textComponent.addFocusListener(new FocusListener() {
       @Override
@@ -568,18 +570,14 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
 
   @NotNull
   private ActionToolbarImpl createToolbar(@NotNull ActionGroup group) {
-    return tweakToolbar((ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, group, true));
-  }
-
-  @NotNull
-  private ActionToolbarImpl tweakToolbar(@NotNull ActionToolbarImpl toolbar) {
+    ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance()
+      .createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, group, true);
+    toolbar.setBorder(JBUI.Borders.empty());
     toolbar.setTargetComponent(this);
     toolbar.setLayoutPolicy(ActionToolbar.AUTO_LAYOUT_POLICY);
-    toolbar.setBorder(null);
     Utils.setSmallerFontForChildren(toolbar);
     return toolbar;
   }
-
 
   public interface Listener extends EventListener {
     void searchFieldDocumentChanged();

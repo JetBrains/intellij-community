@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
@@ -18,7 +18,7 @@ import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.impl.ContentImpl;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -147,7 +147,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   @NotNull
   @Override
   public String[] getToolWindowIds() {
-    return ArrayUtil.EMPTY_STRING_ARRAY;
+    return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
   @Override
@@ -197,6 +197,11 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   @Override
+  public boolean fallbackToEditor() {
+    return false;
+  }
+
+  @Override
   public String getLastActiveToolWindowId() {
     return null;
   }
@@ -237,6 +242,12 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   @Override
   public List<String> getIdsOn(@NotNull final ToolWindowAnchor anchor) {
     return new ArrayList<>();
+  }
+
+  @NotNull
+  @Override
+  public Icon getLocationIcon(@NotNull String id, @NotNull Icon fallbackIcon) {
+    return fallbackIcon;
   }
 
   public static class MockToolWindow implements ToolWindowEx {

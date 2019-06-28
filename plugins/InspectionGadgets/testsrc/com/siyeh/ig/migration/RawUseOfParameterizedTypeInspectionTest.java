@@ -2,10 +2,10 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class RawUseOfParameterizedTypeInspectionTest extends LightInspectionTestCase {
+public class RawUseOfParameterizedTypeInspectionTest extends LightJavaInspectionTestCase {
 
   public void testRawUseOfParameterizedType() {
     doTest();

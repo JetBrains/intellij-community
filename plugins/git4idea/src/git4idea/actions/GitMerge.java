@@ -51,6 +51,6 @@ public class GitMerge extends GitMergeAction {
       return null;
     }
     return new DialogState(dialog.getSelectedRoot(), GitBundle.message("merging.title", dialog.getSelectedRoot().getPath()),
-                           () -> dialog.handler());
+                           () -> dialog.handler(), dialog.getSelectedBranches());
   }
 }

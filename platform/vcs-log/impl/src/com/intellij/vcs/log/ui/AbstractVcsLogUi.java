@@ -16,7 +16,6 @@ import com.intellij.openapi.util.NamedRunnable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.navigation.History;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -85,14 +84,6 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
     return myId;
   }
 
-  public void requestFocus() {
-    // todo fix selection
-    VcsLogGraphTable graphTable = getTable();
-    if (graphTable.getRowCount() > 0) {
-      IdeFocusManager.getInstance(myProject).requestFocus(graphTable, true).doWhenProcessed(() -> graphTable.setRowSelectionInterval(0, 0));
-    }
-  }
-
   public void setVisiblePack(@NotNull VisiblePack pack) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
@@ -106,7 +97,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
     getTable().repaint();
   }
 
-  public void jumpToNearestCommit(@NotNull Hash hash, @NotNull VirtualFile root) {
+  public void jumpToNearestCommit(@NotNull Hash hash, @NotNull VirtualFile root, boolean silently) {
     jumpTo(hash, (model, h) -> {
       if (!myLogData.getStorage().containsCommit(new CommitId(h, root))) return GraphTableModel.COMMIT_NOT_FOUND;
       int commitIndex = myLogData.getCommitIndex(h, root);
@@ -115,7 +106,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
         rowIndex = ReachableNodesUtilKt.findVisibleAncestorRow(commitIndex, myVisiblePack);
       }
       return rowIndex == null ? GraphTableModel.COMMIT_DOES_NOT_MATCH : rowIndex;
-    }, SettableFuture.create());
+    }, SettableFuture.create(), silently);
   }
 
   protected abstract void onVisiblePackUpdated(boolean permGraphChanged);
@@ -167,11 +158,11 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
     return myVisiblePack;
   }
 
-  public void jumpToRow(int row) {
+  public void jumpToRow(int row, boolean silently) {
     jumpTo(row, (model, r) -> {
       if (model.getRowCount() <= r) return -1;
       return r;
-    }, SettableFuture.create());
+    }, SettableFuture.create(), silently);
   }
 
   @NotNull
@@ -198,6 +189,13 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   protected <T> void jumpTo(@NotNull final T commitId,
                             @NotNull final PairFunction<GraphTableModel, T, Integer> rowGetter,
                             @NotNull final SettableFuture<? super Boolean> future) {
+    jumpTo(commitId, rowGetter, future, false);
+  }
+
+  protected <T> void jumpTo(@NotNull final T commitId,
+                            @NotNull final PairFunction<GraphTableModel, T, Integer> rowGetter,
+                            @NotNull final SettableFuture<? super Boolean> future,
+                            boolean silently) {
     if (future.isCancelled()) return;
 
     GraphTableModel model = getTable().getModel();
@@ -208,13 +206,13 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
       future.set(true);
     }
     else if (model.canRequestMore()) {
-      model.requestToLoadMore(() -> jumpTo(commitId, rowGetter, future));
+      model.requestToLoadMore(() -> jumpTo(commitId, rowGetter, future, silently));
     }
     else if (!myVisiblePack.isFull()) {
-      invokeOnChange(() -> jumpTo(commitId, rowGetter, future));
+      invokeOnChange(() -> jumpTo(commitId, rowGetter, future, silently));
     }
     else {
-      handleCommitNotFound(commitId, result == GraphTableModel.COMMIT_DOES_NOT_MATCH, rowGetter);
+      if (!silently) handleCommitNotFound(commitId, result == GraphTableModel.COMMIT_DOES_NOT_MATCH, rowGetter);
       future.set(false);
     }
   }

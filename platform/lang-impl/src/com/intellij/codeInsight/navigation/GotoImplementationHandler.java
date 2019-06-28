@@ -101,20 +101,18 @@ public class GotoImplementationHandler extends GotoTargetHandler {
   public static int tryGetNavigationSourceOffsetFromGutterIcon(@NotNull Editor editor, String actionId) {
     int line = editor.getCaretModel().getVisualPosition().line;
     List<GutterMark> renderers = ((EditorGutterComponentEx)editor.getGutter()).getGutterRenderers(line);
-    if (renderers != null) {
-      List<PsiElement> elementCandidates = new ArrayList<>();
-      for (GutterMark renderer : renderers) {
-        if (renderer instanceof LineMarkerInfo.LineMarkerGutterIconRenderer) {
-          LineMarkerInfo.LineMarkerGutterIconRenderer lineMarkerRenderer = (LineMarkerInfo.LineMarkerGutterIconRenderer)renderer;
-          AnAction clickAction = ((LineMarkerInfo.LineMarkerGutterIconRenderer)renderer).getClickAction();
-          if (clickAction instanceof NavigateAction && actionId.equals(((NavigateAction)clickAction).getOriginalActionId())) {
-            elementCandidates.add(lineMarkerRenderer.getLineMarkerInfo().getElement());
-          }
+    List<PsiElement> elementCandidates = new ArrayList<>();
+    for (GutterMark renderer : renderers) {
+      if (renderer instanceof LineMarkerInfo.LineMarkerGutterIconRenderer) {
+        LineMarkerInfo.LineMarkerGutterIconRenderer lineMarkerRenderer = (LineMarkerInfo.LineMarkerGutterIconRenderer)renderer;
+        AnAction clickAction = ((LineMarkerInfo.LineMarkerGutterIconRenderer)renderer).getClickAction();
+        if (clickAction instanceof NavigateAction && actionId.equals(((NavigateAction)clickAction).getOriginalActionId())) {
+          elementCandidates.add(lineMarkerRenderer.getLineMarkerInfo().getElement());
         }
       }
-      if (elementCandidates.size() == 1) {
-        return elementCandidates.iterator().next().getTextRange().getStartOffset();
-      }
+    }
+    if (elementCandidates.size() == 1) {
+      return elementCandidates.iterator().next().getTextRange().getStartOffset();
     }
     return -1;
   }
@@ -143,7 +141,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
 
   @Override
   @NotNull
-  protected String getChooserTitle(@NotNull PsiElement sourceElement, String name, int length, boolean finished) {
+  protected String getChooserTitle(@NotNull PsiElement sourceElement, @Nullable String name, int length, boolean finished) {
     ItemPresentation presentation = ((NavigationItem)sourceElement).getPresentation();
     String fullName;
     if (presentation == null) {
@@ -155,7 +153,8 @@ public class GotoImplementationHandler extends GotoTargetHandler {
       String containerText = containerPresentation == null ? null : containerPresentation.getPresentableText();
       fullName = (containerText == null ? "" : containerText+".") + presentation.getPresentableText();
     }
-    return CodeInsightBundle.message("goto.implementation.chooserTitle", StringUtil.escapeXmlEntities(fullName), length, finished ? "" : " so far");
+    return CodeInsightBundle.message("goto.implementation.chooserTitle",
+                                     fullName == null ? "unnamed element" : StringUtil.escapeXmlEntities(fullName), length, finished ? "" : " so far");
   }
 
   @NotNull

@@ -165,9 +165,6 @@ final class BrowserSettingsPanel {
       if (text == null) throw new IllegalStateException(String.valueOf(value));
       return text;
     }));
-    if (UIUtil.isUnderAquaLookAndFeel()) {
-      defaultBrowserPolicyComboBox.setBorder(JBUI.Borders.emptyTop(3));
-    }
   }
 
   private void updateCustomPathTextFieldValue(@NotNull DefaultBrowserPolicy browser) {

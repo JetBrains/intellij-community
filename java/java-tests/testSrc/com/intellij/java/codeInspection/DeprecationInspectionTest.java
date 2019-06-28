@@ -11,7 +11,7 @@ import com.intellij.openapi.roots.JavaModuleExternalPaths;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.JavaInspectionTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author max
  */
-public class DeprecationInspectionTest extends InspectionTestCase {
+public class DeprecationInspectionTest extends JavaInspectionTestCase {
 
   private final DefaultLightProjectDescriptor myProjectDescriptor = new DefaultLightProjectDescriptor() {
     @Override

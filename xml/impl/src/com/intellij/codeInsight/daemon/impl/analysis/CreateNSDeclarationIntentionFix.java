@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.application.options.XmlSettings;
@@ -33,7 +33,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.xml.*;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlElementDescriptor;
@@ -145,7 +145,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     final PsiElement element = myElement.retrieve();
     if (element == null) return;
     XmlFile xmlFile = getFile();
-    final String[] namespaces = ArrayUtil.toStringArray(getNamespaces(element, xmlFile));
+    final String[] namespaces = ArrayUtilRt.toStringArray(getNamespaces(element, xmlFile));
 
     runActionOverSeveralAttributeValuesAfterLettingUserSelectTheNeededOne(
       namespaces,
@@ -246,7 +246,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   private static boolean checkIfGivenXmlHasTheseWords(final String name, final XmlFile tldFileByUri) {
     if (name == null || name.isEmpty()) return true;
     final List<String> list = StringUtil.getWordsIn(name);
-    final String[] words = ArrayUtil.toStringArray(list);
+    final String[] words = ArrayUtilRt.toStringArray(list);
     final boolean[] wordsFound = new boolean[words.length];
     final int[] wordsFoundCount = new int[1];
 

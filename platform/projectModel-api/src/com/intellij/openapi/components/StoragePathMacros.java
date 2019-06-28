@@ -3,6 +3,7 @@ package com.intellij.openapi.components;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,6 +28,13 @@ public final class StoragePathMacros {
    * and outside of application configuration directory (if application level component).
    */
   public static final String CACHE_FILE = "$CACHE_FILE$";
+
+  /**
+   * Applicable only for project-level.
+   */
+  @ApiStatus.Experimental
+  @NotNull
+  public static final String PRODUCT_WORKSPACE_FILE = "$PRODUCT_WORKSPACE_FILE$";
 
   @NotNull
   public static final String MODULE_FILE = "$MODULE_FILE$";

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -10,8 +10,8 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Consumer;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -97,7 +97,8 @@ public class SearchPopup extends ComponentAdapter implements CaretListener {
   }
 
   private static int getXOffset() {
-    return JBUI.scale(UIUtil.isUnderWin10LookAndFeel() ? 5 : UIUtil.getListCellHPadding());
+    int i = UIUtil.isUnderWin10LookAndFeel() ? 5 : UIUtil.getListCellHPadding();
+    return JBUIScale.scale(i);
   }
 
   @NotNull
@@ -112,7 +113,7 @@ public class SearchPopup extends ComponentAdapter implements CaretListener {
     }
 
     SwingUtilities.convertPointToScreen(location, myEditor);
-    location.x -= getXOffset() + JBUI.scale(2);
+    location.x -= getXOffset() + JBUIScale.scale(2);
     location.y += 2;
 
     return location;

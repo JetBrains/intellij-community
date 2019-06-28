@@ -222,12 +222,10 @@ public class RunAnythingPopupUI extends BigPopupUI {
     }
 
     if (model != null) {
-      RunAnythingUsageCollector.Companion.triggerExecCategoryStatistics(project, model.getGroups(), model.getClass(), index);
+      RunAnythingUsageCollector.Companion.triggerExecCategoryStatistics(project, model.getGroups(), model.getClass(), index,
+                                                                        SHIFT_IS_PRESSED.get(), ALT_IS_PRESSED.get());
     }
     DataContext dataContext = createDataContext(myDataContext, ALT_IS_PRESSED.get());
-    if (SHIFT_IS_PRESSED.get()) {
-      RunAnythingUtil.triggerShiftStatistics(dataContext);
-    }
     RunAnythingUtil.executeMatched(dataContext, pattern);
 
     searchFinishedHandler.run();
@@ -695,12 +693,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
       });
     }
 
-    private void runReadAction(@NotNull Runnable action) {
-      if (!DumbService.getInstance(myProject).isDumb()) {
-        ApplicationManager.getApplication().runReadAction(action);
-      }
-    }
-
     protected void check() {
       myProgressIndicator.checkCanceled();
       if (myDone.isRejected()) throw new ProcessCanceledException();
@@ -719,13 +711,18 @@ public class RunAnythingPopupUI extends BigPopupUI {
     private void buildCompletionGroups(@NotNull String pattern, @NotNull Runnable checkCancellation) {
       LOG.assertTrue(myListModel instanceof RunAnythingSearchListModel.RunAnythingMainListModel);
 
+      if (DumbService.getInstance(myProject).isDumb()) {
+        return;
+      }
+
       StreamEx.of(RunAnythingRecentGroup.INSTANCE)
         .select(RunAnythingGroup.class)
         .append(myListModel.getGroups().stream()
                   .filter(group -> group instanceof RunAnythingCompletionGroup || group instanceof RunAnythingGeneralGroup)
                   .filter(group -> RunAnythingCache.getInstance(myProject).isGroupVisible(group.getTitle())))
         .forEach(group -> {
-          runReadAction(() -> group.collectItems(myDataContext, myListModel, pattern, checkCancellation));
+          ApplicationManager.getApplication().runReadAction(
+            () -> group.collectItems(myDataContext, myListModel, pattern, checkCancellation));
           checkCancellation.run();
         });
     }
@@ -752,7 +749,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     }
 
     public ActionCallback insert(final int index, @NotNull RunAnythingGroup group) {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> runReadAction(() -> {
+      ApplicationManager.getApplication().executeOnPooledThread(() -> ApplicationManager.getApplication().runReadAction(() -> {
         try {
           RunAnythingGroup.SearchResult result = group.getItems(myDataContext, myListModel, trimHelpPattern(), true, this::check);
 

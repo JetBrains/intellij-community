@@ -89,7 +89,7 @@ public class RootsCalculator {
     return myLocationCache.getLocation(myVcs, getFilePath(file), false);
   }
 
-  private static void logRoots(@NotNull String prefix, @NotNull Collection<VirtualFile> roots) {
+  private static void logRoots(@NotNull String prefix, @NotNull Collection<? extends VirtualFile> roots) {
     if (LOG.isDebugEnabled()) {
       LOG.debug(prefix + ": " + join(roots, VirtualFile::getPath, ", "));
     }

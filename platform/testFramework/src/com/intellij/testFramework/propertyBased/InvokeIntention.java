@@ -40,6 +40,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.ui.UiInterceptors;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
@@ -121,6 +122,7 @@ public class InvokeIntention extends ActionOnFile {
 
     Disposable disposable = Disposer.newDisposable();
     try {
+      UiInterceptors.register(new RandomActivityInterceptor(env, disposable));
       if (containsErrorElements) {
         Registry.get("ide.check.structural.psi.text.consistency.in.tests").setValue(false, disposable);
         Disposer.register(disposable, this::restoreAfterPotentialPsiTextInconsistency);

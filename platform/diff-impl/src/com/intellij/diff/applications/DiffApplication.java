@@ -22,15 +22,20 @@ import com.intellij.diff.chains.SimpleDiffRequestChain;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.ide.CliResult;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 
 public class DiffApplication extends DiffApplicationBase {
   public DiffApplication() {
@@ -44,8 +49,9 @@ public class DiffApplication extends DiffApplicationBase {
     return DiffBundle.message("diff.application.usage.parameters.and.description", scriptName);
   }
 
+  @NotNull
   @Override
-  public void processCommand(@NotNull String[] args, @Nullable String currentDirectory) throws Exception {
+  public Future<CliResult> processCommand(@NotNull String[] args, @Nullable String currentDirectory) throws Exception {
     List<String> filePaths = Arrays.asList(args).subList(1, args.length);
     List<VirtualFile> files = findFiles(filePaths, currentDirectory);
     Project project = guessProject(files);
@@ -62,7 +68,18 @@ public class DiffApplication extends DiffApplicationBase {
     SimpleDiffRequestChain chain = new SimpleDiffRequestChain(request);
     chain.putUserData(DiffUserDataKeys.PLACE, DiffPlaces.EXTERNAL);
 
-    DiffDialogHints dialogHints = project != null ? DiffDialogHints.DEFAULT : DiffDialogHints.MODAL;
-    DiffManagerEx.getInstance().showDiffBuiltin(project, chain, dialogHints);
+    if (project != null) {
+      CompletableFuture<CliResult> future = new CompletableFuture<>();
+      Runnable resultCallback = () -> future.complete(new CliResult(0, null));
+
+      DiffDialogHints dialogHints = new DiffDialogHints(WindowWrapper.Mode.FRAME, null,
+                                                        wrapper -> UIUtil.runWhenWindowClosed(wrapper.getWindow(), resultCallback));
+      DiffManagerEx.getInstance().showDiffBuiltin(project, chain, dialogHints);
+      return future;
+    }
+    else {
+      DiffManagerEx.getInstance().showDiffBuiltin(null, chain, DiffDialogHints.MODAL);
+      return CliResult.ok();
+    }
   }
 }

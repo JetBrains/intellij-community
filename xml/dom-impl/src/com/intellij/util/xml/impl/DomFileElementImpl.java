@@ -15,17 +15,18 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.semantic.SemElement;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.*;
@@ -45,8 +46,7 @@ import java.util.Map;
 /**
  * @author peter
  */
-public class DomFileElementImpl<T extends DomElement> implements DomFileElement<T> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomFileElementImpl");
+public class DomFileElementImpl<T extends DomElement> implements DomFileElement<T>, SemElement {
   private static final DomGenericInfo EMPTY_DOM_GENERIC_INFO = new DomGenericInfo() {
 
     @Override
@@ -141,17 +141,13 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   private final DomManagerImpl myManager;
   private final Map<Key,Object> myUserData = new HashMap<>();
 
-  protected DomFileElementImpl(final XmlFile file,
-                               final Class<T> rootElementClass,
-                               final EvaluatedXmlNameImpl rootTagName,
-                               final DomManagerImpl manager, final DomFileDescription<T> fileDescription,
-                               FileStub stub) {
+  protected DomFileElementImpl(XmlFile file, EvaluatedXmlNameImpl rootTagName, DomFileDescription<T> fileDescription, FileStub stub) {
     myFile = file;
-    myRootElementClass = rootElementClass;
+    myRootElementClass = fileDescription.getRootElementClass();
     myRootTagName = rootTagName;
-    myManager = manager;
+    myManager = DomManagerImpl.getDomManager(file.getProject());
     myFileDescription = fileDescription;
-    myRootHandler = new DomRootInvocationHandler(rootElementClass, new RootDomParentStrategy(this), this, rootTagName,
+    myRootHandler = new DomRootInvocationHandler(myRootElementClass, new RootDomParentStrategy(this), this, rootTagName,
                                                  stub == null ? null : stub.getRootTagStub());
   }
 
@@ -304,18 +300,8 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   @NotNull
   public final T getRootElement() {
     if (!isValid()) {
-      if (!myFile.isValid()) {
-        assert false: myFile + " is not valid";
-      } else {
-        final DomFileElementImpl<DomElement> fileElement = myManager.getFileElement(myFile);
-        if (fileElement == null) {
-          final FileDescriptionCachedValueProvider<DomElement> provider = myManager.getOrCreateCachedValueProvider(myFile);
-          String s = provider.getFileElementWithLogging();
-          LOG.error("Null, log=" + s);
-        } else {
-          assert false: this + " does not equal to " + fileElement;
-        }
-      }
+      PsiUtilCore.ensureValid(myFile);
+      throw new AssertionError(this + " is not equal to " + myManager.getFileElement(myFile));
     }
     return (T)getRootHandler().getProxy();
   }

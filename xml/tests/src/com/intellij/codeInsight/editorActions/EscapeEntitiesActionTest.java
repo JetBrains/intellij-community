@@ -2,14 +2,14 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 import java.nio.charset.StandardCharsets;
 
 /**
  * @author Dennis.Ushakov
  */
-public class EscapeEntitiesActionTest extends LightCodeInsightFixtureTestCase {
+public class EscapeEntitiesActionTest extends LightJavaCodeInsightFixtureTestCase {
   private static final String N_DASH = new String(new byte[]{-30, -128, -109}, StandardCharsets.UTF_8);
   private static final String COPY = new String(new byte[]{-62, -82}, StandardCharsets.UTF_8);
 

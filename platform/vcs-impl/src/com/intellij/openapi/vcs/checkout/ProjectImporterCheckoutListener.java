@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.checkout;
 
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -27,12 +28,14 @@ public class ProjectImporterCheckoutListener implements CheckoutListener {
         if (virtualFile != null) {
           final ProjectOpenProcessor openProcessor = ProjectOpenProcessor.getImportProvider(virtualFile);
           if (openProcessor != null) {
-            int rc = Messages
-              .showYesNoDialog(project, VcsBundle.message("checkout.open.project.prompt", ProjectCheckoutListener.getProductNameWithArticle(), file.getPath()),
-                               VcsBundle.message("checkout.title"), Messages.getQuestionIcon());
-            if (rc == Messages.YES) {
-              openProcessor.doOpenProject(virtualFile, project, false);
-            }
+            TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+              int rc = Messages
+                .showYesNoDialog(project, VcsBundle.message("checkout.open.project.prompt", ProjectCheckoutListener.getProductNameWithArticle(), file.getPath()),
+                                 VcsBundle.message("checkout.title"), Messages.getQuestionIcon());
+              if (rc == Messages.YES) {
+                openProcessor.doOpenProject(virtualFile, project, false);
+              }
+            });
             return true;
           }
         }

@@ -75,6 +75,7 @@ class ActionUpdater {
       action -> {
         // clone the presentation to avoid partially changing the cached one if update is interrupted
         Presentation presentation = ActionUpdateEdtExecutor.computeOnEdt(() -> myFactory.getPresentation(action).clone());
+        presentation.setEnabledAndVisible(true);
         Supplier<Boolean> doUpdate = () -> doUpdate(myModalContext, action, createActionEvent(action, presentation));
         boolean success = callAction(action, "update", doUpdate);
         return success ? presentation : null;
@@ -202,6 +203,9 @@ class ActionUpdater {
   }
 
   private List<AnAction> doExpandActionGroup(ActionGroup group, boolean hideDisabled, UpdateStrategy strategy) {
+    if (group instanceof ActionGroupStub) {
+      throw new IllegalStateException("Trying to expand non-unstubbed group");
+    }
     ProgressManager.checkCanceled();
     Presentation presentation = update(group, strategy);
     if (presentation == null || !presentation.isVisible()) { // don't process invisible groups
@@ -237,7 +241,7 @@ class ActionUpdater {
       if (hideDisabled && !hasEnabledChildren(actionGroup, strategy)) {
         return Collections.emptyList();
       }
-      if (actionGroup.isPopup()) { // popup menu has its own presentation
+      if (actionGroup.isPopup(myPlace)) { // popup menu has its own presentation
         if (actionGroup.disableIfNoVisibleChildren()) {
           boolean visibleChildren = hasVisibleChildren(actionGroup, strategy);
           if (actionGroup.hideIfNoVisibleChildren() && !visibleChildren) {

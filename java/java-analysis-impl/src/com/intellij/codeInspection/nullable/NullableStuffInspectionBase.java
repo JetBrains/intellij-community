@@ -26,6 +26,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
@@ -418,23 +419,15 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                                      Annotated annotated,
                                                      NullableNotNullManager manager, String anno, @NotNull ProblemsHolder holder) {
     if (!AnnotationUtil.isAnnotatingApplicable(field, anno)) {
-      final PsiAnnotation notNull = AnnotationUtil.findAnnotation(field, manager.getNotNulls());
-      final PsiAnnotation nullable = AnnotationUtil.findAnnotation(field, manager.getNullables());
-      final PsiAnnotation annotation;
       String message = "Not \'";
-      if (annotated.isDeclaredNullable) {
-        message += nullable.getQualifiedName();
-        annotation = nullable;
-      } else {
-        message += notNull.getQualifiedName();
-        annotation = notNull;
-      }
+      PsiAnnotation annotation = Objects.requireNonNull(annotated.isDeclaredNullable ? annotated.nullable : annotated.notNull);
+      message += annotation.getQualifiedName();
       message += "\' but \'" + anno + "\' would be used for code generation.";
       final PsiJavaCodeReferenceElement annotationNameReferenceElement = annotation.getNameReferenceElement();
       holder.registerProblem(annotationNameReferenceElement != null && annotationNameReferenceElement.isPhysical() ? annotationNameReferenceElement : field.getNameIdentifier(),
                              message,
                              ProblemHighlightType.WEAK_WARNING,
-                             new ChangeNullableDefaultsFix(notNull, nullable, manager));
+                             new ChangeNullableDefaultsFix(annotated.notNull, annotated.nullable, manager));
       return false;
     }
     return true;
@@ -450,7 +443,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     final PsiIdentifier nameIdentifier = getter == null ? null : getter.getNameIdentifier();
     if (nameIdentifier != null && nameIdentifier.isPhysical()) {
       if (PropertyUtil.getFieldOfGetter(getter) == field) {
-        AnnotateMethodFix getterAnnoFix = new AnnotateMethodFix(anno, ArrayUtil.toStringArray(annoToRemove));
+        AnnotateMethodFix getterAnnoFix = new AnnotateMethodFix(anno, ArrayUtilRt.toStringArray(annoToRemove));
         if (REPORT_NOT_ANNOTATED_GETTER) {
           if (!manager.hasNullability(getter) && !TypeConversionUtil.isPrimitiveAndNotNull(getter.getReturnType())) {
             holder.registerProblem(nameIdentifier, InspectionsBundle
@@ -500,7 +493,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
 
   @NotNull
   private static AddAnnotationPsiFix createAddAnnotationFix(String anno, List<String> annoToRemove, PsiParameter parameter) {
-    return new AddAnnotationPsiFix(anno, parameter, PsiNameValuePair.EMPTY_ARRAY, ArrayUtil.toStringArray(annoToRemove));
+    return new AddAnnotationPsiFix(anno, parameter, PsiNameValuePair.EMPTY_ARRAY, ArrayUtilRt.toStringArray(annoToRemove));
   }
 
   @Contract("_,_,null -> fail")
@@ -874,7 +867,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
               && AddAnnotationPsiFix.isAvailable(overriding, defaultNotNull)) {
             PsiIdentifier identifier = method.getNameIdentifier();//load tree
             PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, nullableManager.getNotNulls());
-            final String[] annotationsToRemove = ArrayUtil.toStringArray(nullableManager.getNullables());
+            final String[] annotationsToRemove = ArrayUtilRt.toStringArray(nullableManager.getNullables());
 
             LocalQuickFix fix = AnnotationUtil.isAnnotatingApplicable(overriding, defaultNotNull)
                                 ? new MyAnnotateMethodFix(defaultNotNull, annotationsToRemove)

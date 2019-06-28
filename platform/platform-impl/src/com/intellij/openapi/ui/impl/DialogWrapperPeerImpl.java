@@ -11,7 +11,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.CommandProcessorEx;
@@ -38,10 +37,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.AppIcon;
-import com.intellij.ui.AppUIUtil;
-import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.SpeedSearchBase;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.IJSwingUtilities;
@@ -142,8 +138,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   }
 
   /**
-   * @param parent parent component which is used to calculate heavy weight window ancestor.
-   *               {@code parent} cannot be {@code null} and must be showing.
+   * @param parent parent component (must be showing) which is used to calculate heavy weight window ancestor.
    */
   protected DialogWrapperPeerImpl(@NotNull DialogWrapper wrapper, @NotNull Component parent, boolean canBeParent) {
     boolean headless = isHeadlessEnv();
@@ -390,9 +385,13 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     final JRootPane rootPane = getRootPane();
     UIUtil.decorateWindowHeader(rootPane);
 
+    if (getWindow() instanceof JDialog) {
+      UIUtil.setCustomTitleBar(getWindow(), rootPane, runnable -> Disposer.register(myWrapper.getDisposable(), () -> runnable.run()));
+    }
+
     Container contentPane = getContentPane();
-    if (IdeFrameDecorator.isCustomDecoration() && contentPane instanceof JComponent) {
-      setContentPane(CustomFrameDialogContent.Companion.getContent(getWindow(), (JComponent) contentPane));
+    if (IdeFrameDecorator.isCustomDecorationActive() && contentPane instanceof JComponent) {
+      setContentPane(CustomFrameDialogContent.getContent(getWindow(), myProject, (JComponent) contentPane));
     }
 
     anCancelAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, rootPane);
@@ -424,11 +423,14 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       hidePopupsIfNeeded();
     }
 
-    myDialog.getWindow().setAutoRequestFocus(!Registry.is("suppress.focus.stealing"));
+    myDialog.getWindow().setAutoRequestFocus(!UIUtil.SUPPRESS_FOCUS_STEALING);
 
-    final Disposable tb = TouchBarsManager.showDialogWrapperButtons(myDialog.getContentPane());
-    if (tb != null)
-      myDisposeActions.add(() -> Disposer.dispose(tb));
+    if (SystemInfo.isMac) {
+      final Disposable tb = TouchBarsManager.showDialogWrapperButtons(myDialog.getContentPane());
+      if (tb != null) {
+        myDisposeActions.add(() -> Disposer.dispose(tb));
+      }
+    }
 
     try {
       myDialog.show();
@@ -438,7 +440,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         commandProcessor.leaveModal();
         if (perProjectModality) {
           LaterInvocator.leaveModal(project, myDialog.getWindow());
-        } else {
+        }
+        else {
           LaterInvocator.leaveModal(myDialog);
         }
       }
@@ -468,8 +471,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
 
       if (StackingPopupDispatcher.getInstance().isPopupFocused()) return;
-      JTree tree = UIUtil.getParentOfType(JTree.class, focusOwner);
-      JTable table = UIUtil.getParentOfType(JTable.class, focusOwner);
+      JTree tree = ComponentUtil.getParentOfType((Class<? extends JTree>)JTree.class, focusOwner);
+      JTable table = ComponentUtil.getParentOfType((Class<? extends JTable>)JTable.class, focusOwner);
 
       if (tree != null || table != null) {
         if (hasNoEditingTreesOrTablesUpward(focusOwner)) {
@@ -545,9 +548,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       myWindowListener = new MyWindowListener();
       addWindowListener(myWindowListener);
-      UIUtil.setAutoRequestFocus(this, !Registry.is("suppress.focus.stealing"));
+      UIUtil.setAutoRequestFocus(this, !UIUtil.SUPPRESS_FOCUS_STEALING);
     }
 
+    /**
+     * @deprecated use {@link MyDialog#MyDialog(Window, DialogWrapper, Project, ActionCallback)}
+     */
     @Deprecated
     MyDialog(Window owner,
              DialogWrapper dialogWrapper,
@@ -629,7 +635,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     @Override
     public void addNotify() {
-      if (IdeFrameDecorator.isCustomDecoration()) {
+      if (IdeFrameDecorator.isCustomDecorationActive()) {
         JdkEx.setHasCustomDecoration(this);
       }
       super.addNotify();
@@ -817,9 +823,17 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         SwingUtilities.invokeLater(() -> {
           myOpened = true;
           final DialogWrapper activeWrapper = getActiveWrapper();
-          for (JComponent c : UIUtil.uiTraverser(e.getWindow()).filter(JComponent.class)) {
+          UIUtil.uiTraverser(e.getWindow()).filter(JComponent.class).consumeEach(c -> {
             GraphicsUtil.setAntialiasingType(c, AntialiasingType.getAAHintForSwingComponent());
+            c.invalidate();
+          });
+
+          JComponent rootPane = ((JDialog)e.getComponent()).getRootPane();
+          if (rootPane != null) {
+            rootPane.revalidate();
           }
+          e.getComponent().repaint();
+
           if (activeWrapper == null) {
             myFocusedCallback.setRejected();
           }
@@ -845,7 +859,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
           setupSelectionOnPreferredComponent(toFocus);
 
           if (toFocus != null) {
-            if (isShowing() && (ApplicationManagerEx.getApplicationEx() == null || ApplicationManagerEx.getApplicationEx().isActive())) {
+            if (isShowing() && (ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isActive())) {
               toFocus.requestFocus();
             } else {
               toFocus.requestFocusInWindow();

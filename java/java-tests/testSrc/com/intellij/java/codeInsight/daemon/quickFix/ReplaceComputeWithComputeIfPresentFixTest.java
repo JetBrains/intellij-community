@@ -6,7 +6,7 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 public class ReplaceComputeWithComputeIfPresentFixTest extends LightQuickFixParameterizedTestCase {
@@ -20,7 +20,7 @@ public class ReplaceComputeWithComputeIfPresentFixTest extends LightQuickFixPara
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return LightCodeInsightFixtureTestCase.JAVA_8_ANNOTATED;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_8_ANNOTATED;
   }
 
   @Override

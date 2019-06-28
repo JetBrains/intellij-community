@@ -1,10 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api.data;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.io.mandatory.Mandatory;
-import org.jetbrains.io.mandatory.RestModel;
 
 import java.util.Objects;
 
@@ -30,13 +28,13 @@ import java.util.Objects;
   "site_admin": false
 */
 //endregion
-@RestModel
 @SuppressWarnings("UnusedDeclaration")
 public class GithubUser {
   @NotNull public static final GithubUser UNKNOWN = createUnknownUser();
 
-  @Mandatory private String login;
-  @Mandatory private Long id;
+  private String login;
+  private Long id;
+  private String nodeId;
   private String avatarUrl;
   private String gravatarId;
 
@@ -47,11 +45,16 @@ public class GithubUser {
   private Boolean siteAdmin;
 
   @NotNull
+  public String getNodeId() {
+    return nodeId;
+  }
+
+  @NotNull
   public String getLogin() {
     return login;
   }
 
-  @Nullable
+  @NotNull
   public String getHtmlUrl() {
     return htmlUrl;
   }
@@ -59,14 +62,6 @@ public class GithubUser {
   @Nullable
   public String getAvatarUrl() {
     return avatarUrl;
-  }
-
-
-  @NotNull
-  private static GithubUser createUnknownUser() {
-    GithubUser user = new GithubUser();
-    user.login = "ghost";
-    return user;
   }
 
   @Override
@@ -80,5 +75,13 @@ public class GithubUser {
   @Override
   public int hashCode() {
     return Objects.hash(id);
+  }
+
+  @NotNull
+  private static GithubUser createUnknownUser() {
+    GithubUser user = new GithubUser();
+    user.id = -1L;
+    user.login = "ghost";
+    return user;
   }
 }

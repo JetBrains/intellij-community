@@ -14,6 +14,7 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.MethodBytecodeUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
@@ -53,13 +54,12 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
   }
 
   @NotNull
-  @Override
-  public Promise<List<SmartStepTarget>> findSmartStepTargetsAsync(SourcePosition position, DebuggerSession session) {
+  private Promise<List<SmartStepTarget>> findSmartStepTargetsAsync(SourcePosition position, DebuggerSession session, boolean smart) {
     AsyncPromise<List<SmartStepTarget>> res = new AsyncPromise<>();
     session.getProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(session.getContextManager().getContext()) {
       @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
-        res.setResult(ReadAction.compute(() -> findSmartStepTargets(position, suspendContext, getDebuggerContext())));
+        res.setResult(ReadAction.compute(() -> findStepTargets(position, suspendContext, getDebuggerContext(), smart)));
       }
 
       @Override
@@ -72,9 +72,15 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
   @NotNull
   @Override
+  public Promise<List<SmartStepTarget>> findSmartStepTargetsAsync(SourcePosition position, DebuggerSession session) {
+    return findSmartStepTargetsAsync(position, session, true);
+  }
+
+  @NotNull
+  @Override
   public Promise<List<SmartStepTarget>> findStepIntoTargets(SourcePosition position, DebuggerSession session) {
     if (DebuggerSettings.getInstance().ALWAYS_SMART_STEP_INTO) {
-      return findSmartStepTargetsAsync(position, session);
+      return findSmartStepTargetsAsync(position, session, false);
     }
     return Promises.rejectedPromise();
   }
@@ -85,9 +91,10 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
     throw new IllegalStateException("Should not be used");
   }
 
-  protected List<SmartStepTarget> findSmartStepTargets(final SourcePosition position,
-                                                       @Nullable SuspendContextImpl suspendContext,
-                                                       @NotNull DebuggerContextImpl debuggerContext) {
+  protected List<SmartStepTarget> findStepTargets(final SourcePosition position,
+                                                  @Nullable SuspendContextImpl suspendContext,
+                                                  @NotNull DebuggerContextImpl debuggerContext,
+                                                  boolean smart) {
     final int line = position.getLine();
     if (line < 0) {
       return Collections.emptyList(); // the document has been changed
@@ -342,6 +349,10 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       if (!targets.isEmpty()) {
         StackFrameProxyImpl frameProxy = suspendContext != null ? suspendContext.getFrameProxy() : null;
         if (frameProxy != null) {
+          VirtualMachineProxyImpl virtualMachine = frameProxy.getVirtualMachine();
+          if (!virtualMachine.canGetConstantPool() || !virtualMachine.canGetBytecodes()) {
+            return smart ? targets : Collections.emptyList();
+          }
           // sanity check
           try {
             List<MethodSmartStepTarget> methodTargets =
@@ -351,7 +362,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
                 .toList();
             visitLinesMethods(frameProxy.location(), true, lines, (opcode, owner, name, desc, itf) -> {
               if (name.startsWith("access$")) { // bridge method
-                ReferenceType cls = ContainerUtil.getFirstItem(frameProxy.getVirtualMachine().classesByName(owner));
+                ReferenceType cls = ContainerUtil.getFirstItem(virtualMachine.classesByName(owner));
                 if (cls != null) {
                   Method method = DebuggerUtils.findMethod(cls, name, desc);
                   if (method != null) {

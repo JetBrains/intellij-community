@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ide.BrowserUtil;
@@ -31,9 +30,6 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
 
-/**
- * @author Eugene Belyaev
- */
 public class HyperlinkLabel extends HighlightableComponent {
   private static final TextAttributes BOLD_ATTRIBUTES = new TextAttributes(new JBColor(() -> {
     final Color foreground1 = UIUtil.getLabelTextForeground();

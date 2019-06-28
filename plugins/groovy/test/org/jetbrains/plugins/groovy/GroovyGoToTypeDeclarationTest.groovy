@@ -15,14 +15,14 @@
  */
 package org.jetbrains.plugins.groovy
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction
 import com.intellij.psi.PsiClass
 
 /**
  * @author Sergey Evdokimov
  */
-class GroovyGoToTypeDeclarationTest extends LightCodeInsightFixtureTestCase {
+class GroovyGoToTypeDeclarationTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testGoToTypeDeclarationMethod() {
     myFixture.configureByText("g.groovy", """

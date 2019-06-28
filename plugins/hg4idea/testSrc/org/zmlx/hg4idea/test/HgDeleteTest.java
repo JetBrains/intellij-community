@@ -15,12 +15,12 @@ package org.zmlx.hg4idea.test;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.io.File;
 
-import static org.testng.Assert.fail;
+import static org.junit.Assert.fail;
 
 public class HgDeleteTest extends HgSingleUserTest {
 
@@ -76,6 +76,7 @@ public class HgDeleteTest extends HgSingleUserTest {
   public void testNewlyAddedFileShouldNotBePromptedForRemoval() {
     showConfirmation(VcsConfiguration.StandardConfirmation.REMOVE);
     final VirtualFile vf = createFileInCommand("a.txt", null);
+    myChangeListManager.ensureUpToDate();
     final HgMockVcsHelper helper = registerMockVcsHelper();
     helper.addListener(new VcsHelperListener() {
       @Override
@@ -103,6 +104,7 @@ public class HgDeleteTest extends HgSingleUserTest {
 
     showConfirmation(VcsConfiguration.StandardConfirmation.REMOVE);
     vf = createFileInCommand("a.txt", null);
+    myChangeListManager.ensureUpToDate();
     final HgMockVcsHelper helper = registerMockVcsHelper();
     helper.addListener(new VcsHelperListener() {
       @Override

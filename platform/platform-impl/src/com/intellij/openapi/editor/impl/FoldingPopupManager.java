@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,11 +21,21 @@ import java.awt.event.MouseEvent;
 /**
  * This class implements showing a preview of text in a collapsed fold region on mouse hover.
  */
-class FoldingPopupManager implements EditorMouseListener, EditorMouseMotionListener {
+public class FoldingPopupManager implements EditorMouseListener, EditorMouseMotionListener {
+  private static final Key<Boolean> DISABLED = Key.create("FoldingPopupManager.disabled");
   private static final TooltipGroup FOLDING_TOOLTIP_GROUP = new TooltipGroup("FOLDING_TOOLTIP_GROUP", 10);
   private static final int TOOLTIP_DELAY_MS = 300;
 
   private final Alarm myAlarm;
+
+  public static void disableForEditor(@NotNull Editor editor) {
+    editor.putUserData(DISABLED, Boolean.TRUE);
+    TooltipController.getInstance().cancelTooltip(FOLDING_TOOLTIP_GROUP, null, true);
+  }
+
+  public static void enableForEditor(@NotNull Editor editor) {
+    editor.putUserData(DISABLED, null);
+  }
 
   FoldingPopupManager(EditorImpl editor) {
     myAlarm = new Alarm(editor.getDisposable());
@@ -36,6 +47,7 @@ class FoldingPopupManager implements EditorMouseListener, EditorMouseMotionListe
   public void mouseMoved(@NotNull EditorMouseEvent e) {
     myAlarm.cancelAllRequests();
     Editor editor = e.getEditor();
+    if (editor.getUserData(DISABLED) != null) return;
     if (e.getArea() == EditorMouseEventArea.EDITING_AREA) {
       MouseEvent mouseEvent = e.getMouseEvent();
       Point point = mouseEvent.getPoint();
@@ -43,7 +55,7 @@ class FoldingPopupManager implements EditorMouseListener, EditorMouseMotionListe
       TooltipController controller = TooltipController.getInstance();
       if (fold != null && !fold.shouldNeverExpand()) {
         myAlarm.addRequest(() -> {
-          if (!editor.getComponent().isShowing() || !fold.isValid() || fold.isExpanded()) return;
+          if (editor.getUserData(DISABLED) != null || !editor.getComponent().isShowing() || !fold.isValid() || fold.isExpanded()) return;
           DocumentFragment range = createDocumentFragment(fold);
           Point p = SwingUtilities.convertPoint((Component)mouseEvent.getSource(), point,
                                                 editor.getComponent().getRootPane().getLayeredPane());
@@ -74,6 +86,7 @@ class FoldingPopupManager implements EditorMouseListener, EditorMouseMotionListe
   @Override
   public void mouseExited(@NotNull EditorMouseEvent e) {
     myAlarm.cancelAllRequests();
+    if (e.getEditor().getUserData(DISABLED) != null) return;
     TooltipController.getInstance().cancelTooltip(FOLDING_TOOLTIP_GROUP, e.getMouseEvent(), true);
   }
 

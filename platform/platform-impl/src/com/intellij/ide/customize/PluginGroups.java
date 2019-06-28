@@ -26,25 +26,25 @@ public class PluginGroups {
   static final String CORE = "Core";
   private static final int MAX_DESCR_LENGTH = 55;
 
-  public static final String IDEA_VIM_PLUGIN_ID = "IdeaVIM";
+  static final String IDEA_VIM_PLUGIN_ID = "IdeaVIM";
 
-  final Map<String, Pair<Icon, List<String>>> myTree = new LinkedHashMap<>();
-  final Map<String, String> myFeaturedPlugins = new LinkedHashMap<>();
+  private final Map<String, Pair<Icon, List<String>>> myTree = new LinkedHashMap<>();
+  private final Map<String, String> myFeaturedPlugins = new LinkedHashMap<>();
 
   private final Map<String, List<IdSet>> myGroups = new LinkedHashMap<>();
   private final Map<String, String> myDescriptions = new LinkedHashMap<>();
   private final List<IdeaPluginDescriptor> myPluginsFromRepository = new ArrayList<>();
   private final Collection<String> myDisabledPluginIds = new HashSet<>();
   private final IdeaPluginDescriptor[] myAllPlugins;
-  private boolean myInitialized = false;
+  private boolean myInitialized;
   private final Set<String> myFeaturedIds = new HashSet<>();
-  private Runnable myLoadingCallback = null;
+  private Runnable myLoadingCallback;
 
   public PluginGroups() {
-    myAllPlugins = PluginManagerCore.loadDescriptors(null, new ArrayList<>());
+    myAllPlugins = PluginManagerCore.loadDescriptors(new ArrayList<>());
     SwingWorker worker = new SwingWorker<List<IdeaPluginDescriptor>, Object>() {
       @Override
-      protected List<IdeaPluginDescriptor> doInBackground() throws Exception {
+      protected List<IdeaPluginDescriptor> doInBackground() {
         try {
           return RepositoryHelper.loadPlugins(null);
         }
@@ -72,7 +72,7 @@ public class PluginGroups {
     initCloudPlugins();
   }
 
-  public void setLoadingCallback(Runnable loadingCallback) {
+  void setLoadingCallback(Runnable loadingCallback) {
     myLoadingCallback = loadingCallback;
     if (!myPluginsFromRepository.isEmpty()) {
       myLoadingCallback.run();
@@ -234,7 +234,7 @@ public class PluginGroups {
     addTrainingPlugin(featuredPlugins);
   }
 
-  public static void addVcsGroup(Map<String, Pair<Icon, List<String>>> tree) {
+  protected static void addVcsGroup(Map<String, Pair<Icon, List<String>>> tree) {
     tree.put("Version Controls", Pair.create(PlatformImplIcons.VersionControls, Arrays.asList(
       "CVS",
       "Git4Idea",
@@ -254,7 +254,7 @@ public class PluginGroups {
     featuredPlugins.put("IDE Features Trainer", "Code tools:Learn basic shortcuts and essential IDE features with quick interactive exercises:training");
   }
 
-  public static void addLuaPlugin(Map<String, String> featuredPlugins) {
+  protected static void addLuaPlugin(Map<String, String> featuredPlugins) {
     featuredPlugins.put("Lua", "Custom Languages:Lua language support:Lua");
   }
 
@@ -266,7 +266,7 @@ public class PluginGroups {
     featuredPlugins.put("Markdown", "Custom Languages:Markdown language support:org.intellij.plugins.markdown");
   }
 
-  public static void addConfigurationServerPlugin(Map<String, String> featuredPlugins) {
+  protected static void addConfigurationServerPlugin(Map<String, String> featuredPlugins) {
     featuredPlugins.put("Configuration Server",
                         "Team Work:Supports sharing settings between installations of IntelliJ Platform based products used by the same developer on different computers:IdeaServerPlugin");
   }
@@ -276,7 +276,7 @@ public class PluginGroups {
                         "Tools Integration:Integration with JetBrains TeamCity - innovative solution for continuous integration and build management:Jetbrains TeamCity Plugin");
   }
 
-  private void initIfNeed() {
+  private void initIfNeeded() {
     if (myInitialized) return;
     myInitialized = true;
     for (Entry<String, Pair<Icon, List<String>>> entry : myTree.entrySet()) {
@@ -307,22 +307,22 @@ public class PluginGroups {
   }
 
   Map<String, Pair<Icon, List<String>>> getTree() {
-    initIfNeed();
+    initIfNeeded();
     return myTree;
   }
 
   Map<String, String> getFeaturedPlugins() {
-    initIfNeed();
+    initIfNeeded();
     return myFeaturedPlugins;
   }
 
   public String getDescription(String group) {
-    initIfNeed();
+    initIfNeeded();
     return myDescriptions.get(group);
   }
 
   public List<IdSet> getSets(String group) {
-    initIfNeed();
+    initIfNeeded();
     return myGroups.get(group);
   }
 
@@ -350,21 +350,21 @@ public class PluginGroups {
     }
   }
 
-  public Collection<String> getDisabledPluginIds() {
+  Collection<String> getDisabledPluginIds() {
     return Collections.unmodifiableCollection(myDisabledPluginIds);
   }
 
-  public List<IdeaPluginDescriptor> getPluginsFromRepository() {
+  List<IdeaPluginDescriptor> getPluginsFromRepository() {
     return myPluginsFromRepository;
   }
 
   boolean isPluginEnabled(String pluginId) {
-    initIfNeed();
+    initIfNeeded();
     return !myDisabledPluginIds.contains(pluginId);
   }
 
-  IdSet getSet(String pluginId) {
-    initIfNeed();
+  private IdSet getSet(String pluginId) {
+    initIfNeeded();
     for (List<IdSet> sets : myGroups.values()) {
       for (IdSet set : sets) {
         for (String id : set.getIds()) {
@@ -386,7 +386,7 @@ public class PluginGroups {
   }
 
   void setPluginEnabledWithDependencies(final String pluginId, boolean enabled) {
-    initIfNeed();
+    initIfNeeded();
     Set<String> ids = new HashSet<>();
     collectInvolvedIds(pluginId, enabled, ids);
     Set<IdSet> sets = new HashSet<>();

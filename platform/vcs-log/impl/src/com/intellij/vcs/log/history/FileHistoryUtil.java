@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 
@@ -65,8 +64,12 @@ public class FileHistoryUtil {
   }
 
   public static boolean affectsDirectory(@NotNull Change change, @NotNull FilePath directory) {
-    FilePath file = notNull(chooseNotNull(change.getAfterRevision(), change.getBeforeRevision())).getFile();
-    return VfsUtilCore.isAncestor(directory.getIOFile(), file.getIOFile(), false);
+    return affectsDirectory(directory, change.getAfterRevision()) || affectsDirectory(directory, change.getBeforeRevision());
+  }
+
+  private static boolean affectsDirectory(@NotNull FilePath directory, @Nullable ContentRevision revision) {
+    if (revision == null) return false;
+    return VfsUtilCore.isAncestor(directory.getIOFile(), revision.getFile().getIOFile(), false);
   }
 
   @Nullable
@@ -74,7 +77,7 @@ public class FileHistoryUtil {
                                       @NotNull VisiblePack visiblePack, @NotNull VcsLogDiffHandler diffHandler,
                                       @NotNull VcsLogData logData) {
     int commitIndex = visiblePack.getVisibleGraph().getRowInfo(commitRow).getCommit();
-    FilePath path = FileHistoryVisiblePack.filePath(visiblePack, commitIndex);
+    FilePath path = FileHistoryPaths.filePath(visiblePack, commitIndex);
     if (path == null) return null;
     Hash commitHash = logData.getCommitId(commitIndex).getHash();
     ContentRevision afterRevision = createContentRevision(commitHash, commitIndex, visiblePack, diffHandler);
@@ -103,9 +106,9 @@ public class FileHistoryUtil {
   @Nullable
   private static ContentRevision createContentRevision(@NotNull Hash commitHash, int commitIndex, @NotNull VcsLogDataPack visiblePack,
                                                        @NotNull VcsLogDiffHandler diffHandler) {
-    boolean isDeleted = FileHistoryVisiblePack.isDeletedInCommit(visiblePack, commitIndex);
+    boolean isDeleted = FileHistoryPaths.isDeletedInCommit(visiblePack, commitIndex);
     if (isDeleted) return null;
-    FilePath path = FileHistoryVisiblePack.filePath(visiblePack, commitIndex);
+    FilePath path = FileHistoryPaths.filePath(visiblePack, commitIndex);
     if (path == null) return null;
     return diffHandler.createContentRevision(path, commitHash);
   }

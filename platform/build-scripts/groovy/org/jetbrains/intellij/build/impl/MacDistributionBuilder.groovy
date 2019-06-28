@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.util.SystemProperties
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
@@ -107,21 +108,34 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   void buildArtifacts(String osSpecificDistPath) {
     buildContext.executeStep("Build macOS artifacts", BuildOptions.MAC_ARTIFACTS_STEP) {
       def macZipPath = buildMacZip(osSpecificDistPath)
-      def secondJreBuild = buildContext.bundledJreManager.getSecondJreBuild()
       if (buildContext.proprietaryBuildTools.macHostProperties == null) {
         buildContext.messages.info("A macOS build agent isn't configured - .dmg artifact won't be produced")
         buildContext.notifyArtifactBuilt(macZipPath)
       }
       else {
         buildContext.executeStep("Build .dmg artifact for macOS", BuildOptions.MAC_DMG_STEP) {
-          MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath)
-          if (secondJreBuild != null) {
-            def secondJreVersion = buildContext.bundledJreManager.getSecondJreVersion()
-            def jreArchive = "jbr-${buildContext.bundledJreManager.jreArchiveSuffix(secondJreBuild, secondJreVersion, JvmArchitecture.x64, 'osx')}"
-            File archive = new File(buildContext.bundledJreManager.jreDir(), jreArchive)
-            if (archive.file) {
-              MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath, archive.absolutePath)
-            }
+          boolean notarize = SystemProperties.getBooleanProperty("intellij.build.mac.notarize", true)
+          // With second JRE
+          def jreManager = buildContext.bundledJreManager
+          if (jreManager.doBundleSecondJre()) {
+            MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath,
+                                          jreManager.findSecondBundledJreArchiveForMac(), jreManager.isSecondBundledJreModular(),
+                                          jreManager.secondJreSuffix(),
+                                          false) // Disabled because JBR 8 cannot be notarized successfully
+          }
+          // With first aka main JRE
+          File jreArchive = jreManager.findJreArchive('osx')
+          if (jreArchive.file) {
+            MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath,
+                                          jreArchive.absolutePath, jreManager.isBundledJreModular(), "", notarize)
+          }
+          else {
+            buildContext.messages.info("Skipping building macOS distribution with bundled JRE because JRE archive is missing")
+          }
+          // Without JRE
+          if (buildContext.options.buildDmgWithoutBundledJre) {
+            MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath,
+                                          null, false, "-no-jdk", notarize)
           }
           buildContext.ant.delete(file: macZipPath)
         }
@@ -270,9 +284,8 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       def extraBins = customizer.extraExecutables
       def allPaths = [buildContext.paths.distAll, macDistPath]
       def zipRoot = getZipRoot(buildContext, customizer)
-      def suffix = buildContext.bundledJreManager.jreSuffix()
       def baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
-      def targetPath = "${buildContext.paths.artifacts}/${baseName}${suffix}.mac.zip"
+      def targetPath = "${buildContext.paths.artifacts}/${baseName}.mac.zip"
       buildContext.messages.progress("Building zip archive for macOS")
 
       def productJsonDir = new File(buildContext.paths.temp, "mac.dist.product-info.json.zip").absolutePath

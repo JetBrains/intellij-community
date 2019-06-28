@@ -32,11 +32,11 @@ class ServiceViewActionProvider {
     return ourInstance;
   }
 
-  JComponent createServiceToolbar(@NotNull JComponent component) {
+  ActionToolbar createServiceToolbar(@NotNull JComponent component) {
     ActionGroup actions = (ActionGroup)ActionManager.getInstance().getAction(SERVICE_VIEW_NODE_TOOLBAR);
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.SERVICES_TOOLBAR, actions, false);
     toolbar.setTargetComponent(component);
-    return toolbar.getComponent();
+    return toolbar;
   }
 
   void installPopupHandler(@NotNull JComponent component) {
@@ -44,9 +44,7 @@ class ServiceViewActionProvider {
     PopupHandler.installPopupHandler(component, actions, ActionPlaces.SERVICES_POPUP, ActionManager.getInstance());
   }
 
-  JComponent createMasterComponentToolbar(@NotNull JComponent component) {
-    JPanel toolBarPanel = new JPanel(new BorderLayout());
-
+  ActionToolbar createMasterComponentToolbar(@NotNull JComponent component) {
     DefaultActionGroup group = new DefaultActionGroup();
 
     if (component instanceof JTree) {
@@ -64,10 +62,18 @@ class ServiceViewActionProvider {
     group.add(treeActions);
 
     ActionToolbar treeActionsToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.SERVICES_TOOLBAR, group, true);
-    toolBarPanel.add(treeActionsToolBar.getComponent(), BorderLayout.CENTER);
     treeActionsToolBar.setTargetComponent(component);
 
-    return toolBarPanel;
+    return treeActionsToolBar;
+  }
+
+  @Nullable
+  static ServiceView getSelectedView(@NotNull AnActionEvent e) {
+    Component contextComponent = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    while (contextComponent != null && !(contextComponent instanceof ServiceView)) {
+      contextComponent = contextComponent.getParent();
+    }
+    return (ServiceView)contextComponent;
   }
 
   private static class ServiceViewTreeExpander extends DefaultTreeExpander {
@@ -117,16 +123,13 @@ class ServiceViewActionProvider {
     Project project = e.getProject();
     if (project == null) return AnAction.EMPTY_ARRAY;
 
-    Component contextComponent = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
-    while (contextComponent != null && !(contextComponent instanceof ServiceView)) {
-      contextComponent = contextComponent.getParent();
-    }
-    if (contextComponent == null) return AnAction.EMPTY_ARRAY;
+    ServiceView serviceView = getSelectedView(e);
+    if (serviceView == null) return AnAction.EMPTY_ARRAY;
 
-    List<ServiceViewItem> selectedItems = ((ServiceView)contextComponent).getSelectedItems();
+    List<ServiceViewItem> selectedItems = serviceView.getSelectedItems();
     if (selectedItems.isEmpty()) return AnAction.EMPTY_ARRAY;
 
-    ServiceViewDescriptor descriptor = null;
+    ServiceViewDescriptor descriptor;
     if (selectedItems.size() == 1) {
       descriptor = selectedItems.get(0).getViewDescriptor();
     }

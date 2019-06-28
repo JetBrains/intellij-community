@@ -91,7 +91,7 @@ class SaturationBrightnessComponent(private val myModel: ColorPickerModel) : JCo
     val knobX = Math.round(saturation * component.width)
     val knobY = Math.round(component.height * (1.0f - brightness))
 
-    if (image is ToolkitImage) {
+    if (image is ToolkitImage && image.bufferedImage.width > knobX && image.bufferedImage.height > knobY) {
       val rgb = image.bufferedImage.getRGB(knobX, knobY)
       g.color = if (ColorUtil.isDark(Color(rgb))) Color.WHITE else Color.BLACK
     } else {

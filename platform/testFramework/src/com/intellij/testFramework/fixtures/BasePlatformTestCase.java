@@ -1,0 +1,131 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.testFramework.fixtures;
+
+import com.intellij.lang.Language;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiManager;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
+import org.jetbrains.annotations.NotNull;
+
+/**
+ * Base class for light tests.
+ * <p/>
+ * Please see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/testing_plugins.html">Testing Plugins</a> in IntelliJ Platform SDK DevGuide.
+ *
+ * @author peter
+ */
+public abstract class BasePlatformTestCase extends UsefulTestCase {
+  protected CodeInsightTestFixture myFixture;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+
+    IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
+    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor());
+    IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
+
+    TempDirTestFixture tempDirFixture = createTempDirTestFixture();
+    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, tempDirFixture);
+
+    myFixture.setTestDataPath(getTestDataPath());
+    myFixture.setUp();
+  }
+
+  protected TempDirTestFixture createTempDirTestFixture() {
+    IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
+    return policy != null
+        ? policy.createTempDirTestFixture()
+        : new LightTempDirTestFixtureImpl(true);
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      myFixture.tearDown();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      myFixture = null;
+      super.tearDown();
+    }
+  }
+
+  /**
+   * Returns relative path to the test data.
+   */
+  protected String getBasePath() {
+    return "";
+  }
+
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return null;
+  }
+
+   /**
+    * Return absolute path to the test data. Not intended to be overridden in tests written as part of the IntelliJ IDEA codebase;
+    * must be overridden in plugins which use the test framework.
+    *
+    * @see #getBasePath()
+    */
+   protected String getTestDataPath() {
+     String path = isCommunity() ? PlatformTestUtil.getCommunityPath() : IdeaTestExecutionPolicy.getHomePathWithPolicy();
+     return StringUtil.trimEnd(FileUtil.toSystemIndependentName(path), "/") + '/' +
+            StringUtil.trimStart(FileUtil.toSystemIndependentName(getBasePath()), "/");
+   }
+
+   protected boolean isCommunity() {
+     return false;
+   }
+
+  @Override
+  protected void runTest() throws Throwable {
+    if (isWriteActionRequired()) {
+      WriteCommandAction.writeCommandAction(getProject()).run(() -> doRunTests());
+    }
+    else {
+      doRunTests();
+    }
+  }
+
+  protected boolean isWriteActionRequired() {
+    return false;
+  }
+
+  protected void doRunTests() throws Throwable {
+    super.runTest();
+  }
+
+  protected Project getProject() {
+    return myFixture.getProject();
+  }
+
+  protected PsiManager getPsiManager() {
+    return PsiManager.getInstance(getProject());
+  }
+
+  protected PsiFile createLightFile(FileType fileType, String text) {
+    return PsiFileFactory.getInstance(getProject()).createFileFromText("a." + fileType.getDefaultExtension(), fileType, text);
+  }
+
+  public PsiFile createLightFile(String fileName, Language language, String text) {
+    return PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, language, text, false, true);
+  }
+
+  @NotNull
+  protected Module getModule() {
+    return myFixture.getModule();
+  }
+}

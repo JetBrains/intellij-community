@@ -4,13 +4,13 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class TestMethodWithoutAssertionInspectionTest extends LightInspectionTestCase {
+public class TestMethodWithoutAssertionInspectionTest extends LightJavaInspectionTestCase {
 
   public void testTestMethodWithoutAssertion() {
     doTest();

@@ -6,11 +6,13 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.CollectConsumer;
+import com.intellij.util.Consumer;
+import com.intellij.util.text.StringSearcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.Collection;
 
 public class ShTextOccurrencesUtil {
   private ShTextOccurrencesUtil() {
@@ -25,8 +27,8 @@ public class ShTextOccurrencesUtil {
       return StringUtil.isEmptyOrSpaces(subSequence) || StringUtil.contains(subSequence, "\n") ? null : textRange;
     }
     return SelectWordUtil.getWordSelectionRange(editor.getDocument().getImmutableCharSequence(),
-        caret.getOffset(),
-        ShTextOccurrencesUtil::isWordPartCondition);
+                                                caret.getOffset(),
+                                                ShTextOccurrencesUtil::isWordPartCondition);
   }
 
   private static boolean isWordPartCondition(char ch) {
@@ -34,19 +36,27 @@ public class ShTextOccurrencesUtil {
   }
 
   @NotNull
-  public static List<TextRange> findAllOccurrences(@NotNull CharSequence documentText,
-                                                   @NotNull CharSequence textToFind,
-                                                   boolean matchExactWordsOnly) {
-    List<TextRange> result = ContainerUtil.newSmartList();
-    int offset = StringUtil.indexOf(documentText, textToFind);
-    while (offset >= 0) {
-      TextRange textRange = TextRange.create(offset, offset + textToFind.length());
-      if (!matchExactWordsOnly || !isWordExpandableOutside(documentText, textRange)) {
-        result.add(textRange);
-      }
-      offset = StringUtil.indexOf(documentText, textToFind, offset + textToFind.length());
-    }
-    return result;
+  public static Collection<TextRange> findAllOccurrences(@NotNull CharSequence documentText,
+                                                         @NotNull CharSequence textToFind,
+                                                         boolean matchExactWordsOnly) {
+    CollectConsumer<TextRange> consumer = new CollectConsumer<>();
+    consumeAllOccurrences(documentText, textToFind, matchExactWordsOnly, consumer);
+    return consumer.getResult();
+  }
+
+  public static void consumeAllOccurrences(@NotNull CharSequence documentText,
+                                           @NotNull CharSequence textToFind,
+                                           boolean matchExactWordsOnly,
+                                           Consumer<? super TextRange> consumer) {
+    String pattern = textToFind.toString();
+    int length = pattern.length();
+    StringSearcher searcher = new StringSearcher(pattern, true, true);
+    searcher.processOccurrences(documentText, value -> {
+      TextRange tr = TextRange.create(value, value + length);
+      if (matchExactWordsOnly && isWordExpandableOutside(documentText, tr)) return true;
+      consumer.consume(tr);
+      return true;
+    });
   }
 
   private static boolean isWordExpandableOutside(@NotNull CharSequence documentText, @NotNull TextRange textRange) {

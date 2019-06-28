@@ -16,13 +16,12 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.siyeh.ig.LightInspectionTestCase;
-import com.siyeh.ig.bugs.InnerClassReferencedViaSubclassInspection;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class InnerClassReferencedViaSubclassInspectionTest extends LightInspectionTestCase {
+public class InnerClassReferencedViaSubclassInspectionTest extends LightJavaInspectionTestCase {
 
   @Override
   protected String[] getEnvironmentClasses() {

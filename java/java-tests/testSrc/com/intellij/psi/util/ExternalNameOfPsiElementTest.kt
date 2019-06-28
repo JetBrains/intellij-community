@@ -2,7 +2,7 @@
 package com.intellij.psi.util
 
 import com.intellij.psi.PsiModifierListOwner
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
  * Tests our expectations on which string presentation of PSI elements
@@ -11,7 +11,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
  * This format is used in external annotations files, "annotations.xml", to specify item names:
  * `<item name="org.jetbrains.some.Class void func()">...</item>`
  */
-class ExternalNameOfPsiElementTest : LightCodeInsightFixtureTestCase() {
+class ExternalNameOfPsiElementTest : LightJavaCodeInsightFixtureTestCase() {
   fun `test class qualified name`() {
     myFixture.addFileToProject("pkg/A.java", """
       package pkg;

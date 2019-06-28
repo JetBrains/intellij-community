@@ -57,6 +57,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
   private PluginUpdatesService myPluginUpdatesService;
 
+  private Runnable myInvalidFixCallback;
+
   protected MyPluginModel() {
     Window window = ProjectUtil.getActiveFrameOrWelcomeScreen();
     myStatusBar = getStatusBar(window);
@@ -159,7 +161,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     List<PluginNode> pluginsToInstall = ContainerUtil.newArrayList(pluginNode);
 
     PluginManagerMain.suggestToEnableInstalledDependantPlugins(this, pluginsToInstall);
-    needRestart = true;
 
     installPlugin(pluginsToInstall, getAllRepoPlugins(), this, prepareToInstall(descriptor, updateDescriptor));
   }
@@ -306,6 +307,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
     info.indicator.cancel();
 
+    if (success) {
+      needRestart = true;
+    }
     if (!success && showErrors) {
       Messages.showErrorDialog("Plugin " + descriptor.getName() + " download or installing failed",
                                IdeBundle.message("action.download.and.install.plugin"));
@@ -539,7 +543,15 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
     if (!requiredPlugins.isEmpty()) {
       enablePlugins(requiredPlugins);
+
+      if (myInvalidFixCallback != null) {
+        ApplicationManager.getApplication().invokeLater(myInvalidFixCallback, ModalityState.any());
+      }
     }
+  }
+
+  public void setInvalidFixCallback(@Nullable Runnable invalidFixCallback) {
+    myInvalidFixCallback = invalidFixCallback;
   }
 
   private void updateAfterEnableDisable() {
@@ -661,12 +673,12 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     else {
       String deps = StringUtil.join(requiredPlugins, id -> {
         IdeaPluginDescriptor plugin = findPlugin(id);
-        return plugin != null ? plugin.getName() : id.getIdString();
+        return StringUtil.wrapWithDoubleQuote(plugin != null ? plugin.getName() : id.getIdString());
       }, ", ");
 
       int size = requiredPlugins.size();
       message = IdeBundle.message("new.plugin.manager.incompatible.deps.tooltip", size, deps);
-      enableAction.set(IdeBundle.message("new.plugin.manager.incompatible.deps.action", size == 1 ? deps : "required", size));
+      enableAction.set(IdeBundle.message("new.plugin.manager.incompatible.deps.action", size));
     }
 
     return message;

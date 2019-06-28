@@ -208,6 +208,9 @@ public class ExceptionUtil {
     List<PsiClassType> result = new ArrayList<>();
     for (PsiType type : referenceTypes) {
       type = PsiClassImplUtil.correctType(substitutor.substitute(type), scope);
+      if (type instanceof PsiCapturedWildcardType) {
+        type = ((PsiCapturedWildcardType)type).getUpperBound();
+      }
       if (type instanceof PsiClassType) {
         result.add((PsiClassType)type);
       }

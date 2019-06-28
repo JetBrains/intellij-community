@@ -668,7 +668,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
 
     @Override
-    public void setFilterBase(final List<CommittedChangeList> changeLists) {
+    public void setFilterBase(final List<? extends CommittedChangeList> changeLists) {
     }
 
     @Override
@@ -686,14 +686,14 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
 
     @Override
-    public void appendFilterBase(List<CommittedChangeList> changeLists) {
+    public void appendFilterBase(List<? extends CommittedChangeList> changeLists) {
     }
 
     @Override
     @NotNull
-    public List<CommittedChangeList> filterChangeLists(final List<CommittedChangeList> changeLists) {
+    public List<CommittedChangeList> filterChangeLists(final List<? extends CommittedChangeList> changeLists) {
       if ((!myFilterAlien.mySelected) && (!myFilterNotMerged.mySelected) && (!myFilterMerged.mySelected)) {
-        return changeLists;
+        return new ArrayList<>(changeLists);
       }
 
       final List<CommittedChangeList> result = new ArrayList<>();

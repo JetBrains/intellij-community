@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -7,9 +8,9 @@ import com.intellij.ui.SimpleColoredRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -31,7 +32,7 @@ import java.util.Objects;
 
 public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphCommitCell> {
   private static final int MAX_GRAPH_WIDTH = 6;
-  private static final int VERTICAL_PADDING = JBUI.scale(7);
+  private static final int VERTICAL_PADDING = JBUIScale.scale(7);
 
   @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogGraphTable myGraphTable;
@@ -242,7 +243,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
         allowedSpace = Math.min(freeSpace, textAndLabelsWidth / 3);
       }
       else {
-        allowedSpace = Math.max(freeSpace, Math.max(textAndLabelsWidth / 2, textAndLabelsWidth - JBUI.scale(DISPLAYED_MESSAGE_PART)));
+        allowedSpace = Math.max(freeSpace, Math.max(textAndLabelsWidth / 2, textAndLabelsWidth - JBUIScale.scale(DISPLAYED_MESSAGE_PART)));
       }
       return Math.max(0, allowedSpace);
     }

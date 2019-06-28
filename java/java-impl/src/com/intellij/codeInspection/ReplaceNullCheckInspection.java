@@ -263,6 +263,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
         if(!ExpressionUtils.isReferenceTo(nullDiff, variable)) return null;
       }
       if(NullabilityUtil.getExpressionNullability(nonNullDiff, true) != Nullability.NOT_NULL) return null;
+      if (nonNullDiff instanceof PsiSuperExpression) return null;
       if(!LambdaGenerationUtil.canBeUncheckedLambda(nonNullDiff)) return null;
       return new NotNullContext(nonNullDiff, nullDiff, nullBranch, reference, ifStatement, toDelete, false);
     }

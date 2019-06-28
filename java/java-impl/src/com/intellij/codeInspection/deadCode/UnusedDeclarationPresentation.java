@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.deadCode;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
@@ -32,13 +33,15 @@ import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.TObjectIntHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -435,6 +438,19 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       public boolean isQuickFixAppliedFromView() {
         return myFixedElements.containsKey(getElement());
       }
+
+      @Override
+      protected void visitProblemSeverities(@NotNull TObjectIntHashMap<HighlightDisplayLevel> counter) {
+        if (!isExcluded() && isLeaf() && !isProblemResolved(getElement()) && !isSuppressed(getElement())) {
+          HighlightSeverity severity = InspectionToolPresentation.getSeverity(getElement(), null, getPresentation());
+          HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
+          if (!counter.adjustValue(level, 1)) {
+            counter.put(level, 1);
+          }
+          return;
+        }
+        super.visitProblemSeverities(counter);
+      }
     };
   }
 
@@ -651,10 +667,10 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       }
     });
     final StyleSheet css = ((HTMLEditorKit)htmlView.getEditorKit()).getStyleSheet();
-    css.addRule("p.problem-description-group {text-indent: " + JBUI.scale(9) + "px;font-weight:bold;}");
-    css.addRule("div.problem-description {margin-left: " + JBUI.scale(9) + "px;}");
-    css.addRule("ul {margin-left:" + JBUI.scale(10) + "px;text-indent: 0}");
-    css.addRule("code {font-family:" + UIUtil.getLabelFont().getFamily()  +  "}");
+    css.addRule("p.problem-description-group {text-indent: " + JBUIScale.scale(9) + "px;font-weight:bold;}");
+    css.addRule("div.problem-description {margin-left: " + JBUIScale.scale(9) + "px;}");
+    css.addRule("ul {margin-left:" + JBUIScale.scale(10) + "px;text-indent: 0}");
+    css.addRule("code {font-family:" + StartupUiUtil.getLabelFont().getFamily() + "}");
     final StringBuffer buf = new StringBuffer();
     getComposer().compose(buf, entity, false);
     final String text = buf.toString();

@@ -1,15 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.ex;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.ui.messages.ChooseDialog;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
-import com.intellij.util.ArrayUtil;
+import com.intellij.ui.messages.ChooseDialog;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -178,7 +178,7 @@ public class MessagesEx extends Messages {
   }
 
   public static class ChoiceInfo extends BaseInputInfo<ChoiceInfo> {
-    private String[] myChoises = ArrayUtil.EMPTY_STRING_ARRAY;
+    private String[] myChoises = ArrayUtilRt.EMPTY_STRING_ARRAY;
     private String myDefaultChoice = null;
 
     public ChoiceInfo(Project project) {

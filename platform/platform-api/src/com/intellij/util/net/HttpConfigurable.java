@@ -7,7 +7,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -23,9 +22,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.HttpRequests;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.proxy.JavaProxyProperty;
 import com.intellij.util.proxy.PropertiesEncryptionSupport;
@@ -36,6 +35,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectObjectProcedure;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,12 +53,12 @@ import java.util.regex.Pattern;
 import static com.intellij.openapi.util.Pair.pair;
 
 @State(name = "HttpConfigurable", storages = @Storage("proxy.settings.xml"))
-public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, Disposable, BaseComponent {
+public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.net.HttpConfigurable");
   private static final File PROXY_CREDENTIALS_FILE = new File(PathManager.getOptionsPath(), "proxy.settings.pwd");
-  public static final int CONNECTION_TIMEOUT = SystemProperties.getIntProperty("idea.connection.timeout", 10000);
-  public static final int READ_TIMEOUT = SystemProperties.getIntProperty("idea.read.timeout", 60000);
-  public static final int REDIRECT_LIMIT = SystemProperties.getIntProperty("idea.redirect.limit", 10);
+  public static final int CONNECTION_TIMEOUT = HttpRequests.CONNECTION_TIMEOUT;
+  public static final int READ_TIMEOUT = HttpRequests.READ_TIMEOUT;
+  public static final int REDIRECT_LIMIT = HttpRequests.REDIRECT_LIMIT;
 
   public boolean PROXY_TYPE_IS_SOCKS;
   public boolean USE_HTTP_PROXY;
@@ -123,7 +123,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   @Override
-  public void initComponent() {
+  public void initializeComponent() {
     final HttpConfigurable currentState = getState();
     if (currentState != null) {
       final Element serialized = XmlSerializer.serialize(currentState);
@@ -152,6 +152,14 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     String name = getClass().getName();
     CommonProxy.getInstance().setCustom(name, mySelector);
     CommonProxy.getInstance().setCustomAuth(name, new IdeaWideAuthenticator(this));
+  }
+
+  /**
+   * @deprecated use {@link #initializeComponent()}
+   */
+  @Deprecated
+  public void initComponent() {
+    initializeComponent();
   }
 
   @NotNull
@@ -354,12 +362,17 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
   }
 
-  //these methods are preserved for compatibility with com.intellij.openapi.project.impl.IdeaServerSettings
+  /**
+   * @deprecated left for compatibility with com.intellij.openapi.project.impl.IdeaServerSettings
+   */
   @Deprecated
   public void readExternal(Element element) throws InvalidDataException {
     loadState(XmlSerializer.deserialize(element, HttpConfigurable.class));
   }
 
+  /**
+   * @deprecated left for compatibility with com.intellij.openapi.project.impl.IdeaServerSettings
+   */
   @Deprecated
   public void writeExternal(Element element) throws WriteExternalException {
     com.intellij.util.xmlb.XmlSerializer.serializeInto(getState(), element);
@@ -458,6 +471,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   /** @deprecated use {@link #getJvmProperties(boolean, URI)} (to be removed in IDEA 2018) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   @SuppressWarnings({"unused"})
   public static List<KeyValue<String, String>> getJvmPropertiesList(boolean withAutodetection, @Nullable URI uri) {
     List<Pair<String, String>> properties = getInstance().getJvmProperties(withAutodetection, uri);
@@ -552,6 +566,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   /** @deprecated use {@link com.intellij.execution.configurations.ParametersList#addProperty(String, String)} (to be removed in IDEA 2018) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   @SuppressWarnings({"unused"})
   @NotNull
   public static List<String> convertArguments(@NotNull final List<? extends KeyValue<String, String>> list) {

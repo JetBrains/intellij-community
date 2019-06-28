@@ -5,6 +5,7 @@ package com.intellij.util.io;
 import com.google.common.collect.Maps;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
@@ -189,5 +190,24 @@ public class UrlUtilTest {
     assertThat(URLUtil.unescapePercentSequences(query, 0, k.length()).toString()).isEqualTo("foo?%&=");
     assertThat(URLUtil.unescapePercentSequences(v)).isEqualTo("bar?1=%");
     assertThat(URLUtil.unescapePercentSequences(query, k.length() + 1, query.length()).toString()).isEqualTo("bar?1=%");
+  }
+
+  @Test
+  public void testUrlsWithParen() {
+    doUrlWithParensTest("https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)",
+                        "https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)");
+    doUrlWithParensTest("(http://some.url)", "http://some.url");
+  }
+
+  private static void doUrlWithParensTest(@NotNull String text, @Nullable String expectedExtractedUrl) {
+    TextRange result = URLUtil.findUrl(text, 0, text.length());
+    if (expectedExtractedUrl == null) {
+      assertNull("URL shouldn't be found", result);
+    }
+    else {
+      assertNotNull("URL should be found", result);
+      assertEquals("Wrong URL found", expectedExtractedUrl, result.substring(text));
+      assertNull("Extra URL found", URLUtil.findUrl(text, result.getEndOffset(), text.length()));
+    }
   }
 }

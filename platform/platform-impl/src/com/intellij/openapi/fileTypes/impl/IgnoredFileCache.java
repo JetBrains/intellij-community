@@ -59,7 +59,7 @@ final class IgnoredFileCache {
     myNonIgnoredIds.clear();
   }
 
-  boolean isFileIgnored(VirtualFile file) {
+  boolean isFileIgnored(@NotNull VirtualFile file) {
     int id = myVfsEventNesting == 0 && file instanceof NewVirtualFile ? ((NewVirtualFile)file).getId() : -1;
     if (id > 0 && myNonIgnoredIds.get(id)) {
       return false;

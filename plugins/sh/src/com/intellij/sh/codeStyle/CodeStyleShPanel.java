@@ -21,7 +21,9 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.sh.ShFileType;
 import com.intellij.sh.ShLanguage;
 import com.intellij.sh.formatter.ShShfmtFormatterUtil;
+import com.intellij.sh.settings.ShSettings;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.fields.IntegerField;
 import com.intellij.ui.components.labels.ActionLink;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +44,7 @@ public class CodeStyleShPanel extends CodeStyleAbstractPanel {
   private IntegerField myIndentField;
   private JLabel myIndentLabel;
   private JLabel myWarningLabel;
+  private JLabel myErrorLabel;
 
   private JCheckBox myBinaryOpsStartLine;
   private JCheckBox mySwitchCasesIndented;
@@ -77,6 +80,13 @@ public class CodeStyleShPanel extends CodeStyleAbstractPanel {
       }
     });
     myWarningLabel.setIcon(AllIcons.General.Warning);
+    myErrorLabel.setForeground(JBColor.RED);
+
+    myBinaryOpsStartLine.setText("Binary ops like & and | may start a line");
+    mySwitchCasesIndented.setText("Switch cases will be indented");
+    myRedirectFollowedBySpace.setText("Redirect operators will be followed by a space");
+    myKeepColumnAlignmentPadding.setText("Keep column alignment padding");
+    myMinifyProgram.setText("Minify program to reduce its size");
 
     addPanelToWatch(myPanel);
   }
@@ -87,8 +97,9 @@ public class CodeStyleShPanel extends CodeStyleAbstractPanel {
       @Override
       public void actionPerformed(@NotNull AnActionEvent event) {
         CodeStyleSettings settings = getSettings();
-        ShCodeStyleSettings shSettings = settings.getCustomSettings(ShCodeStyleSettings.class);
-        ShShfmtFormatterUtil.download(event.getProject(), settings, () -> myShfmtPathSelector.setText(shSettings.SHFMT_PATH));
+        ShShfmtFormatterUtil.download(event.getProject(), settings,
+                                      () -> myShfmtPathSelector.setText(ShSettings.getShfmtPath()),
+                                      () -> myErrorLabel.setVisible(true));
       }
     });
   }
@@ -129,8 +140,9 @@ public class CodeStyleShPanel extends CodeStyleAbstractPanel {
     shSettings.REDIRECT_FOLLOWED_BY_SPACE = myRedirectFollowedBySpace.isSelected();
     shSettings.KEEP_COLUMN_ALIGNMENT_PADDING = myKeepColumnAlignmentPadding.isSelected();
     shSettings.MINIFY_PROGRAM = myMinifyProgram.isSelected();
-    shSettings.SHFMT_PATH = myShfmtPathSelector.getText();
+    ShSettings.setShfmtPath(myShfmtPathSelector.getText());
     myWarningPanel.setVisible(!ShShfmtFormatterUtil.isValidPath(myShfmtPathSelector.getText()));
+    myErrorLabel.setVisible(false);
   }
 
   @Override
@@ -145,7 +157,7 @@ public class CodeStyleShPanel extends CodeStyleAbstractPanel {
         || isFieldModified(myMinifyProgram, shSettings.MINIFY_PROGRAM)
         || isFieldModified(myTabCharacter, indentOptions.USE_TAB_CHARACTER)
         || isFieldModified(myIndentField, indentOptions.INDENT_SIZE)
-        || isFieldModified(myShfmtPathSelector, shSettings.SHFMT_PATH);
+        || isFieldModified(myShfmtPathSelector, ShSettings.getShfmtPath());
   }
 
   @Nullable
@@ -166,19 +178,20 @@ public class CodeStyleShPanel extends CodeStyleAbstractPanel {
     myRedirectFollowedBySpace.setSelected(shSettings.REDIRECT_FOLLOWED_BY_SPACE);
     myKeepColumnAlignmentPadding.setSelected(shSettings.KEEP_COLUMN_ALIGNMENT_PADDING);
     myMinifyProgram.setSelected(shSettings.MINIFY_PROGRAM);
-    myShfmtPathSelector.setText(shSettings.SHFMT_PATH);
-    myWarningPanel.setVisible(!ShShfmtFormatterUtil.isValidPath(shSettings.SHFMT_PATH));
+    myShfmtPathSelector.setText(ShSettings.getShfmtPath());
+    myWarningPanel.setVisible(!ShShfmtFormatterUtil.isValidPath(ShSettings.getShfmtPath()));
+    myErrorLabel.setVisible(false);
   }
 
-  private boolean isFieldModified(JCheckBox checkBox, boolean value) {
+  private static boolean isFieldModified(@NotNull JCheckBox checkBox, boolean value) {
     return checkBox.isSelected() != value;
   }
 
-  private boolean isFieldModified(IntegerField textField, int value) {
+  private static boolean isFieldModified(@NotNull IntegerField textField, int value) {
     return textField.getValue() != value;
   }
 
-  private boolean isFieldModified(TextFieldWithBrowseButton browseButton, String value) {
+  private static boolean isFieldModified(@NotNull TextFieldWithBrowseButton browseButton, String value) {
     return !browseButton.getText().equals(value);
   }
 

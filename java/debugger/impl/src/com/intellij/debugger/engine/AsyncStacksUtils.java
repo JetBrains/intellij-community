@@ -222,15 +222,15 @@ public class AsyncStacksUtils {
 
   private static Location findLocation(DebugProcessImpl debugProcess, ReferenceType type, String methodName, int line) {
     if (type != null && line >= 0) {
-      try {
-        Location location = type.locationsOfLine(DebugProcess.JAVA_STRATUM, null, line).stream()
-                                .filter(l -> l.method().name().equals(methodName))
-                                .findFirst().orElse(null);
-        if (location != null) {
-          return location;
+      for (Method method : type.methodsByName(methodName)) {
+        try {
+          List<Location> locations = method.locationsOfLine(DebugProcess.JAVA_STRATUM, null, line);
+          if (!locations.isEmpty()) {
+            return locations.get(0);
+          }
         }
-      }
-      catch (AbsentInformationException ignored) {
+        catch (AbsentInformationException ignored) {
+        }
       }
     }
     return new GeneratedLocation(debugProcess, type, methodName, line);

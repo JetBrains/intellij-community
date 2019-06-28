@@ -171,6 +171,9 @@ public class NotificationTestAction extends AnAction implements DumbAware {
         else if (line.equals("Toolwindow")) {
           notification.setToolwindow(true);
         }
+        else if (line.equals("LeftCollapseActions")) {
+          notification.myRightActionsDirection = false;
+        }
       }
 
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -191,6 +194,7 @@ public class NotificationTestAction extends AnAction implements DumbAware {
     private boolean mySticky;
     private boolean myAddListener;
     private boolean myToolwindow;
+    private boolean myRightActionsDirection = true;
 
     private Notification myNotification;
 
@@ -219,6 +223,9 @@ public class NotificationTestAction extends AnAction implements DumbAware {
           }
         }
       }
+      myNotification.setCollapseActionsDirection(myRightActionsDirection
+                                                 ? Notification.CollapseActionsDirection.KEEP_RIGHTMOST
+                                                 : Notification.CollapseActionsDirection.KEEP_LEFTMOST);
       return myNotification;
     }
 

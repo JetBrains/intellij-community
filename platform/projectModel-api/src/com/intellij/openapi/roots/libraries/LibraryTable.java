@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.libraries;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +29,7 @@ import java.util.Iterator;
  * @see LibraryTablesRegistrar#getLibraryTable(com.intellij.openapi.project.Project)
  * @author dsl
  */
+@ApiStatus.NonExtendable
 public interface LibraryTable {
   @NotNull
   Library[] getLibraries();

@@ -2,6 +2,8 @@
 package com.intellij.execution.dashboard;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.StopAction;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -19,10 +21,13 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -31,8 +36,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -45,7 +50,7 @@ import static com.intellij.openapi.actionSystem.ActionPlaces.RUN_DASHBOARD_POPUP
 public class RunConfigurationsServiceViewContributor
   implements ServiceViewGroupingContributor<RunConfigurationsServiceViewContributor.RunConfigurationContributor, RunDashboardGroup> {
   private static final ServiceViewDescriptor CONTRIBUTOR_DESCRIPTOR =
-    new SimpleServiceViewDescriptor("Run Configurations", AllIcons.RunConfigurations.Application) {
+    new SimpleServiceViewDescriptor("Run Dashboard", AllIcons.Actions.Execute) {
       @Override
       public ActionGroup getToolbarActions() {
         return RunConfigurationsServiceViewContributor.getToolbarActions(null);
@@ -80,10 +85,11 @@ public class RunConfigurationsServiceViewContributor
     return contributor.getViewDescriptor();
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public RunDashboardGroup groupBy(@NotNull RunConfigurationContributor contributor) {
-    return TYPE_GROUPING_RULE.getGroup(contributor.asService());
+  public List<RunDashboardGroup> getGroups(@NotNull RunConfigurationContributor contributor) {
+    RunDashboardGroup group = TYPE_GROUPING_RULE.getGroup(contributor.asService());
+    return group != null ? Collections.singletonList(group) : Collections.emptyList();
   }
 
   @NotNull
@@ -272,14 +278,16 @@ public class RunConfigurationsServiceViewContributor
       });
     }
 
+    @Nullable
     @Override
-    public boolean handleDoubleClick(@NotNull MouseEvent event) {
+    public Navigatable getNavigatable() {
       for (RunDashboardCustomizer customizer : node.getCustomizers()) {
-        if (customizer.handleDoubleClick(event, node)) {
-          return true;
+        Navigatable navigatable = customizer.getNavigatable(node);
+        if (navigatable != null) {
+          return navigatable;
         }
       }
-      return false;
+      return null;
     }
 
     @Nullable
@@ -287,6 +295,14 @@ public class RunConfigurationsServiceViewContributor
     public Object getPresentationTag(Object fragment) {
       Map<Object, Object> links = node.getUserData(NODE_LINKS);
       return links == null ? null : links.get(fragment);
+    }
+
+    @Nullable
+    @Override
+    public Runnable getRemover() {
+      RunnerAndConfigurationSettings settings = node.getConfigurationSettings();
+      RunManager runManager = RunManager.getInstance(settings.getConfiguration().getProject());
+      return runManager.hasSettings(settings) ? () -> runManager.removeConfiguration(settings) : null;
     }
   }
 
@@ -320,11 +336,6 @@ public class RunConfigurationsServiceViewContributor
     public ServiceViewDescriptor getServiceDescriptor(@NotNull AbstractTreeNode service) {
       return new ServiceViewDescriptor() {
         @Override
-        public JComponent getContentComponent() {
-          return null;
-        }
-
-        @Override
         public ActionGroup getToolbarActions() {
           return RunConfigurationsServiceViewContributor.getToolbarActions(null);
         }
@@ -340,9 +351,31 @@ public class RunConfigurationsServiceViewContributor
           return service.getPresentation();
         }
 
+        @Nullable
         @Override
-        public DataProvider getDataProvider() {
+        public String getId() {
+          ItemPresentation presentation = getPresentation();
+          String text = presentation.getPresentableText();
+          if (!StringUtil.isEmpty(text)) {
+            return text;
+          }
+          if (presentation instanceof PresentationData) {
+            List<PresentableNodeDescriptor.ColoredFragment> fragments = ((PresentationData)presentation).getColoredText();
+            if (!fragments.isEmpty()) {
+              StringBuilder result = new StringBuilder();
+              for (PresentableNodeDescriptor.ColoredFragment fragment : fragments) {
+                result.append(fragment.getText());
+              }
+              return result.toString();
+            }
+          }
           return null;
+        }
+
+        @Nullable
+        @Override
+        public Runnable getRemover() {
+          return service instanceof RunDashboardNode ? ((RunDashboardNode)service).getRemover() : null;
         }
       };
     }

@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.RequiredElement;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -14,6 +15,7 @@ public class UIThemeMetadataProvider implements PluginAware {
   private PluginDescriptor myPluginDescriptor;
 
   @Attribute("path")
+  @RequiredElement
   public String path;
 
   @Nullable

@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import git4idea.GitVcs;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.util.ObjectUtils;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,8 +22,6 @@ import org.jetbrains.annotations.NotNull;
  * }
  * }</pre>
  * </p>
- *
- * @author Kirill Likhodedov
  */
 public enum GitVersionSpecialty {
 
@@ -161,13 +146,6 @@ public enum GitVersionSpecialty {
     }
   },
 
-  FOLLOW_IS_BUGGY_IN_THE_LOG {
-    @Override
-    public boolean existsIn(@NotNull GitVersion version) {
-      return version.isOlderOrEqual(new GitVersion(1, 7, 2, 0));
-    }
-  },
-
   FULL_HISTORY_SIMPLIFY_MERGES_WORKS_CORRECTLY { // for some reason, even with "simplify-merges", it used to show a lot of merges in history
 
     @Override
@@ -263,15 +241,27 @@ public enum GitVersionSpecialty {
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(2, 2, 0, 0));
     }
+  },
+
+  REBASE_MERGES_REPLACES_PRESERVE_MERGES {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 22, 0, 0));
+    }
   };
 
   public abstract boolean existsIn(@NotNull GitVersion version);
 
   public boolean existsIn(@NotNull Project project) {
-    return existsIn(GitVcs.getInstance(project).getVersion());
+    GitVersion version = GitExecutableManager.getInstance().tryGetVersion(project);
+    return existsIn(ObjectUtils.chooseNotNull(version, GitVersion.NULL));
   }
 
   public boolean existsIn(@NotNull GitRepository repository) {
-    return existsIn(repository.getVcs().getVersion());
+    return existsIn(repository.getProject());
+  }
+
+  public boolean existsIn(@NotNull AbstractVcs vcs) {
+    return existsIn(vcs.getProject());
   }
 }

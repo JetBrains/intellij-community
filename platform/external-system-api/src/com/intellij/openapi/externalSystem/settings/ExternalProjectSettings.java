@@ -30,8 +30,15 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
   }
 
   private boolean myUseAutoImport;
+  private boolean myUseQualifiedModuleNames = !ExternalSystemApiUtil.isJavaCompatibleIde(); // backward-compatible defaults
+
+  @SuppressWarnings("DeprecatedIsStillUsed") @Deprecated // left for settings backward-compatibility
   private boolean myCreateEmptyContentRootDirectories;
-  private boolean myUseQualifiedModuleNames = !ExternalSystemApiUtil.isJavaCompatibleIde();
+
+  // Used to gradually migrate new project to the new defaults.
+  public void setupNewProjectDefault() {
+    myUseQualifiedModuleNames = true;
+  }
 
   public String getExternalProjectPath() {
     return myExternalProjectPath;
@@ -49,10 +56,12 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
     myUseAutoImport = useAutoImport;
   }
 
+  @Deprecated // left for settings backward-compatibility
   public boolean isCreateEmptyContentRootDirectories() {
     return myCreateEmptyContentRootDirectories;
   }
 
+  @Deprecated // left for settings backward-compatibility
   public void setCreateEmptyContentRootDirectories(boolean createEmptyContentRootDirectories) {
     myCreateEmptyContentRootDirectories = createEmptyContentRootDirectories;
   }

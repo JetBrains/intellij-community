@@ -117,7 +117,7 @@ object JavaInlayHintsProvider {
 
   private fun isCallInfoToShow(info: CallInfo): Boolean {
     val hintsProvider = JavaInlayParameterHintsProvider.getInstance()
-    if (hintsProvider.ignoreOneCharOneDigitHints.get() && info.allParamsSequential()) {
+    if (!hintsProvider.ignoreOneCharOneDigitHints.get() && info.allParamsSequential()) {
       return false
     }
     return true
@@ -173,7 +173,7 @@ object JavaInlayHintsProvider {
     return resultSet
   }
 
-  private fun isShowForParamsWithSameType() = JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.get()
+  private fun isShowForParamsWithSameType() = JavaInlayParameterHintsProvider.getInstance().showForParamsWithSameType.get()
 
   private fun isMethodToShow(method: PsiMethod, callExpression: PsiCall): Boolean {
     val params = method.parameterList.parameters
@@ -181,12 +181,12 @@ object JavaInlayHintsProvider {
     if (params.size == 1) {
       val hintsProvider = JavaInlayParameterHintsProvider.getInstance()
       
-      if (hintsProvider.isDoNotShowForBuilderLikeMethods.get() 
+      if (!hintsProvider.showForBuilderLikeMethods.get()
           && isBuilderLike(callExpression, method)) {
         return false
       }
       
-      if (hintsProvider.isDoNotShowIfMethodNameContainsParameterName.get()
+      if (!hintsProvider.showIfMethodNameContainsParameterName.get()
           && isParamNameContainedInMethodName(params[0], method)) {
         return false
       }

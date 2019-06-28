@@ -102,7 +102,7 @@ public class JarRepositoryManager {
     }
 
     final NewLibraryConfiguration config = resolveAndDownload(
-      project, artifactKinds, copyTo, RemoteRepositoriesConfiguration.getInstance(project).getRepositories(), libraryDescriptor
+      project, libraryDescriptor, artifactKinds, copyTo, RemoteRepositoriesConfiguration.getInstance(project).getRepositories()
     );
     if (config == null) {
       Messages.showErrorDialog(parentComponent, "No files were downloaded for " + libraryDescriptor.getMavenId(), CommonBundle.getErrorTitle());
@@ -110,21 +110,19 @@ public class JarRepositoryManager {
     return config;
   }
 
-  private static NewLibraryConfiguration resolveAndDownload(Project project,
-                                                            EnumSet<ArtifactKind> kinds,
-                                                            String copyTo,
-                                                            Collection<RemoteRepositoryDescription> repositories,
-                                                            JpsMavenRepositoryLibraryDescriptor libraryDescriptor) {
-    RepositoryLibraryProperties props = new RepositoryLibraryProperties(libraryDescriptor);
-    final JpsMavenRepositoryLibraryDescriptor libDescriptor = props.getRepositoryLibraryDescriptor();
+  @Nullable
+  public static NewLibraryConfiguration resolveAndDownload(@NotNull Project project,
+                                                           @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
+                                                           Set<ArtifactKind> kinds,
+                                                           String copyTo,
+                                                           Collection<RemoteRepositoryDescription> repositories) {
     final Collection<OrderRoot> roots = new ArrayList<>();
-    if (libDescriptor.getMavenId() != null) {
-      roots.addAll(loadDependenciesModal(project, libDescriptor, kinds, repositories, copyTo));
+    if (descriptor.getMavenId() != null) {
+      roots.addAll(loadDependenciesModal(project, descriptor, kinds, repositories, copyTo));
     }
-
     if (!roots.isEmpty()) {
       notifyArtifactsDownloaded(project, roots);
-      return createNewLibraryConfiguration(props, roots);
+      return createNewLibraryConfiguration(new RepositoryLibraryProperties(descriptor), roots);
     }
     return null;
   }
@@ -138,8 +136,9 @@ public class JarRepositoryManager {
                                                            String copyTo,
                                                            Collection<RemoteRepositoryDescription> repositories) {
     JpsMavenRepositoryLibraryDescriptor libraryDescriptor = new JpsMavenRepositoryLibraryDescriptor(coord, includeTransitiveDependencies, Collections.emptyList());
-    return resolveAndDownload(project, ArtifactKind.kindsOf(attachSources, attachJavaDoc, libraryDescriptor.getPackaging()),
-                              copyTo, repositories, libraryDescriptor);
+    return resolveAndDownload(
+      project, libraryDescriptor, ArtifactKind.kindsOf(attachSources, attachJavaDoc, libraryDescriptor.getPackaging()), copyTo, repositories
+    );
   }
 
   @NotNull

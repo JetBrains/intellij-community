@@ -364,6 +364,10 @@ idea.fatal.error.notification=disabled
         if (buildContext.buildNumber == null) {
           buildContext.messages.warning("Toolbox LiteGen is not executed - it does not support SNAPSHOT build numbers")
         }
+        else if (buildContext.options.targetOS != BuildOptions.OS_ALL) {
+          buildContext.messages.
+            warning("Toolbox LiteGen is not executed - it doesn't support installers are being built only for specific OS")
+        }
         else {
           buildContext.executeStep("Building Toolbox Lite-Gen Links", BuildOptions.TOOLBOX_LITE_GEN_STEP) {
             String toolboxLiteGenVersion = System.getProperty("intellij.build.toolbox.litegen.version")
@@ -391,7 +395,7 @@ idea.fatal.error.notification=disabled
         if (paths.size() == 3) {
           buildContext.executeStep("Build cross-platform distribution", BuildOptions.CROSS_PLATFORM_DISTRIBUTION_STEP) {
             def crossPlatformBuilder = new CrossPlatformDistributionBuilder(buildContext)
-            def monsterZip = crossPlatformBuilder.buildCrossPlatformZip(paths[0], paths[1], paths[2], ".portable")
+            def monsterZip = crossPlatformBuilder.buildCrossPlatformZip(paths[0], paths[1], paths[2])
 
             Map<String, String> checkerConfig = buildContext.productProperties.versionCheckerConfig
             if (checkerConfig != null) {
@@ -431,6 +435,14 @@ idea.fatal.error.notification=disabled
     ]
     if (buildContext.options.bundledJreBuild != null) {
       args += "-Dintellij.build.bundled.jre.build=$buildContext.options.bundledJreBuild"
+    }
+    [
+      'intellij.build.bundle.second.jre',
+      'intellij.build.bundled.second.jre.build'
+    ].each { prop ->
+      System.getProperty(prop)?.with {
+        args += "-D$prop=$it"
+      }
     }
     buildContext.gradle.run('Setting up JetBrains JREs', args)
     logFreeDiskSpace("after downloading JREs")

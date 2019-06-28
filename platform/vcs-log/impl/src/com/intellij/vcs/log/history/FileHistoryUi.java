@@ -4,6 +4,7 @@ package com.intellij.vcs.log.history;
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
@@ -22,7 +23,6 @@ import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
-import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.highlighters.CurrentBranchHighlighter;
 import com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter;
@@ -36,8 +36,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Collections;
 import java.util.List;
-import java.util.*;
+import java.util.Objects;
+import java.util.Set;
 
 import static com.intellij.ui.JBColor.namedColor;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -57,13 +59,12 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   @NotNull private final History myHistory;
 
   public FileHistoryUi(@NotNull VcsLogData logData,
-                       @NotNull VcsLogColorManager manager,
                        @NotNull FileHistoryUiProperties uiProperties,
                        @NotNull VisiblePackRefresher refresher,
                        @NotNull FilePath path,
                        @Nullable Hash revision,
                        @NotNull VirtualFile root) {
-    super(getFileHistoryLogId(path, revision), logData, manager, refresher);
+    super(getFileHistoryLogId(path, revision), logData, new FileHistoryColorManager(root, path), refresher);
 
     myPath = path;
     myRoot = root;
@@ -98,6 +99,15 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     return path.getPath() + (revision == null ? "" : revision.asString());
   }
 
+  @Override
+  public void setVisiblePack(@NotNull VisiblePack pack) {
+    super.setVisiblePack(pack);
+
+    if (pack.canRequestMore()) {
+      requestMore(EmptyRunnable.INSTANCE);
+    }
+  }
+
   public boolean hasDiffPreview() {
     return myFileHistoryPanel.hasDiffPreview();
   }
@@ -115,14 +125,14 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   public FilePath getPathInCommit(@NotNull Hash hash) {
     if (myPath.isDirectory()) return myPath;
     int commitIndex = myLogData.getStorage().getCommitIndex(hash, myRoot);
-    return FileHistoryVisiblePack.filePath(myVisiblePack, commitIndex);
+    return FileHistoryPaths.filePath(myVisiblePack, commitIndex);
   }
 
   private boolean isFileDeletedInCommit(@NotNull Hash hash) {
     if (myPath.isDirectory()) return false;
 
     int commitIndex = myLogData.getStorage().getCommitIndex(hash, myRoot);
-    return FileHistoryVisiblePack.isDeletedInCommit(myVisiblePack, commitIndex);
+    return FileHistoryPaths.isDeletedInCommit(myVisiblePack, commitIndex);
   }
 
   @NotNull
@@ -204,7 +214,9 @@ public class FileHistoryUi extends AbstractVcsLogUi {
 
   @Override
   protected void onVisiblePackUpdated(boolean permGraphChanged) {
+    ((FileHistoryColorManager)myColorManager).update(myVisiblePack);
     myFileHistoryPanel.updateDataPack(myVisiblePack, permGraphChanged);
+    myFileHistoryPanel.getGraphTable().rootColumnUpdated();
   }
 
   @NotNull
@@ -264,6 +276,9 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       }
       else if (CommonUiProperties.SHOW_DIFF_PREVIEW.equals(property)) {
         myFileHistoryPanel.showDiffPreview(myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW));
+      }
+      else if (CommonUiProperties.SHOW_ROOT_NAMES.equals(property)) {
+        myFileHistoryPanel.getGraphTable().rootColumnUpdated();
       }
     }
   }

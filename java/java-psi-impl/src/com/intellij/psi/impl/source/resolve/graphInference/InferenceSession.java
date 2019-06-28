@@ -54,6 +54,7 @@ public class InferenceSession {
   private PsiSubstitutor myInferenceSubstitution = PsiSubstitutor.EMPTY;
   private PsiSubstitutor myRestoreNameSubstitution = PsiSubstitutor.EMPTY;
   private MethodCandidateInfo myCurrentMethod;
+  private ThreadLocalTypes myTempTypes;
 
   public InferenceSession(InitialInferenceState initialState, ParameterTypeInferencePolicy policy) {
     myContext = initialState.getContext();
@@ -303,24 +304,24 @@ public class InferenceSession {
                                                  @Nullable PsiElement parent,
                                                  @Nullable MethodCandidateInfo currentMethod,
                                                  @NotNull PsiSubstitutor initialSubstitutor) {
-    try {
-      doInfer(parameters, args, parent, currentMethod, initialSubstitutor);
-      return prepareSubstitution();
-    }
-    finally {
-      for (ConstraintFormula formula : myConstraintsCopy) {
-        if (formula instanceof InputOutputConstraintFormula) {
-          LambdaUtil.getFunctionalTypeMap().remove(((InputOutputConstraintFormula)formula).getExpression());
-        }
+    return ThreadLocalTypes.performWithTypes(types -> {
+      myTempTypes = types;
+      try {
+        doInfer(parameters, args, parent, currentMethod, initialSubstitutor);
+        return prepareSubstitution();
       }
-
-      if (currentMethod != null) {
-        if (myErrorMessages != null) {
-          currentMethod.setApplicabilityError(StringUtil.join(myErrorMessages, "\n"));
+      finally {
+        if (currentMethod != null) {
+          if (myErrorMessages != null) {
+            currentMethod.setApplicabilityError(StringUtil.join(myErrorMessages, "\n"));
+          }
+          if (myErased) {
+            currentMethod.setErased();
+          }
         }
-        currentMethod.setErased(myErased);
+        myTempTypes = null;
       }
-    }
+    });
   }
 
   private void doInfer(@Nullable PsiParameter[] parameters,
@@ -376,7 +377,7 @@ public class InferenceSession {
   }
 
   private static boolean isPertinentToApplicabilityCheckOnContainingCall(@NotNull PsiElement parent) {
-    return LambdaUtil.getFunctionalTypeMap().containsKey(parent);
+    return ThreadLocalTypes.hasBindingFor(parent);
   }
 
   private void collectAdditionalConstraints(PsiParameter[] parameters,
@@ -455,7 +456,7 @@ public class InferenceSession {
                                              boolean addConstraint,
                                              PsiSubstitutor initialSubstitutor) {
     final PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(parameterType);
-    if (interfaceReturnType != null && !PsiType.VOID.equals(interfaceReturnType)) {
+    if (interfaceReturnType != null && (!PsiType.VOID.equals(interfaceReturnType) || !addConstraint)) {
       final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(lambdaExpression);
       for (PsiExpression returnExpression : returnExpressions) {
         processReturnExpression(additionalConstraints, ignoredConstraints, returnExpression, interfaceReturnType, addConstraint, initialSubstitutor);
@@ -466,7 +467,7 @@ public class InferenceSession {
   private void processReturnExpression(Set<ConstraintFormula> additionalConstraints,
                                        Set<ConstraintFormula> ignoredConstraints,
                                        PsiExpression returnExpression,
-                                       PsiType functionalType,
+                                       @NotNull PsiType functionalType,
                                        boolean addConstraint,
                                        PsiSubstitutor initialSubstitutor) {
     if (returnExpression instanceof PsiCallExpression) {
@@ -619,7 +620,7 @@ public class InferenceSession {
     return result.toArray(new InferenceVariable[0]);
   }
 
-  public void registerReturnTypeConstraints(PsiType returnType, PsiType targetType, PsiElement context) {
+  public void registerReturnTypeConstraints(PsiType returnType, @NotNull PsiType targetType, PsiElement context) {
     returnType = substituteWithInferenceVariables(returnType);
     if (myErased) {
       PsiSubstitutor currentSubstitutor = resolveSubset(myInferenceVariables, mySiteSubstitutor);
@@ -791,7 +792,7 @@ public class InferenceSession {
         final PsiExpressionList argumentList = ((PsiCall)gParent).getArgumentList();
         if (argumentList != null) {
           if (MethodCandidateInfo.isOverloadCheck(argumentList)) {
-            return LambdaUtil.getFunctionalTypeMap().get(context);
+            return ThreadLocalTypes.getElementType(context);
           }
 
           final JavaResolveResult result = PsiDiamondType.getDiamondsAwareResolveResult((PsiCall)gParent);
@@ -836,7 +837,7 @@ public class InferenceSession {
       //at this time, types of interface method parameter types must be already calculated
       // that's why walkUp in InferenceSessionContainer stops at this point and
       //that's why we can reuse this type here
-      final PsiType cachedLambdaType = LambdaUtil.getFunctionalTypeMap().get(lambdaExpression);
+      PsiType cachedLambdaType = ThreadLocalTypes.getElementType(lambdaExpression);
       if (cachedLambdaType != null) {
         return LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression.getGroundTargetType(cachedLambdaType));
       }
@@ -1386,6 +1387,10 @@ public class InferenceSession {
                                        PsiSubstitutor substitutor, 
                                        Set<ConstraintFormula> ignoredConstraints) {
     formula.apply(substitutor, true);
+    if (formula instanceof InputOutputConstraintFormula) {
+      myTempTypes.forceType(((InputOutputConstraintFormula)formula).getExpression(),
+                            ((InputOutputConstraintFormula)formula).getCurrentType());
+    }
 
     addConstraint(formula);
     if (!repeatInferencePhases()) {
@@ -1395,7 +1400,7 @@ public class InferenceSession {
     if (formula instanceof ExpressionCompatibilityConstraint) {
       PsiExpression expression = ((ExpressionCompatibilityConstraint)formula).getExpression();
       if (expression instanceof PsiLambdaExpression) {
-        PsiType parameterType = ((PsiLambdaExpression)expression).getGroundTargetType(((ExpressionCompatibilityConstraint)formula).getT());
+        PsiType parameterType = ((PsiLambdaExpression)expression).getGroundTargetType(((ExpressionCompatibilityConstraint)formula).getCurrentType());
         collectLambdaReturnExpression(additionalConstraints, ignoredConstraints, (PsiLambdaExpression)expression, parameterType, !isProperType(parameterType), substitutor);
       }
     }
@@ -1632,14 +1637,7 @@ public class InferenceSession {
                                                 PsiElement context,
                                                 boolean varargs) {
 
-    List<PsiTypeParameter> params = new ArrayList<>();
-    for (PsiTypeParameter param : PsiUtil.typeParametersIterable(m2)) {
-      params.add(param);
-    }
-
-    siteSubstitutor1 = getSiteSubstitutor(siteSubstitutor1, params);
-
-    final InferenceSession session = new InferenceSession(params.toArray(PsiTypeParameter.EMPTY_ARRAY), siteSubstitutor1, m2.getManager(), context);
+    final InferenceSession session = new InferenceSession(m2.getTypeParameters(), siteSubstitutor1, m2.getManager(), context);
 
     final PsiParameter[] parameters1 = m1.getParameterList().getParameters();
     final PsiParameter[] parameters2 = m2.getParameterList().getParameters();
@@ -1677,14 +1675,6 @@ public class InferenceSession {
     }
 
     return session.repeatInferencePhases();
-  }
-
-  private static PsiSubstitutor getSiteSubstitutor(PsiSubstitutor siteSubstitutor1, List<PsiTypeParameter> params) {
-    PsiSubstitutor subst = PsiSubstitutor.EMPTY;
-    for (PsiTypeParameter param : params) {
-      subst = subst.put(param, siteSubstitutor1.substitute(param));
-    }
-    return subst;
   }
 
   /**

@@ -50,13 +50,13 @@ public class XmlImportOptimizer implements ImportOptimizer {
   };
 
   @Override
-  public boolean supports(PsiFile file) {
+  public boolean supports(@NotNull PsiFile file) {
     return file instanceof XmlFile;
   }
 
   @NotNull
   @Override
-  public CollectingInfoRunnable processFile(final PsiFile file) {
+  public CollectingInfoRunnable processFile(@NotNull final PsiFile file) {
     return new CollectingInfoRunnable() {
       int myRemovedNameSpaces = 0;
 

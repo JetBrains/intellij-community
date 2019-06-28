@@ -123,7 +123,7 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
       myCurrentIcon = changesAvailable ? myEnabledIcon : myDisabledIcon;
       myTooltip = changesAvailable ? "\n" + myChangesStatus.getToolTip() : "No changes available";
       if (!isVisible() || !isAlreadyShown) return;
-      myStatusBar.updateWidget(ID());
+      if (myStatusBar != null) myStatusBar.updateWidget(ID());
     });
   }
 

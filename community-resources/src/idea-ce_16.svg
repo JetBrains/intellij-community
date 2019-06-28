@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="16" height="16" viewBox="0 0 16 16">
+  <defs>
+    <linearGradient id="idea-ce_16-b" x1="50%" x2="50%" y1="-11.618%" y2="60.589%">
+      <stop offset="0%" stop-color="#A6A5A5"/>
+      <stop offset="0%" stop-color="#989898" stop-opacity=".568"/>
+      <stop offset="100%"/>
+    </linearGradient>
+    <polygon id="idea-ce_16-a" points="0 14 14 14 14 0 0 0"/>
+  </defs>
+  <g fill="none" fill-rule="evenodd">
+    <polygon fill="#087CFA" points="0 16 16 16 16 0 0 0"/>
+    <g transform="translate(1 1)">
+      <use fill="#000" xlink:href="#idea-ce_16-a"/>
+      <use fill="url(#idea-ce_16-b)" xlink:href="#idea-ce_16-a"/>
+      <polygon fill="#FFF" points="4.165 3.217 4.165 6.782 4.83 6.782 4.83 8 2.17 8 2.17 6.782 2.835 6.782 2.835 3.217 2.17 3.217 2.17 2 4.83 2 4.83 3.217"/>
+      <path fill="#FFF" d="M5.7769,7.2256 L6.6149,6.2926 C6.9609,6.6726 7.2979,6.8976 7.7199,6.8976 C8.2209,6.8976 8.5319,6.5946 8.5319,5.8956 L8.5319,1.9996 L9.8969,1.9996 L9.8969,5.9556 C9.8969,6.6726 9.6899,7.2076 9.3269,7.5716 C8.9559,7.9426 8.4119,8.1326 7.7549,8.1326 C6.8139,8.1326 6.1919,7.7176 5.7769,7.2256"/>
+      <polygon fill="#FFF" points="2 12 8 12 8 11 2 11"/>
+    </g>
+  </g>
+</svg>

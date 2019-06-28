@@ -17,7 +17,7 @@ class ProjectLibraryTableImpl(val parentProject: Project) : LibraryTableBase(), 
 
 }
 
-private val PROJECT_LIBRARY_TABLE_PRESENTATION = object : LibraryTablePresentation() {
+val PROJECT_LIBRARY_TABLE_PRESENTATION = object : LibraryTablePresentation() {
   override fun getDisplayName(plural: Boolean) = ProjectBundle.message("project.library.display.name", if (plural) 2 else 1)
 
   override fun getDescription() = ProjectBundle.message("libraries.node.text.project")

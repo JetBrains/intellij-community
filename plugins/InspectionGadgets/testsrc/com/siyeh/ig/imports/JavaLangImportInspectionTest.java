@@ -16,14 +16,13 @@
 package com.siyeh.ig.imports;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
-import junit.framework.TestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class JavaLangImportInspectionTest extends LightInspectionTestCase {
+public class JavaLangImportInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSamePackageConflict() {
     addEnvironmentClass("package a;" +

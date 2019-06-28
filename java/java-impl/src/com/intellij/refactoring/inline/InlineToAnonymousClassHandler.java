@@ -16,7 +16,7 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
@@ -60,7 +60,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
 
   @Override
   public boolean canInlineElement(final PsiElement element) {
-    if (element.getLanguage() != StdLanguages.JAVA) return false;
+    if (element.getLanguage() != JavaLanguage.INSTANCE) return false;
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element;
       if (method.isConstructor() && !InlineUtil.isChainingConstructor(method)) {
@@ -385,6 +385,6 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
   @Nullable
   @Override
   public String getActionName(PsiElement element) {
-    return "Inline to Anonymous Class";
+    return RefactoringBundle.message("inline.to.anonymous.refactoring");
   }
 }

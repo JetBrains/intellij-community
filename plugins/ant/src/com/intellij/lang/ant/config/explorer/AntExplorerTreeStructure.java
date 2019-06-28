@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,19 +50,19 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
     if (element == myRoot) {
       return new RootNodeDescriptor(myProject, parentDescriptor);
     }
-    
+
     if (element instanceof String) {
       return new TextInfoNodeDescriptor(myProject, parentDescriptor, (String)element);
     }
-    
+
     if (element instanceof AntBuildFileBase) {
       return new AntBuildFileNodeDescriptor(myProject, parentDescriptor, (AntBuildFileBase)element);
     }
-    
+
     if (element instanceof AntBuildTargetBase) {
       return new AntTargetNodeDescriptor(myProject, parentDescriptor, (AntBuildTargetBase)element);
     }
-    
+
     LOG.error("Unknown element for this tree structure " + element);
     return null;
   }
@@ -93,7 +93,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
       return targets.toArray(new AntBuildTarget[0]);
     }
 
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
 
   @Override
@@ -105,11 +105,11 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
       }
       return ((AntBuildTarget)element).getModel().getBuildFile();
     }
-    
+
     if (element instanceof AntBuildFile) {
       return myRoot;
     }
-    
+
     return null;
   }
 

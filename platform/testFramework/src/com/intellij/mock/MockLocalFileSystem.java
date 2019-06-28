@@ -6,7 +6,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileOperationsHandler;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -138,7 +138,7 @@ public class MockLocalFileSystem extends LocalFileSystem {
   @NotNull
   @Override
   public byte[] contentsToByteArray(@NotNull VirtualFile file) {
-    return ArrayUtil.EMPTY_BYTE_ARRAY;
+    return ArrayUtilRt.EMPTY_BYTE_ARRAY;
   }
 
   @Override
@@ -170,7 +170,7 @@ public class MockLocalFileSystem extends LocalFileSystem {
   @NotNull
   @Override
   public String[] list(@NotNull VirtualFile file) {
-    return ArrayUtil.EMPTY_STRING_ARRAY;
+    return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
   @Override

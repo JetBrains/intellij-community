@@ -24,10 +24,12 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -128,6 +130,8 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
         }
       }
     });
+
+    myCertificatesListPanel.setBorder(IdeBorderFactory.createTitledBorder("Accepted certificates:", false, JBUI.insetsTop(8)).setShowLine(false));
     myCertificatesListPanel.add(decorator.createPanel(), BorderLayout.CENTER);
   }
 

@@ -14,6 +14,9 @@ class UnnecessaryUnicodeEscape {
   String str3 = "\\<warning descr="Unicode escape sequence '\u0061' can be replaced with 'a'">\u0061</warning>"; // Backslash followed by escape sequence
   String str4 = <error descr="Illegal escape character in string literal">"\u004"</error>; // Too short to be a Unicode escape sequence
   String str5 = <error descr="Illegal escape character in string literal">"\u004g"</error>; // Invalid hex character
+
+  // <warning descr="Unicode escape sequence '\u0009' can be replaced with a tab character">\u0009</warning>
+  // <warning descr="Unicode escape sequence '\u000A' can be replaced with a line feed character">\u000A</warning>
 }
 @SuppressWarnings("UnnecessaryUnicodeEscape")
 class Suppress {

@@ -2,10 +2,10 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class UtilityClassCanBeEnumInspectionTest extends LightInspectionTestCase {
+public class UtilityClassCanBeEnumInspectionTest extends LightJavaInspectionTestCase {
 
   public void testUtilityClassCanBeEnum() {
     doTest();

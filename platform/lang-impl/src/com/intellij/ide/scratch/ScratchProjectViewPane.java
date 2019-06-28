@@ -13,10 +13,12 @@ import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.lang.Language;
+import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -131,6 +133,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
       @Override
       protected boolean canSelect(PsiFileSystemItem file) {
         VirtualFile vFile = PsiUtilCore.getVirtualFile(file);
+        vFile = BackedVirtualFile.getOriginFileIfBacked(vFile);
         if (vFile == null || !vFile.isValid()) return false;
         if (!vFile.isInLocalFileSystem()) return false;
 
@@ -239,7 +242,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
 
     @Override
     public boolean contains(@NotNull VirtualFile file) {
-      return file.getFileType() == ScratchFileType.INSTANCE;
+      return FileTypeRegistry.getInstance().isFileOfType(file, ScratchFileType.INSTANCE);
     }
 
     @NotNull

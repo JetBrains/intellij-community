@@ -1,9 +1,9 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
-public class FieldMayBeFinalInspectionTest extends LightInspectionTestCase {
+public class FieldMayBeFinalInspectionTest extends LightJavaInspectionTestCase {
 
   public void testFieldMayBeFinal() {
     doTest();

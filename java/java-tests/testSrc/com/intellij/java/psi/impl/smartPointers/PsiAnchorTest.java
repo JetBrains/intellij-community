@@ -19,12 +19,12 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
 import com.intellij.psi.xml.XmlToken;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 /**
  * @author peter
  */
-public class PsiAnchorTest extends LightCodeInsightFixtureTestCase {
+public class PsiAnchorTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testSingleTokenAnchor() {
     PsiFile file = myFixture.configureByText("a.xml", "<");

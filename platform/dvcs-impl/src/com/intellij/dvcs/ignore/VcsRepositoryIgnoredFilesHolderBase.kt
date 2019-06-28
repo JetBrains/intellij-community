@@ -3,6 +3,7 @@ package com.intellij.dvcs.ignore
 
 import com.intellij.dvcs.repo.AbstractRepositoryManager
 import com.intellij.dvcs.repo.Repository
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
@@ -19,6 +20,8 @@ import com.intellij.util.ui.update.Update
 import com.intellij.vcsUtil.VcsUtil
 import com.intellij.vfs.AsyncVfsEventsListener
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
+import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -153,7 +156,7 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
             fireUpdateStarted()
             val ignored = action()
             inUpdateMode.set(false)
-            fireUpdateFinished(ignored)
+            fireUpdateFinished(ignored, isFullRescan)
             doAfterRescan?.run()
           }
         })
@@ -194,12 +197,35 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     listeners.multicaster.updateStarted()
   }
 
-  private fun fireUpdateFinished(paths: Collection<FilePath>) {
-    listeners.multicaster.updateFinished(paths)
+  private fun fireUpdateFinished(paths: Collection<FilePath>, isFullRescan: Boolean) {
+    listeners.multicaster.updateFinished(paths, isFullRescan)
   }
 
   private fun isUnder(parents: Set<VirtualFile>, child: VirtualFile) = generateSequence(child) { it.parent }.any { it in parents }
   private fun isUnder(parents: Set<FilePath>, child: FilePath) = generateSequence(child) { it.parentPath }.any { it in parents }
+
+  @TestOnly
+  inner class Waiter : VcsIgnoredHolderUpdateListener {
+
+    private val awaitLatch = CountDownLatch(1)
+
+    init {
+      addUpdateStateListener(this)
+    }
+
+    override fun updateFinished(ignoredPaths: Collection<FilePath>, isFullRescan: Boolean) = awaitLatch.countDown()
+
+    fun waitFor() {
+      awaitLatch.await()
+      listeners.removeListener(this)
+    }
+  }
+
+  @TestOnly
+  fun createWaiter(): Waiter {
+    assert(ApplicationManager.getApplication().isUnitTestMode)
+    return Waiter()
+  }
 
   companion object {
     @JvmStatic

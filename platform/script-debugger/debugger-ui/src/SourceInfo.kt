@@ -21,23 +21,10 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Url
-import com.intellij.util.Urls
 import com.intellij.xdebugger.XSourcePosition
 
-class SourceInfo @JvmOverloads constructor(private val file: VirtualFile, private val line: Int, val column: Int = -1, private var offset: Int = -1, val functionName: String? = null, url: Url? = null) : XSourcePosition {
-  private var _url = url
-
+class SourceInfo @JvmOverloads constructor(private val file: VirtualFile, private val line: Int, val column: Int = -1, private var offset: Int = -1, val functionName: String? = null, val url: Url? = null) : XSourcePosition {
   override fun getFile(): VirtualFile = file
-
-  val url: Url
-    get() {
-      var result = _url
-      if (result == null) {
-        result = Urls.newFromVirtualFile(file)
-        _url = result
-      }
-      return result
-    }
 
   override fun getLine(): Int = line
 

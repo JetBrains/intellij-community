@@ -233,7 +233,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
           Icon icon = factory.getGroupIcon(group);
           String parentGroup = factory.getParentGroup(group);
           TemplatesGroup templatesGroup = new TemplatesGroup(group, null, icon, factory.getGroupWeight(group), parentGroup, group, null);
-          templatesGroup.setSafeToReport(PluginInfoDetectorKt.getPluginInfo(factory.getClass()).isSafeToReport());
+          templatesGroup.setPluginInfo(PluginInfoDetectorKt.getPluginInfo(factory.getClass()));
           groups.putValues(templatesGroup, values);
         }
       }
@@ -494,7 +494,9 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
   @Override
   public void updateDataModel() {
     ModuleBuilder builder = getSelectedBuilder();
-    myWizard.getSequence().addStepsForBuilder(builder, myContext, myModulesProvider);
+    if (builder != null) {
+      myWizard.getSequence().addStepsForBuilder(builder, myContext, myModulesProvider);
+    }
     ModuleWizardStep step = getCustomStep();
     if (step != null) {
       step.updateDataModel();
@@ -712,16 +714,17 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
     reportStatistics("attempt");
   }
 
-  private void reportStatistics(String groupId) {
+  private void reportStatistics(String eventId) {
     TemplatesGroup group = myProjectTypeList.getSelectedValue();
     FeatureUsageData data = new FeatureUsageData();
-    data.addData("projectType", group.isSafeToReport() ? group.getId() : "third-party");
-    myFrameworksPanel.reportFeatureUsageData(data);
+    data.addData("projectType", group.getId());
+    data.addPluginInfo(group.getPluginInfo());
+    myFrameworksPanel.reportSelectedFrameworks(eventId, data);
     ModuleWizardStep step = getCustomStep();
     if (step instanceof StatisticsAwareModuleWizardStep) {
-      ((StatisticsAwareModuleWizardStep) step).reportFeatureUsageData(data);
+      ((StatisticsAwareModuleWizardStep) step).addCustomFeatureUsageData(eventId, data);
     }
 
-    FUCounterUsageLogger.getInstance().logEvent("new.project.wizard", groupId, data);
+    FUCounterUsageLogger.getInstance().logEvent("new.project.wizard", eventId, data);
   }
 }

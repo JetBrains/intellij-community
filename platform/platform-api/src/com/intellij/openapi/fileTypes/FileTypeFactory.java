@@ -19,8 +19,10 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * @deprecated use &lt;fileType&gt; extension point instead
  * @author peter
  */
+@Deprecated
 public abstract class FileTypeFactory {
   public static final ExtensionPointName<FileTypeFactory> FILE_TYPE_FACTORY_EP = ExtensionPointName.create("com.intellij.fileTypeFactory");
 

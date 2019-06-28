@@ -12,6 +12,9 @@ public final class SaveAndSyncHandlerImpl {
   private SaveAndSyncHandlerImpl() {
   }
 
+  /**
+   * @deprecated Use {@link SaveAndSyncHandler} directly, do not use implementation class.
+   */
   @Deprecated
   public static SaveAndSyncHandler getInstance() {
     return SaveAndSyncHandler.getInstance();

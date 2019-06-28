@@ -15,23 +15,56 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
 import com.intellij.ui.components.*
-import com.intellij.ui.layout.migLayout.*
 import com.intellij.util.ui.UIUtil
 import java.awt.Component
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.MouseEvent
-import java.util.function.Consumer
-import java.util.function.Supplier
 import javax.swing.*
+import kotlin.jvm.internal.CallableReference
 import kotlin.reflect.KMutableProperty0
-import kotlin.reflect.KProperty0
 
 @DslMarker
 annotation class CellMarker
+
+data class PropertyBinding<V>(val get: () -> V, val set: (V) -> Unit)
+
+@PublishedApi
+internal fun <T> createPropertyBinding(prop: KMutableProperty0<T>, propType: Class<T>): PropertyBinding<T> {
+  if (prop is CallableReference) {
+    val name = prop.name
+    val receiver = (prop as CallableReference).boundReceiver
+    if (receiver != null) {
+      val baseName = name.removePrefix("is")
+      val nameCapitalized = StringUtil.capitalize(baseName)
+      val getterName = if (name.startsWith("is")) name else "get$nameCapitalized"
+      val setterName = "set$nameCapitalized"
+      val receiverClass = receiver::class.java
+
+      try {
+        val getter = receiverClass.getMethod(getterName)
+        val setter = receiverClass.getMethod(setterName, propType)
+        return PropertyBinding({ getter.invoke(receiver) as T }, { setter.invoke(receiver, it) })
+      }
+      catch (e: Exception) {
+        // ignore
+      }
+    }
+  }
+  return PropertyBinding(prop.getter, prop.setter)
+}
+
+fun <T> PropertyBinding<T>.toNullable(): PropertyBinding<T?> {
+  return PropertyBinding<T?>({ get() }, { set(it!!) })
+}
+
+fun KMutableProperty0<Boolean>.asBooleanBinding(): PropertyBinding<Boolean> {
+  return createPropertyBinding(this, Boolean::class.javaPrimitiveType!!)
+}
 
 interface CellBuilder<T : JComponent> {
   val component: T
@@ -45,12 +78,11 @@ interface CellBuilder<T : JComponent> {
   fun <V> withBinding(
     componentGet: () -> V,
     componentSet: (V) -> Unit,
-    modelGet: () -> V,
-    modelSet: (V) -> Unit
+    modelBinding: PropertyBinding<V>
   ): CellBuilder<T> {
-    onApply { modelSet(componentGet()) }
-    onReset { componentSet(modelGet()) }
-    onIsModified { componentGet() != modelGet() }
+    onApply { modelBinding.set(componentGet()) }
+    onReset { componentSet(modelBinding.get()) }
+    onIsModified { componentGet() != modelBinding.get() }
     return this
   }
 
@@ -148,13 +180,19 @@ abstract class Cell {
   }
 
   fun checkBox(text: String, prop: KMutableProperty0<Boolean>, comment: String? = null): CellBuilder<JBCheckBox> {
-    return checkBox(text, prop.getter, prop.setter, comment)
+    return checkBox(text, createPropertyBinding(prop, Boolean::class.javaPrimitiveType!!), comment)
   }
 
   fun checkBox(text: String, getter: () -> Boolean, setter: (Boolean) -> Unit, comment: String? = null): CellBuilder<JBCheckBox> {
-    val component = JBCheckBox(text, getter())
+    return checkBox(text, PropertyBinding(getter, setter), comment)
+  }
+
+  private fun checkBox(text: String,
+                       modelBinding: PropertyBinding<Boolean>,
+                       comment: String?): CellBuilder<JBCheckBox> {
+    val component = JBCheckBox(text, modelBinding.get())
     return component(comment = comment)
-      .withBinding(component::isSelected, component::setSelected, getter, setter)
+      .withBinding(component::isSelected, component::setSelected, modelBinding)
   }
 
   fun radioButton(text: String, comment: String? = null): CellBuilder<JBRadioButton> {
@@ -166,10 +204,18 @@ abstract class Cell {
   fun radioButton(text: String, prop: KMutableProperty0<Boolean>, comment: String? = null): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text, prop.get())
     return component(comment = comment)
-      .withBinding(component::isSelected, component::setSelected, prop.getter, prop.setter)
+      .withBinding(component::isSelected, component::setSelected, createPropertyBinding(prop, Boolean::class.javaPrimitiveType!!))
   }
 
-  fun <T> comboBox(model: ComboBoxModel<T>, getter: () -> T?, setter: (T?) -> Unit, growPolicy: GrowPolicy? = null, renderer: ListCellRenderer<T?>? = null): CellBuilder<ComboBox<T>> {
+  fun <T> comboBox(model: ComboBoxModel<T>, getter: () -> T?, setter: (T?) -> Unit, growPolicy: GrowPolicy? = null, renderer: ListCellRenderer<T?>? = null
+  ): CellBuilder<ComboBox<T>> {
+    return comboBox(model, PropertyBinding(getter, setter), growPolicy, renderer)
+  }
+
+  fun <T> comboBox(model: ComboBoxModel<T>,
+                   modelBinding: PropertyBinding<T?>,
+                   growPolicy: GrowPolicy?,
+                   renderer: ListCellRenderer<T?>?): CellBuilder<ComboBox<T>> {
     val component = ComboBox(model)
     if (renderer != null) {
       component.renderer = renderer
@@ -178,17 +224,17 @@ abstract class Cell {
       component.renderer = SimpleListCellRenderer.create("") { it.toString() }
     }
     val builder = component(growPolicy = growPolicy)
-    return builder.withBinding({ component.selectedItem as T? }, { component.setSelectedItem(it) }, getter, setter)
+    return builder.withBinding({ component.selectedItem as T? }, { component.setSelectedItem(it) }, modelBinding)
   }
 
-  fun <T> comboBox(model: ComboBoxModel<T>, prop: KMutableProperty0<T>, growPolicy: GrowPolicy? = null, renderer: ListCellRenderer<T?>? = null): CellBuilder<ComboBox<T>> {
-    return comboBox(model, prop.getter, { prop.set(it!!) }, growPolicy, renderer)
+  inline fun <reified T : Any> comboBox(model: ComboBoxModel<T>, prop: KMutableProperty0<T>, growPolicy: GrowPolicy? = null, renderer: ListCellRenderer<T?>? = null): CellBuilder<ComboBox<T>> {
+    return comboBox(model, createPropertyBinding(prop, T::class.javaPrimitiveType ?: T::class.java).toNullable(), growPolicy, renderer)
   }
 
   fun textField(prop: KMutableProperty0<String>, columns: Int? = null): CellBuilder<JTextField> {
     val component = JTextField(prop.get(),columns ?: 0)
     val builder = component()
-    return builder.withBinding(component::getText, component::setText, prop.getter, prop.setter)
+    return builder.withBinding(component::getText, component::setText, createPropertyBinding(prop, String::class.java))
   }
 
   fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null, range: UINumericRange? = null): CellBuilder<JTextField> {
@@ -202,12 +248,12 @@ abstract class Cell {
   fun textField(getter: () -> String, setter: (String) -> Unit, columns: Int? = null): CellBuilder<JTextField> {
     val component = JTextField(getter(),columns ?: 0)
     val builder = component()
-    return builder.withBinding(component::getText, component::setText, getter, setter)
+    return builder.withBinding(component::getText, component::setText, PropertyBinding(getter, setter))
   }
 
   fun spinner(prop: KMutableProperty0<Int>, minValue: Int, maxValue: Int, step: Int = 1): CellBuilder<JBIntSpinner> {
     val component = JBIntSpinner(prop.get(), minValue, maxValue, step)
-    return component().withBinding(component::getNumber, component::setNumber, prop.getter, prop.setter)
+    return component().withBinding(component::getNumber, component::setNumber, createPropertyBinding(prop, Int::class.javaPrimitiveType!!))
   }
 
   fun textFieldWithHistoryWithBrowseButton(browseDialogTitle: String,
@@ -259,8 +305,9 @@ abstract class Cell {
   /**
    * @see LayoutBuilder.titledRow
    */
-  fun panel(title: String, wrappedComponent: Component, vararg constraints: CCFlags) {
-    val panel = Panel(title)
+  @JvmOverloads
+  fun panel(title: String, wrappedComponent: Component, hasSeparator: Boolean = true, vararg constraints: CCFlags) {
+    val panel = Panel(title, hasSeparator)
     panel.add(wrappedComponent)
     panel(*constraints)
   }

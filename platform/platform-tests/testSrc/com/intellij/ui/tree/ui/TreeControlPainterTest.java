@@ -2,25 +2,24 @@
 package com.intellij.ui.tree.ui;
 
 import com.intellij.ui.RestoreScaleRule;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import java.awt.Component;
-import java.awt.Graphics;
-import javax.swing.Icon;
+import javax.swing.*;
+import java.awt.*;
 
-import static com.intellij.util.ui.JBUI.setUserScaleFactor;
-
+@SuppressWarnings("SuspiciousPackagePrivateAccess")
 public class TreeControlPainterTest {
   @ClassRule
   public static final RestoreScaleRule MANAGE_STATE = new RestoreScaleRule();
 
   @Test
   public void testClassicDefault() {
-    setUserScaleFactor(1);
+    JBUIScale.setUserScaleFactor((float)1);
     Control.Painter painter = new ClassicPainter(true, 7, 11, null);
 
     Control even = new TestControl(10, 10);
@@ -36,7 +35,7 @@ public class TreeControlPainterTest {
 
   @Test
   public void testClassicDefaultLeafIndent() {
-    setUserScaleFactor(1);
+    JBUIScale.setUserScaleFactor((float)1);
     Control.Painter painter = new ClassicPainter(false, 7, 11, 0);
 
     Control even = new TestControl(10, 10);
@@ -52,39 +51,39 @@ public class TreeControlPainterTest {
 
   @Test
   public void testClassicCompact() {
-    setUserScaleFactor(1);
+    JBUIScale.setUserScaleFactor((float)1);
     Control.Painter painter = new ClassicPainter(true, 0, 0, null);
 
     Control even = new TestControl(10, 10);
-    testRendererOffset(painter, even, false, 10, 15, 20, 25, 30, 35);
-    testRendererOffset(painter, even, true, 10, 15, 20, 25, 30, 35);
+    testRendererOffset(painter, even, false, 12, 17, 22, 27, 32, 37);
+    testRendererOffset(painter, even, true, 12, 17, 22, 27, 32, 37);
     testControlOffset(painter, even, 0, 5, 10, 15, 20, 25);
 
     Control odd = new TestControl(11, 11);
-    testRendererOffset(painter, odd, false, 11, 16, 21, 26, 31, 36);
-    testRendererOffset(painter, odd, true, 11, 16, 21, 26, 31, 36);
+    testRendererOffset(painter, odd, false, 13, 18, 23, 28, 33, 38);
+    testRendererOffset(painter, odd, true, 13, 18, 23, 28, 33, 38);
     testControlOffset(painter, odd, 0, 5, 10, 15, 20, 25);
   }
 
   @Test
   public void testClassicCompactLeafIndent() {
-    setUserScaleFactor(1);
+    JBUIScale.setUserScaleFactor((float)1);
     Control.Painter painter = new ClassicPainter(false, 0, 0, 0);
 
     Control even = new TestControl(10, 10);
-    testRendererOffset(painter, even, false, 10, 15, 20, 25, 30, 35);
+    testRendererOffset(painter, even, false, 12, 17, 22, 27, 32, 37);
     testRendererOffset(painter, even, true, 0, 5, 10, 15, 20, 25);
     testControlOffset(painter, even, 0, 5, 10, 15, 20, 25);
 
     Control odd = new TestControl(11, 11);
-    testRendererOffset(painter, odd, false, 11, 16, 21, 26, 31, 36);
+    testRendererOffset(painter, odd, false, 13, 18, 23, 28, 33, 38);
     testRendererOffset(painter, odd, true, 0, 5, 10, 15, 20, 25);
     testControlOffset(painter, odd, 0, 5, 10, 15, 20, 25);
   }
 
   @Test
   public void testCompact() {
-    setUserScaleFactor(1);
+    JBUIScale.setUserScaleFactor((float)1);
     for (int i = 0; i < 4; i++) {
       Control.Painter painter = new CompactPainter(true, i, i, -1);
 
@@ -102,7 +101,7 @@ public class TreeControlPainterTest {
 
   @Test
   public void testCompactLeafIndent() {
-    setUserScaleFactor(1);
+    JBUIScale.setUserScaleFactor((float)1);
     for (int i = 0; i < 4; i++) {
       Control.Painter painter = new CompactPainter(false, i, i, 0);
 

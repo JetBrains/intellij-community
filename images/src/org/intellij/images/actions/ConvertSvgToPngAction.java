@@ -17,6 +17,7 @@ package org.intellij.images.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SVGLoader;
@@ -49,7 +50,7 @@ public class ConvertSvgToPngAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    boolean enabled = file != null && file.getFileType() == SvgFileType.INSTANCE;
+    boolean enabled = file != null && FileTypeRegistry.getInstance().isFileOfType(file, SvgFileType.INSTANCE);
     e.getPresentation().setEnabledAndVisible(enabled);
   }
 }

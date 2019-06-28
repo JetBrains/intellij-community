@@ -2,38 +2,24 @@
 package com.intellij.openapi.vfs.newvfs.events;
 
 import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Experimental
-// internal class for data transfer from refresh worker to persistent FS impl, do not use
-public class ChildInfo {
-  public static final ChildInfo[] EMPTY_ARRAY = new ChildInfo[0];
-  public final int id;
-  @NotNull
-  public final String name;
-  public final FileAttributes attributes;
-  public final String symLinkTarget;
-  @Nullable // null means children are unknown
-  public final ChildInfo[] children;
-  public static final int UNKNOWN_ID_YET = -1;
+/** An internal class for data transfer from refresh worker to persistent FS impl, do not use. */
+@ApiStatus.Internal
+public interface ChildInfo {
+  ChildInfo[] EMPTY_ARRAY = new ChildInfo[0];
 
-  public ChildInfo(int id, @NotNull String name, FileAttributes attributes, @Nullable ChildInfo[] children, String symLinkTarget) {
-    this.id = id;
-    this.name = name;
-    this.attributes = attributes;
-    this.children = children;
-    this.symLinkTarget = symLinkTarget;
-    if (id <= 0 && id != UNKNOWN_ID_YET) throw new IllegalArgumentException("expected id > 0, got: "+id);
-  }
+  int getId();
 
-  @Override
-  public String toString() {
-    return name +" id: " + id
-           + " ("+attributes+")"
-           + (children == null ? "" :
-              "\n  " + StringUtil.join(children, info -> info.toString().replaceAll("\n", "\n  "), "\n  "));
-  }
+  @NotNull CharSequence getName();
+
+  int getNameId();
+
+  String getSymLinkTarget();
+
+  @Nullable("null means children are unknown") ChildInfo[] getChildren();
+
+  FileAttributes getFileAttributes();
 }

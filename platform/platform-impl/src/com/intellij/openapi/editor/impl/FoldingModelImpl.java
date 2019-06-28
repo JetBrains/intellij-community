@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.PrioritizedInternalDocumentListener;
+import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
@@ -52,10 +53,11 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
   private boolean myDoNotCollapseCaret;
   private boolean myFoldRegionsProcessed;
 
-  private int mySavedCaretShift;
+  private boolean myDisableScrollingPositionAdjustment;
   private final MultiMap<FoldingGroup, FoldRegion> myGroups = new MultiMap<>();
   private boolean myDocumentChangeProcessed = true;
   private final AtomicLong myExpansionCounter = new AtomicLong();
+  private final EditorScrollingPositionKeeper myScrollingPositionKeeper;
 
   FoldingModelImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
@@ -80,6 +82,10 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
       }
     };
     myFoldRegionsProcessed = false;
+
+    myScrollingPositionKeeper = new EditorScrollingPositionKeeper(editor);
+    Disposer.register(editor.getDisposable(), myScrollingPositionKeeper);
+
     refreshSettings();
   }
 
@@ -133,6 +139,15 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
     return region != null && region.getStartOffset() < offset;
   }
 
+  void onPlaceholderTextChanged(FoldRegionImpl region) {
+    if (!myIsBatchFoldingProcessing) {
+      LOG.error("Fold regions must be changed inside batchFoldProcessing() only");
+    }
+    myFoldRegionsProcessed = true;
+    myEditor.myView.invalidateFoldRegionLayout(region);
+    notifyListenersOnFoldRegionStateChange(region);
+  }
+
   private static void assertIsDispatchThreadForEditor() {
     ApplicationManager.getApplication().assertIsDispatchThread();
   }
@@ -174,7 +189,8 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
     boolean oldBatchFlag = myIsBatchFoldingProcessing;
     if (!oldBatchFlag) {
       ((ScrollingModelImpl)myEditor.getScrollingModel()).finishAnimation();
-      mySavedCaretShift = myEditor.visualLineToY(myEditor.getCaretModel().getVisualPosition().line) - myEditor.getScrollingModel().getVerticalScrollOffset();
+      myScrollingPositionKeeper.savePosition();
+      myDisableScrollingPositionAdjustment = false;
     }
 
     myIsBatchFoldingProcessing = true;
@@ -199,11 +215,11 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   /**
-   * Disables caret position adjustment after batch folding operation is finished.
+   * Disables scrolling position adjustment after batch folding operation is finished.
    * Should be called from inside batch operation runnable.
    */
-  void flushCaretShift() {
-    mySavedCaretShift = -1;
+  void disableScrollingPositionAdjustment() {
+    myDisableScrollingPositionAdjustment = true;
   }
 
   @Override
@@ -396,7 +412,7 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
         }
 
         if (collapsed != null && positionToUse == null) {
-          positionToUse = myEditor.offsetToLogicalPosition(collapsed.getStartOffset());
+          //positionToUse = myEditor.offsetToLogicalPosition(collapsed.getStartOffset());
         }
 
         if ((markedForUpdate || moveCaretFromCollapsedRegion) && caret.isUpToDate()) {
@@ -421,12 +437,7 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
         }
       }
     });
-    if (mySavedCaretShift > 0) {
-      final ScrollingModel scrollingModel = myEditor.getScrollingModel();
-      scrollingModel.disableAnimation();
-      scrollingModel.scrollVertically(myEditor.visualLineToY(myEditor.getCaretModel().getVisualPosition().line) - mySavedCaretShift);
-      scrollingModel.enableAnimation();
-    }
+    if (!myDisableScrollingPositionAdjustment) myScrollingPositionKeeper.restorePosition(true);
   }
 
   @Override

@@ -3,7 +3,7 @@ package git4idea.history;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
 import git4idea.commands.GitHandler;
@@ -130,7 +130,7 @@ class GitLogRecord {
   @NotNull
   String[] getParentsHashes() {
     final String parents = lookup(PARENTS);
-    if (parents.trim().length() == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
+    if (parents.trim().length() == 0) return ArrayUtilRt.EMPTY_STRING_ARRAY;
     return parents.split(" ");
   }
 

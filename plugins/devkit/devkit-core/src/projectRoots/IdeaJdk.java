@@ -23,7 +23,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.impl.compiled.ClsParsingUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import gnu.trove.THashSet;
 import icons.DevkitIcons;
@@ -168,6 +168,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     List<VirtualFile> result = new ArrayList<>();
     appendIdeaLibrary(home, result, "junit.jar");
     String plugins = home + File.separator + PLUGINS_DIR + File.separator;
+    appendIdeaLibrary(plugins + "java", result);
     appendIdeaLibrary(plugins + "JavaEE", result, "javaee-impl.jar", "jpa-console.jar");
     appendIdeaLibrary(plugins + "PersistenceSupport", result, "persistence-impl.jar");
     appendIdeaLibrary(plugins + "DatabaseTools", result, "database-impl.jar", "jdbc-console.jar");
@@ -234,7 +235,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
       int choice = Messages.showChooseDialog(
         "Select Java SDK to be used for " + DevKitBundle.message("sdk.title"),
         "Select Internal Java Platform",
-        ArrayUtil.toStringArray(javaSdks), javaSdks.get(0), Messages.getQuestionIcon());
+        ArrayUtilRt.toStringArray(javaSdks), javaSdks.get(0), Messages.getQuestionIcon());
       if (choice != -1) {
         String name = javaSdks.get(choice);
         Sdk internalJava = ObjectUtils.assertNotNull(sdkModel.findSdk(name));

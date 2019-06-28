@@ -16,12 +16,12 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class SharedThreadLocalRandomInspectionTest extends LightInspectionTestCase {
+public class SharedThreadLocalRandomInspectionTest extends LightJavaInspectionTestCase {
   @Override
   protected InspectionProfileEntry getInspection() {
     return new SharedThreadLocalRandomInspection();

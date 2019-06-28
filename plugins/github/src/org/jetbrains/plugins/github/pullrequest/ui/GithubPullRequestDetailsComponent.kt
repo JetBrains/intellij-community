@@ -9,9 +9,9 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.ui.frame.ProgressStripe
-import org.jetbrains.plugins.github.api.data.GithubIssueState
-import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailedWithHtml
+import org.jetbrains.plugins.github.api.data.*
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
+import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsMetadataService
@@ -27,7 +27,7 @@ internal class GithubPullRequestDetailsComponent(private val dataLoader: GithubP
                                                  metadataService: GithubPullRequestsMetadataService,
                                                  stateService: GithubPullRequestsStateService,
                                                  iconProviderFactory: CachingGithubAvatarIconsProvider.Factory)
-  : GithubDataLoadingComponent<GithubPullRequestDetailedWithHtml>(), Disposable {
+  : GithubDataLoadingComponent<GHPullRequest>(), Disposable {
 
   private val detailsModel = GithubPullRequestDetailsModel()
   private val detailsPanel = GithubPullRequestDetailsPanel(detailsModel, securityService, busyStateTracker, metadataService, stateService,
@@ -52,14 +52,16 @@ internal class GithubPullRequestDetailsComponent(private val dataLoader: GithubP
     detailsModel.details = null
   }
 
+  override fun extractRequest(provider: GithubPullRequestDataProvider) = provider.detailsRequest
+
   override fun resetUI() {
     detailsPanel.emptyText.text = DEFAULT_EMPTY_TEXT
     detailsModel.details = null
   }
 
-  override fun handleResult(result: GithubPullRequestDetailedWithHtml) {
+  override fun handleResult(result: GHPullRequest) {
     detailsModel.details = result
-    if (!result.merged && result.state == GithubIssueState.open && result.mergeable == null) {
+    if (result.state != GHPullRequestState.MERGED && result.mergeable == GHPullRequestMergeableState.UNKNOWN) {
       ApplicationManager.getApplication().invokeLater {
         dataLoader.findDataProvider(result.number)?.reloadDetails()
       }

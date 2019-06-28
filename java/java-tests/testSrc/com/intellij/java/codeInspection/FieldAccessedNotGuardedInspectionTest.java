@@ -18,10 +18,10 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.concurrencyAnnotations.FieldAccessNotGuardedInspection;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class FieldAccessedNotGuardedInspectionTest extends LightCodeInsightFixtureTestCase {
+public class FieldAccessedNotGuardedInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testItself() {
     myFixture.addClass("package net.jcip.annotations;\n" + getGuardedByAnnotationText());
     doTest();

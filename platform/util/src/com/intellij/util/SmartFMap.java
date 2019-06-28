@@ -9,12 +9,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 /**
- * An immutable map optimized for storing few entries with relatively rare updates
+ * An immutable map optimized for storing few entries with relatively rare updates.
  *
  * @author peter
  */
 public class SmartFMap<K,V> implements Map<K,V> {
-  private static final SmartFMap EMPTY = new SmartFMap(ArrayUtil.EMPTY_OBJECT_ARRAY);
+  private static final SmartFMap EMPTY = new SmartFMap(ArrayUtilRt.EMPTY_OBJECT_ARRAY);
   private static final int ARRAY_THRESHOLD = 8;
   private final Object myMap; // Object[] for map sizes up to ARRAY_THRESHOLD or Map
 
@@ -180,18 +180,27 @@ public class SmartFMap<K,V> implements Map<K,V> {
     return null;
   }
 
+  /**
+   * @deprecated not supported, use {@link #plus(Object, Object)}
+   */
   @Override
   @Deprecated
   public V put(K key, V value) {
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * @deprecated not supported, use {@link #plusAll(Map)}
+   */
   @Override
   @Deprecated
   public void putAll(@NotNull Map<? extends K, ? extends V> m) {
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * @deprecated not supported
+   */
   @Override
   @Deprecated
   public void clear() {
@@ -222,6 +231,9 @@ public class SmartFMap<K,V> implements Map<K,V> {
     return Collections.unmodifiableCollection(result);
   }
 
+  /**
+   * @deprecated not supported, use {@link #minus(Object)}
+   */
   @Override
   @Deprecated
   public V remove(Object key) {

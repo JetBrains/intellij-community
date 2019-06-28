@@ -2,14 +2,16 @@
 package com.intellij.java.psi
 
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.psi.PsiField
 import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiLiteralExpression
 import com.intellij.testFramework.PsiTestUtil
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.ThrowableRunnable
 import groovy.transform.CompileStatic
 
 @CompileStatic
-class JavaPsiTest extends LightCodeInsightFixtureTestCase {
+class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
   void testEmptyImportList() {
     assert configureFile("").importList != null
     assert configureFile("class C { }").importList != null
@@ -79,6 +81,42 @@ class JavaPsiTest extends LightCodeInsightFixtureTestCase {
     def file = configureFile("package p;;import javax.swing.*;")
     runCommand { file.importList.importStatements[0].delete() }
     PsiTestUtil.checkPsiMatchesTextIgnoringNonCode(file)
+  }
+
+  void testTextBlockLiteralValue() {
+    def file = configureFile("""
+        class C {
+          String invalid1 = \"""\""";
+          String invalid2 = \""" \""";
+          String invalid3 = \"""\\n \""";
+          String empty = \"""
+            \""";
+          String underIndented = \"""
+            hello
+           \""";
+          String overIndented = \"""
+            hello
+              \""";
+          String noTrailingNewLine = \"""
+            <p>
+              hello
+            </p>\""";
+          String tabs = \"""
+          \t<p>
+          \t\thello
+          \t</p>\""";
+          String openingSpaces = \""" \t \f \n    \""";
+        }""".stripIndent())
+    def values = file.classes[0].fields.collect { ((it as PsiField).initializer as PsiLiteralExpression).value }
+    assert values[0] == null
+    assert values[1] == null
+    assert values[2] == null
+    assert values[3] == ""
+    assert values[4] == " hello\n"
+    assert values[5] == "hello\n"
+    assert values[6] == "<p>\n  hello\n</p>"
+    assert values[7] == "<p>\n\thello\n</p>"
+    assert values[8] == ""
   }
 
   private PsiJavaFile configureFile(String text) {

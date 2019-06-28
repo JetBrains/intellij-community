@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FilteringIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -162,7 +161,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
 
   @NotNull
   public List<RepositoryTreeNode> getAlreadyLoadedChildren() {
-    return ContainerUtil.collect(myChildren.iterator(), FilteringIterator.instanceOf(RepositoryTreeNode.class));
+    return ContainerUtil.filterIsInstance(myChildren, RepositoryTreeNode.class);
   }
 
   public boolean isDisposed() {

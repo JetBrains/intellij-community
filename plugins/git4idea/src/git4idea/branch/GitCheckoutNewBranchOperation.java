@@ -38,7 +38,7 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
   @NotNull private final String myNewBranchName;
 
   GitCheckoutNewBranchOperation(@NotNull Project project, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,
-                                @NotNull Collection<GitRepository> repositories, @NotNull String newBranchName) {
+                                @NotNull Collection<? extends GitRepository> repositories, @NotNull String newBranchName) {
     super(project, git, uiHandler, repositories);
     myNewBranchName = newBranchName;
     myProject = project;

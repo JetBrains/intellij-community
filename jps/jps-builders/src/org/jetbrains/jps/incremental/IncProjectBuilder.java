@@ -350,10 +350,6 @@ public class IncProjectBuilder {
           new File(root, CLASSPATH_INDEX_FILE_NAME).delete();
         }
       }
-
-      @Override
-      public void filesDeleted(@NotNull FileDeletedEvent event) {
-      }
     });
 
     for (TargetBuilder builder : myBuilderRegistry.getTargetBuilders()) {
@@ -1077,7 +1073,9 @@ public class IncProjectBuilder {
       fsState.clearContextRoundData(context);
       fsState.clearContextChunk(context);
 
-      BuildOperations.markTargetsUpToDate(context, chunk);
+      if (doneSomething) {
+        BuildOperations.markTargetsUpToDate(context, chunk);
+      }
 
       //if (doneSomething && GENERATE_CLASSPATH_INDEX) {
       //  myAsyncTasks.add(SharedThreadPool.getInstance().executeOnPooledThread(new Runnable() {

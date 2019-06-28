@@ -29,6 +29,9 @@ public abstract class InspectionProjectProfileManager implements InspectionProfi
     return project.getComponent(ProjectInspectionProfileManager.class);
   }
 
+  /**
+   * @deprecated use {@link #getCurrentProfile()}
+   */
   @NotNull
   @Deprecated
   public InspectionProfile getInspectionProfile() {

@@ -22,29 +22,23 @@ import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
-import com.intellij.openapi.vcs.update.UpdateInfoTree;
-import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.ViewUpdateInfoNotification;
 import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRepository;
 import git4idea.update.GitUpdateResult;
 import one.util.streamex.EntryStream;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
-
-import static com.intellij.openapi.vcs.update.ActionInfo.UPDATE;
 
 class GitPushResultNotification extends Notification {
 
@@ -59,14 +53,15 @@ class GitPushResultNotification extends Notification {
 
   private static final Logger LOG = Logger.getInstance(GitPushResultNotification.class);
 
-  GitPushResultNotification(@NotNull String groupDisplayId,
-                                   @NotNull String title,
-                                   @NotNull String content,
-                                   @NotNull NotificationType type) {
+  private GitPushResultNotification(@NotNull String groupDisplayId,
+                                    @NotNull String title,
+                                    @NotNull String content,
+                                    @NotNull NotificationType type) {
     super(groupDisplayId, title, content, type);
   }
 
   @NotNull
+  @CalledInAwt
   static GitPushResultNotification create(@NotNull Project project,
                                           @NotNull GitPushResult pushResult,
                                           @Nullable GitPushOperation pushOperation,
@@ -123,17 +118,6 @@ class GitPushResultNotification extends Notification {
       }
     }
 
-    UpdatedFiles updatedFiles = pushResult.getUpdatedFiles();
-    if (!updatedFiles.isEmpty()) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        UpdateInfoTree tree = ProjectLevelVcsManagerEx.getInstanceEx(project).showUpdateProjectInfo(updatedFiles, "Update", UPDATE, false);
-        if (tree != null) {
-          tree.setBefore(pushResult.getBeforeUpdateLabel());
-          tree.setAfter(pushResult.getAfterUpdateLabel());
-          notification.addAction(new ViewUpdateInfoNotification(project, tree, VIEW_FILES_UPDATED_DURING_THE_PUSH, notification));
-        }
-      });
-    }
     return notification;
   }
 

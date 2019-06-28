@@ -16,10 +16,10 @@ internal class GithubPullRequestDirectionPanel : NonOpaquePanel(WrapLayout(FlowL
   private val from = createLabel()
   private val to = createLabel()
 
-  var direction: Pair<GithubPullRequest.Tag, GithubPullRequest.Tag>?
-    by equalVetoingObservable<Pair<GithubPullRequest.Tag, GithubPullRequest.Tag>?>(null) {
-      from.text = " ${it?.first?.label} "
-      to.text = " ${it?.second?.ref} "
+  var direction: Pair<String, String>?
+    by equalVetoingObservable<Pair<String, String>?>(null) {
+      from.text = " ${it?.first} "
+      to.text = " ${it?.second} "
       this@GithubPullRequestDirectionPanel.isVisible = it != null
     }
 

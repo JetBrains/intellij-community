@@ -18,6 +18,7 @@ package com.intellij.dvcs.ui;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.ui.SimpleListCellRenderer;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -29,7 +30,7 @@ import javax.swing.*;
  */
 public class RepositoryComboboxListCellRenderer extends SimpleListCellRenderer<Repository> {
   @Override
-  public void customize(JList<? extends Repository> list, Repository value, int index, boolean selected, boolean hasFocus) {
+  public void customize(@NotNull JList<? extends Repository> list, Repository value, int index, boolean selected, boolean hasFocus) {
     setText(DvcsUtil.getShortRepositoryName(value));
   }
 }

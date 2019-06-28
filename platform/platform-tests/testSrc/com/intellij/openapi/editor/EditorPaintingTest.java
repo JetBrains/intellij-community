@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -147,6 +148,23 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     bottomHighlighter.setLineSeparatorColor(Color.blue);
     bottomHighlighter.setLineSeparatorPlacement(SeparatorPlacement.BOTTOM);
 
+    checkResult();
+  }
+
+  public void testSoftWrappedLineHighlighterWithBlockInlay() throws Exception {
+    initText("some text");
+    configureSoftWraps(5);
+    addBlockInlay(0);
+    addLineHighlighter(0, 0, HighlighterLayer.CARET_ROW + 1, null, Color.red);
+    checkResultWithGutter();
+  }
+
+  public void testBlockInlaysWithSelection() throws Exception {
+    initText("line 1\nline 2\n");
+    addBlockInlay(myEditor.getDocument().getLineStartOffset(0));
+    addBlockInlay(myEditor.getDocument().getLineStartOffset(1));
+    executeAction(IdeActions.ACTION_EDITOR_TEXT_END);
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
     checkResult();
   }
 }

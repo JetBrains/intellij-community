@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.Nullable;
@@ -8,8 +8,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class IconPathPatcher {
   /**
-   * @deprecated
-   * @see #patchPath(String, ClassLoader)
+   * @deprecated use {@link #patchPath(String, ClassLoader)}
    */
   @Deprecated
   @Nullable
@@ -18,10 +17,11 @@ public abstract class IconPathPatcher {
   }
 
   /**
-   * Patches the path or returns null if nothing has patched
-   * @param path path to the icon
+   * Patches the path or returns {@code null} if nothing has patched.
+   *
+   * @param path        path to the icon
    * @param classLoader ClassLoader of the icon is requested from
-   * @return patched path or null
+   * @return patched path or {@code null}
    */
   @Nullable
   public String patchPath(String path, ClassLoader classLoader) {
@@ -29,8 +29,7 @@ public abstract class IconPathPatcher {
   }
 
   /**
-   * @deprecated
-   * @see #getContextClassLoader(String, ClassLoader)
+   * @deprecated use {@link #getContextClassLoader(String, ClassLoader)}
    */
   @Deprecated
   public Class getContextClass(String path) {
@@ -38,10 +37,11 @@ public abstract class IconPathPatcher {
   }
 
   /**
-   * Return ClassLoader for icon path or returns null if nothing has patched
-   * @param path path to the icon
+   * Return ClassLoader for icon path or {@code null} if nothing has patched.
+   *
+   * @param path                path to the icon
    * @param originalClassLoader ClassLoader of the icon is requested from
-   * @return patched icon ClassLoader or null
+   * @return patched icon ClassLoader or {@code null}
    */
   @Nullable
   public ClassLoader getContextClassLoader(String path, ClassLoader originalClassLoader) {

@@ -68,14 +68,20 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
     if (repository.isFresh()) {
       return null;
     }
-    GitLocalBranch currentBranch = repository.getCurrentBranch();
-    if (currentBranch == null) {
+    GitLocalBranch sourceBranch = repository.getCurrentBranch();
+    if (sourceBranch == null) {
       return null;
     }
+    return getDefaultTarget(repository, GitPushSource.create(sourceBranch));
+  }
 
-    GitPushTarget pushSpecTarget = getPushTargetIfExist(repository, currentBranch);
+  @Nullable
+  @Override
+  public GitPushTarget getDefaultTarget(@NotNull GitRepository repository, @NotNull GitPushSource source) {
+    if (source instanceof GitPushSource.DetachedHead) return null;
+    GitPushTarget pushSpecTarget = getPushTargetIfExist(repository, source.getBranch());
     if (pushSpecTarget != null) return pushSpecTarget;
-    return proposeTargetForNewBranch(repository, currentBranch);
+    return proposeTargetForNewBranch(repository, source.getBranch());
   }
 
   @Nullable
@@ -92,21 +98,21 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
     return null;
   }
 
-  private static GitPushTarget proposeTargetForNewBranch(@NotNull GitRepository repository, @NotNull GitLocalBranch currentBranch) {
+  private static GitPushTarget proposeTargetForNewBranch(@NotNull GitRepository repository, @NotNull GitLocalBranch sourceBranch) {
     GitRemote remote = getDefaultOrFirstRemote(repository.getRemotes());
     if (remote == null) return null; // TODO need to propose to declare new remote
-    return makeTargetForNewBranch(repository, remote, currentBranch);
+    return makeTargetForNewBranch(repository, remote, sourceBranch);
   }
 
   @NotNull
   private static GitPushTarget makeTargetForNewBranch(@NotNull GitRepository repository,
                                                       @NotNull GitRemote remote,
-                                                      @NotNull GitLocalBranch currentBranch) {
-    GitRemoteBranch existingRemoteBranch = findRemoteBranch(repository, remote, currentBranch.getName());
+                                                      @NotNull GitLocalBranch sourceBranch) {
+    GitRemoteBranch existingRemoteBranch = findRemoteBranch(repository, remote, sourceBranch.getName());
     if (existingRemoteBranch != null) {
       return new GitPushTarget(existingRemoteBranch, false);
     }
-    return new GitPushTarget(new GitStandardRemoteBranch(remote, currentBranch.getName()), true);
+    return new GitPushTarget(new GitStandardRemoteBranch(remote, sourceBranch.getName()), true);
   }
 
   @NotNull
@@ -126,8 +132,10 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
 
   @NotNull
   @Override
-  public PushTargetPanel<GitPushTarget> createTargetPanel(@NotNull GitRepository repository, @Nullable GitPushTarget defaultTarget) {
-    return new GitPushTargetPanel(this, repository, defaultTarget);
+  public PushTargetPanel<GitPushTarget> createTargetPanel(@NotNull GitRepository repository,
+                                                          @NotNull GitPushSource source,
+                                                          @Nullable GitPushTarget defaultTarget) {
+    return new GitPushTargetPanel(this, repository, source, defaultTarget);
   }
 
   @Override
@@ -140,12 +148,12 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
   @Override
   public VcsPushOptionsPanel createOptionsPanel() {
     return new GitPushOptionsPanel(mySettings.getPushTagMode(),
-                                   GitVersionSpecialty.SUPPORTS_FOLLOW_TAGS.existsIn(myVcs.getVersion()),
+                                   GitVersionSpecialty.SUPPORTS_FOLLOW_TAGS.existsIn(myVcs),
                                    shouldShowSkipHookOption());
   }
 
   private boolean shouldShowSkipHookOption() {
-    return GitVersionSpecialty.PRE_PUSH_HOOK.existsIn(myVcs.getVersion()) &&
+    return GitVersionSpecialty.PRE_PUSH_HOOK.existsIn(myVcs) &&
            getRepositoryManager()
              .getRepositories()
              .stream()

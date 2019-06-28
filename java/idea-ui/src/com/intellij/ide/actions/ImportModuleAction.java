@@ -86,18 +86,18 @@ public class ImportModuleAction extends AnAction implements NewProjectOrModuleAc
     if (wizard == null || wizard.getStepCount() > 0 && !wizard.showAndGet()) {
       return Collections.emptyList();
     }
+    return createFromWizard(project, wizard);
+  }
+
+  public static List<Module> createFromWizard(@Nullable Project project, AbstractProjectWizard wizard) {
     try {
-      return createFromWizard(project, wizard);
+      Ref<List<Module>> result = Ref.create();
+      TransactionGuard.getInstance().submitTransactionAndWait(() -> result.set(doCreateFromWizard(project, wizard)));
+      return result.get();
     }
     finally {
       wizard.disposeIfNeeded();
     }
-  }
-
-  public static List<Module> createFromWizard(@Nullable Project project, AbstractProjectWizard wizard) {
-    Ref<List<Module>> result = Ref.create();
-    TransactionGuard.getInstance().submitTransactionAndWait(() -> result.set(doCreateFromWizard(project, wizard)));
-    return result.get();
   }
 
   private static List<Module> doCreateFromWizard(@Nullable Project project, AbstractProjectWizard wizard) {
@@ -120,6 +120,9 @@ public class ImportModuleAction extends AnAction implements NewProjectOrModuleAc
         return Collections.singletonList(module);
       }
       else {
+        if (!projectBuilder.validate(project, project)) {
+          return Collections.emptyList();
+        }
         return projectBuilder.commit(project);
       }
     }

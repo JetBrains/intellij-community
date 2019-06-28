@@ -21,10 +21,12 @@ import org.editorconfig.configmanagement.EditorConfigNavigationActionsFactory;
 import org.editorconfig.core.EditorConfig;
 import org.editorconfig.core.EditorConfigException;
 import org.editorconfig.plugincomponents.SettingsProviderComponent;
+import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 import static org.editorconfig.core.EditorConfig.OutPair;
 
@@ -72,7 +74,7 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
   }
 
   private static boolean applyCodeStyleSettings(@NotNull MyContext context) {
-    LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(context.getLanguage());
+    LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.findUsingBaseLanguage(context.getLanguage());
     if (provider != null) {
       AbstractCodeStylePropertyMapper mapper = provider.getPropertyMapper(context.getSettings());
       Set<String> processed = new HashSet<>();
@@ -194,5 +196,14 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
       CommonCodeStyleSettings.IndentOptions indentOptions = mySettings.getIndentOptions(myFile.getFileType());
       return String.valueOf(indentOptions.TAB_SIZE);
     }
+  }
+
+  @Nullable
+  @Override
+  public Consumer<CodeStyleSettings> getDisablingFunction() {
+    return settings -> {
+      EditorConfigSettings editorConfigSettings = settings.getCustomSettings(EditorConfigSettings.class);
+      editorConfigSettings.ENABLED = false;
+    };
   }
 }

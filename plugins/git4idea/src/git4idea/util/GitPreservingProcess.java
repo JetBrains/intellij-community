@@ -38,7 +38,7 @@ public class GitPreservingProcess {
 
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
-  @NotNull private final Collection<VirtualFile> myRootsToSave;
+  @NotNull private final Collection<? extends VirtualFile> myRootsToSave;
   @NotNull private final String myOperationTitle;
   @NotNull private final String myDestinationName;
   @NotNull private final ProgressIndicator myProgressIndicator;
@@ -50,7 +50,7 @@ public class GitPreservingProcess {
 
   public GitPreservingProcess(@NotNull Project project,
                               @NotNull Git git,
-                              @NotNull Collection<VirtualFile> rootsToSave,
+                              @NotNull Collection<? extends VirtualFile> rootsToSave,
                               @NotNull String operationTitle,
                               @NotNull String destinationName,
                               @NotNull GitVcsSettings.UpdateChangesPolicy saveMethod,

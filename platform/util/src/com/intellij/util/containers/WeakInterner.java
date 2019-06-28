@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentMap;
  *
  * @author peter
  */
-public class WeakInterner<T> {
+public class WeakInterner<T> extends Interner<T> {
   private final ConcurrentMap<T, T> myMap;
 
   public WeakInterner() {
@@ -25,15 +25,18 @@ public class WeakInterner<T> {
     myMap = ContainerUtil.createConcurrentWeakKeyWeakValueMap(strategy);
   }
 
+  @Override
   @NotNull
   public T intern(@NotNull T name) {
     return ConcurrencyUtil.cacheOrGet(myMap, name, name);
   }
 
+  @Override
   public void clear() {
     myMap.clear();
   }
 
+  @Override
   @NotNull
   public Set<T> getValues() {
     return new THashSet<>(myMap.values());

@@ -20,12 +20,12 @@ import com.intellij.ide.util.JavaAnonymousClassesHelper;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class JavaAnonymousClassesHelperTest extends LightCodeInsightFixtureTestCase {
+public class JavaAnonymousClassesHelperTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();

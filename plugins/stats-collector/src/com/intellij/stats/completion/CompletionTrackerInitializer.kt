@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.stats.completion
 
 import com.intellij.codeInsight.lookup.LookupManager
@@ -6,25 +6,34 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.settings.CompletionStatsCollectorSettings
 import com.intellij.completion.tracker.PositionTrackingListener
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
+import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.BaseComponent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.reporting.isUnitTestMode
 import com.intellij.stats.experiment.WebServiceStatus
 import com.intellij.stats.personalization.UserFactorDescriptions
 import com.intellij.stats.personalization.UserFactorStorage
 import com.intellij.stats.personalization.UserFactorsManager
+import com.intellij.stats.personalization.session.SessionFactorsUtils
+import com.intellij.stats.personalization.session.SessionPrefixTracker
 import java.beans.PropertyChangeListener
 import kotlin.random.Random
 
-class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposable, BaseComponent {
+class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposable {
   companion object {
     var isEnabledInTests: Boolean = false
-    private const val LOGGED_SESSIONS_RATIO: Double = 0.1
+    private val LOGGED_SESSIONS_RATIO: Map<String, Double> = mapOf(
+      "python" to 0.5,
+      "scala" to 0.3,
+      "php" to 0.3,
+      "kotlin" to 0.2,
+      "java" to 0.1
+    )
   }
 
   private val actionListener = LookupActionsListener()
@@ -35,20 +44,23 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
     }
     else if (lookup is LookupImpl) {
       if (isUnitTestMode() && !isEnabledInTests) return@PropertyChangeListener
-      lookup.putUserData(CompletionUtil.COMPLETION_STARTING_TIME_KEY, System.currentTimeMillis())
+      val startedTimestamp = System.currentTimeMillis()
+      lookup.putUserData(CompletionUtil.COMPLETION_STARTING_TIME_KEY, startedTimestamp)
 
       processUserFactors(lookup)
+      processSessionFactors(lookup, startedTimestamp)
 
-      val shownTimesTracker = PositionTrackingListener(lookup)
-      lookup.setPrefixChangeListener(shownTimesTracker)
-
-      if (sessionShouldBeLogged(experimentHelper)) {
+      if (sessionShouldBeLogged(experimentHelper, lookup.language())) {
         val tracker = actionsTracker(lookup, experimentHelper)
         actionListener.listener = tracker
         lookup.addLookupListener(tracker)
         lookup.setPrefixChangeListener(tracker)
       }
     }
+  }
+
+  init {
+    initComponent()
   }
 
   private fun actionsTracker(lookup: LookupImpl, experimentHelper: WebServiceStatus): CompletionActionsTracker {
@@ -62,24 +74,29 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
 
   private fun shouldUseUserFactors() = UserFactorsManager.ENABLE_USER_FACTORS
 
-  private fun sessionShouldBeLogged(experimentHelper: WebServiceStatus): Boolean {
+  private fun shouldUseSessionFactors(): Boolean = SessionFactorsUtils.shouldUseSessionFactors()
+
+  private fun sessionShouldBeLogged(experimentHelper: WebServiceStatus, language: Language?): Boolean {
     val application = ApplicationManager.getApplication()
     if (!application.isEAP) return false
+    if (Registry.`is`("completion.stats.show.ml.ranking.diff")) return false
     if (application.isUnitTestMode || experimentHelper.isExperimentOnCurrentIDE()) return true
 
-    return Random.nextDouble() < LOGGED_SESSIONS_RATIO
+    var logSessionChance = 0.0
+    if (language != null) {
+      logSessionChance = LOGGED_SESSIONS_RATIO.getOrDefault(language.displayName.toLowerCase(), 1.0)
+    }
+
+    return Random.nextDouble() < logSessionChance
   }
 
   private fun processUserFactors(lookup: LookupImpl) {
     if (!shouldUseUserFactors()) return
 
-    val globalStorage = UserFactorStorage.getInstance()
-    val projectStorage = UserFactorStorage.getInstance(lookup.project)
-
-    val userFactors = UserFactorsManager.getInstance(lookup.project).getAllFactors()
+    val userFactors = UserFactorsManager.getInstance().getAllFactors()
     val userFactorValues = mutableMapOf<String, String?>()
-    userFactors.asSequence().map { "${it.id}:App" to it.compute(globalStorage) }.toMap(userFactorValues)
-    userFactors.asSequence().map { "${it.id}:Project" to it.compute(projectStorage) }.toMap(userFactorValues)
+    userFactors.associateTo(userFactorValues) { "${it.id}:App" to it.compute(UserFactorStorage.getInstance()) }
+    userFactors.associateTo(userFactorValues) { "${it.id}:Project" to it.compute(UserFactorStorage.getInstance(lookup.project)) }
 
     lookup.putUserData(UserFactorsManager.USER_FACTORS_KEY, userFactorValues)
 
@@ -93,7 +110,18 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
     lookup.addLookupListener(LookupStartedTracker())
   }
 
-  override fun initComponent() {
+  private fun processSessionFactors(lookup: LookupImpl, completionStartedTimestamp: Long) {
+    if (!shouldUseSessionFactors()) return
+
+    val storage = SessionFactorsUtils.initLookupSessionFactors(lookup, completionStartedTimestamp)
+    lookup.setPrefixChangeListener(SessionPrefixTracker(storage))
+    lookup.addLookupListener(LookupSelectionTracker(storage))
+
+    val shownTimesTracker = PositionTrackingListener(lookup)
+    lookup.setPrefixChangeListener(shownTimesTracker)
+  }
+
+  private fun initComponent() {
     if (!shouldInitialize()) return
 
     val busConnection = ApplicationManager.getApplication().messageBus.connect(this)

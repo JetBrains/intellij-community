@@ -13,13 +13,13 @@ public class MockPlainTextImportOptimizer implements ImportOptimizer {
   private final Set<PsiFile> myProcessedFiles = new HashSet<>();
   
   @Override
-  public boolean supports(PsiFile file) {
+  public boolean supports(@NotNull PsiFile file) {
     return file.getLanguage() == PlainTextLanguage.INSTANCE;
   }
 
   @NotNull
   @Override
-  public Runnable processFile(PsiFile file) {
+  public Runnable processFile(@NotNull PsiFile file) {
     myProcessedFiles.add(file);
     return EmptyRunnable.INSTANCE;
   }

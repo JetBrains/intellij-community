@@ -4,6 +4,7 @@ package com.intellij.openapi.fileTypes.impl;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -47,6 +48,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
@@ -70,7 +72,7 @@ public class FileTypesTest extends PlatformTestCase {
       ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.setIgnoredFilesList(myOldIgnoredFilesList));
       myFileTypeManager.clearForTests();
       myFileTypeManager.initStandardFileTypes();
-      myFileTypeManager.initComponent();
+      myFileTypeManager.initializeComponent();
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -286,8 +288,10 @@ public class FileTypesTest extends PlatformTestCase {
       @Override
       public FileType detect(@NotNull VirtualFile file, @NotNull ByteSequence firstBytes, @Nullable CharSequence firstCharsIfText) {
         detectorCalled.add(file);
-        String text = firstCharsIfText.toString();
-        FileType result = text.startsWith("TYPE:") ? fileTypeManager.findFileTypeByName(StringUtil.trimStart(text, "TYPE:")) : null;
+        String text = firstCharsIfText != null ? firstCharsIfText.toString() : null;
+        FileType result = text != null && text.startsWith("TYPE:")
+                          ? fileTypeManager.findFileTypeByName(StringUtil.trimStart(text, "TYPE:"))
+                          : null;
         log("T: my detector run for "+file.getName()+"; result: "+(result == null ? null : result.getName())+" (text="+text+")");
         return result;
       }
@@ -358,7 +362,7 @@ public class FileTypesTest extends PlatformTestCase {
 
       myFileTypeManager.initStandardFileTypes();
       myFileTypeManager.loadState(element);
-      myFileTypeManager.initComponent();
+      myFileTypeManager.initializeComponent();
 
       assertEquals(fileType, myFileTypeManager.getFileTypeByFileName("foo." + extension));
     }
@@ -377,19 +381,19 @@ public class FileTypesTest extends PlatformTestCase {
     table.removeAssociation(matcher, fileType);
 
     WriteAction.run(() -> myFileTypeManager.setPatternsTable(fileTypes, table));
-    myFileTypeManager.getRemovedMappings().put(matcher, Pair.create(fileType, true));
+    myFileTypeManager.getRemovedMappingTracker().add(matcher, fileType.getName(), true);
 
     Element state = myFileTypeManager.getState();
 
-    myFileTypeManager.getRemovedMappings().clear();
+    myFileTypeManager.getRemovedMappingTracker().clear();
     myFileTypeManager.initStandardFileTypes();
     myFileTypeManager.loadState(state);
-    myFileTypeManager.initComponent();
+    myFileTypeManager.initializeComponent();
 
-    Map<FileNameMatcher, Pair<FileType, Boolean>> mappings = myFileTypeManager.getRemovedMappings();
-    Pair<FileType, Boolean> pair = mappings.get(matcher);
-    assertNotNull(pair);
-    assertTrue(pair.second);
+    List<RemovedMappingTracker.RemovedMapping> mappings = myFileTypeManager.getRemovedMappingTracker().getRemovedMappings();
+    assertEquals(1, mappings.size());
+    assertTrue(mappings.get(0).isApproved());
+    assertEquals(matcher, mappings.get(0).getFileNameMatcher());
   }
 
   public void testRemovedExactNameMapping() {
@@ -403,19 +407,18 @@ public class FileTypesTest extends PlatformTestCase {
     table.removeAssociation(matcher, fileType);
 
     WriteAction.run(() -> myFileTypeManager.setPatternsTable(fileTypes, table));
-    myFileTypeManager.getRemovedMappings().put(matcher, Pair.create(fileType, true));
+    myFileTypeManager.getRemovedMappingTracker().add(matcher, fileType.getName(), true);
 
     Element state = myFileTypeManager.getState();
 
-    myFileTypeManager.getRemovedMappings().clear();
+    myFileTypeManager.getRemovedMappingTracker().clear();
     myFileTypeManager.initStandardFileTypes();
     myFileTypeManager.loadState(state);
-    myFileTypeManager.initComponent();
+    myFileTypeManager.initializeComponent();
 
-    Map<FileNameMatcher, Pair<FileType, Boolean>> mappings = myFileTypeManager.getRemovedMappings();
-    Pair<FileType, Boolean> pair = mappings.get(matcher);
-    assertNotNull(pair);
-    assertTrue(pair.second);
+    List<RemovedMappingTracker.RemovedMapping> mappings = myFileTypeManager.getRemovedMappingTracker().getRemovedMappings();
+    assertTrue(mappings.get(0).isApproved());
+    assertEquals(matcher, mappings.get(0).getFileNameMatcher());
   }
 
   public void testReassignedPredefinedFileType() {
@@ -428,18 +431,18 @@ public class FileTypesTest extends PlatformTestCase {
   public void testReAddedMapping() {
     ArchiveFileType fileType = ArchiveFileType.INSTANCE;
     FileNameMatcher matcher = myFileTypeManager.getAssociations(fileType).get(0);
-    myFileTypeManager.getRemovedMappings().put(matcher, Pair.create(fileType, true));
+    myFileTypeManager.getRemovedMappingTracker().add(matcher, fileType.getName(), true);
 
     WriteAction.run(() -> myFileTypeManager
       .setPatternsTable(new HashSet<>(Arrays.asList(myFileTypeManager.getRegisteredFileTypes())), myFileTypeManager.getExtensionMap().copy()));
-    assertEquals(0, myFileTypeManager.getRemovedMappings().size());
+    assertEquals(0, myFileTypeManager.getRemovedMappingTracker().getRemovedMappings().size());
   }
 
   public void testPreserveRemovedMappingForUnknownFileType() {
-    myFileTypeManager.getRemovedMappings().put(new ExtensionFileNameMatcher("xxx"), Pair.create(createTestFileType(), true));
+    myFileTypeManager.getRemovedMappingTracker().add(new ExtensionFileNameMatcher("xxx"), "Foo Files", true);
     WriteAction.run(() -> myFileTypeManager
       .setPatternsTable(new HashSet<>(Arrays.asList(myFileTypeManager.getRegisteredFileTypes())), myFileTypeManager.getExtensionMap().copy()));
-    assertEquals(1, myFileTypeManager.getRemovedMappings().size());
+    assertEquals(1, myFileTypeManager.getRemovedMappingTracker().getRemovedMappings().size());
   }
 
   public void testGetRemovedMappings() {
@@ -452,10 +455,10 @@ public class FileTypesTest extends PlatformTestCase {
     assertEquals(1, reassigned.size());
   }
 
-  public void testRenamedPropertiesToUnknownAndBack() throws Exception {
-    FileType propFileType = myFileTypeManager.getFileTypeByFileName("xx.properties");
-    assertEquals("Properties", propFileType.getName());
-    File file = createTempFile("xx.properties", "xx=yy");
+  public void testRenamedXmlToUnknownAndBack() throws Exception {
+    FileType propFileType = myFileTypeManager.getFileTypeByFileName("xx.xml");
+    assertEquals("XML", propFileType.getName());
+    File file = createTempFile("xx.xml", "<foo></foo>");
     VirtualFile vFile = getVirtualFile(file);
     assertEquals(propFileType, myFileTypeManager.getFileTypeByFile(vFile));
 
@@ -463,7 +466,7 @@ public class FileTypesTest extends PlatformTestCase {
     UIUtil.dispatchAllInvocationEvents();
     assertEquals(PlainTextFileType.INSTANCE, myFileTypeManager.getFileTypeByFile(vFile));
 
-    rename(vFile, "xx.properties");
+    rename(vFile, "xx.xml");
     myFileTypeManager.drainReDetectQueue();
     for (int i=0; i<100;i++) {
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
@@ -491,10 +494,10 @@ public class FileTypesTest extends PlatformTestCase {
     myFileTypeManager.initStandardFileTypes();
     myFileTypeManager.loadState(element);
 
-    myFileTypeManager.initComponent();
-    Map<FileNameMatcher, Pair<FileType, Boolean>> mappings = myFileTypeManager.getRemovedMappings();
+    myFileTypeManager.initializeComponent();
+    List<RemovedMappingTracker.RemovedMapping> mappings = myFileTypeManager.getRemovedMappingTracker().getRemovedMappings();
     assertEquals(1, mappings.size());
-    assertEquals(typeFromPlugin, mappings.values().iterator().next().first);
+    assertEquals(typeFromPlugin.getName(), mappings.get(0).getFileTypeName());
   }
 
   public void testPreserveUninstalledPluginAssociations() {
@@ -512,7 +515,7 @@ public class FileTypesTest extends PlatformTestCase {
       FileTypeFactory.FILE_TYPE_FACTORY_EP.getPoint(null).registerExtension(factory, disposable);
       myFileTypeManager.initStandardFileTypes();
       myFileTypeManager.loadState(element);
-      myFileTypeManager.initComponent();
+      myFileTypeManager.initializeComponent();
 
       ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(typeFromPlugin, "*.foo"));
 
@@ -525,7 +528,7 @@ public class FileTypesTest extends PlatformTestCase {
       myFileTypeManager.clearForTests();
       myFileTypeManager.initStandardFileTypes();
       myFileTypeManager.loadState(element);
-      myFileTypeManager.initComponent();
+      myFileTypeManager.initializeComponent();
 
       element = myFileTypeManager.getState();
       //log(JDOMUtil.writeElement(element));
@@ -535,7 +538,7 @@ public class FileTypesTest extends PlatformTestCase {
       myFileTypeManager.clearForTests();
       myFileTypeManager.initStandardFileTypes();
       myFileTypeManager.loadState(element);
-      myFileTypeManager.initComponent();
+      myFileTypeManager.initializeComponent();
 
       //element = myFileTypeManager.getState();
       //log(JDOMUtil.writeElement(element));
@@ -551,7 +554,7 @@ public class FileTypesTest extends PlatformTestCase {
   public void testReassign() throws Exception {
     myFileTypeManager.clearForTests();
     myFileTypeManager.initStandardFileTypes();
-    myFileTypeManager.initComponent();
+    myFileTypeManager.initializeComponent();
 
     Element element = JDOMUtil.load(
       "<component name=\"FileTypeManager\" version=\"13\">\n" +
@@ -561,11 +564,11 @@ public class FileTypesTest extends PlatformTestCase {
       "</component>");
 
     myFileTypeManager.loadState(element);
-    myFileTypeManager.initComponent();
-    Map<FileNameMatcher, Pair<FileType, Boolean>> mappings = myFileTypeManager.getRemovedMappings();
+    myFileTypeManager.initializeComponent();
+    List<RemovedMappingTracker.RemovedMapping> mappings = myFileTypeManager.getRemovedMappingTracker().getRemovedMappings();
     assertEquals(1, mappings.size());
-    assertEquals(ArchiveFileType.INSTANCE, mappings.values().iterator().next().first);
-    mappings.clear();
+    assertEquals(ArchiveFileType.INSTANCE.getName(), mappings.get(0).getFileTypeName());
+    myFileTypeManager.getRemovedMappingTracker().clear();
     assertEquals(ArchiveFileType.INSTANCE, myFileTypeManager.getFileTypeByExtension("zip"));
     Element map = myFileTypeManager.getState().getChild("extensionMap");
     if (map != null) {
@@ -586,7 +589,7 @@ public class FileTypesTest extends PlatformTestCase {
     myFileTypeManager.clearForTests();
     myFileTypeManager.initStandardFileTypes();
     myFileTypeManager.loadState(element);
-    myFileTypeManager.initComponent();
+    myFileTypeManager.initializeComponent();
     FileType extensions = myFileTypeManager.getFileTypeByExtension(extension);
     assertEquals("IDL", extensions.getName());
     ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.removeAssociatedExtension(idl, extension));
@@ -781,6 +784,55 @@ public class FileTypesTest extends PlatformTestCase {
     finally {
       manager.setDefaultCharsetName(oldProject);
     }
+  }
+
+  public void testFileTypeBeanByName() {
+    assertInstanceOf(myFileTypeManager.getStdFileType("IDEA_WORKSPACE"), WorkspaceFileType.class);
+  }
+
+  public void testFileTypeBeanRegistered() {
+    final FileType[] types = myFileTypeManager.getRegisteredFileTypes();
+    assertTrue(ContainerUtil.exists(types, (it) -> it instanceof WorkspaceFileType));
+  }
+
+  public void testFileTypeBeanByFileName() {
+    assertInstanceOf(myFileTypeManager.getFileTypeByFileName("foo.iws"), WorkspaceFileType.class);
+  }
+
+  public void testFileTypeBeanByExtensionWithFieldName() {
+    assertSame(ModuleFileType.INSTANCE, myFileTypeManager.getFileTypeByExtension("iml"));
+  }
+
+  public void testIsFileTypeRunsDetector() throws IOException {
+    final AtomicInteger detectorCalls = new AtomicInteger();
+    FileTypeRegistry.FileTypeDetector detector = new FileTypeRegistry.FileTypeDetector() {
+      @Nullable
+      @Override
+      public FileType detect(@NotNull VirtualFile file, @NotNull ByteSequence firstBytes, @Nullable CharSequence firstCharsIfText) {
+        detectorCalls.incrementAndGet();
+        if (firstCharsIfText.toString().startsWith("#!archive")) {
+          return ArchiveFileType.INSTANCE;
+        }
+        return null;
+      }
+
+      @Nullable
+      @Override
+      public Collection<? extends FileType> getDetectedFileTypes() {
+        return Collections.singleton(ArchiveFileType.INSTANCE);
+      }
+
+      @Override
+      public int getVersion() {
+        return 0;
+      }
+    };
+    FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint(null).registerExtension(detector, getTestRootDisposable());
+
+    VirtualFile vFile = createTempFile("foo.bbb", null, "#!archive!!!", CharsetToolkit.UTF8_CHARSET);
+    assertTrue(myFileTypeManager.isFileOfType(vFile, ArchiveFileType.INSTANCE));
+    assertTrue(myFileTypeManager.isFileOfType(vFile, ArchiveFileType.INSTANCE));
+    assertEquals(1, detectorCalls.get());
   }
 
   @NotNull

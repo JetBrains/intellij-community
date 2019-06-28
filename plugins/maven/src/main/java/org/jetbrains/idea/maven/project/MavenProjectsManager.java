@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.CommonBundle;
+import com.intellij.build.SyncViewManager;
 import com.intellij.configurationStore.SettingsSavingComponentJavaAdapter;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.notification.*;
@@ -15,6 +16,7 @@ import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
@@ -53,6 +55,7 @@ import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.MavenArtifactDownloader.DownloadResult;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.*;
 
@@ -104,6 +107,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     EventDispatcher.create(MavenProjectsTree.Listener.class);
   private final List<Listener> myManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final ModificationTracker myModificationTracker;
+  private final SyncViewManager mySyncViewManager;
 
   private MavenWorkspaceSettings myWorkspaceSettings;
 
@@ -122,6 +126,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     myModificationTracker = new MavenModificationTracker(this);
     myInitializationAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
     mySaveQueue = new MavenMergingUpdateQueue("Maven save queue", SAVE_DELAY, !isUnitTestMode(), this);
+    mySyncViewManager = ServiceManager.getService(myProject, SyncViewManager.class);
   }
 
   @Override
@@ -170,7 +175,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   @Override
-  public void initComponent() {
+  public void initializeComponent() {
     if (!isNormalProject()) return;
 
     StartupManagerEx startupManager = StartupManagerEx.getInstanceEx(myProject);
@@ -272,6 +277,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       initWorkers();
       listenForSettingsChanges();
       listenForProjectsTreeChanges();
+      registerSyncConsoleListener();
 
       MavenUtil.runWhenInitialized(myProject, (DumbAwareRunnable)() -> {
         if (!isUnitTestMode()) {
@@ -368,7 +374,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       new MavenProjectsManagerWatcher(myProject, this, myProjectsTree, getGeneralSettings(), myReadingProcessor, myEmbeddersManager);
 
     myImportingQueue = new MavenMergingUpdateQueue(getComponentName() + ": Importing queue", IMPORT_DELAY, !isUnitTestMode(), myProject);
-    myImportingQueue.setPassThrough(ApplicationManager.getApplication().isUnitTestMode());
+    myImportingQueue.setPassThrough(false);
 
     myImportingQueue.makeUserAware(myProject);
     myImportingQueue.makeDumbAware(myProject);
@@ -382,7 +388,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         if (myProject.isDisposed()) return;
 
         if (getImportingSettings().isImportAutomatically()) {
-          scheduleImportAndResolve();
+          scheduleImportAndResolve(true);
         }
       }
 
@@ -398,6 +404,21 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     });
   }
 
+  private void registerSyncConsoleListener() {
+    myProjectsTree.addListener(new MavenProjectsTree.Listener() {
+    });
+    myProjectsTree.addListener(new MavenProjectsTree.Listener() {
+      @Override
+      public void pluginsResolved(@NotNull MavenProject project) {
+        getSyncConsole().getListener(MavenServerProgressIndicator.ResolveType.PLUGIN).finish();
+      }
+
+      @Override
+      public void artifactsDownloaded(@NotNull MavenProject project) {
+        getSyncConsole().getListener(MavenServerProgressIndicator.ResolveType.DEPENDENCY).finish();
+      }
+    });
+  }
   private void listenForProjectsTreeChanges() {
     myProjectsTree.addListener(new MavenProjectsTree.Listener() {
       @Override
@@ -428,7 +449,10 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         Iterator<MavenProject> it = toResolve.iterator();
         while (it.hasNext()) {
           MavenProject each = it.next();
-          if (each.hasReadingProblems()) it.remove();
+          if (each.hasReadingProblems()) {
+            getSyncConsole().notifyReadingProblems(each.getFile());
+            it.remove();
+          }
         }
 
         if (haveChanges(toImport) || !deleted.isEmpty()) {
@@ -842,12 +866,41 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
    * if project is closed)
    */
   public Promise<List<Module>> scheduleImportAndResolve() {
-    getSyncConsole().startImport();
-    AsyncPromise<List<Module>> promise = scheduleResolve();// scheduleImport will be called after the scheduleResolve process has finished
+    return scheduleImportAndResolve(false);
+  }
+
+  public Promise<List<Module>> scheduleImportAndResolve(boolean fromAutoImport) {
+    getSyncConsole().startImport(mySyncViewManager, fromAutoImport);
+    MavenSyncConsole console = getSyncConsole();
+    AsyncPromise<List<Module>> promise = scheduleResolve();
+    promise.onProcessed(m -> completeMavenSyncOnImportCompletion(console));
     fireImportAndResolveScheduled();
-    return promise
-      .onError(t -> getSyncConsole().addRootError(t))
-      .onProcessed(modules -> getSyncConsole().finishImport());
+    return promise;
+  }
+
+  private void completeMavenSyncOnImportCompletion(MavenSyncConsole console) {
+    MavenUtil.runInBackground(myProject, "waiting for maven import completion", false,
+                              indicator -> {
+                                if (myReadingProcessor != null) {
+                                  myReadingProcessor.waitForCompletion();
+                                }
+                                if (myArtifactsDownloadingProcessor != null) {
+                                  myArtifactsDownloadingProcessor.waitForCompletion();
+                                }
+                                if (myFoldersResolvingProcessor != null) {
+                                  myFoldersResolvingProcessor.waitForCompletion();
+                                }
+                                if (myPluginsResolvingProcessor != null) {
+                                  myPluginsResolvingProcessor.waitForCompletion();
+                                }
+                                if (myResolvingProcessor != null) {
+                                  myResolvingProcessor.waitForCompletion();
+                                }
+                                if (myPostProcessor != null) {
+                                  myPostProcessor.waitForCompletion();
+                                }
+                                console.finishImport();
+                              });
   }
 
   private AsyncPromise<List<Module>> scheduleResolve() {

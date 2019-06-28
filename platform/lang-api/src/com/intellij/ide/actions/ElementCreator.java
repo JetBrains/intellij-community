@@ -28,6 +28,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
@@ -55,13 +56,13 @@ public abstract class ElementCreator implements WriteActionAware {
   protected abstract String getActionName(String newName);
 
   public PsiElement[] tryCreate(@NotNull final String inputString) {
-    if (inputString.length() == 0) {
+    if (inputString.isEmpty()) {
       Messages.showMessageDialog(myProject, IdeBundle.message("error.name.should.be.specified"), CommonBundle.getErrorTitle(),
                                  Messages.getErrorIcon());
       return PsiElement.EMPTY_ARRAY;
     }
 
-    Ref<List<SmartPsiElementPointer>> createdElements = Ref.create();
+    Ref<List<SmartPsiElementPointer<?>>> createdElements = Ref.create();
     Exception exception = executeCommand(getActionName(inputString), () -> {
       PsiElement[] psiElements = create(inputString);
       SmartPointerManager manager = SmartPointerManager.getInstance(myProject);
@@ -76,7 +77,7 @@ public abstract class ElementCreator implements WriteActionAware {
   }
 
   @Nullable
-  private Exception executeCommand(String commandName, ThrowableRunnable<Exception> invokeCreate) {
+  private Exception executeCommand(String commandName, ThrowableRunnable<? extends Exception> invokeCreate) {
     final Exception[] exception = new Exception[1];
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       LocalHistoryAction action = LocalHistory.getInstance().startAction(commandName);
@@ -105,7 +106,7 @@ public abstract class ElementCreator implements WriteActionAware {
 
   public static String getErrorMessage(Throwable t) {
     String errorMessage = CreateElementActionBase.filterMessage(t.getMessage());
-    if (errorMessage == null || errorMessage.length() == 0) {
+    if (StringUtil.isEmpty(errorMessage)) {
       errorMessage = t.toString();
     }
     return errorMessage;

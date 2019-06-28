@@ -53,6 +53,8 @@ public class ClassPath {
   @Nullable private final CachePoolImpl myCachePool;
   @Nullable private final UrlClassLoader.CachingCondition myCachingCondition;
   final boolean myLogErrorOnMissingJar;
+  private final boolean myLogJarAccess;
+  private final LinkedHashSet<String> myJarAccessLog = new LinkedHashSet<String>();
 
   public ClassPath(List<URL> urls,
                    boolean canLockJars,
@@ -64,7 +66,7 @@ public class ClassPath {
                    @Nullable UrlClassLoader.CachingCondition cachingCondition,
                    boolean logErrorOnMissingJar,
                    boolean lazyClassloadingCaches,
-                   Set<URL> urlsWithProtectionDomain) {
+                   Set<URL> urlsWithProtectionDomain, boolean logJarAccess) {
     myLazyClassloadingCaches = lazyClassloadingCaches;
     myCanLockJars = canLockJars;
     myCanUseCache = canUseCache && !myLazyClassloadingCaches;
@@ -75,6 +77,7 @@ public class ClassPath {
     myCanHavePersistentIndex = canHavePersistentIndex;
     myLogErrorOnMissingJar = logErrorOnMissingJar;
     myURLsWithProtectionDomain = urlsWithProtectionDomain;
+    myLogJarAccess = logJarAccess;
     push(urls);
   }
 
@@ -122,6 +125,9 @@ public class ClassPath {
         }
         Resource resource = loader.getResource(s);
         if (resource != null) {
+          if (myLogJarAccess) {
+            myJarAccessLog.add(loader.getBaseURL().toString());
+          }
           return resource;
         }
       }
@@ -179,6 +185,10 @@ public class ClassPath {
       result.add(loader.getBaseURL());
     }
     return result;
+  }
+
+  public Collection<String> getJarAccessLog() {
+    return myJarAccessLog;
   }
 
   private void initLoaders(final URL url, int index) throws IOException {
@@ -360,15 +370,20 @@ public class ClassPath {
     Resource process(Loader loader, String s, ClassPath classPath, String shortName) {
       if (!loader.containsName(s, shortName)) return null;
       Resource resource = loader.getResource(s);
-      if (resource != null && ourResourceLoadingLogger != null) {
-        long resourceSize;
-        try {
-          resourceSize = resource instanceof MemoryResource ? resource.getBytes().length : -1;
+      if (resource != null) {
+        if (classPath.myLogJarAccess) {
+          classPath.myJarAccessLog.add(loader.getBaseURL().toString());
         }
-        catch (IOException e) {
-          resourceSize = -1;
+        if (ourResourceLoadingLogger != null) {
+          long resourceSize;
+          try {
+            resourceSize = resource instanceof MemoryResource ? resource.getBytes().length : -1;
+          }
+          catch (IOException e) {
+            resourceSize = -1;
+          }
+          ourResourceLoadingLogger.logResource(s, loader.getBaseURL(), resourceSize);
         }
-        ourResourceLoadingLogger.logResource(s, loader.getBaseURL(), resourceSize);
       }
       return resource;
     }

@@ -18,7 +18,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerManager;
-import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 import org.jetbrains.idea.maven.utils.MavenSettings;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
@@ -100,7 +99,6 @@ public class MavenShowEffectivePom extends AnAction implements DumbAware {
   public void actionPerformed(@NotNull AnActionEvent event) {
     final Project project = MavenActionUtil.getProject(event.getDataContext());
     if(project == null) return;
-    MavenActionsUsagesCollector.trigger(project, this, event);
     final VirtualFile file = findPomXml(event.getDataContext());
     if (file == null) return;
 

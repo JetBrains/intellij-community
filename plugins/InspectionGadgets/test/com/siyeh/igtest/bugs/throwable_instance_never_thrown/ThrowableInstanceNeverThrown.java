@@ -121,7 +121,7 @@ class Main {
 
     return switch(i) {
       default -> {
-        break new Throwable();
+        yield new Throwable();
       }
     };
   }

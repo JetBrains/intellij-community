@@ -21,7 +21,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
@@ -29,7 +29,7 @@ import java.io.File;
 /**
  * @author dsl
  */
-public abstract class GenericsTestCase extends PsiTestCase {
+public abstract class GenericsTestCase extends JavaPsiTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();

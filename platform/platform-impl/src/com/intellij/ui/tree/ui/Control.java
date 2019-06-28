@@ -21,7 +21,7 @@ public interface Control {
 
   interface Painter {
     Control.Painter DEFAULT = new ClassicPainter(null, null, null, null);
-    Control.Painter COMPACT = new ClassicPainter(null, 0, 0, 0);
+    Control.Painter COMPACT = new ClassicPainter(null, null, 0, null);
 
     JBColor LINE_COLOR = JBColor.namedColor("Tree.hash", new JBColor(0xE6E6E6, 0x505355));
 

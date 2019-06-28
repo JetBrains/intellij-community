@@ -10,7 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectIntHashMap;
 
@@ -19,7 +19,7 @@ import java.util.*;
 /**
  * @author gregsh
  */
-public class IElementTypeTest extends LightPlatformCodeInsightFixtureTestCase {
+public class IElementTypeTest extends BasePlatformTestCase {
   // load all parser definitions, instantiate all lexers & parsers to initialize all IElementType constants
   @SuppressWarnings("UnusedDeclaration")
   public void testCount() {

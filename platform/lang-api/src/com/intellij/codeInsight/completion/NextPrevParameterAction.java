@@ -18,9 +18,6 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 public abstract class NextPrevParameterAction extends CodeInsightAction {
   private static final LanguageExtension<TemplateParameterTraversalPolicy> EP = new LanguageExtension<>("com.intellij.templateParameterTraversalPolicy");
   private final boolean myNext;

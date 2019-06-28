@@ -95,7 +95,7 @@
             }
           }
         },
-        "markerWidth": {
+        "markerUnits": {
           "__compat": {
             "support": {
               "chrome": {
@@ -142,7 +142,7 @@
             }
           }
         },
-        "markerUnits": {
+        "markerWidth": {
           "__compat": {
             "support": {
               "chrome": {

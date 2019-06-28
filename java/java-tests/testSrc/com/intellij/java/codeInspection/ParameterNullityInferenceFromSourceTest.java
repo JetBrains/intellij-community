@@ -23,10 +23,10 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiMethodImpl;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import one.util.streamex.StreamEx;
 
-public class ParameterNullityInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
+public class ParameterNullityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTestCase {
   public void testSimpleDereference() {
     assertNullity("+", "String test(String s) { return s.trim(); }");
   }

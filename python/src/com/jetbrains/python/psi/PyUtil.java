@@ -439,11 +439,11 @@ public class PyUtil {
       final File file = new File(pyFilePath);
       File pycache = new File(file.getParentFile(), PyNames.PYCACHE);
       if (pycache.isDirectory()) {
-        final String shortName = FileUtil.getNameWithoutExtension(file);
+        final String shortName = FileUtilRt.getNameWithoutExtension(file.getName());
         Collections.addAll(filesToDelete, pycache.listFiles(pathname -> {
           if (!FileUtilRt.extensionEquals(pathname.getName(), "pyc")) return false;
-          String nameWithMagic = FileUtil.getNameWithoutExtension(pathname);
-          return FileUtil.getNameWithoutExtension(nameWithMagic).equals(shortName);
+          String nameWithMagic = FileUtilRt.getNameWithoutExtension(pathname.getName());
+          return FileUtilRt.getNameWithoutExtension(nameWithMagic).equals(shortName);
         }));
       }
       FileUtil.asyncDelete(filesToDelete);
@@ -452,7 +452,7 @@ public class PyUtil {
 
   public static String getElementNameWithoutExtension(PsiNamedElement psiNamedElement) {
     return psiNamedElement instanceof PyFile
-           ? FileUtil.getNameWithoutExtension(((PyFile)psiNamedElement).getName())
+           ? FileUtilRt.getNameWithoutExtension(((PyFile)psiNamedElement).getName())
            : psiNamedElement.getName();
   }
 
@@ -510,7 +510,7 @@ public class PyUtil {
   @NotNull
   public static String computeElementNameForStringSearch(@NotNull final PsiElement element) {
     if (element instanceof PyFile) {
-      return FileUtil.getNameWithoutExtension(((PyFile)element).getName());
+      return FileUtilRt.getNameWithoutExtension(((PyFile)element).getName());
     }
     if (element instanceof PsiDirectory) {
       return ((PsiDirectory)element).getName();
@@ -639,9 +639,7 @@ public class PyUtil {
     if (virtualFile instanceof VirtualFileWindow) {
       virtualFile = ((VirtualFileWindow)virtualFile).getDelegate();
     }
-    if (virtualFile instanceof BackedVirtualFile) {
-      virtualFile = ((BackedVirtualFile)virtualFile).getOriginFile();
-    }
+    virtualFile = BackedVirtualFile.getOriginFileIfBacked(virtualFile);
 
     // Most of the cases should be handled by this one, PyLanguageLevelPusher pushes folders only
     final VirtualFile folder = virtualFile.getParent();
@@ -1392,7 +1390,7 @@ public class PyUtil {
         final FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance(project);
         final FileTemplate template = fileTemplateManager.getInternalTemplate("Python Script");
         final Properties properties = fileTemplateManager.getDefaultProperties();
-        properties.setProperty("NAME", FileUtil.getNameWithoutExtension(file.getName()));
+        properties.setProperty("NAME", FileUtilRt.getNameWithoutExtension(file.getName()));
         final String content = (template != null) ? template.getText(properties) : null;
         psi = PyExtractSuperclassHelper.placeFile(project,
                                                   StringUtil.notNullize(
@@ -1601,7 +1599,9 @@ public class PyUtil {
     if (hasPositionalContainer(parameters) || hasKeywordContainer(parameters)) {
       return requiredCount <= otherRequiredCount;
     }
-    return requiredCount <= otherRequiredCount && parameters.size() >= otherParameters.size() && optionalCount >= otherOptionalCount;
+    return requiredCount <= otherRequiredCount &&
+           optionalCount >= otherOptionalCount &&
+           namedParametersCount(parameters) >= namedParametersCount(otherParameters);
   }
 
   private static int optionalParametersCount(@NotNull List<PyCallableParameter> parameters) {
@@ -1615,7 +1615,7 @@ public class PyUtil {
   }
 
   private static int requiredParametersCount(@NotNull PyCallable callable, @NotNull List<PyCallableParameter> parameters) {
-    return parameters.size() - optionalParametersCount(parameters) - specialParametersCount(callable, parameters);
+    return namedParametersCount(parameters) - optionalParametersCount(parameters) - specialParametersCount(callable, parameters);
   }
 
   private static int specialParametersCount(@NotNull PyCallable callable, @NotNull List<PyCallableParameter> parameters) {
@@ -1648,6 +1648,10 @@ public class PyUtil {
       }
     }
     return false;
+  }
+
+  private static int namedParametersCount(@NotNull List<PyCallableParameter> parameters) {
+    return ContainerUtil.count(parameters, p -> p.getParameter() instanceof PyNamedParameter);
   }
 
   private static boolean isFirstParameterSpecial(@NotNull PyCallable callable, @NotNull List<PyCallableParameter> parameters) {
@@ -1868,7 +1872,7 @@ public class PyUtil {
     }
 
     final PyElementGenerator generator = PyElementGenerator.getInstance(function.getProject());
-    final PyDecoratorList newDecorators = generator.createDecoratorList(ArrayUtil.toStringArray(decoTexts));
+    final PyDecoratorList newDecorators = generator.createDecoratorList(ArrayUtilRt.toStringArray(decoTexts));
 
     if (currentDecorators != null) {
       currentDecorators.replace(newDecorators);

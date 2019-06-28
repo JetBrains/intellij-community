@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.psi.codeStyle.IndentStatusBarUIContributor;
+import org.editorconfig.language.messages.EditorConfigBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +37,7 @@ public class EditorConfigIndentStatusBarUIContributor extends IndentStatusBarUIC
   @Nullable
   @Override
   public AnAction createDisableAction(@NotNull Project project) {
-    return EditorConfigActionUtil.createDisableAction(project);
+    return EditorConfigActionUtil.createDisableAction(project, EditorConfigBundle.message("action.disable"));
   }
 
   @Nullable

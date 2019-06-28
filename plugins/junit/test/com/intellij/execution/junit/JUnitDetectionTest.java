@@ -7,10 +7,10 @@ import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testIntegration.TestFramework;
 
-public class JUnitDetectionTest extends LightCodeInsightFixtureTestCase {
+public class JUnitDetectionTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   protected void setUp() throws Exception {

@@ -17,7 +17,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.tabs.*;
-import com.intellij.ui.tabs.newImpl.SameHeightTabs;
+import com.intellij.ui.tabs.newImpl.JBEditorTabs;
 import com.intellij.ui.tabs.newImpl.TabLabel;
 import com.intellij.ui.tabs.newImpl.singleRow.ScrollableSingleRowLayout;
 import com.intellij.ui.tabs.newImpl.singleRow.SingleRowLayout;
@@ -74,15 +74,20 @@ public class GridCellImpl implements GridCell {
         return null;
       }
     });
-    myTabs.getPresentation().setUiDecorator(new UiDecorator() {
-      @Override
-      @NotNull
-      public UiDecoration getDecoration() {
-        return new UiDecoration(null, JBTabsFactory.getUseNewTabs()? JBUI.insets(0, 8, 0, 9) : new Insets(1, -1, 1, -1));
-      }
-    }).setSideComponentVertical(!context.getLayoutSettings().isToolbarHorizontal())
+
+    if(!JBTabsFactory.getUseNewTabs()) {
+      myTabs.getPresentation().setUiDecorator(new UiDecorator() {
+        @Override
+        @NotNull
+        public UiDecoration getDecoration() {
+          return new UiDecoration(null, new Insets(1, -1, 1, -1));
+        }
+      });
+    }
+
+    myTabs.getPresentation().setSideComponentVertical(!context.getLayoutSettings().isToolbarHorizontal())
       .setStealthTabMode(!JBTabsFactory.getUseNewTabs()).setFocusCycle(false).setPaintFocus(true)
-      .setTabDraggingEnabled(true).setSideComponentOnTabs(false);
+      .setTabDraggingEnabled(context.isMoveToGridActionEnabled()).setSideComponentOnTabs(false);
 
     myTabs.addTabMouseListener(new MouseAdapter() {
       @Override
@@ -448,7 +453,7 @@ public class GridCellImpl implements GridCell {
     return ActionCallback.DONE;
   }
 
-  private static class GridCellTabs extends SameHeightTabs {
+  private static class GridCellTabs extends JBEditorTabs {
     private final ViewContextEx myContext;
 
     @Override
@@ -493,14 +498,7 @@ public class GridCellImpl implements GridCell {
 
     @Override
     protected TabLabel createTabLabel(TabInfo info) {
-      return new SameHeightTabs.SingleHeightLabel(this, info) {
-
-        @NotNull
-        @Override
-        public Dimension getPreferredSize() {
-          return super.getPreferredSize();
-        }
-
+      return new TabLabel(this, info) {
         @Override
         public void setAlignmentToCenter(boolean toCenter) {
           super.setAlignmentToCenter(false);

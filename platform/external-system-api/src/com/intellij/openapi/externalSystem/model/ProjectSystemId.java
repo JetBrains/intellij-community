@@ -7,6 +7,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Serializable;
 import java.util.Map;
 
 /**
@@ -15,7 +16,8 @@ import java.util.Map;
  * <p/>
  * This class serves as an id of a system which defines project structure, i.e. it might be any external system or the ide itself.
  */
-public final class ProjectSystemId {
+public final class ProjectSystemId implements Serializable {
+  private static final long serialVersionUID = 2L;
   private static final Map<String, ProjectSystemId> ourExistingIds = ContainerUtil.newConcurrentMap();
 
   @NotNull public static final ProjectSystemId IDE = new ProjectSystemId("IDE");
@@ -73,5 +75,15 @@ public final class ProjectSystemId {
   @Nullable
   public static ProjectSystemId findById(@NotNull String id) {
     return ourExistingIds.get(id);
+  }
+
+  private Object readResolve() {
+    ProjectSystemId cached = ourExistingIds.get(id);
+    if (cached != null) {
+      return cached;
+    }
+    else {
+      return this;
+    }
   }
 }

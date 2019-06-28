@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.javaee.ExternalResourceManager;
@@ -123,7 +123,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   }
 
   /**
-   * Use {@link #getReferences(PsiReferenceService.Hints)} instead of calling or overriding this method.
+   * @deprecated use {@link #getReferences(PsiReferenceService.Hints)} instead of calling or overriding this method.
    */
   @Deprecated
   @NotNull
@@ -858,7 +858,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
         }
       }
     }
-    return ArrayUtil.toStringArray(known);
+    return ArrayUtilRt.toStringArray(known);
   }
 
   @Nullable

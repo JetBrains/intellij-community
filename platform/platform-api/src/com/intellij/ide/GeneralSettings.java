@@ -215,12 +215,18 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
     myUseDefaultBrowser = value;
   }
 
+  /**
+   * @deprecated unused
+   */
   @Transient
   @Deprecated
   public boolean isConfirmExtractFiles() {
     return true;
   }
 
+  /**
+   * @deprecated unused
+   */
   @Deprecated
   public void setConfirmExtractFiles(@SuppressWarnings("unused") boolean value) { }
 

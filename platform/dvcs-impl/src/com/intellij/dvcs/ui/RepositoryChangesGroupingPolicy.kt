@@ -20,6 +20,8 @@ class RepositoryChangesGroupingPolicy(val project: Project, val model: DefaultTr
     val nextPolicyParent = nextPolicy?.getParentNodeFor(nodePath, subtreeRoot)
 
     file?.let { repositoryManager.getRepositoryForFile(it, true) }?.let { repository ->
+      if (repositoryManager.isExternal(repository)) return nextPolicyParent
+      
       val grandParent = nextPolicyParent ?: subtreeRoot
       val cachingRoot = getCachingRoot(grandParent, subtreeRoot)
 

@@ -55,6 +55,70 @@ class FeatureEventLogSerializationTest {
   }
 
   @Test
+  fun testEventIdWithDotsInEventId() {
+    testEventEscaping(newEvent("recorder-id", "event.type"), "recorder-id", "event.type")
+  }
+
+  @Test
+  fun testEventIdWithWhitespacesToEscape() {
+    testEventEscaping(newEvent("recorder-id", "e vent\ttype"), "recorder-id", "e_vent_type")
+  }
+
+  @Test
+  fun testEventIdWithQuotesToEscape() {
+    testEventEscaping(newEvent("recorder-id", "e\"vent'type"), "recorder-id", "eventtype")
+  }
+
+  @Test
+  fun testEventIdWithSystemSymbolsToEscape() {
+    testEventEscaping(newEvent("recorder-id", "e:vent;ty,pe"), "recorder-id", "e_vent_ty_pe")
+  }
+
+  @Test
+  fun testEventIdWithAllSymbolsToEscape() {
+    testEventEscaping(newEvent("recorder-id", "e:v'e\"nt;t\ty,p e"), "recorder-id", "e_vent_t_y_p_e")
+  }
+
+  @Test
+  fun testEventIdWithAllSymbolsToEscapeInEventDataField() {
+    val event = newEvent("recorder-id", "event type")
+    event.event.addData("my.key", "value")
+    event.event.addData("my:", "value")
+    event.event.addData(";mykey", "value")
+    event.event.addData("another'key", "value")
+    event.event.addData("se\"cond\"", "value")
+    event.event.addData("a'l\"l;s:y.s,t\tem symbols", "value")
+
+    val expected = HashMap<String, Any>()
+    expected["my_key"] = "value"
+    expected["my_"] = "value"
+    expected["_mykey"] = "value"
+    expected["second"] = "value"
+    expected["all_s_y_s_t_em_symbols"] = "value"
+    testEventEscaping(event, "recorder-id", "event_type", expected)
+  }
+
+  @Test
+  fun testEventIdWithAllSymbolsToEscapeInEventDataValue() {
+    val event = newEvent("recorder-id", "event type")
+    event.event.addData("my.key", "v.alue")
+    event.event.addData("my:", "valu:e")
+    event.event.addData(";mykey", ";value")
+    event.event.addData("another'key", "value'")
+    event.event.addData("se\"cond\"", "v\"alue")
+    event.event.addData("a'l\"l;s:y.s,t\tem symbols", "fin\"a'l :v;'a\" l,u\te")
+
+    val expected = HashMap<String, Any>()
+    expected["my_key"] = "v.alue"
+    expected["my_"] = "valu_e"
+    expected["_mykey"] = "_value"
+    expected["anotherkey"] = "value"
+    expected["second"] = "value"
+    expected["all_s_y_s_t_em_symbols"] = "final__v_a_l_u_e"
+    testEventEscaping(event, "recorder-id", "event_type", expected)
+  }
+
+  @Test
   fun testEventActionWithTabInDataKey() {
     val event = newEvent("recorder-id", "event-type")
     event.event.addData("my key", "value")

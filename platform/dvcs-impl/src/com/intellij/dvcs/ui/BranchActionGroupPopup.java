@@ -365,6 +365,13 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
         myTextLabel.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
         myTextLabel.setIcon(chooseUpdateIndicatorIcon(branchActionGroup));
       }
+      else{
+        CustomIconProvider actionWithIconProvider = getSpecificAction(value, CustomIconProvider.class);
+        if (actionWithIconProvider != null) {
+          myTextLabel.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
+          myTextLabel.setIcon(actionWithIconProvider.getRightIcon());
+        }
+      }
       PopupElementWithAdditionalInfo additionalInfoAction = getSpecificAction(value, PopupElementWithAdditionalInfo.class);
       updateInfoComponent(myInfoLabel, additionalInfoAction != null ? additionalInfoAction.getInfoText() : null, isSelected);
     }

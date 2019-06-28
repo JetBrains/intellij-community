@@ -2,13 +2,13 @@
 package com.siyeh.ig.security;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class SerializableDeserializableClassInSecureContextInspectionTest extends LightInspectionTestCase {
+public class SerializableDeserializableClassInSecureContextInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSerializableDeserializableClassInSecureContext() {
     doTest();

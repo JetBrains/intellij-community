@@ -127,7 +127,7 @@ open class MultipleFileMergeDialog(
       table.selectionModel.setSelectionInterval(0, 0)
     }
     else {
-      table.tree.selectionPath = TreeUtil.getFirstLeafNodePath(table.tree)
+      TreeUtil.promiseSelectFirstLeaf(table.tree)
     }
   }
 
@@ -145,11 +145,11 @@ open class MultipleFileMergeDialog(
         }, growX, growY, pushX, pushY)
 
         cell(isVerticalFlow = true) {
-          JButton("Accept Yours").also {
+          JButton(VcsBundle.message("multiple.file.merge.accept.yours")).also {
             it.addActionListener { acceptRevision(MergeSession.Resolution.AcceptedYours) }
             acceptYoursButton = it
           }(growX)
-          JButton("Accept Theirs").also {
+          JButton(VcsBundle.message("multiple.file.merge.accept.theirs")).also {
             it.addActionListener { acceptRevision(MergeSession.Resolution.AcceptedTheirs) }
             acceptTheirsButton = it
           }(growX)
@@ -160,7 +160,7 @@ open class MultipleFileMergeDialog(
           }
           mergeAction.putValue(DEFAULT_ACTION, java.lang.Boolean.TRUE)
           createJButtonForAction(mergeAction).also {
-            it.text = "Merge..."
+            it.text = VcsBundle.message("multiple.file.merge.merge")
             mergeButton = it
           }(growX)
         }

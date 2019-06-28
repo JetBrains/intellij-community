@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.Disposable;
@@ -9,8 +9,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
@@ -72,7 +74,9 @@ public class ComponentValidator {
     this.parentDisposable = parentDisposable;
   }
 
-   // @deprecated Use {@link ComponentValidator#withValidator(Supplier)} instead
+  /**
+   * @deprecated Use {@link ComponentValidator#withValidator(Supplier)} instead
+   */
   @Deprecated
   public ComponentValidator withValidator(@NotNull Consumer<? super ComponentValidator> validator) {
     this.validator = () -> {
@@ -123,7 +127,7 @@ public class ComponentValidator {
     };
 
     PropertyChangeListener ancestorListener = e -> {
-      Window w = (Window)UIUtil.findParentByCondition((Component)e.getSource(), v -> v instanceof Window);
+      Window w = (Window)ComponentUtil.findParentByCondition((Component)e.getSource(), v -> v instanceof Window);
       if (w != null) {
         if (e.getNewValue() != null) {
           w.addComponentListener(componentListener);
@@ -133,7 +137,7 @@ public class ComponentValidator {
       }
     };
 
-    Window w = (Window)UIUtil.findParentByCondition(component, v -> v instanceof Window);
+    Window w = (Window)ComponentUtil.findParentByCondition(component, v -> v instanceof Window);
     if (w != null) {
       w.addComponentListener(componentListener);
     } else {
@@ -296,7 +300,7 @@ public class ComponentValidator {
       popup = popupBuilder.createPopup();
 
       Insets i = validationInfo.component.getInsets();
-      Point point = new Point(JBUI.scale(40), i.top - JBUI.scale(6) - popupSize.height);
+      Point point = new Point(JBUIScale.scale(40), i.top - JBUIScale.scale(6) - popupSize.height);
       popupLocation = new RelativePoint(validationInfo.component, point);
 
       popup.show(popupLocation);

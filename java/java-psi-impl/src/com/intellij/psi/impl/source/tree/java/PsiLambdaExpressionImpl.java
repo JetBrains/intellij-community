@@ -29,7 +29,6 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -265,6 +264,6 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
   @Nullable
   @Override
   public Icon getIcon(int flags) {
-    return AllIcons.Nodes.Function;
+    return AllIcons.Nodes.Lambda;
   }
 }

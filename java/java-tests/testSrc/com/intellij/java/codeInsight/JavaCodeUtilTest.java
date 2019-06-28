@@ -7,9 +7,9 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.java.PsiExpressionStatementImpl;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 
-public class JavaCodeUtilTest extends LightCodeInsightTestCase {
+public class JavaCodeUtilTest extends LightJavaCodeInsightTestCase {
   public void testReplace() {
     PsiFileFactory instance = PsiFileFactory.getInstance(getProject());
     PsiJavaFile aFile = (PsiJavaFile)instance

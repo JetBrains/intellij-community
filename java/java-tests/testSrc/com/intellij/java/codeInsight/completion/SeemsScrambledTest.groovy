@@ -15,7 +15,7 @@
  */
 package com.intellij.java.codeInsight.completion
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 
 import static com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl.seemsScrambledByStructure
@@ -23,7 +23,7 @@ import static com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl.
  * @author peter
  */
 @CompileStatic
-class SeemsScrambledTest extends LightCodeInsightFixtureTestCase {
+class SeemsScrambledTest extends LightJavaCodeInsightFixtureTestCase {
 
   void "test Id annotation"() {
     assert !seemsScrambledByStructure(myFixture.addClass('public @interface Id {}'))

@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -127,7 +128,9 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
 
     MyListCellRenderer renderer = new MyListCellRenderer();
     myList.setCellRenderer(renderer);
-    myList.addKeyListener(new KeyAdapter() {
+    myList.addKeyListener(new KeyListener() {
+      boolean doConsume;
+
       @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_DELETE) {
@@ -139,7 +142,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
               newSelectionIndex = i;
             }
           }
-          
+
           rebuildListContent();
           if (myAllContents.isEmpty()) {
             close(CANCEL_EXIT_CODE);
@@ -160,9 +163,24 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
             if (idx < myAllContents.size()) {
               myList.setSelectedIndex(idx);
               e.consume();
-              doOKAction();
+              doConsume = true;
+              ApplicationManager.getApplication().invokeLater(() -> doOKAction());
             }
           }
+        }
+      }
+
+      @Override
+      public void keyTyped(KeyEvent e) {
+        if (doConsume) {
+          e.consume();
+        }
+      }
+
+      @Override
+      public void keyReleased(KeyEvent e) {
+        if (doConsume) {
+          e.consume();
         }
       }
     });
@@ -280,7 +298,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     FilteringListModel listModel = (FilteringListModel)myList.getModel();
     ((CollectionListModel)listModel.getOriginalModel()).removeAll();
     listModel.addAll(items);
-    ListWithFilter listWithFilter = UIUtil.getParentOfType(ListWithFilter.class, myList);
+    ListWithFilter listWithFilter = ComponentUtil.getParentOfType((Class<? extends ListWithFilter>)ListWithFilter.class, (Component)myList);
     if (listWithFilter != null) {
       listWithFilter.getSpeedSearch().update();
       if (listModel.getSize() == 0) listWithFilter.resetFilter();
@@ -297,7 +315,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     Item o = myList.getSelectedValue();
     return o == null? -1 : o.index;
   }
-  
+
   public void setSelectedIndex(int index) {
     myList.setSelectedIndex(index);
     ScrollingUtil.ensureIndexIsVisible(myList, index, 0);
@@ -326,7 +344,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     }
     return sb.toString();
   }
-  
+
   private class MyListCellRenderer extends ColoredListCellRenderer<Item> {
 
     int previewChars = 80;

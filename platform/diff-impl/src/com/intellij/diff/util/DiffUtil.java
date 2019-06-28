@@ -41,6 +41,7 @@ import com.intellij.openapi.diff.impl.GenericDataProvider;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
@@ -48,11 +49,10 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.PlainTextFileType;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -83,6 +83,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ImageLoader;
@@ -110,7 +111,7 @@ public class DiffUtil {
 
   public static final Key<Boolean> TEMP_FILE_KEY = Key.create("Diff.TempFile");
   @NotNull public static final String DIFF_CONFIG = "diff.xml";
-  public static final int TITLE_GAP = JBUI.scale(2);
+  public static final int TITLE_GAP = JBUIScale.scale(2);
 
   public static final List<Image> DIFF_FRAME_ICONS = loadDiffFrameImages();
 
@@ -158,7 +159,7 @@ public class DiffUtil {
       return highlighterFactory.createEditorHighlighter(syntaxHighlighter, EditorColorsManager.getInstance().getGlobalScheme());
     }
     if (file != null && file.isValid()) {
-      if ((type == null || type == PlainTextFileType.INSTANCE) || file.getFileType() == type || file instanceof LightVirtualFile) {
+      if ((type == null || type == PlainTextFileType.INSTANCE) || FileTypeRegistry.getInstance().isFileOfType(file, type) || file instanceof LightVirtualFile) {
         return highlighterFactory.createEditorHighlighter(project, file);
       }
     }
@@ -187,6 +188,11 @@ public class DiffUtil {
       editor.getSettings().setTabSize(indentOptions.TAB_SIZE);
       editor.getSettings().setUseTabCharacter(indentOptions.USE_TAB_CHARACTER);
     }
+
+    Language language = content != null ? content.getUserData(DiffUserDataKeys.LANGUAGE) : null;
+    if (language == null && editor.getProject() != null) language = TextEditorImpl.getDocumentLanguage(editor);
+    editor.getSettings().setLanguage(language);
+
     editor.getSettings().setCaretRowShown(false);
     editor.reinitSettings();
   }
@@ -380,9 +386,26 @@ public class DiffUtil {
         return size;
       }
     }.setCopyable(true);
-    label.setForeground(UIUtil.getInactiveTextColor());
 
-    return new CenteredPanel(label, JBUI.Borders.empty(5));
+    return createMessagePanel(label);
+  }
+
+  @NotNull
+  public static JPanel createMessagePanel(@NotNull JComponent label) {
+    CenteredPanel panel = new CenteredPanel(label, JBUI.Borders.empty(5));
+
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    TextAttributes commentAttributes = scheme.getAttributes(DefaultLanguageHighlighterColors.LINE_COMMENT);
+    if (commentAttributes.getForegroundColor() != null && commentAttributes.getBackgroundColor() == null) {
+      label.setForeground(commentAttributes.getForegroundColor());
+    }
+    else {
+      label.setForeground(scheme.getDefaultForeground());
+    }
+    label.setBackground(scheme.getDefaultBackground());
+    panel.setBackground(scheme.getDefaultBackground());
+
+    return panel;
   }
 
   public static void addActionBlock(@NotNull DefaultActionGroup group, AnAction... actions) {
@@ -635,7 +658,7 @@ public class DiffUtil {
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
     for (int i = 0; i < components.size(); i++) {
-      if (i != 0) panel.add(Box.createVerticalStrut(JBUI.scale(gap)));
+      if (i != 0) panel.add(Box.createVerticalStrut(JBUIScale.scale(gap)));
       panel.add(components.get(i));
     }
 

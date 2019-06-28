@@ -33,12 +33,12 @@ final class GitTaskHandler extends DvcsTaskHandler<GitRepository> {
   }
 
   @Override
-  protected void checkout(@NotNull String taskName, @NotNull List<GitRepository> repos, @Nullable Runnable callInAwtLater) {
+  protected void checkout(@NotNull String taskName, @NotNull List<? extends GitRepository> repos, @Nullable Runnable callInAwtLater) {
     myBrancher.checkout(taskName, false, repos, callInAwtLater);
   }
 
   @Override
-  protected void checkoutAsNewBranch(@NotNull String name, @NotNull List<GitRepository> repositories) {
+  protected void checkoutAsNewBranch(@NotNull String name, @NotNull List<? extends GitRepository> repositories) {
     myBrancher.checkoutNewBranch(name, repositories);
   }
 
@@ -48,7 +48,7 @@ final class GitTaskHandler extends DvcsTaskHandler<GitRepository> {
   }
 
   @Override
-  protected void mergeAndClose(@NotNull String branch, @NotNull List<GitRepository> repositories) {
+  protected void mergeAndClose(@NotNull String branch, @NotNull List<? extends GitRepository> repositories) {
     myBrancher.merge(branch, GitBrancher.DeleteOnMergeOption.DELETE, repositories);
   }
 

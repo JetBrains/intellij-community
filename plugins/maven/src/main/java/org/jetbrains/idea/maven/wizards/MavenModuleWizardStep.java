@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.util.projectWizard.ProjectWizardUtil;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -216,7 +217,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     return MavenProjectsManager.getInstance(project).findProject(parentPom);
   }
 
-  private static void setTestIfEmpty(@NotNull JTextField artifactIdField, @Nullable String text) {
+  private static void setTextIfEmpty(@NotNull JTextField artifactIdField, @Nullable String text) {
     if (StringUtil.isEmpty(artifactIdField.getText())) {
       artifactIdField.setText(StringUtil.notNullize(text));
     }
@@ -235,14 +236,14 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     MavenId projectId = myBuilder.getProjectId();
 
     if (projectId == null) {
-      setTestIfEmpty(myArtifactIdField, myBuilder.getName());
-      setTestIfEmpty(myGroupIdField, myParent == null ? myBuilder.getName() : myParent.getMavenId().getGroupId());
-      setTestIfEmpty(myVersionField, myParent == null ? "1.0-SNAPSHOT" : myParent.getMavenId().getVersion());
+      setTextIfEmpty(myArtifactIdField, myBuilder.getName());
+      setTextIfEmpty(myGroupIdField, myParent == null ? myBuilder.getName() : myParent.getMavenId().getGroupId());
+      setTextIfEmpty(myVersionField, myParent == null ? "1.0-SNAPSHOT" : myParent.getMavenId().getVersion());
     }
     else {
-      setTestIfEmpty(myArtifactIdField, projectId.getArtifactId());
-      setTestIfEmpty(myGroupIdField, projectId.getGroupId());
-      setTestIfEmpty(myVersionField, projectId.getVersion());
+      setTextIfEmpty(myArtifactIdField, projectId.getArtifactId());
+      setTextIfEmpty(myGroupIdField, projectId.getGroupId());
+      setTextIfEmpty(myVersionField, projectId.getVersion());
     }
 
     myInheritGroupIdCheckBox.setSelected(myBuilder.isInheritGroupId());
@@ -287,6 +288,18 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
       myInheritGroupIdCheckBox.setEnabled(true);
       myInheritVersionCheckBox.setEnabled(true);
     }
+
+    setTextIfEmpty(myGroupIdField, "org.example");
+    setTextIfEmpty(myArtifactIdField, suggestArtifactId());
+  }
+
+  @NotNull
+  private String suggestArtifactId() {
+    if (myContext.isCreatingNewProject()) {
+      String baseDir = myContext.getProjectFileDirectory();
+      return ProjectWizardUtil.findNonExistingFileName(baseDir, "untitled", "");
+    }
+    return "";
   }
 
   private static String formatProjectString(MavenProject project) {

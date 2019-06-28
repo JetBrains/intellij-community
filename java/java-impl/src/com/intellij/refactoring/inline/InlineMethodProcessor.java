@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -33,12 +33,13 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceParameter.Util;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.rename.NonCodeUsageInfoFactory;
-import com.intellij.refactoring.rename.RenameJavaVariableProcessor;
+import com.intellij.refactoring.rename.RenameJavaMemberProcessor;
 import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -47,10 +48,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MultiMap;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.SideEffectChecker;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -208,8 +206,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       final PsiMethod[] superMethods = myMethod.findSuperMethods();
       for (PsiMethod method : superMethods) {
         String className = Objects.requireNonNull(method.getContainingClass()).getQualifiedName();
-        final String message = method.hasModifierProperty(PsiModifier.ABSTRACT) ? 
-                               RefactoringBundle.message("inlined.method.implements.method.from.0", className) : 
+        final String message = method.hasModifierProperty(PsiModifier.ABSTRACT) ?
+                               RefactoringBundle.message("inlined.method.implements.method.from.0", className) :
                                RefactoringBundle.message("inlined.method.overrides.method.from.0", className);
         conflicts.putValue(method, message);
       }
@@ -753,7 +751,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     if (myMethod.isPhysical()) {
       // Could be specialized
       LOG.assertTrue(myManager.areElementsEquivalent(resolveResult.getElement(), myMethod));
-    } 
+    }
     if (resolveResult.getSubstitutor() != PsiSubstitutor.EMPTY) {
       Iterator<PsiTypeParameter> oldTypeParameters = PsiUtil.typeParametersIterator(myMethod);
       Iterator<PsiTypeParameter> newTypeParameters = PsiUtil.typeParametersIterator(myMethodCopy);
@@ -989,12 +987,14 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
     PsiExpression initializer = variable.getInitializer();
     if (firstRef == null) {
-      if (initializer != null && SideEffectChecker.mayHaveSideEffects(initializer)) {
-        RemoveUnusedVariableUtil.replaceElementWithExpression(initializer, PsiElementFactory.getInstance(myProject), variable);
+      PsiDeclarationStatement declaration = (PsiDeclarationStatement)variable.getParent();
+      if (initializer != null) {
+        List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(initializer);
+        for (PsiStatement statement : StatementExtractor.generateStatements(sideEffects, initializer)) {
+          declaration.getParent().addBefore(statement, declaration);
+        }
       }
-      else {
-        variable.getParent().delete();
-      }
+      declaration.delete();
       return;
     }
 
@@ -1240,7 +1240,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     if (modifiers != null && modifiers.getAnnotations().length != 0) return;
     boolean effectivelyFinal = HighlightControlFlowUtil.isEffectivelyFinal(variable, context, null);
     if (!effectivelyFinal && !VariableAccessUtils.canUseAsNonFinal(target)) return;
-    
+
     for (PsiReferenceExpression reference : references) {
       ExpressionUtils.bindReferenceTo(reference, name);
     }
@@ -1368,7 +1368,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           PsiExpressionStatement statement = (PsiExpressionStatement)myFactory.createStatementFromText(field.getName() + " = 0;", body);
           statement = (PsiExpressionStatement)body.add(statement);
           final PsiAssignmentExpression assignment = (PsiAssignmentExpression)statement.getExpression();
-          assignment.getLExpression().replace(RenameJavaVariableProcessor.createMemberReference(field, assignment));
+          assignment.getLExpression().replace(RenameJavaMemberProcessor.createMemberReference(field, assignment));
           assignment.getRExpression().replace(initializer);
           addMarkedElements(refsVector, statement);
           if (field.hasModifierProperty(PsiModifier.STATIC)) {

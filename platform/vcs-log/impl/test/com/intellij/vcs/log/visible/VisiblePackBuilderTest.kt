@@ -17,9 +17,11 @@ import com.intellij.vcs.log.graph.VisibleGraph
 import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.impl.TestVcsLogProvider.BRANCH_TYPE
 import com.intellij.vcs.log.impl.TestVcsLogProvider.DEFAULT_USER
+import com.intellij.vcs.log.util.VcsLogUtil.FULL_HASH_LENGTH
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import org.junit.Test
 import java.util.*
+import kotlin.random.nextInt
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
@@ -188,6 +190,31 @@ class VisiblePackBuilderTest {
   }
 
   @Test
+  fun `filter by hash range in multi-root project`() {
+    val root1 = MockVirtualFile("root1")
+    val root2 = MockVirtualFile("root2")
+
+    val graph = multiRootGraph {
+      root(root1) {
+        1(2) * "master"
+        2(3)
+        3()
+      }
+
+      root(root2) {
+        5(4) * "master"
+        4()
+      }
+    }
+
+    val hash1 = graph.getHash(1)
+    val hash2 = graph.getHash(2)
+    val filters = VcsLogFilterObject.collection(VcsLogFilterObject.fromRange(hash2.asString(), hash1.asString()))
+    val visiblePack = graph.build(filters)
+    assertCommits(visiblePack.visibleGraph, 1)
+  }
+
+  @Test
   fun `filter by range where ref is unresolved`() {
     val graph = graph {
       1(3) *"master"
@@ -251,7 +278,7 @@ class VisiblePackBuilderTest {
 
       val builder = VcsLogFiltererImpl(providers, hashMap, detailsCache, newTrivialDataGetter(), EmptyIndex())
 
-      return builder.filter(dataPack, PermanentGraph.SortType.Normal, filters, CommitCountStage.INITIAL).first
+      return builder.filter(dataPack, VisiblePack.EMPTY, PermanentGraph.SortType.Normal, filters, CommitCountStage.INITIAL).first
     }
 
     private fun newTrivialDataGetter(): DataGetter<VcsFullCommitDetails> {
@@ -270,6 +297,10 @@ class VisiblePackBuilderTest {
           return null
         }
       }
+    }
+
+    fun getHash(id: Int): Hash {
+      return hashMap.getCommitId(id).hash
     }
   }
 
@@ -349,7 +380,7 @@ class VisiblePackBuilderTest {
         val hashes : Map<Int, Hash> = commits.map {
           val currentIndex = commitIndex
           commitIndex++
-          val hash = HashImpl.build(currentIndex.toString())
+          val hash = generateHashForIndex(currentIndex)
           currentIndex to hash
         }.toMap()
 
@@ -362,6 +393,21 @@ class VisiblePackBuilderTest {
 
         SingleRootStorage(hashes, refs)
       }
+    }
+
+    private fun generateHashForIndex(currentIndex: Int): Hash {
+      val hexIndex = currentIndex.toString(16)
+      val remainingSize = FULL_HASH_LENGTH - hexIndex.length
+
+      val sb = StringBuilder()
+      for (i in 0 until remainingSize) {
+        val randomHexChar = kotlin.random.Random.nextInt(0 until 16).toString(16)
+        sb.append(randomHexChar)
+      }
+
+      val hashString = hexIndex + sb.toString()
+      assertEquals(FULL_HASH_LENGTH, hashString.length, "Hash generated incorrectly: [$hashString]")
+      return HashImpl.build(hashString)
     }
 
     override fun getCommitIndex(hash: Hash, root: VirtualFile) = storagesByRoot.getValue(root).hashesReversed.getValue(hash)

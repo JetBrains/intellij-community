@@ -11,6 +11,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,7 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,7 +33,6 @@ import com.intellij.ui.AppIcon;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -183,21 +183,17 @@ public class ProjectUtil {
       }
     }
 
-    ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
-    Project project = null;
-    try {
-      project = projectManager.loadAndOpenProject(path);
-    }
-    catch (IOException e) {
-      Messages.showMessageDialog(IdeBundle.message("error.cannot.load.project", e.getMessage()),
-                                 IdeBundle.message("title.cannot.load.project"), Messages.getErrorIcon());
-    }
-    catch (JDOMException | InvalidDataException e) {
-      LOG.info(e);
-      Messages.showMessageDialog(IdeBundle.message("error.project.file.is.corrupted"), IdeBundle.message("title.cannot.load.project"),
-                                 Messages.getErrorIcon());
-    }
-    return project;
+    Ref<Project> result = new Ref<>();
+    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+      try {
+        result.set(ProjectManager.getInstance().loadAndOpenProject(path));
+      }
+      catch (Exception e) {
+        Messages.showMessageDialog(IdeBundle.message("error.cannot.load.project", e.getMessage()),
+                                   IdeBundle.message("title.cannot.load.project"), Messages.getErrorIcon());
+      }
+    });
+    return result.get();
   }
 
   public static boolean confirmLoadingFromRemotePath(@NotNull String path,

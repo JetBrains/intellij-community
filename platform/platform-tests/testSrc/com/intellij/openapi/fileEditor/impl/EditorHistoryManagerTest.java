@@ -11,28 +11,32 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.util.io.PathKt;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ref.GCWatcher;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class EditorHistoryManagerTest extends PlatformTestCase {
   public void testSavingStateForNotOpenedEditors() throws Exception {
-    File dir = createTempDir("foo");
-    File file = new File(dir, "some.txt");
-    Files.write(file.toPath(), "first line\nsecond line".getBytes(StandardCharsets.UTF_8));
-    VirtualFile virtualFile = getVirtualFile(file);
-    assertNotNull(virtualFile);
+    Path dir = createTempDir("foo").toPath();
+    Path file = dir.resolve("some.txt");
+    Files.write(file, "first line\nsecond line".getBytes(StandardCharsets.UTF_8));
+    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(PathKt.getSystemIndependentPath(file));
+    assertThat(virtualFile).isNotNull();
 
     useRealFileEditorManager();
 
@@ -73,12 +77,12 @@ public class EditorHistoryManagerTest extends PlatformTestCase {
     });
   }
 
-  private void openProjectPerformTaskCloseProject(File projectDir, Consumer<Project> task) throws Exception {
-    Project project = new File(projectDir, Project.DIRECTORY_STORE_FOLDER).exists()
-                      ? myProjectManager.loadProject(projectDir.getPath())
-                      : myProjectManager.createProject(null, projectDir.getPath());
+  private void openProjectPerformTaskCloseProject(Path projectDir, Consumer<Project> task) throws Exception {
+    Project project = Files.exists(projectDir.resolve(Project.DIRECTORY_STORE_FOLDER))
+                      ? myProjectManager.loadProject(projectDir.toString())
+                      : myProjectManager.createProject(null, projectDir.toString());
     try {
-      assertTrue(myProjectManager.openProject(project));
+      assertThat(myProjectManager.openProject(project)).isTrue();
       task.accept(project);
       ProjectKt.getStateStore(project).saveComponent(EditorHistoryManager.getInstance(project));
     }

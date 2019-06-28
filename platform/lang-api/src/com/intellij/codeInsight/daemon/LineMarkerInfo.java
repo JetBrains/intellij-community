@@ -64,14 +64,15 @@ public class LineMarkerInfo<T extends PsiElement> {
     myIconAlignment = alignment;
     PsiFile containingFile = element.getContainingFile();
     Project project = containingFile.getProject();
-    if (!InjectedLanguageManager.getInstance(project).getTopLevelFile(containingFile).getTextRange().contains(range)) {
-      throw new IllegalArgumentException("Range must be inside file offsets ("+containingFile.getTextRange()+") but got: "+range);
+    TextRange topLevelRange = InjectedLanguageManager.getInstance(project).getTopLevelFile(containingFile).getTextRange();
+    if (!topLevelRange.contains(range)) {
+      throw new IllegalArgumentException("Range must be inside file offsets "+topLevelRange+" but got: "+range);
     }
     elementRef = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(element, containingFile);
     myNavigationHandler = navHandler;
     startOffset = range.getStartOffset();
     endOffset = range.getEndOffset();
-    this.updatePass = 11; //Pass.LINE_MARKERS;
+    updatePass = 11; //Pass.LINE_MARKERS;
     PsiElement firstChild;
     if (!(element instanceof PsiFile) && (firstChild = element.getFirstChild()) != null) {
       String msg = "Performance warning: LineMarker is supposed to be registered for leaf elements only, but got: " +

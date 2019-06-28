@@ -35,12 +35,9 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
     if (!canModify(element)) return false;
     if (!element.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return false;
 
-    final PsiElement context = PsiTreeUtil.getParentOfType(element, PsiDeclarationStatement.class, PsiClass.class);
-    if (context instanceof PsiDeclarationStatement) {
-      return isAvailableOnDeclarationStatement((PsiDeclarationStatement)context);
-    }
-
-    return false;
+    final PsiDeclarationStatement
+      context = PsiTreeUtil.getParentOfType(element, PsiDeclarationStatement.class, false, PsiClass.class, PsiLambdaExpression.class, PsiSwitchExpression.class);
+    return context != null && isAvailableOnDeclarationStatement(context);
   }
 
   private boolean isAvailableOnDeclarationStatement(PsiDeclarationStatement decl) {

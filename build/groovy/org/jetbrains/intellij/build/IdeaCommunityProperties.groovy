@@ -18,19 +18,17 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     toolsJarRequired = true
     buildCrossPlatformDistribution = true
 
-    productLayout.productApiModules = JAVA_API_MODULES
-    productLayout.productImplementationModules =  JAVA_IMPLEMENTATION_MODULES + [
+    productLayout.productApiModules = JAVA_IDE_API_MODULES
+    productLayout.productImplementationModules = JAVA_IDE_IMPLEMENTATION_MODULES + [
       "intellij.platform.duplicates.analysis",
       "intellij.platform.structuralSearch",
-      "intellij.java.structuralSearch",
-      "intellij.java.typeMigration",
       "intellij.platform.main"
     ]
     productLayout.additionalPlatformJars.put("resources.jar", "intellij.idea.community.resources")
     productLayout.bundledPluginModules = BUNDLED_PLUGIN_MODULES
-    productLayout.mainModules = ["intellij.idea.community.main"]
     productLayout.compatiblePluginsToIgnore = PythonCommunityPluginModules.PYCHARM_ONLY_PLUGIN_MODULES + ["intellij.java.plugin"]
     productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
+      JavaPluginLayout.javaPlugin(false),
       CommunityRepositoryModules.androidPlugin([:]),
       CommunityRepositoryModules.groovyPlugin([])
     ]
@@ -89,7 +87,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
   LinuxDistributionCustomizer createLinuxCustomizer(String projectHome) {
     return new LinuxDistributionCustomizer() {
       {
-        iconPngPath = "$projectHome/platform/icons/src/icon_CE_128.png"
+        iconPngPath = "$projectHome/platform/icons/compatibilityResources/icon_CE_128.png"
         iconPngPathForEAP = "$projectHome/build/conf/ideaCE/linux/images/icon_CE_EAP_128.png"
         snapName = "intellij-idea-community"
         snapDescription =

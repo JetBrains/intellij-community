@@ -2,9 +2,9 @@
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-public class JavaOffsetsElementSignatureProviderTest extends LightCodeInsightFixtureTestCase {
+public class JavaOffsetsElementSignatureProviderTest extends LightJavaCodeInsightFixtureTestCase {
   private final OffsetsElementSignatureProvider myProvider = new OffsetsElementSignatureProvider();
 
   public void testJavaStringLiteral() {

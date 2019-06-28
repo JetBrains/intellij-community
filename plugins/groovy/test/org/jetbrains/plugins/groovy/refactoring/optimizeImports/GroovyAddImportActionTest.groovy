@@ -1,11 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.refactoring.optimizeImports
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 /**
  * @author peter
  */
-class GroovyAddImportActionTest extends LightCodeInsightFixtureTestCase {
+class GroovyAddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testUseContext() {
     myFixture.addClass 'package foo; public class Log {}'

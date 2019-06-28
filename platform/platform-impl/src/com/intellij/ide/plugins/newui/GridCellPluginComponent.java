@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.*;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -41,11 +42,11 @@ public class GridCellPluginComponent extends CellPluginComponent {
     myPluginModel = pluginsModel;
     pluginsModel.addComponent(this);
 
-    JPanel container = new NonOpaquePanel(new BorderLayout(JBUI.scale(10), 0));
+    JPanel container = new NonOpaquePanel(new BorderLayout(JBUIScale.scale(10), 0));
     add(container);
     addIconComponent(container, BorderLayout.WEST);
 
-    JPanel centerPanel = new NonOpaquePanel(new VerticalLayout(PluginManagerConfigurableNew.offset5(), JBUI.scale(181)));
+    JPanel centerPanel = new NonOpaquePanel(new VerticalLayout(PluginManagerConfigurableNew.offset5(), JBUIScale.scale(181)));
     container.add(centerPanel);
 
     addNameComponent(centerPanel);
@@ -102,7 +103,7 @@ public class GridCellPluginComponent extends CellPluginComponent {
     String rating = PluginManagerConfigurableNew.getRating(myPlugin);
 
     if (downloads != null || date != null || rating != null) {
-      JPanel panel = new NonOpaquePanel(new HorizontalLayout(JBUI.scale(7)));
+      JPanel panel = new NonOpaquePanel(new HorizontalLayout(JBUIScale.scale(7)));
       centerPanel.add(panel);
 
       if (date != null) {
@@ -197,7 +198,7 @@ public class GridCellPluginComponent extends CellPluginComponent {
       return;
     }
 
-    NonOpaquePanel panel = new NonOpaquePanel(new HorizontalLayout(JBUI.scale(6)));
+    NonOpaquePanel panel = new NonOpaquePanel(new HorizontalLayout(JBUIScale.scale(6)));
     parent.add(panel);
 
     myTagComponents = new ArrayList<>();

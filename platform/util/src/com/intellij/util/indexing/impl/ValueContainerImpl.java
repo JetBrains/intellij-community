@@ -98,8 +98,6 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     return myInputIdMapping != null ? myInputIdMapping instanceof THashMap ? ((THashMap)myInputIdMapping).size(): 1 : 0;
   }
 
-  static final ThreadLocal<IndexId> ourDebugIndexInfo = new ThreadLocal<>();
-
   @Override
   public void removeAssociatedValue(int inputId) {
     if (myInputIdMapping == null) return;
@@ -114,7 +112,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
           valueObjects = new SmartList<>();
         }
         else if (DebugAssertions.DEBUG) {
-          LOG.error("Expected only one value per-inputId for " + ourDebugIndexInfo.get(), String.valueOf(fileSetObjects.get(0)), String.valueOf(value));
+          LOG.error("Expected only one value per-inputId for " + DebugAssertions.DEBUG_INDEX_ID.get(), String.valueOf(fileSetObjects.get(0)), String.valueOf(value));
         }
         fileSetObjects.add(valueIterator.getFileSetObject());
         valueObjects.add(value);

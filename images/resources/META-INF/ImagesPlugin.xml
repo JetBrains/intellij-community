@@ -6,7 +6,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <search.topHitProvider implementation="org.intellij.images.options.impl.ImagesOptionsTopHitProvider"/>
     <applicationConfigurable groupId="editor" instance="org.intellij.images.options.impl.ImagesConfigurable" id="Images" displayName="Images"/>
     <fileEditorProvider implementation="org.intellij.images.editor.impl.ImageFileEditorProvider"/>
     <selectInTarget implementation="org.intellij.images.thumbnail.impl.ThumbnailSelectInTarget"/>
@@ -18,6 +17,8 @@
     <projectService serviceInterface="org.intellij.images.thumbnail.ThumbnailManager"
                     serviceImplementation="org.intellij.images.thumbnail.impl.ThumbnailManagerImpl"/>
     <fileTypeFactory implementation="org.intellij.images.fileTypes.impl.ImageFileTypeManagerImpl" />
+    <fileType name="SVG" implementationClass="org.intellij.images.fileTypes.impl.SvgFileType" fieldName="INSTANCE" extensions="svg" language="SVG"/>
+    <lang.parserDefinition language="SVG" implementationClass="org.intellij.images.fileTypes.impl.SvgParserDefinition"/>
     <fileBasedIndex implementation="org.intellij.images.index.ImageInfoIndex"/>
     <fileLookupInfoProvider implementation="org.intellij.images.completion.ImageLookupInfoProvider"/>
     <documentationProvider implementation="org.intellij.images.fileTypes.ImageDocumentationProvider"/>

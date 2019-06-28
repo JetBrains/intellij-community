@@ -86,7 +86,7 @@ public class FileNameCache {
   
   @NotNull
   public static CharSequence getVFileName(int nameId, @NotNull NameComputer computeName) throws IOException {
-    assert nameId > 0;
+    assert nameId > 0 : nameId;
 
     if (ourTrackStats) {
       int frequency = 10000000;
@@ -94,7 +94,7 @@ public class FileNameCache {
       if (queryCount >= frequency && ourQueries.compareAndSet(queryCount, 0)) {
         double misses = ourMisses.getAndSet(0);
         //noinspection UseOfSystemOutOrSystemErr
-        System.out.println("Misses: " + (misses / frequency));
+        System.out.println("Misses: " + misses / frequency);
         ourQueries.set(0);
       }
     }

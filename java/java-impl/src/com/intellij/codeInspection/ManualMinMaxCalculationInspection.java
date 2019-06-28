@@ -58,7 +58,7 @@ public class ManualMinMaxCalculationInspection extends AbstractBaseJavaLocalInsp
 
       private void visitConditional(@NotNull PsiElement element,
                                     @NotNull ConditionalModel model) {
-        PsiBinaryExpression condition = getCondition(model.myCondition);
+        PsiBinaryExpression condition = getCondition(model.getCondition());
         if (condition == null) return;
         PsiExpression left = condition.getLOperand();
         if (SideEffectChecker.mayHaveSideEffects(left, e -> e instanceof PsiMethodCallExpression)) return;
@@ -69,10 +69,11 @@ public class ManualMinMaxCalculationInspection extends AbstractBaseJavaLocalInsp
         PsiType rightType = getType(right);
         if (rightType == null || leftType != rightType) return;
         EquivalenceChecker equivalenceChecker = EquivalenceChecker.getCanonicalPsiEquivalence();
-        boolean useMathMin = equivalenceChecker.expressionsAreEquivalent(left, model.myElseExpression);
-        if (!useMathMin && !equivalenceChecker.expressionsAreEquivalent(left, model.myThenExpression)) return;
-        if (!equivalenceChecker.expressionsAreEquivalent(right, useMathMin ? model.myThenExpression : model.myElseExpression)) return;
-        useMathMin ^= JavaTokenType.LT.equals(condition.getOperationTokenType());
+        boolean useMathMin = equivalenceChecker.expressionsAreEquivalent(left, model.getElseExpression());
+        if (!useMathMin && !equivalenceChecker.expressionsAreEquivalent(left, model.getThenExpression())) return;
+        if (!equivalenceChecker.expressionsAreEquivalent(right, useMathMin ? model.getThenExpression() : model.getElseExpression())) return;
+        IElementType tokenType = condition.getOperationTokenType();
+        useMathMin ^= JavaTokenType.LT.equals(tokenType) || JavaTokenType.LE.equals(tokenType);
         holder.registerProblem(element,
                                InspectionsBundle.message("inspection.manual.min.max.calculation.description", useMathMin ? "min" : "max"),
                                new ReplaceWithMinMaxFix(useMathMin));
@@ -94,7 +95,11 @@ public class ManualMinMaxCalculationInspection extends AbstractBaseJavaLocalInsp
     PsiBinaryExpression condition = tryCast(ParenthesesUtils.stripParentheses(expression), PsiBinaryExpression.class);
     if (condition == null) return null;
     IElementType tokenType = condition.getOperationTokenType();
-    return JavaTokenType.LT.equals(tokenType) || JavaTokenType.GT.equals(tokenType) ? condition : null;
+    if (JavaTokenType.LT.equals(tokenType) || JavaTokenType.LE.equals(tokenType) ||
+        JavaTokenType.GT.equals(tokenType) || JavaTokenType.GE.equals(tokenType)) {
+      return condition;
+    }
+    return null;
   }
 
   private static class ReplaceWithMinMaxFix implements LocalQuickFix {
@@ -119,7 +124,7 @@ public class ManualMinMaxCalculationInspection extends AbstractBaseJavaLocalInsp
       if (element instanceof PsiConditionalExpression) {
         ConditionalModel model = ConditionalModel.from((PsiConditionalExpression)element);
         if (model == null) return;
-        String replacement = createReplacement(model.myCondition);
+        String replacement = createReplacement(model.getCondition());
         if (replacement == null) return;
         PsiReplacementUtil.replaceExpression((PsiExpression)element, replacement, new CommentTracker());
         return;
@@ -128,12 +133,12 @@ public class ManualMinMaxCalculationInspection extends AbstractBaseJavaLocalInsp
       if (ifStatement == null) return;
       IfConditionalModel model = IfConditionalModel.from(ifStatement);
       if (model == null) return;
-      String replacement = createReplacement(model.myCondition);
+      String replacement = createReplacement(model.getCondition());
       if (replacement == null) return;
-      PsiExpression toReplace = model.myThenExpression;
+      PsiExpression toReplace = model.getThenExpression();
       PsiReplacementUtil.replaceExpression(toReplace, replacement, new CommentTracker());
       CommentTracker tracker = new CommentTracker();
-      PsiStatement thenBranch = model.myThenBranch;
+      PsiStatement thenBranch = model.getThenBranch();
       tracker.text(thenBranch);
       PsiElement result = PsiReplacementUtil.replaceStatement(ifStatement, thenBranch.getText(), tracker);
       SimplifiableIfStatementInspection.tryJoinDeclaration(result);

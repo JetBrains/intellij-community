@@ -21,7 +21,7 @@ class CrossPlatformDistributionBuilder {
     this.buildContext = buildContext
   }
 
-  String buildCrossPlatformZip(String winDistPath, String linuxDistPath, String macDistPath, String zipNameSuffix) {
+  String buildCrossPlatformZip(String winDistPath, String linuxDistPath, String macDistPath) {
     buildContext.messages.block("Building cross-platform zip") {
       def executableName = buildContext.productProperties.baseFileName
       def zipDir = "$buildContext.paths.temp/cross-platform-zip"
@@ -63,8 +63,8 @@ class CrossPlatformDistributionBuilder {
         new ProductInfoLaunchData(OsFamily.MACOS.osName, "MacOS/$executableName", null, "bin/mac/${executableName}.vmoptions", null)
       ])
 
-      String baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
-      String targetPath = "$buildContext.paths.artifacts/${baseName}${zipNameSuffix}.zip"
+      def zipFileName = buildContext.productProperties.getCrossPlatformZipFileName(buildContext.applicationInfo, buildContext.buildNumber)
+      String targetPath = "$buildContext.paths.artifacts/$zipFileName"
 
       List<String> extraExecutables = buildContext.linuxDistributionCustomizer.extraExecutables + buildContext.macDistributionCustomizer.extraExecutables
       buildContext.ant.zip(zipfile: targetPath, duplicate: "fail") {

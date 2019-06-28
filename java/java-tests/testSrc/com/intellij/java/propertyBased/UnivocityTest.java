@@ -38,7 +38,7 @@ import org.junit.Assume;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -101,7 +101,7 @@ public class UnivocityTest extends AbstractApplyAndRevertTestCase {
         env.executeCommands(Generator.constant(env1 -> {
           PsiJavaFile file = env1.generateValue(javaFiles, "Open %s in editor");
 
-          Map<Generator<? extends MadTestingAction>, Integer> actionWeights = new HashMap<>();
+          Map<Generator<? extends MadTestingAction>, Integer> actionWeights = new LinkedHashMap<>();
 
           List<ActionOnFile> psiMutations = Arrays.asList(new DeleteRange(file),
                                                           new AddNullArgument(file),

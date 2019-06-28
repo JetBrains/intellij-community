@@ -13,7 +13,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.util.ui.UIUtil;
@@ -32,8 +32,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * @author Dmitry Avdeev
  */
-public abstract class FileEditorManagerTestCase extends LightPlatformCodeInsightFixtureTestCase {
-
+public abstract class FileEditorManagerTestCase extends BasePlatformTestCase {
   protected FileEditorManagerImpl myManager;
   private FileEditorManager myOldManager;
   private Set<DockContainer> myOldDockContainers;
@@ -41,35 +40,35 @@ public abstract class FileEditorManagerTestCase extends LightPlatformCodeInsight
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    DockManager dockManager = DockManager.getInstance(getProject());
-    myOldDockContainers = dockManager.getContainers();
-    myManager = new FileEditorManagerImpl(getProject(), dockManager);
+
+    myOldDockContainers = DockManager.getInstance(getProject()).getContainers();
+    myManager = new FileEditorManagerImpl(getProject());
     myOldManager = ((ComponentManagerImpl)getProject()).registerComponentInstance(FileEditorManager.class, myManager);
     ((FileEditorProviderManagerImpl)FileEditorProviderManager.getInstance()).clearSelectedProviders();
   }
 
   @Override
   protected void tearDown() throws Exception {
-    try {
-      for (DockContainer container : DockManager.getInstance(getProject()).getContainers()) {
-        if (!myOldDockContainers.contains(container)) {
-          Disposer.dispose(container);
+    new RunAll(
+      () -> {
+        for (DockContainer container : DockManager.getInstance(getProject()).getContainers()) {
+          if (!myOldDockContainers.contains(container)) {
+            Disposer.dispose(container);
+          }
         }
-      }
-      myOldDockContainers = null;
-      ((ComponentManagerImpl)getProject()).registerComponentInstance(FileEditorManager.class, myOldManager);
-      myManager.closeAllFiles();
-      EditorHistoryManager.getInstance(getProject()).removeAllFiles();
-      ((FileEditorProviderManagerImpl)FileEditorProviderManager.getInstance()).clearSelectedProviders();
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
+
+        myOldDockContainers = null;
+        ((ComponentManagerImpl)getProject()).registerComponentInstance(FileEditorManager.class, myOldManager);
+        myManager.closeAllFiles();
+        EditorHistoryManager.getInstance(getProject()).removeAllFiles();
+        ((FileEditorProviderManagerImpl)FileEditorProviderManager.getInstance()).clearSelectedProviders();
+      },
+      () -> Disposer.dispose(myManager), () -> {
       myManager = null;
       myOldManager = null;
-      super.tearDown();
-    }
+    },
+      () -> super.tearDown()
+    ).run();
   }
 
   protected VirtualFile getFile(String path) {

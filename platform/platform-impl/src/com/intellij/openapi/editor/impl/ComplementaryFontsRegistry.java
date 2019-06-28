@@ -10,6 +10,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.TIntHashSet;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +51,6 @@ public class ComplementaryFontsRegistry {
     FONT_NAME_TO_STYLE.put("SourceCodePro-BoldIt",  Font.BOLD | Font.ITALIC);
     FONT_NAME_TO_STYLE.put("Hasklig-It",            Font.ITALIC);
     FONT_NAME_TO_STYLE.put("Hasklig-BoldIt",        Font.BOLD | Font.ITALIC);
-    FONT_NAME_TO_STYLE.put("FiraCode-Light",        Font.PLAIN);
     FONT_NAME_TO_STYLE.put("FiraCode-Medium",       Font.BOLD);
   }
 
@@ -126,6 +126,7 @@ public class ComplementaryFontsRegistry {
    * @deprecated Use {{@link #getFontAbleToDisplay(int, int, FontPreferences, FontRenderContext)}} instead. To be removed in 2020.2 version.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   @NotNull
   public static FontInfo getFontAbleToDisplay(int codePoint, @JdkConstants.FontStyle int style, @NotNull FontPreferences preferences) {
     return getFontAbleToDisplay(codePoint, style, preferences, null);
@@ -250,6 +251,7 @@ public class ComplementaryFontsRegistry {
    * @deprecated Use {{@link #getFontAbleToDisplay(int, int, int, String, FontRenderContext)}} instead. To be removed in 2020.2 version.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   @NotNull
   public static FontInfo getFontAbleToDisplay(int codePoint, int size, @JdkConstants.FontStyle int style, @NotNull String defaultFontFamily) {
     return getFontAbleToDisplay(codePoint, size, style, defaultFontFamily, null);

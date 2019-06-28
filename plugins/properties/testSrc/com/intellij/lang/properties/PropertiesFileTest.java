@@ -23,7 +23,7 @@ import com.intellij.lang.properties.psi.impl.PropertyImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
@@ -32,7 +32,7 @@ import java.util.List;
 /**
  * @author max
  */
-public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase {
+public class PropertiesFileTest extends BasePlatformTestCase {
   private Property myPropertyToAdd;
 
   @Override

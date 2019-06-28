@@ -331,7 +331,7 @@ public class PsiImplUtil {
   }
 
   /**
-   * Types should be proceed by the callers themselves
+   * @deprecated types should be proceed by the callers themselves
    */
   @Deprecated
   public static PsiType normalizeWildcardTypeByPosition(@NotNull PsiType type, @NotNull PsiExpression expression) {
@@ -778,7 +778,7 @@ public class PsiImplUtil {
     }
     if (element instanceof PsiMethodReferenceExpression) {
       // method refs: do not cache results during parent conflict resolving, acceptable checks, etc
-      if (LambdaUtil.getFunctionalTypeMap().containsKey(element)) {
+      if (ThreadLocalTypes.hasBindingFor(element)) {
         return (JavaResolveResult[])resolver.resolve(element, psiFile, incompleteCode);
       }
     }

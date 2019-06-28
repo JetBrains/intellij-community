@@ -43,6 +43,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.utils.EncodingManagerUtilKt;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -73,7 +74,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
   private static final Charset WINDOWS_1251 = CharsetToolkit.WIN_1251_CHARSET;
   private static final Charset WINDOWS_1252 = Charset.forName("windows-1252");
   private static final String UTF8_XML_PROLOG = prolog(StandardCharsets.UTF_8);
-  private static final byte[] NO_BOM = ArrayUtil.EMPTY_BYTE_ARRAY;
+  private static final byte[] NO_BOM = ArrayUtilRt.EMPTY_BYTE_ARRAY;
   private static final String XML_TEST_BODY = "<web-app>\n" + "<!--\u043f\u0430\u043f\u0430-->\n" + "</web-app>";
   private static final String THREE_RUSSIAN_LETTERS = "\u0416\u041e\u041f";
   private TestDialog myOldTestDialogValue;

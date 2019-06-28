@@ -4,10 +4,10 @@ package com.siyeh.ig.abstraction;
 import com.intellij.ToolExtensionPoints;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.extensions.Extensions;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class TypeMayBeWeakenedInspectionTest extends LightInspectionTestCase {
+public class TypeMayBeWeakenedInspectionTest extends LightJavaInspectionTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();

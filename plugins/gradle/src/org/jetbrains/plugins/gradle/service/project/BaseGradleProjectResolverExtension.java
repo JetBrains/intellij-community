@@ -364,7 +364,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     processSourceSets(resolverCtx, gradleModule, externalProject, ideModule, new SourceSetsProcessor() {
       @Override
       public void process(@NotNull DataNode<? extends ModuleData> dataNode, @NotNull ExternalSourceSet sourceSet) {
-        for (Map.Entry<IExternalSystemSourceType, ExternalSourceDirectorySet> directorySetEntry : sourceSet.getSources().entrySet()) {
+        for (Map.Entry<? extends IExternalSystemSourceType, ? extends ExternalSourceDirectorySet> directorySetEntry : sourceSet.getSources().entrySet()) {
           ExternalSystemSourceType sourceType = ExternalSystemSourceType.from(directorySetEntry.getKey());
           ExternalSourceDirectorySet sourceDirectorySet = directorySetEntry.getValue();
 
@@ -453,7 +453,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
           }
           final ModuleData moduleData = dataNode.getData();
           moduleData.useExternalCompilerOutput(resolverCtx.isDelegatedBuild());
-          for (Map.Entry<IExternalSystemSourceType, ExternalSourceDirectorySet> directorySetEntry : sourceSet.getSources().entrySet()) {
+          for (Map.Entry<? extends IExternalSystemSourceType, ? extends ExternalSourceDirectorySet> directorySetEntry : sourceSet.getSources().entrySet()) {
             ExternalSystemSourceType sourceType = ExternalSystemSourceType.from(directorySetEntry.getKey());
             ExternalSourceDirectorySet sourceDirectorySet = directorySetEntry.getValue();
             File ideOutputDir = getIdeOutputDir(sourceDirectorySet);
@@ -1116,7 +1116,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       level = LibraryLevel.PROJECT;
       libraryName = String.format("%s:%s:%s", moduleVersion.getGroup(), moduleVersion.getName(), moduleVersion.getVersion());
       if (binaryPath.isFile()) {
-        String libraryFileName = FileUtil.getNameWithoutExtension(binaryPath);
+        String libraryFileName = FileUtilRt.getNameWithoutExtension(binaryPath.getName());
         final String mavenLibraryFileName = String.format("%s-%s", moduleVersion.getName(), moduleVersion.getVersion());
         if (!mavenLibraryFileName.equals(libraryFileName)) {
           Pattern pattern = Pattern.compile(moduleVersion.getName() + "-" + moduleVersion.getVersion() + "-(.*)");
@@ -1179,7 +1179,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   private String chooseName(File path,
                             LibraryLevel level,
                             DataNode<ProjectData> ideProject) {
-    final String fileName = FileUtil.getNameWithoutExtension(path);
+    final String fileName = FileUtilRt.getNameWithoutExtension(path.getName());
     if (level == LibraryLevel.MODULE) {
       return fileName;
     }

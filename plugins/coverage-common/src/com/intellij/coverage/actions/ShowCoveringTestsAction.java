@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.coverage.actions;
 
@@ -25,7 +25,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +43,7 @@ public class ShowCoveringTestsAction extends AnAction {
   private final LineData myLineData;
 
   public ShowCoveringTestsAction(final String classFQName, LineData lineData) {
-    super("Show tests covering line", "Show tests covering line", PlatformIcons.TEST_SOURCE_FOLDER);
+    super("Show Tests Covering Line", "Show tests covering line", PlatformIcons.TEST_SOURCE_FOLDER);
     myClassFQName = classFQName;
     myLineData = lineData;
   }
@@ -62,7 +62,7 @@ public class ShowCoveringTestsAction extends AnAction {
     final Set<String> tests = new HashSet<>();
     if (ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> tests.addAll(coverageEngine.getTestsForLine(project, myClassFQName, myLineData.getLineNumber())),
                                                                           "Extract Information About Tests", false, project)) { //todo cache them? show nothing found message
-      final String[] testNames = ArrayUtil.toStringArray(tests);
+      final String[] testNames = ArrayUtilRt.toStringArray(tests);
       Arrays.sort(testNames);
       if (testNames.length == 0) {
         HintManager.getInstance().showErrorHint(editor, "Failed to load covered tests");
@@ -108,7 +108,8 @@ public class ShowCoveringTestsAction extends AnAction {
       final Project project = e.getProject();
       if (project != null) {
         CoverageSuitesBundle currentSuitesBundle = CoverageDataManager.getInstance(project).getCurrentSuitesBundle();
-        presentation.setEnabled(currentSuitesBundle.isCoverageByTestEnabled() && 
+        presentation.setEnabled(currentSuitesBundle != null &&
+                                currentSuitesBundle.isCoverageByTestEnabled() &&
                                 currentSuitesBundle.getCoverageEngine().wasTestDataCollected(project));
       }
     }

@@ -17,6 +17,7 @@ package com.intellij.execution.testframework;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.LayeredIcon;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 
@@ -31,6 +32,7 @@ public interface PoolOfTestIcons {
    */
   @SuppressWarnings("unused")
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
   Icon LOADING_ICON = AllIcons.RunConfigurations.LoadingTree;
   Icon TERMINATED_ICON = AllIcons.RunConfigurations.TestTerminated;
   Icon IGNORED_ICON = AllIcons.RunConfigurations.TestIgnored;

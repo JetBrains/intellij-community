@@ -12,7 +12,7 @@ class SwitchExpressionMigration {
           case 2:
               return switch (1) {
                   case 1 -> {
-                      break 12;
+                      yield 12;
                   }
                   default -> 55;
               };

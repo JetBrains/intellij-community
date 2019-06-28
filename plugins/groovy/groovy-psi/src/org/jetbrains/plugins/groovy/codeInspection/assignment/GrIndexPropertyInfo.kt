@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.assignment
 
 import com.intellij.psi.PsiElement
@@ -25,13 +23,7 @@ class GrIndexPropertyInfo(private val myCall: GrIndexProperty, private val rhs: 
 
   override fun getInvokedExpression(): GrExpression? = myCall.invokedExpression
 
-  override fun getQualifierInstanceType(): PsiType? = myCall.invokedExpression.type
+  fun advancedResolve(): GroovyResolveResult = myCall.advancedResolve(rhs)
 
-  override fun advancedResolve(): GroovyResolveResult = myCall.advancedResolve(rhs)
-
-  override fun multiResolve(): Array<GroovyResolveResult> = myCall.multiResolve(rhs)
-
-  override fun getExpressionArguments(): Nothing = TODO("not supported")
-  override fun getClosureArguments(): Nothing = TODO("not supported")
-  override fun getNamedArguments(): Nothing = TODO("not supported")
+  fun multiResolve(): Array<GroovyResolveResult> = myCall.multiResolve(rhs)
 }

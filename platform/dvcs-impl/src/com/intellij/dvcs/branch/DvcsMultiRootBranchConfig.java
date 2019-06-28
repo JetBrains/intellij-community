@@ -23,9 +23,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 public abstract class DvcsMultiRootBranchConfig<Repo extends Repository> {
-  @NotNull protected final Collection<Repo> myRepositories;
+  @NotNull protected final Collection<? extends Repo> myRepositories;
 
-  public DvcsMultiRootBranchConfig(@NotNull Collection<Repo> repositories) {
+  public DvcsMultiRootBranchConfig(@NotNull Collection<? extends Repo> repositories) {
     myRepositories = repositories;
   }
 

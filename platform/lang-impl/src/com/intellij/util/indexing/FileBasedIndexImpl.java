@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util.indexing;
 
@@ -15,7 +15,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.EditorHighlighterCache;
@@ -37,10 +36,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -100,7 +96,7 @@ import java.util.stream.Stream;
 /**
  * @author Eugene Zhuravlev
  */
-public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent, Disposable {
+public final class FileBasedIndexImpl extends FileBasedIndex implements Disposable {
   private static final ThreadLocal<VirtualFile> ourIndexedFile = new ThreadLocal<>();
   static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndexImpl");
   private static final String CORRUPTION_MARKER_NAME = "corruption.marker";
@@ -263,7 +259,9 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     myChangedFilesCollector = new ChangedFilesCollector();
     myConnection = connection;
 
-    myConnection.subscribe(VirtualFileManager.VFS_CHANGES, myChangedFilesCollector);
+    VirtualFileManager.getInstance().addAsyncFileListener(myChangedFilesCollector, this);
+
+    initComponent();
   }
 
   @VisibleForTesting
@@ -282,7 +280,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
   boolean processChangedFiles(@NotNull Project project, @NotNull Processor<? super VirtualFile> processor) {
     // avoid missing files when events are processed concurrently
-    return Stream.concat(myChangedFilesCollector.myVfsEventsMerger.getChangedFiles(),
+    return Stream.concat(myChangedFilesCollector.getEventMerger().getChangedFiles(),
                          myChangedFilesCollector.myFilesToUpdate.values().stream())
       .filter(filesToBeIndexedForProjectCondition(project))
       .distinct()
@@ -310,14 +308,13 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     // but it is more costly than current code, see IDEA-192192
     //myChangedFilesCollector.invalidateIndicesRecursively(file, false);
     //myChangedFilesCollector.buildIndicesForFileRecursively(file, false);
-    myChangedFilesCollector.invalidateIndicesRecursively(file, true);
+    myChangedFilesCollector.invalidateIndicesRecursively(file, true, myChangedFilesCollector.getEventMerger());
     if (myInitialized) myChangedFilesCollector.ensureUpToDateAsync();
   }
 
-  @Override
-  public void initComponent() {
+  private void initComponent() {
     myStateFuture = IndexInfrastructure.submitGenesisTask(new FileIndexDataInitialization());
-    
+
     if (!IndexInfrastructure.ourDoAsyncIndicesInitialization) {
       waitUntilIndicesAreInitialized();
     }
@@ -1355,6 +1352,9 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
           }
           else {
             newFc = new FileContentImpl(vFile, contentText, currentDocStamp);
+            if (IdIndex.ourSnapshotMappingsEnabled) {
+              newFc.putUserData(UpdatableSnapshotInputMappingIndex.FORCE_IGNORE_MAPPING_INDEX_UPDATE, Boolean.TRUE);
+            }
             document.putUserData(ourFileContentKey, new WeakReference<>(newFc));
           }
 
@@ -1444,7 +1444,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
   public void requestRebuild(@NotNull final ID<?, ?> indexId, final Throwable throwable) {
     cleanupProcessedFlag();
     if (!myExtensionsRelatedDataWasLoaded) reportUnexpectedAsyncInitState();
-    
+
     if (RebuildStatus.requestRebuild(indexId)) {
       String message = "Rebuild requested for index " + indexId;
       Application app = ApplicationManager.getApplication();
@@ -1578,7 +1578,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
               currentBytes = content.getBytes();
             }
             catch (IOException e) {
-              currentBytes = ArrayUtil.EMPTY_BYTE_ARRAY;
+              currentBytes = ArrayUtilRt.EMPTY_BYTE_ARRAY;
             }
             fc = new FileContentImpl(file, currentBytes);
 
@@ -1858,7 +1858,6 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
   private final class ChangedFilesCollector extends IndexedFilesListener {
     private final IntObjectMap<VirtualFile> myFilesToUpdate = ContainerUtil.createConcurrentIntObjectMap();
-    private final VfsEventsMerger myVfsEventsMerger = new VfsEventsMerger();
     private final AtomicInteger myProcessedEventIndex = new AtomicInteger();
     private final Phaser myWorkersFinishedSync = new Phaser() {
       @Override
@@ -1893,18 +1892,6 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
           set.iterateIndexableFilesIn(file, iterator);
         }
       }
-    }
-
-    @Override
-    protected void buildIndicesForFile(@NotNull VirtualFile file, boolean contentChange) {
-      int fileId = getIdMaskingNonIdBasedFile(file);
-      myVfsEventsMerger.recordFileEvent(fileId, file, contentChange);
-    }
-
-    @Override
-    protected void doInvalidateIndicesForFile(@NotNull VirtualFile file, boolean contentChange) {
-      final int fileId = Math.abs(getIdMaskingNonIdBasedFile(file));
-      myVfsEventsMerger.recordBeforeFileEvent(fileId, file, contentChange);
     }
 
     void scheduleForUpdate(VirtualFile file) {
@@ -1949,14 +1936,26 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     }
 
     @Override
-    public void before(@NotNull List<? extends VFileEvent> events) {
-      for (VFileEvent event : events) {
-        if (memoryStorageCleaningNeeded(event)) {
-          cleanupMemoryStorage(false);
-          break;
+    @NotNull
+    public AsyncFileListener.ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
+      boolean shouldCleanup = ContainerUtil.exists(events, this::memoryStorageCleaningNeeded);
+      ChangeApplier superApplier = super.prepareChange(events);
+
+      return new AsyncFileListener.ChangeApplier() {
+        @Override
+        public void beforeVfsChange() {
+          if (shouldCleanup) {
+            cleanupMemoryStorage(false);
+          }
+          superApplier.beforeVfsChange();
         }
-      }
-      super.before(events);
+
+        @Override
+        public void afterVfsChange() {
+          superApplier.afterVfsChange();
+          if (myInitialized) ensureUpToDateAsync();
+        }
+      };
     }
 
     private boolean memoryStorageCleaningNeeded(VFileEvent event) {
@@ -1964,13 +1963,6 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       return requestor instanceof FileDocumentManager ||
           requestor instanceof PsiManager ||
           requestor == LocalHistory.VFS_EVENT_REQUESTOR;
-    }
-
-    @Override
-    public void after(@NotNull List<? extends VFileEvent> events) {
-      super.after(events);
-
-      if (myInitialized) ensureUpToDateAsync();
     }
 
     boolean isScheduledForUpdate(VirtualFile file) {
@@ -1992,7 +1984,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     }
 
     void ensureUpToDateAsync() {
-      if (myVfsEventsMerger.getApproximateChangesCount() >= 20 && myScheduledVfsEventsWorkers.compareAndSet(0,1)) {
+      if (getEventMerger().getApproximateChangesCount() >= 20 && myScheduledVfsEventsWorkers.compareAndSet(0,1)) {
         myVfsEventsExecutor.submit(this::scheduledEventProcessingInReadActionWithYieldingToWriteAction);
 
         if (Registry.is("try.starting.dumb.mode.where.many.files.changed")) {
@@ -2023,7 +2015,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     private void processFilesInReadAction() {
       assert ApplicationManager.getApplication().isReadAccessAllowed(); // no vfs events -> event processing code can finish
 
-      int publishedEventIndex = myVfsEventsMerger.getPublishedEventIndex();
+      int publishedEventIndex = getEventMerger().getPublishedEventIndex();
       int processedEventIndex = myProcessedEventIndex.get();
       if (processedEventIndex == publishedEventIndex) {
         return;
@@ -2032,7 +2024,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       myWorkersFinishedSync.register();
       int phase = myWorkersFinishedSync.getPhase();
       try {
-        myVfsEventsMerger.processChanges(info ->
+        getEventMerger().processChanges(info ->
           ConcurrencyUtil.withLock(myWriteLock, () -> {
             try {
               ProgressManager.getInstance().executeNonCancelableSection(() -> {
@@ -2058,13 +2050,13 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
       myWorkersFinishedSync.awaitAdvance(phase);
 
-      if (myVfsEventsMerger.getPublishedEventIndex() == publishedEventIndex) {
+      if (getEventMerger().getPublishedEventIndex() == publishedEventIndex) {
         myProcessedEventIndex.compareAndSet(processedEventIndex, publishedEventIndex);
       }
     }
 
     private void processFilesInReadActionWithYieldingToWriteAction() {
-      while (myVfsEventsMerger.hasChanges()) {
+      while (getEventMerger().hasChanges()) {
         if (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(this::processFilesInReadAction)) {
           ProgressIndicatorUtils.yieldToPendingWriteActions();
         }
@@ -2126,7 +2118,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
         int fileId = ((VirtualFileWithId)file).getId();
         if (usedFileIds.get(fileId)) continue;
         usedFileIds.set(fileId);
-        
+
         if (file.getFileSystem() instanceof LocalFileSystem) localFileSystemFiles.add(file);
         else archiveFiles.add(file);
       }
@@ -2245,7 +2237,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
             VirtualFile virtualFile = file.getVirtualFile();
 
             if (virtualFile instanceof VirtualFileWithId) {
-              myChangedFilesCollector.myVfsEventsMerger.recordTransientStateChangeEvent(getFileId(virtualFile), virtualFile);
+              myChangedFilesCollector.getEventMerger().recordTransientStateChangeEvent(virtualFile);
             }
           }
         }
@@ -2258,11 +2250,12 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       int fileId = ((VirtualFileWithId)virtualFile).getId();
       boolean wasIndexed = false;
       List<ID<?, ?>> candidates = getAffectedIndexCandidates(virtualFile);
-      for (ID<?, ?> psiBackedIndex : myPsiDependentIndices) {
-        if (!candidates.contains(psiBackedIndex)) continue;
-        if(getInputFilter(psiBackedIndex).acceptInput(virtualFile)) {
-          getIndex(psiBackedIndex).resetIndexedStateForFile(fileId);
-          wasIndexed = true;
+      for (ID<?, ?> candidate : candidates) {
+        if (myPsiDependentIndices.contains(candidate)) {
+          if(getInputFilter(candidate).acceptInput(virtualFile)) {
+            getIndex(candidate).resetIndexedStateForFile(fileId);
+            wasIndexed = true;
+          }
         }
       }
       if (wasIndexed) {
@@ -2363,7 +2356,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
     private void initAssociatedDataForExtensions() {
       long started = System.nanoTime();
-      Iterator<FileBasedIndexExtension> extensions = 
+      Iterator<FileBasedIndexExtension> extensions =
         IndexInfrastructure.hasIndices() ?
         ((ExtensionPointImpl<FileBasedIndexExtension>)FileBasedIndexExtension.EXTENSION_POINT_NAME.getPoint(null)).iterator() :
         Collections.emptyIterator();
@@ -2385,7 +2378,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
           myRequiringContentIndices.add(name);
         }
 
-        if (extension instanceof PsiDependentIndex) myPsiDependentIndices.add(name);
+        if (isPsiDependentIndex(extension)) myPsiDependentIndices.add(name);
         myNoLimitCheckTypes.addAll(extension.getFileTypesWithSizeLimitNotApplicable());
 
         addNestedInitializationTask(() -> {
@@ -2408,7 +2401,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     @Override
     protected void prepare() {
       initAssociatedDataForExtensions();
-      
+
       mySerializationManagerEx = SerializationManagerEx.getInstanceEx();
       File indexRoot = PathManager.getIndexRoot();
 
@@ -2520,6 +2513,17 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       catch (TimeoutException e) {
         UIUtil.dispatchAllInvocationEvents();
       }
+    }
+  }
+
+  private static final boolean INDICES_ARE_PSI_DEPENDENT_BY_DEFAULT = SystemProperties.getBooleanProperty("idea.indices.psi.dependent.default", true);
+  public static boolean isPsiDependentIndex(@NotNull IndexExtension<?, ?, ?> extension) {
+    if (INDICES_ARE_PSI_DEPENDENT_BY_DEFAULT) {
+      return extension instanceof FileBasedIndexExtension &&
+             ((FileBasedIndexExtension<?, ?>)extension).dependsOnFileContent() &&
+             !(extension instanceof DocumentChangeDependentIndex);
+    } else {
+      return extension instanceof PsiDependentIndex;
     }
   }
 }

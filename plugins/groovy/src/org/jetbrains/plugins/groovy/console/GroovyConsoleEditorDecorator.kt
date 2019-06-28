@@ -3,17 +3,16 @@ package org.jetbrains.plugins.groovy.console
 
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.editor.impl.EditorHeaderComponent
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotifications.Provider
 import org.jetbrains.plugins.groovy.console.GroovyConsoleRootType.EXECUTE_ACTION
-import org.jetbrains.plugins.groovy.console.actions.GrSelectModuleAction
 import javax.swing.JComponent
 
 class GroovyConsoleEditorDecorator : Provider<JComponent>() {
+
   companion object {
     private val myKey = Key.create<JComponent>("groovy.console.toolbar")
   }
@@ -25,8 +24,6 @@ class GroovyConsoleEditorDecorator : Provider<JComponent>() {
     if (!consoleService.isProjectConsole(file)) return null
     val actionGroup = DefaultActionGroup(EXECUTE_ACTION, GrSelectModuleAction(project, file))
     val menu = ActionManager.getInstance().createActionToolbar("GroovyConsole", actionGroup, true)
-    return EditorHeaderComponent().apply {
-      add(menu.component)
-    }
+    return menu.component
   }
 }

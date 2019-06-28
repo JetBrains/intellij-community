@@ -12,7 +12,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -20,7 +20,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 import java.io.File;
 import java.io.IOException;
 
-public abstract class SuspiciousPackagePrivateAccessInspectionTestCase extends LightInspectionTestCase {
+public abstract class SuspiciousPackagePrivateAccessInspectionTestCase extends LightJavaInspectionTestCase {
   private final ProjectWithDepModuleDescriptor myProjectDescriptor = new ProjectWithDepModuleDescriptor(LanguageLevel.HIGHEST);
   private final String myExtension;
 

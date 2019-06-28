@@ -95,6 +95,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       @Suppress("DEPRECATION")
       if (component is PersistentStateComponent<*>) {
         componentName = initPersistenceStateComponent(component, getStateSpec(component), serviceDescriptor)
+        component.initializeComponent()
       }
       else if (component is com.intellij.openapi.util.JDOMExternalizable) {
         componentName = ComponentManagerImpl.getComponentName(component)
@@ -230,10 +231,10 @@ abstract class ComponentStoreImpl : IComponentStore {
   @CalledInAwt
   override fun saveComponent(component: PersistentStateComponent<*>) {
     val stateSpec = getStateSpec(component)
-    LOG.info("saveComponent is called for ${stateSpec.name}")
+    LOG.debug { "saveComponent is called for ${stateSpec.name}" }
     val saveManager = createSaveSessionProducerManager()
     commitComponent(saveManager, ComponentInfoImpl(component, stateSpec), null)
-    val absolutePath = Paths.get(storageManager.expandMacros(findNonDeprecated(stateSpec.storages).path)).toAbsolutePath().toString()
+    val absolutePath = Paths.get(storageManager.expandMacros(findNonDeprecated(getStorageSpecs(component, stateSpec, StateStorageOperation.WRITE)).path)).toAbsolutePath().toString()
     val newDisposable = Disposer.newDisposable()
     try {
       VfsRootAccess.allowRootAccess(newDisposable, absolutePath)
@@ -241,8 +242,7 @@ abstract class ComponentStoreImpl : IComponentStore {
         val saveResult = saveManager.save()
         saveResult.throwIfErrored()
 
-        val isSomethingChanged = saveResult.isChanged
-        if (!isSomethingChanged) {
+        if (!saveResult.isChanged) {
           LOG.info("saveApplicationComponent is called for ${stateSpec.name} but nothing to save")
         }
       }
@@ -385,7 +385,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
         val storage = storageManager.getStateStorage(storageSpec)
 
-        // if storage marked as changed, it means that analyzeExternalChangesAndUpdateIfNeed was called for it and storage is already reloaded
+        // if storage marked as changed, it means that analyzeExternalChangesAndUpdateIfNeeded was called for it and storage is already reloaded
         val isReloadDataForStorage = if (reloadData == ThreeState.UNSURE) changedStorages!!.contains(storage) else reloadData.toBoolean()
 
         val stateGetter = doCreateStateGetter(isReloadDataForStorage, storage, info, name, stateClass)
@@ -529,7 +529,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       LOG.runAndLogException {
         // we must update (reload in-memory storage data) even if non-reloadable component will be detected later
         // not saved -> user does own modification -> new (on disk) state will be overwritten and not applied
-        storage.analyzeExternalChangesAndUpdateIfNeed(componentNames)
+        storage.analyzeExternalChangesAndUpdateIfNeeded(componentNames)
       }
     }
 
@@ -564,8 +564,9 @@ abstract class ComponentStoreImpl : IComponentStore {
   override fun toString() = storageManager.componentManager.toString()
 }
 
-private fun findNonDeprecated(storages: Array<Storage>) = storages.firstOrNull { !it.deprecated } ?: throw AssertionError(
-  "All storages are deprecated")
+private fun findNonDeprecated(storages: List<Storage>): Storage {
+  return storages.firstOrNull { !it.deprecated } ?: throw AssertionError("All storages are deprecated")
+}
 
 enum class StateLoadPolicy {
   LOAD, LOAD_ONLY_DEFAULT, NOT_LOAD

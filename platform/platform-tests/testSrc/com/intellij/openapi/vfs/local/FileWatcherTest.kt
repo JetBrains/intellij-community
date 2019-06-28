@@ -9,7 +9,10 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.vfs.impl.local.FileWatcher
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl
 import com.intellij.openapi.vfs.impl.local.NativeFileWatcherImpl
@@ -67,7 +70,8 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     fs = LocalFileSystem.getInstance()
     root = refresh(tempDir.root)
 
-    runInEdtAndWait { VirtualFileManager.getInstance().syncRefresh() }
+    runInEdtAndWait { fs.refresh(false) }
+    runInEdtAndWait { fs.refresh(false) }
 
     alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, testRootDisposable)
 

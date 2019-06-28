@@ -16,14 +16,13 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
-import junit.framework.TestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class CheckedExceptionClassInspectionTest extends LightInspectionTestCase {
+public class CheckedExceptionClassInspectionTest extends LightJavaInspectionTestCase {
 
   public void testCheckedExceptionClass() {
     doTest();

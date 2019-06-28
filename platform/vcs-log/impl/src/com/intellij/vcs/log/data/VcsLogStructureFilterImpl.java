@@ -30,6 +30,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Objects;
 
 @ApiStatus.Internal
 public class VcsLogStructureFilterImpl implements VcsLogDetailsFilter, VcsLogStructureFilter {
@@ -73,5 +74,18 @@ public class VcsLogStructureFilterImpl implements VcsLogDetailsFilter, VcsLogStr
   @Override
   public String toString() {
     return "files:" + myFiles;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    VcsLogStructureFilterImpl filter = (VcsLogStructureFilterImpl)o;
+    return getFiles().equals(filter.getFiles());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getFiles());
   }
 }

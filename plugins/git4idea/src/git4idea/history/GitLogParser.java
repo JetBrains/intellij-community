@@ -85,7 +85,7 @@ public class GitLogParser<R extends GitLogRecord> {
     myPretty = "--pretty=format:" + makeFormatFromOptions(options);
 
     myOptionsParser = new OptionsParser(options);
-    myPathsParser = new PathsParser(nameStatusOption);
+    myPathsParser = new MyPathsParser(nameStatusOption);
   }
 
   public GitLogParser(@NotNull Project project,
@@ -183,13 +183,22 @@ public class GitLogParser<R extends GitLogRecord> {
     return createRecord();
   }
 
-  @NotNull
+  @Nullable
   private R createRecord() {
+    if (myPathsParser.getErrorText() != null) {
+      LOG.debug("Creating record was skipped: " + myPathsParser.getErrorText());
+      myOptionsParser.clear();
+      myRecordBuilder.clear();
+      myPathsParser.clear();
+      return null;
+    }
+
     Map<GitLogOption, String> options = myOptionsParser.getResult();
     myOptionsParser.clear();
 
     R record = myRecordBuilder.build(options, mySupportsRawBody);
     myRecordBuilder.clear();
+    myPathsParser.clear();
     myIsInBody = true;
 
     return record;
@@ -355,11 +364,14 @@ public class GitLogParser<R extends GitLogRecord> {
     }
   }
 
-  private class PathsParser {
+  public static class PathsParser<R extends GitLogRecord> {
     @NotNull private final NameStatus myNameStatusOption;
+    @NotNull private final GitLogRecordBuilder<R> myRecordBuilder;
+    @Nullable private String myErrorText = null;
 
-    PathsParser(@NotNull NameStatus nameStatusOption) {
+    PathsParser(@NotNull NameStatus nameStatusOption, @NotNull GitLogRecordBuilder<R> recordBuilder) {
       myNameStatusOption = nameStatusOption;
+      myRecordBuilder = recordBuilder;
     }
 
     public void parseLine(@NotNull CharSequence line) {
@@ -374,7 +386,7 @@ public class GitLogParser<R extends GitLogRecord> {
         if (myNameStatusOption != NameStatus.STATUS) throwGFE("Status list not expected", line);
 
         if (match.size() < 2) {
-          LOG.error("Could not parse status line [" + line + "] for record " + myOptionsParser.myResult.getResult());
+          myErrorText = getErrorText(line);
         }
         else {
           if (match.size() == 2) {
@@ -387,6 +399,11 @@ public class GitLogParser<R extends GitLogRecord> {
       }
     }
 
+    @NotNull
+    protected String getErrorText(@NotNull CharSequence line) {
+      return "Could not parse status line [" + line + "]";
+    }
+
     private void addPath(@NotNull String type, @NotNull String firstPath, @Nullable String secondPath) {
       myRecordBuilder.addPath(GitChangesParser.getChangeType(GitChangeType.fromString(type)), tryUnescapePath(firstPath),
                               tryUnescapePath(secondPath));
@@ -394,7 +411,7 @@ public class GitLogParser<R extends GitLogRecord> {
 
     @Nullable
     @Contract("!null -> !null")
-    private String tryUnescapePath(@Nullable String path) {
+    private static String tryUnescapePath(@Nullable String path) {
       if (path == null) return null;
       try {
         return GitUtil.unescapePath(path);
@@ -406,7 +423,7 @@ public class GitLogParser<R extends GitLogRecord> {
     }
 
     @NotNull
-    private List<String> parsePathsLine(@NotNull CharSequence line) {
+    private static List<String> parsePathsLine(@NotNull CharSequence line) {
       int offset = 0;
 
       PartialResult result = new PartialResult();
@@ -430,7 +447,7 @@ public class GitLogParser<R extends GitLogRecord> {
       return result.getResult();
     }
 
-    private boolean atLineEnd(@NotNull CharSequence line, int offset) {
+    private static boolean atLineEnd(@NotNull CharSequence line, int offset) {
       while (offset < line.length() && (line.charAt(offset) == '\t')) offset++;
       if (offset == line.length() || (line.charAt(offset) == '\n' || line.charAt(offset) == '\r')) return true;
       return false;
@@ -438,6 +455,27 @@ public class GitLogParser<R extends GitLogRecord> {
 
     public boolean expectsPaths() {
       return myNameStatusOption == NameStatus.STATUS;
+    }
+
+    public void clear() {
+      myErrorText = null;
+    }
+
+    @Nullable
+    public String getErrorText() {
+      return myErrorText;
+    }
+  }
+
+  private class MyPathsParser extends PathsParser<R> {
+    MyPathsParser(@NotNull NameStatus nameStatusOption) {
+      super(nameStatusOption, myRecordBuilder);
+    }
+
+    @NotNull
+    @Override
+    protected String getErrorText(@NotNull CharSequence line) {
+      return super.getErrorText(line) + " for record " + myOptionsParser.myResult.getResult();
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.geb;
 
 import com.intellij.pom.PomDeclarationSearcher;
@@ -41,8 +41,8 @@ public class GebContentDeclarationSearcher extends PomDeclarationSearcher {
     Map<String, PsiMember> contentElements = GebUtil.getContentElements(containingClass);
 
     for (PsiMember contentElement : contentElements.values()) {
-      if (contentElement.getNavigationElement() == element) {
-        consumer.consume(contentElement);
+      if (contentElement.getNavigationElement() == element && contentElement instanceof PomTarget) {
+        consumer.consume((PomTarget)contentElement);
         return;
       }
     }

@@ -5,9 +5,9 @@ import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory.doW
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.ExpectedHighlightingData
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
-class EditorConfigHighlightUsagesTest : LightPlatformCodeInsightFixtureTestCase() {
+class EditorConfigHighlightUsagesTest : BasePlatformTestCase() {
   override fun getTestDataPath() =
     "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testData/org/editorconfig/language/codeinsight/highlightUsages/"
 

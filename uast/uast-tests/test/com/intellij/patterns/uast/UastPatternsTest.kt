@@ -6,12 +6,12 @@ import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.toUElement
 import org.junit.Test
 
-class UastPatternsTest : LightCodeInsightFixtureTestCase() {
+class UastPatternsTest : LightJavaCodeInsightFixtureTestCase() {
 
   @Test
   fun testCallParameters() {

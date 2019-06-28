@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -301,7 +302,7 @@ public class PathEditor {
         tempFile = LocalFileSystem.getInstance().findFileByPath(path);
       }
       if (tempFile != null && !tempFile.isDirectory()) {
-        return Boolean.valueOf(tempFile.getFileType().equals(ArchiveFileType.INSTANCE));
+        return Boolean.valueOf(FileTypeRegistry.getInstance().isFileOfType(tempFile, ArchiveFileType.INSTANCE));
       }
       return Boolean.FALSE;
     }).booleanValue();

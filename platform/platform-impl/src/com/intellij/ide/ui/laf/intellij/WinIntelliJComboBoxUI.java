@@ -1,12 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaJBPopupComboPopup;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.ColoredItem;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.PopupMenuListenerAdapter;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,6 +16,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.plaf.ComponentUI;
+import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.plaf.basic.BasicComboBoxEditor;
 import javax.swing.plaf.basic.ComboPopup;
@@ -175,11 +178,20 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
 
   private Color getComboBackground(boolean opaque) {
     if (comboBox != null) {
-      if (comboBox.isEnabled() && comboBox.isEditable()) {
+      Color bg = comboBox.getBackground();
+      Object value = comboBox.getSelectedItem();
+
+      if (comboBox.isEnabled() && comboBox.isEditable() && editor != null) {
         return UIManager.getColor("TextField.background");
       }
       else if (!comboBox.isEnabled()) {
         return opaque ? UIManager.getColor("Button.background.opaque") : UIManager.getColor("Button.background");
+      }
+      else if (comboBox.isBackgroundSet() && !(bg instanceof UIResource)) {
+        return bg;
+      }
+      else if (value instanceof ColoredItem) {
+        return ((ColoredItem)value).getColor();
       }
       else if (!comboBox.isEditable()) {
         if (isPressed() || popup.isVisible()) {
@@ -254,7 +266,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
           }
 
           Icon icon = getArrowIcon(this);
-          int x = JBUI.scale(5);
+          int x = JBUIScale.scale(5);
           int y = (getHeight() - icon.getIconHeight()) / 2;
           icon.paintIcon(this, g2, x, y);
         }
@@ -328,7 +340,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
           @Override
           public Dimension getPreferredSize() {
             Dimension size = super.getPreferredSize();
-            return new Dimension(size.width, Math.max(JBUI.scale(18), size.height));
+            return new Dimension(size.width, Math.max(JBUIScale.scale(18), size.height));
           }
         };
       }
@@ -596,7 +608,8 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
 
       @Override
       public void show(Component invoker, int x, int y) {
-        int yOffset = JBUI.scale(DarculaUIUtil.isTableCellEditor(comboBox) ? 0 : 1);
+        int i = DarculaUIUtil.isTableCellEditor(comboBox) ? 0 : 1;
+        int yOffset = JBUIScale.scale(i);
         super.show(invoker, x, y - yOffset);
       }
     };

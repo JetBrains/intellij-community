@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.memory.ui;
 
 import com.intellij.icons.AllIcons;
@@ -12,11 +12,11 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.memory.component.InstancesTracker;
 import com.intellij.xdebugger.memory.tracking.TrackerForNewInstancesBase;
 import com.intellij.xdebugger.memory.tracking.TrackingType;
@@ -36,8 +36,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ClassesTable extends JBTable implements DataProvider, Disposable {
@@ -131,11 +131,11 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     TableColumn diffColumn = columnModel.getColumn(DiffViewTableModel.DIFF_COLUMN_INDEX);
 
     setAutoResizeMode(AUTO_RESIZE_SUBSEQUENT_COLUMNS);
-    classesColumn.setPreferredWidth(JBUI.scale(CLASSES_COLUMN_PREFERRED_WIDTH));
+    classesColumn.setPreferredWidth(JBUIScale.scale(CLASSES_COLUMN_PREFERRED_WIDTH));
 
-    countColumn.setMinWidth(JBUI.scale(COUNT_COLUMN_MIN_WIDTH));
+    countColumn.setMinWidth(JBUIScale.scale(COUNT_COLUMN_MIN_WIDTH));
 
-    diffColumn.setMinWidth(JBUI.scale(DIFF_COLUMN_MIN_WIDTH));
+    diffColumn.setMinWidth(JBUIScale.scale(DIFF_COLUMN_MIN_WIDTH));
 
     TableRowSorter<DiffViewTableModel> sorter = new TableRowSorter<>(myModel);
     sorter.setRowFilter(new RowFilter<DiffViewTableModel, Integer>() {

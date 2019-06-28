@@ -112,7 +112,7 @@ public class MavenShortcutsManager implements Disposable {
     return KeymapUtil.getShortcutsText(shortcuts);
   }
 
-  public boolean hasShortcuts(MavenProject project, String goal) {
+  boolean hasShortcuts(MavenProject project, String goal) {
     return getShortcuts(project, goal).length > 0;
   }
 
@@ -134,6 +134,7 @@ public class MavenShortcutsManager implements Disposable {
     myListeners.add(listener);
   }
 
+  @FunctionalInterface
   public interface Listener {
     void shortcutsUpdated();
   }
@@ -146,14 +147,6 @@ public class MavenShortcutsManager implements Disposable {
     @Override
     public void activated() {
       scheduleKeymapUpdate(MavenProjectsManager.getInstance(myProject).getNonIgnoredProjects(), true);
-    }
-
-    @Override
-    public void projectsScheduled() {
-    }
-
-    @Override
-    public void importAndResolveScheduled() {
     }
 
     @Override
@@ -179,7 +172,7 @@ public class MavenShortcutsManager implements Disposable {
       scheduleKeymapUpdate(Collections.singletonList(project), true);
     }
 
-    private void scheduleKeymapUpdate(List<MavenProject> mavenProjects, boolean forUpdate) {
+    private void scheduleKeymapUpdate(List<? extends MavenProject> mavenProjects, boolean forUpdate) {
       synchronized (mySheduledProjects) {
         for (MavenProject each : mavenProjects) {
           mySheduledProjects.put(each, forUpdate);

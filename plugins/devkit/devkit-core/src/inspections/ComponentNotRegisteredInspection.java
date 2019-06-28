@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -13,6 +13,8 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
@@ -32,6 +34,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public class ComponentNotRegisteredInspection extends DevKitJvmInspection {
@@ -114,7 +117,7 @@ public class ComponentNotRegisteredInspection extends DevKitJvmInspection {
     }
 
     if (checkedClass.isInheritor(actionClass, true)) {
-      if (!isActionRegistered(checkedClass) && canFix(checkedClass)) {
+      if (!isActionRegistered(checkedClass, project) && canFix(checkedClass)) {
         LocalQuickFix fix = new RegisterActionFix(org.jetbrains.idea.devkit.util.PsiUtil.createPointer(checkedClass));
         sink.highlight(DevKitBundle.message("inspections.component.not.registered.message",
                                             DevKitBundle.message("new.menu.action.text")), fix);
@@ -148,7 +151,9 @@ public class ComponentNotRegisteredInspection extends DevKitJvmInspection {
     }
   }
 
-  private static boolean checkComponentRegistration(@NotNull PsiClass checkedClass, @NotNull HighlightSink sink, @NotNull ComponentType componentType) {
+  private static boolean checkComponentRegistration(@NotNull PsiClass checkedClass,
+                                                    @NotNull HighlightSink sink,
+                                                    @NotNull ComponentType componentType) {
     if (findRegistrationType(checkedClass, COMPONENT_TYPE_TO_REGISTRATION_TYPE.get(componentType)) != null) {
       return true;
     }
@@ -173,11 +178,13 @@ public class ComponentNotRegisteredInspection extends DevKitJvmInspection {
     return true;
   }
 
-  private static boolean isActionRegistered(@NotNull PsiClass actionClass) {
+  private static boolean isActionRegistered(@NotNull PsiClass actionClass, Project project) {
     final PsiClass registrationType = findRegistrationType(actionClass, RegistrationCheckerUtil.RegistrationType.ACTION);
     if (registrationType != null) {
       return true;
     }
+
+    if (isTooCostlyToSearch(actionClass, project)) return false;
 
     // search code usages: 1) own CTOR calls  2) usage via "new ActionClass()"
     for (PsiMethod method : actionClass.getConstructors()) {
@@ -201,6 +208,17 @@ public class ComponentNotRegisteredInspection extends DevKitJvmInspection {
     }
 
     return false;
+  }
+
+  private static boolean isTooCostlyToSearch(@NotNull PsiClass actionClass, Project project) {
+    final SearchScope useScope = actionClass.getUseScope();
+    if (!(useScope instanceof GlobalSearchScope)) return false;
+
+    final PsiSearchHelper.SearchCostResult searchCost = PsiSearchHelper.getInstance(project)
+      .isCheapEnoughToSearch(Objects.requireNonNull(actionClass.getName()),
+                             (GlobalSearchScope)useScope,
+                             actionClass.getContainingFile(), null);
+    return searchCost == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;
   }
 
   private static boolean canFix(@NotNull PsiClass psiClass) {

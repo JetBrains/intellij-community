@@ -16,14 +16,13 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
-import junit.framework.TestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class BooleanMethodNameMustStartWithQuestionInspectionTest extends LightInspectionTestCase {
+public class BooleanMethodNameMustStartWithQuestionInspectionTest extends LightJavaInspectionTestCase {
 
   public void testBooleanMethodNameMustStartWithQuestion() {
     doTest();

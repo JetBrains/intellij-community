@@ -4,11 +4,11 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class BoundedWildcardInspectionTest extends LightInspectionTestCase {
+public class BoundedWildcardInspectionTest extends LightJavaInspectionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {

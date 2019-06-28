@@ -17,12 +17,12 @@ package com.siyeh.ig.dataflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class NegativelyNamedBooleanVariableInspectionTest extends LightInspectionTestCase {
+public class NegativelyNamedBooleanVariableInspectionTest extends LightJavaInspectionTestCase {
 
   public void testTree() {
     doTest("class X {" +

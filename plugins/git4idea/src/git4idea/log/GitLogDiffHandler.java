@@ -128,7 +128,7 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
   }
 
   @NotNull
-  private static String getTitleForPaths(@NotNull VirtualFile root, @Nullable Collection<FilePath> filePaths) {
+  private static String getTitleForPaths(@NotNull VirtualFile root, @Nullable Collection<? extends FilePath> filePaths) {
     if (filePaths == null) return getContentTitle(VcsUtil.getFilePath(root));
     String joinedPaths = StringUtil.join(filePaths, path -> VcsFileUtil.relativePath(root, path), ", ");
     return StringUtil.shortenTextWithEllipsis(joinedPaths, 100, 0);
@@ -151,7 +151,7 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
 
   @NotNull
   private Collection<Change> getDiff(@NotNull VirtualFile root,
-                                     @NotNull Collection<FilePath> filePaths,
+                                     @NotNull Collection<? extends FilePath> filePaths,
                                      @NotNull Hash leftRevision,
                                      @Nullable Hash rightRevision) throws VcsException {
     if (rightRevision == null) {
@@ -160,8 +160,8 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
     return GitChangeUtils.getDiff(myProject, root, leftRevision.asString(), rightRevision.asString(), filePaths);
   }
 
-  private <T> void loadDiffAndShow(@NotNull ThrowableComputable<T, VcsException> load,
-                                   @NotNull Consumer<T> show,
+  private <T> void loadDiffAndShow(@NotNull ThrowableComputable<? extends T, VcsException> load,
+                                   @NotNull Consumer<? super T> show,
                                    @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       ProgressManager.getInstance().run(new Task.Backgroundable(myProject, title + "...", false) {

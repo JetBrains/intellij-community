@@ -53,6 +53,9 @@ internal class ImagePaths(val id: String,
   val used: Boolean get() = flags.used
   val deprecated: Boolean get() = flags.deprecation != null
   val deprecation: DeprecationData? get() = flags.deprecation
+  val scheduledForRemoval by lazy {
+    flags.deprecation?.comment?.contains("to be removed") == true
+  }
 }
 
 class ImageFlags(val skipped: Boolean,

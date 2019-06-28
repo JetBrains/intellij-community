@@ -8,6 +8,7 @@ import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
@@ -87,7 +88,7 @@ public class PythonPathEditor extends SdkPathEditor {
   @Override
   protected VirtualFile[] adjustAddedFileSet(Component component, VirtualFile[] files) {
     for (int i = 0, filesLength = files.length; i < filesLength; i++) {
-      if (!files[i].isDirectory() && files[i].getFileType() == ArchiveFileType.INSTANCE) {
+      if (!files[i].isDirectory() && FileTypeRegistry.getInstance().isFileOfType(files[i], ArchiveFileType.INSTANCE)) {
         files[i] = JarFileSystem.getInstance().getJarRootForLocalFile(files[i]);
       }
     }

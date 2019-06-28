@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.breadcrumbs;
 
 import com.intellij.openapi.Disposable;
@@ -16,7 +16,9 @@ import org.jetbrains.annotations.Nullable;
  * Allows to replace the mechanism of gathering breadcrumbs for a file.
  */
 public abstract class FileBreadcrumbsCollector {
-  public static final ExtensionPointName<FileBreadcrumbsCollector> EP_NAME = ExtensionPointName.create("com.intellij.fileBreadcrumbsCollector");
+  
+  public static final ExtensionPointName<FileBreadcrumbsCollector> EP_NAME =
+    ExtensionPointName.create("com.intellij.fileBreadcrumbsCollector");
 
   /**
    * Checks if this collector handles the given file.
@@ -32,9 +34,10 @@ public abstract class FileBreadcrumbsCollector {
 
   /**
    * Adds event listeners required to redraw the breadcrumbs when the contents of the file changes.
-   * @param file the file to watch
-   * @param editor
-   * @param disposable the disposable used to detach listeners when the file is closed.
+   *
+   * @param file           the file to watch
+   * @param editor         current editor
+   * @param disposable     the disposable used to detach listeners when the file is closed.
    * @param changesHandler the callback to be called when any changes are detected.
    */
   public abstract void watchForChanges(@NotNull VirtualFile file,

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.openapi.application.PathManager;
@@ -19,14 +19,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.RunAll;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.lang.JavaVersion;
 import org.gradle.StartParameter;
 import org.gradle.util.GradleVersion;
 import org.gradle.wrapper.GradleWrapperMain;
 import org.gradle.wrapper.PathAssembler;
 import org.gradle.wrapper.WrapperConfiguration;
+import org.hamcrest.CustomMatcher;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -51,8 +53,7 @@ import java.util.*;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
-import static org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest.DistributionLocator;
-import static org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest.SUPPORTED_GRADLE_VERSIONS;
+import static org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest.*;
 import static org.junit.Assume.assumeThat;
 
 @RunWith(value = Parameterized.class)
@@ -73,6 +74,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   @Override
   public void setUp() throws Exception {
     assumeThat(gradleVersion, versionMatcherRule.getMatcher());
+    assumeGradleCompatibleWithJava(gradleVersion);
     myJdkHome = IdeaTestUtil.requireRealJdkHome();
     super.setUp();
     WriteAction.runAndWait(() -> {
@@ -94,7 +96,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     List<String> allowedRoots = new ArrayList<>();
     collectAllowedRoots(allowedRoots, distribution);
     if (!allowedRoots.isEmpty()) {
-      VfsRootAccess.allowRootAccess(myTestFixture.getTestRootDisposable(), ArrayUtil.toStringArray(allowedRoots));
+      VfsRootAccess.allowRootAccess(myTestFixture.getTestRootDisposable(), ArrayUtilRt.toStringArray(allowedRoots));
     }
   }
 

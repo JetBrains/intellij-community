@@ -49,7 +49,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
         final MethodSignature signature = interfaceMethod != null ? interfaceMethod.getSignature(functionalInterfaceSubstitutor) : null;
         final PsiType interfaceMethodReturnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
         if (isConstructor && containingClass.getConstructors().length == 0) {
-          if (interfaceMethod != null) {
+          if (interfaceMethodReturnType != null) {
             final PsiClassType returnType = composeReturnType(containingClass, substitutor);
             final InferenceSession session = new InferenceSession(containingClass.getTypeParameters(), substitutor, reference.getManager(), null);
             if (!(session.isProperType(session.substituteWithInferenceVariables(returnType)) && session.isProperType(interfaceMethodReturnType))) {
@@ -117,8 +117,11 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
                   }
 
                   if (includeReturnConstraint && !PsiType.VOID.equals(interfaceMethodReturnType) && interfaceMethodReturnType != null) {
-                    PsiSubstitutor subst = PsiMethodReferenceCompatibilityConstraint.getSubstitutor(signature, qualifierResolveResult, method, containingClass, reference);
-                    final PsiType returnType = method.isConstructor() ? composeReturnType(containingClass, subst) : subst.substitute(method.getReturnType());
+                    final PsiType returnType = method.isConstructor()
+                                               ? composeReturnType(containingClass, substitutor)
+                                               : PsiMethodReferenceCompatibilityConstraint
+                                                 .getSubstitutor(signature, qualifierResolveResult, method, containingClass, reference)
+                                                 .substitute(method.getReturnType());
                     if (returnType != null) {
                       session.registerReturnTypeConstraints(returnType, interfaceMethodReturnType, reference);
                     }

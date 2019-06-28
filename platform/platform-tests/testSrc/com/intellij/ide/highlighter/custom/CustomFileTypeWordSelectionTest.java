@@ -2,12 +2,12 @@
 package com.intellij.ide.highlighter.custom;
 
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 /**
  * @author yole
  */
-public class CustomFileTypeWordSelectionTest extends LightPlatformCodeInsightFixtureTestCase {
+public class CustomFileTypeWordSelectionTest extends BasePlatformTestCase {
 
   public void testCustomFileTypeBraces() {
     doTest();

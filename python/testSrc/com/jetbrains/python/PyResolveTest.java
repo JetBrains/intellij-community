@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.UsefulTestCase;
@@ -15,6 +16,9 @@ import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiUtil;
+import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NotNull;
 
 public class PyResolveTest extends PyResolveTestCase {
   @Override
@@ -38,6 +42,22 @@ public class PyResolveTest extends PyResolveTestCase {
     PsiReference ref = findReferenceByMarker();
     assertTrue(ref instanceof PsiPolyVariantReference);
     return ((PsiPolyVariantReference)ref).multiResolve(false);
+  }
+
+  private <T extends PsiNamedElement> T assertResolvesTo(@Language("TEXT") @NotNull String text,
+                                                         @NotNull Class<T> cls,
+                                                         @NotNull String name) {
+    final Ref<T> result = new Ref<>();
+
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        myFixture.configureByText(PythonFileType.INSTANCE, text);
+        result.set(assertResolveResult(PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve(), cls, name));
+      }
+    );
+
+    return result.get();
   }
 
   public void testClass() {
@@ -734,9 +754,13 @@ public class PyResolveTest extends PyResolveTestCase {
     assertEquals("2", target.getText());
   }
 
-
   public void testGlobalNotDefinedAtTopLevel() {
     assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  public void testGlobalReassignmentNotDefinedAtTopLevel() {
+    final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "xx");
+    assertInstanceOf(target.getParent(), PyGlobalStatement.class);
   }
 
   // PY-13734
@@ -1338,5 +1362,97 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testDunderBuiltins() {
     final PsiElement element = doResolve();
     assertEquals(PyBuiltinCache.getInstance(myFixture.getFile()).getBuiltinsFile(), element);
+  }
+
+  // PY-35531
+  public void testOverloadedDunderInit() {
+    final PyFile file = (PyFile)myFixture.configureByFile("resolve/" + getTestName(false) + ".py");
+    final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), file);
+
+    final PyFunction function = file.findTopLevelClass("A").findInitOrNew(false, context);
+    assertNotNull(function);
+    assertFalse(PyiUtil.isOverload(function, context));
+  }
+
+  // PY-33886
+  public void testAssignmentExpressions() {
+    assertResolvesTo(
+      "if a := b:\n" +
+      "    print(a)\n" +
+      "          <ref>",
+      PyTargetExpression.class,
+      "a"
+    );
+
+    assertResolvesTo(
+      "[y := 2, y**2]\n" +
+      "         <ref>",
+      PyTargetExpression.class,
+      "y"
+    );
+
+    assertResolvesTo(
+      "[y for x in data if (y := f(x))]\n" +
+      " <ref>",
+      PyTargetExpression.class,
+      "y"
+    );
+
+    assertResolvesTo(
+      "len(lines := [])\n" +
+      "print(lines)\n" +
+      "       <ref>",
+      PyTargetExpression.class,
+      "lines"
+    );
+  }
+
+  // PY-33886
+  public void testAssignmentExpressionGoesToOuterScope() {
+    assertResolvesTo(
+      "if any({(comment := line).startswith('#') for line in lines}):\n" +
+      "    print(\"First comment:\", comment)\n" +
+      "                             <ref>",
+      PyTargetExpression.class,
+      "comment"
+    );
+
+    assertResolvesTo(
+      "if all((nonblank := line).strip() == '' for line in lines):\n" +
+      "    pass\n" +
+      "else:\n" +
+      "    print(\"First non-blank line:\", nonblank)\n" +
+      "                                     <ref>",
+      PyTargetExpression.class,
+      "nonblank"
+    );
+  }
+
+  // PY-33886
+  public void testAssignmentExpressionGoesFromOuterScope() {
+    assertResolvesTo(
+      "[[x * y for x in range(5)] for i in range(5) if (y := i)]\n" +
+      "      <ref>",
+      PyTargetExpression.class,
+      "y"
+    );
+  }
+
+  // PY-33886
+  public void testAssignmentExpressionsAndOuterVar() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON38,
+      () -> {
+        final ResolveResult[] results = multiResolve();
+
+        final PsiElement first = results[0].getElement();
+        assertResolveResult(first, PyTargetExpression.class, "total");
+        assertInstanceOf(first.getParent(), PyAssignmentStatement.class);
+
+        final PsiElement second = results[1].getElement();
+        assertResolveResult(second, PyTargetExpression.class, "total");
+        assertInstanceOf(second.getParent(), PyAssignmentExpression.class);
+      }
+    );
   }
 }

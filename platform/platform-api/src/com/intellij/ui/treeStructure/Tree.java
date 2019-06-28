@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.util.treeView.*;
@@ -16,6 +16,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -119,16 +120,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   public boolean isEmpty() {
-    TreeModel model = getModel();
-    if (model == null) return true;
-    if (model.getRoot() == null) return true;
-    if (!isRootVisible()) {
-      int childCount = model.getChildCount(model.getRoot());
-      if (childCount == 0) {
-        return true;
-      }
-    }
-    return false;
+    return 0 >= getRowCount();
   }
 
   protected boolean isCustomUI() {
@@ -273,7 +265,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   private void updateBusy() {
     if (myBusy) {
       if (myBusyIcon == null) {
-        myBusyIcon = new AsyncProcessIcon(toString()).setUseMask(false);
+        myBusyIcon = new AsyncProcessIcon(toString());
         myBusyIcon.setOpaque(false);
         myBusyIcon.setPaintPassiveIcon(false);
         add(myBusyIcon);
@@ -410,7 +402,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
    * in the area of row that is used to expand/collapse the node and
    * the node at {@code row} does not represent a leaf.
    */
-  @Deprecated
+  @ApiStatus.Experimental
   protected boolean isLocationInExpandControl(@Nullable TreePath path, int mouseX) {
     if (path == null) return false;
     Rectangle bounds = getRowBounds(getRowForPath(path));
@@ -755,6 +747,9 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
   }
 
+  /**
+   * @deprecated no effect
+   */
   @Deprecated
   public final void setLineStyleAngled() {
   }

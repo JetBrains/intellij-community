@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup;
 
 import com.intellij.CommonBundle;
@@ -9,8 +9,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretModel;
@@ -129,9 +129,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                       String noText,
                                       final Runnable onYes,
                                       final Runnable onNo,
-                                      int defaultOptionIndex)
-  {
-
+                                      int defaultOptionIndex) {
     final BaseListPopupStep<String> step = new BaseListPopupStep<String>(title, yesText, noText) {
       @Override
       public PopupStep onChosen(String selectedValue, final boolean finalChoice) {
@@ -150,7 +148,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     };
     step.setDefaultOptionIndex(defaultOptionIndex);
 
-    final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+    final Application app = ApplicationManager.getApplication();
     return app == null || !app.isUnitTestMode() ? new ListPopupImpl(step) : new MockConfirmation(step, yesText);
   }
 

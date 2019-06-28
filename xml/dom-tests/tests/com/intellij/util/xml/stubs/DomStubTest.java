@@ -25,7 +25,7 @@ import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileDescription;
 import com.intellij.util.xml.DomFileElement;
@@ -36,7 +36,7 @@ import com.intellij.util.xml.stubs.model.Foo;
 /**
  * @author Dmitry Avdeev
  */
-public abstract class DomStubTest extends LightCodeInsightFixtureTestCase {
+public abstract class DomStubTest extends LightJavaCodeInsightFixtureTestCase {
 
   private static final String HTTP_FOO_DTD = "http://foo.dtd";
   private static final DomFileDescription<Foo> DOM_FILE_DESCRIPTION = new DomFileDescription<Foo>(Foo.class, "foo", HTTP_FOO_DTD) {

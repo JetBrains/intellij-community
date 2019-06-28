@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.RequiredElement;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -18,9 +19,11 @@ public final class UIThemeProvider implements PluginAware {
   private PluginDescriptor myDescriptor;
 
   @Attribute("path")
+  @RequiredElement
   public String path;
 
   @Attribute("id")
+  @RequiredElement
   public String id;
 
   @Nullable
@@ -29,7 +32,7 @@ public final class UIThemeProvider implements PluginAware {
       ClassLoader loader = myDescriptor != null ? myDescriptor.getPluginClassLoader() : getClass().getClassLoader();
       return UITheme.loadFromJson(loader.getResourceAsStream(path), id, loader);
     }
-    catch (IOException e) {
+    catch (Exception e) {
       Logger.getInstance(getClass()).warn("error loading UITheme '" + path + "', " +
                                           "pluginId=" + (myDescriptor != null ? myDescriptor.getPluginId().getIdString() : "(none)"), e);
       return null;

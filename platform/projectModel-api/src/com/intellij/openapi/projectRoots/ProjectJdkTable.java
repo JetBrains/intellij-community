@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -39,6 +40,7 @@ public abstract class ProjectJdkTable {
 
   /** @deprecated comparing version strings across SDK types makes no sense; use {@link #findMostRecentSdkOfType} (to be removed in IDEA 2019) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   public Sdk findMostRecentSdk(@NotNull Condition<? super Sdk> condition) {
     Sdk found = null;
     for (Sdk each : getAllJdks()) {
@@ -73,18 +75,6 @@ public abstract class ProjectJdkTable {
     @Override public void jdkRemoved(@NotNull Sdk jdk) { }
     @Override public void jdkNameChanged(@NotNull Sdk jdk, @NotNull String previousName) { }
   }
-
-  /**
-   * @deprecated use {@link ProjectJdkTable#JDK_TABLE_TOPIC} instead
-   */
-  @Deprecated
-  public abstract void addListener(@NotNull Listener listener);
-
-  /**
-   * @deprecated use {@link ProjectJdkTable#JDK_TABLE_TOPIC} instead
-   */
-  @Deprecated
-  public abstract void removeListener(@NotNull Listener listener);
 
   @NotNull
   public abstract SdkTypeId getDefaultSdkType();

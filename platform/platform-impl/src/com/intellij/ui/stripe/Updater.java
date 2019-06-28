@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.stripe;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
@@ -6,8 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.JBScrollBar;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.RegionPainter;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -49,18 +48,15 @@ public abstract class Updater<Painter extends ErrorStripePainter> implements Dis
     myScrollBar.addMouseListener(myMouseAdapter);
     myScrollBar.addMouseMotionListener(myMouseAdapter);
     myQueue = new MergingUpdateQueue("ErrorStripeUpdater", 100, true, myScrollBar, this);
-    UIUtil.putClientProperty(myScrollBar, JBScrollBar.TRACK, new RegionPainter<Object>() {
-      @Override
-      public void paint(Graphics2D g, int x, int y, int width, int height, Object object) {
-        DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
-        myPainter.setMinimalThickness(settings == null ? 2 : Math.min(settings.getErrorStripeMarkMinHeight(), JBUI.scale(4)));
-        myPainter.setErrorStripeGap(Registry.intValue("error.stripe.gap", 0));
-        if (myPainter instanceof ExtraErrorStripePainter) {
-          ExtraErrorStripePainter extra = (ExtraErrorStripePainter)myPainter;
-          extra.setGroupSwap(!myScrollBar.getComponentOrientation().isLeftToRight());
-        }
-        myPainter.paint(g, x, y, width, height, object);
+    UIUtil.putClientProperty(myScrollBar, JBScrollBar.TRACK, (g, x, y, width, height, object) -> {
+      DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
+      myPainter.setMinimalThickness(settings == null ? 2 : Math.min(settings.getErrorStripeMarkMinHeight(), JBUIScale.scale(4)));
+      myPainter.setErrorStripeGap(Registry.intValue("error.stripe.gap", 0));
+      if (myPainter instanceof ExtraErrorStripePainter) {
+        ExtraErrorStripePainter extra = (ExtraErrorStripePainter)myPainter;
+        extra.setGroupSwap(!myScrollBar.getComponentOrientation().isLeftToRight());
       }
+      myPainter.paint(g, x, y, width, height, object);
     });
   }
 
@@ -169,7 +165,7 @@ public abstract class Updater<Painter extends ErrorStripePainter> implements Dis
   }
 
   private static final class SearchResult {
-    int layer = 0;
+    int layer;
     int index = -1;
 
     void updateForward(ErrorStripePainter painter, int index, int max) {

@@ -3,11 +3,11 @@ package org.editorconfig.language.codeinsight
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.editorconfig.language.codeinsight.inspections.*
 import kotlin.reflect.KClass
 
-class EditorConfigInspectionsTest : LightPlatformCodeInsightFixtureTestCase() {
+class EditorConfigInspectionsTest : BasePlatformTestCase() {
   override fun getTestDataPath() =
     "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testData/org/editorconfig/language/codeinsight/inspections"
 

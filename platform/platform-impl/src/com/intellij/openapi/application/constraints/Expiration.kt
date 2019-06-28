@@ -2,7 +2,7 @@
 package com.intellij.openapi.application.constraints
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.WeaklyReferencedDisposable
+import com.intellij.openapi.WeakReferenceDisposableWrapper
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.IncorrectOperationException
 import kotlinx.coroutines.*
@@ -142,7 +142,7 @@ internal fun Disposable.cancelJobOnDisposal(job: Job,
   }
   val childRef =
     if (!weaklyReferencedJob) child
-    else WeaklyReferencedDisposable(child)
+    else WeakReferenceDisposableWrapper(child)
 
   if (!tryRegisterDisposable(this, childRef)) {
     Disposer.dispose(childRef)  // runs disposableBlock()

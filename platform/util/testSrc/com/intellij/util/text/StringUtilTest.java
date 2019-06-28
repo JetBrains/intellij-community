@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.LineColumn;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.LineSeparator;
+import com.intellij.util.TripleFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jdom.Verifier;
@@ -199,16 +200,16 @@ public class StringUtilTest {
   @Test
   public void testNaturalCompare() {
 
-    final List<String> numbers = Arrays.asList("1a000001", "000001a1", "001a0001", "0001A001" , "00001a01", "01a00001");
+    final List<String> numbers = Arrays.asList("1a000001", "000001a1", "001a0001", "0001A001", "00001a01", "01a00001");
     numbers.sort(NaturalComparator.INSTANCE);
-    assertEquals(Arrays.asList("1a000001", "01a00001", "001a0001", "0001A001" , "00001a01", "000001a1"), numbers);
+    assertEquals(Arrays.asList("1a000001", "01a00001", "001a0001", "0001A001", "00001a01", "000001a1"), numbers);
 
     final List<String> test = Arrays.asList("test011", "test10", "test10a", "test010");
     test.sort(NaturalComparator.INSTANCE);
     assertEquals(Arrays.asList("test10", "test10a", "test010", "test011"), test);
 
     final List<String> strings = Arrays.asList("Test99", "tes0", "test0", "testing", "test", "test99", "test011", "test1",
-                    "test 3", "test2", "test10a", "test10", "1.2.10.5", "1.2.9.1");
+                                               "test 3", "test2", "test10a", "test10", "1.2.10.5", "1.2.9.1");
     strings.sort(NaturalComparator.INSTANCE);
     assertEquals(Arrays.asList("1.2.9.1", "1.2.10.5", "tes0", "test", "test0", "test1", "test2", "test 3", "test10", "test10a",
                                "test011", "Test99", "test99", "testing"), strings);
@@ -216,13 +217,14 @@ public class StringUtilTest {
     final List<String> strings2 = Arrays.asList("t1", "t001", "T2", "T002", "T1", "t2");
     strings2.sort(NaturalComparator.INSTANCE);
     assertEquals(Arrays.asList("T1", "t1", "t001", "T2", "t2", "T002"), strings2);
-    assertEquals(1 ,StringUtil.naturalCompare("7403515080361171695", "07403515080361171694"));
+    assertEquals(1, StringUtil.naturalCompare("7403515080361171695", "07403515080361171694"));
     assertEquals(-14, StringUtil.naturalCompare("_firstField", "myField1"));
     //idea-80853
     final List<String> strings3 =
       Arrays.asList("C148A_InsomniaCure", "C148B_Escape", "C148C_TersePrincess", "C148D_BagOfMice", "C148E_Porcelain");
     strings3.sort(NaturalComparator.INSTANCE);
-    assertEquals(Arrays.asList("C148A_InsomniaCure", "C148B_Escape", "C148C_TersePrincess", "C148D_BagOfMice", "C148E_Porcelain"), strings3);
+    assertEquals(Arrays.asList("C148A_InsomniaCure", "C148B_Escape", "C148C_TersePrincess", "C148D_BagOfMice", "C148E_Porcelain"),
+                 strings3);
 
     final List<String> l = Arrays.asList("a0002", "a0 2", "a001");
     l.sort(NaturalComparator.INSTANCE);
@@ -259,6 +261,11 @@ public class StringUtilTest {
     assertEquals("couldn't connect to debugger", StringUtil.wordsToBeginFromLowerCase("Couldn't Connect to Debugger"));
     assertEquals("let's make abbreviations like I18n, SQL and CSS s SQ sq",
                  StringUtil.wordsToBeginFromLowerCase("Let's Make Abbreviations Like I18n, SQL and CSS S SQ Sq"));
+  }
+
+  @Test
+  public void testCapitalizeWords() {
+    assertEquals("AspectJ (Syntax Highlighting Only)", StringUtil.capitalizeWords("AspectJ (syntax highlighting only)", true));
   }
 
   @Test
@@ -374,7 +381,8 @@ public class StringUtilTest {
   @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
   public void testReplaceReturnReplacementIfTextEqualsToReplacedText() {
     String str = "/tmp";
-    assertSame(str, StringUtil.replace("$PROJECT_FILE$", "$PROJECT_FILE$".toLowerCase().toUpperCase() /* ensure new String instance */, str));
+    assertSame(str,
+               StringUtil.replace("$PROJECT_FILE$", "$PROJECT_FILE$".toLowerCase().toUpperCase() /* ensure new String instance */, str));
   }
 
   @Test
@@ -451,6 +459,36 @@ public class StringUtilTest {
     assertFalse(StringUtil.contains("1", "12"));
     assertTrue(StringUtil.contains("12", "1"));
     assertTrue(StringUtil.contains("12", "2"));
+  }
+
+  @Test
+  public void testCompareCharSequence() {
+    TripleFunction<CharSequence, CharSequence, Boolean, Boolean> assertPrecedence =
+      (lesser, greater, ignoreCase) -> {
+        assertTrue(StringUtil.compare(lesser, greater, ignoreCase) < 0);
+        assertTrue(StringUtil.compare(greater, lesser, ignoreCase) > 0);
+        return true;
+      };
+    TripleFunction<CharSequence, CharSequence, Boolean, Boolean> assertEquality =
+      (lesser, greater, ignoreCase) -> {
+        assertEquals(0, StringUtil.compare(lesser, greater, ignoreCase));
+        assertEquals(0, StringUtil.compare(greater, lesser, ignoreCase));
+        return true;
+      };
+
+    assertPrecedence.fun("A","b", true);
+    assertPrecedence.fun("a","aa", true);
+    assertPrecedence.fun("abb","abC", true);
+
+    assertPrecedence.fun("A","a", false);
+    assertPrecedence.fun("Aa","a", false);
+    assertPrecedence.fun("a","aa", false);
+    assertPrecedence.fun("-","A", false);
+
+    assertEquality.fun("a","A",true);
+    assertEquality.fun("aa12b","Aa12B",true);
+
+    assertEquality.fun("aa12b","aa12b",false);
   }
 
   @Test
@@ -549,7 +587,7 @@ public class StringUtilTest {
     assertEquals("2 m 3 s", StringUtil.formatDurationApproximate(123456));
     assertEquals("1 h 1 m", StringUtil.formatDurationApproximate(3659009));
     assertEquals("2 h", StringUtil.formatDurationApproximate(7199000));
-    assertEquals("1 d", StringUtil.formatDurationApproximate((23*60*60 + 59*60 + 59) * 1000L));
+    assertEquals("1 d", StringUtil.formatDurationApproximate((23 * 60 * 60 + 59 * 60 + 59) * 1000L));
     assertEquals("1 yr 1 mo", StringUtil.formatDurationApproximate(33786061001L));
   }
 
@@ -558,7 +596,8 @@ public class StringUtilTest {
     assertEquals("<![CDATA[abc]]>", XmlStringUtil.wrapInCDATA("abc"));
     assertEquals("<![CDATA[abc]]]><![CDATA[]>]]>", XmlStringUtil.wrapInCDATA("abc]]>"));
     assertEquals("<![CDATA[abc]]]><![CDATA[]>def]]>", XmlStringUtil.wrapInCDATA("abc]]>def"));
-    assertEquals("<![CDATA[123<![CDATA[wow<&>]]]><![CDATA[]>]]]><![CDATA[]><![CDATA[123]]>", XmlStringUtil.wrapInCDATA("123<![CDATA[wow<&>]]>]]><![CDATA[123"));
+    assertEquals("<![CDATA[123<![CDATA[wow<&>]]]><![CDATA[]>]]]><![CDATA[]><![CDATA[123]]>",
+                 XmlStringUtil.wrapInCDATA("123<![CDATA[wow<&>]]>]]><![CDATA[123"));
   }
 
   @Test
@@ -571,7 +610,7 @@ public class StringUtilTest {
 
   @Test
   public void testIndexOf_1() {
-    char[] chars = new char[]{'a','b','c','d','a','b','c','d','A','B','C','D'};
+    char[] chars = new char[]{'a', 'b', 'c', 'd', 'a', 'b', 'c', 'd', 'A', 'B', 'C', 'D'};
     assertEquals(2, StringUtil.indexOf(chars, 'c', 0, 12, false));
     assertEquals(2, StringUtil.indexOf(chars, 'C', 0, 12, false));
     assertEquals(10, StringUtil.indexOf(chars, 'C', 0, 12, true));
@@ -776,10 +815,12 @@ public class StringUtilTest {
     CharSequence s = ByteArrayCharSequence.convertToBytesIfPossible("test");
     assertTrue(s instanceof ByteArrayCharSequence || SystemInfo.IS_AT_LEAST_JAVA9 && s.getClass() == String.class);
     CharSequence first = StringUtil.first(s, 1, false);
-    assertTrue(String.valueOf(first.getClass()), first instanceof CharSequenceSubSequence);
+    assertTrue(String.valueOf(first.getClass()),
+               first instanceof CharSequenceSubSequence || SystemInfo.IS_AT_LEAST_JAVA9 && s.getClass() == String.class);
     assertEquals("t", first.toString());
     CharSequence last = StringUtil.last(s, 1, false);
-    assertTrue(String.valueOf(last.getClass()), last instanceof CharSequenceSubSequence);
+    assertTrue(String.valueOf(last.getClass()),
+               last instanceof CharSequenceSubSequence || SystemInfo.IS_AT_LEAST_JAVA9 && s.getClass() == String.class);
     assertEquals("t", last.toString());
   }
 

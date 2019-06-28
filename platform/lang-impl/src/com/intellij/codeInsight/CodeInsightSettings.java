@@ -15,7 +15,7 @@ import com.intellij.openapi.util.DifferenceFilter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.serialization.SerializationException;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Property;
@@ -74,8 +74,6 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean SHOW_INFERRED_ANNOTATIONS_INLINE;
 
 
-  public boolean SHOW_METHOD_CHAIN_TYPES_INLINE = true;
-
   public boolean SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION;
   public boolean AUTO_POPUP_PARAMETER_INFO = true;
   public int PARAMETER_INFO_DELAY = 1000;
@@ -92,6 +90,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   /**
    * @deprecated use accessors instead
    */
+  @Deprecated
   public boolean SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS;
 
   public boolean isSelectAutopopupSuggestionsByChars() {
@@ -111,6 +110,9 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean AUTOCOMPLETE_ON_CODE_COMPLETION = true;
   public boolean AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION = true;
 
+  /**
+   * @deprecated unused
+   */
   @Deprecated
   public boolean AUTOCOMPLETE_COMMON_PREFIX = true;
 
@@ -154,7 +156,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean INDENT_TO_CARET_ON_PASTE;
 
   @MagicConstant(intValues = {YES, NO, ASK})
-  public int ADD_IMPORTS_ON_PASTE = ASK;
+  public int ADD_IMPORTS_ON_PASTE = YES;
   public static final int YES = 1;
   public static final int NO = 2;
   public static final int ASK = 3;
@@ -186,7 +188,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   @Property(surroundWithTag = false)
   @XCollection(elementName = "EXCLUDED_PACKAGE", valueAttributeName = "NAME")
   @NotNull
-  public String[] EXCLUDED_PACKAGES = ArrayUtil.EMPTY_STRING_ARRAY;
+  public String[] EXCLUDED_PACKAGES = ArrayUtilRt.EMPTY_STRING_ARRAY;
 
   @Override
   public void loadState(@NotNull Element state) {
@@ -215,7 +217,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
       LOG.info(e);
     }
 
-    EXCLUDED_PACKAGES = ArrayUtil.EMPTY_STRING_ARRAY;
+    EXCLUDED_PACKAGES = ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
   @Override

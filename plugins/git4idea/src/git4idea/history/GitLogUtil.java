@@ -254,7 +254,7 @@ public class GitLogUtil {
   static void sendHashesToStdin(@NotNull GitVcs vcs, @NotNull Collection<String> hashes, @NotNull GitHandler handler) {
     // if we close this stream, RunnerMediator won't be able to send ctrl+c to the process in order to softly kill it
     // see RunnerMediator.sendCtrlEventThroughStream
-    String separator = GitVersionSpecialty.LF_SEPARATORS_IN_STDIN.existsIn(vcs.getVersion()) ? "\n" : System.lineSeparator();
+    String separator = GitVersionSpecialty.LF_SEPARATORS_IN_STDIN.existsIn(vcs) ? "\n" : System.lineSeparator();
     handler.setInputProcessor(GitHandlerInputProcessorUtil.writeLines(hashes,
                                                                       separator,
                                                                       handler.getCharset(),
@@ -263,7 +263,7 @@ public class GitLogUtil {
 
   @NotNull
   static String getNoWalkParameter(@NotNull GitVcs vcs) {
-    return GitVersionSpecialty.NO_WALK_UNSORTED.existsIn(vcs.getVersion()) ? "--no-walk=unsorted" : "--no-walk";
+    return GitVersionSpecialty.NO_WALK_UNSORTED.existsIn(vcs) ? "--no-walk=unsorted" : "--no-walk";
   }
 
   @NotNull

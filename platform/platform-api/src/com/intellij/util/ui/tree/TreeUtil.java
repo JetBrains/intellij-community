@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.tree;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
@@ -13,6 +13,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
@@ -21,8 +22,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.containers.TreeTraversal;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,8 +40,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.lang.reflect.Method;
-import java.util.*;
 import java.util.List;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -291,10 +293,16 @@ public final class TreeUtil {
     return result;
   }
 
+  /**
+   * Tries to select the first node in the specified tree as soon as possible.
+   *
+   * @param tree a tree, which node should be selected
+   * @return a callback that will be done when first visible node is selected
+   * @see #promiseSelectFirst
+   */
   @NotNull
   public static ActionCallback selectFirstNode(@NotNull JTree tree) {
-    TreePath selectionPath = getFirstNodePath(tree);
-    return selectPath(tree, selectionPath);
+    return Promises.toActionCallback(promiseSelectFirst(tree));
   }
 
   @NotNull
@@ -308,6 +316,10 @@ public final class TreeUtil {
     return selectionPath;
   }
 
+  /**
+   * @deprecated use {@link #promiseSelectFirstLeaf}
+   */
+  @Deprecated
   @NotNull
   public static TreePath getFirstLeafNodePath(@NotNull JTree tree) {
     final TreeModel model = tree.getModel();
@@ -1079,7 +1091,7 @@ public final class TreeUtil {
     static final Method METHOD = getDeclaredMethod(BasicTreeUI.class, "getRowX", int.class, int.class);
   }
 
-  @Deprecated
+  @ApiStatus.Experimental
   public static int getNodeRowX(@NotNull JTree tree, int row) {
     if (LazyRowX.METHOD == null) return -1; // system error
     TreePath path = tree.getPathForRow(row);
@@ -1099,14 +1111,13 @@ public final class TreeUtil {
     static final Method METHOD = getDeclaredMethod(BasicTreeUI.class, "isLocationInExpandControl", TreePath.class, int.class, int.class);
   }
 
-  @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
+  @ApiStatus.Experimental
   public static boolean isLocationInExpandControl(@NotNull JTree tree, int x, int y) {
     if (LazyLocationInExpandControl.METHOD == null) return false; // system error
     return isLocationInExpandControl(tree, tree.getClosestPathForLocation(x, y), x, y);
   }
 
-  @Deprecated
+  @ApiStatus.Experimental
   public static boolean isLocationInExpandControl(@NotNull JTree tree, @Nullable TreePath path, int x, int y) {
     if (LazyLocationInExpandControl.METHOD == null || path == null) return false; // system error or undefined path
     try {
@@ -1118,12 +1129,11 @@ public final class TreeUtil {
     }
   }
 
-  @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
+  @ApiStatus.Experimental
   public static void invalidateCacheAndRepaint(@Nullable TreeUI ui) {
     if (ui instanceof BasicTreeUI) {
       BasicTreeUI basic = (BasicTreeUI)ui;
-      basic.setLeftChildIndent(basic.getLeftChildIndent());
+      UIUtil.invokeLaterIfNeeded(() -> basic.setLeftChildIndent(basic.getLeftChildIndent()));
     }
   }
 
@@ -1366,6 +1376,7 @@ public final class TreeUtil {
    * @return a promise that will be succeed only if path are found and made visible
    */
   @NotNull
+  @SuppressWarnings("unused")
   public static Promise<List<TreePath>> promiseMakeVisible(@NotNull JTree tree, @NotNull Stream<? extends TreeVisitor> visitors) {
     return promiseMakeVisibleAll(tree, visitors, null);
   }
@@ -1506,7 +1517,7 @@ public final class TreeUtil {
       }
       else {
         bounds.width = Math.min(bounds.width, width / 2);
-        bounds.x -= JBUI.scale(20); // TODO: calculate a control width
+        bounds.x -= JBUIScale.scale(20); // TODO: calculate a control width
         if (bounds.x < 0) {
           bounds.width += bounds.x;
           bounds.x = 0;
@@ -1554,6 +1565,37 @@ public final class TreeUtil {
     return promiseSelect(tree, path -> !tree.isRootVisible() && path.getParentPath() == null
                                        ? TreeVisitor.Action.CONTINUE
                                        : TreeVisitor.Action.INTERRUPT);
+  }
+
+  /**
+   * Promises to select the first leaf node in the specified tree.
+   * <strong>NB!:</strong>
+   * The returned promise may be resolved immediately,
+   * if this method is called on inappropriate background thread.
+   *
+   * @param tree a tree, which node should be selected
+   * @return a promise that will be succeed when first leaf node is made visible and selected
+   */
+  @NotNull
+  public static Promise<TreePath> promiseSelectFirstLeaf(@NotNull JTree tree) {
+    AtomicReference<TreePath> reference = new AtomicReference<>();
+    AsyncPromise<TreePath> promise = new AsyncPromise<>();
+    promiseMakeVisible(tree, path -> {
+      TreePath parent = reference.getAndSet(path);
+      if (getPathCount(parent) == getPathCount(path.getParentPath())) return TreeVisitor.Action.CONTINUE;
+      internalSelectPath(tree, parent);
+      promise.setResult(parent);
+      return TreeVisitor.Action.INTERRUPT;
+    }, promise)
+      .onError(promise::setError)
+      .onSuccess(path -> {
+        if (!promise.isDone()) promise.cancel();
+      });
+    return promise;
+  }
+
+  private static int getPathCount(@Nullable TreePath path) {
+    return path == null ? 0 : path.getPathCount();
   }
 
   /**

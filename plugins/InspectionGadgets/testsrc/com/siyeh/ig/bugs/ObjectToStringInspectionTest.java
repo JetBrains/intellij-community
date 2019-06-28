@@ -18,10 +18,10 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ui.OptionAccessor;
 import com.intellij.openapi.util.text.StringUtil;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class ObjectToStringInspectionTest extends LightInspectionTestCase {
+public class ObjectToStringInspectionTest extends LightJavaInspectionTestCase {
 
   public void testObjectToString() {
     doTest();

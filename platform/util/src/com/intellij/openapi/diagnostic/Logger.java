@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diagnostic;
 
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -142,7 +142,7 @@ public abstract class Logger {
   public abstract void warn(String message, @Nullable Throwable t);
 
   public void error(String message) {
-    error(message, new Throwable(message), ArrayUtil.EMPTY_STRING_ARRAY);
+    error(message, new Throwable(message), ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
   public void error(Object message) {
     error(String.valueOf(message));
@@ -163,11 +163,11 @@ public abstract class Logger {
   }
 
   public void error(String message, @Nullable Throwable t) {
-    error(message, t, ArrayUtil.EMPTY_STRING_ARRAY);
+    error(message, t, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   public void error(@NotNull Throwable t) {
-    error(t.getMessage(), t, ArrayUtil.EMPTY_STRING_ARRAY);
+    error(t.getMessage(), t, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   public abstract void error(String message, @Nullable Throwable t, @NotNull String... details);

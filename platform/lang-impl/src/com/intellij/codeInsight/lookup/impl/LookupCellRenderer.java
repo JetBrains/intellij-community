@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
@@ -22,6 +23,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.icons.RowIcon;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.FList;
@@ -40,30 +43,38 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static com.intellij.codeInsight.documentation.DocumentationComponent.COLOR_KEY;
+
 /**
  * @author peter
  * @author Konstantin Bulenkov
  */
-public class LookupCellRenderer implements ListCellRenderer {
+public class LookupCellRenderer implements ListCellRenderer<LookupElement> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.impl.LookupCellRenderer");
-  //TODO[kb]: move all these awesome constants to Editor's Fonts & Colors settings
-  private Icon myEmptyIcon = JBUI.scale(EmptyIcon.create(5));
+
+  private Icon myEmptyIcon = EmptyIcon.ICON_0;
   private final Font myNormalFont;
   private final Font myBoldFont;
   private final FontMetrics myNormalMetrics;
   private final FontMetrics myBoldMetrics;
 
-  public static final Color BACKGROUND_COLOR = JBColor.namedColor("CompletionPopup.background", new JBColor(new Color(235, 244, 254), JBColor.background()));
+  /**
+   * @deprecated unused
+   */
+  @Deprecated
   public static final Color FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.foreground", JBColor.foreground());
-  private static final Color GRAYED_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.infoForeground",  new JBColor(new Color(0x8c8e91), Gray.x91));
-  private static final Color SELECTED_BACKGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionBackground", new Color(0, 82, 164));
-  public static final Color SELECTED_NON_FOCUSED_BACKGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionInactiveBackground", new JBColor(0x6e8ea2, 0x55585a));
-  private static final Color SELECTED_NON_FOCUSED_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionInactiveInfoForeground", new JBColor(new Color(0x1c2b38), Gray.x91));
-  public static final Color SELECTED_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionForeground", new JBColor(JBColor.WHITE, JBColor.foreground()));
-  private static final Color SELECTED_GRAYED_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionInfoForeground", new JBColor(JBColor.WHITE, JBColor.foreground()));
 
-  private static final Color PREFIX_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.matchForeground", new JBColor(0xb000b0, 0xd17ad6));
-  private static final Color SELECTED_PREFIX_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.matchSelectionForeground", new JBColor(0xf9eccc, 0xd17ad6));
+  /**
+   * @deprecated unused
+   */
+  @Deprecated
+  public static final Color SELECTED_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionForeground", new JBColor(JBColor.WHITE, JBColor.foreground()));
+
+  public static final Color BACKGROUND_COLOR = EditorColorsUtil.getGlobalOrDefaultColor(COLOR_KEY);
+  private static final Color MATCHED_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.matchForeground", JBUI.CurrentTheme.Link.linkColor());
+  private static final Color SELECTED_BACKGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionBackground", new JBColor(0xc5dffc, 0x113a5c));
+  public static final Color SELECTED_NON_FOCUSED_BACKGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionInactiveBackground", new JBColor(0xE0E0E0, 0x515457));
+  private static final Color NON_FOCUSED_MASK_COLOR = JBColor.namedColor("CompletionPopup.nonFocusedMask", Gray._0.withAlpha(0));
 
   private final LookupImpl myLookup;
 
@@ -83,7 +94,8 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     myLookup = lookup;
     myNameComponent = new MySimpleColoredComponent();
-    myNameComponent.setIpad(JBUI.insetsLeft(2));
+    myNameComponent.setIconTextGap(JBUIScale.scale(4));
+    myNameComponent.setIpad(JBUI.insetsLeft(1));
     myNameComponent.setMyBorder(null);
 
     myTailComponent = new MySimpleColoredComponent();
@@ -92,7 +104,7 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     myTypeLabel = new MySimpleColoredComponent();
     myTypeLabel.setIpad(JBUI.emptyInsets());
-    myTypeLabel.setBorder(JBUI.Borders.emptyRight(6));
+    myTypeLabel.setBorder(JBUI.Borders.emptyRight(10));
 
     myPanel = new LookupPanel();
     myPanel.add(myNameComponent, BorderLayout.WEST);
@@ -107,11 +119,10 @@ public class LookupCellRenderer implements ListCellRenderer {
   @Override
   public Component getListCellRendererComponent(
       final JList list,
-      Object value,
+      LookupElement item,
       int index,
       boolean isSelected,
       boolean hasFocus) {
-
 
     boolean nonFocusedSelection = isSelected && myLookup.getFocusDegree() == LookupImpl.FocusDegree.SEMI_FOCUSED;
     if (!myLookup.isFocused()) {
@@ -119,7 +130,6 @@ public class LookupCellRenderer implements ListCellRenderer {
     }
 
     myIsSelected = isSelected;
-    final LookupElement item = (LookupElement)value;
     final Color background = nonFocusedSelection ? SELECTED_NON_FOCUSED_BACKGROUND_COLOR :
                              isSelected ? SELECTED_BACKGROUND_COLOR : BACKGROUND_COLOR;
 
@@ -133,12 +143,6 @@ public class LookupCellRenderer implements ListCellRenderer {
       if (item.isValid()) {
         try {
           item.renderElement(presentation);
-
-          //In Darcula: default monospaced bold fonts are very similar to their regular versions.
-          //We need to tune foreground colors here to tell bold elements from regular
-          if (presentation.isItemTextBold() && UIUtil.isUnderDarcula()) {
-            presentation.setItemTextForeground(ColorUtil.brighter(presentation.getItemTextForeground(), 2));
-          }
         }
         catch (ProcessCanceledException e) {
           LOG.info(e);
@@ -158,8 +162,8 @@ public class LookupCellRenderer implements ListCellRenderer {
     myNameComponent.clear();
     myNameComponent.setBackground(background);
 
-    Color itemColor = isSelected ? SELECTED_FOREGROUND_COLOR : presentation.getItemTextForeground();
-    allowedWidth -= setItemTextLabel(item, itemColor, isSelected, presentation, allowedWidth);
+    Color itemColor = presentation.getItemTextForeground();
+    allowedWidth -= setItemTextLabel(item, itemColor, presentation, allowedWidth);
 
     Font font = myLookup.getCustomFont(item, false);
     if (font == null) {
@@ -169,10 +173,13 @@ public class LookupCellRenderer implements ListCellRenderer {
     myTypeLabel.setFont(font);
     myNameComponent.setIcon(augmentIcon(myLookup.getTopLevelEditor(), presentation.getIcon(), myEmptyIcon));
 
-    final Color grayedForeground = nonFocusedSelection ? SELECTED_NON_FOCUSED_FOREGROUND_COLOR : getGrayedForeground(isSelected);
+    final Color grayedForeground = getGrayedForeground(isSelected);
     myTypeLabel.clear();
     if (allowedWidth > 0) {
       allowedWidth -= setTypeTextLabel(item, background, grayedForeground, presentation, isSelected ? getMaxWidth() : allowedWidth, isSelected, nonFocusedSelection, normalMetrics);
+    }
+    else {
+      myTypeLabel.setBackground(background);
     }
 
     myTailComponent.clear();
@@ -311,11 +318,12 @@ public class LookupCellRenderer implements ListCellRenderer {
     return defaultForeground;
   }
 
+  @SuppressWarnings("unused")
   public static Color getGrayedForeground(boolean isSelected) {
-    return isSelected ? SELECTED_GRAYED_FOREGROUND_COLOR : GRAYED_FOREGROUND_COLOR;
+    return UIUtil.getContextHelpForeground();
   }
 
-  private int setItemTextLabel(LookupElement item, final Color foreground, final boolean selected, LookupElementPresentation presentation, int allowedWidth) {
+  private int setItemTextLabel(LookupElement item, final Color foreground, LookupElementPresentation presentation, int allowedWidth) {
     boolean bold = presentation.isItemTextBold();
 
     Font customItemFont = myLookup.getCustomFont(item, bold);
@@ -326,7 +334,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     final String name = trimLabelText(presentation.getItemText(), allowedWidth, metrics);
     int used = RealLookupElementPresentation.getStringWidth(name, metrics);
 
-    renderItemName(item, foreground, selected, style, name, myNameComponent);
+    renderItemName(item, foreground, style, name, myNameComponent);
     return used;
   }
 
@@ -356,7 +364,6 @@ public class LookupCellRenderer implements ListCellRenderer {
 
   private void renderItemName(LookupElement item,
                       Color foreground,
-                      boolean selected,
                       @SimpleTextAttributes.StyleAttributeConstant int style,
                       String name,
                       final SimpleColoredComponent nameComponent) {
@@ -366,8 +373,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     if (prefix.length() > 0) {
       Iterable<TextRange> ranges = getMatchingFragments(prefix, name);
       if (ranges != null) {
-        SimpleTextAttributes highlighted =
-          new SimpleTextAttributes(style, selected ? SELECTED_PREFIX_FOREGROUND_COLOR : PREFIX_FOREGROUND_COLOR);
+        SimpleTextAttributes highlighted = new SimpleTextAttributes(style, MATCHED_FOREGROUND_COLOR);
         SpeedSearchUtil.appendColoredFragments(nameComponent, name, ranges, base, highlighted);
         return;
       }
@@ -427,6 +433,14 @@ public class LookupCellRenderer implements ListCellRenderer {
       return standard;
     }
 
+    if (!Registry.is("ide.completion.show.visibility.icon") && icon instanceof com.intellij.ui.icons.RowIcon) {
+      com.intellij.ui.icons.RowIcon rowIcon = (RowIcon)icon;
+      if (rowIcon.getIconCount() >= 1 ) {
+        Icon firstIcon = rowIcon.getIcon(0);
+        if (firstIcon != null) icon = firstIcon;
+      }
+    }
+
     if (icon.getIconHeight() < standard.getIconHeight() || icon.getIconWidth() < standard.getIconWidth()) {
       final LayeredIcon layeredIcon = new LayeredIcon(2);
       layeredIcon.setIcon(icon, 0, 0, (standard.getIconHeight() - icon.getIconHeight()) / 2);
@@ -465,7 +479,10 @@ public class LookupCellRenderer implements ListCellRenderer {
   int updateMaximumWidth(final LookupElementPresentation p, LookupElement item) {
     final Icon icon = p.getIcon();
     if (icon != null && (icon.getIconWidth() > myEmptyIcon.getIconWidth() || icon.getIconHeight() > myEmptyIcon.getIconHeight())) {
-      myEmptyIcon = EmptyIcon.create(Math.max(icon.getIconWidth(), myEmptyIcon.getIconWidth()), Math.max(icon.getIconHeight(), myEmptyIcon.getIconHeight()));
+      myEmptyIcon = EmptyIcon.create(Math.max(icon.getIconWidth(), myEmptyIcon.getIconWidth()),
+                                     Math.max(icon.getIconHeight(), myEmptyIcon.getIconHeight()));
+
+      myNameComponent.setIpad(JBUI.insetsLeft(6));
     }
 
     return RealLookupElementPresentation.calculateWidth(p, getRealFontMetrics(item, false), getRealFontMetrics(item, true)) +
@@ -498,13 +515,17 @@ public class LookupCellRenderer implements ListCellRenderer {
     }
 
     @Override
-    public void paint(Graphics g){
+    public Dimension getPreferredSize() {
+      return UIUtil.updateListRowHeight(super.getPreferredSize());
+    }
+
+    @Override
+    public void paint(Graphics g) {
       super.paint(g);
-      if (!myLookup.isFocused() && myLookup.isCompletion() &&
-          UIManager.getBoolean("CompletionPopup.nonFocusedState") == Boolean.TRUE) {
+      if (NON_FOCUSED_MASK_COLOR.getAlpha() > 0 && !myLookup.isFocused() && myLookup.isCompletion()) {
         g = g.create();
         try {
-          g.setColor(ColorUtil.withAlpha(BACKGROUND_COLOR, .4));
+          g.setColor(NON_FOCUSED_MASK_COLOR);
           g.fillRect(0, 0, getWidth(), getHeight());
         }
         finally {

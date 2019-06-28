@@ -1,8 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
+import com.intellij.openapi.util.ColoredItem;
+import com.intellij.ui.BackgroundSupplier;
 import com.intellij.ui.list.ListCellBackgroundSupplier;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -36,11 +40,7 @@ public final class WideSelectionListUI extends BasicListUI {
       boolean selected = selectionModel.isSelectedIndex(row);
       boolean focused = row == leadSelectionIndex && list.hasFocus();
       Object value = model.getElementAt(row);
-      Color background = null;
-      if (list instanceof ListCellBackgroundSupplier) {
-        //noinspection unchecked
-        background = ((ListCellBackgroundSupplier<Object>)list).getCellBackground(value, row);
-      }
+      Color background = getBackground(list, value, row);
       if (background != null) {
         g.setColor(background);
         g.fillRect(rowBounds.x, rowBounds.y, rowBounds.width, rowBounds.height);
@@ -55,6 +55,25 @@ public final class WideSelectionListUI extends BasicListUI {
       }
     }
     super.paintCell(g, row, rowBounds, renderer, model, selectionModel, leadSelectionIndex);
+  }
+
+  @Nullable
+  private static Color getBackground(@NotNull JList list, @Nullable Object value, int row) {
+    if (value instanceof ColoredItem) {
+      Color background = ((ColoredItem)value).getColor();
+      if (background != null) return background;
+    }
+    if (value instanceof BackgroundSupplier) {
+      BackgroundSupplier supplier = (BackgroundSupplier)value;
+      Color background = supplier.getElementBackground(row);
+      if (background != null) return background;
+    }
+    if (list instanceof ListCellBackgroundSupplier) {
+      //noinspection unchecked
+      Color background = ((ListCellBackgroundSupplier<Object>)list).getCellBackground(value, row);
+      if (background != null) return background;
+    }
+    return null;
   }
 
   private static void paintRenderer(Graphics g, int x, int y, int width, int height, Component owner, Component renderer) {

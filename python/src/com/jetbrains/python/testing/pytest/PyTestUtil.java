@@ -21,6 +21,7 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.testing.PythonUnitTestUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @deprecated use {@link PythonUnitTestUtil} will be removed in 2018
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2018")
 @Deprecated
 public class PyTestUtil {
 

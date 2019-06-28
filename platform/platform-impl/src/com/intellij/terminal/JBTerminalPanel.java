@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /* -*-mode:java; c-basic-offset:2; -*- */
 
@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.JBHiDPIScaledImage;
@@ -40,8 +41,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
 import java.util.List;
 
-public class JBTerminalPanel extends TerminalPanel implements FocusListener, TerminalSettingsListener, Disposable,
-                                                              IdeEventQueue.EventDispatcher {
+public class JBTerminalPanel extends TerminalPanel implements FocusListener, TerminalSettingsListener, Disposable {
   private static final Logger LOG = Logger.getLogger(JBTerminalPanel.class);
   private static final String[] ACTIONS_TO_SKIP = new String[]{
     "ActivateTerminalToolWindow",
@@ -76,9 +76,16 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
 
     "ShowSettings",
     "RecentFiles",
-    "Switcher"
+    "Switcher",
+
+    "ResizeToolWindowLeft",
+    "ResizeToolWindowRight",
+    "ResizeToolWindowUp",
+    "ResizeToolWindowDown",
+    "MaximizeToolWindow"
   };
 
+  private final TerminalEventDispatcher myEventDispatcher = new TerminalEventDispatcher();
   private final JBTerminalSystemSettingsProviderBase mySettingsProvider;
   private final TerminalEscapeKeyListener myEscapeKeyListener;
 
@@ -129,16 +136,6 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
         }
       }
     }
-  }
-
-  @Override
-  public boolean dispatch(@NotNull AWTEvent e) {
-    if (e instanceof KeyEvent && !skipKeyEvent((KeyEvent)e)) {
-      IdeEventQueue.getInstance().flushDelayedKeyEvents();
-      dispatchEvent(e);
-      return true;
-    }
-    return false;
   }
 
   private boolean skipKeyEvent(KeyEvent e) {
@@ -248,13 +245,14 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
   private void installKeyDispatcher() {
     if (mySettingsProvider.overrideIdeShortcuts()) {
       myActionsToSkip = setupActionsToSkip();
-      IdeEventQueue.getInstance().addDispatcher(this, this);
+      myEventDispatcher.register();
     }
     else {
       myActionsToSkip = null;
     }
   }
 
+  @NotNull
   private static List<AnAction> setupActionsToSkip() {
     List<AnAction> res = Lists.newArrayList();
     ActionManager actionManager = ActionManager.getInstance();
@@ -271,7 +269,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
   public void focusLost(FocusEvent event) {
     if (myActionsToSkip != null) {
       myActionsToSkip = null;
-      IdeEventQueue.getInstance().removeDispatcher(this);
+      myEventDispatcher.unregister();
     }
 
     refreshAfterExecution();
@@ -304,5 +302,33 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
       LocalFileSystem.getInstance().refresh(true);
     }
   }
-}
 
+  /**
+   * Adds "Override IDE shortcuts" terminal feature allowing terminal to process all the key events.
+   * Without own IdeEventQueue.EventDispatcher, terminal won't receive key events corresponding to IDE action shortcuts.
+   */
+  private class TerminalEventDispatcher implements IdeEventQueue.EventDispatcher {
+    @Override
+    public boolean dispatch(@NotNull AWTEvent e) {
+      if (e instanceof KeyEvent && !skipKeyEvent((KeyEvent)e)) {
+        IdeEventQueue.getInstance().flushDelayedKeyEvents();
+        // Workaround for https://youtrack.jetbrains.com/issue/IDEA-214782, revert once it's fixed.
+        if (SystemInfo.isJavaVersionAtLeast(8, 0, 212)) {
+          // JBTerminalPanel is focused, because TerminalEventDispatcher added in focusGained and removed in focusLost
+          processKeyEvent((KeyEvent)e);
+        }
+        dispatchEvent(e);
+        return true;
+      }
+      return false;
+    }
+
+    void register() {
+      IdeEventQueue.getInstance().addDispatcher(this, JBTerminalPanel.this);
+    }
+
+    void unregister() {
+      IdeEventQueue.getInstance().removeDispatcher(this);
+    }
+  }
+}

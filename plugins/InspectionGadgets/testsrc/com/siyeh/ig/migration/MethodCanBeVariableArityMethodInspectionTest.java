@@ -1,9 +1,9 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
-public class MethodCanBeVariableArityMethodInspectionTest extends LightInspectionTestCase {
+public class MethodCanBeVariableArityMethodInspectionTest extends LightJavaInspectionTestCase {
 
   public void testMethodCanBeVariableArity() {
     doTest();

@@ -19,14 +19,12 @@ import com.intellij.psi.PsiManager;
 import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.util.Url;
 import com.intellij.util.io.URLUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.AncestorEvent;
 
 public class StartBrowserPanel {
@@ -116,9 +114,6 @@ public class StartBrowserPanel {
   private void createUIComponents() {
     myBrowserSelector = new BrowserSelector();
     myBrowserComboBox = myBrowserSelector.getMainComponent();
-    if (UIUtil.isUnderAquaLookAndFeel()) {
-      myBrowserComboBox.setBorder(new EmptyBorder(3, 0, 0, 0));
-    }
   }
 
   @Nullable

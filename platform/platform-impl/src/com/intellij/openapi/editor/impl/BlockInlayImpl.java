@@ -95,7 +95,7 @@ class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R,
     return "[Block inlay, offset=" + getOffset() +
            ", width=" + myWidthInPixels +
            ", height=" + myHeightInPixels +
-           "renderer=" + myRenderer +
+           ", renderer=" + myRenderer +
            "]";
   }
 }

@@ -5,14 +5,14 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.refactoring.migration.MigrationMap;
 import com.intellij.refactoring.migration.MigrationMapSet;
 import com.intellij.refactoring.migration.MigrationProcessor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Pavel.Dolgov
  */
-public class JavaFxMigrationTest extends LightCodeInsightFixtureTestCase {
+public class JavaFxMigrationTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testImportClasses() {
     doTest();

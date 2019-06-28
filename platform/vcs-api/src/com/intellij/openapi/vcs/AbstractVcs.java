@@ -429,6 +429,22 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   }
 
   /**
+   * This switch disables platform support for "default mapping" aka "&lt;Project&gt;".
+   * <p>
+   * If enabled, platform will do nothing. All roots from {@link com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy} will be registered as vcs root.
+   * Vcs can try using {@link RootsConvertor} to process roots itself.
+   * <p>
+   * If disabled, platform will use {@link VcsRootChecker} or {@link com.intellij.openapi.vcs.impl.VcsEP#administrativeAreaName} to find actual vcs roots.
+   * If vcs does not implement these EP, no vcs roots will be registered for "default mapping".
+   *
+   * @see ProjectLevelVcsManager
+   * @see com.intellij.openapi.vcs.impl.projectlevelman.NewMappings
+   */
+  public boolean needsLegacyDefaultMappings() {
+    return false;
+  }
+
+  /**
    * Returns the implementation of the merge provider which is used to load the revisions to be merged
    * for a particular file.
    *

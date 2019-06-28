@@ -32,9 +32,11 @@
     <extensionPoint name="executionEnvironmentProvider"
                     interface="org.jetbrains.idea.maven.execution.build.MavenExecutionEnvironmentProvider"/>
     <extensionPoint name="artifactBuilder" interface="org.jetbrains.idea.maven.execution.build.MavenArtifactBuilder"/>
+    <extensionPoint name="dependencyCompletionProviderFactory" interface="org.jetbrains.idea.maven.onlinecompletion.DependencyCompletionProviderFactory"/>
   </extensionPoints>
 
   <depends>com.intellij.properties</depends>
+  <depends>com.intellij.modules.java</depends>
   <depends optional="true" config-file="groovy-support.xml">org.intellij.groovy</depends>
   <depends optional="true" config-file="errorProne-compiler-support.xml">Error-prone plugin</depends>
 
@@ -42,7 +44,8 @@
     <applicationInitializedListener implementation="org.jetbrains.idea.maven.utils.MavenEnvironmentRegistrar"/>
     <applicationInitializedListener implementation="org.jetbrains.idea.maven.utils.MavenEditorTabTitleUpdater"/>
     <customJavadocTagProvider implementation="org.jetbrains.idea.maven.javadoc.MojoClassAnnotationTagProvider"/>
-    <fileTypeFactory implementation="org.jetbrains.idea.maven.config.MavenConfigFileTypeFactory"/>
+    <fileType name="MavenConfig" implementationClass="org.jetbrains.idea.maven.config.MavenConfigFileType"
+              fileNames="maven.config"/>
     <fileTypeFactory implementation="org.jetbrains.idea.maven.utils.MavenFileTypeFactory"/>
     <fileTypeUsageSchemaDescriptor schema="Maven" implementationClass="org.jetbrains.idea.maven.utils.MavenFileTypeFactory"/>
     <projectImportProvider implementation="org.jetbrains.idea.maven.wizards.MavenProjectImportProvider"/>
@@ -145,11 +148,26 @@
                             implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenVersionCompletionContributor"/>
 
     <completion.contributor language="XML"
+                            implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenGroupIdCompletionContributor"/>
+
+    <completion.contributor language="XML"
+                            implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenArtifactIdCompletionContributor"/>
+
+    <completion.contributor language="XML"
+                            implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenDependencyTopLevelCompletionContributor"/>
+
+    <completion.contributor language="XML"
                             implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenPomXmlCompletionTagListenerContributor"
                             order="first"/>
 
     <completion.contributor language="XML"
-                            implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenDependenciesCompletionProvider"/>
+                            implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenDependenciesCompletionContributor"/>
+
+    <completion.contributor language="XML"
+                            implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenPluginCompletionContributor"/>
+
+    <completion.contributor language="XML"
+                            implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenExtensionCompletionContributor"/>
 
     <psi.referenceContributor implementation="org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReferenceContributor"/>
 
@@ -201,10 +219,10 @@
 
     <projectTaskRunner implementation="org.jetbrains.idea.maven.execution.build.MavenProjectTaskRunner"/>
     <runAnything.executionProvider implementation="org.jetbrains.idea.maven.execution.MavenRunAnythingProvider"/>
-    <runAnything.helpGroup implementation="org.jetbrains.idea.maven.execution.MavenRunAnythingHelpGroup"/>
 
     <statistics.projectUsagesCollector implementation="org.jetbrains.idea.maven.statistics.MavenSettingsCollector"/>
     <statistics.counterUsagesCollector groupId="build.maven.actions" version="1"/>
+    <statistics.counterUsagesCollector groupId="build.maven.packagesearch" version="2"/>
 
     <registryKey key="maven.import.compiler.arguments" defaultValue="true"
                  description="Enable importing of the maven compiler plugin arguments"/>
@@ -214,6 +232,9 @@
 
     <registryKey key="maven.spy.events.debug" defaultValue="false"
                  description="Enable Maven spy events to be printed in Build Tool Window console"/>
+
+    <registryKey key="maven.packagesearch.enabled" defaultValue="true"
+                 description="Enable package search dependency via https://package-search.services.jetbrains.com" restartRequired="true"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">
@@ -355,6 +376,7 @@
     <compiler implementation="org.jetbrains.idea.maven.importing.MavenCompilerJavacExtension"/>
     <compiler implementation="org.jetbrains.idea.maven.importing.MavenCompilerEclipseExtension"/>
     <executionEnvironmentProvider implementation="org.jetbrains.idea.maven.execution.MavenApplicationConfigurationExecutionEnvironmentProvider"/>
+    <dependencyCompletionProviderFactory implementation="org.jetbrains.idea.maven.onlinecompletion.MavenCompletionProviderFactory"/>
   </extensions>
 
   <project-components>

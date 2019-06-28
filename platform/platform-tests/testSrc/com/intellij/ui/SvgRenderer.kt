@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -15,7 +15,6 @@ import org.apache.batik.dom.GenericDOMImplementation
 import org.apache.batik.svggen.*
 import org.w3c.dom.Element
 import java.awt.Component
-import java.awt.GraphicsConfiguration
 import java.awt.Image
 import java.io.StringWriter
 import java.nio.file.Path
@@ -27,7 +26,7 @@ import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
 
 // jFreeSvg produces not so compact and readable SVG as batik
-internal class SvgRenderer(val svgFileDir: Path, private val deviceConfiguration: GraphicsConfiguration) {
+internal class SvgRenderer(val svgFileDir: Path) {
   private val xmlTransformer = TransformerFactory.newInstance().newTransformer()
 
   private val xmlFactory = GenericDOMImplementation.getDOMImplementation().createDocument(SVGDOMImplementation.SVG_NAMESPACE_URI, "svg", null)
@@ -39,8 +38,6 @@ internal class SvgRenderer(val svgFileDir: Path, private val deviceConfiguration
     xmlTransformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2")
     xmlTransformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8")
     xmlTransformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes")
-
-    IconLoader.activate()
 
     context.imageHandler = object : ImageHandlerBase64Encoder() {
       override fun handleImage(image: Image, imageElement: Element, generatorContext: SVGGeneratorContext) {
@@ -133,28 +130,23 @@ internal class SvgRenderer(val svgFileDir: Path, private val deviceConfiguration
       // &#27;Remember
       // no idea why transformer/batik doesn't escape it correctly
       .replace(">&#27;", ">&amp;")
-    return if (SystemInfoRt.isWindows) StringUtilRt.convertLineSeparators(result) else result
+    return if (SystemInfo.isWindows) StringUtilRt.convertLineSeparators(result) else result
   }
 
   fun render(component: Component): String {
-    val svgGenerator = SvgGraphics2dWithDeviceConfiguration(context, deviceConfiguration)
+    val svgGenerator = SvgGraphics2dWithDeviceConfiguration(context)
     component.paint(svgGenerator)
     return svgGraphicsToString(svgGenerator, component)
   }
 }
 
 private class SvgGraphics2dWithDeviceConfiguration : SVGGraphics2D {
-  private val _deviceConfiguration: GraphicsConfiguration
-
-  constructor(context: SVGGeneratorContext, _deviceConfiguration: GraphicsConfiguration) : super(context, false) {
-    this._deviceConfiguration = _deviceConfiguration
+  constructor(context: SVGGeneratorContext) : super(context, false) {
   }
 
-  private constructor(g: SvgGraphics2dWithDeviceConfiguration): super(g) {
-    this._deviceConfiguration = g._deviceConfiguration
-  }
+  private constructor(g: SvgGraphics2dWithDeviceConfiguration): super(g)
 
-  override fun getDeviceConfiguration() = _deviceConfiguration
+  override fun getDeviceConfiguration() = null
 
   override fun create() = SvgGraphics2dWithDeviceConfiguration(this)
 }

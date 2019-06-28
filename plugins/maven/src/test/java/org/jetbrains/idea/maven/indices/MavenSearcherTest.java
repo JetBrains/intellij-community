@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-@Ignore("tests for online search to be ready")
 public class MavenSearcherTest extends MavenIndicesTestCase {
   MavenIndicesTestFixture myIndicesFixture;
 
@@ -130,7 +129,7 @@ public class MavenSearcherTest extends MavenIndicesTestCase {
     List<String> actualArtifacts = new ArrayList<>();
     for (MavenClassSearchResult eachResult : new MavenClassSearcher().search(myProject, pattern, 100)) {
       StringBuilder s = new StringBuilder(eachResult.getClassName() + "(" + eachResult.getPackageName() + ")");
-      for (MavenDependencyCompletionItem eachVersion : eachResult.getSearchResults()) {
+      for (MavenDependencyCompletionItem eachVersion : eachResult.getSearchResults().getItems()) {
         if (s.length() > 0) s.append(" ");
         s.append(eachVersion.getGroupId()).append(":").append(eachVersion.getArtifactId()).append(":").append(eachVersion.getVersion());
       }
@@ -143,7 +142,7 @@ public class MavenSearcherTest extends MavenIndicesTestCase {
     List<String> actual = new ArrayList<>();
     for (MavenArtifactSearchResult eachResult : new MavenArtifactSearcher().search(myProject, pattern, 100)) {
       StringBuilder s = new StringBuilder();
-      for (MavenDependencyCompletionItem eachVersion : eachResult.getSearchResults()) {
+      for (MavenDependencyCompletionItem eachVersion : eachResult.getSearchResults().getItems()) {
         if (s.length() > 0) s.append(" ");
         s.append(eachVersion.getGroupId()).append(":").append(eachVersion.getArtifactId()).append(":").append(eachVersion.getVersion());
       }

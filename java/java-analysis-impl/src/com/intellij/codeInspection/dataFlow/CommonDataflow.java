@@ -18,6 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ForkJoinPool;
 
 import static com.intellij.codeInspection.dataFlow.DfaUtil.hasImplicitImpureSuperCall;
 
@@ -101,7 +103,7 @@ public class CommonDataflow {
   /**
    * Represents the result of dataflow applied to some code fragment (usually a method)
    */
-  public static class DataflowResult {
+  public static final class DataflowResult {
     private final Map<PsiExpression, DataflowPoint> myData = new HashMap<>();
     private final RunnerResult myResult;
 
@@ -109,6 +111,7 @@ public class CommonDataflow {
       myResult = result;
     }
 
+    @NotNull
     DataflowResult copy() {
       DataflowResult copy = new DataflowResult(myResult);
       myData.forEach((expression, point) -> copy.myData.put(expression, new DataflowPoint(point)));
@@ -235,10 +238,9 @@ public class CommonDataflow {
     }
   }
 
-  @Contract("null -> null")
-  @Nullable
+  @NotNull
   private static DataflowResult runDFA(@Nullable PsiElement block) {
-    if (block == null) return null;
+    if (block == null) return new DataflowResult(RunnerResult.NOT_APPLICABLE);
     DataFlowRunner runner = new DataFlowRunner(false, block);
     CommonDataflowVisitor visitor = new CommonDataflowVisitor();
     RunnerResult result = runner.analyzeMethodRecursively(block, visitor, false);
@@ -274,10 +276,37 @@ public class CommonDataflow {
   public static DataflowResult getDataflowResult(PsiExpression context) {
     PsiElement body = DfaUtil.getDataflowContext(context);
     if (body == null) return null;
-    return CachedValuesManager.getCachedValue(body, () -> {
-      DataflowResult result = runDFA(body);
-      return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
-    });
+    ConcurrentHashMap<PsiElement, DataflowResult> fileMap =
+      CachedValuesManager.getCachedValue(body.getContainingFile(), () ->
+        CachedValueProvider.Result.create(new ConcurrentHashMap<>(), PsiModificationTracker.MODIFICATION_COUNT));
+    try {
+      class ManagedCompute implements ForkJoinPool.ManagedBlocker {
+        DataflowResult myResult;
+
+        @Override
+        public boolean block() {
+          myResult = fileMap.computeIfAbsent(body, CommonDataflow::runDFA);
+          return true;
+        }
+
+        @Override
+        public boolean isReleasable() {
+          myResult = fileMap.get(body);
+          return myResult != null;
+        }
+
+        DataflowResult getResult() {
+          return myResult == null || myResult.myResult != RunnerResult.OK ? null : myResult;
+        }
+      }
+      ManagedCompute managedCompute = new ManagedCompute();
+      ForkJoinPool.managedBlock(managedCompute);
+      return managedCompute.getResult();
+    }
+    catch (InterruptedException ignored) {
+      // Should not happen
+      throw new AssertionError();
+    }
   }
 
   /**

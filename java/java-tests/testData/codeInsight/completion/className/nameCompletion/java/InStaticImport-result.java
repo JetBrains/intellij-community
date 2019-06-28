@@ -1,4 +1,4 @@
-import static java.io.FileInputStream<caret>
+import static java.io.FileInputStream.<caret>
 
 class Main {
 

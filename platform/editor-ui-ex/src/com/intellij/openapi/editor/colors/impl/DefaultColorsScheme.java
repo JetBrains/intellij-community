@@ -70,14 +70,8 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
     Color color = myColorsMap.get(key);
     if (color != null) return color == NULL_COLOR_MARKER ? null : color;
 
-    ColorKey fallbackKey = key.getFallbackColorKey();
-    Color fallback = fallbackKey == null ? null : getFallbackColor(fallbackKey);
-    if (fallback != null && fallback != AbstractColorsScheme.INHERITED_COLOR_MARKER) return fallback;
-
     if (!useDefaults) return null;
-    Color keyDefaults = key.getDefaultColor();
-    if (keyDefaults != null) return keyDefaults;
-    return fallbackKey == null ? null : fallbackKey.getDefaultColor();
+    return key.getDefaultColor();
   }
 
   @Override

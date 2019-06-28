@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,16 @@ import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("ComponentNotRegistered")
 public class CloseAction extends AnAction implements DumbAware {
   private RunContentDescriptor myContentDescriptor;
   private final Project myProject;
@@ -34,7 +39,7 @@ public class CloseAction extends AnAction implements DumbAware {
     myExecutor = executor;
     myContentDescriptor = contentDescriptor;
     myProject = project;
-    copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE));
+    ActionUtil.copyFrom(this, IdeActions.ACTION_CLOSE);
     final Presentation templatePresentation = getTemplatePresentation();
     templatePresentation.setIcon(AllIcons.Actions.Cancel);
     templatePresentation.setText(ExecutionBundle.message("close.tab.action.name"));

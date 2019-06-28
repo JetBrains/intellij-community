@@ -12,7 +12,5 @@ public interface VcsLogModifiableIndex extends VcsLogIndex {
 
   void markForIndexing(int commit, @NotNull VirtualFile root);
 
-  void reindexWithRenames(int commit, @NotNull VirtualFile root);
-
   void markCorrupted();
 }

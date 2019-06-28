@@ -41,6 +41,7 @@ public class VcsDirtyScopeTest extends FileBasedTest {
     myVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
     myVcsManager.registerVcs(myVcs);
     myVcsManager.setDirectoryMapping(myProjectFixture.getProject().getBasePath(), myVcs.getName());
+    myVcsManager.waitForInitialized();
   }
 
   @Override
@@ -101,8 +102,8 @@ public class VcsDirtyScopeTest extends FileBasedTest {
     final HashSet<VirtualFile> removed = new HashSet<>(set);
     removeMarked(set, scope, virtualFile -> removed.remove(virtualFile));
 
-    Assert.assertTrue(scope.isEmpty());
-    Assert.assertTrue(removed.isEmpty());
+    Assert.assertTrue(scope.toString(), scope.isEmpty());
+    Assert.assertTrue(removed.toString(), removed.isEmpty());
   }
 
   @Test
@@ -118,9 +119,9 @@ public class VcsDirtyScopeTest extends FileBasedTest {
 
     Assert.assertNotNull(dirtyDirs);
     Assert.assertNotNull(dirtyFiles);
-    Assert.assertTrue(dirtyFiles.contains(VcsUtil.getFilePath(data.baseDir)));
-    Assert.assertTrue(dirtyDirs.contains(VcsUtil.getFilePath(data.dir1)));
-    Assert.assertTrue(dirtyDirs.contains(VcsUtil.getFilePath(data.dir2)));
+    Assert.assertTrue(dirtyFiles.toString(), dirtyFiles.contains(VcsUtil.getFilePath(data.baseDir)));
+    Assert.assertTrue(dirtyDirs.toString(), dirtyDirs.contains(VcsUtil.getFilePath(data.dir1)));
+    Assert.assertTrue(dirtyDirs.toString(), dirtyDirs.contains(VcsUtil.getFilePath(data.dir2)));
   }
 
   private Data createData() throws IOException {

@@ -17,12 +17,12 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.emptyMethod.EmptyMethodInspection;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.JavaInspectionTestCase;
 
 /**
  * @author max
  */
-public class EmptyMethodTest extends InspectionTestCase {
+public class EmptyMethodTest extends JavaInspectionTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection";

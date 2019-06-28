@@ -9,7 +9,7 @@ import java.io.File;
 import java.util.Collection;
 
 /**
- * Stripped-down version of {@link com.intellij.util.ArrayUtil}.
+ * A stripped-down version of {@link com.intellij.util.ArrayUtil}.
  * Intended to use by external (out-of-IDE-process) runners and helpers so it should not contain any library dependencies.
  */
 @SuppressWarnings("SSBasedInspection")
@@ -25,7 +25,6 @@ public class ArrayUtilRt {
   public static final long[] EMPTY_LONG_ARRAY = new long[0];
   public static final Collection[] EMPTY_COLLECTION_ARRAY = new Collection[0];
   public static final File[] EMPTY_FILE_ARRAY = new File[0];
-  public static final Runnable[] EMPTY_RUNNABLE_ARRAY = new Runnable[0];
 
   @NotNull
   @Contract(pure=true)

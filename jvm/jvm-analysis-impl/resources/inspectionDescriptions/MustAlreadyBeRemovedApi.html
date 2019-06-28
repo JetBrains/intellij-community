@@ -1,0 +1,10 @@
+<html>
+<body>
+Reports any declarations of classes, fields, or methods marked with <b>@org.jetbrains.annotations.ApiStatus.ScheduledForRemoval</b>
+annotation that must already be removed. Specified scheduled removal version is compared with the current version that you may set below.
+Versions are dot-separated strings with possibly "alpha", "beta", "eap" classifiers, like "1.0", "2.3.1", "2018.1", "7.5-snapshot",
+"3.0-eap". Versions comparison is intuitive: 1.0 &lt 2.0, 1.0-eap &lt 1.0, 2.3-snapshot &lt 2.3 and so on.
+For detailed comparison logic refer to implementation of <a
+    href="https://github.com/JetBrains/intellij-community/blob/master/platform/util-rt/src/com/intellij/util/text/VersionComparatorUtil.java">VersionComparatorUtil</a>.
+</body>
+</html>

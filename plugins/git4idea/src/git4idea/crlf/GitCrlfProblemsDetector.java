@@ -98,7 +98,7 @@ public class GitCrlfProblemsDetector {
   }
 
   @NotNull
-  private Collection<VirtualFile> findFilesWithoutAttrs(@NotNull VirtualFile root, @NotNull Collection<VirtualFile> files) {
+  private Collection<VirtualFile> findFilesWithoutAttrs(@NotNull VirtualFile root, @NotNull Collection<? extends VirtualFile> files) {
     GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
     if (repository == null) {
       LOG.warn("Repository is null for " + root);
@@ -142,7 +142,7 @@ public class GitCrlfProblemsDetector {
   }
 
   @NotNull
-  private static Collection<VirtualFile> findFilesWithCrlf(@NotNull Collection<VirtualFile> files) {
+  private static Collection<VirtualFile> findFilesWithCrlf(@NotNull Collection<? extends VirtualFile> files) {
     Collection<VirtualFile> filesWithCrlf = new ArrayList<>();
     for (VirtualFile file : files) {
       ProgressIndicatorProvider.checkCanceled();

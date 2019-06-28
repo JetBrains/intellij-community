@@ -15,13 +15,13 @@
  */
 package org.jetbrains.idea.maven.plugins.groovy
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 
 /**
  * @author Sergey Evdokimov
  */
-class MavenGroovyInjectionTest extends LightCodeInsightFixtureTestCase {
+class MavenGroovyInjectionTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testCompletion() {
     myFixture.configureByText("pom.xml", """

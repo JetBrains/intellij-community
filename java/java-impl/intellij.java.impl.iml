@@ -62,6 +62,7 @@
     <orderEntry type="library" name="javax.activation" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="jaxb-runtime" level="project" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer.annotations" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
   </component>
   <component name="copyright">
     <Base>

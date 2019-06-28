@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.actionSystem.*;
@@ -176,7 +176,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<FilterPair<VcsL
     Set<VirtualFile> roots = getAllRoots();
 
     List<AnAction> rootActions = new ArrayList<>();
-    if (myColorManager.isMultipleRoots()) {
+    if (myColorManager.hasMultiplePaths()) {
       for (VirtualFile root : ContainerUtil.sorted(roots, FILE_BY_NAME_COMPARATOR)) {
         rootActions.add(new SelectVisibleRootAction(root));
       }

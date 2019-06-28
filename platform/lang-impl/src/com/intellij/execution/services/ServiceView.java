@@ -3,11 +3,15 @@ package com.intellij.execution.services;
 
 import com.intellij.execution.services.ServiceModel.ServiceViewItem;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.pom.Navigatable;
+import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
@@ -20,6 +24,7 @@ abstract class ServiceView extends JPanel implements Disposable {
   protected final Project myProject;
   private final ServiceViewModel myModel;
   protected final ServiceViewUi myUi;
+  private AutoScrollToSourceHandler myAutoScrollToSourceHandler;
 
   ServiceView(LayoutManager layout, @NotNull Project project, @NotNull ServiceViewModel model, @NotNull ServiceViewUi ui) {
     super(layout);
@@ -36,6 +41,10 @@ abstract class ServiceView extends JPanel implements Disposable {
     return myModel;
   }
 
+  ServiceViewUi getUi() {
+    return myUi;
+  }
+
   void saveState(@NotNull ServiceViewState state) {
     myModel.saveState(state);
   }
@@ -49,11 +58,41 @@ abstract class ServiceView extends JPanel implements Disposable {
 
   abstract void onViewUnselected();
 
-  static ServiceView createView(@NotNull Project project, @NotNull ServiceViewModel model, @NotNull ServiceViewState state) {
-    ServiceView serviceView = model instanceof ServiceViewModel.SingeServiceModel ?
-                              createSingleView(project, model) :
-                              createTreeView(project, model, state);
+  boolean isGroupByServiceGroups() {
+    return myModel.isGroupByServiceGroups();
+  }
+
+  void setGroupByServiceGroups(boolean value) {
+    myModel.setGroupByServiceGroups(value);
+  }
+
+  boolean isGroupByContributor() {
+    return myModel.isGroupByContributor();
+  }
+
+  void setGroupByContributor(boolean value) {
+    myModel.setGroupByContributor(value);
+  }
+
+  abstract List<Object> getChildrenSafe(@NotNull Object value);
+
+  void setAutoScrollToSourceHandler(@NotNull AutoScrollToSourceHandler autoScrollToSourceHandler) {
+    myAutoScrollToSourceHandler = autoScrollToSourceHandler;
+  }
+
+  protected void onViewSelected(@NotNull ServiceViewDescriptor descriptor) {
+    descriptor.onNodeSelected();
+    if (myAutoScrollToSourceHandler != null) {
+      myAutoScrollToSourceHandler.onMouseClicked(this);
+    }
+  }
+
+  static ServiceView createView(@NotNull Project project, @NotNull ServiceViewModel viewModel, @NotNull ServiceViewState viewState) {
+    ServiceView serviceView = viewModel instanceof ServiceViewModel.SingeServiceModel ?
+                              createSingleView(project, viewModel) :
+                              createTreeView(project, viewModel, viewState);
     setDataProvider(serviceView);
+    setViewModelState(viewModel, viewState);
     return serviceView;
   }
 
@@ -73,6 +112,21 @@ abstract class ServiceView extends JPanel implements Disposable {
       if (PlatformDataKeys.SELECTED_ITEMS.is(dataId)) {
         return ContainerUtil.map2Array(serviceView.getSelectedItems(), ServiceViewItem::getValue);
       }
+      if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+        List<Navigatable> navigatables =
+          ContainerUtil.mapNotNull(serviceView.getSelectedItems(), item -> item.getViewDescriptor().getNavigatable());
+        return navigatables.toArray(new Navigatable[0]);
+      }
+      if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
+        List<ServiceViewItem> selection = serviceView.getSelectedItems();
+        ServiceViewContributor contributor = ServiceViewDragHelper.getTheOnlyContributor(selection);
+        DataProvider delegate = contributor == null ? null : contributor.getViewDescriptor().getDataProvider();
+        DeleteProvider deleteProvider = delegate == null ? null : PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getData(delegate);
+        return deleteProvider == null ? new ServiceViewDeleteProvider(serviceView) : deleteProvider;
+      }
+      if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+        return new ServiceViewCopyProvider(serviceView);
+      }
       List<ServiceViewItem> selectedItems = serviceView.getSelectedItems();
       ServiceViewItem selectedItem = ContainerUtil.getOnlyItem(selectedItems);
       ServiceViewDescriptor descriptor = selectedItem == null ? null : selectedItem.getViewDescriptor();
@@ -82,5 +136,10 @@ abstract class ServiceView extends JPanel implements Disposable {
       }
       return null;
     });
+  }
+
+  private static void setViewModelState(@NotNull ServiceViewModel viewModel, @NotNull ServiceViewState viewState) {
+    viewModel.setGroupByServiceGroups(viewState.groupByServiceGroups);
+    viewModel.setGroupByContributor(viewState.groupByContributor);
   }
 }

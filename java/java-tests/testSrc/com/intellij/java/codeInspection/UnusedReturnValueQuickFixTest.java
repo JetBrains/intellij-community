@@ -29,31 +29,31 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
-public class UnusedReturnValueQuickFixTest extends LightCodeInsightFixtureTestCase {
+public class UnusedReturnValueQuickFixTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     PlatformTestUtil.registerExtension(Extensions.getRootArea(), ImplicitUsageProvider.EP_NAME, new ImplicitUsageProvider() {
       @Override
-      public boolean isImplicitUsage(PsiElement element) {
+      public boolean isImplicitUsage(@NotNull PsiElement element) {
         return false;
       }
 
       @Override
-      public boolean isImplicitRead(PsiElement element) {
+      public boolean isImplicitRead(@NotNull PsiElement element) {
         return element instanceof PsiMethod && ((PsiMethod)element).getName().equals("implicitRead");
       }
 
       @Override
-      public boolean isImplicitWrite(PsiElement element) {
+      public boolean isImplicitWrite(@NotNull PsiElement element) {
         return false;
       }
     }, getTestRootDisposable());

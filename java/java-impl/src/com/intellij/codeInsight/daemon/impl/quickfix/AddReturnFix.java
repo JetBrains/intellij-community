@@ -81,7 +81,7 @@ public class AddReturnFix implements IntentionAction {
     assert body != null;
     returnStatement = (PsiReturnStatement) body.addBefore(returnStatement, body.getRBrace());
 
-    MethodReturnTypeFix.selectReturnValueInEditor(returnStatement, editor);
+    MethodReturnTypeFix.selectInEditor(returnStatement.getReturnValue(), editor);
   }
 
   private String suggestReturnValue() {

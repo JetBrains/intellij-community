@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.customize;
 
 import com.intellij.CommonBundle;
@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -68,7 +69,6 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
 
   public CustomizeUIThemeStepPanel() {
     setLayout(createSmallBorderLayout());
-    IconLoader.activate();
 
     initThemes(myThemes);
 
@@ -173,10 +173,10 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
 
   @Override
   public String getHTMLFooter() {
-    return "UI theme can be changed later in " +
+    return "You can change the UI theme later in " +
            CommonBundle.settingsTitle()
            + " | " + OptionsBundle.message("configurable.group.appearance.settings.display.name")
-           + " | " + "Appearance";
+           + " | " + "Appearance. Additional themes are available in " + CommonBundle.settingsTitle() + " | Plugins.";
   }
 
   private void applyLaf(ThemeInfo theme, Component component) {
@@ -184,7 +184,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
     try {
       boolean wasUnderDarcula = UIUtil.isUnderDarcula();
       UIManager.setLookAndFeel(info.getClassName());
-      LafManagerImpl.updateForDarcula(UIUtil.isUnderDarcula());
+      AppUIUtil.updateForDarcula(UIUtil.isUnderDarcula());
       String className = info.getClassName();
       WelcomeWizardUtil.setWizardLAF(className);
       Window window = SwingUtilities.getWindowAncestor(component);

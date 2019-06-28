@@ -6,8 +6,10 @@ import com.intellij.codeInsight.navigation.DocPreviewUtil;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -25,7 +27,6 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SingleAlarm;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -103,6 +104,16 @@ public class QuickDocUtil {
     return result;
   }
 
+  /**
+   * Same as {@link #runInReadActionWithWriteActionPriorityWithRetries(Runnable, long, long, ProgressIndicator)} using current thread's
+   * progress indicator ({@link ProgressManager#getProgressIndicator()}).
+   */
+  public static boolean runInReadActionWithWriteActionPriorityWithRetries(@NotNull final Runnable action,
+                                                                          long timeout, long pauseBetweenRetries) {
+    return runInReadActionWithWriteActionPriorityWithRetries(action, timeout, pauseBetweenRetries,
+                                                             ProgressIndicatorProvider.getGlobalProgressIndicator());
+  }
+
   @Contract("_, _, _, null -> null")
   public static String inferLinkFromFullDocumentation(@NotNull DocumentationProvider provider,
                                                       PsiElement element,
@@ -158,7 +169,7 @@ public class QuickDocUtil {
         component.replaceText(newText, element);
       }
     }, 100, alarmDisposable);
-    AppExecutorUtil.getAppExecutorService().submit(() -> {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         provider.consume(str -> {
           ProgressManager.checkCanceled();

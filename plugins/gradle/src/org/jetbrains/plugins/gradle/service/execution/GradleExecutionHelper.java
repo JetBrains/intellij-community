@@ -15,6 +15,7 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunCo
 import com.intellij.openapi.externalSystem.util.OutputWrapper;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
@@ -26,6 +27,8 @@ import org.gradle.process.internal.JvmOptions;
 import org.gradle.tooling.*;
 import org.gradle.tooling.events.OperationType;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
+import org.gradle.tooling.model.BuildIdentifier;
+import org.gradle.tooling.model.UnsupportedMethodException;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
@@ -115,7 +118,8 @@ public class GradleExecutionHelper {
       if (buildEnvironment != null) {
         // the BuildEnvironment jvm arguments of the main build should be used for the 'buildSrc' import
         // to avoid spawning of the second gradle daemon
-        List<String> buildJvmArguments = "buildSrc".equals(buildEnvironment.getBuildIdentifier().getRootDir().getName())
+        BuildIdentifier buildIdentifier = getBuildIdentifier(buildEnvironment);
+        List<String> buildJvmArguments = buildIdentifier == null || "buildSrc".equals(buildIdentifier.getRootDir().getName())
                                          ? ContainerUtil.emptyList()
                                          : buildEnvironment.getJava().getJvmArguments();
         merged = mergeJvmArgs(settings.getServiceDirectory(), buildJvmArguments, jvmArgs);
@@ -127,7 +131,7 @@ public class GradleExecutionHelper {
       // filter nulls and empty strings
       List<String> filteredArgs = ContainerUtil.mapNotNull(merged, s -> StringUtil.isEmpty(s) ? null : s);
 
-      operation.setJvmArguments(ArrayUtil.toStringArray(filteredArgs));
+      operation.setJvmArguments(ArrayUtilRt.toStringArray(filteredArgs));
     }
 
     if (settings.isOfflineWork()) {
@@ -164,7 +168,7 @@ public class GradleExecutionHelper {
     }
     filteredArgs.add("-Didea.active=true");
     filteredArgs.add("-Didea.version=" + getIdeaVersion());
-    operation.withArguments(ArrayUtil.toStringArray(filteredArgs));
+    operation.withArguments(ArrayUtilRt.toStringArray(filteredArgs));
 
     setupEnvironment(operation, settings, gradleVersion, id, listener);
 
@@ -173,7 +177,14 @@ public class GradleExecutionHelper {
       operation.setJavaHome(new File(javaHome));
     }
 
-    String buildRootDir = buildEnvironment == null ? null : buildEnvironment.getBuildIdentifier().getRootDir().getPath();
+    String buildRootDir;
+    if (buildEnvironment == null) {
+      buildRootDir = null;
+    }
+    else {
+      BuildIdentifier buildIdentifier = getBuildIdentifier(buildEnvironment);
+      buildRootDir = buildIdentifier == null ? null : buildIdentifier.getRootDir().getPath();
+    }
     GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, id, buildRootDir);
     operation.addProgressListener((ProgressListener)gradleProgressListener);
     operation.addProgressListener(gradleProgressListener,
@@ -187,6 +198,16 @@ public class GradleExecutionHelper {
     if (inputStream != null) {
       operation.setStandardInput(inputStream);
     }
+  }
+
+  @Nullable
+  private static BuildIdentifier getBuildIdentifier(@NotNull BuildEnvironment buildEnvironment) {
+    try {
+      return buildEnvironment.getBuildIdentifier();
+    }
+    catch (UnsupportedMethodException ignore) {
+    }
+    return null;
   }
 
   private static void setupEnvironment(@NotNull LongRunningOperation operation,
@@ -498,15 +519,6 @@ public class GradleExecutionHelper {
     }
   }
 
-  /**
-   * @deprecated use {@link GradleExecutionHelper#writeToFileGradleInitScript(String, String)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
-  public static File writeToFileGradleInitScript(@NotNull String content) throws IOException {
-    return writeToFileGradleInitScript(content, "ijinit");
-  }
-
   public static File writeToFileGradleInitScript(@NotNull String content, @NotNull String filePrefix) throws IOException {
     byte[] contentBytes = content.getBytes(StandardCharsets.UTF_8);
     int contentLength = contentBytes.length;
@@ -685,11 +697,11 @@ public class GradleExecutionHelper {
   }
 
   @NotNull
-  private static String getToolingExtensionsJarPaths(@NotNull Set<Class> toolingExtensionClasses) {
+  public static String getToolingExtensionsJarPaths(@NotNull Set<Class> toolingExtensionClasses) {
     final Set<String> jarPaths = ContainerUtil.map2SetNotNull(toolingExtensionClasses, aClass -> {
       String path = PathManager.getJarPathForClass(aClass);
       if (path != null) {
-        if (FileUtil.getNameWithoutExtension(path).equals("gradle-api-" + GradleVersion.current().getBaseVersion())) {
+        if (FileUtilRt.getNameWithoutExtension(path).equals("gradle-api-" + GradleVersion.current().getBaseVersion())) {
           LOG.warn("The gradle api jar shouldn't be added to the gradle daemon classpath: {" + aClass + "," + path + "}");
           return null;
         }
@@ -716,6 +728,7 @@ public class GradleExecutionHelper {
    * @deprecated {@link #getModelBuilder(Class, ExternalSystemTaskId, GradleExecutionSettings, ProjectConnection, ExternalSystemTaskNotificationListener)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   @NotNull
   public <T> ModelBuilder<T> getModelBuilder(@NotNull Class<T> modelType,
                                              @NotNull final ExternalSystemTaskId id,
@@ -767,6 +780,7 @@ public class GradleExecutionHelper {
   /**
    * @deprecated to be removed in future version
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static void prepare(@NotNull LongRunningOperation operation,
                              @NotNull final ExternalSystemTaskId id,

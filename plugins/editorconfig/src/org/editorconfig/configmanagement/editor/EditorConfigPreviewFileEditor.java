@@ -1,17 +1,24 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement.editor;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent;
+import com.intellij.psi.codeStyle.CodeStyleSettingsListener;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ObjectUtils;
 import org.editorconfig.language.messages.EditorConfigBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,15 +27,23 @@ import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeListener;
 
-public class EditorConfigPreviewFileEditor implements FileEditor {
-  private final Editor myEditor;
+public class EditorConfigPreviewFileEditor implements FileEditor, CodeStyleSettingsListener {
+  private final Editor                  myEditor;
+  private final EditorConfigPreviewFile myPreviewFile;
 
-  public EditorConfigPreviewFileEditor(Editor editor) {
+  public EditorConfigPreviewFileEditor(@NotNull Editor editor, @NotNull EditorConfigPreviewFile previewFile) {
     myEditor = editor;
+    myPreviewFile = previewFile;
     if (myEditor instanceof EditorEx) {
       ((EditorEx)myEditor).setPermanentHeaderComponent(getHeaderComponent());
     }
     myEditor.setHeaderComponent(getHeaderComponent());
+    final EditorSettings editorSettings = myEditor.getSettings();
+    editorSettings.setWhitespacesShown(true);
+    editorSettings.setGutterIconsShown(false);
+    editorSettings.setLineNumbersShown(false);
+    updateEditor();
+    CodeStyleSettingsManager.getInstance(myEditor.getProject()).addListener(this);
   }
 
   private static JComponent getHeaderComponent() {
@@ -108,6 +123,7 @@ public class EditorConfigPreviewFileEditor implements FileEditor {
 
   @Override
   public void dispose() {
+    CodeStyleSettingsManager.removeListener(myEditor.getProject(), this);
     EditorFactory.getInstance().releaseEditor(myEditor);
   }
 
@@ -121,4 +137,21 @@ public class EditorConfigPreviewFileEditor implements FileEditor {
   public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
 
   }
+
+  @Override
+  public void codeStyleSettingsChanged(@NotNull CodeStyleSettingsChangeEvent event) {
+    updateEditor();
+  }
+
+  private void updateEditor() {
+    PsiFile originalPsi = myPreviewFile.resolveOriginalPsi();
+    if (originalPsi != null) {
+      CodeStyleSettings settings = CodeStyle.getSettings(originalPsi);
+      final Language language = myPreviewFile.getLanguage();
+      myEditor.getSettings().setRightMargin(settings.getRightMargin(language));
+      myEditor.getSettings().setSoftMargins(settings.getSoftMargins(language));
+      myEditor.getSettings().setTabSize(settings.getTabSize(myPreviewFile.getFileType()));
+    }
+  }
+
 }

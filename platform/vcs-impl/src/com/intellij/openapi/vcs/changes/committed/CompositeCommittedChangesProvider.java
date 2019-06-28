@@ -85,7 +85,7 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
   public void loadCommittedChanges(CompositeChangeBrowserSettings settings,
                                    RepositoryLocation location,
                                    int maxCount,
-                                   AsynchConsumer<CommittedChangeList> consumer) {
+                                   AsynchConsumer<? super CommittedChangeList> consumer) {
     throw new UnsupportedOperationException();
   }
 
@@ -208,7 +208,7 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
         myEditors.put(vcs, editor);
 
         JPanel wrapperPane = new JPanel(new BorderLayout());
-        wrapperPane.setBorder(IdeBorderFactory.createTitledBorder(vcs.getDisplayName(), true));
+        wrapperPane.setBorder(IdeBorderFactory.createTitledBorder(vcs.getDisplayName()));
         final JCheckBox checkBox = new JCheckBox(VcsBundle.message("composite.change.provider.include.vcs.checkbox", vcs.getDisplayName()), true);
         checkBox.addActionListener(new ActionListener() {
           @Override

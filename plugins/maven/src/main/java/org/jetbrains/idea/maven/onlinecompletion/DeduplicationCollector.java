@@ -3,7 +3,13 @@ package org.jetbrains.idea.maven.onlinecompletion;
 
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
@@ -12,7 +18,7 @@ import java.util.stream.Collector;
 
 class DeduplicationCollector<Result extends MavenDependencyCompletionItem>
   implements
-  Collector<List<? extends Result>, Map<String, Result>, List<Result>> {
+  Collector<Result, Map<String, Result>, List<Result>> {
   static final Set<Characteristics> CHARACTERISTICS
     = Collections.unmodifiableSet(EnumSet.of(Characteristics.UNORDERED));
 
@@ -28,15 +34,13 @@ class DeduplicationCollector<Result extends MavenDependencyCompletionItem>
   }
 
   @Override
-  public BiConsumer<Map<String, Result>, List<? extends Result>> accumulator() {
-    return (m, l) -> {
-      if (l != null && m != null) {
-        for (Result item : l) {
+  public BiConsumer<Map<String, Result>, Result> accumulator() {
+    return (m, item) -> {
+      if (item != null && m != null) {
           String key = myDeduplicationKey.apply(item);
           Result present = m.get(key);
           if (present == null || present.getType().getWeight() < item.getType().getWeight()) {
             m.put(key, item);
-          }
         }
       }
     };

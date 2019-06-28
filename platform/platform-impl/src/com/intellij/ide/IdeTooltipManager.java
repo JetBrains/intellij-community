@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NonNls;
@@ -237,10 +238,12 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
           String text = c.getToolTipText(myCurrentEvent);
           if (text == null || text.trim().isEmpty()) return false;
 
-          Rectangle visibleRect = c.getParent() instanceof JViewport ? ((JViewport)c.getParent()).getViewRect() : c.getVisibleRect();
+          Rectangle visibleRect = c.getParent() instanceof JViewport ? ((JViewport)c.getParent()).getViewRect() :
+                                  c.getClass().getName().equals("y.view.Graph2DCanvas") ? c.getBounds() :
+                                  c.getVisibleRect();
           if (!visibleRect.contains(getPoint())) return false;
 
-          JLayeredPane layeredPane = UIUtil.getParentOfType(JLayeredPane.class, c);
+          JLayeredPane layeredPane = ComponentUtil.getParentOfType((Class<? extends JLayeredPane>)JLayeredPane.class, (Component)c);
 
           final JEditorPane pane = initPane(text, new HintHint(me).setAwtTooltip(true), layeredPane);
           final Wrapper wrapper = new Wrapper(pane);
@@ -617,7 +620,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
       }
     };
 
-    HTMLEditorKit kit = new UIUtil.JBHtmlEditorKit() {
+    HTMLEditorKit kit = new JBHtmlEditorKit() {
       final HTMLFactory factory = new HTMLFactory() {
         @Override
         public View create(Element elem) {
@@ -631,7 +634,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
               try {
                 Field field = view.getClass().getDeclaredField("size");
                 field.setAccessible(true);
-                field.set(view, JBUI.scale(1));
+                field.set(view, JBUIScale.scale(1));
                 return view;
               }
               catch (Exception ignored) {

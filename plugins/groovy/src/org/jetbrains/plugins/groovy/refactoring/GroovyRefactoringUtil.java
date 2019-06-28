@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.refactoring;
 
@@ -21,7 +21,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -373,7 +373,7 @@ public abstract class GroovyRefactoringUtil {
       modifiers = finalModifiers;
     }
     else {
-      modifiers = ArrayUtil.EMPTY_STRING_ARRAY;
+      modifiers = ArrayUtilRt.EMPTY_STRING_ARRAY;
     }
     GrVariableDeclaration decl =
       factory.createVariableDeclaration(modifiers, (GrExpression)org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil

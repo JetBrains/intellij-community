@@ -2,10 +2,10 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class IfCanBeSwitchInspectionTest extends LightInspectionTestCase {
+public class IfCanBeSwitchInspectionTest extends LightJavaInspectionTestCase {
 
   public void testIfCanBeSwitch() {
     doTest();

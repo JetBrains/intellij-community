@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.CommonBundle;
@@ -27,7 +27,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -589,7 +589,9 @@ public class ExpectedHighlightingData {
     return sb.toString();
   }
 
-  /** This is temporary wrapper to provide a time to fix failing tests */
+  /**
+   * @deprecated This is temporary wrapper to provide time to fix failing tests
+   */
   @Deprecated
   public static void expectedDuplicatedHighlighting(@NotNull Runnable check) {
     try {
@@ -669,7 +671,7 @@ public class ExpectedHighlightingData {
           matched = parse != null && info.getDescription() != null && position.getIndex() == info.getDescription().length() && position.getErrorIndex() == -1;
         }
         else {
-          parse = ArrayUtil.EMPTY_OBJECT_ARRAY;
+          parse = ArrayUtilRt.EMPTY_OBJECT_ARRAY;
           matched = value.equals(info.getDescription());
         }
         if (matched) {

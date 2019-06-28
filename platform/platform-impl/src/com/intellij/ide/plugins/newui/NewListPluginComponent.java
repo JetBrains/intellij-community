@@ -13,6 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,10 +38,10 @@ public class NewListPluginComponent extends CellPluginComponent {
   private final JLabel myNameComponent = new JLabel();
   private final JLabel myIconComponent = new JLabel(AllIcons.Plugins.PluginLogo_40);
   private final BaselineLayout myLayout = new BaselineLayout();
-  public JButton myRestartButton;
-  public JButton myInstallButton;
-  public JButton myUpdateButton;
-  public JCheckBox myEnableDisableButton;
+  private JButton myRestartButton;
+  private JButton myInstallButton;
+  private JButton myUpdateButton;
+  private JCheckBox myEnableDisableButton;
   private JLabel myRating;
   private JLabel myDownloads;
   private JLabel myVersion;
@@ -116,7 +117,7 @@ public class NewListPluginComponent extends CellPluginComponent {
             if (myBaseline == -1) {
               JCheckBox checkBox = new JCheckBox("Foo", true);
               Dimension size = checkBox.getPreferredSize();
-              myBaseline = checkBox.getBaseline(size.width, size.height) - JBUI.scale(1);
+              myBaseline = checkBox.getBaseline(size.width, size.height) - JBUIScale.scale(1);
             }
             return myBaseline;
           }
@@ -130,7 +131,7 @@ public class NewListPluginComponent extends CellPluginComponent {
           @Override
           public Dimension getPreferredSize() {
             Dimension size = super.getPreferredSize();
-            int scale = JBUI.scale(2);
+            int scale = JBUIScale.scale(2);
             return new Dimension(size.width + scale, size.height + scale);
           }
         });
@@ -143,7 +144,7 @@ public class NewListPluginComponent extends CellPluginComponent {
   }
 
   private void createMetricsPanel() {
-    JPanel panel = new NonOpaquePanel(new TextHorizontalLayout(JBUI.scale(7)));
+    JPanel panel = new NonOpaquePanel(new TextHorizontalLayout(JBUIScale.scale(7)));
     panel.setBorder(JBUI.Borders.emptyTop(5));
     myLayout.addLineComponent(panel);
 
@@ -253,6 +254,13 @@ public class NewListPluginComponent extends CellPluginComponent {
     boolean errors = myPluginModel.hasErrors(myPlugin);
     updateIcon(errors, myUninstalled || !myPluginModel.isEnabled(myPlugin));
 
+    if (myUpdateButton != null) {
+      myUpdateButton.setVisible(myUpdateDescriptor != null && !errors);
+    }
+    if (myEnableDisableButton != null) {
+      myEnableDisableButton.setVisible(!errors);
+    }
+
     if (errors) {
       boolean addListeners = myErrorComponent == null && myEventHandler != null;
 
@@ -339,7 +347,7 @@ public class NewListPluginComponent extends CellPluginComponent {
 
   @Override
   public void updateEnabledState() {
-    if (!myUninstalled) {
+    if (!myUninstalled && myEnableDisableButton != null) {
       myEnableDisableButton.setSelected(isEnabledState());
     }
     updateErrors();
@@ -414,31 +422,41 @@ public class NewListPluginComponent extends CellPluginComponent {
       return;
     }
 
-    JButton[] updateButtons = new JButton[size];
-
-    for (int i = 0; i < size; i++) {
-      JButton button = ((NewListPluginComponent)selection.get(i)).myUpdateButton;
-      if (button == null || !button.isVisible()) {
-        updateButtons = null;
+    boolean showUpdateAndState = true;
+    for (CellPluginComponent component : selection) {
+      if (myPluginModel.hasErrors(component.myPlugin)) {
+        showUpdateAndState = false;
         break;
       }
-      updateButtons[i] = button;
     }
 
-    if (updateButtons != null) {
-      group.add(new ListPluginComponent.ButtonAnAction(updateButtons));
-      if (size > 1) {
-        return;
-      }
-    }
+    if (showUpdateAndState) {
+      JButton[] updateButtons = new JButton[size];
 
-    Pair<Boolean, IdeaPluginDescriptor[]> result = getSelectionNewState(selection);
-    group.add(new ListPluginComponent.MyAnAction(result.first ? "Enable" : "Disable", null, KeyEvent.VK_SPACE) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        myPluginModel.changeEnableDisable(result.second, result.first);
+      for (int i = 0; i < size; i++) {
+        JButton button = ((NewListPluginComponent)selection.get(i)).myUpdateButton;
+        if (button == null || !button.isVisible()) {
+          updateButtons = null;
+          break;
+        }
+        updateButtons[i] = button;
       }
-    });
+
+      if (updateButtons != null) {
+        group.add(new ListPluginComponent.ButtonAnAction(updateButtons));
+        if (size > 1) {
+          return;
+        }
+      }
+
+      Pair<Boolean, IdeaPluginDescriptor[]> result = getSelectionNewState(selection);
+      group.add(new ListPluginComponent.MyAnAction(result.first ? "Enable" : "Disable", null, KeyEvent.VK_SPACE) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          myPluginModel.changeEnableDisable(result.second, result.first);
+        }
+      });
+    }
 
     for (CellPluginComponent component : selection) {
       if (((NewListPluginComponent)component).myUninstalled || component.myPlugin.isBundled()) {
@@ -446,7 +464,10 @@ public class NewListPluginComponent extends CellPluginComponent {
       }
     }
 
-    group.addSeparator();
+    if (group.getChildrenCount() > 0) {
+      group.addSeparator();
+    }
+
     group.add(new ListPluginComponent.MyAnAction("Uninstall", IdeActions.ACTION_EDITOR_DELETE, EventHandler.DELETE_CODE) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -516,6 +537,12 @@ public class NewListPluginComponent extends CellPluginComponent {
     }
     else if (!restart && !update) {
       if (keyCode == KeyEvent.VK_SPACE) {
+        for (CellPluginComponent component : selection) {
+          if (myPluginModel.hasErrors(component.myPlugin)) {
+            return;
+          }
+        }
+
         if (selection.size() == 1) {
           myPluginModel.changeEnableDisable(selection.get(0).myPlugin);
         }
@@ -626,7 +653,7 @@ public class NewListPluginComponent extends CellPluginComponent {
       Dimension iconSize = myIconComponent.getPreferredSize();
       myIconComponent.setBounds(x, y, iconSize.width, iconSize.height);
       x += iconSize.width + myHGap.get();
-      y += JBUI.scale(2);
+      y += JBUIScale.scale(2);
 
       int calcNameWidth = calculateNameWidth();
       Dimension nameSize = myNameComponent.getPreferredSize();
@@ -727,11 +754,13 @@ public class NewListPluginComponent extends CellPluginComponent {
         myButtonComponents.add(index, component);
       }
       add(component);
+      updateVisibleOther();
     }
 
     public void removeButtonComponent(@NotNull JComponent component) {
       myButtonComponents.remove(component);
       remove(component);
+      updateVisibleOther();
     }
 
     public void setProgressComponent(@NotNull JComponent progressComponent) {
@@ -755,6 +784,13 @@ public class NewListPluginComponent extends CellPluginComponent {
 
       setVisibleOther(true);
       doLayout();
+    }
+
+    private void updateVisibleOther() {
+      if (myProgressComponent != null) {
+        myButtonEnableStates = null;
+        setVisibleOther(false);
+      }
     }
 
     private void setVisibleOther(boolean value) {

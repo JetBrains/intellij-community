@@ -5,10 +5,10 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.CapturingCleanerInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class CapturingCleanerInspectionTest extends LightCodeInsightFixtureTestCase {
+public class CapturingCleanerInspectionTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testCapturingCleaner() {doTest();}
 

@@ -27,7 +27,6 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   private final ControlFlowPolicy myPolicy;
 
   private ControlFlowImpl myCurrentFlow;
-  private final ControlFlowStack myStack = new ControlFlowStack();
   private final Stack<PsiParameter> myCatchParameters = new Stack<>();// stack of PsiParameter for catch
   private final Stack<PsiElement> myCatchBlocks = new Stack<>();
 
@@ -397,10 +396,18 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Override
   public void visitBreakStatement(PsiBreakStatement statement) {
-    startElement(statement);
-    generateExpressionInstructions(statement.getValueExpression());
+    generateYieldInstructions(statement, statement.getValueExpression(), statement.findExitedElement());
+  }
 
-    PsiElement exitedStatement = statement.findExitedElement();
+  @Override
+  public void visitYieldStatement(PsiYieldStatement statement) {
+    generateYieldInstructions(statement, statement.getExpression(), statement.findEnclosingExpression());
+  }
+
+  private void generateYieldInstructions(PsiStatement statement, PsiExpression valueExpression, PsiElement exitedStatement) {
+    startElement(statement);
+    generateExpressionInstructions(valueExpression);
+
     if (exitedStatement != null) {
       callFinallyBlocksOnExit(exitedStatement);
 
@@ -410,7 +417,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       if (finallyBlock != null && finallyStartOffset != -1) {
         // go out of finally, use return
         CallInstruction callInstruction = (CallInstruction)myCurrentFlow.getInstructions().get(finallyStartOffset - 2);
-        instruction = new ReturnInstruction(0, myStack, callInstruction);
+        instruction = new ReturnInstruction(0, callInstruction);
       }
       else {
         instruction = new GoToInstruction(0, BranchingInstruction.Role.END, PsiTreeUtil.isAncestor(exitedStatement, myCodeFragment, true));
@@ -430,7 +437,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       if (enclosingTryStatement == null || !PsiTreeUtil.isAncestor(exitedStatement, enclosingTryStatement, false)) {
         break;
       }
-      CallInstruction instruction = new CallInstruction(0, 0, myStack);
+      CallInstruction instruction = new CallInstruction(0, 0);
       finallyBlockSubroutine.addCall(instruction);
       myCurrentFlow.addInstruction(instruction);
       addElementOffsetLater(finallyBlock, true);
@@ -472,7 +479,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       if (finallyBlock != null && finallyStartOffset != -1) {
         // go out of finally, use return
         CallInstruction callInstruction = (CallInstruction)myCurrentFlow.getInstructions().get(finallyStartOffset - 2);
-        instruction = new ReturnInstruction(0, myStack, callInstruction);
+        instruction = new ReturnInstruction(0, callInstruction);
       }
       else {
         instruction = new GoToInstruction(0, BranchingInstruction.Role.END, PsiTreeUtil.isAncestor(body, myCodeFragment, true));
@@ -1169,20 +1176,20 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
     if (finallyBlock != null) {
       // normal completion, call finally block and proceed
-      CallInstruction normalCompletion = new CallInstruction(0, 0, myStack);
+      CallInstruction normalCompletion = new CallInstruction(0, 0);
       finallyBlockSubroutine.addCall(normalCompletion);
       myCurrentFlow.addInstruction(normalCompletion);
       addElementOffsetLater(finallyBlock, true);
       myCurrentFlow.addInstruction(new GoToInstruction(0));
       addElementOffsetLater(statement, false);
       // return completion, call finally block and return
-      CallInstruction returnCompletion = new CallInstruction(0, 0, myStack);
+      CallInstruction returnCompletion = new CallInstruction(0, 0);
       finallyBlockSubroutine.addCall(returnCompletion);
       myCurrentFlow.addInstruction(returnCompletion);
       addElementOffsetLater(finallyBlock, true);
       addReturnInstruction(statement);
       // throw exception completion, call finally block and rethrow
-      CallInstruction throwExceptionCompletion = new CallInstruction(0, 0, myStack);
+      CallInstruction throwExceptionCompletion = new CallInstruction(0, 0);
       finallyBlockSubroutine.addCall(throwExceptionCompletion);
       myCurrentFlow.addInstruction(throwExceptionCompletion);
       addElementOffsetLater(finallyBlock, true);
@@ -1202,13 +1209,13 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       // first three return instructions are for normal completion, return statement call completion and unchecked exception throwing completion resp.
 
       // normal completion
-      myCurrentFlow.addInstruction(new ReturnInstruction(0, myStack, normalCompletion));
+      myCurrentFlow.addInstruction(new ReturnInstruction(0, normalCompletion));
 
       // return statement call completion
-      myCurrentFlow.addInstruction(new ReturnInstruction(procStart - 3, myStack, returnCompletion));
+      myCurrentFlow.addInstruction(new ReturnInstruction(procStart - 3, returnCompletion));
 
       // unchecked exception throwing completion
-      myCurrentFlow.addInstruction(new ReturnInstruction(procStart - 1, myStack, throwExceptionCompletion));
+      myCurrentFlow.addInstruction(new ReturnInstruction(procStart - 1, throwExceptionCompletion));
 
       // checked exception throwing completion. need to dispatch to the correct catch clause
       final List<PsiElement> unhandledExceptionCatchBlocks = finallyBlockToUnhandledExceptions.remove(finallyBlock);
@@ -1216,7 +1223,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         ProgressManager.checkCanceled();
         PsiElement catchBlock = unhandledExceptionCatchBlocks.get(i);
 
-        final ReturnInstruction returnInstruction = new ReturnInstruction(0, myStack, throwExceptionCompletion);
+        final ReturnInstruction returnInstruction = new ReturnInstruction(0, throwExceptionCompletion);
         returnInstruction.setRethrowFromFinally();
         myCurrentFlow.addInstruction(returnInstruction);
         if (catchBlock == null) {

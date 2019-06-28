@@ -18,7 +18,7 @@ package org.jetbrains.idea.maven.utils;
 import com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory;
 import com.intellij.platform.templates.SaveProjectAsTemplateAction;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.util.Map;
@@ -26,7 +26,7 @@ import java.util.Map;
 /**
  * @author Dmitry Avdeev
  */
-public class MavenTemplateFileProcessorTest extends LightPlatformCodeInsightFixtureTestCase {
+public class MavenTemplateFileProcessorTest extends BasePlatformTestCase {
 
   private static final String TEXT =
     "<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +

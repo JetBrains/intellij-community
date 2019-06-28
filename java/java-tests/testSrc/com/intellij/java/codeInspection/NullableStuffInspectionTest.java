@@ -12,12 +12,12 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
-public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase {
+public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   private NullableStuffInspection myInspection = new NullableStuffInspection();
 
   private final GeneratedSourcesFilter myGeneratedSourcesFilter = new GeneratedSourcesFilter() {

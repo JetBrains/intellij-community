@@ -22,14 +22,17 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSetInterner;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.messages.ListenerDescriptor;
 import com.intellij.util.xmlb.BeanBinding;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
@@ -91,7 +94,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private @Nullable MultiMap<String, Element> myExtensionsPoints;
   private List<String> myModules;
   private ClassLoader myLoader;
-  private HelpSetPath[] myHelpSets;
   private String myDescriptionChildText;
   private boolean myUseIdeaClassLoader;
   private boolean myUseCoreClassLoader;
@@ -103,6 +105,8 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private boolean myEnabled = true;
   private boolean myDeleted;
   private Boolean mySkipped;
+
+  private List<ListenerDescriptor> myListenerDescriptors;
 
   public IdeaPluginDescriptorImpl(@NotNull File pluginPath, boolean bundled) {
     myPath = pluginPath;
@@ -122,9 +126,8 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     readExternal(element, url, app != null && app.isUnitTestMode(), pathResolver, stringInterner);
   }
 
-  public void loadFromFile(@NotNull File file, @Nullable SafeJdomFactory factory) throws IOException, JDOMException {
-    Application app = ApplicationManager.getApplication();
-    readExternal(JDOMUtil.load(file, factory), file.toURI().toURL(), app != null && app.isUnitTestMode(),
+  public void loadFromFile(@NotNull File file, @Nullable SafeJdomFactory factory, boolean ignoreMissingInclude) throws IOException, JDOMException {
+    readExternal(JDOMUtil.load(file, factory), file.toURI().toURL(), ignoreMissingInclude,
                  JDOMXIncluder.DEFAULT_PATH_RESOLVER, factory == null ? null : factory.stringInterner());
   }
 
@@ -139,7 +142,14 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       return;
     }
 
-    JDOMXIncluder.resolveNonXIncludeElement(element, url, ignoreMissingInclude, pathResolver);
+    String pluginId = element.getChildTextTrim("id");
+    if (pluginId == null) pluginId = element.getChildTextTrim("name");
+    if (pluginId == null || !PluginManagerCore.disabledPlugins().contains(pluginId)) {
+      JDOMXIncluder.resolveNonXIncludeElement(element, url, ignoreMissingInclude, pathResolver);
+    }
+    else if (LOG.isDebugEnabled()) {
+      LOG.debug("Skipping resolving of " + pluginId + " from " + url);
+    }
     readExternal(element, stringInterner);
   }
 
@@ -223,25 +233,13 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       myOptionalDependencies = ContainerUtil.filter(dependentPlugins, id -> !nonOptionalDependentPlugins.contains(id)).toArray(PluginId.EMPTY_ARRAY);
     }
 
-    if (pluginBean.helpSets == null || pluginBean.helpSets.length == 0) {
-      myHelpSets = HelpSetPath.EMPTY;
-    }
-    else {
-      myHelpSets = new HelpSetPath[pluginBean.helpSets.length];
-      PluginHelpSet[] sets = pluginBean.helpSets;
-      for (int i = 0, n = sets.length; i < n; i++) {
-        PluginHelpSet pluginHelpSet = sets[i];
-        myHelpSets[i] = new HelpSetPath(pluginHelpSet.file, pluginHelpSet.path);
-      }
-    }
-
     // we cannot use our new kotlin-aware XmlSerializer, so, will be used different bean cache,
     // but it is not a problem because in any case new XmlSerializer is not used for our core classes (plugin bean, component config and so on).
     Ref<BeanBinding> oldComponentConfigBeanBinding = new Ref<>();
 
     // only for CoreApplicationEnvironment
     if (stringInterner == null) {
-      stringInterner = new Interner<>(SERVICE_QUALIFIED_ELEMENT_NAMES);
+      stringInterner = new HashSetInterner<>(SERVICE_QUALIFIED_ELEMENT_NAMES);
     }
 
     MultiMap<String, Element> extensions = myExtensions;
@@ -352,9 +350,38 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
           readComponents(child, oldComponentConfigBeanBinding, (ArrayList<ComponentConfig>)myModuleComponents);
         }
         break;
+
+        case "applicationListeners": {
+          List<ListenerDescriptor> descriptors = myListenerDescriptors;
+          if (descriptors == null) {
+            descriptors = new ArrayList<>();
+            myListenerDescriptors = descriptors;
+          }
+          readListener(child, descriptors);
+        }
+        break;
       }
 
       child.getContent().clear();
+    }
+  }
+
+  private void readListener(@NotNull Element list, @NotNull List<ListenerDescriptor> descriptors) {
+    for (Content content : list.getContent()) {
+      if (!(content instanceof Element)) {
+        continue;
+      }
+
+      Element child = (Element)content;
+      String listenerClassName = child.getAttributeValue("class");
+      String topicClassName = child.getAttributeValue("topic");
+      if (listenerClassName == null || topicClassName == null) {
+        LOG.error("applicationListener descriptor is not correct: " + JDOMUtil.writeElement(child));
+      }
+      else {
+        String activeInTestMode = child.getAttributeValue("activeInTestMode");
+        descriptors.add(new ListenerDescriptor(listenerClassName, topicClassName, activeInTestMode == null || Boolean.parseBoolean(activeInTestMode), this));
+      }
     }
   }
 
@@ -617,6 +644,11 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   @NotNull
+  public List<ListenerDescriptor> getListeners() {
+    return ContainerUtil.notNullize(myListenerDescriptors);
+  }
+
+  @NotNull
   public List<ServiceDescriptor> getProjectServices() {
     return ContainerUtil.notNullize(myProjectServices);
   }
@@ -658,17 +690,12 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   @Override
-  @NotNull
-  public HelpSetPath[] getHelpSets() {
-    return myHelpSets;
-  }
-
-  @Override
   public PluginId getPluginId() {
     return myId;
   }
 
   /** @deprecated doesn't make sense for installed plugins; use PluginNode#getDownloads (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Override
   @Deprecated
   public String getDownloads() {
@@ -785,6 +812,8 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myAppServices = concatOrNull(myAppServices, descriptor.myAppServices);
     myProjectServices = concatOrNull(myProjectServices, descriptor.myProjectServices);
     myModuleServices = concatOrNull(myModuleServices, descriptor.myModuleServices);
+
+    myListenerDescriptors = concatOrNull(myListenerDescriptors, descriptor.myListenerDescriptors);
   }
 
   @Nullable
@@ -849,19 +878,19 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
 
     if (os.equals(Extensions.OS.mac.name())) {
-      return SystemInfoRt.isMac;
+      return SystemInfo.isMac;
     }
     else if (os.equals(Extensions.OS.linux.name())) {
-      return SystemInfoRt.isLinux;
+      return SystemInfo.isLinux;
     }
     else if (os.equals(Extensions.OS.windows.name())) {
-      return SystemInfoRt.isWindows;
+      return SystemInfo.isWindows;
     }
     else if (os.equals(Extensions.OS.unix.name())) {
-      return SystemInfoRt.isUnix;
+      return SystemInfo.isUnix;
     }
     else if (os.equals(Extensions.OS.freebsd.name())) {
-      return SystemInfoRt.isFreeBSD;
+      return SystemInfo.isFreeBSD;
     }
     else {
       throw new IllegalArgumentException("Unknown OS '" + os + "'");

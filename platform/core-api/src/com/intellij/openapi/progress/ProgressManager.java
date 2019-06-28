@@ -248,4 +248,13 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   public abstract boolean runInReadActionWithWriteActionPriority(@NotNull final Runnable action, @Nullable ProgressIndicator indicator);
 
   public abstract boolean isInNonCancelableSection();
+
+  /**
+   * Performs the given computation while giving more priority to the current thread
+   * (by forcing all other non-prioritized threads to sleep a bit whenever they call {@link #checkCanceled()}.<p></p>
+   *
+   * This is intended for relatively short (expected to be under 10 seconds) background activities that the user is waiting for
+   * (e.g. code navigation), and which shouldn't be slowed down by CPU-intensive background tasks like highlighting or indexing.
+   */
+  public abstract <T, E extends Throwable> T computePrioritized(@NotNull ThrowableComputable<T, E> computable) throws E;
 }

@@ -20,6 +20,7 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
     public boolean ANNOTATE_IGNORE_SPACES = true;
     public AnnotateDetectMovementsOption ANNOTATE_DETECT_INNER_MOVEMENTS = AnnotateDetectMovementsOption.NONE;
     public boolean AUTO_COMMIT_ON_CHERRY_PICK = true;
+    public boolean USE_CREDENTIAL_HELPER = false;
   }
 
   public static GitVcsApplicationSettings getInstance() {
@@ -83,6 +84,14 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
 
   public boolean isAutoCommitOnCherryPick() {
     return myState.AUTO_COMMIT_ON_CHERRY_PICK;
+  }
+
+  public void setUseCredentialHelper(boolean useCredentialHelper) {
+    myState.USE_CREDENTIAL_HELPER = useCredentialHelper;
+  }
+
+  public boolean isUseCredentialHelper() {
+    return myState.USE_CREDENTIAL_HELPER;
   }
 
   public enum AnnotateDetectMovementsOption {

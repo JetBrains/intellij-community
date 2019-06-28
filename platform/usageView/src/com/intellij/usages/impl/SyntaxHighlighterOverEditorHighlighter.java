@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.ex.util.LayeredLexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -38,7 +39,7 @@ public class SyntaxHighlighterOverEditorHighlighter implements SyntaxHighlighter
   private final SyntaxHighlighter highlighter;
 
   public SyntaxHighlighterOverEditorHighlighter(@NotNull SyntaxHighlighter _highlighter, @NotNull VirtualFile file, @NotNull Project project) {
-    if (file.getFileType() == PlainTextFileType.INSTANCE) { // optimization for large files, PlainTextSyntaxHighlighterFactory is slow
+    if (FileTypeRegistry.getInstance().isFileOfType(file, PlainTextFileType.INSTANCE)) { // optimization for large files, PlainTextSyntaxHighlighterFactory is slow
       highlighter = new PlainSyntaxHighlighter();
       lexer = highlighter.getHighlightingLexer();
     }

@@ -6,6 +6,7 @@ import com.intellij.vcs.log.VcsLogRootFilter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Objects;
 
 class VcsLogRootFilterImpl implements VcsLogRootFilter {
   @NotNull private final Collection<VirtualFile> myRoots;
@@ -23,5 +24,18 @@ class VcsLogRootFilterImpl implements VcsLogRootFilter {
   @Override
   public String toString() {
     return "roots:" + myRoots;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    VcsLogRootFilterImpl filter = (VcsLogRootFilterImpl)o;
+    return getRoots().equals(filter.getRoots());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getRoots());
   }
 }

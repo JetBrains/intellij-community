@@ -24,8 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 final class ObjectNode<T extends Disposable> {
@@ -41,25 +39,14 @@ final class ObjectNode<T extends Disposable> {
   private List<ObjectNode<T>> myChildren; // guarded by myTree.treeLock
   private final Throwable myTrace;
 
-  private final long myOwnModification;
-
   ObjectNode(@NotNull ObjectTree<T> tree,
              @Nullable ObjectNode<T> parentNode,
-             @NotNull T object,
-             long modification) {
+             @NotNull T object) {
     myTree = tree;
     myParent = parentNode;
     myObject = object;
 
     myTrace = parentNode == null && Disposer.isDebugMode() ? ThrowableInterner.intern(new Throwable()) : null;
-    myOwnModification = modification;
-  }
-
-  @NotNull
-  private ObjectNode<T>[] getChildrenArray() {
-    List<ObjectNode<T>> children = myChildren;
-    //noinspection unchecked
-    return children == null || children.isEmpty() ? EMPTY_ARRAY : children.toArray(EMPTY_ARRAY);
   }
 
   void addChild(@NotNull ObjectNode<T> child) {
@@ -89,14 +76,8 @@ final class ObjectNode<T extends Disposable> {
   }
 
   ObjectNode<T> getParent() {
-    return myParent;
-  }
-
-  @NotNull
-  Collection<ObjectNode<T>> getChildren() {
     synchronized (myTree.treeLock) {
-      if (myChildren == null) return Collections.emptyList();
-      return Collections.unmodifiableCollection(myChildren);
+      return myParent;
     }
   }
 
@@ -114,7 +95,9 @@ final class ObjectNode<T extends Disposable> {
 
         ObjectNode<T>[] childrenArray;
         synchronized (myTree.treeLock) {
-          childrenArray = getChildrenArray();
+          List<ObjectNode<T>> children = myChildren;
+          //noinspection unchecked
+          childrenArray = children == null || children.isEmpty() ? EMPTY_ARRAY : children.toArray(EMPTY_ARRAY);
           myChildren = null;
         }
 
@@ -133,7 +116,7 @@ final class ObjectNode<T extends Disposable> {
 
         try {
           action.execute(myObject);
-          myTree.fireExecuted(myObject);
+          myTree.rememberDisposedTrace(myObject);
         }
         catch (Throwable e) {
           exceptions.add(e);
@@ -147,7 +130,7 @@ final class ObjectNode<T extends Disposable> {
     });
   }
 
-  void removeFromObjectTree() {
+  private void removeFromObjectTree() {
     synchronized (myTree.treeLock) {
       myTree.putNode(myObject, null);
       if (myParent == null) {
@@ -181,14 +164,6 @@ final class ObjectNode<T extends Disposable> {
         }
       }
     }
-  }
-
-  long getOwnModification() {
-    return myOwnModification;
-  }
-
-  long getModification() {
-    return getOwnModification();
   }
 
   <D extends Disposable> D findChildEqualTo(@NotNull D object) {

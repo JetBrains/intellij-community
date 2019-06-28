@@ -180,7 +180,7 @@ public class CyclicDependenciesAction extends AnAction{
     @Override
     protected JComponent createCenterPanel() {
       myScopePanel.setBorder(IdeBorderFactory.createTitledBorder(
-        AnalysisScopeBundle.message("analysis.scope.title", myAnalysisNoun), true));
+        AnalysisScopeBundle.message("analysis.scope.title", myAnalysisNoun)));
       myProjectButton.setText(AnalysisScopeBundle.message("cyclic.dependencies.scope.dialog.project.button", myAnalysisVerb));
       ButtonGroup group = new ButtonGroup();
       group.add(myProjectButton);

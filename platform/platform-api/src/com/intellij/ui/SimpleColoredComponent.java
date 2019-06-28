@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ide.BrowserUtil;
@@ -7,11 +7,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.paint.EffectPainter;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.*;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,8 +95,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   public SimpleColoredComponent() {
     myFragments = new ArrayList<>(3);
-    myIpad = JBUI.insets(1, 2);
-    myIconTextGap = JBUI.scale(2);
+    myIpad = JBInsets.create(1, 2);
+    myIconTextGap = JBUIScale.scale(2);
     myBorder = JBUI.Borders.empty(1, UIUtil.isUnderWin10LookAndFeel() ? 0 : 1);
     setOpaque(true);
     updateUI();
@@ -204,6 +207,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
    * fragment width isn't a right name, it is actually a padding
    * @deprecated remove in IDEA 16
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2016")
   @Deprecated
   public void appendFixedTextFragmentWidth(int width) {
     appendTextPadding(width);
@@ -428,7 +432,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   protected int getMinHeight() {
-    return JBUI.scale(16);
+    return JBUIScale.scale(16);
   }
 
   private Rectangle computePaintArea() {

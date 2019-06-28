@@ -4,6 +4,7 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileElement;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -55,7 +56,7 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
   public List<? extends RootDetector> getRootDetectors() {
     List<RootDetector> results = new ArrayList<>();
     results.add(new DescendentBasedRootFilter(OrderRootType.CLASSES, false, "classes",
-                                              file -> StdFileTypes.CLASS.equals(file.getFileType())
+                                              file -> FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.CLASS)
                                                       //some libraries store native libraries inside their JAR files and unpack them dynamically so we should detect such JARs as classes roots
                                                       || file.getFileSystem() instanceof JarFileSystem && isNativeLibrary(file)));
     results.add(DescendentBasedRootFilter.createFileTypeBasedFilter(OrderRootType.CLASSES, true, StdFileTypes.CLASS, "jar directory"));

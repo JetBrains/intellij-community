@@ -16,9 +16,9 @@
 package com.intellij.editor;
 
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 
-public class XmlJoinLinesTest extends LightCodeInsightTestCase {
+public class XmlJoinLinesTest extends LightJavaCodeInsightTestCase {
   public void testJoiningText() {
     configureFromFileText(getTestName(true) + ".xml", 
                           "<body>\n" +

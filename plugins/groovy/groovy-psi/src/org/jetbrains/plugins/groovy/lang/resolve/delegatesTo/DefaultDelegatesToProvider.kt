@@ -9,20 +9,20 @@ import groovy.lang.Closure.*
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
-import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil
-import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.createSignature
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureAsAnonymousParameterEnhancer.Companion.substitutorIgnoringClosures
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.FromStringHintProcessor
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.unwrapClassType
+import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
+import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 
 class DefaultDelegatesToProvider : GrDelegatesToProvider {
 
@@ -36,11 +36,9 @@ class DefaultDelegatesToProvider : GrDelegatesToProvider {
       return DelegatesToInfo(qualifier.type, DELEGATE_FIRST)
     }
 
-    val signature = createSignature(method, PsiSubstitutor.EMPTY)
-    val map = mapArgs(expression, call, signature) ?: return null
+    val argumentMapping = (result as? GroovyMethodResult)?.candidate?.argumentMapping ?: return null
 
-    val parameterList = method.parameterList
-    val parameter = findParameter(parameterList, expression, map) ?: return null
+    val parameter = argumentMapping.targetParameter(ExpressionArgument(expression)) ?: return null
 
     parameter.getUserData(DELEGATES_TO_KEY)?.let {
       return it
@@ -63,29 +61,10 @@ class DefaultDelegatesToProvider : GrDelegatesToProvider {
     }
     else {
       getFromValue(delegatesTo)
-      ?: getFromTarget(parameterList, delegatesTo, signature, map)
-      ?: getFromType(result, delegatesTo)
+      ?: getFromTarget(method.parameterList, delegatesTo, argumentMapping)
+      ?: getFromType(call, result, delegatesTo)
     }
     return DelegatesToInfo(delegateType, strategyValue)
-  }
-
-  private fun mapArgs(place: PsiElement, call: GrCall, signature: GrSignature): Array<GrClosureSignatureUtil.ArgInfo<PsiElement>>? {
-    val rawSignature = GrClosureSignatureUtil.rawSignature(signature)
-    return GrClosureSignatureUtil.mapParametersToArguments(
-      rawSignature, call.namedArguments, call.expressionArguments, call.closureArguments, place, false, false
-    )
-  }
-
-  private fun findParameter(parameterList: PsiParameterList,
-                            expression: GrFunctionalExpression,
-                            map: Array<GrClosureSignatureUtil.ArgInfo<PsiElement>>): PsiParameter? {
-    val parameters = parameterList.parameters
-
-    for (i in map.indices) {
-      if (map[i].args.contains(expression)) return parameters[i]
-    }
-
-    return null
   }
 
   private fun getFromValue(delegatesTo: PsiAnnotation): PsiType? {
@@ -109,29 +88,30 @@ class DefaultDelegatesToProvider : GrDelegatesToProvider {
 
   private fun getFromTarget(parameterList: PsiParameterList,
                             delegatesTo: PsiAnnotation,
-                            signature: GrSignature,
-                            map: Array<GrClosureSignatureUtil.ArgInfo<PsiElement>>): PsiType? {
+                            mapping: ArgumentMapping): PsiType? {
     val target = GrAnnotationUtil.inferStringAttribute(delegatesTo, "target") ?: return null
 
-    val parameter = findTargetParameter(parameterList, target)
-    if (parameter < 0) return null
+    val parameter = findTargetParameter(parameterList, target) ?: return null
 
-    val type = map[parameter].type
+    val type = mapping.arguments.firstOrNull {
+      mapping.targetParameter(it) == parameter
+    }?.type ?: return null
+
     val index = GrAnnotationUtil.inferIntegerAttribute(delegatesTo, "genericTypeIndex")
     return if (index != null) {
-      inferGenericArgType(signature, type, index, parameter)
+      inferGenericArgType(type, index, parameter)
     }
     else {
       type
     }
   }
 
-  private fun inferGenericArgType(signature: GrSignature, targetType: PsiType?, genericIndex: Int, param: Int): PsiType? {
+  private fun inferGenericArgType(targetType: PsiType?, genericIndex: Int, param: PsiParameter): PsiType? {
     if (targetType !is PsiClassType) return null
     val result = targetType.resolveGenerics()
     val psiClass = result.element ?: return null
     val substitutor = result.substitutor
-    val baseType = signature.parameters[param].type
+    val baseType = param.type
     val baseClass = PsiUtil.resolveClassInClassTypeOnly(baseType)
     if (baseClass != null && InheritanceUtil.isInheritorOrSelf(psiClass, baseClass, true)) {
       val typeParameters = baseClass.typeParameters
@@ -143,25 +123,32 @@ class DefaultDelegatesToProvider : GrDelegatesToProvider {
     return null
   }
 
-  private fun getFromType(result: GroovyResolveResult, delegatesTo: PsiAnnotation): PsiType? {
+  private fun getFromType(call: GrCall, result: GroovyResolveResult, delegatesTo: PsiAnnotation): PsiType? {
     val element = result.element as? PsiMethod ?: return null
     val typeValue = GrAnnotationUtil.inferStringAttribute(delegatesTo, "type") ?: return null
     if (typeValue.isBlank()) return null
     val context = FromStringHintProcessor.createContext(element)
     val type = JavaPsiFacade.getElementFactory(context.project).createTypeFromText(typeValue, context)
-    val substitutor = if (result is GroovyMethodResult) result.partialSubstitutor else result.substitutor
+    val substitutor = if (result is GroovyMethodResult) {
+      result.candidate?.let { candidate ->
+        substitutorIgnoringClosures(call, candidate, result)
+      } ?: result.partialSubstitutor
+    }
+    else {
+      result.substitutor
+    }
     return substitutor.substitute(type)
   }
 
-  private fun findTargetParameter(list: PsiParameterList, target: String): Int {
+  private fun findTargetParameter(list: PsiParameterList, target: String): PsiParameter? {
     val parameters = list.parameters
-    for (i in parameters.indices) {
-      val modifierList = parameters[i].modifierList ?: continue
+    for (parameter in parameters) {
+      val modifierList = parameter.modifierList ?: continue
       val targetAnnotation = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_LANG_DELEGATES_TO_TARGET) ?: continue
       val value = GrAnnotationUtil.inferStringAttribute(targetAnnotation, "value") ?: continue
-      if (value == target) return i
+      if (value == target) return parameter
     }
-    return -1
+    return null
   }
 
   private fun inferCallQualifier(call: GrMethodCall): GrExpression? {

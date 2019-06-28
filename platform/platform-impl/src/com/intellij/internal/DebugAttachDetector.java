@@ -9,7 +9,9 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
@@ -51,7 +53,7 @@ public class DebugAttachDetector {
       LOG.error(ex);
     }
     catch (IllegalAccessException ex) {
-      if (app.isInternal()) {
+      if (app.isInternal() && !PluginManagerCore.isRunningFromSources()) {
         LOG.warn("Unable to start DebugAttachDetector, please add `--add-exports=java.base/jdk.internal.vm=ALL-UNNAMED` to VM options");
       }
     }
@@ -86,13 +88,27 @@ public class DebugAttachDetector {
     return property != null && property.isEmpty();
   }
 
+  @Nullable
+  private static final String DEBUG_ARGS = getDebugArgs();
+
+  private static String getDebugArgs() {
+    return ContainerUtil.find(ManagementFactory.getRuntimeMXBean().getInputArguments(), s -> s.contains("-agentlib:jdwp"));
+  }
+
   public static boolean isDebugEnabled() {
-    return ManagementFactory.getRuntimeMXBean().getInputArguments().stream().anyMatch(s -> s.contains("-agentlib:jdwp"));
+    return DEBUG_ARGS != null;
+  }
+
+  private static boolean isDebugServer() {
+    return DEBUG_ARGS != null && DEBUG_ARGS.contains("server=y");
   }
 
   public static boolean isAttached() {
     if (!isDebugEnabled()) {
       return false;
+    }
+    if (!isDebugServer()) {
+      return true;
     }
     Properties properties = ApplicationManager.getApplication().getComponent(DebugAttachDetector.class).myAgentProperties;
     if (properties == null) { // For now return true if can not detect

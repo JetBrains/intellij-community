@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class JavaFxIdsIndex extends FileBasedIndexExtension<String, Set<String>> {
+public class JavaFxIdsIndex extends FileBasedIndexExtension<String, Set<String>> implements DocumentChangeDependentIndex {
 
   @NonNls public static final ID<String, Set<String>> KEY = ID.create("javafx.id.name");
 

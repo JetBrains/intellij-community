@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github
 
 import com.intellij.openapi.util.Clock
@@ -8,7 +8,7 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.text.DateFormatUtil
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GithubGist
-import org.jetbrains.plugins.github.api.requests.GithubGistRequest.FileContent
+import org.jetbrains.plugins.github.api.data.request.GithubGistRequest.FileContent
 import org.jetbrains.plugins.github.test.GithubTest
 import java.io.IOException
 import java.util.*

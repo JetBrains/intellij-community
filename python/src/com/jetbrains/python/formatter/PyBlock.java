@@ -28,6 +28,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
@@ -446,7 +447,7 @@ public class PyBlock implements ASTBlock {
     if (TreeUtil.findParent(child, PyElementTypes.FSTRING_FRAGMENT) != null) {
       childWrap = Wrap.createWrap(WrapType.NONE, false);
     }
-    
+
     return new PyBlock(this, child, childAlignment, childIndent, childWrap, myContext);
   }
 
@@ -829,6 +830,10 @@ public class PyBlock implements ASTBlock {
       final IElementType childType2 = psi2.getNode().getElementType();
       child2 = getSubBlockByNode(node2);
 
+      if (isInsideFStringFragmentWithEqualsSign(myNode)) {
+        return Spacing.getReadOnlySpacing();
+      }
+
       if ((childType1 == PyTokenTypes.EQ || childType2 == PyTokenTypes.EQ)) {
         final PyNamedParameter namedParameter = as(myNode.getPsi(), PyNamedParameter.class);
         if (namedParameter != null && namedParameter.getAnnotation() != null) {
@@ -1170,5 +1175,17 @@ public class PyBlock implements ASTBlock {
   @Override
   public boolean isLeaf() {
     return myNode.getFirstChildNode() == null;
+  }
+
+  private static final TokenSet stopAtTokens = TokenSet.orSet(TokenSet.create(PyElementTypes.FSTRING_NODE),
+                                                              PythonDialectsTokenSetProvider.INSTANCE.getStatementTokens());
+
+  private static boolean isInsideFStringFragmentWithEqualsSign(@NotNull ASTNode node) {
+    final ASTNode fStringFragmentParent = node.getElementType() == PyElementTypes.FSTRING_FRAGMENT
+                                    ? node
+                                    : TreeUtil.findParent(node, TokenSet.create(PyElementTypes.FSTRING_FRAGMENT),
+                                                          stopAtTokens);
+    if (fStringFragmentParent == null) return false;
+    return fStringFragmentParent.findChildByType(PyTokenTypes.EQ) != null;
   }
 }

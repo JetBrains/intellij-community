@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.inheritanceToDelegation;
 
 import com.intellij.openapi.options.ConfigurationException;
@@ -18,6 +18,7 @@ import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.classMembers.InterfaceMemberDependencyGraph;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -171,7 +172,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
 
     gbc.gridy++;
     gbc.gridwidth = 1;
-    gbc.insets = JBUI.insets(4, 0);
+    gbc.insets = JBInsets.create(4, 0);
     final JLabel fieldNameLabel = new JLabel();
     panel.add(fieldNameLabel, gbc);
 
@@ -187,7 +188,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     gbc.gridx = 0;
     gbc.gridy++;
     gbc.gridwidth = 1;
-    gbc.insets = JBUI.insets(4, 0);
+    gbc.insets = JBInsets.create(4, 0);
     gbc.weightx = 0.0;
     final JLabel innerClassNameLabel = new JLabel();
     panel.add(innerClassNameLabel, gbc);

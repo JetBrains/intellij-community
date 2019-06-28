@@ -16,14 +16,13 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
-import junit.framework.TestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class SuperTearDownInFinallyInspectionTest extends LightInspectionTestCase {
+public class SuperTearDownInFinallyInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSuperTearDownInFinally() {
     doTest();

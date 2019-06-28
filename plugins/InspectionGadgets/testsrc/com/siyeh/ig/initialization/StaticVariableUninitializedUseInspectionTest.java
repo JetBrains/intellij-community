@@ -16,9 +16,9 @@
 package com.siyeh.ig.initialization;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
-public class StaticVariableUninitializedUseInspectionTest extends LightInspectionTestCase {
+public class StaticVariableUninitializedUseInspectionTest extends LightJavaInspectionTestCase {
   @Override
   protected InspectionProfileEntry getInspection() {
     return new StaticVariableUninitializedUseInspection();

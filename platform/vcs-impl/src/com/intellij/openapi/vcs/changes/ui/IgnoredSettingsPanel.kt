@@ -8,6 +8,7 @@ import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle.message
+import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.ASKED_MANAGE_IGNORE_FILES_PROPERTY
 import com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.MANAGE_IGNORE_FILES_PROPERTY
 import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsPanel.ManageIgnoredOption.*
@@ -18,7 +19,8 @@ import javax.swing.DefaultComboBoxModel
 internal class IgnoredSettingsPanel(private val project: Project) : BoundConfigurable(message("ignored.file.tab.title"),
                                                                                       "project.propVCSSupport.Ignored.Files"), SearchableConfigurable {
   internal var selectedManageIgnoreOption = getIgnoredOption()
-  internal var selectedMarkExcludedAsIgnored = VcsApplicationSettings.getInstance().MARK_EXCLUDED_AS_IGNORED
+  internal var settings = VcsApplicationSettings.getInstance()
+  internal var projectSettings = VcsConfiguration.getInstance(project)
 
   override fun apply() {
     val modified = isModified
@@ -26,7 +28,6 @@ internal class IgnoredSettingsPanel(private val project: Project) : BoundConfigu
 
     if (modified) {
       updateIgnoredOption(selectedManageIgnoreOption)
-      VcsApplicationSettings.getInstance().MARK_EXCLUDED_AS_IGNORED = selectedMarkExcludedAsIgnored
     }
   }
 
@@ -50,9 +51,10 @@ internal class IgnoredSettingsPanel(private val project: Project) : BoundConfigu
       }
       titledRow(message("ignored.file.excluded.settings.title")) {
         row {
-          cell {
-            checkBox(message("ignored.file.excluded.to.ignored.label"), ::selectedMarkExcludedAsIgnored)
-          }
+          checkBox(message("ignored.file.excluded.to.ignored.label"), settings::MARK_EXCLUDED_AS_IGNORED)
+        }
+        row {
+          checkBox(message("ignored.file.ignored.to.excluded.label"), projectSettings::MARK_IGNORED_AS_EXCLUDED)
         }
       }
     }

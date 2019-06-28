@@ -276,6 +276,8 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
   public void testUnqualifiedStaticInterfaceMethodCallsOnInnerClasses() { doTest(false);}
 
   public void testStaticMethodInSuperInterfaceConflictWithCurrentStatic() { doTest(false);}
+  public void testPreferMethodInsideSameComb() { doTest(false);}
+  public void testFixedContainingClassTypeArguments() { doTest(false);}
   public void testPotentialCompatibilityWithArrayCreation() { doTest(false);}
   public void testOverloadsWithOneNonCompatible() { doTest(false);}
   public void testSecondSearchOverloadsBoxing() {

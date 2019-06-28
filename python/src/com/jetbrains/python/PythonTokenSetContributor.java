@@ -45,7 +45,8 @@ public class PythonTokenSetContributor extends PythonDialectsTokenSetContributor
                            LAMBDA_EXPRESSION, LIST_COMP_EXPRESSION, DICT_LITERAL_EXPRESSION, KEY_VALUE_EXPRESSION,
                            REPR_EXPRESSION, GENERATOR_EXPRESSION, CONDITIONAL_EXPRESSION, YIELD_EXPRESSION,
                            TARGET_EXPRESSION, NONE_LITERAL_EXPRESSION, BOOL_LITERAL_EXPRESSION,
-                           SET_LITERAL_EXPRESSION, SET_COMP_EXPRESSION, DICT_COMP_EXPRESSION, STAR_EXPRESSION, DOUBLE_STAR_EXPRESSION);
+                           SET_LITERAL_EXPRESSION, SET_COMP_EXPRESSION, DICT_COMP_EXPRESSION, STAR_EXPRESSION, DOUBLE_STAR_EXPRESSION,
+                           ASSIGNMENT_EXPRESSION);
   }
 
   @NotNull
@@ -66,7 +67,7 @@ public class PythonTokenSetContributor extends PythonDialectsTokenSetContributor
   @NotNull
   @Override
   public TokenSet getParameterTokens() {
-    return TokenSet.create(NAMED_PARAMETER, TUPLE_PARAMETER, SINGLE_STAR_PARAMETER);
+    return TokenSet.create(NAMED_PARAMETER, TUPLE_PARAMETER, SINGLE_STAR_PARAMETER, SLASH_PARAMETER);
   }
 
   @NotNull

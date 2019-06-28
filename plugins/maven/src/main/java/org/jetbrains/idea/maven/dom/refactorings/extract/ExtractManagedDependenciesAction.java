@@ -108,7 +108,7 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
   private static class MyRefactoringActionHandler implements RefactoringActionHandler {
     @Override
     public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
-      MavenActionsUsagesCollector.trigger(project, "ExtractManagedDependenciesAction");
+      MavenActionsUsagesCollector.trigger(project, MavenActionsUsagesCollector.ActionID.ExtractManagedDependenciesAction);
       Pair<MavenDomDependency, Set<MavenDomProjectModel>> depAndParents = findDependencyAndParent(file, editor);
       if (depAndParents == null) return;
 

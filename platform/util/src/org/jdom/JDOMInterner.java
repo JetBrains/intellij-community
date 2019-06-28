@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.containers.StringInterner;
 import gnu.trove.TObjectHashingStrategy;
@@ -16,7 +17,7 @@ import static com.intellij.openapi.util.JDOMUtil.getAttributes;
 
 public class JDOMInterner {
   private static final Condition<Object> IS_ELEMENT = Conditions.instanceOf(Element.class);
-  private final StringInterner myStrings = new StringInterner();
+  private final Interner<String> myStrings = new StringInterner();
   private final OpenTHashSet<Element> myElements = new OpenTHashSet<>(new TObjectHashingStrategy<Element>() {
     @Override
     public int computeHashCode(Element e) {

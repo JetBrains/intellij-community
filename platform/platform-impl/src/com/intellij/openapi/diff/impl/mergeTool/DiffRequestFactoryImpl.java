@@ -40,9 +40,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
                                          @Nullable ActionButtonPresentation cancelButtonPresentation) {
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document != null) {
-      return new MergeRequestImpl(leftText, new MergeVersion.MergeDocumentVersion(document, originalContent), rightText, project,
-                                  okButtonPresentation,
-                                  cancelButtonPresentation);
+      return new MergeRequestImpl(leftText, new MergeVersion.MergeDocumentVersion(document, originalContent), rightText, project);
     }
     else {
       LOG.warn("Document not found for " + file.getPresentableUrl() + "; FileType - " + file.getFileType().getName() + "; valid - " + file.isValid());
@@ -58,7 +56,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
                                             @Nullable Project project,
                                             @Nullable ActionButtonPresentation okButtonPresentation,
                                             @Nullable ActionButtonPresentation cancelButtonPresentation) {
-    return new MergeRequestImpl(leftText, originalContent, rightText, type, project, okButtonPresentation, cancelButtonPresentation);
+    return new MergeRequestImpl(leftText, originalContent, rightText, type, project);
   }
 
   @Override

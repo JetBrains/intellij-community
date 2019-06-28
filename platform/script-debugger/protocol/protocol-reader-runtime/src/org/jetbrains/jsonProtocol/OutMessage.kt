@@ -109,30 +109,35 @@ open class OutMessage() {
     writer.beginArray()
     var isNotFirst = false
     for (item in value!!) {
-      if (isNotFirst) {
-        buffer.writeByte(','.toInt()).writeByte(' '.toInt())
-      }
-      else {
-        isNotFirst = true
-      }
-
-      if (!item.finalized) {
-        item.finalized = true
-        try {
-          item.writer.endObject()
+      try {
+        if (isNotFirst) {
+          buffer.writeByte(','.toInt()).writeByte(' '.toInt())
         }
-        catch (e: IllegalStateException) {
-          if ("Nesting problem." == e.message) {
-            throw RuntimeException(item.buffer.toString(Charsets.UTF_8) + "\nparent:\n" + buffer.toString(Charsets.UTF_8), e)
-          }
-          else {
-            throw e
-          }
+        else {
+          isNotFirst = true
         }
 
-      }
+        if (!item.finalized) {
+          item.finalized = true
+          try {
+            item.writer.endObject()
+          }
+          catch (e: IllegalStateException) {
+            if ("Nesting problem." == e.message) {
+              throw RuntimeException(item.buffer.toString(Charsets.UTF_8) + "\nparent:\n" + buffer.toString(Charsets.UTF_8), e)
+            }
+            else {
+              throw e
+            }
+          }
+        }
 
-      buffer.writeBytes(item.buffer)
+        buffer.writeBytes(item.buffer)
+      } finally {
+        if (item.buffer.refCnt() > 0) {
+          item.buffer.release()
+        }
+      }
     }
     writer.endArray()
   }
@@ -156,14 +161,20 @@ open class OutMessage() {
     if (value == null) {
       return
     }
+    try {
+      beginArguments()
+      prepareWriteRaw(this, name)
 
-    beginArguments()
-    prepareWriteRaw(this, name)
-
-    if (!value.finalized) {
-      value.close()
+      if (!value.finalized) {
+        value.close()
+      }
+      buffer.writeBytes(value.buffer)
     }
-    buffer.writeBytes(value.buffer)
+    finally {
+      if (value.buffer.refCnt() > 0) {
+        value.buffer.release()
+      }
+    }
   }
 
   fun close() {

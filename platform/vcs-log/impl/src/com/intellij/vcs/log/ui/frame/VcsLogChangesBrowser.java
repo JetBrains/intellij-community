@@ -27,6 +27,7 @@ import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
@@ -52,9 +53,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.tree.DefaultTreeModel;
-import java.math.RoundingMode;
-import java.text.DecimalFormat;
 import java.util.*;
+import java.util.function.Consumer;
 
 import static com.intellij.diff.util.DiffUserDataKeysEx.*;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -169,8 +169,8 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     updateModel(() -> myViewer.setEmptyText(""));
   }
 
-  public void showError(@NotNull String errorText) {
-    updateModel(() -> myViewer.setEmptyText(errorText));
+  public void showText(@NotNull Consumer<StatusText> statusTextConsumer) {
+    updateModel(() -> statusTextConsumer.accept(myViewer.getEmptyText()));
   }
 
   public void setAffectedPaths(@Nullable Collection<FilePath> paths) {
@@ -179,71 +179,50 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
   }
 
   public void setSelectedDetails(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
-    setSelectedDetails(detailsList, false);
-  }
-
-  private void setSelectedDetails(@NotNull List<? extends VcsFullCommitDetails> detailsList, boolean showBigCommits) {
     updateModel(() -> {
       if (detailsList.isEmpty()) {
         myViewer.setEmptyText(EMPTY_SELECTION_TEXT);
       }
       else {
-        int maxSize = VcsLogUtil.getMaxSize(detailsList);
-        if (maxSize > VcsLogUtil.getShownChangesLimit() && !showBigCommits) {
-          String commitText = detailsList.size() == 1 ? "This commit" : "One of the selected commits";
-          String sizeText = getSizeText(maxSize);
-          myViewer.getEmptyText().setText(commitText + " has " + sizeText + " changes").
-            appendSecondaryText("Show anyway", VcsLogUiUtil.getLinkAttributes(), e -> setSelectedDetails(detailsList, true));
-        }
-        else {
-          myRoots.addAll(ContainerUtil.map(detailsList, detail -> detail.getRoot()));
+        myRoots.addAll(ContainerUtil.map(detailsList, detail -> detail.getRoot()));
 
-          if (detailsList.size() == 1) {
-            VcsFullCommitDetails detail = notNull(getFirstItem(detailsList));
-            myChanges.addAll(detail.getChanges());
+        if (detailsList.size() == 1) {
+          VcsFullCommitDetails detail = notNull(getFirstItem(detailsList));
+          myChanges.addAll(detail.getChanges());
 
-            if (detail.getParents().size() > 1) {
-              for (int i = 0; i < detail.getParents().size(); i++) {
-                THashSet<Change> changesSet = ContainerUtil.newIdentityTroveSet(detail.getChanges(i));
-                myChangesToParents.put(new CommitId(detail.getParents().get(i), detail.getRoot()), changesSet);
-              }
+          if (detail.getParents().size() > 1) {
+            for (int i = 0; i < detail.getParents().size(); i++) {
+              THashSet<Change> changesSet = ContainerUtil.newIdentityTroveSet(detail.getChanges(i));
+              myChangesToParents.put(new CommitId(detail.getParents().get(i), detail.getRoot()), changesSet);
             }
+          }
 
-            if (myChanges.isEmpty() && detail.getParents().size() > 1) {
-              myViewer.getEmptyText().setText("No merged conflicts.").
-                appendSecondaryText("Show changes to parents", VcsLogUiUtil.getLinkAttributes(),
-                                    e -> myUiProperties.set(SHOW_CHANGES_FROM_PARENTS, true));
-            }
-            else {
-              myViewer.setEmptyText("");
-            }
+          if (myChanges.isEmpty() && detail.getParents().size() > 1) {
+            myViewer.getEmptyText().setText("No merged conflicts.").
+              appendSecondaryText("Show changes to parents", VcsLogUiUtil.getLinkAttributes(),
+                                  e -> myUiProperties.set(SHOW_CHANGES_FROM_PARENTS, true));
           }
           else {
-            myChanges.addAll(VcsLogUtil.collectChanges(detailsList, VcsFullCommitDetails::getChanges));
-            myViewer.setEmptyText("");
+            setEmptyAffectedText();
           }
+        }
+        else {
+          myChanges.addAll(VcsLogUtil.collectChanges(detailsList, VcsFullCommitDetails::getChanges));
+          setEmptyAffectedText();
         }
       }
     });
   }
 
-  @NotNull
-  private static String getSizeText(int maxSize) {
-    if (maxSize < 1000) {
-      return String.valueOf(maxSize);
+  private void setEmptyAffectedText() {
+    if (!isShowOnlyAffectedSelected() || myAffectedPaths == null) {
+      myViewer.setEmptyText("");
     }
-    DecimalFormat format = new DecimalFormat("#.#");
-    format.setRoundingMode(RoundingMode.FLOOR);
-    if (maxSize < 10_000) {
-      return format.format(maxSize / 1000.0) + "K";
+    else {
+      myViewer.getEmptyText().setText("No changes that affect selected filters.").
+        appendSecondaryText("Show all changes", VcsLogUiUtil.getLinkAttributes(),
+                            e -> myUiProperties.set(SHOW_ONLY_AFFECTED_CHANGES, false));
     }
-    else if (maxSize < 1_000_000) {
-      return (maxSize / 1000) + "K";
-    }
-    else if (maxSize < 10_000_000) {
-      return format.format(maxSize / 1_000_000.0) + "M";
-    }
-    return (maxSize / 1_000_000) + "M";
   }
 
   @NotNull
@@ -281,7 +260,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
 
   @NotNull
   private Collection<Change> collectAffectedChanges(@NotNull Collection<Change> changes) {
-    if (!isShowOnlyAffected() || myAffectedPaths == null) return changes;
+    if (!isShowOnlyAffectedSelected() || myAffectedPaths == null) return changes;
     return ContainerUtil.filter(changes, change -> ContainerUtil.or(myAffectedPaths, filePath -> {
       if (filePath.isDirectory()) {
         return FileHistoryUtil.affectsDirectory(change, filePath);
@@ -298,7 +277,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
            myUiProperties.get(SHOW_CHANGES_FROM_PARENTS);
   }
 
-  private boolean isShowOnlyAffected() {
+  private boolean isShowOnlyAffectedSelected() {
     return myUiProperties.exists(SHOW_ONLY_AFFECTED_CHANGES) &&
            myUiProperties.get(SHOW_ONLY_AFFECTED_CHANGES);
   }

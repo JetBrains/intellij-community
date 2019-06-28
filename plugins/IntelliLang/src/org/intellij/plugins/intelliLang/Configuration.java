@@ -52,10 +52,7 @@ import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -484,6 +481,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
    * To be removed in IDEA 2019.2
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.2")
   public void replaceInjectionsWithUndo(final Project project,
                                         final List<? extends BaseInjection> newInjections,
                                         final List<? extends BaseInjection> originalInjections,
@@ -517,6 +515,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
    * To be removed in IDEA 2019.2
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.2")
   public static <T> void replaceInjectionsWithUndo(final Project project, final T add, final T remove,
                                                    final List<? extends PsiElement> psiElementsToRemove,
                                                    final PairProcessor<T, T> actualProcessor) {

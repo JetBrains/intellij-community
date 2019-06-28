@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.diagnostic.AttachmentFactory;
@@ -40,6 +40,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -300,6 +301,7 @@ public final class EditorUtil {
    * @deprecated use {@link EditorEx#setCustomCursor(Object, Cursor)} instead. To be removed in 2020.1.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public static void setHandCursor(@NotNull Editor view) {
     Cursor c = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
     // XXX: Workaround, simply view.getContentComponent().setCursor(c) doesn't work
@@ -639,6 +641,10 @@ public final class EditorUtil {
            : e.isControlDown() && !e.isMetaDown() && !e.isAltDown() && !e.isShiftDown();
   }
 
+  public static boolean isCaretInVirtualSpace(@NotNull Editor editor) {
+    return inVirtualSpace(editor, editor.getCaretModel().getLogicalPosition());
+  }
+
   public static boolean inVirtualSpace(@NotNull Editor editor, @NotNull LogicalPosition logicalPosition) {
     return !editor.offsetToLogicalPosition(editor.logicalPositionToOffset(logicalPosition)).equals(logicalPosition);
   }
@@ -688,7 +694,7 @@ public final class EditorUtil {
   /**
    * Setting selection using {@link SelectionModel#setSelection(int, int)} or {@link Caret#setSelection(int, int)} methods can result
    * in resulting selection range to be larger than requested (in case requested range intersects with collapsed fold regions).
-   * This method will make sure interfering collapsed regions are expanded first, so that resulting selection range is exactly as 
+   * This method will make sure interfering collapsed regions are expanded first, so that resulting selection range is exactly as
    * requested.
    */
   public static void setSelectionExpandingFoldedRegionsIfNeeded(@NotNull Editor editor, int startOffset, int endOffset) {

@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicReference
  * Class is not thread safe in that matter that you can't call [process] for same stream (i.e. stderr) from different threads,
  * but [flush] could be called from any thread.
  *
- * If [bufferTextUntilNewLine] is set, any output (including service messages) is buffered until newline arrives.
+ * If [bufferTextUntilNewLine] is set, any output/err (including service messages) is buffered until newline arrives.
  * Otherwise, this is done only for service messages.
  * It is recommended not to enable [bufferTextUntilNewLine] because it gives user ability to see text as fast as possible.
  * In some cases like when there is a separate protocol exists on top of text message that does not support messages
@@ -35,54 +35,55 @@ import java.util.concurrent.atomic.AtomicReference
 abstract class OutputEventSplitter(private val bufferTextUntilNewLine: Boolean = false) {
 
   private val currentCyclicBufferSize = ConsoleBuffer.getCycleBufferSize()
+  private val prevRefs: Map<ProcessOutputType, AtomicReference<Output>> =
+    listOf(ProcessOutputType.STDOUT, ProcessOutputType.STDERR, ProcessOutputType.SYSTEM)
+      .map { it to AtomicReference<Output>() }.toMap()
+
+  private val ProcessOutputType.prevRef get() = prevRefs[baseOutputType.baseOutputType]
 
 
   /**
    * [outputType] could be one of [ProcessOutputTypes] or any other [ProcessOutputType].
    * Only stdout ([ProcessOutputType.isStdout]) accepts Teamcity Messages ([ServiceMessage]).
    *
-   * Stderr and System are flushed automatically, Stdout may be buffered until the end of the message.
+   * Stderr and System are flushed automatically unless [bufferTextUntilNewLine],
+   * Stdout may be buffered until the end of the message.
    * Make sure you do not process same type from different threads.
    */
   fun process(text: String, outputType: Key<*>) {
-    if (outputType is ProcessOutputType && outputType.isStdout) {
-      processStdOut(text, outputType)
+    val prevRef = (outputType as? ProcessOutputType)?.prevRef
+    if (prevRef == null) {
+      flushInternal(text, outputType)
+      return
     }
-    else {
-      // Everything but stdout
-      onTextAvailable(text, outputType)
+
+    var mergedText = text
+    prevRef.getAndSet(null)?.let {
+      if (it.outputType == outputType) {
+        mergedText = it.text + text
+      }
+      else {
+        flushInternal(it.text, it.outputType)
+      }
+    }
+    processInternal(mergedText, outputType)?.let {
+      prevRef.set(Output(it, outputType))
     }
   }
 
   /**
-   * For stderr and system [text] is provided as fast as possible.
+   * For stderr and system [text] is provided as fast as possible unless [bufferTextUntilNewLine].
    * For stdout [text] is either TC message that starts from [ServiceMessage.SERVICE_MESSAGE_START] and ends with new line
    * or chunk of process output
    * */
   abstract fun onTextAvailable(text: String, outputType: Key<*>)
 
-  private val prevStdOutRef: AtomicReference<Output> = AtomicReference()
-
-  private fun processStdOut(text: String, outputType: Key<*>) {
-    var mergedText = text
-    prevStdOutRef.getAndSet(null)?.let {
-      if (it.outputType == outputType) {
-        mergedText = it.text + text
-      }
-      else {
-        flushStdOut(it.text, it.outputType)
-      }
-    }
-    doProcessStdOut(mergedText, outputType)?.let {
-      prevStdOutRef.set(Output(it, outputType))
-    }
-  }
-
-  private fun doProcessStdOut(text: String, outputType: Key<*>): String? {
+  private fun processInternal(text: String, outputType: ProcessOutputType): String? {
     var from = 0
+    val processServiceMessages = outputType.isStdout
     // new line char and teamcity message start are two reasons to flush previous text
     var newLineInd = text.indexOf(NEW_LINE)
-    var teamcityMessageStartInd = text.indexOf(SERVICE_MESSAGE_START)
+    var teamcityMessageStartInd = if (processServiceMessages) text.indexOf(SERVICE_MESSAGE_START) else -1
     var serviceMessageStarted = false
     while (from < text.length) {
       val nextFrom = Math.min(if (newLineInd != -1) newLineInd + 1 else Integer.MAX_VALUE,
@@ -91,10 +92,10 @@ abstract class OutputEventSplitter(private val bufferTextUntilNewLine: Boolean =
         break
       }
       if (from < nextFrom) {
-        flushStdOut(text.substring(from, nextFrom), outputType)
+        flushInternal(text.substring(from, nextFrom), outputType)
       }
       from = nextFrom
-      serviceMessageStarted = nextFrom == teamcityMessageStartInd
+      serviceMessageStarted = processServiceMessages && nextFrom == teamcityMessageStartInd
       if (serviceMessageStarted) {
         teamcityMessageStartInd = text.indexOf(SERVICE_MESSAGE_START, nextFrom + SERVICE_MESSAGE_START.length)
       }
@@ -107,9 +108,13 @@ abstract class OutputEventSplitter(private val bufferTextUntilNewLine: Boolean =
       if (serviceMessageStarted) {
         return unprocessed
       }
-      val preserveSuffixLength = if (bufferTextUntilNewLine) unprocessed.length else findSuffixLengthToPreserve(unprocessed)
+      val preserveSuffixLength = when {
+        bufferTextUntilNewLine -> unprocessed.length
+        processServiceMessages -> findSuffixLengthToPreserve(unprocessed)
+        else -> 0
+      }
       if (preserveSuffixLength < unprocessed.length) {
-        flushStdOut(unprocessed.substring(0, unprocessed.length - preserveSuffixLength), outputType)
+        flushInternal(unprocessed.substring(0, unprocessed.length - preserveSuffixLength), outputType)
       }
       if (preserveSuffixLength > 0) {
         return unprocessed.substring(unprocessed.length - preserveSuffixLength)
@@ -127,18 +132,20 @@ abstract class OutputEventSplitter(private val bufferTextUntilNewLine: Boolean =
     return 0
   }
 
-  private data class Output(val text: String, val outputType: Key<*>)
+  private data class Output(val text: String, val outputType: ProcessOutputType)
 
   /**
    * Flush remainder. Call as last step.
    */
   fun flush() {
-    prevStdOutRef.getAndSet(null)?.let {
-      flushStdOut(it.text, it.outputType)
+    prevRefs.values.forEach { reference ->
+      reference.getAndSet(null)?.let {
+        flushInternal(it.text, it.outputType)
+      }
     }
   }
 
-  private fun flushStdOut(text: String, key: Key<*>) {
+  private fun flushInternal(text: String, key: Key<*>) {
     var result = text
     // Cut long lines
     if (USE_CYCLE_BUFFER &&

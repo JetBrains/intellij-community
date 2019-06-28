@@ -15,10 +15,10 @@ import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.DumbService;
@@ -46,7 +46,7 @@ import java.util.List;
 /**
  * @author anna
  */
-public class AbstractRerunFailedTestsAction extends AnAction implements AnAction.TransparentUpdate {
+public abstract class AbstractRerunFailedTestsAction extends AnAction implements AnAction.TransparentUpdate {
   private static final Logger LOG = Logger.getInstance(AbstractRerunFailedTestsAction.class);
 
   private TestFrameworkRunningModel myModel;
@@ -54,7 +54,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
   protected TestConsoleProperties myConsoleProperties;
 
   protected AbstractRerunFailedTestsAction(@NotNull ComponentContainer componentContainer) {
-    copyFrom(ActionManager.getInstance().getAction("RerunFailedTests"));
+    ActionUtil.copyFrom(this, "RerunFailedTests");
     registerCustomShortcutSet(getShortcutSet(), componentContainer.getComponent());
   }
 

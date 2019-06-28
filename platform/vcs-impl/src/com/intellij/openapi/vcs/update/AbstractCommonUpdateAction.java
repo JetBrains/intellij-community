@@ -31,7 +31,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.util.WaitForProgressToShow;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.vcs.ViewUpdateInfoNotification;
@@ -231,46 +231,41 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
   protected void update(@NotNull VcsContext vcsContext, @NotNull Presentation presentation) {
     Project project = vcsContext.getProject();
 
-    if (project != null) {
-      final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-      final boolean underVcs = vcsManager.hasActiveVcss();
-      if (! underVcs) {
-        presentation.setVisible(false);
-        return;
-      }
+    if (project == null) {
+      presentation.setEnabledAndVisible(false);
+      return;
+    }
 
-      String actionName = getCompleteActionName(vcsContext);
-      if (myActionInfo.showOptions(project) || OptionsDialog.shiftIsPressed(vcsContext.getModifiers())) {
-        actionName += "...";
-      }
+    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    final boolean underVcs = vcsManager.hasActiveVcss();
+    if (!underVcs) {
+      presentation.setEnabledAndVisible(false);
+      return;
+    }
 
-      presentation.setText(actionName);
+    String actionName = getCompleteActionName(vcsContext);
+    if (myActionInfo.showOptions(project) || OptionsDialog.shiftIsPressed(vcsContext.getModifiers())) {
+      actionName += "...";
+    }
+    presentation.setText(actionName);
 
-      presentation.setEnabledAndVisible(true);
+    if (supportingVcsesAreEmpty(vcsManager, myActionInfo)) {
+      presentation.setEnabledAndVisible(false);
+      return;
+    }
 
-      if (supportingVcsesAreEmpty(vcsManager, myActionInfo)) {
+    if (filterRootsBeforeAction()) {
+      FilePath[] roots = filterRoots(myScopeInfo.getRoots(vcsContext, myActionInfo), vcsContext);
+      if (roots.length == 0) {
         presentation.setVisible(myAlwaysVisible);
         presentation.setEnabled(false);
         return;
       }
-
-      if (filterRootsBeforeAction()) {
-        FilePath[] roots = filterRoots(myScopeInfo.getRoots(vcsContext, myActionInfo), vcsContext);
-        if (roots.length == 0) {
-          presentation.setVisible(myAlwaysVisible);
-          presentation.setEnabled(false);
-          return;
-        }
-      }
-
-      if (presentation.isVisible() && presentation.isEnabled() &&
-          vcsManager.isBackgroundVcsOperationRunning()) {
-        presentation.setEnabled(false);
-      }
-    } else {
-      presentation.setEnabledAndVisible(false);
     }
- }
+
+    presentation.setVisible(true);
+    presentation.setEnabled(!vcsManager.isBackgroundVcsOperationRunning());
+  }
 
   private static boolean supportingVcsesAreEmpty(final ProjectLevelVcsManager vcsManager, final ActionInfo actionInfo) {
     final AbstractVcs[] allActiveVcss = vcsManager.getAllActiveVcss();
@@ -518,25 +513,24 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
 
       final boolean updateSuccess = !someSessionWasCancelled && myGroupedExceptions.isEmpty();
 
-      WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> {
-        if (myProject.isDisposed()) {
-          StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges();
-          return;
-        }
+      if (myProject.isDisposed()) {
+        StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges();
+        return;
+      }
 
-        if (!myGroupedExceptions.isEmpty()) {
-          if (continueChainFinal) {
-            gatherContextInterruptedMessages();
-          }
-          AbstractVcsHelper.getInstance(myProject).showErrors(myGroupedExceptions, VcsBundle.message("message.title.vcs.update.errors",
-                                                                                                     getTemplatePresentation().getText()));
+      if (!myGroupedExceptions.isEmpty()) {
+        if (continueChainFinal) {
+          gatherContextInterruptedMessages();
         }
-        else if (someSessionWasCancelled) {
-          ProgressManager.progress(VcsBundle.message("progress.text.updating.canceled"));
-        }
-        else {
-          ProgressManager.progress(VcsBundle.message("progress.text.updating.done"));
-        }
+        AbstractVcsHelper.getInstance(myProject).showErrors(myGroupedExceptions, VcsBundle.message("message.title.vcs.update.errors",
+                                                                                                   getTemplatePresentation().getText()));
+      }
+      else if (someSessionWasCancelled) {
+        ProgressManager.progress(VcsBundle.message("progress.text.updating.canceled"));
+      }
+      else {
+        ProgressManager.progress(VcsBundle.message("progress.text.updating.done"));
+      }
 
         final boolean noMerged = myUpdatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).isEmpty();
         if (myUpdatedFiles.isEmpty() && myGroupedExceptions.isEmpty()) {
@@ -553,28 +547,35 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
           VcsNotifier.getInstance(myProject).notify(STANDARD_NOTIFICATION.createNotification(content, type));
         }
         else if (!myUpdatedFiles.isEmpty()) {
-          final UpdateInfoTree tree = showUpdateTree(continueChainFinal && updateSuccess && noMerged, someSessionWasCancelled);
-          final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
-          cache.processUpdatedFiles(myUpdatedFiles, incomingChangeLists -> tree.setChangeLists(incomingChangeLists));
 
-          Notification notification = prepareNotification(tree, someSessionWasCancelled, myUpdateSessions);
-          notification.addAction(new ViewUpdateInfoNotification(myProject, tree, "View", notification));
-          VcsNotifier.getInstance(myProject).notify(notification);
-        }
-
-        StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges();
-
-        if (continueChainFinal && updateSuccess) {
-          if (!noMerged) {
-            showContextInterruptedError();
+          if (myUpdateSessions.size() == 1 && showsCustomNotification(myVcsToVirtualFiles.keySet())) {
+            // multi-vcs projects behave as before: only a compound notification & file tree is shown for them, for the sake of simplicity
+            myUpdateSessions.get(0).showNotification();
           }
           else {
-            // trigger next update; for CVS when updating from several branches simultaneously
-            reset();
-            ProgressManager.getInstance().run(this);
+            final UpdateInfoTree tree = showUpdateTree(continueChainFinal && updateSuccess && noMerged, someSessionWasCancelled);
+            final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
+            cache.processUpdatedFiles(myUpdatedFiles, incomingChangeLists -> tree.setChangeLists(incomingChangeLists));
+
+            Notification notification = prepareNotification(tree, someSessionWasCancelled, myUpdateSessions);
+            notification.addAction(new ViewUpdateInfoNotification(myProject, tree, "View", notification));
+            VcsNotifier.getInstance(myProject).notify(notification);
           }
         }
-      }, null, myProject);
+
+
+      StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges();
+
+      if (continueChainFinal && updateSuccess) {
+        if (!noMerged) {
+          showContextInterruptedError();
+        }
+        else {
+          // trigger next update; for CVS when updating from several branches simultaneously
+          reset();
+          ProgressManager.getInstance().run(this);
+        }
+      }
     }
 
 
@@ -610,5 +611,12 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
     public void onCancel() {
       onSuccessImpl(true);
     }
+  }
+
+  public static boolean showsCustomNotification(@NotNull Collection<? extends AbstractVcs> vcss) {
+    return ContainerUtil.all(vcss, vcs -> {
+             UpdateEnvironment environment = vcs.getUpdateEnvironment();
+             return environment != null && environment.hasCustomNotification();
+           });
   }
 }

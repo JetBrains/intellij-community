@@ -26,6 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -72,12 +73,11 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final MatchingHandler handler = (MatchingHandler)comment.getUserData(CompiledPattern.HANDLER_KEY);
     if (handler instanceof SubstitutionHandler) {
       final IElementType tokenType = other.getTokenType();
-      final int end = other.getTextLength();
+      final int length = other.getTextLength();
+      final int start = tokenType == JavaDocTokenType.DOC_COMMENT_START ? 3 : 2;
+      final int end = tokenType == JavaTokenType.END_OF_LINE_COMMENT || length < 4 ? length : length - 2;
       final SubstitutionHandler substitutionHandler = (SubstitutionHandler)handler;
-      myMatchingVisitor.setResult(substitutionHandler.handle(other,
-                                                             tokenType == JavaDocTokenType.DOC_COMMENT_START ? 3 : 2,
-                                                             tokenType == JavaTokenType.END_OF_LINE_COMMENT ? end : end - 2,
-                                                             myMatchingVisitor.getMatchContext()));
+      myMatchingVisitor.setResult(substitutionHandler.handle(other, start, end, myMatchingVisitor.getMatchContext()));
     }
     else if (handler != null) {
       myMatchingVisitor.setResult(handler.match(comment, other, myMatchingVisitor.getMatchContext()));
@@ -370,7 +370,16 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     if (!myMatchingVisitor.setResult(
       parameterList1.isEmpty() || myMatchingVisitor.matchSons(parameterList1, other.getParameterList()))) return;
     final PsiElement body1 = getElementToMatch(expression.getBody());
-    myMatchingVisitor.setResult(body1 == null || myMatchingVisitor.matchSequentially(body1, getElementToMatch(other.getBody())));
+    if (body1 == null) {
+      return;
+    }
+    final PsiElement body2 = getElementToMatch(other.getBody());
+    if (body1 instanceof PsiExpression && body2 instanceof PsiStatement) {
+      myMatchingVisitor.setResult(myMatchingVisitor.matchSequentially(body1.getParent(), body2));
+    }
+    else {
+      myMatchingVisitor.setResult(myMatchingVisitor.matchSequentially(body1, body2));
+    }
   }
 
   private static PsiElement getElementToMatch(PsiElement element) {
@@ -1695,11 +1704,11 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         return;
       }
 
-      myMatchingVisitor.setResult(method.isConstructor() == other.isConstructor() &&
+      myMatchingVisitor.setResult((!method.isConstructor() || other.isConstructor()) &&
                                   (isTypedVar || myMatchingVisitor.matchText(methodNameNode, other.getNameIdentifier())) &&
                                   myMatchingVisitor.match(method.getModifierList(), other.getModifierList()) &&
                                   myMatchingVisitor.matchSons(method.getParameterList(), other.getParameterList()) &&
-                                  myMatchingVisitor.match(method.getReturnTypeElement(), other.getReturnTypeElement()) &&
+                                  myMatchingVisitor.matchOptionally(method.getReturnTypeElement(), other.getReturnTypeElement()) &&
                                   matchInAnyOrder(method.getThrowsList(), other.getThrowsList()) &&
                                   myMatchingVisitor.matchSonsOptionally(method.getBody(), other.getBody()));
     }
@@ -1708,6 +1717,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     }
   }
 
+  @Nullable
   private <T extends PsiExpression> T getExpression(Class<T> aClass, PsiExpression patternExpression) {
     PsiElement other = myMatchingVisitor.getElement();
     if (!myMatchingVisitor.setResult(other instanceof PsiExpression)) {

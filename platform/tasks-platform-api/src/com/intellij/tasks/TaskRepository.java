@@ -25,6 +25,7 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -135,6 +136,7 @@ public abstract class TaskRepository {
    * @deprecated To be removed in IDEA 14. Use {@link #getIssues(String, int, int, boolean)} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2014")
   public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
     throw new UnsupportedOperationException("Deprecated: should not be called");
   }

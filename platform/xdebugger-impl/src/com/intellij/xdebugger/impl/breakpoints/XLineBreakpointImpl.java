@@ -41,7 +41,7 @@ import java.io.File;
 /**
  * @author nik
  */
-public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreakpointBase<XLineBreakpoint<P>, P, LineBreakpointState<P>>
+public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreakpointBase<XLineBreakpoint<P>, P, LineBreakpointState<P>>
   implements XLineBreakpoint<P> {
   @Nullable private RangeHighlighter myHighlighter;
   private final XLineBreakpointType<P> myType;
@@ -61,7 +61,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     myType = type;
   }
 
-  public void updateUI() {
+  public final void updateUI() {
     if (isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
@@ -70,6 +70,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     if (document == null) {
       return;
     }
+
     if (myType instanceof XBreakpointTypeWithDocumentDelegation) {
       document = ((XBreakpointTypeWithDocumentDelegation)myType).getDocumentForHighlighting(document);
     }

@@ -38,7 +38,7 @@ import java.util.List;
 @HardwareAgentRequired
 public class DomPerformanceTest extends DomHardCoreTestCase {
   public void testVisitorPerformance() {
-    final MyElement element = createElement("<root xmlns=\"adsf\" targetNamespace=\"adsf\"/>", MyElement.class);
+    MyElement element = createElement("<root xmlns=\"http://www.w3.org/1999/xhtml\"/>", MyElement.class);
 
     final MyElement child = element.addChildElement();
     child.getAttr().setValue("239");
@@ -51,7 +51,7 @@ public class DomPerformanceTest extends DomHardCoreTestCase {
     child.addChildElement().addBarComposite().setValue("ssss");
     child.addBarChild().getChild2().getAttr().setValue("234178956023");
 
-    PlatformTestUtil.startPerformanceTest("creating", 80_000, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+    PlatformTestUtil.startPerformanceTest("creating", 40_000, () -> ApplicationManager.getApplication().runWriteAction(() -> {
       for (int i = 0; i < 239; i++) {
         element.addChildElement().copyFrom(child);
       }

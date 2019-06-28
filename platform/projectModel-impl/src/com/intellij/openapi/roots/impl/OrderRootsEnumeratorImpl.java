@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,7 +6,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.NotNullFunction;
+import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -77,7 +65,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
       final int flags = myOrderEnumerator.getFlags();
       return cache.getOrComputeUrls(myRootType, flags, this::computeRootsUrls);
     }
-    return ArrayUtil.toStringArray(computeRootsUrls());
+    return ArrayUtilRt.toStringArray(computeRootsUrls());
   }
 
   private void checkCanUseCache() {
@@ -86,7 +74,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
     LOG.assertTrue(!myWithoutSelfModuleOutput, "Caching not supported for OrderRootsEnumerator with 'withoutSelfModuleOutput' option");
   }
 
-  @NotNull 
+  @NotNull
   private Collection<VirtualFile> computeRoots() {
     final Collection<VirtualFile> result = new LinkedHashSet<>();
     myOrderEnumerator.forEach((orderEntry, customHandlers) -> {
@@ -101,8 +89,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
         final Module module = moduleOrderEntry.getModule();
         if (module != null) {
           ModuleRootModel rootModel = myOrderEnumerator.getRootModel(module);
-          boolean productionOnTests = orderEntry instanceof ModuleOrderEntryImpl
-                                      && ((ModuleOrderEntryImpl)orderEntry).isProductionOnTestDependency();
+          boolean productionOnTests = ((ModuleOrderEntry)orderEntry).isProductionOnTestDependency();
           boolean includeTests = !myOrderEnumerator.isProductionOnly()
                                  && OrderEnumeratorBase.shouldIncludeTestsFromDependentModulesToTestClasspath(customHandlers)
                                  || productionOnTests;
@@ -138,8 +125,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
         final Module module = moduleOrderEntry.getModule();
         if (module != null) {
           ModuleRootModel rootModel = myOrderEnumerator.getRootModel(module);
-          boolean productionOnTests = orderEntry instanceof ModuleOrderEntryImpl
-                                      && ((ModuleOrderEntryImpl)orderEntry).isProductionOnTestDependency();
+          boolean productionOnTests = ((ModuleOrderEntry)orderEntry).isProductionOnTestDependency();
           boolean includeTests = !myOrderEnumerator.isProductionOnly() && OrderEnumeratorBase
             .shouldIncludeTestsFromDependentModulesToTestClasspath(customHandlers)
                                  || productionOnTests;

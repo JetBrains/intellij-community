@@ -18,7 +18,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.io.IOException;
 import java.util.Comparator;
@@ -123,7 +122,6 @@ public class CVPPanel extends JBPanel {
 
   private static class OriginColumnInfo extends ColumnInfo<CVPInfo, String> {
     private final Project myProject;
-    private TableCellRenderer myRenderer;
 
     private OriginColumnInfo(Project project) {super("Origin");
       myProject = project;
@@ -149,15 +147,6 @@ public class CVPPanel extends JBPanel {
     @Override
     public TableCellEditor getEditor(CVPInfo info) {
       return new CVPTableCellEditor(myProject);
-    }
-
-    @Nullable
-    @Override
-    public TableCellRenderer getRenderer(CVPInfo info) {
-      if (myRenderer == null) {
-        myRenderer = new CVPRenderer(myProject);
-      }
-      return myRenderer;
     }
   }
 }

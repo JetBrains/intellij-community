@@ -109,11 +109,6 @@
     </group>
 
     <!-- Tools -->
-    <action id="ConsoleView.FoldLinesLikeThis" class="com.intellij.execution.console.FoldLinesLikeThis" text="Fold Lines Like This">
-      <add-to-group group-id="ConsoleEditorPopupMenu" anchor="after" relative-to-action="$SearchWeb"/>
-    </action>
-
-
     <group id="Internal1" text="IDEA Internal Actions" internal="true">
       <separator/>
       <action id="Merge3Files" internal="true" class="com.intellij.openapi.diff.actions.MergeFilesAction"/>
@@ -131,11 +126,11 @@
       </group>
 
       <separator/>
-      <group internal="true" text="Cached value profiler" popup="true">
+      <group internal="true" text="Cached Value Profiler" popup="true">
         <action id="TurnOnOffCachedValueProfilerAction" class="com.intellij.internal.cachedValueProfiler.TurnOnOffCachedValueProfilerAction"
-                text="Turn on cached value profiler" internal="true"/>
+                text="Turn on Cached Value Profiler" internal="true"/>
         <action id="DumpCachedValueProfilerInfoAction" class="com.intellij.internal.cachedValueProfiler.DumpCachedValueProfilerInfoAction"
-                text="Dump results" internal="true"/>
+                text="Dump Results" internal="true"/>
       </group>
 
       <separator/>
@@ -145,7 +140,7 @@
                 text="Mark File Dirty"/>
         <separator/>
         <action id="CheckVfsSanity" internal="true" class="com.intellij.openapi.vfs.newvfs.persistent.CheckSanityAction"
-                text="Check VFS sanity"/>
+                text="Check VFS Sanity"/>
         <action id="LoadAllContent" internal="true" class="com.intellij.internal.LoadAllContentsAction" text="Load All Files Content"/>
         <action id="LoadAllVFSContent" internal="true" class="com.intellij.internal.LoadAllVfsStoredContentsAction"
                 text="Load All VFS Stored Files Content"/>
@@ -168,6 +163,12 @@
     <action internal="true" id="TestParseEventLogWhitelistAction"
             class="com.intellij.internal.statistic.actions.TestParseEventLogWhitelistAction"
             text="Test Parsing Event Log Whitelist...">
+      <add-to-group group-id="FeatureUsage.Internal" anchor="last"/>
+    </action>
+
+    <action internal="true" id="CollectFUStatisticsAction"
+            class="com.intellij.internal.statistic.actions.CollectFUStatisticsAction"
+            text="Collect Statistics from Collector...">
       <add-to-group group-id="FeatureUsage.Internal" anchor="last"/>
     </action>
 
@@ -576,30 +577,23 @@
                     relative-to-action="XDebugger.JumpToTypeSource"/>
     </action>
 
-    <group id="MemoryView.SettingsPopupActionGroup">
-      <action class="com.intellij.debugger.memory.action.ShowClassesWithInstanceAction"
-              id="MemoryView.ShowOnlyWithInstances"
-              text="Show With Instances Only"/>
+    <action class="com.intellij.debugger.memory.action.ShowClassesWithInstanceAction"
+            id="MemoryView.ShowOnlyWithInstances"
+            text="Show With Instances Only">
+      <add-to-group group-id="MemoryView.SettingsPopupActionGroup" anchor="before" relative-to-action="MemoryView.ShowOnlyWithDiff"/>
+    </action>
 
-      <action class="com.intellij.xdebugger.memory.action.ShowClassesWithDiffAction"
-              id="MemoryView.ShowOnlyWithDiff"
-              text="Show Non-Zero Diff Only"/>
+    <action class="com.intellij.debugger.memory.action.ShowTrackedAction"
+            id="MemoryView.ShowOnlyTracked"
+            text="Show Tracked Classes Only">
+      <add-to-group group-id="MemoryView.SettingsPopupActionGroup" anchor="after" relative-to-action="MemoryView.ShowOnlyWithDiff"/>
+    </action>
 
-      <action class="com.intellij.debugger.memory.action.ShowTrackedAction"
-              id="MemoryView.ShowOnlyTracked"
-              text="Show Tracked Classes Only"/>
-
-      <separator/>
-
-      <action class="com.intellij.debugger.memory.action.EnableBackgroundTrackingAction"
-              id="MemoryView.EnableTrackingWithClosedWindow"
-              text="Enable Tracking With Hidden Memory View"/>
-
-      <action class="com.intellij.xdebugger.memory.action.SwitchUpdateModeAction"
-              id="MemoryView.SwitchUpdateMode"
-              text="Update Loaded Classes On Debugger Stop"
-              description="Load classes on debugger pause (may increase overhead on debugger stepping)"/>
-    </group>
+    <action class="com.intellij.debugger.memory.action.EnableBackgroundTrackingAction"
+            id="MemoryView.EnableTrackingWithClosedWindow"
+            text="Enable Tracking With Hidden Memory View">
+      <add-to-group group-id="MemoryView.SettingsPopupActionGroup" anchor="before" relative-to-action="MemoryView.SwitchUpdateMode"/>
+    </action>
 
     <group id="MemoryView.ClassesPopupActionGroup">
       <action class="com.intellij.debugger.memory.action.ShowInstancesFromClassesViewAction"
@@ -790,13 +784,6 @@
       <reference ref="EditorPopupMenu"/>
     </group>
 
-    <group id="MethodChainHintsContextMenu" popup="true">
-      <action id="MethodChainHintAction"
-              class="com.intellij.codeInsight.hints.MethodChainHintTurningAction"
-              text="Show method chain hints"/>
-      <separator/>
-      <reference ref="EditorPopupMenu"/>
-    </group>
 
     <action id="MethodOverloadSwitchUp" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchUpAction"/>
     <action id="MethodOverloadSwitchDown" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchDownAction" />

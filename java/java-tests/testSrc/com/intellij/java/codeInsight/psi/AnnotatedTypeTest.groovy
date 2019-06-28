@@ -5,11 +5,11 @@ import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiImmediateClassType
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE
 
-class AnnotatedTypeTest extends LightCodeInsightFixtureTestCase {
+class AnnotatedTypeTest extends LightJavaCodeInsightFixtureTestCase {
   private PsiElementFactory factory
   private PsiElement context
 

@@ -1,7 +1,7 @@
 <root>
   <repositories>
     <repository id="central" name="Maven Central" url="http://repo1.maven.org/maven2/"/>
-    <repository id="codehaus" name="Сodehaus" url="http://repository.codehaus.org"/>
+    <repository id="codehaus" name="Codehaus" url="http://repository.codehaus.org"/>
     <repository id="glassfish-repo-archive" name="Nexus repository collection for Glassfish"
                 url="http://maven.glassfish.org/content/groups/glassfish"/>
     <repository id="ibiblio.mirrors" name="ibiblio.mirrors" url="http://mirrors.ibiblio.org/pub/mirrors/maven2"/>

@@ -59,11 +59,11 @@ public class ExperimentsDialog extends DialogWrapper {
     return "ExperimentsDialog";
   }
 
-  private TableCellRenderer getValueRenderer() {
+  private static TableCellRenderer getValueRenderer() {
     return new BooleanTableCellRenderer(SwingConstants.CENTER);
   }
 
-  private TableCellRenderer getIdRenderer() {
+  private static TableCellRenderer getIdRenderer() {
     return new ColoredTableCellRenderer() {
       @Override
       protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
@@ -72,7 +72,7 @@ public class ExperimentsDialog extends DialogWrapper {
     };
   }
 
-  private TableModel createModel(ExperimentalFeature[] experimentalFeatures) {
+  private static TableModel createModel(ExperimentalFeature[] experimentalFeatures) {
     return new AbstractTableModel() {
       final ExperimentalFeature[] features = experimentalFeatures;
 

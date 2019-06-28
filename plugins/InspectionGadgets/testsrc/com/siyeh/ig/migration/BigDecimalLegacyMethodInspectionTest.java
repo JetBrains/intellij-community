@@ -16,12 +16,12 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class BigDecimalLegacyMethodInspectionTest extends LightInspectionTestCase {
+public class BigDecimalLegacyMethodInspectionTest extends LightJavaInspectionTestCase {
   @Override
   protected InspectionProfileEntry getInspection() {
     return new BigDecimalLegacyMethodInspection();

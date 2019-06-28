@@ -202,7 +202,7 @@ public abstract class MergeRequestProcessor implements Disposable {
 
     List<Action> leftActions = ContainerUtil.packNullables(applyLeft, applyRight);
     List<Action> rightActions = SystemInfo.isMac ? ContainerUtil.packNullables(cancelAction, resolveAction)
-                                                 : ContainerUtil.packNullables(resolveAction, cancelAction);
+                                                   : ContainerUtil.packNullables(resolveAction, cancelAction);
 
     JRootPane rootPane = getRootPane();
     JPanel buttonsPanel = new NonOpaquePanel(new BorderLayout());

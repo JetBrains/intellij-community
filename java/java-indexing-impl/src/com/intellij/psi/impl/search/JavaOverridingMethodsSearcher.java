@@ -4,6 +4,7 @@ package com.intellij.psi.impl.search;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -66,7 +67,7 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
   }
 
   static boolean isJavaOnlyScope(@NotNull VirtualFile[] files) {
-    return Arrays.stream(files).allMatch(file -> file.getFileType() == JavaFileType.INSTANCE);
+    return Arrays.stream(files).allMatch(file -> FileTypeRegistry.getInstance().isFileOfType(file, JavaFileType.INSTANCE));
   }
 
   private static boolean processLocalScope(@NotNull LocalSearchScope searchScope,

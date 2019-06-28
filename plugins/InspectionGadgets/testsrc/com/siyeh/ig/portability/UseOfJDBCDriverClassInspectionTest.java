@@ -2,14 +2,13 @@
 package com.siyeh.ig.portability;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
-import junit.framework.TestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class UseOfJDBCDriverClassInspectionTest extends LightInspectionTestCase {
+public class UseOfJDBCDriverClassInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
     doTest("import com.pany.*;" +

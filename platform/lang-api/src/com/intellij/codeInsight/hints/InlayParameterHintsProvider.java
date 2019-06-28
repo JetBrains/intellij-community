@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Set;
 
-@ApiStatus.Experimental
 public interface InlayParameterHintsProvider {
 
   /**
@@ -95,4 +94,9 @@ public interface InlayParameterHintsProvider {
    * (EditorSettingsExternalizable.isShowParameterNameHints()).
    */
   default boolean canShowHintsWhenDisabled() { return false; }
+
+  /**
+   * @return text of preview, will be used in settings
+   */
+  default String getSettingsPreview() { return null; }
 }

@@ -50,7 +50,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.BitUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -210,7 +210,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   @Override
   @NotNull
   public String[] getImplicitlyImportedPackages() {
-    return ArrayUtil.EMPTY_STRING_ARRAY;
+    return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
   @Override
@@ -259,7 +259,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
     throw ClsElementImpl.cannotModifyException(this);
   }
 
-  /** Shouldn't be called from outside or overridden */
+  /** @deprecated Shouldn't be called from outside or overridden */
   @Deprecated
   public void appendMirrorText(@SuppressWarnings("unused") int indentLevel, @NotNull StringBuilder buffer) {
     appendMirrorText(buffer);
@@ -282,7 +282,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
     }
   }
 
-  /** Shouldn't be called from outside or overridden */
+  /** @deprecated Shouldn't be called from outside or overridden */
   @Deprecated
   public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setFileMirror(element);
@@ -635,7 +635,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
     public void accept(FileContentPair innerClass, StubBuildingVisitor<FileContentPair> visitor) {
       try {
         new ClassReader(innerClass.second).accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES);
-      } catch (Exception e) {  // workaround for bug in skipping annotations when first parameter of inner class is dropped (IDEA-204145) 
+      } catch (Exception e) {  // workaround for bug in skipping annotations when first parameter of inner class is dropped (IDEA-204145)
         VirtualFile file = innerClass.first;
         if (LOG.isDebugEnabled()) LOG.debug(String.valueOf(file), e);
         else LOG.info(file + ": " + e.getMessage());

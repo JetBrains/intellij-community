@@ -16,13 +16,13 @@
 package com.siyeh.ig.j2me;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class RecordStoreResourceInspectionTest extends LightInspectionTestCase {
+public class RecordStoreResourceInspectionTest extends LightJavaInspectionTestCase {
 
   public void testRecordStoreResource() {
     doTest();

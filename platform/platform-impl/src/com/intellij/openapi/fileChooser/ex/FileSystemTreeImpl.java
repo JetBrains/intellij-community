@@ -88,8 +88,8 @@ public class FileSystemTreeImpl implements FileSystemTree {
     //noinspection deprecation
     if (renderer == null && useNewAsyncModel()) {
       renderer = new FileRenderer().forTree();
-      myFileTreeModel = new FileTreeModel(descriptor, new FileRefresher(true, 3, () -> ModalityState.stateForComponent(tree)));
-      myAsyncTreeModel = new AsyncTreeModel(myFileTreeModel, false, this);
+      myFileTreeModel = createFileTreeModel(descriptor, tree);
+      myAsyncTreeModel = createAsyncTreeModel(myFileTreeModel);
       myTreeStructure = null;
     }
     else {
@@ -176,6 +176,16 @@ public class FileSystemTreeImpl implements FileSystemTree {
   @Deprecated
   protected boolean useNewAsyncModel() {
     return Registry.is("file.chooser.async.tree.model");
+  }
+
+  @NotNull
+  protected FileTreeModel createFileTreeModel(@NotNull FileChooserDescriptor descriptor, @NotNull Tree tree) {
+    return new FileTreeModel(descriptor, new FileRefresher(true, 3, () -> ModalityState.stateForComponent(tree)));
+  }
+
+  @NotNull
+  protected AsyncTreeModel createAsyncTreeModel(@NotNull FileTreeModel fileTreeModel) {
+    return new AsyncTreeModel(fileTreeModel, false, this);
   }
 
   protected AbstractTreeBuilder createTreeBuilder(final JTree tree, DefaultTreeModel treeModel, final AbstractTreeStructure treeStructure,

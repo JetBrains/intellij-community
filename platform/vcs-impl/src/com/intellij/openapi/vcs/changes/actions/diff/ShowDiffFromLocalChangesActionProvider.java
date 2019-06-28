@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.diff.DiffDialogHints;
@@ -36,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT;
 import static java.util.stream.Collectors.toList;
 
 public class ShowDiffFromLocalChangesActionProvider implements AnActionExtensionProvider {
@@ -60,7 +47,7 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
     }
   }
 
-  private static boolean canShowDiff(@Nullable Project project, @NotNull Stream<Change> changes, @NotNull Stream<VirtualFile> files) {
+  private static boolean canShowDiff(@Nullable Project project, @NotNull Stream<? extends Change> changes, @NotNull Stream<VirtualFile> files) {
     return files.findAny().isPresent() ||
            changes.anyMatch(it -> ChangeDiffRequestProducer.canCreate(project, it));
   }
@@ -95,7 +82,7 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
   }
 
 
-  private static boolean checkIfThereAreFakeRevisions(@NotNull Project project, @NotNull List<Change> changes) {
+  private static boolean checkIfThereAreFakeRevisions(@NotNull Project project, @NotNull List<? extends Change> changes) {
     boolean needsConversion = false;
     for (Change change : changes) {
       final ContentRevision beforeRevision = change.getBeforeRevision();
@@ -113,7 +100,7 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
   }
 
   @NotNull
-  private static List<Change> loadFakeRevisions(@NotNull Project project, @NotNull List<Change> changes) {
+  private static List<Change> loadFakeRevisions(@NotNull Project project, @NotNull List<? extends Change> changes) {
     List<Change> actualChanges = new ArrayList<>();
     for (Change change : changes) {
       actualChanges.addAll(ChangeListManager.getInstance(project).getChangesIn(ChangesUtil.getFilePath(change)));
@@ -123,8 +110,8 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
 
 
   private static void showDiff(@NotNull Project project,
-                               @NotNull List<Change> changes,
-                               @NotNull List<VirtualFile> unversioned,
+                               @NotNull List<? extends Change> changes,
+                               @NotNull List<? extends VirtualFile> unversioned,
                                @NotNull ChangesListView changesView) {
     if (changes.size() == 1 && unversioned.isEmpty()) { // show all changes from this changelist
       Change selectedChange = changes.get(0);
@@ -153,7 +140,7 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
 
 
   private static void showChangesDiff(@Nullable Project project,
-                                      @NotNull ListSelection<Change> selection) {
+                                      @NotNull ListSelection<? extends Change> selection) {
     ListSelection<ChangeDiffRequestChain.Producer> producers =
       selection.map(change -> ChangeDiffRequestProducer.create(project, change));
 
@@ -161,7 +148,7 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
   }
 
   private static void showUnversionedDiff(@Nullable Project project,
-                                          @NotNull ListSelection<VirtualFile> selection) {
+                                          @NotNull ListSelection<? extends VirtualFile> selection) {
     ListSelection<ChangeDiffRequestChain.Producer> producers =
       selection.map(change -> UnversionedDiffRequestProducer.create(project, change));
 
@@ -169,8 +156,8 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
   }
 
   private static void showSelectionDiff(@Nullable Project project,
-                                        @NotNull List<Change> changes,
-                                        @NotNull List<VirtualFile> unversioned) {
+                                        @NotNull List<? extends Change> changes,
+                                        @NotNull List<? extends VirtualFile> unversioned) {
     List<ChangeDiffRequestChain.Producer> changeRequests =
       ContainerUtil.mapNotNull(changes, change -> ChangeDiffRequestProducer.create(project, change));
     List<ChangeDiffRequestChain.Producer> unversionedRequests =
@@ -180,11 +167,20 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
   }
 
   private static void showDiff(@Nullable Project project,
-                               @NotNull List<ChangeDiffRequestChain.Producer> producers,
+                               @NotNull List<? extends ChangeDiffRequestChain.Producer> producers,
                                int selected) {
     if (producers.isEmpty()) return;
     DiffRequestChain chain = new ChangeDiffRequestChain(producers, selected);
     chain.putUserData(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, true);
+    if (project != null) setAllowExcludeFromCommit(project, chain);
     DiffManager.getInstance().showDiff(project, chain, DiffDialogHints.DEFAULT);
+  }
+
+  private static void setAllowExcludeFromCommit(@NotNull Project project, @NotNull DiffRequestChain chain) {
+    ChangesViewI manager = ChangesViewManager.getInstance(project);
+
+    if (manager instanceof ChangesViewManager) {
+      chain.putUserData(ALLOW_EXCLUDE_FROM_COMMIT, ((ChangesViewManager)manager).isAllowExcludeFromCommit());
+    }
   }
 }

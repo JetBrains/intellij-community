@@ -872,7 +872,7 @@ class Foo {
   }
 
   void testDispreferAlreadyCalledBuilderMethods() {
-    checkPreferredItems 0, 'addInt', 'c', 'd', 'mayCallManyTimes', 'putLong'
+    checkPreferredItems 0, 'addInt', 'append', 'c', 'd', 'mayCallManyTimes', 'putLong'
   }
 
   void testPreferPrintln() {

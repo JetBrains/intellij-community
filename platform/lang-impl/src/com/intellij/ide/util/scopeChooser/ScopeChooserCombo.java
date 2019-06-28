@@ -19,15 +19,16 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.TitledSeparator;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBEmptyBorder;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.awt.*;
@@ -88,7 +89,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     addActionListener(this::handleScopeChooserAction);
 
     ComboBox<ScopeDescriptor> combo = getComboBox();
-    combo.setMinimumAndPreferredWidth(JBUI.scale(300));
+    combo.setMinimumAndPreferredWidth(JBUIScale.scale(300));
     combo.setRenderer(createDefaultRenderer());
     combo.setSwingPopup(false);
 
@@ -193,12 +194,14 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   @NotNull
   private DefaultComboBoxModel<ScopeDescriptor> createModel() {
     DefaultComboBoxModel<ScopeDescriptor> model = new DefaultComboBoxModel<>();
-    DataContext dataContext = DataManager.getInstance().getDataContext(this);
-    processScopes(myProject, dataContext, myOptions, descriptor -> {
-      if (myScopeFilter == null || myScopeFilter.value(descriptor)) {
-        model.addElement(descriptor);
-      }
-      return true;
+    Promise<DataContext> promise = DataManager.getInstance().getDataContextFromFocusAsync();
+    promise.onSuccess(c -> {
+      processScopes(myProject, c, myOptions, descriptor -> {
+        if (myScopeFilter == null || myScopeFilter.value(descriptor)) {
+          model.addElement(descriptor);
+        }
+        return true;
+      });
     });
     return model;
   }
@@ -255,7 +258,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     final TitledSeparator separator = new TitledSeparator();
 
     @Override
-    public void customize(JList<? extends ScopeDescriptor> list, ScopeDescriptor value, int index, boolean selected, boolean hasFocus) {
+    public void customize(@NotNull JList<? extends ScopeDescriptor> list, ScopeDescriptor value, int index, boolean selected, boolean hasFocus) {
       if (value == null) return;
       setIcon(value.getIcon());
       setText(value.getDisplayName());

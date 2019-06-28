@@ -34,7 +34,8 @@
       "focusColor": "#1AEBFF",
       "focusedBorderColor": "#1AEBFF",
 
-      "separatorColor": "#B3B3B3"
+      "separatorColor": "#B3B3B3",
+      "lineSeparatorColor": "#6A6173"
     },
 
     "ActionButton": {
@@ -67,6 +68,7 @@
 
     "ComboBox": {
       "nonEditableBackground": "#000000",
+      "modifiedItemForeground": "#4FF0FF",
       "ArrowButton": {
         "iconColor": "#FFFFFF",
         "disabledIconColor": "#AA6E28",
@@ -99,6 +101,12 @@
 
     "DebuggerTabs.selectedBackground": "#000080",
 
+    "DefaultTabs": {
+      "underlineColor": "#1AEBFF",
+      "inactiveUnderlineColor": "#1AEBFF",
+      "hoverBackground": "#0f6780"
+    },
+
     "DragAndDrop": {
       "areaForeground": "#FFFFFF",
       "areaBackground": "#00838f",
@@ -115,9 +123,12 @@
 
     "EditorTabs": {
       "selectedForeground": "#FFFFFF",
-      "selectedBackground": "#3333FF",
-      "underlineColor": "#3333FF",
-      "inactiveMaskColor": "#000000FF"
+      "selectedBackground": "#0e5d73",
+      "underlineColor": "#1AEBFF",
+      "inactiveMaskColor": "#000000FF",
+
+      "underlinedTabBackground": "#000000",
+      "inactiveColoredFileBackground": "#00000000"
     },
 
     "FileColor": {
@@ -158,13 +169,12 @@
       "borderColor": "#E6E6E6"
     },
 
-    "Label.selectedDisabledForeground": "#E0861F",
-
     "Link": {
       "activeForeground": "#D2F53C",
       "hoverForeground": "#D2F53C",
       "pressedForeground": "#D2F53C",
-      "visitedForeground": "#D2F53C"
+      "visitedForeground": "#D2F53C",
+      "secondaryForeground": "#D2F53C"
     },
 
     "NavBar.borderColor": "#b3b3b3",
@@ -197,8 +207,7 @@
       "background": "#281A33",
       "foreground": "#CCCCCC",
       "currentOverloadBackground": "#450073",
-      "currentParameterForeground": "#FFFFFF",
-      "lineSeparatorColor": "#6A6173"
+      "currentParameterForeground": "#FFFFFF"
     },
 
     "Plugins": {
@@ -268,6 +277,7 @@
       "hoverThumbColor": "#E6E6E6",
       "hoverThumbBorderColor": "#000000C8",
       "trackColor": "#000000",
+      "hoverTrackColor": "#E6E6E65A",
 
       "Mac": {
         "Transparent": {
@@ -282,7 +292,7 @@
         "hoverThumbColor": "#E6E6E6",
         "hoverThumbBorderColor": "#000000C8",
         "trackColor": "#000000",
-        "hoverTrackColor": "#000000"
+        "hoverTrackColor": "#E6E6E65A"
       }
     },
 
@@ -314,7 +324,9 @@
     "TabbedPane": {
       "underlineColor": "#1AEBFF",
       "disabledUnderlineColor": "#AA6E28",
-      "contentAreaColor": "#b3b3b3"
+      "contentAreaColor": "#b3b3b3",
+      "hoverColor": "#0f6780",
+      "focusColor": "#0f6780"
     },
 
     "TableHeader.cellBorder": "8,0,8,0",
@@ -360,6 +372,9 @@
         "selectedForeground": "#FFFFFF"
       }
     },
+
+
+    "Tree.modifiedItemForeground": "#4FF0FF",
 
     "ValidationTooltip": {
       "errorBackground": "#800002",

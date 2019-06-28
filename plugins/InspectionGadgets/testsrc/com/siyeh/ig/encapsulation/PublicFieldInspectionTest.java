@@ -3,11 +3,11 @@ package com.siyeh.ig.encapsulation;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PublicFieldInspectionTest extends LightInspectionTestCase {
+public class PublicFieldInspectionTest extends LightJavaInspectionTestCase {
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
@@ -19,7 +19,7 @@ public class PublicFieldInspectionTest extends LightInspectionTestCase {
 
   @Override
   protected String getBasePath() {
-    return LightInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/encapsulation/public_field";
+    return LightJavaInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/encapsulation/public_field";
   }
 
   @NotNull

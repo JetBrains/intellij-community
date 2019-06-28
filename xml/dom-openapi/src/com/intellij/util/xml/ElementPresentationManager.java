@@ -60,7 +60,7 @@ public abstract class ElementPresentationManager {
   }
 
   /**
-   * Use {@link com.intellij.codeInsight.lookup.LookupElementBuilder}
+   * @deprecated use {@link com.intellij.codeInsight.lookup.LookupElementBuilder}
    */
   @Deprecated
   public abstract Object createVariant(final Object variant, final String name, final PsiElement psiElement);
@@ -79,15 +79,13 @@ public abstract class ElementPresentationManager {
   }
 
   /**
-   * @deprecated
-   * @see com.intellij.ide.presentation.Presentation#provider()
+   * @deprecated use {@link com.intellij.ide.presentation.Presentation#provider()}
    */
   @Deprecated
   public static void registerNameProvider(Function<Object, String> function) { ourNameProviders.add(function); }
 
   /**
-   * @deprecated
-   * @see Documentation
+   * @deprecated use {@link Documentation}
    */
   @Deprecated
   public static void registerDocumentationProvider(Function<Object, String> function) { ourDocumentationProviders.add(function); }

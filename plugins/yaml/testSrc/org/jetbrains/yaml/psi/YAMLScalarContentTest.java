@@ -4,10 +4,10 @@ package org.jetbrains.yaml.psi;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.yaml.YAMLParserDefinition;
 
-public class YAMLScalarContentTest extends LightPlatformCodeInsightFixtureTestCase {
+public class YAMLScalarContentTest extends BasePlatformTestCase {
   @Override
   protected String getTestDataPath() {
     return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/psi/data/";

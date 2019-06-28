@@ -6,7 +6,6 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.*;
@@ -15,7 +14,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -23,14 +21,13 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.SystemDock;
 import com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectPanel;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -168,12 +165,6 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
   private State myState = new State();
 
   private boolean myBatchOpening;
-
-  protected RecentProjectsManagerBase(@NotNull MessageBus messageBus) {
-    MessageBusConnection connection = messageBus.connect();
-    connection.subscribe(AppLifecycleListener.TOPIC, new MyAppLifecycleListener());
-    connection.subscribe(ProjectManager.TOPIC, new MyProjectListener());
-  }
 
   @Override
   public State getState() {
@@ -502,14 +493,16 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
   }
 
   @Nullable
-  public Project doOpenProject(@NotNull @SystemIndependent String projectPath, Project projectToClose, boolean forceOpenInNewFrame) {
-    VirtualFile dotIdea = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(
-      new File(projectPath, Project.DIRECTORY_STORE_FOLDER));
-
+  public Project doOpenProject(@NotNull @SystemIndependent String projectPath,
+                               @Nullable Project projectToClose,
+                               boolean forceOpenInNewFrame,
+                               @Nullable IdeFrame frame) {
+    VirtualFile dotIdea = LocalFileSystem.getInstance()
+      .refreshAndFindFileByPath(FileUtilRt.toSystemIndependentName(projectPath) + "/" + Project.DIRECTORY_STORE_FOLDER);
     if (dotIdea != null) {
       EnumSet<PlatformProjectOpenProcessor.Option> options = EnumSet.of(PlatformProjectOpenProcessor.Option.REOPEN);
       if (forceOpenInNewFrame) options.add(PlatformProjectOpenProcessor.Option.FORCE_NEW_FRAME);
-      return PlatformProjectOpenProcessor.doOpenProject(dotIdea.getParent(), projectToClose, -1, null, options);
+      return PlatformProjectOpenProcessor.doOpenProject(dotIdea.getParent(), projectToClose, -1, null, options, frame);
     }
     else {
       // If .idea is missing in the recent project's dir; this might mean, for instance, that 'git clean' was called.
@@ -520,18 +513,20 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     }
   }
 
-  private class MyProjectListener implements ProjectManagerListener {
+  static final class MyProjectListener implements ProjectManagerListener {
+    private final RecentProjectsManagerBase manager = getInstanceEx();
+
     @Override
     public void projectOpened(@NotNull final Project project) {
-      String path = getProjectPath(project);
+      String path = manager.getProjectPath(project);
       if (path != null) {
-        markPathRecent(path, project);
+        manager.markPathRecent(path, project);
       }
-      updateLastProjectPath();
+      manager.updateLastProjectPath();
       updateSystemDockMenu();
     }
 
-    private void updateSystemDockMenu() {
+    private static void updateSystemDockMenu() {
       if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
         SystemDock.updateMenu();
       }
@@ -539,14 +534,14 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
 
     @Override
     public void projectClosing(@NotNull Project project) {
-      String path = getProjectPath(project);
+      String path = manager.getProjectPath(project);
       if (path == null) {
         return;
       }
 
-      synchronized (myStateLock) {
-        myState.names.put(path, getProjectDisplayName(project));
-        myNameCache.put(path, project.getName());
+      synchronized (manager.myStateLock) {
+        manager.myState.names.put(path, manager.getProjectDisplayName(project));
+        manager.myNameCache.put(path, project.getName());
       }
     }
 
@@ -555,9 +550,9 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
       Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
       if (openProjects.length > 0) {
         Project openProject = openProjects[openProjects.length - 1];
-        String path = getProjectPath(openProject);
+        String path = manager.getProjectPath(openProject);
         if (path != null) {
-          markPathRecent(path, openProject);
+          manager.markPathRecent(path, openProject);
         }
       }
       updateSystemDockMenu();
@@ -606,13 +601,19 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     return file.getFileName().toString();
   }
 
-  protected boolean willReopenProjectOnStart() {
-    return GeneralSettings.getInstance().isReopenLastProject() && getLastProjectPath() != null;
+  @Override
+  public boolean willReopenProjectOnStart() {
+    @SystemIndependent String lastProjectPath = getLastProjectPath();
+    return lastProjectPath != null && GeneralSettings.getInstance().isReopenLastProject() && ProjectKt.isValidProjectPath(lastProjectPath, true);
   }
 
-  protected void doReopenLastProject() {
-    GeneralSettings generalSettings = GeneralSettings.getInstance();
-    if (!generalSettings.isReopenLastProject()) {
+  @Override
+  public void reopenLastProjectOnStart() {
+    doReopenLastProject(null);
+  }
+
+  protected void doReopenLastProject(@Nullable IdeFrame frame) {
+    if (!GeneralSettings.getInstance().isReopenLastProject()) {
       return;
     }
 
@@ -628,10 +629,12 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
 
     try {
       myBatchOpening = true;
+      boolean usedFrame = false;
       for (String openPath : openPaths) {
         // https://youtrack.jetbrains.com/issue/IDEA-166321
         if (ProjectKt.isValidProjectPath(openPath, true)) {
-          doOpenProject(openPath, null, forceNewFrame);
+          doOpenProject(openPath, null, forceNewFrame, usedFrame ? null : frame);
+          usedFrame = true;
         }
       }
     }
@@ -675,33 +678,17 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     return myModCounter.get();
   }
 
-  private final class MyAppLifecycleListener implements AppLifecycleListener {
-    @Override
-    public void appFrameCreated(@NotNull List<String> commandLineArgs, @NotNull final Ref<? super Boolean> willOpenProject) {
-      if (willReopenProjectOnStart()) {
-        willOpenProject.set(Boolean.TRUE);
-      }
-    }
-
-    @Override
-    public void appStarting(@Nullable Project projectFromCommandLine) {
-      if (projectFromCommandLine != null || JetBrainsProtocolHandler.appStartedWithCommand()) {
-        return;
-      }
-
-      doReopenLastProject();
-    }
-
+  static final class MyAppLifecycleListener implements AppLifecycleListener {
     @Override
     public void projectOpenFailed() {
-      updateLastProjectPath();
+      getInstanceEx().updateLastProjectPath();
     }
 
     @Override
     public void projectFrameClosed() {
       // ProjectManagerListener.projectClosed cannot be used to call updateLastProjectPath,
       // because called even if project closed on app exit
-      updateLastProjectPath();
+      getInstanceEx().updateLastProjectPath();
     }
   }
 

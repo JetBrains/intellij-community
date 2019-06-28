@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Splitter
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsDataKeys
@@ -391,8 +392,10 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
     override fun createCenterPanel(): JComponent? {
       val tree = super.createCenterPanel()
 
-      myCommitMessagePanel = CommitMessage(myProject)
-      myCommitMessagePanel!!.setCommitMessage("Initial commit")
+      val commitMessage = CommitMessage(myProject)
+      Disposer.register(disposable, commitMessage)
+      commitMessage.setCommitMessage("Initial commit")
+      myCommitMessagePanel = commitMessage
 
       val splitter = Splitter(true)
       splitter.setHonorComponentsMinimumSize(true)

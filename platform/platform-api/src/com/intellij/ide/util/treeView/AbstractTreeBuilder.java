@@ -15,6 +15,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +32,11 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.*;
 
+/**
+ * @deprecated use {@link com.intellij.ui.tree.AsyncTreeModel} and {@link com.intellij.ui.tree.StructureTreeModel} instead.
+ */
+@ApiStatus.ScheduledForRemoval
+@Deprecated
 public class AbstractTreeBuilder implements Disposable {
   private AbstractTreeUi myUi;
   @NonNls private static final String TREE_BUILDER = "TreeBuilder";
@@ -216,8 +222,7 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   /**
-   * @see #queueUpdateFrom
-   * @deprecated
+   * @deprecated use {@link #queueUpdate()}
    */
   @Deprecated
   public void updateFromRoot() {
@@ -271,7 +276,7 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   /**
-   * @deprecated
+   * @deprecated use {@link AbstractTreeUi#buildNodeForElement(Object)}
    */
   @Deprecated
   public void buildNodeForElement(@NotNull Object element) {
@@ -280,7 +285,7 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   /**
-   * @deprecated
+   * @deprecated use {@link AbstractTreeUi#getNodeForElement(Object, boolean)}
    */
   @Deprecated
   @Nullable

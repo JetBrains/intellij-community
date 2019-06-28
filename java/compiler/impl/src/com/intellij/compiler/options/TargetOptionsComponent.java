@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.options;
 
 import com.intellij.openapi.project.Project;
@@ -9,8 +9,9 @@ import com.intellij.ui.TableSpeedSearch;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +45,7 @@ public class TargetOptionsComponent extends JPanel {
       }
     }
     Collections.reverse(targets);
-    KNOWN_TARGETS = ArrayUtil.toStringArray(targets);
+    KNOWN_TARGETS = ArrayUtilRt.toStringArray(targets);
   }
 
   private final ComboBox<String> myCbProjectTargetLevel;
@@ -57,7 +58,7 @@ public class TargetOptionsComponent extends JPanel {
     myCbProjectTargetLevel = createTargetOptionsCombo();
 
     myTable = new JBTable(new ModuleOptionsTableModel());
-    myTable.setRowHeight(JBUI.scale(22));
+    myTable.setRowHeight(JBUIScale.scale(22));
     myTable.getEmptyText().setText("All modules will be compiled with project bytecode version");
 
     TableColumn moduleColumn = myTable.getColumnModel().getColumn(0);

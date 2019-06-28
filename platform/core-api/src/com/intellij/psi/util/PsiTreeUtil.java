@@ -22,6 +22,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -146,7 +147,7 @@ public class PsiTreeUtil {
   }
 
   @Contract(pure = true)
-  private static int getDepth(@NotNull PsiElement element, @Nullable PsiElement topLevel) {
+  public static int getDepth(@NotNull PsiElement element, @Nullable PsiElement topLevel) {
     int depth=0;
     PsiElement parent = element;
     while (parent != topLevel && parent != null) {
@@ -1224,7 +1225,10 @@ public class PsiTreeUtil {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** use {@link SyntaxTraverser#psiTraverser()} (to be removed in IDEA 2019) */
+  /**
+   * @deprecated use {@link SyntaxTraverser#psiTraverser()} (to be removed in IDEA 2019)
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   public static <T extends PsiElement> Iterator<T> childIterator(@NotNull PsiElement element, @NotNull Class<T> aClass) {
     return SyntaxTraverser.psiTraverser().children(element).filter(aClass).iterator();

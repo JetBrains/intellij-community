@@ -140,7 +140,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
 
 
     final JPanel showPanel = new JPanel(new GridBagLayout());
-    showPanel.setBorder(IdeBorderFactory.createTitledBorder("Show", true));
+    showPanel.setBorder(IdeBorderFactory.createTitledBorder("Show"));
 
     showPanel.add(myCbShowDeclaredType, new GridBagConstraints(0, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));
     showPanel.add(myCbShowObjectId, new GridBagConstraints(0, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insetsTop(4), 0, 0));

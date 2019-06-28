@@ -16,10 +16,10 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class StringConcatenationInFormatCallInspectionTest extends LightInspectionTestCase {
+public class StringConcatenationInFormatCallInspectionTest extends LightJavaInspectionTestCase {
 
   public void testStringConcatenationInFormatCall() {
     doTest();

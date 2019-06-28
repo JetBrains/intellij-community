@@ -99,19 +99,21 @@ internal class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAw
 
     var description = templatePresentation.text
     if (ActionPlaces.CONTEXT_TOOLBAR == e.place) {
-      val builder = StringBuilder(description)
-      builder.append(" (")
-      val shortcuts = KeymapManager.getInstance().activeKeymap.getShortcuts("WebOpenInAction")
-      val exists = shortcuts.isNotEmpty()
-      if (exists) {
-        builder.append(KeymapUtil.getShortcutText(shortcuts[0]))
-      }
+      val shortcutInfo = buildString {
+        val shortcuts = KeymapManager.getInstance().activeKeymap.getShortcuts("WebOpenInAction")
+        val exists = shortcuts.isNotEmpty()
+        if (exists) {
+          append(KeymapUtil.getShortcutText(shortcuts[0]))
+        }
 
-      if (HtmlUtil.isHtmlFile(result.file)) {
-        builder.append(if (exists) ", " else "").append("hold Shift to open URL of local file")
+        if (HtmlUtil.isHtmlFile(result.file)) {
+          append(if (exists) ", " else "")
+          append("hold Shift to open URL of local file")
+        }
       }
-      builder.append(')')
-      description = builder.toString()
+      if (shortcutInfo.isNotEmpty()) {
+        description = "$description ($shortcutInfo)"
+      }
     }
     e.presentation.text = description
   }

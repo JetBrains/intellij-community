@@ -17,7 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextField;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,7 +93,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
     comboBox.setEditable(true);
     comboBox.setRenderer(new ColoredListCellRenderer<JreComboBoxItem>() {
       {
-        setIpad(JBUI.insets(1, 0));
+        setIpad(JBInsets.create(1, 0));
         setMyBorder(null);
       }
 

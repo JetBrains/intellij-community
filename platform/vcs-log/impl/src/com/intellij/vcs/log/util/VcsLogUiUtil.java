@@ -11,8 +11,10 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.navigation.History;
@@ -136,6 +138,26 @@ public class VcsLogUiUtil {
       }
     });
     return history;
+  }
+
+  @NotNull
+  public static String shortenTextToFit(@NotNull String text, @NotNull FontMetrics fontMetrics, int availableWidth, int maxLength,
+                                        @NotNull String symbol) {
+    if (fontMetrics.stringWidth(text) <= availableWidth) return text;
+
+    for (int i = text.length(); i > maxLength; i--) {
+      String result = StringUtil.shortenTextWithEllipsis(text, i, 0, symbol);
+      if (fontMetrics.stringWidth(result) <= availableWidth) {
+        return result;
+      }
+    }
+    return StringUtil.shortenTextWithEllipsis(text, maxLength, 0, symbol);
+  }
+
+  public static int getHorizontalTextPadding(@NotNull SimpleColoredComponent component) {
+    Insets borderInsets = component.getMyBorder().getBorderInsets(component);
+    Insets ipad = component.getIpad();
+    return borderInsets.left + borderInsets.right + ipad.left + ipad.right;
   }
 
   private static class VcsLogPlaceNavigator implements Place.Navigator {

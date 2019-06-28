@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import java.util.ArrayList;
  * @author Konstantin Bulenkov
  */
 public class JBSlidingPanel extends JBPanel {
-  private final ArrayList<Pair<String,Component>> mySlides = new ArrayList<>();
+  private final ArrayList<Pair<String, Component>> mySlides = new ArrayList<>();
   private int mySelectedIndex = -1;
 
   public JBSlidingPanel() {
@@ -75,24 +75,36 @@ public class JBSlidingPanel extends JBPanel {
     return callback;
   }
 
+  /**
+   * @deprecated MUST use {@link #add((String, Component))}
+   */
   @Override
   @Deprecated
   public Component add(Component comp) {
     throw new AddMethodIsNotSupportedException();
   }
 
+  /**
+   * @deprecated MUST use {@link #add((String, Component))}
+   */
   @Override
   @Deprecated
   public Component add(Component comp, int index) {
     throw new AddMethodIsNotSupportedException();
   }
 
+  /**
+   * @deprecated MUST use {@link #add((String, Component))}
+   */
   @Override
   @Deprecated
   public void add(Component comp, Object constraints) {
     throw new AddMethodIsNotSupportedException();
   }
 
+  /**
+   * @deprecated MUST use {@link #add((String, Component))}
+   */
   @Override
   @Deprecated
   public void add(Component comp, Object constraints, int index) {

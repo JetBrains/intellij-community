@@ -45,7 +45,7 @@ public class GitShelveChangesSaver extends GitChangesSaver {
   }
 
   @Override
-  protected void save(@NotNull Collection<VirtualFile> rootsToSave) throws VcsException {
+  protected void save(@NotNull Collection<? extends VirtualFile> rootsToSave) throws VcsException {
     myVcsShelveChangesSaver.save(rootsToSave);
   }
 

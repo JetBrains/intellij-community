@@ -5,10 +5,10 @@ import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiClass
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.assertj.core.api.Assertions.assertThat
 
-class LightJava11HighlightingTest : LightCodeInsightFixtureTestCase() {
+class LightJava11HighlightingTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor() = JAVA_11
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advHighlighting11"
 

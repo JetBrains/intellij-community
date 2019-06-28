@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsProviderMarker;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,4 +72,13 @@ public interface UpdateEnvironment extends VcsProviderMarker {
   Configurable createConfigurable(Collection<FilePath> files);
 
   boolean validateOptions(final Collection<FilePath> roots);
+
+  /**
+   * Returns true if the {@link UpdateSession} created by this UpdateEnvironment will
+   * {@link UpdateSession#showNotification() show a custom notification} instead of the standard one.
+   */
+  @CalledInAwt
+  default boolean hasCustomNotification() {
+    return false;
+  }
 }

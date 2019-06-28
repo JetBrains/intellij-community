@@ -201,7 +201,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
 
         private void visitVariableUsages(PsiVariable variable) {
           if (variable == null) return;
-          if (myConfiguration.getAdvancedConfiguration().getDfaOption() != Configuration.DfaOption.OFF && visitedVars.add(variable)) {
+          if (myConfiguration.getAdvancedConfiguration().getDfaOption() != Configuration.DfaOption.OFF) {
             ReferencesSearch.search(variable, searchScope).forEach(psiReference -> {
               PsiElement element = psiReference.getElement();
               if (element instanceof PsiExpression) {
@@ -218,6 +218,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
 
         @Override
         public boolean visitVariable(PsiVariable variable) {
+          if (!visitedVars.add(variable)) return false;
           visitVariableUsages(variable);
           PsiElement anchor = !(variable.getFirstChild() instanceof PsiComment) ? variable :
                               variable.getModifierList() != null ? variable.getModifierList() :

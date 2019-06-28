@@ -24,10 +24,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.CustomStatusBarWidget;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.ui.AnimatedIcon.Recording;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -155,6 +152,7 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
 
     private Widget(StatusBar statusBar) {
       myStatusBar = statusBar;
+      myIcon.setBorder(StatusBarWidget.WidgetBorder.ICON);
       myPresentation = new WidgetPresentation() {
         @Override
         public String getTooltipText() {

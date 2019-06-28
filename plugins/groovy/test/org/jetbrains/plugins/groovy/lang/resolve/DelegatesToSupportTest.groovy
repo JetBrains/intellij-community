@@ -51,4 +51,32 @@ class MyDelegate {
       }
     }
   }
+
+  void 'test extension method generic type'() {
+    fixture.with {
+      addClass '''\
+package test;
+
+import groovy.lang.Closure;
+import groovy.lang.DelegatesTo;
+
+public class TestExtension {
+    public static <T> T letIf(T obj, boolean cond, @DelegatesTo(type = "T", strategy = Closure.DELEGATE_FIRST) Closure<T> closure) {}
+}
+'''
+      addFileToProject 'META-INF/services/org.codehaus.groovy.runtime.ExtensionModule', 'extensionClasses=test.TestExtension'
+      configureByText 'a.groovy', '''\
+@groovy.transform.CompileStatic
+def foo(String s) {
+    s.letIf(true) {
+        concat ""
+    }
+    s.letIf(false) {
+        delegate.concat ""
+    }
+}
+'''
+      checkHighlighting()
+    }
+  }
 }

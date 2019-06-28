@@ -16,10 +16,10 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class ObjectEqualityInspectionTest extends LightInspectionTestCase {
+public class ObjectEqualityInspectionTest extends LightJavaInspectionTestCase {
 
   public void testObjectEquality() {
     doTest();

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.configurations.JavaParameters;
@@ -31,10 +17,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.PathsList;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
@@ -806,7 +789,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
     if (new File(librarySrcPath).exists()) {
       expectedPaths.add(librarySrcPath);
     }
-    assertSearchScope(scope2, ArrayUtil.toStringArray(expectedPaths));
+    assertSearchScope(scope2, ArrayUtilRt.toStringArray(expectedPaths));
   }
 
   public void testDoNotIncludeConflictingTransitiveDependenciesInTheClasspath() throws Exception {

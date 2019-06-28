@@ -8,14 +8,14 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.TestLoggerFactory;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mikhail Golubev
  */
 @TestDataPath("$CONTENT_ROOT/testData")
-public abstract class JsonTestCase extends LightCodeInsightFixtureTestCase {
+public abstract class JsonTestCase extends LightJavaCodeInsightFixtureTestCase {
   static {
     Logger.setFactory(TestLoggerFactory.class);
   }

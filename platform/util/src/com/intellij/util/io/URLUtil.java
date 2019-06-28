@@ -2,8 +2,8 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ThreeState;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +28,7 @@ public class URLUtil {
 
   public static final Pattern DATA_URI_PATTERN = Pattern.compile("data:([^,;]+/[^,;]+)(;charset(?:=|:)[^,;]+)?(;base64)?,(.+)");
   public static final Pattern URL_PATTERN = Pattern.compile("\\b(mailto:|(news|(ht|f)tp(s?))://|((?<![\\p{L}0-9_.])(www\\.)))[-A-Za-z0-9+$&@#/%?=~_|!:,.;]*[-A-Za-z0-9+$&@#/%=~_|]");
+  public static final Pattern URL_WITH_PARENS_PATTERN = Pattern.compile("\\b(mailto:|(news|(ht|f)tp(s?))://|((?<![\\p{L}0-9_.])(www\\.)))[-A-Za-z0-9+$&@#/%?=~_|!:,.;()]*[-A-Za-z0-9+$&@#/%=~_|()]");
   public static final Pattern FILE_URL_PATTERN = Pattern.compile("\\b(file:///)[-A-Za-z0-9+$&@#/%?=~_|!:,.;]*[-A-Za-z0-9+$&@#/%=~_|]");
 
   public static final Pattern HREF_PATTERN = Pattern.compile("<a(?:\\s+href\\s*=\\s*[\"']([^\"']*)[\"'])?\\s*>([^<]*)</a>");
@@ -323,7 +324,7 @@ public class URLUtil {
   @NotNull
   public static String encodeURIComponent(@NotNull String s) {
     try {
-      return URLEncoder.encode(s, CharsetToolkit.UTF8)
+      return URLEncoder.encode(s, StandardCharsets.UTF_8.name())
         .replace("+", "%20")
         .replace("%21", "!")
         .replace("%27", "'")
@@ -334,5 +335,31 @@ public class URLUtil {
     catch (UnsupportedEncodingException e) {
       return s;
     }
+  }
+
+  /**
+   * Finds the first range in text containing URL. This is similar to using {@link #URL_PATTERN} matcher, but also finds URLs containing
+   * matched set of parentheses.
+   */
+  @Nullable
+  public static TextRange findUrl(@NotNull CharSequence text, int startOffset, int endOffset) {
+    Matcher m = URL_WITH_PARENS_PATTERN.matcher(text);
+    m.region(startOffset, endOffset);
+    if (!m.find()) return null;
+    int start = m.start();
+    int end = m.end();
+    int unmatchedPos = 0;
+    int unmatchedCount = 0;
+    for (int i = m.end(1); i < end; i++) {
+      char c = text.charAt(i);
+      if (c == '(') {
+        if (unmatchedCount++ == 0) unmatchedPos = i;
+      }
+      else if (c == ')') {
+        if (unmatchedCount-- == 0) return new TextRange(start, i);
+      }
+    }
+    if (unmatchedCount > 0) return new TextRange(start, unmatchedPos);
+    return new TextRange(start, end);
   }
 }

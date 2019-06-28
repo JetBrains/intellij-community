@@ -7,18 +7,19 @@ import com.intellij.diff.tools.fragmented.UnifiedDiffTool
 import com.intellij.diff.tools.simple.SimpleDiffTool
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings
 import com.intellij.diff.util.DiffPlaces
-import com.intellij.internal.statistic.beans.UsageDescriptor
+import com.intellij.internal.statistic.beans.MetricEvent
+import com.intellij.internal.statistic.beans.addBoolIfDiffers
+import com.intellij.internal.statistic.beans.addIfDiffers
+import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
-import com.intellij.internal.statistic.utils.addIfDiffers
 import java.util.*
 
 class DiffUsagesCollector : ApplicationUsagesCollector() {
-  override fun getGroupId(): String {
-    return "vcs.diff"
-  }
+  override fun getGroupId(): String = "vcs.diff"
+  override fun getVersion(): Int = 2
 
-  override fun getUsages(): MutableSet<UsageDescriptor> {
-    val usages = HashSet<UsageDescriptor>()
+  override fun getMetrics(): MutableSet<MetricEvent> {
+    val set = HashSet<MetricEvent>()
 
     val places = listOf(DiffPlaces.DEFAULT,
                         DiffPlaces.CHANGES_VIEW,
@@ -28,34 +29,35 @@ class DiffUsagesCollector : ApplicationUsagesCollector() {
                         DiffPlaces.TESTS_FAILED_ASSERTIONS)
 
     for (place in places) {
+      val data = FeatureUsageData().addData("diff_place", place)
+
       val diffSettings = DiffSettings.getSettings(place)
       val defaultDiffSettings = DiffSettings.getDefaultSettings(place)
 
       val textSettings = TextDiffSettings.getSettings(place)
       val defaultTextSettings = TextDiffSettings.getDefaultSettings(place)
 
-      addIfDiffers(usages, textSettings, defaultTextSettings, { it.ignorePolicy }, { "ignore.policy.$place.$it" })
-      addIfDiffers(usages, textSettings, defaultTextSettings, { it.highlightPolicy }, { "highlight.policy.$place.$it" })
-      addIfDiffers(usages, textSettings, defaultTextSettings, { it.highlightingLevel }, { "show.warnings.policy.$place.$it" })
-      addBoolIfDiffers(usages, textSettings, defaultTextSettings, { !it.isExpandByDefault }, "collapse.unchanged.$place")
-      addBoolIfDiffers(usages, textSettings, defaultTextSettings, { it.isShowLineNumbers }, "show.line.numbers.$place")
-      addBoolIfDiffers(usages, textSettings, defaultTextSettings, { it.isUseSoftWraps }, "use.soft.wraps.$place")
-      addBoolIfDiffers(usages, diffSettings, defaultDiffSettings, { isUnifiedToolDefault(it) }, "use.unified.diff.$place")
-
-      addBoolIfDiffers(usages, textSettings, defaultTextSettings, { it.isReadOnlyLock }, "enable.read.lock.$place")
+      addIfDiffers(set, textSettings, defaultTextSettings, { it.ignorePolicy }, "ignore.policy", data)
+      addIfDiffers(set, textSettings, defaultTextSettings, { it.highlightPolicy }, "highlight.policy", data)
+      addIfDiffers(set, textSettings, defaultTextSettings, { it.highlightingLevel }, "show.warnings.policy", data)
+      addBoolIfDiffers(set, textSettings, defaultTextSettings, { !it.isExpandByDefault }, "collapse.unchanged", data)
+      addBoolIfDiffers(set, textSettings, defaultTextSettings, { it.isShowLineNumbers }, "show.line.numbers", data)
+      addBoolIfDiffers(set, textSettings, defaultTextSettings, { it.isUseSoftWraps }, "use.soft.wraps", data)
+      addBoolIfDiffers(set, diffSettings, defaultDiffSettings, { isUnifiedToolDefault(it) }, "use.unified.diff", data)
+      addBoolIfDiffers(set, textSettings, defaultTextSettings, { it.isReadOnlyLock }, "enable.read.lock", data)
     }
 
     val diffSettings = DiffSettings.getSettings(DiffPlaces.DEFAULT)
     val defaultDiffSettings = DiffSettings.getDefaultSettings(DiffPlaces.DEFAULT)
-    addBoolIfDiffers(usages, diffSettings, defaultDiffSettings, { it.isGoToNextFileOnNextDifference }, "iterate.next.file")
+    addBoolIfDiffers(set, diffSettings, defaultDiffSettings, { it.isGoToNextFileOnNextDifference }, "iterate.next.file")
 
     val externalSettings = ExternalDiffSettings.instance
     val defaultExternalSettings = ExternalDiffSettings()
-    addBoolIfDiffers(usages, externalSettings, defaultExternalSettings, { it.isDiffEnabled }, "external.diff.enabled")
-    addBoolIfDiffers(usages, externalSettings, defaultExternalSettings, { it.isDiffEnabled && it.isDiffDefault }, "external.diff.default")
-    addBoolIfDiffers(usages, externalSettings, defaultExternalSettings, { it.isMergeEnabled }, "external.merge.enabled")
+    addBoolIfDiffers(set, externalSettings, defaultExternalSettings, { it.isDiffEnabled }, "use.external.diff")
+    addBoolIfDiffers(set, externalSettings, defaultExternalSettings, { it.isDiffEnabled && it.isDiffDefault }, "use.external.diff.by.default")
+    addBoolIfDiffers(set, externalSettings, defaultExternalSettings, { it.isMergeEnabled }, "use.external.merge")
 
-    return usages
+    return set
   }
 
   private fun isUnifiedToolDefault(settings: DiffSettings): Boolean {
@@ -64,10 +66,5 @@ class DiffUsagesCollector : ApplicationUsagesCollector() {
     val unifiedToolIndex = toolOrder.indexOf(UnifiedDiffTool::class.java.canonicalName)
     if (unifiedToolIndex == -1) return false
     return defaultToolIndex == -1 || unifiedToolIndex < defaultToolIndex
-  }
-
-  private fun <T> addBoolIfDiffers(set: MutableSet<in UsageDescriptor>, settingsBean: T, defaultSettingsBean: T,
-                                   valueFunction: Function1<T, Boolean>, featureId: String) {
-    addIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction) { if (it) featureId else "$featureId.disabled" }
   }
 }

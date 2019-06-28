@@ -2,11 +2,11 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/pluginXmlCapitalization/")
-public class PluginXmlCapitalizationInspectionTest extends LightCodeInsightFixtureTestCase {
+public class PluginXmlCapitalizationInspectionTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
@@ -19,6 +19,7 @@ public class PluginXmlCapitalizationInspectionTest extends LightCodeInsightFixtu
   }
 
   public void testAction() {
-    myFixture.testHighlighting("pluginXmlCapitalization_Action.xml");
+    myFixture.testHighlighting("pluginXmlCapitalization_Action.xml",
+                               "MyBundle.properties", "MyAction.java");
   }
 }

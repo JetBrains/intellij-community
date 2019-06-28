@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -17,7 +17,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
@@ -204,7 +204,7 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
   }
 
   private static final Trinity<String[], VirtualFile[], VirtualFile[]> EMPTY =
-    Trinity.create(ArrayUtil.EMPTY_STRING_ARRAY, VirtualFile.EMPTY_ARRAY, VirtualFile.EMPTY_ARRAY);
+    Trinity.create(ArrayUtilRt.EMPTY_STRING_ARRAY, VirtualFile.EMPTY_ARRAY, VirtualFile.EMPTY_ARRAY);
 
   @NotNull
   private Trinity<String[], VirtualFile[], VirtualFile[]> cacheThings() {
@@ -271,7 +271,7 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
           });
         }
       }
-      String[] urlsArray = ArrayUtil.toStringArray(cachedUrls);
+      String[] urlsArray = ArrayUtilRt.toStringArray(cachedUrls);
       VirtualFile[] directories = VfsUtilCore.toVirtualFileArray(cachedDirectories);
       VirtualFile[] files = allFilesAreDirs ? directories : VfsUtilCore.toVirtualFileArray(cachedFiles);
       result = Trinity.create(urlsArray, files, directories);

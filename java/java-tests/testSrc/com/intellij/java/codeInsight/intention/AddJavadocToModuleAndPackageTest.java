@@ -2,10 +2,10 @@
 package com.intellij.java.codeInsight.intention;
 
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class AddJavadocToModuleAndPackageTest extends LightCodeInsightFixtureTestCase {
+public class AddJavadocToModuleAndPackageTest extends LightJavaCodeInsightFixtureTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {

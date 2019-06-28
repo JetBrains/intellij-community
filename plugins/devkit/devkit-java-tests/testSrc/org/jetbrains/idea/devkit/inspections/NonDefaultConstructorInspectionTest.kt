@@ -1,10 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 
-class NonDefaultConstructorInspectionTest : LightCodeInsightFixtureTestCase() {
+class NonDefaultConstructorInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getBasePath() = "${DevkitJavaTestsUtil.TESTDATA_PATH}inspections/nonDefaultConstructor"
 
   override fun setUp() {

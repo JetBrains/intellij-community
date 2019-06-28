@@ -19,7 +19,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.xml.Html5SchemaProvider;
@@ -237,7 +237,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
       addResourcesFromMap(result, version, myStandardResources.getValue());
     }
 
-    return ArrayUtil.toStringArray(result);
+    return ArrayUtilRt.toStringArray(result);
   }
 
   private static <T> void addResourcesFromMap(@NotNull List<? super String> result, @Nullable String version, @NotNull Map<String, Map<String, T>> resourcesMap) {
@@ -248,9 +248,9 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   }
 
   /**
-   * @see #registerResourceTemporarily(String, String, Disposable)
+   * @deprecated use {@link #registerResourceTemporarily(String, String, Disposable)}
    */
-  @Deprecated()
+  @Deprecated
   @TestOnly
   public static void addTestResource(final String url, final String location, Disposable parentDisposable) {
     registerResourceTemporarily(url, location, parentDisposable);
@@ -311,7 +311,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     for (Map<String, String> map : myResources.values()) {
       urls.addAll(map.keySet());
     }
-    return ArrayUtil.toStringArray(urls);
+    return ArrayUtilRt.toStringArray(urls);
   }
 
   @Override
@@ -422,13 +422,13 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     myStandardResources.getValue();
 
     if (myIgnoredResources.isEmpty()) {
-      return ArrayUtil.toStringArray(myStandardIgnoredResources);
+      return ArrayUtilRt.toStringArray(myStandardIgnoredResources);
     }
 
     Set<String> set = new THashSet<>(myIgnoredResources.size() + myStandardIgnoredResources.size());
     set.addAll(myIgnoredResources);
     set.addAll(myStandardIgnoredResources);
-    return ArrayUtil.toStringArray(set);
+    return ArrayUtilRt.toStringArray(set);
   }
 
   @Override

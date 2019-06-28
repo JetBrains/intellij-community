@@ -28,7 +28,7 @@ import java.util.List;
 public interface VcsCacheableHistorySessionFactory<Cacheable extends Serializable, T extends VcsAbstractHistorySession> {
 
   T createFromCachedData(@Nullable Cacheable cacheable,
-                         @NotNull List<VcsFileRevision> revisions,
+                         @NotNull List<? extends VcsFileRevision> revisions,
                          @NotNull FilePath filePath,
                          @Nullable VcsRevisionNumber currentRevision);
 

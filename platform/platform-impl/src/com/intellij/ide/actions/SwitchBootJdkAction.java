@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.CopyProvider;
@@ -29,11 +29,11 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.ArrayUtil;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.JdkBundle;
 import com.intellij.util.JdkBundleList;
 import com.intellij.util.lang.JavaVersion;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -118,7 +118,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
       bundleList.addBundle(bundledJdk);
     }
 
-    String[] locations = ArrayUtil.EMPTY_STRING_ARRAY;
+    String[] locations = ArrayUtilRt.EMPTY_STRING_ARRAY;
     if (SystemInfo.isWindows) {
       String dir = SystemInfo.is32Bit ? WINDOWS_X86_JVM_LOCATION : WINDOWS_X64_JVM_LOCATION;
       locations = Stream.of(File.listRoots()).map(root -> new File(root, dir).getPath()).toArray(String[]::new);
@@ -276,7 +276,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
         warningLabel.setIcon(UIUtil.getWarningIcon());
         warningLabel.setForeground(JBColor.RED);
 
-        JPanel panel = new NonOpaquePanel(new BorderLayout(0, JBUI.scale(20)));
+        JPanel panel = new NonOpaquePanel(new BorderLayout(0, JBUIScale.scale(20)));
         panel.add(warningLabel, BorderLayout.NORTH);
         panel.add(new JBLabel("Select Boot JDK"), BorderLayout.CENTER);
         return panel;
@@ -331,7 +331,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
 
     private static class JdkBundleItemRenderer extends SimpleListCellRenderer<JdkBundleItem> {
       @Override
-      public void customize(JList<? extends JdkBundleItem> list, JdkBundleItem value, int index, boolean selected, boolean hasFocus) {
+      public void customize(@NotNull JList<? extends JdkBundleItem> list, JdkBundleItem value, int index, boolean selected, boolean hasFocus) {
         if (value == RESET) {
           setText("<reset to default>");
         }

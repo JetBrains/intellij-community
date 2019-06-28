@@ -103,13 +103,14 @@ public class ThemeJsonCompletionContributor extends CompletionContributor {
       final String description = uiKeyMetadata.getDescription();
       final boolean deprecated = uiKeyMetadata.isDeprecated();
       final String source = uiKeyMetadata.getSource();
-      final String tailText = (StringUtil.isEmpty(description) ? "" : " (" + description + ")") +
-                              (StringUtil.isEmpty(source) ? "" : " in " + source);
+      final String since = uiKeyMetadata.getSince();
       final LookupElementBuilder builder =
         LookupElementBuilder.create(completionKey)
           .withPresentableText(key)
           .withStrikeoutness(deprecated)
-          .withTailText(tailText, true)
+          .appendTailText(StringUtil.isEmpty(since) ? "" : " [" + since + "]", true)
+          .appendTailText(StringUtil.isEmpty(description) ? "" : " (" + description + ")", true)
+          .appendTailText(StringUtil.isEmpty(source) ? "" : " in " + source, true)
           .withTypeText("[" + ObjectUtils.chooseNotNull(themeMetadata.getName(), themeMetadata.getPluginId()) + "]")
           .withInsertHandler(shouldSurroundWithQuotes ? MyInsertHandler.SURROUND_WITH_QUOTES : MyInsertHandler.INSTANCE);
 

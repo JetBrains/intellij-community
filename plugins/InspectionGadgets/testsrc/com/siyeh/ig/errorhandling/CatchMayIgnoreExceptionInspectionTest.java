@@ -1,9 +1,9 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
-public class CatchMayIgnoreExceptionInspectionTest extends LightInspectionTestCase {
+public class CatchMayIgnoreExceptionInspectionTest extends LightJavaInspectionTestCase {
 
   @Override
   protected LocalInspectionTool getInspection() {

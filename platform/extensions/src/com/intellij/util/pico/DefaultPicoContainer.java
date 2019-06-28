@@ -27,7 +27,7 @@ public class DefaultPicoContainer implements MutablePicoContainer {
   private final AtomicReference<FList<ComponentAdapter>> nonAssignableComponentAdapters = new AtomicReference<>(FList.emptyList());
 
   public DefaultPicoContainer(@Nullable PicoContainer parent) {
-    this.parent = parent == null ? null : ImmutablePicoContainerProxyFactory.newProxyInstance(parent);
+    this.parent = parent;
   }
 
   public DefaultPicoContainer() {

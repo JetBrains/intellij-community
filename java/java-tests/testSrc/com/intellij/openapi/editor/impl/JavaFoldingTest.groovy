@@ -377,7 +377,7 @@ class Test {
     myFixture.performEditorAction 'CollapseBlock'
     myFixture.editor.caretModel.moveToOffset(text.indexOf('test1'))
     myFixture.performEditorAction 'HighlightUsagesInFile'
-    FindManager.getInstance(project).findNextUsageInEditor(TextEditorProvider.getInstance().getTextEditor(myFixture.editor))
+    FindManager.getInstance(project).findNextUsageInEditor(myFixture.editor)
     assertEquals('test1', myFixture.editor.selectionModel.selectedText)
   }
 

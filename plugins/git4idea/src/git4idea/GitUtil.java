@@ -34,6 +34,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -1064,10 +1066,6 @@ public class GitUtil {
     VcsImplUtil.generateIgnoreFileIfNeeded(project, GitVcs.getInstance(project), ignoreFileRoot);
   }
 
-  public static void proposeUpdateGitignore(@NotNull Project project, @NotNull VirtualFile ignoreFileRoot) {
-    VcsImplUtil.proposeUpdateIgnoreFile(project, GitVcs.getInstance(project), ignoreFileRoot);
-  }
-
   public static <T extends Throwable> void tryRunOrClose(@NotNull AutoCloseable closeable,
                                                          @NotNull ThrowableRunnable<T> runnable) throws T {
     try {
@@ -1082,6 +1080,18 @@ public class GitUtil {
       }
       throw e;
     }
+  }
+
+  @NotNull
+  public static Map<GitRepository, Hash> getCurrentRevisions(@NotNull Collection<? extends GitRepository> repositories) {
+    Map<GitRepository, Hash> result = new LinkedHashMap<>();
+    for (GitRepository repository : repositories) {
+      String currentRevision = repository.getCurrentRevision();
+      if (currentRevision != null) {
+        result.put(repository, HashImpl.build(currentRevision));
+      }
+    }
+    return result;
   }
 
   private static class GitRepositoryNotFoundException extends VcsException {

@@ -26,6 +26,12 @@ abstract class SaveAndSyncHandler {
   }
 
   data class SaveTask @JvmOverloads constructor(val onlyProject: Project? = null, val saveDocuments: Boolean = true, val forceSavingAllSettings: Boolean = false) {
+    companion object {
+      // for Java clients
+      @JvmStatic
+      fun projectIncludingAllSettings(project: Project) = SaveTask(onlyProject = project, saveDocuments = false, forceSavingAllSettings = true)
+    }
+
     fun isMoreGenericThan(other: SaveTask): Boolean {
       return onlyProject == null && other.onlyProject != null && saveDocuments == other.saveDocuments && forceSavingAllSettings == other.forceSavingAllSettings
     }

@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.ant;
 import com.intellij.compiler.ant.*;
 import com.intellij.compiler.ant.taskdefs.PatternSetRef;
 import com.intellij.compiler.ant.taskdefs.Property;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -133,6 +134,6 @@ public class GroovyAntCustomCompilerProvider extends ChunkCustomCompilerExtensio
   }
 
   private static boolean isCompilableGroovyFile(VirtualFile file, Set<String> scriptExtensions) {
-    return !file.isDirectory() && GroovyFileType.GROOVY_FILE_TYPE == file.getFileType() && !scriptExtensions.contains(file.getExtension());
+    return !file.isDirectory() && FileTypeRegistry.getInstance().isFileOfType(file, GroovyFileType.GROOVY_FILE_TYPE) && !scriptExtensions.contains(file.getExtension());
   }
 }

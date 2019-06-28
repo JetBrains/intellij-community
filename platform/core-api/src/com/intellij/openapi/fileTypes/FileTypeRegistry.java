@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.fileTypes;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.ByteSequence;
@@ -22,6 +23,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 /**
  * @author yole
@@ -31,7 +34,19 @@ public abstract class FileTypeRegistry {
 
   public abstract boolean isFileIgnored(@NotNull VirtualFile file);
 
+  /**
+   * Checks if the given file has the given file type. This is faster than getting the file type
+   * and comparing it, because for file types that are identified by virtual file, it will only
+   * check if the given file type matches, and will not run other detectors. However, this can
+   * lead to inconsistent results if two file types report the same file as matching (which should
+   * generally be avoided).
+   */
   public abstract boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType type);
+
+  @Nullable
+  public LanguageFileType findFileTypeByLanguage(@NotNull Language language) {
+    return language.findMyFileType(getRegisteredFileTypes());
+  }
 
   public static FileTypeRegistry getInstance() {
     return ourInstanceGetter.get();
@@ -103,6 +118,15 @@ public abstract class FileTypeRegistry {
      */
     @Nullable
     FileType detect(@NotNull VirtualFile file, @NotNull ByteSequence firstBytes, @Nullable CharSequence firstCharsIfText);
+
+    /**
+     * Returns the file type that this detector is capable of detecting, or null if it can detect
+     * multiple file types.
+     */
+    @Nullable
+    default Collection<? extends FileType> getDetectedFileTypes() {
+      return null;
+    }
 
     int getVersion();
   }

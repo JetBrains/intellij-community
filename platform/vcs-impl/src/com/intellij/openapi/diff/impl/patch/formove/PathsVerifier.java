@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
@@ -593,7 +594,7 @@ public class PathsVerifier {
       File destFile = new File(newParentFile, tmpFileWithUniqueName.getName());
       while (destFile.exists()) {
         destFile = new File(newParentFile,
-                            FileUtil.createTempFile(oldParent, FileUtil.getNameWithoutExtension(destFile.getName()), null, false)
+                            FileUtil.createTempFile(oldParent, FileUtilRt.getNameWithoutExtension(destFile.getName()), null, false)
                               .getName());
       }
       myCurrent.rename(PatchApplier.class, destFile.getName());
@@ -612,7 +613,7 @@ public class PathsVerifier {
       myProject = project;
       myOverrideExisting = new HashMap<>();
       mySkipDeleted = new HashMap<>();
-      myOverridenPaths = new LinkedList<>();
+      myOverridenPaths = new ArrayList<>();
     }
 
     public void addSkip(final FilePath path, final FilePatch filePatch) {
@@ -627,7 +628,7 @@ public class PathsVerifier {
 
     // returns those to be skipped
     public Collection<FilePatch> doDelayed() {
-      final List<FilePatch> result = new LinkedList<>();
+      final List<FilePatch> result = new ArrayList<>();
       if (! myOverrideExisting.isEmpty()) {
         final String title = "Overwrite Existing Files";
         List<FilePath> files = new ArrayList<>(myOverrideExisting.keySet());

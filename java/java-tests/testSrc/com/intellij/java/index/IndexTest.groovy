@@ -60,7 +60,9 @@ import com.intellij.util.indexing.*
 import com.intellij.util.indexing.impl.MapIndexStorage
 import com.intellij.util.indexing.impl.MapReduceIndex
 import com.intellij.util.indexing.impl.UpdatableValueContainer
-import com.intellij.util.io.*
+import com.intellij.util.io.CaseInsensitiveEnumeratorStringDescriptor
+import com.intellij.util.io.EnumeratorStringDescriptor
+import com.intellij.util.io.PersistentHashMap
 import com.intellij.util.ref.GCUtil
 import com.intellij.util.ref.GCWatcher
 import com.siyeh.ig.JavaOverridingMethodUtil
@@ -227,10 +229,14 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     def psiFile = myFixture.addFileToProject("Foo.java", "class Foo {}")
     final VirtualFile vFile = psiFile.getVirtualFile()
 
+    def stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, getProject())
+
     CodeStyleManager.getInstance(project).reformat(psiFile)
 
     PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
     PsiManager.getInstance(project).reloadFromDisk(psiFile)
+
+    assertEquals(stamp, ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, getProject()))
 
     FileContentUtilCore.reparseFiles(vFile)
 
@@ -767,7 +773,6 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   class RecordingVfsListener extends IndexedFilesListener {
-    def vfsEventMerger = new VfsEventsMerger()
 
     @Override
     protected void iterateIndexableFiles(@NotNull VirtualFile file, @NotNull ContentIterator iterator) {
@@ -780,18 +785,9 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       })
     }
 
-    protected void doInvalidateIndicesForFile(@NotNull VirtualFile file, boolean contentChange) {
-      vfsEventMerger.recordBeforeFileEvent(((VirtualFileWithId)file).id, file, contentChange)
-    }
-
-    @Override
-    protected void buildIndicesForFile(@NotNull VirtualFile file, boolean contentChange) {
-      vfsEventMerger.recordFileEvent(((VirtualFileWithId)file).id, file, contentChange)
-    }
-
     String indexingOperation(VirtualFile file) {
       Ref<String> operation = new Ref<>()
-      vfsEventMerger.processChanges(new VfsEventsMerger.VfsEventProcessor() {
+      eventMerger.processChanges(new VfsEventsMerger.VfsEventProcessor() {
         @Override
         boolean process(@NotNull VfsEventsMerger.ChangeInfo info) {
           operation.set(info.toString())
@@ -806,10 +802,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   void testIndexedFilesListener() throws Throwable {
     def listener = new RecordingVfsListener()
 
-    ApplicationManager.getApplication().getMessageBus().connect(myFixture.getTestRootDisposable()).subscribe(
-      VirtualFileManager.VFS_CHANGES,
-      listener
-    )
+    VirtualFileManager.instance.addAsyncFileListener(listener, myFixture.testRootDisposable)
 
     def fileName = "test.txt"
     final VirtualFile testFile = myFixture.addFileToProject(fileName, "test").getVirtualFile()
@@ -918,7 +911,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   @CompileStatic
-  void "test Vfs Events Processing Performance"() {
+  void "test Vfs Event Processing Performance"() {
     def filename = 'A.java'
     myFixture.addFileToProject('foo/bar/' + filename, 'class A {}')
 
@@ -940,9 +933,9 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
         eventList.add(new VFileCreateEvent(null, file.parent, filename, false, null, null, true, null))
       }
 
-      IndexedFilesListener indexedFilesListener = ((FileBasedIndexImpl)FileBasedIndex.instance).changedFilesCollector
-      indexedFilesListener.before(eventList)
-      indexedFilesListener.after(eventList)
+      def applier = ((FileBasedIndexImpl)FileBasedIndex.instance).changedFilesCollector.prepareChange(eventList)
+      applier.beforeVfsChange()
+      applier.afterVfsChange()
 
       files = FilenameIndex.getFilesByName(project, filename, GlobalSearchScope.moduleScope(module))
       assert files?.length == 1
@@ -1087,5 +1080,15 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       PsiDocumentManager.getInstance(project).commitAllDocuments()
       assert !findClass('Foo')
     }
+  }
+
+  void "test stub updating index stamp"() {
+    final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile()
+    def stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project)
+    VfsUtil.saveText(vFile, "class Foo { void m() {} }")
+    assertTrue(stamp != ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project))
+    stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project)
+    VfsUtil.saveText(vFile, "class Foo { void m() { int k = 0; } }")
+    assertTrue(stamp == ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project))
   }
 }

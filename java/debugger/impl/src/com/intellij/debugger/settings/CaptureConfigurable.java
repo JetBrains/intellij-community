@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
 import com.intellij.codeInsight.AnnotationsPanel;
@@ -17,6 +17,7 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.Configurable.NoScroll;
 import com.intellij.openapi.options.ConfigurationException;
@@ -39,6 +40,7 @@ import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.JBUI;
@@ -207,12 +209,12 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
           @Override
           public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
             return super.isFileVisible(file, showHiddenFiles) &&
-                   (file.isDirectory() || "xml".equals(file.getExtension()) || file.getFileType() == ArchiveFileType.INSTANCE);
+                   (file.isDirectory() || "xml".equals(file.getExtension()) || FileTypeRegistry.getInstance().isFileOfType(file, ArchiveFileType.INSTANCE));
           }
 
           @Override
           public boolean isFileSelectable(VirtualFile file) {
-            return file.getFileType() == StdFileTypes.XML;
+            return FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.XML);
           }
         };
         descriptor.setDescription("Please select a file to import.");
@@ -273,7 +275,7 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
 
     myConfigureAnnotationsButton.addActionListener(e -> new AsyncAnnotationsDialog(myProject).show());
 
-    myCapturePanel.setBorder(IdeBorderFactory.createTitledBorder("Breakpoints based", false));
+    myCapturePanel.setBorder(IdeBorderFactory.createTitledBorder("Breakpoints based:", false, JBUI.insetsTop(8)).setShowLine(false));
     myCapturePanel.add(decorator.createPanel(), BorderLayout.CENTER);
 
     return myPanel;
@@ -599,10 +601,10 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
     protected void doOKAction() {
       mySettings.myAsyncScheduleAnnotations = StreamEx.of(myAsyncSchedulePanel.getAnnotations())
         .filter(e -> !e.equals(getAnnotationName(true)))
-        .toArray(ArrayUtil.EMPTY_STRING_ARRAY);
+        .toArray(ArrayUtilRt.EMPTY_STRING_ARRAY);
       mySettings.myAsyncExecuteAnnotations = StreamEx.of(myAsyncExecutePanel.getAnnotations())
         .filter(e -> !e.equals(getAnnotationName(false)))
-        .toArray(ArrayUtil.EMPTY_STRING_ARRAY);
+        .toArray(ArrayUtilRt.EMPTY_STRING_ARRAY);
       super.doOKAction();
     }
 

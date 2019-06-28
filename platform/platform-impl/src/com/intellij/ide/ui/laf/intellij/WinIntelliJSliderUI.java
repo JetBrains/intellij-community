@@ -1,22 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.intellij;
 
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -92,25 +78,25 @@ public class WinIntelliJSliderUI extends BasicSliderUI {
     Graphics2D g2 = (Graphics2D)g.create();
     try {
       Rectangle2D coloredTrack, scaleRect;
-      int tw = JBUI.scale(1);
+      int tw = JBUIScale.scale(1);
       if (slider.getOrientation() == SwingConstants.HORIZONTAL) {
         coloredTrack = new Rectangle2D.Double(trackRect.x - thumbRect.width / 2,
-                                              trackRect.y + trackRect.height - JBUI.scale(10),
+                                              trackRect.y + trackRect.height - JBUIScale.scale(10),
                                               thumbRect.x - trackRect.x + thumbRect.width,
                                               tw);
 
         scaleRect = new Rectangle2D.Double(thumbRect.x + thumbRect.width / 2,
-                                           trackRect.y + trackRect.height - JBUI.scale(10),
+                                           trackRect.y + trackRect.height - JBUIScale.scale(10),
                                            trackRect.x + trackRect.width - thumbRect.x - tw,
                                            tw);
       }
       else {
-        coloredTrack = new Rectangle2D.Double(trackRect.x + thumbRect.width - JBUI.scale(10),
+        coloredTrack = new Rectangle2D.Double(trackRect.x + thumbRect.width - JBUIScale.scale(10),
                                               trackRect.y - thumbRect.height / 2,
                                               tw,
                                               thumbRect.y - trackRect.y + thumbRect.height);
 
-        scaleRect = new Rectangle2D.Double(trackRect.x + thumbRect.width - JBUI.scale(10),
+        scaleRect = new Rectangle2D.Double(trackRect.x + thumbRect.width - JBUIScale.scale(10),
                                            thumbRect.y + thumbRect.height / 2,
                                            tw,
                                            trackRect.y + trackRect.height - thumbRect.y - tw);
@@ -142,7 +128,7 @@ public class WinIntelliJSliderUI extends BasicSliderUI {
     }
     else {
       centerSpacing = thumbRect.width;
-      int offset = JBUI.scale(6);
+      int offset = JBUIScale.scale(6);
       if (slider.getComponentOrientation().isLeftToRight()) {
         if (slider.getPaintLabels()) {
           centerSpacing += getWidthOfWidestLabel();
@@ -165,14 +151,14 @@ public class WinIntelliJSliderUI extends BasicSliderUI {
   protected void calculateTickRect() {
     super.calculateTickRect();
     if (slider.getOrientation() == SwingConstants.HORIZONTAL) {
-      tickRect.y -= JBUI.scale(5);
+      tickRect.y -= JBUIScale.scale(5);
     }
     else {
       if (slider.getComponentOrientation().isLeftToRight()) {
-        tickRect.x -= JBUI.scale(5);
+        tickRect.x -= JBUIScale.scale(5);
       }
       else {
-        tickRect.x = trackRect.x + JBUI.scale(5);
+        tickRect.x = trackRect.x + JBUIScale.scale(5);
       }
     }
   }
@@ -182,11 +168,11 @@ public class WinIntelliJSliderUI extends BasicSliderUI {
     super.calculateLabelRect();
     if (slider.getPaintLabels()) {
       if (slider.getOrientation() == SwingConstants.VERTICAL) {
-        int distance = JBUI.scale(11); // Count tickRect
+        int distance = JBUIScale.scale(11); // Count tickRect
         labelRect.x += slider.getComponentOrientation().isLeftToRight() ? distance : -distance;
       }
       else {
-        labelRect.y += JBUI.scale(6);
+        labelRect.y += JBUIScale.scale(6);
       }
     }
   }
@@ -207,25 +193,25 @@ public class WinIntelliJSliderUI extends BasicSliderUI {
       if (slider.getOrientation() == SwingConstants.VERTICAL) {
         if (slider.getComponentOrientation().isLeftToRight()) {
           thumb.moveTo(0, 0);
-          thumb.lineTo(thumbRect.width - JBUI.scale(4), 0);
+          thumb.lineTo(thumbRect.width - JBUIScale.scale(4), 0);
           thumb.lineTo(thumbRect.width, thumbRect.height / 2);
-          thumb.lineTo(thumbRect.width - JBUI.scale(4), thumbRect.height);
+          thumb.lineTo(thumbRect.width - JBUIScale.scale(4), thumbRect.height);
           thumb.lineTo(0, thumbRect.height);
         }
         else {
           thumb.moveTo(thumbRect.width, 0);
           thumb.lineTo(thumbRect.width, thumbRect.height);
-          thumb.lineTo(JBUI.scale(4), thumbRect.height);
+          thumb.lineTo(JBUIScale.scale(4), thumbRect.height);
           thumb.lineTo(0, thumbRect.height / 2);
-          thumb.lineTo(JBUI.scale(4), 0);
+          thumb.lineTo(JBUIScale.scale(4), 0);
         }
       }
       else {
         thumb.moveTo(0, 0);
         thumb.lineTo(thumbRect.width, 0);
-        thumb.lineTo(thumbRect.width, thumbRect.height - JBUI.scale(4));
+        thumb.lineTo(thumbRect.width, thumbRect.height - JBUIScale.scale(4));
         thumb.lineTo(thumbRect.width / 2, thumbRect.height);
-        thumb.lineTo(0, thumbRect.height - JBUI.scale(4));
+        thumb.lineTo(0, thumbRect.height - JBUIScale.scale(4));
       }
       thumb.closePath();
 
@@ -239,12 +225,12 @@ public class WinIntelliJSliderUI extends BasicSliderUI {
 
   @Override
   protected int getTickLength() {
-    return JBUI.scale(4);
+    return JBUIScale.scale(4);
   }
 
   @Override
   protected void paintMinorTickForHorizSlider(Graphics g, Rectangle tickBounds, int x) {
-    Rectangle2D tick = new Rectangle2D.Double(x - 0.5, 0, JBUI.scale(1), tickBounds.height);
+    Rectangle2D tick = new Rectangle2D.Double(x - 0.5, 0, JBUIScale.scale(1), tickBounds.height);
     paintSliderTick(g, tick);
   }
 
@@ -255,7 +241,7 @@ public class WinIntelliJSliderUI extends BasicSliderUI {
 
   @Override
   protected void paintMinorTickForVertSlider(Graphics g, Rectangle tickBounds, int y) {
-    Rectangle2D tick = new Rectangle2D.Double(0, y - 0.5, tickBounds.width, JBUI.scale(1));
+    Rectangle2D tick = new Rectangle2D.Double(0, y - 0.5, tickBounds.width, JBUIScale.scale(1));
     paintSliderTick(g, tick);
   }
 

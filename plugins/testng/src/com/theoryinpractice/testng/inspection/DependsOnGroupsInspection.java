@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInspection.*;
@@ -10,7 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NonNls;
@@ -60,7 +60,7 @@ public class DependsOnGroupsInspection extends AbstractBaseJavaLocalInspectionTo
   public JComponent createOptionsPanel() {
     final LabeledComponent<JTextField> definedGroups = new LabeledComponent<>();
     definedGroups.setText("&Defined Groups");
-    final JTextField textField = new JTextField(StringUtil.join(ArrayUtil.toStringArray(groups), ","));
+    final JTextField textField = new JTextField(StringUtil.join(ArrayUtilRt.toStringArray(groups), ","));
     textField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull final DocumentEvent e) {

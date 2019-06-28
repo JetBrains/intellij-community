@@ -1,0 +1,6 @@
+fragment actorInfo on Actor {
+  __typename
+  login
+  url
+  avatarUrl
+}

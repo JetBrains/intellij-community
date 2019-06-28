@@ -22,15 +22,17 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.Set;
 
 public class NormalizeDeclarationFix extends InspectionGadgetsFix {
 
@@ -124,18 +126,26 @@ public class NormalizeDeclarationFix extends InspectionGadgetsFix {
     }
     final PsiStatement initialization = forStatement.getInitialization();
     if (!(initialization instanceof PsiDeclarationStatement)) {
-      throw new IllegalArgumentException();
+      return;
     }
     final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)initialization;
-    final List<PsiLocalVariable> variables = Stream.of(declarationStatement.getDeclaredElements())
-      .filter(a -> a instanceof PsiLocalVariable)
-      .map(element -> (PsiLocalVariable)element)
-      .collect(Collectors.toList());
+    final List<PsiLocalVariable> variables =
+      StreamEx.of(declarationStatement.getDeclaredElements()).select(PsiLocalVariable.class).toList();
+    final int min, max;
+    final boolean dependentVariables = containsDependentVariables(variables);
+    if (dependentVariables) {
+      min = 0;
+      max = variables.size() - 1;
+    }
+    else {
+      min = 1;
+      max = variables.size();
+    }
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(forStatement.getProject());
 
     final CommentTracker ct = new CommentTracker();
-    for (int i = 1; i < variables.size(); i++) {
-      final PsiVariable variable = variables.get(i - 1);
+    for (int i = min; i < max; i++) {
+      final PsiVariable variable = variables.get(i);
       final String name = variable.getName();
       assert name != null;
       final PsiDeclarationStatement newStatement =
@@ -144,12 +154,36 @@ public class NormalizeDeclarationFix extends InspectionGadgetsFix {
       forStatement.getParent().addBefore(newStatement, forStatement);
     }
 
-    final PsiVariable lastVariable = variables.get(variables.size() - 1);
-    final String name = lastVariable.getName();
+    final PsiVariable remainingVariable = variables.get(dependentVariables ? variables.size() - 1 : 0);
+    final String name = remainingVariable.getName();
     assert name != null;
     final PsiStatement replacementStatement =
-      factory.createVariableDeclarationStatement(name, lastVariable.getType(), ct.markUnchanged(lastVariable.getInitializer()),
+      factory.createVariableDeclarationStatement(name, remainingVariable.getType(), ct.markUnchanged(remainingVariable.getInitializer()),
                                                  declarationStatement);
     ct.replaceAndRestoreComments(declarationStatement, replacementStatement);
+  }
+
+  private static boolean containsDependentVariables(List<PsiLocalVariable> variables) {
+    if (variables.isEmpty()) return false;
+    final Set<PsiLocalVariable> visited = ContainerUtil.newHashSet(variables.get(0));
+    for (int i = 1; i < variables.size(); i++) {
+      final PsiLocalVariable variable = variables.get(i);
+      if (!PsiTreeUtil.processElements(variable.getInitializer(),
+                                       element -> !visited.contains(tryResolveLocalVariable(element)))) {
+        return true;
+      }
+      visited.add(variable);
+    }
+    return false;
+  }
+
+  private static PsiLocalVariable tryResolveLocalVariable(PsiElement element) {
+    if (element instanceof PsiReferenceExpression) {
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
+      if (referenceExpression.getQualifierExpression() == null) {
+        return ObjectUtils.tryCast(referenceExpression.resolve(), PsiLocalVariable.class);
+      }
+    }
+    return null;
   }
 }

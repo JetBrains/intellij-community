@@ -1,10 +1,10 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class DuplicateConditionInspectionTest extends LightInspectionTestCase {
+public class DuplicateConditionInspectionTest extends LightJavaInspectionTestCase {
 
   public void testDuplicateCondition() {
     doTest();

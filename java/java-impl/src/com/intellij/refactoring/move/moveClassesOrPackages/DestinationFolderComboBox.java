@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.DirectoryChooser;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -71,7 +71,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
         if (element == NULL_WRAPPER) return LEAVE_IN_SAME_SOURCE_ROOT;
         if (element instanceof DirectoryChooser.ItemWrapper) {
           final VirtualFile virtualFile = ((DirectoryChooser.ItemWrapper)element).getDirectory().getVirtualFile();
-          final Module module = ModuleUtil.findModuleForFile(virtualFile, project);
+          final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
           if (module != null) {
             return module.getName();
           }
@@ -289,7 +289,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
                                      final VirtualFile virtualFile,
                                      final VirtualFile targetVirtualFile) {
     final boolean inTestSourceContent = ProjectRootManager.getInstance(project).getFileIndex().isInTestSourceContent(virtualFile);
-    final Module module = ModuleUtil.findModuleForFile(virtualFile, project);
+    final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
     if (targetVirtualFile != null &&
         module != null &&
         !GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, inTestSourceContent).contains(targetVirtualFile)) {

@@ -19,8 +19,9 @@ import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.PyMissingConstructorInspection;
+import com.jetbrains.python.psi.LanguageLevel;
 
-@TestDataPath("$CONTENT_ROOT/../testData//quickFixes/AddCallSuperQuickFixTest/")
+@TestDataPath("$CONTENT_ROOT/../testData/quickFixes/PyAddCallSuperQuickFixTest/")
 public class PyAddCallSuperQuickFixTest extends PyQuickFixTestCase {
 
   public void testOldStyle() {
@@ -33,5 +34,10 @@ public class PyAddCallSuperQuickFixTest extends PyQuickFixTestCase {
 
   public void testKwargs() {
     doQuickFixTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"));
+  }
+
+  // PY-35512
+  public void testPositionalOnlyParameters() {
+    doQuickFixTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), LanguageLevel.PYTHON38);
   }
 }

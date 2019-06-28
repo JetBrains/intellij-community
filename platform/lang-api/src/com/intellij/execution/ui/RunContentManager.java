@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.Executor;
@@ -13,6 +13,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,7 @@ public interface RunContentManager {
 
   /** @deprecated Use {@link LangDataKeys#RUN_CONTENT_DESCRIPTOR} instead (to be removed in IDEA 16) */
   @Deprecated @SuppressWarnings("UnusedDeclaration")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2016")
   DataKey<RunContentDescriptor> RUN_CONTENT_DESCRIPTOR = LangDataKeys.RUN_CONTENT_DESCRIPTOR;
 
   /**
@@ -87,6 +89,9 @@ public interface RunContentManager {
 
   void selectRunContent(@NotNull RunContentDescriptor descriptor);
 
+  /**
+   * @deprecated use {@link #getContentDescriptorToolWindowId(RunConfiguration)}
+   */
   @Nullable
   @Deprecated
   default String getContentDescriptorToolWindowId(@Nullable RunnerAndConfigurationSettings settings) {

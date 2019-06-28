@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.lexer;
 
 import com.intellij.lexer.LexerBase;
@@ -38,7 +38,8 @@ public class JavaLexer extends LexerBase {
   public static boolean isSoftKeyword(CharSequence id, @NotNull LanguageLevel level) {
     return id != null &&
            (level.isAtLeast(LanguageLevel.JDK_1_9) && JAVA9_KEYWORDS.contains(id) ||
-            level.isAtLeast(LanguageLevel.JDK_10) && VAR.contentEquals(id));
+            level.isAtLeast(LanguageLevel.JDK_10) && VAR.contentEquals(id) ||
+            level.isAtLeast(LanguageLevel.JDK_13_PREVIEW) && YIELD.contentEquals(id));
   }
 
   private final _JavaLexer myFlexLexer;
@@ -143,10 +144,20 @@ public class JavaLexer extends LexerBase {
         }
         break;
 
-      case '"':
       case '\'':
-        myTokenType = c == '"' ? JavaTokenType.STRING_LITERAL : JavaTokenType.CHARACTER_LITERAL;
+        myTokenType = JavaTokenType.CHARACTER_LITERAL;
         myTokenEndOffset = getClosingQuote(myBufferIndex + 1, c);
+        break;
+
+      case '"':
+        if (myBufferIndex + 2 < myBufferEndOffset && charAt(myBufferIndex + 2) == '"' && charAt(myBufferIndex + 1) == '"') {
+          myTokenType = JavaTokenType.TEXT_BLOCK_LITERAL;
+          myTokenEndOffset = getTextBlockEnd(myBufferIndex + 2);
+        }
+        else {
+          myTokenType = JavaTokenType.STRING_LITERAL;
+          myTokenEndOffset = getClosingQuote(myBufferIndex + 1, c);
+        }
         break;
 
       case '`':
@@ -246,6 +257,19 @@ public class JavaLexer extends LexerBase {
       char c = charAt(pos);
       if (c == '\r' || c == '\n') break;
       pos++;
+    }
+
+    return pos;
+  }
+
+  private int getTextBlockEnd(int offset) {
+    int pos = offset;
+
+    while ((pos = getClosingQuote(pos + 1, '"')) < myBufferEndOffset) {
+      if (pos + 1 < myBufferEndOffset && charAt(pos + 1) == '"' && charAt(pos) == '"') {
+        pos += 2;
+        break;
+      }
     }
 
     return pos;

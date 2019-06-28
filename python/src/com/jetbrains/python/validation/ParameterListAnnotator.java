@@ -18,6 +18,7 @@ package com.jetbrains.python.validation;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -36,6 +37,7 @@ public class ParameterListAnnotator extends PyAnnotator {
         boolean hadPositionalContainer = false;
         boolean hadKeywordContainer = false;
         boolean hadDefaultValue = false;
+        boolean hadSlash = false;
         boolean hadSingleStar = false;
         boolean hadParamsAfterSingleStar = false;
         int inTuple = 0;
@@ -99,6 +101,23 @@ public class ParameterListAnnotator extends PyAnnotator {
         @Override
         public void leaveTupleParameter(PyTupleParameter param, boolean first, boolean last) {
           inTuple--;
+        }
+
+        @Override
+        public void visitSlashParameter(@NotNull PySlashParameter param, boolean first, boolean last) {
+          if (hadSlash) {
+            markError(param, PyBundle.message("ANN.multiple.slash"));
+          }
+          hadSlash = true;
+          if (hadPositionalContainer) {
+            markError(param, PyBundle.message("ANN.slash.param.after.vararg"));
+          }
+          else if (hadKeywordContainer) {
+            markError(param, PyBundle.message("ANN.slash.param.after.keyword"));
+          }
+          if (first) {
+            markError(param, PyBundle.message("ANN.named.parameters.before.slash"));
+          }
         }
 
         @Override

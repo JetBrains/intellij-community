@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -251,7 +251,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
   private void loadFromIpr(@NotNull Path iprFile) {
     final Element iprRoot = loadRootElement(iprFile);
 
-    String projectName = FileUtil.getNameWithoutExtension(iprFile.getFileName().toString());
+    String projectName = FileUtilRt.getNameWithoutExtension(iprFile.getFileName().toString());
     myProject.setName(projectName);
     Path iwsFile = iprFile.getParent().resolve(projectName + ".iws");
     Element iwsRoot = loadRootElement(iwsFile);
@@ -463,7 +463,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
 
   @NotNull
   private static String getModuleName(@NotNull Path file) {
-    return FileUtil.getNameWithoutExtension(file.getFileName().toString());
+    return FileUtilRt.getNameWithoutExtension(file.getFileName().toString());
   }
 
   static JpsMacroExpander createModuleMacroExpander(final Map<String, String> pathVariables, @NotNull Path moduleFile) {

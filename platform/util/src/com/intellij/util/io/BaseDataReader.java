@@ -18,6 +18,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -44,6 +45,7 @@ public abstract class BaseDataReader {
 
   /** @deprecated use {@link #start(String)} instead (to be removed in IDEA 17) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2017")
   protected void start() {
     start("");
   }
@@ -120,6 +122,7 @@ public abstract class BaseDataReader {
 
   /** @deprecated use one of default policies (recommended) or implement your own (to be removed in IDEA 2018) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   public static class AdaptiveSleepingPolicy implements SleepingPolicy {
     private static final int maxSleepTimeWhenIdle = 200;
     private static final int maxIterationsWithCurrentSleepTime = 50;

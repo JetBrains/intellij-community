@@ -4,14 +4,14 @@ package org.jetbrains.plugins.groovy.completion
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiPackage
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 import static org.jetbrains.plugins.groovy.util.TestUtils.readInput
 
-class KeywordCompletionTest extends LightCodeInsightFixtureTestCase {
+class KeywordCompletionTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testBr1()                 { doTest() }
   void testCase_return()         { doTest() }

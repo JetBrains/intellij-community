@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.openapi.Disposable
@@ -9,9 +9,9 @@ import com.intellij.util.ui.UIUtil
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.plugins.github.api.data.GithubIssueLabel
-import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailed
-import org.jetbrains.plugins.github.api.data.GithubUser
+import org.jetbrains.plugins.github.api.data.GHLabel
+import org.jetbrains.plugins.github.api.data.GHPullRequest
+import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsMetadataService
@@ -49,7 +49,7 @@ internal class GithubPullRequestMetadataPanel(private val model: GithubPullReque
     addListPanel(labelsHandle)
 
     model.addDetailsChangedListener(this) {
-      directionPanel.direction = model.details?.let { it.head to it.base }
+      directionPanel.direction = model.details?.let { it.headLabel to it.baseRefName }
     }
 
     Disposer.register(this, reviewersHandle)
@@ -65,10 +65,11 @@ internal class GithubPullRequestMetadataPanel(private val model: GithubPullReque
   override fun dispose() {}
 
   private inner class ReviewersListPanelHandle
-    : LabeledListPanelHandle<GithubUser>(model, securityService, busyStateTracker, "No Reviewers", "Reviewers:") {
-    override fun extractItems(details: GithubPullRequestDetailed): List<GithubUser> = details.requestedReviewers
+    : LabeledListPanelHandle<GHUser>(model, securityService, busyStateTracker, "No Reviewers", "Reviewers:") {
+    override fun extractItems(details: GHPullRequest): List<GHUser> = details.reviewRequests.map { it.requestedReviewer }
+      .filterIsInstance(GHUser::class.java)
 
-    override fun getItemComponent(item: GithubUser) = createUserLabel(item)
+    override fun getItemComponent(item: GHUser) = createUserLabel(item)
 
     override fun editList() {
       model.details?.run { metadataService.adjustReviewers(number, editButton) }
@@ -76,34 +77,36 @@ internal class GithubPullRequestMetadataPanel(private val model: GithubPullReque
   }
 
   private inner class AssigneesListPanelHandle
-    : LabeledListPanelHandle<GithubUser>(model, securityService, busyStateTracker, "Unassigned", "Assignees:") {
+    : LabeledListPanelHandle<GHUser>(model, securityService, busyStateTracker, "Unassigned", "Assignees:") {
 
-    override fun extractItems(details: GithubPullRequestDetailed): List<GithubUser> = details.assignees
+    override fun extractItems(details: GHPullRequest): List<GHUser> = details.assignees
 
-    override fun getItemComponent(item: GithubUser) = createUserLabel(item)
+    override fun getItemComponent(item: GHUser) = createUserLabel(item)
 
     override fun editList() {
       model.details?.run { metadataService.adjustAssignees(number, editButton) }
     }
   }
 
-  private fun createUserLabel(user: GithubUser) = JLabel(user.login, iconsProvider.getIcon(user), SwingConstants.LEFT).apply {
+  private fun createUserLabel(user: GHUser) = JLabel(user.login,
+                                                     iconsProvider.getIcon(user.avatarUrl),
+                                                     SwingConstants.LEFT).apply {
     border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP / 2, UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP / 2)
   }
 
   private inner class LabelsListPanelHandle
-    : LabeledListPanelHandle<GithubIssueLabel>(model, securityService, busyStateTracker, "No Labels", "Labels:") {
+    : LabeledListPanelHandle<GHLabel>(model, securityService, busyStateTracker, "No Labels", "Labels:") {
 
-    override fun extractItems(details: GithubPullRequestDetailed): List<GithubIssueLabel>? = details.labels
+    override fun extractItems(details: GHPullRequest): List<GHLabel>? = details.labels
 
-    override fun getItemComponent(item: GithubIssueLabel) = createLabelLabel(item)
+    override fun getItemComponent(item: GHLabel) = createLabelLabel(item)
 
     override fun editList() {
       model.details?.run { metadataService.adjustLabels(number, editButton) }
     }
   }
 
-  private fun createLabelLabel(label: GithubIssueLabel) = Wrapper(GithubUIUtil.createIssueLabelLabel(label)).apply {
+  private fun createLabelLabel(label: GHLabel) = Wrapper(GithubUIUtil.createIssueLabelLabel(label)).apply {
     border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP + 1, UIUtil.DEFAULT_HGAP / 2, UIUtil.DEFAULT_VGAP + 2, UIUtil.DEFAULT_HGAP / 2)
   }
 }

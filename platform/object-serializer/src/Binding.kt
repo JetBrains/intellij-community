@@ -13,18 +13,18 @@ internal interface Binding {
 
   fun deserialize(hostObject: Any, property: MutableAccessor, context: ReadContext) {
     read(hostObject, property, context) {
-      deserialize(context)
+      deserialize(context, hostObject)
     }
   }
 
-  fun createCacheKey(aClass: Class<*>, type: Type = aClass) = type
+  fun createCacheKey(aClass: Class<*>?, type: Type) = type
 
   fun init(originalType: Type, context: BindingInitializationContext) {
   }
 
   fun serialize(obj: Any, context: WriteContext)
 
-  fun deserialize(context: ReadContext): Any
+  fun deserialize(context: ReadContext, hostObject: Any?): Any
 }
 
 internal interface BindingInitializationContext {
@@ -51,7 +51,7 @@ internal inline fun write(hostObject: Any, accessor: MutableAccessor, context: W
   }
 }
 
-internal inline fun read(hostObject: Any, property: MutableAccessor, context: ReadContext, read: ValueReader.() -> Any) {
+internal inline fun read(hostObject: Any, property: MutableAccessor, context: ReadContext, read: ValueReader.() -> Any?) {
   if (context.reader.type == IonType.NULL) {
     property.set(hostObject, null)
   }

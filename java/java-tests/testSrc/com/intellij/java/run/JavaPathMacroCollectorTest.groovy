@@ -3,11 +3,11 @@ package com.intellij.java.run
 
 import com.intellij.application.options.PathMacrosCollector
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 
 @CompileStatic
-class JavaPathMacroCollectorTest extends LightCodeInsightFixtureTestCase {
+class JavaPathMacroCollectorTest extends LightJavaCodeInsightFixtureTestCase {
   void testJunitConfiguration() {
     String text = '''
   <component name="RunManager" selected="JUnit.FooWithComments.test$withDollar$2">

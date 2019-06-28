@@ -14,7 +14,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.propertyBased.CheckHighlighterConsistency;
 
 import java.util.ArrayList;
@@ -22,7 +22,7 @@ import java.util.ArrayList;
 /**
  * @author mike
  */
-public class JavaHighlighterTest extends LightCodeInsightTestCase {
+public class JavaHighlighterTest extends LightJavaCodeInsightTestCase {
   private EditorHighlighter myHighlighter;
   private Document myDocument;
   private final ArrayList<Editor> myEditorsToRelease = new ArrayList<>();

@@ -7,7 +7,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.text.BlockSupport;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author maxim
  */
-public abstract class AbstractReparseTestCase extends LightCodeInsightFixtureTestCase {
+public abstract class AbstractReparseTestCase extends LightJavaCodeInsightFixtureTestCase {
   protected FileType myFileType;
   protected PsiFile myDummyFile;
   private int myInsertOffset;

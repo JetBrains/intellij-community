@@ -3,6 +3,7 @@ package com.intellij.util.loader;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import org.jetbrains.annotations.NotNull;
 

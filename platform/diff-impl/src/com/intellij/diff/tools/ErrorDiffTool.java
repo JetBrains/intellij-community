@@ -86,9 +86,7 @@ public class ErrorDiffTool implements FrameDiffTool {
         for (final DiffContent content : contents) {
           if (content instanceof FileContent && FileTypes.UNKNOWN.equals(content.getContentType())) {
             final VirtualFile file = ((FileContent)content).getFile();
-
-            UnknownFileTypeDiffRequest unknownFileTypeRequest = new UnknownFileTypeDiffRequest(file, myRequest.getTitle());
-            return unknownFileTypeRequest.getComponent(myContext);
+            return UnknownFileTypeDiffRequest.createComponent(file.getName(), myContext);
           }
         }
       }

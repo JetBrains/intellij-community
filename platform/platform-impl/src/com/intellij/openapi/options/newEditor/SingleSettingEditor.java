@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 
 import java.awt.*;
@@ -16,7 +17,7 @@ public class SingleSettingEditor extends ConfigurableEditor {
   private final SimpleBanner myBanner = new SimpleBanner() {
     @Override
     Dimension getPreferredLeftPanelSize(Dimension size) {
-      return new Dimension(size.width, JBUI.scale(35));
+      return new Dimension(size.width, JBUIScale.scale(35));
     }
   };
   private final Map<Configurable, ConfigurableController> myControllers = new HashMap<>();

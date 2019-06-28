@@ -9,12 +9,12 @@ import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector
 import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
  * @author cdr
  */
-class HighlightUsagesHandlerTest extends LightCodeInsightFixtureTestCase {
+class HighlightUsagesHandlerTest extends LightJavaCodeInsightFixtureTestCase {
   final String basePath = JavaTestUtil.relativeJavaTestDataPath
 
   void testHighlightImport() {
@@ -95,10 +95,10 @@ class HighlightUsagesHandlerTest extends LightCodeInsightFixtureTestCase {
   }
 
   void testBreakInSwitchExpr() {
-    IdeaTestUtil.withLevel module, LanguageLevel.JDK_12_PREVIEW, {
+    IdeaTestUtil.withLevel module, LanguageLevel.JDK_13_PREVIEW, {
       configureFile()
       ctrlShiftF7()
-      assertRangeText 'switch', 'break', 'break'
+      assertRangeText 'switch', 'yield', 'yield'
       checkUnselect()
     }
   }

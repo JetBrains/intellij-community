@@ -17,14 +17,14 @@ package com.siyeh.ig.javadoc;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class MissingDeprecatedAnnotationInspectionTest extends LightInspectionTestCase {
+public class MissingDeprecatedAnnotationInspectionTest extends LightJavaInspectionTestCase {
 
   public void testMissingDeprecatedAnnotation() {
     doTest();

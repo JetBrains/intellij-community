@@ -31,7 +31,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
 import com.intellij.util.ui.UIUtil;
@@ -41,7 +41,7 @@ import java.awt.*;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
-public class FindInEditorTest extends LightCodeInsightTestCase {
+public class FindInEditorTest extends LightJavaCodeInsightTestCase {
   private LivePreviewController myLivePreviewController;
   private FindModel myFindModel;
 

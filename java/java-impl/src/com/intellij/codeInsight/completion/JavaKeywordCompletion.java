@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -15,6 +15,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.filters.FilterPositionUtil;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -70,9 +71,11 @@ public class JavaKeywordCompletion {
     if (psiElement().withText(string().oneOf("{", "}", ";", ":", "else")).accepts(prev)) return true;
     if (prev.textMatches(")")) {
       PsiElement parent = prev.getParent();
-      return !(parent instanceof PsiExpressionList ||
-               parent instanceof PsiParameterList ||
-               parent instanceof PsiTypeCastExpression);
+      if (parent instanceof PsiParameterList) {
+        return PsiTreeUtil.getParentOfType(PsiTreeUtil.prevVisibleLeaf(element), PsiDocComment.class) != null;
+      }
+
+      return !(parent instanceof PsiExpressionList || parent instanceof PsiTypeCastExpression);
     }
 
     return false;
@@ -770,8 +773,14 @@ public class JavaKeywordCompletion {
     }
     if (psiElement().inside(PsiSwitchStatement.class).accepts(myPosition)) {
       addKeyword(br);
-    } else if (psiElement().inside(PsiSwitchExpression.class).accepts(myPosition)) {
-      addKeyword(TailTypeDecorator.withTail(createKeyword(PsiKeyword.BREAK), TailType.INSERT_SPACE));
+    }
+    else if (psiElement().inside(PsiSwitchExpression.class).accepts(myPosition)) {
+      if (PsiUtil.getLanguageLevel(myPosition) == LanguageLevel.JDK_12_PREVIEW) {
+        addKeyword(TailTypeDecorator.withTail(createKeyword(PsiKeyword.BREAK), TailType.INSERT_SPACE));
+      }
+      else if (PsiUtil.getLanguageLevel(myPosition).isAtLeast(LanguageLevel.JDK_13_PREVIEW)) {
+        addKeyword(TailTypeDecorator.withTail(createKeyword(PsiKeyword.YIELD), TailType.INSERT_SPACE));
+      }
     }
 
     for (PsiLabeledStatement labeled : psiApi().parents(myPosition).takeWhile(notInstanceOf(PsiMember.class)).filter(PsiLabeledStatement.class)) {

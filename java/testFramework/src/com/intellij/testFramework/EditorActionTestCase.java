@@ -26,7 +26,7 @@ import java.io.IOException;
 /**
  * A TestCase for testing some action in editor
  */
-public abstract class EditorActionTestCase extends LightCodeInsightTestCase {
+public abstract class EditorActionTestCase extends LightJavaCodeInsightTestCase {
   /**
    * @return id of the action to be tested.
    */

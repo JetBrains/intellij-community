@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github
 
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GithubRepo
-import org.jetbrains.plugins.github.api.requests.GithubRequestPagination
+import org.jetbrains.plugins.github.api.data.request.GithubRequestPagination
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.test.GithubTest
 
@@ -36,7 +36,9 @@ class GithubRequestQueryingTest : GithubTest() {
   fun testLinkPagination() {
     val result = GithubApiPagesLoader
       .loadAll(mainAccount.executor, EmptyProgressIndicator(),
-               GithubApiRequests.CurrentUser.Repos.pages(mainAccount.account.server, false, GithubRequestPagination(pageSize = 2)))
+               GithubApiRequests.CurrentUser.Repos.pages(mainAccount.account.server, false,
+                                                         GithubRequestPagination(
+                                                           pageSize = 2)))
 
     assertContainsElements(result, mainRepos)
     assertDoesntContain(result, secondaryRepos)

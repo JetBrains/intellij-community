@@ -57,9 +57,9 @@ import com.intellij.openapi.vcs.ex.LineStatusTrackerBase;
 import com.intellij.openapi.vcs.ex.Range;
 import com.intellij.openapi.vcs.ex.SimpleLineStatusTracker;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.*;
 
@@ -682,7 +682,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
           if (isDisposed()) return;
 
           JComponent component = getEditor().getComponent();
-          RelativePoint point = new RelativePoint(component, new Point(component.getWidth() / 2, JBUI.scale(5)));
+          RelativePoint point = new RelativePoint(component, new Point(component.getWidth() / 2, JBUIScale.scale(5)));
 
           String message = DiffBundle.message("merge.all.changes.processed.message.text");
           DiffUtil.showSuccessPopup(message, point, this, () -> {
@@ -1329,7 +1329,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       @Override
       protected int getFramingBorderSize() {
-        return JBUI.scale(2);
+        return JBUIScale.scale(2);
       }
 
       @Override

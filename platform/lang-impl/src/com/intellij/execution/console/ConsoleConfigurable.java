@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.console;
 
 import com.intellij.execution.impl.ConsoleBuffer;
@@ -15,10 +15,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.AddEditDeleteListPanel;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.ListSpeedSearch;
+import com.intellij.ui.*;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
@@ -27,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.util.ArrayList;
@@ -53,13 +52,13 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
     if (myMainComponent == null) {
       myMainComponent = new JPanel(new BorderLayout());
       myCbUseSoftWrapsAtConsole = new JCheckBox(ApplicationBundle.message("checkbox.use.soft.wraps.at.console"), false);
-      myCommandsHistoryLimitField = new JTextField(3);
+      myCommandsHistoryLimitField = new JTextField(4);
       myCbOverrideConsoleCycleBufferSize = new JCheckBox(ApplicationBundle.message("checkbox.override.console.cycle.buffer.size", String.valueOf(ConsoleBuffer.getLegacyCycleBufferSize() / 1024)), false);
       myCbOverrideConsoleCycleBufferSize.addChangeListener(e -> {
         myConsoleCycleBufferSizeField.setEnabled(myCbOverrideConsoleCycleBufferSize.isSelected());
         myConsoleBufferSizeWarningLabel.setVisible(myCbOverrideConsoleCycleBufferSize.isSelected());
       });
-      myConsoleCycleBufferSizeField = new JTextField(3);
+      myConsoleCycleBufferSizeField = new JTextField(4);
       myConsoleBufferSizeWarningLabel = new JLabel();
       myConsoleBufferSizeWarningLabel.setForeground(JBColor.red);
       myConsoleCycleBufferSizeField.getDocument().addDocumentListener(new DocumentAdapter() {
@@ -80,7 +79,7 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
         northPanel.add(myCbOverrideConsoleCycleBufferSize, gridBag.nextLine().next());
         northPanel.add(myConsoleCycleBufferSizeField, gridBag.next());
         northPanel.add(new JLabel(" KB"), gridBag.next());
-        northPanel.add(Box.createHorizontalStrut(JBUI.scale(20)), gridBag.next());
+        northPanel.add(Box.createHorizontalStrut(JBUIScale.scale(20)), gridBag.next());
         northPanel.add(myConsoleBufferSizeWarningLabel, gridBag.next());
       }
       if (!editFoldingsOnly()) {
@@ -91,8 +90,8 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
       Splitter splitter = new Splitter(true);
       myMainComponent.add(splitter, BorderLayout.CENTER);
       myPositivePanel =
-        new MyAddDeleteListPanel("Fold console lines that contain", "Enter a substring of a console line you'd like to see folded:");
-      myNegativePanel = new MyAddDeleteListPanel("Exceptions", "Enter a substring of a console line you don't want to fold:");
+        new MyAddDeleteListPanel("Fold console lines that contain:", "Enter a substring of a console line you'd like to see folded:");
+      myNegativePanel = new MyAddDeleteListPanel("Exceptions:", "Enter a substring of a console line you don't want to fold:");
       splitter.setFirstComponent(myPositivePanel);
       splitter.setSecondComponent(myNegativePanel);
 
@@ -231,6 +230,11 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
       super(title, new ArrayList<>());
       myQuery = query;
       new ListSpeedSearch(myList);
+    }
+
+    @Override
+    protected Border createTitledBorder(String title) {
+      return IdeBorderFactory.createTitledBorder(title, false, JBUI.insetsTop(8)).setShowLine(false);
     }
 
     @Override

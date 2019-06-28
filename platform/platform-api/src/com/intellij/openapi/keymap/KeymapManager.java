@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.Disposable;
@@ -15,15 +15,26 @@ public abstract class KeymapManager {
   public static final String KDE_KEYMAP = "Default for KDE";
   public static final String GNOME_KEYMAP = "Default for GNOME";
 
+  @NotNull
   public abstract Keymap getActiveKeymap();
 
   @Nullable
   public abstract Keymap getKeymap(@NotNull String name);
 
+  private static volatile KeymapManager INSTANCE;
+
   public static KeymapManager getInstance() {
     Application application = ApplicationManager.getApplication();
-    if (application == null) return null;
-    return application.getComponent(KeymapManager.class);
+    if (application == null) {
+      return null;
+    }
+
+    KeymapManager instance = INSTANCE;
+    if (instance == null) {
+      instance = application.getComponent(KeymapManager.class);
+      INSTANCE = instance;
+    }
+    return instance;
   }
 
   /**

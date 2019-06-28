@@ -18,6 +18,7 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
@@ -31,6 +32,7 @@ import java.util.Set;
  *
  * @author dsl
  */
+@ApiStatus.NonExtendable
 public interface ModuleRootModel {
   /**
    * Returns the module to which the model belongs.

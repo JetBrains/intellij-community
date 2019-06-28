@@ -44,6 +44,7 @@ class ParameterNameHintsSettings : PersistentStateComponent<Element> {
   private val removedPatterns = hashMapOf<String, Set<String>>()
   private val addedPatterns = hashMapOf<String, Set<String>>()
   private val options = hashMapOf<String, Boolean>()
+  private val disabledLanguages = hashSetOf<String>()
 
   fun addIgnorePattern(language: Language, pattern: String) {
     val patternsBefore = getAddedPatterns(language)
@@ -93,6 +94,18 @@ class ParameterNameHintsSettings : PersistentStateComponent<Element> {
     }
 
     return root
+  }
+
+  fun setIsEnabledForLanguage(enabled: Boolean, language: Language) {
+    if (!enabled) {
+      disabledLanguages.add(language.id)
+    } else {
+      disabledLanguages.remove(language.id)
+    }
+  }
+
+  fun isEnabledForLanguage(language: Language): Boolean {
+    return language.id !in disabledLanguages
   }
 
   override fun loadState(state: Element) {

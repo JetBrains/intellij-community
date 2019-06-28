@@ -13,6 +13,7 @@
   <vendor>JetBrains</vendor>
 
   <depends>com.intellij.properties</depends>
+  <depends>com.intellij.modules.java</depends>
   <depends>com.intellij.modules.json</depends>
   <depends config-file="gradle-devkit.xml" optional="true">org.jetbrains.plugins.gradle</depends>
   <depends config-file="groovy-devkit.xml" optional="true">org.intellij.groovy</depends>
@@ -22,7 +23,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <virtualFileSystem key="testdata" implementationClass="org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupFileSystem"/>
     <editorTabTitleProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupEditorTabTitleProvider"/>
-    <fileIconProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupFileIconProvider"/>
+    <highlightingPassFactory implementation="org.jetbrains.idea.devkit.testAssistant.TestDataHighlightingPassFactory"/>
 
     <runLineMarkerContributor language="JAVA" implementationClass="org.jetbrains.idea.devkit.testAssistant.TestDataLineMarkerProvider"/>
     <fileEditorProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupEditorProvider"/>
@@ -76,11 +77,11 @@
     <completion.contributor implementationClass="org.jetbrains.idea.devkit.completion.ExtensionOrderKeywordCompletionContributor"
                             language="XML"/>
 
-    <localInspection language="XML" shortName="PluginXmlValidity" displayName="Plugin.xml Validity" applyToDialects="false"
+    <localInspection language="XML" shortName="PluginXmlValidity" displayName="Plugin.xml validity" applyToDialects="false"
                      groupPath="Plugin DevKit" groupKey="inspections.group.descriptor"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection"/>
-    <localInspection language="XML" shortName="PluginXmlCapitalization" displayName="Plugin.xml Text Capitalization" applyToDialects="false"
+    <localInspection language="XML" shortName="PluginXmlCapitalization" displayName="Plugin.xml text capitalization" applyToDialects="false"
                      groupPath="Plugin DevKit" groupKey="inspections.group.descriptor"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlCapitalizationInspection"/>
@@ -88,7 +89,7 @@
                      groupPath="Plugin DevKit"
                      key="inspections.component.not.registered.name" groupKey="inspections.group.code" enabledByDefault="true"
                      level="WARNING" implementationClass="org.jetbrains.idea.devkit.inspections.ComponentNotRegisteredInspection"/>
-    <localInspection language="JAVA" shortName="InspectionDescriptionNotFoundInspection" displayName="Inspection Description Checker"
+    <localInspection language="JAVA" shortName="InspectionDescriptionNotFoundInspection" displayName="Inspection description checker"
                      groupPath="Plugin DevKit" groupKey="inspections.group.description.file"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.InspectionDescriptionNotFoundInspection"/>
@@ -100,7 +101,7 @@
                      groupPath="Plugin DevKit" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.UniqueToolbarIdInspection"/>
-    <localInspection language="JAVA" shortName="IntentionDescriptionNotFoundInspection" displayName="Intention Description Checker"
+    <localInspection language="JAVA" shortName="IntentionDescriptionNotFoundInspection" displayName="Intention description checker"
                      groupPath="Plugin DevKit" groupKey="inspections.group.description.file"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.IntentionDescriptionNotFoundInspection"/>
@@ -110,6 +111,7 @@
                      enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PostfixTemplateDescriptionNotFoundInspection"/>
+    <!--suppress PluginXmlCapitalization -->
     <localInspection shortName="ComponentRegistrationProblems"
                      key="inspections.registration.problems.name"
                      groupKey="inspections.group.name"
@@ -154,6 +156,7 @@
                      groupPath="Plugin DevKit" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.DontUseNewPairInspection"/>
+    <!--suppress PluginXmlCapitalization -->
     <localInspection language="JAVA" shortName="UseVirtualFileEquals" displayName="Use VirtualFile.equals"
                      groupPath="Plugin DevKit" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
@@ -162,7 +165,7 @@
                      groupPath="Plugin DevKit" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UnsafeReturnStatementVisitorInspection"/>
-    <localInspection language="UAST" shortName="StatefulEp" displayName="Stateful Extension"
+    <localInspection language="UAST" shortName="StatefulEp" displayName="Stateful extension"
                      groupPath="Plugin DevKit" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.StatefulEpInspection"/>
@@ -174,6 +177,7 @@
                      groupPath="Plugin DevKit" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UsePrimitiveTypesInspection"/>
+    <!--suppress PluginXmlCapitalization -->
     <localInspection groupPath="Java" shortName="HighlightVisitorInternal"
                      displayName="Good code is red"
                      groupKey="inspections.group.name"
@@ -279,13 +283,15 @@
     <console.folding order="first" implementation="com.intellij.testFramework.FailedTestDebugLogConsoleFolding"/>
 
     <!--cached value profiler-->
-    <fileTypeFactory implementation="org.jetbrains.idea.devkit.cachedValueProfiler.CVPFileTypeFactory"/>
+    <fileType extensions="cvp" name="CVP"
+              implementationClass="org.jetbrains.idea.devkit.cachedValueProfiler.CVPFileType" fieldName="INSTANCE"/>
     <fileEditorProvider implementation="org.jetbrains.idea.devkit.cachedValueProfiler.CVPFileEditorProvider"/>
 
     <!-- themes -->
     <completion.contributor implementationClass="org.jetbrains.idea.devkit.themes.ThemeJsonCompletionContributor" language="JSON"/>
     <annotator language="JSON" implementationClass="org.jetbrains.idea.devkit.themes.ThemeColorAnnotator"/>
     <annotator language="JSON" implementationClass="org.jetbrains.idea.devkit.themes.ThemeAnnotator"/>
+    <psi.referenceContributor language="JSON" implementation="org.jetbrains.idea.devkit.themes.ThemeJsonPsiReferenceContributor"/>
     <spellchecker.support language="JSON"
                           order="first"
                           implementationClass="org.jetbrains.idea.devkit.themes.ThemeSpellcheckingStrategy"/>
@@ -310,12 +316,6 @@
       <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.internal.GoodCodeRedVisitor"/>
     </extensionPoint>
   </extensionPoints>
-
-  <project-components>
-    <component>
-      <implementation-class>org.jetbrains.idea.devkit.testAssistant.TestDataHighlightingPassFactory</implementation-class>
-    </component>
-  </project-components>
 
   <actions>
     <group id="PluginDeployActions">
@@ -375,10 +375,6 @@
     <action id="DumpCleanTestData" internal="true" class="org.jetbrains.idea.devkit.internal.DumpCleanHighlightingTestdataAction"
             text="Dump Highlighting-Markup-Free Data">
       <add-to-group group-id="Internal.Dump"/>
-    </action>
-
-    <action class="org.jetbrains.idea.devkit.actions.MigrateModuleNamesInSourcesAction" id="ReplaceModuleNamesInSources" internal="true">
-      <add-to-group group-id="FindMenuGroup" anchor="last"/>
     </action>
 
     <!-- Theme Toolbar -->

@@ -18,10 +18,10 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.miscGenerics.SuspiciousCollectionsMethodCallsInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class SuspiciousCollectionMethodCallsTest extends LightCodeInsightFixtureTestCase {
+public class SuspiciousCollectionMethodCallsTest extends LightJavaCodeInsightFixtureTestCase {
   private SuspiciousCollectionsMethodCallsInspection myTool = new SuspiciousCollectionsMethodCallsInspection();
 
   @Override

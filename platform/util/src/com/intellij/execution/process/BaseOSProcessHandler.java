@@ -10,6 +10,7 @@ import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseInputStreamReader;
 import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.io.BaseOutputReader.Options;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -111,6 +112,7 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
 
   /** @deprecated override {@link #createOutputDataReader()} (to be removed in IDEA 2018) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   @SuppressWarnings("DeprecatedIsStillUsed")
   protected BaseDataReader createErrorDataReader(BaseDataReader.SleepingPolicy policy) {
     return createErrorDataReader();
@@ -118,6 +120,7 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
 
   /** @deprecated override {@link #createOutputDataReader()} (to be removed in IDEA 2018) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   @SuppressWarnings("DeprecatedIsStillUsed")
   protected BaseDataReader createOutputDataReader(BaseDataReader.SleepingPolicy policy) {
     return createOutputDataReader();
@@ -152,6 +155,7 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
 
   /** @deprecated use {@link BaseOSProcessHandler#executeTask(Runnable)} instead (to be removed in IDEA 2018) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   public static class ExecutorServiceHolder {
     public static Future<?> submit(@NotNull Runnable task) {
       LOG.warn("Deprecated method. Please use com.intellij.execution.process.BaseOSProcessHandler.executeTask() instead", new Throwable());

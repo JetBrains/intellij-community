@@ -27,14 +27,14 @@ public class ModulesConfigurationTest extends PlatformTestCase {
     File projectDir = result.getFirst();
 
     ProjectManager projectManager = ProjectManager.getInstance();
-    Project reloaded = projectManager.loadAndOpenProject(projectDir.getAbsolutePath());
+    Project reloaded = projectManager.loadAndOpenProject(projectDir);
     disposeOnTearDown(reloaded);
     ModuleManager moduleManager = ModuleManager.getInstance(reloaded);
     Module module = assertOneElement(moduleManager.getModules());
     moduleManager.disposeModule(module);
     closeProject(reloaded, true);
 
-    reloaded = projectManager.loadAndOpenProject(projectDir.getAbsolutePath());
+    reloaded = projectManager.loadAndOpenProject(projectDir);
     disposeOnTearDown(reloaded);
     assertEmpty(ModuleManager.getInstance(reloaded).getModules());
     closeProject(reloaded, false);
@@ -51,7 +51,7 @@ public class ModulesConfigurationTest extends PlatformTestCase {
     List<ConfigurationErrorDescription> errors = new ArrayList<>();
     ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(errors::add, getTestRootDisposable());
     ProjectManager projectManager = ProjectManager.getInstance();
-    Project reloaded = projectManager.loadAndOpenProject(projectDir.getAbsolutePath());
+    Project reloaded = projectManager.loadAndOpenProject(projectDir);
     disposeOnTearDown(reloaded);
     ModuleManager moduleManager = ModuleManager.getInstance(reloaded);
     assertThat(moduleManager.getModules()).hasSize(1);
@@ -59,7 +59,7 @@ public class ModulesConfigurationTest extends PlatformTestCase {
     closeProject(reloaded, true);
     errors.clear();
 
-    reloaded = projectManager.loadAndOpenProject(projectDir.getAbsolutePath());
+    reloaded = projectManager.loadAndOpenProject(projectDir);
     disposeOnTearDown(reloaded);
     assertEmpty(errors);
     closeProject(reloaded, false);

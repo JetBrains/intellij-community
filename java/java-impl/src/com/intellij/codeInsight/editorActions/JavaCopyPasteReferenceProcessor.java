@@ -20,12 +20,18 @@ import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
+import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Set;
 
 /**
  * @author peter
@@ -56,6 +62,25 @@ public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor
           }
         }
       }
+    }
+  }
+
+  @Override
+  protected void removeImports(PsiFile file, Set<String> imports) {
+    removeImports((PsiJavaFile)file, imports);
+  }
+
+  /**
+   * Remove imports on {@code imports} (including static imports in format Class_Name.Member_Name)
+   * To ensure that on-demand import expands when one of the import inside was deleted, let's do optimize imports.
+   * 
+   * This may change some unrelated imports 
+   */
+  public static void removeImports(PsiJavaFile javaFile, Set<String> imports) {
+    PsiImportList importList = new ImportHelper(JavaCodeStyleSettings.getInstance(javaFile))
+      .prepareOptimizeImportsResult(javaFile, pair -> !imports.contains(pair.first));
+    if (importList != null) {
+      ObjectUtils.notNull(javaFile.getImportList()).replace(importList);
     }
   }
 
@@ -124,7 +149,8 @@ public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor
 
   @Override
   protected void restoreReferences(ReferenceData[] referenceData,
-                                        PsiJavaCodeReferenceElement[] refs) {
+                                   PsiJavaCodeReferenceElement[] refs,
+                                   Set<String> imported) {
     for (int i = 0; i < refs.length; i++) {
       PsiJavaCodeReferenceElement reference = refs[i];
       if (reference == null || !reference.isValid()) continue;
@@ -134,11 +160,19 @@ public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor
         PsiClass refClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(refData.qClassName, reference.getResolveScope());
         if (refClass != null) {
           if (refData.staticMemberName == null) {
+            if (reference instanceof PsiJavaCodeReferenceElementImpl &&
+                ((PsiJavaCodeReferenceElementImpl)reference).getKindEnum(reference.getContainingFile()) ==
+                PsiJavaCodeReferenceElementImpl.Kind.PACKAGE_NAME_KIND) {
+              // Trying to paste class reference into e.g. package statement
+              continue;
+            }
             reference.bindToElement(refClass);
+            imported.add(refData.qClassName);
           }
           else {
             LOG.assertTrue(reference instanceof PsiReferenceExpression);
             ((PsiReferenceExpression)reference).bindToElementViaStaticImport(refClass);
+            imported.add(StringUtil.getQualifiedName(refData.qClassName, refData.staticMemberName));
           }
         }
       }

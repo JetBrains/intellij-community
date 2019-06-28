@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.dupLocator.util.NodeFilter;
@@ -116,6 +116,9 @@ public class GlobalCompilingVisitor {
   }
 
   void compile(PsiElement[] elements, CompileContext context) {
+    if (elements.length == 0) {
+      throw new MalformedPatternException();
+    }
     myCodeBlockLevel = 0;
     this.context = context;
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(context.getOptions().getFileType());

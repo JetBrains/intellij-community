@@ -352,15 +352,15 @@ public class InferenceIncorporationPhase {
    * there exists a supertype (4.10) of S of the form G<S1, ..., Sn> and a supertype of T of the form G<T1, ..., Tn>, 
    * then for all i, 1 <= i <= n, if Si and Ti are types (not wildcards), the constraint (Si = Ti) is implied.
    */
-  private boolean upUp(List<? extends PsiType> upperBounds) {
-    return InferenceSession.findParameterizationOfTheSameGenericClass(upperBounds, pair -> {
+  private void upUp(List<? extends PsiType> upperBounds) {
+    InferenceSession.findParameterizationOfTheSameGenericClass(upperBounds, pair -> {
       final PsiType sType = pair.first;
       final PsiType tType = pair.second;
       if (!(sType instanceof PsiWildcardType) && !(tType instanceof PsiWildcardType) && sType != null && tType != null) {
         addConstraint(new TypeEqualityConstraint(sType, tType));
       }
       return false;
-    }) != null;
+    });
   }
 
   private void addConstraint(ConstraintFormula constraint) {
@@ -368,16 +368,8 @@ public class InferenceIncorporationPhase {
   }
 
   public void addBound(InferenceVariable variable, PsiType type, InferenceBound bound) {
-    Map<InferenceBound, Set<PsiType>> bounds = myCurrentBounds.get(variable);
-    if (bounds == null) {
-      bounds = new HashMap<>();
-      myCurrentBounds.put(variable, bounds);
-    }
-    Set<PsiType> types = bounds.get(bound);
-    if (types == null) {
-      types = new LinkedHashSet<>();
-      bounds.put(bound, types);
-    }
-    types.add(type);
+    myCurrentBounds.computeIfAbsent(variable, k1 -> new HashMap<>())
+      .computeIfAbsent(bound, k -> new LinkedHashSet<>())
+      .add(type);
   }
 }

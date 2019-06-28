@@ -34,7 +34,7 @@ import static java.util.Comparator.comparing;
 import static java.util.Comparator.comparingInt;
 
 @SuppressWarnings("UnusedReturnValue")
-public class TreeModelBuilder {
+public class TreeModelBuilder implements ChangesViewModelBuilder {
   public static final Key<Function<StaticFilePath, ChangesBrowserNode<?>>> PATH_NODE_BUILDER = Key.create("ChangesTree.PathNodeBuilder");
   public static final NotNullLazyKey<Map<String, ChangesBrowserNode<?>>, ChangesBrowserNode<?>> DIRECTORY_CACHE =
     NotNullLazyKey.create("ChangesTree.DirectoryCache", node -> new HashMap<>());
@@ -138,7 +138,7 @@ public class TreeModelBuilder {
                                                       @NotNull Collection<? extends ChangeList> changeLists,
                                                       boolean skipSingleDefaultChangelist) {
     return new TreeModelBuilder(project, grouping)
-      .setChangeLists(changeLists, skipSingleDefaultChangelist)
+      .setChangeLists(changeLists, skipSingleDefaultChangelist, null)
       .build();
   }
 
@@ -197,7 +197,9 @@ public class TreeModelBuilder {
   }
 
   @NotNull
-  public TreeModelBuilder setChangeLists(@NotNull Collection<? extends ChangeList> changeLists, boolean skipSingleDefaultChangeList) {
+  public TreeModelBuilder setChangeLists(@NotNull Collection<? extends ChangeList> changeLists,
+                                         boolean skipSingleDefaultChangeList,
+                                         @Nullable Function<ChangeNodeDecorator, ChangeNodeDecorator> changeDecoratorProvider) {
     assert myProject != null;
     final RemoteRevisionsCache revisionsCache = RemoteRevisionsCache.getInstance(myProject);
     boolean skipChangeListNode = skipSingleDefaultChangeList && isSingleBlankChangeList(changeLists);
@@ -219,7 +221,8 @@ public class TreeModelBuilder {
 
       for (int i = 0; i < changes.size(); i++) {
         Change change = changes.get(i);
-        RemoteStatusChangeNodeDecorator decorator = new RemoteStatusChangeNodeDecorator(revisionsCache, listRemoteState, i);
+        RemoteStatusChangeNodeDecorator baseDecorator = new RemoteStatusChangeNodeDecorator(revisionsCache, listRemoteState, i);
+        ChangeNodeDecorator decorator = changeDecoratorProvider != null ? changeDecoratorProvider.apply(baseDecorator) : baseDecorator;
         insertChangeNode(change, changesParent, createChangeNode(change, decorator));
       }
     }
@@ -233,7 +236,8 @@ public class TreeModelBuilder {
     return ((LocalChangeList) single).isBlank();
   }
 
-  protected ChangesBrowserNode createChangeNode(Change change, ChangeNodeDecorator decorator) {
+  @NotNull
+  protected ChangesBrowserNode createChangeNode(@NotNull Change change, @Nullable ChangeNodeDecorator decorator) {
     return new ChangesBrowserChangeNode(myProject, change, decorator);
   }
 
@@ -268,7 +272,8 @@ public class TreeModelBuilder {
     return subtreeRoot;
   }
 
-  private void insertFilesIntoNode(@NotNull Collection<? extends VirtualFile> files, @NotNull ChangesBrowserNode subtreeRoot) {
+  @Override
+  public void insertFilesIntoNode(@NotNull Collection<? extends VirtualFile> files, @NotNull ChangesBrowserNode subtreeRoot) {
     List<VirtualFile> sortedFiles = sorted(files, VirtualFileHierarchicalComparator.getInstance());
     for (VirtualFile file : sortedFiles) {
       insertChangeNode(file, subtreeRoot, ChangesBrowserNode.createFile(myProject, file));
@@ -314,11 +319,11 @@ public class TreeModelBuilder {
       final String branchName = switchedRoots.get(vf);
       insertChangeNode(vf, rootsHeadNode, createChangeNode(change, new ChangeNodeDecorator() {
         @Override
-        public void decorate(Change change1, SimpleColoredComponent component, boolean isShowFlatten) {
+        public void decorate(@NotNull Change change1, @NotNull SimpleColoredComponent component, boolean isShowFlatten) {
         }
 
         @Override
-        public void preDecorate(Change change1, ChangesBrowserNodeRenderer renderer, boolean showFlatten) {
+        public void preDecorate(@NotNull Change change1, @NotNull ChangesBrowserNodeRenderer renderer, boolean showFlatten) {
           renderer.append("[" + branchName + "] ", SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
         }
       }));
@@ -357,6 +362,13 @@ public class TreeModelBuilder {
       final LogicalLock lock = logicallyLockedFiles.get(file);
       insertChangeNode(file, subtreeRoot, ChangesBrowserNode.createLogicallyLocked(myProject, file, lock));
     }
+    return this;
+  }
+
+  @NotNull
+  @Override
+  public TreeModelBuilder insertChangeNode(@NotNull ChangesBrowserNode node) {
+    myModel.insertNodeInto(node, myRoot, myRoot.getChildCount());
     return this;
   }
 

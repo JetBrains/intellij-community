@@ -23,14 +23,14 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.psi.*;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 
-public class GenerateMembersUtilTest extends LightCodeInsightTestCase {
+public class GenerateMembersUtilTest extends LightJavaCodeInsightTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/generateMembersUtil/";
 
   @NotNull

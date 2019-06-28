@@ -24,7 +24,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
@@ -35,7 +35,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  * @author peter
  */
 @CompileStatic
-class GroovyDslTest extends LightCodeInsightFixtureTestCase {
+class GroovyDslTest extends LightJavaCodeInsightFixtureTestCase {
   private static LightProjectDescriptor descriptor = new DefaultLightProjectDescriptor() {
     @Override
     void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {

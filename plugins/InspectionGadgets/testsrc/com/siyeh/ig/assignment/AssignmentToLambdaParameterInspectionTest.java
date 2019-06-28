@@ -16,13 +16,13 @@
 package com.siyeh.ig.assignment;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class AssignmentToLambdaParameterInspectionTest extends LightInspectionTestCase {
+public class AssignmentToLambdaParameterInspectionTest extends LightJavaInspectionTestCase {
 
   public void testAssignmentToLambdaParameter() {
     doTest();

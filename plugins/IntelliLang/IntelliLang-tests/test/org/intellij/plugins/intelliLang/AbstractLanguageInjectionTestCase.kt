@@ -7,11 +7,11 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.testFramework.fixtures.InjectionTestFixture
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.Processor
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
 
-abstract class AbstractLanguageInjectionTestCase : LightCodeInsightFixtureTestCase() {
+abstract class AbstractLanguageInjectionTestCase : LightJavaCodeInsightFixtureTestCase() {
 
   private val injectionTestFixture: InjectionTestFixture get() = InjectionTestFixture(myFixture)
 

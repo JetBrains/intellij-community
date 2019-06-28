@@ -58,7 +58,7 @@
       <implementation-class>com.intellij.psi.refResolve.RefResolveServiceImpl</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.lang.java.JavaModuleRenameListener</implementation-class>
+      <implementation-class>com.intellij.codeInsight.hints.AnnotationHintsPassFactory</implementation-class>
     </component>
     <component>
       <implementation-class>com.intellij.openapi.vcs.impl.ModuleVcsDetector</implementation-class>
@@ -196,8 +196,8 @@
     <extensionPoint qualifiedName="com.intellij.projectWizard.projectCategory" interface="com.intellij.ide.projectWizard.ProjectCategory"/>
 
     <!-- both EP implementation classes requires constructor injection (our plugins fixed, but 3rd-party not) -->
-    <extensionPoint name="projectImportProvider" interface="com.intellij.projectImport.ProjectImportProvider" registerInPicoContainer="true"/>
-    <extensionPoint name="projectImportBuilder" interface="com.intellij.projectImport.ProjectImportBuilder" registerInPicoContainer="true"/>
+    <extensionPoint qualifiedName="com.intellij.projectImportProvider" interface="com.intellij.projectImport.ProjectImportProvider" registerInPicoContainer="true"/>
+    <extensionPoint qualifiedName="com.intellij.projectImportBuilder" interface="com.intellij.projectImport.ProjectImportBuilder" registerInPicoContainer="true"/>
     <extensionPoint qualifiedName="com.intellij.projectStructureDetector" interface="com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector"/>
 
     <extensionPoint qualifiedName="com.intellij.projectStructureConfigurableFilter"
@@ -300,7 +300,6 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <highlightingPassFactory implementation="com.intellij.codeInsight.hints.AnnotationHintsPassFactory"/>
-    <highlightingPassFactory implementation="com.intellij.codeInsight.hints.MethodChainHintsPassFactory"/>
     <highlightingPassFactory implementation="com.intellij.framework.detection.impl.FrameworkDetectionManager$FrameworkDetectionHighlightingPassFactory"/>
 
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.jrt.JrtFileSystemImpl" key="jrt" physical="true"/>
@@ -313,7 +312,6 @@
     <applicationService serviceImplementation="com.intellij.refactoring.JavaRefactoringSettings"/>
     <applicationService serviceInterface="com.intellij.refactoring.JavaRefactoringActionHandlerFactory"
                         serviceImplementation="com.intellij.refactoring.openapi.impl.JavaRefactoringActionHandlerFactoryImpl"/>
-    <applicationService serviceImplementation="com.intellij.codeInsight.intention.impl.JavaElementRenderer"/>
     <applicationService serviceInterface="com.intellij.util.xml.converters.values.ClassArrayConverter"
                         serviceImplementation="com.intellij.util.xml.converters.ClassArrayConverterImpl"/>
     <applicationService serviceInterface="com.intellij.util.xml.converters.values.ClassValueConverter"
@@ -529,6 +527,7 @@
                                        order="first"/>
 
     <postStartupActivity implementation="com.intellij.compiler.impl.CleanStaleModuleOutputsActivity"/>
+    <postStartupActivity implementation="com.intellij.lang.java.JavaModuleRenameListener"/>
 
     <keymapExtension implementation="com.intellij.debugger.actions.DebuggerKeymapExtension"/>
 
@@ -546,6 +545,15 @@
     <stepsBeforeRunProvider implementation="com.intellij.packaging.impl.run.BuildArtifactsBeforeRunTaskProvider"
                             order="after compileBeforeRunNoErrorCheck"/>
     <externalSystem.beforeRunTaskImporter implementation="com.intellij.compiler.options.CompileStepBeforeRunImporter"/>
+    <externalSystemConfigurationHandler
+        implementation="com.intellij.openapi.externalSystem.service.project.settings.CompilerConfigurationHandler"/>
+    <externalSystemConfigurationHandler implementation="com.intellij.openapi.externalSystem.service.project.settings.ArtifactsImporter"/>
+    <externalSystem.moduleDataServiceExtension implementation="com.intellij.openapi.externalSystem.service.project.ModuleDataServiceJavaExtension"/>
+    <externalSystem.runConfigurationExtension implementation="com.intellij.execution.ExternalSystemRunConfigurationJavaExtension"/>
+    <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkProvider"
+                        serviceImplementation="com.intellij.openapi.externalSystem.service.execution.ExternalSystemJavaSdkProvider"
+                        overrides="true"/>
+    <programRunner implementation="com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskDebugRunner"/>
 
     <programRunner id="defaultRunRunner" implementation="com.intellij.execution.impl.DefaultJavaProgramRunner"/>
 
@@ -656,6 +664,9 @@
 
     <externalSystem.runConfigurationImporter implementation="com.intellij.execution.application.JavaApplicationRunConfigurationImporter"/>
     <externalSystem.runConfigurationImporter implementation="com.intellij.execution.remote.JavaRemoteDebugRunConfigurationImporter"/>
+    <externalSystem.modifiableModelsProvider implementation="com.intellij.openapi.externalSystem.service.project.PackagingModifiableModelProvider"/>
+    <configuration.ModuleStructureExtension
+        implementation="com.intellij.openapi.externalSystem.service.project.ExternalModuleStructureExtension"/>
 
     <runLineMarkerContributor language="JVM"
                               order="before applicationRunLineMarkerProvider"
@@ -880,7 +891,6 @@
     <inlineActionHandler implementation="com.intellij.refactoring.inline.InlineParameterHandler"/>
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.JavaRainbowVisitor"/>
     <problemHighlightFilter implementation="com.intellij.codeInsight.daemon.JavaProblemHighlightFilter"/>
-    <bundledKeymapProvider implementation="com.intellij.openapi.keymap.JBuilderKeymapProvider"/>
     <todoIndexer filetype="JAVA" implementationClass="com.intellij.psi.impl.cache.impl.idCache.JavaTodoIndexer"/>
     <idIndexer filetype="JAVA" implementationClass="com.intellij.psi.impl.cache.impl.idCache.JavaIdIndexer"/>
     <fileIconPatcher id="javaFileIconPatcher" implementation="com.intellij.ide.JavaFileIconPatcher"/>
@@ -1100,7 +1110,6 @@
     <editorSmartKeysConfigurable instance="com.intellij.application.options.JavadocOptionsProvider" id="editor.preferences.javadocOptions"
                                  key="javadoc.generate.message.title" bundle="messages.JavadocBundle"/>
     <editorAppearanceConfigurable instance="com.intellij.codeInsight.hints.AnnotationHintsConfigurable"/>
-    <editorAppearanceConfigurable instance="com.intellij.codeInsight.hints.MethodChainHintsConfigurable"/>
     <wordBoundaryFilter language="JAVA" implementationClass="com.intellij.codeInsight.editorActions.JavaWordBoundaryFilter"/>
     <editorActionHandler action="PrevParameter" implementationClass="com.intellij.codeInsight.editorActions.JavaPrevParameterHandler"/>
     <editorActionHandler action="NextParameter" implementationClass="com.intellij.codeInsight.editorActions.JavaNextParameterHandler"/>
@@ -1145,6 +1154,7 @@
     <codeInsight.parameterInfo language="JAVA" implementationClass="com.intellij.codeInsight.hint.api.impls.ReferenceParameterInfoHandler"/>
     <codeInsight.parameterInfo language="JAVA" implementationClass="com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler"/>
     <codeInsight.parameterNameHints language="JAVA" implementationClass="com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider"/>
+    <codeInsight.inlayProvider language="JAVA" implementationClass="com.intellij.codeInsight.hints.MethodChainsInlayProvider"/>
     <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.codeInsight.folding.impl.JavaFoldingBuilder"/>
     <lang.braceMatcher language="JAVA" implementationClass="com.intellij.codeInsight.highlighting.JavaPairedBraceMatcher"/>
     <anonymousElementProvider implementation="com.intellij.lang.java.JavaAnonymousClassesProvider" />
@@ -1676,6 +1686,10 @@
       <category>Java/Strings</category>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.SplitTextBlockIntentionAction</className>
+      <category>Java/Strings</category>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ReplaceCastWithVariableAction</className>
       <category>Java/Imports</category>
     </intentionAction>
@@ -1894,6 +1908,22 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.WrapWithUnmodifiableAction</className>
+      <category>Java/Other</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.lists.JavaChopParametersAction</className>
+      <category>Java/Other</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.lists.JavaChopArgumentsAction</className>
+      <category>Java/Other</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.lists.JavaJoinParametersAction</className>
+      <category>Java/Other</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.lists.JavaJoinArgumentsAction</className>
       <category>Java/Other</category>
     </intentionAction>
     <externalAnnotationsArtifactsResolver implementation="com.intellij.jarRepository.ExternalAnnotationsRepositoryResolver"/>

@@ -53,14 +53,14 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
 
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
-    return !getElements(editor, file).isEmpty();
+    return !getElements(editor, file, true).isEmpty();
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
 
-    List<PsiElement> elements = getElements(editor, file);
+    List<PsiElement> elements = getElements(editor, file, false);
     if (elements.isEmpty()) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.pull.members.from"));
       CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MEMBERS_PULL_UP);
@@ -70,12 +70,16 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
     }
   }
 
-  private static List<PsiElement> getElements(Editor editor, PsiFile file) {
+  private static List<PsiElement> getElements(Editor editor, PsiFile file, boolean stopAtCodeBlock) {
     List<PsiElement> elements = ContainerUtil.newSmartList();
     for (Caret caret : editor.getCaretModel().getAllCarets()) {
       int offset = caret.getOffset();
       PsiElement element = file.findElementAt(offset);
       while (element != null && !(element instanceof PsiFile)) {
+        if (stopAtCodeBlock && element instanceof PsiCodeBlock) {
+          break;
+        }
+
         if (element instanceof PsiClass || element instanceof PsiField || element instanceof PsiMethod) {
           elements.add(element);
           break;

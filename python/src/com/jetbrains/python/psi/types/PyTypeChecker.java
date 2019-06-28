@@ -422,22 +422,33 @@ public class PyTypeChecker {
   }
 
   @NotNull
-  private static Optional<Boolean> match(@NotNull PyCallableType expected, @NotNull PyCallableType actual, @NotNull MatchContext context) {
+  private static Optional<Boolean> match(@NotNull PyCallableType expected,
+                                         @NotNull PyCallableType actual,
+                                         @NotNull MatchContext matchContext) {
     if (expected.isCallable() && actual.isCallable()) {
-      final List<PyCallableParameter> expectedParameters = expected.getParameters(context.context);
-      final List<PyCallableParameter> actualParameters = actual.getParameters(context.context);
+      final TypeEvalContext context = matchContext.context;
+      final List<PyCallableParameter> expectedParameters = expected.getParameters(context);
+      final List<PyCallableParameter> actualParameters = actual.getParameters(context);
       if (expectedParameters != null && actualParameters != null) {
         final int size = Math.min(expectedParameters.size(), actualParameters.size());
         for (int i = 0; i < size; i++) {
           final PyCallableParameter expectedParam = expectedParameters.get(i);
           final PyCallableParameter actualParam = actualParameters.get(i);
           // TODO: Check named and star params, not only positional ones
-          if (!match(expectedParam.getType(context.context), actualParam.getType(context.context), context).orElse(true)) {
-            return Optional.of(false);
+          if (expectedParam.isSelf() && actualParam.isSelf()) {
+            if (!match(expectedParam.getType(context), actualParam.getType(context), matchContext).orElse(true)) {
+              return Optional.of(false);
+            }
+          }
+          else {
+            // actual callable type could accept more general parameter type
+            if (!match(actualParam.getType(context), expectedParam.getType(context), matchContext).orElse(true)) {
+              return Optional.of(false);
+            }
           }
         }
       }
-      if (!match(expected.getReturnType(context.context), actual.getReturnType(context.context), context).orElse(true)) {
+      if (!match(expected.getReturnType(context), actual.getReturnType(context), matchContext).orElse(true)) {
         return Optional.of(false);
       }
       return Optional.of(true);

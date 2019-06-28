@@ -1,17 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -26,9 +27,10 @@ import java.util.concurrent.TimeUnit;
 
 import static com.intellij.openapi.util.io.FileUtilRt.MEGABYTE;
 
-public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget, UISettingsListener, Activatable {
+public final class MemoryUsagePanel extends JButton implements CustomStatusBarWidget, UISettingsListener, Activatable {
   public static final String WIDGET_ID = "Memory";
 
+  private static final int INDENT = 6;
   private static final Color USED_COLOR = JBColor.namedColor("MemoryIndicator.usedBackground", new JBColor(Gray._185, Gray._110));
   private static final Color UNUSED_COLOR = JBColor.namedColor("MemoryIndicator.allocatedBackground", new JBColor(Gray._215, Gray._90));
 
@@ -47,11 +49,12 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget, 
     setFocusable(false);
 
     addActionListener(e -> {
+      //noinspection CallToSystemGC
       System.gc();
       updateState();
     });
 
-    setBorder(StatusBarWidget.WidgetBorder.INSTANCE);
+    setBorder(JBUI.Borders.empty(0, 2));
     updateUI();
 
     new UiNotifyConnector(this, this);
@@ -126,7 +129,8 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget, 
       Dimension size = getSize();
       Insets insets = getInsets();
 
-      myBufferedImage = UIUtil.createImage(g, size.width, size.height, BufferedImage.TYPE_INT_ARGB);
+      int barWidth = size.width - INDENT;
+      myBufferedImage = UIUtil.createImage(g, barWidth, size.height, BufferedImage.TYPE_INT_ARGB);
       Graphics2D g2 = JBSwingUtilities.runGlobalCGTransform(this, myBufferedImage.createGraphics());
       UISettings.setupAntialiasing(g2);
 
@@ -139,12 +143,12 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget, 
       long unusedMem = rt.freeMemory();
       long usedMem = allocatedMem - unusedMem;
 
-      int usedBarLength = (int)(size.width * usedMem / maxMem);
+      int usedBarLength = (int)(barWidth * usedMem / maxMem);
       int unusedBarLength = (int)(size.height * unusedMem / maxMem);
 
       // background
       g2.setColor(UIUtil.getPanelBackground());
-      g2.fillRect(0, 0, size.width, size.height);
+      g2.fillRect(0, 0, barWidth, size.height);
 
       // gauge (used)
       g2.setColor(USED_COLOR);
@@ -158,21 +162,21 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget, 
       g2.setColor(pressed ? UIUtil.getLabelDisabledForeground() : JBColor.foreground());
       String text = UIBundle.message("memory.usage.panel.message.text", usedMem / MEGABYTE, maxMem / MEGABYTE);
       int textX = insets.left;
-      int textY = insets.top + (size.height - insets.top - insets.bottom - textHeight) / 2 + textHeight - JBUI.scale(1);
+      int textY = insets.top + (size.height - insets.top - insets.bottom - textHeight) / 2 + textHeight - JBUIScale.scale(1);
       g2.drawString(text, textX, textY);
 
       g2.dispose();
     }
 
-    UIUtil.drawImage(g, myBufferedImage, 0, 0, null);
+    StartupUiUtil.drawImage(g, myBufferedImage, INDENT, 0, null);
   }
 
   @Override
   public Dimension getPreferredSize() {
     FontMetrics metrics = getFontMetrics(getWidgetFont());
     Insets insets = getInsets();
-    int width = metrics.stringWidth(mySample) + insets.left + insets.right + JBUI.scale(2);
-    int height = metrics.getHeight() + insets.top + insets.bottom + JBUI.scale(2);
+    int width = metrics.stringWidth(mySample) + insets.left + insets.right + JBUIScale.scale(2) + INDENT;
+    int height = metrics.getHeight() + insets.top + insets.bottom + JBUIScale.scale(2);
     return new Dimension(width, height);
   }
 

@@ -23,7 +23,6 @@ import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.VcsBackgroundTask;
 import gnu.trove.TLongArrayList;
 import org.jetbrains.annotations.CalledInAwt;
@@ -531,7 +530,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
         }
       }, true);
       myFileHistoryPanel.setBottomRevisionForShowDiff(last);
-      myFileHistoryPanel.setBorder(BorderFactory.createLineBorder(UIUtil.getBorderColor()));
+      myFileHistoryPanel.setBorder(BorderFactory.createLineBorder(JBColor.border()));
       return myFileHistoryPanel;
     }
   }

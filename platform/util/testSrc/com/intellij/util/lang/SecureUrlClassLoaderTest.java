@@ -139,7 +139,9 @@ public class SecureUrlClassLoaderTest {
   @Test
   public void testLoadJarWithMaliciousManifest() throws Exception {
     SecurityException err = doTestLoadJarWithMaliciousThings(false, true, false, "org.bouncycastle.jce.provider.BouncyCastleProvider");
-    assertThat(err).hasMessage("invalid SHA-256 signature file digest for org/bouncycastle/jce/provider/BouncyCastleProvider.class");
+    assertThat(err).hasMessageMatching(
+      // This error message differs in Java 1.8 and Java 11.
+      "[Ii]nvalid .*signature file digest for (Manifest main attributes|org/bouncycastle/jce/provider/BouncyCastleProvider.class)");
   }
 
   /**

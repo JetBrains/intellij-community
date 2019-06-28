@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="16" height="16" viewBox="0 0 16 16">
+  <defs>
+    <linearGradient id="idea-ce_16@2x-b" x1="65.347%" x2="27.427%" y1="100%" y2="57.698%">
+      <stop offset="0%" stop-color="#2773E7"/>
+      <stop offset="100%" stop-color="#FC801D"/>
+    </linearGradient>
+    <polygon id="idea-ce_16@2x-a" points="0 13 4.098 12.284 6.5 6.433 0 5"/>
+    <linearGradient id="idea-ce_16@2x-c" x1="56.154%" x2="27.304%" y1="30.518%" y2="106.868%">
+      <stop offset="0%" stop-color="#FE2857"/>
+      <stop offset="100%" stop-color="#9039D0"/>
+    </linearGradient>
+    <linearGradient id="idea-ce_16@2x-d" x1="50%" x2="50%" y1="0%" y2="75.199%">
+      <stop offset="0%" stop-color="#2773E7"/>
+      <stop offset="100%" stop-color="#9039D0"/>
+    </linearGradient>
+    <linearGradient id="idea-ce_16@2x-f" x1="50%" x2="50%" y1="-11.618%" y2="60.589%">
+      <stop offset="0%" stop-color="#A6A5A5"/>
+      <stop offset="0%" stop-color="#989898" stop-opacity=".568"/>
+      <stop offset="100%"/>
+    </linearGradient>
+    <polygon id="idea-ce_16@2x-e" points="0 10 10 10 10 0 0 0"/>
+  </defs>
+  <g fill="none" fill-rule="evenodd" transform="translate(1 1)">
+    <use fill="#F97A12" xlink:href="#idea-ce_16@2x-a"/>
+    <use fill="url(#idea-ce_16@2x-b)" xlink:href="#idea-ce_16@2x-a"/>
+    <polygon fill="#2773E7" points="2.5 14 14 14 14 10.75 14 0 6.21 0"/>
+    <polygon fill="url(#idea-ce_16@2x-c)" points="0 0 0 5.25 2.597 6.875 0 12.125 0 14 3.091 14 11.5 6 6.306 0"/>
+    <polygon fill="url(#idea-ce_16@2x-d)" points="10.5 7 14 3.559 14 0 7 0"/>
+    <g transform="translate(2 2)">
+      <use fill="#000" xlink:href="#idea-ce_16@2x-e"/>
+      <use fill="url(#idea-ce_16@2x-f)" xlink:href="#idea-ce_16@2x-e"/>
+      <polygon fill="#FFF" points="1 8.5 5 8.5 5 8 1 8"/>
+      <path fill="#FFF" d="M3.50415,4.83445 L4.11315,4.14995 C4.36465,4.42895 4.60915,4.59395 4.91715,4.59395 C5.28165,4.59395 5.50765,4.37195 5.50765,3.85845 L5.50765,0.99995 L6.50015,0.99995 L6.50015,3.90295 C6.50015,4.42895 6.34915,4.82195 6.08565,5.08795 C5.81565,5.36045 5.42015,5.49995 4.94215,5.49995 C4.25765,5.49995 3.80565,5.19595 3.50415,4.83445"/>
+      <polygon fill="#FFF" points="1 1 1 2 1.5 2 1.5 4.5 1 4.5 1 5.5 3 5.5 3 4.5 2.5 4.5 2.5 2 3 2 3 1"/>
+    </g>
+  </g>
+</svg>

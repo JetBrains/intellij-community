@@ -18,11 +18,11 @@ package com.siyeh.ig.bugs
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.LightProjectDescriptor
-import com.siyeh.ig.LightInspectionTestCase
+import com.siyeh.ig.LightJavaInspectionTestCase
 import org.jetbrains.annotations.NotNull
 
 @SuppressWarnings(["ResultOfMethodCallIgnored", "UnusedReturnValue"])
-class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
+class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCase {
 
   @Override
   protected LocalInspectionTool getInspection() {

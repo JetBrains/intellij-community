@@ -18,7 +18,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -29,7 +29,7 @@ import java.util.Set;
 /**
  * @author mike
  */
-public abstract class LightCompletionTestCase extends LightCodeInsightTestCase {
+public abstract class LightCompletionTestCase extends LightJavaCodeInsightTestCase {
   protected String myPrefix;
   protected LookupElement[] myItems;
   private CompletionType myType = CompletionType.BASIC;

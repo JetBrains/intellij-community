@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("MayBeConstant")
 
 package com.intellij.codeInsight.daemon.impl
@@ -15,7 +15,6 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.TooltipAction
 import com.intellij.openapi.keymap.KeymapManager
@@ -27,10 +26,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
-import com.intellij.util.ui.GridBag
-import com.intellij.util.ui.Html
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import java.awt.*
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -97,8 +93,9 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
                          hint: LightweightHint,
                          hintHint: HintHint,
                          actions: ArrayList<AnAction>,
-                         tooltipReloader: TooltipReloader) {
-    super.fillPanel(editor, grid, hint, hintHint, actions, tooltipReloader)
+                         tooltipReloader: TooltipReloader,
+                         highlightActions: Boolean) {
+    super.fillPanel(editor, grid, hint, hintHint, actions, tooltipReloader, highlightActions)
     val hasMore = LineTooltipRenderer.isActiveHtml(myText!!)
     if (tooltipAction == null && !hasMore) return
 
@@ -109,7 +106,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     grid.add(settingsComponent, settingsConstraints)
 
     if (isShowActions()) {
-      addActionsRow(hintHint, hint, editor, actions, grid)
+      addActionsRow(hintHint, hint, editor, actions, grid, highlightActions)
     }
   }
 
@@ -117,12 +114,13 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
                             hint: LightweightHint,
                             editor: Editor,
                             actions: ArrayList<AnAction>,
-                            grid: JComponent) {
+                            grid: JComponent,
+                            highlightActions: Boolean) {
     if (tooltipAction == null || !hintHint.isAwtTooltip) return
 
 
     val buttons = JPanel(GridBagLayout())
-    val wrapper = createActionPanelWithBackground(hint, grid)
+    val wrapper = createActionPanelWithBackground(highlightActions)
     wrapper.add(buttons, BorderLayout.WEST)
 
     buttons.border = JBUI.Borders.empty()
@@ -177,9 +175,8 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     grid.add(wrapper, buttonsConstraints)
   }
 
-  private fun createActionPanelWithBackground(hint: LightweightHint,
-                                              grid: JComponent): JPanel {
-    val wrapper: JPanel = object : JPanel(BorderLayout()) {
+  private fun createActionPanelWithBackground(highlight : Boolean): JPanel {
+    val wrapper: JPanel = if (highlight) object : JPanel(BorderLayout()) {
       override fun paint(g: Graphics?) {
         g!!.color = UIUtil.getToolTipActionBackground()
         val graphics2D = g as Graphics2D
@@ -196,7 +193,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
         cfg.restore()
         super.paint(g)
       }
-    }
+    } else JPanel(BorderLayout())
 
     wrapper.isOpaque = false
     wrapper.border = JBUI.Borders.empty()
@@ -356,7 +353,7 @@ private fun getActionFont(): Font? {
   if (toolTipFont == null || SystemInfo.isWindows) return toolTipFont
 
   //if font was changed from default we dont have a good heuristic to customize it
-  if (JBUI.Fonts.label() != toolTipFont || UISettings.instance.overrideLafFonts) return toolTipFont
+  if (JBFont.label() != toolTipFont || UISettings.instance.overrideLafFonts) return toolTipFont
 
   if (SystemInfo.isMac) {
     return toolTipFont.deriveFont(toolTipFont.size - 1f)

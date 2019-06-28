@@ -25,12 +25,12 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.URLUtil
 import com.intellij.util.lang.JavaVersion
 
-class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
+class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
     myFixture.testDataPath = "${PluginPathManager.getPluginHomePath("java-decompiler")}/plugin/testData"

@@ -47,6 +47,12 @@ public class AnnotationsHighlightUtil {
   @Nullable
   static HighlightInfo checkNameValuePair(@NotNull PsiNameValuePair pair,
                                           RefCountHolder refCountHolder) {
+    PsiAnnotation annotation = PsiTreeUtil.getParentOfType(pair, PsiAnnotation.class);
+    if (annotation == null) return null;
+    PsiJavaCodeReferenceElement annotationNameReferenceElement = annotation.getNameReferenceElement();
+    if (annotationNameReferenceElement == null) return null;
+    PsiElement annotationClass = annotationNameReferenceElement.resolve();
+    if (!(annotationClass instanceof PsiClass && ((PsiClass)annotationClass).isAnnotationType())) return null;
     PsiReference ref = pair.getReference();
     if (ref == null) return null;
     PsiMethod method = (PsiMethod)ref.resolve();
@@ -198,7 +204,10 @@ public class AnnotationsHighlightUtil {
       if (metaAnno == null) {
         String explanation = JavaErrorMessages.message("annotation.non.repeatable", annotationType.getQualifiedName());
         String description = JavaErrorMessages.message("annotation.duplicate.explained", explanation);
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
+        HighlightInfo info =
+          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
+        QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createCollapseAnnotationsFix(annotationToCheck));
+        return info;
       }
 
       String explanation = doCheckRepeatableAnnotation(metaAnno);

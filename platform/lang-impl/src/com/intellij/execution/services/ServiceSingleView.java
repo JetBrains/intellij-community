@@ -82,7 +82,7 @@ class ServiceSingleView extends ServiceView {
         if (newValue != null) {
           ServiceViewDescriptor descriptor = newValue.getViewDescriptor();
           if (oldValue == null) {
-            descriptor.onNodeSelected();
+            onViewSelected(descriptor);
           }
           myUi.setDetailsComponent(descriptor.getContentComponent());
         }
@@ -97,9 +97,14 @@ class ServiceSingleView extends ServiceView {
     ServiceViewItem item = myRef.get();
     if (item != null) {
       ServiceViewDescriptor descriptor = item.getViewDescriptor();
-      descriptor.onNodeSelected();
+      onViewSelected(descriptor);
 
       myUi.setDetailsComponent(descriptor.getContentComponent());
     }
+  }
+
+  @Override
+  List<Object> getChildrenSafe(@NotNull Object value) {
+    return Collections.emptyList();
   }
 }

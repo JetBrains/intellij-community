@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.components.RoamingType;
@@ -7,7 +7,6 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.ProjectBaseDirectory;
-import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -15,10 +14,6 @@ import org.jetbrains.annotations.SystemIndependent;
 // todo the only difference - usage of ProjectBaseDirectory Is it really make sense?
 @State(name = "RecentDirectoryProjectsManager", storages = @Storage(value = "recentProjectDirectories.xml", roamingType = RoamingType.DISABLED))
 public class RecentDirectoryProjectsManager extends RecentProjectsManagerBase {
-  public RecentDirectoryProjectsManager(@NotNull MessageBus messageBus) {
-    super(messageBus);
-  }
-
   @Override
   @Nullable
   @SystemIndependent

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.application.PathManager
@@ -116,10 +116,8 @@ abstract class ImageResourcesTestBase {
     @JvmStatic
     fun collectNonRegeneratedIconClasses(root: TestRoot): List<Array<Any?>> {
       val model = loadProjectModel(root)
-      val util = model.project.modules.find { it.name == "intellij.platform.util" } ?: throw IllegalStateException("Can't load module 'util'")
       val modules = collectModules(root, model)
-
-      val checker = MyIconClassFileChecker(File(PathManager.getHomePath()), util)
+      val checker = MyIconClassFileChecker(File(PathManager.getHomePath()), model.project.modules)
       modules.forEach {
         checker.checkIconClasses(it)
       }
@@ -197,11 +195,11 @@ private class MyOptimumSizeChecker(val projectHome: Path, val iconsOnly: Boolean
   }
 }
 
-private class MyIconClassFileChecker(val projectHome: File, val util: JpsModule) {
+private class MyIconClassFileChecker(val projectHome: File, val modules: List<JpsModule>) {
   val failures = ArrayList<FailedTest>()
 
   fun checkIconClasses(module: JpsModule) {
-    val generator = IconsClassGenerator(projectHome, util, false)
+    val generator = IconsClassGenerator(projectHome, modules, false)
     generator.processModule(module)
 
     generator.getModifiedClasses().forEach { (module, file, details) ->

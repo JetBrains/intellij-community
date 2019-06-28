@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VFileProperty;
@@ -14,7 +15,6 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
-import com.intellij.util.Function;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.text.FilePathHashingStrategy;
@@ -31,6 +31,7 @@ import java.nio.file.attribute.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.VfsEventGenerationHelper.LOG;
 
@@ -224,9 +225,10 @@ class LocalFileSystemRefreshWorker {
   }
 
   private boolean isCancelled(@NotNull NewVirtualFile stopAt, @NotNull RefreshContext refreshContext) {
-    boolean requestedCancel = false;
-    if (myCancelled || (requestedCancel = ourUnitTestCancellingCondition != null && ourUnitTestCancellingCondition.fun(stopAt))) {
-      if (requestedCancel) myCancelled = true;
+    if (ourTestListener != null) {
+      ourTestListener.accept(stopAt);
+    }
+    if (myCancelled) {
       refreshContext.filesToBecomeDirty.offer(stopAt);
       return true;
     }
@@ -242,12 +244,11 @@ class LocalFileSystemRefreshWorker {
     file.markDirty();
   }
 
-  private static Function<? super VirtualFile, Boolean> ourUnitTestCancellingCondition;
+  private static Consumer<? super VirtualFile> ourTestListener;
 
   @TestOnly
-  static void setCancellingCondition(@Nullable Function<? super VirtualFile, Boolean> condition) {
-    assert ApplicationManager.getApplication().isUnitTestMode();
-    ourUnitTestCancellingCondition = condition;
+  static void setTestListener(@Nullable Consumer<? super VirtualFile> testListener) {
+    ourTestListener = testListener;
   }
 
   private static class SequentialRefreshContext extends RefreshContext {
@@ -534,9 +535,7 @@ class LocalFileSystemRefreshWorker {
       boolean hidden = path.getParent() != null && ((DosFileAttributes)a).isHidden();
       return new FileAttributes(a.isDirectory(), a.isOther(), isSymlink, hidden, a.size(), lastModified, writable);
     }
-    else {
-      return new FileAttributes(a.isDirectory(), a.isOther(), isSymlink, false, a.size(), lastModified, writable);
-    }
+    return new FileAttributes(a.isDirectory(), a.isOther(), isSymlink, false, a.size(), lastModified, writable);
   }
 
   private static final BasicFileAttributes BROKEN_SYMLINK_ATTRIBUTES = new BasicFileAttributes() {

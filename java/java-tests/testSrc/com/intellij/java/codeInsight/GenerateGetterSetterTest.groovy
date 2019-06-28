@@ -22,7 +22,7 @@ import com.intellij.codeInsight.generation.SetterTemplatesManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.ui.UIUtil
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection
 import groovy.transform.CompileStatic
@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable
  */
 
 @CompileStatic
-class GenerateGetterSetterTest extends LightCodeInsightFixtureTestCase {
+class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCase {
 
   void "test don't strip is of non-boolean fields"() {
     myFixture.addClass('class YesNoRAMField {}')

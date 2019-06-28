@@ -55,7 +55,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   protected final int myCurrentWidth;
 
   @FunctionalInterface
-  protected interface TooltipReloader {
+  public interface TooltipReloader {
     void reload(boolean toExpand);
   }
 
@@ -104,6 +104,23 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
                               final boolean alignToRight,
                               @NotNull final TooltipGroup group,
                               @NotNull final HintHint hintHint) {
+    LightweightHint hint = createHint(editor, p, alignToRight, group, hintHint, true, null);
+    if (hint != null) {
+      HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, p, HintManager.HIDE_BY_ANY_KEY |
+                                                                        HintManager.HIDE_BY_TEXT_CHANGE |
+                                                                        HintManager.HIDE_BY_OTHER_HINT |
+                                                                        HintManager.HIDE_BY_SCROLLING, 0, false, hintHint);
+    }
+    return hint;
+  }
+
+  public LightweightHint createHint(@NotNull final Editor editor,
+                                    @NotNull final Point p,
+                                    final boolean alignToRight,
+                                    @NotNull final TooltipGroup group,
+                                    @NotNull final HintHint hintHint,
+                                    boolean highlightActions,
+                                    @Nullable TooltipReloader tooltipReloader) {
     if (myText == null) return null;
 
     //setup text
@@ -112,7 +129,6 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
 
     final boolean expanded = myCurrentWidth > 0 && !dressedText.equals(tooltipPreText);
 
-    final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
     final JComponent contentComponent = editor.getContentComponent();
 
     final JComponent editorComponent = editor.getComponent();
@@ -179,7 +195,9 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     };
 
 
-    TooltipReloader reloader = toExpand -> reloadFor(hint, editor, p, editorPane, alignToRight, group, hintHint, toExpand);
+    TooltipReloader reloader = tooltipReloader == null
+                               ? toExpand -> reloadFor(hint, editor, p, editorPane, alignToRight, group, hintHint, toExpand)
+                               : tooltipReloader;
 
     actions.add(new AnAction() {
       // an action to expand description when tooltip was shown after mouse move; need to unregister from editor component
@@ -226,7 +244,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       }
     });
 
-    fillPanel(editor, grid, hint, hintHint, actions, reloader);
+    fillPanel(editor, grid, hint, hintHint, actions, reloader, highlightActions);
 
 
     grid.addMouseListener(new MouseAdapter() {
@@ -267,10 +285,6 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       }
     });
 
-    hintManager.showEditorHint(hint, editor, p, HintManager.HIDE_BY_ANY_KEY |
-                                                HintManager.HIDE_BY_TEXT_CHANGE |
-                                                HintManager.HIDE_BY_OTHER_HINT |
-                                                HintManager.HIDE_BY_SCROLLING, 0, false, hintHint);
     return hint;
   }
 
@@ -304,7 +318,8 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
                            @NotNull LightweightHint hint,
                            @NotNull HintHint hintHint,
                            @NotNull ArrayList<AnAction> actions,
-                           @NotNull TooltipReloader expandCallback) {
+                           @NotNull TooltipReloader expandCallback,
+                           boolean highlightActions) {
     hintHint.setComponentBorder(JBUI.Borders.empty());
     hintHint.setBorderInsets(JBUI.insets(0));
   }
@@ -405,7 +420,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   }
 
   @NotNull
-  protected LineTooltipRenderer createRenderer(@Nullable String text, int width) {
+  public LineTooltipRenderer createRenderer(@Nullable String text, int width) {
     return new LineTooltipRenderer(text, width, getEqualityObjects());
   }
 

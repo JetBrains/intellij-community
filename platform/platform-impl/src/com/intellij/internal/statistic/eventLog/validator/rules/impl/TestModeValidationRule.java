@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.internal.statistic.eventLog.validator.ValidationResultType.ACCEPTED;
 import static com.intellij.internal.statistic.eventLog.validator.ValidationResultType.REJECTED;
 
-public class TestModeValidationRule extends CustomUtilsWhiteListRule {
+public class TestModeValidationRule extends CustomWhiteListRule {
   @Override
   public boolean acceptRuleId(@Nullable String ruleId) {
     return "fus_test_mode".equals(ruleId);
@@ -19,8 +19,10 @@ public class TestModeValidationRule extends CustomUtilsWhiteListRule {
   @NotNull
   @Override
   protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
-    if(!ApplicationManager.getApplication().isInternal()) return REJECTED;
+    return isTestModeEnabled() ? ACCEPTED : REJECTED;
+  }
 
-    return "true".equals(System.getProperty("fus.internal.test.mode")) ? ACCEPTED : REJECTED;
+  public static boolean isTestModeEnabled() {
+    return ApplicationManager.getApplication().isInternal() && "true".equals(System.getProperty("fus.internal.test.mode"));
   }
 }

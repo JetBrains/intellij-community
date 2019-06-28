@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
@@ -67,7 +67,7 @@ public class ConvertSimpleGetterToPropertyIntention extends Intention {
     PsiType returnType = returnTypeElement == null ? null : returnTypeElement.getType();
 
     GrVariableDeclaration declaration = GroovyPsiElementFactory.getInstance(project).createFieldDeclaration(
-      ArrayUtil.toStringArray(modifiers), fieldName, value, returnType
+      ArrayUtilRt.toStringArray(modifiers), fieldName, value, returnType
     );
 
     PsiElement replaced = method.replace(declaration);

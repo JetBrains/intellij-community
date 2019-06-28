@@ -2,10 +2,10 @@
 package com.intellij.java.codeInsight.intention
 
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 
-class AddDefaultConstructorFixTest extends LightCodeInsightFixtureTestCase {
+class AddDefaultConstructorFixTest extends LightJavaCodeInsightFixtureTestCase {
 
   void "test adding constructor to super class"() {
     def superClass = myFixture.addClass('abstract class Foo { Foo(int a) {} }')

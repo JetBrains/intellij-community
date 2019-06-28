@@ -16,14 +16,14 @@
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 
 /**
  * @author peter
  */
 @CompileStatic
-class HippieCompletionTest extends LightCodeInsightFixtureTestCase {
+class HippieCompletionTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testDollars() {
     myFixture.configureByText "a.txt", '''

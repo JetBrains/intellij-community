@@ -18,7 +18,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.ui.ColorUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xml.util.ColorMap;
@@ -56,7 +56,8 @@ public class JavaFxAnnotator implements Annotator {
               final Annotation annotation = holder.createErrorAnnotation(element,
                                                                          symbolPresentation + (resolve instanceof PsiClass ? " should be public" : " should be public or annotated with @FXML"));
               if (!(resolve instanceof PsiClass)) {
-                annotation.registerUniversalFix(new AddAnnotationFix(JavaFxCommonNames.JAVAFX_FXML_ANNOTATION, (PsiMember)resolve, ArrayUtil.EMPTY_STRING_ARRAY), null, null);
+                annotation.registerUniversalFix(new AddAnnotationFix(JavaFxCommonNames.JAVAFX_FXML_ANNOTATION, (PsiMember)resolve,
+                                                                     ArrayUtilRt.EMPTY_STRING_ARRAY), null, null);
               }
             }
           }

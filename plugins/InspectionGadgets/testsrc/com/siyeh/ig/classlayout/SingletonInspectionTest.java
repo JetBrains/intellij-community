@@ -16,13 +16,13 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class SingletonInspectionTest extends LightInspectionTestCase {
+public class SingletonInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSingleton() {
     doTest();

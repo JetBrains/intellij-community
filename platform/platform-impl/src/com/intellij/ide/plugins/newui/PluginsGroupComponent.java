@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -8,6 +8,7 @@ import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -132,7 +133,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
         Container parent = getParent();
         Insets insets = parent.getInsets();
         size.width = Math.min(parent.getWidth() - insets.left - insets.right -
-                              (parent.getComponentCount() == 2 ? parent.getComponent(1).getWidth() + JBUI.scale(20) : 0), size.width);
+                              (parent.getComponentCount() == 2 ? parent.getComponent(1).getWidth() + JBUIScale.scale(20) : 0), size.width);
         return size;
       }
 
@@ -150,7 +151,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
       panel.add(group.rightAction, BorderLayout.EAST);
     }
     else if (!ContainerUtil.isEmpty(group.rightActions)) {
-      JPanel actions = new NonOpaquePanel(new HorizontalLayout(JBUI.scale(5)));
+      JPanel actions = new NonOpaquePanel(new HorizontalLayout(JBUIScale.scale(5)));
       panel.add(actions, BorderLayout.EAST);
 
       for (JComponent action : group.rightActions) {

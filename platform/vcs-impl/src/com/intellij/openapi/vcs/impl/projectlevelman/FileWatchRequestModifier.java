@@ -32,10 +32,10 @@ public class FileWatchRequestModifier implements Runnable {
     if (!myProject.isInitialized() || myProject.isDisposed()) return;
     final List<VcsDirectoryMapping> copy = myNewMappings.getDirectoryMappings();
 
-    final List<VcsDirectoryMapping> added = new LinkedList<>(copy);
+    final List<VcsDirectoryMapping> added = new ArrayList<>(copy);
     added.removeAll(myDirectoryMappingWatches.keySet());
 
-    final List<VcsDirectoryMapping> deleted = new LinkedList<>(myDirectoryMappingWatches.keySet());
+    final List<VcsDirectoryMapping> deleted = new ArrayList<>(myDirectoryMappingWatches.keySet());
     deleted.removeAll(copy);
 
     final Map<String, VcsDirectoryMapping> toAdd = ContainerUtil.newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
@@ -45,7 +45,7 @@ public class FileWatchRequestModifier implements Runnable {
       }
     }
 
-    final Collection<LocalFileSystem.WatchRequest> toRemove = new LinkedList<>();
+    final Collection<LocalFileSystem.WatchRequest> toRemove = new ArrayList<>();
     for (VcsDirectoryMapping mapping : deleted) {
       if (mapping.isDefaultMapping()) continue;
       final LocalFileSystem.WatchRequest removed = myDirectoryMappingWatches.remove(mapping);

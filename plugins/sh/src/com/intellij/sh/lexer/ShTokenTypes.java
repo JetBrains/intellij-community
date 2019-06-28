@@ -45,7 +45,7 @@ public interface ShTokenTypes extends ShTypes {
   //these tokens will be remapped to word tokens if they occur at a position where a word token would be accepted
   TokenSet identifierKeywords = TokenSet.create(
       CASE, DO, DONE, ELIF, ELSE, ESAC, FI, FOR, FUNCTION,
-      IF, IN, SELECT, THEN, UNTIL, WHILE
+      IF, IN, SELECT, THEN, UNTIL, WHILE, TEST, LET, EVAL
   );
 
   TokenSet stringLiterals = TokenSet.create(WORD, RAW_STRING, INT, COLON);

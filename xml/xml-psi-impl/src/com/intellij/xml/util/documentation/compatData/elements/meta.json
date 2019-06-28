@@ -503,6 +503,64 @@
               "deprecated": false
             }
           },
+          "referer": {
+            "__compat": {
+              "description": "referrer value",
+              "support": {
+                "chrome": {
+                  "version_added": "17",
+                  "notes": "Until Chrome 46, <code>content</code> values weren't constrained to the values listed in the spec."
+                },
+                "chrome_android": {
+                  "version_added": "18",
+                  "notes": "Until Chrome 46, <code>content</code> values weren't constrained to the values listed in the spec."
+                },
+                "edge": {
+                  "version_added": false
+                },
+                "edge_mobile": {
+                  "version_added": false
+                },
+                "firefox": {
+                  "version_added": "36",
+                  "notes": "The <code>referrer</code> value wasn't taken into account when navigation was happening via the context menu or middle click until Firefox 39."
+                },
+                "firefox_android": {
+                  "version_added": "36",
+                  "notes": "The <code>referrer</code> value wasn't taken into account when navigation was happening via the context menu or middle click until Firefox 39."
+                },
+                "ie": {
+                  "version_added": null
+                },
+                "opera": {
+                  "version_added": "15",
+                  "notes": "Until Opera 46, <code>content</code> values weren't constrained to the values listed in the spec."
+                },
+                "opera_android": {
+                  "version_added": null
+                },
+                "safari": {
+                  "version_added": null
+                },
+                "safari_ios": {
+                  "version_added": null
+                },
+                "samsunginternet_android": {
+                  "version_added": true,
+                  "notes": "Until Samsung Internet 5.0, <code>content</code> values weren't constrained to the values listed in the spec."
+                },
+                "webview_android": {
+                  "version_added": "37",
+                  "notes": "Until Chrome 46, <code>content</code> values weren't constrained to the values listed in the spec."
+                }
+              },
+              "status": {
+                "experimental": false,
+                "standard_track": true,
+                "deprecated": true
+              }
+            }
+          },
           "scheme": {
             "__compat": {
               "support": {
@@ -544,60 +602,6 @@
                 },
                 "webview_android": {
                   "version_added": true
-                }
-              },
-              "status": {
-                "experimental": false,
-                "standard_track": true,
-                "deprecated": true
-              }
-            }
-          },
-          "referer": {
-            "__compat": {
-              "description": "referrer value",
-              "support": {
-                "chrome": {
-                  "version_added": "17",
-                  "notes": "Until Chrome 46, <code>content</code> values weren't constrained to the values listed in the spec."
-                },
-                "chrome_android": {
-                  "version_added": null
-                },
-                "edge": {
-                  "version_added": false
-                },
-                "edge_mobile": {
-                  "version_added": false
-                },
-                "firefox": {
-                  "version_added": "36",
-                  "notes": "The <code>referrer</code> value wasn't taken into account when navigation was happening via the context menu or middle click until Firefox 39."
-                },
-                "firefox_android": {
-                  "version_added": "36",
-                  "notes": "The <code>referrer</code> value wasn't taken into account when navigation was happening via the context menu or middle click until Firefox 39."
-                },
-                "ie": {
-                  "version_added": null
-                },
-                "opera": {
-                  "version_added": null
-                },
-                "opera_android": {
-                  "version_added": null
-                },
-                "safari": {
-                  "version_added": null
-                },
-                "safari_ios": {
-                  "version_added": null
-                },
-                "samsunginternet_android": {
-                  "version_added": null
-                },
-                "webview_android": {
-                  "version_added": null
                 }
               },
               "status": {

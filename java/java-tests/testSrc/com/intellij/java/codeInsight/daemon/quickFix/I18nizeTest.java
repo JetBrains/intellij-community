@@ -25,7 +25,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
@@ -33,7 +33,7 @@ import java.io.File;
 import java.util.Collections;
 
 
-public class I18nizeTest extends LightCodeInsightTestCase {
+public class I18nizeTest extends LightJavaCodeInsightTestCase {
   @NonNls
   private static String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/i18nize";

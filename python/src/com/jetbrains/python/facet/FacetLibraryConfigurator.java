@@ -8,9 +8,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,7 +46,7 @@ public class FacetLibraryConfigurator {
           if (lib != null) {
             if (lib instanceof LibraryImpl && ((LibraryImpl)lib).getKind() == null) {   // replace old python libraries with python specific ones
               model.removeOrderEntry(orderEntry);
-              ProjectLibraryTable.getInstance(model.getProject()).removeLibrary(lib);
+              LibraryTablesRegistrar.getInstance().getLibraryTable(model.getProject()).removeLibrary(lib);
               createNewLibrary(model);
               return;
             }

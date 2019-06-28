@@ -3,6 +3,8 @@ package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
 import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.plugins.github.api.data.GHPullRequestShort
+import java.util.concurrent.CompletableFuture
 
 internal interface GithubPullRequestsListLoader {
   @get:CalledInAwt
@@ -17,6 +19,9 @@ internal interface GithubPullRequestsListLoader {
 
   @CalledInAwt
   fun loadMore()
+
+  @CalledInAwt
+  fun reloadData(request: CompletableFuture<out GHPullRequestShort>)
 
   @CalledInAwt
   fun reset()

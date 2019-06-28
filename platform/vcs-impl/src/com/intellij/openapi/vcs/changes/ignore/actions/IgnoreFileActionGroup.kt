@@ -37,7 +37,8 @@ open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
       return
     }
 
-    val ignoreFiles = filterSelectedFiles(project, selectedFiles).map { findSuitableIgnoreFiles(project, it) }
+    val ignoreFiles =
+      filterSelectedFiles(project, selectedFiles).map { findSuitableIgnoreFiles(project, it) }.filterNot(Collection<*>::isEmpty)
     val resultedIgnoreFiles = ignoreFiles.flatten().toHashSet()
 
     for (files in ignoreFiles) {

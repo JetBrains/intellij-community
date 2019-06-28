@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -107,8 +108,7 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
   private static PsiStatement getBody(PsiLoopStatement forStatement) {
     PsiStatement body = forStatement.getBody();
     while (body instanceof PsiBlockStatement) {
-      final PsiBlockStatement blockStatement =
-        (PsiBlockStatement)body;
+      final PsiBlockStatement blockStatement = (PsiBlockStatement)body;
       final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
       final PsiStatement[] statements = codeBlock.getStatements();
       body = statements.length == 0 ? null : statements[0];
@@ -127,70 +127,35 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiElement forElement = descriptor.getPsiElement();
-      final PsiElement parent = forElement.getParent();
-      final String newExpression;
-      if (parent instanceof PsiForStatement) {
-        final PsiForStatement forStatement =
-          (PsiForStatement)parent;
-        newExpression = getCollectionsAddAllText(forStatement);
-        if (newExpression == null) {
-          return;
-        }
-        PsiReplacementUtil.replaceStatementAndShortenClassNames(forStatement,
-                                                                newExpression);
+      final PsiLoopStatement loop = tryCast(descriptor.getPsiElement().getParent(), PsiLoopStatement.class);
+      String newExpression = null;
+      if (loop instanceof PsiForStatement) {
+        newExpression = getCollectionsAddAllText((PsiForStatement)loop);
       }
-      else {
-        final PsiForeachStatement foreachStatement =
-          (PsiForeachStatement)parent;
-        newExpression = getCollectionsAddAllText(foreachStatement);
-        if (newExpression == null) {
-          return;
-        }
-        PsiReplacementUtil.replaceStatementAndShortenClassNames(foreachStatement,
-                                                                newExpression);
+      else if (loop instanceof PsiForeachStatement) {
+        newExpression = getCollectionsAddAllText((PsiForeachStatement)loop);
       }
+      if (newExpression == null) return;
+      PsiReplacementUtil.replaceStatementAndShortenClassNames(loop, newExpression);
     }
 
     @Nullable
     private static String getCollectionsAddAllText(PsiForeachStatement foreachStatement) {
       final PsiStatement body = getBody(foreachStatement);
-      if (!(body instanceof PsiExpressionStatement)) {
-        return null;
-      }
-      final PsiExpressionStatement expressionStatement =
-        (PsiExpressionStatement)body;
-      final PsiMethodCallExpression methodCallExpression =
-        (PsiMethodCallExpression)expressionStatement.getExpression();
-      final PsiReferenceExpression methodExpression =
-        methodCallExpression.getMethodExpression();
-      final PsiElement collection = methodExpression.getQualifier();
-      if (collection == null) {
-        // fixme for when the array is added to 'this'
-        return null;
-      }
-      final String collectionText = collection.getText();
-      final PsiExpression iteratedValue =
-        foreachStatement.getIteratedValue();
-      if (iteratedValue == null) {
-        return null;
-      }
+      if (!(body instanceof PsiExpressionStatement)) return null;
+      final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)body;
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expressionStatement.getExpression();
+      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      final PsiExpression collection = ExpressionUtils.getEffectiveQualifier(methodExpression);
+      if (collection == null) return null;
+      final PsiExpression iteratedValue = foreachStatement.getIteratedValue();
+      if (iteratedValue == null) return null;
       final String arrayText = iteratedValue.getText();
-      @NonNls final StringBuilder buffer = new StringBuilder();
       if (PsiUtil.isLanguageLevel5OrHigher(foreachStatement)) {
-        buffer.append("java.util.Collections.addAll(");
-        buffer.append(collectionText);
-        buffer.append(',');
-        buffer.append(arrayText);
-        buffer.append(");");
+        return "java.util.Collections.addAll(" + collection.getText() + ',' + arrayText + ");";
       }
-      else {
-        buffer.append(collectionText);
-        buffer.append(".addAll(java.util.Arrays.asList(");
-        buffer.append(arrayText);
-        buffer.append("));");
-      }
-      return buffer.toString();
+      final String collectionText = ParenthesesUtils.getText(collection, PsiPrecedenceUtil.POSTFIX_PRECEDENCE);
+      return collectionText + ".addAll(java.util.Arrays.asList(" + arrayText + "));";
     }
 
     @Nullable
@@ -208,37 +173,20 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
       final PsiArrayAccessExpression arrayAccessExpression = getArrayAccessExpression(forStatement);
       if (arrayAccessExpression == null) return null;
 
-      final PsiExpression arrayExpression =
-        arrayAccessExpression.getArrayExpression();
+      final PsiExpression arrayExpression = arrayAccessExpression.getArrayExpression();
       final String arrayText = arrayExpression.getText();
-      final PsiExpression indexExpression =
-        arrayAccessExpression.getIndexExpression();
+      final PsiExpression indexExpression = arrayAccessExpression.getIndexExpression();
       final String indexOffset = getIndexOffset(indexExpression, variable);
-      if (indexOffset == null) {
-        return null;
-      }
-      final String fromOffsetText =
-        addIndexOffset(variable.getInitializer(), indexOffset, false);
-      if (fromOffsetText == null) {
-        return null;
-      }
-      final PsiExpression limit;
+      if (indexOffset == null) return null;
+      final String fromOffsetText = addIndexOffset(variable.getInitializer(), indexOffset, false);
+      if (fromOffsetText == null) return null;
       final IElementType tokenType = condition.getOperationTokenType();
-      if (tokenType == JavaTokenType.LT ||
-          tokenType == JavaTokenType.LE) {
-        limit = condition.getROperand();
-      }
-      else {
-        limit = condition.getLOperand();
-      }
+      final PsiExpression limit =
+        tokenType == JavaTokenType.LT || tokenType == JavaTokenType.LE ? condition.getROperand() : condition.getLOperand();
 
-      final String toOffsetText =
-        addIndexOffset(limit, indexOffset,
-                       tokenType == JavaTokenType.LE ||
-                       tokenType == JavaTokenType.GE);
-      if (toOffsetText == null) {
-        return null;
-      }
+      final String toOffsetText = addIndexOffset(limit, indexOffset, tokenType == JavaTokenType.LE || tokenType == JavaTokenType.GE);
+      if (toOffsetText == null) return null;
+
       if (fromOffsetText.equals("0") && toOffsetText.equals(arrayText + ".length") && PsiUtil.isLanguageLevel5OrHigher(forStatement)) {
         return "java.util.Collections.addAll(" + collectionText + ',' + arrayText + ");";
       }
@@ -249,8 +197,7 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
         buffer.append("addAll(java.util.Arrays.asList(");
         buffer.append(arrayText);
         buffer.append(')');
-        if (!fromOffsetText.equals("0") ||
-            !toOffsetText.equals(arrayText + ".length")) {
+        if (!fromOffsetText.equals("0") || !toOffsetText.equals(arrayText + ".length")) {
           buffer.append(".subList(");
           buffer.append(fromOffsetText);
           buffer.append(", ");
@@ -288,8 +235,7 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
     }
 
     @Nullable
-    private static String getIndexOffset(PsiExpression expression,
-                                         PsiLocalVariable variable) {
+    private static String getIndexOffset(PsiExpression expression, PsiLocalVariable variable) {
       expression = ParenthesesUtils.stripParentheses(expression);
       if (expression == null) {
         return null;
@@ -303,8 +249,7 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
         return "0";
       }
       if (expression instanceof PsiBinaryExpression) {
-        PsiBinaryExpression binaryExpression =
-          (PsiBinaryExpression)expression;
+        PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
         final PsiExpression lhs = binaryExpression.getLOperand();
         final PsiExpression rhs = binaryExpression.getROperand();
 
@@ -321,15 +266,12 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
         if (ExpressionUtils.isZero(rhs)) {
           return lhsText;
         }
-        return collapseConstant(lhsText + " " + sign.getText() + " " + rhsText,
-                                variable);
+        return collapseConstant(lhsText + " " + sign.getText() + " " + rhsText, variable);
       }
       return collapseConstant(expressionText, variable);
     }
 
-    private static String addIndexOffset(PsiExpression expression,
-                                         String indexOffset,
-                                         boolean plusOne) {
+    private static String addIndexOffset(PsiExpression expression, String indexOffset, boolean plusOne) {
       if (expression == null) {
         return null;
       }
@@ -435,139 +377,85 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
     public void visitForStatement(@NotNull PsiForStatement statement) {
       super.visitForStatement(statement);
       final PsiStatement initialization = statement.getInitialization();
-      if (!(initialization instanceof PsiDeclarationStatement)) {
-        return;
-      }
+      if (!(initialization instanceof PsiDeclarationStatement)) return;
       final PsiDeclarationStatement declaration = (PsiDeclarationStatement)initialization;
       final PsiElement[] declaredElements = declaration.getDeclaredElements();
-      if (declaredElements.length != 1) {
-        return;
-      }
+      if (declaredElements.length != 1) return;
       final PsiElement declaredElement = declaredElements[0];
-      if (!(declaredElement instanceof PsiLocalVariable)) {
-        return;
-      }
+      if (!(declaredElement instanceof PsiLocalVariable)) return;
       final PsiLocalVariable variable = (PsiLocalVariable)declaredElement;
       final PsiExpression initialValue = variable.getInitializer();
-      if (initialValue == null) {
-        return;
-      }
+      if (initialValue == null) return;
       final PsiExpression condition = statement.getCondition();
-      if (!ExpressionUtils.isVariableLessThanComparison(condition, variable)) {
-        return;
-      }
+      if (!ExpressionUtils.isVariableLessThanComparison(condition, variable)) return;
       final PsiStatement update = statement.getUpdate();
-      if (!VariableAccessUtils.variableIsIncremented(variable, update)) {
-        return;
-      }
+      if (!VariableAccessUtils.variableIsIncremented(variable, update)) return;
       final PsiArrayAccessExpression arrayAccessExpression = getArrayAccessExpression(statement);
-      if (arrayAccessExpression == null) {
-        return;
-      }
+      if (arrayAccessExpression == null) return;
       final PsiExpression arrayExpression = arrayAccessExpression.getArrayExpression();
       final PsiType type = arrayExpression.getType();
-      if (!(type instanceof PsiArrayType) || type.getDeepComponentType() instanceof PsiPrimitiveType) {
-        return;
-      }
+      if (!(type instanceof PsiArrayType) || type.getDeepComponentType() instanceof PsiPrimitiveType) return;
       final PsiStatement body = statement.getBody();
-      if (!bodyIsArrayToCollectionCopy(body, variable, true)) {
-        return;
-      }
+      if (!bodyIsArrayToCollectionCopy(body, variable, true)) return;
       registerStatementError(statement);
     }
 
     @Override
-    public void visitForeachStatement(
-      PsiForeachStatement statement) {
+    public void visitForeachStatement(PsiForeachStatement statement) {
       super.visitForeachStatement(statement);
       final PsiExpression iteratedValue = statement.getIteratedValue();
-      if (iteratedValue == null) {
-        return;
-      }
+      if (iteratedValue == null) return;
       final PsiType type = iteratedValue.getType();
-      if (!(type instanceof PsiArrayType)) {
-        return;
-      }
+      if (!(type instanceof PsiArrayType)) return;
       final PsiArrayType arrayType = (PsiArrayType)type;
       final PsiType componentType = arrayType.getComponentType();
-      if (componentType instanceof PsiPrimitiveType) {
-        return;
-      }
+      if (componentType instanceof PsiPrimitiveType) return;
       final PsiParameter parameter = statement.getIterationParameter();
       final PsiStatement body = statement.getBody();
-      if (!bodyIsArrayToCollectionCopy(body, parameter, false)) {
-        return;
-      }
+      if (!bodyIsArrayToCollectionCopy(body, parameter, false)) return;
       registerStatementError(statement);
     }
 
     private static boolean bodyIsArrayToCollectionCopy(PsiStatement body, PsiVariable variable, boolean shouldBeOffsetArrayAccess) {
       if (body instanceof PsiExpressionStatement) {
-        final PsiExpressionStatement expressionStatement =
-          (PsiExpressionStatement)body;
-        final PsiExpression expression =
-          expressionStatement.getExpression();
-        return expressionIsArrayToCollectionCopy(expression, variable,
-                                                 shouldBeOffsetArrayAccess);
+        final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)body;
+        final PsiExpression expression = expressionStatement.getExpression();
+        return expressionIsArrayToCollectionCopy(expression, variable, shouldBeOffsetArrayAccess);
       }
       else if (body instanceof PsiBlockStatement) {
-        final PsiBlockStatement blockStatement =
-          (PsiBlockStatement)body;
+        final PsiBlockStatement blockStatement = (PsiBlockStatement)body;
         final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
         final PsiStatement[] statements = codeBlock.getStatements();
         if (statements.length == 1) {
-          return bodyIsArrayToCollectionCopy(statements[0], variable,
-                                             shouldBeOffsetArrayAccess);
+          return bodyIsArrayToCollectionCopy(statements[0], variable, shouldBeOffsetArrayAccess);
         }
         else if (statements.length == 2) {
           final PsiStatement statement = statements[0];
-          if (!(statement instanceof PsiDeclarationStatement)) {
-            return false;
-          }
-          final PsiDeclarationStatement declarationStatement =
-            (PsiDeclarationStatement)statement;
-          final PsiElement[] declaredElements =
-            declarationStatement.getDeclaredElements();
-          if (declaredElements.length != 1) {
-            return false;
-          }
+          if (!(statement instanceof PsiDeclarationStatement)) return false;
+          final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)statement;
+          final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
+          if (declaredElements.length != 1) return false;
           final PsiElement declaredElement = declaredElements[0];
-          if (!(declaredElement instanceof PsiVariable)) {
-            return false;
-          }
-          final PsiVariable localVariable =
-            (PsiVariable)declaredElement;
-          final PsiExpression initializer =
-            localVariable.getInitializer();
-          if (!ExpressionUtils.isOffsetArrayAccess(initializer,
-                                                   variable)) {
-            return false;
-          }
-          return bodyIsArrayToCollectionCopy(statements[1],
-                                             localVariable, false);
+          if (!(declaredElement instanceof PsiVariable)) return false;
+          final PsiVariable localVariable = (PsiVariable)declaredElement;
+          final PsiExpression initializer = localVariable.getInitializer();
+          if (!ExpressionUtils.isOffsetArrayAccess(initializer, variable)) return false;
+          return bodyIsArrayToCollectionCopy(statements[1], localVariable, false);
         }
       }
       return false;
     }
 
-    private static boolean expressionIsArrayToCollectionCopy(
-      PsiExpression expression, PsiVariable variable,
-      boolean shouldBeOffsetArrayAccess) {
+    private static boolean expressionIsArrayToCollectionCopy(PsiExpression expression,
+                                                             PsiVariable variable,
+                                                             boolean shouldBeOffsetArrayAccess) {
       expression = ParenthesesUtils.stripParentheses(expression);
-      if (expression == null) {
-        return false;
-      }
-      if (!(expression instanceof PsiMethodCallExpression)) {
-        return false;
-      }
-      final PsiMethodCallExpression methodCallExpression =
-        (PsiMethodCallExpression)expression;
-      final PsiExpressionList argumentList =
-        methodCallExpression.getArgumentList();
+      if (expression == null) return false;
+      if (!(expression instanceof PsiMethodCallExpression)) return false;
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+      final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
-      if (arguments.length != 1) {
-        return false;
-      }
+      if (arguments.length != 1) return false;
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (!(qualifier instanceof PsiReferenceExpression) &&
@@ -575,36 +463,23 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
           !(qualifier instanceof PsiSuperExpression)) {
         return false;
       }
-      if (VariableAccessUtils.variableIsUsed(variable, qualifier)) {
-        return false;
-      }
+      if (VariableAccessUtils.variableIsUsed(variable, qualifier)) return false;
       final PsiExpression argument = arguments[0];
       final PsiType argumentType = argument.getType();
-      if (argumentType instanceof PsiPrimitiveType) {
-        return false;
-      }
-      if (SideEffectChecker.mayHaveSideEffects(argument)) {
-        return false;
-      }
+      if (argumentType instanceof PsiPrimitiveType) return false;
+      if (SideEffectChecker.mayHaveSideEffects(argument)) return false;
       if (shouldBeOffsetArrayAccess) {
-        if (!ExpressionUtils.isOffsetArrayAccess(argument, variable)) {
-          return false;
-        }
+        if (!ExpressionUtils.isOffsetArrayAccess(argument, variable)) return false;
       }
-      else if (!ExpressionUtils.isReferenceTo(argument, variable)) {
-        return false;
+      else {
+        if (!ExpressionUtils.isReferenceTo(argument, variable)) return false;
       }
       final PsiMethod method = methodCallExpression.resolveMethod();
-      if (method == null) {
-        return false;
-      }
+      if (method == null) return false;
       @NonNls final String name = method.getName();
-      if (!name.equals("add")) {
-        return false;
-      }
+      if (!name.equals("add")) return false;
       final PsiClass containingClass = method.getContainingClass();
-      return InheritanceUtil.isInheritor(containingClass,
-                                         CommonClassNames.JAVA_UTIL_COLLECTION);
+      return InheritanceUtil.isInheritor(containingClass, CommonClassNames.JAVA_UTIL_COLLECTION);
     }
   }
 }

@@ -15,6 +15,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.filters.getters.BuilderCompletionKt;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -92,17 +93,22 @@ public class JavaCompletionSorting {
   private static LookupElementWeigher dispreferPreviousChainCalls(PsiElement position) {
     TObjectIntHashMap<PsiMethod> previousChainCalls = new TObjectIntHashMap<>();
     if (position.getParent() instanceof PsiReferenceExpression) {
-      PsiMethodCallExpression qualifier = getCallQualifier((PsiReferenceExpression)position.getParent());
-      while (qualifier != null) {
-        PsiMethod method = qualifier.resolveMethod();
-        if (method != null) {
-          String name = method.getName();
-          boolean seemsLikeExpectsMultipleCalls = name.startsWith("put") || name.startsWith("add");
-          if (!seemsLikeExpectsMultipleCalls) {
-            previousChainCalls.put(method, previousChainCalls.get(method) + 1);
+      PsiReferenceExpression ref = (PsiReferenceExpression)position.getParent();
+      PsiMethodCallExpression qualifier = getCallQualifier(ref);
+      PsiClass qualifierClass = qualifier == null ? null : PsiUtil.resolveClassInClassTypeOnly(qualifier.getType());
+      if (BuilderCompletionKt.looksLikeBuilder(qualifierClass)) {
+        while (qualifier != null) {
+          PsiMethod method = qualifier.resolveMethod();
+          if (method != null) {
+            String name = method.getName();
+            boolean seemsLikeExpectsMultipleCalls =
+              name.startsWith("put") || name.startsWith("add") || name.startsWith("append") || name.startsWith("get");
+            if (!seemsLikeExpectsMultipleCalls && qualifierClass == method.getContainingClass()) {
+              previousChainCalls.put(method, previousChainCalls.get(method) + 1);
+            }
           }
+          qualifier = getCallQualifier(qualifier.getMethodExpression());
         }
-        qualifier = getCallQualifier(qualifier.getMethodExpression());
       }
     }
     return previousChainCalls.isEmpty() ? null : new LookupElementWeigher("dispreferPreviousChainCalls") {

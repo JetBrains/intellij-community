@@ -15,12 +15,12 @@
  */
 package org.intellij.plugins.intelliLang.inject.java.validation;
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class LanguageMismatchTest extends LightCodeInsightFixtureTestCase {
+public class LanguageMismatchTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testParentheses() {
     highlightTest("import org.intellij.lang.annotations.Language;" +

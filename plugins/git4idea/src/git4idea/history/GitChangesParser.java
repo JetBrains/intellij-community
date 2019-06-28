@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -40,7 +39,7 @@ public class GitChangesParser {
   @NotNull
   public static List<Change> parse(@NotNull Project project,
                                    @NotNull VirtualFile root,
-                                   @NotNull List<VcsFileStatusInfo> statusInfos,
+                                   @NotNull List<? extends VcsFileStatusInfo> statusInfos,
                                    @NotNull String hash,
                                    @NotNull Date date,
                                    @Nullable String parentsHash) {
@@ -96,7 +95,7 @@ public class GitChangesParser {
   }
 
   @NotNull
-  public static Change.Type getChangeType(@NotNull GitChangeType type) {
+  static Change.Type getChangeType(@NotNull GitChangeType type) {
     switch (type) {
       case ADDED:
         return Change.Type.NEW;

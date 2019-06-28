@@ -4,8 +4,8 @@ package com.intellij.ide.plugins;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -40,7 +40,7 @@ public class CountComponent extends JLabel {
 
   @Override
   protected void paintComponent(Graphics g) {
-    int corner = JBUI.scale(14);
+    int corner = JBUIScale.scale(14);
     int ovalWidth = getOvalWidth();
     int ovalHeight = getOvalHeight();
     int width = getWidth();
@@ -62,7 +62,8 @@ public class CountComponent extends JLabel {
   }
 
   private int getOvalWidth() {
-    return JBUI.scale(getText().length() == 1 ? 16 : 20);
+    int i = getText().length() == 1 ? 16 : 20;
+    return JBUIScale.scale(i);
   }
 
   private int getTextOffset() {
@@ -71,6 +72,6 @@ public class CountComponent extends JLabel {
   }
 
   private static int getOvalHeight() {
-    return JBUI.scale(14);
+    return JBUIScale.scale(14);
   }
 }

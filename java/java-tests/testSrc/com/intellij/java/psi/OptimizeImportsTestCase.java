@@ -21,12 +21,12 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 /**
  * @author Dmitry Avdeev
  */
-public abstract class OptimizeImportsTestCase extends LightCodeInsightFixtureTestCase {
+public abstract class OptimizeImportsTestCase extends LightJavaCodeInsightFixtureTestCase {
   protected void doTest(final String extension) {
     CommandProcessor.getInstance().executeCommand(
       getProject(), () -> WriteCommandAction.runWriteCommandAction(null, () -> {

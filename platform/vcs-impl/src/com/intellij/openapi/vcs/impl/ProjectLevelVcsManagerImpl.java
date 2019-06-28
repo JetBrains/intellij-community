@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
@@ -100,12 +101,14 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private final VcsHistoryCache myVcsHistoryCache;
   private final ContentRevisionCache myContentRevisionCache;
   private final FileIndexFacade myExcludedIndex;
+  private final FileTypeManager myFileTypeManager;
   private final VcsAnnotationLocalChangesListenerImpl myAnnotationLocalChangesListener;
 
   public ProjectLevelVcsManagerImpl(Project project,
                                     FileStatusManager manager,
                                     FileIndexFacade excludedFileIndex,
                                     ProjectManager projectManager,
+                                    FileTypeManager fileTypeManager,
                                     DefaultVcsRootPolicy defaultVcsRootPolicy) {
     myProject = project;
     mySerialization = new ProjectLevelVcsManagerSerialization();
@@ -135,6 +138,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myContentRevisionCache = new ContentRevisionCache();
     VcsListener vcsListener = () -> myVcsHistoryCache.clearHistory();
     myExcludedIndex = excludedFileIndex;
+    myFileTypeManager = fileTypeManager;
     MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, vcsListener);
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, vcsListener);
@@ -242,8 +246,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   public AbstractVcs getVcsFor(@NotNull FilePath file) {
     if (myProject.isDisposed()) return null;
 
-    final VirtualFile vFile = ChangesUtil.findValidParentAccurately(file);
-    return vFile != null ? getVcsFor(vFile) : null;
+    NewMappings.MappedRoot root = myMappings.getMappedRootFor(file);
+    return root != null ? root.vcs : null;
   }
 
   @Override
@@ -269,16 +273,16 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   public VirtualFile getVcsRootFor(@Nullable FilePath file) {
     if (file == null || myProject.isDisposed()) return null;
 
-    VirtualFile vFile = ChangesUtil.findValidParentAccurately(file);
-    return vFile != null ? getVcsRootFor(vFile) : null;
+    NewMappings.MappedRoot root = myMappings.getMappedRootFor(file);
+    return root != null ? root.root : null;
   }
 
   @Override
   public VcsRoot getVcsRootObjectFor(@Nullable FilePath file) {
     if (file == null || myProject.isDisposed()) return null;
 
-    VirtualFile vFile = ChangesUtil.findValidParentAccurately(file);
-    return vFile != null ? getVcsRootObjectFor(vFile) : null;
+    NewMappings.MappedRoot root = myMappings.getMappedRootFor(file);
+    return root != null ? new VcsRoot(root.vcs, root.root) : null;
   }
 
   public void unregisterVcs(@NotNull AbstractVcs vcs) {
@@ -452,8 +456,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   public VcsDirectoryMapping getDirectoryMappingFor(@Nullable FilePath file) {
     if (file == null || myProject.isDisposed()) return null;
 
-    VirtualFile vFile = ChangesUtil.findValidParentAccurately(file);
-    return vFile != null ? getDirectoryMappingFor(vFile) : null;
+    NewMappings.MappedRoot root = myMappings.getMappedRootFor(file);
+    return root != null ? root.mapping : null;
   }
 
   @Nullable
@@ -477,7 +481,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     setAutoDirectoryMappings(ContainerUtil.append(myMappings.getDirectoryMappings(), new VcsDirectoryMapping(path, activeVcsName)));
   }
 
-  public void setAutoDirectoryMappings(@NotNull List<VcsDirectoryMapping> mappings) {
+  public void setAutoDirectoryMappings(@NotNull List<? extends VcsDirectoryMapping> mappings) {
     myMappings.setDirectoryMappings(mappings);
     myMappings.cleanupMappings();
   }
@@ -805,13 +809,31 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @Override
   public boolean isIgnored(@NotNull VirtualFile vf) {
     return ReadAction.compute(() -> {
-      if (myProject.isDisposed()) return false;
+      if (myProject.isDisposed() || myProject.isDefault()) return false;
 
       if (Registry.is("ide.hide.excluded.files")) {
         return myExcludedIndex.isExcludedFile(vf);
       }
       else {
         return myExcludedIndex.isUnderIgnored(vf);
+      }
+    });
+  }
+
+  @Override
+  public boolean isIgnored(@NotNull FilePath filePath) {
+    return ReadAction.compute(() -> {
+      if (myProject.isDisposed() || myProject.isDefault()) return false;
+
+      if (Registry.is("ide.hide.excluded.files")) {
+        VirtualFile vf = ChangesUtil.findValidParentAccurately(filePath);
+        return vf != null && myExcludedIndex.isExcludedFile(vf);
+      }
+      else {
+        for (String name : StringUtil.tokenize(filePath.getPath(), "/")) {
+          if (myFileTypeManager.isFileIgnored(name)) return true;
+        }
+        return false;
       }
     });
   }

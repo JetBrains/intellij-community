@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.components.*;
@@ -8,11 +8,13 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ObjectIntHashMap;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -248,7 +250,7 @@ public class DimensionService extends SimpleModificationTracker implements Persi
     JFrame frame = null;
     final Component owner = IdeFocusManager.findInstance().getFocusOwner();
     if (owner != null) {
-      frame = UIUtil.getParentOfType(JFrame.class, owner);
+      frame = ComponentUtil.getParentOfType((Class<? extends JFrame>)JFrame.class, owner);
     }
     if (frame == null) {
       frame = WindowManager.getInstance().findVisibleFrame();
@@ -275,8 +277,8 @@ public class DimensionService extends SimpleModificationTracker implements Persi
       screen = gd.getDefaultConfiguration().getBounds();
     }
     float scale = 1f;
-    if (UIUtil.isJreHiDPIEnabled()) {
-      scale = JBUI.sysScale(gd.getDefaultConfiguration());
+    if (JreHiDpiUtil.isJreHiDPIEnabled()) {
+      scale = JBUIScale.sysScale(gd.getDefaultConfiguration());
       // normalize screen bounds
       screen.setBounds((int)Math.floor(screen.x * scale), (int)Math.floor(screen.y * scale),
                        (int)Math.ceil(screen.width * scale), (int)Math.ceil(screen.height * scale));

@@ -99,7 +99,7 @@ public class LazyRefreshingSelfQueue<T> {
 
     // do not ask under lock
     final Boolean shouldUpdateOld = onlyAbsolute ? false : myShouldUpdateOldChecker.compute();
-    final List<T> dirty = new LinkedList<>();
+    final List<T> dirty = new ArrayList<>();
 
     synchronized (myLock) {
       // adds all pairs with pair.First == null to dirty

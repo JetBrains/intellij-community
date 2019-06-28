@@ -25,11 +25,11 @@ import com.intellij.formatting.fileSet.NamedScopeDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 import static com.intellij.codeInsight.actions.TextRangeType.*;
 
-public class ReformatCodeActionInEditorTest extends LightPlatformCodeInsightFixtureTestCase {
+public class ReformatCodeActionInEditorTest extends BasePlatformTestCase {
 
   @Override
   protected String getTestDataPath() {

@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
@@ -69,7 +68,6 @@ public abstract class MavenOpenOrCreateFilesAction extends MavenAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = MavenActionUtil.getProject(e.getDataContext());
     if(project == null) return;
-    MavenActionsUsagesCollector.trigger(project, this, e);
     final List<File> files = getFiles(e);
     final List<VirtualFile> virtualFiles = collectVirtualFiles(files);
 

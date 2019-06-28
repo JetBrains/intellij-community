@@ -13,13 +13,19 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.LoggingRule;
 import com.jetbrains.TestEnv;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.rules.TestName;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
@@ -28,10 +34,8 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.filter;
 
 /**
  * <p>
@@ -71,6 +75,10 @@ public abstract class PyEnvTestCase {
   @Nullable
   private final String[] myRequiredTags;
 
+  /**
+   * Environments and tags they provide.
+   */
+  public static final Map<String, List<String>> envTags = new HashMap<>();
 
   private boolean myStaging = false;
   /**
@@ -151,10 +159,17 @@ public abstract class PyEnvTestCase {
   @NotNull
   private static Collection<String> getAvailableTags() {
     final Collection<String> allAvailableTags = new HashSet<>();
-    for (final String pythonRoot : getPythonRoots()) {
-      allAvailableTags.addAll(loadEnvTags(pythonRoot));
+    for(List<String> tags : envTags.values()) {
+      allAvailableTags.addAll(tags);
     }
     return allAvailableTags;
+  }
+
+  @BeforeClass
+  public static void collectTagsForEnvs() {
+    for (final String pythonRoot : getPythonRoots()) {
+      envTags.put(pythonRoot, loadEnvTags(pythonRoot));
+    }
   }
 
   protected void invokeTestRunnable(@NotNull final Runnable runnable) {
@@ -277,12 +292,12 @@ public abstract class PyEnvTestCase {
       return tagsRequiredAnnotation.tags();
     }
     else {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
+      return ArrayUtilRt.EMPTY_STRING_ARRAY;
     }
   }
 
   public static List<String> getPythonRoots() {
-    return SETTINGS.getPythons().stream().map(File::getAbsolutePath).collect(Collectors.toList());
+    return ContainerUtil.map(SETTINGS.getPythons(), File::getAbsolutePath);
   }
 
 

@@ -22,16 +22,9 @@ try:
 except:
     frame_type = None
 
-try:
-    from xml.sax.saxutils import escape
-
-
-    def make_valid_xml_value(s):
-        return escape(s, {'"': '&quot;'})
-except:
-    # Simple replacement if it's not there.
-    def make_valid_xml_value(s):
-        return s.replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+def make_valid_xml_value(s):
+    # Same thing as xml.sax.saxutils.escape but also escaping double quotes.
+    return s.replace("&", "&amp;").replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
 
 
 class ExceptionOnEvaluate:
@@ -251,6 +244,10 @@ def is_numpy(x):
            or 'float' in type_name or 'complex' in type_name
 
 
+def is_numeric_container(var_type):
+    return var_type in ("ndarray", "DataFrame", "Series")
+
+
 def should_evaluate_full_value(val):
     return LOAD_VALUES_POLICY == ValuesPolicy.SYNC or ((is_builtin(type(val)) or is_numpy(type(val)))
                                                        and not isinstance(val, (list, tuple, dict, set, frozenset)))
@@ -383,6 +380,11 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value
     else:
         xml_value = ''
 
+    if is_numeric_container(typeName):
+        xml_shape = ' shape="%s"' % make_valid_xml_value(str(v.shape))
+    else:
+        xml_shape = ''
+
     if is_exception_on_eval:
         xml_container = ' isErrorOnEval="True"'
     else:
@@ -391,5 +393,5 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value
         else:
             xml_container = ''
 
-    return ''.join((xml, xml_qualifier, xml_value, xml_container, additional_in_xml, ' />\n'))
+    return ''.join((xml, xml_qualifier, xml_value, xml_container, xml_shape, additional_in_xml, ' />\n'))
 

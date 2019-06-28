@@ -43,6 +43,7 @@ import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.tree.project.ProjectFileNode;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -122,6 +123,9 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     Disposer.register(project, this);
   }
 
+  /**
+   * @deprecated unused
+   */
   @Deprecated
   protected final void fireTreeChangeListener() {
   }
@@ -169,7 +173,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
    */
   @NotNull
   public String[] getSubIds(){
-    return ArrayUtil.EMPTY_STRING_ARRAY;
+    return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
   @NotNull
@@ -502,7 +506,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       treeState.applyTo(myTree);
     }
     else if (myTree.isSelectionEmpty()) {
-      TreeUtil.promiseSelectFirst(myTree).onSuccess(myTree::expandPath);
+      TreeUtil.promiseSelectFirst(myTree);
     }
   }
 
@@ -600,7 +604,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   protected PsiDirectory[] getSelectedDirectoriesInAmbiguousCase(Object userObject) {
     if (userObject instanceof AbstractModuleNode) {
       final Module module = ((AbstractModuleNode)userObject).getValue();
-      if (module != null) {
+      if (module != null && !module.isDisposed()) {
         final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
         final VirtualFile[] sourceRoots = moduleRootManager.getSourceRoots();
         List<PsiDirectory> dirs = new ArrayList<>(sourceRoots.length);
@@ -800,6 +804,9 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return myTreeBuilder.getUi().getReady(requestor);
   }
 
+  /**
+   * @deprecated temporary API
+   */
   @TestOnly
   @Deprecated
   @NotNull

@@ -16,7 +16,7 @@
 package com.intellij.java.codeInsight.navigation;
 
 import com.intellij.psi.*;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.intellij.lang.annotations.Language;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Pavel.Dolgov
  */
-public class JavaReflectionNavigationTest extends LightCodeInsightFixtureTestCase {
+public class JavaReflectionNavigationTest extends LightJavaCodeInsightFixtureTestCase {
 
   private static final String FIELD = "Field";
   private static final String METHOD = "Method";

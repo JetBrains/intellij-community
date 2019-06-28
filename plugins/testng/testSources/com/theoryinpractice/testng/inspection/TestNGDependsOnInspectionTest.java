@@ -16,14 +16,14 @@
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-public class TestNGDependsOnInspectionTest extends LightCodeInsightFixtureTestCase {
+public class TestNGDependsOnInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   @Test
   public void testDependencies() {
     Runnable runnable = () -> {

@@ -198,6 +198,17 @@ public class UninitializedReadCollector {
           return false;
         }
       }
+      else if (statement instanceof PsiYieldStatement) {
+        PsiExpression valueExpression = ((PsiYieldStatement)statement).getExpression();
+        if (!assigns) {
+          if (expressionAssignsVariable(valueExpression, variable, stamp, checkedMethods)) {
+            assigns = true;
+          }
+          else {
+            return false;
+          }
+        }
+      }
       else {
         assigns |= statementAssignsVariable(statement, variable, stamp, checkedMethods);
         if (i == statements.length - 1 && !assigns) {

@@ -39,9 +39,12 @@
     <projectService serviceImplementation="org.jetbrains.plugins.github.pullrequest.GithubPullRequestsComponentFactory"/>
 
     <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.github.extensions.GithubAnnotationGutterActionProvider"/>
-    <projectConfigurable parentId="project.propVCSSupport.Mappings" groupWeight="-500" instance="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable"/>
+    <projectConfigurable parentId="project.propVCSSupport.Mappings" groupWeight="-500"
+                         instance="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable"/>
     <statistics.applicationUsagesCollector
         implementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountsStatisticsCollector"/>
+
+    <diff.DiffExtension implementation="org.jetbrains.plugins.github.pullrequest.comment.GithubPullRequestCommentsDiffExtension"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">
@@ -86,7 +89,9 @@
     <action id="Github.PullRequest.Preview.Refresh"
             class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestRefreshDetailsAction"
             internal="true"/>
-
+    <action id="Github.PullRequest.Preview.Refresh.Comments"
+            class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestRefreshCommentsAction"
+            internal="true"/>
     <group>
       <action id="Github.PullRequest.Zip.Commits.Toggle"
               class="org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestChangesComponent$ToggleZipCommitsAction"/>

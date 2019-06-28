@@ -1,6 +1,6 @@
 package com.jetbrains.jsonSchema.impl;
 
-import com.intellij.codeInsight.completion.CompletionTestCase;
+import com.intellij.codeInsight.completion.JavaCompletionTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author Irina.Chernushina on 8/29/2015.
  */
-public class JsonSchemaReadTest extends CompletionTestCase {
+public class JsonSchemaReadTest extends JavaCompletionTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {

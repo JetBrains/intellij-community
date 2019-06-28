@@ -5,10 +5,7 @@ import com.amazon.ion.Timestamp
 import com.intellij.util.containers.ContainerUtil
 import gnu.trove.THashMap
 import java.io.File
-import java.lang.reflect.Modifier
-import java.lang.reflect.ParameterizedType
-import java.lang.reflect.Proxy
-import java.lang.reflect.Type
+import java.lang.reflect.*
 import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.util.*
@@ -42,10 +39,16 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
     }
   }
 
-  override fun createRootBinding(aClass: Class<*>, type: Type): Binding {
+  override fun createRootBinding(aClass: Class<*>?, type: Type): Binding {
     val customFactory = classToRootBindingFactory.get(aClass)
     if (customFactory != null) {
       return customFactory.invoke()
+    }
+
+    if (aClass == null) {
+      val genericArrayType = type as GenericArrayType
+      val typeVariable = genericArrayType.genericComponentType as TypeVariable<*>
+      return ArrayBinding(typeVariable.bounds[0] as Class<*>, this)
     }
 
     return when {
@@ -63,7 +66,7 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
         @Suppress("UNCHECKED_CAST")
         EnumBinding(aClass as Class<out Enum<*>>)
       }
-      aClass.isInterface || Modifier.isAbstract(aClass.modifiers) -> {
+      aClass.isInterface || Modifier.isAbstract(aClass.modifiers) || aClass == Object::class.java -> {
         PolymorphicBinding(aClass)
       }
       java.lang.Number::class.java.isAssignableFrom(aClass) -> NumberAsObjectBinding()
@@ -83,16 +86,25 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
   // note about field name - Ion binary writer interns string automatically, no need to intern (text writer doesn't support symbol tables)
   override fun getNestedBinding(accessor: MutableAccessor): Binding {
     val type = accessor.genericType
-    val aClass = ClassUtil.typeToClass(type)
+
+    val isGenericArray = type is GenericArrayType
+          //GenericArrayType genericArrayType = (GenericArrayType)type;
+          //TypeVariable typeVariable = (TypeVariable)genericArrayType.getGenericComponentType();
+          //return (Class<?>)typeVariable.getBounds()[0];
 
     // PrimitiveBinding can serialize conditionally, but for the sake of optimization, use special bindings to avoid comparison for each value
     // yes - if field typed as Object, Number and Boolean types are not supported (because bean binding will be created)
+    if (isGenericArray) {
+      return getRootBinding(null, type)
+    }
+
+    val aClass = ClassUtil.typeToClass(type)
     classToNestedBindingFactory.get(aClass)?.let {
       return it(accessor)
     }
 
     return when {
-      aClass.isInterface || Modifier.isAbstract(aClass.modifiers) -> {
+      aClass.isInterface || Modifier.isAbstract(aClass.modifiers) || aClass == Object::class.java -> {
         val annotation = accessor.getAnnotation(Property::class.java)
         if (annotation == null) {
           // todo respect configuration
@@ -115,7 +127,7 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
 }
 
 private class FileBinding : Binding {
-  override fun deserialize(context: ReadContext): Any {
+  override fun deserialize(context: ReadContext, hostObject: Any?): Any {
     return File(context.reader.stringValue())
   }
 
@@ -125,7 +137,7 @@ private class FileBinding : Binding {
 }
 
 private class PathBinding : Binding {
-  override fun deserialize(context: ReadContext): Any {
+  override fun deserialize(context: ReadContext, hostObject: Any?): Any {
     return FileSystems.getDefault().getPath(context.reader.stringValue())
   }
 
@@ -135,7 +147,7 @@ private class PathBinding : Binding {
 }
 
 private class EnumBinding(private val valueClass: Class<out Enum<*>>) : Binding {
-  override fun deserialize(context: ReadContext): Any {
+  override fun deserialize(context: ReadContext, hostObject: Any?): Any {
     val enumConstants = valueClass.enumConstants
     val value = context.reader.stringValue()
     return enumConstants.firstOrNull { it.name == value }
@@ -153,7 +165,7 @@ private class DateBinding : Binding {
     context.writer.writeTimestamp(Timestamp.forDateZ(obj as Date))
   }
 
-  override fun deserialize(context: ReadContext): Any {
+  override fun deserialize(context: ReadContext, hostObject: Any?): Any {
     return context.reader.dateValue()
   }
 }
@@ -163,7 +175,7 @@ private class ByteArrayBinding : Binding {
     context.writer.writeBlob(obj as ByteArray)
   }
 
-  override fun deserialize(context: ReadContext): Any {
+  override fun deserialize(context: ReadContext, hostObject: Any?): Any {
     return context.reader.newBytes()
   }
 }

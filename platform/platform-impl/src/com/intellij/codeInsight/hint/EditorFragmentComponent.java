@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,6 +20,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -188,17 +189,17 @@ public class EditorFragmentComponent extends JPanel {
       incrementLine = StringUtil.isWhiteSpace(c);
       if (!incrementLine || c == '\n') {
         break;
-      } 
+      }
     }
     if (incrementLine) {
       startLine++;
-    } 
-    
+    }
+
     int endLine = Math.min(document.getLineNumber(range.getEndOffset()) + 1, document.getLineCount() - 1);
 
     if (startLine >= endLine) return null;
 
-    EditorFragmentComponent fragmentComponent = createEditorFragmentComponent(editor, startLine, endLine, showFolding, true, 
+    EditorFragmentComponent fragmentComponent = createEditorFragmentComponent(editor, startLine, endLine, showFolding, true,
                                                                               useCaretRowBackground);
 
     if (showUpward) {
@@ -207,7 +208,7 @@ public class EditorFragmentComponent extends JPanel {
     }
 
     final JComponent c = editor.getComponent();
-    int x = SwingUtilities.convertPoint(c, new Point(JBUI.scale(-3),0), UIUtil.getRootPane(c)).x; //IDEA-68016
+    int x = SwingUtilities.convertPoint(c, new Point(JBUIScale.scale(-3), 0), UIUtil.getRootPane(c)).x; //IDEA-68016
 
     LightweightHint currentHint = SoftReference.dereference(editor.getUserData(CURRENT_HINT));
     if (currentHint != null) currentHint.hide();
@@ -232,7 +233,7 @@ public class EditorFragmentComponent extends JPanel {
                                                                       boolean showFolding, boolean showGutter) {
     return createEditorFragmentComponent(component, editor, startLine, endLine, showFolding, showGutter, true);
   }
-  
+
   public static EditorFragmentComponent createEditorFragmentComponent(Editor editor,
                                                                       int startLine,
                                                                       int endLine,
@@ -279,8 +280,8 @@ public class EditorFragmentComponent extends JPanel {
     int lineHeight = editor.getLineHeight();
     int overhang = editor.getScrollingModel().getVisibleArea().y -
             editor.logicalPositionToXY(editor.offsetToLogicalPosition(range.getEndOffset())).y;
-    int yRelative = overhang > 0 && overhang < lineHeight ? 
-                    lineHeight - overhang + JBUI.scale(LINE_BORDER_THICKNESS + EMPTY_BORDER_THICKNESS) : 0;
+    int yRelative = overhang > 0 && overhang < lineHeight ?
+                    lineHeight - overhang + JBUIScale.scale(LINE_BORDER_THICKNESS + EMPTY_BORDER_THICKNESS) : 0;
     Point point = SwingUtilities.convertPoint(((EditorEx)editor).getScrollPane().getViewport(), -2, yRelative, layeredPane);
     return showEditorFragmentHintAt(editor, range, point.y, true, showFolding, hideByAnyKey, true, false);
   }
@@ -288,7 +289,7 @@ public class EditorFragmentComponent extends JPanel {
   public static Color getBackgroundColor(Editor editor){
     return getBackgroundColor(editor, true);
   }
-  
+
   public static Color getBackgroundColor(Editor editor, boolean useCaretRowBackground){
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
     Color color = colorsScheme.getColor(EditorColors.CARET_ROW_COLOR);

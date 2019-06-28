@@ -95,11 +95,10 @@ public class UnshelvedChangelistsCleaningTest extends PlatformTestCase {
     assertTrue("Calendar date is: " + datePresentation, myCalendar.get(Calendar.YEAR) < TEST_YEAR);
     debug(datePresentation);
     shelveChangesManager.cleanUnshelved(myCalendar.getTimeInMillis());
-    PlatformTestUtil.saveProject(myProject);
-    
-    assertFalse(shelveChangesManager.getRecycledShelvedChangeLists().isEmpty());
+    PlatformTestUtil.saveProject(myProject, true);
     shelfDir.refresh(false, true);
     afterDir.refresh(false, true);
+    assertFalse(shelveChangesManager.getRecycledShelvedChangeLists().isEmpty());
     PlatformTestUtil.assertDirectoriesEqual(afterDir, shelfDir);
   }
 }

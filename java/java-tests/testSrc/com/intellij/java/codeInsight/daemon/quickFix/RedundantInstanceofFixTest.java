@@ -5,7 +5,7 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 public class RedundantInstanceofFixTest extends LightQuickFixParameterizedTestCase {
@@ -18,7 +18,7 @@ public class RedundantInstanceofFixTest extends LightQuickFixParameterizedTestCa
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return LightCodeInsightFixtureTestCase.JAVA_8;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_8;
   }
 
   @Override

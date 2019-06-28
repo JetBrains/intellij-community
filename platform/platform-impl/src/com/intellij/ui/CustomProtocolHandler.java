@@ -23,7 +23,7 @@ public class CustomProtocolHandler {
   public boolean openLink(@NotNull URI uri) {
     LOG.info("CustomProtocolHandler.openLink");
     final List<String> args = getOpenArgs(uri);
-    return !args.isEmpty() && CommandLineProcessor.processExternalCommandLine(args, null) != null;
+    return !args.isEmpty() && CommandLineProcessor.processExternalCommandLine(args, null).getFirst() != null;
   }
 
   @NotNull

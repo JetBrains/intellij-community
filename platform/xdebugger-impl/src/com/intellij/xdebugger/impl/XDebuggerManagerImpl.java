@@ -26,10 +26,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.event.EditorMouseEvent;
-import com.intellij.openapi.editor.event.EditorMouseEventArea;
-import com.intellij.openapi.editor.event.EditorMouseListener;
-import com.intellij.openapi.editor.event.EditorMouseMotionListener;
+import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -46,7 +43,6 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
@@ -92,13 +88,15 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
 
   private XDebuggerState myState = new XDebuggerState();
 
-  public XDebuggerManagerImpl(final Project project, MessageBus messageBus) {
+  public XDebuggerManagerImpl(@NotNull Project project) {
     myProject = project;
+
+    MessageBusConnection messageBusConnection = project.getMessageBus().connect();
+
     myBreakpointManager = new XBreakpointManagerImpl(project, this);
     myWatchesManager = new XDebuggerWatchesManager();
     myExecutionPointHighlighter = new ExecutionPointHighlighter(project);
 
-    MessageBusConnection messageBusConnection = messageBus.connect();
     messageBusConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
       @Override
       public void fileContentLoaded(@NotNull VirtualFile file, @NotNull Document document) {
@@ -161,8 +159,9 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
     });
 
     DebuggerEditorListener listener = new DebuggerEditorListener();
-    EditorFactory.getInstance().getEventMulticaster().addEditorMouseMotionListener(listener, myProject);
-    EditorFactory.getInstance().getEventMulticaster().addEditorMouseListener(listener, myProject);
+    EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
+    eventMulticaster.addEditorMouseMotionListener(listener, myProject);
+    eventMulticaster.addEditorMouseListener(listener, myProject);
   }
 
   private void updateExecutionPoint(@NotNull VirtualFile file, boolean navigate) {

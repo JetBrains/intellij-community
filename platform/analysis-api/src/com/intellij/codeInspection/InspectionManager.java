@@ -17,7 +17,8 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 public abstract class InspectionManager {
-  public static final ExtensionPointName<Condition<PsiElement>> CANT_BE_STATIC_EXTENSION = ExtensionPointName.create("com.intellij.cantBeStatic");
+  public static final ExtensionPointName<Condition<PsiElement>> CANT_BE_STATIC_EXTENSION =
+    ExtensionPointName.create("com.intellij.cantBeStatic");
 
   public static InspectionManager getInstance(Project project) {
     return ServiceManager.getService(project, InspectionManager.class);
@@ -39,10 +40,11 @@ public abstract class InspectionManager {
 
   /**
    * Factory method for ProblemDescriptor. Should be called from LocalInspectionTool.checkXXX() methods.
-   * @param psiElement problem is reported against
-   * @param descriptionTemplate problem message. Use {@code #ref} for a link to problem piece of code and {@code #loc} for location in source code.
-   * @param fix should be null if no fix is provided.
-   * @param onTheFly for local tools on batch run
+   *
+   * @param psiElement          problem is reported against
+   * @param descriptionTemplate problem message. Use {@code #ref} for a link to problem piece of code and {@code #loc} for location in source code (see {@link CommonProblemDescriptor#getDescriptionTemplate()}).
+   * @param fix                 should be null if no fix is provided.
+   * @param onTheFly            for local tools on batch run
    */
   @NotNull
   @Contract(pure = true)
@@ -95,8 +97,9 @@ public abstract class InspectionManager {
                                                             @NotNull ProblemHighlightType highlightType,
                                                             boolean onTheFly,
                                                             final LocalQuickFix... fixes);
+
   /**
-   * use {@link #createProblemDescriptor(PsiElement, String, boolean, LocalQuickFix[], ProblemHighlightType)} instead
+   * @deprecated use {@link #createProblemDescriptor(PsiElement, String, boolean, LocalQuickFix[], ProblemHighlightType)} instead
    */
   @Deprecated
   @NotNull
@@ -107,7 +110,7 @@ public abstract class InspectionManager {
                                                             @NotNull ProblemHighlightType highlightType);
 
   /**
-   * use {@link #createProblemDescriptor(PsiElement, String, boolean, LocalQuickFix[], ProblemHighlightType)} instead
+   * @deprecated use {@link #createProblemDescriptor(PsiElement, String, boolean, LocalQuickFix[], ProblemHighlightType)} instead
    */
   @Deprecated
   @NotNull
@@ -118,7 +121,7 @@ public abstract class InspectionManager {
                                                             @NotNull ProblemHighlightType highlightType);
 
   /**
-   * use {@link #createProblemDescriptor(PsiElement, String, LocalQuickFix[], ProblemHighlightType, boolean, boolean)} instead
+   * @deprecated use {@link #createProblemDescriptor(PsiElement, String, LocalQuickFix[], ProblemHighlightType, boolean, boolean)} instead
    */
   @Deprecated
   @NotNull
@@ -130,7 +133,7 @@ public abstract class InspectionManager {
                                                             boolean isAfterEndOfLine);
 
   /**
-   * use {@link #createProblemDescriptor(PsiElement, PsiElement, String, ProblemHighlightType, boolean, LocalQuickFix...)} instead
+   * @deprecated use {@link #createProblemDescriptor(PsiElement, PsiElement, String, ProblemHighlightType, boolean, LocalQuickFix...)} instead
    */
   @Deprecated
   @NotNull
@@ -143,7 +146,7 @@ public abstract class InspectionManager {
 
 
   /**
-   * use {@link #createProblemDescriptor(PsiElement, TextRange, String, ProblemHighlightType, boolean, LocalQuickFix...)} instead
+   * @deprecated use {@link #createProblemDescriptor(PsiElement, TextRange, String, ProblemHighlightType, boolean, LocalQuickFix...)} instead
    */
   @Deprecated
   @NotNull
@@ -155,7 +158,7 @@ public abstract class InspectionManager {
                                                             final LocalQuickFix... fixes);
 
   /**
-   * @deprecated use {@link #createNewGlobalContext()}
+   * @deprecated use {@link #createNewGlobalContext()} instead
    */
   @Deprecated
   @NotNull

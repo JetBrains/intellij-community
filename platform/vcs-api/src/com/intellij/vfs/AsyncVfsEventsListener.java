@@ -28,7 +28,7 @@ import java.util.List;
 /**
  * <p>Receives notifications about changes in the virtual file system, just as {@link BulkFileListener} and {@link VirtualFileListener},
  * but on a pooled thread, which allows to off-load the EDT, but requires more care in the listener code due to asynchrony and
- * the absence of read action.</p>
+ * the absence of read action. For a safer alternative, consider {@link com.intellij.openapi.vfs.AsyncFileListener}.</p>
  *
  * <p>Use the {@link AsyncVfsEventsPostProcessor#addListener(AsyncVfsEventsListener, Disposable)} to subscribe.</p>
  *

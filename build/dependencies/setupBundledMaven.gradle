@@ -1,14 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-buildscript {
-  repositories {
-    maven { url "https://cache-redirector.jetbrains.com/plugins.gradle.org" }
-  }
-  dependencies {
-    classpath "de.undercouch:gradle-download-task:3.2.0"
-  }
-}
 
 apply plugin: "de.undercouch.download"
+apply plugin: "org.jetbrains.gradle.plugin.idea-ext"
 
 configurations {
   mavenServer3CommonLibs
@@ -17,6 +10,8 @@ configurations {
   maven3Distribution
   maven3Distribution.transitive = false
 }
+
+
 
 dependencies {
   mavenServer3CommonLibs 'org.apache.maven.archetype:archetype-common:2.2'
@@ -35,6 +30,7 @@ def mavenDistName = "apache-maven-$bundledMavenVersion"
 task unpackMavenDistribution(type: Copy) {
   from zipTree(project.configurations.maven3Distribution.singleFile)
   into "$mavenServerLibDir/maven3"
+
   onlyIf { (!destinationDir.exists()) || destinationDir.list() == null || destinationDir.list().length == 0 }
 }
 
@@ -43,13 +39,26 @@ task setupCommonLibs(type: Copy) {
   into "$communityPluginsDir/maven/maven3-server-common/lib"
 }
 
+task deletePreviousMinorVersionIfRequired(type: Delete) {
+  delete mavenServerLibDir
+  onlyIf {
+    new File("$mavenServerLibDir/maven3/lib").exists() && !new File("$mavenServerLibDir/maven3/lib/maven-core-${bundledMavenVersion}.jar").
+      exists()
+  }
+}
 //there is no friendly way to unpack gradle zip without parent dir
-task setupBundledMaven(dependsOn: [unpackMavenDistribution, setupCommonLibs], type: Copy) {
+task setupBundledMaven(dependsOn: [deletePreviousMinorVersionIfRequired, unpackMavenDistribution, setupCommonLibs], type: Copy) {
   def unzippedDir = new File("$mavenServerLibDir/maven3/$mavenDistName")
   from fileTree(unzippedDir)
   into "$mavenServerLibDir/maven3/"
   onlyIf { unzippedDir.exists() && !new File("$mavenServerLibDir/maven3/bin").exists() }
   doLast() {
     unzippedDir.deleteDir()
+  }
+}
+
+idea.project.settings {
+  taskTriggers {
+    afterSync tasks.getByName("setupBundledMaven")
   }
 }

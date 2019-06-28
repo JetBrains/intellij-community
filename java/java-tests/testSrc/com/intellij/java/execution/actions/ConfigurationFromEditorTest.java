@@ -20,11 +20,11 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.testFramework.MapDataContext;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 import java.util.Set;
 
-public class ConfigurationFromEditorTest extends LightCodeInsightFixtureTestCase {
+public class ConfigurationFromEditorTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();

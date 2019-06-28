@@ -1,6 +1,6 @@
 /*
 Value is always false (s == null; line#11)
-  Result of 's != null' is known from line #10 (!"foo".equals(s) && !"bar".equals(s); line#10)
+  It's known that 's != null' from line #10 (!"foo".equals(s) && !"bar".equals(s); line#10)
  */
 
 import java.util.List;

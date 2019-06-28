@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
-import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.configurationStore.StateStorageManagerKt;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
@@ -46,7 +46,7 @@ import java.util.concurrent.TimeUnit;
  * @author Dmitry Avdeev
  */
 @SkipSlowTestLocally
-public class PsiModificationTrackerTest extends CodeInsightTestCase {
+public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();

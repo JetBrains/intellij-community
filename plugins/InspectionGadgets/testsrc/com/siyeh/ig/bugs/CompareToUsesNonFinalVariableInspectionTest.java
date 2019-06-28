@@ -16,9 +16,9 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
-public class CompareToUsesNonFinalVariableInspectionTest extends LightInspectionTestCase {
+public class CompareToUsesNonFinalVariableInspectionTest extends LightJavaInspectionTestCase {
 
   public void testForeignComparable() {
     doMemberTest("class A {" +

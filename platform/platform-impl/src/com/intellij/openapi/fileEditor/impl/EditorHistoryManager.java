@@ -28,7 +28,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@State(name = "editorHistoryManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+@State(name = "editorHistoryManager", storages = {
+  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
+  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
+})
 public final class EditorHistoryManager implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(EditorHistoryManager.class);
 
@@ -241,6 +244,9 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
     return result;
   }
 
+  /**
+   * @deprecated use {@link #getFileList()}
+   */
   @NotNull
   @Deprecated
   public synchronized LinkedHashSet<VirtualFile> getFileSet() {

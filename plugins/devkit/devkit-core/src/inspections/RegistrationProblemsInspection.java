@@ -12,7 +12,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
@@ -296,7 +296,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
               names.add(fqn + "#" + moduleType);
             }
           }
-          return ArrayUtil.toStringArray(names);
+          return ArrayUtilRt.toStringArray(names);
         }
       }
       return new String[]{ fqn };

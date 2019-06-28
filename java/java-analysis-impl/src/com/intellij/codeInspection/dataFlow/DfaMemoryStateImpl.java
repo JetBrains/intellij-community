@@ -1342,7 +1342,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Override
   public <T> void forceVariableFact(@NotNull DfaVariableValue var, @NotNull DfaFactType<T> factType, @Nullable T value) {
     DfaVariableState state = getVariableState(var);
-    removeEquivalenceForVariableAndWrappers(var);
+    if (factType.equals(DfaFactType.NULLABILITY) && value == DfaNullability.NOT_NULL && isNull(var)) {
+      removeEquivalenceForVariableAndWrappers(var);
+    }
     setVariableState(var, state.withFact(factType, value));
     updateEqClassesByState(var);
   }
@@ -1417,8 +1419,16 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private DfaVariableValue canonicalize(DfaVariableValue var) {
     DfaVariableValue qualifier = var.getQualifier();
     if (qualifier != null) {
-      EqClass eqClass = getEqClass(qualifier);
-      return var.withQualifier(eqClass == null ? canonicalize(qualifier) : Objects.requireNonNull(eqClass.getCanonicalVariable()));
+      Integer index = myIdToEqClassesIndices.get(qualifier.getID());
+      if (index == null) {
+        qualifier = canonicalize(qualifier);
+        index = myIdToEqClassesIndices.get(qualifier.getID());
+        if (index == null) {
+          return var.withQualifier(qualifier);
+        }
+      }
+
+      return var.withQualifier(Objects.requireNonNull(myEqClasses.get(index).getCanonicalVariable()));
     }
     return var;
   }

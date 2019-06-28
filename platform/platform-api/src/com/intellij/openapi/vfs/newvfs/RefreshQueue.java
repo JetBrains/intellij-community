@@ -34,18 +34,18 @@ public abstract class RefreshQueue {
 
   @NotNull
   public final RefreshSession createSession(boolean async, boolean recursive, @Nullable Runnable finishRunnable) {
-    return createSession(async, recursive, finishRunnable, getDefaultModalityState());
+    return createSession(async, recursive, finishRunnable, ModalityState.defaultModalityState());
   }
 
   @NotNull
   public abstract RefreshSession createSession(boolean async, boolean recursive, @Nullable Runnable finishRunnable, @NotNull ModalityState state);
 
   public final void refresh(boolean async, boolean recursive, @Nullable Runnable finishRunnable, @NotNull VirtualFile... files) {
-    refresh(async, recursive, finishRunnable, getDefaultModalityState(), files);
+    refresh(async, recursive, finishRunnable, ModalityState.defaultModalityState(), files);
   }
 
   public final void refresh(boolean async, boolean recursive, @Nullable Runnable finishRunnable, @NotNull Collection<? extends VirtualFile> files) {
-    refresh(async, recursive, finishRunnable, getDefaultModalityState(), files);
+    refresh(async, recursive, finishRunnable, ModalityState.defaultModalityState(), files);
   }
 
   public final void refresh(boolean async,
@@ -71,9 +71,4 @@ public abstract class RefreshQueue {
   public abstract void processSingleEvent(@NotNull VFileEvent event);
 
   public abstract void cancelSession(long id);
-
-  @NotNull
-  protected ModalityState getDefaultModalityState() {
-    return ModalityState.NON_MODAL;
-  }
 }

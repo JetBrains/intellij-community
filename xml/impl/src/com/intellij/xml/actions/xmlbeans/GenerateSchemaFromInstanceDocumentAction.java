@@ -14,7 +14,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.xml.XmlBundle;
 import org.apache.xmlbeans.impl.inst2xsd.Inst2Xsd;
 import org.jetbrains.annotations.NonNls;
@@ -42,7 +42,7 @@ public class GenerateSchemaFromInstanceDocumentAction extends AnAction {
   }
 
   //private static final
-  
+
   @Override
   public void update(@NotNull AnActionEvent e) {
     final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
@@ -119,7 +119,7 @@ public class GenerateSchemaFromInstanceDocumentAction extends AnAction {
         });
     }
 
-    Inst2Xsd.main(ArrayUtil.toStringArray(parameters));
+    Inst2Xsd.main(ArrayUtilRt.toStringArray(parameters));
     if (expectedSchemaFile.exists()) {
       final boolean renamed = expectedSchemaFile.renameTo(xsd);
       if (! renamed) {

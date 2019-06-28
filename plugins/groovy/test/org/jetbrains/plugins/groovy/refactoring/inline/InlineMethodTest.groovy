@@ -27,7 +27,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.inline.GenericInlineHandler
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import junit.framework.Assert
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
@@ -40,7 +40,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author ilyas
  */
-class InlineMethodTest extends LightCodeInsightFixtureTestCase {
+class InlineMethodTest extends LightJavaCodeInsightFixtureTestCase {
 
   final String basePath = TestUtils.testDataPath + "groovy/refactoring/inlineMethod/"
 

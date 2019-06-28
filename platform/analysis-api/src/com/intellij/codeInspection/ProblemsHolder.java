@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,7 +153,7 @@ public class ProblemsHolder {
 
   public void registerProblem(@NotNull PsiElement psiElement,
                               @Nullable TextRange rangeInElement,
-                              @NotNull String message,
+                              @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message,
                               @Nullable LocalQuickFix... fixes) {
     registerProblem(psiElement, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, rangeInElement, fixes);
   }
@@ -168,7 +168,7 @@ public class ProblemsHolder {
    * @param fixes (Optional) fixes to appear for this highlighter.
    */
   public void registerProblem(@NotNull PsiElement psiElement,
-                              @NotNull String message,
+                              @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message,
                               @NotNull ProblemHighlightType highlightType,
                               @Nullable TextRange rangeInElement,
                               @Nullable LocalQuickFix... fixes) {

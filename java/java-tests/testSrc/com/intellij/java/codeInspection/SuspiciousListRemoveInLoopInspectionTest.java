@@ -4,9 +4,9 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.SuspiciousListRemoveInLoopInspection;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
-public class SuspiciousListRemoveInLoopInspectionTest extends LightInspectionTestCase {
+public class SuspiciousListRemoveInLoopInspectionTest extends LightJavaInspectionTestCase {
   public void testListRemoveInLoop() {
     doTest();
   }

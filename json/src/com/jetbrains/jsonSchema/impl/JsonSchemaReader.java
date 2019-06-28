@@ -171,6 +171,9 @@ public class JsonSchemaReader {
     READERS_MAP.put("deprecationMessage", createFromStringValue((object, s) -> object.setDeprecationMessage(s)));
     READERS_MAP.put(JsonSchemaObject.X_INTELLIJ_HTML_DESCRIPTION, createFromStringValue((object, s) -> object.setHtmlDescription(s)));
     READERS_MAP.put(JsonSchemaObject.X_INTELLIJ_LANGUAGE_INJECTION, createFromStringValue((object, s) -> object.setLanguageInjection(s)));
+    READERS_MAP.put(JsonSchemaObject.X_INTELLIJ_CASE_INSENSITIVE, (element, object, queue, virtualFile) -> {
+      if (element.isBooleanLiteral()) object.setForceCaseInsensitive(getBoolean(element));
+    });
     READERS_MAP.put("title", createFromStringValue((object, s) -> object.setTitle(s)));
     READERS_MAP.put("$ref", createFromStringValue((object, s) -> object.setRef(s)));
     READERS_MAP.put("default", createDefault());

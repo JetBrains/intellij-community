@@ -2,6 +2,7 @@ package com.intellij.vcs.log.ui.table;
 
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
@@ -9,7 +10,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.CommitIdByStringCondition;
-import com.intellij.vcs.log.data.DataGetter;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil;
@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -124,7 +125,7 @@ public class GraphTableModel extends AbstractTableModel {
     VcsShortCommitDetails data = getCommitMetadata(rowIndex);
     switch (columnIndex) {
       case ROOT_COLUMN:
-        return getRoot(rowIndex);
+        return myDataPack.getFilePath(rowIndex);
       case COMMIT_COLUMN:
         return new GraphCommitCell(data.getSubject(), getRefsAtRow(rowIndex),
                                    myDataPack.getVisibleGraph().getRowInfo(rowIndex).getPrintElements());
@@ -155,7 +156,7 @@ public class GraphTableModel extends AbstractTableModel {
   public Class<?> getColumnClass(int column) {
     switch (column) {
       case ROOT_COLUMN:
-        return VirtualFile.class;
+        return FilePath.class;
       case COMMIT_COLUMN:
         return GraphCommitCell.class;
       case AUTHOR_COLUMN:
@@ -185,18 +186,14 @@ public class GraphTableModel extends AbstractTableModel {
 
   @NotNull
   public VcsFullCommitDetails getFullDetails(int row) {
-    return getDetails(row, myLogData.getCommitDetailsGetter());
+    Integer id = getIdAtRow(row);
+    return myLogData.getCommitDetailsGetter().getCommitData(id, Collections.singleton(id));
   }
 
   @NotNull
   public VcsCommitMetadata getCommitMetadata(int row) {
-    return getDetails(row, myLogData.getMiniDetailsGetter());
-  }
-
-  @NotNull
-  private <T extends VcsShortCommitDetails> T getDetails(int row, @NotNull DataGetter<T> dataGetter) {
     Iterable<Integer> iterable = createRowsIterable(row, UP_PRELOAD_COUNT, DOWN_PRELOAD_COUNT, getRowCount());
-    return dataGetter.getCommitData(getIdAtRow(row), iterable);
+    return myLogData.getMiniDetailsGetter().getCommitData(getIdAtRow(row), iterable);
   }
 
   @NotNull

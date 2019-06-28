@@ -24,14 +24,14 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.RootPolicy;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.ModuleTestCase;
+import com.intellij.testFramework.JavaModuleTestCase;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
  */
-public class InheritedJdkTest extends ModuleTestCase {
+public class InheritedJdkTest extends JavaModuleTestCase {
   @Override
   protected void setUpJdk() {
   }

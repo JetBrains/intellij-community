@@ -49,7 +49,7 @@ public class TestDnd extends AnAction {
         JBList list = new JBList(new String[]{"1111111", "222222", "333333", "44444", "555555555555555555555555"});
         DnDSupport.createBuilder(list)
           .setBeanProvider(info -> new DnDDragStartBean("something"))
-          .setImageProvider(info -> new DnDImage(IconUtil.toImage(AllIcons.Icon)))
+          .setImageProvider(info -> new DnDImage(IconUtil.toImage(AllIcons.FileTypes.Text)))
           .install();
 
         return list;

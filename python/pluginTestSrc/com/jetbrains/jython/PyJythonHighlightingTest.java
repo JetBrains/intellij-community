@@ -15,7 +15,7 @@
  */
 package com.jetbrains.jython;
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.inspections.PyCallingNonCallableInspection;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
@@ -23,7 +23,7 @@ import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferenc
 /**
  * @author yole
  */
-public class PyJythonHighlightingTest extends LightCodeInsightFixtureTestCase {
+public class PyJythonHighlightingTest extends LightJavaCodeInsightFixtureTestCase {
   public void testCallableJavaClass() {
     doCallableTest();
   }

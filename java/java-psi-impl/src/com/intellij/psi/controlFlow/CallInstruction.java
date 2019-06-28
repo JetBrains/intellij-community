@@ -19,25 +19,17 @@ import org.jetbrains.annotations.NotNull;
 
 
 public class CallInstruction extends GoToInstruction {
-  public final ControlFlowStack stack;
   int procBegin;
   int procEnd;
 
-  public CallInstruction(int procBegin, int procEnd, @NotNull ControlFlowStack stack) {
+  public CallInstruction(int procBegin, int procEnd) {
     super(procBegin);
-    this.stack = stack;
     this.procBegin = procBegin;
     this.procEnd = procEnd;
   }
 
   public String toString() {
     return "CALL " + offset ;
-  }
-
-  public void execute(int returnOffset) {
-    synchronized (stack) {
-      stack.push(returnOffset, this);
-    }
   }
 
   @Override

@@ -28,6 +28,7 @@ import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.project.Project;
@@ -720,7 +721,7 @@ public class PlatformTestUtil {
     if (doc != null) {
       return doc.getText();
     }
-    if (!file.getFileType().isBinary() || file.getFileType() == FileTypes.UNKNOWN) {
+    if (!file.getFileType().isBinary() || FileTypeRegistry.getInstance().isFileOfType(file, FileTypes.UNKNOWN)) {
       return LoadTextUtil.getTextByBinaryPresentation(file.contentsToByteArray(false), file).toString();
     }
     return null;
@@ -908,14 +909,14 @@ public class PlatformTestUtil {
 
   public static void captureMemorySnapshot() {
     try {
-      Method snapshot = ReflectionUtil.getMethod(Class.forName("com.jetbrains.performancePlugin.utils.ProfilingUtil"), "captureMemorySnapshot");
+      Method snapshot = ReflectionUtil.getMethod(Class.forName("com.jetbrains.performancePlugin.profilers.YourKitProfilerHandler"), "captureMemorySnapshot");
       if (snapshot != null) {
         Object path = snapshot.invoke(null);
         System.out.println("Memory snapshot captured to '" + path + "'");
       }
     }
     catch (ClassNotFoundException e) {
-      // ProfilingUtil is missing from the classpath, ignore
+      // YourKitProfilerHandler is missing from the classpath, ignore
     }
     catch (Exception e) {
       e.printStackTrace(System.err);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,20 +18,20 @@ package com.intellij.ide.actions;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.ui.popup.JBPopup;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.List;
 
 /**
- * @deprecated API compatibility. Utility methods moved to NavigationUtil.
- * todo [neuro] REMOVE-ME when September Ends..
  * @author gregsh
+ * @deprecated API compatibility. Utility methods moved to NavigationUtil.
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2015")
 public class GotoRelatedFileAction {
 
   /**
-   * @deprecated
-   * @see com.intellij.codeInsight.navigation.NavigationUtil#getRelatedItemsPopup(java.util.List, String)
+   * @deprecated use {@link NavigationUtil#getRelatedItemsPopup(List, String)}
    */
   @Deprecated
   public static JBPopup createPopup(List<? extends GotoRelatedItem> items, final String title) {

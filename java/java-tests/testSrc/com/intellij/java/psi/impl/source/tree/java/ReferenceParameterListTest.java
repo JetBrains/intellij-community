@@ -19,13 +19,13 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.util.IncorrectOperationException;
 
 /**
  *  @author dsl
  */
-public class ReferenceParameterListTest extends PsiTestCase {
+public class ReferenceParameterListTest extends JavaPsiTestCase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.ReferenceParameterListTest");
   public void testParameterListInExtends() {
     final PsiManager manager = PsiManager.getInstance(myProject);

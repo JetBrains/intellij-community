@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.psi.JavaDocTokenType;
@@ -19,7 +19,7 @@ public interface ElementType extends JavaTokenType, JavaDocTokenType, JavaElemen
     SWITCH_KEYWORD, SYNCHRONIZED_KEYWORD, THIS_KEYWORD, THROW_KEYWORD, THROWS_KEYWORD, TRANSIENT_KEYWORD, TRY_KEYWORD, VOID_KEYWORD,
     VOLATILE_KEYWORD, WHILE_KEYWORD,
     OPEN_KEYWORD, MODULE_KEYWORD, REQUIRES_KEYWORD, EXPORTS_KEYWORD, OPENS_KEYWORD, USES_KEYWORD, PROVIDES_KEYWORD,
-    TRANSITIVE_KEYWORD, TO_KEYWORD, WITH_KEYWORD, VAR_KEYWORD);
+    TRANSITIVE_KEYWORD, TO_KEYWORD, WITH_KEYWORD, VAR_KEYWORD, YIELD_KEYWORD);
 
   TokenSet LITERAL_BIT_SET = TokenSet.create(TRUE_KEYWORD, FALSE_KEYWORD, NULL_KEYWORD);
 
@@ -61,4 +61,9 @@ public interface ElementType extends JavaTokenType, JavaDocTokenType, JavaElemen
   TokenSet CLASS_KEYWORD_BIT_SET = TokenSet.create(CLASS_KEYWORD, INTERFACE_KEYWORD, ENUM_KEYWORD);
   TokenSet MEMBER_BIT_SET = TokenSet.create(CLASS, FIELD, ENUM_CONSTANT, METHOD, ANNOTATION_METHOD);
   TokenSet FULL_MEMBER_BIT_SET = TokenSet.orSet(MEMBER_BIT_SET, TokenSet.create(CLASS_INITIALIZER));
+
+  TokenSet INTEGER_LITERALS = TokenSet.create(INTEGER_LITERAL, LONG_LITERAL);
+  TokenSet REAL_LITERALS = TokenSet.create(FLOAT_LITERAL, DOUBLE_LITERAL);
+  TokenSet STRING_LITERALS = TokenSet.create(STRING_LITERAL, TEXT_BLOCK_LITERAL, RAW_STRING_LITERAL);
+  TokenSet TEXT_LITERALS = TokenSet.create(STRING_LITERAL, TEXT_BLOCK_LITERAL, RAW_STRING_LITERAL, CHARACTER_LITERAL);
 }

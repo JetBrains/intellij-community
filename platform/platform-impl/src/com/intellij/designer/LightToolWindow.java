@@ -6,6 +6,7 @@ import com.intellij.ide.actions.ToolWindowViewModeAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -378,7 +379,7 @@ public class LightToolWindow extends JPanel {
   private class MyViewModeAction extends ToolWindowViewModeAction {
     private MyViewModeAction(@NotNull ViewMode mode) {
       super(mode);
-      copyFrom(ActionManager.getInstance().getAction(mode.getActionID()));
+      ActionUtil.copyFrom(this, mode.getActionID());
     }
 
     @Nullable

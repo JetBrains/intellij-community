@@ -18,6 +18,9 @@ package com.intellij.xml.breadcrumbs;
 
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 
+/**
+ * @deprecated use {@link BreadcrumbsProvider}
+ */
 @Deprecated
 public abstract class BreadcrumbsInfoProvider implements BreadcrumbsProvider {
 }

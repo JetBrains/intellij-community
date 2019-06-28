@@ -259,7 +259,7 @@ public class TextDiffViewerUtil {
     @Override
     protected void setValue(@NotNull HighlightPolicy option) {
       if (getValue() == option) return;
-      DiffUsageTriggerCollector.trigger("toggle.highlight.policy", option);
+      DiffUsageTriggerCollector.trigger("toggle.highlight.policy", option, mySettings.getPlace());
       mySettings.setHighlightPolicy(option);
     }
 
@@ -300,7 +300,7 @@ public class TextDiffViewerUtil {
     @Override
     protected void setValue(@NotNull IgnorePolicy option) {
       if (getValue() == option) return;
-      DiffUsageTriggerCollector.trigger("toggle.ignore.policy", option);
+      DiffUsageTriggerCollector.trigger("toggle.ignore.policy", option, mySettings.getPlace());
       mySettings.setIgnorePolicy(option);
     }
 

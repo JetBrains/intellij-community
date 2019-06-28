@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.util.Comparing;
@@ -15,24 +15,17 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * Author: msk
- */
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-public class ArrayUtil extends ArrayUtilRt {
-  public static final short[] EMPTY_SHORT_ARRAY = ArrayUtilRt.EMPTY_SHORT_ARRAY;
+public final class ArrayUtil extends ArrayUtilRt {
   public static final char[] EMPTY_CHAR_ARRAY = ArrayUtilRt.EMPTY_CHAR_ARRAY;
   public static final byte[] EMPTY_BYTE_ARRAY = ArrayUtilRt.EMPTY_BYTE_ARRAY;
   public static final int[] EMPTY_INT_ARRAY = ArrayUtilRt.EMPTY_INT_ARRAY;
-  public static final boolean[] EMPTY_BOOLEAN_ARRAY = ArrayUtilRt.EMPTY_BOOLEAN_ARRAY;
   public static final Object[] EMPTY_OBJECT_ARRAY = ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   public static final String[] EMPTY_STRING_ARRAY = ArrayUtilRt.EMPTY_STRING_ARRAY;
   public static final Class[] EMPTY_CLASS_ARRAY = ArrayUtilRt.EMPTY_CLASS_ARRAY;
   public static final long[] EMPTY_LONG_ARRAY = ArrayUtilRt.EMPTY_LONG_ARRAY;
-  public static final Collection[] EMPTY_COLLECTION_ARRAY = ArrayUtilRt.EMPTY_COLLECTION_ARRAY;
   public static final File[] EMPTY_FILE_ARRAY = ArrayUtilRt.EMPTY_FILE_ARRAY;
-  public static final Runnable[] EMPTY_RUNNABLE_ARRAY = ArrayUtilRt.EMPTY_RUNNABLE_ARRAY;
-  public static final CharSequence EMPTY_CHAR_SEQUENCE = new CharArrayCharSequence(EMPTY_CHAR_ARRAY);
+  public static final CharSequence EMPTY_CHAR_SEQUENCE = new CharArrayCharSequence(ArrayUtilRt.EMPTY_CHAR_ARRAY);
 
   public static final ArrayFactory<String> STRING_ARRAY_FACTORY = ArrayUtil::newStringArray;
   public static final ArrayFactory<Object> OBJECT_ARRAY_FACTORY = ArrayUtil::newObjectArray;
@@ -43,7 +36,7 @@ public class ArrayUtil extends ArrayUtilRt {
   @Contract(pure=true)
   public static byte[] realloc(@NotNull byte[] array, final int newSize) {
     if (newSize == 0) {
-      return EMPTY_BYTE_ARRAY;
+      return ArrayUtilRt.EMPTY_BYTE_ARRAY;
     }
 
     final int oldSize = array.length;
@@ -54,7 +47,7 @@ public class ArrayUtil extends ArrayUtilRt {
   @Contract(pure=true)
   public static boolean[] realloc(@NotNull boolean[] array, final int newSize) {
     if (newSize == 0) {
-      return EMPTY_BOOLEAN_ARRAY;
+      return ArrayUtilRt.EMPTY_BOOLEAN_ARRAY;
     }
 
     final int oldSize = array.length;
@@ -65,7 +58,7 @@ public class ArrayUtil extends ArrayUtilRt {
   @Contract(pure=true)
   public static short[] realloc(@NotNull short[] array, final int newSize) {
     if (newSize == 0) {
-      return EMPTY_SHORT_ARRAY;
+      return ArrayUtilRt.EMPTY_SHORT_ARRAY;
     }
 
     final int oldSize = array.length;
@@ -87,7 +80,7 @@ public class ArrayUtil extends ArrayUtilRt {
   @Contract(pure=true)
   public static int[] realloc(@NotNull int[] array, final int newSize) {
     if (newSize == 0) {
-      return EMPTY_INT_ARRAY;
+      return ArrayUtilRt.EMPTY_INT_ARRAY;
     }
 
     final int oldSize = array.length;
@@ -165,7 +158,7 @@ public class ArrayUtil extends ArrayUtilRt {
   @Contract(pure=true)
   public static char[] realloc(@NotNull char[] array, final int newSize) {
     if (newSize == 0) {
-      return EMPTY_CHAR_ARRAY;
+      return ArrayUtilRt.EMPTY_CHAR_ARRAY;
     }
 
     final int oldSize = array.length;
@@ -191,8 +184,7 @@ public class ArrayUtil extends ArrayUtilRt {
   @NotNull
   @Contract(pure=true)
   public static Object[] toObjectArray(@NotNull Collection<?> collection) {
-    //noinspection SSBasedInspection
-    return collection.toArray(EMPTY_OBJECT_ARRAY);
+    return collection.toArray(ArrayUtilRt.EMPTY_OBJECT_ARRAY);
   }
 
   @NotNull
@@ -479,7 +471,7 @@ public class ArrayUtil extends ArrayUtilRt {
     if (idx < 0 || idx >= length) {
       throw new IllegalArgumentException("invalid index: " + idx);
     }
-    short[] result = src.length == 1 ? EMPTY_SHORT_ARRAY : new short[src.length - 1];
+    short[] result = src.length == 1 ? ArrayUtilRt.EMPTY_SHORT_ARRAY : new short[src.length - 1];
     System.arraycopy(src, 0, result, 0, idx);
     System.arraycopy(src, idx + 1, result, idx, length - idx - 1);
     return result;
@@ -676,12 +668,7 @@ public class ArrayUtil extends ArrayUtilRt {
 
   @Contract(pure=true)
   public static int indexOf(@NotNull Object[] objects, @Nullable Object object) {
-    return indexOf(objects, object, 0, objects.length);
-  }
-
-  @Contract(pure=true)
-  public static int indexOf(@NotNull Object[] objects, Object object, int start, int end) {
-    return ArrayUtilRt.indexOf(objects, object, start, end);
+    return ArrayUtilRt.indexOf(objects, object, 0, objects.length);
   }
 
   @Contract(pure=true)
@@ -800,7 +787,7 @@ public class ArrayUtil extends ArrayUtilRt {
   @NotNull
   @Contract(pure=true)
   public static int[] newIntArray(int count) {
-    return count == 0 ? EMPTY_INT_ARRAY : new int[count];
+    return count == 0 ? ArrayUtilRt.EMPTY_INT_ARRAY : new int[count];
   }
 
   @NotNull
@@ -812,13 +799,13 @@ public class ArrayUtil extends ArrayUtilRt {
   @NotNull
   @Contract(pure=true)
   public static String[] newStringArray(int count) {
-    return count == 0 ? EMPTY_STRING_ARRAY : new String[count];
+    return count == 0 ? ArrayUtilRt.EMPTY_STRING_ARRAY : new String[count];
   }
 
   @NotNull
   @Contract(pure=true)
   public static Object[] newObjectArray(int count) {
-    return count == 0 ? EMPTY_OBJECT_ARRAY : new Object[count];
+    return count == 0 ? ArrayUtilRt.EMPTY_OBJECT_ARRAY : new Object[count];
   }
 
   @NotNull
@@ -869,14 +856,14 @@ public class ArrayUtil extends ArrayUtilRt {
   @Contract(value = "null -> null; !null -> !null", pure = true)
   public static boolean[] copyOf(@Nullable boolean[] original) {
     if (original == null) return null;
-    return original.length == 0 ? EMPTY_BOOLEAN_ARRAY : Arrays.copyOf(original, original.length);
+    return original.length == 0 ? ArrayUtilRt.EMPTY_BOOLEAN_ARRAY : Arrays.copyOf(original, original.length);
   }
 
   @Nullable
   @Contract(value = "null -> null; !null -> !null", pure = true)
   public static int[] copyOf(@Nullable int[] original) {
     if (original == null) return null;
-    return original.length == 0 ? EMPTY_INT_ARRAY : Arrays.copyOf(original, original.length);
+    return original.length == 0 ? ArrayUtilRt.EMPTY_INT_ARRAY : Arrays.copyOf(original, original.length);
   }
 
   @NotNull
@@ -944,7 +931,7 @@ public class ArrayUtil extends ArrayUtilRt {
   @Contract(pure = true)
   public static int[] mergeSortedArrays(int[] a1, int[] a2, boolean mergeEqualItems) {
     int newSize = a1.length + a2.length;
-    if (newSize == 0) return EMPTY_INT_ARRAY;
+    if (newSize == 0) return ArrayUtilRt.EMPTY_INT_ARRAY;
     int[] r = new int[newSize];
     int o = 0;
     int index1 = 0;

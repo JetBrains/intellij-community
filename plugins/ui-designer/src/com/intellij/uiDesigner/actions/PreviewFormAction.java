@@ -28,6 +28,7 @@ import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -108,7 +109,7 @@ public final class PreviewFormAction extends AnAction{
     final VirtualFile file = editor.getFile();
     e.getPresentation().setVisible(
       FileDocumentManager.getInstance().getDocument(file) != null &&
-      file.getFileType() == StdFileTypes.GUI_DESIGNER_FORM
+      FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.GUI_DESIGNER_FORM)
     );
   }
 

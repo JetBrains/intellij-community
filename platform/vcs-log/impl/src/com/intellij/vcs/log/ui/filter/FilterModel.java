@@ -2,7 +2,6 @@
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.VcsLogFilterCollection;
@@ -65,7 +64,8 @@ abstract class FilterModel<Filter> {
   }
 
   protected static void triggerFilterSet(@NotNull String name) {
-    VcsLogUsageTriggerCollector.triggerUsage(StringUtil.capitalize(name) + "FilterSet", false);
+    VcsLogUsageTriggerCollector.triggerUsage(VcsLogUsageTriggerCollector.VcsLogEvent.FILTER_SET, false,
+                                             data -> data.addData("filter_name", name));
   }
 
   protected static <FilterObject, F> void triggerFilterSet(@Nullable FilterObject filter,

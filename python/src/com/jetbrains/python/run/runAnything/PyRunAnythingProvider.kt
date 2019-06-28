@@ -68,5 +68,7 @@ class PyRunAnythingProvider : RunAnythingMatchedRunConfigurationProvider() {
 
   override fun getHelpCommand() = "python"
 
+  override fun getHelpGroupTitle(): String? = "Python"
+
   override fun getHelpCommandPlaceholder() = "python <file name>"
 }

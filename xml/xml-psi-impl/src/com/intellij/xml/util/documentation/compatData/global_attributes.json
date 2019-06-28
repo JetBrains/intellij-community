@@ -112,6 +112,147 @@
           }
         }
       },
+      "autocomplete": {
+        "__compat": {
+          "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Global_attributes/autocomplete",
+          "support": {
+            "chrome": [
+              {
+                "version_added": "66",
+                "notes": "Support added for <code>autocomplete</code> on the <code>&lt;textarea&gt;</code> and <code>&lt;select&gt;</code> elements."
+              },
+              {
+                "version_added": true,
+                "notes": "Originally only supported on the <code>&lt;input&gt;</code> element."
+              }
+            ],
+            "chrome_android": [
+              {
+                "version_added": "66",
+                "notes": "Support added for <code>autocomplete</code> on the <code>&lt;textarea&gt;</code> and <code>&lt;select&gt;</code> elements."
+              },
+              {
+                "version_added": true,
+                "notes": "Originally only supported on the <code>&lt;input&gt;</code> element."
+              }
+            ],
+            "edge": {
+              "version_added": null
+            },
+            "edge_mobile": {
+              "version_added": null
+            },
+            "firefox": {
+              "version_added": true
+            },
+            "firefox_android": {
+              "version_added": true
+            },
+            "ie": {
+              "version_added": false
+            },
+            "opera": {
+              "version_added": true
+            },
+            "opera_android": {
+              "version_added": true
+            },
+            "qq_android": {
+              "version_added": null
+            },
+            "safari": {
+              "version_added": null
+            },
+            "safari_ios": {
+              "version_added": null
+            },
+            "samsunginternet_android": {
+              "version_added": true
+            },
+            "uc_android": {
+              "version_added": null
+            },
+            "uc_chinese_android": {
+              "version_added": null
+            },
+            "webview_android": [
+              {
+                "version_added": "66",
+                "notes": "Support added for <code>autocomplete</code> on the <code>&lt;textarea&gt;</code> and <code>&lt;select&gt;</code> elements."
+              },
+              {
+                "version_added": true,
+                "notes": "Originally only supported on the <code>&lt;input&gt;</code> element."
+              }
+            ]
+          },
+          "status": {
+            "experimental": false,
+            "standard_track": true,
+            "deprecated": false
+          }
+        },
+        "new-password": {
+          "__compat": {
+            "description": "The <code>new-password</code> value.",
+            "support": {
+              "chrome": {
+                "version_added": true
+              },
+              "chrome_android": {
+                "version_added": true
+              },
+              "edge": {
+                "version_added": null
+              },
+              "edge_mobile": {
+                "version_added": null
+              },
+              "firefox": {
+                "version_added": "67"
+              },
+              "firefox_android": {
+                "version_added": "67"
+              },
+              "ie": {
+                "version_added": false
+              },
+              "opera": {
+                "version_added": true
+              },
+              "opera_android": {
+                "version_added": true
+              },
+              "qq_android": {
+                "version_added": null
+              },
+              "safari": {
+                "version_added": null
+              },
+              "safari_ios": {
+                "version_added": null
+              },
+              "samsunginternet_android": {
+                "version_added": true
+              },
+              "uc_android": {
+                "version_added": null
+              },
+              "uc_chinese_android": {
+                "version_added": null
+              },
+              "webview_android": {
+                "version_added": true
+              }
+            },
+            "status": {
+              "experimental": false,
+              "standard_track": true,
+              "deprecated": false
+            }
+          }
+        }
+      },
       "class": {
         "__compat": {
           "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Global_attributes/class",
@@ -210,54 +351,6 @@
             "deprecated": false
           }
         },
-        "events": {
-          "__compat": {
-            "description": "<code>contenteditable=\"events\"</code>",
-            "support": {
-              "chrome": {
-                "version_added": true
-              },
-              "chrome_android": {
-                "version_added": true
-              },
-              "edge": {
-                "version_added": null
-              },
-              "edge_mobile": {
-                "version_added": null
-              },
-              "firefox": {
-                "version_added": false
-              },
-              "firefox_android": {
-                "version_added": false
-              },
-              "ie": {
-                "version_added": false
-              },
-              "opera": {
-                "version_added": null
-              },
-              "opera_android": {
-                "version_added": null
-              },
-              "safari": {
-                "version_added": null
-              },
-              "safari_ios": {
-                "version_added": null
-              },
-              "webview_android": {
-                "version_added": true
-              }
-            },
-            "status": {
-              "experimental": true,
-              "standard_track": true,
-              "deprecated": false
-            }
-          }
-        },
         "caret": {
           "__compat": {
             "description": "<code>contenteditable=\"caret\"</code>",
@@ -284,7 +377,7 @@
                 "version_added": false
               },
               "opera": {
-                "version_added": null
+                "version_added": true
               },
               "opera_android": {
                 "version_added": null
@@ -306,9 +399,9 @@
             }
           }
         },
-        "typing": {
+        "events": {
           "__compat": {
-            "description": "<code>contenteditable=\"typing\"</code>",
+            "description": "<code>contenteditable=\"events\"</code>",
             "support": {
               "chrome": {
                 "version_added": true
@@ -332,7 +425,7 @@
                 "version_added": false
               },
               "opera": {
-                "version_added": null
+                "version_added": true
               },
               "opera_android": {
                 "version_added": null
@@ -380,7 +473,55 @@
                 "version_added": false
               },
               "opera": {
+                "version_added": true
+              },
+              "opera_android": {
                 "version_added": null
+              },
+              "safari": {
+                "version_added": null
+              },
+              "safari_ios": {
+                "version_added": null
+              },
+              "webview_android": {
+                "version_added": true
+              }
+            },
+            "status": {
+              "experimental": true,
+              "standard_track": true,
+              "deprecated": false
+            }
+          }
+        },
+        "typing": {
+          "__compat": {
+            "description": "<code>contenteditable=\"typing\"</code>",
+            "support": {
+              "chrome": {
+                "version_added": true
+              },
+              "chrome_android": {
+                "version_added": true
+              },
+              "edge": {
+                "version_added": null
+              },
+              "edge_mobile": {
+                "version_added": null
+              },
+              "firefox": {
+                "version_added": false
+              },
+              "firefox_android": {
+                "version_added": false
+              },
+              "ie": {
+                "version_added": false
+              },
+              "opera": {
+                "version_added": true
               },
               "opera_android": {
                 "version_added": null
@@ -1620,7 +1761,7 @@
                 "version_added": true
               },
               "chrome_android": {
-                "version_added": null
+                "version_added": true
               },
               "edge": {
                 "version_added": true
@@ -1638,7 +1779,7 @@
                 "version_added": true
               },
               "opera": {
-                "version_added": null
+                "version_added": true
               },
               "opera_android": {
                 "version_added": null
@@ -1650,10 +1791,10 @@
                 "version_added": null
               },
               "samsunginternet_android": {
-                "version_added": null
+                "version_added": true
               },
               "webview_android": {
-                "version_added": null
+                "version_added": true
               }
             },
             "status": {
@@ -1702,10 +1843,10 @@
               "version_added": true
             },
             "samsunginternet_android": {
-              "version_added": null
+              "version_added": true
             },
             "webview_android": {
-              "version_added": null
+              "version_added": true
             }
           },
           "status": {

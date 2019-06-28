@@ -16,13 +16,13 @@
 package com.siyeh.ig.j2me;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class MethodCallInLoopConditionInspectionTest extends LightInspectionTestCase {
+public class MethodCallInLoopConditionInspectionTest extends LightJavaInspectionTestCase {
 
   public void testMethodCallInLoopCondition() {
     doTest();

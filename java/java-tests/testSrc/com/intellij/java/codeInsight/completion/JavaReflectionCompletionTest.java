@@ -159,6 +159,12 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
     doTest(1, "PackageLocalClass", "PublicClass");
   }
 
+  public void testClassForNameInvalidPackage() {
+    myFixture.addClass("package foo.bar; public class PublicClass {}");
+    myFixture.addClass("package foo.bar; class PackageLocalClass {}");
+    doTest(-1);
+  }
+
   public void testClassForNamePackages() {
     myFixture.addClass("package foo.bar.one; public class FirstClass {}");
     myFixture.addClass("package foo.bar.two; public class SecondClass {}");

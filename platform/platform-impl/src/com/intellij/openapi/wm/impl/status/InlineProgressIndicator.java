@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.icons.AllIcons;
@@ -29,10 +15,7 @@ import com.intellij.ui.InplaceButton;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.GridBag;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -188,13 +171,15 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     if (isStopping()) {
       if (myCompact) {
         myText.setText("Stopping - " + myText.getText());
-      } else {
-        myProcessName.setText("Stopping - " + myInfo.getTitle());
       }
-      myText.setEnabled(false);
-      myText2.setEnabled(false);
+      else {
+        myProcessName.setText("Stopping - " + myInfo.getTitle());
+        myText.setEnabled(false);
+        myText2.setEnabled(false);
+      }
       myProgress.setEnabled(false);
-    } else {
+    }
+    else {
       myText.setEnabled(true);
       myText2.setEnabled(true);
       myProgress.setEnabled(true);

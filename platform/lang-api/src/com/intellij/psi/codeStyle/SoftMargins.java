@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 class SoftMargins implements Cloneable {
 
@@ -39,7 +40,6 @@ class SoftMargins implements Cloneable {
     if (valueList != null) {
       String[] values = valueList.split(",\\s*");
       myValues = new ArrayList<>(values.length);
-      int i = 0;
       for (String value : values) {
         try {
           myValues.add(Integer.parseInt(value));
@@ -87,14 +87,10 @@ class SoftMargins implements Cloneable {
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder();
-    if (myValues != null) {
-      for (int margin: myValues) {
-        if (sb.length() > 0) sb.append(",");
-        sb.append(margin);
-      }
+    if (myValues == null) {
+      return "";
     }
-    return sb.toString();
+    return myValues.stream().map(String::valueOf).collect(Collectors.joining(","));
   }
 
   public void serializeInto(@NotNull Element element) {

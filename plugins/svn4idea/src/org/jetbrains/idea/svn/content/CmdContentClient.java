@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
@@ -49,7 +49,7 @@ public class CmdContentClient extends BaseSvnClient implements ContentClient {
       }
     }
 
-    byte[] bytes = command != null ? command.getBinaryOutput().toByteArray() : ArrayUtil.EMPTY_BYTE_ARRAY;
+    byte[] bytes = command != null ? command.getBinaryOutput().toByteArray() : ArrayUtilRt.EMPTY_BYTE_ARRAY;
     ContentRevisionCache.checkContentsSize(target.getPath(), bytes.length);
 
     return bytes;

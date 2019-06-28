@@ -10,7 +10,7 @@ import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SystemProperties
@@ -216,7 +216,7 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
     }
 
     if (macroMap != null) {
-      normalizedString = macroMap.substitute(normalizedString, SystemInfoRt.isFileSystemCaseSensitive)
+      normalizedString = macroMap.substitute(normalizedString, SystemInfo.isFileSystemCaseSensitive)
     }
     out.write(escapeElementEntities(normalizedString))
   }
@@ -420,7 +420,7 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
       out.write('"'.toInt())
 
       val value = if (macroMap != null && (macroFilter == null || !macroFilter.skipPathMacros(attribute))) {
-        macroMap.getAttributeValue(attribute, macroFilter, SystemInfoRt.isFileSystemCaseSensitive, false)
+        macroMap.getAttributeValue(attribute, macroFilter, SystemInfo.isFileSystemCaseSensitive, false)
       }
       else {
         attribute.value

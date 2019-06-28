@@ -2,7 +2,7 @@
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.highlighter.XmlFileType;
@@ -58,7 +58,7 @@ import java.util.Set;
 
 @PlatformTestCase.WrapInCommand
 @SkipSlowTestLocally
-public class SmartPsiElementPointersTest extends CodeInsightTestCase {
+public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
   private VirtualFile myRoot;
 
   @Override
@@ -677,20 +677,23 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
   }
 
   public void testLargeFileWithManyChangesPerformance() throws Exception {
-    PsiFile file = createFile("a.txt", StringUtil.repeat("foo foo \n", 50000));
+    String text = StringUtil.repeat("foo foo \n", 50000);
+    PsiFile file = createFile("a.txt", text);
     final TextRange range = TextRange.from(10, 10);
     final SmartPsiFileRange pointer = getPointerManager().createSmartPsiFileRangePointer(file, range);
 
     final Document document = file.getViewProvider().getDocument();
     assertNotNull(document);
 
-    WriteAction.run(() -> PlatformTestUtil.startPerformanceTest("smart pointer range update", 11_000, () -> {
-      document.setText(StringUtil.repeat("foo foo \n", 50000));
+    WriteAction.run(() -> PlatformTestUtil.startPerformanceTest("smart pointer range update", 10_000, () -> {
       for (int i = 0; i < 10000; i++) {
         document.insertString(i * 20 + 100, "x\n");
         assertFalse(PsiDocumentManager.getInstance(myProject).isCommitted(document));
         assertEquals(range, pointer.getRange());
       }
+    }).setup(() -> {
+      document.setText(text);
+      assertEquals(range, pointer.getRange());
     }).attempts(10).assertTiming());
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();

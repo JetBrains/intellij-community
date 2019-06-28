@@ -107,9 +107,4 @@ class ConverterManagerImpl implements ConverterManager {
     }
     return null;
   }
-
-  @Override
-  public <T extends Converter> void registerConverterImplementation(Class<T> converterInterface, T converterImpl) {
-    myConverterInstances.put(converterInterface, converterImpl);
-  }
 }

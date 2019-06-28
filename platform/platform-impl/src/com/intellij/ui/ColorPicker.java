@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -355,21 +355,19 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   }
 
   public static void showColorPickerPopup(@Nullable Color currentColor, @NotNull ColorListener listener) {
-    LightCalloutPopup dialog = new LightCalloutPopup();
-
-    JPanel panel = new ColorPickerBuilder()
+    LightCalloutPopup popup = new ColorPickerBuilder()
       .setOriginalColor(currentColor)
       .addSaturationBrightnessComponent()
       .addColorAdjustPanel(new MaterialGraphicalColorPipetteProvider())
       .addColorValuePanel().withFocus()
       //.addSeparator()
       //.addCustomComponent(MaterialColorPaletteProvider.INSTANCE)
-      .addColorListener(listener)
+      .addColorListener(listener, false)
       .focusWhenDisplay(true)
       .setFocusCycleRoot(true)
       .build();
 
-    dialog.show(panel, null, MouseInfo.getPointerInfo().getLocation());
+    popup.show(MouseInfo.getPointerInfo().getLocation());
   }
 
   private JComponent buildTopPanel(boolean enablePipette) throws ParseException {

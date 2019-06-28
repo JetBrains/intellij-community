@@ -1,10 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup;
 
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.WindowAction;
+import com.intellij.ide.ui.PopupLocationTracker;
+import com.intellij.ide.ui.ScreenAreaConsumer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -14,23 +16,23 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.TransactionGuardImpl;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -54,7 +56,7 @@ import static java.awt.event.MouseEvent.*;
 import static java.awt.event.WindowEvent.WINDOW_ACTIVATED;
 import static java.awt.event.WindowEvent.WINDOW_GAINED_FOCUS;
 
-public class AbstractPopup implements JBPopup {
+public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   public static final String SHOW_HINTS = "ShowHints";
 
   // Popup size stored with DimensionService is null first time
@@ -162,13 +164,13 @@ public class AbstractPopup implements JBPopup {
 
   private volatile State myState = State.NEW;
 
-  public void setNormalWindowLevel(boolean normalWindowLevel) {
+  void setNormalWindowLevel(boolean normalWindowLevel) {
     myNormalWindowLevel = normalWindowLevel;
   }
 
   private enum State {NEW, INIT, SHOWING, SHOWN, CANCEL, DISPOSE}
 
-  private void debugState(String message, State... states) {
+  private void debugState(@NotNull String message, @NotNull State... states) {
     if (LOG.isDebugEnabled()) {
       LOG.debug(hashCode() + " - " + message);
       if (!ApplicationManager.getApplication().isDispatchThread()) {
@@ -185,6 +187,7 @@ public class AbstractPopup implements JBPopup {
 
   protected AbstractPopup() { }
 
+  @NotNull
   protected AbstractPopup init(Project project,
                      @NotNull JComponent component,
                      @Nullable JComponent preferredFocusedComponent,
@@ -269,10 +272,10 @@ public class AbstractPopup implements JBPopup {
       }
 
       if (pinCallback != null) {
+        Icon icon = ToolWindowManagerEx.getInstanceEx(myProject != null ? myProject : ProjectUtil.guessCurrentProject((JComponent)myOwner))
+          .getLocationIcon(ToolWindowId.FIND, AllIcons.General.Pin_tab);
         myCaption.setButtonComponent(new InplaceButton(
-          new IconButton("Open as Tool Window",
-                         AllIcons.General.Pin_tab, AllIcons.General.Pin_tab,
-                         IconLoader.getDisabledIcon(AllIcons.General.Pin_tab)),
+          new IconButton("Open as Tool Window", icon),
           e -> pinCallback.process(this)
         ), JBUI.Borders.empty(4));
       }
@@ -348,11 +351,6 @@ public class AbstractPopup implements JBPopup {
     }
   }
 
-  @Deprecated
-  public static void suppressMacCornerFor(JComponent popupComponent) {
-  }
-
-
   public String getDimensionServiceKey() {
     return myDimensionServiceKey;
   }
@@ -379,7 +377,8 @@ public class AbstractPopup implements JBPopup {
       wrapper.add(myAdComponent, BorderLayout.CENTER);
       myContent.add(wrapper, BorderLayout.SOUTH);
       pack(false, true);
-    } else {
+    }
+    else {
       myAdComponent.setText(s);
       myAdComponent.setHorizontalAlignment(alignment);
     }
@@ -389,7 +388,7 @@ public class AbstractPopup implements JBPopup {
     return getCenterOf(aContainer, content.getPreferredSize());
   }
 
-  private static Point getCenterOf(final Component aContainer, final Dimension contentSize) {
+  private static Point getCenterOf(@NotNull Component aContainer, @NotNull Dimension contentSize) {
     final JComponent component = getTargetComponent(aContainer);
 
     Rectangle visibleBounds = component != null
@@ -433,7 +432,7 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public void showUnderneathOf(@NotNull Component aComponent) {
-    show(new RelativePoint(aComponent, new Point(JBUI.scale(2), aComponent.getHeight())));
+    show(new RelativePoint(aComponent, new Point(JBUIScale.scale(2), aComponent.getHeight())));
   }
 
   @Override
@@ -449,15 +448,14 @@ public class AbstractPopup implements JBPopup {
     show(owner, point.x, point.y, false);
   }
 
+  @NotNull
   @Override
   public Point getBestPositionFor(@NotNull DataContext dataContext) {
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor != null && editor.getComponent().isShowing()) {
       return getBestPositionFor(editor).getScreenPoint();
     }
-    else {
-      return relativePointByQuickSearch(dataContext).getScreenPoint();
-    }
+    return relativePointByQuickSearch(dataContext).getScreenPoint();
   }
 
   @Override
@@ -484,7 +482,8 @@ public class AbstractPopup implements JBPopup {
     }
   }
 
-  private RelativePoint relativePointByQuickSearch(final DataContext dataContext) {
+  @NotNull
+  private RelativePoint relativePointByQuickSearch(@NotNull DataContext dataContext) {
     Rectangle dominantArea = PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.getData(dataContext);
 
     if (dominantArea != null) {
@@ -627,11 +626,11 @@ public class AbstractPopup implements JBPopup {
     final int spaceOnTheLeft = bounds.x;
     final int spaceOnTheRight = screen.x + screen.width - rightTopCornerScreen.x;
     if (spaceOnTheLeft > spaceOnTheRight) {
-      myComponent.setPreferredSize(new Dimension(spaceOnTheLeft, Math.max(size.height, JBUI.scale(200))));
+      myComponent.setPreferredSize(new Dimension(spaceOnTheLeft, Math.max(size.height, JBUIScale.scale(200))));
       return new RelativePoint(layeredPane, new Point(0, bounds.y));
     }
     else {
-      myComponent.setPreferredSize(new Dimension(spaceOnTheRight, Math.max(size.height, JBUI.scale(200))));
+      myComponent.setPreferredSize(new Dimension(spaceOnTheRight, Math.max(size.height, JBUIScale.scale(200))));
       return new RelativePoint(layeredPane, rightTopCorner);
     }
   }
@@ -650,6 +649,7 @@ public class AbstractPopup implements JBPopup {
     return rectangle.getLocation();
   }
 
+  @NotNull
   private Dimension getPreferredContentSize() {
     if (myForcedSize != null) {
       return myForcedSize;
@@ -711,7 +711,7 @@ public class AbstractPopup implements JBPopup {
 
       myPopup.hide(false);
 
-      if (ApplicationManagerEx.getApplicationEx() != null) {
+      if (ApplicationManager.getApplication() != null) {
         StackingPopupDispatcher.getInstance().onPopupHidden(this);
       }
 
@@ -754,13 +754,13 @@ public class AbstractPopup implements JBPopup {
   }
 
   @Override
-  public void show(final Component owner) {
+  public void show(@NotNull final Component owner) {
     show(owner, -1, -1, true);
   }
 
-  public void show(Component owner, int aScreenX, int aScreenY, final boolean considerForcedXY) {
+  public void show(@NotNull Component owner, int aScreenX, int aScreenY, final boolean considerForcedXY) {
     if (UiInterceptors.tryIntercept(this)) return;
-    if (ApplicationManagerEx.getApplicationEx() != null && ApplicationManager.getApplication().isHeadlessEnvironment()) return;
+    if (ApplicationManager.getApplication() != null && ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     if (isDisposed()) {
       throw new IllegalStateException("Popup was already disposed. Recreate a new instance to show again");
     }
@@ -1033,6 +1033,9 @@ public class AbstractPopup implements JBPopup {
 
     myPopup.show();
     Rectangle bounds = window.getBounds();
+
+    PopupLocationTracker.register(this);
+
     if (bounds.width > screen.width || bounds.height > screen.height) {
       ScreenUtil.fitToScreen(bounds);
       window.setBounds(bounds);
@@ -1214,7 +1217,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   private static WindowManagerEx getWndManager() {
-    return ApplicationManagerEx.getApplicationEx() != null ? WindowManagerEx.getInstanceEx() : null;
+    return ApplicationManager.getApplication() != null ? WindowManagerEx.getInstanceEx() : null;
   }
 
   @Override
@@ -1223,7 +1226,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   protected boolean beforeShow() {
-    if (ApplicationManagerEx.getApplicationEx() == null) return true;
+    if (ApplicationManager.getApplication() == null) return true;
     StackingPopupDispatcher.getInstance().onPopupShown(this, myInStack);
     return true;
   }
@@ -1288,6 +1291,7 @@ public class AbstractPopup implements JBPopup {
     return new PopupComponent.Factory.AwtDefault();
   }
 
+  @NotNull
   @Override
   public JComponent getContent() {
     return myContent;
@@ -1484,6 +1488,9 @@ public class AbstractPopup implements JBPopup {
   public static class MyContentPanel extends JPanel implements DataProvider {
     @Nullable private DataProvider myDataProvider;
 
+    /**
+     * @deprecated use {@link MyContentPanel#MyContentPanel(PopupBorder)}
+     */
     @Deprecated
     public MyContentPanel(final boolean resizable, final PopupBorder border, boolean drawMacCorner) {
       this(border);
@@ -1595,6 +1602,7 @@ public class AbstractPopup implements JBPopup {
     return window;
   }
 
+  @NotNull
   @Override
   public Point getLocationOnScreen() {
     Window window = getContentWindow(myContent);
@@ -1613,7 +1621,7 @@ public class AbstractPopup implements JBPopup {
     setSize(size, true);
   }
 
-  private void setSize(Dimension size, boolean adjustByContent) {
+  private void setSize(@NotNull Dimension size, boolean adjustByContent) {
     if (isBusy()) return;
 
     Dimension toSet = new Dimension(size);
@@ -1627,7 +1635,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   private int getAdComponentHeight() {
-    return myAdComponent != null ? myAdComponent.getPreferredSize().height + JBUI.scale(1) : 0;
+    return myAdComponent != null ? myAdComponent.getPreferredSize().height + JBUIScale.scale(1) : 0;
   }
 
   @Override
@@ -1667,7 +1675,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   @Override
-  public void setCaption(String title) {
+  public void setCaption(@NotNull String title) {
     if (myCaption instanceof TitlePanel) {
       ((TitlePanel)myCaption).setText(title);
     }
@@ -1727,7 +1735,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   @Override
-  public <T> T getUserData(final Class<T> userDataClass) {
+  public <T> T getUserData(@NotNull final Class<T> userDataClass) {
     if (myUserData != null) {
       for (Object o : myUserData) {
         if (userDataClass.isInstance(o)) {
@@ -1966,6 +1974,17 @@ public class AbstractPopup implements JBPopup {
   @Override
   public boolean canShow() {
     return myState == State.INIT;
+  }
+
+  @NotNull
+  @Override
+  public Rectangle getConsumedScreenBounds() {
+    return myWindow.getBounds();
+  }
+
+  @Override
+  public Component getUnderlyingAreaOwner() {
+    return myWindow.getOwner();
   }
 
   /**

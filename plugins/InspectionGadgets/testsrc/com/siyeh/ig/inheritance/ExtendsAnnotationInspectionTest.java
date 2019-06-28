@@ -16,13 +16,13 @@
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ExtendsAnnotationInspectionTest extends LightInspectionTestCase {
+public class ExtendsAnnotationInspectionTest extends LightJavaInspectionTestCase {
 
   public void testExtendsAnnotation() {
     doTest();

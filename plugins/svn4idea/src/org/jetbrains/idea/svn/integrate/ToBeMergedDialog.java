@@ -309,11 +309,11 @@ public class ToBeMergedDialog extends DialogWrapper {
   private ChangeNodeDecorator createChangesDecorator() {
     return new ChangeNodeDecorator() {
       @Override
-      public void decorate(Change change, SimpleColoredComponent component, boolean isShowFlatten) {
+      public void decorate(@NotNull Change change, @NotNull SimpleColoredComponent component, boolean isShowFlatten) {
       }
 
       @Override
-      public void preDecorate(Change change, ChangesBrowserNodeRenderer renderer, boolean showFlatten) {
+      public void preDecorate(@NotNull Change change, @NotNull ChangesBrowserNodeRenderer renderer, boolean showFlatten) {
         if (myAlreadyMerged.contains(change)) {
           renderer.append(" [already merged] ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }

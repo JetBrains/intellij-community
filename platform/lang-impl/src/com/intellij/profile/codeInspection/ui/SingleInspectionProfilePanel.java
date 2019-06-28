@@ -394,7 +394,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       reloadModel();
       restoreTreeState();
       if (myTreeTable.getTree().getSelectionPath() == null) {
-        TreeUtil.selectFirstNode(myTreeTable.getTree());
+        TreeUtil.promiseSelectFirst(myTreeTable.getTree());
       }
     }
   }
@@ -774,23 +774,23 @@ public class SingleInspectionProfilePanel extends JPanel {
 
         severityPanel.add(new JLabel(InspectionsBundle.message("inspection.severity")),
                           new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.VERTICAL,
-                                                 JBUI.insets(10, 0), 0, 0));
+                                                 JBInsets.create(10, 0), 0, 0));
         final JComponent severityLevelChooserComponent = severityLevelChooser.createCustomComponent(
           severityLevelChooser.getTemplatePresentation(), ActionPlaces.UNKNOWN);
         severityPanel.add(severityLevelChooserComponent,
                           new GridBagConstraints(1, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                                 JBUI.insets(10, 0), 0, 0));
+                                                 JBInsets.create(10, 0), 0, 0));
         final JComponent scopesChooserComponent = scopesChooser.createCustomComponent(
           scopesChooser.getTemplatePresentation(), ActionPlaces.UNKNOWN);
         severityPanel.add(scopesChooserComponent,
                           new GridBagConstraints(2, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                                 JBUI.insets(10, 0), 0, 0));
+                                                 JBInsets.create(10, 0), 0, 0));
         final JLabel label = new JLabel("", SwingConstants.RIGHT);
         severityPanel.add(label,
                           new GridBagConstraints(3, 0, 1, 1, 1, 0,
                                                  GridBagConstraints.EAST,
                                                  GridBagConstraints.BOTH,
-                                                 JBUI.insets(2, 0), 0, 0));
+                                                 JBInsets.create(2, 0), 0, 0));
         severityPanelWeightY = 0.0;
         if (singleNode != null) {
           setConfigPanel(configPanelAnchor, myProfile.getToolDefaultState(singleNode.getDefaultDescriptor().getKey().toString(),
@@ -955,7 +955,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
     JPanel descriptionPanel = new JPanel(new BorderLayout());
     descriptionPanel.setBorder(IdeBorderFactory.createTitledBorder(InspectionsBundle.message("inspection.description.title"), false,
-                                                                   new JBInsets(2, 2, 0, 0)));
+                                                                   JBUI.insetsLeft(12)).setShowLine(false));
     descriptionPanel.add(ScrollPaneFactory.createScrollPane(myBrowser), BorderLayout.CENTER);
 
     JBSplitter rightSplitter =
@@ -963,6 +963,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     rightSplitter.setFirstComponent(descriptionPanel);
 
     myOptionsPanel = new JPanel(new GridBagLayout());
+    myOptionsPanel.setBorder(JBUI.Borders.emptyLeft(12));
     initOptionsAndDescriptionPanel();
     rightSplitter.setSecondComponent(myOptionsPanel);
     rightSplitter.setHonorComponentsMinimumSize(true);

@@ -159,7 +159,7 @@ class GitChangesCollector {
     return ContainerUtil.map(allPaths, VcsUtil::getFilePath);
   }
 
-  private void addToPaths(FilePath pathToAdd, List<String> paths) {
+  private void addToPaths(FilePath pathToAdd, List<? super String> paths) {
     VcsRoot fileRoot = myVcsManager.getVcsRootObjectFor(pathToAdd);
     if (fileRoot != null && fileRoot.getVcs() != null && myVcs.equals(fileRoot.getVcs()) && myVcsRoot.equals(fileRoot.getPath())) {
       paths.add(pathToAdd.getPath());
@@ -183,7 +183,7 @@ class GitChangesCollector {
   }
 
   // calls 'git status' and parses the output, feeding myChanges.
-  private void collectChanges(Collection<FilePath> dirtyPaths) throws VcsException {
+  private void collectChanges(Collection<? extends FilePath> dirtyPaths) throws VcsException {
     GitLineHandler handler = statusHandler(dirtyPaths);
     String output = myGit.runCommand(handler).getOutputOrThrow();
     parseOutput(output, handler);
@@ -194,7 +194,7 @@ class GitChangesCollector {
     myUnversionedFiles.addAll(untrackedFilesHolder.retrieveUntrackedFiles());
   }
 
-  private GitLineHandler statusHandler(Collection<FilePath> dirtyPaths) {
+  private GitLineHandler statusHandler(Collection<? extends FilePath> dirtyPaths) {
     GitLineHandler handler = new GitLineHandler(myProject, myVcsRoot, GitCommand.STATUS);
     final String[] params = {"--porcelain", "-z", "--untracked-files=no"};   // untracked files are stored separately
     handler.addParameters(params);
@@ -274,9 +274,14 @@ class GitChangesCollector {
             reportAdded(filepath);
           } else if (yStatus == 'D') {
             // added + deleted => no change (from IDEA point of view).
-          } else if (yStatus == 'U' || yStatus == 'A') { // AU - unmerged, added by us; AA - unmerged, both added
-            reportConflict(filepath, head, Status.MODIFIED, Status.MODIFIED);
-          }  else {
+          }
+          else if (yStatus == 'U') { // AU - unmerged, added by us
+            reportConflict(filepath, head, Status.ADDED, Status.MODIFIED);
+          }
+          else if (yStatus == 'A') { // AA - unmerged, both added
+            reportConflict(filepath, head, Status.ADDED, Status.ADDED);
+          }
+          else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
           break;
@@ -294,8 +299,11 @@ class GitChangesCollector {
           break;
 
         case 'U':
-          if (yStatus == 'U' || yStatus == 'A' || yStatus == 'T') { // UU - unmerged, both modified; UA - unmerged, added by them
+          if (yStatus == 'U' || yStatus == 'T') { // UU - unmerged, both modified
             reportConflict(filepath, head, Status.MODIFIED, Status.MODIFIED);
+          }
+          else if (yStatus == 'A') { // UA - unmerged, added by them
+            reportConflict(filepath, head, Status.MODIFIED, Status.ADDED);
           }
           else if (yStatus == 'D') { // UD - unmerged, deleted by them
             reportConflict(filepath, head, Status.MODIFIED, Status.DELETED);

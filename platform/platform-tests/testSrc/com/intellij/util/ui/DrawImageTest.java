@@ -1,8 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.RestoreScaleRule;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.RetinaImage;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -101,18 +103,18 @@ public class DrawImageTest {
   public void test() {
     for (double scale : new double[] {1, 2, 2.5}) {
       overrideJreHiDPIEnabled(true);
-      JBUI.setUserScaleFactor(1);
+      JBUIScale.setUserScaleFactor((float)1);
       test(scale);
 
       overrideJreHiDPIEnabled(false);
-      JBUI.setUserScaleFactor((float)scale);
+      JBUIScale.setUserScaleFactor((float)scale);
       test(scale);
     }
   }
 
   public void test(double scale) {
     source = RetinaImage.createFrom(supplyImage(scale, IMAGE_SIZE, IMAGE_SIZE, IMAGE_QUARTER_COLORS, false).first,
-                                    UIUtil.isJreHiDPIEnabled() ? scale : 1, null);
+                                    JreHiDpiUtil.isJreHiDPIEnabled() ? scale : 1, null);
 
     //
     // 1) draw one to one
@@ -141,7 +143,7 @@ public class DrawImageTest {
     };
     testDrawImage(dest = new Dest(scale),
                   new Rectangle(0, 0, -1, -1),
-                  new Rectangle(JBUI.scale(IMAGE_QUARTER_SIZE), JBUI.scale(IMAGE_QUARTER_SIZE), -1, -1), colors);
+                  new Rectangle(JBUIScale.scale(IMAGE_QUARTER_SIZE), JBUIScale.scale(IMAGE_QUARTER_SIZE), -1, -1), colors);
 
     //
     // 3) draw random quarter to random quarter, all the rest quarter colors should remain DEST_SURFACE_COLOR
@@ -172,8 +174,8 @@ public class DrawImageTest {
     BufferedImage image = pair.first;
     Graphics2D g = pair.second;
 
-    int qw = JBUI.scale(width) / 2;
-    int qh = JBUI.scale(height) / 2;
+    int qw = JBUIScale.scale(width) / 2;
+    int qh = JBUIScale.scale(height) / 2;
 
     g.setColor(quarterColors[0]);
     g.fillRect(0, 0, qw, qh);
@@ -192,11 +194,11 @@ public class DrawImageTest {
   }
 
   private static Rectangle bounds() {
-    return bounds(0, 0, JBUI.scale(IMAGE_SIZE));
+    return bounds(0, 0, JBUIScale.scale(IMAGE_SIZE));
   }
 
   private static Rectangle bounds(int col, int row) {
-    return bounds(col, row, JBUI.scale(IMAGE_QUARTER_SIZE));
+    return bounds(col, row, JBUIScale.scale(IMAGE_QUARTER_SIZE));
   }
 
   private static Rectangle bounds(int col, int row, int size) {

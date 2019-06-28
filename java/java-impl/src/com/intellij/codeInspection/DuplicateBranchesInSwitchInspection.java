@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,7 +15,7 @@ import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
 import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.refactoring.util.duplicates.ReturnValue;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -155,7 +155,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
       PsiStatement body = ruleStatement.getBody();
       if (body != null) {
         collectCommentTexts(ruleStatement, commentTexts);
-        Rule rule = new Rule(ruleStatement, body, ArrayUtil.toStringArray(commentTexts));
+        Rule rule = new Rule(ruleStatement, body, ArrayUtilRt.toStringArray(commentTexts));
         commentTexts.clear();
         int hash = rule.hash();
         List<Rule> list = rulesByHash.get(hash);
@@ -760,7 +760,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     private final List<PsiElement> myPending = new ArrayList<>();
 
     String[] fetchTexts() {
-      String[] result = ArrayUtil.toStringArray(myTexts);
+      String[] result = ArrayUtilRt.toStringArray(myTexts);
       myTexts.clear();
       return result;
     }

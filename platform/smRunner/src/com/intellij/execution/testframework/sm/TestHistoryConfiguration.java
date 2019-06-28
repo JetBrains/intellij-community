@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm;
 
 import com.intellij.execution.configurations.ConfigurationType;
@@ -17,7 +17,10 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@State(name = "TestHistory", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+@State(name = "TestHistory", storages = {
+  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
+  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
+})
 public class TestHistoryConfiguration implements PersistentStateComponent<TestHistoryConfiguration.State> {
 
   public static class State {
@@ -37,7 +40,7 @@ public class TestHistoryConfiguration implements PersistentStateComponent<TestHi
 
   @Tag("configuration")
   public static class ConfigurationBean {
-    
+
     @Attribute("name")
     public String name;
     @Attribute("configurationId")
@@ -59,16 +62,16 @@ public class TestHistoryConfiguration implements PersistentStateComponent<TestHi
   public void loadState(@NotNull State state) {
     myState = state;
   }
-  
+
   public Collection<String> getFiles() {
     return myState.getHistoryElements().keySet();
   }
-  
+
   public String getConfigurationName(String file) {
     final ConfigurationBean bean = myState.getHistoryElements().get(file);
     return bean != null ? bean.name : null;
   }
-  
+
   public Icon getIcon(String file) {
     final ConfigurationBean bean = myState.getHistoryElements().get(file);
     if (bean != null) {

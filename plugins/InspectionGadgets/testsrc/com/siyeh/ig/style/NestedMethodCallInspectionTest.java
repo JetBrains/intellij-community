@@ -16,13 +16,13 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class NestedMethodCallInspectionTest extends LightInspectionTestCase{
+public class NestedMethodCallInspectionTest extends LightJavaInspectionTestCase {
 
   public void testNestedMethodCall() { doTest(); }
 

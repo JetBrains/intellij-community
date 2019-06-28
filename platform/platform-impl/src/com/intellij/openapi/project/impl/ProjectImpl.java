@@ -2,13 +2,15 @@
 package com.intellij.openapi.project.impl;
 
 import com.intellij.configurationStore.StoreUtil;
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.*;
@@ -25,8 +27,6 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -54,6 +54,10 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   public static final String NAME_FILE = ".name";
   public static final Key<Long> CREATION_TIME = Key.create("ProjectImpl.CREATION_TIME");
+
+  /**
+   * @deprecated use {@link #getCreationTrace()}
+   */
   @Deprecated
   public static final Key<String> CREATION_TRACE = Key.create("ProjectImpl.CREATION_TRACE");
   @TestOnly
@@ -79,8 +83,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     creationTrace = ApplicationManager.getApplication().isUnitTestMode() ? DebugUtil.currentStackTrace() : null;
 
     getPicoContainer().registerComponentInstance(Project.class, this);
-
-    getStateStore().setPath(filePath);
 
     myName = projectName;
     // light project may be changed later during test, so we need to remember its initial state
@@ -151,7 +153,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   // do not call for default project
   @NotNull
-  private IProjectStore getStateStore() {
+  public final IProjectStore getStateStore() {
     return (IProjectStore)getComponentStore();
   }
 
@@ -240,20 +242,28 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     return workspaceFilePath == null ? null : LocalFileSystem.getInstance().findFileByPath(workspaceFilePath);
   }
 
-  @Override
-  public void init() {
-    Application application = ApplicationManager.getApplication();
-
-    ProgressIndicator progressIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+  public void registerComponents() {
+    String activityNamePrefix = activityNamePrefix();
+    Activity activity = activityNamePrefix == null ? null : StartUpMeasurer.start(activityNamePrefix + Phases.REGISTER_COMPONENTS_SUFFIX);
     //  at this point of time plugins are already loaded by application - no need to pass indicator to getLoadedPlugins call
-    //noinspection CodeBlock2Expr
-    init(PluginManagerCore.getLoadedPlugins(null), progressIndicator, application.isUnitTestMode() ? () -> {
-      application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsRegistered(this);
-    } : null);
-
-    if (!application.isHeadlessEnvironment()) {
-      distributeProgress();
+    registerComponents(PluginManagerCore.getLoadedPlugins());
+    if (activity != null) {
+      activity.end();
     }
+
+    Application app = ApplicationManager.getApplication();
+    if (app.isUnitTestMode()) {
+      app.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsRegistered(this);
+    }
+  }
+
+  public void init(@Nullable ProgressIndicator indicator) {
+    Application application = ApplicationManager.getApplication();
+    createComponents(indicator);
+    if (indicator != null && !application.isHeadlessEnvironment()) {
+      distributeProgress(indicator);
+    }
+
     if (myName == null) {
       myName = getStateStore().getProjectName();
     }
@@ -265,10 +275,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     indicator.setFraction(getPercentageOfComponentsLoaded() / (ourClassesAreLoaded ? 10 : 2));
   }
 
-  private void distributeProgress() {
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (indicator == null) return;
-
+  private void distributeProgress(@NotNull ProgressIndicator indicator) {
     ModuleManager moduleManager = ModuleManager.getInstance(this);
     if (!(moduleManager instanceof ModuleManagerImpl)) {
       return;
@@ -310,7 +317,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public synchronized void dispose() {
-    ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+    Application application = ApplicationManager.getApplication();
     application.assertWriteAccessAllowed();  // dispose must be under write action
 
     // can call dispose only via com.intellij.ide.impl.ProjectUtil.closeAndDispose()
@@ -356,7 +363,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   public String toString() {
     return "Project" +
            (isDisposed() ? " (Disposed" + (temporarilyDisposed ? " temporarily" : "") + ")"
-                         : " '" + getPresentableUrl() + "'") +
+                         : " '" + (myComponentStore.isComputed() ? getPresentableUrl() : "<no component store>") + "'") +
            " " + myName;
   }
 

@@ -1,0 +1,38 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
+
+plugins {
+  id "groovy"
+  id "com.jetbrains.python.envs" version "0.0.30"
+}
+
+File pythonDirectory = new File(buildDir, 'pythons')
+
+envs {
+  bootstrapDirectory = pythonDirectory
+
+  if (System.getenv().containsKey("PYCHARM_ZIP_REPOSITORY")) {
+    zipRepository = new URL(System.getenv().get("PYCHARM_ZIP_REPOSITORY"))
+    shouldUseZipsFromRespository = Os.isFamily(Os.FAMILY_WINDOWS)
+  }
+
+  Closure testHelpers = { String pythonName, String pythonVersion ->
+    python pythonName, pythonVersion, ["teamcity-messages"]
+
+    task ("Tests for Python " + pythonVersion, type: Exec){
+      mustRunAfter 'build_envs'
+
+      environment PYTHONPATH: ".:.."
+      commandLine new File(pythonDirectory, pythonName).absolutePath + '/bin/python', '__main__.py'
+    }
+  }
+
+  testHelpers("py27_64", "2.7.16")
+  testHelpers("py35_64", "3.5.4")
+  testHelpers("py36_64", "3.6.8")
+  testHelpers("py37_64", "3.7.3")
+}
+
+task ("all_tests") {
+  dependsOn 'build_envs', tasks.findAll { it.name.startsWith("Tests for Python") }
+}

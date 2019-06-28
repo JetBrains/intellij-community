@@ -2,8 +2,10 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.ui.UISettings
 import com.intellij.jdkEx.JdkEx
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.WindowsRegistryUtil
 import com.intellij.openapi.wm.impl.IdeRootPane
@@ -13,9 +15,10 @@ import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.paint.LinePainter2D
-import com.intellij.util.ObjectUtils
+import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.scale.ScaleType
+import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.JBUIScale
 import java.awt.*
 import java.awt.event.*
 import javax.swing.*
@@ -25,7 +28,8 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     companion object {
         const val H_GAP = 7
         const val MIN_HEIGHT = 24
-        val HIT_TEST_RESIZE_GAP = JBUI.scale(3)
+
+        val WINDOWS_VERSION = WindowsRegistryUtil.readRegistryValue("HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "ReleaseId")
 
         fun create(window: Window): CustomHeader {
             return if (window is JFrame) {
@@ -40,15 +44,13 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         }
 
         private fun createFrameHeader(frame: JFrame): DefaultFrameHeader = DefaultFrameHeader(frame)
+        @JvmStatic
         fun createMainFrameHeader(frame: JFrame): MainFrameHeader = MainFrameHeader(frame)
     }
 
     private var windowListener: WindowAdapter
     private val myComponentListener: ComponentListener
-    private val myIconProvider = JBUIScale.ScaleContext.Cache { ctx ->
-        ObjectUtils.notNull(
-                AppUIUtil.loadHiDPIApplicationIcon(ctx, 16), AllIcons.Icon_small)
-    }
+    private val myIconProvider = ScaleContext.Cache { ctx -> AppUIUtil.loadSmallApplicationIcon(ctx, (16 * UISettings.defFontScale).toInt()) }
 
     protected var myActive = false
     protected val windowRootPane: JRootPane? = when (window) {
@@ -62,9 +64,9 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
 
     private val icon: Icon
         get() {
-            val ctx = JBUIScale.ScaleContext.create(window)
-            ctx.overrideScale(JBUIScale.ScaleType.USR_SCALE.of(1.0))
-            return myIconProvider.getOrProvide(ctx) ?: AllIcons.Icon_small
+            val ctx = ScaleContext.create(window)
+            ctx.overrideScale(ScaleType.USR_SCALE.of(UISettings.defFontScale.toDouble()))
+            return myIconProvider.getOrProvide(ctx)!!
         }
 
 
@@ -76,7 +78,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         createButtonsPane()
     }
 
-
+    open fun setProject(project: Project) {}
 
     init {
         isOpaque = true
@@ -215,7 +217,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
 
     open fun addMenuItems(menu: JMenu) {
         val closeMenuItem = menu.add(myCloseAction)
-        closeMenuItem.font = JBUI.Fonts.label().deriveFont(Font.BOLD)
+        closeMenuItem.font = JBFont.label().deriveFont(Font.BOLD)
     }
 
     inner class CustomFrameTopBorder(val isTopNeeded: ()-> Boolean = {true}, val isBottomNeeded: ()-> Boolean = {false}) : Border {
@@ -224,8 +226,6 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         private val affectsBorders: Boolean = Toolkit.getDefaultToolkit().getDesktopProperty("win.dwm.colorizationColor.affects.borders") as Boolean? ?: true
         private val activeColor = Toolkit.getDefaultToolkit().getDesktopProperty("win.dwm.colorizationColor") as Color? ?:
          Toolkit.getDefaultToolkit().getDesktopProperty("win.frame.activeBorderColor") as Color? ?: menuBarBorderColor
-
-        private val windowsVersion = WindowsRegistryUtil.readRegistryValue("HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "ReleaseId")
 
         fun repaintBorder() {
             val borderInsets = getBorderInsets(this@CustomHeader)
@@ -248,9 +248,9 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         }
 
       private fun isAffectsBorder(): Boolean {
-        if(windowsVersion.isNullOrEmpty()) return true
+        if(WINDOWS_VERSION.isNullOrEmpty()) return true
 
-        val winVersion =  windowsVersion.toIntOrNull() ?: return affectsBorders
+        val winVersion = WINDOWS_VERSION.toIntOrNull() ?: return affectsBorders
         return if(winVersion >= 1809) affectsBorders else true
       }
 

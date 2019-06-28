@@ -2,10 +2,7 @@
 package org.jetbrains.plugins.gradle;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.SimpleJavaParameters;
-import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -70,7 +67,6 @@ import org.jetbrains.plugins.gradle.service.project.GradleAutoImportAware;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
 import org.jetbrains.plugins.gradle.service.settings.GradleConfigurable;
-import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.settings.*;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -214,7 +210,7 @@ public final class GradleManager
         result.setResolveModulePerSourceSet(projectLevelSettings.isResolveModulePerSourceSet());
         result.setUseQualifiedModuleNames(projectLevelSettings.isUseQualifiedModuleNames());
       }
-      boolean delegatedBuildEnabled = GradleSettingsService.getInstance(project).isDelegatedBuildEnabled(projectPath);
+      boolean delegatedBuildEnabled = GradleProjectSettings.isDelegatedBuildEnabled(project, projectPath);
       result.setDelegatedBuild(delegatedBuildEnabled);
 
       configureExecutionWorkspace(projectLevelSettings, settings, result, project, projectPath);
@@ -392,14 +388,6 @@ public final class GradleManager
         .toList();
       return modules.isEmpty() ? null : GlobalSearchScopes.executionScope(modules);
     }
-  }
-
-  @Nullable
-  @Override
-  public SMTRunnerConsoleProperties createTestConsoleProperties(@NotNull Project project,
-                                                                @NotNull Executor executor,
-                                                                @NotNull RunConfiguration runConfiguration) {
-    return GradleIdeManager.getInstance().createTestConsoleProperties(project, executor, runConfiguration);
   }
 
   @Override

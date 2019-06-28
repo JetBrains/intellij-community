@@ -23,6 +23,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
  * @author Pavel.Dolgov
@@ -30,7 +31,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 class JavaReflectionParametersCompletionTest : LightFixtureCompletionTestCase() {
   override fun getBasePath(): String = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/reflectionParameters/"
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase.JAVA_8
+  override fun getProjectDescriptor(): LightProjectDescriptor = LightJavaCodeInsightFixtureTestCase.JAVA_8
 
   fun testAnnotation() = doTest(0, "Bar.class", "Foo.class")
 

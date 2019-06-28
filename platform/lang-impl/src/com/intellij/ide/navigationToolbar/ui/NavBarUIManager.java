@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,24 @@
 package com.intellij.ide.navigationToolbar.ui;
 
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class NavBarUIManager {
-  public static final NavBarUI AQUA = new AquaNavBarUI();
   public static final NavBarUI COMMON = new CommonNavBarUI();
+  /**
+   * @deprecated will be removed in 2020.1
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @Deprecated
+  public static final NavBarUI AQUA = COMMON;
   public static final NavBarUI DARCULA = new DarculaNavBarUI();
 
 
   public static NavBarUI getUI() {
-    if (UIUtil.isUnderAquaLookAndFeel()) return AQUA;
-    if (UIUtil.isUnderDarcula())         return DARCULA;
+    if (UIUtil.isUnderDarcula()) return DARCULA;
     return COMMON;
   }
 }

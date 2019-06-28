@@ -18,6 +18,14 @@
         <equals arg1="${intellij.build.use.gradle.daemon}" arg2="true"/>
       </and>
     </condition>
+    <condition property="gradle.args" value="${intellij.gradle.jdk.build.parameters}" else="--stacktrace">
+      <and>
+        <isset property="intellij.gradle.jdk.build.parameters"/>
+        <not>
+          <equals arg1="${intellij.gradle.jdk.build.parameters}" arg2=""/>
+        </not>
+      </and>
+    </condition>
     <condition property="gradlew" value="gradlew.bat" else="gradlew">
       <os family="windows"/>
     </condition>
@@ -28,6 +36,7 @@
       <env key="JAVA_HOME" value="${java.path}"/>
       <arg value="${gradle.daemon}"/>
       <arg value="-Djava.io.tmpdir=${java.io.tmpdir}"/>
+      <arg line="${gradle.args}"/>
       <arg value="setupBuildScriptsDeps"/>
     </exec>
   </target>

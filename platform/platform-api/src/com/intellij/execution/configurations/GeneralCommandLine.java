@@ -18,6 +18,7 @@ import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -182,6 +183,7 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   /** @deprecated use {@link #withParentEnvironmentType(ParentEnvironmentType)} (to be removed in IDEA 2018.*) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   @Deprecated
   public void setPassParentEnvironment(boolean passParentEnvironment) {
     withParentEnvironmentType(passParentEnvironment ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
@@ -396,7 +398,7 @@ public class GeneralCommandLine implements UserDataHolder {
       if (!Objects.equals(systemPath, shellPath)) {
         File exeFile = PathEnvironmentVariableUtil.findInPath(myExePath, shellPath, null);
         if (exeFile != null) {
-          LOG.info(exePath + " => " + exeFile);
+          LOG.debug(exePath + " => " + exeFile);
           exePath = exeFile.getPath();
         }
       }

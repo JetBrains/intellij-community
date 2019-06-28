@@ -3,6 +3,7 @@ package com.intellij.diagnostic;
 
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,6 +11,7 @@ import java.util.List;
 
 /** @deprecated induced exceptions are now grouped as attachments of the initial one - see {@link MessagePool} for details (to be removed in IDEA 2020) */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2020")
 public class GroupedLogMessage extends AbstractMessage {
   private final List<AbstractMessage> myMessages;
 

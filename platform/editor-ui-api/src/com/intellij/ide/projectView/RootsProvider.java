@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,14 @@ import java.util.Collections;
 import java.util.Set;
 
 /**
- * This interface specifies that the element corresponds to several virtual files.
+ * Specifies that the element corresponds to several virtual files.
  * For example, a package may correspond to several folders in a project,
  * or a resource bundle may correspond to several properties files.
  */
 public interface RootsProvider {
+  /**
+   * @deprecated use {@link Collections#emptySet()}
+   */
   @Deprecated
   Set<VirtualFile> EMPTY_ROOTS = Collections.emptySet();
 

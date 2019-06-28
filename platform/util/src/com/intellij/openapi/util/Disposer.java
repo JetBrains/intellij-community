@@ -23,7 +23,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -43,22 +42,21 @@ public class Disposer {
 
   private static final ObjectTreeAction<Disposable> ourDisposeAction = new ObjectTreeAction<Disposable>() {
     @Override
-    public void execute(@NotNull final Disposable each) {
+    public void execute(@NotNull Disposable each) {
       //noinspection SSBasedInspection
       each.dispose();
     }
 
     @Override
-    public void beforeTreeExecution(@NotNull final Disposable parent) {
+    public void beforeTreeExecution(@NotNull Disposable parent) {
       if (parent instanceof Disposable.Parent) {
         ((Disposable.Parent)parent).beforeTreeDispose();
       }
     }
   };
 
-  private static final String debugDisposer = System.getProperty("idea.disposer.debug");
   public static boolean isDebugDisposerOn() {
-    return "on".equals(debugDisposer);
+    return "on".equals(System.getProperty("idea.disposer.debug"));
   }
 
   private static boolean ourDebugMode;
@@ -151,17 +149,12 @@ public class Disposer {
     }
   }
 
-  @TestOnly
-  public static boolean isEmpty() {
-    return ourDebugMode && ourTree.isEmpty();
-  }
-
   /**
    * @return old value
    */
   public static boolean setDebugMode(boolean debugMode) {
     if (debugMode) {
-      debugMode = !"off".equals(debugDisposer);
+      debugMode = !"off".equals(System.getProperty("idea.disposer.debug"));
     }
     boolean oldValue = ourDebugMode;
     ourDebugMode = debugMode;

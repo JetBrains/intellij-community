@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 import org.jetbrains.idea.maven.tasks.MavenBeforeRunTask;
 import org.jetbrains.idea.maven.tasks.MavenBeforeRunTasksProvider;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
@@ -55,7 +54,6 @@ public class ToggleBeforeRunTaskAction extends MavenToggleAction {
 
   @Override
   public void setSelected(@NotNull final AnActionEvent e, boolean state) {
-    MavenActionsUsagesCollector.trigger(e.getProject(), this, e);
     final DataContext context = e.getDataContext();
     final Pair<MavenProject, String> desc = getTaskDesc(context);
     if (desc != null) {

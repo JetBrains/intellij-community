@@ -241,8 +241,8 @@ public class ShowAffectedTestsAction extends AnAction {
   }
 
   public static boolean isEnabled(@Nullable Project project) {
-    if (project == null || DumbService.isDumb(project)) return false;
-    return Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY) || ApplicationManager.getApplication().isInternal();
+    return project != null &&
+           (Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY) || ApplicationManager.getApplication().isInternal());
   }
 
   @NotNull
@@ -389,7 +389,6 @@ public class ShowAffectedTestsAction extends AnAction {
                                            @NotNull TestDiscoveryProducer.PsiTestProcessor processor,
                                            @NotNull List<Couple<String>> classesAndMethods,
                                            @NotNull List<String> filePaths) {
-    if (DumbService.isDumb(project)) return;
     GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
     for (TestDiscoveryConfigurationProducer producer : getRunConfigurationProducers(project)) {
       byte frameworkId =

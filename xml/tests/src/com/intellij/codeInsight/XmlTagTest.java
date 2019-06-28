@@ -30,7 +30,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.xml.*;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
@@ -44,7 +44,7 @@ import java.util.Arrays;
  * @author peter
  */
 @SuppressWarnings({"ConstantConditions", "EmptyCatchBlock"})
-public class XmlTagTest extends LightCodeInsightTestCase {
+public class XmlTagTest extends LightJavaCodeInsightTestCase {
   private static XmlTag createTag(String value) throws IncorrectOperationException {
     return XmlElementFactory.getInstance(getProject()).createTagFromText("<foo>" + value + "</foo>");
   }

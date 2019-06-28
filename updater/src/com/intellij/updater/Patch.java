@@ -363,11 +363,12 @@ public class Patch {
     }
 
     File jre64 = new File(toDir.getAbsolutePath() + "/jre64");
+    File jbr = new File(toDir.getAbsolutePath() + "/jbr");
+    if (jbr.exists())  Runner.logger().info("jbr bundled: " + jbr.getAbsolutePath());
+    if (jre64.exists())  Runner.logger().info("jre64 bundled: " + jre64.getAbsolutePath());
     for (File directory : createdDirectories) {
       File[] children = directory.listFiles();
-      if (children != null &&
-         (!directory.getAbsolutePath().contains("jre64") ||
-           directory.getAbsolutePath().contains("jre64") && !jre64.exists()) &&
+      if (children != null && pruningEmptyDir(toDir, directory, jre64, jbr) &&
           createdOptionalFiles.containsAll(Arrays.asList(children))) {
         Runner.logger().info("Pruning empty directory: " + directory);
         try {
@@ -388,6 +389,13 @@ public class Patch {
     }
 
     return new PatchFileCreator.ApplicationResult(true, appliedActions);
+  }
+
+  private boolean pruningEmptyDir(File toDir, File directory, File jre64, File jbr) {
+    return ((!directory.getAbsolutePath().contains("jre64") ||
+             (directory.getAbsolutePath().contains("jre64") && !jre64.exists())) &&
+            (!directory.getAbsolutePath().contains("jbr") ||
+             (directory.getAbsolutePath().contains("jbr") && !jbr.exists())));
   }
 
   public void revert(List<? extends PatchAction> actions, File backupDir, File rootDir, UpdaterUI ui) throws IOException {

@@ -16,9 +16,9 @@
 package org.jetbrains.plugins.groovy.lang.psi
 
 import com.intellij.psi.util.ClassUtil
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-class GrClassUtilTest extends LightCodeInsightFixtureTestCase {
+class GrClassUtilTest extends LightJavaCodeInsightFixtureTestCase {
   void testFindClassByName() {
     myFixture.configureByText("a.groovy", '''\
       public class InnerClasses {

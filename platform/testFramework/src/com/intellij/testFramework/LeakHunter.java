@@ -130,7 +130,9 @@ public class LeakHunter {
       LaterInvocator.purgeExpiredItems();
 
       Map<Object, String> result = new IdentityHashMap<>();
-      result.put(ApplicationManager.getApplication(), "ApplicationManager.getApplication()");
+      if (ApplicationManager.getApplication() != null) {
+        result.put(ApplicationManager.getApplication(), "ApplicationManager.getApplication()");
+      }
       result.put(Disposer.getTree(), "Disposer.getTree()");
       result.put(IdeEventQueue.getInstance(), "IdeEventQueue.getInstance()");
       result.put(LaterInvocator.getLaterInvocatorQueue(), "LaterInvocator.getLaterInvocatorQueue()");

@@ -3,9 +3,9 @@
   <module value="com.intellij.modules.json"/>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileTypeFactory implementation="com.intellij.json.JsonFileTypeFactory"/>
-    <fileTypeFactory implementation="com.intellij.json.json5.Json5FileTypeFactory"/>
-    <iconProvider implementation="com.jetbrains.jsonSchema.JsonSchemaIconProvider"/>
+    <fileType name="JSON" extensions="json" implementationClass="com.intellij.json.JsonFileType" fieldName="INSTANCE"/>
+    <fileType name="JSON5" extensions="json5" implementationClass="com.intellij.json.json5.Json5FileType" fieldName="INSTANCE"/>
+    <fileIconProvider implementation="com.jetbrains.jsonSchema.JsonSchemaIconProvider"/>
     <lang.parserDefinition language="JSON" implementationClass="com.intellij.json.JsonParserDefinition"/>
     <lang.parserDefinition language="JSON5" implementationClass="com.intellij.json.json5.Json5ParserDefinition"/>
     <lang.syntaxHighlighterFactory language="JSON" implementationClass="com.intellij.json.highlighting.JsonSyntaxHighlighterFactory"/>

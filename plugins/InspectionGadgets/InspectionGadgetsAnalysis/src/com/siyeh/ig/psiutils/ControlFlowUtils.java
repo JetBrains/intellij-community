@@ -27,7 +27,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,8 +37,7 @@ import java.util.List;
 import static com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus.*;
 
 public class ControlFlowUtils {
-
-  private ControlFlowUtils() {}
+  private ControlFlowUtils() { }
 
   public static boolean isElseIf(PsiIfStatement ifStatement) {
     PsiElement parent = ifStatement.getParent();
@@ -60,7 +58,7 @@ public class ControlFlowUtils {
     if (statement == null) {
       return true;
     }
-    if (statement instanceof PsiBreakStatement || statement instanceof PsiContinueStatement ||
+    if (statement instanceof PsiBreakStatement || statement instanceof PsiContinueStatement || statement instanceof PsiYieldStatement ||
         statement instanceof PsiReturnStatement || statement instanceof PsiThrowStatement) {
       return false;
     }
@@ -80,7 +78,7 @@ public class ControlFlowUtils {
       if (method == null) {
         return true;
       }
-      @NonNls final String methodName = method.getName();
+      final String methodName = method.getName();
       if (!methodName.equals("exit")) {
         return true;
       }
@@ -501,15 +499,10 @@ public class ControlFlowUtils {
 
   @Nullable
   public static PsiStatement getLastStatementInBlock(@Nullable PsiCodeBlock codeBlock) {
-    return getLastChildOfType(codeBlock, PsiStatement.class);
-  }
-
-  private static <T extends PsiElement> T getLastChildOfType(@Nullable PsiElement element, @NotNull Class<T> aClass) {
-    if (element == null) return null;
-    for (PsiElement child = element.getLastChild(); child != null; child = child.getPrevSibling()) {
-      if (aClass.isInstance(child)) {
-        //noinspection unchecked
-        return (T)child;
+    if (codeBlock == null) return null;
+    for (PsiElement child = codeBlock.getLastChild(); child != null; child = child.getPrevSibling()) {
+      if (child instanceof PsiStatement) {
+        return (PsiStatement)child;
       }
     }
     return null;
@@ -1181,7 +1174,7 @@ public class ControlFlowUtils {
       if (method == null) {
         return;
       }
-      @NonNls final String methodName = method.getName();
+      final String methodName = method.getName();
       if (!methodName.equals("exit")) {
         return;
       }

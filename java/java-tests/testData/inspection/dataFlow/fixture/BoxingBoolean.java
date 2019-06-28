@@ -48,7 +48,7 @@ class S {
   public void te6(boolean b){
     Boolean c = Boolean.TRUE;
     boolean o = <warning descr="Condition '!c' is always 'false'">!c</warning>;
-    <warning descr="Condition 'o' at the left side of assignment expression is always 'false'. Can be simplified">o</warning> |= c&b;
+    <warning descr="Condition 'o' at the left side of assignment expression is always 'false'. Can be simplified">o</warning> |= <warning descr="Condition 'c' is always 'true'">c</warning>&b;
     if (o) {
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
@@ -16,8 +16,9 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurab
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,10 +57,10 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
     final JLabel label = new JLabel(IdeBundle.message("prompt.please.select.module.jdk", type.getPresentableName()));
     label.setUI(new MultiLineLabelUI());
     myPanel.add(label, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
-                                              GridBagConstraints.HORIZONTAL, JBUI.insets(8, 10), 0, 0));
+                                              GridBagConstraints.HORIZONTAL, JBInsets.create(8, 10), 0, 0));
 
     final JLabel jdkLabel = new JLabel(IdeBundle.message("label.project.jdk"));
-    jdkLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
+    jdkLabel.setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD));
     myPanel.add(jdkLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
                                                  GridBagConstraints.NONE, JBUI.insets(8, 10, 0, 10), 0, 0));
 

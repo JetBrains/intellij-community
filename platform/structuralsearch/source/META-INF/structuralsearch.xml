@@ -17,9 +17,11 @@
     <applicationService serviceImplementation="com.intellij.structuralsearch.plugin.ui.ConfigurationManager$ConfigurationManagerState"/>
 
     <typedHandler implementation="com.intellij.structuralsearch.plugin.ui.StructuralSearchTypedHandler"/>
+    <backspaceHandlerDelegate implementation="com.intellij.structuralsearch.plugin.ui.StructuralSearchBackspaceHandler"/>
     <completion.contributor language="any" implementationClass="com.intellij.structuralsearch.plugin.ui.StructuralSearchTemplatesCompletionContributor"/>
     <documentationProvider implementation="com.intellij.structuralsearch.plugin.ui.StructuralSearchTemplateDocumentationProvider"/>
     <codeInsight.linkHandler prefix="#ssr_edit_filters/" handlerClass="com.intellij.structuralsearch.plugin.ui.filters.FilterTooltipLinkHandler"/>
+    <daemon.highlightInfoFilter implementation="com.intellij.structuralsearch.plugin.ui.StructuralSearchHighlightInfoFilter"/>
   </extensions>
 
   <actions>

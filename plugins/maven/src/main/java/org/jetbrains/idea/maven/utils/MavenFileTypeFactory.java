@@ -20,6 +20,7 @@ import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageSch
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +38,6 @@ public class MavenFileTypeFactory extends FileTypeFactory implements FileTypeUsa
 
   @Override
   public boolean describes(@NotNull VirtualFile file) {
-    return file.getFileType() == XmlFileType.INSTANCE && FileUtil.namesEqual(file.getName(), MavenConstants.POM_XML);
+    return FileTypeRegistry.getInstance().isFileOfType(file, XmlFileType.INSTANCE) && FileUtil.namesEqual(file.getName(), MavenConstants.POM_XML);
   }
 }

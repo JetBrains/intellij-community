@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.eclipse.importWizard;
 
@@ -8,7 +8,7 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.SelectImportedProjectsStep;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.EclipseProjectFinder;
@@ -79,7 +79,7 @@ class SelectEclipseImportedProjectsStep extends SelectImportedProjectsStep<Strin
   public boolean validate() throws ConfigurationException {
     calcDuplicates();
     if (!duplicateNames.isEmpty()) {
-      throw new ConfigurationException("Duplicate names found:" + StringUtil.join(ArrayUtil.toStringArray(duplicateNames), ","), "Unable to proceed");
+      throw new ConfigurationException("Duplicate names found:" + StringUtil.join(ArrayUtilRt.toStringArray(duplicateNames), ","), "Unable to proceed");
     }
     return super.validate();
   }

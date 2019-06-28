@@ -8,7 +8,7 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateSettings
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.ui.UIUtil
 import groovy.transform.CompileStatic
 
@@ -16,7 +16,7 @@ import groovy.transform.CompileStatic
  * @author peter
  */
 @CompileStatic
-abstract class LiveTemplateTestCase extends LightCodeInsightFixtureTestCase {
+abstract class LiveTemplateTestCase extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected void setUp() {
     super.setUp()
@@ -37,6 +37,10 @@ abstract class LiveTemplateTestCase extends LightCodeInsightFixtureTestCase {
 
   protected TemplateState getState() {
     editor?.with { TemplateManagerImpl.getTemplateState(it) }
+  }
+
+  protected TemplateManagerImpl getTemplateManager() {
+    return TemplateManager.getInstance(project) as TemplateManagerImpl
   }
 
   def startTemplate(Template template) {

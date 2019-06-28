@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.mock.MockLocalFileSystem;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -11,7 +12,7 @@ import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.projectlevelman.FileWatchRequestsManager;
 import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.RunAll;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +22,7 @@ import java.util.*;
 /**
  * @author irengrig
  */
-public class VcsFileWatchRequestManagementTest extends PlatformTestCase {
+public class VcsFileWatchRequestManagementTest extends LightPlatformTestCase {
   private static final String ourVcsName = "vcs";
 
   private NewMappings myNewMappings;
@@ -31,16 +32,17 @@ public class VcsFileWatchRequestManagementTest extends PlatformTestCase {
   public void setUp() throws Exception {
     super.setUp();
 
-    myNewMappings = new NewMappings(myProject, (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject),
-                                    FileStatusManager.getInstance(myProject), DefaultVcsRootPolicy.getInstance(myProject));
+    Project project = getProject();
+    myNewMappings = new NewMappings(project, (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(project),
+                                    FileStatusManager.getInstance(project), DefaultVcsRootPolicy.getInstance(project));
     Disposer.register(getTestRootDisposable(), myNewMappings);
     myMockLocalFileSystem = new MyMockLocalFileSystem();
-    myNewMappings.setFileWatchRequestsManager(new FileWatchRequestsManager(myProject, myNewMappings, myMockLocalFileSystem));
+    myNewMappings.setFileWatchRequestsManager(new FileWatchRequestsManager(project, myNewMappings, myMockLocalFileSystem));
     myNewMappings.activateActiveVcses();
   }
 
   @Override
-  protected void tearDown() throws Exception {
+  protected void tearDown() {
     new RunAll()
       .append(() -> myMockLocalFileSystem.disposed())
       .append(() -> super.tearDown())

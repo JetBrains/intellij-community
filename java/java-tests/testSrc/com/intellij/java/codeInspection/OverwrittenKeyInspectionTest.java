@@ -7,10 +7,10 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.OverwrittenKeyInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class OverwrittenKeyInspectionTest extends LightInspectionTestCase {
+public class OverwrittenKeyInspectionTest extends LightJavaInspectionTestCase {
   public void testOverwrittenKey() {
     doTest();
   }

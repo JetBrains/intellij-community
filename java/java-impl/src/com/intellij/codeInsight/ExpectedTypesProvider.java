@@ -364,6 +364,14 @@ public class ExpectedTypesProvider {
     }
 
     @Override
+    public void visitYieldStatement(PsiYieldStatement statement) {
+      PsiSwitchExpression expression = statement.findEnclosingExpression();
+      if (expression != null) {
+        Collections.addAll(myResult, getExpectedTypes(expression, myForCompletion));
+      }
+    }
+    
+    @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       myExpr = (PsiExpression)myExpr.getParent();
       expression.getParent().accept(this);

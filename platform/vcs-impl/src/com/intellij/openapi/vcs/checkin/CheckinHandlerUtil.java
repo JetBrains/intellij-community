@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.openapi.components.impl.stores.IProjectStore;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.OutOfSourcesChecker;
@@ -60,7 +61,7 @@ public class CheckinHandlerUtil {
 
   private static boolean isOutOfSources(@NotNull Project project, @NotNull VirtualFile file) {
     for (OutOfSourcesChecker checker : OutOfSourcesChecker.EP_NAME.getExtensions()) {
-      if (checker.getFileType() == file.getFileType()
+      if (FileTypeRegistry.getInstance().isFileOfType(file, checker.getFileType())
           && checker.isOutOfSources(project, file)) {
         return true;
       }

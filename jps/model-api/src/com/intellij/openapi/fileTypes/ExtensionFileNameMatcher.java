@@ -45,22 +45,23 @@ public class ExtensionFileNameMatcher implements FileNameMatcher {
     return "*." + myExtension;
   }
 
+  @NotNull
   public String getExtension() {
     return myExtension;
   }
 
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
     final ExtensionFileNameMatcher that = (ExtensionFileNameMatcher)o;
 
-    if (!myExtension.equals(that.myExtension)) return false;
-
-    return true;
+    return myExtension.equals(that.myExtension);
   }
 
+  @Override
   public int hashCode() {
     return myExtension.hashCode();
   }

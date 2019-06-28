@@ -9,12 +9,12 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateSettings
 import com.intellij.codeInsight.template.impl.actions.ListTemplatesAction
 import com.intellij.openapi.editor.Editor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author peter
  */
-class GroovyLiveTemplatesTest extends LightCodeInsightFixtureTestCase {
+class GroovyLiveTemplatesTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return TestUtils.getTestDataPath() + "liveTemplates/"
@@ -47,7 +47,7 @@ void usage(int num, boolean someBoolean, List<String> args){
     expandTemplate(myFixture.getEditor())
     myFixture.checkResult '''
 void usage(int num, boolean someBoolean, List<String> args){
-    println "num = [$num], someBoolean = [$someBoolean], args = [$args]"
+    println "num = $num, someBoolean = $someBoolean, args = $args"
 }
 '''
   }

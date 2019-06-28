@@ -16,13 +16,13 @@
 package com.intellij.xml;
 
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.xml.refactoring.SchemaPrefixRenameHandler;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class XmlSchemaPrefixTest extends LightCodeInsightFixtureTestCase {
+public class XmlSchemaPrefixTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testPrefixUsages() {
     doFindUsages("usages.xml", 16);

@@ -16,9 +16,9 @@
 package com.intellij.java.psi.search
 
 import com.intellij.psi.search.searches.MethodReferencesSearch
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-class FindFixtureBasedTest : LightCodeInsightFixtureTestCase() {
+class FindFixtureBasedTest : LightJavaCodeInsightFixtureTestCase() {
   fun testDefaultConstructorWithVarargsParameters() {
     val aClass = myFixture.addClass("public class Foo {public Foo(int... a) {}}")
     myFixture.addClass("public class Bar extends Foo {}")

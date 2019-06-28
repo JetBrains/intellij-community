@@ -2,10 +2,10 @@
 package com.intellij.refactoring.actions;
 
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,5 +33,14 @@ public class RefactoringActionContextUtil {
       return psiMethod;
     }
     return null;
+  }
+
+  public static boolean isOutsideModuleAndCodeBlock(@NotNull Editor editor,
+                                                    @NotNull PsiFile file) {
+    if (PsiUtil.isModuleFile(file)) {
+      return false;
+    }
+    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    return PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class) == null;
   }
 }

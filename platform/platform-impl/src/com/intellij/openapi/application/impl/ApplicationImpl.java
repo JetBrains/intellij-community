@@ -5,20 +5,15 @@ import com.intellij.BundleBase;
 import com.intellij.CommonBundle;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.configurationStore.StoreUtil;
-import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.PerformanceWatcher;
-import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.*;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
-import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.idea.IdeaApplication;
 import com.intellij.idea.Main;
-import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.*;
@@ -41,45 +36,39 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.ui.DialogEarthquakeShaker;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.AppIcon;
-import com.intellij.ui.Splash;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import com.intellij.util.messages.ListenerDescriptor;
+import com.intellij.util.messages.Topic;
+import com.intellij.util.messages.impl.MessageBusImpl;
 import com.intellij.util.ui.UIUtil;
 import net.miginfocom.layout.PlatformDefaults;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.picocontainer.MutablePicoContainer;
 import sun.awt.AWTAccessor;
 import sun.awt.AWTAutoShutdown;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ApplicationImpl extends PlatformComponentManagerImpl implements ApplicationEx {
@@ -103,7 +92,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private final TransactionGuardImpl myTransactionGuard = new TransactionGuardImpl();
   private int myWriteStackBase;
 
-  private final long myStartTime;
+  private final long myStartTime = System.currentTimeMillis();
   private boolean mySaveAllowed;
   private volatile boolean myExitInProgress;
   private volatile boolean myDisposeInProgress;
@@ -130,13 +119,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     boolean strictMode = isUnitTestMode || isInternal;
     BundleBase.assertOnMissedKeys(strictMode);
-    IconLoader.setStrictGlobally(strictMode);
 
     AWTExceptionHandler.register(); // do not crash AWT on exceptions
 
     Disposer.setDebugMode(isInternal || isUnitTestMode || Disposer.isDebugDisposerOn());
 
-    myStartTime = System.currentTimeMillis();
     myName = appName;
 
     myIsInternal = isInternal;
@@ -148,56 +135,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     if (!isUnitTestMode && !isHeadless) {
       Disposer.register(this, Disposer.newDisposable(), "ui");
-
-      StartupUtil.addExternalInstanceListener(args -> invokeLater(() -> {
-        LOG.info("ApplicationImpl.externalInstanceListener invocation");
-        String currentDirectory = args.isEmpty() ? null : args.get(0);
-        List<String> realArgs = args.isEmpty() ? args : args.subList(1, args.size());
-        Project project = CommandLineProcessor.processExternalCommandLine(realArgs, currentDirectory);
-        JFrame frame = project == null
-                       ? WindowManager.getInstance().findVisibleFrame() :
-                       (JFrame)WindowManager.getInstance().getIdeFrame(project);
-        if (frame != null) {
-          if (frame instanceof IdeFrame) {
-            AppIcon.getInstance().requestFocus((IdeFrame)frame);
-          }
-          else {
-            frame.toFront();
-            DialogEarthquakeShaker.shake(frame);
-          }
-        }
-      }));
-
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      WindowsCommandLineProcessor.LISTENER = (currentDirectory, args) -> {
-        List<String> argsList = Arrays.asList(args);
-        LOG.info("Received external Windows command line: current directory " + currentDirectory + ", command line " + argsList);
-        if (argsList.isEmpty()) return;
-        ModalityState state = getDefaultModalityState();
-        for (ApplicationStarter starter : ApplicationStarter.EP_NAME.getExtensionList()) {
-          if (starter.canProcessExternalCommandLine() &&
-              argsList.get(0).equals(starter.getCommandName()) &&
-              starter.allowAnyModalityState()) {
-            state = getAnyModalityState();
-          }
-        }
-        invokeLater(() -> CommandLineProcessor.processExternalCommandLine(argsList, currentDirectory), state);
-      };
     }
 
-    if (isUnitTestMode && IdeaApplication.getInstance() == null) {
-      String[] args = {"inspect", "", "", ""};
-      Main.setFlags(args); // set both isHeadless and isCommandLine to true
-      System.setProperty(IdeaApplication.IDEA_IS_UNIT_TEST, Boolean.TRUE.toString());
-      assert Main.isHeadless();
-      assert Main.isCommandLine();
-      //noinspection ResultOfObjectAllocationIgnored
-      new IdeaApplication(args);
-    }
     gatherStatistics = LOG.isDebugEnabled() || isUnitTestMode() || isInternal();
 
     Activity activity = StartUpMeasurer.start("instantiate AppDelayQueue");
-    Thread edt = UIUtil.invokeAndWaitIfNeeded(() -> {
+    myLock = new ReadMostlyRWLock(UIUtil.invokeAndWaitIfNeeded(() -> {
       // instantiate AppDelayQueue which starts "Periodic task thread" which we'll mark busy to prevent this EDT to die
       // that thread was chosen because we know for sure it's running
       AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
@@ -207,11 +150,43 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         AWTAutoShutdown.getInstance().notifyThreadFree(thread); // allow for EDT to exit - needed for Upsource
       });
       return Thread.currentThread();
-    });
+    }));
     activity.end();
-    myLock = new ReadMostlyRWLock(edt);
 
     NoSwingUnderWriteAction.watchForEvents(this);
+  }
+
+  public static void patchSystem() {
+    LOG.info("CPU cores: " + Runtime.getRuntime().availableProcessors() +
+             "; ForkJoinPool.commonPool: " + ForkJoinPool.commonPool() +
+             "; factory: " + ForkJoinPool.commonPool().getFactory());
+
+    // replaces system event queue
+    //noinspection ResultOfMethodCallIgnored
+    IdeEventQueue.getInstance();
+  }
+
+  // this method not in ApplicationImpl constructor because application starter can perform this activity in parallel to another task
+  public static void registerMessageBusListeners(@NotNull Application app, @NotNull List<IdeaPluginDescriptor> pluginDescriptors, boolean isUnitTestMode) {
+    ConcurrentMap<String, List<ListenerDescriptor>> map = ContainerUtil.newConcurrentMap();
+    for (IdeaPluginDescriptor descriptor : pluginDescriptors) {
+      List<ListenerDescriptor> listeners = ((IdeaPluginDescriptorImpl)descriptor).getListeners();
+      if (!listeners.isEmpty()) {
+        for (ListenerDescriptor listener : listeners) {
+          if (isUnitTestMode && !listener.activeInTestMode) {
+            continue;
+          }
+
+          List<ListenerDescriptor> list = map.get(listener.topicClassName);
+          if (list == null) {
+            list = new SmartList<>();
+            map.put(listener.topicClassName, list);
+          }
+          list.add(listener);
+        }
+      }
+    }
+    ((MessageBusImpl)app.getMessageBus()).setLazyListeners(map);
   }
 
   /**
@@ -221,7 +196,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
    * if there is a pending write action.
    */
   @Override
-  @Deprecated
   public void executeByImpatientReader(@NotNull Runnable runnable) throws ApplicationUtil.CannotRunReadActionException {
     if (isDispatchThread()) {
       runnable.run();
@@ -399,19 +373,18 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void load(@Nullable final String configPath) {
-    load(configPath, null, null);
+    registerComponents(PluginManagerCore.getLoadedPlugins());
+    load(configPath, null);
   }
 
-  public void load(@Nullable final String configPath, @Nullable Splash splash, @Nullable List<? extends IdeaPluginDescriptor> plugins) {
+  @Override
+  public void registerComponents(@NotNull List<? extends IdeaPluginDescriptor> plugins) {
+    super.registerComponents(plugins);
+  }
+
+  public void load(@Nullable String configPath, @Nullable ProgressIndicator indicator) {
     AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
     try {
-      StartupProgress startupProgress = splash == null ? null : (message, progress) -> splash.showProgress("", progress);
-
-      // before totalMeasureToken to ensure that plugin loading is not part of this
-      if (plugins == null) {
-        plugins = PluginManagerCore.getLoadedPlugins(startupProgress);
-      }
-
       if (!isHeadlessEnvironment()) {
         // wanted for UI, but should not affect start-up time,
         // since MigLayout is not important for start-up UI, it is ok execute it in a pooled thread
@@ -422,36 +395,25 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         });
       }
 
-      ProgressIndicator indicator = splash == null ? null : new EmptyProgressIndicator() {
-        @Override
-        public void setFraction(double fraction) {
-          splash.showProgress("", (float)fraction);
-        }
-      };
-      init(plugins, indicator, () -> {
-        String effectiveConfigPath = FileUtilRt.toSystemIndependentName(configPath == null ? PathManager.getConfigPath() : configPath);
-        List<ApplicationLoadListener> applicationLoadListeners = ApplicationLoadListener.EP_NAME.getExtensionList();
-        for (ApplicationLoadListener listener : applicationLoadListeners) {
-          try {
-            listener.beforeApplicationLoaded(this, effectiveConfigPath);
-          }
-          catch (Throwable e) {
-            LOG.error(e);
-          }
-        }
+      Activity componentRegisteredActivity = StartUpMeasurer.start(activityNamePrefix() + Phases.COMPONENTS_REGISTERED_CALLBACK_SUFFIX);
+      String effectiveConfigPath = FileUtilRt.toSystemIndependentName(configPath == null ? PathManager.getConfigPath() : configPath);
+      ApplicationLoadListener.EP_NAME.forEachExtensionSafe(listener -> listener.beforeApplicationLoaded(this, effectiveConfigPath));
 
-        // we set it after beforeApplicationLoaded call, because app store can depends on stream provider state
-        ServiceKt.getStateStore(this).setPath(effectiveConfigPath);
+      // we set it after beforeApplicationLoaded call, because app store can depends on stream provider state
+      ServiceKt.getStateStore(this).setPath(effectiveConfigPath);
 
-        for (ApplicationLoadListener listener : applicationLoadListeners) {
-          try {
-            listener.beforeComponentsCreated();
-          }
-          catch (Throwable e) {
-            LOG.error(e);
-          }
-        }
-      });
+      ApplicationLoadListener.EP_NAME.forEachExtensionSafe(listener -> listener.beforeComponentsCreated());
+      componentRegisteredActivity.end();
+
+      if (indicator == null) {
+        // no splash, no need to to use progress manager
+        createComponents(null);
+      }
+      else {
+        ProgressManager.getInstance().runProcess(() -> createComponents(indicator), indicator);
+      }
+
+      ourThreadExecutorsService.submit(() -> createLocatorFile());
 
       Activity activity = StartUpMeasurer.start(Phases.APP_INITIALIZED_CALLBACK);
       for (ApplicationInitializedListener listener : ((ExtensionsAreaImpl)Extensions.getArea(null)).<ApplicationInitializedListener>getExtensionPoint("com.intellij.applicationInitializedListener")) {
@@ -475,20 +437,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       token.finish();
     }
     myLoaded = true;
-
-    createLocatorFile();
-  }
-
-  @Override
-  protected void createComponents(@Nullable ProgressIndicator indicator) {
-    // we cannot wrap "init()" call because ProgressManager instance could be created only after component registration (our "componentsRegistered" callback)
-    if (indicator == null) {
-      // no splash, no need to to use progress manager
-      super.createComponents(null);
-    }
-    else {
-      ProgressManager.getInstance().runProcess(() -> super.createComponents(indicator), indicator);
-    }
   }
 
   @Override
@@ -499,17 +447,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return progressManager == null ? null : progressManager.getProgressIndicator();
   }
 
-  @Override
-  protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
-    float start = PluginManagerCore.PROGRESS_PART;
-    indicator.setFraction(start + getPercentageOfComponentsLoaded() * (1 - start));
-  }
-
   private static void createLocatorFile() {
-    File locatorFile = new File(PathManager.getSystemPath() + "/" + ApplicationEx.LOCATOR_FILE_NAME);
+    Path locatorFile = Paths.get(PathManager.getSystemPath(), ApplicationEx.LOCATOR_FILE_NAME);
     try {
-      byte[] data = PathManager.getHomePath().getBytes(StandardCharsets.UTF_8);
-      FileUtil.writeToFile(locatorFile, data);
+      Files.write(locatorFile, PathManager.getHomePath().getBytes(StandardCharsets.UTF_8));
     }
     catch (IOException e) {
       LOG.warn("can't store a location in '" + locatorFile + "'", e);
@@ -523,7 +464,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void dispose() {
-    HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
     fireApplicationExiting();
 
     ShutDownTracker.getInstance().ensureStopperThreadsFinished();
@@ -772,7 +712,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
    * @param elevate if true and the IDE is running on Windows, the IDE is restarted in elevated mode (with admin privileges)
    */
   public void restart(boolean exitConfirmed, boolean elevate) {
-    exit(false, exitConfirmed, true, elevate, ArrayUtil.EMPTY_STRING_ARRAY);
+    exit(false, exitConfirmed, true, elevate, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   /**
@@ -785,7 +725,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
    *  quit message is shown. In that case, showing multiple messages sounds contra-intuitive as well
    */
   public void exit(boolean force, boolean exitConfirmed, boolean restart) {
-    exit(force, exitConfirmed, restart, ArrayUtil.EMPTY_STRING_ARRAY);
+    exit(force, exitConfirmed, restart, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   public void exit(boolean force, boolean exitConfirmed, boolean restart, @NotNull String[] beforeRestart) {
@@ -828,7 +768,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       boolean success = disposeSelf(!force);
       if (!success || isUnitTestMode() || Boolean.getBoolean("idea.test.guimode")) {
         if (Boolean.getBoolean("idea.test.guimode")) {
-          IdeaApplication.getInstance().shutdown();
+          shutdown();
         }
         return;
       }
@@ -850,6 +790,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       myDisposeInProgress = false;
       myExitInProgress = false;
     }
+  }
+
+  /**
+   * Used for GUI tests to stop IdeEventQueue dispatching when Application is disposed already
+   */
+  private static void shutdown() {
+    IdeEventQueue.applicationClose();
+    ShutDownTracker.getInstance().run();
   }
 
   private static boolean confirmExitIfNeeded(boolean exitConfirmed) {
@@ -1018,7 +966,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private boolean runEdtProgressWriteAction(@NotNull String title,
                                             @Nullable Project project,
                                             @Nullable JComponent parentComponent,
-                                            @Nullable String cancelText,
+                                            @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText,
                                             @NotNull Consumer<? super ProgressIndicator> action) {
     return runWriteActionWithClass(action.getClass(), ()->{
       PotemkinProgress indicator = new PotemkinProgress(title, project, parentComponent, cancelText);
@@ -1200,7 +1148,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     if (!isWriteAccessAllowed()) {
       assertIsDispatchThread("Write access is allowed from event dispatch thread only");
     }
-    HeavyProcessLatch.INSTANCE.stopThreadPrioritizing(); // let non-cancellable read actions complete faster, if present
     boolean writeActionPending = myWriteActionPending;
     if (gatherStatistics && myWriteActionsStack.isEmpty() && !writeActionPending) {
       ActionPauses.WRITE.started();
@@ -1475,6 +1422,21 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   protected List<ServiceDescriptor> getServices(@NotNull IdeaPluginDescriptor pluginDescriptor) {
     return ((IdeaPluginDescriptorImpl)pluginDescriptor).getAppServices();
   }
+
+  @Override
+  protected void logMessageBusDelivery(Topic topic, String messageName, Object handler, long durationNanos) {
+    super.logMessageBusDelivery(topic, messageName, handler, durationNanos);
+    if (topic == ProjectManager.TOPIC) {
+      ParallelActivity.PROJECT_OPEN_HANDLER.record(StartUpMeasurer.getCurrentTime() - durationNanos, handler.getClass(),
+                                                   StartUpMeasurer.Level.PROJECT);
+    }
+    else if (topic == VirtualFileManager.VFS_CHANGES) {
+      if (TimeUnit.NANOSECONDS.toMillis(durationNanos) > 50) {
+        LOG.info(String.format("LONG VFS PROCESSING. Topic=%s, offender=%s, message=%s, time=%dms", topic.getDisplayName(), handler.getClass(), messageName, TimeUnit.NANOSECONDS.toMillis(durationNanos)));
+      }
+    }
+  }
+
 
   @TestOnly
   void disableEventsUntil(@NotNull Disposable disposable) {

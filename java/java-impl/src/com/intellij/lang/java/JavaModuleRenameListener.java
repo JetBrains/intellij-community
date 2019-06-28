@@ -1,17 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java;
 
 import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.PsiNamedElement;
@@ -34,12 +34,16 @@ import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.Pair.pair;
 
-public class JavaModuleRenameListener implements ProjectComponent, ModuleListener {
-  public JavaModuleRenameListener(@NotNull Project project) {
-    project.getMessageBus().connect().subscribe(ProjectTopics.MODULES, this);
+public class JavaModuleRenameListener implements StartupActivity, ModuleListener {
+  @Override
+  public void runActivity(@NotNull Project project) {
+    if (!project.isDefault()) {
+      project.getMessageBus().connect().subscribe(ProjectTopics.MODULES, this);
+    }
   }
 
   @Override
+  @SuppressWarnings("BoundedWildcard")
   public void modulesRenamed(@NotNull Project project, @NotNull List<Module> modules, @NotNull Function<Module, String> oldNameProvider) {
     List<Pair<SmartPsiElementPointer<PsiJavaModule>, String>> suggestions = new ArrayList<>();
 

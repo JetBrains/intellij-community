@@ -28,7 +28,21 @@ public final class ColorDescriptor extends AbstractKeyDescriptor<ColorKey> {
 
   public enum Kind {
     BACKGROUND,
-    FOREGROUND
+    FOREGROUND,
+    BACKGROUND_WITH_TRANSPARENCY,
+    FOREGROUND_WITH_TRANSPARENCY;
+
+    public boolean isBackground() {
+      return this == BACKGROUND || this == BACKGROUND_WITH_TRANSPARENCY;
+    }
+
+    public boolean isForeground() {
+      return this == FOREGROUND || this == FOREGROUND_WITH_TRANSPARENCY;
+    }
+
+    public boolean isWithTransparency() {
+      return this == FOREGROUND_WITH_TRANSPARENCY || this == BACKGROUND_WITH_TRANSPARENCY;
+    }
   }
 
   private final Kind myKind;

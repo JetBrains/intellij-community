@@ -52,7 +52,8 @@ public class PatternCompiler {
   private static boolean ourLastCompileSuccessful = true;
   private static String ourLastSearchPlan;
 
-  public static CompiledPattern compilePattern(Project project, MatchOptions options, boolean checkForErrors)
+  public static CompiledPattern compilePattern(Project project, MatchOptions options,
+                                               boolean checkForErrors, boolean optimizeScope)
     throws MalformedPatternException, NoMatchFoundException {
     if (!checkForErrors) {
       synchronized (LOCK) {
@@ -68,12 +69,13 @@ public class PatternCompiler {
       }
     }
     return !ApplicationManager.getApplication().isDispatchThread()
-           ? ReadAction.compute(() -> doCompilePattern(project, options, checkForErrors))
-           : doCompilePattern(project, options, checkForErrors);
+           ? ReadAction.compute(() -> doCompilePattern(project, options, checkForErrors, optimizeScope))
+           : doCompilePattern(project, options, checkForErrors, optimizeScope);
   }
 
   @NotNull
-  private static CompiledPattern doCompilePattern(Project project, MatchOptions options, boolean checkForErrors)
+  private static CompiledPattern doCompilePattern(Project project, MatchOptions options,
+                                                  boolean checkForErrors, boolean optimizeScope)
     throws MalformedPatternException, NoMatchFoundException {
 
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getFileType());
@@ -107,7 +109,9 @@ public class PatternCompiler {
       if (checkForErrors) {
         profile.checkSearchPattern(pattern);
       }
-      optimizeScope(options, checkForErrors, context, result);
+      if (optimizeScope) {
+        optimizeScope(options, checkForErrors, context, result);
+      }
       return result;
     } finally {
       context.clear();
@@ -461,7 +465,7 @@ public class PatternCompiler {
           options.addVariableConstraint(constraint);
         }
 
-        SubstitutionHandler handler = result.createSubstitutionHandler(
+        final SubstitutionHandler handler = result.createSubstitutionHandler(
           name,
           compiledName,
           constraint.isPartOfSearchResults(),
@@ -523,9 +527,9 @@ public class PatternCompiler {
       prevOffset = offset;
     }
 
-    MatchVariableConstraint constraint = options.getVariableConstraint(Configuration.CONTEXT_VAR_NAME);
+    final MatchVariableConstraint constraint = options.getVariableConstraint(Configuration.CONTEXT_VAR_NAME);
     if (constraint != null) {
-      SubstitutionHandler handler = result.createSubstitutionHandler(
+      final SubstitutionHandler handler = result.createSubstitutionHandler(
         Configuration.CONTEXT_VAR_NAME,
         Configuration.CONTEXT_VAR_NAME,
         constraint.isPartOfSearchResults(),
@@ -548,17 +552,18 @@ public class PatternCompiler {
 
     buf.append(text.substring(prevOffset));
 
-    PsiElement[] patternElements;
+    final PsiElement[] patternElements;
     try {
       patternElements = MatcherImplUtil.createTreeFromText(buf.toString(), PatternTreeContext.Block, options.getFileType(),
                                                            options.getDialect(), options.getPatternContext(), project, false);
-      if (patternElements.length == 0) throw new MalformedPatternException();
+      if (patternElements.length == 0 && checkForErrors) throw new MalformedPatternException();
     } catch (IncorrectOperationException e) {
-      throw new MalformedPatternException(e.getMessage());
+      if (checkForErrors) throw new MalformedPatternException(e.getMessage());
+      return Collections.emptyList();
     }
 
-    NodeFilter filter = LexicalNodesFilter.getInstance();
-    List<PsiElement> elements = new SmartList<>();
+    final NodeFilter filter = LexicalNodesFilter.getInstance();
+    final List<PsiElement> elements = new SmartList<>();
     for (PsiElement element : patternElements) {
       if (!filter.accepts(element)) {
         elements.add(element);
@@ -566,7 +571,12 @@ public class PatternCompiler {
     }
 
     final GlobalCompilingVisitor compilingVisitor = new GlobalCompilingVisitor();
-    compilingVisitor.compile(elements.toArray(PsiElement.EMPTY_ARRAY), context);
+    try {
+      compilingVisitor.compile(elements.toArray(PsiElement.EMPTY_ARRAY), context);
+    }
+    catch (MalformedPatternException e) {
+      if (checkForErrors) throw e;
+    }
     new DeleteNodesAction(compilingVisitor.getLexicalNodes()).run();
     return elements;
   }

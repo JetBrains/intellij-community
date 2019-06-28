@@ -2,15 +2,14 @@
 package com.intellij.java.psi.impl;
 
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 
-import static com.intellij.testFramework.LightCodeInsightTestCase.getJavaFacade;
+import static com.intellij.testFramework.LightJavaCodeInsightTestCase.getJavaFacade;
 
-public class JavaElementFactoryTest extends LightCodeInsightFixtureTestCase {
+public class JavaElementFactoryTest extends LightJavaCodeInsightFixtureTestCase {
   private PsiElementFactory myFactory;
 
   @Override

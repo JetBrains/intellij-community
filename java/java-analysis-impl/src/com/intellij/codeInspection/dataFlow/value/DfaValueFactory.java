@@ -299,12 +299,17 @@ public class DfaValueFactory {
 
     ClassInitializationInfo(@NotNull PsiClass psiClass) {
       // Indirect instantiation via other class is still possible, but hopefully unlikely
-      myCanInstantiateItself = StreamEx.of(psiClass.getChildren())
-                                       .select(PsiMember.class)
-                                       .filter(member -> member.hasModifierProperty(PsiModifier.STATIC))
-                                       .flatMap(member -> StreamEx.<PsiElement>ofTree(member, e -> StreamEx.of(e.getChildren())))
-                                       .select(PsiNewExpression.class).map(PsiNewExpression::getClassReference).nonNull()
-                                       .anyMatch(classRef -> classRef.isReferenceTo(psiClass));
+      boolean canInstantiateItself = false;
+      for (PsiElement child : psiClass.getChildren()) {
+        if (child instanceof PsiMember && ((PsiMember)child).hasModifierProperty(PsiModifier.STATIC) &&
+            SyntaxTraverser.psiTraverser(child).filter(PsiNewExpression.class)
+              .filterMap(PsiNewExpression::getClassReference)
+              .find(classRef -> classRef.isReferenceTo(psiClass)) != null) {
+          canInstantiateItself = true;
+          break;
+        }
+      }
+      myCanInstantiateItself = canInstantiateItself;
       mySuperCtorsCallMethods =
         !InheritanceUtil.processSupers(psiClass, false, superClass -> !canCallMethodsInConstructors(superClass, true));
       myCtorsCallMethods = canCallMethodsInConstructors(psiClass, false);

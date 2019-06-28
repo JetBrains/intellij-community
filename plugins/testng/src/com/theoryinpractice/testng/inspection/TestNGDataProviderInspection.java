@@ -78,7 +78,7 @@ public class TestNGDataProviderInspection extends AbstractBaseJavaLocalInspectio
 
     String body = "";
     try {
-      final Properties attributes = new Properties();
+      final Properties attributes = FileTemplateManager.getInstance(provider.getProject()).getDefaultProperties();
       attributes.put(FileTemplate.ATTRIBUTE_NAME, name);
       body = fileTemplate.getText(attributes);
       body = body.replace("${BODY}\n", "");

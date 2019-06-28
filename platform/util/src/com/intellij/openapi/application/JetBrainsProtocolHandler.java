@@ -5,24 +5,26 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class JetBrainsProtocolHandler {
+public final class JetBrainsProtocolHandler {
   public static final String PROTOCOL = "jetbrains://";
+  public static final String FRAGMENT_PARAM_NAME = "__fragment";
+
   private static String ourMainParameter = null;
   private static String ourCommand = null;
   public static final String REQUIRED_PLUGINS_KEY = "idea.required.plugins.id";
-  private static final Map<String, String> ourParameters = new HashMap<>(0);
+  private static Map<String, String> ourParameters = Collections.emptyMap();
   private static boolean initialized = false;
 
   public static void processJetBrainsLauncherParameters(@NotNull String url) {
@@ -42,9 +44,10 @@ public class JetBrainsProtocolHandler {
 
     ourCommand = urlParts.get(1);
     ourMainParameter = ContainerUtil.getOrElse(urlParts, 2, null);
-    ourParameters.clear();
-    computeParameters(uri.getRawQuery(), ourParameters);
-
+    Map<String, String> parameters = new THashMap<>();
+    computeParameters(uri.getRawQuery(), parameters);
+    parameters.put(FRAGMENT_PARAM_NAME, uri.getFragment());
+    ourParameters = Collections.unmodifiableMap(parameters);
     initialized = true;
   }
 
@@ -103,6 +106,6 @@ public class JetBrainsProtocolHandler {
   @NotNull
   public static Map<String, String> getParameters() {
     init();
-    return Collections.unmodifiableMap(ourParameters);
+    return ourParameters;
   }
 }

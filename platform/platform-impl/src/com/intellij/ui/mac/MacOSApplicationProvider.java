@@ -20,7 +20,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
-import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.sun.jna.Callback;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,10 +30,7 @@ import java.io.File;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author max
- */
-public class MacOSApplicationProvider {
+public final class MacOSApplicationProvider {
   private static final Logger LOG = Logger.getInstance(MacOSApplicationProvider.class);
 
   private MacOSApplicationProvider() { }
@@ -52,6 +48,7 @@ public class MacOSApplicationProvider {
 
   private static class Worker {
     private static final AtomicBoolean ENABLED = new AtomicBoolean(true);
+    @SuppressWarnings({"FieldCanBeLocal", "unused"}) private static Object UPDATE_CALLBACK_REF;
 
     static void initMacApplication() {
       Application application = Application.getApplication();
@@ -74,7 +71,7 @@ public class MacOSApplicationProvider {
         if (list.isEmpty()) return;
         submit("OpenFile", () -> {
           if (ProjectUtil.tryOpenFileList(project, list, "MacMenu")) {
-            IdeaApplication.getInstance().disableProjectLoad();
+            IdeaApplication.disableProjectLoad();
           }
         });
       });
@@ -82,8 +79,6 @@ public class MacOSApplicationProvider {
       if (JnaLoader.isLoaded()) {
         installAutoUpdateMenu();
       }
-
-      TouchBarsManager.onApplicationInitialized();
     }
 
     private static void installAutoUpdateMenu() {
@@ -106,6 +101,7 @@ public class MacOSApplicationProvider {
           });
         }
       };
+      UPDATE_CALLBACK_REF = impl;  // prevents the callback from being collected
       Foundation.addMethod(checkForUpdatesClass, Foundation.createSelector("checkForUpdates"), impl, "v");
       Foundation.registerObjcClassPair(checkForUpdatesClass);
 

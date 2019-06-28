@@ -14,15 +14,30 @@ internal class MapBinding(keyType: Type, valueType: Type, context: BindingInitia
   private val isKeyComparable = Comparable::class.java.isAssignableFrom(ClassUtil.typeToClass(keyType))
 
   override fun serialize(obj: Any, context: WriteContext) {
-    val writer = context.writer
     val map = obj as Map<*, *>
+    val writer = context.writer
 
-    fun writeEntry(key: Any?, value: Any?) {
-      if (key == null) {
-        writer.writeNull()
+    if (context.filter.skipEmptyMap && map.isEmpty()) {
+      writer.writeInt(0)
+      return
+    }
+
+    fun writeEntry(key: Any?, value: Any?, isStringKey: Boolean) {
+      if (isStringKey) {
+        if (key == null) {
+          throw SerializationException("null string keys not supported")
+        }
+        else {
+          writer.setFieldName(key as String)
+        }
       }
       else {
-        keyBinding.serialize(key, context)
+        if (key == null) {
+          writer.writeNull()
+        }
+        else {
+          keyBinding.serialize(key, context)
+        }
       }
 
       if (value == null) {
@@ -33,7 +48,8 @@ internal class MapBinding(keyType: Type, valueType: Type, context: BindingInitia
       }
     }
 
-    writer.stepIn(IonType.LIST)
+    val isStringKey = keyBinding is StringBinding
+    writer.stepIn(if (isStringKey) IonType.STRUCT else IonType.LIST)
     if (context.configuration.orderMapEntriesByKeys && isKeyComparable && map !is SortedMap<*, *> && map !is LinkedHashMap<*, *>) {
       val keys = ArrayUtil.toObjectArray(map.keys)
       Arrays.sort(keys) { a, b ->
@@ -45,18 +61,20 @@ internal class MapBinding(keyType: Type, valueType: Type, context: BindingInitia
         }
       }
       for (key in keys) {
-        writeEntry(key, map.get(key))
+        writeEntry(key, map.get(key), isStringKey)
       }
     }
     else {
       if (map is THashMap) {
         map.forEachEntry { k: Any?, v: Any? ->
-          writeEntry(k, v)
+          writeEntry(k, v, isStringKey)
           true
         }
       }
       else {
-        map.forEach(::writeEntry)
+        map.forEach {
+          key, value -> writeEntry(key, value, isStringKey)
+        }
       }
     }
     writer.stepOut()
@@ -77,30 +95,45 @@ internal class MapBinding(keyType: Type, valueType: Type, context: BindingInitia
       result = THashMap()
       property.set(hostObject, result)
     }
-    readInto(result, context)
+    readInto(result, context, hostObject)
   }
 
-  override fun deserialize(context: ReadContext): Any {
+  override fun deserialize(context: ReadContext, hostObject: Any?): Any {
     val result = THashMap<Any?, Any?>()
-    readInto(result, context)
+    readInto(result, context, hostObject)
     return result
   }
 
-  private fun readInto(result: MutableMap<Any?, Any?>, context: ReadContext) {
+  private fun readInto(result: MutableMap<Any?, Any?>, context: ReadContext, hostObject: Any?) {
     val reader = context.reader
+
+    if (reader.type == IonType.INT) {
+      LOG.assertTrue(context.reader.intValue() == 0)
+      return
+    }
+
+    val isStringKeys = reader.type == IonType.STRUCT
     reader.stepIn()
     while (true) {
-      val key = read(reader.next() ?: break, keyBinding, context)
-      val value = read(reader.next() ?: break, valueBinding, context)
-      result.put(key, value)
+      if (isStringKeys) {
+        val type = reader.next() ?: break
+        val key = reader.fieldName
+        val value = read(type, valueBinding, context, hostObject)
+        result.put(key, value)
+      }
+      else {
+        val key = read(reader.next() ?: break, keyBinding, context, hostObject)
+        val value = read(reader.next() ?: break, valueBinding, context, hostObject)
+        result.put(key, value)
+      }
     }
     reader.stepOut()
   }
 
-  private fun read(type: IonType, binding: Binding, context: ReadContext): Any? {
+  private fun read(type: IonType, binding: Binding, context: ReadContext, hostObject: Any?): Any? {
     return when (type) {
       IonType.NULL -> null
-      else -> binding.deserialize(context)
+      else -> binding.deserialize(context, hostObject)
     }
   }
 }

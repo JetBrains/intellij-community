@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.hint;
 
@@ -16,7 +16,9 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.*;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Function;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -30,8 +32,8 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -92,7 +94,7 @@ public class ParameterInfoComponent extends JPanel {
     this(objects, editor, handler, false, false);
   }
 
-  ParameterInfoComponent(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler, 
+  ParameterInfoComponent(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler,
                          boolean requestFocus, boolean allowSwitchLabel) {
     super(new BorderLayout());
     myRequestFocus = requestFocus;
@@ -202,7 +204,7 @@ public class ParameterInfoComponent extends JPanel {
     private int i;
     private Function<? super String, String> myEscapeFunction;
     private final ParameterInfoController.Model result = new ParameterInfoController.Model();
-    
+
     MyParameterContext(boolean singleParameterInfo) {
       mySingleParameterInfo = singleParameterInfo;
     }

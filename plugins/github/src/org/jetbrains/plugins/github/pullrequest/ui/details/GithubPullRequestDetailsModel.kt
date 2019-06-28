@@ -4,15 +4,15 @@ package org.jetbrains.plugins.github.pullrequest.ui.details
 import com.intellij.openapi.Disposable
 import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailedWithHtml
+import org.jetbrains.plugins.github.api.data.GHPullRequest
 import java.util.*
 import kotlin.properties.Delegates
 
 class GithubPullRequestDetailsModel {
   private val changeEventDispatcher = EventDispatcher.create(GithubPullRequestDetailsChangedListener::class.java)
 
-  var details: GithubPullRequestDetailedWithHtml?
-    by Delegates.observable<GithubPullRequestDetailedWithHtml?>(null) { _, _, _ ->
+  var details: GHPullRequest?
+    by Delegates.observable<GHPullRequest?>(null) { _, _, _ ->
       changeEventDispatcher.multicaster.detailsChanged()
     }
 

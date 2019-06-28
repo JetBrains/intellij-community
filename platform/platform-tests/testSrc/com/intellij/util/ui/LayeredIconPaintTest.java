@@ -1,18 +1,19 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RestoreScaleRule;
-import com.intellij.util.ui.JBUIScale.ScaleContext;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.scale.ScaleContext;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.ExternalResource;
 
 import javax.swing.*;
 
-import static com.intellij.util.ui.JBUIScale.DerivedScaleType.PIX_SCALE;
+import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
 
 /**
  * Tests {@link com.intellij.ui.LayeredIcon} painting.
@@ -33,7 +34,7 @@ public class LayeredIconPaintTest extends CompositeIconPaintTestHelper {
   protected ScalableIcon createCompositeIcon(ScaleContext ctx, Icon... cellIcons) {
     LayeredIcon icon = new LayeredIcon(2);
     icon.setIcon(cellIcons[0], 0);
-    icon.setIcon(cellIcons[1], 1, JBUI.scale(10), JBUI.scale(6));
+    icon.setIcon(cellIcons[1], 1, JBUIScale.scale(10), JBUIScale.scale(6));
     return icon;
   }
 

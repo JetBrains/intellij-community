@@ -11,10 +11,10 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.siyeh.ig.style.UnnecessaryFullyQualifiedNameInspection
 
-class AddImportActionTest extends LightCodeInsightFixtureTestCase {
+class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
   private CommonCodeStyleSettings settings
 
   void testMap15() {

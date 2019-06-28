@@ -19,7 +19,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NonNls;
 /**
  * @author Mike
  */
-public class XmlSchemaTest extends LightCodeInsightTestCase {
+public class XmlSchemaTest extends LightJavaCodeInsightTestCase {
   private XmlTag SHIP_TO;
   private XmlTag UNKNOWN_TAG;
 

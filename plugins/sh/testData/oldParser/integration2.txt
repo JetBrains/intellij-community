@@ -33,18 +33,14 @@ SHELL_SCRIPT
             COMPOUND_LIST
               PsiElement(\n)('\n')
               PsiWhiteSpace('    ')
-              PIPELINE_COMMAND
-                PIPELINE
-                  SIMPLE_COMMAND
-                    GENERIC_COMMAND_DIRECTIVE
-                      LITERAL
-                        PsiElement(word)('test')
-                    PsiWhiteSpace(' ')
-                    LITERAL
-                      PsiElement(word)('-s')
-                    PsiWhiteSpace(' ')
-                    LITERAL
-                      PsiElement(word)('/etc/init.d/.depend.boot')
+              TEST_COMMAND
+                PsiElement(test)('test')
+                PsiWhiteSpace(' ')
+                LITERAL
+                  PsiElement(word)('-s')
+                PsiWhiteSpace(' ')
+                LITERAL
+                  PsiElement(word)('/etc/init.d/.depend.boot')
               PsiWhiteSpace('  ')
               PsiElement(||)('||')
               PsiWhiteSpace(' ')
@@ -60,18 +56,14 @@ SHELL_SCRIPT
                       PsiElement(CLOSE_QUOTE)('"')
               PsiElement(\n)('\n')
               PsiWhiteSpace('    ')
-              PIPELINE_COMMAND
-                PIPELINE
-                  SIMPLE_COMMAND
-                    GENERIC_COMMAND_DIRECTIVE
-                      LITERAL
-                        PsiElement(word)('test')
-                    PsiWhiteSpace(' ')
-                    LITERAL
-                      PsiElement(word)('-s')
-                    PsiWhiteSpace(' ')
-                    LITERAL
-                      PsiElement(word)('/etc/init.d/.depend.start')
+              TEST_COMMAND
+                PsiElement(test)('test')
+                PsiWhiteSpace(' ')
+                LITERAL
+                  PsiElement(word)('-s')
+                PsiWhiteSpace(' ')
+                LITERAL
+                  PsiElement(word)('/etc/init.d/.depend.start')
               PsiWhiteSpace(' ')
               PsiElement(||)('||')
               PsiWhiteSpace(' ')

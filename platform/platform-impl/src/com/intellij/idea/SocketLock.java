@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
+import com.intellij.ide.CliResult;
 import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -11,8 +12,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.BuiltInServer;
 import org.jetbrains.io.MessageDecoder;
 
+import java.awt.*;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -36,10 +38,14 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
+import java.util.List;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class SocketLock {
   public enum ActivateStatus {ACTIVATED, NO_INSTANCE, CANNOT_ACTIVATE}
@@ -55,7 +61,7 @@ public final class SocketLock {
 
   private final String myConfigPath;
   private final String mySystemPath;
-  private final AtomicReference<Consumer<List<String>>> myActivateListener = new AtomicReference<>();
+  private final AtomicReference<CliRequestProcessor> myActivateListener = new AtomicReference<>();
   private String myToken;
   private BuiltInServer myServer;
 
@@ -67,8 +73,8 @@ public final class SocketLock {
     }
   }
 
-  public void setExternalInstanceListener(@Nullable Consumer<List<String>> consumer) {
-    myActivateListener.set(consumer);
+  public void setExternalInstanceListener(@Nullable CliRequestProcessor processor) {
+    myActivateListener.set(processor);
   }
 
   public void dispose() {
@@ -101,12 +107,12 @@ public final class SocketLock {
   }
 
   @NotNull
-  public ActivateStatus lock() throws Exception {
-    return lock(ArrayUtil.EMPTY_STRING_ARRAY);
+  public ActivateStatusAndResponse lock() throws Exception {
+    return lock(ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   @NotNull
-  public ActivateStatus lock(@NotNull String[] args) throws Exception {
+  public ActivateStatusAndResponse lock(@NotNull String[] args) throws Exception {
     log("enter: lock(config=%s system=%s)", myConfigPath, mySystemPath);
 
     return underLocks(() -> {
@@ -118,9 +124,9 @@ public final class SocketLock {
       addExistingPort(portMarkerS, mySystemPath, portToPath);
       if (!portToPath.isEmpty()) {
         for (Map.Entry<Integer, Collection<String>> entry : portToPath.entrySet()) {
-          ActivateStatus status = tryActivate(entry.getKey(), entry.getValue(), args);
-          if (status != ActivateStatus.NO_INSTANCE) {
-            log("exit: lock(): " + status);
+          ActivateStatusAndResponse status = tryActivate(entry.getKey(), entry.getValue(), args);
+          if (status.getActivateStatus() != ActivateStatus.NO_INSTANCE) {
+            log("exit: lock(): " + status.getActivateStatus());
             return status;
           }
         }
@@ -156,7 +162,7 @@ public final class SocketLock {
       }
 
       log("exit: lock(): succeed");
-      return ActivateStatus.NO_INSTANCE;
+      return ActivateStatusAndResponse.emptyResponse(ActivateStatus.NO_INSTANCE);
     });
   }
 
@@ -184,52 +190,47 @@ public final class SocketLock {
   }
 
   @NotNull
-  private ActivateStatus tryActivate(int portNumber, @NotNull Collection<String> paths, @NotNull String[] args) {
+  private ActivateStatusAndResponse tryActivate(int portNumber, @NotNull Collection<String> paths, @NotNull String[] args) {
     log("trying: port=%s", portNumber);
     args = checkForJetBrainsProtocolCommand(args);
     try {
       try (Socket socket = new Socket(InetAddress.getLoopbackAddress(), portNumber)) {
         socket.setSoTimeout(5000);
 
-        boolean result = false;
-        @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") DataInputStream in = new DataInputStream(socket.getInputStream());
-        while (true) {
-          try {
-            String path = in.readUTF();
-            log("read: path=%s", path);
-            if (PATHS_EOT_RESPONSE.equals(path)) {
-              break;
-            }
-            else if (paths.contains(path)) {
-              result = true;  // don't break - read all input
-            }
-          }
-          catch (IOException e) {
-            log("read: %s", e.getMessage());
-            break;
-          }
-        }
+        DataInputStream in = new DataInputStream(socket.getInputStream());
+        final List<String> stringList = readStringSequence(in);
+        // Backward compatibility: it required at least one path to match
+        boolean result = ContainerUtil.intersects(paths, stringList);
 
         if (result) {
+          // Update property right now, without scheduling on AWT. This allows to avoid shown-and-immediately-hidden splash in some cases.
+          System.setProperty(SplashManager.NO_SPLASH, "true");
+          EventQueue.invokeLater(() -> {
+            Runnable hideSplashTask = SplashManager.getHideTask();
+            if (hideSplashTask != null) hideSplashTask.run();
+          });
+
           try {
             String token = FileUtil.loadFile(new File(mySystemPath, TOKEN_FILE));
             @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") DataOutputStream out = new DataOutputStream(socket.getOutputStream());
             out.writeUTF(ACTIVATE_COMMAND + token + "\0" + new File(".").getAbsolutePath() + "\0" + StringUtil.join(args, "\0"));
             out.flush();
-            String response = in.readUTF();
-            log("read: response=%s", response);
-            if (response.equals(OK_RESPONSE)) {
+
+            socket.setSoTimeout(0);
+            List<String> response = readStringSequence(in);
+            log("read: response=%s", StringUtil.join(response, ";"));
+            if (OK_RESPONSE.equals(ContainerUtil.getFirstItem(response))) {
               if (isShutdownCommand()) {
                 printPID(portNumber);
               }
-              return ActivateStatus.ACTIVATED;
+              return new ActivateStatusAndResponse(ActivateStatus.ACTIVATED, mapResponseToCliResult(response));
             }
           }
-          catch (IOException e) {
+          catch (IOException | IllegalArgumentException e) {
             log(e);
           }
 
-          return ActivateStatus.CANNOT_ACTIVATE;
+          return ActivateStatusAndResponse.emptyResponse(ActivateStatus.CANNOT_ACTIVATE);
         }
       }
     }
@@ -240,7 +241,7 @@ public final class SocketLock {
       log(e);
     }
 
-    return ActivateStatus.NO_INSTANCE;
+    return ActivateStatusAndResponse.emptyResponse(ActivateStatus.NO_INSTANCE);
   }
 
   @SuppressWarnings("ALL")
@@ -280,16 +281,21 @@ public final class SocketLock {
     return args;
   }
 
+  @FunctionalInterface
+  public interface CliRequestProcessor {
+    Future<? extends CliResult> process(@NotNull List<String> args);
+  }
+
   private static final class MyChannelInboundHandler extends MessageDecoder {
     private enum State {HEADER, CONTENT}
 
     private final String[] myLockedPaths;
-    private final AtomicReference<? extends Consumer<List<String>>> myActivateListener;
+    private final AtomicReference<? extends CliRequestProcessor> myActivateListener;
     private final String myToken;
     private State myState = State.HEADER;
 
     MyChannelInboundHandler(@NotNull String[] lockedPaths,
-                            @NotNull AtomicReference<? extends Consumer<List<String>>> activateListener,
+                            @NotNull AtomicReference<? extends CliRequestProcessor> activateListener,
                             @NotNull String token) {
       myLockedPaths = lockedPaths;
       myActivateListener = activateListener;
@@ -298,19 +304,7 @@ public final class SocketLock {
 
     @Override
     public void channelActive(ChannelHandlerContext context) throws Exception {
-      ByteBuf buffer = context.alloc().ioBuffer(1024);
-      boolean success = false;
-      try (ByteBufOutputStream out = new ByteBufOutputStream(buffer)) {
-        for (String path : myLockedPaths) out.writeUTF(path);
-        out.writeUTF(PATHS_EOT_RESPONSE);
-        success = true;
-      }
-      finally {
-        if (!success) {
-          buffer.release();
-        }
-      }
-      context.writeAndFlush(buffer);
+      sendStringSequence(context, Arrays.asList(myLockedPaths));
     }
 
     @Override
@@ -351,6 +345,7 @@ public final class SocketLock {
               String data = command.subSequence(ACTIVATE_COMMAND.length(), command.length()).toString();
               List<String> args = StringUtil.split(data, data.contains("\0") ? "\0" : "\uFFFD");
 
+              final CliResult result;
               boolean tokenOK = !args.isEmpty() && myToken.equals(args.get(0));
               if (!tokenOK) {
                 log(new UnsupportedOperationException("unauthorized request: " + command));
@@ -359,19 +354,22 @@ public final class SocketLock {
                   IdeBundle.message("activation.auth.title"),
                   IdeBundle.message("activation.auth.message"),
                   NotificationType.WARNING));
+                result = new CliResult(Main.ACTIVATE_WRONG_TOKEN_CODE, IdeBundle.message("activation.auth.message"));
               }
               else {
-                Consumer<List<String>> listener = myActivateListener.get();
+                CliRequestProcessor listener = myActivateListener.get();
                 if (listener != null) {
-                  listener.consume(args.subList(1, args.size()));
+                  result = CliResult.getOrWrapFailure(listener.process(args.subList(1, args.size())), Main.ACTIVATE_RESPONSE_TIMEOUT);
+                }
+                else {
+                  result = new CliResult(Main.ACTIVATE_LISTENER_NOT_INITIALIZED, IdeBundle.message("activation.not.initialized"));
                 }
               }
 
-              ByteBuf buffer = context.alloc().ioBuffer(4);
-              try (ByteBufOutputStream out = new ByteBufOutputStream(buffer)) {
-                out.writeUTF(OK_RESPONSE);
-              }
-              context.writeAndFlush(buffer);
+              sendStringSequence(context,
+                                 Stream.of(OK_RESPONSE, String.valueOf(result.getReturnCode()), result.getMessage())
+                                   .filter(Objects::nonNull)
+                                   .collect(Collectors.toList()));
             }
             context.close();
           }
@@ -379,6 +377,60 @@ public final class SocketLock {
         }
       }
     }
+  }
+
+  private static void sendStringSequence(ChannelHandlerContext context, List<String> strings) throws IOException {
+    ByteBuf buffer = context.alloc().ioBuffer(1024);
+    boolean success = false;
+    try (ByteBufOutputStream out = new ByteBufOutputStream(buffer)) {
+      for (String s : strings) out.writeUTF(s);
+      out.writeUTF(PATHS_EOT_RESPONSE);
+      success = true;
+    }
+    finally {
+      if (!success) {
+        buffer.release();
+      }
+    }
+    context.writeAndFlush(buffer);
+  }
+
+  @NotNull
+  private static List<String> readStringSequence(DataInputStream in) {
+    List<String> result = new ArrayList<>();
+    while (true) {
+      try {
+        String string = in.readUTF();
+        log("read: path=%s", string);
+        if (PATHS_EOT_RESPONSE.equals(string)) {
+          break;
+        }
+        result.add(string);
+      }
+      catch (IOException e) {
+        log("read: %s", e.getMessage());
+        break;
+      }
+    }
+    return result;
+  }
+
+  @NotNull
+  private static CliResult mapResponseToCliResult(@NotNull List<String> responseParts) throws IllegalArgumentException {
+    if (responseParts.size() > 3 || responseParts.size() < 2) {
+      throw new IllegalArgumentException("bad response: " + StringUtil.join(responseParts, ";"));
+    }
+
+    final int code;
+    try {
+      code = Integer.parseInt(responseParts.get(1));
+    }
+    catch (NumberFormatException e) {
+      throw new IllegalArgumentException("Second part is not a parsable return code", e);
+    }
+
+    final String message = responseParts.size() == 3 ? responseParts.get(2) : null;
+    return new CliResult(code, message);
   }
 
   @NotNull
@@ -399,6 +451,33 @@ public final class SocketLock {
     Logger logger = Logger.getInstance(SocketLock.class);
     if (logger.isDebugEnabled()) {
       logger.debug(String.format(format, args));
+    }
+  }
+
+  public static class ActivateStatusAndResponse {
+    @NotNull
+    private final ActivateStatus myActivateStatus;
+    @Nullable
+    private final CliResult myResponse;
+
+    public ActivateStatusAndResponse(@NotNull ActivateStatus status, @Nullable CliResult response) {
+      myActivateStatus = status;
+      myResponse = response;
+    }
+
+    @NotNull
+    public static ActivateStatusAndResponse emptyResponse(@NotNull ActivateStatus status) {
+      return new ActivateStatusAndResponse(status, null);
+    }
+
+    @NotNull
+    public ActivateStatus getActivateStatus() {
+      return myActivateStatus;
+    }
+
+    @Nullable
+    public CliResult getResponse() {
+      return myResponse;
     }
   }
 }

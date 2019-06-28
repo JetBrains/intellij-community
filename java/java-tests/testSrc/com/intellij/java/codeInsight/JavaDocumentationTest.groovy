@@ -9,14 +9,14 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiExpressionList
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.ui.UIUtil
 import groovy.transform.CompileStatic
 /**
  * @author peter
  */
 @CompileStatic
-class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
+class JavaDocumentationTest extends LightJavaCodeInsightFixtureTestCase {
   void testConstructorDoc() {
     configure """\
       class Foo { Foo() {} Foo(int param) {} }

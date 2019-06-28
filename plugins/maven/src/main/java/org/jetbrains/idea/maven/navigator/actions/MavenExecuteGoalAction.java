@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 
 import static org.jetbrains.idea.maven.execution.MavenRunAnythingProvider.HELP_COMMAND;
 
@@ -32,7 +31,6 @@ public class MavenExecuteGoalAction extends DumbAwareAction {
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) return;
-    MavenActionsUsagesCollector.trigger(project, this, e);
     RunAnythingManager runAnythingManager = RunAnythingManager.getInstance(project);
     runAnythingManager.show(HELP_COMMAND + " ", false, e);
   }

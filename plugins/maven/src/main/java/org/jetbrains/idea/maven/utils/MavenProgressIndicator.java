@@ -15,16 +15,13 @@
  */
 package org.jetbrains.idea.maven.utils;
 
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.buildtool.ArtifactSyncListener;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
+import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,17 +60,10 @@ public class MavenProgressIndicator {
 
   public synchronized void setText(String text) {
     myIndicator.setText(text);
-    if (mySyncSupplier != null) {
-      mySyncSupplier.get().addText(text);
-    }
-
   }
 
   public synchronized void setText2(String text) {
     myIndicator.setText2(text);
-    if (mySyncSupplier != null) {
-      mySyncSupplier.get().addText(text);
-    }
   }
 
   public synchronized void setFraction(double fraction) {
@@ -121,23 +111,27 @@ public class MavenProgressIndicator {
     if (isCanceled()) throw new ProcessCanceledException();
   }
 
-  public void startTask(String text) {
+  public void startedDownload(MavenServerProgressIndicator.ResolveType type, String id) {
+
     if (mySyncSupplier != null) {
-      mySyncSupplier.get().startTask(text);
+      mySyncSupplier.get().getListener(type).downloadStarted(id);
     }
   }
 
-  public void completeTask(String text, String message) {
+  public void completedDownload(MavenServerProgressIndicator.ResolveType type, String id) {
     if (mySyncSupplier != null) {
-      if (message == null) {
-        mySyncSupplier.get().completeTask(text);
-      }
-      else {
-        mySyncSupplier.get().completeTask(text, new RuntimeException(message));
-      }
+      mySyncSupplier.get().getListener(type).downloadCompleted(id);
     }
   }
 
+  public void failedDownload(MavenServerProgressIndicator.ResolveType type,
+                             String id,
+                             String message,
+                             String trace) {
+    if (mySyncSupplier != null) {
+     mySyncSupplier.get().getListener(type).downloadFailed(id, message, trace);
+    }
+  }
 
   private static class MyEmptyProgressIndicator extends EmptyProgressIndicator {
     private String myText;

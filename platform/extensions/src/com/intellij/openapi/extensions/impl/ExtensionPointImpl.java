@@ -24,7 +24,9 @@ import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -247,6 +249,22 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     return array.length == 0 ? array : array.clone();
   }
 
+  @Override
+  public void forEachExtensionSafe(Consumer<T> extensionConsumer) {
+    for (T t : this) {
+      if (t == null) break;
+      try {
+        extensionConsumer.accept(t);
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
+  }
+
   /**
    * Do not use it if there is any extension point listener, because in this case behaviour is not predictable -
    * events will be fired during iteration and probably it will be not expected.
@@ -270,6 +288,39 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
       }
     }
     return result.iterator();
+  }
+
+  public void processWithPluginDescriptor(@NotNull BiConsumer<T, PluginDescriptor> consumer) {
+    assertBeforeProcessing();
+    CHECK_CANCELED.run();
+
+    if (isInReadOnlyMode()) {
+      for (T extension : myExtensionsCache) {
+        consumer.accept(extension, myDescriptor /* doesn't matter for tests */);
+      }
+      return;
+    }
+
+    List<ExtensionComponentAdapter> adapters = myAdapters;
+    int size = adapters.size();
+    if (size == 0) {
+      return;
+    }
+
+    LoadingOrder.sort(adapters);
+
+    LOG.assertTrue(myListeners.length == 0);
+
+    int currentIndex = 0;
+    do {
+      ExtensionComponentAdapter adapter = adapters.get(currentIndex++);
+      T extension = processAdapter(adapter, null /* don't even pass it */, null, null, null);
+      if (extension == null) {
+        break;
+      }
+      consumer.accept(extension, adapter.getPluginDescriptor());
+    }
+    while (currentIndex < size);
   }
 
   @NotNull
@@ -332,6 +383,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   @NotNull
   private synchronized T[] processAdapters() {
     assertBeforeProcessing();
+    assertNotReadOnlyMode();
 
     long startTime = StartUpMeasurer.getCurrentTime();
 
@@ -429,7 +481,6 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
       throw new IllegalStateException("Recursive processAdapters() detected. You must have called 'getExtensions()' from within your extension constructor - don't. " +
                                       "Either pass extension via constructor parameter or call getExtensions() later.");
     }
-    assertNotReadOnlyMode();
   }
 
   // used in upsource
@@ -485,13 +536,15 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     myExtensionsCacheAsArray = list.toArray(ArrayUtil.newArray(getExtensionClass(), 0));
     POINTS_IN_READONLY_MODE.add(this);
 
-    if (oldList != null) {
-      for (T extension : oldList) {
-        notifyListenersOnRemove(extension, null, myListeners);
+    if (myListeners.length > 0) {
+      if (oldList != null) {
+        for (T extension : oldList) {
+          notifyListenersOnRemove(extension, null, myListeners);
+        }
       }
-    }
-    for (T extension : list) {
-      notifyListenersOnAdd(extension, null, myListeners);
+      for (T extension : list) {
+        notifyListenersOnAdd(extension, null, myListeners);
+      }
     }
 
     Disposer.register(parentDisposable, new Disposable() {

@@ -12,6 +12,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
@@ -60,8 +61,10 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
                                                              int forcedPassId) {
     assert !checkedForCycles;
     PassConfig info = new PassConfig(factory,
-                                     runAfterCompletionOf == null || runAfterCompletionOf.length == 0 ? ArrayUtil.EMPTY_INT_ARRAY : runAfterCompletionOf,
-                                     runAfterOfStartingOf == null || runAfterOfStartingOf.length == 0 ? ArrayUtil.EMPTY_INT_ARRAY : runAfterOfStartingOf);
+                                     runAfterCompletionOf == null || runAfterCompletionOf.length == 0 ? ArrayUtilRt.EMPTY_INT_ARRAY
+                                                                                                      : runAfterCompletionOf,
+                                     runAfterOfStartingOf == null || runAfterOfStartingOf.length == 0 ? ArrayUtilRt.EMPTY_INT_ARRAY
+                                                                                                      : runAfterOfStartingOf);
     int passId = forcedPassId == -1 ? nextAvailableId++ : forcedPassId;
     PassConfig registered = myRegisteredPassFactories.get(passId);
     assert registered == null: "Pass id "+passId +" has already been registered in: "+ registered.passFactory;
@@ -112,12 +115,12 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
         for (int id : passConfig.completionPredecessorIds) {
           if (myRegisteredPassFactories.containsKey(id)) ids.add(id);
         }
-        pass.setCompletionPredecessorIds(ids.isEmpty() ? ArrayUtil.EMPTY_INT_ARRAY : ids.toNativeArray());
+        pass.setCompletionPredecessorIds(ids.isEmpty() ? ArrayUtilRt.EMPTY_INT_ARRAY : ids.toNativeArray());
         ids = new TIntArrayList(passConfig.startingPredecessorIds.length);
         for (int id : passConfig.startingPredecessorIds) {
           if (myRegisteredPassFactories.containsKey(id)) ids.add(id);
         }
-        pass.setStartingPredecessorIds(ids.isEmpty() ? ArrayUtil.EMPTY_INT_ARRAY : ids.toNativeArray());
+        pass.setStartingPredecessorIds(ids.isEmpty() ? ArrayUtilRt.EMPTY_INT_ARRAY : ids.toNativeArray());
         pass.setId(passId);
         id2Pass.put(passId, pass);
       }

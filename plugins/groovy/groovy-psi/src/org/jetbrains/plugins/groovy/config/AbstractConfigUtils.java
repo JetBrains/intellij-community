@@ -5,9 +5,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -130,7 +130,7 @@ public abstract class AbstractConfigUtils {
 
   public Library[] getProjectSDKLibraries(Project project) {
     if (project == null || project.isDisposed()) return Library.EMPTY_ARRAY;
-    final LibraryTable table = ProjectLibraryTable.getInstance(project);
+    final LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(project);
     final List<Library> all = ContainerUtil.findAll(table.getLibraries(), LIB_SEARCH_CONDITION);
     return all.toArray(Library.EMPTY_ARRAY);
   }

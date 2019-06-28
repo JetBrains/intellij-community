@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.objectTree;
 
 import com.intellij.openapi.Disposable;
@@ -31,14 +17,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 
 public final class ObjectTree<T extends Disposable> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectTree");
-  
   private static final ThreadLocal<Throwable> ourTopmostDisposeTrace = new ThreadLocal<>();
-
-  private final List<ObjectTreeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   // identity used here to prevent problems with hashCode/equals overridden by not very bright minds
   private final Set<T> myRootObjects = ContainerUtil.newIdentityTroveSet(); // guarded by treeLock
@@ -51,9 +32,7 @@ public final class ObjectTree<T extends Disposable> {
 
   final Object treeLock = new Object();
 
-  private final AtomicLong myModification = new AtomicLong(0);
-
-  ObjectNode<T> getNode(@NotNull T object) {
+  private ObjectNode<T> getNode(@NotNull T object) {
     return myObject2NodeMap.get(object);
   }
 
@@ -104,8 +83,6 @@ public final class ObjectTree<T extends Disposable> {
       checkWasNotAddedAlready(parentNode, childNode);
 
       parentNode.addChild(childNode);
-
-      fireRegistered(childNode.getObject());
     }
   }
 
@@ -125,16 +102,12 @@ public final class ObjectTree<T extends Disposable> {
 
   @NotNull
   private ObjectNode<T> createNodeFor(@NotNull T object, @Nullable ObjectNode<T> parentNode) {
-    final ObjectNode<T> newNode = new ObjectNode<>(this, parentNode, object, getNextModification());
+    final ObjectNode<T> newNode = new ObjectNode<>(this, parentNode, object);
     if (parentNode == null) {
       myRootObjects.add(object);
     }
     putNode(object, newNode);
     return newNode;
-  }
-
-  private long getNextModification() {
-    return myModification.incrementAndGet();
   }
 
   public final void executeAll(@NotNull T object, @NotNull ObjectTreeAction<T> action, boolean processUnregistered) {
@@ -154,10 +127,7 @@ public final class ObjectTree<T extends Disposable> {
         }
       }
       else {
-        ObjectNode<T> parent;
-        synchronized (treeLock) {
-          parent = node.getParent();
-        }
+        ObjectNode<T> parent = node.getParent();
         List<Throwable> exceptions = new SmartList<>();
         node.execute(action, exceptions);
         if (parent != null) {
@@ -179,7 +149,7 @@ public final class ObjectTree<T extends Disposable> {
     if (!exceptions.isEmpty()) {
       for (Throwable exception : exceptions) {
         if (!(exception instanceof ProcessCanceledException)) {
-          LOG.error(exception);
+          getLogger().error(exception);
         }
       }
 
@@ -259,56 +229,20 @@ public final class ObjectTree<T extends Disposable> {
         if (throwError) {
           throw exception;
         }
-        LOG.error(exception);
+        getLogger().error(exception);
       }
-    }
-  }
-  
-  @TestOnly
-  public boolean isEmpty() {
-    synchronized (treeLock) {
-      return myRootObjects.isEmpty();
     }
   }
 
   @NotNull
-  Set<T> getRootObjects() {
-    synchronized (treeLock) {
-      return myRootObjects;
-    }
+  private static Logger getLogger() {
+    return Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectTree");
   }
 
-  void addListener(@NotNull ObjectTreeListener listener) {
-    myListeners.add(listener);
-  }
-
-  void removeListener(@NotNull ObjectTreeListener listener) {
-    myListeners.remove(listener);
-  }
-
-  private void fireRegistered(@NotNull T object) {
-    for (ObjectTreeListener each : myListeners) {
-      each.objectRegistered(object);
-    }
-  }
-
-  void fireExecuted(@NotNull T object) {
-    for (ObjectTreeListener each : myListeners) {
-      each.objectExecuted(object);
-    }
-    rememberDisposedTrace(object);
-  }
-
-  private void rememberDisposedTrace(@NotNull T object) {
+  void rememberDisposedTrace(@NotNull T object) {
     synchronized (treeLock) {
       Throwable trace = ourTopmostDisposeTrace.get();
       myDisposedObjects.put(object, trace != null ? trace : Boolean.TRUE);
-    }
-  }
-
-  int size() {
-    synchronized (treeLock) {
-      return myObject2NodeMap.size();
     }
   }
 
@@ -321,7 +255,4 @@ public final class ObjectTree<T extends Disposable> {
     }
   }
 
-  long getModification() {
-    return myModification.get();
-  }
 }

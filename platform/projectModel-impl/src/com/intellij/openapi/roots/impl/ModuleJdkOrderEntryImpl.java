@@ -35,10 +35,10 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 /**
  * @author dsl
  */
-public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implements WritableOrderEntry,
-                                                                                  ClonableOrderEntry,
-                                                                                  ModuleJdkOrderEntry,
-                                                                                  ProjectJdkTable.Listener {
+class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implements WritableOrderEntry,
+                                                                           ClonableOrderEntry,
+                                                                           ModuleJdkOrderEntry,
+                                                                           ProjectJdkTable.Listener {
   @NonNls public static final String ENTRY_TYPE = JpsModuleRootModelSerializer.JDK_TYPE;
   @NonNls private static final String JDK_NAME_ATTR = JpsModuleRootModelSerializer.JDK_NAME_ATTRIBUTE;
   @NonNls private static final String JDK_TYPE_ATTR = JpsModuleRootModelSerializer.JDK_TYPE_ATTRIBUTE;

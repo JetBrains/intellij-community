@@ -23,10 +23,10 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 
-public class TreeIsCorrectAfterDiffReparseTest extends LightCodeInsightTestCase {
+public class TreeIsCorrectAfterDiffReparseTest extends LightJavaCodeInsightTestCase {
 
   public void testIDEADEV41862() {
     @NonNls String part1 = "package com.test;\n" +

@@ -4,10 +4,20 @@ package com.intellij.serialization
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.util.SmartList
+import java.lang.reflect.Constructor
+
+// not fully initialized object may be passed (only created instance without properties) if object has PropertyMapping annotation
+typealias BeanConstructed = (instance: Any) -> Any
+
+class NonDefaultConstructorInfo(val names: List<String>, val constructor: Constructor<*>)
+
+typealias PropertyMappingProvider = (beanClass: Class<*>) -> NonDefaultConstructorInfo?
 
 data class ReadConfiguration(val allowAnySubTypes: Boolean = false,
-                             val classLoader: ClassLoader? = null,
-                             val beanConstructed: BeanConstructed? = null)
+                             // loadClass for now doesn't support map or collection as host object
+                             val loadClass: ((name: String, hostObject: Any) -> Class<*>?)? = null,
+                             val beanConstructed: BeanConstructed? = null,
+                             val resolvePropertyMapping: PropertyMappingProvider? = null)
 
 data class WriteConfiguration(val binary: Boolean = true,
                               val filter: SerializationFilter? = null,
@@ -39,7 +49,6 @@ internal interface ReadContext {
 
 data class ReadErrors(
   val unknownFields: MutableList<ReadError> = SmartList(),
-  val parameters: MutableList<ReadError> = SmartList(),
   val fields: MutableList<ReadError> = SmartList()
 ) {
   fun report(logger: Logger) {
@@ -47,11 +56,7 @@ data class ReadErrors(
       logger.warn(unknownFields.joinToString("\n"))
     }
     if (fields.isNotEmpty()) {
-      logger.warn(unknownFields.joinToString("\n"))
-    }
-
-    if (parameters.isNotEmpty()) {
-      logger.error(parameters.joinToString("\n"))
+      logger.warn(fields.joinToString("\n"))
     }
   }
 }

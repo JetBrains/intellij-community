@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 // From: http://www.halley.cc/code/?java/CSVReader.java
 
 package com.intellij.execution.process.impl;
 
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -28,9 +14,9 @@ import java.util.List;
 
 /**
  * A very simple CSV reader released under a commercial-friendly license.
- * 
+ *
  * @author Glen Smith
- * 
+ *
  */
 class CSVReader {
 
@@ -62,7 +48,7 @@ class CSVReader {
 
     /**
      * Constructs CSVReader using a comma for the separator.
-     * 
+     *
      * @param reader
      *            the reader to an underlying CSV source.
      */
@@ -72,7 +58,7 @@ class CSVReader {
 
     /**
      * Constructs CSVReader with supplied separator.
-     * 
+     *
      * @param reader
      *            the reader to an underlying CSV source.
      * @param separator
@@ -84,7 +70,7 @@ class CSVReader {
 
     /**
      * Constructs CSVReader with supplied separator and quote char.
-     * 
+     *
      * @param reader
      *            the reader to an underlying CSV source.
      * @param separator
@@ -98,7 +84,7 @@ class CSVReader {
 
     /**
      * Constructs CSVReader with supplied separator and quote char.
-     * 
+     *
      * @param reader
      *            the reader to an underlying CSV source.
      * @param separator
@@ -106,7 +92,7 @@ class CSVReader {
      * @param quotechar
      *            the character to use for quoted elements
      * @param line
-     *            the line number to skip for start reading 
+     *            the line number to skip for start reading
      */
     CSVReader(Reader reader, char separator, char quotechar, int line) {
         this.br = new BufferedReader(reader);
@@ -118,10 +104,10 @@ class CSVReader {
     /**
      * Reads the entire file into a List with each element being a String[] of
      * tokens.
-     * 
+     *
      * @return a List of String[], with each String[] representing a line of the
      *         file.
-     * 
+     *
      * @throws IOException
      *             if bad things happen during the read
      */
@@ -140,10 +126,10 @@ class CSVReader {
 
     /**
      * Reads the next line from the buffer and converts to a string array.
-     * 
+     *
      * @return a string array with each comma-separated element as a separate
      *         entry.
-     * 
+     *
      * @throws IOException
      *             if bad things happen during the read
      */
@@ -155,7 +141,7 @@ class CSVReader {
 
     /**
      * Reads the next line from the file.
-     * 
+     *
      * @return the next line from the file without trailing newline
      * @throws IOException
      *             if bad things happen during the read
@@ -176,7 +162,7 @@ class CSVReader {
 
     /**
      * Parses an incoming String and returns an array of elements.
-     * 
+     *
      * @param nextLine
      *            the string to parse
      * @return the comma-tokenized list of elements, or null if nextLine is null
@@ -217,7 +203,7 @@ class CSVReader {
                         inQuotes = !inQuotes;
                         // the tricky case of an embedded quote in the middle: a,bc"d"ef,g
                         if (i > 2 //not on the begining of the line
-                                && nextLine.charAt(i - 1) != this.separator //not at the begining of an escape sequence 
+                                && nextLine.charAt(i - 1) != this.separator //not at the begining of an escape sequence
                                 && nextLine.length() > (i + 1) &&
                                 nextLine.charAt(i + 1) != this.separator //not at the     end of an escape sequence
                         ) {
@@ -233,13 +219,12 @@ class CSVReader {
             }
         } while (inQuotes);
         tokensOnThisLine.add(sb.toString());
-        return ArrayUtil.toStringArray(tokensOnThisLine);
-
+      return ArrayUtilRt.toStringArray(tokensOnThisLine);
     }
 
     /**
      * Closes the underlying reader.
-     * 
+     *
      * @throws IOException if the close fails
      */
     public void close() throws IOException {

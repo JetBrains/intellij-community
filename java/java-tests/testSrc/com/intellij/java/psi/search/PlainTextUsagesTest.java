@@ -13,14 +13,14 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.IntArrayList;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class PlainTextUsagesTest extends PsiTestCase {
+public class PlainTextUsagesTest extends JavaPsiTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();

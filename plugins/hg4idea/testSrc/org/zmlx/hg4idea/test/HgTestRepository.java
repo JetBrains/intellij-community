@@ -16,11 +16,11 @@
 package org.zmlx.hg4idea.test;
 
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.vcs.AbstractVcsTestCase;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,7 +90,7 @@ public class HgTestRepository {
   @Nullable
   public VirtualFile getDir() {
     if (myDir == null) {
-      myDir = VcsUtil.getVirtualFile(myDirFixture.getTempDirPath());
+      myDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myDirFixture.getTempDirPath()));
     }
     return myDir;
   }

@@ -30,7 +30,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +45,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author lambdamix
  */
-public class BytecodeAnalysisIntegrationTest extends LightCodeInsightFixtureTestCase {
+public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixtureTestCase {
   private static final String ORG_JETBRAINS_ANNOTATIONS_CONTRACT = JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT;
   private static final String INFERRED_TEST_METHOD =
     "org.apache.velocity.util.ExceptionUtils java.lang.Throwable createWithCause(java.lang.Class, java.lang.String, java.lang.Throwable)";
@@ -96,15 +96,15 @@ public class BytecodeAnalysisIntegrationTest extends LightCodeInsightFixtureTest
   public void testInferredAnnoGutter() {
     checkHasGutter("org.apache.velocity.util.ExceptionUtils",
                    "<html><i>Inferred</i> annotations available. Full signature:<p>\n" +
-                   "<i>@Contract('null,_,_->null')</i> \n" +
-                   "public static Throwable <b>createWithCause</b>(Class clazz,\n String message,\n Throwable cause)</html>");
+                   "<b><i>@Contract('null,_,_->null')</i></b> \n" +
+                   "Throwable <b>createWithCause</b>(Class,\n String,\n Throwable)</html>");
   }
 
   public void testExternalAnnoGutter() {
     checkHasGutter("java.lang.String",
                    "<html>External and <i>inferred</i> annotations available. Full signature:<p>\n" +
-                   "<i>@Contract(pure = true)</i> \n" +
-                   "public <b>String</b>(@NotNull String var1)</html>");
+                   "<b><i>@Contract(pure = true)</i></b> \n" +
+                   "<b>String</b>(<b>@NotNull</b> String)</html>");
   }
 
   private void checkHasGutter(String className, String expectedText) {

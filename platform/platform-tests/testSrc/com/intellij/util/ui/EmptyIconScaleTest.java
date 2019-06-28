@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.ui.RestoreScaleRule;
+import com.intellij.ui.scale.JBUIScale;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.ExternalResource;
@@ -38,7 +39,7 @@ public class EmptyIconScaleTest {
   }
 
   public void test(float scale) {
-    JBUI.setUserScaleFactor(scale);
+    JBUIScale.setUserScaleFactor(scale);
 
     // 1) create unscaled
     EmptyIcon icon = EmptyIcon.create(SIZE);
@@ -46,14 +47,14 @@ public class EmptyIconScaleTest {
     assertEquals(MSG, SIZE, icon.getIconWidth());
 
     // 2) created scaled
-    icon = EmptyIcon.create(JBUI.scale(SIZE));
+    icon = EmptyIcon.create(JBUIScale.scale(SIZE));
 
-    assertEquals(MSG, JBUI.scale(SIZE), icon.getIconWidth());
+    assertEquals(MSG, JBUIScale.scale(SIZE), icon.getIconWidth());
 
     // 3) create unscaled and then scale
     icon = JBUI.scale(EmptyIcon.create(SIZE));
 
-    assertEquals(MSG, JBUI.scale(SIZE), icon.getIconWidth());
+    assertEquals(MSG, JBUIScale.scale(SIZE), icon.getIconWidth());
 
     // 4) create unscaled again
     icon = EmptyIcon.create(SIZE);

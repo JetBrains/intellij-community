@@ -16,9 +16,9 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
-public class EditorCloneCaretAboveBelowTest extends LightPlatformCodeInsightFixtureTestCase {
+public class EditorCloneCaretAboveBelowTest extends BasePlatformTestCase {
   public void testStoringDesiredXPosition() {
     init("long line<caret>\n" +
          "line\n" +

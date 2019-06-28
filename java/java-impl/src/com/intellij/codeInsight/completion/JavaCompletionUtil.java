@@ -631,6 +631,16 @@ public class JavaCompletionUtil {
       return endOffset;
     }
 
+    if (reference != null && !psiClass.hasModifierProperty(PsiModifier.STATIC)) {
+      PsiClass containingClass = psiClass.getContainingClass();
+      if (containingClass != null && containingClass.hasTypeParameters()) {
+        PsiModifierListOwner enclosingStaticElement = PsiUtil.getEnclosingStaticElement(reference.getElement(), null);
+        if (enclosingStaticElement != null && !PsiTreeUtil.isAncestor(enclosingStaticElement, psiClass, false)) {
+          return endOffset;
+        }
+      }
+    }
+    
     assert document != null;
     document.replaceString(startOffset, endOffset, name);
 
@@ -866,7 +876,7 @@ public class JavaCompletionUtil {
   }
 
   public static boolean isSourceLevelAccessible(PsiElement context, PsiClass psiClass, final boolean pkgContext) {
-    if (!JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper().isAccessible(psiClass, context, null)) {
+    if (!JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper().isAccessible(psiClass, context, psiClass.getContainingClass())) {
       return false;
     }
 

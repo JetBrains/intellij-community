@@ -13,7 +13,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.classFilter.ClassFilter;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -105,7 +105,7 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
       for (ClassFilter coveragePattern : myCoveragePatterns) {
         if (coveragePattern.isEnabled() && coveragePattern.isInclude()) patterns.add(coveragePattern.getPattern());
       }
-      return ArrayUtil.toStringArray(patterns);
+      return ArrayUtilRt.toStringArray(patterns);
     }
     return null;
   }
@@ -117,7 +117,7 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
       for (ClassFilter coveragePattern : myCoveragePatterns) {
         if (coveragePattern.isEnabled() && !coveragePattern.isInclude()) patterns.add(coveragePattern.getPattern());
       }
-      return ArrayUtil.toStringArray(patterns);
+      return ArrayUtilRt.toStringArray(patterns);
     }
     return null;
   }

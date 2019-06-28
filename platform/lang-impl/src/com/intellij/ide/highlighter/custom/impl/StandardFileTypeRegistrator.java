@@ -17,17 +17,17 @@
 package com.intellij.ide.highlighter.custom.impl;
 
 import com.intellij.codeInsight.editorActions.TypedHandler;
-import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.ide.highlighter.FileTypeRegistrator;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.lang.Commenter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
+import org.jetbrains.annotations.NotNull;
 
 public class StandardFileTypeRegistrator implements FileTypeRegistrator {
   @Override
-  public void initFileType(final FileType fileType) {
+  public void initFileType(@NotNull final FileType fileType) {
     if (fileType instanceof AbstractFileType) {
       init(((AbstractFileType)fileType));
     }
@@ -39,10 +39,6 @@ public class StandardFileTypeRegistrator implements FileTypeRegistrator {
     if (!isEmpty(table.getStartComment()) && !isEmpty(table.getEndComment()) ||
         !isEmpty(table.getLineComment())) {
       abstractFileType.setCommenter(new MyCommenter(abstractFileType));
-    }
-
-    if (table.isHasBraces() || table.isHasBrackets() || table.isHasParens()) {
-      BraceMatchingUtil.registerBraceMatcher(abstractFileType, CustomFileTypeBraceMatcher.createBraceMatcher());
     }
 
     TypedHandler.registerQuoteHandler(abstractFileType, new CustomFileTypeQuoteHandler());

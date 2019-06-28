@@ -1,3 +1,6 @@
+echo ") \\"
+echo "    ((r)->direct) ? \\"
+echo -n "	bus_${n}((r)->res"
 "'" 1234 "'"
 
 ' "its also not a double string" '

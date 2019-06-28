@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -9,7 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -180,7 +178,7 @@ public abstract class PsiNameHelper {
    */
   @NotNull
   public static String[] getClassParametersText(@NotNull String referenceText) {
-    if (referenceText.indexOf('<') < 0) return ArrayUtil.EMPTY_STRING_ARRAY;
+    if (referenceText.indexOf('<') < 0) return ArrayUtilRt.EMPTY_STRING_ARRAY;
     final char[] chars = referenceText.toCharArray();
     int afterLastDotIndex = 0;
 
@@ -200,7 +198,7 @@ public abstract class PsiNameHelper {
       }
     }
 
-    if (level != 0) return ArrayUtil.EMPTY_STRING_ARRAY;
+    if (level != 0) return ArrayUtilRt.EMPTY_STRING_ARRAY;
 
     int dim = 0;
     for (int i = afterLastDotIndex; i < chars.length; i++) {
@@ -218,7 +216,7 @@ public abstract class PsiNameHelper {
           break;
       }
     }
-    if (level != 0 || dim == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
+    if (level != 0 || dim == 0) return ArrayUtilRt.EMPTY_STRING_ARRAY;
 
     final String[] result = new String[dim];
     dim = 0;

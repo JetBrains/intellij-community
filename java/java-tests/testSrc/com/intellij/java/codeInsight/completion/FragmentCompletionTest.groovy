@@ -21,7 +21,7 @@ import com.intellij.codeInsight.completion.JavaCompletionUtil
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.psi.*
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.PairFunction
 import groovy.transform.CompileStatic
 
@@ -29,7 +29,7 @@ import groovy.transform.CompileStatic
  * @author peter
  */
 @CompileStatic
-class FragmentCompletionTest extends LightCodeInsightFixtureTestCase {
+class FragmentCompletionTest extends LightJavaCodeInsightFixtureTestCase {
   void testDontCompleteFieldsAndMethodsInReferenceCodeFragment() throws Throwable {
     final String text = CommonClassNames.JAVA_LANG_OBJECT + ".<caret>"
     PsiFile file = JavaCodeFragmentFactory.getInstance(project).createReferenceCodeFragment(text, null, true, true)

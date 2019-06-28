@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.util.containers.EmptyIterator;
@@ -6,6 +6,7 @@ import com.intellij.util.containers.SingletonIteratorBase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * A List which is optimised for the sizes of 0 and 1,
@@ -373,5 +374,24 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
       }
     }
     return true;
+  }
+
+  @Override
+  public void forEach(Consumer<? super E> action) {
+    if (mySize == 0) {
+      return;
+    }
+
+    if (mySize == 1) {
+      //noinspection unchecked
+      action.accept((E)myElem);
+    }
+    else {
+      Object[] array = (Object[])myElem;
+      for (int i = 0, length = mySize; i < length; i++) {
+        //noinspection unchecked
+        action.accept((E)array[i]);
+      }
+    }
   }
 }

@@ -5,11 +5,12 @@ import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;
-import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.diagnostic.*;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.notification.Notification;
@@ -29,18 +30,20 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.*;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.ZipHandler;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
-import com.intellij.project.ProjectKt;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -48,15 +51,13 @@ import com.intellij.util.containers.UnsafeWeakList;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
@@ -165,8 +166,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @Override
   @Nullable
   public Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
-    filePath = toCanonicalName(filePath);
-
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       TEST_PROJECTS_CREATED++;
@@ -174,7 +173,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       checkProjectLeaksInTests();
     }
 
-    File projectFile = new File(filePath);
+    filePath = FileUtilRt.toSystemIndependentName(toCanonicalName(filePath));
+    File projectFile = new File(FileUtilRt.toSystemDependentName(filePath));
     if (projectFile.isFile()) {
       FileUtil.delete(projectFile);
     }
@@ -186,9 +186,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         }
       }
     }
-    ProjectEx project = doCreateProject(projectName, filePath);
+
+    ProjectImpl project = doCreateProject(projectName, filePath);
     try {
-      initProject(project, useDefaultProjectSettings ? getDefaultProject() : null);
+      initProject(filePath, project, useDefaultProjectSettings ? getDefaultProject() : null, ProgressManager.getInstance().getProgressIndicator());
       if (LOG_PROJECT_LEAKAGE_IN_TESTS) {
         myProjects.put(project, null);
       }
@@ -258,39 +259,45 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     myProjects.remove(DummyProject.getInstance()); // process queue
     return myProjects.keySet().stream().filter(project -> project.isDisposed() && !((ProjectImpl)project).isTemporarilyDisposed()).collect(Collectors.toCollection(UnsafeWeakList::new));
   }
+
   @TestOnly
   private int getLeakedProjectsCount() {
     myProjects.remove(DummyProject.getInstance()); // process queue
     return (int)myProjects.keySet().stream().filter(project -> project.isDisposed() && !((ProjectImpl)project).isTemporarilyDisposed()).count();
   }
 
-  static void initProject(@NotNull ProjectEx project, @Nullable Project template) {
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (indicator != null && !project.isDefault()) {
+  private static void initProject(@NotNull @SystemIndependent String filePath, @NotNull ProjectImpl project, @Nullable Project template, @Nullable ProgressIndicator indicator) {
+    LOG.assertTrue(!project.isDefault());
+    if (indicator != null) {
       indicator.setIndeterminate(false);
-      indicator.setText(ProjectBundle.message("loading.components.for", project.getName()));
+      // getting project name is not cheap and not possible at this moment
+      indicator.setText("Loading components...");
     }
 
+    Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.PROJECT_BEFORE_LOADED);
     ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(project);
+    activity.end();
 
     boolean succeed = false;
     try {
-      if (template != null) {
-        ProjectKt.getStateStore(project).loadProjectFromTemplate(template);
-      }
-      project.init();
+      project.registerComponents();
+      project.getStateStore().setPath(filePath, true, template);
+      project.init(indicator);
       succeed = true;
     }
     finally {
-      if (!succeed && !project.isDefault()) {
+      if (!succeed) {
         TransactionGuard.submitTransaction(project, () -> WriteAction.run(() -> Disposer.dispose(project)));
       }
     }
   }
 
   @NotNull
-  private static ProjectEx doCreateProject(@Nullable String projectName, @NotNull String filePath) {
-    return new ProjectImpl(FileUtilRt.toSystemIndependentName(filePath), projectName);
+  protected ProjectImpl doCreateProject(@Nullable String projectName, @NotNull String filePath) {
+    Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.PROJECT_INSTANTIATION);
+    ProjectImpl project = new ProjectImpl(filePath, projectName);
+    activity.end();
+    return project;
   }
 
   @Override
@@ -303,8 +310,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @Nullable
   public Project loadProject(@NotNull String filePath, @Nullable String projectName) throws IOException {
     try {
-      ProjectEx project = doCreateProject(projectName, new File(filePath).getAbsolutePath());
-      initProject(project, null);
+      String normalizedFilePath = FileUtilRt.toSystemIndependentName(new File(filePath).getAbsolutePath());
+      ProjectImpl project = doCreateProject(projectName, normalizedFilePath);
+      initProject(normalizedFilePath, project, null, ProgressManager.getInstance().getProgressIndicator());
       return project;
     }
     catch (Throwable t) {
@@ -381,8 +389,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       return false;
     }
 
-    Runnable process = () -> {
-      assertInTransaction();
+    AtomicBoolean success = new AtomicBoolean(true);
+
+    Runnable doLoad = () -> success.set(loadProjectUnderProgress(project, () -> {
+      beforeProjectOpened(project);
 
       TransactionGuard.getInstance().submitTransactionAndWait(() -> fireProjectOpened(project));
 
@@ -404,11 +414,32 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
           if (!(application.isHeadlessEnvironment() || application.isUnitTestMode())) {
             StorageUtilKt.checkUnknownMacros(project, true);
           }
+          StartUpMeasurer.stopPluginCostMeasurement();
         }
       }, ModalityState.NON_MODAL);
-    };
+      ApplicationManager.getApplication().invokeLater(
+        () -> {
+          LoadingPhase.compareAndSet(LoadingPhase.FRAME_SHOWN,
+                                     DumbService.isDumb(project)
+                                     ? LoadingPhase.PROJECT_OPENED
+                                     : LoadingPhase.INDEXING_FINISHED);
 
-    if (!loadProjectUnderProgress(project, process)) {
+          if (!project.isDisposed()) {
+            startupManager.scheduleBackgroundPostStartupActivities();
+          }
+        },
+        ModalityState.NON_MODAL);
+    }));
+
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      TransactionGuard.getInstance().submitTransactionAndWait(doLoad);
+    }
+    else {
+      assertInTransaction();
+      doLoad.run();
+    }
+
+    if (!success.get()) {
       GuiUtils.invokeLaterIfNeeded(() -> {
         closeProject(project, false, false, false, true);
         WriteAction.run(() -> Disposer.dispose(project));
@@ -420,16 +451,19 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return true;
   }
 
+  protected void beforeProjectOpened(Project project) {
+  }
+
   private static void assertInTransaction() {
-    if (!ApplicationManager.getApplication().isUnitTestMode() && TransactionGuard.getInstance().getContextTransaction() == null) {
+    if (!ApplicationManager.getApplication().isUnitTestMode() &&
+        ApplicationManager.getApplication().isInternal() &&
+        TransactionGuard.getInstance().getContextTransaction() == null) {
       LOG.error("Project opening should be done in a transaction",
                 new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
     }
   }
 
   private static boolean loadProjectUnderProgress(@NotNull Project project, @NotNull Runnable performLoading) {
-    assertInTransaction();
-
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (!ApplicationManager.getApplication().isDispatchThread() && indicator != null) {
       indicator.setText("Preparing workspace...");
@@ -483,29 +517,47 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @Override
-  public Project loadAndOpenProject(@NotNull final String originalFilePath) throws IOException {
-    final String filePath = toCanonicalName(originalFilePath);
-    final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(filePath);
+  public Project loadAndOpenProject(@NotNull String originalFilePath) {
+    String filePath = FileUtilRt.toSystemIndependentName(toCanonicalName(originalFilePath));
+    return loadAndOpenProject(LocalFileSystem.getInstance().findFileByPath(filePath), filePath);
+  }
+
+  @Override
+  public Project loadAndOpenProject(@NotNull File file) {
+    VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+    return loadAndOpenProject(virtualFile, Objects.requireNonNull(virtualFile).getPath());
+  }
+
+  private Project loadAndOpenProject(@Nullable VirtualFile virtualFile, @NotNull @SystemIndependent String filePath) {
     final ConversionResult conversionResult = virtualFile == null ? null : ConversionService.getInstance().convert(virtualFile);
-    ProjectEx project;
+    ProjectImpl project;
     if (conversionResult != null && conversionResult.openingIsCanceled()) {
       project = null;
     }
     else {
       project = doCreateProject(null, filePath);
-      ProgressManager.getInstance()
-        .run(new Task.WithResult<Project, IOException>(project, ProjectBundle.message("project.load.progress"), true) {
-        @Override
-        protected Project compute(@NotNull ProgressIndicator indicator) throws IOException {
-          if (!loadProjectWithProgress(project)) {
-            return null;
+      //noinspection CodeBlock2Expr
+      TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+        ProgressManager.getInstance().run(new Task.Modal(project, ProjectBundle.message("project.load.progress"), true) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            try {
+              initProject(filePath, project, null, indicator);
+            }
+            catch (ProcessCanceledException e) {
+              return;
+            }
+            catch (Throwable e) {
+              LOG.error(e);
+              return;
+            }
+
+            if (conversionResult != null && !conversionResult.conversionNotNeeded()) {
+              StartupManager.getInstance(project).registerPostStartupActivity(() -> conversionResult.postStartupActivity(project));
+            }
+            openProject(project);
           }
-          if (conversionResult != null && !conversionResult.conversionNotNeeded()) {
-            StartupManager.getInstance(project).registerPostStartupActivity(() -> conversionResult.postStartupActivity(project));
-          }
-          openProject(project);
-          return project;
-        }
+        });
       });
     }
 
@@ -532,40 +584,35 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
    */
   @Override
   @Nullable
-  public Project convertAndLoadProject(@NotNull VirtualFile path) throws IOException {
+  public Project convertAndLoadProject(@NotNull VirtualFile path) {
+    Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.PROJECT_CONVERSION);
     final ConversionResult conversionResult = ConversionService.getInstance().convert(path);
+    activity.end();
     if (conversionResult.openingIsCanceled()) {
       return null;
     }
 
-    ProjectEx project = doCreateProject(null, path.getPath());
-    if (!loadProjectWithProgress(project)) return null;
+    String filePath = path.getPath();
+    ProjectImpl project = doCreateProject(null, filePath);
+    try {
+      if (!ApplicationManager.getApplication().isDispatchThread() && ProgressManager.getInstance().getProgressIndicator() != null) {
+        initProject(filePath, project, null, ProgressManager.getInstance().getProgressIndicator());
+      }
+      else {
+        //noinspection CodeBlock2Expr
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+          initProject(filePath, project, null, ProgressManager.getInstance().getProgressIndicator());
+        }, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
+      }
+    }
+    catch (ProcessCanceledException e) {
+      return null;
+    }
+
     if (!conversionResult.conversionNotNeeded()) {
       StartupManager.getInstance(project).registerPostStartupActivity(() -> conversionResult.postStartupActivity(project));
     }
     return project;
-  }
-
-  private static boolean loadProjectWithProgress(ProjectEx project) throws IOException {
-    try {
-      if (!ApplicationManager.getApplication().isDispatchThread() &&
-          ProgressManager.getInstance().getProgressIndicator() != null) {
-        initProject(project, null);
-        return true;
-      }
-      ProgressManager.getInstance().runProcessWithProgressSynchronously((ThrowableComputable<Object, RuntimeException>)() -> {
-        initProject(project, null);
-        return project;
-      }, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
-      return true;
-    }
-    catch (ProcessCanceledException e) {
-      return false;
-    }
-    catch (Throwable t) {
-      LOG.info(t);
-      throw new IOException(t);
-    }
   }
 
   private static void notifyProjectOpenFailed() {
@@ -639,6 +686,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       if (!projectImpl.isTemporarilyDisposed()) {
         projectImpl.setTemporarilyDisposed(true);
         removeFromOpened(project);
+        ((ProjectManagerImpl)ProjectManager.getInstance()).updateTheOnlyProjectField();
         return true;
       }
       projectImpl.setTemporarilyDisposed(false);
@@ -757,6 +805,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
 
     LifecycleUsageTriggerCollector.onProjectOpened(project);
+    Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.PROJECT_OPENED_CALLBACKS);
     myBusPublisher.projectOpened(project);
     // https://jetbrains.slack.com/archives/C5E8K7FL4/p1495015043685628
     // projectOpened in the project components is called _after_ message bus event projectOpened for ages
@@ -765,9 +814,17 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     // (and, so, should be called after project initialization)
     if (project instanceof ComponentManagerImpl) {
       for (ProjectComponent component : ((ComponentManagerImpl)project).getComponentInstancesOfType(ProjectComponent.class)) {
-        StartupManagerImpl.runActivity(() -> component.projectOpened());
+        StartupManagerImpl.runActivity(() -> {
+          ClassLoader loader = component.getClass().getClassLoader();
+          String pluginId = loader instanceof PluginClassLoader ? ((PluginClassLoader) loader).getPluginIdString() : null;
+          Activity componentActivity =
+            ParallelActivity.PROJECT_OPEN_HANDLER.start(component.getClass().getName(), StartUpMeasurer.Level.PROJECT, pluginId);
+          component.projectOpened();
+          componentActivity.end();
+        });
       }
     }
+    activity.end();
 
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     ProjectImpl.ourClassesAreLoaded = true;
@@ -901,5 +958,16 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @NotNull
   public String[] getAllExcludedUrls() {
     return myExcludeRootsCache.getExcludedUrls();
+  }
+
+  @NotNull
+  @Override
+  public String[] getAllProjectUrls() {
+    synchronized (lock) {
+      return ContainerUtil.mapNotNull(myOpenProjects, project -> {
+        String basePath = project.getBasePath();
+        return basePath == null ? null : VfsUtilCore.pathToUrl(basePath);
+      }, ArrayUtil.EMPTY_STRING_ARRAY);
+    }
   }
 }

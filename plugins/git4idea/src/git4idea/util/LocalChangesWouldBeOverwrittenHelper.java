@@ -82,7 +82,7 @@ public class LocalChangesWouldBeOverwrittenHelper {
     showErrorDialog(project, operationName, changes, absolutePaths);
   }
 
-  private static void showErrorDialog(@NotNull Project project, @NotNull String operationName, @NotNull List<Change> changes,
+  private static void showErrorDialog(@NotNull Project project, @NotNull String operationName, @NotNull List<? extends Change> changes,
                                       @NotNull Collection<String> absolutePaths) {
     String title = "Local Changes Prevent from " + StringUtil.capitalize(operationName);
     String description = getErrorDialogDescription();

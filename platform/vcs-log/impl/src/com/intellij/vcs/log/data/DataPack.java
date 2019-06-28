@@ -18,7 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class DataPack extends DataPackBase {
-  public static final DataPack EMPTY = createEmptyInstance();
+  public static final DataPack EMPTY = new DataPack(RefsModel.createEmptyInstance(VcsLogStorageImpl.EMPTY),
+                                                    EmptyPermanentGraph.getInstance(), Collections.emptyMap(), false);
 
   @NotNull private final PermanentGraph<Integer> myPermanentGraph;
 
@@ -90,13 +91,6 @@ public class DataPack extends DataPackBase {
       map.put(entry.getKey(), entry.getValue().getReferenceManager());
     }
     return map;
-  }
-
-  @NotNull
-  private static DataPack createEmptyInstance() {
-    RefsModel emptyModel =
-      new RefsModel(new HashMap<>(), new HashSet<>(), VcsLogStorageImpl.EMPTY, new HashMap<>());
-    return new DataPack(emptyModel, EmptyPermanentGraph.getInstance(), Collections.emptyMap(), false);
   }
 
   @NotNull

@@ -109,7 +109,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
   private static class MyRefactoringActionHandler implements RefactoringActionHandler {
     @Override
     public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
-      MavenActionsUsagesCollector.trigger(project, "IntroducePropertyAction");
+      MavenActionsUsagesCollector.trigger(project, MavenActionsUsagesCollector.ActionID.IntroducePropertyAction);
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
       Pair<XmlElement, TextRange> elementAndRange = getSelectedElementAndTextRange(editor, file);

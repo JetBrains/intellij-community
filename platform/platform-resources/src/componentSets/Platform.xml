@@ -59,10 +59,6 @@
     <component>
       <implementation-class>com.intellij.diagnostic.PerformanceWatcher</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.openapi.application.Preloader</implementation-class>
-      <headless-implementation-class/>
-    </component>
 
     <component>
       <interface-class>com.intellij.notification.NotificationsConfiguration</interface-class>
@@ -142,10 +138,6 @@
 
     <component>
       <implementation-class>com.intellij.diagnostic.IdeaFreezeReporter</implementation-class>
-    </component>
-
-    <component>
-      <implementation-class>com.intellij.openapi.util.registry.RegistryExtensionCollector</implementation-class>
     </component>
 
     <component>

@@ -14,7 +14,10 @@ import org.jdom.Element
 import java.awt.Frame
 import java.awt.Rectangle
 
-@State(name = "ProjectFrameBounds", storages = [(Storage(StoragePathMacros.WORKSPACE_FILE))])
+@State(name = "ProjectFrameBounds", storages = [
+  Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
+  Storage(StoragePathMacros.WORKSPACE_FILE, deprecated = true)
+])
 class ProjectFrameBounds(private val project: Project) : PersistentStateComponent<FrameInfo>, ModificationTracker {
   companion object {
     @JvmStatic

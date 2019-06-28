@@ -3,10 +3,10 @@ package com.intellij.execution.junit.codeInsight
 
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import com.siyeh.ig.LightInspectionTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.siyeh.ig.LightJavaInspectionTestCase
 
-class JUnit5MalformedNestedClassTest : LightInspectionTestCase() {
+class JUnit5MalformedNestedClassTest : LightJavaInspectionTestCase() {
   override fun getInspection(): InspectionProfileEntry? {
     return JUnit5MalformedNestedClassInspection()
   }
@@ -27,6 +27,6 @@ class JUnit5MalformedNestedClassTest : LightInspectionTestCase() {
   }
 
   override fun getProjectDescriptor(): LightProjectDescriptor {
-    return LightCodeInsightFixtureTestCase.JAVA_8
+    return LightJavaCodeInsightFixtureTestCase.JAVA_8
   }
 }

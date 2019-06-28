@@ -5,9 +5,11 @@ package com.intellij.find;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -324,14 +326,6 @@ public class FindUtil {
     });
   }
 
-  public static void searchBack(Project project, FileEditor fileEditor, @Nullable DataContext dataContext) {
-    if (!(fileEditor instanceof TextEditor)) return;
-    TextEditor textEditor = (TextEditor)fileEditor;
-    Editor editor = textEditor.getEditor();
-
-    searchBack(project, editor, dataContext);
-  }
-
   public static void searchBack(final Project project, final Editor editor, @Nullable DataContext context) {
     FindManager findManager = FindManager.getInstance(project);
     if (!findManager.findWasPerformed() && !findManager.selectNextOccurrenceWasPerformed()) {
@@ -366,15 +360,7 @@ public class FindUtil {
     searchAgain(project, editor, offset, model);
   }
 
-  public static boolean searchAgain(Project project, FileEditor fileEditor, @Nullable DataContext context) {
-    if (!(fileEditor instanceof TextEditor)) return false;
-    TextEditor textEditor = (TextEditor)fileEditor;
-    Editor editor = textEditor.getEditor();
-
-    return searchAgain(project, editor, context);
-  }
-
-  private static boolean searchAgain(final Project project, final Editor editor, @Nullable DataContext context) {
+  public static boolean searchAgain(final Project project, final Editor editor, @Nullable DataContext context) {
     FindManager findManager = FindManager.getInstance(project);
     if (!findManager.findWasPerformed() && !findManager.selectNextOccurrenceWasPerformed()) {
       new IncrementalFindAction().getHandler().execute(editor, context);
@@ -1019,5 +1005,16 @@ public class FindUtil {
   private static int getCaretPosition(FindResult findResult, int caretShiftFromSelectionStart) {
     return caretShiftFromSelectionStart < 0
            ? findResult.getEndOffset() : Math.min(findResult.getStartOffset() + caretShiftFromSelectionStart, findResult.getEndOffset());
+  }
+
+  public static void triggerUsedOptionsStats(@NotNull String prefix, @NotNull FindModel model) {
+    FUCounterUsageLogger logger = FUCounterUsageLogger.getInstance();
+    if (model.isCaseSensitive()) logger.logEvent("find", prefix + ".MatchCaseOn");
+    if (model.isWholeWordsOnly()) logger.logEvent("find", prefix + ".WholeWordsOn");
+    if (model.isRegularExpressions()) logger.logEvent("find", prefix + ".RegexOn");
+    if (model.getFileFilter() != null) logger.logEvent("find", prefix + ".FileFilterOn");
+    if (model.getSearchContext() != FindModel.SearchContext.ANY) {
+      logger.logEvent("find", prefix + ".Context." + model.getSearchContext());
+    }
   }
 }

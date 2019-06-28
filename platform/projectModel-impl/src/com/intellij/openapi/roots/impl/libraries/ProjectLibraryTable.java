@@ -4,9 +4,15 @@ package com.intellij.openapi.roots.impl.libraries;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public interface ProjectLibraryTable extends LibraryTable {
+  /**
+   * @deprecated use {@link com.intellij.openapi.roots.libraries.LibraryTablesRegistrar#getLibraryTable(Project)} instead
+   */
+  @Deprecated
   static LibraryTable getInstance(Project project) {
     return ServiceManager.getService(project, ProjectLibraryTable.class);
   }

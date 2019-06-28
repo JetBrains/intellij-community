@@ -4,27 +4,26 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build"
+    "build": "vue-cli-service build && unlink dist/js/pdfmake.*.js && unlink dist/js/pdfmake.*.js.map"
   },
-  "//": "https://github.com/amcharts/amcharts4/issues/1101",
   "dependencies": {
-    "@amcharts/amcharts4": "4.3.14",
-    "element-ui": "^2.7.2",
-    "semver": "^6.0.0",
+    "@amcharts/amcharts4": "4.5.3",
+    "element-ui": "^2.10.0",
+    "semver": "^6.1.2",
     "vue": "^2.6.10",
-    "vue-class-component": "^7.0.2",
-    "vue-property-decorator": "^8.1.0",
-    "vue-router": "^3.0.5",
-    "vuex": "^3.1.0",
-    "vuex-persist": "^2.0.0"
+    "vue-class-component": "^7.1.0",
+    "vue-property-decorator": "^8.2.1",
+    "vue-router": "^3.0.6",
+    "vuex": "^3.1.1",
+    "vuex-persist": "^2.0.1"
   },
   "devDependencies": {
-    "@types/semver": "^6.0.0",
-    "@vue/cli-plugin-typescript": "^3.6.0",
-    "@vue/cli-service": "^3.6.0",
-    "typescript": "^3.4.3",
+    "@types/semver": "^6.0.1",
+    "@vue/cli-plugin-typescript": "^3.8.1",
+    "@vue/cli-service": "^3.8.4",
+    "typescript": "^3.5.2",
     "vue-template-compiler": "^2.6.10",
-    "vuex-module-decorators": "^0.9.8"
+    "vuex-module-decorators": "^0.9.9"
   },
   "postcss": {
     "plugins": {
@@ -34,6 +33,7 @@
   "browserslist": [
     "> 1%",
     "last 2 versions",
-    "not ie <= 8"
+    "not ie <= 8",
+    "not dead"
   ]
 }

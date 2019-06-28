@@ -17,13 +17,13 @@ package com.siyeh.ig.resources;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
-public class AutoCloseableResourceInspectionTest extends LightInspectionTestCase {
+public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTestCase {
 
   public void testCorrectClose() {
     doTest("import java.io.*;" +

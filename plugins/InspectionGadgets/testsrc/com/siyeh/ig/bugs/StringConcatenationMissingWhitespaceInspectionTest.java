@@ -4,13 +4,13 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class StringConcatenationMissingWhitespaceInspectionTest extends LightInspectionTestCase {
+public class StringConcatenationMissingWhitespaceInspectionTest extends LightJavaInspectionTestCase {
 
   public void testConcatenations() {
     doTest();

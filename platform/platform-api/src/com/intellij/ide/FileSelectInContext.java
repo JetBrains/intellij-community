@@ -15,6 +15,7 @@
  */
 package com.intellij.ide;
 
+import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -38,7 +39,7 @@ public class FileSelectInContext implements SelectInContext {
 
   public FileSelectInContext(@NotNull Project project, @NotNull VirtualFile file, @Nullable FileEditorProvider provider) {
     myProject = project;
-    myFile = file;
+    myFile = BackedVirtualFile.getOriginFileIfBacked(file);
     myProvider = provider;
   }
 

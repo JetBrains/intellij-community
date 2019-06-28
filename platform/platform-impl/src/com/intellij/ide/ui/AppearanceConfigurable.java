@@ -25,7 +25,7 @@ import com.intellij.ui.FontComboBox;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -256,10 +256,10 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     // reset to default when unchecked
     if (!myComponent.myOverrideLAFFonts.isSelected()) {
       assert !shouldUpdateUI;
-      int defSize = JBUI.Fonts.label().getSize();
+      int defSize = JBFont.label().getSize();
       settingsManager.setFontSize(defSize);
       myComponent.myFontSizeCombo.getModel().setSelectedItem(String.valueOf(defSize));
-      String defName = JBUI.Fonts.label().getFontName();
+      String defName = JBFont.label().getFontName();
       settingsManager.setFontFace(defName);
       myComponent.myFontCombo.setFontName(defName);
     }
@@ -557,7 +557,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     }
 
     @Override
-    public void customize(JList<? extends AntialiasingType> list, AntialiasingType value, int index, boolean selected, boolean hasFocus) {
+    public void customize(@NotNull JList<? extends AntialiasingType> list, AntialiasingType value, int index, boolean selected, boolean hasFocus) {
       if (value == AntialiasingType.SUBPIXEL) {
         GraphicsUtil.setAntialiasingType(this, SUBPIXEL_HINT);
       }

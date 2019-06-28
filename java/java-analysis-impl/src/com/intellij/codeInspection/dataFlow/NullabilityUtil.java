@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -55,38 +56,39 @@ public class NullabilityUtil {
     }
 
     if (var instanceof PsiField && value.getFactory().canTrustFieldInitializer((PsiField)var)) {
-      return DfaNullability.fromNullability(getNullabilityFromFieldInitializers((PsiField)var, defaultNullability));
+      return DfaNullability.fromNullability(getNullabilityFromFieldInitializers((PsiField)var, defaultNullability).second);
     }
 
     return DfaNullability.fromNullability(defaultNullability);
   }
 
-  private static Nullability getNullabilityFromFieldInitializers(PsiField field, Nullability defaultNullability) {
+  static Pair<PsiExpression, Nullability> getNullabilityFromFieldInitializers(PsiField field, Nullability defaultNullability) {
     if (DfaPsiUtil.isFinalField(field)) {
       PsiExpression initializer = field.getInitializer();
       if (initializer != null) {
-        return getExpressionNullability(initializer);
+        return Pair.create(initializer, getExpressionNullability(initializer));
       }
 
       List<PsiExpression> initializers = DfaPsiUtil.findAllConstructorInitializers(field);
       if (initializers.isEmpty()) {
-        return defaultNullability;
+        return Pair.create(null, defaultNullability);
       }
 
       for (PsiExpression expression : initializers) {
-        if (getExpressionNullability(expression) == Nullability.NULLABLE) {
-          return Nullability.NULLABLE;
+        Nullability nullability = getExpressionNullability(expression);
+        if (nullability == Nullability.NULLABLE) {
+          return Pair.create(expression, Nullability.NULLABLE);
         }
       }
 
       if (DfaPsiUtil.isInitializedNotNull(field)) {
-        return Nullability.NOT_NULL;
+        return Pair.create(ContainerUtil.getOnlyItem(initializers), Nullability.NOT_NULL);
       }
     }
-    else if (isOnlyImplicitlyInitialized(field)) {
-      return Nullability.NOT_NULL;
+    else if (isOnlyImplicitlyInitialized(field)) { 
+      return Pair.create(null, Nullability.NOT_NULL);
     }
-    return defaultNullability;
+    return Pair.create(null, defaultNullability);
   }
 
   private static boolean isOnlyImplicitlyInitialized(PsiField field) {

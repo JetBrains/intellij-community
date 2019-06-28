@@ -23,29 +23,11 @@ import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.util.AnnotateFix;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
 public class PatternOverriddenByNonAnnotatedMethod extends LocalInspectionTool {
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  @Override
-  @NotNull
-  public String getGroupDisplayName() {
-    return PatternValidator.PATTERN_VALIDATION;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return "Non-annotated Method overrides @Pattern Method";
-  }
 
   @Override
   @NotNull
@@ -74,10 +56,4 @@ public class PatternOverriddenByNonAnnotatedMethod extends LocalInspectionTool {
     };
   }
 
-  @Override
-  @NotNull
-  @NonNls
-  public String getShortName() {
-    return "PatternOverriddenByNonAnnotatedMethod";
-  }
 }

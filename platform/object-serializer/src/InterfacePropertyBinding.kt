@@ -5,7 +5,7 @@ package com.intellij.serialization
 internal data class InterfacePropertyBinding(private val allowedTypes: Array<Class<*>>) : Binding {
   override fun serialize(obj: Any, context: WriteContext) = throw IllegalStateException("InterfacePropertyBinding cannot be used as root binding")
 
-  override fun deserialize(context: ReadContext) = throw IllegalStateException("InterfacePropertyBinding cannot be used as root binding")
+  override fun deserialize(context: ReadContext, hostObject: Any?) = throw IllegalStateException("InterfacePropertyBinding cannot be used as root binding")
 
   override fun serialize(hostObject: Any, property: MutableAccessor, context: WriteContext) {
     write(hostObject, property, context) { value ->
@@ -31,7 +31,7 @@ internal data class InterfacePropertyBinding(private val allowedTypes: Array<Cla
       else {
         throw SerializationException("Class simple name is not specified (allowedClasses=$allowedTypes)")
       }
-      context.bindingProducer.getRootBinding(beanClass).deserialize(context)
+      context.bindingProducer.getRootBinding(beanClass).deserialize(context, hostObject)
     }
   }
 }

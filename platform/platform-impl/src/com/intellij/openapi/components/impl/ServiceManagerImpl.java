@@ -15,7 +15,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceDescriptor;
-import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
@@ -47,7 +46,7 @@ public final class ServiceManagerImpl implements Disposable {
 
   static void registerServices(@NotNull List<ServiceDescriptor> services,
                                @NotNull IdeaPluginDescriptor pluginDescriptor,
-                               @NotNull ComponentManagerEx componentManager) {
+                               @NotNull ComponentManager componentManager) {
     MutablePicoContainer picoContainer = (MutablePicoContainer)componentManager.getPicoContainer();
     for (ServiceDescriptor descriptor : services) {
       // Allow to re-define service implementations in plugins.
@@ -69,7 +68,7 @@ public final class ServiceManagerImpl implements Disposable {
 
   @ApiStatus.Internal
   public static void processAllDescriptors(@NotNull Consumer<? super ServiceDescriptor> consumer, @NotNull ComponentManager componentManager) {
-    for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins(null)) {
+    for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins()) {
       IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)plugin;
       List<ServiceDescriptor> serviceDescriptors;
       if (componentManager instanceof Application) {
@@ -88,7 +87,7 @@ public final class ServiceManagerImpl implements Disposable {
 
   @ApiStatus.Internal
   public static void processProjectDescriptors(@NotNull BiConsumer<? super ServiceDescriptor, ? super PluginDescriptor> consumer) {
-    for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins(null)) {
+    for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins()) {
       for (ServiceDescriptor serviceDescriptor : ((IdeaPluginDescriptorImpl)plugin).getProjectServices()) {
         consumer.accept(serviceDescriptor, plugin);
       }
@@ -174,10 +173,10 @@ public final class ServiceManagerImpl implements Disposable {
     private ComponentAdapter myDelegate;
     private final PluginDescriptor myPluginDescriptor;
     private final ServiceDescriptor myDescriptor;
-    private final ComponentManagerEx myComponentManager;
+    private final ComponentManager myComponentManager;
     private volatile Object myInitializedComponentInstance;
 
-    MyComponentAdapter(@NotNull ServiceDescriptor descriptor, @NotNull PluginDescriptor pluginDescriptor, @NotNull ComponentManagerEx componentManager) {
+    MyComponentAdapter(@NotNull ServiceDescriptor descriptor, @NotNull PluginDescriptor pluginDescriptor, @NotNull ComponentManager componentManager) {
       myDescriptor = descriptor;
       myPluginDescriptor = pluginDescriptor;
       myComponentManager = componentManager;
@@ -224,12 +223,14 @@ public final class ServiceManagerImpl implements Disposable {
 
         // heavy to prevent storages from flushing and blocking FS
         try (AccessToken ignore = HeavyProcessLatch.INSTANCE.processStarted("Creating service '" + implementation + "'")) {
-          Runnable runnable = () -> myInitializedComponentInstance = createAndInitialize(container);
-          if (ProgressIndicatorProvider.getGlobalProgressIndicator() != null) {
-            ProgressManager.getInstance().executeNonCancelableSection(runnable);
+          if (ProgressIndicatorProvider.getGlobalProgressIndicator() == null) {
+            myInitializedComponentInstance = createAndInitialize(container);
           }
           else {
-            runnable.run();
+            //noinspection CodeBlock2Expr
+            ProgressManager.getInstance().executeNonCancelableSection(() -> {
+              myInitializedComponentInstance = createAndInitialize(container);
+            });
           }
           return myInitializedComponentInstance;
         }

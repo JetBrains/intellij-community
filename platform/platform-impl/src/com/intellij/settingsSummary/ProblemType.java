@@ -18,6 +18,7 @@ package com.intellij.settingsSummary;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -26,6 +27,7 @@ import javax.swing.*;
  * @deprecated use {@link com.intellij.troubleshooting.TroubleInfoCollector}. To be removed in IDEA 2020.1.
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
 public interface ProblemType {
   ExtensionPointName<ProblemType> EP_SETTINGS = ExtensionPointName.create("com.intellij.settingsSummaryFactory");
 

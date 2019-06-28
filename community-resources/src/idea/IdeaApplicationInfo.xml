@@ -1,15 +1,16 @@
 <component xmlns="http://jetbrains.org/intellij/schema/application-info"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="http://jetbrains.org/intellij/schema/application-info http://jetbrains.org/intellij/schema/ApplicationInfo.xsd">
-  <version major="2019" minor="2" eap="true" suffix="Snapshot"/>
+  <version major="2019" minor="3" eap="true" suffix="Snapshot"/>
   <company name="JetBrains s.r.o." url="https://www.jetbrains.com"/>
   <build number="IC-__BUILD__" date="__BUILD_DATE__"/>
   <logo url="/idea_community_logo.png" textcolor="ffffff" progressColor="ffffff" progressX="117" progressY="280" progressHeight="3" />
   <about url="/idea_community_about.png" foreground="939598" copyrightForeground="939598" linkColor="095fdc" logoX="540" logoY="300" logoW="100" logoH="100"/>
-  <icon size32="/icon_CE.png" size16="/icon_CEsmall.png" size128="/icon_CE_128.png" ico="idea_CE.ico" svg="/idea-ce.svg"/>
-  <icon-eap svg="/idea-ce-eap.svg"/>
+  <icon ico="idea_CE.ico" svg="/idea-ce.svg" svg-small="/idea-ce_16.svg"/>
+  <icon-eap svg="/idea-ce-eap.svg" svg-small="/idea-ce-eap_16.svg"/>
   <package code="__PACKAGE_CODE__"/>
   <names product="IDEA" fullname="IntelliJ IDEA" edition="Community Edition" script="idea" motto="Capable and Ergonomic IDE for JVM"/>
+  <essential-plugin>com.intellij.java</essential-plugin>
 
   <welcome-screen logo-url="/Logo_welcomeScreen_CE.png"/>
   <customize-ide-wizard provider="com.intellij.ide.customize.CustomizeIdeaWizardStepsProvider"/>

@@ -33,12 +33,6 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
 
   @Nullable
   @Override
-  public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
-    return null;
-  }
-
-  @Nullable
-  @Override
   public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     String forcedPropName = null;
     if (element instanceof FakeDocElement) {
@@ -210,12 +204,6 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     if ((element instanceof JsonProperty || isWhitespaceOrComment(element) && element.getParent() instanceof JsonObject) && object instanceof String) {
       return new FakeDocElement(element instanceof JsonProperty ? ((JsonProperty)element).getNameElement() : element, StringUtil.unquoteString((String)object));
     }
-    return null;
-  }
-
-  @Nullable
-  @Override
-  public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
     return null;
   }
 

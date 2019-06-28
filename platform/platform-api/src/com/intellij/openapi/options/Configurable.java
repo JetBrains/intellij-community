@@ -119,6 +119,7 @@ import java.awt.*;
  *
  * @see ConfigurableEP
  * @see SearchableConfigurable
+ * @see ShowSettingsUtil
  */
 public interface Configurable extends UnnamedConfigurable {
   ExtensionPointName<ConfigurableEP<Configurable>> APPLICATION_CONFIGURABLE = ExtensionPointName.create("com.intellij.applicationConfigurable");

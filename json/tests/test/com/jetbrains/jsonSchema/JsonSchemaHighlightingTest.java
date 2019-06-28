@@ -1162,4 +1162,19 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
                 "  }\n" +
                 "}");
   }
+
+  public void testCaseInsensitive() throws Exception {
+    doTest("{\n" +
+           "  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n" +
+           "  \"additionalProperties\": {\n" +
+           "    \"x-intellij-case-insensitive\": true,\n" +
+           "    \"enum\": [\"aa\", \"bb\"]\n" +
+           "  }\n" +
+           "}", "{\"q\": \"aA\", \"r\": \"Bb\", \"s\": <warning>\"aB\"</warning>}");
+  }
+
+  public void testFunctionSchema() throws Exception {
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/functionSchema.json"));
+    doTest(schemaText, "{\"bindings\": [\"queueTrigger\"]}");
+  }
 }

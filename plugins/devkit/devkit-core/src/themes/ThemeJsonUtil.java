@@ -3,7 +3,10 @@ package org.jetbrains.idea.devkit.themes;
 
 import com.google.common.collect.Lists;
 import com.intellij.ide.ui.UIThemeMetadata;
+import com.intellij.json.psi.JsonFile;
+import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
+import com.intellij.json.psi.JsonValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -13,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.themes.metadata.UIThemeMetadataService;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,6 +24,9 @@ class ThemeJsonUtil {
 
   @NonNls
   private static final String UI_PROPERTY_NAME = "ui";
+
+  @NonNls
+  private static final String COLORS_PROPERTY_NAME = "colors";
 
   static boolean isInsideUiProperty(@NotNull JsonProperty property) {
     PsiElement parent = property;
@@ -43,6 +50,16 @@ class ThemeJsonUtil {
 
   static boolean isThemeFilename(@NotNull String fileName) {
     return StringUtil.endsWithIgnoreCase(fileName, ".theme.json");
+  }
+
+  static List<JsonProperty> getNamedColors(@NotNull JsonFile themeFile) {
+    JsonValue topLevelValue = themeFile.getTopLevelValue();
+    if (!(topLevelValue instanceof JsonObject)) return Collections.emptyList();
+    JsonProperty colorsProperty = ((JsonObject)topLevelValue).findProperty(COLORS_PROPERTY_NAME);
+    if (colorsProperty == null) return Collections.emptyList();
+    final JsonValue colorsValue = colorsProperty.getValue();
+    if (!(colorsValue instanceof JsonObject)) return Collections.emptyList();
+    return ((JsonObject)colorsValue).getPropertyList();
   }
 
   @Nullable

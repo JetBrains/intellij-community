@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl.references;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -14,6 +14,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -80,7 +81,7 @@ public class PyImportReference extends PyReferenceImpl {
     if (importElement != null) {
       PsiErrorElement prevError = PsiTreeUtil.getPrevSiblingOfType(importElement, PsiErrorElement.class);
       if (prevError != null) {
-        return ArrayUtil.EMPTY_OBJECT_ARRAY;
+        return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
       }
     }
 
@@ -98,7 +99,7 @@ public class PyImportReference extends PyReferenceImpl {
         return variants;
       }
       else {
-        return ArrayUtil.EMPTY_OBJECT_ARRAY;
+        return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
       }
     }
     else {

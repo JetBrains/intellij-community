@@ -37,11 +37,11 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TextTransferable;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -306,7 +306,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   private void setFixedColumnWidth(final int columnIndex, String sampleText) {
     final TableColumn column = myEntryTable.getTableHeader().getColumnModel().getColumn(columnIndex);
     final FontMetrics fontMetrics = myEntryTable.getFontMetrics(myEntryTable.getFont());
-    final int width = fontMetrics.stringWidth(" " + sampleText + " ") + JBUI.scale(4);
+    final int width = fontMetrics.stringWidth(" " + sampleText + " ") + JBUIScale.scale(4);
     column.setPreferredWidth(width);
     column.setMinWidth(width);
     column.setResizable(false);

@@ -27,20 +27,21 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.ModuleTestCase;
+import com.intellij.testFramework.JavaModuleTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.PathsList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.util.JpsPathUtil;
+import org.junit.Assume;
 
 import java.io.IOException;
 
 /**
  * @author nik
  */
-public abstract class ModuleRootManagerTestCase extends ModuleTestCase {
+public abstract class ModuleRootManagerTestCase extends JavaModuleTestCase {
   protected static void assertRoots(PathsList pathsList, VirtualFile... files) {
     assertOrderedEquals(pathsList.getRootDirs(), files);
   }
@@ -141,5 +142,13 @@ public abstract class ModuleRootManagerTestCase extends ModuleTestCase {
 
   protected VirtualFile getAsmJar() {
     return IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("ASM");
+  }
+
+  protected boolean underTreeProjectModel() {
+    return myProject.getClass().getName() == "com.intellij.openapi.project.impl.LegacyBridgeProjectImpl";
+  }
+
+  protected void ignoreTestUnderTreeProjectModel() {
+    Assume.assumeFalse("Not applicable to treeProjectModel", underTreeProjectModel());
   }
 }

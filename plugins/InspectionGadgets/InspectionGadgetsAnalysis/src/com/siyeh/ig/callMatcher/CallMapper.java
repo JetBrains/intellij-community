@@ -38,6 +38,7 @@ public class CallMapper<T> {
 
   public CallMapper() {}
 
+  @SafeVarargs
   public CallMapper(CallHandler<T>... handlers) {
     for (CallHandler<T> handler : handlers) {
       register(handler);

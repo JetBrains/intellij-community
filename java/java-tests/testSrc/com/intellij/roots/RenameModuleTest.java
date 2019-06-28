@@ -31,7 +31,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
 import com.intellij.testFramework.MapDataContext;
-import com.intellij.testFramework.ModuleTestCase;
+import com.intellij.testFramework.JavaModuleTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Vladislav.Soroka
  */
-public class RenameModuleTest extends ModuleTestCase {
+public class RenameModuleTest extends JavaModuleTestCase {
 
   @Override
   protected void tearDown() throws Exception {

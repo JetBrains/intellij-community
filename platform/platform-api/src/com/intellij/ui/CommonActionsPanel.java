@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.*;
@@ -96,7 +96,7 @@ public class CommonActionsPanel extends JPanel {
       Buttons button = buttons[i];
       String name = null;
       switch (button) {
-        case ADD:    name = addName;      break;        
+        case ADD:    name = addName;      break;
         case EDIT:   name = editName;     break;
         case REMOVE: name = removeName;   break;
         case UP:     name = moveUpName;   break;
@@ -192,7 +192,7 @@ public class CommonActionsPanel extends JPanel {
         }
       }
     }
-    
+
     super.addNotify(); // call after all to construct actions tooltips properly
   }
 
@@ -290,9 +290,9 @@ public class CommonActionsPanel extends JPanel {
           }
         }
 
-        final ListSelectionModel model = c instanceof JTable ? ((JTable)c).getSelectionModel() 
+        final ListSelectionModel model = c instanceof JTable ? ((JTable)c).getSelectionModel()
                                                              : ((JList)c).getSelectionModel();
-        final int size = c instanceof JTable ? ((JTable)c).getRowCount()  
+        final int size = c instanceof JTable ? ((JTable)c).getRowCount()
                                              : ((JList)c).getModel().getSize();
         final int min = model.getMinSelectionIndex();
         final int max = model.getMaxSelectionIndex();

@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.actions.ActivateToolWindowAction;
 import com.intellij.ide.actions.GotoActionAction;
+import com.intellij.ide.ui.OptionsSearchTopHitProvider;
 import com.intellij.ide.ui.OptionsTopHitProvider;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
@@ -30,8 +31,6 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.accessibility.Accessible;
-import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
@@ -86,8 +85,8 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Object> 
     List<SearchEverywhereCommandInfo> res = new ArrayList<>();
     final HashSet<String> found = new HashSet<>();
     for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
-      if (provider instanceof OptionsTopHitProvider) {
-        final String providerId = ((OptionsTopHitProvider)provider).getId();
+      if (provider instanceof OptionsSearchTopHitProvider) {
+        final String providerId = ((OptionsSearchTopHitProvider)provider).getId();
         if (!found.contains(providerId)) {
           found.add(providerId);
           res.add(new SearchEverywhereCommandInfo(providerId, "", this));
@@ -185,25 +184,9 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Object> 
   private static class TopHitRenderer extends ColoredListCellRenderer<Object> {
 
     private final Project myProject;
-    private final MyAccessiblePanel myRendererPanel = new MyAccessiblePanel();
 
     private TopHitRenderer(Project project) {
       myProject = project;
-    }
-
-    private static class MyAccessiblePanel extends JPanel {
-      private Accessible myAccessible;
-      MyAccessiblePanel() {
-        super(new BorderLayout());
-        setOpaque(false);
-      }
-      void setAccessible(Accessible comp) {
-        myAccessible = comp;
-      }
-      @Override
-      public AccessibleContext getAccessibleContext() {
-        return accessibleContext = (myAccessible != null ? myAccessible.getAccessibleContext() : super.getAccessibleContext());
-      }
     }
 
     @Override
@@ -213,34 +196,16 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Object> 
       if (value instanceof BooleanOptionDescription) {
         final JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(UIUtil.getListBackground(selected, true));
-        panel.add(cmp, BorderLayout.CENTER);
-        final Component rightComponent;
 
         final OnOffButton button = new OnOffButton();
         button.setSelected(((BooleanOptionDescription)value).isOptionEnabled());
-        rightComponent = button;
 
-        panel.add(rightComponent, BorderLayout.EAST);
+        panel.add(cmp, BorderLayout.CENTER);
+        panel.add(button, BorderLayout.EAST);
         cmp = panel;
       }
 
-      Color bg = cmp.getBackground();
-      if (bg == null) {
-        cmp.setBackground(UIUtil.getListBackground(selected, true));
-        bg = cmp.getBackground();
-      }
-
-      myRendererPanel.removeAll();
-
-      JPanel wrapped = new JPanel(new BorderLayout());
-      wrapped.setBackground(bg);
-      wrapped.add(cmp, BorderLayout.CENTER);
-      myRendererPanel.add(wrapped, BorderLayout.CENTER);
-      if (cmp instanceof Accessible) {
-        myRendererPanel.setAccessible((Accessible)cmp);
-      }
-
-      return myRendererPanel;
+      return cmp;
     }
 
     @Override

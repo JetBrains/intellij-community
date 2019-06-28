@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -129,6 +129,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     return myCodeFragment;
   }
 
+  @NotNull
   private PsiClassType createClassType(GlobalSearchScope scope, String fqn) {
     PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass(fqn, scope);
     if (aClass != null) return JavaPsiFacade.getElementFactory(myProject).createType(aClass);
@@ -397,6 +398,16 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       myExpressionBlockContext.generateReturn(statement.getExpression(), this);
     } else {
       jumpOut(exitedElement);
+    }
+    finishElement(statement);
+  }
+
+  @Override
+  public void visitYieldStatement(PsiYieldStatement statement) {
+    startElement(statement);
+    PsiSwitchExpression enclosing = statement.findEnclosingExpression();
+    if (enclosing != null && myExpressionBlockContext != null && myExpressionBlockContext.myCodeBlock == enclosing.getBody()) {
+      myExpressionBlockContext.generateReturn(statement.getExpression(), this);
     }
     finishElement(statement);
   }
@@ -1028,7 +1039,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(statement);
   }
 
-  void addConditionalRuntimeThrow() {
+  void addConditionalErrorThrow() {
     if (!shouldHandleException()) {
       return;
     }
@@ -1036,10 +1047,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     pushUnknown();
     final ConditionalGotoInstruction ifNoException = addInstruction(new ConditionalGotoInstruction(null, false, null));
 
-    pushUnknown();
-    final ConditionalGotoInstruction ifError = addInstruction(new ConditionalGotoInstruction(null, false, null));
-    throwException(myExceptionCache.get(JAVA_LANG_RUNTIME_EXCEPTION), null);
-    ifError.setOffset(myCurrentFlow.getInstructionCount());
     throwException(myExceptionCache.get(JAVA_LANG_ERROR), null);
 
     ifNoException.setOffset(myCurrentFlow.getInstructionCount());
@@ -1145,7 +1152,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       pushTrap(new InsideFinally(resourceList));
       startElement(resourceList);
       addInstruction(new FlushFieldsInstruction());
-      addThrows(null, closerExceptions.toArray(PsiClassType.EMPTY_ARRAY));
+      addThrows(null, closerExceptions);
       controlTransfer(new ExitFinallyTransfer(twrFinallyDescriptor), FList.emptyList()); // DfaControlTransferValue is on stack
       finishElement(resourceList);
       popTrap(InsideFinally.class);
@@ -1489,7 +1496,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new UnwrapSpecialFieldInstruction(SpecialField.UNBOX));
     }
     else if (TypeConversionUtil.isPrimitiveAndNotNull(actualType) && TypeConversionUtil.isAssignableFromPrimitiveWrapper(expectedType)) {
-      addConditionalRuntimeThrow();
+      addConditionalErrorThrow();
       PsiType boxedType = ((PsiPrimitiveType)actualType).getBoxedType(context);
       addInstruction(new BoxingInstruction(boxedType));
     }
@@ -1648,13 +1655,17 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   void addMethodThrows(PsiMethod method, @Nullable PsiElement explicitCall) {
-    if (method != null && shouldHandleException()) {
-      addThrows(explicitCall, method.getThrowsList().getReferencedTypes());
+    if (shouldHandleException()) {
+      addThrows(explicitCall, method == null ? Collections.emptyList() : Arrays.asList(method.getThrowsList().getReferencedTypes()));
     }
   }
 
-  private void addThrows(@Nullable PsiElement explicitCall, PsiClassType[] refs) {
-    for (PsiClassType ref : refs) {
+  private void addThrows(@Nullable PsiElement explicitCall, Collection<? extends PsiType> exceptions) {
+    List<PsiType> allExceptions = new ArrayList<>(exceptions);
+    allExceptions.add(myExceptionCache.get(JAVA_LANG_ERROR).getThrowable().getPsiType());
+    allExceptions.add(myExceptionCache.get(JAVA_LANG_RUNTIME_EXCEPTION).getThrowable().getPsiType());
+    List<PsiType> refs = PsiDisjunctionType.flattenAndRemoveDuplicates(allExceptions);
+    for (PsiType ref : refs) {
       pushUnknown();
       ConditionalGotoInstruction cond = new ConditionalGotoInstruction(null, false, null);
       addInstruction(cond);
@@ -1743,7 +1754,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   void addBareCall(@Nullable PsiMethodCallExpression expression, @NotNull PsiReferenceExpression reference) {
-    addConditionalRuntimeThrow();
+    addConditionalErrorThrow();
     PsiMethod method = ObjectUtils.tryCast(reference.resolve(), PsiMethod.class);
     List<? extends MethodContract> contracts =
       method == null ? Collections.emptyList() :
@@ -1766,7 +1777,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, PsiType.BOOLEAN));
       ConditionalGotoInstruction ifNotFail = new ConditionalGotoInstruction(null, true, null);
       addInstruction(ifNotFail);
-      addInstruction(new ReturnInstruction(myFactory.controlTransfer(new ExceptionTransfer(null), myTrapStack), anchor));
+      addInstruction(new ReturnInstruction(myFactory.controlTransfer(myExceptionCache.get(JAVA_LANG_THROWABLE), myTrapStack), anchor));
 
       ifNotFail.setOffset(myCurrentFlow.getInstructionCount());
     }
@@ -1852,7 +1863,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         handleEscapedVariables(anonymousClass);
       }
 
-      addConditionalRuntimeThrow();
+      addConditionalErrorThrow();
       DfaValue precalculatedNewValue = getPrecalculatedNewValue(expression);
       List<? extends MethodContract> contracts = constructor == null ? Collections.emptyList() : JavaMethodContractUtil.getMethodContracts(constructor);
       addInstruction(new MethodCallInstruction(expression, precalculatedNewValue, DfaUtil.addRangeContracts(constructor, contracts)));

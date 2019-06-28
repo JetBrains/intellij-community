@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ProjectCoreUtil {
   @Deprecated
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   public static volatile Project theProject;
 
   public static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile file) {
@@ -41,8 +41,12 @@ public class ProjectCoreUtil {
   }
 
   /**
+   * For internal usage only.
+   * Please use {@link com.intellij.psi.PsiElement#getProject()} or {@link com.intellij.openapi.project.ProjectManager#getOpenProjects()} instead.
    * @return the only open project if there is one, null if no projects open, or several projects are open, or default project is created
    */
+  @Deprecated
+  @ApiStatus.Internal
   @Nullable
   public static Project theOnlyOpenProject() {
     return theProject;

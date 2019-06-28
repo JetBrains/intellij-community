@@ -99,7 +99,7 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
               LookupElementBuilder.create(functionalInterfaceMethod, paramsString + " -> ")
                 .withPresentableText(paramsString + " -> {}")
                 .withTypeText(functionalInterfaceType.getPresentableText())
-                .withIcon(AllIcons.Nodes.Function);
+                .withIcon(AllIcons.Nodes.Lambda);
             builder.putUserData(LAMBDA_ITEM, true);
             result.consume(builder.withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE));
           }

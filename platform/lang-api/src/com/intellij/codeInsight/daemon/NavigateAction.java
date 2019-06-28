@@ -28,6 +28,7 @@ import java.awt.event.MouseEvent;
 /**
  * @author Dmitry Avdeev
  */
+@SuppressWarnings("ComponentNotRegistered")
 public class NavigateAction<T extends PsiElement> extends AnAction {
   private final LineMarkerInfo<T> myInfo;
   @Nullable private final String myOriginalActionId;

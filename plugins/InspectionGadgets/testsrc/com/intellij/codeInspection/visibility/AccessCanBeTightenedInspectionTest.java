@@ -26,13 +26,13 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.intellij.lang.annotations.Language;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings("WeakerAccess")
-public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase {
+public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestCase {
   private VisibilityInspection myVisibilityInspection;
 
   @Override
@@ -449,17 +449,17 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
                                "}");
     PlatformTestUtil.registerExtension(Extensions.getRootArea(), ImplicitUsageProvider.EP_NAME, new ImplicitUsageProvider() {
       @Override
-      public boolean isImplicitUsage(PsiElement element) {
+      public boolean isImplicitUsage(@NotNull PsiElement element) {
         return false;
       }
 
       @Override
-      public boolean isImplicitRead(PsiElement element) {
+      public boolean isImplicitRead(@NotNull PsiElement element) {
         return false;
       }
 
       @Override
-      public boolean isImplicitWrite(PsiElement element) {
+      public boolean isImplicitWrite(@NotNull PsiElement element) {
         return element instanceof PsiField && "foo".equals(((PsiField)element).getName());
       }
     }, getTestRootDisposable());

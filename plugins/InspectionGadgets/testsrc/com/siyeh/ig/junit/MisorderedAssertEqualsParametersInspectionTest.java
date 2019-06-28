@@ -16,12 +16,12 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class MisorderedAssertEqualsParametersInspectionTest extends LightInspectionTestCase {
+public class MisorderedAssertEqualsParametersInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() { doTest(); }
 

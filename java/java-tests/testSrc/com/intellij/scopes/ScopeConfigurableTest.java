@@ -8,9 +8,9 @@ import com.intellij.openapi.ui.MasterDetailsStateService;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PatternPackageSet;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 
-public class ScopeConfigurableTest extends LightCodeInsightTestCase {
+public class ScopeConfigurableTest extends LightJavaCodeInsightTestCase {
   public void testModified() throws ConfigurationException {
     DependencyValidationManager manager = DependencyValidationManager.getInstance(getProject());
     final ScopeChooserConfigurable.ScopeChooserConfigurableState state = new ScopeChooserConfigurable.ScopeChooserConfigurableState();

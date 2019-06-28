@@ -19,12 +19,19 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 
 public interface MavenServerProgressIndicator extends Remote {
-  String DEPENDENCIES_RESOLVE_PREFIX = "Resolving Maven dependencies--";
-  String PLUGINS_RESOLVE_PREFIX = "Downloading Maven plugins--";
+  enum ResolveType {
+    DEPENDENCY,
+    PLUGIN
+  }
+
   void setText(String text) throws RemoteException;
   void setText2(String text) throws RemoteException;
-  void startTask(String text) throws RemoteException;
-  void completeTask(String text, String errorMessage) throws RemoteException;
+
+  void startedDownload(ResolveType type, String dependencyId) throws RemoteException;
+
+  void completedDownload(ResolveType type, String dependencyId) throws RemoteException;
+
+  void failedDownload(ResolveType type, String dependencyId, String errorMessage, String stackTrace) throws RemoteException;
 
   boolean isCanceled() throws RemoteException;
 

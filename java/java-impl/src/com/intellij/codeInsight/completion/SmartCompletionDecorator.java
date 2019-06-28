@@ -13,8 +13,8 @@ import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
 import gnu.trove.THashSet;
@@ -138,7 +138,7 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
 
     final Set<PsiTypeParameter> set = new THashSet<>(Arrays.asList(typeParameters));
     for (final PsiParameter parameter : method.getParameterList().getParameters()) {
-      if (PsiPolyExpressionUtil.mentionsTypeParameters(parameter.getType(), set)) return false;
+      if (PsiTypesUtil.mentionsTypeParameters(parameter.getType(), set)) return false;
     }
 
     PsiSubstitutor substitutor = calculateMethodReturnTypeSubstitutor(method, expectedType);

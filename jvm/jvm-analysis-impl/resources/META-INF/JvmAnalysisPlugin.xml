@@ -10,15 +10,15 @@
                      groupBundle="com.intellij.jvm.analysis.JvmAnalysisBundle" bundle="com.intellij.jvm.analysis.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.unstable.api.usage.display.name"
                      implementationClass="com.intellij.codeInspection.UnstableApiUsageInspection"/>
+    <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="UnstableTypeUsedInSignature"
+                     groupBundle="com.intellij.jvm.analysis.JvmAnalysisBundle" bundle="com.intellij.jvm.analysis.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="jvm.inspections.unstable.type.used.in.signature.display.name"
+                     implementationClass="com.intellij.codeInspection.UnstableTypeUsedInSignatureInspection"/>
     <localInspection language="UAST" shortName="BlockingMethodInNonBlockingContext"
                      groupBundle="com.intellij.jvm.analysis.JvmAnalysisBundle" groupKey="jvm.inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      key="jvm.inspections.blocking.method.display.name" bundle="com.intellij.jvm.analysis.JvmAnalysisBundle"
                      implementationClass="com.intellij.codeInspection.blockingCallsDetection.BlockingMethodInNonBlockingContextInspection"/>
-    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="ScheduledForRemoval"
-                     groupBundle="com.intellij.jvm.analysis.JvmAnalysisBundle" bundle="com.intellij.jvm.analysis.JvmAnalysisBundle"
-                     groupKey="jvm.inspections.group.name" key="jvm.inspections.scheduled.for.removal.display.name"
-                     implementationClass="com.intellij.codeInspection.ScheduledForRemovalInspection"/>
     <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="NonExtendableApiUsage"
                      groupBundle="com.intellij.jvm.analysis.JvmAnalysisBundle" bundle="com.intellij.jvm.analysis.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.api.no.extension.display.name"
@@ -27,12 +27,20 @@
                      groupBundle="com.intellij.jvm.analysis.JvmAnalysisBundle" bundle="com.intellij.jvm.analysis.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.api.override.only.display.name"
                      implementationClass="com.intellij.codeInspection.OverrideOnlyInspection"/>
+    <localInspection language="UAST" enabledByDefault="true" level="ERROR" shortName="MissingDeprecatedAnnotationOnScheduledForRemovalApi"
+                     groupBundle="com.intellij.jvm.analysis.JvmAnalysisBundle" bundle="com.intellij.jvm.analysis.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="jvm.inspections.missing.deprecated.annotation.on.scheduled.for.removal.api.display.name"
+                     implementationClass="com.intellij.codeInspection.MissingDeprecatedAnnotationOnScheduledForRemovalApiInspection"/>
+    <localInspection language="UAST" enabledByDefault="true" level="ERROR" shortName="MustAlreadyBeRemovedApi"
+                     groupBundle="com.intellij.jvm.analysis.JvmAnalysisBundle" bundle="com.intellij.jvm.analysis.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="jvm.inspections.must.already.be.removed.api.display.name"
+                     implementationClass="com.intellij.codeInspection.MustAlreadyBeRemovedApiInspection"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.codeInsight">
     <blockingMethodChecker implementation="com.intellij.codeInspection.blockingCallsDetection.ThrowsTypeBlockingMethodChecker"/>
   </extensions>
   <actions>
-    <action id="DumpUastLog" internal="true" class="com.intellij.analysis.internal.DumpUastTreeAction" text="Dump UAST tree">
+    <action id="DumpUastLog" internal="true" class="com.intellij.analysis.internal.DumpUastTreeAction" text="Dump UAST Tree">
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
   </actions>

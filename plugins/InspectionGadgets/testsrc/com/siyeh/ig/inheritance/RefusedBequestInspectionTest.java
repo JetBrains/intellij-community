@@ -4,10 +4,10 @@
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class RefusedBequestInspectionTest extends LightInspectionTestCase {
+public class RefusedBequestInspectionTest extends LightJavaInspectionTestCase {
 
   public void testRefusedBequest() { doTest(); }
   public void testCloneCallsSuperClone() { doTest(); }

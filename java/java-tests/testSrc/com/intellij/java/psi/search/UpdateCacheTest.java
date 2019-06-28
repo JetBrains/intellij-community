@@ -26,9 +26,9 @@ import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -39,7 +39,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 @PlatformTestCase.WrapInCommand
-public class UpdateCacheTest extends PsiTestCase {
+public class UpdateCacheTest extends JavaPsiTestCase {
   @Override
   protected void setUpProject() throws Exception {
     myProjectManager = ProjectManagerEx.getInstanceEx();
@@ -114,7 +114,7 @@ public class UpdateCacheTest extends PsiTestCase {
 
     PsiClass stringClass = myJavaFacade.findClass("java.lang.String", GlobalSearchScope.allScope(getProject()));
     assertNotNull(stringClass);
-    checkUsages(stringClass, ArrayUtil.EMPTY_STRING_ARRAY);
+    checkUsages(stringClass, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   public void testExternalFileModification() {
@@ -202,7 +202,7 @@ public class UpdateCacheTest extends PsiTestCase {
 
     PsiClass threadClass = myJavaFacade.findClass("java.lang.Thread", GlobalSearchScope.allScope(getProject()));
     assertNotNull(threadClass);
-    checkUsages(threadClass, ArrayUtil.EMPTY_STRING_ARRAY);
+    checkUsages(threadClass, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   public void testTodoConfigurationChange() {

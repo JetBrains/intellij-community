@@ -14,7 +14,17 @@ internal class PolymorphicBinding(private val superClass: Class<*>) : Binding {
     context.bindingProducer.getRootBinding(valueClass).serialize(obj, context)
   }
 
-  override fun deserialize(context: ReadContext): Any {
+  override fun deserialize(hostObject: Any, property: MutableAccessor, context: ReadContext) {
+    read(hostObject, property, context) {
+      doDeserialize(context, hostObject)
+    }
+  }
+
+  override fun deserialize(context: ReadContext, hostObject: Any?): Any {
+    return doDeserialize(context, hostObject)!!
+  }
+
+  private fun doDeserialize(context: ReadContext, hostObject: Any?): Any? {
     if (!context.configuration.allowAnySubTypes) {
       throw SerializationException("Polymorphic type without specified allowed sub types is forbidden")
     }
@@ -24,7 +34,15 @@ internal class PolymorphicBinding(private val superClass: Class<*>) : Binding {
     val typeAnnotationIterator = reader.iterateTypeAnnotations()
     if (typeAnnotationIterator.hasNext()) {
       val className = typeAnnotationIterator.next()
-      beanClass = (context.configuration.classLoader ?: javaClass.classLoader).loadClass(className)
+      val loadClass = context.configuration.loadClass
+      // loadClass for now doesn't support map or collection as host object
+      if (loadClass == null || hostObject == null) {
+        beanClass = javaClass.classLoader.loadClass(className)
+      }
+      else {
+        beanClass = loadClass(className, hostObject) ?: return null
+      }
+
       if (!superClass.isAssignableFrom(beanClass)) {
         throw SerializationException("Class \"$className\" must be assignable to \"${superClass.name}\"")
       }
@@ -32,6 +50,6 @@ internal class PolymorphicBinding(private val superClass: Class<*>) : Binding {
     else {
       throw SerializationException("Class name is not specified")
     }
-    return context.bindingProducer.getRootBinding(beanClass).deserialize(context)
+    return context.bindingProducer.getRootBinding(beanClass).deserialize(context, hostObject)
   }
 }

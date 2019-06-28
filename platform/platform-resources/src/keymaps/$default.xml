@@ -141,7 +141,7 @@
     <keyboard-shortcut first-keystroke="control shift B"/>
     <mouse-shortcut keystroke="ctrl shift button1"/>
   </action>
-  
+
   <action id="GotoBookmark0">
     <keyboard-shortcut first-keystroke="control 0"/>
   </action>
@@ -982,6 +982,9 @@
   <action id="Refresh">
     <keyboard-shortcut first-keystroke="control F5"/>
   </action>
+  <action id="ForceRefresh">
+    <keyboard-shortcut first-keystroke="control shift F5"/>
+  </action>
   <action id="Rerun">
     <keyboard-shortcut first-keystroke="control F5"/>
   </action>
@@ -1008,6 +1011,9 @@
   </action>
   <action id="VcsShowPrevChangeMarker">
     <keyboard-shortcut first-keystroke="shift control alt UP"/>
+  </action>
+  <action id="Vcs.ToggleAmendCommitMode">
+    <keyboard-shortcut first-keystroke="alt M"/>
   </action>
   <action id="Vcs.ShowMessageHistory">
     <keyboard-shortcut first-keystroke="control M"/>
@@ -1060,7 +1066,10 @@
     <keyboard-shortcut first-keystroke="alt shift A" />
   </action>
   <action id="ChangesView.GroupBy.Directory">
-    <keyboard-shortcut first-keystroke="ctrl P"/>
+    <keyboard-shortcut first-keystroke="control alt P"/>
+  </action>
+  <action id="ChangesView.GroupBy.Module">
+    <keyboard-shortcut first-keystroke="control alt M"/>
   </action>
   <action id="ShelveChanges.UnshelveWithDialog">
     <keyboard-shortcut first-keystroke="control shift U" />
@@ -1155,5 +1164,23 @@
   <action id="SearchEverywhere.NavigateToPrevGroup">
     <keyboard-shortcut first-keystroke="PAGE_UP"/>
     <keyboard-shortcut first-keystroke="control UP"/>
+  </action>
+
+  <action id="TodoViewGroupByShowModules">
+    <keyboard-shortcut first-keystroke="control alt M"/>
+  </action>
+  <action id="TodoViewGroupByShowPackages">
+    <keyboard-shortcut first-keystroke="control alt P"/>
+  </action>
+  <action id="TodoViewGroupByFlattenPackage">
+    <keyboard-shortcut first-keystroke="control alt O"/>
+  </action>
+
+  <action id="ServiceView.GroupByServiceGroups">
+    <keyboard-shortcut first-keystroke="control alt P"/>
+  </action>
+
+  <action id="ViewInplaceComments">
+    <keyboard-shortcut first-keystroke="alt shift BACK_SLASH"/>
   </action>
 </keymap>

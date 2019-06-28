@@ -47,6 +47,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.*;
 import org.jetbrains.idea.maven.model.MavenConstants;
+import org.jetbrains.idea.maven.model.MavenCoordinate;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenResource;
 import org.jetbrains.idea.maven.plugins.groovy.MavenGroovyPomCompletionContributor;
@@ -422,7 +423,7 @@ public class MavenDomUtil {
   @NotNull
   public static MavenDomDependency createDomDependency(MavenDomDependencies dependencies,
                                                        @Nullable Editor editor,
-                                                       @NotNull final MavenId id) {
+                                                       @NotNull final MavenCoordinate id) {
     MavenDomDependency dep = createDomDependency(dependencies, editor);
 
     dep.getGroupId().setStringValue(id.getGroupId());

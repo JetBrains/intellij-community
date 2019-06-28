@@ -58,7 +58,7 @@ import java.util.stream.Stream;
 /**
  * @author nik
  */
-public class XLineBreakpointManager {
+public final class XLineBreakpointManager {
   private final BidirectionalMap<XLineBreakpointImpl, String> myBreakpoints = new BidirectionalMap<>();
   private final MergingUpdateQueue myBreakpointsUpdateQueue;
   private final Project myProject;
@@ -100,8 +100,14 @@ public class XLineBreakpointManager {
   }
 
   void updateBreakpointsUI() {
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
-      (DumbAwareRunnable)() -> breakpoints().forEach(XLineBreakpointImpl::updateUI));
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+
+    //noinspection CodeBlock2Expr
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
+      myBreakpoints.keySet().forEach(XLineBreakpointImpl::updateUI);
+    });
   }
 
   public void registerBreakpoint(XLineBreakpointImpl breakpoint, final boolean initUI) {

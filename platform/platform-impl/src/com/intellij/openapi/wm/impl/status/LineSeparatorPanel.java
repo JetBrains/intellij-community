@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -28,18 +28,12 @@ public class LineSeparatorPanel extends EditorBasedStatusBarPopup {
       return WidgetState.HIDDEN;
     }
     String lineSeparator = LoadTextUtil.detectLineSeparator(file, true);
-    String toolTipText;
-    String panelText;
-    if (lineSeparator != null) {
-      toolTipText = String.format("Line separator: %s", StringUtil.escapeLineBreak(lineSeparator));
-      panelText = LineSeparator.fromString(lineSeparator).toString();
+    if (lineSeparator == null) {
+      return WidgetState.HIDDEN;
     }
-    else {
-      toolTipText = "No line separator";
-      panelText = "n/a";
-    }
-
-    return new WidgetState(toolTipText, panelText, lineSeparator != null);
+    String toolTipText = String.format("Line Separator: %s", StringUtil.escapeLineBreak(lineSeparator));
+    String panelText = LineSeparator.fromString(lineSeparator).toString();
+    return new WidgetState(toolTipText, panelText, true);
   }
 
   @Nullable

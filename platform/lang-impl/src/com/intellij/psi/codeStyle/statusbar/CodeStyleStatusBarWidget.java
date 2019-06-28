@@ -106,13 +106,13 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
 
   @Nullable
   @Override
-  protected ListPopup createPopup(DataContext context)
-  {
+  protected ListPopup createPopup(DataContext context) {
     WidgetState state = getWidgetState(context.getData(CommonDataKeys.VIRTUAL_FILE));
     Editor editor = getEditor();
     PsiFile psiFile = getPsiFile();
     if (state instanceof MyWidgetState && editor != null && psiFile != null) {
-      AnAction[] actions = getActions(((MyWidgetState)state).getContributor(), psiFile);
+      final CodeStyleStatusBarUIContributor uiContributor = ((MyWidgetState)state).getContributor();
+      AnAction[] actions = getActions(uiContributor, psiFile);
       ActionGroup actionGroup = new ActionGroup() {
         @NotNull
         @Override
@@ -121,7 +121,7 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
         }
       };
       return JBPopupFactory.getInstance().createActionGroupPopup(
-        null, actionGroup, context,
+        uiContributor != null ? uiContributor.getActionGroupTitle() : null, actionGroup, context,
         JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
     }
     return null;
@@ -145,6 +145,10 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
       AnAction disabledAction = uiContributor.createDisableAction(psiFile.getProject());
       if (disabledAction != null) {
         allActions.add(disabledAction);
+      }
+      AnAction showAllAction = uiContributor.createShowAllAction(psiFile.getProject());
+      if (showAllAction != null) {
+        allActions.add(showAllAction);
       }
     }
     return allActions.toArray(AnAction.EMPTY_ARRAY);

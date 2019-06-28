@@ -5,6 +5,7 @@ import com.intellij.openapi.util.ThreadLocalCachedByteArray;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataOutputStream;
@@ -18,7 +19,7 @@ import java.io.IOException;
 import java.util.Map;
 
 @ApiStatus.Experimental
-public abstract class AbstractForwardIndexAccessor<Key, Value, DataType, Input> implements ForwardIndexAccessor<Key, Value, DataType, Input> {
+public abstract class AbstractForwardIndexAccessor<Key, Value, DataType> implements ForwardIndexAccessor<Key, Value> {
   @NotNull
   private final DataExternalizer<DataType> myDataTypeExternalizer;
 
@@ -41,7 +42,15 @@ public abstract class AbstractForwardIndexAccessor<Key, Value, DataType, Input> 
   }
 
   @Nullable
+  public abstract DataType convertToDataType(@NotNull InputData<Key, Value> data);
+
+  @Nullable
   @Override
+  public ByteArraySequence serializeIndexedData(@NotNull InputData<Key, Value> data) throws IOException {
+    return serializeIndexedData(convertToDataType(data));
+  }
+
+  @Nullable
   public ByteArraySequence serializeIndexedData(@Nullable DataType data) throws IOException {
     if (data == null) return null;
     return serializeToByteSeq(data, myDataTypeExternalizer, getBufferInitialSize(data));

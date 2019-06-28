@@ -74,6 +74,9 @@ def build_extension(dir_name, extension_name, target_pydevd_name, force_cython, 
             from distutils.extension import Extension
             ext_modules = [Extension("%s%s.%s" % (dir_name, "_ext" if extended else "", target_pydevd_name,),
                                      [os.path.join(dir_name, "%s.c" % target_pydevd_name), ],
+                                     # uncomment to generate pdbs for visual studio.
+                                     # extra_compile_args=["-Zi", "/Od"],
+                                     # extra_link_args=["-debug"],
                                      )]
 
         setup(
@@ -105,7 +108,7 @@ extension_folder, target_pydevd_name, target_frame_eval, force_cython = process_
 extension_name = "pydevd_cython"
 if target_pydevd_name is None:
     target_pydevd_name = extension_name
-build_extension("_pydevd_bundle", extension_name, target_pydevd_name, force_cython, extension_folder)
+build_extension("_pydevd_bundle", extension_name, target_pydevd_name, force_cython, extension_folder, True)
 
 if IS_PY36_OR_GREATER:
     extension_name = "pydevd_frame_evaluator"

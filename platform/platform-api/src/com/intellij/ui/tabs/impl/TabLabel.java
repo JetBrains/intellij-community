@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.util.PairConsumer;
@@ -199,7 +200,7 @@ public class TabLabel extends JPanel implements Accessible {
     };
     label.setOpaque(false);
     label.setBorder(null);
-    label.setIconTextGap(tabs.isEditorTabs() ? (!UISettings.getShadowInstance().getHideTabsIfNeed() ? 4 : 2) : new JLabel().getIconTextGap());
+    label.setIconTextGap(tabs.isEditorTabs() ? (!UISettings.getShadowInstance().getHideTabsIfNeeded() ? 4 : 2) : new JLabel().getIconTextGap());
     label.setIconOpaque(false);
     label.setIpad(JBUI.emptyInsets());
 
@@ -243,8 +244,8 @@ public class TabLabel extends JPanel implements Accessible {
 
     myCentered = toCenter;
   }
-  
-  
+
+
 
   public void paintOffscreen(Graphics g) {
     synchronized (getTreeLock()) {
@@ -357,7 +358,7 @@ public class TabLabel extends JPanel implements Accessible {
     switch (pos) {
       case top:
       case bottom:
-        if (myTabs.hasUnderline()) size.height += myTabs.getActiveTabUnderlineHeight() - JBUI.scale(1);
+        if (myTabs.hasUnderline()) size.height += myTabs.getActiveTabUnderlineHeight() - JBUIScale.scale(1);
         break;
       case left:
       case right:

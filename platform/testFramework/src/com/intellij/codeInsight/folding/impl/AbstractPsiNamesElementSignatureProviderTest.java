@@ -6,11 +6,11 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-abstract class AbstractPsiNamesElementSignatureProviderTest extends LightPlatformCodeInsightFixtureTestCase {
+abstract class AbstractPsiNamesElementSignatureProviderTest extends BasePlatformTestCase {
   void doTest(@NotNull String text, @NotNull String ext) {
     myFixture.configureByText("test." + ext, text);
 

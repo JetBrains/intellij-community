@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform;
 
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.ProjectUtil;
@@ -11,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -18,16 +21,20 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.projectImport.ProjectOpenedCallback;
-import com.intellij.util.io.PathKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,6 +114,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
   }
 
   /** @deprecated use {@link #doOpenProject(VirtualFile, Project, int, ProjectOpenedCallback, EnumSet)} (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   public static Project doOpenProject(@NotNull VirtualFile virtualFile,
                                       Project projectToClose,
@@ -126,6 +134,16 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
                                       int line,
                                       @Nullable ProjectOpenedCallback callback,
                                       @NotNull EnumSet<Option> options) {
+    return doOpenProject(virtualFile, projectToClose, line, callback, options, null);
+  }
+
+  @Nullable
+  public static Project doOpenProject(@NotNull VirtualFile virtualFile,
+                                      @Nullable Project projectToClose,
+                                      int line,
+                                      @Nullable ProjectOpenedCallback callback,
+                                      @NotNull EnumSet<Option> options,
+                                      @Nullable IdeFrame frame) {
     VirtualFile baseDir = virtualFile;
     boolean dummyProject = false;
     String dummyProjectName = null;
@@ -172,24 +190,56 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
       }
     }
 
-    boolean runConfigurators = true;
+    Pair<Project, Module> result = null;
+    if (frame == null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      Activity activity = StartUpMeasurer.start("show frame");
+      frame = ((WindowManagerImpl)WindowManager.getInstance()).showFrame();
+      activity.end();
+    }
+
+    if (frame == null) {
+      result = prepareAndOpenProject(virtualFile, options, baseDir, dummyProject, dummyProjectName);
+    }
+    else {
+      Ref<Pair<Project, Module>> refResult = Ref.create();
+      VirtualFile finalBaseDir = baseDir;
+      boolean finalDummyProject = dummyProject;
+      String finalDummyProjectName = dummyProjectName;
+      Runnable process = () -> refResult.set(prepareAndOpenProject(virtualFile, options, finalBaseDir, finalDummyProject, finalDummyProjectName));
+      boolean progressCompleted = ProgressManager.getInstance().runProcessWithProgressSynchronously(process, "Loading Project...", true, null, frame.getComponent());
+      if (progressCompleted) {
+        result = refResult.get();
+      }
+    }
+
+    if (result == null || result.first == null) {
+      WelcomeFrame.showIfNoProjectOpened();
+      return null;
+    }
+
+    if (!virtualFile.isDirectory()) {
+      openFileFromCommandLine(result.first, virtualFile, line);
+    }
+
+    if (callback != null) {
+      callback.projectOpened(result.first, result.second);
+    }
+
+    return result.first;
+  }
+
+  @Nullable
+  private static Pair<Project, Module> prepareAndOpenProject(@NotNull VirtualFile virtualFile,
+                                                             @NotNull EnumSet<Option> options,
+                                                             VirtualFile baseDir,
+                                                             boolean dummyProject,
+                                                             String dummyProjectName) {
     boolean newProject = false;
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
-    Project project = null;
-    if (PathKt.exists(Paths.get(FileUtil.toSystemDependentName(baseDir.getPath()), Project.DIRECTORY_STORE_FOLDER))) {
-      try {
-        for (ProjectOpenProcessor processor : ProjectOpenProcessor.EXTENSION_POINT_NAME.getExtensionList()) {
-          processor.refreshProjectFiles(baseDir);
-        }
-
-        project = projectManager.convertAndLoadProject(baseDir);
-        if (project != null && ModuleManager.getInstance(project).getModules().length > 0) {
-          runConfigurators = false;
-        }
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
+    Project project;
+    VirtualFile dotIdeaDir = baseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
+    if (dotIdeaDir != null && dotIdeaDir.isDirectory()) {
+      project = tryLoadProject(baseDir);
     }
     else {
       project = projectManager.newProject(dummyProject ? dummyProjectName : baseDir.getName(), baseDir.getPath(), !options.contains(Option.DO_NOT_USE_DEFAULT_PROJECT), dummyProject);
@@ -197,39 +247,51 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     }
 
     if (project == null) {
-      WelcomeFrame.showIfNoProjectOpened();
       return null;
     }
 
     ProjectBaseDirectory.getInstance(project).setBaseDir(baseDir);
 
-    Module module = runConfigurators ? runDirectoryProjectConfigurators(baseDir, project) : ModuleManager.getInstance(project).getModules()[0];
-    if (runConfigurators && dummyProject) { // add content root for chosen (single) file
-      ModuleRootModificationUtil.updateModel(module, model -> {
-        ContentEntry[] entries = model.getContentEntries();
-        if (entries.length == 1) model.removeContentEntry(entries[0]); // remove custom content entry created for temp directory
-        model.addContentEntry(virtualFile);
-      });
-    }
+    Module module = configureNewProject(project, baseDir, virtualFile, dummyProject, newProject);
 
     if (newProject) {
       project.save();
     }
+    return projectManager.openProject(project) ? new Pair<>(project, module) : null;
+  }
 
-    if (!virtualFile.isDirectory()) {
-      openFileFromCommandLine(project, virtualFile, line);
+  private static Project tryLoadProject(VirtualFile baseDir) {
+    try {
+      for (ProjectOpenProcessor processor : ProjectOpenProcessor.EXTENSION_POINT_NAME.getExtensionList()) {
+        processor.refreshProjectFiles(baseDir);
+      }
+      return ProjectManagerEx.getInstanceEx().convertAndLoadProject(baseDir);
     }
-
-    if (!projectManager.openProject(project)) {
-      WelcomeFrame.showIfNoProjectOpened();
+    catch (Exception e) {
+      LOG.error(e);
       return null;
     }
+  }
 
-    if (callback != null) {
-      callback.projectOpened(project, module);
+  private static Module configureNewProject(Project project, VirtualFile baseDir, @NotNull VirtualFile dummyFileContentRoot,
+                                            boolean dummyProject, boolean newProject) {
+    boolean runConfigurators = newProject || ModuleManager.getInstance(project).getModules().length == 0;
+    final Ref<Module> module = new Ref<>();
+    if (runConfigurators) {
+      ApplicationManager.getApplication().invokeAndWait(() -> module.set(runDirectoryProjectConfigurators(baseDir, project)));
+    }
+    else {
+      module.set(ModuleManager.getInstance(project).getModules()[0]);
     }
 
-    return project;
+    if (runConfigurators && dummyProject) { // add content root for chosen (single) file
+      ModuleRootModificationUtil.updateModel(module.get(), model -> {
+        ContentEntry[] entries = model.getContentEntries();
+        if (entries.length == 1) model.removeContentEntry(entries[0]); // remove custom content entry created for temp directory
+        model.addContentEntry(dummyFileContentRoot);
+      });
+    }
+    return module.get();
   }
 
   private static boolean checkExistingProjectOnOpen(@NotNull Project projectToClose, @Nullable ProjectOpenedCallback callback, VirtualFile baseDir) {
@@ -267,9 +329,9 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     return false;
   }
 
-  public static Module runDirectoryProjectConfigurators(VirtualFile baseDir, Project project) {
+  public static Module runDirectoryProjectConfigurators(@NotNull VirtualFile baseDir, @NotNull Project project) {
     final Ref<Module> moduleRef = new Ref<>();
-    for (DirectoryProjectConfigurator configurator: DirectoryProjectConfigurator.EP_NAME.getExtensionList()) {
+    for (DirectoryProjectConfigurator configurator: DirectoryProjectConfigurator.EP_NAME.getIterable()) {
       try {
         configurator.configureProject(project, baseDir, moduleRef);
       }

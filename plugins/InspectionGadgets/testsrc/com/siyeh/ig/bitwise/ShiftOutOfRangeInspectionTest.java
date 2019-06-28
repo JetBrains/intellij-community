@@ -3,11 +3,11 @@ package com.siyeh.ig.bitwise;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ShiftOutOfRangeInspectionTest extends LightInspectionTestCase {
+public class ShiftOutOfRangeInspectionTest extends LightJavaInspectionTestCase {
 
   public void testShiftOutOfRange() {
     doTest();

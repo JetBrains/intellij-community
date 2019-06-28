@@ -1,9 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.redundancy;
 
 import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInspection.ex.InspectionElementsMergerBase;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +38,7 @@ public class RedundantStringOperationMerger extends InspectionElementsMergerBase
         @NotNull
         @Override
         public String[] getSourceToolNames() {
-          return ArrayUtil.toStringArray(OLD_SOURCE_NAMES);
+          return ArrayUtilRt.toStringArray(OLD_SOURCE_NAMES);
         }
 
         @Override
@@ -68,7 +68,7 @@ public class RedundantStringOperationMerger extends InspectionElementsMergerBase
   public String[] getSourceToolNames() {
     return new String[] {
       "StringToString",
-      "SubstringZero", 
+      "SubstringZero",
       "ConstantStringIntern",
       "StringConstructor",
       OLD_MERGER_NAME

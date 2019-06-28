@@ -161,14 +161,15 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
                                                       MethodCandidateInfo.isOverloadCheck(parentArgList) &&
                                                       Arrays.stream(parentArgList.getExpressions())
                                                         .map(expression -> PsiUtil.skipParenthesizedExprDown(expression))
-                                                        .noneMatch(expression -> LambdaUtil.getFunctionalTypeMap().containsKey(expression));
+                                                        .noneMatch(expression -> expression != null && ThreadLocalTypes.hasBindingFor(expression));
 
       PsiType theOnly = null;
       for (int i = 0; i < results.length; i++) {
         final JavaResolveResult candidateInfo = results[i];
 
-        if (genericParentOverloadResolution && PsiPolyExpressionUtil.isMethodCallPolyExpression(call, (PsiMethod)candidateInfo.getElement())) {
-          LOG.error("poly expression evaluation during overload resolution");
+        PsiElement element = candidateInfo.getElement();
+        if (genericParentOverloadResolution && element != null && PsiPolyExpressionUtil.isMethodCallPolyExpression(call, (PsiMethod)element)) {
+          LOG.error("poly expression evaluation during overload resolution, processing " + results.length + " results");
         }
 
         final PsiType type = getResultType(call, methodExpression, candidateInfo, languageLevel);

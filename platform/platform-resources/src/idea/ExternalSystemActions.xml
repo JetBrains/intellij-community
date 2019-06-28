@@ -7,8 +7,6 @@
       <action id="ExternalSystem.RefreshProject"
               class="com.intellij.openapi.externalSystem.action.RefreshExternalProjectAction"
               icon="AllIcons.Actions.Refresh"/>
-      <action id="ExternalSystem.AttachProject"
-              class="com.intellij.openapi.externalSystem.action.AttachExternalProjectAction"/>
       <action id="ExternalSystem.DetachProject"
               class="com.intellij.openapi.externalSystem.action.DetachExternalProjectAction"
               use-shortcut-of="$Delete"/>
@@ -20,10 +18,6 @@
       <action id="ExternalSystem.ShowSettings"
               class="com.intellij.openapi.externalSystem.action.ShowExternalSystemSettingsAction"
               icon="AllIcons.General.Settings">
-      </action>
-
-      <action id="ExternalSystem.ToggleAutoImport"
-              class="com.intellij.openapi.externalSystem.action.ToggleAutoImportAction">
       </action>
 
       <action id="ExternalSystem.OpenTasksActivationManager"
@@ -94,7 +88,7 @@
               class="com.intellij.openapi.externalSystem.action.task.GroupModulesAction" text="Group Modules">
       </action>
       <action id="ExternalSystem.ShowInheritedTasks"
-              class="com.intellij.openapi.externalSystem.action.task.ShowInheritedTasksAction" text="Display tasks inherited from sub-projects">
+              class="com.intellij.openapi.externalSystem.action.task.ShowInheritedTasksAction" text="Display Tasks Inherited from Sub-Projects">
       </action>
 
       <action id="ExternalSystem.ShowIgnored"
@@ -113,8 +107,6 @@
     <group id="ExternalSystemView.ProjectMenu" popup="true">
       <reference ref="ExternalSystemView.BaseProjectMenu"/>
       <separator/>
-      <reference id="ExternalSystem.ToggleAutoImport"/>
-      <separator/>
       <reference id="ExternalSystem.OpenTasksActivationManager"/>
     </group>
 
@@ -129,7 +121,7 @@
 
     <group id="ExternalSystemView.ActionsToolbar.LeftPanel">
       <reference id="ExternalSystem.RefreshAllProjects"/>
-      <reference id="ExternalSystem.AttachProject"/>
+<!--      <reference id="ExternalSystem.AttachProject"/>-->
       <reference ref="ExternalSystem.DetachProject"/>
       <!--<reference id="ExternalSystem.Run/>-->
     </group>

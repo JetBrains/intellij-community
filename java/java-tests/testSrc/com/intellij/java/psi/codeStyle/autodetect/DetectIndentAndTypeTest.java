@@ -22,11 +22,11 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.DetectableIndentOptionsProvider;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
-public class DetectIndentAndTypeTest extends LightPlatformCodeInsightFixtureTestCase {
+public class DetectIndentAndTypeTest extends BasePlatformTestCase {
 
   private CodeStyleSettings mySettings;
   private static final String myText = "public class T {\n" +

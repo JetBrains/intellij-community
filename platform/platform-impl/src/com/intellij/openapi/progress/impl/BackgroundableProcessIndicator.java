@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,14 @@ import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.util.ProgressWindow;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.DumbModeAction;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,10 +76,11 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   }
 
   public BackgroundableProcessIndicator(Project project,
-                                        @Nls final String progressTitle,
+                                        @Nls(capitalization = Nls.Capitalization.Title) final String progressTitle,
                                         @NotNull PerformInBackgroundOption option,
-                                        @Nls final String cancelButtonText,
-                                        @Nls final String backgroundStopTooltip, final boolean cancellable) {
+                                        @Nls(capitalization = Nls.Capitalization.Title) final String cancelButtonText,
+                                        @Nls(capitalization = Nls.Capitalization.Sentence) final String backgroundStopTooltip,
+                                        final boolean cancellable) {
     this(project, new TaskInfo() {
 
       @Override
@@ -105,6 +109,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   /**
    * to remove in IDEA 16
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2016")
   @Deprecated
   public DumbModeAction getDumbModeAction() {
     return myDumbModeAction;

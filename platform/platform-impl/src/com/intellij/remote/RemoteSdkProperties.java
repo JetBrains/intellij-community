@@ -16,6 +16,7 @@
 package com.intellij.remote;
 
 import com.intellij.util.PathMappingSettings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +43,7 @@ public interface RemoteSdkProperties {
    * @deprecated
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2015")
   void addRemoteRoot(String remoteRoot);
 
   /**
@@ -51,6 +53,7 @@ public interface RemoteSdkProperties {
    * @deprecated
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2015")
   void clearRemoteRoots();
 
   /**
@@ -60,6 +63,7 @@ public interface RemoteSdkProperties {
    * @deprecated
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2015")
   List<String> getRemoteRoots();
 
   /**
@@ -69,6 +73,7 @@ public interface RemoteSdkProperties {
    * @deprecated
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2015")
   void setRemoteRoots(List<String> remoteRoots);
 
   @NotNull
@@ -91,6 +96,7 @@ public interface RemoteSdkProperties {
    * @deprecated
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2015")
   boolean isInitialized();
 
   @Deprecated

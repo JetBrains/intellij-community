@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.project;
 
+import com.intellij.openapi.actionSystem.ActionWithDelegate;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.util.Consumer;
@@ -33,22 +34,12 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
 
   @NotNull
   public static DumbAwareAction create(@NotNull Consumer<? super AnActionEvent> actionPerformed) {
-    return new DumbAwareAction() {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        actionPerformed.consume(e);
-      }
-    };
+    return new SimpleDumbAwareAction(actionPerformed);
   }
 
   @NotNull
   public static DumbAwareAction create(@Nullable String text, @NotNull Consumer<? super AnActionEvent> actionPerformed) {
-    return new DumbAwareAction(text) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        actionPerformed.consume(e);
-      }
-    };
+    return new SimpleDumbAwareAction(text, actionPerformed);
   }
 
   protected DumbAwareAction() {
@@ -60,5 +51,29 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
 
   protected DumbAwareAction(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
     super(text, description, icon);
+  }
+
+  private static class SimpleDumbAwareAction extends DumbAwareAction implements ActionWithDelegate<Consumer<? super AnActionEvent>> {
+    private final Consumer<? super AnActionEvent> myActionPerformed;
+
+    private SimpleDumbAwareAction(Consumer<? super AnActionEvent> actionPerformed) {
+      myActionPerformed = actionPerformed;
+    }
+
+    private SimpleDumbAwareAction(String text, Consumer<? super AnActionEvent> actionPerformed) {
+      super(text);
+      myActionPerformed = actionPerformed;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      myActionPerformed.consume(e);
+    }
+
+    @NotNull
+    @Override
+    public Consumer<? super AnActionEvent> getDelegate() {
+      return myActionPerformed;
+    }
   }
 }

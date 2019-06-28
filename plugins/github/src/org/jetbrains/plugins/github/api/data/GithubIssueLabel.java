@@ -1,9 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api.data;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.io.mandatory.Mandatory;
-import org.jetbrains.io.mandatory.RestModel;
 
 //region Issue label
 /*{
@@ -16,15 +14,24 @@ import org.jetbrains.io.mandatory.RestModel;
     "default": true
   }*/
 //endregion
-@RestModel
 @SuppressWarnings("UnusedDeclaration")
 public class GithubIssueLabel {
-  @Mandatory private Long id;
+  private Long id;
   private String nodeId;
   private String url;
-  @Mandatory private String name;
+  private String name;
   private String description;
-  @Mandatory private String color;
+  private String color;
+
+  @NotNull
+  public String getNodeId() {
+    return nodeId;
+  }
+
+  @NotNull
+  public String getUrl() {
+    return url;
+  }
 
   @NotNull
   public String getName() {

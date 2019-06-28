@@ -20,7 +20,6 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 import org.jetbrains.idea.maven.utils.MavenSettings;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
@@ -28,7 +27,6 @@ import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 public class EditSettingsAction extends MavenAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    MavenActionsUsagesCollector.trigger(e.getProject(), this, e);
     showSettingsFor(MavenActionUtil.getProject(e.getDataContext()));
   }
 

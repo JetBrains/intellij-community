@@ -7,38 +7,72 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 import java.util.function.Supplier;
 
+import static com.intellij.util.ObjectUtils.nullizeByCondition;
+import static com.intellij.util.ObjectUtils.tryCast;
+
 public class InlineMethodSpecialization {
   private static final CallMatcher
     CLASS_METHODS = CallMatcher.exactInstanceCall(CommonClassNames.JAVA_LANG_CLASS, "getName", "getSimpleName").parameterCount(0);
+  private static final CallMatcher
+    ENUM_NAME = CallMatcher.exactInstanceCall(CommonClassNames.JAVA_LANG_ENUM, "name").parameterCount(0);
 
   private static final CallMapper<Supplier<PsiCodeBlock>> SPECIALIZATIONS = new CallMapper<Supplier<PsiCodeBlock>>()
     .register(CLASS_METHODS, (PsiMethodCallExpression call) -> {
       PsiReferenceExpression ref = call.getMethodExpression();
       PsiExpression qualifier = ref.getQualifierExpression();
       PsiClassObjectAccessExpression receiver =
-        ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(qualifier), PsiClassObjectAccessExpression.class);
-      if (receiver != null) {
-        PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(receiver.getOperand().getType());
-        if (psiClass != null) {
-          String name = "getSimpleName".equals(ref.getReferenceName()) ? psiClass.getName() : psiClass.getQualifiedName();
-          if (name != null) {
-            return () -> {
-              PsiElementFactory factory = JavaPsiFacade.getElementFactory(call.getProject());
-              return factory.createCodeBlockFromText("{return \"" + StringUtil.escapeStringCharacters(name) + "\";}", call);
-            };
-          }
-        }
-      }
-      return null;
+        tryCast(PsiUtil.skipParenthesizedExprDown(qualifier), PsiClassObjectAccessExpression.class);
+      if (receiver == null) return null;
+      PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(receiver.getOperand().getType());
+      if (psiClass == null) return null;
+      String name = "getSimpleName".equals(ref.getReferenceName()) ? psiClass.getName() : psiClass.getQualifiedName();
+      return getStringSupplier(call, name);
+    })
+    .register(ENUM_NAME, (PsiMethodCallExpression call) -> {
+      PsiReferenceExpression qualifier =
+        tryCast(PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression()), PsiReferenceExpression.class);
+      if (qualifier == null) return null;
+      PsiEnumConstant enumConstant = tryCast(qualifier.resolve(), PsiEnumConstant.class);
+      if (enumConstant == null) return null;
+      return getStringSupplier(call, enumConstant.getName());
+    })
+    .register(CallMatcher.enumValueOf(), (PsiMethodCallExpression call) -> {
+      PsiReferenceExpression qualifier =
+        tryCast(PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression()), PsiReferenceExpression.class);
+      if (qualifier == null) return null;
+      PsiClass cls = tryCast(qualifier.resolve(), PsiClass.class);
+      if (cls == null || !cls.isEnum()) return null;
+      PsiLiteralExpression literal = ExpressionUtils.getLiteral(call.getArgumentList().getExpressions()[0]);
+      if (literal == null) return null;
+      String name = tryCast(literal.getValue(), String.class);
+      if (name == null) return null;
+      PsiEnumConstant constant = tryCast(cls.findFieldByName(name, false), PsiEnumConstant.class);
+      if (constant == null) return null;
+      return () -> {
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(call.getProject());
+        return factory.createCodeBlockFromText("{return " + qualifier.getText() + "." + constant.getName() + ";}", call);
+      };
     });
+
+  @Contract(value = "_, null -> null", pure = true)
+  private static Supplier<PsiCodeBlock> getStringSupplier(PsiElement context, String name) {
+    if (name == null) return null;
+    return () -> {
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
+      return factory.createCodeBlockFromText("{return \"" + StringUtil.escapeStringCharacters(name) + "\";}", context);
+    };
+  }
 
   static Supplier<PsiCodeBlock> forReference(PsiReference ref) {
     if (!(ref instanceof PsiReferenceExpression)) return null;
-    PsiMethodCallExpression call = ObjectUtils.tryCast(((PsiReferenceExpression)ref).getParent(), PsiMethodCallExpression.class);
+    PsiMethodCallExpression call = tryCast(((PsiReferenceExpression)ref).getParent(), PsiMethodCallExpression.class);
     return SPECIALIZATIONS.mapFirst(call);
   }
 

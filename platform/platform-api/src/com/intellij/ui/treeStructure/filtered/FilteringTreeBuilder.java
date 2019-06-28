@@ -14,6 +14,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -28,6 +29,11 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.util.Comparator;
 
+/**
+ * @deprecated use {@link com.intellij.ui.tree.AsyncTreeModel} and {@link com.intellij.ui.tree.StructureTreeModel} instead.
+ */
+@ApiStatus.ScheduledForRemoval
+@Deprecated
 public class FilteringTreeBuilder extends AbstractTreeBuilder {
 
   private Object myLastSuccessfulSelect;
@@ -107,11 +113,13 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
     return true;
   }
 
+  /**
+   * @deprecated use {@link #refilter(Object, boolean, boolean)}
+   */
   @NotNull
   @Deprecated
   public ActionCallback refilter() {
-    //noinspection unchecked
-    return Promises.toActionCallback((Promise<Object>)refilter(null, true, false));
+    return Promises.toActionCallback(refilter(null, true, false));
   }
 
   @SuppressWarnings("UnusedReturnValue")

@@ -17,10 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitVcs;
 import git4idea.commands.GitCommand.LockingPolicy;
-import git4idea.config.GitExecutableManager;
-import git4idea.config.GitExecutableProblemsNotifier;
-import git4idea.config.GitVersion;
-import git4idea.config.GitVersionSpecialty;
+import git4idea.config.*;
 import git4idea.i18n.GitBundle;
 import git4idea.util.GitVcsConsoleWriter;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +48,7 @@ abstract class GitImplBase implements Git {
 
   @Override
   @NotNull
-  public GitCommandResult runCommand(@NotNull Computable<GitLineHandler> handlerConstructor) {
+  public GitCommandResult runCommand(@NotNull Computable<? extends GitLineHandler> handlerConstructor) {
     return run(handlerConstructor, GitImplBase::getCollectingCollector);
   }
 
@@ -93,18 +90,23 @@ abstract class GitImplBase implements Git {
    * Run handler with retry on authentication failure
    */
   @NotNull
-  private GitCommandResult run(@NotNull Computable<GitLineHandler> handlerConstructor,
-                               @NotNull Computable<OutputCollector> outputCollectorConstructor) {
+  private GitCommandResult run(@NotNull Computable<? extends GitLineHandler> handlerConstructor,
+                               @NotNull Computable<? extends OutputCollector> outputCollectorConstructor) {
     @NotNull GitCommandResult result;
 
     int authAttempt = 0;
     do {
       GitLineHandler handler = handlerConstructor.compute();
       OutputCollector outputCollector = outputCollectorConstructor.compute();
-
+      boolean isCredHelperUsed = GitVcsApplicationSettings.getInstance().isUseCredentialHelper();
       result = run(handler, outputCollector);
+      if (isCredHelperUsed != GitVcsApplicationSettings.getInstance().isUseCredentialHelper()) {
+        // do not spend attempt if the credential helper has been enabled
+        continue;
+      }
+      authAttempt++;
     }
-    while (result.isAuthenticationFailed() && authAttempt++ < 2);
+    while (result.isAuthenticationFailed() && authAttempt < 2);
     return result;
   }
 
@@ -119,6 +121,9 @@ abstract class GitImplBase implements Git {
       try {
         version = GitExecutableManager.getInstance().identifyVersion(executablePath);
       }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
       catch (Exception e) {
         return handlePreValidationException(handler.project(), e);
       }
@@ -131,7 +136,7 @@ abstract class GitImplBase implements Git {
     }
 
     if (project != null && handler.isRemote()) {
-      try (GitHandlerAuthenticationManager authenticationManager = prepareAuthentication(project, handler)) {
+      try (GitHandlerAuthenticationManager authenticationManager = GitHandlerAuthenticationManager.prepare(project, handler, version)) {
         GitCommandResult result = doRun(handler, version, outputCollector);
         return GitCommandResult.withAuthentication(result, authenticationManager.isHttpAuthFailed());
       }
@@ -142,12 +147,6 @@ abstract class GitImplBase implements Git {
     else {
       return doRun(handler, version, outputCollector);
     }
-  }
-
-  @NotNull
-  protected GitHandlerAuthenticationManager prepareAuthentication(@NotNull Project project, @NotNull GitLineHandler handler)
-    throws IOException {
-    return GitHandlerAuthenticationManager.prepare(project, handler);
   }
 
   /**

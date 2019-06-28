@@ -15,7 +15,6 @@ import java.io.Reader
 
 internal typealias ValueReader = IonReader
 internal typealias ValueWriter = IonWriter
-typealias BeanConstructed = (instance: Any) -> Any
 
 internal val defaultWriteConfiguration = WriteConfiguration()
 internal val LOG = logger<ObjectSerializer>()
@@ -85,19 +84,29 @@ class ObjectSerializer {
 }
 
 interface SerializationFilter {
+  val skipEmptyCollection: Boolean
+    get() = false
+
+  val skipEmptyMap: Boolean
+    get() = false
+
+  val skipEmptyArray: Boolean
+    get() = false
+
   fun isSkipped(value: Any?): Boolean
 }
 
 object SkipNullAndEmptySerializationFilter : SerializationFilter {
-  override fun isSkipped(value: Any?): Boolean {
-    return when (value) {
-      null -> true
-      is Collection<*> -> value.isEmpty()
-      is Array<*> -> value.isEmpty()
-      is Map<*, *> -> value.isEmpty()
-      else -> false
-    }
-  }
+  override fun isSkipped(value: Any?) = value == null
+
+  override val skipEmptyCollection: Boolean
+    get() = true
+
+  override val skipEmptyMap: Boolean
+    get() = true
+
+  override val skipEmptyArray: Boolean
+    get() = true
 }
 
 class ObjectIdWriter {

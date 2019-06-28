@@ -3,14 +3,14 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
 @SuppressWarnings("ALL")
-public class InstantiatingObjectToGetClassObjectInspectionTest extends LightInspectionTestCase {
+public class InstantiatingObjectToGetClassObjectInspectionTest extends LightJavaInspectionTestCase {
 
   public void testComplicated() {
     doTest("import java.util.*;" +

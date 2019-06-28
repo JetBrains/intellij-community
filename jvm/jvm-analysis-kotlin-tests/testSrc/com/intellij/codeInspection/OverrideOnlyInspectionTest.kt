@@ -6,14 +6,14 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestDataPath
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.PathUtil
 import org.jetbrains.annotations.ApiStatus
 
 @TestDataPath("/testData/codeInspection/overrideOnly")
-class OverrideOnlyInspectionTest : LightCodeInsightFixtureTestCase() {
+class OverrideOnlyInspectionTest : LightJavaCodeInsightFixtureTestCase() {
 
-  private val projectDescriptor = object : LightCodeInsightFixtureTestCase.ProjectDescriptor(LanguageLevel.HIGHEST) {
+  private val projectDescriptor = object : LightJavaCodeInsightFixtureTestCase.ProjectDescriptor(LanguageLevel.HIGHEST) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
       super.configureModule(module, model, contentEntry)
       PsiTestUtil.addProjectLibrary(model, "annotations", listOf(PathUtil.getJarPathForClass(ApiStatus.OverrideOnly::class.java)))

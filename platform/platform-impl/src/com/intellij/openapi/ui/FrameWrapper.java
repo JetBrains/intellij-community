@@ -3,6 +3,7 @@ package com.intellij.openapi.ui;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
@@ -14,17 +15,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.BooleanGetter;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.WindowStateService;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.FrameState;
@@ -129,6 +129,10 @@ public class FrameWrapper implements Disposable, DataProvider {
 
     UIUtil.decorateWindowHeader(((RootPaneContainer)frame).getRootPane());
 
+    if (frame instanceof JFrame) {
+      UIUtil.setCustomTitleBar(frame, ((JFrame)frame).getRootPane(), runnable -> Disposer.register(this, () -> runnable.run()));
+    }
+
     final WindowAdapter focusListener = new WindowAdapter() {
       @Override
       public void windowOpened(WindowEvent e) {
@@ -154,6 +158,11 @@ public class FrameWrapper implements Disposable, DataProvider {
       }
     });
     if (myCloseOnEsc) addCloseOnEsc((RootPaneContainer)frame);
+
+    if (IdeFrameDecorator.isCustomDecorationActive()) {
+      myComponent = CustomFrameDialogContent.getContent(frame, myProject, myComponent);
+    }
+
     ((RootPaneContainer)frame).getContentPane().add(myComponent, BorderLayout.CENTER);
     if (frame instanceof JFrame) {
       ((JFrame)frame).setTitle(myTitle);
@@ -347,6 +356,7 @@ public class FrameWrapper implements Disposable, DataProvider {
   }
 
   private static class MyJFrame extends JFrame implements DataProvider, IdeFrame.Child {
+    private static final boolean USE_SINGLE_SYSTEM_MENUBAR = SystemInfo.isMacSystemMenu && "true".equalsIgnoreCase(System.getProperty("mac.system.menu.singleton"));
     private FrameWrapper myOwner;
     private final IdeFrame myParent;
 
@@ -360,7 +370,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       FrameState.setFrameStateListener(this);
       setGlassPane(new IdeGlassPaneImpl(getRootPane(), true));
 
-      final boolean setMenuOnFrame = SystemInfo.isMac;
+      final boolean setMenuOnFrame = SystemInfo.isMac && !USE_SINGLE_SYSTEM_MENUBAR;
 
       if (setMenuOnFrame) {
         setJMenuBar(new IdeMenuBar(ActionManagerEx.getInstanceEx(), DataManager.getInstance()));
@@ -368,6 +378,14 @@ public class FrameWrapper implements Disposable, DataProvider {
 
       MouseGestureManager.getInstance().add(this);
       setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt());
+    }
+
+    @Override
+    public void addNotify() {
+      if (IdeFrameDecorator.isCustomDecorationActive()) {
+        JdkEx.setHasCustomDecoration(this);
+      }
+      super.addNotify();
     }
 
     @Override

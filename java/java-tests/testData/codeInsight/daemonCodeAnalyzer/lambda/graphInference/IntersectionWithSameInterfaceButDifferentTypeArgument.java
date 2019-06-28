@@ -10,7 +10,7 @@ class MyTest {
   public <T> void from(Collection<T> elements) { }
 
   public void foo(final Stream<String> artifactStream) {
-    from(artifactStream.collect(Collectors.toCollection(<error descr="Bad return type in method reference: cannot convert java.util.TreeSet<java.lang.String> to C">TreeSet<String>::new</error>)));
+    from<error descr="Ambiguous method call: both 'MyTest.from(Page<String>)' and 'MyTest.from(Collection<String>)' match">(artifactStream.collect(Collectors.toCollection(TreeSet<String>::new)))</error>;
   }
 
   interface Page<T> extends Iterable<T> {}

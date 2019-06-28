@@ -17,6 +17,7 @@ package com.intellij.psi.scope;
 
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author max
@@ -66,7 +67,8 @@ public class ElementClassFilter implements ElementFilter {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** use {@linkplain #PACKAGE} (to be removed in IDEA 2018) */
+  /** @deprecated use {@linkplain #PACKAGE} (to be removed in IDEA 2018) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   @Deprecated
   public static final ElementClassFilter PACKAGE_FILTER = PACKAGE;
   //</editor-fold>

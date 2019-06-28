@@ -9,11 +9,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.ide.CopyPasteManager
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import junit.framework.TestCase
 import java.awt.datatransfer.DataFlavor
 
-class CreateTBXReferenceTest : LightPlatformCodeInsightFixtureTestCase() {
+class CreateTBXReferenceTest : BasePlatformTestCase() {
   override fun getTestDataPath(): String {
     return "${JavaTestUtil.getJavaTestDataPath()}/codeInsight/copyTBXReference/"
   }

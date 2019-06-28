@@ -17,12 +17,12 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 /**
  * @author Dennis.Ushakov
  */
-public abstract class XmlSyncTagTest extends LightPlatformCodeInsightFixtureTestCase {
+public abstract class XmlSyncTagTest extends BasePlatformTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();

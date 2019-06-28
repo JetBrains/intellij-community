@@ -3,12 +3,12 @@ package com.intellij.java.psi.impl.search
 
 import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.psi.impl.java.JavaBinaryPlusExpressionIndex
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.indexing.FileContentImpl
 import com.intellij.util.indexing.IndexingDataKeys
 import org.intellij.lang.annotations.Language
 
-class JavaBinaryPlusExpressionIndexTest : LightPlatformCodeInsightFixtureTestCase() {
+class JavaBinaryPlusExpressionIndexTest : BasePlatformTestCase() {
   fun testIndex() {
     @Language("JAVA")
     val file = myFixture.configureByText(StdFileTypes.JAVA, """

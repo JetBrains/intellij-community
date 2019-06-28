@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -104,7 +105,7 @@ public abstract class EventHandler {
   @NotNull
   protected static CellPluginComponent get(@NotNull ComponentEvent event) {
     //noinspection ConstantConditions
-    return UIUtil.getParentOfType(CellPluginComponent.class, event.getComponent());
+    return ComponentUtil.getParentOfType((Class<? extends CellPluginComponent>)CellPluginComponent.class, event.getComponent());
   }
 
   @Nullable

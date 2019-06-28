@@ -17,6 +17,8 @@ package com.intellij.remoteServer.runtime.ui;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
+import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeNodeSelector;
 import com.intellij.remoteServer.runtime.ServerConnection;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,4 +33,7 @@ public abstract class RemoteServersView {
   public abstract void showServerConnection(@NotNull ServerConnection<?> connection);
 
   public abstract void showDeployment(@NotNull ServerConnection<?> connection, @NotNull String deploymentName);
+
+  public abstract void registerCustomTreeNodeSelector(@NotNull ServersTreeNodeSelector selector,
+                                                      @NotNull Condition<ServerConnection> condition);
 }

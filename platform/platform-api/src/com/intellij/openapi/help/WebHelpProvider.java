@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * &nbsp;&nbsp;&lt;webHelpProvider implementation="qualified-class-name"/&gt;
  * &lt;/extensions&gt;
  * </pre>
- * After that {@link #getHelpPageUrl(String)} method will be used to show help for topics which IDs start with '&lt;plugin ID&gt;.'.
+ * After that {@link #getHelpPageUrl(String)} method will be used to show help for topics which IDs start with {@code '<plugin ID>.'}.
  *
  * @author nik
  */
@@ -36,8 +36,9 @@ public abstract class WebHelpProvider implements PluginAware {
 
   /**
    * Return URL of page which should be opened in browser when context help for {@code helpTopicId} is invoked. The method will be called
-   * only if {@code helpTopicId} starts with '&lt;plugin ID&gt;.' prefix.
-   * @param helpTopicId full ID of help topic including '&lt;plugin ID&gt;.' prefix
+   * only if {@code helpTopicId} starts with {@code '<plugin ID>.'} prefix.
+   *
+   * @param helpTopicId full ID of help topic including {@code '<plugin ID>.'} prefix
    */
   @Nullable
   public abstract String getHelpPageUrl(@NotNull String helpTopicId);

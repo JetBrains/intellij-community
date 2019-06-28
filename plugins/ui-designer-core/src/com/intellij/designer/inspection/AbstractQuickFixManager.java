@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.designer.inspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -31,8 +17,9 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.wm.impl.VisibilityWatcher;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.HintHint;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.LightweightHint;
-import com.intellij.ui.RowIcon;
+import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.EmptyIcon;
@@ -328,11 +315,11 @@ public abstract class AbstractQuickFixManager {
       setOpaque(false);
       setBorder(INACTIVE_BORDER);
 
-      myActiveIcon = new RowIcon(2);
+      myActiveIcon = IconManager.getInstance().createRowIcon(2);
       myActiveIcon.setIcon(icon, 0);
       myActiveIcon.setIcon(AllIcons.General.ArrowDown, 1);
 
-      myInactiveIcon = new RowIcon(2);
+      myInactiveIcon = IconManager.getInstance().createRowIcon(2);
       myInactiveIcon.setIcon(icon, 0);
       myInactiveIcon.setIcon(INACTIVE_ARROW_ICON, 1);
 

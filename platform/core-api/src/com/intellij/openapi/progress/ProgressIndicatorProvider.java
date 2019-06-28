@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,9 @@ public abstract class ProgressIndicatorProvider {
     return instance == null ? null : instance.getProgressIndicator();
   }
 
-  /** use {@link ProgressManager#executeNonCancelableSection(Runnable)} instead */
+  /**
+   * @deprecated use {@link ProgressManager#executeNonCancelableSection(Runnable)} instead
+   */
   @NotNull
   @Deprecated
   public static NonCancelableSection startNonCancelableSectionIfSupported() {

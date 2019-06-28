@@ -18,10 +18,10 @@ package com.intellij.codeInsight.folding.impl;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class AbstractFoldingPolicyTest extends LightPlatformCodeInsightFixtureTestCase {
+public abstract class AbstractFoldingPolicyTest extends BasePlatformTestCase {
   protected void doTest(@NotNull String text, @NotNull String ext) {
     myFixture.configureByText("test." + ext, text);
 

@@ -3,10 +3,12 @@ package com.intellij.openapi.progress.impl;
 
 import com.google.common.collect.ConcurrentHashMultiset;
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
@@ -14,23 +16,22 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentLongObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.LockSupport;
 
 public class CoreProgressManager extends ProgressManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.impl.CoreProgressManager");
@@ -52,7 +53,9 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   // threads which are running under canceled indicator
   // THashSet is avoided here because of possible tombstones overhead
   static final Set<Thread> threadsUnderCanceledIndicator = new HashSet<>(); // guarded by threadsUnderIndicator
-  private static volatile boolean shouldCheckCanceled;
+
+  @NotNull private static volatile CheckCanceledBehavior ourCheckCanceledBehavior = CheckCanceledBehavior.NONE;
+  private enum CheckCanceledBehavior { NONE, ONLY_HOOKS, INDICATOR_PLUS_HOOKS }
 
   /** active (i.e. which have {@link #executeProcessUnderProgress(Runnable, ProgressIndicator)} method running) indicators
    *  which are not inherited from {@link StandardProgressIndicator}.
@@ -111,6 +114,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }
   }
 
+  @ApiStatus.Internal
   public static boolean runCheckCanceledHooks(@Nullable ProgressIndicator indicator) {
     CheckCanceledHook hook = ourCheckCanceledHook;
     return hook != null && hook.runHook(indicator);
@@ -118,10 +122,11 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   @Override
   protected void doCheckCanceled() throws ProcessCanceledException {
-    if (!shouldCheckCanceled) return;
+    CheckCanceledBehavior behavior = ourCheckCanceledBehavior;
+    if (behavior == CheckCanceledBehavior.NONE) return;
 
     final ProgressIndicator progress = getProgressIndicator();
-    if (progress != null && ENABLED) {
+    if (progress != null && behavior == CheckCanceledBehavior.INDICATOR_PLUS_HOOKS) {
       progress.checkCanceled();
     }
     else {
@@ -618,14 +623,13 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   final void updateShouldCheckCanceled() {
-    ourCheckCanceledHook = createCheckCanceledHook();
-    if (ourCheckCanceledHook != null) {
-      shouldCheckCanceled = true;
-      return;
-    }
-
     synchronized (threadsUnderIndicator) {
-      shouldCheckCanceled = !threadsUnderCanceledIndicator.isEmpty();
+      CheckCanceledHook hook = createCheckCanceledHook();
+      boolean hasCanceledIndicator = !threadsUnderCanceledIndicator.isEmpty();
+      ourCheckCanceledHook = hook;
+      ourCheckCanceledBehavior = hook == null && !hasCanceledIndicator ? CheckCanceledBehavior.NONE :
+                                 hasCanceledIndicator && ENABLED ? CheckCanceledBehavior.INDICATOR_PLUS_HOOKS :
+                                 CheckCanceledBehavior.ONLY_HOOKS;
     }
   }
 
@@ -654,8 +658,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
           if (underCancelledIndicator) {
             threadsUnderCanceledIndicator.add(thread);
-            //noinspection AssignmentToStaticFieldFromInstanceMethod
-            shouldCheckCanceled = true;
+            updateShouldCheckCanceled();
           }
         }
       }
@@ -672,6 +675,166 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   @Override
   public boolean isInNonCancelableSection() {
     return isInNonCancelableSection.get() != null;
+  }
+
+  private static final long MAX_PRIORITIZATION_NANOS = TimeUnit.SECONDS.toNanos(12);
+  private static final Thread[] NO_THREADS = new Thread[0];
+  private final Set<Thread> myPrioritizedThreads = ContainerUtil.newConcurrentSet();
+  private volatile Thread[] myEffectivePrioritizedThreads = NO_THREADS;
+  private int myDeprioritizations = 0;
+  private final Object myPrioritizationLock = ObjectUtils.sentinel("myPrioritizationLock");
+  private volatile long myPrioritizingStarted = 0;
+
+  @Override
+  public <T, E extends Throwable> T computePrioritized(@NotNull ThrowableComputable<T, E> computable) throws E {
+    Thread thread = Thread.currentThread();
+
+    if (!Registry.is("ide.prioritize.threads") || isPrioritizedThread(thread)) {
+      return computable.compute();
+    }
+
+    synchronized (myPrioritizationLock) {
+      if (myPrioritizedThreads.isEmpty()) {
+        myPrioritizingStarted = System.nanoTime();
+      }
+      myPrioritizedThreads.add(thread);
+      updateEffectivePrioritized();
+    }
+    try {
+      return computable.compute();
+    }
+    finally {
+      synchronized (myPrioritizationLock) {
+        myPrioritizedThreads.remove(thread);
+        updateEffectivePrioritized();
+      }
+    }
+  }
+
+  private void updateEffectivePrioritized() {
+    Thread[] prev = myEffectivePrioritizedThreads;
+    Thread[] current = myDeprioritizations > 0 || myPrioritizedThreads.isEmpty() ? NO_THREADS : myPrioritizedThreads.toArray(NO_THREADS);
+    myEffectivePrioritizedThreads = current;
+    if (prev.length == 0 && current.length > 0) {
+      prioritizingStarted();
+    } else if (prev.length > 0 && current.length == 0) {
+      prioritizingFinished();
+    }
+  }
+
+  protected void prioritizingStarted() {}
+  protected void prioritizingFinished() {}
+
+  @ApiStatus.Internal
+  public boolean isPrioritizedThread(@NotNull Thread from) {
+    return myPrioritizedThreads.contains(from);
+  }
+
+  @ApiStatus.Internal
+  public void suppressPrioritizing() {
+    synchronized (myPrioritizationLock) {
+      if (++myDeprioritizations == 100 + ForkJoinPool.getCommonPoolParallelism() * 2) {
+        Attachment attachment = new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString());
+        attachment.setIncluded(true);
+        LOG.error("A suspiciously high nesting of suppressPrioritizing, forgot to call restorePrioritizing?", attachment);
+      }
+      updateEffectivePrioritized();
+    }
+  }
+
+  @ApiStatus.Internal
+  public void restorePrioritizing() {
+    synchronized (myPrioritizationLock) {
+      if (--myDeprioritizations < 0) {
+        myDeprioritizations = 0;
+        LOG.error("Unmatched suppressPrioritizing/restorePrioritizing");
+      }
+      updateEffectivePrioritized();
+    }
+  }
+
+  protected boolean sleepIfNeededToGivePriorityToAnotherThread() {
+    if (!isCurrentThreadEffectivelyPrioritized() && checkLowPriorityReallyApplicable()) {
+      LockSupport.parkNanos(1_000_000);
+      avoidBlockingPrioritizingThread();
+      return true;
+    }
+    return false;
+  }
+
+  private boolean isCurrentThreadEffectivelyPrioritized() {
+    Thread current = Thread.currentThread();
+    for (Thread prioritized : myEffectivePrioritizedThreads) {
+      if (prioritized == current) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean checkLowPriorityReallyApplicable() {
+    long time = System.nanoTime() - myPrioritizingStarted;
+    if (time < 5_000_000) {
+      return false; // don't sleep when activities are very short (e.g. empty processing of mouseMoved events)
+    }
+
+    if (avoidBlockingPrioritizingThread()) {
+      return false;
+    }
+
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      return false; // EDT always has high priority
+    }
+
+    if (time > MAX_PRIORITIZATION_NANOS) {
+       // Don't wait forever in case someone forgot to stop prioritizing before waiting for other threads to complete
+       // wait just for 12 seconds; this will be noticeable (and we'll get 2 thread dumps) but not fatal
+      stopAllPrioritization();
+      return false;
+    }
+    return true;
+  }
+
+  private boolean avoidBlockingPrioritizingThread() {
+    if (isAnyPrioritizedThreadBlocked()) {
+      // the current thread could hold a lock that prioritized threads are waiting for
+      suppressPrioritizing();
+      checkLaterThreadsAreUnblocked();
+      return true;
+    }
+    return false;
+  }
+
+  private void checkLaterThreadsAreUnblocked() {
+    try {
+      AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
+        if (isAnyPrioritizedThreadBlocked()) {
+          checkLaterThreadsAreUnblocked();
+        }
+        else {
+          restorePrioritizing();
+        }
+      }, 5, TimeUnit.MILLISECONDS);
+    }
+    catch (RejectedExecutionException ignore) {
+    }
+  }
+
+  private void stopAllPrioritization() {
+    synchronized (myPrioritizationLock) {
+      myPrioritizedThreads.clear();
+      updateEffectivePrioritized();
+    }
+  }
+
+  private boolean isAnyPrioritizedThreadBlocked() {
+    for (Thread thread : myEffectivePrioritizedThreads) {
+      Thread.State state = thread.getState();
+      if (state == Thread.State.WAITING || state == Thread.State.TIMED_WAITING || state == Thread.State.BLOCKED) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @NotNull

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing.tox;
 
 import com.intellij.execution.Executor;
@@ -15,7 +13,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.xmlb.SkipEmptySerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -53,7 +51,7 @@ public final class PyToxConfiguration extends AbstractPythonTestRunConfiguration
 
   @NotNull
   String[] getRunOnlyEnvs() {
-    return (myRunOnlyEnvs == null ? ArrayUtil.EMPTY_STRING_ARRAY : myRunOnlyEnvs.clone());
+    return (myRunOnlyEnvs == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : myRunOnlyEnvs.clone());
   }
 
   void setRunOnlyEnvs(@NotNull final String... tests) {
@@ -62,7 +60,7 @@ public final class PyToxConfiguration extends AbstractPythonTestRunConfiguration
 
   @NotNull
   String[] getArguments() {
-    return (myArguments == null ? ArrayUtil.EMPTY_STRING_ARRAY : myArguments.clone());
+    return (myArguments == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : myArguments.clone());
   }
 
   void setArguments(@NotNull final String... arguments) {

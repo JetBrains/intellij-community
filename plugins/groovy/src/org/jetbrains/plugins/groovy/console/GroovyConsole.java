@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.console;
 
 import com.intellij.execution.ExecutionException;
@@ -21,6 +21,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JdkUtil;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,15 +39,16 @@ import java.awt.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import static org.jetbrains.plugins.groovy.console.GroovyConsoleUtilKt.getWorkingDirectory;
+import static org.jetbrains.plugins.groovy.util.UserDataHolderUtilKt.removeUserData;
 
-public class GroovyConsole {
+public final class GroovyConsole {
 
-  public static final Key<GroovyConsole> GROOVY_CONSOLE = Key.create("Groovy console key");
+  private static final Key<GroovyConsole> GROOVY_CONSOLE = Key.create("Groovy console key");
 
   private static final Logger LOG = Logger.getInstance(GroovyConsole.class);
-  private static final Charset UTF_8 = Charset.forName("UTF-8");
   private static final Executor defaultExecutor = DefaultRunExecutor.getRunExecutorInstance();
 
   private final Project myProject;
@@ -53,7 +56,7 @@ public class GroovyConsole {
   private final ConsoleView myConsoleView;
   private final ProcessHandler myProcessHandler;
 
-  public GroovyConsole(Project project, RunContentDescriptor descriptor, ConsoleView view, ProcessHandler handler) {
+  private GroovyConsole(Project project, RunContentDescriptor descriptor, ConsoleView view, ProcessHandler handler) {
     myProject = project;
     myContentDescriptor = descriptor;
     myConsoleView = view;
@@ -86,13 +89,20 @@ public class GroovyConsole {
     final Charset charset = processHandler instanceof BaseOSProcessHandler
                             ? ((BaseOSProcessHandler)processHandler).getCharset()
                             : null;
-    byte[] bytes = (command + "\n").getBytes(charset != null ? charset : UTF_8);
+    byte[] bytes = (command + "\n").getBytes(charset != null ? charset : StandardCharsets.UTF_8);
     try {
       outputStream.write(bytes);
       outputStream.flush();
     }
-    catch (IOException ignored) {
-      LOG.warn(ignored);
+    catch (IOException e) {
+      LOG.warn(e);
+    }
+  }
+
+  public static void stopConsole(@NotNull VirtualFile contentFile) {
+    GroovyConsole console = removeUserData(contentFile, GROOVY_CONSOLE);
+    if (console != null) {
+      console.stop();
     }
   }
 
@@ -100,7 +110,10 @@ public class GroovyConsole {
                                         @NotNull final VirtualFile contentFile,
                                         @NotNull final Consumer<? super GroovyConsole> callback) {
     final GroovyConsole existingConsole = contentFile.getUserData(GROOVY_CONSOLE);
-    if (existingConsole != null) return;
+    if (existingConsole != null) {
+      callback.consume(existingConsole);
+      return;
+    }
 
     final Consumer<Module> initializer = module -> {
       final GroovyConsole console = createConsole(project, contentFile, module);
@@ -109,15 +122,19 @@ public class GroovyConsole {
       }
     };
 
-    final Module module = GroovyConsoleStateService.getInstance(project).getSelectedModule(contentFile);
-    if (module == null || module.isDisposed()) {
-      // if not, then select module, then run initializer
-      GroovyConsoleUtil.selectModuleAndRun(project, initializer);
-    }
-    else {
+    final GroovyConsoleStateService service = GroovyConsoleStateService.getInstance(project);
+    final Module module = service.getSelectedModule(contentFile);
+    if (module != null) {
       // if module for console is already selected, then use it for creation
       initializer.consume(module);
+      return;
     }
+
+    // if not, then select module, then run initializer
+    GroovyConsoleUtil.selectModuleAndRun(project, selectedModule -> {
+      service.setFileModule(contentFile, selectedModule);
+      initializer.consume(selectedModule);
+    });
   }
 
   @Nullable
@@ -127,12 +144,10 @@ public class GroovyConsole {
     final ProcessHandler processHandler = createProcessHandler(module);
     if (processHandler == null) return null;
 
-    final GroovyConsoleStateService consoleStateService = GroovyConsoleStateService.getInstance(project);
-    consoleStateService.setFileModule(contentFile, module);
-    final String title = consoleStateService.getSelectedModuleTitle(contentFile);
-
     final ConsoleViewImpl consoleView = new GroovyConsoleView(project);
-    final RunContentDescriptor descriptor = new RunContentDescriptor(consoleView, processHandler, new JPanel(new BorderLayout()), title);
+    final RunContentDescriptor descriptor = new RunContentDescriptor(
+      consoleView, processHandler, new JPanel(new BorderLayout()), contentFile.getNameWithoutExtension()
+    );
     final GroovyConsole console = new GroovyConsole(project, descriptor, consoleView, processHandler);
 
     // must call getComponent before createConsoleActions()
@@ -200,11 +215,27 @@ public class GroovyConsole {
 
   private static JavaParameters createJavaParameters(@NotNull Module module) throws ExecutionException {
     JavaParameters res = GroovyScriptRunConfiguration.createJavaParametersWithSdk(module);
-    DefaultGroovyScriptRunner.configureGenericGroovyRunner(res, module, "groovy.ui.GroovyMain", !GroovyConsoleUtil.hasGroovyAll(module), true, true, false);
+    DefaultGroovyScriptRunner
+      .configureGenericGroovyRunner(res, module, "groovy.ui.GroovyMain", !GroovyConsoleUtil.hasGroovyAll(module), true, true, false);
     res.getProgramParametersList().addAll("-p", GroovyScriptRunner.getPathInConf("console.groovy"));
     res.setWorkingDirectory(getWorkingDirectory(module));
     res.setUseDynamicClasspath(true);
+    if (useArgsFile(res)) {
+      res.setArgFile(true);
+    }
     return res;
+  }
+
+  private static boolean useArgsFile(@NotNull JavaParameters res) {
+    Sdk jdk = res.getJdk();
+    if (jdk == null) {
+      return false;
+    }
+    String rootPath = jdk.getHomePath();
+    if (rootPath == null) {
+      return false;
+    }
+    return JdkUtil.isModularRuntime(rootPath);
   }
 
   private static Consumer<Module> restarter(final Project project, final VirtualFile file) {

@@ -4,9 +4,9 @@ package org.jetbrains.idea.maven.buildtool;
 import com.intellij.build.*;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -18,7 +18,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.ToolWindowId;
 import icons.MavenIcons;
 import org.jetbrains.annotations.ApiStatus;
@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration;
 import org.jetbrains.idea.maven.execution.MavenRunner;
-import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.MavenSpyOutputParser;
 import org.jetbrains.idea.maven.project.MavenConsole;
 import org.jetbrains.idea.maven.project.MavenConsoleImpl;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
@@ -55,6 +54,7 @@ public class BuildViewMavenConsole extends MavenConsole {
   @NotNull
   private final String myTitle;
   private final long myExecutionId;
+  private final AnsiEscapeDecoder myDecoder = new AnsiEscapeDecoder();
 
   public BuildViewMavenConsole(@NotNull Project project,
                                @NotNull String title,
@@ -66,7 +66,7 @@ public class BuildViewMavenConsole extends MavenConsole {
     myTitle = title;
     myExecutionId = executionId;
     ExternalSystemTaskId taskId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, EXECUTE_TASK, project);
-    DefaultBuildDescriptor descriptor = new DefaultBuildDescriptor(taskId, "Run Maven task", workingDir, System.currentTimeMillis());
+    DefaultBuildDescriptor descriptor = new DefaultBuildDescriptor(taskId, title, workingDir, System.currentTimeMillis());
 
     BuildProgressListener buildProgressListener;
     if (ToolWindowId.BUILD.equals(toolWindowId)) {
@@ -86,7 +86,7 @@ public class BuildViewMavenConsole extends MavenConsole {
 
   @Override
   public void attachToProcess(ProcessHandler processHandler) {
-    processHandler.addProcessListener(new BuildToolConsoleProcessAdapter(myEventParser));
+    processHandler.addProcessListener(new BuildToolConsoleProcessAdapter(myEventParser, false));
     if (myBuildView != null) {
       myBuildView.attachToProcess(processHandler);
       ApplicationManager.getApplication().invokeLater(() -> {
@@ -134,6 +134,10 @@ public class BuildViewMavenConsole extends MavenConsole {
     myEventParser.onTextAvailable(text, type == OutputType.ERROR);
   }
 
+  public void onTextAvailable(String text, Key outputType) {
+    myDecoder.escapeText(text, outputType, myEventParser);
+  }
+
   private static JComponent createConsolePanel(ConsoleView view, ActionGroup actions) {
     JPanel panel = new JPanel();
     panel.setLayout(new BorderLayout());
@@ -175,13 +179,6 @@ public class BuildViewMavenConsole extends MavenConsole {
       @Override
       public void dispose() {
         super.dispose();
-      }
-
-      @Override
-      public void print(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
-        if(!MavenSpyOutputParser.isSpyLog(text) ||Registry.is("maven.spy.events.debug")) {
-          super.print(text, contentType);
-        }
       }
     };
   }

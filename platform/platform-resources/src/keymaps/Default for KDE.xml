@@ -70,6 +70,9 @@
   <action id="Refresh">
     <keyboard-shortcut first-keystroke="control 5"/>
   </action>
+  <action id="ForceRefresh">
+    <keyboard-shortcut first-keystroke="control shift 5"/>
+  </action>
   <action id="Rerun">
     <keyboard-shortcut first-keystroke="control 5"/>
   </action>

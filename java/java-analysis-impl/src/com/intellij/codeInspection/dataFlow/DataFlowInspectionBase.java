@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.dataFlow;
 
@@ -46,7 +46,7 @@ import java.util.*;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool {
+public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool {
   static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowInspection");
   @NonNls private static final String SHORT_NAME = "ConstantConditions";
   public boolean SUGGEST_NULLABLE_ANNOTATIONS;
@@ -230,6 +230,11 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
   }
 
   @NotNull
+  protected List<LocalQuickFix> createCastFixes(PsiTypeCastExpression castExpression, boolean onTheFly) {
+    return Collections.emptyList();
+  }
+
+  @NotNull
   protected List<LocalQuickFix> createNPEFixes(PsiExpression qualifier, PsiExpression expression, boolean onTheFly) {
     return Collections.emptyList();
   }
@@ -348,7 +353,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
       // Cannot do anything if we have already single branch and we cannot restore flow due to non-terminal breaks
       return allBranches.size() != 1 || BreakConverter.from(statement) != null;
     }
-    // Expression switch: if we cannot unwrap existing branch and the other one is default case, we cannot kill it either 
+    // Expression switch: if we cannot unwrap existing branch and the other one is default case, we cannot kill it either
     return (allBranches.size() <= 2 &&
            !allBranches.stream().allMatch(branch -> branch == labelStatement || branch.isDefaultCase())) ||
            (labelStatement instanceof PsiSwitchLabeledRuleStatement &&
@@ -377,7 +382,8 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     if (parent instanceof PsiStatement) return !(parent instanceof PsiReturnStatement);
     if (parent instanceof PsiPolyadicExpression) {
       IElementType tokenType = ((PsiPolyadicExpression)parent).getOperationTokenType();
-      return tokenType.equals(JavaTokenType.ANDAND) || tokenType.equals(JavaTokenType.OROR);
+      return tokenType.equals(JavaTokenType.ANDAND) || tokenType.equals(JavaTokenType.OROR) ||
+             tokenType.equals(JavaTokenType.AND) || tokenType.equals(JavaTokenType.OR);
     }
     if (parent instanceof PsiConditionalExpression) {
       return PsiTreeUtil.isAncestor(((PsiConditionalExpression)parent).getCondition(), expression, false);
@@ -390,7 +396,11 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     if (shouldBeSuppressed(ref) || constant == ConstantResult.UNKNOWN) return;
     List<LocalQuickFix> fixes = new SmartList<>();
     String presentableName = constant.toString();
-    fixes.add(new ReplaceWithConstantValueFix(presentableName, presentableName));
+    if (constant.value() instanceof Boolean) {
+      fixes.add(createSimplifyBooleanExpressionFix(ref, (Boolean)constant.value()));
+    } else {
+      fixes.add(new ReplaceWithConstantValueFix(presentableName, presentableName));
+    }
     Object value = constant.value();
     boolean isAssertion = isAssertionEffectively(ref, constant);
     if (isAssertion && DONT_REPORT_TRUE_ASSERT_STATEMENTS) return;
@@ -697,11 +707,11 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
       PsiTypeElement castType = typeCast.getCastType();
       assert castType != null;
       assert operand != null;
-      LocalQuickFix fix = null;
+      List<LocalQuickFix> fixes = new ArrayList<>(createCastFixes(typeCast, reporter.isOnTheFly()));
       if (reporter.isOnTheFly()) {
-        fix = createExplainFix(typeCast, new TrackingRunner.CastDfaProblemType());
+        fixes.add(createExplainFix(typeCast, new TrackingRunner.CastDfaProblemType()));
       }
-      reporter.registerProblem(castType, InspectionsBundle.message("dataflow.message.cce", operand.getText()), fix);
+      reporter.registerProblem(castType, InspectionsBundle.message("dataflow.message.cce", operand.getText()), fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
     }
   }
 
@@ -720,7 +730,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         reportConstantBoolean(reporter, psiAnchor, true);
       }
     }
-    else if (psiAnchor != null && 
+    else if (psiAnchor != null &&
              (!(psiAnchor instanceof PsiExpression) || PsiImplUtil.getSwitchLabel((PsiExpression)psiAnchor) == null) &&
              !isFlagCheck(psiAnchor)) {
       boolean evaluatesToTrue = trueSet.contains(instruction);
@@ -899,7 +909,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         final String text = isNullLiteralExpression(expr) || expressions.get(expr) == ConstantResult.NULL
                             ? InspectionsBundle.message("dataflow.message.return.null.from.notnull", presentable)
                             : InspectionsBundle.message("dataflow.message.return.nullable.from.notnull", presentable);
-        reporter.registerProblem(expr, text);
+        reporter.registerProblem(expr, text, createNPEFixes(expr, expr, reporter.isOnTheFly()).toArray(LocalQuickFix.EMPTY_ARRAY));
       }
       else if (AnnotationUtil.isAnnotatingApplicable(anchor)) {
         final String defaultNullable = manager.getDefaultNullable();
@@ -910,7 +920,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         final LocalQuickFix[] fixes =
           PsiTreeUtil.getParentOfType(anchor, PsiMethod.class, PsiLambdaExpression.class) instanceof PsiLambdaExpression
           ? LocalQuickFix.EMPTY_ARRAY
-          : new LocalQuickFix[]{ new AnnotateMethodFix(defaultNullable, ArrayUtil.toStringArray(manager.getNotNulls()))};
+          : new LocalQuickFix[]{ new AnnotateMethodFix(defaultNullable, ArrayUtilRt.toStringArray(manager.getNotNulls()))};
         reporter.registerProblem(expr, text, fixes);
       }
     }

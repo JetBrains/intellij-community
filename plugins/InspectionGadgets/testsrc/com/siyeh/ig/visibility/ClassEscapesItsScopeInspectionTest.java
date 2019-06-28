@@ -16,13 +16,13 @@
 package com.siyeh.ig.visibility;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ClassEscapesItsScopeInspectionTest extends LightInspectionTestCase {
+public class ClassEscapesItsScopeInspectionTest extends LightJavaInspectionTestCase {
   private ClassEscapesItsScopeInspection myInspection = new ClassEscapesItsScopeInspection();
 
   @Override

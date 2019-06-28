@@ -17,7 +17,7 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Bas Leijdekkers
  */
 @SuppressWarnings("EnumSwitchStatementWhichMissesCases")
-public class EnumSwitchStatementWhichMissesCasesInspectionTest extends LightInspectionTestCase {
+public class EnumSwitchStatementWhichMissesCasesInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
     doTest("enum E { A, B, C }" +

@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude"
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
              xsi:schemaLocation="http://www.w3.org/2001/XInclude
@@ -10,11 +9,11 @@
     </component>
   </application-components>
   <project-components>
-     <component>
-       <implementation-class>com.intellij.profile.codeInspection.ProjectInspectionProfileManager</implementation-class>
-       <loadForDefaultProject/>
-     </component>
-   </project-components>
+    <component>
+      <implementation-class>com.intellij.profile.codeInspection.ProjectInspectionProfileManager</implementation-class>
+      <loadForDefaultProject/>
+    </component>
+  </project-components>
 
   <xi:include href="/componentSets/Platform.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/componentSets/UICore.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -24,15 +23,15 @@
   <xi:include href="/componentSets/ProjectView.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/componentSets/Execution.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
-  <application-components>
-    <component>
-      <implementation-class>com.intellij.platform.PlatformProjectStarter</implementation-class>
-    </component>
-  </application-components>
-
   <project-components>
     <component>
       <implementation-class>com.intellij.platform.PlatformVcsDetector</implementation-class>
     </component>
   </project-components>
+
+  <applicationListeners>
+    <listener class="com.intellij.util.gist.GistManagerImpl$MyBulkFileListener" topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+    <listener class="com.intellij.ide.RecentProjectsManagerBase$MyAppLifecycleListener" topic="com.intellij.ide.AppLifecycleListener"/>
+    <listener class="com.intellij.ide.RecentProjectsManagerBase$MyProjectListener" topic="com.intellij.openapi.project.ProjectManagerListener"/>
+  </applicationListeners>
 </idea-plugin>

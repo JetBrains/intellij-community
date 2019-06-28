@@ -60,6 +60,8 @@ class BuildOptions {
   static final String TOOLBOX_LITE_GEN_STEP = "toolbox_lite_gen"
   /** Generate files containing lists of used third-party libraries */
   static final String THIRD_PARTY_LIBRARIES_LIST_STEP = "third_party_libraries"
+  /** Build community distributives */
+  static final String COMMUNITY_DIST_STEP = "community_dist"
 
   /**
    * Pass 'true' to this system property to produce an additional .dmg archive for macOS without bundled JRE.
@@ -121,9 +123,9 @@ class BuildOptions {
                                                                     System.getProperty("teamcity.buildType.id") == null)
 
   /**
-   * Specifies JRE version to be bundled with distributions, 8 by default.
+   * Specifies JRE version to be bundled with distributions, 11 by default.
    */
-  int bundledJreVersion = System.getProperty("intellij.build.bundled.jre.version", "8").toInteger()
+  int bundledJreVersion = System.getProperty("intellij.build.bundled.jre.version", "11").toInteger()
 
   /**
    * Specifies JRE build to be bundled with distributions. If {@code null} then jdkBuild from gradle.properties will be used.

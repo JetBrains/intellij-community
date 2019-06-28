@@ -7,11 +7,13 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,6 +38,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
   private JPanel myMainPanel;
   private JBTable myIndicesTable;
   private JButton myUpdateButton;
+  private JPanel myBorderPanel;
 
   private AnimatedIcon myUpdatingIcon;
   private Timer myRepaintTimer;
@@ -44,6 +47,8 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
   public MavenRepositoriesConfigurable(Project project) {
     myManager = MavenProjectIndicesManager.getInstance(project);
     configControls();
+
+    myBorderPanel.setBorder(IdeBorderFactory.createTitledBorder("Indexed Maven repositories:", false, JBUI.insetsTop(8)).setShowLine(false));
   }
 
   @Override

@@ -26,7 +26,7 @@ public class ShSyntaxHighlighter extends SyntaxHighlighterBase {
   private static final TokenSet numberSet = TokenSet.create(NUMBER, OCTAL, HEX, INT);
   private static final TokenSet bracketSet = TokenSet.create(LEFT_SQUARE, RIGHT_SQUARE);
   private static final TokenSet parenthesisSet = TokenSet.create(LEFT_PAREN, RIGHT_PAREN);
-  private static final TokenSet commandSet = TokenSet.create(LET, EVAL);
+  private static final TokenSet commandSet = TokenSet.create(LET, EVAL, TEST);
   private static final TokenSet conditionalOperators = TokenSet.create(OR_OR, AND_AND, BANG, EQ, REGEXP, GT, LT);
   private static final TokenSet redirectionSet = TokenSet.create(GT, LT, SHIFT_RIGHT, REDIRECT_HERE_STRING, REDIRECT_LESS_GREATER,
       REDIRECT_GREATER_BAR, REDIRECT_GREATER_AMP, REDIRECT_AMP_GREATER, REDIRECT_LESS_AMP, REDIRECT_AMP_GREATER_GREATER,

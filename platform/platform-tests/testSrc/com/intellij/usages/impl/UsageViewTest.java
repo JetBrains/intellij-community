@@ -33,11 +33,13 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,31 +48,25 @@ import javax.swing.tree.TreeNode;
 import java.util.HashSet;
 import java.util.Set;
 
-public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
+public class UsageViewTest extends BasePlatformTestCase {
   public void testUsageViewDoesNotHoldPsiFilesOrDocuments() {
     // sick and tired of hunting tests leaking documents
     ((UndoManagerImpl)UndoManager.getInstance(getProject())).flushCurrentCommandMerger();
 
-    boolean[] foundLeaksBeforeTest = new boolean[1];
+    Set<Object> alreadyLeaking = new THashSet<>(TObjectHashingStrategy.IDENTITY);
     Condition<Object> isReallyLeak = file -> {
       if (file instanceof PsiFile) {
         if (!((PsiFile)file).isPhysical()) {
           return false;
         }
         Project project = ((PsiFile)file).getProject();
-        System.err.println(project + "; its creation trace: " + PlatformTestCase.getCreationPlace(project));
+        System.err.println(project + " already leaking; its creation trace: " + PlatformTestCase.getCreationPlace(project));
       }
-
-      System.err.println("DON'T BLAME ME, IT'S NOT MY FAULT! SOME SNEAKY TEST BEFORE ME HAS LEAKED PsiFiles/Documents!");
-      foundLeaksBeforeTest[0] = true;
-      return true;
+      alreadyLeaking.add(file);
+      return false;
     };
     LeakHunter.checkLeak(ApplicationManager.getApplication(), PsiFileImpl.class, isReallyLeak);
     LeakHunter.checkLeak(ApplicationManager.getApplication(), Document.class, isReallyLeak);
-
-    if (foundLeaksBeforeTest[0]) {
-      fail("Can't start the test: leaking PsiFiles found");
-    }
 
     @Language("JAVA")
     String text = "public class X{} //iuggjhfg";
@@ -86,8 +82,8 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
     FileDocumentManager.getInstance().saveAllDocuments();
     UIUtil.dispatchAllInvocationEvents();
 
-    LeakHunter.checkLeak(usageView, PsiFileImpl.class, PsiFileImpl::isPhysical);
-    LeakHunter.checkLeak(usageView, Document.class);
+    LeakHunter.checkLeak(usageView, PsiFileImpl.class, file -> !alreadyLeaking.contains(file) && file.isPhysical());
+    LeakHunter.checkLeak(usageView, Document.class, document -> !alreadyLeaking.contains(document));
   }
 
   public void testUsageViewHandlesDocumentChange() {

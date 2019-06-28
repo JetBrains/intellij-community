@@ -18,14 +18,14 @@ package com.intellij.lang.properties;
 import com.intellij.lang.properties.editor.inspections.incomplete.IncompletePropertyInspection;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 import java.util.Collections;
 
 /**
  * @author Dmitry Batkovich
  */
-public class IgnoredPropertiesFilesSuffixesTest extends LightPlatformCodeInsightFixtureTestCase {
+public class IgnoredPropertiesFilesSuffixesTest extends BasePlatformTestCase {
 
   @Override
   protected void setUp() throws Exception {

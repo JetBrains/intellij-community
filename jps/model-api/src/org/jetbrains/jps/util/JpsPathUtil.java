@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.util;
 
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Contract;
@@ -62,7 +62,7 @@ public class JpsPathUtil {
       String prefix = url.substring(0, idx);
       String suffix = url.substring(idx + 2);
 
-      if (SystemInfoRt.isWindows) {
+      if (SystemInfo.isWindows) {
         url = prefix + "://" + suffix;
       }
       else {

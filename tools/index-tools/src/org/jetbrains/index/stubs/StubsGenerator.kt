@@ -31,7 +31,7 @@ import java.util.*
 open class StubsGenerator(private val stubsVersion: String, private val stubsStorageFilePath: String) :
   IndexGenerator<SerializedStubTree>(stubsStorageFilePath) {
 
-  private val serializationManager = SerializationManagerImpl(File("$stubsStorageFilePath.names"))
+  private val serializationManager = SerializationManagerImpl(File("$stubsStorageFilePath.names"), false)
 
   fun buildStubsForRoots(roots: Collection<VirtualFile>) {
     try {
@@ -54,22 +54,14 @@ open class StubsGenerator(private val stubsVersion: String, private val stubsSto
     val bytes = BufferExposingByteArrayOutputStream()
     serializationManager.serialize(stub, bytes)
 
-    val file = fileContent.file
-
-    val contentLength =
-      if (file.fileType.isBinary) {
-        -1
-      }
-      else {
-        fileContent.psiFileForPsiDependentIndex.textLength
-      }
-
-    return SerializedStubTree(bytes.internalBuffer, bytes.size(), stub, file.length, contentLength)
+    val tree = SerializedStubTree(bytes.internalBuffer, bytes.size(), stub)
+    tree.indexTree()
+    return tree
   }
 
   override fun createStorage(stubsStorageFilePath: String): PersistentHashMap<HashCode, SerializedStubTree> {
     return PersistentHashMap(File("$stubsStorageFilePath.input"),
-                             HashCodeDescriptor.instance, StubTreeExternalizer())
+                             HashCodeDescriptor.instance, FullStubExternalizer())
   }
 
   open fun buildStubForFile(fileContent: FileContentImpl,
@@ -89,7 +81,7 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
   // we don't need a project here, but I didn't find a better way to wait until indices and components are initialized
 
   try {
-    val stubExternalizer = StubTreeExternalizer()
+    val stubExternalizer = FullStubExternalizer()
 
     val storageFile = File(stubsFilePath, "$stubsFileName.input")
     if (storageFile.exists()) {
@@ -104,7 +96,7 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
       stringEnumeratorFile.delete()
     }
 
-    val newSerializationManager = SerializationManagerImpl(stringEnumeratorFile)
+    val newSerializationManager = SerializationManagerImpl(stringEnumeratorFile, false)
 
     val map = HashMap<HashCode, Int>()
 
@@ -117,31 +109,25 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
       val fromStorage = PersistentHashMap<HashCode, SerializedStubTree>(fromStorageFile,
                                                                         HashCodeDescriptor.instance, stubExternalizer)
 
-      val serializationManager = SerializationManagerImpl(File(path, "$stubsFileName.names"))
+      val serializationManager = SerializationManagerImpl(File(path, "$stubsFileName.names"), true)
 
       try {
         fromStorage.processKeysWithExistingMapping { key ->
           count++
           val value = fromStorage.get(key)
 
-          val stub = value.getStub(false, serializationManager)
-
           // re-serialize stub tree to correctly enumerate strings in the new string enumerator
-          val bytes = BufferExposingByteArrayOutputStream()
-          newSerializationManager.serialize(stub, bytes)
-
-          val newStubTree = SerializedStubTree(bytes.internalBuffer, bytes.size(), null, value.byteContentLength,
-                                               value.charContentLength)
+          val newStubTree = value.reSerialize(serializationManager, newSerializationManager)
 
           if (storage.containsMapping(key)) {
             if (newStubTree != storage.get(key)) { // TODO: why are they slightly different???
               storage.get(key).getStub(false, newSerializationManager)
 
+              val stub = value.getStub(false, serializationManager)
               val bytes2 = BufferExposingByteArrayOutputStream()
               newSerializationManager.serialize(stub, bytes2)
 
-              val newStubTree2 = SerializedStubTree(bytes2.internalBuffer, bytes2.size(), null, value.byteContentLength,
-                                                    value.charContentLength)
+              val newStubTree2 = SerializedStubTree(bytes2.internalBuffer, bytes2.size(), null)
 
               TestCase.assertTrue(newStubTree == newStubTree2) // wtf!!! why are they equal now???
             }

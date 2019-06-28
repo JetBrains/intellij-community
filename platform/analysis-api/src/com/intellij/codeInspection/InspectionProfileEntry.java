@@ -15,6 +15,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.serialization.SerializationException;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.ThreeState;
@@ -24,14 +25,12 @@ import com.intellij.util.xmlb.annotations.Property;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -82,6 +81,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     return false;
   }
 
+  @NonNls
   @NotNull
   protected String getSuppressId() {
     return getShortName();
@@ -155,6 +155,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
 
   @NotNull
   public static Set<InspectionSuppressor> getSuppressors(@NotNull PsiElement element) {
+    PsiUtilCore.ensureValid(element);
     FileViewProvider viewProvider = element.getContainingFile().getViewProvider();
     final List<InspectionSuppressor> elementLanguageSuppressor = LanguageInspectionSuppressors.INSTANCE.allForLanguage(element.getLanguage());
     if (viewProvider instanceof TemplateLanguageFileViewProvider) {
@@ -188,9 +189,18 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   }
 
   interface DefaultNameProvider {
-    @Nullable String getDefaultShortName();
-    @Nullable String getDefaultDisplayName();
-    @Nullable String getDefaultGroupDisplayName();
+
+    @NonNls
+    @Nullable
+    String getDefaultShortName();
+
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @Nullable
+    String getDefaultDisplayName();
+
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @Nullable
+    String getDefaultGroupDisplayName();
   }
 
   protected volatile DefaultNameProvider myNameProvider;
@@ -200,7 +210,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    * @see InspectionEP#groupKey
    * @see InspectionEP#groupBundle
    */
-  @Nls
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   public String getGroupDisplayName() {
     if (myNameProvider != null) {
@@ -216,6 +226,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   /**
    * @see InspectionEP#groupPath
    */
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   public String[] getGroupPath() {
     String groupDisplayName = getGroupDisplayName();
@@ -230,6 +241,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    * @see InspectionEP#key
    * @see InspectionEP#bundle
    */
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   public String getDisplayName() {
     if (myNameProvider != null) {
@@ -399,11 +411,12 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     return null;
   }
 
+  /** @deprecated This method is no longer internally used */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @Nullable
   protected URL getDescriptionUrl() {
-    final String fileName = getDescriptionFileName();
-    if (fileName == null) return null;
-    return ResourceUtil.getResource(getDescriptionContextClass(), "/inspectionDescriptions", fileName);
+    return null;
   }
 
   @NotNull
@@ -418,6 +431,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   /**
    * @return short name of tool whose results will be used
    */
+  @NonNls
   @Nullable
   public String getMainToolId() {
     return null;
@@ -429,9 +443,12 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     if (description != null) return description;
 
     try {
-      URL descriptionUrl = getDescriptionUrl();
-      if (descriptionUrl == null) return null;
-      return ResourceUtil.loadText(descriptionUrl);
+      InputStream descriptionStream = null;
+      final String fileName = getDescriptionFileName();
+      if (fileName != null) {
+        descriptionStream = ResourceUtil.getResourceAsStream(getDescriptionContextClass(), "/inspectionDescriptions", fileName);
+      }
+      return descriptionStream != null ? ResourceUtil.loadText(descriptionStream) : null;
     }
     catch (IOException ignored) {
     }

@@ -7,10 +7,11 @@ import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -21,9 +22,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class CacheDiffRequestChainProcessor extends CacheDiffRequestProcessor<DiffRequestProducer> {
-  private static final Logger LOG = Logger.getInstance(CacheDiffRequestChainProcessor.class);
-
   @NotNull private final DiffRequestChain myRequestChain;
+  private int myIndex;
 
   public CacheDiffRequestChainProcessor(@Nullable Project project, @NotNull DiffRequestChain requestChain) {
     super(project, requestChain);
@@ -31,8 +31,11 @@ public class CacheDiffRequestChainProcessor extends CacheDiffRequestProcessor<Di
 
     if (myRequestChain instanceof AsyncDiffRequestChain) {
       ((AsyncDiffRequestChain)myRequestChain).onAssigned(true);
+      // listener should be added after `onAssigned` call to avoid notification about synchronously loaded requests
       ((AsyncDiffRequestChain)myRequestChain).addListener(new MyChangeListener(), this);
     }
+
+    myIndex = myRequestChain.getIndex();
   }
 
   @Override
@@ -58,9 +61,8 @@ public class CacheDiffRequestChainProcessor extends CacheDiffRequestProcessor<Di
   @Override
   protected DiffRequestProducer getCurrentRequestProvider() {
     List<? extends DiffRequestProducer> requests = myRequestChain.getRequests();
-    int index = myRequestChain.getIndex();
-    if (index < 0 || index >= requests.size()) return null;
-    return requests.get(index);
+    if (myIndex < 0 || myIndex >= requests.size()) return null;
+    return requests.get(myIndex);
   }
 
   @NotNull
@@ -92,23 +94,23 @@ public class CacheDiffRequestChainProcessor extends CacheDiffRequestProcessor<Di
 
   @Override
   protected boolean hasNextChange() {
-    return myRequestChain.getIndex() < myRequestChain.getRequests().size() - 1;
+    return myIndex < myRequestChain.getRequests().size() - 1;
   }
 
   @Override
   protected boolean hasPrevChange() {
-    return myRequestChain.getIndex() > 0;
+    return myIndex > 0;
   }
 
   @Override
   protected void goToNextChange(boolean fromDifferences) {
-    myRequestChain.setIndex(myRequestChain.getIndex() + 1);
+    myIndex += 1;
     updateRequest(false, fromDifferences ? ScrollToPolicy.FIRST_CHANGE : null);
   }
 
   @Override
   protected void goToPrevChange(boolean fromDifferences) {
-    myRequestChain.setIndex(myRequestChain.getIndex() - 1);
+    myIndex -= 1;
     updateRequest(false, fromDifferences ? ScrollToPolicy.LAST_CHANGE : null);
   }
 
@@ -119,18 +121,23 @@ public class CacheDiffRequestChainProcessor extends CacheDiffRequestProcessor<Di
 
   @NotNull
   private AnAction createGoToChangeAction() {
-    return GoToChangePopupBuilder.create(myRequestChain, index -> {
-      if (index >= 0 && index != myRequestChain.getIndex()) {
-        myRequestChain.setIndex(index);
+    AnAction action = GoToChangePopupBuilder.create(myRequestChain, index -> {
+      if (index >= 0 && index < myRequestChain.getRequests().size() && index != myIndex) {
+        myIndex = index;
         updateRequest();
       }
-    });
+    }, myIndex);
+    if (DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DIFF_IN_EDITOR, getContext())) {
+      patchShortcutSet(action, "GotoClass", null);
+    }
+    return action;
   }
 
   private class MyChangeListener implements AsyncDiffRequestChain.Listener {
     @Override
     public void onRequestsLoaded() {
       dropCaches();
+      myIndex = myRequestChain.getIndex();
       updateRequest(true);
     }
   }

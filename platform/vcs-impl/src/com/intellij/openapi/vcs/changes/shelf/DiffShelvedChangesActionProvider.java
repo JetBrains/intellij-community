@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -99,7 +100,7 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
     List<ShelvedChangeList> changeLists = ShelvedChangesViewManager.getShelvedLists(dc);
     ShelvedChangeList changeList = assertNotNull(ContainerUtil.getFirstItem(changeLists));
 
-    final List<ShelvedChange> textChanges = changeList.getChanges(project);
+    final List<ShelvedChange> textChanges = Objects.requireNonNull(changeList.getChanges());
     final List<ShelvedBinaryFile> binaryChanges = changeList.getBinaryFiles();
 
     final List<ShelveDiffRequestProducer> diffRequestProducers = new ArrayList<>();
@@ -392,7 +393,7 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
         }
       }
       else {
-        return createDiffRequest(myProject, myChange.getChange(myProject), getName(), context, indicator);
+        return createDiffRequest(myProject, myChange.getChange(), getName(), context, indicator);
       }
     }
   }
@@ -424,7 +425,7 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
     @Override
     public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
       throws DiffRequestProducerException, ProcessCanceledException {
-      if (myFile.getFileType() == UnknownFileType.INSTANCE) {
+      if (FileTypeRegistry.getInstance().isFileOfType(myFile, UnknownFileType.INSTANCE)) {
         return new UnknownFileTypeDiffRequest(myFile, getName());
       }
 
@@ -500,9 +501,9 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
                                                     @NotNull TextFilePatch patch,
                                                     @NotNull UserDataHolder context,
                                                     @NotNull ProgressIndicator indicator) throws DiffRequestProducerException {
-      DiffRequest diffRequest = myChange.isConflictingChange(myProject)
+      DiffRequest diffRequest = myChange.isConflictingChange()
                                 ? createConflictDiffRequest(myProject, myFile, patch, SHELVED_VERSION, texts, getName())
-                                : createDiffRequest(myProject, myChange.getChange(myProject), getName(), context, indicator);
+                                : createDiffRequest(myProject, myChange.getChange(), getName(), context, indicator);
       if (!myWithLocal) {
         DiffUtil.addNotification(createNotification(DIFF_WITH_BASE_ERROR + " Showing difference with local version"), diffRequest);
       }

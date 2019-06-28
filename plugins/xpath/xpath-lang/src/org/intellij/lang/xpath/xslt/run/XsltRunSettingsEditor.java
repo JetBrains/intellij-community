@@ -47,6 +47,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
@@ -173,7 +174,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
             comboBox.setSelectedItem(oldXml);
           }
           else {
-            comboBox.setModel(new DefaultComboBoxModel<>(ArrayUtil.EMPTY_OBJECT_ARRAY));
+            comboBox.setModel(new DefaultComboBoxModel<>(ArrayUtilRt.EMPTY_OBJECT_ARRAY));
             comboBox.getEditor().setItem(oldXml);
           }
         }
@@ -222,7 +223,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
 
       myFileType.setRenderer(new FileTypeRenderer() {
         @Override
-        public void customize(JList<? extends FileType> list, FileType value, int index, boolean selected, boolean hasFocus) {
+        public void customize(@NotNull JList<? extends FileType> list, FileType value, int index, boolean selected, boolean hasFocus) {
           if (value == null) {
             setIcon(AllIcons.Actions.Cancel);
             setText("Disabled");

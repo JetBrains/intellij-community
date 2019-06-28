@@ -48,7 +48,7 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
 
   @Override
   protected SingleRowLayout createSingleRowLayout() {
-    if (!UISettings.getInstance().getHideTabsIfNeed() && supportsCompression()) {
+    if (!UISettings.getInstance().getHideTabsIfNeeded() && supportsCompression()) {
       return new CompressibleSingleRowLayout(this);
     }
     else if (ApplicationManager.getApplication().isInternal() || Registry.is("editor.use.scrollable.tabs")) {

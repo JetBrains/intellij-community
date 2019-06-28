@@ -25,7 +25,7 @@ import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.JavaProjectTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.idea.devkit.build.ant.BuildJarTarget;
@@ -33,7 +33,7 @@ import org.jetbrains.idea.devkit.build.ant.BuildJarTarget;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-public class GenerateAntTest extends IdeaTestCase {
+public class GenerateAntTest extends JavaProjectTestCase {
   public void testP1() throws Exception {
     final VirtualFile parent = myModule.getModuleFile().getParent();
     assertNotNull(parent);

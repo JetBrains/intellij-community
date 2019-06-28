@@ -2,7 +2,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 class IfCanBeSwitch {
   void m1(int i) {  // ok
-    <warning descr="'if' statement replaceable with 'switch' statement">if</warning> (i == 0) System.out.println("zero"); else if (i == 1) System.out.println("one"); else System.out.println("many");
+    <warning descr="'if' statement replaceable with 'switch' statement">if</warning> (i == 0) System.out.println("zero"); else if (((i) == (1))) System.out.println("one"); else System.out.println("many");
+    if (i == 0) {
+      System.out.println("zero");
+    }
+    else if ((i == (1))) {
+      System.out.println("one");
+    }
+    else if (i == 1) { // duplicate case value not legal in switch
+      System.out.println("one too");
+    }
+    else {
+      System.out.println("many");
+    }
   }
 
   void m1(char c) {  // ok

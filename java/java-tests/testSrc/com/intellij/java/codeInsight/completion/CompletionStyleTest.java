@@ -13,12 +13,12 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NotNull;
 
 @TestDataPath("$CONTENT_ROOT/testData")
-public class CompletionStyleTest extends LightCodeInsightTestCase{
+public class CompletionStyleTest extends LightJavaCodeInsightTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/style";
 
   @Override

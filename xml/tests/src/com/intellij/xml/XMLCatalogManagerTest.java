@@ -19,7 +19,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.XMLCatalogConfigurable;
 import com.intellij.javaee.XMLCatalogManager;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.apache.xml.resolver.CatalogManager;
 
 import java.io.File;
@@ -31,7 +31,7 @@ import java.util.Vector;
  * @author Dmitry Avdeev
  */
 @SuppressWarnings("UseOfObsoleteCollectionType")
-public class XMLCatalogManagerTest extends LightPlatformCodeInsightFixtureTestCase {
+public class XMLCatalogManagerTest extends BasePlatformTestCase {
 
   public void testCatalogManager() throws Exception {
     XMLCatalogManager manager = getManager();

@@ -54,6 +54,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -874,8 +875,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final FindUsagesManager usagesManager = ((FindManagerImpl)FindManager.getInstance(getProject())).getFindUsagesManager();
     final FindUsagesHandler handler = usagesManager.getFindUsagesHandler(targetElement, false);
     assertNotNull("Cannot find handler for: " + targetElement, handler);
-    final UsageViewImpl usageView = (UsageViewImpl)usagesManager.doFindUsages(new PsiElement[]{targetElement},
-                                                                              PsiElement.EMPTY_ARRAY,
+    final UsageViewImpl usageView = (UsageViewImpl)usagesManager.doFindUsages(handler.getPrimaryElements(),
+                                                                              handler.getSecondaryElements(),
                                                                               handler,
                                                                               handler.getFindUsagesOptions(),
                                                                               false);
@@ -1180,14 +1181,24 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     //noinspection Convert2MethodRef
     new RunAll()
       .append(() -> EdtTestUtil.runInEdtAndWait(() -> {
+        if (ApplicationManager.getApplication() == null) {
+          return;
+        }
+
         Project project = getProject();
         if (project != null) {
           CodeStyle.dropTemporarySettings(project);
           AutoPopupController.getInstance(project).cancelAllRequests(); // clear "show param info" delayed requests leaking project
         }
-        DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true); // return default value to avoid unnecessary save
-        closeOpenFiles();
+
+        // return default value to avoid unnecessary save
+        DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings = ServiceManager.getServiceIfCreated(DaemonCodeAnalyzerSettings.class);
+        if (daemonCodeAnalyzerSettings != null) {
+          daemonCodeAnalyzerSettings.setImportHintEnabled(true);
+        }
+
         if (project != null) {
+          closeOpenFiles();
           ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).cleanupAfterTest();
           // needed for myVirtualFilePointerTracker check below
           ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).clearScopesCachesForModules();

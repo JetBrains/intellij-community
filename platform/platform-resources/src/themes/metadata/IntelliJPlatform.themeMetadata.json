@@ -15,15 +15,13 @@
       "description": "Combo box drop-down menu. Format: \"top, left, bottom, right, hex\", e.g. “1,1,1,1,FFFFFF\". Size in pixels"
     },
     {
-      "key": "CompletionPopup.background"
-    },
-    {
-      "key": "CompletionPopup.foreground",
-      "description": "Gray text at the right border. Completion suggestions foreground is Label.foreground."
+      "key": "CompletionPopup.background",
+      "deprecated": true
     },
     {
       "key": "CompletionPopup.infoForeground",
-      "description": "Gray info text after each completion suggestion (not the gray text on the right)"
+      "description": "Gray info text after each completion suggestion (not the gray text on the right)",
+      "deprecated": true
     },
     {
       "key": "CompletionPopup.matchForeground",
@@ -31,11 +29,21 @@
     },
     {
       "key": "CompletionPopup.matchSelectionForeground",
-      "description": "The string in the completion suggestions list that matches the entered string when selected"
+      "description": "The string in the completion suggestions list that matches the entered string when selected",
+      "deprecated": true
     },
     {
       "key": "CompletionPopup.nonFocusedState",
-      "description": "Show completion popup as grayed-out until focused. Boolean. Default is \"true\""
+      "description": "Show completion popup as grayed-out until focused. Boolean. Default is \"true\"",
+      "deprecated": true
+    },
+    {
+      "key": "CompletionPopup.foreground",
+      "description": "Gray text at the right border. Completion suggestions foreground is Label.foreground."
+    },
+    {
+      "key": "CompletionPopup.nonFocusedMask",
+      "description": "Color mask with alpha to draw over not focused completion list"
     },
     {
       "key": "CompletionPopup.selectionBackground"
@@ -45,12 +53,6 @@
     },
     {
       "key": "CompletionPopup.selectionInactiveBackground"
-    },
-    {
-      "key": "CompletionPopup.selectionInactiveInfoForeground"
-    },
-    {
-      "key": "CompletionPopup.selectionInfoForeground"
     },
     {
       "key": "Counter.background",
@@ -66,6 +68,33 @@
     {
       "key": "DebuggerTabs.selectedBackground",
       "description": "Background of the selected tab in the Debugger tool window. The foreground is EditorTabs.underlinedTabForeground."
+    },
+    {
+      "key": "DebuggerTabs.underlineHeight"
+    },
+    {
+      "key": "DebuggerTabs.underlinedTabBackground"
+    },
+    {
+      "key": "Debugger.Variables.collectingDataForeground"
+    },
+    {
+      "key": "Debugger.Variables.evaluatingExpressionForeground"
+    },
+    {
+      "key": "Debugger.Variables.modifyingValueForeground"
+    },
+    {
+      "key": "Debugger.Variables.changedValueForeground"
+    },
+    {
+      "key": "Debugger.Variables.exceptionForeground"
+    },
+    {
+      "key": "Debugger.Variables.valueForeground"
+    },
+    {
+      "key": "Debugger.Variables.errorMessageForeground"
     },
     {
     "key": "DefaultTabs.background"

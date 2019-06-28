@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.difftool;
 
 import com.intellij.diff.DiffContext;
@@ -27,6 +28,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,8 +44,8 @@ import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class SvnDiffViewer implements DiffViewer {
   private static final Logger LOG = Logger.getInstance(SvnDiffViewer.class);
@@ -370,7 +372,7 @@ public class SvnDiffViewer implements DiffViewer {
           label.setFont(UIUtil.getOptionPaneMessageFont());
           label.setForeground(UIUtil.getLabelForeground());
           add(label, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, JBUI.insets(2), 0, 0));
-          setDividerWidth(label.getPreferredSize().height + JBUI.scale(4));
+          setDividerWidth(label.getPreferredSize().height + JBUIScale.scale(4));
 
           revalidate();
           repaint();

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.flavors;
 
 import com.google.common.collect.Lists;
@@ -10,7 +10,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PatternUtil;
@@ -54,14 +54,6 @@ public abstract class PythonSdkFlavor {
       pythonPathList = appendSystemPythonPath(pythonPathList);
     }
     PythonEnvUtil.addToPythonPath(envs, pythonPathList);
-  }
-
-  /**
-   * @deprecated Use {@link #suggestHomePaths(Module)}. To be removed in 2019.2.
-   */
-  @Deprecated
-  public Collection<String> suggestHomePaths() {
-    return suggestHomePaths(null);
   }
 
   public Collection<String> suggestHomePaths(@Nullable Module module) {
@@ -171,7 +163,7 @@ public abstract class PythonSdkFlavor {
   }
 
   public boolean isValidSdkPath(@NotNull File file) {
-    return StringUtil.toLowerCase(FileUtil.getNameWithoutExtension(file)).startsWith("python");
+    return StringUtil.toLowerCase(FileUtilRt.getNameWithoutExtension(file.getName())).startsWith("python");
   }
 
   @Nullable

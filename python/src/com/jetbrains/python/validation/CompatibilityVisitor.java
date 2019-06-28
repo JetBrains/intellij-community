@@ -682,4 +682,31 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
         .forEach(element -> registerProblem(element, "Python version 3.5 does not support 'await' inside comprehensions"));
     }
   }
+
+  @Override
+  public void visitPySlashParameter(PySlashParameter node) {
+    super.visitPySlashParameter(node);
+
+    registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON38) && registerForLanguageLevel(level),
+                                   " not support positional-only parameters",
+                                   node);
+  }
+
+  @Override
+  public void visitPyFStringFragment(PyFStringFragment node) {
+    super.visitPyFStringFragment(node);
+
+    final ASTNode equalitySignInFStringFragment = node.getNode().findChildByType(PyTokenTypes.EQ);
+    if (equalitySignInFStringFragment != null) {
+      registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON38) && registerForLanguageLevel(level),
+                                     " not support equality signs in f-strings", equalitySignInFStringFragment.getPsi());
+    }
+  }
+
+  @Override
+  public void visitPyAssignmentExpression(PyAssignmentExpression node) {
+    super.visitPyAssignmentExpression(node);
+    registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON38) && registerForLanguageLevel(level),
+                                   " not support assignment expressions", node);
+  }
 }

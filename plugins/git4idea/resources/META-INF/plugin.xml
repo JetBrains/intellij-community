@@ -173,8 +173,8 @@
     </group>
 
     <group id="Git.Log.Toolbar">
-      <action id="Git.Log.DeepCompare" class="git4idea.branch.DeepCompareAction" text="Non-Picked Commits"
-              description="Dims those commits which have equivalent changes in the current branch"/>
+      <action id="Git.Log.DeepCompare" class="git4idea.branch.DeepCompareAction" text="Not Cherry-Picked Commits"
+              description="Highlights commits which have not been cherry-picked to the current branch"/>
       <add-to-group group-id="Vcs.Log.PresentationSettings" relative-to-action="Vcs.Log.HighlightersActionGroup" anchor="after"/>
     </group>
 
@@ -184,6 +184,8 @@
       <add-to-group group-id="Unversioned.Files.Dialog.Popup" anchor="after" relative-to-action="$Delete"/>
     </group>
 
+    <action id="git4idea.commands.TestGitHttpLoginDialogAction" class="git4idea.commands.TestGitHttpLoginDialogAction"
+            text="Test Git login dialog" internal="true"/>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -207,7 +209,6 @@
     <vcsAnnotationGutterActionProvider implementation="git4idea.actions.GitToggleAnnotationOptionsActionProvider" />
     <vcsAnnotationGutterActionProvider implementation="git4idea.actions.GitShowCommitInLogAnnotationGutterActionProvider" />
     <statistics.projectUsagesCollector implementation="git4idea.GitStatisticsCollector"/>
-    <statistics.projectUsagesCollector implementation="git4idea.GitProjectMigrationStatisticsCollector"/>
     <vcsRepositoryInitializer implementation="git4idea.repo.GitRepositoryInitializer"/>
     <openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider
         implementation="git4idea.diff.GitSubmoduleDiffRequestProvider"/>
@@ -235,6 +236,7 @@
     <projectService serviceImplementation="git4idea.GitUserRegistry" />
     <projectService serviceImplementation="git4idea.branch.DeepComparatorHolder"/>
     <projectService serviceImplementation="git4idea.config.GitExecutableProblemsNotifier"/>
+    <projectService serviceImplementation="git4idea.update.GitUpdateProjectInfoLogProperties"/>
     <projectService serviceInterface="git4idea.fetch.GitFetchSupport" serviceImplementation="git4idea.fetch.GitFetchSupportImpl" />
 
     <applicationService serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
@@ -253,7 +255,7 @@
     <applicationService serviceImplementation="git4idea.DialogManager" />
     <applicationService serviceImplementation="git4idea.log.GitExternalLogTabsProperties"/>
 
-    <fileTypeFactory implementation="git4idea.vfs.GitFileTypeFactory"/>
+    <fileType name="PLAIN_TEXT" fileNames=".gitmodules"/>
     <vcs.taskHandler implementation="git4idea.GitTaskHandler"/>
 
     <logHighlighterFactory implementation="git4idea.branch.DeepComparator$Factory"/>
@@ -275,13 +277,14 @@
      <!--END Git ignore lang-->
 
     <postStartupActivity implementation="git4idea.conflicts.GitConflictsToolWindowManager$Starter"/>
+
+    <registryKey key="git.update.incoming.info.time" defaultValue="20"
+                 description="Time period (in minutes) between incoming commits checks." restartRequired="true"/>
   </extensions>
 
   <extensionPoints>
     <extensionPoint qualifiedName="Git4Idea.GitHttpAuthDataProvider" interface="git4idea.remote.GitHttpAuthDataProvider"/>
     <extensionPoint qualifiedName="Git4Idea.gitRepositoryHostingService" interface="git4idea.remote.GitRepositoryHostingService"/>
-    <extensionPoint qualifiedName="com.intellij.vcs.git.pushCustomizationFactory"
-                    interface="git4idea.push.GitPushProcessCustomizationFactory" />
     <extensionPoint qualifiedName="Git4Idea.GitCheckinExplicitMovementProvider" interface="git4idea.checkin.GitCheckinExplicitMovementProvider"/>
   </extensionPoints>
 </idea-plugin>

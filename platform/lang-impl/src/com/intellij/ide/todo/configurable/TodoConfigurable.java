@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.search.TodoAttributesUtil;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.ui.*;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
@@ -33,7 +34,7 @@ import java.util.List;
  * @author Vladimir Kondratyev
  */
 public class TodoConfigurable implements SearchableConfigurable, Configurable.NoScroll {
-  private static final int HEADER_GAP = JBUI.scale(20);
+  private static final int HEADER_GAP = JBUIScale.scale(20);
   /*
    * UI resources
    */
@@ -164,7 +165,7 @@ public class TodoConfigurable implements SearchableConfigurable, Configurable.No
     patternColumn.setPreferredWidth(patternColumn.getMaxWidth());
 
     JPanel patternsPanel = new JPanel(new BorderLayout());
-    patternsPanel.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("label.todo.patterns"), false));
+    patternsPanel.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("label.todo.patterns"), false, JBUI.insetsTop(8)).setShowLine(false));
     patternsPanel.add(ToolbarDecorator.createDecorator(myPatternsTable)
                         .setAddAction(new AnActionButtonRunnable() {
                           @Override
@@ -233,7 +234,8 @@ public class TodoConfigurable implements SearchableConfigurable, Configurable.No
     patternsColumn.setPreferredWidth(patternsColumn.getMaxWidth());
 
     JPanel filtersPanel = new JPanel(new BorderLayout());
-    filtersPanel.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("label.todo.filters"), false));
+    filtersPanel.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("label.todo.filters"), false, JBUI.insetsTop(13))
+                             .setShowLine(false));
     filtersPanel.add(ToolbarDecorator.createDecorator(myFiltersTable)
                         .setAddAction(new AnActionButtonRunnable() {
                           @Override

@@ -70,13 +70,13 @@ class ShelvedWrapper {
   }
 
   Change getChange(@NotNull Project project) {
-    return myShelvedChange != null ? myShelvedChange.getChange(project) : assertNotNull(myBinaryFile).createChange(project);
+    return myShelvedChange != null ? myShelvedChange.getChange() : assertNotNull(myBinaryFile).createChange(project);
   }
 
   @Nullable
   public VirtualFile getBeforeVFUnderProject(@NotNull final Project project) {
-    if (getBeforePath() == null || project.getBaseDir() == null) return null;
-    final File baseDir = new File(project.getBaseDir().getPath());
+    if (getBeforePath() == null || project.getBasePath() == null) return null;
+    final File baseDir = new File(project.getBasePath());
     final File file = new File(baseDir, getBeforePath());
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
   }

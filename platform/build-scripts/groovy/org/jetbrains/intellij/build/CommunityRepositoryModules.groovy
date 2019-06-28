@@ -53,40 +53,24 @@ class CommunityRepositoryModules {
     "intellij.platform.analysis.impl",
     "intellij.platform.builtInServer.impl",
     "intellij.platform.core.impl",
-    "intellij.platform.util.ex",
-    "intellij.platform.credentialStore",
     "intellij.platform.diff.impl",
-    "intellij.platform.vcs.dvcs.impl",
     "intellij.platform.editor.ex",
-    "intellij.platform.images",
     "intellij.platform.indexing.impl",
-    "intellij.json",
     "intellij.platform.lang.impl",
     "intellij.platform.lvcs.impl",
     "intellij.platform.ide.impl",
-    "intellij.platform.objectSerializer",
-    "intellij.platform.objectSerializer.annotations",
     "intellij.platform.projectModel.impl",
+    "intellij.platform.externalSystem.impl",
     "intellij.platform.scriptDebugger.protocolReaderRuntime",
     "intellij.regexp",
-    "intellij.relaxng",
     "intellij.platform.remoteServers.impl",
     "intellij.platform.scriptDebugger.backend",
     "intellij.platform.scriptDebugger.ui",
     "intellij.platform.smRunner",
-    "intellij.spellchecker",
     "intellij.platform.structureView.impl",
     "intellij.platform.tasks.impl",
     "intellij.platform.testRunner",
-    "intellij.platform.vcs.impl",
-    "intellij.platform.vcs.log.graph.impl",
-    "intellij.platform.vcs.log.impl",
-    "intellij.platform.debugger.impl",
-    "intellij.xml.analysis.impl",
-    "intellij.xml.psi.impl",
-    "intellij.xml.structureView.impl",
-    "intellij.xml.impl",
-    "intellij.platform.configurationStore.impl",
+    "intellij.platform.debugger.impl"
   ]
 
   /**
@@ -187,6 +171,7 @@ class CommunityRepositoryModules {
       withProjectLibrary("Kryo")
       withProjectLibrary("Gradle")
     },
+    plugin("intellij.gradle.java.maven"),
     plugin("intellij.platform.testGuiFramework") {
       //the plugin is for internal use for now so it shouldn't be published
       defaultPublishingSpec = PluginPublishingSpec.DO_NOT_UPLOAD_AUTOMATICALLY
@@ -244,6 +229,10 @@ class CommunityRepositoryModules {
       withResource("resources/jediterm-bash.in", "")
       withResource("resources/fish/config.fish", "fish")
     },
+    plugin("intellij.textmate") {
+      withResource("lib/bundles", "lib/bundles")
+      withResource("lib/themes", "lib/themes")
+    },
     PythonCommunityPluginModules.pythonCommunityPluginLayout(),
     // required for android plugin
     plugin("intellij.android.smali") {
@@ -274,7 +263,6 @@ class CommunityRepositoryModules {
       withModule("intellij.android.artwork")
       withModule("intellij.android.observable", "android.jar")
       withModule("intellij.android.observable.ui", "android.jar")
-      withModule("android.sdktools.flags", "android.jar")
       withModule("intellij.android.designer", "android.jar")
       withModule("intellij.android.sdkUpdates", "android.jar")
       withModule("intellij.android.wizard", "android.jar")
@@ -293,12 +281,6 @@ class CommunityRepositoryModules {
       withModule("intellij.android.adt.ui", "adt-ui.jar")
       withModule("intellij.android.adt.ui.model", "adt-ui.jar")
       withModule("intellij.android.layoutlib", "layoutlib-loader.jar")
-
-      withModule("android.sdktools.dvlib", "sdk-tools.jar")
-      withModule("android.sdktools.deployer", "sdk-tools.jar")
-      withModule("android.sdktools.perflib", "sdk-tools.jar")
-      withModule("android.sdktools.layoutinspector", "sdk-tools.jar")
-      withModule("android.sdktools.usb-devices", "sdk-tools.jar")
 
       withModule("intellij.android.jps", "jps/android-jps-plugin.jar", null)
 
@@ -338,6 +320,7 @@ class CommunityRepositoryModules {
       withProjectLibrary("com.android.tools.lint:lint-api")
       withProjectLibrary("com.android.tools.lint:lint-checks")
       withProjectLibrary("com.android.tools:sdk-common")
+      withProjectLibrary("com.android.tools:dvlib")
       withProjectLibrary("com.android.tools:sdklib")
       withProjectLibrary("com.android.tools:common")
       withProjectLibrary("com.android.tools:repository")
@@ -347,6 +330,9 @@ class CommunityRepositoryModules {
       withProjectLibrary("com.android.tools.build:builder-model")
       withProjectLibrary("com.android.tools.build:builder-test-api")
       withProjectLibrary("com.android.tools.pixelprobe:pixelprobe")
+
+      withProjectLibrary("org.jetbrains.intellij.deps.android.tools:perflib")
+      withProjectLibrary("org.jetbrains.intellij.deps.android.tools:layoutInspector")
 
       additionalModulesToJars.entrySet().each {
         withModule(it.key, it.value)

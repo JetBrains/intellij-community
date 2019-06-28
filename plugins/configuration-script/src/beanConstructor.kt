@@ -5,9 +5,9 @@ import com.intellij.openapi.components.ScalarProperty
 import com.intellij.openapi.components.StoredProperty
 import com.intellij.serialization.stateProperties.CollectionStoredProperty
 import com.intellij.serialization.stateProperties.MapStoredProperty
-import org.yaml.snakeyaml.nodes.MappingNode
-import org.yaml.snakeyaml.nodes.ScalarNode
-import org.yaml.snakeyaml.nodes.SequenceNode
+import org.snakeyaml.engine.v1.nodes.MappingNode
+import org.snakeyaml.engine.v1.nodes.ScalarNode
+import org.snakeyaml.engine.v1.nodes.SequenceNode
 
 internal fun <T : BaseState> readIntoObject(instance: T, node: MappingNode, affectedPropertyConsumer: ((StoredProperty<Any>) -> Unit)? = null): T {
   val properties = instance.__getProperties()

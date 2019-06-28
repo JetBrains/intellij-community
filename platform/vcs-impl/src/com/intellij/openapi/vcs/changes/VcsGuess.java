@@ -37,7 +37,7 @@ public class VcsGuess {
 
   @Nullable
   public AbstractVcs getVcsForDirty(@NotNull VirtualFile file) {
-    if (file.isInLocalFileSystem() && isFileInIndex(null, file)) {
+    if (file.isInLocalFileSystem() && isFileInIndex(file)) {
       return myVcsManager.getVcsFor(file);
     }
     return null;
@@ -49,26 +49,16 @@ public class VcsGuess {
       return null;
     }
     VirtualFile validParent = ChangesUtil.findValidParentAccurately(filePath);
-    if (validParent != null && isFileInIndex(filePath, validParent)) {
+    if (validParent != null && isFileInIndex(validParent)) {
       return myVcsManager.getVcsFor(validParent);
     }
     return null;
   }
 
-  private boolean isFileInIndex(@Nullable final FilePath filePath, @NotNull final VirtualFile validParent) {
+  private boolean isFileInIndex(@NotNull VirtualFile validParent) {
     return ReadAction.compute(() -> {
       if (myProject.isDisposed()) return false;
-      boolean inContent = myVcsManager.isFileInContent(validParent);
-      if (inContent) return true;
-      if (filePath != null) {
-        return isFileInBaseDir(filePath, myProject.getBaseDir()) && !myVcsManager.isIgnored(validParent);
-      }
-      return false;
+      return myVcsManager.isFileInContent(validParent);
     });
-  }
-
-  private static boolean isFileInBaseDir(@NotNull  FilePath filePath, @Nullable VirtualFile baseDir) {
-    VirtualFile parent = filePath.getVirtualFileParent();
-    return !filePath.isDirectory() && parent != null && parent.equals(baseDir);
   }
 }

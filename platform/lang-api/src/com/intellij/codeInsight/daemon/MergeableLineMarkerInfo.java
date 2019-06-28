@@ -92,6 +92,9 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
     return updatePass;
   }
 
+  /**
+   * @deprecated obsolete API
+   */
   @Deprecated
   public boolean configurePopupAndRenderer(@NotNull PopupChooserBuilder builder,
                                            @NotNull JBList list,

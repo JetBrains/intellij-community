@@ -94,7 +94,11 @@ public class AnimatedIcon implements Icon {
       AllIcons.Ide.Macro.Recording_4);
   }
 
+  /**
+   * @deprecated icons are not applicable for our user interface and will be removed
+   */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public static class Grey extends AnimatedIcon {
     public Grey() {
       super(DELAY, ICONS.toArray(new Icon[0]));
@@ -277,7 +281,7 @@ public class AnimatedIcon implements Icon {
   @Override
   public final void paintIcon(Component c, Graphics g, int x, int y) {
     Icon icon = getUpdatedIcon();
-    CellRendererPane pane = UIUtil.getParentOfType(CellRendererPane.class, c);
+    CellRendererPane pane = ComponentUtil.getParentOfType((Class<? extends CellRendererPane>)CellRendererPane.class, c);
     requestRefresh(pane == null ? c : getRendererOwner(pane.getParent()));
     icon.paintIcon(c, g, x, y);
   }

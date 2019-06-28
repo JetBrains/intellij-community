@@ -17,10 +17,7 @@ import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class SnapshotVisiblePackBuilder {
   private static final int VISIBLE_RANGE = 1000;
@@ -37,9 +34,9 @@ public class SnapshotVisiblePackBuilder {
                    visiblePack.getAdditionalData());
     }
     else {
-      VisibleGraph<Integer> newGraph = EmptyVisibleGraph.getInstance();
-      DataPackBase newPack = new DataPackBase(visiblePack.getDataPack().getLogProviders(), createEmptyRefsModel(), false);
-      return new VisiblePack(newPack, newGraph, true, visiblePack.getFilters());
+      DataPackBase newPack = new DataPackBase(visiblePack.getDataPack().getLogProviders(),
+                                              RefsModel.createEmptyInstance(myStorage), false);
+      return new VisiblePack(newPack, EmptyVisibleGraph.getInstance(), true, visiblePack.getFilters());
     }
   }
 
@@ -65,11 +62,6 @@ public class SnapshotVisiblePackBuilder {
       new VisibleGraphImpl<>(new CollapsedController(new BaseController(info), info, null), info, colorManager);
 
     return new VisiblePack(newPack, newGraph, true, filters, data);
-  }
-
-  @NotNull
-  private RefsModel createEmptyRefsModel() {
-    return new RefsModel(new HashMap<>(), new HashSet<>(), myStorage, new HashMap<>());
   }
 
   private RefsModel createRefsModel(@NotNull RefsModel refsModel,

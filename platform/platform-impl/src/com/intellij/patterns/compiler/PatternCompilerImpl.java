@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.patterns.compiler;
 
@@ -25,11 +11,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.ElementPatternCondition;
 import com.intellij.patterns.InitialPatternCondition;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.ProcessingContext;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashMap;
@@ -48,7 +32,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
   private static final Logger LOG = Logger.getInstance(PatternCompilerImpl.class.getName());
 
   private final Set<Method> myStaticMethods;
-  private final StringInterner myStringInterner = new StringInterner();
+  private final Interner<String> myStringInterner = new StringInterner();
 
   public PatternCompilerImpl(final List<Class> patternClasses) {
     myStaticMethods = getStaticMethods(patternClasses);
@@ -101,7 +85,8 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
       for (int i = 0, argsLength = args.length; i < argsLength; i++) {
         args[i] = args[i] instanceof String ? myStringInterner.intern((String)args[i]) : args[i];
       }
-      return new Node((Node)frame.target, myStringInterner.intern(frame.methodName), args.length == 0 ? ArrayUtil.EMPTY_OBJECT_ARRAY : args);
+      return new Node((Node)frame.target, myStringInterner.intern(frame.methodName), args.length == 0 ? ArrayUtilRt.EMPTY_OBJECT_ARRAY
+                                                                                                      : args);
     });
     if (node == null) node = new Node(ERROR_NODE, text, null);
     return new LazyPresentablePattern<>(node, myStaticMethods);
@@ -640,7 +625,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
       }
       sb.append(node.method).append('(');
       boolean first = true;
-      for (Object arg : (node.args == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : node.args)) {
+      for (Object arg : (node.args == null ? ArrayUtilRt.EMPTY_OBJECT_ARRAY : node.args)) {
         if (first) first = false;
         else sb.append(',').append(' ');
         if (arg instanceof Node) {

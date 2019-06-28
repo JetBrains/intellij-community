@@ -2,14 +2,14 @@
 package com.siyeh.ig.assignment;
 
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceAssignmentWithOperatorAssignmentInspectionTest extends LightCodeInsightFixtureTestCase {
+public class ReplaceAssignmentWithOperatorAssignmentInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    return LightInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH +
+    return LightJavaInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH +
            "com/siyeh/igtest/assignment/replace_assignment_with_operator_assignment";
   }
 

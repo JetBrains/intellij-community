@@ -28,7 +28,7 @@ import com.intellij.serialization.SerializationException;
 import com.intellij.tasks.*;
 import com.intellij.tasks.context.WorkingContextManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -60,7 +60,7 @@ import java.util.concurrent.TimeoutException;
  * @author Dmitry Avdeev
  */
 @State(name = "TaskManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public final class TaskManagerImpl extends TaskManager implements PersistentStateComponent<TaskManagerImpl.Config>, ChangeListDecorator, Disposable, BaseComponent {
+public final class TaskManagerImpl extends TaskManager implements PersistentStateComponent<TaskManagerImpl.Config>, ChangeListDecorator, Disposable {
   private static final Logger LOG = Logger.getInstance(TaskManagerImpl.class);
 
   private static final DecimalFormat LOCAL_TASK_ID_FORMAT = new DecimalFormat("LOCAL-00000");
@@ -408,7 +408,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
       ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
       for (ShelvedChangeList list : manager.getShelvedChangeLists()) {
         if (name.equals(list.DESCRIPTION)) {
-          manager.unshelveChangeList(list, list.getChanges(myProject), list.getBinaryFiles(), changeListManager.getDefaultChangeList(), true);
+          manager.unshelveChangeList(list, null, list.getBinaryFiles(), changeListManager.getDefaultChangeList(), true);
           return;
         }
       }
@@ -707,7 +707,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
   }
 
   @Override
-  public void initComponent() {
+  public void initializeComponent() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       myCacheRefreshTimer = UIUtil.createNamedTimer("TaskManager refresh", myConfig.updateInterval * 60 * 1000, new ActionListener() {
         @Override
@@ -977,7 +977,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     String name = constructDefaultBranchName(task);
     if (task.isIssue()) return name.replace(' ', '-');
     List<String> words = StringUtil.getWordsIn(name);
-    String[] strings = ArrayUtil.toStringArray(words);
+    String[] strings = ArrayUtilRt.toStringArray(words);
     return StringUtil.join(strings, 0, Math.min(2, strings.length), "-");
   }
 

@@ -25,6 +25,12 @@ class EditorConfigCodeStyleStatusBarUIContributor implements CodeStyleStatusBarU
 
   @Nullable
   @Override
+  public String getActionGroupTitle() {
+    return EditorConfigBundle.message("action.group.title");
+  }
+
+  @Nullable
+  @Override
   public String getTooltip() {
     return EditorConfigBundle.message("config.code.style.overridden");
   }
@@ -32,12 +38,18 @@ class EditorConfigCodeStyleStatusBarUIContributor implements CodeStyleStatusBarU
   @Nullable
   @Override
   public AnAction createDisableAction(@NotNull Project project) {
-    return EditorConfigActionUtil.createDisableAction(project);
+    return EditorConfigActionUtil.createDisableAction(project, EditorConfigBundle.message("action.disable"));
   }
 
   @NotNull
   @Override
   public String getStatusText(@NotNull PsiFile psiFile) {
     return EditorConfigBundle.message("config.title");
+  }
+
+  @Nullable
+  @Override
+  public AnAction createShowAllAction(@NotNull Project project) {
+    return EditorConfigActionUtil.createShowEditorConfigFilesAction();
   }
 }

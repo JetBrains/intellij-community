@@ -16,10 +16,10 @@
 package com.siyeh.ig.javadoc;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class PackageDotHtmlMayBePackageInfoInspectionTest extends LightInspectionTestCase {
+public class PackageDotHtmlMayBePackageInfoInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
     myFixture.configureByFile("package.html");

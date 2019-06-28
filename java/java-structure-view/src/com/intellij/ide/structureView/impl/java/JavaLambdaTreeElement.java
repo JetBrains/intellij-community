@@ -87,6 +87,6 @@ public class JavaLambdaTreeElement extends JavaClassTreeElementBase<PsiLambdaExp
 
   @Override
   public Icon getIcon(boolean open) {
-    return AllIcons.Nodes.Function;
+    return AllIcons.Nodes.Lambda;
   }
 }

@@ -3,6 +3,12 @@ package com.intellij.internal.statistic.utils
 
 import com.intellij.ide.plugins.*
 import com.intellij.internal.statistic.beans.UsageDescriptor
+import com.intellij.internal.statistic.beans.newMetric
+import com.intellij.internal.statistic.beans.newCounterMetric
+import com.intellij.internal.statistic.beans.newBooleanMetric
+import com.intellij.internal.statistic.beans.addBoolIfDiffers
+import com.intellij.internal.statistic.beans.addCounterIfDiffers
+import com.intellij.internal.statistic.beans.addIfDiffers
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.eventLog.newData
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext
@@ -16,6 +22,7 @@ import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Getter
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.TimeoutCachedValue
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.ObjectIntHashMap
 import gnu.trove.THashSet
 import java.io.IOException
@@ -30,35 +37,47 @@ fun createData(project: Project?, context: FUSUsageContext?): Map<String, Any> {
   return newData(project, context)
 }
 
+fun addPluginInfoTo(info: PluginInfo, data : MutableMap<String, Any>) {
+  data["plugin_type"] = info.type.name
+  if (info.type.isSafeToReport() && info.id != null && StringUtil.isNotEmpty(info.id)) {
+    data["plugin"] = info.id
+  }
+}
+
 fun isDevelopedByJetBrains(pluginId: PluginId?): Boolean {
   val plugin = PluginManager.getPlugin(pluginId)
   return plugin == null || PluginManagerMain.isDevelopedByJetBrains(plugin.vendor)
 }
 
 /**
- * Constructs a proper UsageDescriptor for a boolean value,
- * by adding "enabled" or "disabled" suffix to the given key, depending on the value.
+ * @deprecated will be deleted in 2019.3
+ *
+ * Report setting name as event id and enabled/disabled state in event data with MetricEvent class.
+ * @see newBooleanMetric(java.lang.String, boolean)*
  */
+@Deprecated("Report enabled or disabled setting as MetricEvent")
 fun getBooleanUsage(key: String, value: Boolean): UsageDescriptor {
   return UsageDescriptor(key + if (value) ".enabled" else ".disabled", 1)
 }
 
+/**
+ * @deprecated will be deleted in 2019.3
+ *
+ * Report setting name as event id and setting value in event data with MetricEvent class.
+ * @see newMetric(java.lang.String, Enum)*
+ */
+@Deprecated("Report enum settings as MetricEvent")
 fun getEnumUsage(key: String, value: Enum<*>?): UsageDescriptor {
   return UsageDescriptor(key + "." + value?.name?.toLowerCase(Locale.ENGLISH), 1)
 }
 
 /**
+ * @deprecated will be deleted in 2019.3
+ * This method should be used only for a transition period for existing counter metrics.
+ * New metrics should report absolute counter value by
+ * @see newCounterMetric(java.lang.String, int)
+ *
  * Constructs a proper UsageDescriptor for a counting value.
- * If one needs to know a number of some items in the project, there is no direct way to report usages per-project.
- * Therefore this workaround: create several keys representing interesting ranges, and report that key which correspond to the range
- * which the given value belongs to.
- *
- * For example, to report a number of commits in Git repository, you can call this method like that:
- * ```
- * val usageDescriptor = getCountingUsage("git.commit.count", listOf(0, 1, 100, 10000, 100000), realCommitCount)
- * ```
- * and if there are e.g. 50000 commits in the repository, one usage of the following key will be reported: `git.commit.count.10K+`.
- *
  * NB:
  * (1) the list of steps must be sorted ascendingly; If it is not, the result is undefined.
  * (2) the value should lay somewhere inside steps ranges. If it is below the first step, the following usage will be reported:
@@ -69,8 +88,12 @@ fun getEnumUsage(key: String, value: Enum<*>?): UsageDescriptor {
  * @value Value to be checked among the given ranges.
  */
 fun getCountingUsage(key: String, value: Int, steps: List<Int>) : UsageDescriptor {
-  if (steps.isEmpty()) return UsageDescriptor("$key.$value", 1)
-  if (value < steps[0]) return UsageDescriptor("$key.<${steps[0]}", 1)
+  return UsageDescriptor("$key." + getCountingStepName(value, steps), 1)
+}
+
+fun getCountingStepName(value: Int, steps: List<Int>): String {
+  if (steps.isEmpty()) return value.toString()
+  if (value < steps[0]) return "<" + steps[0]
 
   var stepIndex = 0
   while (stepIndex < steps.size - 1) {
@@ -80,8 +103,7 @@ fun getCountingUsage(key: String, value: Int, steps: List<Int>) : UsageDescripto
 
   val step = steps[stepIndex]
   val addPlus = stepIndex == steps.size - 1 || steps[stepIndex + 1] != step + 1
-  val stepName = humanize(step) + if (addPlus) "+" else ""
-  return UsageDescriptor("$key.$stepName", 1)
+  return humanize(step) + if (addPlus) "+" else ""
 }
 
 /**
@@ -120,11 +142,29 @@ private fun humanize(number: Int): String {
   return ms + ks + rs
 }
 
+/**
+ * @deprecated will be deleted in 2019.3
+ *
+ * Report setting name as event id and setting value in event data with MetricEvent class.
+ *
+ * @see addIfDiffers
+ * @see addBoolIfDiffers
+ * @see addCounterIfDiffers
+ */
 fun <T> addIfDiffers(set: MutableSet<in UsageDescriptor>, settingsBean: T, defaultSettingsBean: T,
                      valueFunction: (T) -> Any, featureIdPrefix: String) {
   addIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction, { "$featureIdPrefix.$it" })
 }
 
+/**
+ * @deprecated will be deleted in 2019.3
+ *
+ * Report setting name as event id and setting value in event data with MetricEvent class.
+ *
+ * @see addIfDiffers
+ * @see addBoolIfDiffers
+ * @see addCounterIfDiffers
+ */
 fun <T, V> addIfDiffers(set: MutableSet<in UsageDescriptor>, settingsBean: T, defaultSettingsBean: T,
                         valueFunction: (T) -> V,
                         featureIdFunction: (V) -> String) {

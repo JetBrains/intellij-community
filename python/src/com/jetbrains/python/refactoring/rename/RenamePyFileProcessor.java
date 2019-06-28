@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.rename;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
@@ -61,7 +61,7 @@ public class RenamePyFileProcessor extends RenamePsiFileProcessor {
                              @NotNull final String newName,
                              @NotNull Map<? extends PsiElement, String> allRenames,
                              @NotNull List<UsageInfo> result) {
-    final String newFileName = FileUtil.getNameWithoutExtension(newName);
+    final String newFileName = FileUtilRt.getNameWithoutExtension(newName);
     if (!PyNames.isIdentifier(newFileName)) {
       final List<UsageInfo> usages = new ArrayList<>(result);
       for (UsageInfo usageInfo : usages) {

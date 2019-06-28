@@ -61,7 +61,7 @@ public class PyImportOptimizer implements ImportOptimizer {
   }
 
   @Override
-  public boolean supports(PsiFile file) {
+  public boolean supports(@NotNull PsiFile file) {
     return true;
   }
 

@@ -362,10 +362,6 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     return object instanceof Node && child instanceof Node ? ((Node)object).getIndex((TreeNode)child) : -1;
   }
 
-  @Override
-  public void valueForPathChanged(TreePath path, Object value) {
-  }
-
   private boolean isValid(@NotNull Node node) {
     return isValid(structure, node.getElement());
   }
@@ -440,7 +436,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     return list;
   }
 
-  private static final class Node extends DefaultMutableTreeNode {
+  private static final class Node extends DefaultMutableTreeNode implements LeafState.Supplier {
     private final Reference<List<Node>> children = new Reference<>();
     private final LeafState leafState;
     private final int hashCode;
@@ -582,6 +578,12 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     @Override
     public int getIndex(@NotNull TreeNode child) {
       return child instanceof Node && isNodeChild(child) ? getChildren().indexOf(child) : -1;
+    }
+
+    @NotNull
+    @Override
+    public LeafState getLeafState() {
+      return leafState;
     }
   }
 

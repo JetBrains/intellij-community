@@ -16,8 +16,10 @@ private val EP_NAME = ExtensionPointName.create<StatisticsEventLoggerProvider>("
 interface StatisticsEventLogger {
   fun log(group: EventLogGroup, eventId: String, isState: Boolean)
   fun log(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean)
+  fun getActiveLogFile(): File?
   fun getLogFiles(): List<File>
   fun cleanup()
+  fun rollOver()
 }
 
 abstract class StatisticsEventLoggerProvider(val recorderId: String,
@@ -28,6 +30,10 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
 
   abstract fun isRecordEnabled() : Boolean
   abstract fun isSendEnabled() : Boolean
+
+  fun getActiveLogFile(): File? {
+    return logger.getActiveLogFile()
+  }
 
   fun getLogFiles(): List<File> {
     return logger.getLogFiles()
@@ -60,8 +66,10 @@ class EmptyStatisticsEventLoggerProvider(recorderId: String): StatisticsEventLog
 class EmptyStatisticsEventLogger : StatisticsEventLogger {
   override fun log(group: EventLogGroup, eventId: String, isState: Boolean) = Unit
   override fun log(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean) = Unit
+  override fun getActiveLogFile(): File? = null
   override fun getLogFiles(): List<File> = emptyList()
   override fun cleanup() = Unit
+  override fun rollOver() = Unit
 }
 
 fun getEventLogProviders(): List<StatisticsEventLoggerProvider> {

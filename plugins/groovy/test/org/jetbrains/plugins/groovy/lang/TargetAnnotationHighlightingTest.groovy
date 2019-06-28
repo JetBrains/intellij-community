@@ -16,11 +16,11 @@
 package org.jetbrains.plugins.groovy.lang
 
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 /**
  * @author Max Medvedev
  */
-class TargetAnnotationHighlightingTest extends LightCodeInsightFixtureTestCase {
+class TargetAnnotationHighlightingTest extends LightJavaCodeInsightFixtureTestCase {
   final LightProjectDescriptor projectDescriptor = LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR
 
   private void addElementType() {

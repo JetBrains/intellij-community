@@ -66,7 +66,7 @@ public abstract class AbstractImportTestsAction extends AnAction {
   }
 
   @Nullable
-  public abstract VirtualFile getFile(@NotNull Project project);
+  protected abstract VirtualFile getFile(@NotNull Project project);
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

@@ -21,6 +21,7 @@ import com.intellij.ui.ClickListener;
 import com.intellij.ui.JBColor;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +63,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
 
     updateIconAndNotify();
 
-    setOpaque(false);
+    setOpaque(true);
   }
 
   @Override
@@ -90,6 +91,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
   }
 
   /** @deprecated use {@link #openErrorsDialog(LogMessage)} (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   @SuppressWarnings("SpellCheckingInspection")
   public void openFatals(@Nullable LogMessage message) {

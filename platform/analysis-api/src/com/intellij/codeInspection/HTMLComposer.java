@@ -51,7 +51,7 @@ public abstract class HTMLComposer {
   public abstract void startListItem(@NonNls StringBuffer buf);
 
   /**
-   * Use css for indentations
+   * @deprecated Use CSS for indentations
    */
   @Deprecated
   public static void appendAfterHeaderIndention(@NonNls StringBuffer buf) {

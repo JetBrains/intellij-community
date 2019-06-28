@@ -2,9 +2,11 @@
     resolution/conversion to XML.
 """
 import pickle
+from _pydevd_bundle.pydevd_constants import get_frame, get_current_thread_id, xrange
+
 
 from _pydev_imps._pydev_saved_modules import thread
-from _pydevd_bundle.pydevd_constants import get_frame, get_thread_id, xrange
+from _pydevd_bundle.pydevd_constants import get_frame, get_current_thread_id, xrange
 from _pydevd_bundle.pydevd_custom_frames import get_custom_frame
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate, get_type, var_to_xml
 
@@ -49,7 +51,7 @@ def _iter_frames(initialFrame):
 
 def dump_frames(thread_id):
     sys.stdout.write('dumping frames\n')
-    if thread_id != get_thread_id(threading.currentThread()):
+    if thread_id != get_current_thread_id(threading.currentThread()):
         raise VariableError("find_frame: must execute on same thread")
 
     curFrame = get_frame()
@@ -90,7 +92,7 @@ def get_additional_frames_by_id(thread_id):
 def find_frame(thread_id, frame_id):
     """ returns a frame on the thread that has a given frame_id """
     try:
-        curr_thread_id = get_thread_id(threading.currentThread())
+        curr_thread_id = get_current_thread_id(threading.currentThread())
         if thread_id != curr_thread_id:
             try:
                 return get_custom_frame(thread_id, frame_id)  # I.e.: thread_id could be a stackless frame id + thread_id.
@@ -142,13 +144,18 @@ def find_frame(thread_id, frame_id):
                 else:
                     msgFrames += '  -  '
 
-            errMsg = '''find_frame: frame not found.
-    Looking for thread_id:%s, frame_id:%s
-    Current     thread_id:%s, available frames:
-    %s\n
-    ''' % (thread_id, lookingFor, curr_thread_id, msgFrames)
-
-            sys.stderr.write(errMsg)
+# Note: commented this error message out (it may commonly happen 
+# if a message asking for a frame is issued while a thread is paused
+# but the thread starts running before the message is actually 
+# handled).
+# Leaving code to uncomment during tests.  
+#             err_msg = '''find_frame: frame not found.
+#     Looking for thread_id:%s, frame_id:%s
+#     Current     thread_id:%s, available frames:
+#     %s\n
+#     ''' % (thread_id, lookingFor, curr_thread_id, msgFrames)
+# 
+#             sys.stderr.write(err_msg)
             return None
 
         return frameFound
@@ -173,7 +180,7 @@ def getVariable(thread_id, frame_id, scope, attrs):
            not the frame (as we don't care about the frame in this case).
     """
     if scope == 'BY_ID':
-        if thread_id != get_thread_id(threading.currentThread()):
+        if thread_id != get_current_thread_id(threading.currentThread()):
             raise VariableError("getVariable: must execute on same thread")
 
         try:
@@ -263,7 +270,7 @@ def resolve_compound_variable_fields(thread_id, frame_id, scope, attrs):
     :return: a dictionary of variables's fields
 
     :note: PyCharm supports progressive loading of large collections and uses the `attrs`
-           parameter to pass the offset, e.g. 300\t\obj\tattr1\tattr2 should return
+           parameter to pass the offset, e.g. 300\t\\obj\tattr1\tattr2 should return
            the value of attr2 starting from the 300th element. This hack makes it possible
            to add the support of progressive loading without extending of the protocol.
     """
@@ -440,28 +447,28 @@ def change_attr_expression(thread_id, frame_id, attr, expression, dbg, value=SEN
             if result:
                 return result
 
+        if value is SENTINEL_VALUE:
+            # It is possible to have variables with names like '.0', ',,,foo', etc in scope by setting them with
+            # `sys._getframe().f_locals`. In particular, the '.0' variable name is used to denote the list iterator when we stop in
+            # list comprehension expressions. This variable evaluates to 0. by `eval`, which is not what we want and this is the main
+            # reason we have to check if the expression exists in the global and local scopes before trying to evaluate it.
+            value = frame.f_locals.get(expression) or frame.f_globals.get(expression) or eval(expression, frame.f_globals, frame.f_locals)
+
         if attr[:7] == "Globals":
             attr = attr[8:]
             if attr in frame.f_globals:
-                if value is SENTINEL_VALUE:
-                    value = eval(expression, frame.f_globals, frame.f_locals)
                 frame.f_globals[attr] = value
                 return frame.f_globals[attr]
         else:
             if pydevd_save_locals.is_save_locals_available():
-                if value is SENTINEL_VALUE:
-                    value = eval(expression, frame.f_globals, frame.f_locals)
                 frame.f_locals[attr] = value
                 pydevd_save_locals.save_locals(frame)
                 return frame.f_locals[attr]
 
             # default way (only works for changing it in the topmost frame)
-            if value is SENTINEL_VALUE:
-                value = eval(expression, frame.f_globals, frame.f_locals)
             result = value
             Exec('%s=%s' % (attr, expression), frame.f_globals, frame.f_locals)
             return result
-
 
     except Exception:
         traceback.print_exc()

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.build;
 
 import com.intellij.build.events.*;
@@ -57,10 +57,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.plaf.TreeUI;
@@ -240,7 +240,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     return parentNode;
   }
 
-  private void onEventInternal(@NotNull BuildEvent event) {
+  private void onEventInternal(@NotNull Object buildId, @NotNull BuildEvent event) {
     final ExecutionNode parentNode = getOrMaybeCreateParentNode(event);
     final Object eventId = event.getId();
     ExecutionNode currentNode = nodesMap.get(eventId);
@@ -287,14 +287,14 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
               showErrorIfFirst(currentNode, messageEventNavigatable);
             }
 
-            if (parentNode != buildProgressRootNode) {
-              myConsoleViewHandler.addOutput(parentNode, event);
-              myConsoleViewHandler.addOutput(parentNode, "\n", true);
-            }
             if (parentNode != null) {
+              if (parentNode != buildProgressRootNode) {
+                myConsoleViewHandler.addOutput(parentNode, buildId, event);
+                myConsoleViewHandler.addOutput(parentNode, "\n", true);
+              }
               reportMessageKind(messageEvent, parentNode);
             }
-            myConsoleViewHandler.addOutput(currentNode, event);
+            myConsoleViewHandler.addOutput(currentNode, buildId, event);
           }
           currentNode.setAutoExpandNode(currentNode == buildProgressRootNode || parentNode == buildProgressRootNode);
         }
@@ -320,7 +320,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
           }
         }
         else if (event instanceof OutputBuildEvent && parentNode != null) {
-          myConsoleViewHandler.addOutput(parentNode, event);
+          myConsoleViewHandler.addOutput(parentNode, buildId, event);
         }
       }
     }
@@ -337,11 +337,15 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
 
     if (event instanceof FinishEvent) {
       currentNode.setEndTime(event.getEventTime());
-      currentNode.setResult(((FinishEvent)event).getResult());
+      EventResult result = ((FinishEvent)event).getResult();
+      if (result instanceof DerivedResult) {
+        result = calculateDerivedResult((DerivedResult)result, currentNode);
+      }
+      currentNode.setResult(result);
       SkippedResult skippedResult = new SkippedResultImpl();
       finishChildren(currentNode, skippedResult);
-      if (((FinishEvent)event).getResult() instanceof FailureResult) {
-        for (Failure failure : ((FailureResult)((FinishEvent)event).getResult()).getFailures()) {
+      if (result instanceof FailureResult) {
+        for (Failure failure : ((FailureResult)result).getFailures()) {
           addChildFailureNode(currentNode, failure, event.getMessage());
         }
       }
@@ -353,12 +357,23 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       String time = DateFormatUtil.formatDateTime(event.getEventTime());
       aHint = aHint == null ? "at " + time : aHint + " at " + time;
       currentNode.setHint(aHint);
-      myDeferredEvents.forEach(this::onEventInternal);
+      myDeferredEvents.forEach(buildEvent -> onEventInternal(buildId, buildEvent));
       if (myConsoleViewHandler.myExecutionNode == null) {
-        ApplicationManager.getApplication().invokeLater(() -> myConsoleViewHandler.setNode(buildProgressRootNode));
+        invokeLater(() -> myConsoleViewHandler.setNode(buildProgressRootNode));
       }
     }
     scheduleUpdate(currentNode);
+  }
+
+  private static EventResult calculateDerivedResult(DerivedResult result, ExecutionNode node) {
+    if (node.getResult() != null) {
+      return node.getResult(); // if another thread set result for child
+    }
+    if(node.isFailed()) {
+      return result.createFailureResult();
+    }
+
+    return result.createDefaultResult();
   }
 
   private void reportMessageKind(@NotNull MessageEvent messageEvent, @NotNull ExecutionNode parentNode) {
@@ -477,22 +492,24 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     showErrorIfFirst(failureNode, failure.getNavigatable());
   }
 
-  private static void finishChildren(@NotNull ExecutionNode node, @NotNull EventResult result) {
-    for (SimpleNode child : node.getChildren()) {
-      if (child instanceof ExecutionNode) {
-        ExecutionNode executionChild = (ExecutionNode)child;
-        if (!executionChild.isRunning()) {
-          continue;
-        }
-        ApplicationManager.getApplication().invokeLater(() -> {
-          // Need to check again since node could have finished on a later event.
-          if (executionChild.isRunning()) {
-            finishChildren(executionChild, result);
-            executionChild.setResult(result);
+  private void finishChildren(@NotNull ExecutionNode node, @NotNull EventResult result) {
+    invokeLater(() -> {
+      for (SimpleNode child : node.getChildren()) {
+        if (child instanceof ExecutionNode) {
+          ExecutionNode executionChild = (ExecutionNode)child;
+          if (!executionChild.isRunning()) {
+            continue;
           }
-        });
+          invokeLater(() -> {
+            // Need to check again since node could have finished on a later event.
+            if (executionChild.isRunning()) {
+              finishChildren(executionChild, result);
+              executionChild.setResult(result);
+            }
+          });
+        }
       }
-    }
+    });
   }
 
   protected void expand(Tree tree) {
@@ -588,8 +605,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   }
 
   @Override
-  public void onEvent(@NotNull BuildEvent event) {
-    myTreeModel.getInvoker().runOrInvokeLater(() -> onEventInternal(event));
+  public void onEvent(@NotNull Object buildId, @NotNull BuildEvent event) {
+    myTreeModel.getInvoker().runOrInvokeLater(() -> onEventInternal(buildId, event));
   }
 
   void scheduleUpdate(ExecutionNode executionNode) {
@@ -661,7 +678,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     return result;
   }
 
-  @TestOnly
+  @ApiStatus.Internal
   JTree getTree() {
     return myTree;
   }
@@ -704,6 +721,10 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       nodesMap.put(nodeId, node);
     }
     return node;
+  }
+
+  private void invokeLater(@NotNull Runnable task) {
+    myTreeModel.getInvoker().invokeLater(task);
   }
 
   private static class ConsoleViewHandler {
@@ -829,19 +850,19 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       return true;
     }
 
-    private void addOutput(ExecutionNode node, @NotNull String text, boolean stdOut) {
+    private void addOutput(@NotNull ExecutionNode node, @NotNull String text, boolean stdOut) {
       addOutput(node, view -> view.append(text, stdOut));
     }
 
-    private void addOutput(ExecutionNode node, BuildEvent event) {
-      addOutput(node, view -> view.onEvent(event));
+    private void addOutput(@NotNull ExecutionNode node, @NotNull Object buildId, BuildEvent event) {
+      addOutput(node, view -> view.onEvent(buildId, event));
     }
 
-    private void addOutput(ExecutionNode node, Failure failure) {
+    private void addOutput(@NotNull ExecutionNode node, Failure failure) {
       addOutput(node, view -> view.append(failure));
     }
 
-    private void addOutput(ExecutionNode node, Consumer<BuildTextConsoleView> consumer) {
+    private void addOutput(@NotNull ExecutionNode node, Consumer<BuildTextConsoleView> consumer) {
       if (!myViewSettingsProvider.isSideBySideView()) return;
       String nodeConsoleViewName = getNodeConsoleViewName(node);
       ExecutionConsole viewView = myView.getView(nodeConsoleViewName);

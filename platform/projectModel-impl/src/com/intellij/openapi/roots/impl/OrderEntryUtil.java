@@ -230,4 +230,8 @@ public class OrderEntryUtil {
     }
     return libraries;
   }
+
+  public static boolean isModuleLibraryOrderEntry(@Nullable OrderEntry orderEntry) {
+    return orderEntry instanceof ModuleLibraryOrderEntryImpl;
+  }
 }

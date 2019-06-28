@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 public abstract class LocalTerminalCustomizer {
-  public static ExtensionPointName<LocalTerminalCustomizer> EP_NAME = ExtensionPointName.create("org.jetbrains.plugins.terminal.localTerminalCustomizer");
+  public static final ExtensionPointName<LocalTerminalCustomizer> EP_NAME = ExtensionPointName.create("org.jetbrains.plugins.terminal.localTerminalCustomizer");
 
   public String[] customizeCommandAndEnvironment(Project project, String[] command, Map<String, String> envs) {
     return command;

@@ -16,12 +16,12 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class TrivialIfInspectionTest extends LightInspectionTestCase {
+public class TrivialIfInspectionTest extends LightJavaInspectionTestCase {
 
   public void testParenthesesReturn() {
     doMemberTest("boolean b(int[] array) {" +

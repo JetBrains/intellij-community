@@ -32,6 +32,7 @@ public abstract class ActionPlaces {
   public static final String EDITOR_TAB = "EditorTab";
   public static final String EDITOR_GUTTER = "ICON_NAVIGATION";
   public static final String EDITOR_GUTTER_POPUP = "ICON_NAVIGATION_SECONDARY_BUTTON";
+  public static final String RIGHT_EDITOR_GUTTER_POPUP = "RightEditorGutterPopup";
   public static final String COMMANDER_POPUP = "CommanderPopup";
   public static final String COMMANDER_TOOLBAR = "CommanderToolbar";
   public static final String CONTEXT_TOOLBAR = "ContextToolbar";
@@ -61,6 +62,7 @@ public abstract class ActionPlaces {
   public static final String J2EE_ATTRIBUTES_VIEW_POPUP = "J2EEAttributesViewPopup";
   public static final String J2EE_VIEW_POPUP = "J2EEViewPopup";
   public static final String RUNNER_TOOLBAR = "RunnerToolbar";
+  public static final String RUNNER_LAYOUT_BUTTON_TOOLBAR = "RunnerLayoutButtonToolbar";
   public static final String DEBUGGER_TOOLBAR = "DebuggerToolbar";
   public static final String USAGE_VIEW_POPUP = "UsageViewPopup";
   public static final String USAGE_VIEW_TOOLBAR = "UsageViewToolbar";
@@ -134,6 +136,8 @@ public abstract class ActionPlaces {
   public static final String TOUCHBAR_GENERAL = "TouchBarGeneral";
 
   public static final String REFACTORING_QUICKLIST = "RefactoringQuickList";
+
+  public static final String INTENTION_MENU = "IntentionMenu";
 
   public static boolean isMainMenuOrActionSearch(String place) {
     return MAIN_MENU.equals(place) || ACTION_SEARCH.equals(place) ||

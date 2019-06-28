@@ -2,13 +2,13 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class MultipleVariablesInDeclarationInspectionTest extends LightInspectionTestCase {
+public class MultipleVariablesInDeclarationInspectionTest extends LightJavaInspectionTestCase {
 
   public void testOnlyWarnArrayDimensions() { doTest(); }
   public void testMultipleVariableDeclaration() { doTest(); }

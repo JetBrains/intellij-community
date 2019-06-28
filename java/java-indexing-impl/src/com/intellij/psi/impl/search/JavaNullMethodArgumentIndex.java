@@ -23,6 +23,8 @@ import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashMap;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +41,8 @@ public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMe
   public static final ID<MethodCallData, Void> INDEX_ID = ID.create("java.null.method.argument");
   private interface Lazy {
     TokenSet CALL_TYPES = TokenSet.create(METHOD_CALL_EXPRESSION, NEW_EXPRESSION, ANONYMOUS_CLASS);
+    TIntHashSet WHITE_SPACE_OR_EOL_SYMBOLS = new TIntHashSet(new int[]{' ', '\n', '\r', '\t', '\f'});
+    TIntHashSet STOP_SYMBOLS = new TIntHashSet(new int[]{'(', ',', ')', '/'}); // stop at slash, bracket, comma
   }
   private final boolean myOfflineMode = ApplicationManager.getApplication().isCommandLine() &&
                                         !ApplicationManager.getApplication().isUnitTestMode();
@@ -57,7 +61,7 @@ public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMe
         return Collections.emptyMap();
       }
 
-      LighterAST lighterAst = ((FileContentImpl)inputData).getLighterASTForPsiDependentIndex();
+      LighterAST lighterAst = ((PsiDependentFileContent)inputData).getLighterAST();
 
       CharSequence text = inputData.getContentAsText();
       Set<LighterASTNode> calls = findCallsWithNulls(lighterAst, text);
@@ -79,12 +83,37 @@ public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMe
     };
   }
 
+  private static boolean containsStopSymbol(int startIndex, @NotNull CharSequence text, boolean leftDirection) {
+    int i = leftDirection ? startIndex - 1 : startIndex + 1;
+    while (true) {
+      if (leftDirection) {
+        if (i < 0) return false;
+      } else {
+        if (i >= text.length()) return false;
+      }
+
+      char c = text.charAt(i);
+      if (Lazy.STOP_SYMBOLS.contains(c)) return true;
+      if (!Lazy.WHITE_SPACE_OR_EOL_SYMBOLS.contains(c) && !Character.isWhitespace(c)) {
+        return false;
+      }
+
+      if (leftDirection) i--; else i++;
+    }
+  }
+
   @NotNull
   private static Set<LighterASTNode> findCallsWithNulls(@NotNull LighterAST lighterAst,
                                                         @NotNull CharSequence text) {
     Set<LighterASTNode> calls = new HashSet<>();
-    int[] occurrences = new StringSearcher(PsiKeyword.NULL, true, true).findAllOccurrences(text);
-    LightTreeUtil.processLeavesAtOffsets(occurrences, lighterAst, (leaf, offset) -> {
+    TIntArrayList occurrences = new TIntArrayList();
+    new StringSearcher(PsiKeyword.NULL, true, true).processOccurrences(text, idx -> {
+      if (containsStopSymbol(idx, text, true) && containsStopSymbol(idx + 3, text, false)) {
+        occurrences.add(idx);
+      }
+      return true;
+    });
+    LightTreeUtil.processLeavesAtOffsets(occurrences.toNativeArray(), lighterAst, (leaf, offset) -> {
       LighterASTNode literal = leaf == null ? null : lighterAst.getParent(leaf);
       if (isNullLiteral(lighterAst, literal)) {
         LighterASTNode exprList = lighterAst.getParent(literal);
@@ -162,7 +191,7 @@ public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMe
 
   @Override
   public int getVersion() {
-    return 0;
+    return 1;
   }
 
   @NotNull
@@ -178,6 +207,11 @@ public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMe
 
   @Override
   public boolean dependsOnFileContent() {
+    return true;
+  }
+
+  @Override
+  public boolean hasSnapshotMapping() {
     return true;
   }
 

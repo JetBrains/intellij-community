@@ -3,6 +3,7 @@ package com.intellij.openapi.util;
 
 import com.intellij.util.xmlb.Constants;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -132,12 +133,14 @@ public class JDOMExternalizerUtil {
 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link #readOption(Element, String)} (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   public static Element getOption(@NotNull Element parent, @NotNull String fieldName) {
     return readOption(parent, fieldName);
   }
 
   /** @deprecated use {@link #writeCustomField(Element, String, String)} (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   public static Element addElementWithValueAttribute(@NotNull Element parent, @NotNull String childTagName, @Nullable String attrValue) {
     writeCustomField(parent, childTagName, attrValue);
@@ -145,6 +148,7 @@ public class JDOMExternalizerUtil {
   }
 
   /** @deprecated use {@link #readCustomField(Element, String)} (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   public static String getFirstChildValueAttribute(@NotNull Element parent, @NotNull String childTagName) {
     return readCustomField(parent, childTagName);

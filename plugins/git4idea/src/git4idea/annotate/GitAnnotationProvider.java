@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSetInterner;
 import com.intellij.util.containers.Interner;
 import com.intellij.vcs.AnnotationProviderEx;
 import com.intellij.vcs.log.VcsUser;
@@ -261,7 +262,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
                                              @NotNull VirtualFile file,
                                              @NotNull VirtualFile root,
                                              @NotNull String output) throws VcsException {
-    Interner<FilePath> pathInterner = new Interner<>();
+    Interner<FilePath> pathInterner = new HashSetInterner<>();
 
     try {
       List<LineInfo> lines = new ArrayList<>();

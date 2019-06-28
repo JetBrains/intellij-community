@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +24,11 @@ public abstract class DaemonCodeAnalyzer {
 
   public abstract void settingsChanged();
 
+  /**
+   * @deprecated Does nothing, unused, keeping alive for outdated plugins sake only. Please use {@code} (nothing) instead.
+   */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public abstract void updateVisibleHighlighters(@NotNull Editor editor);
 
   public abstract void setUpdateByTimerEnabled(boolean value);

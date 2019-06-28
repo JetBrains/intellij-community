@@ -27,7 +27,7 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 /**
  *  @author dsl
  */
-public class OrderEntryFactory {
+class OrderEntryFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.OrderEntryFactory");
   @NonNls public static final String ORDER_ENTRY_ELEMENT_NAME = JpsModuleRootModelSerializer.ORDER_ENTRY_TAG;
   @NonNls public static final String ORDER_ENTRY_TYPE_ATTR = JpsModuleRootModelSerializer.TYPE_ATTRIBUTE;

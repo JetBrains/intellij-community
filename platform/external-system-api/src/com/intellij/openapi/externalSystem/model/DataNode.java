@@ -4,7 +4,6 @@ package com.intellij.openapi.externalSystem.model;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.UserDataHolderEx;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,8 +20,6 @@ import java.util.function.Function;
  * enhance any project. For example, particular framework can add facet settings as one more 'project' node's child.
  * <p/>
  * Not thread-safe.
- *
- * {@link #serializeData} must be called before serialization.
  */
 public class DataNode<T> implements UserDataHolderEx {
   private static final Logger LOG = Logger.getInstance(DataNode.class);
@@ -33,13 +30,12 @@ public class DataNode<T> implements UserDataHolderEx {
   @NotNull
   private final transient UserDataHolderBase userData = new UserDataHolderBase();
 
-  private transient T data;
-
-  // Key data type class cannot be used because can specify interface class and not actual data class
-  private String dataClassName;
-  private byte[] rawData;
+  @Nullable
+  private T data;
 
   private boolean ignored;
+
+  private transient volatile boolean ready;
 
   @Nullable
   private DataNode<?> parent;
@@ -54,6 +50,10 @@ public class DataNode<T> implements UserDataHolderEx {
     this.key = key;
     this.data = data;
     this.parent = parent;
+  }
+
+  public boolean isReady() {
+    return ready;
   }
 
   // deserialization, data decoded on demand
@@ -80,9 +80,6 @@ public class DataNode<T> implements UserDataHolderEx {
 
   @NotNull
   public T getData() {
-    if (data == null) {
-      deserializeData(Arrays.asList(getClass().getClassLoader(), Thread.currentThread().getContextClassLoader()));
-    }
     return data;
   }
 
@@ -92,47 +89,6 @@ public class DataNode<T> implements UserDataHolderEx {
 
   public void setIgnored(boolean ignored) {
     this.ignored = ignored;
-  }
-
-  /**
-   * This class is a generic holder for any kind of project data. That project data might originate from different locations, e.g.
-   * core ide plugins, non-core ide plugins, third-party plugins etc. That means that when a service from a core plugin needs to
-   * unmarshall {@link DataNode} object, its content should not be unmarshalled as well because its class might be unavailable here.
-   * <p/>
-   * That's why the content is delivered as a raw byte array and this method allows to build actual java object from it using
-   * the right class loader.
-   * <p/>
-   * This method is a no-op if the content is already built.
-   *
-   * @param classLoaders  class loaders which are assumed to be able to build object of the target content class
-   */
-  public void deserializeData(@NotNull Collection<? extends ClassLoader> classLoaders) {
-    if (data != null) {
-      return;
-    }
-    if (rawData == null) {
-      throw new IllegalStateException(String.format("Data node of key '%s' does not contain raw or prepared data", key));
-    }
-    if (rawData.length == 0) {
-      return;
-    }
-
-
-    String className = dataClassName;
-    if (className == null) {
-      className = key.getDataType();
-    }
-
-    try {
-      MultiLoaderWrapper classLoader = new MultiLoaderWrapper(getClass().getClassLoader(), classLoaders);
-      //noinspection unchecked
-      data = SerializationKt.readDataNodeData(((Class<T>)classLoader.findClass(className)), rawData, classLoader);
-      clearRawData();
-    }
-    catch (Exception e) {
-      throw new IllegalStateException("Can't deserialize target data of key '" + key + "'. " +
-                                      "Given class loaders: " + classLoaders, e);
-    }
   }
 
   /**
@@ -147,14 +103,7 @@ public class DataNode<T> implements UserDataHolderEx {
     T newData = (T) visitor.apply(getData());
     if (newData != null) {
       data = newData;
-      clearRawData();
-      dataClassName = null;
     }
-  }
-
-  private void clearRawData() {
-    rawData = null;
-    dataClassName = null;
   }
 
   /**
@@ -221,24 +170,6 @@ public class DataNode<T> implements UserDataHolderEx {
     return result;
   }
 
-  public void serializeData(@NotNull WriteAndCompressSession buffer) {
-    if (rawData != null) {
-      return;
-    }
-
-    if (data == null) {
-      dataClassName = null;
-      rawData = ArrayUtil.EMPTY_BYTE_ARRAY;
-    }
-    else {
-      dataClassName = data.getClass().getName();
-      if (dataClassName.equals(key.getDataType())) {
-        dataClassName = null;
-      }
-      rawData = SerializationKt.serializeDataNodeData(data, buffer);
-    }
-  }
-
   @Override
   public int hashCode() {
     // We can't use myChildren.hashCode() because it iterates whole subtree. This should not produce many collisions because 'getData()'
@@ -284,7 +215,6 @@ public class DataNode<T> implements UserDataHolderEx {
       }
     }
     parent = null;
-    clearRawData();
     children.clear();
   }
 
@@ -332,12 +262,24 @@ public class DataNode<T> implements UserDataHolderEx {
     return userData.getCopyableUserData(key);
   }
 
+  public boolean validateData() {
+    if (data == null) {
+      ready = false;
+      clear(true);
+    }
+    else {
+      ready = true;
+    }
+    return ready;
+  }
+
   @NotNull
   public static <T> DataNode<T> nodeCopy(@NotNull DataNode<T> dataNode) {
-    DataNode<T> copy = new DataNode<>(dataNode.key, dataNode.data, null);
-    copy.dataClassName = dataNode.dataClassName;
-    copy.rawData = dataNode.rawData;
+    DataNode<T> copy = new DataNode<>();
+    copy.key = dataNode.key;
+    copy.data = dataNode.data;
     copy.ignored = dataNode.ignored;
+    copy.ready = dataNode.ready;
     dataNode.userData.copyCopyableDataTo(copy.userData);
     return copy;
   }

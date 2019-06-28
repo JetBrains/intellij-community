@@ -91,7 +91,10 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-@State(name = "ProjectView", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+@State(name = "ProjectView", storages = {
+  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
+  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
+})
 public class ProjectViewImpl extends ProjectView implements PersistentStateComponent<Element>, Disposable, QuickActionProvider, BusyObject  {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.ProjectViewImpl");
   private static final Key<String> ID_KEY = Key.create("pane-id");
@@ -207,6 +210,16 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         if (!super.isAutoScrollEnabledFor(file)) return false;
         AbstractProjectViewPane pane = getCurrentProjectViewPane();
         return pane == null || pane.isAutoScrollEnabledFor(file);
+      }
+
+      @Override
+      protected String getActionName() {
+        return "Open Files with Single Click";
+      }
+
+      @Override
+      protected String getActionDescription() {
+        return "When a file is selected, open it for editing";
       }
     };
 
@@ -1952,6 +1965,16 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
       createToolbarActions();
     }
+
+    @Override
+    protected String getActionName() {
+      return "Always Select Opened File";
+    }
+
+    @Override
+    protected String getActionDescription() {
+      return "When an editor tab is selected, select the corresponding file in Project view";
+    }
   }
 
   private class SimpleSelectInContext extends SmartSelectInContext {
@@ -2111,7 +2134,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   private class ScrollFromSourceAction extends AnAction implements DumbAware {
     private ScrollFromSourceAction() {
-      super("Scroll from Source", "Select the file open in the active editor", AllIcons.General.Locate);
+      super("Select Opened File", "Select the file open in the active editor", AllIcons.General.Locate);
     }
 
     @Override

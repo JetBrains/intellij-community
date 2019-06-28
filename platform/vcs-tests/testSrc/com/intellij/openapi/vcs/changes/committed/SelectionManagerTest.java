@@ -42,13 +42,7 @@ public class SelectionManagerTest extends PlatformTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Void, IOException>() {
-      @Override
-      public Void compute() throws IOException {
-        myFs = new FileStructure(getProject());
-        return null;
-      }
-    });
+    myFs = ApplicationManager.getApplication().runWriteAction((ThrowableComputable<FileStructure, IOException>)() -> new FileStructure(getProject()));
     myCm = new SelectionManager(2, 10, MyConvertor.getInstance());
   }
 

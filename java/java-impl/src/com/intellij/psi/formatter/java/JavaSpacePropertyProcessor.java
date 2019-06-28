@@ -834,6 +834,13 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   @Override
+  public void visitYieldStatement(PsiYieldStatement statement) {
+    if (myType1 == JavaTokenType.YIELD_KEYWORD && ElementType.EXPRESSION_BIT_SET.contains(myType2)) {
+      createSpaceProperty(true, false, 0);
+    }
+  }
+
+  @Override
   public void visitContinueStatement(PsiContinueStatement statement) {
     if (myType1 == JavaTokenType.CONTINUE_KEYWORD && myType2 == JavaTokenType.IDENTIFIER) {
       createSpaceProperty(true, false, 0);

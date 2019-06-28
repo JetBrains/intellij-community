@@ -16,12 +16,12 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ClassMayBeInterfaceInspectionTest extends LightInspectionTestCase {
+public class ClassMayBeInterfaceInspectionTest extends LightJavaInspectionTestCase {
 
   public void testOne() {
     doTest("abstract class /*Abstract class 'ConvertMe' may be interface*/ConvertMe/**/ {\n" +

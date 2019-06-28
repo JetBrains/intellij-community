@@ -201,6 +201,12 @@ public class AnnotationUtilEx {
                                                   Pair<String, ? extends Set<String>> annotationName,
                                                   boolean allowIndirect,
                                                   boolean inHierarchy) {
+    if (owner instanceof PsiField || owner instanceof PsiLocalVariable) {
+      PsiAnnotation[] annotations = getAnnotationsFromImpl(owner, annotationName, allowIndirect, false);
+      if (annotations.length == 0 || !PsiUtilEx.isLanguageAnnotationTarget(owner)) return PsiAnnotation.EMPTY_ARRAY;
+      return annotations;
+    }
+    
     if (!PsiUtilEx.isLanguageAnnotationTarget(owner)) return PsiAnnotation.EMPTY_ARRAY;
 
     return getAnnotationsFromImpl(owner, annotationName, allowIndirect, inHierarchy);

@@ -10,7 +10,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.sh.ShStringUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,11 +18,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 import static org.junit.Assume.assumeNotNull;
 
-public class ShFileCompletionTest extends LightCodeInsightFixtureTestCase {
+public class ShFileCompletionTest extends BasePlatformTestCase {
   private static final String FOLDER_NAME = "example";
   private static final String FIRST_FILE_NAME = "simple1.txt";
   private static final String SECOND_FILE_NAME = "simple2.txt";
@@ -31,14 +32,18 @@ public class ShFileCompletionTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myTempDirectory = FileUtil.createTempDirectory(ShFileCompletionTest.class.getSimpleName().toLowerCase(), null, true);
+    myTempDirectory = FileUtil.createTempDirectory(ShFileCompletionTest.class.getSimpleName().toLowerCase(Locale.ENGLISH), null, true);
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
       FileUtil.delete(myTempDirectory);
-    } finally {
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
       super.tearDown();
     }
   }

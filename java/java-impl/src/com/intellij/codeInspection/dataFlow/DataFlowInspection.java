@@ -26,6 +26,7 @@ import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -135,6 +136,22 @@ public class DataFlowInspection extends DataFlowInspectionBase {
 
   @Override
   @NotNull
+  protected List<LocalQuickFix> createCastFixes(PsiTypeCastExpression castExpression, boolean onTheFly) {
+    List<LocalQuickFix> fixes = new ArrayList<>();
+    PsiExpression operand = castExpression.getOperand();
+    PsiTypeElement typeElement = castExpression.getCastType();
+    if (typeElement != null && operand != null && !SideEffectChecker.mayHaveSideEffects(operand)) {
+      String suffix = " instanceof " + typeElement.getText();
+      fixes.add(new AddAssertStatementFix(ParenthesesUtils.getText(operand, PsiPrecedenceUtil.RELATIONAL_PRECEDENCE) + suffix));
+      if (onTheFly && SurroundWithIfFix.isAvailable(operand)) {
+        fixes.add(new SurroundWithIfFix(operand, suffix));
+      }
+    }
+    return fixes;
+  }
+
+  @Override
+  @NotNull
   protected List<LocalQuickFix> createNPEFixes(PsiExpression qualifier, PsiExpression expression, boolean onTheFly) {
     qualifier = PsiUtil.deparenthesizeExpression(qualifier);
 
@@ -148,14 +165,15 @@ public class DataFlowInspection extends DataFlowInspectionBase {
         ContainerUtil.addIfNotNull(fixes, createIntroduceVariableFix(qualifier));
       }
       else if (!ExpressionUtils.isNullLiteral(qualifier) && !SideEffectChecker.mayHaveSideEffects(qualifier))  {
+        String suffix = " != null";
         if (PsiUtil.getLanguageLevel(qualifier).isAtLeast(LanguageLevel.JDK_1_4) &&
             RefactoringUtil.getParentStatement(expression, false) != null) {
-          String replacement = ParenthesesUtils.getText(qualifier, ParenthesesUtils.EQUALITY_PRECEDENCE) + " != null";
+          String replacement = ParenthesesUtils.getText(qualifier, ParenthesesUtils.EQUALITY_PRECEDENCE) + suffix;
           fixes.add(new AddAssertStatementFix(replacement));
         }
 
         if (onTheFly && SurroundWithIfFix.isAvailable(qualifier)) {
-          fixes.add(new SurroundWithIfFix(qualifier));
+          fixes.add(new SurroundWithIfFix(qualifier, suffix));
         }
 
         if (onTheFly && ReplaceWithTernaryOperatorFix.isAvailable(qualifier, expression)) {

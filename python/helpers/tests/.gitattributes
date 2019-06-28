@@ -1,0 +1,3 @@
+# In these files persistent line endings are crucial 
+# as we use their binary content for hashes.
+generator3_tests/data/SkeletonCaching/**/*.py text eol=lf

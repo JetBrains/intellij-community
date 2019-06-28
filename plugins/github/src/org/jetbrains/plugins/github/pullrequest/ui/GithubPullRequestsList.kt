@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.ide.CopyProvider
@@ -16,13 +16,12 @@ import icons.GithubIcons
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.plugins.github.api.data.GithubIssueState
-import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
+import org.jetbrains.plugins.github.api.data.GHPullRequestShort
+import org.jetbrains.plugins.github.api.data.GHPullRequestState
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.Component
-import java.awt.FlowLayout
 import java.awt.datatransfer.StringSelection
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -30,8 +29,8 @@ import javax.swing.*
 
 internal class GithubPullRequestsList(private val copyPasteManager: CopyPasteManager,
                                       avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
-                                      model: ListModel<GithubSearchedIssue>)
-  : JBList<GithubSearchedIssue>(model), CopyProvider, DataProvider, Disposable {
+                                      model: ListModel<GHPullRequestShort>)
+  : JBList<GHPullRequestShort>(model), CopyProvider, DataProvider, Disposable {
 
   private val avatarIconSize = JBValue.UIInteger("Github.PullRequests.List.Assignee.Avatar.Size", 20)
   private val avatarIconsProvider = avatarIconsProviderFactory.create(avatarIconSize, this)
@@ -65,13 +64,13 @@ internal class GithubPullRequestsList(private val copyPasteManager: CopyPasteMan
 
   override fun getData(dataId: String): Any? = when {
     PlatformDataKeys.COPY_PROVIDER.`is`(dataId) -> this
-    GithubPullRequestKeys.SELECTED_SEARCHED_ISSUE.`is`(dataId) -> selectedValue
+    GithubPullRequestKeys.SELECTED_PULL_REQUEST.`is`(dataId) -> selectedValue
     else -> null
   }
 
   override fun dispose() {}
 
-  private inner class PullRequestsListCellRenderer : ListCellRenderer<GithubSearchedIssue>, JPanel() {
+  private inner class PullRequestsListCellRenderer : ListCellRenderer<GHPullRequestShort>, JPanel() {
 
     private val stateIcon = JLabel()
     private val title = JLabel()
@@ -110,29 +109,33 @@ internal class GithubPullRequestsList(private val copyPasteManager: CopyPasteMan
         .spanX(2))
     }
 
-    override fun getListCellRendererComponent(list: JList<out GithubSearchedIssue>,
-                                              value: GithubSearchedIssue,
+    override fun getListCellRendererComponent(list: JList<out GHPullRequestShort>,
+                                              value: GHPullRequestShort,
                                               index: Int,
                                               isSelected: Boolean,
                                               cellHasFocus: Boolean): Component {
-      UIUtil.setBackgroundRecursively(this, GithubUIUtil.List.WithTallRow.background(list, isSelected))
-      val primaryTextColor = GithubUIUtil.List.WithTallRow.foreground(list, isSelected)
-      val secondaryTextColor = GithubUIUtil.List.WithTallRow.secondaryForeground(list, isSelected)
+      UIUtil.setBackgroundRecursively(this, ListUiUtil.WithTallRow.background(list, isSelected))
+      val primaryTextColor = ListUiUtil.WithTallRow.foreground(list, isSelected)
+      val secondaryTextColor = ListUiUtil.WithTallRow.secondaryForeground(list, isSelected)
 
       stateIcon.apply {
-        icon = if (value.state == GithubIssueState.open) GithubIcons.PullRequestOpen else GithubIcons.PullRequestClosed
+        icon = when (value.state) {
+          GHPullRequestState.CLOSED -> GithubIcons.PullRequestClosed
+          GHPullRequestState.MERGED -> GithubIcons.PullRequestMerged
+          GHPullRequestState.OPEN -> GithubIcons.PullRequestOpen
+        }
       }
       title.apply {
         text = value.title
         foreground = primaryTextColor
       }
       info.apply {
-        text = "#${value.number} ${value.user.login} on ${DateFormatUtil.formatDate(value.createdAt)}"
+        text = "#${value.number} ${value.author?.login} on ${DateFormatUtil.formatDate(value.createdAt)}"
         foreground = secondaryTextColor
       }
       labels.apply {
         removeAll()
-        for (label in value.labels.orEmpty()) {
+        for (label in value.labels) {
           add(GithubUIUtil.createIssueLabelLabel(label))
           add(Box.createRigidArea(JBDimension(4, 0)))
         }
@@ -144,7 +147,7 @@ internal class GithubPullRequestsList(private val copyPasteManager: CopyPasteMan
             add(Box.createRigidArea(JBDimension(UIUtil.DEFAULT_HGAP, 0)))
           }
           add(JLabel().apply {
-            icon = assignee.let { avatarIconsProvider.getIcon(it) }
+            icon = avatarIconsProvider.getIcon(assignee.avatarUrl)
             toolTipText = assignee.login
           })
         }

@@ -119,7 +119,10 @@ public class MavenModuleBuilderHelper {
 
     // execute when current dialog is closed (e.g. Project Structure)
     MavenUtil.invokeLater(project, ModalityState.NON_MODAL, () -> {
-      if (!pom.isValid()) return;
+      if (!pom.isValid()) {
+        showError(project, new RuntimeException("Project is not valid"));
+        return;
+      }
 
       EditorHelper.openInEditor(getPsiFile(project, pom));
       if (myArchetype != null) generateFromArchetype(project, pom);
@@ -217,15 +220,14 @@ public class MavenModuleBuilderHelper {
       if (artifactId != null) {
         FileUtil.copyDir(new File(workingDir, artifactId), new File(pom.getParent().getPath()));
       }
+      FileUtil.delete(workingDir);
     }
-    catch (IOException e) {
+    catch (Exception e) {
       showError(project, e);
       return;
     }
 
-    FileUtil.delete(workingDir);
-
-    pom.refresh(false, false);
+    pom.getParent().refresh(false, false);
     updateProjectPom(project, pom);
 
     LocalFileSystem.getInstance().refreshWithoutFileWatcher(true);

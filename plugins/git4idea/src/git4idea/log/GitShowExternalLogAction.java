@@ -98,29 +98,30 @@ public class GitShowExternalLogAction extends DumbAwareAction {
                                                             @NotNull final GitVcs vcs,
                                                             @NotNull final List<VirtualFile> roots,
                                                             boolean isToolWindowTab) {
+    Disposable disposable = Disposer.newDisposable();
     final GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(project);
     for (VirtualFile root : roots) {
-      repositoryManager.addExternalRepository(root, GitRepositoryImpl.getInstance(root, project, true));
+      repositoryManager.addExternalRepository(root, GitRepositoryImpl.getInstance(root, project, disposable, true));
     }
     VcsLogManager manager = new VcsLogManager(project, ServiceManager.getService(project, GitExternalLogTabsProperties.class),
                                               ContainerUtil.map(roots, root -> new VcsRoot(vcs, root)));
-    Disposable disposable = () -> manager.dispose(() -> {
+    Disposer.register(disposable, () -> manager.dispose(() -> {
       for (VirtualFile root : roots) {
         repositoryManager.removeExternalRepository(root);
       }
-    });
+    }));
     AbstractVcsLogUi ui = manager.createLogUi(calcLogId(roots), isToolWindowTab);
     Disposer.register(disposable, ui);
     return new MyContentComponent(new VcsLogPanel(manager, ui), roots, disposable);
   }
 
   @NotNull
-  private static String calcLogId(@NotNull List<VirtualFile> roots) {
+  private static String calcLogId(@NotNull List<? extends VirtualFile> roots) {
     return EXTERNAL + " " + StringUtil.join(roots, VirtualFile::getPath, File.pathSeparator);
   }
 
   @NotNull
-  private static String calcTabName(@NotNull ContentManager cm, @NotNull List<VirtualFile> roots) {
+  private static String calcTabName(@NotNull ContentManager cm, @NotNull List<? extends VirtualFile> roots) {
     String name = VcsLogContentProvider.TAB_NAME + " (" + roots.get(0).getName();
     if (roots.size() > 1) {
       name += "+";

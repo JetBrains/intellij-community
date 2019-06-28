@@ -28,12 +28,10 @@ import java.io.IOException;
  */
 public class AttributeStubSerializer implements ObjectStubSerializer<AttributeStub, ElementStub> {
 
-  final static ObjectStubSerializer INSTANCE = new AttributeStubSerializer();
-
   @NotNull
   @Override
   public String getExternalId() {
-    return "AttributeStub";
+    return "xml.AttributeStub";
   }
 
   @Override

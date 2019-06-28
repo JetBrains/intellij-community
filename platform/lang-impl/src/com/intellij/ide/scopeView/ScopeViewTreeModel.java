@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.scopeView;
 
 import com.intellij.icons.AllIcons;
@@ -14,6 +14,9 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.AreaInstance;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.fileEditor.impl.OpenFilesScope;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -32,14 +35,17 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.NavigatableWithText;
 import com.intellij.problems.ProblemListener;
 import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.search.scope.ProblemsScope;
 import com.intellij.psi.search.scope.ProjectFilesScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.RowIcon;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.icons.RowIcon;
 import com.intellij.ui.stripe.ErrorStripe;
 import com.intellij.ui.tree.AbstractTreeWalker;
 import com.intellij.ui.tree.BaseTreeModel;
@@ -52,6 +58,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,7 +106,8 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
     });
     Disposer.register(this, model);
     root = new ProjectNode(project, settings);
-    project.getMessageBus().connect(this).subscribe(ProblemListener.TOPIC, new ProblemListener() {
+    MessageBusConnection connection = project.getMessageBus().connect(this);
+    connection.subscribe(ProblemListener.TOPIC, new ProblemListener() {
       @Override
       public void problemsAppeared(@NotNull VirtualFile file) {
         problemsDisappeared(file);
@@ -107,13 +115,18 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
 
       @Override
       public void problemsDisappeared(@NotNull VirtualFile file) {
-        NamedScopeFilter filter = getFilter();
-        if (filter != null && filter.getScope() instanceof ProblemsScope) {
-          model.setFilter(filter); // update a problem scope from root
-        }
-        else {
-          notifyPresentationChanged(file);
-        }
+        if (!updateScopeIf(ProblemsScope.class)) notifyPresentationChanged(file);
+      }
+    });
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+      @Override
+      public void fileOpened(@NotNull FileEditorManager manager, @NotNull VirtualFile file) {
+        fileClosed(manager, file);
+      }
+
+      @Override
+      public void fileClosed(@NotNull FileEditorManager manager, @NotNull VirtualFile file) {
+        updateScopeIf(OpenFilesScope.class);
       }
     });
     FileStatusManager.getInstance(project).addFileStatusListener(new FileStatusListener() {
@@ -376,6 +389,14 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
       if (color != null) return ErrorStripe.create(color, 1);
     }
     return null;
+  }
+
+  boolean updateScopeIf(@NotNull Class<? extends NamedScope> type) {
+    NamedScopeFilter filter = getFilter();
+    if (filter == null || !type.isInstance(filter.getScope())) return false;
+    LOG.debug("update filter", filter);
+    model.setFilter(filter);
+    return true;
   }
 
 

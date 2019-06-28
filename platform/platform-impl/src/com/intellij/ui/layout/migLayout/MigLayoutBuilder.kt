@@ -3,17 +3,14 @@ package com.intellij.ui.layout.migLayout
 
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.ui.panel.ComponentPanelBuilder
-import com.intellij.ui.components.noteComponent
 import com.intellij.ui.layout.*
 import com.intellij.ui.layout.migLayout.patched.*
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.ui.JBUI
 import net.miginfocom.layout.*
 import java.awt.Component
 import java.awt.Container
-import javax.swing.*
-import kotlin.reflect.KProperty0
+import javax.swing.JComponent
 
 internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagic: Boolean = true) : LayoutBuilderImpl {
   companion object {
@@ -21,7 +18,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
     private var vRelatedGap = -1
 
     init {
-      JBUI.addPropertyChangeListener(JBUI.USER_SCALE_FACTOR_PROPERTY) {
+      JBUIScale.addUserScaleChangeListener {
         updatePlatformDefaults()
       }
     }
@@ -51,7 +48,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
    * Map of component to constraints shared among rows (since components are unique)
    */
   private val componentConstraints: MutableMap<Component, CC> = ContainerUtil.newIdentityTroveMap()
-  private val rootRow = MigLayoutRow(parent = null, componentConstraints = componentConstraints, builder = this, indent = 0)
+  override val rootRow = MigLayoutRow(parent = null, componentConstraints = componentConstraints, builder = this, indent = 0)
 
   override var preferredFocusedComponent: JComponent? = null
   override var validateCallbacks: MutableList<() -> ValidationInfo?> = mutableListOf()
@@ -64,22 +61,6 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
   // keep in mind - MigLayout always creates one more than need column constraints (i.e. for 2 will be 3)
   // it doesn't lead to any issue.
   val columnConstraints = AC()
-
-  override fun newRow(label: JLabel?, buttonGroup: ButtonGroup?, isSeparated: Boolean): Row {
-    return rootRow.createChildRow(label = label, buttonGroup = buttonGroup, isSeparated = isSeparated)
-  }
-
-  override fun newTitledRow(title: String): Row {
-    return rootRow.createChildRow(isSeparated = true, title = title)
-  }
-
-  override fun noteRow(text: String, linkHandler: ((url: String) -> Unit)?) {
-    rootRow.createNoteOrCommentRow(noteComponent(text, linkHandler))
-  }
-
-  override fun commentRow(text: String) {
-    rootRow.createNoteOrCommentRow(ComponentPanelBuilder.createCommentComponent(text, true))
-  }
 
   fun updateComponentConstraints(component: Component, callback: CC.() -> Unit) {
     componentConstraints.getOrPut(component) { CC() }.callback()
@@ -96,7 +77,20 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
       lc.apply(layoutConstraints)
     }
 
-    lc.isVisualPadding = spacing.isCompensateVisualPaddings
+    /**
+     * On macOS input fields (text fields, checkboxes, buttons and so on) have focus ring that drawn outside of component border.
+     * If reported component dimensions will be equals to visible (when unfocused) component dimensions, focus ring will be clipped.
+     *
+     * Since LaF cannot control component environment (host component), default safe strategy is to report component dimensions including focus ring.
+     * But it leads to an issue - spacing specified for visible component borders, not to compensated. For example, if horizontal space must be 8px,
+     * this 8px must be between one visible border of component to another visible border (in the case of macOS Light theme, gray 1px borders).
+     * Exactly 8px.
+     *
+     * So, advanced layout engine, e.g. MigLayout, offers a way to compensate visual padding on the layout container level, not on component level, as a solution.
+     */
+
+    lc.isVisualPadding = true
+
     // if 3, invisible component will be disregarded completely and it means that if it is last component, it's "wrap" constraint will be not taken in account
     lc.hideMode = 2
 

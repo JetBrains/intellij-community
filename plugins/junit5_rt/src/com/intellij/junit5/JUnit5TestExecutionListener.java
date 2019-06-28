@@ -39,6 +39,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
 
+@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class JUnit5TestExecutionListener implements TestExecutionListener {
   private static final String NO_LOCATION_HINT = "";
   private static final String NO_LOCATION_HINT_VALUE = "";
@@ -330,7 +331,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
 
   private String getParentId(TestIdentifier testIdentifier) {
     Optional<TestIdentifier> parent = myTestPlan.getParent(testIdentifier);
-    if (myActiveRoots.size() <= 1 && !parent.map(identifier -> identifier.getParentId().orElse(null)).isPresent()) {
+    if (myActiveRoots.size() <= 1 && !parent.flatMap(TestIdentifier::getParentId).isPresent()) {
       return "0";
     }
 

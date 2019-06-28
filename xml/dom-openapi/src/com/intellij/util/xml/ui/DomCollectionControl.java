@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.ui;
 
 import com.intellij.openapi.actionSystem.*;
@@ -10,7 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.ui.CommonActionsPanel;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ReflectionUtil;
@@ -241,7 +241,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
         messages.add(descriptor.getDescriptionTemplate());
       }
     }
-    myCollectionPanel.setErrorMessages(ArrayUtil.toStringArray(messages));
+    myCollectionPanel.setErrorMessages(ArrayUtilRt.toStringArray(messages));
     myCollectionPanel.repaint();
   }
 

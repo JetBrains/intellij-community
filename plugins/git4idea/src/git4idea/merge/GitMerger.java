@@ -51,7 +51,7 @@ public class GitMerger {
                                            repository -> repository.getState() == Repository.State.MERGING));
   }
 
-  public void mergeCommit(@NotNull Collection<VirtualFile> roots) throws VcsException {
+  public void mergeCommit(@NotNull Collection<? extends VirtualFile> roots) throws VcsException {
     for (VirtualFile root : roots) {
       mergeCommit(root);
     }
@@ -67,7 +67,8 @@ public class GitMerger {
       final String branchName = branch != null ? branch.getName() : "";
       handler.addParameters("-m", "Merge branch '" + branchName + "' of " + root.getPresentableUrl() + " with conflicts.");
     } else {
-      handler.addParameters("-F", messageFile.getAbsolutePath());
+      handler.addParameters("-F");
+      handler.addAbsoluteFile(messageFile);
     }
     handler.endOptions();
     Git.getInstance().runCommand(handler).throwOnError();

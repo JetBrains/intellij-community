@@ -5,7 +5,7 @@ import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomUtilsWhiteListRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -74,7 +74,7 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
     return info.isDevelopedByJetBrains() ? type.getName() : DEFAULT_ID;
   }
 
-  public static class ValidationRule extends CustomUtilsWhiteListRule {
+  public static class ValidationRule extends CustomWhiteListRule {
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {
       return "file_type".equals(ruleId);

@@ -12,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 
 public class PathMerger {
@@ -161,7 +160,7 @@ public class PathMerger {
 
     public IoFilePathMerger(final File base) {
       myBase = base;
-      myChildPathElements = new LinkedList<>();
+      myChildPathElements = new ArrayList<>();
     }
 
     @Override

@@ -15,11 +15,12 @@
  */
 package com.intellij.ide.highlighter;
 
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileTypes.FileType;
+import org.jetbrains.annotations.NotNull;
 
 public interface FileTypeRegistrator {
   ExtensionPointName<FileTypeRegistrator> EP_NAME = ExtensionPointName.create("com.intellij.fileTypeRegistrator");
 
-  void initFileType(FileType fileType);
+  void initFileType(@NotNull FileType fileType);
 }

@@ -2084,7 +2084,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
   }
 
   private Library createProjectLibrary(final String libraryName) {
-    return WriteAction.compute(() -> ProjectLibraryTable.getInstance(myProject).createLibrary(libraryName));
+    return WriteAction.compute(() -> LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).createLibrary(libraryName));
   }
 
   private void createAndAddProjectLibrary(final String moduleName, final String libraryName) {
@@ -2096,7 +2096,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
   private void clearLibraryRoots(final String libraryName, final OrderRootType... types) {
     ApplicationManager.getApplication().runWriteAction(() -> {
-      Library lib = ProjectLibraryTable.getInstance(myProject).getLibraryByName(libraryName);
+      Library lib = com.intellij.openapi.roots.libraries.LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getLibraryByName(libraryName);
       Library.ModifiableModel model = lib.getModifiableModel();
       for (OrderRootType eachType : types) {
         for (String each : model.getUrls(eachType)) {
@@ -2109,7 +2109,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
   private void addLibraryRoot(final String libraryName, final OrderRootType type, final String path) {
     ApplicationManager.getApplication().runWriteAction(() -> {
-      Library lib = ProjectLibraryTable.getInstance(myProject).getLibraryByName(libraryName);
+      Library lib = com.intellij.openapi.roots.libraries.LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getLibraryByName(libraryName);
       Library.ModifiableModel model = lib.getModifiableModel();
       model.addRoot(path, type);
       model.commit();

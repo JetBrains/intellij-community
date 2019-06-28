@@ -2,10 +2,11 @@
 import {DataManager} from "@/state/DataManager"
 import {ActivityChartManager, ClassItem, ClassItemChartConfig} from "@/charts/ActivityChartManager"
 import {Item} from "@/state/data"
+import {ActivityChartDescriptor} from "@/charts/ActivityChartDescriptor"
 
 export class ComponentChartManager extends ActivityChartManager {
-  constructor(container: HTMLElement, sourceNames: Array<string>) {
-    super(container, sourceNames)
+  constructor(container: HTMLElement, sourceNames: Array<string>, descriptor: ActivityChartDescriptor) {
+    super(container, sourceNames, descriptor)
   }
 
   // doesn't make sense for components - cannot be outside of ready, and app initialized is clear

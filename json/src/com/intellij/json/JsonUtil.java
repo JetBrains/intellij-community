@@ -7,6 +7,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,6 +67,12 @@ public class JsonUtil {
       }
     }
     return -1;
+  }
+
+  @Contract(value = "null -> null")
+  @Nullable
+  public static JsonObject getTopLevelObject(@Nullable JsonFile jsonFile) {
+    return jsonFile != null ? ObjectUtils.tryCast(jsonFile.getTopLevelValue(), JsonObject.class) : null;
   }
 
   public static boolean isJsonFile(@NotNull VirtualFile file) {

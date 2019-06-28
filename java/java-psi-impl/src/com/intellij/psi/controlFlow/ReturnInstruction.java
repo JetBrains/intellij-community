@@ -22,31 +22,16 @@ import org.jetbrains.annotations.NotNull;
 public class ReturnInstruction extends GoToInstruction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.controlFlow.ReturnInstruction");
 
-  @NotNull private final ControlFlowStack myStack;
   @NotNull private CallInstruction myCallInstruction;
   private boolean myRethrowFromFinally;
 
-  public ReturnInstruction(int offset, @NotNull ControlFlowStack stack, @NotNull CallInstruction callInstruction) {
+  public ReturnInstruction(int offset, @NotNull CallInstruction callInstruction) {
     super(offset, Role.END, false);
-    myStack = stack;
     myCallInstruction = callInstruction;
   }
 
   public String toString() {
     return "RETURN FROM " + getProcBegin() + (offset == 0 ? "" : " TO "+offset);
-  }
-
-  public int execute(boolean pushBack) {
-    synchronized (myStack) {
-      int jumpTo = -1;
-      if (myStack.size() != 0) {
-        jumpTo = myStack.pop(pushBack);
-      }
-      if (offset != 0) {
-        jumpTo = offset;
-      }
-      return jumpTo;
-    }
   }
 
   @NotNull
@@ -102,11 +87,6 @@ public class ReturnInstruction extends GoToInstruction {
   @Override
   public void accept(@NotNull ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
     visitor.visitReturnInstruction(this, offset, nextOffset);
-  }
-
-  @NotNull
-  public ControlFlowStack getStack() {
-    return myStack;
   }
 
   void setRethrowFromFinally() {

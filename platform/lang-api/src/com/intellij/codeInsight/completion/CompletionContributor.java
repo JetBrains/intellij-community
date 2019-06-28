@@ -198,7 +198,7 @@ public abstract class CompletionContributor {
   }
 
   /**
-   * Don't use this method, because {@code position} can come from uncommitted PSI and be totally unrelated to the code being currently in the document/editor.
+   * @deprecated Don't use this method, because {@code position} can come from uncommitted PSI and be totally unrelated to the code being currently in the document/editor.
    * Please consider using {@link com.intellij.codeInsight.editorActions.TypedHandlerDelegate#checkAutoPopup} instead.
    */
   @Deprecated

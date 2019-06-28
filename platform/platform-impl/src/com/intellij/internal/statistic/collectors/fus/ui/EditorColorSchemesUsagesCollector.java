@@ -1,7 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.ui;
 
-import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.beans.MetricEvent;
+import com.intellij.internal.statistic.beans.MetricEventFactoryKt;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -52,14 +53,9 @@ public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollecto
 
   @NotNull
   @Override
-  public Set<UsageDescriptor> getUsages() {
-    return getDescriptors();
-  }
-
-  @NotNull
-  public static Set<UsageDescriptor> getDescriptors() {
+  public Set<MetricEvent> getMetrics() {
     EditorColorsScheme currentScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    Set<UsageDescriptor> usages = new HashSet<>();
+    Set<MetricEvent> usages = new HashSet<>();
     if (currentScheme instanceof AbstractColorsScheme) {
       String schemeName = currentScheme.getName();
       if (schemeName.startsWith(SchemeManager.EDITABLE_COPY_PREFIX)) {
@@ -68,15 +64,10 @@ public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollecto
           schemeName = original.getName();
         }
       }
-      final String reportableName = getKnownSchemeName(schemeName) + " (" + getLightDarkSuffix(currentScheme) + ")";
-      usages.add(new UsageDescriptor(reportableName, 1));
+      final String reportableName = getKnownSchemeName(schemeName);
+      usages.add(MetricEventFactoryKt.newMetric(reportableName, ColorUtil.isDark(currentScheme.getDefaultBackground())));
     }
     return usages;
-  }
-
-  @NotNull
-  private static String getLightDarkSuffix(@NotNull EditorColorsScheme scheme) {
-    return ColorUtil.isDark(scheme.getDefaultBackground()) ? "Dark" : "Light";
   }
 
   @NotNull

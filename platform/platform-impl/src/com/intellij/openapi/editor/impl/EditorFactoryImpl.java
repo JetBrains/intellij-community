@@ -29,7 +29,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -47,6 +46,9 @@ public class EditorFactoryImpl extends EditorFactory {
   private final EventDispatcher<EditorFactoryListener> myEditorFactoryEventDispatcher = EventDispatcher.create(EditorFactoryListener.class);
   private final List<Editor> myEditors = ContainerUtil.createLockFreeCopyOnWriteList();
 
+  /**
+   * @deprecated left for API compatibility
+   */
   @Deprecated
   public EditorFactoryImpl(/* unused for API compatibility reasons */ @SuppressWarnings("unused") EditorActionManager editorActionManager) {
     this();
@@ -194,7 +196,6 @@ public class EditorFactoryImpl extends EditorFactory {
     myEditors.add(editor);
     myEditorEventMulticaster.registerEditor(editor);
     myEditorFactoryEventDispatcher.getMulticaster().editorCreated(new EditorFactoryEvent(this, editor));
-    TouchBarsManager.registerEditor(editor);
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("number of Editors after create: " + myEditors.size());
@@ -219,7 +220,6 @@ public class EditorFactoryImpl extends EditorFactory {
         }
       }
     }
-    TouchBarsManager.releaseEditor(editor);
   }
 
   @Override

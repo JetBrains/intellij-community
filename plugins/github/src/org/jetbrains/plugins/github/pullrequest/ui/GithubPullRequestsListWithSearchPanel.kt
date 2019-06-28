@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.codeInsight.AutoPopupController
@@ -15,7 +15,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.ui.frame.ProgressStripe
-import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
+import org.jetbrains.plugins.github.api.data.GHPullRequestShort
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
@@ -36,7 +36,7 @@ internal class GithubPullRequestsListWithSearchPanel(project: Project,
                                                      avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
                                                      private val loader: GithubPullRequestsListLoader,
                                                      private val dataLoader: GithubPullRequestsDataLoader,
-                                                     private val listModel: ListModel<GithubSearchedIssue>,
+                                                     private val listModel: ListModel<GHPullRequestShort>,
                                                      private val searchQueryHolder: GithubPullRequestSearchQueryHolder,
                                                      private val listSelectionHolder: GithubPullRequestsListSelectionHolder)
   : BorderLayoutPanel(), Disposable {

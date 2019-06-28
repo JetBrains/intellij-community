@@ -9,7 +9,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashSet;
@@ -67,7 +67,7 @@ class ExcludeRootsCache {
             ContainerUtil.addAll(excludedUrls, urls);
           }
         }
-        urls = ArrayUtil.toStringArray(excludedUrls);
+        urls = ArrayUtilRt.toStringArray(excludedUrls);
         Arrays.sort(urls);
         myCache = new CachedUrls(actualModCount, urls);
       }

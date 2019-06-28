@@ -16,13 +16,13 @@
 package com.siyeh.ig.assignment;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class AssignmentToStaticFieldFromInstanceMethodInspectionTest extends LightInspectionTestCase {
+public class AssignmentToStaticFieldFromInstanceMethodInspectionTest extends LightJavaInspectionTestCase {
 
   public void testAssignmentToStaticFieldFromInstanceMethod() {
     doTest();

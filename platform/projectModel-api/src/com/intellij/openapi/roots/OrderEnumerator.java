@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.PathsList;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -38,6 +39,7 @@ import java.util.List;
  *
  * @author nik
  */
+@ApiStatus.NonExtendable
 public abstract class OrderEnumerator {
   /**
    * Skip test dependencies

@@ -9,6 +9,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -50,6 +51,11 @@ public interface ExtensionPoint<T> {
   @NotNull
   List<T> getExtensionList();
 
+  /**
+   * Invokes the given lambda for each extension registered in this extension point. Logs exceptions thrown by the lambda.
+   */
+  void forEachExtensionSafe(Consumer<T> extensionConsumer);
+
   @NotNull
   Stream<T> extensions();
 
@@ -59,19 +65,19 @@ public interface ExtensionPoint<T> {
   T getExtension();
 
   /**
-   * @deprecated Use another solution, because this method instantiate all extensions.
+   * @deprecated Use another solution, because this method instantiates all extensions.
    */
   @Deprecated
   boolean hasExtension(@NotNull T extension);
 
   /**
-   * @deprecated Use another solutions to unregister not applicable extension, because this method instantiate all extensions.
+   * @deprecated Use another solution to unregister not applicable extension, because this method instantiates all extensions.
    */
   @Deprecated
   void unregisterExtension(@NotNull T extension);
 
   /**
-   * @deprecated Use another solutions to unregister not applicable extension, because this method instantiate all extensions.
+   * @deprecated Use another solution to unregister not applicable extension, because this method instantiates all extensions.
    */
   @Deprecated
   void unregisterExtensions(@NotNull Predicate<? super T> extension);
@@ -93,6 +99,9 @@ public interface ExtensionPoint<T> {
    */
   boolean unregisterExtensions(@NotNull BiPredicate<? super String, ? super ExtensionComponentAdapter> extensionClassFilter, boolean stopAfterFirstMatch);
 
+  /**
+   * @deprecated use {@link #addExtensionPointListener(ExtensionPointListener, boolean, Disposable)}
+   */
   @Deprecated
   void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener);
 

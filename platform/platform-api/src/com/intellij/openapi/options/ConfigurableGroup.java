@@ -4,7 +4,9 @@ package com.intellij.openapi.options;
 public interface ConfigurableGroup extends Configurable.Composite {
   String getDisplayName();
 
-  /** No one uses it */
+  /**
+   * @deprecated unused
+   */
   @Deprecated
   default String getShortName() { return null; }
 }

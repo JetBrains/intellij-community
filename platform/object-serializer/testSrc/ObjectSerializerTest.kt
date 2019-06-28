@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization
 
-import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import gnu.trove.THashMap
 import org.junit.Assume.assumeTrue
@@ -19,6 +19,11 @@ class ObjectSerializerTest {
 
   private fun <T : Any> test(bean: T, writeConfiguration: WriteConfiguration = defaultTestWriteConfiguration): T {
     return test(bean, testName, writeConfiguration)
+  }
+
+  @Test
+  fun threadLocalPooledBlockAllocatorProvider() {
+    testThreadLocalPooledBlockAllocatorProvider()
   }
 
   @Test
@@ -117,8 +122,9 @@ class ObjectSerializerTest {
 
   @Test
   fun `file and path`() {
-    assumeTrue(!SystemInfoRt.isWindows)
+    assumeTrue(!SystemInfo.isWindows)
 
+    @Suppress("unused")
     class TestBean {
       @JvmField
       var f = File("/foo")
@@ -182,7 +188,7 @@ private class Rectangle : Shape {
 
 
 internal enum class TestEnum {
-  RED, GREEN, BLUE
+  RED, BLUE
 }
 
 private class TestEnumBean {

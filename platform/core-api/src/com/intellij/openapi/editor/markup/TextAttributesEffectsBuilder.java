@@ -144,7 +144,7 @@ public class TextAttributesEffectsBuilder {
     List<EffectDescriptor> allEffects = getDescriptorsList();
     if (allEffects.isEmpty()) {
       targetAttributes.setEffectColor(null);
-      targetAttributes.setEffectType(null);
+      targetAttributes.setEffectType(BOXED);
       targetAttributes.setAdditionalEffects(Collections.emptyMap());
     }
     else {
