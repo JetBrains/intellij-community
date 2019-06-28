@@ -499,9 +499,17 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
                                @Nullable IdeFrame frame) {
     VirtualFile dotIdea = LocalFileSystem.getInstance()
       .refreshAndFindFileByPath(FileUtilRt.toSystemIndependentName(projectPath) + "/" + Project.DIRECTORY_STORE_FOLDER);
+
+    Project existing = ProjectUtil.findAndFocusExistingProjectForPath(projectPath);
+    if (existing != null) {
+      return existing;
+    }
+
     if (dotIdea != null) {
       EnumSet<PlatformProjectOpenProcessor.Option> options = EnumSet.of(PlatformProjectOpenProcessor.Option.REOPEN);
-      if (forceOpenInNewFrame) options.add(PlatformProjectOpenProcessor.Option.FORCE_NEW_FRAME);
+      if (forceOpenInNewFrame) {
+        options.add(PlatformProjectOpenProcessor.Option.FORCE_NEW_FRAME);
+      }
       return PlatformProjectOpenProcessor.doOpenProject(dotIdea.getParent(), projectToClose, -1, null, options, frame);
     }
     else {
@@ -609,10 +617,10 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
 
   @Override
   public void reopenLastProjectOnStart() {
-    doReopenLastProject(null);
+    doReopenLastProject();
   }
 
-  protected void doReopenLastProject(@Nullable IdeFrame frame) {
+  protected void doReopenLastProject() {
     if (!GeneralSettings.getInstance().isReopenLastProject()) {
       return;
     }
@@ -629,13 +637,9 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
 
     try {
       myBatchOpening = true;
-      boolean usedFrame = false;
       for (String openPath : openPaths) {
         // https://youtrack.jetbrains.com/issue/IDEA-166321
-        if (ProjectKt.isValidProjectPath(openPath, true)) {
-          doOpenProject(openPath, null, forceNewFrame, usedFrame ? null : frame);
-          usedFrame = true;
-        }
+        doOpenProject(openPath, null, forceNewFrame, null);
       }
     }
     finally {
