@@ -48,7 +48,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
 
     private var windowListener: WindowAdapter
     private val myComponentListener: ComponentListener
-    private val myIconProvider = ScaleContext.Cache { ctx -> AppUIUtil.loadSmallApplicationIcon(ctx, (16 * UISettings.defFontScale).toInt()) }
+    private val myIconProvider = ScaleContext.Cache { ctx -> getFrameIcon(ctx) }
 
     protected var myActive = false
     protected val windowRootPane: JRootPane? = when (window) {
@@ -61,12 +61,19 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     private var customFrameTopBorder: CustomFrameTopBorder? = null
 
     private val icon: Icon
-        get() {
-            val ctx = ScaleContext.create(window)
-            ctx.overrideScale(ScaleType.USR_SCALE.of(UISettings.defFontScale.toDouble()))
-            return myIconProvider.getOrProvide(ctx)!!
-        }
+        get() = getFrameIcon()
 
+    protected val iconSize = (16 * UISettings.defFontScale).toInt()
+
+    private fun getFrameIcon(): Icon {
+        val ctx = ScaleContext.create(window)
+        ctx.overrideScale(ScaleType.USR_SCALE.of(UISettings.defFontScale.toDouble()))
+        return myIconProvider.getOrProvide(ctx)!!
+    }
+
+    protected open fun getFrameIcon(ctx: ScaleContext): Icon {
+        return AppUIUtil.loadSmallApplicationIcon(ctx, iconSize)
+    }
 
     protected val productIcon: JComponent by lazy {
         createProductIcon()
@@ -189,7 +196,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
             }
 
             override fun getMinimumSize(): Dimension {
-                return Dimension(icon.iconWidth, icon.iconHeight)
+                return Dimension(iconSize, iconSize)
             }
 
             override fun paint(g: Graphics?) {

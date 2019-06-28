@@ -5,17 +5,17 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
 import com.intellij.openapi.wm.impl.customFrameDecorations.ResizableCustomFrameTitleButtons
 import com.intellij.ui.awt.RelativeRectangle
+import com.intellij.ui.scale.ScaleContext
+import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.JBImageIcon
 import java.awt.Font
 import java.awt.Frame
 import java.awt.Toolkit
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowStateListener
 import java.util.*
-import javax.swing.Action
-import javax.swing.JFrame
-import javax.swing.JMenu
-import javax.swing.JSeparator
+import javax.swing.*
 
 open class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
     private val myIconifyAction: Action = CustomFrameAction("Minimize", AllIcons.Windows.MinimizeSmall) { iconify() }
@@ -32,6 +32,11 @@ open class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
             }
         }
      }
+
+    override fun getFrameIcon(ctx: ScaleContext): Icon {
+        val image = ImageUtil.ensureHiDPI(frame.iconImage, ctx)
+        return JBImageIcon(ImageUtil.scaleImage(image, iconSize, iconSize))
+    }
 
     override fun createButtonsPane(): CustomFrameTitleButtons = ResizableCustomFrameTitleButtons.create(myCloseAction,
             myRestoreAction, myIconifyAction, myMaximizeAction)
