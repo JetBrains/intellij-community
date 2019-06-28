@@ -11,6 +11,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
+import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.GuiUtils
 import com.intellij.util.ContentUtilEx
 import com.intellij.util.text.DateFormatUtil
@@ -118,6 +120,9 @@ class GitUpdateInfoAsLog(private val project: Project,
     val contentManager = ProjectLevelVcsManagerEx.getInstanceEx(project).contentManager!!
     ContentUtilEx.addTabbedContent(contentManager, panel, "Update Info", DateFormatUtil.formatDateTime(System.currentTimeMillis()),
                                    select, panel.getUi())
+    if (select) {
+      ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS).activate(null)
+    }
   }
 
   private inner class MyLogUiFactory(val logManager: VcsLogManager,
