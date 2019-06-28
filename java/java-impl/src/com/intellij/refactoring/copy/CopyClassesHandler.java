@@ -357,14 +357,18 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
           }
           continue;
         }
-        PsiClass[] classes = ((PsiClassOwner)createdFile).getClasses();
-        for (final PsiClass destination : classes) {
-          if (isSynthetic(destination)) {
-            continue;
+
+        List<PsiClass> nonSyntheticClasses = new ArrayList<>();
+        for (final PsiClass aClass : ((PsiClassOwner)createdFile).getClasses()) {
+          if (!isSynthetic(aClass)) {
+            nonSyntheticClasses.add(aClass);
           }
+        }
+
+        for (final PsiClass destination : nonSyntheticClasses) {
           PsiClass source = findByName(sources, destination.getName());
           if (source != null) {
-            final PsiClass copy = copy(source, classes.length > 1 ? null : copyClassName);
+            final PsiClass copy = copy(source, nonSyntheticClasses.size() > 1 ? null : copyClassName);
             PsiElement newElement = WriteAction.compute(() -> destination.replace(copy));
             oldToNewMap.put(source, newElement);
           }
