@@ -80,6 +80,18 @@ public class MergeChangeCollector {
     addAll(updatedFiles, FileGroup.REMOVED_FROM_REPOSITORY_ID, removed);
   }
 
+  /**
+   * @deprecated Use {@link #collect(UpdatedFiles)}
+   */
+  @Deprecated
+  public void collect(@NotNull UpdatedFiles updatedFiles, List<? super VcsException> exceptions) {
+    try {
+      collect(updatedFiles);
+    } catch (VcsException e) {
+      exceptions.add(e);
+    }
+  }
+
   public int calcUpdatedFilesCount() throws VcsException {
     String revisionsForDiff = getRevisionsForDiff();
     if (revisionsForDiff == null) {
