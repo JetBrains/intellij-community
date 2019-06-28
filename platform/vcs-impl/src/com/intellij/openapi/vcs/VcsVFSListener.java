@@ -3,6 +3,7 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.diagnostic.Logger;
@@ -104,9 +105,11 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   protected void installListeners() {
-    VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(), this);
-    VirtualFileManager.getInstance().addAsyncFileListener(new MyAsyncVfsListener(), this);
-    myProject.getMessageBus().connect(this).subscribe(CommandListener.TOPIC, new MyCommandAdapter());
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(), this);
+      VirtualFileManager.getInstance().addAsyncFileListener(new MyAsyncVfsListener(), this);
+      myProject.getMessageBus().connect(this).subscribe(CommandListener.TOPIC, new MyCommandAdapter());
+    });
 
     myProjectConfigurationFilesProcessor.install();
     myExternalFilesProcessor.install();
