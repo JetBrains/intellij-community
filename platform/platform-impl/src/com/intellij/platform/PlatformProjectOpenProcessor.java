@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.projectImport.ProjectAttachProcessor;
@@ -191,8 +192,11 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     Pair<Project, Module> result = null;
     if (frame == null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       Activity activity = StartUpMeasurer.start("show frame");
-      frame = ((WindowManagerImpl)WindowManager.getInstance()).showFrame();
+      IdeFrameImpl finalFrame = ((WindowManagerImpl)WindowManager.getInstance()).showFrame();
+      frame = finalFrame;
       activity.end();
+      // runProcessWithProgressSynchronously still processes EDT events
+      ApplicationManager.getApplication().invokeLater(() -> finalFrame.init(), ModalityState.any());
     }
 
     if (frame == null) {

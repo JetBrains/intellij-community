@@ -64,7 +64,30 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
   private final StatusPanel myInfoPanel = new StatusPanel();
   private final JPanel myRefreshAndInfoPanel = new JPanel();
-  private final AsyncProcessIcon myProgressIcon;
+  private final NotNullLazyValue<AsyncProcessIcon> myProgressIcon = new NotNullLazyValue<AsyncProcessIcon>() {
+    @NotNull
+    @Override
+    protected AsyncProcessIcon compute() {
+      AsyncProcessIcon icon = new AsyncProcessIcon("Background process");
+      icon.setOpaque(false);
+
+      icon.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mousePressed(MouseEvent e) {
+          handle(e);
+        }
+        @Override
+        public void mouseReleased(MouseEvent e) {
+          handle(e);
+        }
+      });
+
+      icon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      icon.setBorder(StatusBarWidget.WidgetBorder.INSTANCE);
+      icon.setToolTipText(ActionsBundle.message("action.ShowProcessWindow.double.click"));
+      return icon;
+    }
+  };
 
   private final List<ProgressIndicatorEx> myOriginals = new ArrayList<>();
   private final List<TaskInfo> myInfos = new ArrayList<>();
@@ -98,7 +121,6 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   };
 
   InfoAndProgressPanel() {
-
     setOpaque(false);
     setBorder(JBUI.Borders.empty());
 
@@ -108,24 +130,6 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     myRefreshAndInfoPanel.setOpaque(false);
     myRefreshAndInfoPanel.add(myRefreshIcon, BorderLayout.WEST);
     myRefreshAndInfoPanel.add(myInfoPanel, BorderLayout.CENTER);
-
-    myProgressIcon = new AsyncProcessIcon("Background process");
-    myProgressIcon.setOpaque(false);
-
-    myProgressIcon.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mousePressed(MouseEvent e) {
-        handle(e);
-      }
-      @Override
-      public void mouseReleased(MouseEvent e) {
-        handle(e);
-      }
-    });
-
-    myProgressIcon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    myProgressIcon.setBorder(StatusBarWidget.WidgetBorder.INSTANCE);
-    myProgressIcon.setToolTipText(ActionsBundle.message("action.ShowProcessWindow.double.click"));
 
     myUpdateQueue = new MergingUpdateQueue("Progress indicator", 50, true, MergingUpdateQueue.ANY_COMPONENT);
     myPopup = new ProcessPopup(this);
@@ -361,7 +365,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     progressCountPanel.add(labelComp, BorderLayout.CENTER);
 
     //myProgressIcon.setBorder(new IdeStatusBarImpl.MacStatusBarWidgetBorder());
-    progressCountPanel.add(myProgressIcon, BorderLayout.WEST);
+    progressCountPanel.add(myProgressIcon.getValue(), BorderLayout.WEST);
 
     add(myRefreshAndInfoPanel, BorderLayout.CENTER);
 
@@ -387,7 +391,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     inlinePanel.add(inlineComponent, BorderLayout.CENTER);
 
     //myProgressIcon.setBorder(new IdeStatusBarImpl.MacStatusBarWidgetBorder());
-    inlinePanel.add(myProgressIcon, BorderLayout.WEST);
+    inlinePanel.add(myProgressIcon.getValue(), BorderLayout.WEST);
 
     inline.updateProgressNow();
     inlinePanel.setOpaque(false);
@@ -622,18 +626,26 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   private void restoreEmptyStatusInner() {
     removeAll();
     updateProgressIcon();
-    Container iconParent = myProgressIcon.getParent();
+    AsyncProcessIcon progressIcon = myProgressIcon.isComputed() ? myProgressIcon.getValue() : null;
+    Container iconParent = progressIcon == null ? null : progressIcon.getParent();
     if (iconParent != null) {
-      iconParent.remove(myProgressIcon); // to prevent leaks to this removed parent via progress icon
+      // to prevent leaks to this removed parent via progress icon
+      iconParent.remove(progressIcon);
     }
   }
 
   private void updateProgressIcon() {
+    AsyncProcessIcon progressIcon = myProgressIcon.isComputed() ? myProgressIcon.getValue() : null;
+    if (progressIcon == null) {
+      return;
+    }
+
     if (myOriginals.isEmpty() || PowerSaveMode.isEnabled() ||
         myOriginals.stream().map(ProgressSuspender::getSuspender).allMatch(s -> s != null && s.isSuspended())) {
-      myProgressIcon.suspend();
-    } else {
-      myProgressIcon.resume();
+      progressIcon.suspend();
+    }
+    else {
+      progressIcon.resume();
     }
   }
 

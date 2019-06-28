@@ -427,7 +427,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
    */
   @NotNull
   public IdeFrameImpl showFrame() {
-    final IdeFrameImpl frame = new IdeFrameImpl();
+    IdeFrameImpl frame = new IdeFrameImpl();
     myProjectToFrame.put(null, frame);
 
     Rectangle frameBounds = validateFrameBounds(myDefaultFrameInfo.getBounds());
@@ -462,6 +462,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     IdeFrameImpl frame = myProjectToFrame.remove(null);
     if (frame == null) {
       frame = new IdeFrameImpl();
+      frame.init();
     }
 
     final FrameInfo frameInfo = ProjectFrameBounds.getInstance(project).getRawFrameInfo();
