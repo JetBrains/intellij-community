@@ -8,8 +8,6 @@ public final class ActivitySubNames {
   public static final String UPDATE_WINDOW_ICON = "update window icon";
   public static final String INIT_DEFAULT_LAF = "init default LaF";
 
-  public static final String REGISTER_BUNDLED_FONTS = "register bundled fonts";
-
   public static final String SETUP_SYSTEM_LIBS = "setup system libs";
   public static final String LOAD_SYSTEM_LIBS = "load system libs";
   public static final String FIX_PROCESS_ENV = "fix process env";

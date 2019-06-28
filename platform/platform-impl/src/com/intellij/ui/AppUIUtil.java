@@ -58,8 +58,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executor;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
@@ -225,38 +223,6 @@ public final class AppUIUtil {
     String wmClass = name.startsWith(VENDOR_PREFIX) ? name : VENDOR_PREFIX + name;
     if (PluginManagerCore.isRunningFromSources()) wmClass += "-debug";
     return wmClass;
-  }
-
-  public static void registerBundledFonts() {
-    if (!SystemProperties.getBooleanProperty("ide.register.bundled.fonts", true)) {
-      return;
-    }
-
-    String jvmVersion = System.getProperty("java.runtime.version");
-    if (jvmVersion.startsWith("11.") && "JetBrains s.r.o".equals(System.getProperty("java.vm.vendor"))) {
-      Matcher matcher = Pattern.compile("-b([\\d]+)(?:.([\\d])+)?$").matcher(jvmVersion);
-      if (matcher.find() && Integer.parseInt(matcher.group(1)) >= 296) {
-        return;
-      }
-    }
-
-    Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.REGISTER_BUNDLED_FONTS);
-
-    File fontDir = PluginManagerCore.isRunningFromSources()
-                   ? new File(PathManager.getCommunityHomePath(), "platform/platform-resources/src/fonts")
-                   : null;
-
-    registerFont("Inconsolata.ttf", fontDir);
-    registerFont("SourceCodePro-Regular.ttf", fontDir);
-    registerFont("SourceCodePro-Bold.ttf", fontDir);
-    registerFont("SourceCodePro-It.ttf", fontDir);
-    registerFont("SourceCodePro-BoldIt.ttf", fontDir);
-    registerFont("FiraCode-Regular.ttf", fontDir);
-    registerFont("FiraCode-Bold.ttf", fontDir);
-    registerFont("FiraCode-Light.ttf", fontDir);
-    registerFont("FiraCode-Medium.ttf", fontDir);
-    registerFont("FiraCode-Retina.ttf", fontDir);
-    activity.end();
   }
 
   private static void registerFont(@NotNull String name, @Nullable File fontDir) {
