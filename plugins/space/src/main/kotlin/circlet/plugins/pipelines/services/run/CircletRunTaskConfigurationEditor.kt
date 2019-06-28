@@ -7,7 +7,8 @@ import javax.swing.*
 class CircletRunTaskConfigurationEditor : SettingsEditor<CircletRunConfiguration>() {
     private val taskNameField = JBTextField()
     override fun resetEditorFrom(s: CircletRunConfiguration) {
-        taskNameField.text = s.settings.taskName
+        val options = s.options
+        taskNameField.text = options.taskName
     }
 
     override fun createEditor(): JComponent {
@@ -19,6 +20,7 @@ class CircletRunTaskConfigurationEditor : SettingsEditor<CircletRunConfiguration
     }
 
     override fun applyEditorTo(s: CircletRunConfiguration) {
-        s.settings.taskName = taskNameField.text
+        val options = s.options
+        options.taskName = taskNameField.text
     }
 }
