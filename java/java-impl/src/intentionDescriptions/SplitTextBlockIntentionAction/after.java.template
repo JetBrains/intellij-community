@@ -1,4 +1,0 @@
-String s = <spot>"""
-                 Hello, """ + """
-                 world!
-                 """</spot>;
