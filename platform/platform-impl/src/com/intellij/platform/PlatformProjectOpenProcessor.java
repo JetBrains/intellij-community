@@ -188,12 +188,16 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     Pair<Project, Module> result = null;
     IdeFrame frame = null;
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      Activity activity = StartUpMeasurer.start("show frame");
+      Activity showFrameActivity = StartUpMeasurer.start("show frame");
       IdeFrameImpl finalFrame = ((WindowManagerImpl)WindowManager.getInstance()).showFrame();
       frame = finalFrame;
-      activity.end();
+      showFrameActivity.end();
       // runProcessWithProgressSynchronously still processes EDT events
-      ApplicationManager.getApplication().invokeLater(() -> finalFrame.init(), ModalityState.any());
+      ApplicationManager.getApplication().invokeLater(() -> {
+        Activity activity = StartUpMeasurer.start("init frame");
+        finalFrame.init();
+        activity.end();
+      }, ModalityState.any());
     }
 
     if (frame == null) {

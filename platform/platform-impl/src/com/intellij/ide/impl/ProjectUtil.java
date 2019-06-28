@@ -109,7 +109,7 @@ public class ProjectUtil {
       return strong.doOpenProject(virtualFile, projectToClose, forceOpenInNewFrame);
     }
 
-    if (ProjectKt.isValidProjectPath(path)) {
+    if (isValidProjectPath(virtualFile)) {
       return openProject(path, projectToClose, forceOpenInNewFrame);
     }
 
@@ -369,5 +369,15 @@ public class ProjectUtil {
       }
     }
     return result;
+  }
+
+  public static boolean isValidProjectPath(VirtualFile file) {
+    if (file.isDirectory()) {
+      VirtualFile child = file.findChild(Project.DIRECTORY_STORE_FOLDER);
+      return child != null && child.isValid();
+    }
+    else {
+      return StringUtil.endsWith(file.getNameSequence(), ProjectFileType.DOT_DEFAULT_EXTENSION);
+    }
   }
 }

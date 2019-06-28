@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.platform.CommandLineProjectOpenProcessor;
-import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
@@ -46,8 +45,8 @@ public class CommandLineProcessor {
 
   @NotNull
   private static Pair<Project, Future<? extends CliResult>> doOpenFileOrProject(VirtualFile file, boolean shouldWait) {
-    String path = file.getPath();
-    if (ProjectKt.isValidProjectPath(path) || ProjectOpenProcessor.getImportProvider(file) != null) {
+    if (ProjectUtil.isValidProjectPath(file) || ProjectOpenProcessor.getImportProvider(file) != null) {
+      String path = file.getPath();
       Project project = ProjectUtil.openOrImport(path, null, true);
       if (project == null) {
         final String message = "Cannot open project '" + FileUtil.toSystemDependentName(path) + "'";
