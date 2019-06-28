@@ -70,10 +70,10 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   void "test match action by parent and grandparent group name"() {
-    def extractMethod = ActionManager.instance.getAction("ExtractMethod")
-    assert actionMatches('method', extractMethod) == MatchMode.NAME
-    assert actionMatches('extract method', extractMethod) == MatchMode.GROUP
-    assert actionMatches('refactor method', extractMethod) == MatchMode.GROUP
+    def extractMethod = ActionManager.instance.getAction("IntroduceVariable")
+    assert actionMatches('variable', extractMethod) == MatchMode.NAME
+    assert actionMatches('extract variable', extractMethod) == MatchMode.GROUP
+    assert actionMatches('refactor variable', extractMethod) == MatchMode.GROUP
   }
 
   void "test matched value comparator"() {
