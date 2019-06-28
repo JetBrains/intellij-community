@@ -85,6 +85,28 @@ public abstract class JavaTestFramework implements TestFramework {
 
   @Nullable
   protected abstract PsiMethod findTearDownMethod(@NotNull PsiClass clazz);
+  
+  @Nullable
+  @Override
+  public PsiElement findBeforeClassMethod(@NotNull PsiElement clazz) {
+    return clazz instanceof PsiClass ? findBeforeClassMethod((PsiClass)clazz) : null;
+  }
+
+  @Nullable
+  protected PsiMethod findBeforeClassMethod(@NotNull PsiClass clazz) {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public PsiElement findAfterClassMethod(@NotNull PsiElement clazz) {
+    return clazz instanceof PsiClass ? findAfterClassMethod((PsiClass)clazz) : null;
+  }
+
+  @Nullable
+  protected PsiMethod findAfterClassMethod(@NotNull PsiClass clazz) {
+    return null;
+  }
 
   @Override
   public PsiElement findOrCreateSetUpMethod(@NotNull PsiElement clazz) throws IncorrectOperationException {
