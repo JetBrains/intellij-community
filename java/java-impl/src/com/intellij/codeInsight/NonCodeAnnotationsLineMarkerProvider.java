@@ -141,7 +141,7 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
                                action instanceof PriorityAction ? ((PriorityAction)action).getPriority() : PriorityAction.Priority.NORMAL)
                   .thenComparing(IntentionAction::getText);
       return Stream.of(IntentionManager.getInstance().getAvailableIntentionActions())
-                   .map(action -> action instanceof IntentionActionDelegate ? ((IntentionActionDelegate)action).getDelegate() : action)
+                   .map(action -> IntentionActionDelegate.unwrap(action))
                    .filter(action -> shouldShowInGutterPopup(action) && action.isAvailable(project, editor, file))
                    .sorted(comparator)
                    .map(action -> new ApplyIntentionAction(action, action.getText(), editor, file))

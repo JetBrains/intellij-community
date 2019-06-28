@@ -86,7 +86,7 @@ public class EmptyIntentionInspectionQuickFixTest extends LightQuickFixTestCase 
     List<IntentionAction> emptyActions = getAvailableActions();
     for (int i = emptyActions.size()-1; i>=0; i--) {
       IntentionAction action = emptyActions.get(i);
-      if (action instanceof IntentionActionDelegate) action = ((IntentionActionDelegate)action).getDelegate();
+      action = IntentionActionDelegate.unwrap(action);
       if (!(action instanceof EmptyIntentionAction)) emptyActions.remove(i);
     }
     assertEquals(emptyActions.toString(), 1, emptyActions.size());
@@ -97,8 +97,7 @@ public class EmptyIntentionInspectionQuickFixTest extends LightQuickFixTestCase 
     List<IntentionAction> emptyActions = getAvailableActions();
     int i = 0;
     for(;i < emptyActions.size(); i++) {
-      IntentionAction action = emptyActions.get(i);
-      if (action instanceof IntentionActionDelegate) action = ((IntentionActionDelegate)action).getDelegate();
+      IntentionAction action = IntentionActionDelegate.unwrap(emptyActions.get(i));
       if ("Make 'i' not final".equals(action.getText())) {
         break;
       }
@@ -108,8 +107,7 @@ public class EmptyIntentionInspectionQuickFixTest extends LightQuickFixTestCase 
     }
     assertTrue(i < emptyActions.size());
     for (; i < emptyActions.size(); i++) {
-      IntentionAction action = emptyActions.get(i);
-      if (action instanceof IntentionActionDelegate) action = ((IntentionActionDelegate)action).getDelegate();
+      IntentionAction action = IntentionActionDelegate.unwrap(emptyActions.get(i));
       if (action instanceof EditInspectionToolsSettingsAction) {
         return;
       }

@@ -86,7 +86,7 @@ public class ActionHint {
              infoSupplier.get());
       }
       else if(myHighlightType != null) {
-        if (result instanceof IntentionActionDelegate) result = ((IntentionActionDelegate)result).getDelegate();
+        result = IntentionActionDelegate.unwrap(result);
         if(!(result instanceof QuickFixWrapper)) {
           fail(exceptionHeader() + " is not a LocalQuickFix, but " + result.getClass().getName() +
                "\nExpected LocalQuickFix with ProblemHighlightType=" + myHighlightType + "\n" +

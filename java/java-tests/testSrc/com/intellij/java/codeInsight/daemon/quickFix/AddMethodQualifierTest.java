@@ -86,7 +86,7 @@ public class AddMethodQualifierTest extends JavaCodeInsightFixtureTestCase {
     final List<IntentionAction> availableIntentions = myFixture.getAvailableIntentions();
     AddMethodQualifierFix addMethodQualifierFix = null;
     for (IntentionAction action : availableIntentions) {
-      if (action instanceof IntentionActionDelegate) action = ((IntentionActionDelegate)action).getDelegate();
+      action = IntentionActionDelegate.unwrap(action);
       if (action instanceof AddMethodQualifierFix) {
         addMethodQualifierFix = (AddMethodQualifierFix)action;
         break;
