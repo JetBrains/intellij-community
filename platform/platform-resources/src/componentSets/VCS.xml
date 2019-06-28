@@ -87,8 +87,8 @@
     </component>
   </project-components>
   <extensions defaultExtensionNs="com.intellij">
-    <fileTypeFactory
-        implementation="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreFileTypeFactory"/>
+    <fileType language="IgnoreLang" extensions="ignore" fieldName="INSTANCE" name="IgnoreLang file"
+              implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreFileType"/>
     <psi.referenceContributor language="IgnoreLang"
                               implementation="com.intellij.openapi.vcs.changes.ignore.reference.IgnoreReferenceContributor"/>
 
