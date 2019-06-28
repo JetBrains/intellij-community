@@ -1160,7 +1160,7 @@ public class KeyVO {
 
     def presentation = LookupElementPresentation.renderElement(myFixture.lookupElements[0])
     assertEquals 'Util.bar', presentation.itemText
-    assertEquals '() (bar)', presentation.tailText
+    assertEquals '() bar', presentation.tailText
     assert !presentation.tailGrayed
 
     myFixture.type 'f\n'

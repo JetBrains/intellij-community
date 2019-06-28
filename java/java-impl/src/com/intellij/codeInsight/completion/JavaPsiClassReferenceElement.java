@@ -133,7 +133,7 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
 
   @Override
   public void renderElement(LookupElementPresentation presentation) {
-    renderClassItem(presentation, this, getObject(), false, " (" + myPackageDisplayName + ")", mySubstitutor);
+    renderClassItem(presentation, this, getObject(), false, " " + myPackageDisplayName, mySubstitutor);
   }
 
   public static void renderClassItem(LookupElementPresentation presentation, LookupElement item, PsiClass psiClass, boolean diamond,
@@ -163,7 +163,7 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
   }
 
   public String getLocationString() {
-    return " (" + myPackageDisplayName + ")";
+    return " " + myPackageDisplayName;
   }
 
   private static String getName(final PsiClass psiClass, final LookupElement item, boolean diamond, @NotNull PsiSubstitutor substitutor) {
@@ -189,7 +189,7 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
     return StringUtil.notNullize(name);
   }
 
-  @Nullable
+  @NotNull
   private static String formatTypeParameters(@NotNull final PsiSubstitutor substitutor, final PsiTypeParameter[] params) {
     final boolean space = showSpaceAfterComma(params[0]);
     StringBuilder buffer = new StringBuilder();

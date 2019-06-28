@@ -90,14 +90,14 @@ class NormalCompletionTest extends NormalCompletionTestCase {
     configure()
     LookupElementPresentation presentation = renderElement(myItems[0])
     assert "Param" == presentation.itemText
-    assert presentation.tailText == " (type parameter of Foo)"
+    assert presentation.tailText == " type parameter of Foo"
     assert !presentation.typeText
     assert !presentation.icon
     assert !presentation.itemTextBold
 
     presentation = renderElement(myItems[1])
     assert "Param2" == presentation.itemText
-    assert presentation.tailText == " (type parameter of goo)"
+    assert presentation.tailText == " type parameter of goo"
   }
 
   void testDisplayDefaultValueInAnnotationMethods() {

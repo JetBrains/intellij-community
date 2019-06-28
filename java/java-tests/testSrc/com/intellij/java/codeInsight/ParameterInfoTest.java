@@ -362,7 +362,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
                        "class Bar2 {}");
     myFixture.configureByText("a.java", "class Foo {{ new Bar<caret> }}");
     LookupElement[] elements = myFixture.completeBasic();
-    assertEquals("(boolean a) (default package)", LookupElementPresentation.renderElement(elements[2]).getTailText());
+    assertEquals("(boolean a) default package", LookupElementPresentation.renderElement(elements[2]).getTailText());
     myFixture.getLookup().setCurrentItem(elements[2]);
     myFixture.type('\n');
     myFixture.checkResult("class Foo {{ new Bar(<caret>) }}");
