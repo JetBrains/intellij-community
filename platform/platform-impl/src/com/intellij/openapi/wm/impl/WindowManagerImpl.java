@@ -424,6 +424,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   /**
    * This method is called when there is some opened project (IDE will not open Welcome Frame, but project).
+   *
+   * {@link IdeFrameImpl#init()} must be called explicitly.
    */
   @NotNull
   public IdeFrameImpl showFrame() {

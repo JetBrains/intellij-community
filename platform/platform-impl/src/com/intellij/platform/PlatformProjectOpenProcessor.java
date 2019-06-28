@@ -134,16 +134,6 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
                                       int line,
                                       @Nullable ProjectOpenedCallback callback,
                                       @NotNull EnumSet<Option> options) {
-    return doOpenProject(virtualFile, projectToClose, line, callback, options, null);
-  }
-
-  @Nullable
-  public static Project doOpenProject(@NotNull VirtualFile virtualFile,
-                                      @Nullable Project projectToClose,
-                                      int line,
-                                      @Nullable ProjectOpenedCallback callback,
-                                      @NotNull EnumSet<Option> options,
-                                      @Nullable IdeFrame frame) {
     VirtualFile baseDir = virtualFile;
     boolean dummyProject = false;
     String dummyProjectName = null;
@@ -196,7 +186,8 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     }
 
     Pair<Project, Module> result = null;
-    if (frame == null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    IdeFrame frame = null;
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       Activity activity = StartUpMeasurer.start("show frame");
       IdeFrameImpl finalFrame = ((WindowManagerImpl)WindowManager.getInstance()).showFrame();
       frame = finalFrame;
