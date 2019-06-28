@@ -49,8 +49,9 @@ public class MappingsToRoots {
     final AbstractVcs.RootsConvertor convertor = vcs.getCustomConvertor();
     final List<VirtualFile> result = convertor != null ? convertor.convertRoots(mappings) : mappings;
 
-    Collections.sort(result, FilePathComparator.getInstance());
     if (!vcs.allowsNestedRoots()) {
+      Collections.sort(result, FilePathComparator.getInstance());
+
       ApplicationManager.getApplication().runReadAction(() -> {
         final FileIndexFacade facade = ServiceManager.getService(myProject, FileIndexFacade.class);
         int i = 1;
@@ -84,8 +85,6 @@ public class MappingsToRoots {
       NewMappings.MappedRoot root = myMappings.getMappedRootFor(file);
       return root != null && vcs.equals(root.vcs);
     });
-
-    Collections.sort(roots, FilePathComparator.getInstance());
 
     List<VirtualFile> modulesToAdd = ApplicationManager.getApplication().runReadAction((Computable<List<VirtualFile>>)() -> {
       final FileIndexFacade facade = ServiceManager.getService(myProject, FileIndexFacade.class);
