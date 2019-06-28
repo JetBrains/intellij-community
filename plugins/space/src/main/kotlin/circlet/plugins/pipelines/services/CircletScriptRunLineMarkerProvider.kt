@@ -1,10 +1,10 @@
 package circlet.plugins.pipelines.services
 
+import circlet.plugins.pipelines.services.run.*
 import com.intellij.execution.*
 import com.intellij.execution.lineMarker.*
 import com.intellij.icons.*
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.ui.*
 import com.intellij.psi.*
 import org.jetbrains.kotlin.idea.refactoring.fqName.*
 import org.jetbrains.kotlin.idea.references.*
@@ -27,7 +27,7 @@ class CircletScriptRunLineMarkerProvider : RunLineMarkerContributor() {
                             if (taskName != null) {
                                 val runAction = object : AnAction(ExecutionBundle.message("run.configurable.display.name"), null, AllIcons.RunConfigurations.TestState.Run) {
                                     override fun actionPerformed(e: AnActionEvent) {
-                                        Messages.showInfoMessage("run task: $taskName", "circlet")
+                                        CircletRunConfigurationUtils.run(taskName, element.project)
                                     }
                                 }
                                 return Info(runAction)
