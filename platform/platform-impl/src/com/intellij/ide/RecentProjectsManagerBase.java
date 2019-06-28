@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.SystemDock;
 import com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectPanel;
 import com.intellij.platform.PlatformProjectOpenProcessor;
-import com.intellij.project.ProjectKt;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -607,8 +606,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
 
   @Override
   public boolean willReopenProjectOnStart() {
-    @SystemIndependent String lastProjectPath = getLastProjectPath();
-    return lastProjectPath != null && GeneralSettings.getInstance().isReopenLastProject() && ProjectKt.isValidProjectPath(lastProjectPath, true);
+    return getLastProjectPath() != null && GeneralSettings.getInstance().isReopenLastProject();
   }
 
   @Override
