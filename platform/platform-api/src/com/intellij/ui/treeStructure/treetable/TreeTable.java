@@ -6,6 +6,7 @@ import com.intellij.ui.TableUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -312,7 +313,7 @@ public class TreeTable extends JBTable {
               }
             }
             if (!selectionPaths.isEmpty()) {
-              addSelectionPaths(selectionPaths.toArray(new TreePath[0]));
+              addSelectionPaths(selectionPaths.toArray(TreeUtil.EMPTY_TREE_PATH));
             }
           }
         }

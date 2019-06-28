@@ -977,11 +977,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     }
 
     private void restoreExpandedState(List<Object> toRestore) {
-      TreePath[] selected = myTree.getSelectionPaths();
-      if (selected == null) {
-        selected = new TreePath[0];
-      }
-
+      List<TreePath> selected = TreeUtil.collectSelectedPaths(myTree);
       List<TreePath> toCollapse = new ArrayList<>();
 
       for (int eachRow = 0; eachRow < myTree.getRowCount(); eachRow++) {

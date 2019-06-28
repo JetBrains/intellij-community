@@ -54,6 +54,7 @@ import java.util.*;
 
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.DIRECTORY_GROUPING;
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.MODULE_GROUPING;
+import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.ar;
 import static com.intellij.util.containers.ContainerUtil.set;
@@ -734,7 +735,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       }
       return true;
     });
-    setSelectionPaths(treeSelection.toArray(new TreePath[0]));
+    setSelectionPaths(toTreePathArray(treeSelection));
     if (treeSelection.size() == 1) scrollPathToVisible(treeSelection.get(0));
   }
 

@@ -9,9 +9,12 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Stream;
+
+import static com.intellij.util.ui.tree.TreeUtil.EMPTY_TREE_PATH;
 
 public class TreePathUtil {
   /**
@@ -187,6 +190,10 @@ public class TreePathUtil {
 
   private static <I, O> O convert(I object, @NotNull Function<? super I, ? extends O> converter) {
     return object == null ? null : converter.apply(object);
+  }
+
+  public static TreePath[] toTreePathArray(@NotNull Collection<TreePath> collection) {
+    return collection.isEmpty() ? EMPTY_TREE_PATH : collection.toArray(EMPTY_TREE_PATH);
   }
 
   public static TreeNode toTreeNode(TreePath path) {

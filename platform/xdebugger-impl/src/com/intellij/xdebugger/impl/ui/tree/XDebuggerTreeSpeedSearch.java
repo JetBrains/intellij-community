@@ -102,7 +102,6 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
         .expand(n -> myComponent.isExpanded(n) || n.getPathCount() - initialLevel < SEARCH_DEPTH)
         .traverse()
         .filter(o -> !(o.getLastPathComponent() instanceof LoadingNode))
-        .toList()
-        .toArray(new TreePath[0]);
+        .toArray(TreeUtil.EMPTY_TREE_PATH);
   }
 }

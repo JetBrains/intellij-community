@@ -52,6 +52,7 @@ import static com.intellij.util.ReflectionUtil.getDeclaredMethod;
 import static java.util.stream.Collectors.toList;
 
 public final class TreeUtil {
+  public static final TreePath[] EMPTY_TREE_PATH = new TreePath[0];
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.tree.TreeUtil");
   private static final String TREE_UTIL_SCROLL_TIME_STAMP = "TreeUtil.scrollTimeStamp";
   private static final JBIterable<Integer> NUMBERS = JBIterable.generate(0, i -> i + 1);
@@ -358,20 +359,20 @@ public final class TreeUtil {
     for (final TreePath path : paths) {
       if (!result.contains(path)) result.add(path);
     }
-    return result.toArray(new TreePath[0]);
+    return result.toArray(EMPTY_TREE_PATH);
   }
 
   @NotNull
   public static TreePath[] selectMaximals(@Nullable final TreePath[] paths) {
-    if (paths == null) return new TreePath[0];
+    if (paths == null) return EMPTY_TREE_PATH;
     final TreePath[] noDuplicates = removeDuplicates(paths);
     final ArrayList<TreePath> result = new ArrayList<>();
     for (final TreePath path : noDuplicates) {
       final ArrayList<TreePath> otherPaths = new ArrayList<>(Arrays.asList(noDuplicates));
       otherPaths.remove(path);
-      if (!isDescendants(path, otherPaths.toArray(new TreePath[0]))) result.add(path);
+      if (!isDescendants(path, otherPaths.toArray(EMPTY_TREE_PATH))) result.add(path);
     }
-    return result.toArray(new TreePath[0]);
+    return result.toArray(EMPTY_TREE_PATH);
   }
 
   public static void sort(@NotNull final DefaultTreeModel model, @Nullable Comparator comparator) {
@@ -421,7 +422,7 @@ public final class TreeUtil {
 
   public static void selectPaths(@NotNull JTree tree, @NotNull Collection<? extends TreePath> paths) {
     if (paths.isEmpty()) return;
-    selectPaths(tree, paths.toArray(new TreePath[0]));
+    selectPaths(tree, paths.toArray(EMPTY_TREE_PATH));
   }
 
   public static void selectPaths(@NotNull JTree tree, @NotNull TreePath... paths) {
@@ -1173,7 +1174,7 @@ public final class TreeUtil {
     if (toRetain == null) return;
 
     TreePath[] selection = tree.getSelectionModel().getSelectionPaths();
-    selection = selection == null ? new TreePath[0] : selection;
+    selection = selection == null ? EMPTY_TREE_PATH : selection;
     for (TreePath each : selection) {
       if (toRetain.equals(each)) continue;
       tree.getSelectionModel().removeSelectionPath(each);
@@ -1486,7 +1487,7 @@ public final class TreeUtil {
   private static void internalSelectPaths(@NotNull JTree tree, @NotNull List<? extends TreePath> paths) {
     assert EventQueue.isDispatchThread();
     if (paths.isEmpty()) return;
-    tree.setSelectionPaths(paths.toArray(new TreePath[0]));
+    tree.setSelectionPaths(paths.toArray(EMPTY_TREE_PATH));
     for (TreePath path : paths) {
       if (scrollToVisible(tree, path, true)) {
         break;
