@@ -10,7 +10,7 @@ import java.util.ArrayList
 import javax.swing.JComponent
 import javax.swing.JFrame
 
-class CustomDecorationPath(val frame: JFrame) : SelectedEditorFilePath() {
+class CustomDecorationPath(val frame: JFrame, project: Project) : SelectedEditorFilePath(project) {
   private val titleChangeListener = PropertyChangeListener{
     updateProjectName()
   }
@@ -22,7 +22,7 @@ class CustomDecorationPath(val frame: JFrame) : SelectedEditorFilePath() {
   }
 
   fun getListenerBounds(): List<RelativeRectangle> {
-    return if (isClipped()) {
+    return if (!isClipped()) {
       emptyList()
     }
     else {

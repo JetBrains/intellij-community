@@ -6,10 +6,9 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.impl.IdeMenuBar
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.CustomDecorationPath
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.CustomDecorationTitle
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
@@ -24,7 +23,7 @@ import javax.swing.border.Border
 import javax.swing.event.ChangeListener
 
 class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
-  private val mySelectedEditorFilePath: CustomDecorationPath
+  private val customDecorationTitle: CustomDecorationTitle
   private val myIdeMenu: IdeMenuBar
   private var changeListener: ChangeListener
 
@@ -48,7 +47,7 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
     val pane = JPanel(MigLayout("fillx, ins 0, novisualpadding", "[pref!][]"))
     pane.isOpaque = false
     setCustomFrameTopBorder({ myState != Frame.MAXIMIZED_VERT && myState != Frame.MAXIMIZED_BOTH }, {true})
-    mySelectedEditorFilePath = CustomDecorationPath(frame)
+    customDecorationTitle = CustomDecorationTitle(frame)
     relayoutFrameHeader(pane, true)
 
     val mainMenuUpdater = UISettingsListener {
@@ -75,19 +74,14 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
     if (showMainMenu) {
       pane.add(myIdeMenu, "wmin 0, wmax pref, top, hmin $MIN_HEIGHT")
     }
-    pane.add(mySelectedEditorFilePath.getView(), "center, growx, wmin 0, gapbefore $H_GAP, gapafter $H_GAP, gapbottom 1")
+    pane.add(customDecorationTitle.getView(), "center, growx, wmin 0, gapbefore $H_GAP, gapafter $H_GAP, gapbottom 1")
     add(pane, "wmin 0, growx")
     add(buttonPanes.getView(), "top, wmin pref")
   }
 
-  override fun setProject(project: Project) {
-    super.setProject(project)
-    mySelectedEditorFilePath.setProject(project)
-  }
-
   override fun updateActive() {
     super.updateActive()
-    mySelectedEditorFilePath.setActive(myActive)
+    customDecorationTitle.setActive(myActive)
   }
 
   override fun installListeners() {
@@ -112,7 +106,7 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
     }
 
     hitTestSpots.add(RelativeRectangle(myIdeMenu, menuRect))
-    hitTestSpots.addAll(mySelectedEditorFilePath.getListenerBounds())
+    hitTestSpots.addAll(customDecorationTitle.getListenerBounds())
 
     return hitTestSpots
   }
