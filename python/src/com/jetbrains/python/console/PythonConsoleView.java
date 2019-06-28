@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
 import com.intellij.execution.console.ConsolePromptDecorator;
@@ -82,7 +82,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
    */
   public PythonConsoleView(final Project project, final String title, @Nullable final Sdk sdk, final boolean testMode) {
     super(project, title, PythonLanguage.getInstance());
-    ConsolePromptDecorator promptDecorator = getConsolePromptDecorator();
     myTestMode = testMode;
     isShowVars = PyConsoleOptions.getInstance(project).isShowVariableByDefault();
     VirtualFile virtualFile = getVirtualFile();
@@ -103,8 +102,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     }
     myPyHighlighter = new PyHighlighter(languageLevel);
     myScheme = getConsoleEditor().getColorsScheme();
-    PythonConsoleData data = PyConsoleUtil.getOrCreateIPythonData(getVirtualFile());
-    promptDecorator.setIndentPrompt((data.isIPythonEnabled()) ? PyConsoleUtil.IPYTHON_INDENT_PROMPT : PyConsoleUtil.INDENT_PROMPT);
   }
 
   public void setConsoleCommunication(final ConsoleCommunication communication) {
