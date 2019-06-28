@@ -28,11 +28,8 @@ interface VcsCloneDialogExtensionComponent {
 
   /**
    * Perform primary clone/checkout action.
-   * would be called from [com.intellij.openapi.ui.DialogWrapper.doOKAction] when extension is selected
-   *
-   * @see com.intellij.openapi.ui.DialogWrapper.doOKAction
    */
-  fun doOk()
+  fun doClone()
 
   /**
    * would be called from [com.intellij.openapi.ui.DialogWrapper.doValidateAll] when extension is selected

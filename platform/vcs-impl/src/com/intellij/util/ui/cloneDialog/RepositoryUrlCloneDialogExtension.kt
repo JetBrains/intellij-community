@@ -75,7 +75,7 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
       return this
     }
 
-    override fun doOk() {
+    override fun doClone() {
       val listener = ProjectLevelVcsManager.getInstance(project).compositeCheckoutListener
       getCurrentVcsComponent()?.doClone(project, listener)
     }

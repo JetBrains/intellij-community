@@ -18,8 +18,9 @@ class RunVcsCloneDialogAction : DumbAwareAction("Get from Version Control") {
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT) ?: ProjectManager.getInstance().defaultProject
-    VcsCloneDialog.Builder(project)
-      .forExtension()
-      .showAndGet()
+    val cloneDialog = VcsCloneDialog.Builder(project).forExtension()
+    if (cloneDialog.showAndGet()) {
+      cloneDialog.doClone()
+    }
   }
 }

@@ -80,13 +80,13 @@ internal class VcsCloneDialog private constructor(private val project: Project,
   override fun isOKActionEnabled(): Boolean {
     return getSelectedComponent()?.isOkEnabled() ?: false
   }
-
-  override fun doOKAction() {
-    getSelectedComponent()?.doOk()
-  }
-
+  
   override fun doValidateAll(): List<ValidationInfo> {
     return getSelectedComponent()?.doValidateAll() ?: emptyList()
+  }
+
+  fun doClone() {
+    getSelectedComponent()?.doClone()
   }
 
   private fun switchComponent(extension: VcsCloneDialogExtension) {
