@@ -210,7 +210,12 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
   // purpose of delayed init - to show project frame as earlier as possible (and start loading of project too) and use it as project loading "splash"
   // show frame -> start project loading (performed in a pooled thread) -> do UI tasks while project loading
   public void init() {
-    myRootPane.init(this);
+    IdeRootPane rootPane = myRootPane;
+    if (rootPane == null) {
+      return;
+    }
+
+    rootPane.init(this);
 
     // to show window thumbnail under Macs
     // http://lists.apple.com/archives/java-dev/2009/Dec/msg00240.html
