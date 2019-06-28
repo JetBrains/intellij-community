@@ -390,6 +390,10 @@ public final class IconLoader {
    */
   @Nullable
   public static Icon getDisabledIcon(Icon icon) {
+    if (!ourIsActivated) {
+      return icon;
+    }
+
     if (icon instanceof LazyIcon) icon = ((LazyIcon)icon).getOrComputeIcon();
     if (icon == null) return null;
 
