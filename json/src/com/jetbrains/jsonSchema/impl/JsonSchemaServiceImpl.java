@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,7 +35,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class JsonSchemaServiceImpl implements JsonSchemaService {
+public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTracker {
   private static final Logger LOG = Logger.getInstance(JsonSchemaServiceImpl.class);
 
   @NotNull private final Project myProject;
@@ -65,6 +66,11 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     });
     JsonSchemaVfsListener.startListening(project, this, connection);
     myCatalogManager.startUpdates();
+  }
+
+  @Override
+  public long getModificationCount() {
+    return myAnyChangeCount.get();
   }
 
   @NotNull
