@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.testframework.sm;
 
+import com.intellij.execution.impl.ConsoleBuffer;
 import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.sm.runner.OutputEventSplitter;
@@ -30,6 +31,7 @@ import org.hamcrest.core.IsCollectionContaining;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
+import java.text.ParseException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -70,6 +72,32 @@ public class OutputLineSplitterTest extends LightPlatformTestCase {
         }
       }
     };
+  }
+
+  public void testLongText() {
+    final int maxSize = ConsoleBuffer.getCycleBufferSize();
+    final String string = "abc";
+    final String longString = StringUtil.repeat(string, maxSize);
+    mySplitter.process(longString, ProcessOutputType.STDOUT);
+    final String shortenedLine = myOutput.get(ProcessOutputTypes.STDOUT).toList().get(0);
+    Assert.assertEquals(shortenedLine.length(), maxSize);
+    Assert.assertTrue(shortenedLine.startsWith(string));
+  }
+
+  public void testLongMessage() throws ParseException {
+    final int maxSize = ConsoleBuffer.getCycleBufferSize();
+    final String string = "abc|n";
+    final String longString = StringUtil.repeat(string, maxSize);
+    final String junk = "QWE";
+    final String message =
+      String.format("##teamcity[testFailed name='someTest' expected='%s' actual='%s']\n", longString, longString.replaceFirst("abc", junk));
+
+    mySplitter.process(message, ProcessOutputType.STDOUT);
+    final String shortenedLine = myOutput.get(ProcessOutputTypes.STDOUT).toList().get(0);
+    final ServiceMessage shortenedMessage = ServiceMessage.parse(shortenedLine);
+    Assert.assertTrue("Failed to shorten message", shortenedMessage.toString().length() <= maxSize);
+    final Map<String, String> attrs = shortenedMessage.getAttributes();
+    Assert.assertEquals(attrs.get("expected").replaceFirst("abc", junk), attrs.get("actual"));
   }
 
 
