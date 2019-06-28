@@ -2,7 +2,6 @@ package circlet.plugins.pipelines.services
 
 import circlet.pipelines.config.dsl.scriptdefinition.*
 import circlet.plugins.pipelines.utils.*
-import klogging.*
 import java.io.*
 import kotlin.script.experimental.intellij.*
 
