@@ -25,7 +25,7 @@ import javax.swing.JPanel
 import javax.swing.plaf.FontUIResource
 
 
-open class SelectedEditorFilePath {
+open class SelectedEditorFilePath(val project: Project) {
   companion object {
     const val fileSeparatorChar = '\\'
     const val ellipsisSymbol = "\u2026"
@@ -36,22 +36,18 @@ open class SelectedEditorFilePath {
   private var clippedProjectName: String = ""
 
   fun isClipped(): Boolean {
-    return clippedText.equals(path)
+    return !clippedText.equals(path)
   }
 
-  private var added = false
-
-  protected val projectLabel = object : JLabel(){
+  protected val projectLabel = object : JLabel() {
     override fun addNotify() {
       super.addNotify()
-      added = true
-      updateListeners()
+      installListeners()
     }
 
     override fun removeNotify() {
       super.removeNotify()
-      added = false
-      updateListeners()
+      unInstallListeners()
     }
 
     override fun setFont(font: Font) {
@@ -62,15 +58,15 @@ open class SelectedEditorFilePath {
   }
 
   protected val classTitle = JLabel()
-  protected val productTitle = JLabel()
-  protected val productVersionTitle = JLabel()
+  private val productTitle = JLabel()
+  private val productVersionTitle = JLabel()
 
   private fun fontUIResource(font: Font) = FontUIResource(font.deriveFont(font.style or Font.BOLD))
 
-  private val pane = object : JPanel(MigLayout("ins 0, gap 0", "[min!][pref][pref][pref]push")){
+  private val pane = object : JPanel(MigLayout("ins 0, gap 0", "[min!][pref][pref][pref]push")) {
     override fun getMinimumSize(): Dimension {
       val minimumSize = super.getMinimumSize()
-      if(shortProjectName.isEmpty()) return minimumSize
+      if (shortProjectName.isEmpty()) return minimumSize
 
       val fm = projectLabel.getFontMetrics(projectLabel.font)
       val shortPnWidth = SwingUtilities2.stringWidth(projectLabel, fm, shortProjectName)
@@ -109,43 +105,31 @@ open class SelectedEditorFilePath {
     }
 
   private var disposable: Disposable? = null
-  private var project: Project? = null
-
-  private fun updateListeners() {
-    if (added && project != null) {
-      installListeners()
-    }
-    else {
-      unInstallListeners()
-    }
-  }
 
   protected open fun installListeners() {
     if (disposable != null) {
       unInstallListeners()
     }
 
-    project?.let {
-      val disp = Disposer.newDisposable()
-      Disposer.register(it, disp)
-      disposable = disp
+    val disp = Disposer.newDisposable()
+    Disposer.register(project, disp)
+    disposable = disp
 
-      it.messageBus.connect(disp).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
-        override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
-          updatePath()
-        }
+    project.messageBus.connect(disp).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+      override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
+        updatePath()
+      }
 
-        override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
-          updatePath()
-        }
+      override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
+        updatePath()
+      }
 
-        override fun selectionChanged(event: FileEditorManagerEvent) {
-          updatePath()
-        }
-      })
+      override fun selectionChanged(event: FileEditorManagerEvent) {
+        updatePath()
+      }
+    })
 
-      updatePath()
-    }
+    updatePath()
 
     getView().addComponentListener(resizedListener)
   }
@@ -161,42 +145,35 @@ open class SelectedEditorFilePath {
   }
 
   private fun updatePath() {
-    path = project?.let {
-      val fileEditorManager = FileEditorManager.getInstance(it)
+    val fileEditorManager = FileEditorManager.getInstance(project)
 
-      val file = if (fileEditorManager is FileEditorManagerEx) {
-        val splittersFor = fileEditorManager.getSplittersFor(pane)
-        splittersFor.currentFile
-      }
-      else {
-        fileEditorManager?.selectedEditor?.file
-      }
+    val file = if (fileEditorManager is FileEditorManagerEx) {
+      val splittersFor = fileEditorManager.getSplittersFor(pane)
+      splittersFor.currentFile
+    }
+    else {
+      fileEditorManager?.selectedEditor?.file
+    }
 
-      file?.let { fl ->
-        FrameTitleBuilder.getInstance().getFileTitle(it, fl)
-      }
+    path = file?.let { fl ->
+      FrameTitleBuilder.getInstance().getFileTitle(project, fl)
     } ?: ""
 
     update()
   }
 
-  fun setProject(project: Project) {
-    this.project = project
-    updateProjectName()
-    updateListeners()
-  }
-
   protected fun updateProjectName() {
-    projectName = project?.let { getProjectName(it) } ?: ""
-    shortProjectName = project?.let { getShortProjectName(it) } ?: ""
+    shortProjectName = project.name
+    projectName = FrameTitleBuilder.getInstance().getProjectTitle(project) ?: shortProjectName
+
     update()
   }
 
-  protected open fun getProjectName(project: Project) = FrameTitleBuilder.getInstance().getProjectTitle(project)
-  protected open fun getShortProjectName(project: Project) = project.name
-
   private fun update() {
-    val product = if(!SystemInfo.isMac && !SystemInfo.isGNOME) "${ApplicationNamesInfo.getInstance().fullProductName}${if(java.lang.Boolean.getBoolean("ide.ui.version.in.title")) " ${ApplicationInfo.getInstance().fullVersion}" else ""}" else ""
+    val product = if (!SystemInfo.isMac && !SystemInfo.isGNOME) "${ApplicationNamesInfo.getInstance().fullProductName}${if (java.lang.Boolean.getBoolean(
+        "ide.ui.version.in.title")) " ${ApplicationInfo.getInstance().fullVersion}"
+    else ""}"
+    else ""
     val fullToolTip = projectName + delimiterSymbol + path + product
 
     clippedText = path.let {
@@ -216,19 +193,20 @@ open class SelectedEditorFilePath {
       val symbolWidth = SwingUtilities2.stringWidth(classTitle, fm, ellipsisSymbol)
       val delimiterWidth = SwingUtilities2.stringWidth(classTitle, fm, delimiterSymbol)
 
-      if(pnWidth + classWidth + delimiterWidth + (if(path.isEmpty()) 0 else delimiterWidth) + productWidth < width) {
+      if (pnWidth + classWidth + delimiterWidth + (if (path.isEmpty()) 0 else delimiterWidth) + productWidth < width) {
         projectLabel.toolTipText = null
         classTitle.toolTipText = null
         clippedProjectName = projectName
 
-        return@let "${if(path.isEmpty()) "" else "$delimiterSymbol$path"}$delimiterSymbol$product"
+        return@let "${if (path.isEmpty()) "" else "$delimiterSymbol$path"}$delimiterSymbol$product"
       }
 
-      val pn = if(pnWidth + classWidth + delimiterWidth > width) {
+      val pn = if (pnWidth + classWidth + delimiterWidth > width) {
         pnWidth = shortPnWidth
 
         shortProjectName
-      } else {
+      }
+      else {
         projectName
       }
 
@@ -255,7 +233,7 @@ open class SelectedEditorFilePath {
           if (clipString.isEmpty()) "" else "$delimiterSymbol$clipString"
         }
         else -> {
-          projectLabel.toolTipText = if(pn == shortProjectName) projectName else null
+          projectLabel.toolTipText = if (pn == shortProjectName) projectName else null
           classTitle.toolTipText = null
           clippedProjectName = pn
           if (path.isEmpty()) "" else "$delimiterSymbol$path"

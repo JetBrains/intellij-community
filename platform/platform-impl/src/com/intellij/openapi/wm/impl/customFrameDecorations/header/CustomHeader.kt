@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.UISettings
 import com.intellij.jdkEx.JdkEx
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.WindowsRegistryUtil
 import com.intellij.openapi.wm.impl.IdeRootPane
@@ -84,8 +83,6 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     protected val buttonPanes: CustomFrameTitleButtons by lazy {
         createButtonsPane()
     }
-
-    open fun setProject(project: Project) {}
 
     init {
         isOpaque = true
