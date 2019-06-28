@@ -268,11 +268,6 @@ public class StartupUtil {
                                      @NotNull ExecutorService executorService,
                                      @NotNull Logger log,
                                      @NotNull Future<?> initLafTask) {
-    if (!Main.isHeadless()) {
-      // no need to wait - fonts required for editor, not for license window or splash
-      executorService.execute(() -> AppUIUtil.registerBundledFonts());
-    }
-
     futures.add(executorService.submit(() -> {
       try {
         try {
