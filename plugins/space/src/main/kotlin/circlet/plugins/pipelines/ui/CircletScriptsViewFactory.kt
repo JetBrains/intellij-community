@@ -2,6 +2,7 @@ package circlet.plugins.pipelines.ui
 
 import circlet.pipelines.config.api.*
 import circlet.plugins.pipelines.services.*
+import circlet.plugins.pipelines.services.run.*
 import circlet.plugins.pipelines.viewmodel.*
 import circlet.runtime.*
 import com.intellij.execution.*
@@ -85,7 +86,12 @@ class CircletScriptsViewFactory {
                 if (viewModel.modelBuildIsRunning.value) {
                     return
                 }
-                Messages.showInfoMessage("run task", "circlet")
+                val selectedNode = viewModel.selectedNode.value ?: return
+                if (!selectedNode.isRunnable){
+                    return
+                }
+                val taskName = selectedNode.userObject
+                CircletRunConfigurationUtils.run(taskName.toString(), project)
             }
         }
 
