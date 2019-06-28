@@ -20,6 +20,7 @@ import com.intellij.ui.SearchTextField;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
@@ -379,7 +380,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
       DataPackBase dataPack = visiblePack.getDataPack();
       if (dataPack instanceof DataPack.ErrorDataPack) {
-        String message = ((DataPack.ErrorDataPack)dataPack).getError().getMessage();
+        String message = ObjectUtils.chooseNotNull(((DataPack.ErrorDataPack)dataPack).getError().getMessage(), "Error loading commits");
         message = StringUtil.shortenTextWithEllipsis(message, 150, 0, true).replace('\n', ' ');
         getEmptyText().setText(message).appendSecondaryText("Refresh", VcsLogUiUtil.getLinkAttributes(),
                                                             e -> myLogData.refresh(myLogData.getLogProviders().keySet()));
