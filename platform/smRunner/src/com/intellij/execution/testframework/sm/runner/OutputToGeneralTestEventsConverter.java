@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner;
 
-import com.intellij.execution.impl.ConsoleBuffer;
 import com.intellij.execution.process.ColoredOutputTypeRegistry;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.TestConsoleProperties;
@@ -31,7 +30,6 @@ import static com.intellij.execution.testframework.sm.runner.GeneralToSMTRunnerE
  */
 public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer {
   private static final Logger LOG = Logger.getInstance(OutputToGeneralTestEventsConverter.class.getName());
-  private static final boolean USE_CYCLE_BUFFER = ConsoleBuffer.useCycleBuffer();
 
   private final MyServiceMessageVisitor myServiceMessageVisitor;
   private final String myTestFrameworkName;
@@ -40,8 +38,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   private volatile GeneralTestEventsProcessor myProcessor;
   private Runnable myTestingStartedHandler;
   private boolean myFirstTestingStartedEvent = true;
-  private static final String ELLIPSIS = "<...>";
-  private final int myCycleBufferSize = ConsoleBuffer.getCycleBufferSize();
+
 
   public OutputToGeneralTestEventsConverter(@NotNull final String testFrameworkName, @NotNull final TestConsoleProperties consoleProperties) {
     // If console is editable, user may want to see output before new line char.
@@ -103,12 +100,6 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   }
 
   protected void processConsistentText(@NotNull String text, @NotNull final Key<?> outputType) {
-    if (USE_CYCLE_BUFFER && text.length() > myCycleBufferSize && myCycleBufferSize > OutputEventSplitterKt.SM_MESSAGE_PREFIX) {
-      text = text.substring(0, myCycleBufferSize - OutputEventSplitterKt.SM_MESSAGE_PREFIX) +
-             ELLIPSIS +
-             text.substring(text.length() - OutputEventSplitterKt.SM_MESSAGE_PREFIX + ELLIPSIS.length());
-    }
-
     try {
       if (!processServiceMessages(text, outputType, myServiceMessageVisitor)) {
         //fire current output
