@@ -221,10 +221,7 @@ public class JBTabsImpl extends JComponent
     mySingleRowLayout = createSingleRowLayout();
     myLayout = mySingleRowLayout;
 
-    if(JBTabsFactory.getUseNewTabs()) {
-      OnePixelDivider divider = mySplitter.getDivider();
-      divider.setOpaque(false);
-    }
+    mySplitter.getDivider().setOpaque(false);
 
     myPopupListener = new PopupMenuListener() {
       @Override

@@ -4,39 +4,32 @@ package com.intellij.ui.tabs
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.tabs.newImpl.JBEditorTabs
 import com.intellij.ui.tabs.newImpl.JBTabsImpl
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * @author yole
  */
 object JBTabsFactory {
+  @Deprecated ("It's always true now")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
   @JvmStatic
-  val useNewTabs = Registry.`is`("ide.new.tabs")
+  val useNewTabs = true
 
   @JvmStatic
   fun createTabs(project: Project): JBTabs {
-    if (useNewTabs) {
       return JBTabsImpl(project)
-    }
-    return com.intellij.ui.tabs.impl.JBTabsImpl(project)
   }
 
   @JvmStatic
   fun createTabs(project: Project?, parentDisposable: Disposable): JBTabs {
-    if (useNewTabs) {
       return JBTabsImpl(project, ActionManager.getInstance(), project?.let { IdeFocusManager.getInstance(it) }, parentDisposable)
-    }
-    return com.intellij.ui.tabs.impl.JBTabsImpl(project, ActionManager.getInstance(), project?.let { IdeFocusManager.getInstance(it) }, parentDisposable)
   }
 
   @JvmStatic
   fun createEditorTabs(project: Project?, parentDisposable: Disposable): JBEditorTabsBase {
-    if (useNewTabs) {
       return JBEditorTabs(project, ActionManager.getInstance(), project?.let { IdeFocusManager.getInstance(it) }, parentDisposable)
-    }
-    return com.intellij.ui.tabs.impl.JBEditorTabs(project, ActionManager.getInstance(), project?.let { IdeFocusManager.getInstance(it) }, parentDisposable)
   }
 }
