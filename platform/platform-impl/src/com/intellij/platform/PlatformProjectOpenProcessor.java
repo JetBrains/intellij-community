@@ -188,24 +188,22 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     }
 
     Pair<Project, Module> result = null;
-    IdeFrame frame = null;
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      result = prepareAndOpenProject(virtualFile, options, baseDir, dummyProject, dummyProjectName);
+    }
+    else {
       Activity showFrameActivity = StartUpMeasurer.start("show frame");
-      IdeFrameImpl finalFrame = ((WindowManagerImpl)WindowManager.getInstance()).showFrame();
-      frame = finalFrame;
+      IdeFrameImpl frame = ((WindowManagerImpl)WindowManager.getInstance()).showFrame();
       showFrameActivity.end();
       // runProcessWithProgressSynchronously still processes EDT events
       ApplicationManager.getApplication().invokeLater(() -> {
         Activity activity = StartUpMeasurer.start("init frame");
-        finalFrame.init();
+        if (frame.isDisplayable()) {
+          frame.init();
+        }
         activity.end();
       }, ModalityState.any());
-    }
 
-    if (frame == null) {
-      result = prepareAndOpenProject(virtualFile, options, baseDir, dummyProject, dummyProjectName);
-    }
-    else {
       Ref<Pair<Project, Module>> refResult = Ref.create();
       VirtualFile finalBaseDir = baseDir;
       boolean finalDummyProject = dummyProject;
