@@ -730,6 +730,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
       }
 
       params.getVMParametersList().addProperty("idea.version=", MavenUtil.getIdeaVersionToPassToMavenProcess());
+      params.getVMParametersList().addProperty("maven.defaultProjectBuilder.disableGlobalModelCache", "true");
 
       boolean xmxSet = false;
       boolean maven2Forced = false;
