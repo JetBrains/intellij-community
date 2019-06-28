@@ -5,8 +5,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.ui.tabs.newImpl.JBEditorTabs
-import com.intellij.ui.tabs.newImpl.JBTabsImpl
+import com.intellij.ui.tabs.impl.JBEditorTabs
+import com.intellij.ui.tabs.impl.JBTabsImpl
 import org.jetbrains.annotations.ApiStatus
 
 /**

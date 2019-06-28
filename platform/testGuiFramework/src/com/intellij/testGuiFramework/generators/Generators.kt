@@ -49,7 +49,7 @@ import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.components.labels.ActionLink
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.messages.SheetController
-import com.intellij.ui.tabs.newImpl.TabLabel
+import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.ui.treeStructure.SimpleTree
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.util.ui.tree.TreeUtil

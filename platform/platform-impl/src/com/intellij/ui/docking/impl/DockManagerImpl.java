@@ -30,7 +30,7 @@ import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.ui.docking.*;
-import com.intellij.ui.tabs.newImpl.JBTabsImpl;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;

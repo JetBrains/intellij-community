@@ -29,17 +29,6 @@ public class SingleRowLayout extends TabLayout {
     protected Rectangle getIconRec() {
       return myLastSingRowLayout != null ? myLastSingRowLayout.moreRect : null;
     }
-
-    @Override
-    protected int getIconY(Rectangle iconRec) {
-      final int shift;
-      switch (myTabs.getTabsPosition()) {
-        case bottom: shift = myTabs.getActiveTabUnderlineHeight(); break;
-        case top: shift = -(myTabs.getActiveTabUnderlineHeight() / 2); break;
-        default: shift = 0;
-      }
-      return super.getIconY(iconRec) + shift;
-    }
   };
   public JPopupMenu myMorePopup;
 
@@ -196,7 +185,7 @@ public class SingleRowLayout extends TabLayout {
     data.toFitLength = getStrategy().getToFitLength(data);
 
     if (myTabs.isGhostsAlwaysVisible()) {
-      data.toFitLength -= myTabs.getGhostTabLength() * 2 + (myTabs.getInterTabSpaceLength() * 2);
+      data.toFitLength -= myTabs.getGhostTabLength() * 2 + (myTabs.getTabHGap() * 2);
     }
   }
 
@@ -215,7 +204,7 @@ public class SingleRowLayout extends TabLayout {
     if (data.firstGhostVisible || myTabs.isGhostsAlwaysVisible()) {
       data.firstGhost = getStrategy().getLayoutRect(data, data.position, myTabs.getGhostTabLength());
       myTabs.layout(myLeftGhost, data.firstGhost);
-      data.position += getStrategy().getLengthIncrement(data.firstGhost.getSize()) + myTabs.getInterTabSpaceLength();
+      data.position += getStrategy().getLengthIncrement(data.firstGhost.getSize()) + myTabs.getTabHGap();
     }
 
     int deltaToFit = 0;
@@ -252,9 +241,9 @@ public class SingleRowLayout extends TabLayout {
       boolean continueLayout = applyTabLayout(data, label, length, deltaToFit);
 
       data.position = getStrategy().getMaxPosition(label.getBounds());
-      data.position += myTabs.getInterTabSpaceLength();
+      data.position += myTabs.getTabHGap();
 
-      totalLength = getStrategy().getMaxPosition(label.getBounds()) - positionStart + myTabs.getInterTabSpaceLength();
+      totalLength = getStrategy().getMaxPosition(label.getBounds()) - positionStart + myTabs.getTabHGap();
       if (!continueLayout) {
         layoutStopped = true;
       }
@@ -343,7 +332,7 @@ public class SingleRowLayout extends TabLayout {
   protected int getRequiredLength(TabInfo eachInfo) {
     TabLabel label = myTabs.myInfo2Label.get(eachInfo);
     return getStrategy().getLengthIncrement(label != null ? label.getPreferredSize() : new Dimension())
-                                      + (myTabs.isEditorTabs() ? myTabs.getInterTabSpaceLength() : 0);
+                                      + (myTabs.isEditorTabs() ? myTabs.getTabHGap() : 0);
   }
 
 

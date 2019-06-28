@@ -17,7 +17,7 @@ import com.intellij.ui.content.TabbedContent;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tabs.JBTabPainter;
 import com.intellij.ui.tabs.JBTabsPosition;
-import com.intellij.ui.tabs.newImpl.singleRow.MoreTabsIcon;
+import com.intellij.ui.tabs.impl.singleRow.MoreTabsIcon;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.BaseButtonBehavior;
 import org.jetbrains.annotations.NotNull;
