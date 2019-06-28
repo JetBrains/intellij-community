@@ -7,6 +7,7 @@ import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.MainRunner;
@@ -32,6 +33,7 @@ import com.intellij.openapi.wm.impl.SystemDock;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.platform.PlatformProjectOpenProcessor;
+import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.AppIcon;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.CustomProtocolHandler;
@@ -39,6 +41,7 @@ import com.intellij.ui.mac.MacOSApplicationProvider;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -101,6 +104,14 @@ public final class IdeaApplication {
         MacOSApplicationProvider.initApplication();
         activity.end();
       }
+
+      app.executeOnPooledThread(() -> {
+        new AsyncProcessIcon("");
+        new AsyncProcessIcon.Big("");
+        new AnimatedIcon.Blinking(AllIcons.Ide.FatalError);
+        new AnimatedIcon.FS();
+        AllIcons.Ide.Shadow.Top.getIconHeight();
+      });
     }
 
     starter.premain(args);
