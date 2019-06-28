@@ -142,7 +142,7 @@ public class IdeaFreezeReporter {
           node.appendIndentedString(sb);
           nodes.addAll(0, ContainerUtil.sorted(node.myChildren, CallTreeNode.TIME_COMPARATOR));
         }
-        Attachment attachment = new Attachment("report.txt", sb.toString());
+        Attachment attachment = new Attachment("report-" + lengthInSeconds + "s.txt", sb.toString());
         attachment.setIncluded(true);
 
         if (!ContainerUtil.isEmpty(commonStack)) {
