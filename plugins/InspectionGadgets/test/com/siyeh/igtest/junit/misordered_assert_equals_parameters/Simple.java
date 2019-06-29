@@ -12,7 +12,7 @@ class Simple {
 
   private class BeanCreator {
 
-    public BeanCreator 9withQuery(int s, Map test, TimeUnit timeUnit) {
+    public BeanCreator withQuery(int s, Map test, TimeUnit timeUnit) {
       Assert.<warning descr="Arguments to 'assertEquals()' in wrong order">assertEquals</warning>(s, -1);
       Assert.<warning descr="Arguments to 'assertSame()' in wrong order">assertSame</warning>(s, EXPECTED);
       junit.framework.Assert.<warning descr="Arguments to 'failNotEquals()' in wrong order">failNotEquals</warning>("asdfasd", s, EXPECTED);
