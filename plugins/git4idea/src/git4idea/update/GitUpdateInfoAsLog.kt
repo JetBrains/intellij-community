@@ -138,15 +138,15 @@ class GitUpdateInfoAsLog(private val project: Project,
   private class MyPropertiesForRange(val rangeFilter: VcsLogRangeFilter,
                                      val mainProperties: GitUpdateProjectInfoLogProperties) : MainVcsLogUiProperties by mainProperties {
     override fun getFilterValues(filterName: String): List<String>? {
-      when {
-        filterName === RANGE_FILTER.name -> return ArrayList(rangeFilter.getTextPresentation())
-        filterName == BRANCH_FILTER.name || filterName == REVISION_FILTER.name -> return null
+      when (filterName) {
+        RANGE_FILTER.name -> return ArrayList(rangeFilter.getTextPresentation())
+        BRANCH_FILTER.name, REVISION_FILTER.name -> return null
         else -> return mainProperties.getFilterValues(filterName)
       }
     }
 
     override fun saveFilterValues(filterName: String, values: List<String>?) {
-      if (filterName !== RANGE_FILTER.name && filterName !== BRANCH_FILTER.name && filterName !== REVISION_FILTER.name) {
+      if (filterName != RANGE_FILTER.name && filterName != BRANCH_FILTER.name && filterName != REVISION_FILTER.name) {
         mainProperties.saveFilterValues(filterName, values)
       }
     }
