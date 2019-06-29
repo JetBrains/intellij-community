@@ -42,10 +42,9 @@ public class IgnoreGroupHelperAction {
     Project project = e.getProject();
     SvnVcs vcs = project != null ? SvnVcs.getInstance(project) : null;
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
-    boolean visible = project != null;
+    boolean enabledAndVisible = project != null && vcs != null && !isEmpty(files) && isEnabled(vcs, files);
 
-    e.getPresentation().setEnabled(visible && vcs != null && !isEmpty(files) && isEnabled(vcs, files));
-    e.getPresentation().setVisible(visible);
+    e.getPresentation().setEnabledAndVisible(enabledAndVisible);
   }
 
   protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files) {
