@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class FunctionalExpressionsIdentityAddAll {
+public class FunctionalExpressionsIdentityAddAllPutAll {
   public void foo() {
     Map<MyFuncInterface, String> <warning descr="Map 'map' may contain key of functional interface type">map</warning> = new HashMap<>();
     Map <warning descr="Map 'map2' may contain key of functional interface type">map2</warning> = new HashMap();

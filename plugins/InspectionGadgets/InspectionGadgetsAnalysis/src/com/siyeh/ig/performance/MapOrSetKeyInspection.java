@@ -1,5 +1,6 @@
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -22,6 +23,8 @@ public abstract class MapOrSetKeyInspection extends BaseInspection {
       add("containsAll");
       add("removeAll");
       add("retainAll");
+      add("contains");
+      add("remove");
     }
   };
 
@@ -92,6 +95,7 @@ public abstract class MapOrSetKeyInspection extends BaseInspection {
   private class ContainsEntryOfInterestVisitor
     extends BaseInspectionVisitor {
 
+
     @Override
     public void visitVariable(PsiVariable variable) {
       super.visitVariable(variable);
@@ -150,6 +154,7 @@ public abstract class MapOrSetKeyInspection extends BaseInspection {
         return;
       }
       registerVariableError(variable, collectionType);
+
     }
   }
 
