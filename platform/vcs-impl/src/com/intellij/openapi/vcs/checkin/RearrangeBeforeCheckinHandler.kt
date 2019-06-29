@@ -1,55 +1,52 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vcs.checkin;
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.openapi.vcs.checkin
 
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.actions.RearrangeCodeProcessor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.CheckinProjectPanel;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption;
-import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.codeInsight.CodeInsightBundle
+import com.intellij.codeInsight.actions.RearrangeCodeProcessor
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
+import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.getPsiFiles
+import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 
-public class RearrangeBeforeCheckinHandler extends CheckinHandler implements CheckinMetaHandler {
-  public static final String COMMAND_NAME = CodeInsightBundle.message("process.rearrange.code.before.commit");
+open class RearrangeCheckinHandlerFactory : CheckinHandlerFactory() {
+  override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler =
+    RearrangeBeforeCheckinHandler(panel.project, panel)
+}
 
-  private final Project myProject;
-  private final CheckinProjectPanel myPanel;
+open class RearrangeBeforeCheckinHandler(
+  private val project: Project,
+  private val panel: CheckinProjectPanel
+) : CheckinHandler(),
+    CheckinMetaHandler {
 
-  public RearrangeBeforeCheckinHandler(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
-    myProject = project;
-    myPanel = panel;
-  }
+  private val settings get() = VcsConfiguration.getInstance(project)
 
-  @Override
-  @Nullable
-  public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
-    return new BooleanCommitOption(myPanel, VcsBundle.message("checkbox.checkin.options.rearrange.code"), true,
-                                   () -> getSettings().REARRANGE_BEFORE_PROJECT_COMMIT,
-                                   value -> getSettings().REARRANGE_BEFORE_PROJECT_COMMIT = value);
-  }
+  override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
+    BooleanCommitOption(panel, VcsBundle.message("checkbox.checkin.options.rearrange.code"), true,
+                        settings::REARRANGE_BEFORE_PROJECT_COMMIT)
 
-  private VcsConfiguration getSettings() {
-    return VcsConfiguration.getInstance(myProject);
-  }
+  override fun runCheckinHandlers(runnable: Runnable) {
+    val saveAndContinue = {
+      FileDocumentManager.getInstance().saveAllDocuments()
+      runnable.run()
+    }
 
-  @Override
-  public void runCheckinHandlers(@NotNull final Runnable finishAction) {
-    final Runnable performCheckoutAction = () -> {
-      FileDocumentManager.getInstance().saveAllDocuments();
-      finishAction.run();
-    };
-
-    if (VcsConfiguration.getInstance(myProject).REARRANGE_BEFORE_PROJECT_COMMIT && !DumbService.isDumb(myProject)) {
-      new RearrangeCodeProcessor(myProject, CheckinHandlerUtil.getPsiFiles(myProject, myPanel.getVirtualFiles()), COMMAND_NAME,
-                                 performCheckoutAction, true).run();
+    if (settings.REARRANGE_BEFORE_PROJECT_COMMIT && !DumbService.isDumb(project)) {
+      RearrangeCodeProcessor(project, getPsiFiles(project, panel.virtualFiles), COMMAND_NAME, saveAndContinue, true).run()
     }
     else {
-      performCheckoutAction.run();
+      saveAndContinue() // TODO just runnable.run()?
     }
+  }
+
+  companion object {
+    @JvmField
+    val COMMAND_NAME: String = CodeInsightBundle.message("process.rearrange.code.before.commit")
   }
 }
