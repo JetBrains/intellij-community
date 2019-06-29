@@ -186,6 +186,10 @@ public class AssertHint {
           JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSUMPTIONS.equals(qualifiedName);
   }
 
+  public boolean isAssertTrue() {
+    return "assertTrue".equals(getMethod().getName());
+  }
+
   public static class JUnitCommonAssertNames {
     @NonNls public static final Map<String, Integer> ASSERT_METHOD_2_PARAMETER_COUNT;
 
