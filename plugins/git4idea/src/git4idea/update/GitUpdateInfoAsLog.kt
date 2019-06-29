@@ -55,32 +55,19 @@ class GitUpdateInfoAsLog(private val project: Project,
   fun buildAndShowNotification() {
     notificationShown = false
     VcsLogContentUtil.runWhenLogIsReady(project) { log, logManager ->
-      if (!isPathFilterSet()) {  // if no preserved filters are set, we don't need the log to show the notification
-        showTabAndNotificationAfterCalculations(logManager)
+      val listener = object : DataPackChangeListener {
+        override fun onDataPackChange(dataPack: DataPack) {
+          showNotificationIfRangesAreReachable(log, dataPack, logManager, this)
+        }
       }
-      else {
-        waitForLogRefreshAndShowNotification(log, logManager)
-      }
+
+      log.dataManager?.addDataPackChangeListener(listener)
+
+      GuiUtils.invokeLaterIfNeeded({
+                                     // the log may be refreshed before we subscribe to the listener
+                                     showNotificationIfRangesAreReachable(log, logManager.dataManager.dataPack, logManager, listener)
+                                   }, ModalityState.defaultModalityState())
     }
-  }
-
-  private fun waitForLogRefreshAndShowNotification(log: VcsProjectLog, logManager: VcsLogManager) {
-    val listener = object : DataPackChangeListener {
-      override fun onDataPackChange(dataPack: DataPack) {
-        showNotificationIfRangesAreReachable(log, dataPack, logManager, this)
-      }
-    }
-
-    log.dataManager?.addDataPackChangeListener(listener)
-
-    GuiUtils.invokeLaterIfNeeded({
-                                   // the log may be refreshed before we subscribe to the listener
-                                   showNotificationIfRangesAreReachable(log, logManager.dataManager.dataPack, logManager, listener)
-                                 }, ModalityState.defaultModalityState())
-  }
-
-  private fun isPathFilterSet() : Boolean {
-    return project.service<GitUpdateProjectInfoLogProperties>().getFilterValues(STRUCTURE_FILTER.name) != null
   }
 
   @CalledInAwt
@@ -142,7 +129,7 @@ class GitUpdateInfoAsLog(private val project: Project,
       // null for initial filters means that filters will be loaded from properties: saved filters + the range filter which we've just set
       val logUi = VcsLogUiImpl(logId, logData, logManager.colorManager, properties, refresher, null)
 
-      val listener = MyVisiblePackChangeListener(logManager, logUi, updatedFilesCount, updateCommitsCount, isPathFilterSet())
+      val listener = MyVisiblePackChangeListener(logManager, logUi, updatedFilesCount, updateCommitsCount, properties.havePresetFilters())
       refresher.addVisiblePackChangeListener(listener)
       return logUi
     }
@@ -162,6 +149,11 @@ class GitUpdateInfoAsLog(private val project: Project,
       if (filterName !== RANGE_FILTER.name && filterName !== BRANCH_FILTER.name && filterName !== REVISION_FILTER.name) {
         mainProperties.saveFilterValues(filterName, values)
       }
+    }
+
+    fun havePresetFilters(): Boolean {
+      val filters = mainProperties.state.FILTERS
+      return if (filters[RANGE_FILTER.name] != null) filters.size > 1 else filters.isNotEmpty()
     }
   }
 
