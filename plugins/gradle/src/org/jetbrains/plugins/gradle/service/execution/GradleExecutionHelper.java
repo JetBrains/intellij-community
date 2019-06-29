@@ -25,6 +25,7 @@ import org.gradle.initialization.BuildLayoutParameters;
 import org.gradle.internal.nativeintegration.services.NativeServices;
 import org.gradle.process.internal.JvmOptions;
 import org.gradle.tooling.*;
+import org.gradle.tooling.events.OperationType;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
@@ -168,7 +169,11 @@ public class GradleExecutionHelper {
     String buildRootDir = buildEnvironment == null ? null : buildEnvironment.getBuildIdentifier().getRootDir().getPath();
     GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, id, buildRootDir);
     operation.addProgressListener((ProgressListener)gradleProgressListener);
-    operation.addProgressListener((org.gradle.tooling.events.ProgressListener)gradleProgressListener);
+    operation.addProgressListener((org.gradle.tooling.events.ProgressListener)gradleProgressListener,
+                                  OperationType.GENERIC,
+                                  OperationType.PROJECT_CONFIGURATION,
+                                  OperationType.TASK,
+                                  OperationType.TEST);
     operation.setStandardOutput(standardOutput);
     operation.setStandardError(standardError);
     InputStream inputStream = settings.getUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY);
@@ -570,7 +575,11 @@ public class GradleExecutionHelper {
     // and we can miss gradle tooling client side events like distribution download.
     GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, taskId);
     modelBuilder.addProgressListener((ProgressListener)gradleProgressListener);
-    modelBuilder.addProgressListener((org.gradle.tooling.events.ProgressListener)gradleProgressListener);
+    modelBuilder.addProgressListener((org.gradle.tooling.events.ProgressListener)gradleProgressListener,
+                                     OperationType.GENERIC,
+                                     OperationType.PROJECT_CONFIGURATION,
+                                     OperationType.TASK,
+                                     OperationType.TEST);
     modelBuilder.setStandardOutput(new OutputWrapper(listener, taskId, true));
     modelBuilder.setStandardError(new OutputWrapper(listener, taskId, false));
 
