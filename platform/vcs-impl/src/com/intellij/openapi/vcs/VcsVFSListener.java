@@ -493,13 +493,6 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   private class MyCommandAdapter implements CommandListener {
-    private int myCommandLevel;
-
-    @Override
-    public void commandStarted(@NotNull final CommandEvent event) {
-      if (myProject != event.getProject()) return;
-      myCommandLevel++;
-    }
 
     private void checkMovedAddedSourceBack() {
       if (myAddedFiles.isEmpty() || myMovedFiles.isEmpty()) return;
@@ -542,27 +535,24 @@ public abstract class VcsVFSListener implements Disposable {
     @Override
     public void commandFinished(@NotNull final CommandEvent event) {
       if (myProject != event.getProject()) return;
-      myCommandLevel--;
-      if (myCommandLevel == 0) {
-        if (!myAddedFiles.isEmpty() || !myDeletedFiles.isEmpty() || !myDeletedWithoutConfirmFiles.isEmpty() || !myMovedFiles.isEmpty()) {
-          doNotDeleteAddedCopiedOrMovedFiles();
-          checkMovedAddedSourceBack();
-          if (!myAddedFiles.isEmpty()) {
-            executeAdd();
-            myAddedFiles.clear();
-          }
-          if (!myDeletedFiles.isEmpty() || !myDeletedWithoutConfirmFiles.isEmpty()) {
-            executeDelete();
-            myDeletedFiles.clear();
-            myDeletedWithoutConfirmFiles.clear();
-          }
-          if (!myMovedFiles.isEmpty()) {
-            executeMoveRename();
-            myMovedFiles.clear();
-          }
-          if (! myExceptions.isEmpty()) {
-            AbstractVcsHelper.getInstance(myProject).showErrors(myExceptions, myVcs.getDisplayName() + " operations errors");
-          }
+      if (!myAddedFiles.isEmpty() || !myDeletedFiles.isEmpty() || !myDeletedWithoutConfirmFiles.isEmpty() || !myMovedFiles.isEmpty()) {
+        doNotDeleteAddedCopiedOrMovedFiles();
+        checkMovedAddedSourceBack();
+        if (!myAddedFiles.isEmpty()) {
+          executeAdd();
+          myAddedFiles.clear();
+        }
+        if (!myDeletedFiles.isEmpty() || !myDeletedWithoutConfirmFiles.isEmpty()) {
+          executeDelete();
+          myDeletedFiles.clear();
+          myDeletedWithoutConfirmFiles.clear();
+        }
+        if (!myMovedFiles.isEmpty()) {
+          executeMoveRename();
+          myMovedFiles.clear();
+        }
+        if (! myExceptions.isEmpty()) {
+          AbstractVcsHelper.getInstance(myProject).showErrors(myExceptions, myVcs.getDisplayName() + " operations errors");
         }
       }
     }
