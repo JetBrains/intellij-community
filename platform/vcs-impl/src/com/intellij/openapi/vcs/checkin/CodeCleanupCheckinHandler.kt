@@ -1,59 +1,36 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package com.intellij.openapi.vcs.checkin;
+package com.intellij.openapi.vcs.checkin
 
-import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.CheckinProjectPanel;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.changes.CommitContext;
-import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption;
-import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.analysis.AnalysisScope
+import com.intellij.codeInspection.ex.GlobalInspectionContextBase
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.vcs.VcsBundle.message
+import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
+import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.filterOutGeneratedAndExcludedFiles
+import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 
-import java.util.List;
+class CodeCleanupCheckinHandlerFactory : CheckinHandlerFactory() {
+  override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler = CodeCleanupCheckinHandler(panel)
+}
 
+private class CodeCleanupCheckinHandler(private val panel: CheckinProjectPanel) : CheckinHandler(), CheckinMetaHandler {
+  private val project = panel.project
+  private val settings get() = VcsConfiguration.getInstance(project)
 
-public class CodeCleanupCheckinHandlerFactory extends CheckinHandlerFactory  {
-  @Override
-  @NotNull
-  public CheckinHandler createHandler(@NotNull final CheckinProjectPanel panel, @NotNull CommitContext commitContext) {
-    return new CleanupCodeCheckinHandler(panel);
-  }
+  override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
+    BooleanCommitOption(panel, message("before.checkin.cleanup.code"), true, settings::CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT)
 
-  private static class CleanupCodeCheckinHandler extends CheckinHandler implements CheckinMetaHandler {
-    private final CheckinProjectPanel myPanel;
-    private final Project myProject;
-
-    CleanupCodeCheckinHandler(CheckinProjectPanel panel) {
-      myProject = panel.getProject();
-      myPanel = panel;
+  override fun runCheckinHandlers(runnable: Runnable) {
+    if (settings.CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT && !DumbService.isDumb(project)) {
+      val filesToProcess = filterOutGeneratedAndExcludedFiles(panel.virtualFiles, project)
+      GlobalInspectionContextBase.modalCodeCleanup(project, AnalysisScope(project, filesToProcess), runnable)
     }
-
-    @Override
-    public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
-      return new BooleanCommitOption(myPanel, VcsBundle.message("before.checkin.cleanup.code"), true,
-                                     () -> getSettings().CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT,
-                                     value -> getSettings().CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT = value);
-    }
-
-    @Override
-    public void runCheckinHandlers(@NotNull Runnable runnable) {
-      if (getSettings().CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT && !DumbService.isDumb(myProject)) {
-        List<VirtualFile> filesToProcess = CheckinHandlerUtil.filterOutGeneratedAndExcludedFiles(myPanel.getVirtualFiles(), myProject);
-        GlobalInspectionContextBase.modalCodeCleanup(myProject, new AnalysisScope(myProject, filesToProcess), runnable);
-      } else {
-        runnable.run();
-      }
-    }
-
-    @NotNull
-    private VcsConfiguration getSettings() {
-      return VcsConfiguration.getInstance(myProject);
+    else {
+      runnable.run()
     }
   }
 }
