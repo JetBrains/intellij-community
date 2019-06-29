@@ -1,62 +1,53 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package com.intellij.openapi.vcs.checkin;
+package com.intellij.openapi.vcs.checkin
 
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.CheckinProjectPanel;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption;
-import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.codeInsight.CodeInsightBundle
+import com.intellij.codeInsight.actions.OptimizeImportsProcessor
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
+import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.getPsiFiles
+import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 
-import java.util.Collection;
+open class OptimizeOptionsCheckinHandlerFactory : CheckinHandlerFactory() {
+  override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler =
+    OptimizeImportsBeforeCheckinHandler(panel.project, panel)
+}
 
-public class OptimizeImportsBeforeCheckinHandler extends CheckinHandler implements CheckinMetaHandler {
+open class OptimizeImportsBeforeCheckinHandler(
+  @JvmField protected val myProject: Project,
+  private val panel: CheckinProjectPanel
+) : CheckinHandler(),
+    CheckinMetaHandler {
 
-  public static final String COMMAND_NAME = CodeInsightBundle.message("process.optimize.imports.before.commit");
-  
-  protected final Project myProject;
-  private final CheckinProjectPanel myPanel;
+  private val settings get() = VcsConfiguration.getInstance(myProject)
 
-  public OptimizeImportsBeforeCheckinHandler(final Project project, final CheckinProjectPanel panel) {
-    myProject = project;
-    myPanel = panel;
-  }
+  override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
+    BooleanCommitOption(panel, VcsBundle.message("checkbox.checkin.options.optimize.imports"), true,
+                        settings::OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT)
 
-  @Override
-  @Nullable
-  public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
-    return new BooleanCommitOption(myPanel, VcsBundle.message("checkbox.checkin.options.optimize.imports"), true,
-                                   () -> getSettings().OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT,
-                                   value -> getSettings().OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT = value);
-  }
-
-  protected VcsConfiguration getSettings() {
-    return VcsConfiguration.getInstance(myProject);
-  }
-
-  @Override
-  public void runCheckinHandlers(@NotNull final Runnable finishAction) {
-    final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
-    final Collection<VirtualFile> files = myPanel.getVirtualFiles();
-
-    final Runnable performCheckoutAction = () -> {
-      FileDocumentManager.getInstance().saveAllDocuments();
-      finishAction.run();
-    };
-
-    if (configuration.OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT && !DumbService.isDumb(myProject)) {
-      new OptimizeImportsProcessor(myProject, CheckinHandlerUtil.getPsiFiles(myProject, files), COMMAND_NAME, performCheckoutAction).run();
-    }  else {
-      finishAction.run();
+  override fun runCheckinHandlers(runnable: Runnable) {
+    val saveAndContinue = {
+      FileDocumentManager.getInstance().saveAllDocuments()
+      runnable.run()
     }
 
+    if (settings.OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT && !DumbService.isDumb(myProject)) {
+      OptimizeImportsProcessor(myProject, getPsiFiles(myProject, panel.virtualFiles), COMMAND_NAME, saveAndContinue).run()
+    }
+    else {
+      runnable.run()
+    }
+  }
+
+  companion object {
+    @JvmField
+    val COMMAND_NAME: String = CodeInsightBundle.message("process.optimize.imports.before.commit")
   }
 }
