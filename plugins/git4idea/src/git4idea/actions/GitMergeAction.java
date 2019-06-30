@@ -40,6 +40,7 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.update.GitUpdateInfoAsLog;
 import git4idea.update.GitUpdatedRanges;
+import git4idea.update.HashRange;
 import git4idea.util.GitUIUtil;
 import git4idea.util.GitUntrackedFilesHelper;
 import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
@@ -47,6 +48,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
 
 import static com.intellij.notification.NotificationType.INFORMATION;
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.MERGE;
@@ -156,13 +158,14 @@ abstract class GitMergeAction extends GitRepositoryAction {
       VfsUtil.markDirtyAndRefresh(false, true, false, root);
       repository.update();
       if (updatedRanges != null && AbstractCommonUpdateAction.showsCustomNotification(singletonList(GitVcs.getInstance(project)))) {
-        new GitUpdateInfoAsLog(project, updatedRanges.calcCurrentPositions(), (filesCount, commitCount, filteredCommits, viewCommits) -> {
-          String title = getTitleForUpdateNotification(filesCount, commitCount);
-          String content = getBodyForUpdateNotification(filesCount, commitCount, filteredCommits);
-          Notification notification = VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, content, INFORMATION, null);
-          notification.addAction(NotificationAction.createSimple("View Commits", viewCommits));
-          return notification;
-        }).buildAndShowNotification();
+        Map<GitRepository, HashRange> ranges = updatedRanges.calcCurrentPositions();
+        GitUpdateInfoAsLog.NotificationData notificationData = new GitUpdateInfoAsLog(project, ranges).calculateDataAndCreateLogTab();
+        String title = getTitleForUpdateNotification(notificationData.getUpdatedFilesCount(), notificationData.getReceivedCommitsCount());
+        String content = getBodyForUpdateNotification(notificationData.getUpdatedFilesCount(), notificationData.getReceivedCommitsCount(),
+                                                      notificationData.getFilteredCommitsCount());
+        Notification notification = VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, content, INFORMATION, null);
+        notification.addAction(NotificationAction.createSimple("View Commits", notificationData.getViewCommitAction()));
+        VcsNotifier.getInstance(project).notify(notification);
       }
       else {
         showUpdates(project, root, currentRev, beforeLabel, getActionName());

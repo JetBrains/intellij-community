@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -18,13 +17,13 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.Consumer;
 import com.intellij.util.ContentUtilEx;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +31,8 @@ import javax.swing.*;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.function.BiConsumer;
+
+import static com.intellij.util.ObjectUtils.notNull;
 
 /**
  * Utility methods to operate VCS Log tabs as {@link Content}s of the {@link ContentManager} of the VCS toolwindow.
@@ -154,7 +155,7 @@ public class VcsLogContentUtil {
       return;
     }
 
-    Runnable runConsumer = () -> ObjectUtils.notNull(VcsLogContentProvider.getInstance(project)).executeOnMainUiCreated(consumer);
+    Runnable runConsumer = () -> notNull(VcsLogContentProvider.getInstance(project)).executeOnMainUiCreated(consumer);
     if (!window.isVisible()) {
       window.activate(runConsumer);
     }
@@ -213,5 +214,16 @@ public class VcsLogContentUtil {
         }
       }.queue();
     }
+  }
+
+  @CalledInBackground
+  @NotNull
+  public static VcsLogManager getOrCreateLog(@NotNull Project project) {
+    VcsProjectLog log = VcsProjectLog.getInstance(project);
+    VcsLogManager manager = log.getLogManager();
+    if (manager == null) {
+      manager = notNull(log.createLog(true));
+    }
+    return manager;
   }
 }

@@ -1,15 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.update
 
-import com.intellij.notification.Notification
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
@@ -40,45 +40,79 @@ import git4idea.history.GitHistoryUtils
 import git4idea.merge.MergeChangeCollector
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.CalledInBackground
 import java.util.*
+import java.util.concurrent.CompletableFuture
 import kotlin.collections.ArrayList
 
 private val LOG = logger<GitUpdateInfoAsLog>()
 
 class GitUpdateInfoAsLog(private val project: Project,
-                         private val ranges: Map<GitRepository, HashRange>,
-                         private val notificationProducer: (Int, Int, Int?, Runnable) -> Notification) {
+                         private val ranges: Map<GitRepository, HashRange>) {
+
+  private val log: VcsProjectLog = VcsProjectLog.getInstance(project)
 
   private var notificationShown: Boolean = false // accessed only from EDT
 
-  @CalledInAwt
-  fun buildAndShowNotification() {
-    notificationShown = false
-    VcsLogContentUtil.runWhenLogIsReady(project) { log, logManager ->
-      val listener = object : DataPackChangeListener {
-        override fun onDataPackChange(dataPack: DataPack) {
-          showNotificationIfRangesAreReachable(log, dataPack, logManager, this)
-        }
-      }
+  class NotificationData(val updatedFilesCount: Int,
+                         val receivedCommitsCount: Int,
+                         val filteredCommitsCount: Int?,
+                         val viewCommitAction: Runnable)
 
-      log.dataManager?.addDataPackChangeListener(listener)
+  private class CommitsAndFiles(val updatedFilesCount: Int, val receivedCommitsCount: Int)
 
-      GuiUtils.invokeLaterIfNeeded({
-                                     // the log may be refreshed before we subscribe to the listener
-                                     showNotificationIfRangesAreReachable(log, logManager.dataManager.dataPack, logManager, listener)
-                                   }, ModalityState.defaultModalityState())
+  @CalledInBackground
+  fun calculateDataAndCreateLogTab(): NotificationData {
+    val commitsAndFiles = calculateDataFromGit()
+
+    val logManager = VcsLogContentUtil.getOrCreateLog(project)
+    if (!isPathFilterSet()) {
+      // if no path filters is set, we don't need the log to show the notification
+      // => schedule the log tab and return the data
+      val logUi = createLogTabInEdtAndWait(logManager)
+      return NotificationData(commitsAndFiles.updatedFilesCount, commitsAndFiles.receivedCommitsCount, null,
+                              getViewCommitsAction(logManager, logUi))
+    }
+    else {
+      return waitForLogRefreshAndCalculate(logManager, commitsAndFiles)
     }
   }
 
+  private fun isPathFilterSet(): Boolean {
+    return project.service<GitUpdateProjectInfoLogProperties>().getFilterValues(STRUCTURE_FILTER.name) != null
+  }
+
+  @CalledInBackground
+  private fun waitForLogRefreshAndCalculate(logManager: VcsLogManager, commitsAndFiles: CommitsAndFiles): NotificationData {
+    val dataSupplier = CompletableFuture<NotificationData>()
+
+    val listener = object : DataPackChangeListener {
+      override fun onDataPackChange(dataPack: DataPack) {
+        createLogTabAndCalculateIfRangesAreReachable(dataPack, logManager, commitsAndFiles, dataSupplier, this)
+      }
+    }
+
+    log.dataManager?.addDataPackChangeListener(listener)
+
+    ApplicationManager.getApplication().invokeLater {
+      // the log may be refreshed before we subscribe to the listener
+      createLogTabAndCalculateIfRangesAreReachable(logManager.dataManager.dataPack, logManager, commitsAndFiles, dataSupplier, listener)
+    }
+
+    BackgroundTaskUtil.awaitWithCheckCanceled(dataSupplier)
+    return dataSupplier.get()
+  }
+
   @CalledInAwt
-  private fun showNotificationIfRangesAreReachable(log: VcsProjectLog,
-                                                   dataPack: DataPack,
-                                                   logManager: VcsLogManager,
-                                                   listener: DataPackChangeListener) {
+  private fun createLogTabAndCalculateIfRangesAreReachable(dataPack: DataPack,
+                                                           logManager: VcsLogManager,
+                                                           commitsAndFiles: CommitsAndFiles,
+                                                           dataSupplier: CompletableFuture<NotificationData>,
+                                                           listener: DataPackChangeListener) {
     if (!notificationShown && areRangesInDataPack(log, dataPack)) {
       notificationShown = true
       log.dataManager?.removeDataPackChangeListener(listener)
-      showTabAndNotificationAfterCalculations(logManager)
+      createLogTab(logManager) { logUi -> MyVisiblePackChangeListener(logManager, logUi, commitsAndFiles, dataSupplier) }
     }
   }
 
@@ -86,20 +120,37 @@ class GitUpdateInfoAsLog(private val project: Project,
     return dataPack.containsAll(ranges.asIterable().map { CommitId(it.value.end, it.key.root) }, log.dataManager!!.storage)
   }
 
-  private fun showTabAndNotificationAfterCalculations(logManager: VcsLogManager) {
-    ApplicationManager.getApplication().executeOnPooledThread {
-      val updatedCommitsCount = calcUpdatedCommitsCount()
-      val updatedFilesCount = calcUpdatedFilesCount()
+  private fun calculateDataFromGit(): CommitsAndFiles {
+    val updatedCommitsCount = calcUpdatedCommitsCount()
+    val updatedFilesCount = calcUpdatedFilesCount()
+    return CommitsAndFiles(updatedFilesCount, updatedCommitsCount)
+  }
 
-      ApplicationManager.getApplication().invokeLater {
-        val rangeFilter = VcsLogFilterObject.fromRange(ranges.values.map {
-          VcsLogRangeFilter.RefRange(it.start.asString(), it.end.asString())
-        })
-        val logUiFactory = MyLogUiFactory(logManager, rangeFilter, updatedFilesCount, updatedCommitsCount)
-        val logUi = logManager.createLogUi(logUiFactory, true)
-        createTab(logManager, logUi, select = false)
+  private fun createLogTabInEdtAndWait(logManager: VcsLogManager): VcsLogUiImpl {
+    val logUi = Ref.create<VcsLogUiImpl>()
+    ApplicationManager.getApplication().invokeAndWait {
+      logUi.set(createLogTab(logManager, null))
+    }
+    return logUi.get()
+  }
+
+  private fun getViewCommitsAction(logManager: VcsLogManager, logUi: VcsLogUiImpl): Runnable {
+    return Runnable {
+      val found = VcsLogContentUtil.selectLogUi(project, logUi)
+      if (!found) {
+        createTab(logManager, logUi, select = true)
       }
     }
+  }
+
+  private fun createLogTab(logManager: VcsLogManager, listenerGetter: ((VcsLogUiImpl) -> VisiblePackChangeListener)?): VcsLogUiImpl {
+    val rangeFilter = VcsLogFilterObject.fromRange(ranges.values.map {
+      VcsLogRangeFilter.RefRange(it.start.asString(), it.end.asString())
+    })
+    val logUiFactory = MyLogUiFactory(logManager, rangeFilter, listenerGetter)
+    val logUi = logManager.createLogUi(logUiFactory, true)
+    createTab(logManager, logUi, select = false)
+    return logUi
   }
 
   private fun createTab(logManager: VcsLogManager, logUi: VcsLogUiImpl, select: Boolean) {
@@ -114,9 +165,8 @@ class GitUpdateInfoAsLog(private val project: Project,
 
   private inner class MyLogUiFactory(val logManager: VcsLogManager,
                                      val rangeFilter: VcsLogRangeFilter,
-                                     val updatedFilesCount: Int,
-                                     val updateCommitsCount: Int) : VcsLogManager.VcsLogUiFactory<VcsLogUiImpl> {
-
+                                     val listenerGetter: ((VcsLogUiImpl) -> VisiblePackChangeListener)?)
+    : VcsLogManager.VcsLogUiFactory<VcsLogUiImpl> {
     override fun createLogUi(project: Project, logData: VcsLogData): VcsLogUiImpl {
       val logId = "git-update-project-info-" + UUID.randomUUID()
       val properties = MyPropertiesForRange(rangeFilter, project.service<GitUpdateProjectInfoLogProperties>())
@@ -129,8 +179,10 @@ class GitUpdateInfoAsLog(private val project: Project,
       // null for initial filters means that filters will be loaded from properties: saved filters + the range filter which we've just set
       val logUi = VcsLogUiImpl(logId, logData, logManager.colorManager, properties, refresher, null)
 
-      val listener = MyVisiblePackChangeListener(logManager, logUi, updatedFilesCount, updateCommitsCount, properties.havePresetFilters())
-      refresher.addVisiblePackChangeListener(listener)
+      if (listenerGetter != null) {
+        refresher.addVisiblePackChangeListener(listenerGetter.invoke(logUi))
+      }
+
       return logUi
     }
   }
@@ -149,11 +201,6 @@ class GitUpdateInfoAsLog(private val project: Project,
       if (filterName != RANGE_FILTER.name && filterName != BRANCH_FILTER.name && filterName != REVISION_FILTER.name) {
         mainProperties.saveFilterValues(filterName, values)
       }
-    }
-
-    fun havePresetFilters(): Boolean {
-      val filters = mainProperties.state.FILTERS
-      return if (filters[RANGE_FILTER.name] != null) filters.size > 1 else filters.isNotEmpty()
     }
   }
 
@@ -183,31 +230,22 @@ class GitUpdateInfoAsLog(private val project: Project,
     return result
   }
 
-
-  inner class MyVisiblePackChangeListener(private val logManager: VcsLogManager,
-                                          private val logUi: VcsLogUiImpl,
-                                          private val updatedFilesCount: Int,
-                                          private val updatedCommitsCount: Int,
-                                          private val thereArePresetFilters: Boolean) : VisiblePackChangeListener {
+  private inner class MyVisiblePackChangeListener(val logManager: VcsLogManager,
+                                                  val logUi: VcsLogUiImpl,
+                                                  val commitsAndFiles: CommitsAndFiles,
+                                                  val dataSupplier: CompletableFuture<NotificationData>) : VisiblePackChangeListener {
 
     private var visibleCommitCount: Int = -1
 
     override fun onVisiblePackChange(visiblePack: VisiblePack) {
       runInEdt {
         if (visibleCommitCount < 0) { // make sure the code is executed only once in case of two asynchronous VisiblePack updates
-          visibleCommitCount = visiblePack.visibleGraph.visibleCommitCount
-
-          val filteredCommitsNumber = if (thereArePresetFilters) visibleCommitCount else null
-          val notification = notificationProducer(updatedFilesCount, updatedCommitsCount, filteredCommitsNumber,
-                                                  Runnable {
-                                                    val found = VcsLogContentUtil.selectLogUi(project, logUi)
-                                                    if (!found) {
-                                                      createTab(logManager, logUi, select = true)
-                                                    }
-                                                  })
-          VcsNotifier.getInstance(project).notify(notification)
-
           logUi.refresher.removeVisiblePackChangeListener(this)
+
+          visibleCommitCount = visiblePack.visibleGraph.visibleCommitCount
+          val data = NotificationData(commitsAndFiles.updatedFilesCount, commitsAndFiles.receivedCommitsCount, visibleCommitCount,
+                                      getViewCommitsAction(logManager, logUi))
+          dataSupplier.complete(data)
         }
       }
     }
