@@ -12,15 +12,16 @@ public class FunctionalExpressionsIdentityInspectionTest extends LightInspection
     return new FunctionalExpressionsIdentityInspection();
   }
 
-  public void testFunctionalExpressionsIdentity() {
-    doTest();
-  }
+  public void testFunctionalExpressionsIdentity() { doTest(); }
+
   public void testFunctionalExpressionsIdentityAddAllPutAll() {
     doTest();
   }
+
   public void testFunctionalExpressionsIdentityInheritance() {
     doTest();
   }
+
   public void testFunctionalExpressionsIdentityMethods() {doTest();}
 
   @Override

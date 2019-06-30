@@ -1,6 +1,5 @@
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -154,7 +153,6 @@ public abstract class MapOrSetKeyInspection extends BaseInspection {
         return;
       }
       registerVariableError(variable, collectionType);
-
     }
   }
 
