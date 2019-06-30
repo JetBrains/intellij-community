@@ -4,6 +4,7 @@ package org.jetbrains.uast.java
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.ChildRole
 import org.jetbrains.uast.*
+import org.jetbrains.uast.expressions.UYieldExpression
 import org.jetbrains.uast.java.expressions.JavaUExpressionList
 import org.jetbrains.uast.java.kinds.JavaSpecialExpressionKinds
 
@@ -131,7 +132,7 @@ class JavaUSwitchEntry(
         if (addDummyBreak) {
           val lastValueExpressionPsi = expressions.lastOrNull()?.sourcePsi as? PsiExpression
           if (lastValueExpressionPsi != null)
-            expressions[expressions.size - 1] = DummyUBreakExpression(lastValueExpressionPsi, this)
+            expressions[expressions.size - 1] = DummyYieldExpression(lastValueExpressionPsi, this)
         }
 
         this.expressions = expressions
@@ -144,12 +145,9 @@ class JavaUSwitchEntry(
       }
     }
   }
-
-
 }
 
-internal class DummyUBreakExpression(val valueExpressionPsi: PsiExpression,
-                                     override val uastParent: UElement?) : UBreakWithValueExpression {
+internal class DummyYieldExpression(val expressionPsi: PsiExpression, override val uastParent: UElement?) : UYieldExpression {
   override val javaPsi: PsiElement? = null
   override val sourcePsi: PsiElement? = null
   override val psi: PsiElement?
@@ -159,18 +157,17 @@ internal class DummyUBreakExpression(val valueExpressionPsi: PsiExpression,
   override val uAnnotations: List<UAnnotation>
     get() = emptyList()
 
-  override val valueExpression: UExpression? by lazy { JavaConverter.convertExpression(valueExpressionPsi, this) }
+  override val expression: UExpression? by lazy { JavaConverter.convertExpression(expressionPsi, this) }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
 
-    other as DummyUBreakExpression
-    return valueExpressionPsi == other.valueExpressionPsi
+    other as DummyYieldExpression
+    return expressionPsi == other.expressionPsi
   }
 
-  override fun hashCode(): Int = valueExpressionPsi.hashCode()
-
+  override fun hashCode(): Int = expressionPsi.hashCode()
 }
 
 class JavaUDefaultCaseExpression(override val sourcePsi: PsiElement?, givenParent: UElement?)
