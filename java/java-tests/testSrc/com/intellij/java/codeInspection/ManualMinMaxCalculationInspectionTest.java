@@ -26,6 +26,6 @@ public class ManualMinMaxCalculationInspectionTest extends LightQuickFixParamete
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_12;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_13;
   }
 }
