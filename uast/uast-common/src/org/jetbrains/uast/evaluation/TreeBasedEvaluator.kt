@@ -10,7 +10,6 @@ import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiVariable
 import org.jetbrains.uast.*
-import org.jetbrains.uast.expressions.UYieldExpression
 import org.jetbrains.uast.values.*
 import org.jetbrains.uast.values.UNothingValue.JumpKind.BREAK
 import org.jetbrains.uast.values.UNothingValue.JumpKind.CONTINUE
@@ -104,12 +103,13 @@ class TreeBasedEvaluator(
 
     override fun visitBreakExpression(node: UBreakExpression, data: UEvaluationState): UEvaluationInfo {
       storeState(node, data)
-      return when (node) {
-        is UYieldExpression ->
-          node.expression?.accept(chain, data)?.let { UYieldResult(it.value, node) } ?: UUndeterminedValue
-        else ->
-          UNothingValue(node)
-      } to data storeResultFor node
+      return UNothingValue(node) to data storeResultFor node
+    }
+
+    override fun visitYieldExpression(node: UYieldExpression, data: UEvaluationState): UEvaluationInfo {
+      storeState(node, data)
+      val value = node.expression?.accept(chain, data)?.let { UYieldResult(it.value, node) } ?: UUndeterminedValue
+      return value to data storeResultFor node
     }
 
     override fun visitContinueExpression(node: UContinueExpression, data: UEvaluationState): UEvaluationInfo {

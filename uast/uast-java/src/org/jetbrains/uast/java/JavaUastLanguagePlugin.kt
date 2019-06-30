@@ -9,7 +9,6 @@ import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
 import com.intellij.psi.javadoc.PsiDocToken
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.uast.*
-import org.jetbrains.uast.expressions.UYieldExpression
 import org.jetbrains.uast.java.expressions.JavaUAnnotationCallExpression
 import org.jetbrains.uast.java.expressions.JavaUNamedExpression
 import org.jetbrains.uast.java.expressions.JavaUSynchronizedExpression

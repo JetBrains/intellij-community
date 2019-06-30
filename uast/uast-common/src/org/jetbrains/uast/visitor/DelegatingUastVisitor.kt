@@ -2,7 +2,6 @@
 package org.jetbrains.uast.visitor
 
 import org.jetbrains.uast.*
-import org.jetbrains.uast.expressions.UYieldExpression
 
 class DelegatingUastVisitor(private val visitors: List<UastVisitor>) : UastVisitor {
   override fun visitElement(node: UElement): Boolean {

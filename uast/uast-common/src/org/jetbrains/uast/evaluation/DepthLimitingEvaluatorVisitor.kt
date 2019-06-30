@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.evaluation
 
 import com.intellij.openapi.diagnostic.Logger
@@ -159,6 +159,9 @@ internal class DepthLimitingEvaluatorVisitor(val depthLimit: kotlin.Int,
 
   override fun visitBreakExpression(node: UBreakExpression, data: UEvaluationState): UEvaluationInfo =
     wrapCall(node, data, delegate::visitBreakExpression)
+
+  override fun visitYieldExpression(node: UYieldExpression, data: UEvaluationState): UEvaluationInfo =
+    wrapCall(node, data, delegate::visitYieldExpression)
 
   override fun visitContinueExpression(node: UContinueExpression, data: UEvaluationState): UEvaluationInfo =
     wrapCall(node, data, delegate::visitContinueExpression)

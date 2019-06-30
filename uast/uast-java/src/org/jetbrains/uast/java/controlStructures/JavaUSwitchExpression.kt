@@ -4,7 +4,6 @@ package org.jetbrains.uast.java
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.ChildRole
 import org.jetbrains.uast.*
-import org.jetbrains.uast.expressions.UYieldExpression
 import org.jetbrains.uast.java.expressions.JavaUExpressionList
 import org.jetbrains.uast.java.kinds.JavaSpecialExpressionKinds
 

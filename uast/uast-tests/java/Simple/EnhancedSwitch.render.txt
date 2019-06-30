@@ -1,41 +1,41 @@
 public class Main {
     private static fun getString() : java.lang.String {
-        var str: var = "baz"
+        var str: java.lang.String = "baz"
         final var numericString: java.lang.String = switch (str)
             "foo" -> {
                 System.out.println("here")
-                break "FOO"
+                yield "FOO"
             }
 
             "bar", "beer" -> {
-                break "BAR"
+                yield "BAR"
             }
 
             "baz" -> {
-                break "bAz"
+                yield "bAz"
             }
 
             else -> {
-                break "default"
+                yield "default"
             }
 
 
         final var numericString2: java.lang.String = switch (str)
             "foo" -> {
-                break "FOO"
+                yield "FOO"
             }
 
             "bar" -> {
-                break "BAR"
+                yield "BAR"
             }
 
             "baz", "zub" -> {
                 System.out.println("here")
-                break "bAz"
+                yield "bAz"
             }
 
             else -> {
-                break "default"
+                yield "default"
             }
 
 

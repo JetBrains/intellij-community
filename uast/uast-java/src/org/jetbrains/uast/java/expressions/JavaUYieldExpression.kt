@@ -5,7 +5,7 @@ import com.intellij.psi.PsiExpression
 import com.intellij.psi.PsiYieldStatement
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
-import org.jetbrains.uast.expressions.UYieldExpression
+import org.jetbrains.uast.UYieldExpression
 
 class JavaUYieldExpression(
   override val sourcePsi: PsiYieldStatement,

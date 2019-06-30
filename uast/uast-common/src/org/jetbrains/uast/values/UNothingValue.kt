@@ -2,7 +2,6 @@
 package org.jetbrains.uast.values
 
 import org.jetbrains.uast.*
-import org.jetbrains.uast.expressions.UYieldExpression
 
 // Something that never can be reached / created
 internal open class UNothingValue private constructor(
@@ -47,6 +46,9 @@ internal open class UNothingValue private constructor(
         if (this is UBreakExpression && label == null && containingElement is USwitchExpression) {
           return containingElement
         }
+        if (this is UYieldExpression && containingElement is USwitchExpression) {
+          return containingElement
+        }
         if (containingElement is ULoopExpression) {
           val containingLabeled = containingElement.uastParent as? ULabeledExpression
           if (label == null || label == containingLabeled?.label) {
@@ -67,7 +69,7 @@ internal open class UNothingValue private constructor(
 }
 
 internal class UYieldResult(val value: UValue, jump: UYieldExpression) : UNothingValue(jump) {
-  override fun toString(): String = "UBreakResult($value)"
+  override fun toString(): String = "UYieldResult($value)"
 
   override fun merge(other: UValue): UValue = when (other) {
     is UYieldResult -> UPhiValue.create(this, other)
