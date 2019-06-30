@@ -72,6 +72,7 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.*;
 
+import static com.intellij.openapi.progress.util.BackgroundTaskUtil.awaitWithCheckCanceled;
 import static com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED;
 import static com.intellij.util.containers.ContainerUtil.emptyList;
 
@@ -453,18 +454,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     assert !ApplicationManager.getApplication().isDispatchThread();
     CountDownLatch waiter = new CountDownLatch(1);
     invokeAfterUpdate(() -> waiter.countDown(), InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, operationName, ModalityState.NON_MODAL);
-
-    boolean success = false;
-    while (!success) {
-      ProgressManager.checkCanceled();
-      try {
-        success = waiter.await(50, TimeUnit.MILLISECONDS);
-      }
-      catch (InterruptedException e) {
-        LOG.warn(e);
-        throw new ProcessCanceledException(e);
-      }
-    }
+    awaitWithCheckCanceled(waiter);
   }
 
   @Override

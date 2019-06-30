@@ -19,7 +19,7 @@ import git4idea.repo.GitRepository
  * and the error notification is shown from the GitUpdateProcess itself.
  */
 class GitUpdateSession(private val project: Project,
-                       private val ranges: Map<GitRepository, HashRange>?,
+                       private val notificationData: GitUpdateInfoAsLog.NotificationData?,
                        private val result: Boolean,
                        private val skippedRoots: Map<GitRepository, String>) : UpdateSession {
 
@@ -58,12 +58,11 @@ class GitUpdateSession(private val project: Project,
   }
 
   override fun showNotification() {
-    if (ranges != null) {
-      GitUpdateInfoAsLog(project, ranges) { updatedFilesNumber, updatedCommitsNumber, filteredCommitsNumber, viewCommits ->
-        val notification = prepareNotification(updatedFilesNumber, updatedCommitsNumber, filteredCommitsNumber)
-        notification.addAction(NotificationAction.createSimple("View Commits", viewCommits))
-        notification
-      }.buildAndShowNotification()
+    if (notificationData != null) {
+      val notification = prepareNotification(notificationData.updatedFilesCount, notificationData.receivedCommitsCount,
+                                             notificationData.filteredCommitsCount)
+      notification.addAction(NotificationAction.createSimple("View Commits", notificationData.viewCommitAction))
+      VcsNotifier.getInstance(project).notify(notification)
     }
   }
 

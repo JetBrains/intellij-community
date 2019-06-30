@@ -79,29 +79,30 @@ class GitPusher extends Pusher<GitRepository, GitPushSource, GitPushTarget> {
   public static void pushAndNotify(@NotNull Project project, @NotNull GitPushOperation pushOperation) {
     GitPushResult pushResult = pushOperation.execute();
 
+    Map<GitRepository, HashRange> updatedRanges = pushResult.getUpdatedRanges();
+    GitUpdateInfoAsLog.NotificationData notificationData = !updatedRanges.isEmpty() ?
+                                                           new GitUpdateInfoAsLog(project, updatedRanges).calculateDataAndCreateLogTab() :
+                                                           null;
+
     ApplicationManager.getApplication().invokeLater(() -> {
       GitPushResultNotification notification = GitPushResultNotification.create(project, pushResult, pushOperation,
                                                                                 GitUtil.getRepositoryManager(project).moreThanOneRoot());
       if (AbstractCommonUpdateAction.showsCustomNotification(singletonList(GitVcs.getInstance(project)))) {
-        Map<GitRepository, HashRange> updatedRanges = pushResult.getUpdatedRanges();
-        if (updatedRanges.isEmpty()) {
+        if (notificationData == null) {
           notification.notify(project);
         }
         else {
-          new GitUpdateInfoAsLog(project, updatedRanges,
-                                 (updatedFilesNumber, updatedCommitsNumber, filteredCommitsNumber, viewCommits) -> {
-            String commitsNumber;
-            if (filteredCommitsNumber == null) {
-              commitsNumber = String.valueOf(updatedCommitsNumber);
-            }
-            else {
-              commitsNumber = filteredCommitsNumber + " of " + updatedCommitsNumber;
-            }
-            String actionText = String.format("View %s %s received during the push", commitsNumber,
-                                              pluralize("commit", updatedCommitsNumber));
-            notification.addAction(NotificationAction.createSimple(actionText, viewCommits));
-            return notification;
-          }).buildAndShowNotification();
+          String commitsNumber;
+          if (notificationData.getFilteredCommitsCount() == null) {
+            commitsNumber = String.valueOf(notificationData.getReceivedCommitsCount());
+          }
+          else {
+            commitsNumber = notificationData.getFilteredCommitsCount() + " of " + notificationData.getReceivedCommitsCount();
+          }
+          String actionText = String.format("View %s %s received during the push", commitsNumber,
+                                            pluralize("commit", notificationData.getReceivedCommitsCount()));
+          notification.addAction(NotificationAction.createSimple(actionText, notificationData.getViewCommitAction()));
+          notification.notify(project);
         }
       }
       else {
