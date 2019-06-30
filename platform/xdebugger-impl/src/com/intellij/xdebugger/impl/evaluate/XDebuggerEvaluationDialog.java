@@ -34,9 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.util.function.Supplier;
 
 /**
@@ -136,18 +134,23 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
     myTreePanel.getTree().expandNodesOnLoad(XDebuggerEvaluationDialog::isFirstChild);
 
-    EvaluationMode mode = XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().getEvaluationDialogMode();
-    if (mode == EvaluationMode.CODE_FRAGMENT && !myIsCodeFragmentEvaluationSupported) {
-      mode = EvaluationMode.EXPRESSION;
-    }
-    if (mode == EvaluationMode.EXPRESSION && text.getMode() == EvaluationMode.CODE_FRAGMENT && myIsCodeFragmentEvaluationSupported) {
-      mode = EvaluationMode.CODE_FRAGMENT;
-    }
     setTitle(XDebuggerBundle.message("xdebugger.evaluate.dialog.title"));
-    switchToMode(mode, text);
-    if (mode == EvaluationMode.EXPRESSION) {
-      myInputComponent.getInputEditor().selectAll();
-    }
+    getPeer().getWindow().addWindowListener(new WindowAdapter() {
+      @Override
+      public void windowOpened(WindowEvent e) {
+        EvaluationMode mode = XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().getEvaluationDialogMode();
+        if (mode == EvaluationMode.CODE_FRAGMENT && !myIsCodeFragmentEvaluationSupported) {
+          mode = EvaluationMode.EXPRESSION;
+        }
+        if (mode == EvaluationMode.EXPRESSION && text.getMode() == EvaluationMode.CODE_FRAGMENT && myIsCodeFragmentEvaluationSupported) {
+          mode = EvaluationMode.CODE_FRAGMENT;
+        }
+        switchToMode(mode, text);
+        if (mode == EvaluationMode.EXPRESSION) {
+          myInputComponent.getInputEditor().selectAll();
+        }
+      }
+    });
     init();
 
     if (mySession != null) mySession.addSessionListener(new XDebugSessionListener() {
