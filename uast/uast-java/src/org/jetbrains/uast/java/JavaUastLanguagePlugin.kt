@@ -40,8 +40,7 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
     if (element !is PsiMethodCallExpression) return null
     if (element.methodExpression.referenceName != methodName) return null
 
-    val uElement = convertElementWithParent(element, null)
-    val callExpression = when (uElement) {
+    val callExpression = when (val uElement = convertElementWithParent(element, null)) {
       is UCallExpression -> uElement
       is UQualifiedReferenceExpression -> uElement.selector as UCallExpression
       else -> error("Invalid element type: $uElement")
@@ -321,9 +320,9 @@ internal object JavaConverter {
         is PsiTryStatement -> expr<UTryExpression>(build(::JavaUTryExpression))
         is PsiEmptyStatement -> expr<UExpression> { UastEmptyExpression(el.parent?.toUElement()) }
         is PsiSwitchLabelStatementBase -> expr<UExpression> {
-          when {
-            givenParent is JavaUSwitchEntryList -> givenParent.findUSwitchEntryForLabel(el)
-            givenParent == null -> PsiTreeUtil.getParentOfType(el, PsiSwitchBlock::class.java)?.let {
+          when (givenParent) {
+            is JavaUSwitchEntryList -> givenParent.findUSwitchEntryForLabel(el)
+            null -> PsiTreeUtil.getParentOfType(el, PsiSwitchBlock::class.java)?.let {
               JavaUSwitchExpression(it, null).body.findUSwitchEntryForLabel(el)
             }
             else -> null
@@ -349,26 +348,19 @@ internal object JavaConverter {
     }
   }
 
-  internal fun convertOrEmpty(statement: PsiStatement?, parent: UElement?): UExpression {
-    return statement?.let { convertStatement(it, parent) } ?: UastEmptyExpression(parent)
-  }
+  internal fun convertOrEmpty(statement: PsiStatement?, parent: UElement?): UExpression =
+    statement?.let { convertStatement(it, parent) } ?: UastEmptyExpression(parent)
 
-  internal fun convertOrEmpty(expression: PsiExpression?, parent: UElement?): UExpression {
-    return expression?.let { convertExpression(it, parent) } ?: UastEmptyExpression(parent)
-  }
+  internal fun convertOrEmpty(expression: PsiExpression?, parent: UElement?): UExpression =
+    expression?.let { convertExpression(it, parent) } ?: UastEmptyExpression(parent)
 
-  internal fun convertOrNull(expression: PsiExpression?, parent: UElement?): UExpression? {
-    return if (expression != null) convertExpression(expression, parent) else null
-  }
+  internal fun convertOrNull(expression: PsiExpression?, parent: UElement?): UExpression? =
+    if (expression != null) convertExpression(expression, parent) else null
 
-  internal fun convertOrEmpty(block: PsiCodeBlock?, parent: UElement?): UExpression {
-    return if (block != null) convertBlock(block, parent) else UastEmptyExpression(parent)
-  }
+  internal fun convertOrEmpty(block: PsiCodeBlock?, parent: UElement?): UExpression =
+    if (block != null) convertBlock(block, parent) else UastEmptyExpression(parent)
 }
-
-private fun expressionTypes(requiredType: Class<out UElement>?) = requiredType?.let { arrayOf(it) } ?: DEFAULT_EXPRESSION_TYPES_LIST
 
 private fun elementTypes(requiredType: Class<out UElement>?) = requiredType?.let { arrayOf(it) } ?: DEFAULT_TYPES_LIST
 
-private fun <T : UElement> Array<out Class<out T>>.nonEmptyOr(default: Array<out Class<out UElement>>) = takeIf { it.isNotEmpty() }
-                                                                                                         ?: default
+private fun <T : UElement> Array<out Class<out T>>.nonEmptyOr(default: Array<out Class<out UElement>>) = takeIf { it.isNotEmpty() } ?: default
