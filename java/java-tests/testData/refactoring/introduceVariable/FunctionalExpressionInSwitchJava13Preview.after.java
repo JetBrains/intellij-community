@@ -4,7 +4,7 @@ class Foo {
        return switch (i) {
            default -> {
                final Predicate<String> p = String::isEmpty;
-               break p;
+               yield p;
            }
        };
     }

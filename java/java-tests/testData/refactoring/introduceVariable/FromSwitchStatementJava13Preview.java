@@ -1,7 +1,7 @@
 class MyTest {
     {
         <selection>switch (0) {
-            default: break "";
+            default: yield "";
         }</selection>
     }
 }

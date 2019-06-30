@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -104,7 +104,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("i", true, true, true, "int"));
   }
 
-  public void testFunctionalExpressionInSwitch() {
+  public void testFunctionalExpressionInSwitchJava13Preview() {
     doTest(new MockIntroduceVariableHandler("p", true, true, true, "java.util.function.Predicate<java.lang.String>"));
   }
 
@@ -273,7 +273,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING));
   }
 
-  public void testEnsureCodeBlockAroundBreakStatementJava12Preview() {
+  public void testEnsureCodeBlockAroundBreakStatementJava13Preview() {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING));
   }
 
@@ -281,7 +281,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING));
   }
 
-  public void testFromSwitchStatementJava12Preview() {
+  public void testFromSwitchStatementJava13Preview() {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING));
   }
 
