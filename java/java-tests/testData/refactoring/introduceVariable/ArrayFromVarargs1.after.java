@@ -3,7 +3,7 @@ public class Foo {
 
     public void test1(Foo o, String... foo) {}
     void bar() {
-        String[] strs = {"", ""};
-        test1(new Foo(strs));
+        String[] strings = {"", ""};
+        test1(new Foo(strings));
     }
 }

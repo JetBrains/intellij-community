@@ -43,93 +43,28 @@ public class ReplaceWithMutableCollectionIntentionTest extends IPPTestCase {
       "}");
   }
 
-  public void testMapOf() {
-    doTest();
-  }
-
-  public void testMapOfEntries() {
-    doTest();
-  }
-
-  public void testListOf() {
-    doTest();
-  }
-
-  public void testLambdaExpr() {
-    doTest();
-  }
-
-  public void testSingletonMap() {
-    doTest();
-  }
-
-  public void testSingletonList() {
-    doTest();
-  }
-
-  public void testEmpty() {
-    doTest();
-  }
-
-  public void testDeclaration() {
-    doTest();
-  }
-
-  public void testAssignment() {
-    doTest();
-  }
-
-  public void testSwitchExpression() {
-    doTest();
-  }
-
-  public void testAssignmentInSwitchExpression() {
-    doTest();
-  }
-
-  public void testMapOfEntriesTernary() {
-    assertIntentionNotAvailable();
-  }
-
-  public void testMapOfEntriesArrayAccess() {
-    assertIntentionNotAvailable();
-  }
-
-  public void testVarArgCall() {
-    doTest();
-  }
-
-  public void testFieldAssignment() {
-    doTest();
-  }
-
-  public void testGenericMethod() {
-    assertIntentionNotAvailable();
-  }
-
-  public void testGenericMethodWithKnownType() {
-    doTest();
-  }
-
-  public void testNonTrivialQualifier() {
-    doTest();
-  }
-
-  public void testVolatileField() {
-    doTest();
-  }
-
-  public void testImmutableListAssignment() {
-    assertIntentionNotAvailable();
-  }
-
-  public void testImmutableSetVarArgArray() {
-    doTest();
-  }
-
-  public void testImmutableSetVarArgTernary() {
-    doTest();
-  }
+  public void testMapOf() { doTest(); }
+  public void testMapOfEntries() { doTest(); }
+  public void testListOf() { doTest(); }
+  public void testLambdaExpr() { doTest(); }
+  public void testSingletonMap() { doTest(); }
+  public void testSingletonList() { doTest(); }
+  public void testEmpty() { doTest(); }
+  public void testDeclaration() { doTest(); }
+  public void testAssignment() { doTest(); }
+  public void testSwitchExpression() { doTest(); }
+  public void testAssignmentInSwitchExpression() { doTest(); }
+  public void testMapOfEntriesTernary() { assertIntentionNotAvailable(); }
+  public void testMapOfEntriesArrayAccess() { assertIntentionNotAvailable(); }
+  public void testVarArgCall() { doTest(); }
+  public void testFieldAssignment() { doTest(); }
+  public void testGenericMethod() { assertIntentionNotAvailable(); }
+  public void testGenericMethodWithKnownType() { doTest(); }
+  public void testNonTrivialQualifier() { doTest(); }
+  public void testVolatileField() { doTest(); }
+  public void testImmutableListAssignment() { assertIntentionNotAvailable(); }
+  public void testImmutableSetVarArgArray() { doTest(); }
+  public void testImmutableSetVarArgTernary() { doTest(); }
 
   @Override
   protected String getIntentionName() {
