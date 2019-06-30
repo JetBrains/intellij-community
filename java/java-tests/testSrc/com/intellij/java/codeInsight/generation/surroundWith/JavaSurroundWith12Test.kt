@@ -10,8 +10,8 @@ import com.intellij.testFramework.LightJavaCodeInsightTestCase
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.containers.ContainerUtil
 
-class JavaSurroundWith12Test : LightJavaCodeInsightTestCase() {
-  private val BASE_PATH = "/codeInsight/generation/surroundWith/java12/"
+class JavaSurroundWith13Test : LightJavaCodeInsightTestCase() {
+  private val BASE_PATH = "/codeInsight/generation/surroundWith/java13/"
 
   override fun getProjectDescriptor(): LightProjectDescriptor = JavaFoldingTestCase.JAVA_13
 
