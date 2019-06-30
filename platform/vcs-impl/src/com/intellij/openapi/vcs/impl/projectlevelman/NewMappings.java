@@ -99,6 +99,7 @@ public class NewMappings implements Disposable {
     myFileWatchRequestsManager = fileWatchRequestsManager;
   }
 
+  @NotNull
   public AbstractVcs[] getActiveVcses() {
     return myActiveVcses.toArray(new AbstractVcs[0]);
   }

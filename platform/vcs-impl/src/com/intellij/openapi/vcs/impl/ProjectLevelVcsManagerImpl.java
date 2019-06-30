@@ -311,6 +311,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return myMappings.haveActiveVcs(vcsName);
   }
 
+  @NotNull
   @Override
   public AbstractVcs[] getAllActiveVcss() {
     return myMappings.getActiveVcses();
