@@ -362,7 +362,12 @@ public final class TreeUtil {
     return result.toArray(EMPTY_TREE_PATH);
   }
 
+  /**
+   * @deprecated use TreeCollector.TreePathRoots#collect(TreePath...) instead
+   */
   @NotNull
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public static TreePath[] selectMaximals(@Nullable final TreePath[] paths) {
     if (paths == null) return EMPTY_TREE_PATH;
     final TreePath[] noDuplicates = removeDuplicates(paths);

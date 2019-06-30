@@ -3,22 +3,22 @@ package com.intellij.ui.tree;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.Invoker;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.TreePath;
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiPredicate;
-import java.util.function.Consumer;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.isAncestor;
+import static com.intellij.util.ArrayUtil.isEmpty;
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 
 public final class TreeCollector<T> {
   private final AtomicReference<List<T>> reference = new AtomicReference<>();
-  private final AtomicLong counter = new AtomicLong();
   private final BiPredicate<? super T, ? super T> predicate;
 
   private TreeCollector(@NotNull BiPredicate<? super T, ? super T> predicate) {
@@ -29,52 +29,115 @@ public final class TreeCollector<T> {
   public List<T> get() {
     synchronized (reference) {
       List<T> list = reference.getAndSet(null);
-      return list != null ? list : Collections.emptyList();
+      return list != null ? list : emptyList();
     }
   }
 
   public boolean add(@NotNull T object) {
     synchronized (reference) {
       List<T> list = reference.get();
-      if (list == null) {
-        reference.set(new SmartList<>(object));
-      }
-      else {
-        for (T parent : list) {
-          if (predicate.test(parent, object)) {
-            return false;
-          }
-        }
-        list.removeIf(t -> predicate.test(object, t));
-        list.add(object);
-      }
+      if (list != null) return add(predicate, list, object);
+      reference.set(new SmartList<>(object));
       return true;
     }
   }
 
-  public void processLater(@NotNull Invoker invoker, @NotNull Consumer<? super List<T>> consumer) {
-    long count = counter.incrementAndGet();
-    invoker.invokeLater(() -> {
-      // is this request still actual after 10 ms?
-      if (count == counter.get()) consumer.accept(get());
-    }, 10);
+  @NotNull
+  private static <T> List<T> collect(@NotNull BiPredicate<? super T, ? super T> predicate, T... objects) {
+    return isEmpty(objects) ? new ArrayList<>() : collect(predicate, asList(objects));
+  }
+
+  @NotNull
+  private static <T> List<T> collect(@NotNull BiPredicate<? super T, ? super T> predicate, @NotNull Collection<? extends T> objects) {
+    List<T> list = new ArrayList<>(objects.size());
+    for (T object : objects) if (object != null) add(predicate, list, object);
+    return list;
+  }
+
+  private static <T> boolean add(@NotNull BiPredicate<? super T, ? super T> predicate, @NotNull List<T> list, @NotNull T object) {
+    for (T each : list) if (predicate.test(each, object)) return false;
+    list.removeIf(each -> predicate.test(object, each));
+    list.add(object);
+    return true;
   }
 
 
-  public static TreeCollector<VirtualFile> createFileLeafsCollector() {
-    return new TreeCollector<>((child, parent) -> isAncestor(parent, child, false));
+  public static final class VirtualFileLeafs {
+    private static final BiPredicate<VirtualFile, VirtualFile> PREDICATE = (child, parent) -> isAncestor(parent, child, false);
+
+    @NotNull
+    public static TreeCollector<VirtualFile> create() {
+      return new TreeCollector<>(PREDICATE);
+    }
+
+    @NotNull
+    public static List<VirtualFile> collect(VirtualFile... files) {
+      return TreeCollector.collect(PREDICATE, files);
+    }
+
+    @NotNull
+    public static List<VirtualFile> collect(@NotNull Collection<? extends VirtualFile> files) {
+      return TreeCollector.collect(PREDICATE, files);
+    }
   }
 
-  public static TreeCollector<VirtualFile> createFileRootsCollector() {
-    return new TreeCollector<>((parent, child) -> isAncestor(parent, child, false));
+
+  public static final class VirtualFileRoots {
+    private static final BiPredicate<VirtualFile, VirtualFile> PREDICATE = (parent, child) -> isAncestor(parent, child, false);
+
+    @NotNull
+    public static TreeCollector<VirtualFile> create() {
+      return new TreeCollector<>(PREDICATE);
+    }
+
+    @NotNull
+    public static List<VirtualFile> collect(VirtualFile... files) {
+      return TreeCollector.collect(PREDICATE, files);
+    }
+
+    @NotNull
+    public static List<VirtualFile> collect(@NotNull Collection<? extends VirtualFile> files) {
+      return TreeCollector.collect(PREDICATE, files);
+    }
   }
 
 
-  public static TreeCollector<TreePath> createPathLeafsCollector() {
-    return new TreeCollector<>((child, parent) -> parent.isDescendant(child));
+  public static final class TreePathLeafs {
+    private static final BiPredicate<TreePath, TreePath> PREDICATE = (child, parent) -> parent.isDescendant(child);
+
+    @NotNull
+    public static TreeCollector<TreePath> create() {
+      return new TreeCollector<>(PREDICATE);
+    }
+
+    @NotNull
+    public static List<TreePath> collect(TreePath... paths) {
+      return TreeCollector.collect(PREDICATE, paths);
+    }
+
+    @NotNull
+    public static List<TreePath> collect(@NotNull Collection<? extends TreePath> paths) {
+      return TreeCollector.collect(PREDICATE, paths);
+    }
   }
 
-  public static TreeCollector<TreePath> createPathRootsCollector() {
-    return new TreeCollector<>((parent, child) -> parent.isDescendant(child));
+
+  public static final class TreePathRoots {
+    private static final BiPredicate<TreePath, TreePath> PREDICATE = (parent, child) -> parent.isDescendant(child);
+
+    @NotNull
+    public static TreeCollector<TreePath> create() {
+      return new TreeCollector<>(PREDICATE);
+    }
+
+    @NotNull
+    public static List<TreePath> collect(TreePath... paths) {
+      return TreeCollector.collect(PREDICATE, paths);
+    }
+
+    @NotNull
+    public static List<TreePath> collect(@NotNull Collection<? extends TreePath> paths) {
+      return TreeCollector.collect(PREDICATE, paths);
+    }
   }
 }

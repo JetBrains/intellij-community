@@ -244,7 +244,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
         visitContentRoots(project, (file, area) -> list.add(mapper.apply(file, area)));
       }
       else {
-        TreeCollector<VirtualFile> collector = TreeCollector.createFileRootsCollector();
+        TreeCollector<VirtualFile> collector = TreeCollector.VirtualFileRoots.create();
         visitContentRoots(project, (file, area) -> collector.add(file));
         collector.get().forEach(file -> list.add(mapper.apply(file, file)));
       }
