@@ -11,10 +11,9 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.containers.ContainerUtil
 
 class JavaSurroundWith12Test : LightJavaCodeInsightTestCase() {
-
   private val BASE_PATH = "/codeInsight/generation/surroundWith/java12/"
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = JavaFoldingTestCase.JAVA_12
+  override fun getProjectDescriptor(): LightProjectDescriptor = JavaFoldingTestCase.JAVA_13
 
   fun testCaseBlockWithIf() = doTest(JavaWithIfSurrounder())
   fun testCaseResultWithIf() = doTest(JavaWithIfSurrounder())
@@ -31,18 +30,17 @@ class JavaSurroundWith12Test : LightJavaCodeInsightTestCase() {
   fun testDefaultThrowWithIfElse() = doTest(JavaWithIfElseSurrounder())
   fun testDefaultResultWithWhile() = doTest(JavaWithWhileSurrounder())
 
-  private fun doTest(surrounder: Surrounder) = doTest(getTestName(false), surrounder)
+  private fun doTest(surrounder: Surrounder) {
+    val fileName = getTestName(false)
+    configureByFile("${BASE_PATH}${fileName}.java")
 
-  private fun doTest(fileName: String, surrounder: Surrounder) {
-    configureByFile("$BASE_PATH$fileName.java")
-
-    val item = ContainerUtil.getFirstItem(LanguageSurrounders.INSTANCE.allForLanguage(JavaLanguage.INSTANCE))!!
+    val descriptor = ContainerUtil.getFirstItem(LanguageSurrounders.INSTANCE.allForLanguage(JavaLanguage.INSTANCE))!!
     val selectionModel = getEditor().selectionModel
-    val elements = item.getElementsToSurround(getFile(), selectionModel.selectionStart, selectionModel.selectionEnd)
+    val elements = descriptor.getElementsToSurround(getFile(), selectionModel.selectionStart, selectionModel.selectionEnd)
     assertTrue(surrounder.isApplicable(elements))
 
     SurroundWithHandler.invoke(getProject(), getEditor(), getFile(), surrounder)
 
-    checkResultByFile(BASE_PATH + fileName + "_after.java")
+    checkResultByFile("${BASE_PATH}${fileName}_after.java")
   }
 }
