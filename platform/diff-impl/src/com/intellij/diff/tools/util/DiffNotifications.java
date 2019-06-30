@@ -58,7 +58,7 @@ public class DiffNotifications {
 
   @NotNull
   public static JPanel createError() {
-    return createNotification("Can not calculate diff");
+    return createNotification(DiffBundle.message("diff.cant.calculate.diff"));
   }
 
   @NotNull
