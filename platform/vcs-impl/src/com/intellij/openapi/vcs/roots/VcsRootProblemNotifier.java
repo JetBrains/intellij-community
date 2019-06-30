@@ -23,8 +23,8 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -295,15 +295,16 @@ public class VcsRootProblemNotifier {
 
   @VisibleForTesting
   @NotNull
-  String getPresentableMapping(@NotNull String mapping) {
-    String relativePath = null;
+  String getPresentableMapping(@NotNull @SystemIndependent String mapping) {
+    String presentablePath = null;
     String projectDir = myProject.getBasePath();
     if (projectDir != null && FileUtil.isAncestor(projectDir, mapping, true)) {
-      relativePath = "<Project>/" + FileUtil.getRelativePath(projectDir, mapping, File.separatorChar);
+      String relativePath = FileUtil.getRelativePath(projectDir, mapping, '/');
+      if (relativePath != null) presentablePath = toSystemDependentName("<Project>/" + relativePath);
     }
-    if (relativePath == null) {
-      relativePath = FileUtil.getLocationRelativeToUserHome(toSystemDependentName(mapping));
+    if (presentablePath == null) {
+      presentablePath = FileUtil.getLocationRelativeToUserHome(toSystemDependentName(mapping));
     }
-    return StringUtil.shortenPathWithEllipsis(escapeXmlEntities(relativePath), 30, true);
+    return StringUtil.shortenPathWithEllipsis(escapeXmlEntities(presentablePath), 30, true);
   }
 }
