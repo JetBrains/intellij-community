@@ -7,7 +7,7 @@ class Test {
       case "singleton" -> {
           List<String> model = new ArrayList<>();
           model.add("foo");
-          break process(model);
+          yield process(model);
       }
       default -> new ArrayList<>();
     };

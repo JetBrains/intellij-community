@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes.controlflow;
 
 import com.intellij.pom.java.LanguageLevel;
@@ -8,7 +8,6 @@ import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.controlflow.ConditionalExpressionInspection;
 
 public class ConditionalExpressionFixTest extends IGQuickFixesTestCase {
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -45,7 +44,7 @@ public class ConditionalExpressionFixTest extends IGQuickFixesTestCase {
   }
 
   @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
-    builder.setLanguageLevel(LanguageLevel.JDK_12_PREVIEW);
+  protected void tuneFixture(JavaModuleFixtureBuilder builder) {
+    builder.setLanguageLevel(LanguageLevel.JDK_13_PREVIEW);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.impl.SplitDeclarationAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -47,11 +48,13 @@ class EnsureCodeBlockImpl {
                            ((PsiSwitchLabeledRuleStatement)grandParent).getEnclosingSwitchBlock() instanceof PsiSwitchExpression;
         if (addBreak) {
           expression = replace(expression, parent, (old, copy) -> {
-            PsiBlockStatement block = (PsiBlockStatement)old.replace(factory.createStatementFromText("{break a;}", old));
-            PsiExpression copyExpression = ((PsiBreakStatement)block.getCodeBlock().getStatements()[0]).getExpression();
-            return Objects.requireNonNull(copyExpression).replace(((PsiExpressionStatement)copy).getExpression());
+            PsiBlockStatement block = (PsiBlockStatement)old.replace(factory.createStatementFromText("{yield x;}", old));
+            PsiExpression copyExpression = ((PsiYieldStatement)block.getCodeBlock().getStatements()[0]).getExpression();
+            assert copyExpression != null : DebugUtil.psiToString(block, false);
+            return copyExpression.replace(((PsiExpressionStatement)copy).getExpression());
           });
-        } else {
+        }
+        else {
           expression = replace(expression, parent, (old, copy) -> {
             PsiBlockStatement blockStatement = (PsiBlockStatement)old.replace(factory.createStatementFromText("{}", old));
             return blockStatement.getCodeBlock().add(copy);
