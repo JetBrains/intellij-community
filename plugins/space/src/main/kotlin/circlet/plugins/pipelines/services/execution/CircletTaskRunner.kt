@@ -1,5 +1,6 @@
-package circlet.plugins.pipelines.services.run
+package circlet.plugins.pipelines.services.execution
 
+import circlet.pipelines.engine.*
 import circlet.plugins.pipelines.services.*
 import circlet.plugins.pipelines.viewmodel.*
 import com.intellij.execution.process.*
@@ -7,13 +8,15 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
 import libraries.klogging.*
 import runtime.*
+import runtime.async.*
+import runtime.reactive.*
 import java.io.*
 
 class CircletTaskRunner(val project: Project) {
 
     companion object : KLogging()
 
-    fun run(taskName: String): ProcessHandler {
+    fun run(lifetime: Lifetime, taskName: String): ProcessHandler {
         val circletModelStore = ServiceManager.getService(project, CircletModelStore::class.java)
         val viewModel = circletModelStore.viewModel
         val logData = LogData("")
@@ -58,6 +61,33 @@ class CircletTaskRunner(val project: Project) {
         val newLine = System.getProperty("line.separator", "\n")
         timer = UiDispatch.dispatchInterval(1000) {
             processHandler.notifyTextAvailable("Dummy message for task: $taskName. message #${messageCounter++}$newLine", ProcessOutputTypes.STDOUT)
+        }
+
+        val orgInfo = OrgInfo("jetbrains.team")
+        val automationGraphEngineCommon = AutomationGraphEngineCommon(
+            CircletIdeaJobExecutionProvider(),
+            SystemTimeTicker())
+        val automationStarterCommon = AutomationStarterCommon(
+            orgInfo,
+            CircletIdeaAutomationGraphStorage(),
+            CircletIdeaAutomationBootstrapper(),
+            automationGraphEngineCommon,
+            CircletIdeaAutomationTracer())
+
+        val currentTime = System.currentTimeMillis()
+        val metaTaskId : Long = 1
+        val principalId : Long = 1
+        val projectKey = "myProjectKey"
+        val repositoryData = RepositoryData("repoId", null)
+        val branch = "myBranch"
+        val commit = "myCommit"
+        val trigger = TriggerData.ManualTriggerData(currentTime, principalId)
+        val context = TaskStartContext(projectKey, repositoryData, branch, commit, emptyList(), trigger)
+
+
+        async(lifetime, Ui) {
+            processHandler.notifyTextAvailable("smth inside asyng$newLine", ProcessOutputTypes.SYSTEM)
+            //val startTaskRes = automationStarterCommon.startTask(metaTaskId, context)
         }
 
         viewModel.taskIsRunning.value = true
