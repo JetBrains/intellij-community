@@ -76,10 +76,9 @@ class WinExeInstallerBuilder {
     ant.mkdir(dir: "$box/bin")
     ant.mkdir(dir: "$box/nsiconf")
 
-    def bundleJre = customizer.bundledJreArchitecture != null
-    if (bundleJre && jreDirectoryPath == null) {
+    def bundleJre = jreDirectoryPath != null
+    if (!bundleJre) {
       buildContext.messages.info("JRE won't be bundled with Windows installer because JRE archive is missing")
-      bundleJre = false
     }
 
     ant.copy(todir: "$box/nsiconf") {
