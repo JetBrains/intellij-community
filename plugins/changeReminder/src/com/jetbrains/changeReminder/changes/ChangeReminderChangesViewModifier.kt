@@ -16,9 +16,11 @@ class ChangeReminderChangesViewModifier(private val project: Project) : ChangesV
     if (userSettings.isPluginEnabled && project.anyGitRootsForIndexing()) {
       val predictionService = project.service<PredictionService>()
       val prediction = predictionService.prediction
-      val node = ChangeReminderBrowserNode(prediction, predictionService)
-      builder.insertChangeNode(node)
-      builder.insertFilesIntoNode(prediction, node)
+      if (prediction.isNotEmpty()) {
+        val node = ChangeReminderBrowserNode(prediction, predictionService)
+        builder.insertChangeNode(node)
+        builder.insertFilesIntoNode(prediction, node)
+      }
     }
   }
 }
