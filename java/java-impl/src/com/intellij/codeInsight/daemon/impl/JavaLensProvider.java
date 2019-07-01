@@ -9,7 +9,6 @@ import com.intellij.codeInsight.hints.presentation.AttributesTransformerPresenta
 import com.intellij.codeInsight.hints.presentation.InlayPresentation;
 import com.intellij.codeInsight.hints.presentation.MouseButton;
 import com.intellij.codeInsight.hints.presentation.PresentationFactory;
-import com.intellij.codeInsight.navigation.CtrlMouseHandler;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
@@ -155,11 +154,15 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
       result.onClick(editor, element);
       return null;
     });
+
     return factory.changeOnHover(presentation, () -> {
-      ((EditorEx)editor).setCustomCursor(CtrlMouseHandler.class, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      ((EditorEx)editor).setCustomCursor(presentation, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       TextAttributes link = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR);
-      return new AttributesTransformerPresentation(presentation, __->link);
-    }, __ -> true);
+      return new AttributesTransformerPresentation(presentation, __ -> link);
+    }, __ -> true, ()->{
+      ((EditorEx)editor).setCustomCursor(presentation, null);
+      return null;
+    });
   }
 
 
