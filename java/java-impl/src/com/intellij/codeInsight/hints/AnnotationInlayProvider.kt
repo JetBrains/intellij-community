@@ -27,9 +27,8 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
                                sink: InlayHintsSink): InlayHintsCollector? {
     val project = file.project
     return object : FactoryInlayHintsCollector(editor) {
-      val presentations = mutableListOf<InlayPresentation>()
-
       override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
+        val presentations = SmartList<InlayPresentation>()
         if (element is PsiModifierListOwner) {
           var annotations = emptySequence<PsiAnnotation>()
           if (settings.showExternal) {
@@ -51,10 +50,9 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
           if (modifierList != null) {
             val offset = modifierList.textRange.startOffset
             if (presentations.isNotEmpty()) {
-              sink.addInlineElement(offset, false, SequencePresentation(SmartList(presentations)))
+              sink.addInlineElement(offset, false, SequencePresentation(presentations))
             }
           }
-          presentations.clear()
         }
         return true
       }
@@ -93,7 +91,7 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
         val attributes = parameterList.attributes
         when {
           attributes.isEmpty() -> smallText("()")
-          else -> insideParametersPresentation(attributes, collapsed = parameterList.textLength > 30)
+          else -> insideParametersPresentation(attributes, collapsed = parameterList.textLength > 60)
         }
       }
 
@@ -145,7 +143,7 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
             checkBox(ApplicationBundle.message("editor.appearance.show.external.annotations"), settings::showExternal)
           }
           row {
-            checkBox(ApplicationBundle.message("editor.appearance.show.external.annotations"), settings::showExternal)
+            checkBox(ApplicationBundle.message("editor.appearance.show.inferred.annotations"), settings::showInferred)
           }
         }
       }
