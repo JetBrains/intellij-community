@@ -454,7 +454,7 @@ private fun parsePipFileLock(virtualFile: VirtualFile): PipFileLock? {
   }
 }
 
-private val Sdk.pipFileLock: VirtualFile?
+val Sdk.pipFileLock: VirtualFile?
   get() =
     associatedModulePath?.let { StandardFileSystems.local().findFileByPath(it)?.findChild(PIP_FILE_LOCK) }
 
