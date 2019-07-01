@@ -124,11 +124,7 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
   @Override
   @NotNull
   public XmlElementDescriptor[] getRootElementsDescriptors(@Nullable final XmlDocument document) {
-    if (myDelegate == null) return XmlElementDescriptor.EMPTY_ARRAY;
-
-    return document == null
-           ? buildDeclarationMap().values().toArray(XmlElementDescriptor.EMPTY_ARRAY)
-           : myDelegate.getRootElementsDescriptors(document);
+    return myDelegate == null ? XmlElementDescriptor.EMPTY_ARRAY : myDelegate.getRootElementsDescriptors(document);
   }
 
   @Override
