@@ -97,7 +97,7 @@ public class SwitchStatementDensityInspection extends BaseInspection {
     @Override
     public void visitStatement(@NotNull PsiStatement statement) {
       super.visitStatement(statement);
-      if (statement instanceof PsiSwitchLabelStatementBase || statement instanceof PsiBreakStatement) {
+      if (statement instanceof PsiSwitchLabelStatementBase || statement instanceof PsiBreakStatement || statement instanceof PsiYieldStatement) {
         return;
       }
       statementCount++;
