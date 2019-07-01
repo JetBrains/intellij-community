@@ -40,7 +40,6 @@ import com.intellij.util.progress.ComponentVisibilityProgressManager;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,30 +49,15 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.*;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
-import java.util.regex.Pattern;
 
 import static com.intellij.util.ui.UI.PanelFactory;
 
 public abstract class CloneDvcsDialog extends DialogWrapper {
-  /**
-   * The pattern for SSH URL-s in form [user@]host:path
-   */
-  private static final Pattern SSH_URL_PATTERN;
-
-  static {
-    // TODO make real URL pattern
-    @NonNls final String ch = "[\\p{ASCII}&&[\\p{Graph}]&&[^@:/]]";
-    @NonNls final String host = ch + "+(?:\\." + ch + "+)*";
-    @NonNls final String path = "/?" + ch + "+(?:/" + ch + "+)*/?";
-    @NonNls final String all = "(?:" + ch + "+@)?" + host + ":" + path;
-    SSH_URL_PATTERN = Pattern.compile(all);
-  }
 
   private ComboBox<String> myRepositoryUrlCombobox;
   private CollectionComboBoxModel<String> myRepositoryUrlComboboxModel;
@@ -125,7 +109,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        error = createDestination(path);
+        error = CloneDvcsValidationUtils.createDestination(path);
       }
 
       @Override
@@ -139,26 +123,6 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
         }
       }
     }.queue();
-  }
-
-  @Nullable
-  private static ValidationInfo createDestination(@NotNull String path) {
-    try {
-      Path directoryPath = Paths.get(path);
-      if (!Files.exists(directoryPath)) {
-        Files.createDirectories(directoryPath);
-      }
-      else if (!Files.isDirectory(directoryPath) || !Files.isWritable(directoryPath)) {
-        return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.access")).withOKEnabled();
-      }
-      return null;
-    }
-    catch (InvalidPathException e) {
-      return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.invalid"));
-    }
-    catch (Exception e) {
-      return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.access")).withOKEnabled();
-    }
   }
 
   @NotNull
@@ -397,8 +361,9 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   @NotNull
   @Override
   protected List<ValidationInfo> doValidateAll() {
-    ValidationInfo urlValidation = checkRepositoryURL();
-    ValidationInfo directoryValidation = checkDirectory();
+    ValidationInfo urlValidation = CloneDvcsValidationUtils.checkRepositoryURL(myRepositoryUrlCombobox, getCurrentUrlText());
+    ValidationInfo directoryValidation = CloneDvcsValidationUtils.checkDirectory(myDirectoryField.getText(),
+                                                                                 myDirectoryField.getTextField());
 
     myTestButton.setEnabled(urlValidation == null);
 
@@ -409,86 +374,6 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     ContainerUtil.addIfNotNull(infoList, directoryValidation);
     infoList.addAll(myRepositoryListLoadingErrors);
     return infoList;
-  }
-
-  /**
-   * Check repository URL and set appropriate error text if there are problems
-   *
-   * @return null if repository URL is OK.
-   */
-  @Nullable
-  private ValidationInfo checkRepositoryURL() {
-    String repository = getCurrentUrlText();
-    if (repository.length() == 0) {
-      return new ValidationInfo(DvcsBundle.getString("clone.repository.url.error.empty"), myRepositoryUrlCombobox);
-    }
-
-    // Is it a proper URL?
-    try {
-      if (new URI(repository).isAbsolute()) {
-        return null;
-      }
-    }
-    catch (URISyntaxException urlExp) {
-      // do nothing
-    }
-
-    // Is it SSH URL?
-    if (SSH_URL_PATTERN.matcher(repository).matches()) {
-      return null;
-    }
-
-    // Is it FS URL?
-    try {
-      Path path = Paths.get(repository);
-
-      if (Files.exists(path)) {
-        if (!Files.isDirectory(path)) {
-          return new ValidationInfo(DvcsBundle.getString("clone.repository.url.error.not.directory"), myRepositoryUrlCombobox);
-        }
-        return null;
-      }
-    }
-    catch (Exception fileExp) {
-      // do nothing
-    }
-
-    return new ValidationInfo(DvcsBundle.getString("clone.repository.url.error.invalid"), myRepositoryUrlCombobox);
-  }
-
-  /**
-   * Check destination directory and set appropriate error text if there are problems
-   *
-   * @return null if destination directory is OK.
-   */
-  @Nullable
-  private ValidationInfo checkDirectory() {
-    String directoryPath = myDirectoryField.getText();
-    if (directoryPath.length() == 0) {
-      return new ValidationInfo("");
-    }
-
-    try {
-      Path path = Paths.get(directoryPath);
-      if (!Files.exists(path)) {
-        return null;
-      }
-      else if (!Files.isDirectory(path)) {
-        return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.not.directory"), myDirectoryField.getTextField());
-      }
-      else if (!isDirectoryEmpty(path)) {
-        return new ValidationInfo(DvcsBundle.message("clone.destination.directory.error.exists"), myDirectoryField.getTextField());
-      }
-    }
-    catch (InvalidPathException | IOException e) {
-      return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.invalid"), myDirectoryField.getTextField());
-    }
-    return null;
-  }
-
-  private static boolean isDirectoryEmpty(@NotNull Path directory) throws IOException {
-    DirectoryStream<Path> directoryStream = Files.newDirectoryStream(directory);
-    return !directoryStream.iterator().hasNext();
   }
 
   @NotNull
