@@ -280,7 +280,7 @@ class TestingTasksImpl extends TestingTasks {
       "-XX:HeapDumpPath=$hprofSnapshotFilePath".toString(),
       "-XX:ReservedCodeCacheSize=300m",
       "-XX:SoftRefLRUPolicyMSPerMB=50",
-      "-XX:+UseConcMarkSweepGC",
+      "-XX:+UseG1GC",
       "-XX:-OmitStackTraceInFastThrow"
     ]
     jvmArgs.addAll(additionalJvmOptions)
