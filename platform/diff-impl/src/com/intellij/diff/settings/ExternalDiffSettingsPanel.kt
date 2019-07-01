@@ -122,7 +122,7 @@ class ExternalDiffSettingsPanel {
                                        modelSet: (String) -> Unit): CellBuilder<TextFieldWithBrowseButton> {
     val pathField = TextFieldWithBrowseButton()
     pathField.addBrowseFolderListener(title, null, null, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor())
-    return pathField().withBinding(pathField::getText, pathField::setText, PropertyBinding(modelGet, modelSet))
+    return pathField().withBinding(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, PropertyBinding(modelGet, modelSet))
   }
 
   private fun showTestDiff() {

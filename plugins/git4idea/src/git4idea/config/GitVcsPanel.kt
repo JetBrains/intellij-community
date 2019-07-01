@@ -233,8 +233,8 @@ internal class GitVcsPanel(private val project: Project,
         val protectedBranchesField = ExpandableTextField(ParametersListUtil.COLON_LINE_PARSER, ParametersListUtil.COLON_LINE_JOINER)
         protectedBranchesField(growX)
           .withBinding<List<String>>(
-            { ParametersListUtil.COLON_LINE_PARSER.`fun`(protectedBranchesField.text) },
-            { protectedBranchesField.text = ParametersListUtil.COLON_LINE_JOINER.`fun`(it) },
+            { ParametersListUtil.COLON_LINE_PARSER.`fun`(it.text) },
+            { component, value -> component.text = ParametersListUtil.COLON_LINE_JOINER.`fun`(value) },
             PropertyBinding(
               { sharedSettings.forcePushProhibitedPatterns },
               { sharedSettings.setForcePushProhibitedPatters(it) })
