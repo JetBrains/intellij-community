@@ -484,11 +484,8 @@ public class GitRebaseProcess {
     @NotNull
     @Override
     public String getRightPanelTitle(@NotNull VirtualFile file, @Nullable VcsRevisionNumber revisionNumber) {
-      Hash hash = myBaseHash;
-      if (hash == null) {
-        GitRevisionNumber gitRevisionNumber = tryCast(revisionNumber, GitRevisionNumber.class);
-        hash = gitRevisionNumber != null ? HashImpl.build(gitRevisionNumber.asString()) : null;
-      }
+      GitRevisionNumber gitRevisionNumber = tryCast(revisionNumber, GitRevisionNumber.class);
+      Hash hash = gitRevisionNumber != null ? HashImpl.build(gitRevisionNumber.asString()) : myBaseHash;
       return GitDefaultMergeDialogCustomizerKt.getDefaultRightPanelTitleForBranch(myBaseBranch, hash);
     }
 
