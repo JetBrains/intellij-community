@@ -26,7 +26,7 @@ public interface MoveInnerClassUsagesHandler {
     new LanguageExtension<>("com.intellij.refactoring.moveInnerClassUsagesHandler");
 
   /**
-   * Override {@link #correctInnerClassUsage(UsageInfo, PsiClass, String)} instead
+   * @deprecated Override {@link #correctInnerClassUsage(UsageInfo, PsiClass, String)} instead
    * 
    * to be deleted in 2018.2
    */

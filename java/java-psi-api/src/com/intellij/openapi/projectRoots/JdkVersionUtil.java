@@ -6,6 +6,7 @@ package com.intellij.openapi.projectRoots;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+/** @deprecated use {@link JavaSdkVersion#fromVersionString} (to be removed in IDEA 2019) */
 @Deprecated
 public class JdkVersionUtil {
   /** @deprecated use {@link JavaSdkVersion#fromVersionString} (to be removed in IDEA 2019) */

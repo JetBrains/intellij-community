@@ -583,7 +583,7 @@ public class GenerateMembersUtil {
   }
 
   /**
-   * to be deleted in 2017.2
+   * @deprecated use {@link #copyOrReplaceModifierList(PsiModifierListOwner, PsiElement, PsiModifierListOwner)}. to be deleted in 2017.2
    */
   @Deprecated
   public static void copyOrReplaceModifierList(@NotNull PsiModifierListOwner sourceParam, @NotNull PsiModifierListOwner targetParam) {

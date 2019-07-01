@@ -1509,6 +1509,9 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     return ((PsiAssignmentExpression)expression).getRExpression();
   }
 
+  /**
+   * @deprecated use {@link #checkUnableToInsertCodeBlock(PsiCodeBlock, PsiElement)}
+   */
   @Deprecated
   public static String checkCalledInSuperOrThisExpr(PsiCodeBlock methodBody, final PsiElement element) {
     return checkUnableToInsertCodeBlock(methodBody, element,

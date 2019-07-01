@@ -98,6 +98,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   protected HighlightVisitorImpl() {
   }
 
+  /**
+   * @deprecated use {@link #HighlightVisitorImpl()} and {@link #getResolveHelper(Project)}
+   */
   @Deprecated
   protected HighlightVisitorImpl(@SuppressWarnings("unused") @NotNull PsiResolveHelper psiResolveHelper) {
   }

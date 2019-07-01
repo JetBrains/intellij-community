@@ -42,6 +42,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
    */
   public boolean m_ignoreImmediatelyReturnedVariables;
   /**
+   * @deprecated unused, left for compatibility
    * @noinspection PublicField
    */
   @Deprecated

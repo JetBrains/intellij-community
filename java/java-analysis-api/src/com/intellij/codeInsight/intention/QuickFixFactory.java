@@ -433,7 +433,7 @@ public abstract class QuickFixFactory {
   public abstract void registerFixesForUnusedParameter(@NotNull PsiParameter parameter, @NotNull Object highlightInfo);
 
   /**
-   * Use {@link #createAddToDependencyInjectionAnnotationsFix(Project, String)} instead
+   * @deprecated Use {@link #createAddToDependencyInjectionAnnotationsFix(Project, String)} instead
    */
   @Deprecated
   @NotNull

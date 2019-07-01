@@ -78,7 +78,7 @@ public class PackageUtil {
   }
 
   /**
-   * @deprecated
+   * @deprecated use {@link #findOrCreateDirectoryForPackage(Module, String, PsiDirectory, boolean)}
    */
   @Deprecated
   @Nullable

@@ -74,7 +74,7 @@ public class JavaExecutionUtil {
   }
 
   /**
-   * {@link JavaExecutionUtil#getPresentableClassName(java.lang.String)}
+   * @deprecated use {@link JavaExecutionUtil#getPresentableClassName(String)}
    */
   @Deprecated
   @Nullable

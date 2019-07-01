@@ -89,7 +89,7 @@ public abstract class PsiShortNamesCache {
    * to the specified set.
    *
    * @param dest the set to add the names to.
-   * @see #processAllClassNames
+   * @deprecated use {@link #processAllClassNames}
    */
   @Deprecated
   public void getAllClassNames(@NotNull HashSet<String> dest) {
@@ -140,7 +140,7 @@ public abstract class PsiShortNamesCache {
    * to the specified set.
    *
    * @param set the set to add the names to.
-   * @see #processAllMethodNames
+   * @deprecated use {@link #processAllMethodNames(Processor, GlobalSearchScope, IdFilter)}
    */
   @Deprecated
   public void getAllMethodNames(@NotNull HashSet<String> set) {
@@ -171,7 +171,7 @@ public abstract class PsiShortNamesCache {
    * to the specified set.
    *
    * @param set the set to add the names to.
-   * @see #processAllFieldNames
+   * @deprecated use {@link #processAllFieldNames(Processor, GlobalSearchScope, IdFilter)}
    */
   @Deprecated
   public void getAllFieldNames(@NotNull HashSet<String> set) {

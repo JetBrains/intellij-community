@@ -4,7 +4,7 @@ package com.siyeh.ig.threading;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
- * To be removed in 2019.1. Please use {@link AccessToNonThreadSafeStaticFieldFromInstanceInspection} directly
+ * @deprecated To be removed in 2019.1. Please use {@link AccessToNonThreadSafeStaticFieldFromInstanceInspection} directly
  */
 @Deprecated
 @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")

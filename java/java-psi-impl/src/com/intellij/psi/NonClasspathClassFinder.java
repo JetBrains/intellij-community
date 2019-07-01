@@ -69,6 +69,9 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
     return cache;
   }
 
+  /**
+   * @deprecated use {@link PackageDirectoryCache#createCache(List)}
+   */
   @NotNull
   @Deprecated
   protected static PackageDirectoryCache createCache(@NotNull final List<? extends VirtualFile> roots) {

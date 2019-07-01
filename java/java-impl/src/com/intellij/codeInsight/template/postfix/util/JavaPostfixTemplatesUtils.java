@@ -61,7 +61,7 @@ public abstract class JavaPostfixTemplatesUtils {
   }
 
   /**
-   * @deprecated
+   * @deprecated use {@link #selectorTopmost(Condition)}
    */
   @Deprecated
   public static PostfixTemplateExpressionSelector selectorTopmost() {
@@ -142,7 +142,7 @@ public abstract class JavaPostfixTemplatesUtils {
     element -> element instanceof PsiExpression && isBoolean(((PsiExpression)element).getType());
 
   /**
-   * @deprecated
+   * @deprecated use {@link #isThrowable(PsiType)}
    */
   @Deprecated public static final Condition<PsiElement> IS_THROWABLE =
     element -> element instanceof PsiExpression && isThrowable(((PsiExpression)element).getType());
@@ -154,7 +154,7 @@ public abstract class JavaPostfixTemplatesUtils {
     element -> element instanceof PsiExpression && isNotPrimitiveTypeExpression((PsiExpression)element);
 
   /**
-   * @deprecated
+   * @deprecated use {@link #isArray(PsiType)}
    */
   @Deprecated public static final Condition<PsiElement> IS_ARRAY = element -> {
     if (!(element instanceof PsiExpression)) return false;
@@ -164,7 +164,7 @@ public abstract class JavaPostfixTemplatesUtils {
   };
 
   /**
-   * @deprecated
+   * @deprecated use {@link #isIterable(PsiType)} / {@link #isArray(PsiType)}
    */
   @Deprecated public static final Condition<PsiElement> IS_ITERABLE_OR_ARRAY = element -> {
     if (!(element instanceof PsiExpression)) return false;

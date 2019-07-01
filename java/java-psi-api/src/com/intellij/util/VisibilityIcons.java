@@ -18,6 +18,9 @@ import javax.swing.*;
 public final class VisibilityIcons {
   private VisibilityIcons() {}
 
+  /**
+   * @deprecated use {@link #setVisibilityIcon(PsiModifierList, RowIcon)}
+   */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public static void setVisibilityIcon(PsiModifierList modifierList, com.intellij.ui.RowIcon baseIcon) {
@@ -49,6 +52,9 @@ public final class VisibilityIcons {
       }
   }
 
+  /**
+   * @deprecated use {@link #setVisibilityIcon(int, RowIcon)}
+   */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public static void setVisibilityIcon(@MagicConstant(intValues = {PsiUtil.ACCESS_LEVEL_PUBLIC, PsiUtil.ACCESS_LEVEL_PROTECTED, PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL, PsiUtil.ACCESS_LEVEL_PRIVATE}) int accessLevel, com.intellij.ui.RowIcon baseIcon) {

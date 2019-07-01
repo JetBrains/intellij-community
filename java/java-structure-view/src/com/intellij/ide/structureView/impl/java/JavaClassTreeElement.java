@@ -32,7 +32,10 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
     super(inherited, cls);
   }
 
-  /** @noinspection unused*/
+  /**
+   * @deprecated use {@link #JavaClassTreeElement(PsiClass, boolean)}
+   * @noinspection unused
+   */
   @Deprecated
   public JavaClassTreeElement(PsiClass cls, boolean inherited, Set<PsiClass> parents) {
     this(cls, inherited);

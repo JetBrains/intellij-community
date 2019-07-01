@@ -46,6 +46,9 @@ public final class ElementPresentationUtil implements PlatformIcons {
     return flags;
   }
 
+  /**
+   * @deprecated obsolete API, to be removed
+   */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public static com.intellij.ui.RowIcon createLayeredIcon(Icon baseIcon, PsiModifierListOwner element, boolean isLocked) {
@@ -215,6 +218,9 @@ public final class ElementPresentationUtil implements PlatformIcons {
     iconManager.registerIconLayer(FLAGS_RUNNABLE, AllIcons.Nodes.RunnableMark);
   }
 
+  /**
+   * @deprecated use {@link #addVisibilityIcon(PsiModifierListOwner, int, RowIcon)}
+   */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public static Icon addVisibilityIcon(PsiModifierListOwner element, final int flags, com.intellij.ui.RowIcon baseIcon) {

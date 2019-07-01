@@ -50,6 +50,9 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   public JavaLineMarkerProvider() { }
 
+  /**
+   * @deprecated use {@link #JavaLineMarkerProvider()}
+   */
   @Deprecated
   public JavaLineMarkerProvider(DaemonCodeAnalyzerSettings daemonSettings, EditorColorsManager colorsManager) { }
 
