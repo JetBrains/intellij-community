@@ -61,8 +61,10 @@ public interface Content extends UserDataHolder, ComponentContainer {
   void setDescription(String description);
 
   void addPropertyChangeListener(PropertyChangeListener l);
+
   void removePropertyChangeListener(PropertyChangeListener l);
 
+  @Nullable
   ContentManager getManager();
 
   boolean isSelected();

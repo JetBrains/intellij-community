@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.content.impl;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -15,6 +15,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Konstantin Bulenkov
@@ -137,7 +138,7 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
   public void split() {
     List<Pair<String, JComponent>> copy = new ArrayList<>(myTabs);
     int selectedTab = ContentUtilEx.getSelectedTab(this);
-    ContentManager manager = getManager();
+    ContentManager manager = Objects.requireNonNull(getManager());
     String prefix = getTitlePrefix();
     manager.removeContent(this, false);
     PropertiesComponent.getInstance().setValue(SPLIT_PROPERTY_PREFIX + prefix, Boolean.TRUE.toString());

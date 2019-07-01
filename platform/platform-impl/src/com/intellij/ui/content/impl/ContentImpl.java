@@ -198,7 +198,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
     myChangeSupport.removePropertyChangeListener(l);
   }
 
-  public void setManager(ContentManager manager) {
+  public void setManager(@Nullable ContentManager manager) {
     myManager = manager;
   }
 
