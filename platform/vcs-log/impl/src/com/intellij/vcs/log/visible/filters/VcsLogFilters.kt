@@ -45,7 +45,12 @@ object VcsLogFilterObject {
 
   @JvmStatic
   fun fromBranch(branchName: String): VcsLogBranchFilter {
-    return VcsLogBranchFilterImpl(listOf(branchName), emptyList(), emptyList(), emptyList())
+    return fromBranches(listOf(branchName))
+  }
+
+  @JvmStatic
+  fun fromBranches(branchNames: List<String>): VcsLogBranchFilter {
+    return VcsLogBranchFilterImpl(branchNames, emptyList(), emptyList(), emptyList())
   }
 
   @JvmStatic

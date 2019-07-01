@@ -301,6 +301,9 @@
     <terminal.shellCommandHandler implementation="git4idea.log.GitLogTerminalCustomCommandHandler"/>
     <completion.contributor language="TEXT" implementationClass="git4idea.commit.GitCommitCompletionContributor"
                             order="first, before commitCompletion"/>
+
+    <changesViewContent id="git.branches" tabName="Branches" className="git4idea.ui.branch.dashboard.BranchesDashboardTabContentProvider"
+                        predicateClassName="git4idea.ui.branch.dashboard.BranchesDashboardTabContentProvider$BranchesTabVisibilityPredicate" order="last"/>
   </extensions>
 
   <extensionPoints>

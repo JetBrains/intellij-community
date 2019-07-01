@@ -116,6 +116,7 @@ class ChangesViewContentManager : ChangesViewContentI, Disposable {
     REPOSITORY(ChangesViewContentManager.REPOSITORY, 20),
     INCOMING(ChangesViewContentManager.INCOMING, 30),
     SHELF(ChangesViewContentManager.SHELF, 40),
+    BRANCHES(ChangesViewContentManager.BRANCHES, 50),
     OTHER(null, 100),
     LAST(null, Integer.MAX_VALUE)
   }
@@ -156,6 +157,7 @@ class ChangesViewContentManager : ChangesViewContentI, Disposable {
     const val REPOSITORY = "Repository"
     const val INCOMING = "Incoming"
     const val SHELF = "Shelf"
+    const val BRANCHES = "Branches"
 
     private fun getContentWeight(content: Content): Int {
       val userData = content.getUserData(ORDER_WEIGHT_KEY)
