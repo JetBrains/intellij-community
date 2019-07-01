@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * @see ReplaceWithMutableCollectionIntention
  */
 public class ReplaceWithMutableCollectionIntentionTest extends IPPTestCase {
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -140,6 +141,6 @@ public class ReplaceWithMutableCollectionIntentionTest extends IPPTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_13;
+    return JAVA_12;
   }
 }

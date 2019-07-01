@@ -7,7 +7,7 @@ class Test {
           StringBuilder stringBuilder<caret> = new StringBuilder();
           stringBuilder.append("a");
           stringBuilder.append("b");
-          yield stringBuilder.toString();
+          break stringBuilder.toString();
       }
     };
   }

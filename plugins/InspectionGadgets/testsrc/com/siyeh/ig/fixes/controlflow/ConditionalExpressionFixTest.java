@@ -8,6 +8,7 @@ import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.controlflow.ConditionalExpressionInspection;
 
 public class ConditionalExpressionFixTest extends IGQuickFixesTestCase {
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -44,7 +45,7 @@ public class ConditionalExpressionFixTest extends IGQuickFixesTestCase {
   }
 
   @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder builder) {
-    builder.setLanguageLevel(LanguageLevel.JDK_13_PREVIEW);
+  protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
+    builder.setLanguageLevel(LanguageLevel.JDK_12_PREVIEW);
   }
 }

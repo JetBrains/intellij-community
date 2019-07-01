@@ -3,7 +3,7 @@ class MyTest {
     String s = switch (i) {
       default -> {
           String temp = "abc";
-          yield temp;
+          break temp;
       }
     };
   }
