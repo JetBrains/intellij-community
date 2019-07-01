@@ -8,9 +8,13 @@ import org.junit.Test
 
 
 class LongLineCutterTest {
+  private fun createMessage(attrs:Map<String, String>) = ServiceMessage.asString(
+    "myMessage",
+    attrs + mapOf("name" to "testFailed")
+  )
   @Test
   fun shortMessageUntouched() {
-    val message = ServiceMessage.asString("foo", mapOf(
+    val message = createMessage(mapOf(
       "A" to "B",
       "Z" to "Q"
     ))
@@ -27,10 +31,10 @@ class LongLineCutterTest {
   @Test
   fun actualExpectedShort() {
     val maxLength = 1000
-    val message = ServiceMessage.asString("testFailed", mapOf(
+    val message = createMessage(mapOf(
       "expected" to "A".repeat(maxLength * 2),
       "actual" to "B"
-    ));
+    ))
     val result = ServiceMessage.parse(cutLineIfTooLong(message, maxLength, 10))!!
 
     val actual = result.attributes["actual"]!!
@@ -46,7 +50,7 @@ class LongLineCutterTest {
   @Test
   fun actualExpectedLong() {
     val maxLength = 1000
-    val message = ServiceMessage.asString("testFailed", mapOf(
+    val message = createMessage(mapOf(
       "expected" to "A".repeat(maxLength * 2),
       "actual" to "B".repeat(maxLength * 2)
     ));
@@ -70,7 +74,7 @@ class LongLineCutterTest {
     val maxLength = 10000
     val s = "abc\r\n"
     val longString = s.repeat(maxLength * 2)
-    val message = ServiceMessage.asString("foo", mapOf(
+    val message = createMessage(mapOf(
       "A" to "B",
       "C" to "D",
       "Z" to longString
