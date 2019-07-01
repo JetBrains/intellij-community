@@ -273,7 +273,7 @@ object GuiTestLocalLauncher {
       .plusIf(GuiTestOptions.xssSize != 0, "-Xss${GuiTestOptions.xssSize}m")
       .plus("-Xmx${GuiTestOptions.xmxSize}m")
       .plus("-XX:ReservedCodeCacheSize=240m")
-      .plus("-XX:+UseConcMarkSweepGC")
+      .plus("-XX:+UseG1GC")
       .plus("-XX:SoftRefLRUPolicyMSPerMB=50")
       .plus("-XX:MaxJavaStackTraceDepth=10000")
       .plus("-ea")
