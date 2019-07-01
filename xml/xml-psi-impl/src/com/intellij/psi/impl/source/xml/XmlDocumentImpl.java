@@ -301,7 +301,8 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     return null;
   }
 
-  private static XmlNSDescriptor getCachedHtmlNsDescriptor(final XmlFile descriptorFile) {
+  @Nullable
+  public static XmlNSDescriptor getCachedHtmlNsDescriptor(final XmlFile descriptorFile) {
     return CachedValuesManager.getCachedValue(descriptorFile, () -> {
       final XmlDocument document = descriptorFile.getDocument();
       if (document == null) return CachedValueProvider.Result.create(null, descriptorFile);
