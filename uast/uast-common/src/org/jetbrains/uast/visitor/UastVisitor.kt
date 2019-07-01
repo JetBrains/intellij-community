@@ -52,6 +52,7 @@ interface UastVisitor {
   fun visitSuperExpression(node: USuperExpression): Boolean = visitExpression(node)
   fun visitReturnExpression(node: UReturnExpression): Boolean = visitExpression(node)
   fun visitBreakExpression(node: UBreakExpression): Boolean = visitExpression(node)
+  @JvmDefault
   fun visitYieldExpression(node: UYieldExpression): Boolean = visitExpression(node)
   fun visitContinueExpression(node: UContinueExpression): Boolean = visitExpression(node)
   fun visitThrowExpression(node: UThrowExpression): Boolean = visitExpression(node)
@@ -230,6 +231,7 @@ interface UastVisitor {
     afterVisitExpression(node)
   }
 
+  @JvmDefault
   fun afterVisitYieldExpression(node: UYieldExpression) {
     afterVisitExpression(node)
   }

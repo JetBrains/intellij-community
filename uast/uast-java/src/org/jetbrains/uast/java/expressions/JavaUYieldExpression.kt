@@ -9,7 +9,7 @@ import org.jetbrains.uast.UYieldExpression
 
 class JavaUYieldExpression(
   override val sourcePsi: PsiYieldStatement,
-  val psiExpression: PsiExpression?,
+  private val psiExpression: PsiExpression?,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UYieldExpression {
   override val expression: UExpression? by lazy {

@@ -69,6 +69,7 @@ interface UastTypedVisitor<in D, out R> {
   fun visitReturnExpression(node: UReturnExpression, data: D): R = visitExpression(node, data)
 
   fun visitBreakExpression(node: UBreakExpression, data: D): R = visitExpression(node, data)
+  @JvmDefault
   fun visitYieldExpression(node: UYieldExpression, data: D): R = visitExpression(node, data)
   fun visitContinueExpression(node: UContinueExpression, data: D): R = visitExpression(node, data)
   fun visitThrowExpression(node: UThrowExpression, data: D): R = visitExpression(node, data)
