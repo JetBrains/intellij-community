@@ -753,14 +753,21 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
       DefaultActionGroup subActions = new DefaultActionGroup("Ratings", true);
       subActions.getTemplatePresentation().setIcon(AllIcons.Ide.Rating);
-      subActions.addAll(new MyAction("Rating one", AllIcons.Ide.Rating1),
-                        new MyAction("Rating two", AllIcons.Ide.Rating2),
-                        new MyAction("Rating three", AllIcons.Ide.Rating3),
-                        new MyAction("Rating four", AllIcons.Ide.Rating4));
+      subActions.addAll(new MyAction("Rating one", AllIcons.Ide.Rating1).withDefaultDescription(),
+                        new MyAction("Rating two", AllIcons.Ide.Rating2).withDefaultDescription(),
+                        new MyAction("Rating three", AllIcons.Ide.Rating3).withDefaultDescription(),
+                        new MyAction("Rating four", AllIcons.Ide.Rating4).withDefaultDescription());
       actions.add(subActions);
 
       DefaultActionGroup toolbarActions = new DefaultActionGroup();
       toolbarActions.add(new SplitButtonAction(actions));
+      toolbarActions.add(new MyAction("Short", AllIcons.Ide.Rating1).withShortCut("control K"));
+      toolbarActions.add(new MyAction("Short", AllIcons.Ide.Rating2)
+                           .withDescription("Some description.<p/>With several paragraphs.")
+                           .withShortCut("control N"));
+      toolbarActions.add(new MyAction(null, AllIcons.Ide.Rating3)
+                           .withDescription("Another long description.<p/>With several paragraphs")
+                           .withShortCut("control P"));
 
       ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("TOP", toolbarActions, true);
       JComponent toolbarComponent = toolbar.getComponent();
@@ -770,13 +777,28 @@ public class ComponentPanelTestAction extends DumbAwareAction {
   }
 
   private static class MyAction extends DumbAwareAction {
-    private MyAction(String name, Icon icon) {
-      super(name, name + " track", icon);
+    private MyAction(@Nullable String name, @Nullable Icon icon) {
+      super(name, null, icon);
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       System.out.println(e.getPresentation().getDescription());
+    }
+
+    public MyAction withDefaultDescription() {
+      getTemplatePresentation().setDescription(getTemplateText() + " description");
+      return this;
+    }
+
+    public MyAction withDescription(@Nullable String description) {
+      getTemplatePresentation().setDescription(description);
+      return this;
+    }
+
+    public MyAction withShortCut(@NotNull String shortCut) {
+      setShortcutSet(CustomShortcutSet.fromString(shortCut));
+      return this;
     }
   }
 

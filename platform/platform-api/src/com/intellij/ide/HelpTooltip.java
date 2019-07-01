@@ -103,6 +103,7 @@ public class HelpTooltip {
   private static final JBValue X_OFFSET = new JBValue.UIInteger("HelpTooltip.xOffset", 0);
   private static final JBValue Y_OFFSET = new JBValue.UIInteger("HelpTooltip.yOffset", 0);
   private static final JBValue FONT_DELTA_SIZE = new JBValue.UIInteger("HelpTooltip.fontSizeDelta", 0);
+  private static final JBValue CURSOR_OFFSET = new JBValue.UIInteger("HelpTooltip.mouseCursorOffset", 20);
 
   private static final String DOTS = "...";
   private static final String PARAGRAPH_SPLITTER = "<p/?>";
@@ -155,7 +156,7 @@ public class HelpTooltip {
 
     CURSOR {
       @Override public Point getPointFor(Component owner, Dimension popupSize, Point mouseLocation) {
-        mouseLocation.y += JBUIScale.scale(20);
+        mouseLocation.y += CURSOR_OFFSET.get();
         return mouseLocation;
       }
     };
@@ -293,18 +294,29 @@ public class HelpTooltip {
     tipPanel.setLayout(new VerticalLayout(VGAP.get()));
     tipPanel.setBackground(BACKGROUND_COLOR);
 
-    if (StringUtil.isNotEmpty(title)) {
+    boolean hasTitle = StringUtil.isNotEmpty(title);
+    if (hasTitle) {
       tipPanel.add(new Header(), VerticalLayout.TOP);
     }
 
     if (StringUtil.isNotEmpty(description)) {
       String[] pa = description.split(PARAGRAPH_SPLITTER);
       isMultiline = pa.length > 1;
+
+      Color descriptionColor = hasTitle ? INFO_COLOR : FOREGROUND_COLOR;
       for (String p : pa) {
         if (!p.isEmpty()) {
-          tipPanel.add(new Paragraph(p), VerticalLayout.TOP);
+          tipPanel.add(new Paragraph(p, descriptionColor), VerticalLayout.TOP);
         }
       }
+    }
+
+    if (!hasTitle && StringUtil.isNotEmpty(shortcut)) {
+      JLabel shortcutLabel = new JLabel(shortcut);
+      shortcutLabel.setFont(modifyFont(shortcutLabel.getFont()));
+      shortcutLabel.setForeground(SHORTCUT_COLOR);
+
+      tipPanel.add(shortcutLabel, VerticalLayout.TOP);
     }
 
     if (link != null) {
@@ -527,7 +539,8 @@ public class HelpTooltip {
             g2.setColor(SHORTCUT_COLOR);
             shortcutLayout.draw(g2, layout.getAdvance() + dotLayout.getAdvance() + HGAP.get(), drawPosY);
           }
-        } else if (layout != null && shortcutString != null) {
+        }
+        else if (layout != null && shortcutString != null) {
           g2.setColor(SHORTCUT_COLOR);
           if (Float.compare(getWidth() - layout.getAdvance(), shortcutLayout.getAdvance() + HGAP.get()) >= 0) {
             drawPosY = shortcutLayout.getAscent();
@@ -537,19 +550,16 @@ public class HelpTooltip {
             shortcutLayout.draw(g2, 0, drawPosY);
           }
         }
-      } finally {
+      }
+      finally {
         g2.dispose();
       }
     }
   }
 
   private class Paragraph extends JLabel {
-    private Paragraph(String text) {
-      init(text);
-    }
-
-    private void init(String text) {
-      setForeground(FOREGROUND_COLOR);
+    private Paragraph(String text, Color fgColor) {
+      setForeground(fgColor);
       setFont(modifyFont(getFont()));
 
       View v = BasicHTML.createHTMLView(this, String.format("<html>%s</html>", text));
