@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.impl.GlobalMenuLinux;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,6 +28,7 @@ public class ViewMainMenuAction extends ToggleAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setEnabledAndVisible(SystemInfo.isWindows);
+    boolean makesSense = SystemInfo.isWindows || (SystemInfo.isLinux && !GlobalMenuLinux.isAvailable());
+    e.getPresentation().setEnabledAndVisible(makesSense);
   }
 }
