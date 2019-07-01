@@ -157,14 +157,13 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
     if (state == NORMAL || state == DETACHED) return null
     if (state == REBASING && allowRebaseIfHeadCommit && isHeadCommit(e)) return null
 
-    return when (state) {
-      REBASING -> "Can't $operation during rebase"
-      MERGING -> "Can't $operation during merge"
-      else -> {
-        LOG.error(IllegalStateException("Unexpected state: $state"))
-        "Can't $operation during $state"
-      }
+    val stateName = when (state) {
+      REBASING -> "rebase"
+      MERGING -> "merge"
+      GRAFTING -> "cherry-pick"
+      else -> state
     }
+    return "Can't $operation during $stateName"
   }
 
   protected fun isHeadCommit(e: AnActionEvent): Boolean {
