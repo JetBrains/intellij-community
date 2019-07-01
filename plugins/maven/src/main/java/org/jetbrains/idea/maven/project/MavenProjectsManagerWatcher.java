@@ -377,7 +377,7 @@ public class MavenProjectsManagerWatcher {
     }
 
     @Override
-    protected void updateFile(VirtualFile file, VFileEvent event) {
+    protected void updateFile(@NotNull VirtualFile file, @NotNull VFileEvent event) {
       doUpdateFile(file, event, false);
     }
 
