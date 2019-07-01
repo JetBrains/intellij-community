@@ -23,7 +23,7 @@ class ScriptWindowViewModel(private val lifetime: Lifetime, private val project:
 
 
 class ScriptViewModel internal constructor(
-    private val lifetime: Lifetime,
+    val lifetime: Lifetime,
     val config: ProjectConfig) {
 }
 
