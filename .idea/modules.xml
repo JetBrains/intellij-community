@@ -429,6 +429,8 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/adt-ui-model/intellij.android.adt.ui.model.iml" filepath="$PROJECT_DIR$/../adt/idea/adt-ui-model/intellij.android.adt.ui.model.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/apkanalyzer/intellij.android.apkanalyzer.iml" filepath="$PROJECT_DIR$/../adt/idea/apkanalyzer/intellij.android.apkanalyzer.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/artwork/intellij.android.artwork.iml" filepath="$PROJECT_DIR$/../adt/idea/artwork/intellij.android.artwork.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/build-attribution/intellij.android.build-attribution.iml" filepath="$PROJECT_DIR$/../adt/idea/build-attribution/intellij.android.build-attribution.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/build-attribution/intellij.android.build-attribution.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/build-attribution/intellij.android.build-attribution.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/build-common/intellij.android.buildCommon.iml" filepath="$PROJECT_DIR$/../adt/idea/build-common/intellij.android.buildCommon.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-common/intellij.android.common.iml" filepath="$PROJECT_DIR$/../adt/idea/android-common/intellij.android.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android/intellij.android.core.iml" filepath="$PROJECT_DIR$/../adt/idea/android/intellij.android.core.iml" />
