@@ -82,6 +82,10 @@ public class IR {
       myExePath = exePath;
     }
 
+    public void setExePath(@NotNull String exePath) {
+      myExePath = new StringRemoteValue(exePath);
+    }
+
     public void setWorkingDirectory(@NotNull RemoteValue workingDirectory) {
       myWorkingDirectory = workingDirectory;
     }
@@ -90,8 +94,16 @@ public class IR {
       myParameters.add(parameter);
     }
 
+    public void addParameter(@NotNull String parameter) {
+      myParameters.add(new StringRemoteValue(parameter));
+    }
+
     public void addEnvironmentVariable(String name, RemoteValue value) {
       myEnvironment.put(name, value);
+    }
+
+    public void addEnvironmentVariable(String name, String value) {
+      myEnvironment.put(name, new StringRemoteValue(value));
     }
 
     public String getExePath(@NotNull RemoteEnvironment target) {
