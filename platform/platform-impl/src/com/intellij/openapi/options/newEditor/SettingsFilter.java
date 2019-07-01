@@ -25,12 +25,10 @@ import java.util.Set;
 
 public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNode> {
   final OptionsEditorContext myContext = new OptionsEditorContext();
-  final Project myProject;
-
-  boolean myDocumentWasChanged;
+  private final Project myProject;
 
   private final SearchTextField mySearch;
-  private final List<ConfigurableGroup> myGroups;
+  private final List<? extends ConfigurableGroup> myGroups;
 
   private final SearchableOptionsRegistrar myRegistrar = SearchableOptionsRegistrar.getInstance();
   private Set<Configurable> myFiltered;
@@ -39,7 +37,7 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
   private boolean myUpdateRejected;
   private Configurable myLastSelected;
 
-  SettingsFilter(Project project, List<ConfigurableGroup> groups, SearchTextField search) {
+  SettingsFilter(Project project, List<? extends ConfigurableGroup> groups, SearchTextField search) {
     myProject = project;
     myGroups = groups;
     mySearch = search;
@@ -111,12 +109,12 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
     return "";
   }
 
-  void setHoldingFilter(boolean holding) {
+  private void setHoldingFilter(boolean holding) {
     myContext.setHoldingFilter(holding);
     updateSpotlight(false);
   }
 
-  boolean contains(Configurable configurable) {
+  boolean contains(@NotNull Configurable configurable) {
     return myHits != null && myHits.getNameHits().contains(configurable);
   }
 
@@ -152,9 +150,8 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
 
     Configurable current = myContext.getCurrentConfigurable();
 
-    boolean shouldMoveSelection = myHits == null || (
-      !myHits.getNameFullHits().contains(current) &&
-      !myHits.getContentHits().contains(current));
+    boolean shouldMoveSelection = myHits == null || !myHits.getNameFullHits().contains(current) &&
+                                                    !myHits.getContentHits().contains(current);
 
     if (shouldMoveSelection && type != DocumentEvent.EventType.INSERT && (myFiltered == null || myFiltered.contains(current))) {
       shouldMoveSelection = false;
@@ -180,7 +177,6 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
     }
     SimpleNode node = !adjustSelection ? null : findNode(candidate);
     fireUpdate(node, adjustSelection, now);
-    myDocumentWasChanged = true;
   }
 
   private static Configurable findConfigurable(Set<? extends Configurable> configurables, Set<? extends Configurable> hits) {

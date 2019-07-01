@@ -114,7 +114,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     ConfigurableGroup[] groups = getConfigurableGroups(project, true);
     Configurable config = new ConfigurableVisitor() {
       @Override
-      protected boolean accept(Configurable configurable) {
+      protected boolean accept(@NotNull Configurable configurable) {
         return predicate.test(configurable);
       }
     }.find(groups);

@@ -14,6 +14,7 @@ import org.jetbrains.concurrency.Promises;
 
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Sergey.Malenkov
@@ -21,11 +22,10 @@ import java.util.List;
 public abstract class Settings {
   public static final DataKey<Settings> KEY = DataKey.create("settings.editor");
 
-  private final List<ConfigurableGroup> myGroups;
-  private final IdentityHashMap<UnnamedConfigurable, ConfigurableWrapper>
-    myMap = new IdentityHashMap<>();
+  private final List<? extends ConfigurableGroup> myGroups;
+  private final Map<UnnamedConfigurable, ConfigurableWrapper> myMap = new IdentityHashMap<>();
 
-  protected Settings(@NotNull List<ConfigurableGroup> groups) {
+  protected Settings(@NotNull List<? extends ConfigurableGroup> groups) {
     myGroups = groups;
   }
 

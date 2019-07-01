@@ -61,10 +61,10 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
 
   SettingsEditor(@NotNull Disposable parent,
                  @NotNull Project project,
-                 @NotNull List<ConfigurableGroup> groups,
+                 @NotNull List<? extends ConfigurableGroup> groups,
                  @Nullable Configurable configurable,
                  final String filter,
-                 final ISettingsTreeViewFactory factory) {
+                 @NotNull ISettingsTreeViewFactory factory) {
     super(parent);
 
     myProperties = PropertiesComponent.getInstance(project);

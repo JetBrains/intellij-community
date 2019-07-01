@@ -237,7 +237,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
 
   @Override
   @NotNull
-  public ConfigurableHit getConfigurables(@NotNull List<ConfigurableGroup> groups,
+  public ConfigurableHit getConfigurables(@NotNull List<? extends ConfigurableGroup> groups,
                                           final DocumentEvent.EventType type,
                                           @Nullable Set<? extends Configurable> configurables,
                                           @NotNull String option,
@@ -247,15 +247,15 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   }
 
   @NotNull
-  private ConfigurableHit findConfigurables(@NotNull List<ConfigurableGroup> groups,
+  private ConfigurableHit findConfigurables(@NotNull List<? extends ConfigurableGroup> groups,
                                             final DocumentEvent.EventType type,
                                             @Nullable Collection<Configurable> configurables,
                                             @NotNull String option,
                                             @Nullable Project project) {
-    Collection<Configurable> effectiveConfigurables;
     if (ContainerUtil.isEmpty(configurables)) {
       configurables = null;
     }
+    Collection<Configurable> effectiveConfigurables;
     if (configurables == null) {
       effectiveConfigurables = new LinkedHashSet<>();
       Consumer<Configurable> consumer = new CollectConsumer<>(effectiveConfigurables);

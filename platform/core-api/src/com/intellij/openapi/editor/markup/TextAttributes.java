@@ -175,7 +175,7 @@ public class TextAttributes implements Cloneable {
   /**
    * Appends additional effect to paint with specific color
    *
-   * @see TextAttributes#setAdditionalEffects(java.util.Map)
+   * @see TextAttributes#setAdditionalEffects(Map)
    */
   @ApiStatus.Experimental
   public void withAdditionalEffect(@NotNull EffectType effectType, @NotNull Color color) {
@@ -184,7 +184,7 @@ public class TextAttributes implements Cloneable {
 
   /**
    * Appends additional effects to paint with specific colors. New effects may supersede old ones
-   * @see TextAttributes#setAdditionalEffects(java.util.Map)
+   * @see TextAttributes#setAdditionalEffects(Map)
    * @see TextAttributesEffectsBuilder
    */
   @ApiStatus.Experimental
@@ -234,6 +234,7 @@ public class TextAttributes implements Cloneable {
     return new TextAttributes(myAttrs);
   }
 
+  @Override
   public boolean equals(Object obj) {
     if(!(obj instanceof TextAttributes)) {
       return false;
@@ -242,6 +243,7 @@ public class TextAttributes implements Cloneable {
     return myAttrs == ((TextAttributes)obj).myAttrs;
   }
 
+  @Override
   public int hashCode() {
     return myAttrs.hashCode();
   }

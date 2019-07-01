@@ -22,7 +22,7 @@ public abstract class SearchableOptionsRegistrar{
   }
 
   @NotNull
-  public abstract ConfigurableHit getConfigurables(@NotNull List<ConfigurableGroup> groups,
+  public abstract ConfigurableHit getConfigurables(@NotNull List<? extends ConfigurableGroup> groups,
                                                    final DocumentEvent.EventType type,
                                                    @Nullable Set<? extends Configurable> configurables,
                                                    @NotNull String option,

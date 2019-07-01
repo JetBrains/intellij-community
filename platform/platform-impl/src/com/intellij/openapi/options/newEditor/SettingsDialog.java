@@ -57,7 +57,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     init(configurable, null);
   }
 
-  public SettingsDialog(@NotNull Project project, @NotNull List<ConfigurableGroup> groups, @Nullable Configurable configurable, @Nullable String filter) {
+  public SettingsDialog(@NotNull Project project, @NotNull List<? extends ConfigurableGroup> groups, @Nullable Configurable configurable, @Nullable String filter) {
     super(project, true);
 
     myDimensionServiceKey = DIMENSION_KEY;
@@ -67,7 +67,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   }
 
   @NotNull
-  protected SettingsTreeView treeViewFactory(SettingsFilter filter, List<ConfigurableGroup> groups) {
+  protected SettingsTreeView treeViewFactory(@NotNull SettingsFilter filter, @NotNull List<? extends ConfigurableGroup> groups) {
     return new SettingsTreeView(filter, groups);
   }
 
