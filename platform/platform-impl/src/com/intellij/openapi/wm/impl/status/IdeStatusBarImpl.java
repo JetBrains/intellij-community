@@ -19,7 +19,6 @@ import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.ClickListener;
-import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.ArrayUtilRt;
@@ -640,12 +639,13 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     void beforeUpdate();
   }
 
-  private static final class MultipleTextValuesPresentationWrapper extends SimpleColoredComponent implements StatusBarWrapper {
+  private static final class MultipleTextValuesPresentationWrapper extends TextPanel implements StatusBarWrapper {
     private final StatusBarWidget.MultipleTextValuesPresentation myPresentation;
 
     private MultipleTextValuesPresentationWrapper(@NotNull final StatusBarWidget.MultipleTextValuesPresentation presentation) {
       myPresentation = presentation;
-      setVisible(presentation.getSelectedValue() != null);
+      setVisible(StringUtil.isNotEmpty(myPresentation.getSelectedValue()));
+      setTextAlignment(Component.CENTER_ALIGNMENT);
       new ClickListener() {
         @Override
         public boolean onClick(@NotNull MouseEvent e, int clickCount) {
@@ -666,12 +666,9 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
 
     @Override
     public void beforeUpdate() {
-      clear();
       String value = myPresentation.getSelectedValue();
-      if (value != null) {
-        append(value);
-      }
-      setVisible(value != null);
+      setText(value);
+      setVisible(StringUtil.isNotEmpty(value));
       setToolTipText(myPresentation.getTooltipText());
     }
   }
