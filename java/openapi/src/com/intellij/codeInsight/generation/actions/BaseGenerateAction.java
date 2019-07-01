@@ -50,6 +50,11 @@ public abstract class BaseGenerateAction extends CodeInsightAction implements Ge
   }
 
   @Override
+  protected void update(@NotNull Presentation presentation, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    presentation.setEnabledAndVisible(isValidForFile(project, editor, file));
+  }
+
+  @Override
   @Nullable
   public AnAction createEditTemplateAction(DataContext dataContext) {
     return null;

@@ -115,7 +115,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
 
 
   protected boolean isValidFor(PsiClass targetClass, TestFramework framework) {
-    return true;
+    return ((MyHandler)getHandler()).myMethodKind.getFileTemplateDescriptor(framework) != null;
   }
 
   private static void chooseAndPerform(Editor editor, List<? extends TestFramework> frameworks, final Consumer<? super TestFramework> consumer) {
