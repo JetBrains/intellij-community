@@ -11,14 +11,14 @@ import com.intellij.serialization.WriteConfiguration
 // do not use SkipNullAndEmptySerializationFilter for now because can lead to issues
 fun createCacheWriteConfiguration() = WriteConfiguration(allowAnySubTypes = true)
 
-private fun createDataClassResolver(log: Logger): (name: String, hostObject: DataNode<*>) -> Class<*>? {
+private fun createDataClassResolver(log: Logger): (name: String, hostObject: DataNode<*>?) -> Class<*>? {
   val projectDataManager = ProjectDataManager.getInstance()
   val managerClassLoaders = ExternalSystemApiUtil.getAllManagers().asSequence()
     .map { it.javaClass.classLoader }
     .toSet()
-  return fun(name: String, hostObject: DataNode<*>): Class<*>? {
+  return fun(name: String, hostObject: DataNode<*>?): Class<*>? {
     var classLoadersToSearch = managerClassLoaders
-    val services = projectDataManager!!.findService(hostObject.key)
+    val services = if (hostObject == null) emptyList() else projectDataManager!!.findService(hostObject.key)
     if (!services.isNullOrEmpty()) {
       val set = LinkedHashSet<ClassLoader>(managerClassLoaders.size + services.size)
       set.addAll(managerClassLoaders)
@@ -44,7 +44,17 @@ fun createCacheReadConfiguration(log: Logger, testOnlyClassLoader: ClassLoader? 
   val dataNodeResolver = if (testOnlyClassLoader == null) createDataClassResolver(log) else null
   return createDataNodeReadConfiguration(fun(name: String, hostObject: Any): Class<*>? {
     return when {
-      hostObject !is DataNode<*> -> hostObject.javaClass.classLoader.loadClass(name)
+      hostObject !is DataNode<*> -> {
+        val hostObjectClass = hostObject.javaClass
+        try {
+          hostObjectClass.classLoader.loadClass(name)
+        }
+        catch (e: ClassNotFoundException) {
+          log.debug("cannot find class $name using class loader of class ${hostObjectClass.name} (classLoader=${hostObjectClass.classLoader})", e)
+          // let's try system manager class loaders
+          dataNodeResolver?.invoke(name, null) ?: throw e
+        }
+      }
       dataNodeResolver == null -> testOnlyClassLoader!!.loadClass(name)
       else -> dataNodeResolver(name, hostObject)
     }
