@@ -31,6 +31,7 @@ import java.awt.font.TextLayout;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.function.BooleanSupplier;
@@ -102,7 +103,8 @@ public class HelpTooltip {
   private static final JBValue MAX_WIDTH = new JBValue.UIInteger("HelpTooltip.maxWidth", 250);
   private static final JBValue X_OFFSET = new JBValue.UIInteger("HelpTooltip.xOffset", 0);
   private static final JBValue Y_OFFSET = new JBValue.UIInteger("HelpTooltip.yOffset", 0);
-  private static final JBValue FONT_DELTA_SIZE = new JBValue.UIInteger("HelpTooltip.fontSizeDelta", 0);
+  private static final JBValue FONT_SIZE_DELTA = new JBValue.UIInteger("HelpTooltip.fontSizeDelta", 0);
+  private static final JBValue DESCRIPTION_SIZE_DELTA = new JBValue.UIInteger("HelpTooltip.descriptionSizeDelta", 0);
   private static final JBValue CURSOR_OFFSET = new JBValue.UIInteger("HelpTooltip.mouseCursorOffset", 20);
 
   private static final String DOTS = "...";
@@ -302,25 +304,19 @@ public class HelpTooltip {
     if (StringUtil.isNotEmpty(description)) {
       String[] pa = description.split(PARAGRAPH_SPLITTER);
       isMultiline = pa.length > 1;
-
-      Color descriptionColor = hasTitle ? INFO_COLOR : FOREGROUND_COLOR;
-      for (String p : pa) {
-        if (!p.isEmpty()) {
-          tipPanel.add(new Paragraph(p, descriptionColor), VerticalLayout.TOP);
-        }
-      }
+      Arrays.stream(pa).filter(p -> !p.isEmpty()).forEach(p -> tipPanel.add(new Paragraph(p, hasTitle), VerticalLayout.TOP));
     }
 
     if (!hasTitle && StringUtil.isNotEmpty(shortcut)) {
       JLabel shortcutLabel = new JLabel(shortcut);
-      shortcutLabel.setFont(modifyFont(shortcutLabel.getFont()));
+      shortcutLabel.setFont(deriveDescriptionFont(shortcutLabel.getFont(), hasTitle));
       shortcutLabel.setForeground(SHORTCUT_COLOR);
 
       tipPanel.add(shortcutLabel, VerticalLayout.TOP);
     }
 
     if (link != null) {
-      link.setFont(modifyFont(link.getFont()));
+      link.setFont(deriveDescriptionFont(link.getFont(), hasTitle));
       tipPanel.add(link, VerticalLayout.TOP);
     }
 
@@ -444,8 +440,13 @@ public class HelpTooltip {
     return i != null ? new JBEmptyBorder(i) : JBUI.Borders.empty();
   }
 
-  private static Font modifyFont(Font font) {
-    return font.deriveFont((float)font.getSize() + FONT_DELTA_SIZE.get());
+  private static Font deriveActionFont(Font font) {
+    return font.deriveFont((float)font.getSize() + FONT_SIZE_DELTA.get());
+  }
+
+  private static Font deriveDescriptionFont(Font font, boolean hasTitle) {
+    return hasTitle ? deriveActionFont(font) :
+           font.deriveFont((float)font.getSize() + DESCRIPTION_SIZE_DELTA.get());
   }
 
   private class Header extends JPanel {
@@ -463,7 +464,7 @@ public class HelpTooltip {
     private Header() {
       setOpaque(false);
 
-      Font font = modifyFont(getFont());
+      Font font = deriveActionFont(getFont());
       setFont(font);
 
       Font titleFont = StringUtil.isNotEmpty(description) ? font.deriveFont(Font.BOLD) : font;
@@ -558,9 +559,9 @@ public class HelpTooltip {
   }
 
   private class Paragraph extends JLabel {
-    private Paragraph(String text, Color fgColor) {
-      setForeground(fgColor);
-      setFont(modifyFont(getFont()));
+    private Paragraph(String text, boolean hasTitle) {
+      setForeground(hasTitle ? INFO_COLOR : FOREGROUND_COLOR);
+      setFont(deriveDescriptionFont(getFont(), hasTitle));
 
       View v = BasicHTML.createHTMLView(this, String.format("<html>%s</html>", text));
       float width = v.getPreferredSpan(View.X_AXIS);

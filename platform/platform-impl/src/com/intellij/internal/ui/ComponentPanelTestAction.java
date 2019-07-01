@@ -94,6 +94,9 @@ public class ComponentPanelTestAction extends DumbAwareAction {
     private static final ValidationInfo NULL_VALUE_ERROR = new ValidationInfo("Null value");
     private static final ValidationInfo NAN_VALUE_ERROR = new ValidationInfo("Not a number");
 
+    private static final String LONG_TEXT1 = "In advance of the dogs, on wide snowshoes, toiled a man. At the rear of the sled toiled a second man.<p/>On the sled, in the box, lay a third man whose toil was over, - a man whom the Wild had conquered and beaten down until he would never move nor struggle again.";
+    private static final String LONG_TEXT2 = "It is not the way of the Wild to like movement.<p/>Life is an offence to it, for life is movement; and the Wild aims always to destroy movement.";
+
     private final Alarm myAlarm = new Alarm(getDisposable());
     private ProgressTimerRequest progressTimerRequest;
 
@@ -763,10 +766,10 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       toolbarActions.add(new SplitButtonAction(actions));
       toolbarActions.add(new MyAction("Short", AllIcons.Ide.Rating1).withShortCut("control K"));
       toolbarActions.add(new MyAction("Short", AllIcons.Ide.Rating2)
-                           .withDescription("Some description.<p/>With several paragraphs.")
+                           .withDescription(LONG_TEXT1)
                            .withShortCut("control N"));
       toolbarActions.add(new MyAction(null, AllIcons.Ide.Rating3)
-                           .withDescription("Another long description.<p/>With several paragraphs")
+                           .withDescription(LONG_TEXT2)
                            .withShortCut("control P"));
 
       ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("TOP", toolbarActions, true);
