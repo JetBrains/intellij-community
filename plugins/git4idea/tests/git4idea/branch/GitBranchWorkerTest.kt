@@ -694,7 +694,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     git("branch $todelete")
     git("push -u origin todelete")
 
-    GitSharedSettings.getInstance(project).setForcePushProhibitedPatters(listOf("todelete"))
+    GitSharedSettings.getInstance(project).forcePushProhibitedPatterns = listOf("todelete")
 
     first.deleteBranch(todelete)
 

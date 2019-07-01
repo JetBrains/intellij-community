@@ -237,7 +237,7 @@ internal class GitVcsPanel(private val project: Project,
             { component, value -> component.text = ParametersListUtil.COLON_LINE_JOINER.`fun`(value) },
             PropertyBinding(
               { sharedSettings.forcePushProhibitedPatterns },
-              { sharedSettings.setForcePushProhibitedPatters(it) })
+              { sharedSettings.forcePushProhibitedPatterns = it })
           )
       }
     }
