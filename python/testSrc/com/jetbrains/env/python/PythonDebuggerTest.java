@@ -2186,4 +2186,22 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       }
     });
   }
+
+  @Test
+  public void testCallingSettraceWarning() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_calling_settrace_warning.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 2);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        resume();
+        waitForTerminate();
+        outputContains("PYDEV DEBUGGER WARNING:\nsys.settrace() should not be used when the debugger is being used.");
+      }
+    });
+  }
 }
