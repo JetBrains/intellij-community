@@ -5,7 +5,7 @@ class C {
             default -> /*0*/{
                 try {
                     /*1*/
-                    yield /*2*/"a";/*3*/
+                    break /*2*/"a";/*3*/
                 } finally {
                     <caret>
                 }

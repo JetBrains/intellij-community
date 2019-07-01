@@ -4,7 +4,7 @@ class C {
             case 1 -> "";
             default -> {
                 try {
-                    yield "a" + "b";
+                    break "a" + "b";
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {

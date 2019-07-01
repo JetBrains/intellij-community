@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -53,7 +52,7 @@ abstract class JavaStatementsSurrounder implements Surrounder {
     if (container instanceof PsiSwitchLabeledRuleStatement && statements.length == 1) {
       PsiElement statement = statements[0];
       if (statement instanceof PsiExpressionStatement && canBreak) {
-        addYield(codeBlock, (PsiExpressionStatement)statement);
+        addBreakWithValue(codeBlock, (PsiExpressionStatement)statement);
         return;
       }
       if (statement instanceof PsiBlockStatement) {
@@ -65,22 +64,22 @@ abstract class JavaStatementsSurrounder implements Surrounder {
     codeBlock.addRange(statements[0], statements[statements.length - 1]);
   }
 
-  private static void addYield(PsiCodeBlock codeBlock, PsiExpressionStatement statement) {
+  private static void addBreakWithValue(PsiCodeBlock codeBlock, PsiExpressionStatement statement) {
     PsiExpressionStatement wrappedStatement = (PsiExpressionStatement)codeBlock.add(statement);
     CommentTracker tracker = new CommentTracker();
     tracker.markUnchanged(wrappedStatement.getExpression());
 
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(codeBlock.getProject());
-    PsiYieldStatement yieldStatement = (PsiYieldStatement)factory.createStatementFromText("yield 0;", statement);
-    yieldStatement = (PsiYieldStatement)tracker.replaceAndRestoreComments(wrappedStatement, yieldStatement);
+    PsiBreakStatement breakStatement = (PsiBreakStatement)factory.createStatementFromText("break 0;", null);
+    breakStatement = (PsiBreakStatement)tracker.replaceAndRestoreComments(wrappedStatement, breakStatement);
 
-    PsiExpression yieldExpression = yieldStatement.getExpression();
-    assert yieldExpression != null : DebugUtil.psiToString(yieldStatement, false);
-    yieldExpression.replace(statement.getExpression());
+    PsiExpression breakExpression = breakStatement.getExpression();
+    assert breakExpression != null : "breakExpression";
+    breakExpression.replace(statement.getExpression());
   }
 
   protected static void addCodeBlockContents(PsiCodeBlock codeBlock, PsiBlockStatement statement) {
-    // could just replace one code block with the other, but then we lose some comments and formatting
+    // could just replace one code block with the other but then we lose some comments and formatting
     PsiBlockStatement tempStatement = (PsiBlockStatement)codeBlock.add(statement);
     PsiCodeBlock tempBlock = tempStatement.getCodeBlock();
     PsiJavaToken lBrace = tempBlock.getLBrace();

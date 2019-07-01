@@ -3,7 +3,7 @@ class C {
         String s = switch (n) {
             case 1 -> {
                 if () {
-                    yield "a".substring(1);
+                    break "a".substring(1);
                 }
             }
             default -> "";
