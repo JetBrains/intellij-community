@@ -2,12 +2,15 @@ package com.intellij.remoteServer.ir.configuration
 
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.ui.NamedConfigurable
+import javax.swing.Icon
 import javax.swing.JComponent
 
-fun <T> Pair<T, BoundConfigurable>.toNamedConfigurable(): NamedConfigurable<T> {
+fun <T : RemoteRunnerConfigurable> Pair<T, BoundConfigurable>.toNamedConfigurable(): NamedConfigurable<T> {
   val (element, boundConfigurable) = this
   return object : NamedConfigurable<T>() {
     override fun getBannerSlogan(): String = "TODO"
+
+    override fun getIcon(expanded: Boolean): Icon? = element.getIcon()
 
     override fun isModified(): Boolean = boundConfigurable.isModified
 
