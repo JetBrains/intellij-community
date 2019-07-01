@@ -1,19 +1,5 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.jetbrains.python.console
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.execution.console
 
 import com.intellij.execution.impl.ConsoleViewUtil
 import com.intellij.openapi.actionSystem.DataContext
@@ -27,11 +13,13 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.TextRange
 import java.awt.datatransfer.StringSelection
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * Created by Yuli Fiterman on 9/17/2016.
  */
-class PyConsoleCopyHandler(val originalHandler: EditorActionHandler) : EditorActionHandler() {
+class ConsoleHistoryCopyHandler(val originalHandler: EditorActionHandler) : EditorActionHandler() {
 
   override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
     if (!RichCopySettings.getInstance().isEnabled) {
@@ -62,8 +50,8 @@ class PyConsoleCopyHandler(val originalHandler: EditorActionHandler) : EditorAct
       if (!r.isNull) {
         lineStart += r.get()
       }
-      val rangeStart = Math.max(lineStart, start)
-      val rangeEnd = Math.min(document.getLineEndOffset(i), end)
+      val rangeStart = max(lineStart, start)
+      val rangeEnd = min(document.getLineEndOffset(i), end)
       if (rangeStart < rangeEnd) {
         sb.append(document.getText(TextRange(rangeStart, rangeEnd)))
         if (rangeEnd < end) {
@@ -71,14 +59,13 @@ class PyConsoleCopyHandler(val originalHandler: EditorActionHandler) : EditorAct
         }
       }
     }
-    if (!sb.isEmpty()) {
+    if (sb.isNotEmpty()) {
       CopyPasteManager.getInstance().setContents(StringSelection(sb.toString()))
     }
   }
 
   companion object {
     @JvmField
-    val PROMPT_LENGTH_MARKER: Key<Int?> = Key.create<Int>("PROMPT_LENGTH_MARKER");
-
+    val PROMPT_LENGTH_MARKER: Key<Int?> = Key.create<Int>("PROMPT_LENGTH_MARKER")
   }
 }
