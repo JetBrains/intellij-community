@@ -20,6 +20,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Arrays;
 
 /**
  * @author yole
@@ -29,22 +30,20 @@ public class SnapShooter {
   }
 
   public static void main(String[] args) throws Throwable {
-    int origClassPathSize = Integer.parseInt(args [0]);
+    int origClassPathStart = Integer.parseInt(args [0]);
     int port = Integer.parseInt(args [1]);
 
     ClassLoader loader = SnapShooter.class.getClassLoader();
     if (loader instanceof URLClassLoader) {
       URLClassLoader ucl = (URLClassLoader) loader;
-
+      // classpath layout: [internal entry]...[internal entry][user entry]...[user entry][idea_rt.jar/intellij.java.rt]
       URL[] oldURLs = ucl.getURLs();
-      URL[] newURLs = new URL[origClassPathSize];
-      final int startIndex = oldURLs.length - origClassPathSize;
-      System.arraycopy(oldURLs, startIndex, newURLs, 0, origClassPathSize);
+      URL[] newURLs = Arrays.copyOfRange(oldURLs, origClassPathStart, oldURLs.length - 1);
       loader = new URLClassLoader(newURLs, null);
       Thread.currentThread().setContextClassLoader(loader);
     }
 
-    final Thread thread = new Thread(new SnapShooterDaemon(port),"snapshooter");
+    final Thread thread = new Thread(new SnapShooterDaemon(port), "snapshooter");
     thread.setDaemon(true);
     thread.start();
 
@@ -56,8 +55,9 @@ public class SnapShooter {
     Method m = loader.loadClass(mainClass).getMethod("main", parms.getClass());
     try {
       ensureAccess(m);
-      m.invoke(null, (Object) parms);
-    } catch (InvocationTargetException ite) {
+      m.invoke(null, (Object)parms);
+    }
+    catch (InvocationTargetException ite) {
       throw ite.getTargetException();
     }
   }
