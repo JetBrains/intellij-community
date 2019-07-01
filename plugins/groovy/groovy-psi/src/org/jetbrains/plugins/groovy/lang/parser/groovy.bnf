@@ -219,7 +219,8 @@ modifier_list ::= non_empty_modifier_list | empty_modifier_list
 }
 empty_modifier_list ::=
 non_empty_modifier_list ::= <<a_b_a (modifier | annotation) mb_nl>>
-annotation_modifier_list ::= <<a_b_a annotation mb_nl>>?
+annotation_modifier_list ::= non_empty_annotation_list?
+private non_empty_annotation_list ::= <<a_b_a annotation mb_nl>>
 private modifier ::= 'abstract'
                    | 'default'
                    | 'final'
@@ -547,7 +548,7 @@ private non_empty_type_argument_list ::= '<' <<comma_list_p type_argument_list_i
   pin = 1
   consumeTokenMethod = 'consumeTokenFast'
 }
-private type_argument_list_item ::= mb_nl type_argument
+private type_argument_list_item ::= mb_nl <<annotated type_argument>>
 private type_argument_list_end ::= <<mb_nl_group '>'>>
 private type_argument ::= any_type_element | wildcard_type_element
 {
@@ -917,28 +918,28 @@ private p_parenthesized_expression_inner ::= '(' expression ')' { pin = 1}
 private priority1_1 ::= new_anonymous_expression | new_expression
 
 new_anonymous_expression ::= 'new' type_argument_list? anonymous_type_definition { elementType = new_expression }
-anonymous_type_definition ::= code_reference call_argument_list class_body
+anonymous_type_definition ::= <<annotated code_reference>> call_argument_list class_body
 {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnonymousElementType'
 }
 
 new_expression ::= 'new' type_argument_list? new_expression_creator { pin = 1 }
-private new_expression_creator ::= new_expression_type (l_paren_variant | new_expression_tail) { pin = 1 }
+private new_expression_creator ::= <<annotated new_expression_type>> (l_paren_variant | new_expression_tail) { pin = 1 }
 private new_expression_type ::= primitive_type_element | <<allowDiamond code_reference>>
 private l_paren_variant ::= &'(' fail // adds a variant, to achieve "'(' expected" generated message
 private new_expression_tail ::= array_initializer_tail | array_declaration | (mb_nl call_argument_list)
 
 private array_initializer_tail ::= array_initializer_declaration mb_nl array_initializer
 array_initializer_declaration ::= array_dimensions+ { elementType = array_declaration }
-private array_dimensions ::= '['(']') { consumeTokenMethod = 'consumeTokenFast' }
+private array_dimensions ::= non_empty_annotation_list? '['(']') { consumeTokenMethod = 'consumeTokenFast' }
 array_initializer ::= '{' mb_nl '}' | array_initializer_pin
 private array_initializer_pin ::=  '{' <<a_b_a array_initializer_item array_initializer_separator>> array_initializer_separator? mb_nl '}' { pin = 1 }
 private array_initializer_item ::= mb_nl expression
 private array_initializer_separator ::= mb_nl ','
 
 array_declaration ::= mandatory_expression optional_expression* { consumeTokenMethod = 'consumeTokenFast' }
-private mandatory_expression ::= '[' expression ']' { pin = 1 consumeTokenMethod = 'consumeTokenFast' }
-private optional_expression ::= '[' expression? ']' { pin = 1 consumeTokenMethod = 'consumeTokenFast' }
+private mandatory_expression ::= non_empty_annotation_list? '[' expression ']' { pin = 2 consumeTokenMethod = 'consumeTokenFast' }
+private optional_expression ::= non_empty_annotation_list? '[' expression? ']' { pin = 2 consumeTokenMethod = 'consumeTokenFast' }
 
 private priority1_2 ::= method_call_expression | lazy_closure | lambda_expression | single_parameter_lambda_expression | list_or_map
 constructor_call_expression ::= &('this' | 'super') unqualified_reference_expression call_tail
@@ -1036,8 +1037,8 @@ private property_expression_identifiers ::= parenthesized_expression | lazy_bloc
 
 private priority1_4 ::= not_expression | cast_expression
 not_expression ::= ('~' | '!') mb_nl expression { elementType = unary_expression }
-cast_expression ::= &cast_expression_start '(' type_element ')' cast_operand
-private cast_expression_start ::= '(' (IDENTIFIER | primitive_type) { consumeTokenMethod = 'consumeTokenFast' }
+cast_expression ::= &cast_expression_start '(' <<annotated type_element>> ')' cast_operand
+private cast_expression_start ::= '(' non_empty_annotation_list? (IDENTIFIER | primitive_type) { consumeTokenMethod = 'consumeTokenFast' }
 private cast_operand ::= !empty_parens <<castOperandCheck>> priority1_4
 
 private priority1_5 ::= index_expression | safe_index_expression | postfix_unary_expression
@@ -1220,10 +1221,10 @@ unqualified_class_type_element ::= short_code_reference
 private capital_class_type_element ::= <<capitalizedTypeElement class_type_element <<refWasCapitalized>>>>
 
 private array_type_elements ::= array_type_element*
-left array_type_element ::= '[' mb_nl ']' { consumeTokenMethod = 'consumeTokenFast' }
+left array_type_element ::= non_empty_annotation_list? '[' mb_nl ']' { consumeTokenMethod = 'consumeTokenFast' }
 
 wildcard_type_element ::= '?' wildcard_bound?
-private wildcard_bound ::= ('extends' | 'super') any_type_element { pin = 1 }
+private wildcard_bound ::= ('extends' | 'super') <<annotated any_type_element>> { pin = 1 }
 left disjunction_type_element ::= disjunction_type_element_part+
 private disjunction_type_element_part ::= '|' (type_element | expect_type) { pin = 1 consumeTokenMethod = 'consumeTokenFast' }
 
@@ -1233,7 +1234,8 @@ private any_type_element ::= <<anyTypeElement type_element>>
 
 
 // region Code references
-code_reference ::= short_code_reference code_reference_tail*
+code_reference ::= code_reference_base
+private code_reference_base ::= short_code_reference code_reference_tail*
 qualified_code_reference ::= short_code_reference code_reference_tail code_reference_tail* { elementType = code_reference}
 short_code_reference ::= code_reference_part { elementType = code_reference }
 left code_reference_tail ::= code_reference_dot code_reference_part <<setRefWasQualified>>
@@ -1253,7 +1255,7 @@ private code_reference_identifiers ::= IDENTIFIER | code_reference_identifiers_s
 private code_reference_identifiers_soft ::= 'def' | 'as' | 'in' | 'trait' { consumeTokenMethod = 'consumeTokenFast' }
 
 // for the sake of showing 'type expected' message
-type_code_reference ::= code_reference { elementType = '' name = 'type' }
+type_code_reference ::= <<annotated code_reference_base>> { elementType = '' name = 'type' }
 
 private qualified_name ::= <<qualifiedName code_reference>>
 
@@ -1310,6 +1312,8 @@ private meta paren_list_tail ::= ',' <<paren_list_item <<item>>>> { pin = 1 }
 private paren_list_item_recovery ::= !(',' | ')' | '}')
 // endregion
 
+//annotation nodes will be added to the root node of <<item>>
+private meta annotated ::= (non_empty_annotation_list <<forceWrapLeft <<item>>>>) | <<item>>
 
 // region Recovery
 

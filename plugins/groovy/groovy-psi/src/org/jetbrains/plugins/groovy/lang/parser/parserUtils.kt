@@ -470,6 +470,16 @@ fun wrapLeft(builder: PsiBuilder, level: Int): Boolean {
   return true
 }
 
+fun forceWrapLeft(builder: PsiBuilder, level: Int, parser: Parser): Boolean {
+  val marker = builder.latestDoneMarker as? Marker ?: return false
+  val r = parser.parse(builder, level)
+  if (!r) return false
+  val latest = builder.latestDoneMarker ?: return false
+  marker.precede().done(latest.tokenType)
+  (latest as? Marker)?.drop()
+  return true
+}
+
 fun choice(builder: PsiBuilder, level: Int, vararg parsers: Parser): Boolean {
   assert(parsers.size > 1)
   for (parser in parsers) {
