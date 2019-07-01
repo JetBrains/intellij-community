@@ -669,7 +669,7 @@ public class ExpressionUtils {
     return null;
   }
 
-  public static boolean isConcatenation(PsiElement element) {
+  public static boolean isStringConcatenation(PsiElement element) {
     if (!(element instanceof PsiPolyadicExpression)) {
       return false;
     }

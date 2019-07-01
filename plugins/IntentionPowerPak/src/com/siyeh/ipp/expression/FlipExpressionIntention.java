@@ -41,7 +41,7 @@ public class FlipExpressionIntention extends MutablyNamedIntention {
     final String operatorText = sign == null ? "" : sign.getText();
     final IElementType tokenType = expression.getOperationTokenType();
     final boolean commutative = ParenthesesUtils.isCommutativeOperator(tokenType);
-    if (commutative && !ExpressionUtils.isConcatenation(expression)) {
+    if (commutative && !ExpressionUtils.isStringConcatenation(expression)) {
       return IntentionPowerPackBundle.message("flip.smth.intention.name", operatorText);
     }
     else {

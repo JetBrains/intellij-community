@@ -51,7 +51,7 @@ public class ReplaceConcatenationWithStringBufferIntention extends MutablyNamedI
   public void processIntention(@NotNull PsiElement element) {
     PsiPolyadicExpression expression = (PsiPolyadicExpression)element;
     PsiElement parent = expression.getParent();
-    while (ExpressionUtils.isConcatenation(parent)) {
+    while (ExpressionUtils.isStringConcatenation(parent)) {
       expression = (PsiPolyadicExpression)parent;
       parent = expression.getParent();
     }

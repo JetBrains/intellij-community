@@ -39,7 +39,7 @@ public class ReplaceConcatenationWithFormatStringIntention extends Intention {
   protected void processIntention(@NotNull PsiElement element) {
     PsiPolyadicExpression expression = (PsiPolyadicExpression)element;
     PsiElement parent = expression.getParent();
-    while (ExpressionUtils.isConcatenation(parent)) {
+    while (ExpressionUtils.isStringConcatenation(parent)) {
       expression = (PsiPolyadicExpression)parent;
       parent = expression.getParent();
     }
