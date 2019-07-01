@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -26,21 +25,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class VcsGuess {
-
-  @NotNull private final Project myProject;
   @NotNull private final ProjectLevelVcsManagerImpl myVcsManager;
 
   public VcsGuess(@NotNull Project project) {
-    myProject = project;
-    myVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
+    myVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(project);
   }
 
   @Nullable
   public AbstractVcs getVcsForDirty(@NotNull VirtualFile file) {
-    if (file.isInLocalFileSystem() && isFileInIndex(file)) {
-      return myVcsManager.getVcsFor(file);
+    if (!file.isInLocalFileSystem()) {
+      return null;
     }
-    return null;
+    if (myVcsManager.isIgnored(file)) {
+      return null;
+    }
+    return myVcsManager.getVcsFor(file);
   }
 
   @Nullable
@@ -48,17 +47,9 @@ public class VcsGuess {
     if (filePath.isNonLocal()) {
       return null;
     }
-    VirtualFile validParent = ChangesUtil.findValidParentAccurately(filePath);
-    if (validParent != null && isFileInIndex(validParent)) {
-      return myVcsManager.getVcsFor(validParent);
+    if (myVcsManager.isIgnored(filePath)) {
+      return null;
     }
-    return null;
-  }
-
-  private boolean isFileInIndex(@NotNull VirtualFile validParent) {
-    return ReadAction.compute(() -> {
-      if (myProject.isDisposed()) return false;
-      return myVcsManager.isFileInContent(validParent);
-    });
+    return myVcsManager.getVcsFor(filePath);
   }
 }
