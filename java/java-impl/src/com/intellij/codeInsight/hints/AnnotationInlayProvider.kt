@@ -12,7 +12,10 @@ import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.ui.layout.*
@@ -28,6 +31,7 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
     val project = file.project
     return object : FactoryInlayHintsCollector(editor) {
       override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
+        if (file.project.service<DumbService>().isDumb) return true
         val presentations = SmartList<InlayPresentation>()
         if (element is PsiModifierListOwner) {
           var annotations = emptySequence<PsiAnnotation>()
