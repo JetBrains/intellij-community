@@ -10,7 +10,7 @@ import java.util.ArrayList
 import javax.swing.JComponent
 import javax.swing.JFrame
 
-class CustomDecorationPath(val frame: JFrame, project: Project) : SelectedEditorFilePath(project) {
+class CustomDecorationPath(val frame: JFrame) : SelectedEditorFilePath() {
   private val titleChangeListener = PropertyChangeListener{
     updateProjectName()
   }

@@ -25,7 +25,7 @@ import javax.swing.JPanel
 import javax.swing.plaf.FontUIResource
 
 
-open class SelectedEditorFilePath(val project: Project) {
+open class SelectedEditorFilePath() {
   companion object {
     const val fileSeparatorChar = '\\'
     const val ellipsisSymbol = "\u2026"
@@ -40,16 +40,6 @@ open class SelectedEditorFilePath(val project: Project) {
   }
 
   protected val projectLabel = object : JLabel() {
-    override fun addNotify() {
-      super.addNotify()
-      installListeners()
-    }
-
-    override fun removeNotify() {
-      super.removeNotify()
-      unInstallListeners()
-    }
-
     override fun setFont(font: Font) {
       super.setFont(fontUIResource(font))
     }
@@ -64,6 +54,16 @@ open class SelectedEditorFilePath(val project: Project) {
   private fun fontUIResource(font: Font) = FontUIResource(font.deriveFont(font.style or Font.BOLD))
 
   private val pane = object : JPanel(MigLayout("ins 0, gap 0", "[min!][pref][pref][pref]push")) {
+    override fun addNotify() {
+      super.addNotify()
+      installListeners()
+    }
+
+    override fun removeNotify() {
+      super.removeNotify()
+      unInstallListeners()
+    }
+
     override fun getMinimumSize(): Dimension {
       val minimumSize = super.getMinimumSize()
       if (shortProjectName.isEmpty()) return minimumSize
@@ -105,8 +105,50 @@ open class SelectedEditorFilePath(val project: Project) {
     }
 
   private var disposable: Disposable? = null
+  private var project: Project? = null
 
   protected open fun installListeners() {
+    project ?: return
+
+    updateProjectName()
+    updatePath()
+
+    getView().addComponentListener(resizedListener)
+  }
+
+  protected open fun unInstallListeners() {
+    disposable?.let {
+      if (!Disposer.isDisposed(it))
+        Disposer.dispose(it)
+      disposable = null
+    }
+
+    getView().removeComponentListener(resizedListener)
+  }
+
+  private fun updatePath() {
+    path = project?.let {
+      val fileEditorManager = FileEditorManager.getInstance(it)
+
+      val file = if (fileEditorManager is FileEditorManagerEx) {
+        val splittersFor = fileEditorManager.getSplittersFor(pane)
+        splittersFor.currentFile
+      }
+      else {
+        fileEditorManager?.selectedEditor?.file
+      }
+
+      file?.let { fl ->
+        FrameTitleBuilder.getInstance().getFileTitle(it, fl)
+      } ?: ""
+    } ?: ""
+
+    update()
+  }
+
+  fun setProject(project: Project) {
+    this.project = project
+
     if (disposable != null) {
       unInstallListeners()
     }
@@ -129,44 +171,15 @@ open class SelectedEditorFilePath(val project: Project) {
       }
     })
 
-    updatePath()
-
-    getView().addComponentListener(resizedListener)
-  }
-
-  protected open fun unInstallListeners() {
-    disposable?.let {
-      if (!Disposer.isDisposed(it))
-        Disposer.dispose(it)
-      disposable = null
-    }
-
-    getView().removeComponentListener(resizedListener)
-  }
-
-  private fun updatePath() {
-    val fileEditorManager = FileEditorManager.getInstance(project)
-
-    val file = if (fileEditorManager is FileEditorManagerEx) {
-      val splittersFor = fileEditorManager.getSplittersFor(pane)
-      splittersFor.currentFile
-    }
-    else {
-      fileEditorManager?.selectedEditor?.file
-    }
-
-    path = file?.let { fl ->
-      FrameTitleBuilder.getInstance().getFileTitle(project, fl)
-    } ?: ""
-
-    update()
+    installListeners()
   }
 
   protected fun updateProjectName() {
-    shortProjectName = project.name
-    projectName = FrameTitleBuilder.getInstance().getProjectTitle(project) ?: shortProjectName
-
-    update()
+    project?.let {
+      shortProjectName = it.name
+      projectName = FrameTitleBuilder.getInstance().getProjectTitle(it) ?: shortProjectName
+      update()
+    }
   }
 
   private fun update() {
