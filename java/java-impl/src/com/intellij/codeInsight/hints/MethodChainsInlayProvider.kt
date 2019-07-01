@@ -7,12 +7,13 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.*
-import com.intellij.ui.components.fields.IntegerField
+import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
 import com.siyeh.ig.psiutils.ExpressionUtils
 import org.intellij.lang.annotations.Language
 import javax.swing.JPanel
+import javax.swing.event.ChangeEvent
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
 
@@ -60,19 +61,17 @@ class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.S
   override fun createConfigurable(settings: Settings) = object : ImmediateConfigurable {
     val uniqueTypeCountName = "Unique type count"
 
-    private val field = IntegerField(uniqueTypeCountName, 1, 10)
+    private val uniqueTypeCount = JBIntSpinner(1, 1, 10)
 
     override fun createComponent(listener: ChangeListener): JPanel {
-      field.value = settings.uniqueTypeCount
-      field.document.addDocumentListener(object : DocumentListener {
-        override fun changedUpdate(e: DocumentEvent?) = handleChange(listener)
-        override fun insertUpdate(e: DocumentEvent?) = handleChange(listener)
-        override fun removeUpdate(e: DocumentEvent?) = handleChange(listener)
-      })
+      uniqueTypeCount.value = settings.uniqueTypeCount
+      uniqueTypeCount.addChangeListener {
+        handleChange(listener)
+      }
       val panel = panel {
         row {
           label(uniqueTypeCountName)
-          field(pushX)
+          uniqueTypeCount(pushX)
         }
       }
       panel.border = JBUI.Borders.empty(5)
@@ -80,7 +79,7 @@ class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.S
     }
 
     private fun handleChange(listener: ChangeListener) {
-      settings.uniqueTypeCount = field.value
+      settings.uniqueTypeCount = uniqueTypeCount.number
       listener.settingsChanged()
     }
   }
