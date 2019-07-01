@@ -346,6 +346,11 @@
             icon="AllIcons.Welcome.FromVCS">
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
     </action>
+    <action id="WelcomeScreen.NewGetFromVcs" class="com.intellij.openapi.wm.impl.welcomeScreen.RunVcsCloneDialogAction"
+            icon="AllIcons.Vcs.Clone"
+            internal="true">
+      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="last"/>
+    </action>
 
     <action id="Vcs.CopyRevisionNumberAction" class="com.intellij.openapi.vcs.history.actions.CopyRevisionNumberAction"
             text="Copy Revision Number" description="Copy short revision numbers of selected commits to the clipboard"

@@ -105,6 +105,8 @@
     <extensionPoint name="vcsRepositoryInitializer" interface="com.intellij.vcs.VcsRepositoryInitializer"/>
     <extensionPoint name="openapi.vcs.changes.vcsPreservingExecutor"
                     interface="com.intellij.openapi.vcs.changes.VcsPreservingExecutor"/>
+    <extensionPoint qualifiedName="com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension"
+                    interface="com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension"/>
 
   </extensionPoints>
 </idea-plugin>

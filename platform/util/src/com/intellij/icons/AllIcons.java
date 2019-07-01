@@ -3133,6 +3133,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Arrow_right = load("/vcs/arrow_right.svg");
     /** 16x16 */ public static final Icon Branch = load("/vcs/branch.svg");
     /** 16x16 */ public static final Icon Changelist = load("/vcs/changelist.svg");
+    /** 16x16 */ public static final Icon Clone = load("/vcs/clone.svg");
     /** 16x16 */ public static final Icon CommitNode = load("/vcs/commitNode.svg");
     /** 16x16 */ public static final Icon Equal = load("/vcs/equal.svg");
     /** 16x16 */ public static final Icon Folders = load("/vcs/folders.svg");

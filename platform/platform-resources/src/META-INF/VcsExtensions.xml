@@ -140,6 +140,11 @@
     <nonProjectFileWritingAccessExtension implementation="com.intellij.openapi.vcs.changes.IgnoredFileWritingAccessExtension"/>
 
     <statistics.applicationUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsApplicationOptionsUsagesCollector"/>
+
+    <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
+        id="com.intellij.util.ui.cloneDialog.RepositoryUrlCloneDialogExtension"
+        implementation="com.intellij.util.ui.cloneDialog.RepositoryUrlCloneDialogExtension"
+        order="first"/>
   </extensions>
 
   <applicationListeners>
