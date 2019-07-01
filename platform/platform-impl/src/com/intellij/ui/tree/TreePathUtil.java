@@ -192,6 +192,7 @@ public class TreePathUtil {
     return object == null ? null : converter.apply(object);
   }
 
+  @NotNull
   public static TreePath[] toTreePathArray(@NotNull Collection<TreePath> collection) {
     return collection.isEmpty() ? EMPTY_TREE_PATH : collection.toArray(EMPTY_TREE_PATH);
   }
@@ -212,5 +213,39 @@ public class TreePathUtil {
 
   public static TreePath[] toTreePaths(TreeNode... nodes) {
     return nodes == null ? null : Stream.of(nodes).map(TreePathUtil::toTreePath).filter(Objects::nonNull).toArray(TreePath[]::new);
+  }
+
+  /**
+   * @param paths an array  of tree paths to iterate through
+   * @return a common ancestor for the given paths, or {@code null} if these paths do not have one
+   */
+  public static TreePath findCommonAncestor(TreePath... paths) {
+    if (ArrayUtil.isEmpty(paths)) return null;
+    if (paths.length == 1) return paths[0];
+    return findCommonAncestor(Arrays.asList(paths));
+  }
+
+  /**
+   * @param paths a collection of tree paths to iterate through
+   * @return a common ancestor for the given paths, or {@code null} if these paths do not have one
+   */
+  public static TreePath findCommonAncestor(@NotNull Iterable<? extends TreePath> paths) {
+    TreePath ancestor = null;
+    for (int i = 0; i < Integer.MAX_VALUE; i++) {
+      TreePath first = null;
+      for (TreePath path : paths) {
+        int count = path.getPathCount();
+        if (count <= i) return ancestor; // a path is too short
+        while (--count > i) path = path.getParentPath();
+        if (path == null) throw new IllegalStateException("unexpected");
+        if (first == null) first = path; // initialize with the first path in the given collection
+        if (first != path && !Objects.equals(first.getLastPathComponent(), path.getLastPathComponent())) {
+          return ancestor; // different components at the current index
+        }
+      }
+      if (first == null) return ancestor; // nothing to iterate
+      ancestor = createTreePath(ancestor, first.getLastPathComponent());
+    }
+    return ancestor;
   }
 }
