@@ -192,18 +192,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
       result = prepareAndOpenProject(virtualFile, options, baseDir, dummyProject, dummyProjectName);
     }
     else {
-      Activity showFrameActivity = StartUpMeasurer.start("show frame");
-      IdeFrameImpl frame = ((WindowManagerImpl)WindowManager.getInstance()).showFrame();
-      showFrameActivity.end();
-      // runProcessWithProgressSynchronously still processes EDT events
-      ApplicationManager.getApplication().invokeLater(() -> {
-        Activity activity = StartUpMeasurer.start("init frame");
-        if (frame.isDisplayable()) {
-          frame.init();
-        }
-        activity.end();
-      }, ModalityState.any());
-
+      IdeFrameImpl frame = showFrame();
       Ref<Pair<Project, Module>> refResult = Ref.create();
       VirtualFile finalBaseDir = baseDir;
       boolean finalDummyProject = dummyProject;
@@ -229,6 +218,28 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     }
 
     return result.first;
+  }
+
+  @NotNull
+  private static IdeFrameImpl showFrame() {
+    WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
+    IdeFrameImpl freeRootFrame = windowManager.getRootFrame();
+    if (freeRootFrame != null) {
+      return freeRootFrame;
+    }
+
+    Activity showFrameActivity = StartUpMeasurer.start("show frame");
+    IdeFrameImpl frame = windowManager.showFrame();
+    showFrameActivity.end();
+    // runProcessWithProgressSynchronously still processes EDT events
+    ApplicationManager.getApplication().invokeLater(() -> {
+      Activity activity = StartUpMeasurer.start("init frame");
+      if (frame.isDisplayable()) {
+        frame.init();
+      }
+      activity.end();
+    }, ModalityState.any());
+    return frame;
   }
 
   @Nullable
