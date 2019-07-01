@@ -164,6 +164,8 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
               myList.setSelectedIndex(idx);
               e.consume();
               doConsume = true;
+              // postpone doOKAction in order to handle all other (typed/released) key events
+              // otherwise this events get to editor
               ApplicationManager.getApplication().invokeLater(() -> doOKAction());
             }
           }
@@ -172,6 +174,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
 
       @Override
       public void keyTyped(KeyEvent e) {
+        // we handle keyPressed for numbers and close dialog but we have to handle typed and released events too
         if (doConsume) {
           e.consume();
         }
@@ -179,6 +182,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
 
       @Override
       public void keyReleased(KeyEvent e) {
+        // we handle keyPressed for numbers and close dialog but we have to handle typed and released events too
         if (doConsume) {
           e.consume();
         }
