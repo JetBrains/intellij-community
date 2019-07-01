@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution.build;
 
 import com.intellij.execution.Executor;
@@ -58,11 +58,11 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
                   @NotNull Collection<? extends ProjectTask> tasks) {
     Map<Class<? extends ProjectTask>, List<ProjectTask>> taskMap = JpsProjectTaskRunner.groupBy(tasks);
 
-    buildModuleFiles(project, callback, getFromGroupedMap(taskMap, ModuleFilesBuildTask.class, emptyList()));
-    buildModules(project, callback, getFromGroupedMap(taskMap, ModuleResourcesBuildTask.class, emptyList()));
-    buildModules(project, callback, getFromGroupedMap(taskMap, ModuleBuildTask.class, emptyList()));
+    buildModuleFiles(project, context, callback, getFromGroupedMap(taskMap, ModuleFilesBuildTask.class, emptyList()));
+    buildModules(project, context, callback, getFromGroupedMap(taskMap, ModuleResourcesBuildTask.class, emptyList()));
+    buildModules(project, context, callback, getFromGroupedMap(taskMap, ModuleBuildTask.class, emptyList()));
 
-    buildArtifacts(project, callback, getFromGroupedMap(taskMap, ProjectModelBuildTask.class, emptyList()));
+    buildArtifacts(project, context, callback, getFromGroupedMap(taskMap, ProjectModelBuildTask.class, emptyList()));
   }
 
   @Override
@@ -153,6 +153,7 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
   }
 
   private static void buildModules(@NotNull Project project,
+                                   @NotNull ProjectTaskContext context,
                                    @Nullable ProjectTaskNotification callback,
                                    @NotNull Collection<? extends ModuleBuildTask> moduleBuildTasks) {
     if (moduleBuildTasks.isEmpty()) return;
@@ -208,7 +209,7 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
                                              explicitProfiles.getDisabledProfiles()));
     }
 
-    runBatch(project, mavenRunner, "Maven Build", commands, callback);
+    runBatch(project, mavenRunner, "Maven Build", commands, context, callback);
   }
 
   @NotNull
@@ -219,8 +220,12 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
     return compileOnly ? "compile" : "install";
   }
 
-  public static void runBatch(@NotNull Project project, @NotNull MavenRunner mavenRunner, @NotNull String title,
-                              @NotNull List<MavenRunnerParameters> commands, @Nullable ProjectTaskNotification callback) {
+  public static void runBatch(@NotNull Project project,
+                              @NotNull MavenRunner mavenRunner,
+                              @NotNull String title,
+                              @NotNull List<MavenRunnerParameters> commands,
+                              @NotNull ProjectTaskContext context,
+                              @Nullable ProjectTaskNotification callback) {
     ApplicationManager.getApplication().invokeAndWait(() -> {
       AtomicInteger errors = new AtomicInteger();
       AtomicInteger warnings = new AtomicInteger();
@@ -274,21 +279,21 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
         @Override
         public void onCancel() {
           if (callback != null) {
-            callback.finished(new ProjectTaskResult(true, errors.get(), warnings.get()));
+            callback.finished(context, new ProjectTaskResult(true, errors.get(), warnings.get()));
           }
         }
 
         @Override
         public void onSuccess() {
           if (callback != null) {
-            callback.finished(new ProjectTaskResult(false, errors.get(), warnings.get()));
+            callback.finished(context, new ProjectTaskResult(false, errors.get(), warnings.get()));
           }
         }
 
         @Override
         public void onThrowable(@NotNull Throwable error) {
           if (callback != null) {
-            callback.finished(new ProjectTaskResult(false, errors.get(), warnings.get()));
+            callback.finished(context, new ProjectTaskResult(false, errors.get(), warnings.get()));
           }
         }
       }.queue();
@@ -296,17 +301,21 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
   }
 
   private static void buildModuleFiles(@NotNull Project project,
+                                       @NotNull ProjectTaskContext context,
                                        @Nullable ProjectTaskNotification callback,
                                        @NotNull Collection<? extends ModuleFilesBuildTask> moduleFilesBuildTasks) {
-    buildModules(project, callback, moduleFilesBuildTasks);
+    buildModules(project, context, callback, moduleFilesBuildTasks);
   }
 
-  private static void buildArtifacts(Project project, ProjectTaskNotification callback, List<? extends ProjectModelBuildTask> tasks) {
+  private static void buildArtifacts(@NotNull Project project,
+                                     @NotNull ProjectTaskContext context,
+                                     @Nullable ProjectTaskNotification callback,
+                                     List<? extends ProjectModelBuildTask> tasks) {
     for (ProjectModelBuildTask buildTask : tasks) {
       if (buildTask.getBuildableElement() instanceof Artifact) {
         for (MavenArtifactBuilder artifactBuilder : MavenArtifactBuilder.EP_NAME.getExtensions()) {
           if (artifactBuilder.isApplicable(buildTask)) {
-            artifactBuilder.build(project, buildTask, callback);
+            artifactBuilder.build(project, buildTask, context, callback);
           }
         }
       }
