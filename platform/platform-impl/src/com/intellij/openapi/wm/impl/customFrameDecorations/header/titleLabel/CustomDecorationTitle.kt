@@ -1,9 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
+import com.intellij.openapi.fileEditor.impl.DockableEditorTabbedContainer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.ui.awt.RelativeRectangle
+import com.intellij.ui.docking.DockManager
 import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
 import java.beans.PropertyChangeListener
@@ -27,6 +29,7 @@ class CustomDecorationTitle(val frame: JFrame) {
 
   private val pane = object : JPanel(MigLayout("fill, ins 0, gap 0, hidemode 3")) {
     init {
+      isOpaque = false
       frame.addPropertyChangeListener("title", titleChangeListener)
       add(titleLabel, "growx")
     }
@@ -35,25 +38,45 @@ class CustomDecorationTitle(val frame: JFrame) {
       super.addNotify()
       checkProject()
     }
+
   }
+
 
   private fun checkProject() {
     if(project == null) {
       if(frame is IdeFrame) {
         frame.project?.let {
           project = it
-
-          val title = CustomDecorationPath(frame, it)
-          title.setActive(active)
-
-          pane.add(title.getView(), "growx")
-          titleLabel.isVisible = false
-          mySelectedEditorFilePath = title
-
-          frame.removePropertyChangeListener(titleChangeListener)
+          checkSplitters()
         }
       }
+    } else {
+      checkSplitters()
     }
+  }
+
+  private fun checkSplitters() {
+    if(mySelectedEditorFilePath != null) return
+
+    project?.let {
+      val myDockManager = DockManager.getInstance(it)
+      val dockContainer = myDockManager.getContainerFor(frame.rootPane)
+      if (dockContainer is DockableEditorTabbedContainer) {
+        createCustomDecoration(it)
+      }
+    }
+  }
+
+  private fun createCustomDecoration(it: Project) {
+    val title = CustomDecorationPath(frame)
+    title.setProject(it)
+
+    pane.remove(titleLabel)
+    pane.add(title.getView(), "growx")
+    mySelectedEditorFilePath = title
+    title.setActive(active)
+
+    frame.removePropertyChangeListener(titleChangeListener)
   }
 
   fun getView(): JComponent {
