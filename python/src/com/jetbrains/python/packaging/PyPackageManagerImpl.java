@@ -13,18 +13,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.net.HttpConfigurable;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -155,19 +152,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   }
 
   protected void subscribeToLocalChanges() {
-    final Application app = ApplicationManager.getApplication();
-    final MessageBusConnection connection = app.getMessageBus().connect();
-    MySdkRootWatcher watcher = new MySdkRootWatcher();
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, watcher);
-    connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, new ProjectJdkTable.Adapter() {
-      @Override
-      public void jdkRemoved(@NotNull Sdk jdk) {
-        if (jdk == getSdk()) {
-          connection.disconnect();
-        }
-      }
-    });
-    Disposer.register(app, connection);
+    PyPackageUtil.runOnChangeUnderInterpreterPaths(getSdk(), this::refreshPackagesSynchronously);
   }
 
   @NotNull
@@ -611,26 +596,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
     private static boolean isMeaningfulOutput(@NotNull String trimmed) {
       return trimmed.length() > 3;
-    }
-  }
-
-  private class MySdkRootWatcher implements BulkFileListener {
-    @Override
-    public void after(@NotNull List<? extends VFileEvent> events) {
-      final Sdk sdk = getSdk();
-      final VirtualFile[] roots = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
-      for (VFileEvent event : events) {
-        final VirtualFile file = event.getFile();
-        if (file != null) {
-          for (VirtualFile root : roots) {
-            if (VfsUtilCore.isAncestor(root, file, false)) {
-              LOG.debug("Refreshing packages cache on SDK change");
-              ApplicationManager.getApplication().executeOnPooledThread(PyPackageManagerImpl.this::refreshPackagesSynchronously);
-              return;
-            }
-          }
-        }
-      }
     }
   }
 }

@@ -23,21 +23,24 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.ResolveResult;
+import com.intellij.util.messages.MessageBusConnection;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -511,5 +514,42 @@ public class PyPackageUtil {
     }
 
     return null;
+  }
+
+  /**
+   * Execute the given executable on a pooled thread whenever there is a VFS event happening under some of the roots of the SDK.
+   *
+   * @param sdk      SDK those roots need to be watched
+   * @param runnable executable that's going to be executed
+   */
+  public static void runOnChangeUnderInterpreterPaths(@NotNull Sdk sdk, @NotNull Runnable runnable) {
+    final Application app = ApplicationManager.getApplication();
+    final MessageBusConnection connection = app.getMessageBus().connect();
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      @Override
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        final VirtualFile[] roots = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
+        for (VFileEvent event : events) {
+          final VirtualFile file = event.getFile();
+          if (file != null) {
+            for (VirtualFile root : roots) {
+              if (VfsUtilCore.isAncestor(root, file, false)) {
+                ApplicationManager.getApplication().executeOnPooledThread(runnable);
+                return;
+              }
+            }
+          }
+        }
+      }
+    });
+    connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, new ProjectJdkTable.Adapter() {
+      @Override
+      public void jdkRemoved(@NotNull Sdk jdk) {
+        if (jdk == sdk) {
+          connection.disconnect();
+        }
+      }
+    });
+    Disposer.register(app, connection);
   }
 }

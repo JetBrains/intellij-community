@@ -9,16 +9,10 @@ import com.intellij.execution.ExecutionException
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.guessProjectForFile
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.jetbrains.python.packaging.*
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.associatedModule
@@ -38,42 +32,20 @@ class PyPipEnvPackageManager(val sdk: Sdk) : PyPackageManager() {
   private val isUpdatingCache: AtomicBoolean = AtomicBoolean(false)
 
   init {
-    val app = ApplicationManager.getApplication()
-    val connection = app.messageBus.connect()
-    val watcher = object : BulkFileListener {
-      override fun after(events: List<VFileEvent>) {
-        val roots = sdk.rootProvider.getFiles(OrderRootType.CLASSES)
-        val fileUnderRootAffected = events
-          .mapNotNull { it.file }
-          .any { file -> roots.any { VfsUtilCore.isAncestor(it, file, false) } }
-        if (fileUnderRootAffected) {
-          app.executeOnPooledThread {
-            val updated = PyPackageUtil.updatePackagesSynchronouslyWithGuard(this@PyPipEnvPackageManager, isUpdatingCache)
-            if (!updated) {
-              return@executeOnPooledThread
-            }
-            // Restart inspections once again because due to the changes in Pipfile.lock "Package Requirements" inspection
-            // might be restarted earlier than we finish updating the list of installed packages.
-            val project = guessProjectForFile(sdk.pipFileLock)
-            if (project != null) {
-              val analyzer = DaemonCodeAnalyzer.getInstance(project)
-              // Otherwise, with a plain method reference, Kotlin complains about signature ambiguity
-              app.invokeLater(Runnable { analyzer.restart() }, project.disposed)
-            }
-          }
-        }
+    PyPackageUtil.runOnChangeUnderInterpreterPaths(sdk) {
+      val updated = PyPackageUtil.updatePackagesSynchronouslyWithGuard(this@PyPipEnvPackageManager, isUpdatingCache)
+      if (!updated) {
+        return@runOnChangeUnderInterpreterPaths
+      }
+      // Restart inspections once again because due to the changes in Pipfile.lock "Package Requirements" inspection
+      // might be restarted earlier than we finish updating the list of installed packages.
+      val project = guessProjectForFile(sdk.pipFileLock)
+      if (project != null) {
+        val analyzer = DaemonCodeAnalyzer.getInstance(project)
+        // Otherwise, with a plain method reference, Kotlin complains about signature ambiguity
+        ApplicationManager.getApplication().invokeLater(Runnable { analyzer.restart() }, project.disposed)
       }
     }
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, watcher)
-    connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, object : ProjectJdkTable.Adapter() {
-      override fun jdkRemoved(jdk: Sdk) {
-        if (jdk === sdk) {
-          connection.disconnect()
-        }
-      }
-    })
-    Disposer.register(app, connection)
-
   }
 
   override fun installManagement() {}
