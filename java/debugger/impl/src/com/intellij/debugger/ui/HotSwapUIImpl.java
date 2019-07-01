@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.KeyWithDefaultValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.task.*;
@@ -38,12 +39,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class HotSwapUIImpl extends HotSwapUI {
+  public static final Key<Boolean> SKIP_HOT_SWAP_KEY = KeyWithDefaultValue.create("skip_hotswap_after_this_compilation", false);
   private static final Key<HotSwapStatusListener> HOT_SWAP_CALLBACK_KEY = Key.create("hot_swap_callback");
 
   private final List<HotSwapVetoableListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myAskBeforeHotswap = true;
   private final Project myProject;
-  private boolean myPerformHotswapAfterThisCompilation = true;
 
   public HotSwapUIImpl(@NotNull Project project) {
     myProject = project;
@@ -294,11 +295,6 @@ public class HotSwapUIImpl extends HotSwapUI {
     }
   }
 
-  @Override
-  public void dontPerformHotswapAfterThisCompilation() {
-    myPerformHotswapAfterThisCompilation = false;
-  }
-
   public void dontAskHotswapAfterThisCompilation() {
     myAskBeforeHotswap = false;
   }
@@ -324,49 +320,45 @@ public class HotSwapUIImpl extends HotSwapUI {
       if (myProject.isDisposed()) {
         return;
       }
-      try {
-        if (!hasCompilationResults(executionResult)) return;
 
-        int errors = executionResult.getErrors();
-        boolean aborted = executionResult.isAborted();
-        if (errors == 0 && !aborted && myPerformHotswapAfterThisCompilation) {
-          for (HotSwapVetoableListener listener : myListeners) {
-            if (!listener.shouldHotSwap(context, executionResult)) {
-              return;
-            }
-          }
+      if (!hasCompilationResults(executionResult)) return;
 
-          List<DebuggerSession> sessions = getHotSwappableDebugSessions();
-          if (!sessions.isEmpty()) {
-            Map<String, Collection<String>> generatedPaths;
-            Collection<String> generatedFilesRoots = context.getGeneratedFilesRoots();
-            if (!generatedFilesRoots.isEmpty()) {
-              generatedPaths = new HashMap<>();
-              for (String outputRoot : generatedFilesRoots) {
-                // collect only classes under IDE output roots
-                if (!JpsPathUtil.isUnder(myOutputRoots, new File(outputRoot))) continue;
-                Collection<String> relativePaths = context.getGeneratedFilesRelativePaths(outputRoot).stream()
-                  .filter(relativePath -> StringUtil.endsWith(relativePath, ".class"))
-                  .collect(Collectors.toCollection(SmartList::new));
-                if (!relativePaths.isEmpty()) {
-                  generatedPaths.put(outputRoot, relativePaths);
-                }
-              }
-              if (generatedPaths.isEmpty()) {
-                generatedPaths = null;
-              }
-            }
-            else {
-              generatedPaths = null;
-            }
-
-            HotSwapStatusListener callback = context.getUserData(HOT_SWAP_CALLBACK_KEY);
-            hotSwapSessions(sessions, generatedPaths, callback);
+      int errors = executionResult.getErrors();
+      boolean aborted = executionResult.isAborted();
+      if (errors == 0 && !aborted && !SKIP_HOT_SWAP_KEY.getRequired(context)) {
+        for (HotSwapVetoableListener listener : myListeners) {
+          if (!listener.shouldHotSwap(context, executionResult)) {
+            return;
           }
         }
-      }
-      finally {
-        myPerformHotswapAfterThisCompilation = true;
+
+        List<DebuggerSession> sessions = getHotSwappableDebugSessions();
+        if (!sessions.isEmpty()) {
+          Map<String, Collection<String>> generatedPaths;
+          Collection<String> generatedFilesRoots = context.getGeneratedFilesRoots();
+          if (!generatedFilesRoots.isEmpty()) {
+            generatedPaths = new HashMap<>();
+            for (String outputRoot : generatedFilesRoots) {
+              // collect only classes under IDE output roots
+              if (!JpsPathUtil.isUnder(myOutputRoots, new File(outputRoot))) continue;
+              Collection<String> relativePaths = context.getGeneratedFilesRelativePaths(outputRoot).stream()
+                .filter(relativePath -> StringUtil.endsWith(relativePath, ".class"))
+                .collect(Collectors.toCollection(SmartList::new));
+              if (!relativePaths.isEmpty()) {
+                generatedPaths.put(outputRoot, relativePaths);
+              }
+            }
+            if (generatedPaths.isEmpty()) {
+              generatedPaths = null;
+            }
+          }
+          else {
+            generatedPaths = null;
+          }
+
+          HotSwapStatusListener callback = context.getUserData(HOT_SWAP_CALLBACK_KEY);
+          hotSwapSessions(sessions, generatedPaths, callback);
+        }
       }
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.options;
 
 import com.intellij.execution.BeforeRunTask;
@@ -21,9 +21,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
-import com.intellij.task.ProjectTask;
-import com.intellij.task.ProjectTaskContext;
-import com.intellij.task.ProjectTaskManager;
+import com.intellij.task.*;
 import com.intellij.task.impl.EmptyCompileScopeBuildTaskImpl;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.ApiStatus;
@@ -160,12 +158,19 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
         }
 
         if (!myProject.isDisposed()) {
-          projectTaskManager.run(new ProjectTaskContext(sessionId, configuration), projectTask, executionResult -> {
-            if ((executionResult.getErrors() == 0 || ignoreErrors) && !executionResult.isAborted()) {
-              result.set(Boolean.TRUE);
-            }
-            done.up();
-          });
+          ProjectTaskContext context = new ProjectTaskContext(sessionId, configuration);
+          env.copyUserDataTo(context);
+          projectTaskManager.run(context, projectTask,
+                                 new ProjectTaskNotification() {
+                                   @Override
+                                   public void finished(@NotNull ProjectTaskContext context, @NotNull ProjectTaskResult executionResult) {
+                                     if ((executionResult.getErrors() == 0 || ignoreErrors) && !executionResult.isAborted()) {
+                                       result.set(Boolean.TRUE);
+                                     }
+                                     done.up();
+                                   }
+                                 }
+          );
         }
         else {
           done.up();
