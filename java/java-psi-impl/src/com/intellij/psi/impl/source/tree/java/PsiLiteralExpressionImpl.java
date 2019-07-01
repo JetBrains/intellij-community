@@ -21,15 +21,12 @@ import com.intellij.util.text.LiteralFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.regex.Pattern;
-
 public class PsiLiteralExpressionImpl
   extends JavaStubPsiElement<PsiLiteralStub>
   implements PsiLiteralExpression, PsiLanguageInjectionHost, ContributedReferenceHost {
 
   private static final String QUOT = "&quot;";
   private static final TokenSet NUMERIC_LITERALS = TokenSet.orSet(ElementType.INTEGER_LITERALS, ElementType.REAL_LITERALS);
-  private static final Pattern EOL_SPLIT_PATTERN = Pattern.compile("\r|\n|\r\n");
 
   public PsiLiteralExpressionImpl(@NotNull PsiLiteralStub stub) {
     super(stub, JavaStubElementTypes.LITERAL_EXPRESSION);
@@ -207,8 +204,7 @@ public class PsiLiteralExpressionImpl
       if (c == '\n') break;
       if (!Character.isWhitespace(c) || start == rawText.length()) return null;
     }
-    String innerText = rawText.substring(start, rawText.length() - 3);
-    return EOL_SPLIT_PATTERN.split(innerText, -1);
+    return rawText.substring(start, rawText.length() - 3).split("\n", -1);
   }
 
   public String getRawString() {
