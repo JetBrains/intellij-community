@@ -708,7 +708,6 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
 
     private static boolean isSimpleExit(@Nullable PsiStatement statement) {
       if (statement instanceof PsiBreakStatement ||
-          statement instanceof PsiYieldStatement ||
           statement instanceof PsiContinueStatement ||
           statement instanceof PsiThrowStatement) {
         return true;

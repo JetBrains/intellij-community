@@ -2,13 +2,13 @@ class C {
   void test(int n) {
     String s = switch (n) {
       case 1:
-        yield "a"; // same comment
+        break "a"; // same comment
       case 2:
-        yield "b";
+        break "b";
       case 3:
-        <weak_warning descr="Duplicate branch in 'switch'">yield "a"; // same comment</weak_warning>
+        <weak_warning descr="Duplicate branch in 'switch'">break "a"; // same comment</weak_warning>
       default:
-        yield "";
+        break "";
     };
   }
 }

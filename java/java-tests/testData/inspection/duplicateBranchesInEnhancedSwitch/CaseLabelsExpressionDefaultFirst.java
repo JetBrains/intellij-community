@@ -3,11 +3,11 @@ class C {
     String s = switch (n) {
       default:
       case 1:
-        yield "a";
+        break "a";
       case 2:
-        yield "b";
+        break "b";
       case 3:
-        <weak_warning descr="Branch in 'switch' is a duplicate of the default branch">yield "a";</weak_warning>
+        <weak_warning descr="Branch in 'switch' is a duplicate of the default branch">break "a";</weak_warning>
     };
   }
 }
