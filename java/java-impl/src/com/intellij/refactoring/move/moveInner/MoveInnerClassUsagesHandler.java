@@ -18,6 +18,7 @@ package com.intellij.refactoring.move.moveInner;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.psi.PsiClass;
 import com.intellij.usageView.UsageInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +32,7 @@ public interface MoveInnerClassUsagesHandler {
    * to be deleted in 2018.2
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018.2")
   @Deprecated
   default void correctInnerClassUsage(@NotNull UsageInfo usage, @NotNull PsiClass outerClass) {}
   default void correctInnerClassUsage(@NotNull UsageInfo usage,
