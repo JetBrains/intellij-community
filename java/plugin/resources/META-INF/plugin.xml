@@ -25,7 +25,6 @@
   </xi:include>
 
   <depends optional="true" config-file="profiler-java.xml">com.intellij.modules.profiler</depends>
-  <depends optional="true" config-file="profiler-java-gradle-support.xml">org.jetbrains.plugins.gradle</depends>
   <depends optional="true" config-file="structuralsearch-java.xml">com.intellij.modules.structuralsearch</depends>
   <depends optional="true" config-file="RemoteServersJava.xml">com.intellij.modules.remoteServers</depends>
   <depends optional="true" config-file="JavaCMakeActionPatcher.xml">com.intellij.modules.clion.cmake</depends> <!-- a workaround for IDEA-209728 -->
