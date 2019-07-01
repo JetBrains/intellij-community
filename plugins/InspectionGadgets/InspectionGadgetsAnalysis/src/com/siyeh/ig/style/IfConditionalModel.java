@@ -71,12 +71,13 @@ public class IfConditionalModel extends ConditionalModel {
     if (model != null) return model;
     model = extractFromReturn(ifStatement);
     if (model != null) return model;
-    model = extractFromYield(ifStatement);
+    model = extractFromBreak(ifStatement);
     if (model != null) return model;
-    model = extractFromImplicitYield(ifStatement);
+    model = extractFromImplicitBreak(ifStatement);
     if (model != null) return model;
     return extractFromMethodCall(ifStatement);
   }
+
 
   @Nullable
   private static IfConditionalModel extractFromAssignment(@NotNull PsiIfStatement ifStatement) {
@@ -126,28 +127,28 @@ public class IfConditionalModel extends ConditionalModel {
   }
 
   @Nullable
-  private static IfConditionalModel extractFromImplicitYield(@NotNull PsiIfStatement ifStatement) {
+  private static IfConditionalModel extractFromImplicitBreak(@NotNull PsiIfStatement ifStatement) {
     PsiExpression condition = stripParentheses(ifStatement.getCondition());
     if (condition == null) return null;
     if (ifStatement.getElseBranch() != null) return null;
-    PsiYieldStatement thenBranch = tryCast(stripBraces(ifStatement.getThenBranch()), PsiYieldStatement.class);
-    PsiYieldStatement nextReturnStatement = tryCast(PsiTreeUtil.skipWhitespacesAndCommentsForward(ifStatement), PsiYieldStatement.class);
-    return extractFromYield(condition, thenBranch, nextReturnStatement);
+    PsiBreakStatement thenBranch = tryCast(stripBraces(ifStatement.getThenBranch()), PsiBreakStatement.class);
+    PsiBreakStatement nextReturnStatement = tryCast(PsiTreeUtil.skipWhitespacesAndCommentsForward(ifStatement), PsiBreakStatement.class);
+    return extractFromBreak(condition, thenBranch, nextReturnStatement);
   }
 
   @Nullable
-  private static IfConditionalModel extractFromYield(@NotNull PsiIfStatement ifStatement) {
+  private static IfConditionalModel extractFromBreak(@NotNull PsiIfStatement ifStatement) {
     PsiExpression condition = stripParentheses(ifStatement.getCondition());
     if (condition == null) return null;
-    PsiYieldStatement thenBranch = tryCast(stripBraces(ifStatement.getThenBranch()), PsiYieldStatement.class);
-    PsiYieldStatement elseBranch = tryCast(stripBraces(ifStatement.getElseBranch()), PsiYieldStatement.class);
-    return extractFromYield(condition, thenBranch, elseBranch);
+    PsiBreakStatement thenBranch = tryCast(stripBraces(ifStatement.getThenBranch()), PsiBreakStatement.class);
+    PsiBreakStatement elseBranch = tryCast(stripBraces(ifStatement.getElseBranch()), PsiBreakStatement.class);
+    return extractFromBreak(condition, thenBranch, elseBranch);
   }
 
   @Contract("_, null, _ -> null; _, !null, null -> null")
-  private static IfConditionalModel extractFromYield(PsiExpression condition,
-                                                     PsiYieldStatement thenBranch,
-                                                     PsiYieldStatement elseBranch) {
+  private static IfConditionalModel extractFromBreak(PsiExpression condition,
+                                                     PsiBreakStatement thenBranch,
+                                                     PsiBreakStatement elseBranch) {
     if (thenBranch == null || elseBranch == null) return null;
     final PsiExpression thenBreak = thenBranch.getExpression();
     if (thenBreak == null) return null;
