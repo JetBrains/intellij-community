@@ -39,6 +39,15 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class HotSwapUIImpl extends HotSwapUI {
+  /**
+   * There are cases when the hotswap of the changed classes is not needed.
+   * E.g. for a tomcat application redeploy there's no need to even try reloading classes and it's only can cause hotswap failure UX issue.
+   * <p>
+   * The flag can be used to skip hotswap after the ProjectTaskManager run session finish.
+   * To apply the flag one should add it to {@link ProjectTaskContext} user data.
+   *
+   * @see ProjectTaskContext#withUserData(Key, Object)
+   */
   public static final Key<Boolean> SKIP_HOT_SWAP_KEY = KeyWithDefaultValue.create("skip_hotswap_after_this_compilation", false);
   private static final Key<HotSwapStatusListener> HOT_SWAP_CALLBACK_KEY = Key.create("hot_swap_callback");
 
