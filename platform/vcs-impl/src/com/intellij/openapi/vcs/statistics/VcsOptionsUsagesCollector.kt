@@ -12,7 +12,7 @@ import com.intellij.openapi.vcs.VcsShowConfirmationOption
 import java.util.*
 
 class VcsOptionsUsagesCollector : ProjectUsagesCollector() {
-  override fun getGroupId(): String = "vcs.configuration"
+  override fun getGroupId(): String = "vcs.settings"
   override fun getVersion(): Int = 2
 
   override fun getMetrics(project: Project): MutableSet<MetricEvent> {
