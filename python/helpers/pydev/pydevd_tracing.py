@@ -50,8 +50,8 @@ def _internal_set_trace(tracing_func):
     if TracingFunctionHolder._warn:
         frame = get_frame()
         if frame is not None and frame.f_back is not None:
-            if not frame.f_back.f_code.co_filename.lower().endswith('threading.py'):
-            
+            filename = frame.f_back.f_code.co_filename.lower()
+            if not filename.endswith('threading.py') and not filename.endswith('pydevd_tracing.py'):
                 message = \
                 '\nPYDEV DEBUGGER WARNING:' + \
                 '\nsys.settrace() should not be used when the debugger is being used.' + \
