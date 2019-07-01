@@ -14,13 +14,10 @@ def is_localhost(hostname):
     This function does not perform DNS lookup.
     Use it in combination with `get_localhost`.
 
-    :param hostname Domain name or IPv4/IPv6 address.
+    :param hostname: Domain name or IPv4/IPv6 address.
     :return: True if specified host is a local host.
     """
-    return (hostname == 'localhost'
-            or hostname == 'localhost.localdomain'
-            or hostname == '127.0.0.1'
-            or hostname == '::1')
+    return hostname in ('localhost', 'localhost.localdomain', '127.0.0.1', '::1')
 
 
 def get_localhost():
