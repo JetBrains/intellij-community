@@ -16,6 +16,7 @@
 package com.siyeh.ipp.concatenation;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.util.PsiConcatenationUtil;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -51,9 +52,8 @@ public class ReplaceConcatenationWithFormatStringIntention extends Intention {
     }
     CommentTracker commentTracker = new CommentTracker();
     final StringBuilder newExpression = new StringBuilder();
-    newExpression.append("java.lang.String.format(\"");
-    newExpression.append(formatString);
-    newExpression.append('\"');
+    newExpression.append("java.lang.String.format(");
+    appendFormatString(expression, formatString, false, newExpression);
     for (PsiExpression formatParameter : formatParameters) {
       newExpression.append(", ");
       newExpression.append(commentTracker.text(formatParameter));
@@ -62,7 +62,7 @@ public class ReplaceConcatenationWithFormatStringIntention extends Intention {
     PsiReplacementUtil.replaceExpression(expression, newExpression.toString(), commentTracker);
   }
 
-  private static boolean replaceWithPrintfExpression(PsiExpression expression, CharSequence formatString,
+  private static boolean replaceWithPrintfExpression(PsiPolyadicExpression expression, CharSequence formatString,
                                                      List<PsiExpression> formatParameters) {
     final PsiElement expressionParent = expression.getParent();
     if (!(expressionParent instanceof PsiExpressionList)) {
@@ -104,16 +104,28 @@ public class ReplaceConcatenationWithFormatStringIntention extends Intention {
     if (qualifier != null) {
       newExpression.append(commentTracker.text(qualifier)).append('.');
     }
-    newExpression.append("printf(\"").append(formatString);
-    if (insertNewline) {
-      newExpression.append("%n");
-    }
-    newExpression.append('\"');
+    newExpression.append("printf(");
+    appendFormatString(expression, formatString, insertNewline, newExpression);
     for (PsiExpression formatParameter : formatParameters) {
       newExpression.append(", ").append(commentTracker.text(formatParameter));
     }
     newExpression.append(')');
     PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression.toString(), commentTracker);
     return true;
+  }
+
+  private static void appendFormatString(PsiPolyadicExpression expression,
+                                         CharSequence formatString,
+                                         boolean insertNewline,
+                                         StringBuilder newExpression) {
+    PsiExpression firstOperand = expression.getOperands()[0];
+    boolean textBlocks = firstOperand instanceof PsiLiteralExpressionImpl &&
+                         ((PsiLiteralExpressionImpl)firstOperand).getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL;
+    newExpression.append(textBlocks ? "\"\"\"\n" : '\"');
+    newExpression.append(formatString);
+    if (insertNewline) {
+      newExpression.append("%n");
+    }
+    newExpression.append(textBlocks ? "\"\"\"" : '\"');
   }
 }
