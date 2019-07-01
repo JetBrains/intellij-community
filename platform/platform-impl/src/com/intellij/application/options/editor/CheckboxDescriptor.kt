@@ -7,7 +7,7 @@ import com.intellij.ui.layout.*
 import kotlin.reflect.KMutableProperty0
 
 class CheckboxDescriptor(val name: String, val binding: PropertyBinding<Boolean>, val comment : String? = null) {
-  constructor(name: String, mutableProperty: KMutableProperty0<Boolean>, comment : String? = null) : this(name, mutableProperty.asBooleanBinding(), comment)
+  constructor(name: String, mutableProperty: KMutableProperty0<Boolean>, comment : String? = null) : this(name, mutableProperty.toBinding(), comment)
 
   fun asOptionDescriptor() = object : BooleanOptionDescription(name, ID) {
     override fun setOptionState(enabled: Boolean) {
