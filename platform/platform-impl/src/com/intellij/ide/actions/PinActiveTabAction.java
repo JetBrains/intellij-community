@@ -17,6 +17,8 @@ import com.intellij.ui.content.ContentManagerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 /**
  * Pins any kind of tab in context: editor tab, toolwindow tab or other tabs.
  *
@@ -98,7 +100,7 @@ public class PinActiveTabAction extends DumbAwareAction implements Toggleable {
 
   @NotNull
   private static Handler createHandler(final Content content) {
-    return new Handler(content.isPinned(), content.getManager().getSelectedContent() == content) {
+    return new Handler(content.isPinned(), Objects.requireNonNull(content.getManager()).getSelectedContent() == content) {
       @Override
       void setPinned(boolean value) {
         content.setPinned(value);

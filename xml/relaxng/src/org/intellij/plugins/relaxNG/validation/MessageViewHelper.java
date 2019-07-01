@@ -37,6 +37,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Objects;
 import java.util.Set;
 
 public class MessageViewHelper {
@@ -158,7 +159,7 @@ public class MessageViewHelper {
         }
         myErrorsView = null;
 
-        myContent.getManager().removeContentManagerListener(this);
+        Objects.requireNonNull(myContent.getManager()).removeContentManagerListener(this);
         myContent.release();
         myContent = null;
       }
