@@ -29,6 +29,7 @@ import org.jetbrains.annotations.TestOnly;
  */
 public abstract class PsiManagerEx extends PsiManager {
   public static PsiManagerEx getInstanceEx(Project project) {
+    //noinspection SSBasedInspection
     return (PsiManagerEx)getInstance(project);
   }
   public abstract boolean isBatchFilesProcessingMode();
