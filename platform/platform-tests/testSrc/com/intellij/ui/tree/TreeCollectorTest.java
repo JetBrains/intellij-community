@@ -2,6 +2,8 @@
 package com.intellij.ui.tree;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.TimeoutUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -9,12 +11,9 @@ import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.IntFunction;
 import java.util.function.Supplier;
-
-import static com.intellij.util.TimeoutUtil.measureExecutionTime;
-import static com.intellij.util.TimeoutUtil.sleep;
-import static com.intellij.util.ui.tree.TreeUtil.selectMaximals;
 
 public class TreeCollectorTest {
   private static final TreePath ROOT = new TreePath("root");
@@ -170,18 +169,43 @@ public class TreeCollectorTest {
   public static final class Slow {
     private static final IntFunction<Object> SLOW = Slow::new;
     private static final IntFunction<Object> FAST = Integer::toString;
+    private static final Consumer<TreePath[]> SELECT_MAXIMALS = paths -> {
+      measureExecutionTime("selectMaximals", () -> TreeUtil.selectMaximals(paths));
+      measureExecutionTime("collectRoots", () -> TreeCollector.TreePathRoots.collect(paths));
+      measureExecutionTime("collectLeafs", () -> TreeCollector.TreePathLeafs.collect(paths));
+      Assert.assertArrayEquals(TreeUtil.selectMaximals(paths), TreePathUtil.toTreePathArray(TreeCollector.TreePathRoots.collect(paths)));
+    };
+    private static final Consumer<TreePath[]> FIND_COMMON_PATH = paths -> {
+      measureExecutionTime("findCommonPath", () -> TreeUtil.findCommonPath(paths));
+      measureExecutionTime("findCommonAncestor", () -> TreePathUtil.findCommonAncestor(paths));
+      Assert.assertEquals(TreePathUtil.findCommonAncestor(paths), TreePathUtil.findCommonAncestor(paths));
+    };
 
     // manual performance test
     public static void main(String[] args) {
-      testPaths(FAST, 7, 7);
-      testPaths(FAST, 1, 7);
-      testPaths(SLOW, 1, 1);
-      testPaths(SLOW, 1, 2);
-      testPaths(SLOW, 1, 3);
-      testPaths(SLOW, 1, 4);
-      testPaths(SLOW, 2, 4);
-      testPaths(SLOW, 3, 4);
-      testPaths(SLOW, 4, 4);
+      testPaths(FIND_COMMON_PATH, FAST, 10, 10);
+      testPaths(FIND_COMMON_PATH, FAST, 1, 10);
+      testPaths(FIND_COMMON_PATH, SLOW, 1, 1);
+      testPaths(FIND_COMMON_PATH, SLOW, 1, 2);
+      testPaths(FIND_COMMON_PATH, SLOW, 1, 3);
+      testPaths(FIND_COMMON_PATH, SLOW, 1, 4);
+      testPaths(FIND_COMMON_PATH, SLOW, 1, 5);
+      testPaths(FIND_COMMON_PATH, SLOW, 1, 6);
+      testPaths(FIND_COMMON_PATH, SLOW, 2, 6);
+      testPaths(FIND_COMMON_PATH, SLOW, 3, 6);
+      testPaths(FIND_COMMON_PATH, SLOW, 4, 6);
+      testPaths(FIND_COMMON_PATH, SLOW, 5, 6);
+      testPaths(FIND_COMMON_PATH, SLOW, 6, 6);
+
+      testPaths(SELECT_MAXIMALS, FAST, 7, 7);
+      testPaths(SELECT_MAXIMALS, FAST, 1, 7);
+      testPaths(SELECT_MAXIMALS, SLOW, 1, 1);
+      testPaths(SELECT_MAXIMALS, SLOW, 1, 2);
+      testPaths(SELECT_MAXIMALS, SLOW, 1, 3);
+      testPaths(SELECT_MAXIMALS, SLOW, 1, 4);
+      testPaths(SELECT_MAXIMALS, SLOW, 2, 4);
+      testPaths(SELECT_MAXIMALS, SLOW, 3, 4);
+      testPaths(SELECT_MAXIMALS, SLOW, 4, 4);
     }
 
     private static void addPaths(IntFunction<Object> function, int min, int max, List<TreePath> list, TreePath path) {
@@ -194,25 +218,23 @@ public class TreeCollectorTest {
       }
     }
 
-    private static void testPaths(IntFunction<Object> function, int min, int max) {
+    private static void testPaths(Consumer<TreePath[]> consumer, IntFunction<Object> function, int min, int max) {
       List<TreePath> list = new ArrayList<>();
       addPaths(function, min, max, list, null);
       System.err.println();
       System.err.println(list.size() + " paths with count from " + min + " to " + max);
-      testPaths(list, "1. ordered");
+      System.err.println("1. ordered list:");
+      consumer.accept(TreePathUtil.toTreePathArray(list));
       Collections.reverse(list);
-      testPaths(list, "2. reversed");
+      System.err.println("2. reversed list:");
+      consumer.accept(TreePathUtil.toTreePathArray(list));
       Collections.shuffle(list);
-      testPaths(list, "3. shuffled");
+      System.err.println("3. shuffled list:");
+      consumer.accept(TreePathUtil.toTreePathArray(list));
     }
 
-    private static void testPaths(List<TreePath> list, String description) {
-      TreePath[] paths = TreePathUtil.toTreePathArray(list);
-      System.err.println(description + " list:");
-      System.err.println(String.format("%,12d ms to selectMaximals", measureExecutionTime(() -> selectMaximals(paths))));
-      System.err.println(String.format("%,12d ms to collectRoots", measureExecutionTime(() -> TreeCollector.TreePathRoots.collect(paths))));
-      System.err.println(String.format("%,12d ms to collectLeafs", measureExecutionTime(() -> TreeCollector.TreePathLeafs.collect(paths))));
-      Assert.assertArrayEquals(selectMaximals(paths), TreePathUtil.toTreePathArray(TreeCollector.TreePathRoots.collect(paths)));
+    private static void measureExecutionTime(String method, Runnable runnable) {
+      System.err.println(String.format("%,12d ms to " + method, TimeoutUtil.measureExecutionTime(runnable::run)));
     }
 
 
@@ -234,7 +256,7 @@ public class TreeCollectorTest {
 
     @Override
     public boolean equals(Object object) {
-      sleep(1); // simulate slow comparison
+      TimeoutUtil.sleep(1); // simulate slow comparison
       return object instanceof Slow && ((Slow)object).id == id;
     }
   }
