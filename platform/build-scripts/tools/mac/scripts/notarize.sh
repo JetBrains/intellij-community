@@ -86,8 +86,6 @@ while true; do
   log "Fetching $developer_log"
   # TODO: Replace cut with trim or something better
   url="$(grep -oe 'LogFileURL: .*' "altool.check.out" | cut -c 13-)"
-  # wget does url quoting by itself
-  # shellcheck disable=SC2086,SC2015
   wget "$url" -O "$developer_log" && cat "$developer_log" || true
   if [ $ec != 0 ]; then
     log "Publishing $developer_log"
