@@ -10,12 +10,12 @@ class YieldStatements {
       default: <error descr="Yield outside of switch expression">yield 0;</error>
     }
 
-    System.out.println(switch (i) {
+    out: System.out.println(switch (i) {
       case 1 -> { while (true) yield ref; }
       case 2 -> { while (true) break <error descr="Undefined label: 'wtf'">wtf</error>; }
       case 3 -> { yield ref; }
       case 4 -> { yield (ref); }
-      case 5 -> { <error descr="Break outside of enclosing switch expression">break wtf;</error> }
+      case 5 -> { break <error descr="Undefined label: 'wtf'">wtf</error>; }
       case 6 -> {
         int a = 0;
         a: switch (0) { default: yield a; }
@@ -34,6 +34,9 @@ class YieldStatements {
         yield yield;
       }
       case 11 -> { yield <error descr="Expression type should not be 'void'">m(0)</error>; }
+      case 12 -> {
+        switch (i) { default: <error descr="Break outside of enclosing switch expression">break out;</error>; }
+      }
       default -> throw new RuntimeException();
     });
 

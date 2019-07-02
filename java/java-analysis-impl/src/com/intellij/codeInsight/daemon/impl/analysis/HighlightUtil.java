@@ -515,7 +515,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
   @Nullable
   static HighlightInfo checkReturnFromSwitchExpr(@NotNull PsiStatement statement) {
-    if (PsiImplUtil.findEnclosingSwitchOrLoop(statement) instanceof PsiSwitchExpression) {
+    if (PsiImplUtil.findEnclosingSwitchExpression(statement) != null) {
       String message = JavaErrorMessages.message("return.outside.switch.expr");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
     }
@@ -796,24 +796,9 @@ public class HighlightUtil extends HighlightUtilBase {
 
   @Nullable
   static HighlightInfo checkBreakTarget(@NotNull PsiBreakStatement statement, @NotNull LanguageLevel languageLevel) {
-    if (statement.findExitedStatement() == null) {
-      if (Feature.ENHANCED_SWITCH.isSufficient(languageLevel) && PsiImplUtil.findEnclosingSwitchOrLoop(statement) instanceof PsiSwitchExpression) {
-        String message = JavaErrorMessages.message("break.outside.switch.expr");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
-      }
-
-      PsiIdentifier label = statement.getLabelIdentifier();
-      if (label != null) {
-        String message = JavaErrorMessages.message("unresolved.label", label.getText());
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(label).descriptionAndTooltip(message).create();
-      }
-      else {
-        String message = JavaErrorMessages.message("break.outside.switch.or.loop");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
-      }
-    }
-
-    return null;
+    return checkBreakOrContinueTarget(statement, statement.getLabelIdentifier(), statement.findExitedStatement(), languageLevel,
+                                      "break.outside.switch.or.loop",
+                                      "break.outside.switch.expr");
   }
 
   @Nullable
@@ -838,40 +823,43 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @Nullable
-  static HighlightInfo checkContinueOutsideLoop(@NotNull PsiContinueStatement statement, LanguageLevel languageLevel) {
-    if (PsiImplUtil.findEnclosingLoop(statement) == null) {
-      String message = JavaErrorMessages.message("continue.outside.loop");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
-    }
-
-    return checkContinueOutsideOfSwitchExpression(statement, statement.findContinuedStatement(), languageLevel);
-  }
-
-  @Nullable
-  static HighlightInfo checkContinueTarget(@NotNull PsiContinueStatement statement, @NotNull PsiIdentifier label, @NotNull LanguageLevel level) {
+  static HighlightInfo checkContinueTarget(@NotNull PsiContinueStatement statement, @NotNull LanguageLevel languageLevel) {
     PsiStatement continuedStatement = statement.findContinuedStatement();
+    PsiIdentifier label = statement.getLabelIdentifier();
 
-    if (continuedStatement == null) {
-      String message = JavaErrorMessages.message("unresolved.label", label.getText());
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(label).descriptionAndTooltip(message).create();
-    }
-    if (!(continuedStatement instanceof PsiLoopStatement)) {
+    if (label != null && continuedStatement != null && !(continuedStatement instanceof PsiLoopStatement)) {
       String message = JavaErrorMessages.message("not.loop.label", label.getText());
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
     }
 
-    return checkContinueOutsideOfSwitchExpression(statement, continuedStatement, level);
+    return checkBreakOrContinueTarget(statement, label, continuedStatement, languageLevel,
+                                      "continue.outside.loop",
+                                      "continue.outside.switch.expr");
   }
 
-  private static HighlightInfo checkContinueOutsideOfSwitchExpression(PsiContinueStatement statement,
-                                                                      PsiStatement continuedStatement,
-                                                                      LanguageLevel level) {
+  @Nullable
+  private static HighlightInfo checkBreakOrContinueTarget(PsiStatement statement,
+                                                          @Nullable PsiIdentifier label,
+                                                          @Nullable PsiStatement target,
+                                                          LanguageLevel level,
+                                                          @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String misplacedKey,
+                                                          @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String crossingKey) {
+    if (target == null && label != null) {
+      String message = JavaErrorMessages.message("unresolved.label", label.getText());
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(label).descriptionAndTooltip(message).create();
+    }
+
     if (Feature.ENHANCED_SWITCH.isSufficient(level)) {
-      PsiElement enclosing = PsiImplUtil.findEnclosingSwitchOrLoop(statement);
-      if (enclosing instanceof PsiSwitchExpression && PsiTreeUtil.isAncestor(continuedStatement, enclosing, true)) {
-        String message = JavaErrorMessages.message("continue.outside.switch.expr");
+      PsiSwitchExpression expression = PsiImplUtil.findEnclosingSwitchExpression(statement);
+      if (expression != null && (target == null || PsiTreeUtil.isAncestor(target, expression, true))) {
+        String message = JavaErrorMessages.message(crossingKey);
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
       }
+    }
+
+    if (target == null) {
+      String message = JavaErrorMessages.message(misplacedKey);
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
     }
 
     return null;

@@ -27,18 +27,14 @@ public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBre
   @Nullable
   @Override
   public PsiStatement findExitedStatement() {
-    PsiElement enclosing = PsiImplUtil.findEnclosingSwitchOrLoop(this);
-    if (enclosing instanceof PsiSwitchExpression) {
-      return null;
-    }
-
     PsiIdentifier label = getLabelIdentifier();
     if (label != null) {
       PsiLabeledStatement labeled = PsiImplUtil.findEnclosingLabeledStatement(this, label.getText());
       return labeled != null ? labeled.getStatement() : null;
     }
-
-    return (PsiStatement)enclosing;
+    else {
+      return PsiImplUtil.findEnclosingSwitchOrLoop(this);
+    }
   }
 
   @Override
