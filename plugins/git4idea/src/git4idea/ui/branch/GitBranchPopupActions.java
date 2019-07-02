@@ -465,7 +465,9 @@ class GitBranchPopupActions {
     @NotNull
     @Override
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
-      return new AnAction[]{new LocalBranchActions.RenameBranchAction(myProject, myRepositories, myBranchName)};
+      return new AnAction[]{new LocalBranchActions.RenameBranchAction(myProject, myRepositories, myBranchName),
+        new LocalBranchActions.PushBranchAction(myProject, myRepositories, myBranchName, hasOutgoingCommits())
+      };
     }
   }
 
