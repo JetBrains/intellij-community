@@ -40,7 +40,7 @@ public class JavaTelescope {
       int newCount = totalUsageCount.updateAndGet(old -> count == TOO_MANY_USAGES ? TOO_MANY_USAGES : old + count);
       return newCount != TOO_MANY_USAGES;
     });
-    if (totalUsageCount.get() == TOO_MANY_USAGES) return null;
+    if (totalUsageCount.get() == TOO_MANY_USAGES || totalUsageCount.get() == 0) return null;
     String format = "{0,choice, 0#no usages|1#1 usage|2#{0,number} usages}";
     return StringUtil.capitalizeWords(MessageFormat.format(format, totalUsageCount.get()), true);
   }
