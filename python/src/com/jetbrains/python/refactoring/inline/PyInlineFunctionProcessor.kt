@@ -41,7 +41,6 @@ class PyInlineFunctionProcessor(project: Project,
   private val myFunctionClass = myFunction.containingClass
   private val myGenerator = PyElementGenerator.getInstance(myProject)
   private var myRemoveDeclaration = !myInlineThis && removeDeclaration
-  private var mySelfUsed: Boolean? = null
 
   override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
     if (refUsages.isNull) return false
@@ -130,6 +129,14 @@ class PyInlineFunctionProcessor(project: Project,
       SyntaxTraverser.psiApi().parents(usage.element).asSequence().filter { it is PyCallExpression }.count()
     }
 
+    val selfUsed = myFunction.parameterList.parameters.firstOrNull()?.let { firstParam ->
+      if (!firstParam.isSelf) return@let false
+      return@let SyntaxTraverser.psiTraverser(myFunction.statementList).traverse()
+        .filter(PyReferenceExpression::class.java)
+        .filter { !it.isQualified }
+        .any { it.reference.isReferenceTo(firstParam) }
+    } ?: false
+
     val functionScope = ControlFlowCache.getScope(myFunction)
     PyClassRefactoringUtil.rememberNamedReferences(myFunction)
 
@@ -160,7 +167,7 @@ class PyInlineFunctionProcessor(project: Project,
       val importAsRefs = MultiMap.create<String, PyReferenceExpression>()
       val returnStatements = mutableListOf<PyReturnStatement>()
 
-      val mappedArguments = prepareArguments(callSite, declarations, generatedNames, scopeAnchor, reference, languageLevel)
+      val mappedArguments = prepareArguments(callSite, declarations, generatedNames, scopeAnchor, reference, languageLevel, selfUsed)
 
       myFunction.statementList.accept(object : PyRecursiveElementVisitor() {
         override fun visitPyReferenceExpression(node: PyReferenceExpression) {
@@ -283,8 +290,7 @@ class PyInlineFunctionProcessor(project: Project,
     }
 
     imports.asSequence()
-      .map { it.element?.containingFile }
-      .filterNotNull()
+      .mapNotNull { it.element?.containingFile }
       .distinct()
       .forEach { PyClassRefactoringUtil.optimizeImports(it) }
 
@@ -304,23 +310,16 @@ class PyInlineFunctionProcessor(project: Project,
   }
 
   private fun prepareArguments(callSite: PyCallExpression, declarations: MutableList<PyAssignmentStatement>, generatedNames: MutableSet<String>, scopeAnchor: PsiElement,
-                               reference: PyReferenceExpression, languageLevel: LanguageLevel): Map<String, PyExpression> {
+                               reference: PyReferenceExpression, languageLevel: LanguageLevel, selfUsed: Boolean): Map<String, PyExpression> {
     val context = PyResolveContext.noImplicits().withTypeEvalContext(TypeEvalContext.userInitiated(myProject, reference.containingFile))
     val mapping = PyCallExpressionHelper.mapArguments(callSite, context).firstOrNull() ?: error("Can't map arguments for ${reference.name}")
     val mappedParams = mapping.mappedParameters
     val firstImplicit = mapping.implicitParameters.firstOrNull()
 
-    if (mySelfUsed == null && firstImplicit != null) {
-      mySelfUsed = SyntaxTraverser.psiTraverser(myFunction.statementList).traverse()
-        .filter(PyReferenceExpression::class.java)
-        .filter { !it.isQualified }
-        .any { it.name == firstImplicit.name }
-    }
-
     val self = firstImplicit?.let { first ->
       val qualifier = reference.qualifier ?: error("Function $myFunction has first implicit parameter, but no qualifier")
       val selfReplacement = when {
-        mySelfUsed == false -> qualifier
+        !selfUsed -> qualifier
         qualifier is PyReferenceExpression && !qualifier.isQualified -> qualifier
         else -> extractDeclaration(myFunctionClass?.name!!, qualifier, declarations, generatedNames, scopeAnchor, languageLevel).second
       }

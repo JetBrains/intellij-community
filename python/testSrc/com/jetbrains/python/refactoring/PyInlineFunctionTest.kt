@@ -86,6 +86,7 @@ class PyInlineFunctionTest : PyTestCase() {
   fun testInvocationOnImport() = doTest(inlineThis = false, remove = true)
   fun testImportedLocally() = doTest(inlineThis = false, remove = true)
   //fun testInlineImportedAs() = doTest(inlineThis = false)
+  fun testSelfUsageDetection() = doTest(inlineThis = false, remove = true)
   fun testRemoveFunctionWithStub() {
     doTest(inlineThis = false, remove = true)
     val testName = getTestName(true)
