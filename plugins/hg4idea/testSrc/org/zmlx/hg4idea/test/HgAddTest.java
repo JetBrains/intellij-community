@@ -12,6 +12,8 @@
 // limitations under the License.
 package org.zmlx.hg4idea.test;
 
+import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Before;
@@ -23,6 +25,8 @@ import static org.zmlx.hg4idea.test.HgTestOutputParser.added;
  * Tests adding files to the Mercurial repository.
  */
 public class HgAddTest extends HgSingleUserTest {
+
+  protected static final Logger LOG = Logger.getInstance(HgAddTest.class);
 
   @Before
   @Override
@@ -53,7 +57,9 @@ public class HgAddTest extends HgSingleUserTest {
   @Test
   public void fileAddedViaHgShouldBeAddedInChangeList() throws Exception {
     final VirtualFile vf = createFileInCommand(AFILE, INITIAL_FILE_CONTENT);
-    addAll();
+    ProcessOutput processOutput = addAll();
+    LOG.debug(processOutput.getStdout());
+    LOG.debug(processOutput.getStderr());
     myChangeListManager.checkFilesAreInList(true, vf);
   }
 
@@ -83,7 +89,9 @@ public class HgAddTest extends HgSingleUserTest {
     final VirtualFile afile = createFileInCommand(AFILE, INITIAL_FILE_CONTENT);
     final VirtualFile bdir = createDirInCommand(myWorkingCopyDir, BDIR);
     final VirtualFile bfile = createFileInCommand(bdir, BFILE, INITIAL_FILE_CONTENT);
-    addAll();
+    ProcessOutput processOutput = addAll();
+    LOG.debug(processOutput.getStdout());
+    LOG.debug(processOutput.getStderr());
     verifyStatus(added(AFILE), added(BFILE_PATH));
     myChangeListManager.checkFilesAreInList(true, afile, bfile);
   }
