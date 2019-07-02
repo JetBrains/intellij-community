@@ -40,7 +40,7 @@ public abstract class JavaContentEntryEditor extends ContentEntryEditor {
       @Nullable
       @Override
       protected ContentEntry getContentEntry() {
-        return JavaContentEntryEditor.this.getContentEntry();
+        return getThisContentEntry();
       }
 
       @Nullable
@@ -49,6 +49,10 @@ public abstract class JavaContentEntryEditor extends ContentEntryEditor {
         return editor.createPropertiesEditor(folder, this, myCallback);
       }
     };
+  }
+
+  private ContentEntry getThisContentEntry() {
+    return getContentEntry();
   }
 
   @Override

@@ -156,12 +156,12 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
 
     @Override
     public boolean isSelected(@NotNull AnActionEvent event) {
-      return ProjectView.getInstance(myProject).isShowLibraryContents(getId());
+      return ProjectView.getInstance(getProject()).isShowLibraryContents(getId());
     }
 
     @Override
     public void setSelected(@NotNull AnActionEvent event, boolean flag) {
-      final ProjectViewImpl projectView = (ProjectViewImpl)ProjectView.getInstance(myProject);
+      final ProjectViewImpl projectView = (ProjectViewImpl)ProjectView.getInstance(getProject());
       projectView.setShowLibraryContents(getId(), flag);
     }
 
@@ -169,7 +169,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
-      final ProjectViewImpl projectView = (ProjectViewImpl)ProjectView.getInstance(myProject);
+      final ProjectViewImpl projectView = (ProjectViewImpl)ProjectView.getInstance(getProject());
       presentation.setVisible(projectView.getCurrentProjectViewPane() == PackageViewPane.this);
     }
   }
@@ -231,6 +231,10 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     return 1;
   }
 
+  private Project getProject() {
+    return myProject;
+  }
+
   private final class PackageViewTreeUpdater extends AbstractTreeUpdater {
     private PackageViewTreeUpdater(final AbstractTreeBuilder treeBuilder) {
       super(treeBuilder);
@@ -242,7 +246,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
       if (element instanceof PsiDirectory) {
         PsiDirectory dir = (PsiDirectory)element;
         final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(dir);
-        if (ProjectView.getInstance(myProject).isShowModules(getId())) {
+        if (ProjectView.getInstance(getProject()).isShowModules(getId())) {
           Module[] modules = getModulesFor(dir);
           boolean rv = false;
           for (Module module : modules) {
@@ -259,7 +263,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     }
 
     private boolean addPackageElementToUpdate(final PsiPackage aPackage, Module module) {
-      final ProjectTreeStructure packageTreeStructure = (ProjectTreeStructure)myTreeStructure;
+      final ProjectTreeStructure packageTreeStructure = (ProjectTreeStructure)getTreeStructure();
       PsiPackage packageToUpdateFrom = aPackage;
       if (!packageTreeStructure.isFlattenPackages() && packageTreeStructure.isHideEmptyMiddlePackages()) {
         // optimization: this check makes sense only if flattenPackages == false && HideEmptyMiddle == true
@@ -280,7 +284,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     @NotNull
     private Object getTreeElementToUpdateFrom(PsiPackage packageToUpdateFrom, Module module) {
       if (packageToUpdateFrom == null || !packageToUpdateFrom.isValid() || "".equals(packageToUpdateFrom.getQualifiedName())) {
-        return module == null ? myTreeStructure.getRootElement() : module;
+        return module == null ? getTreeStructure().getRootElement() : module;
       }
       else {
         return new PackageElement(module, packageToUpdateFrom, false);
@@ -288,7 +292,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     }
 
     private Module[] getModulesFor(PsiDirectory dir) {
-      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
       final VirtualFile vFile = dir.getVirtualFile();
       final Set<Module> modules = new HashSet<>();
       final Module module = fileIndex.getModuleForFile(vFile);
@@ -328,7 +332,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
 
       LocalHistoryAction a = LocalHistory.getInstance().startAction(IdeBundle.message("progress.deleting"));
       try {
-        DeleteHandler.deletePsiElement(elements, myProject);
+        DeleteHandler.deletePsiElement(elements, getProject());
       }
       finally {
         a.finish();

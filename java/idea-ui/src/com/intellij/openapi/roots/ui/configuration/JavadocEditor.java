@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ui.Util;
 import com.intellij.openapi.roots.JavaModuleExternalPaths;
@@ -92,7 +93,7 @@ public class JavadocEditor extends ModuleElementsEditor {
           FileChooserDescriptor myDescriptor = FileChooserDescriptorFactory.createMultipleJavaPathDescriptor();
           myDescriptor.setTitle(ProjectBundle.message("module.javadoc.add.path.title"));
           myDescriptor.setDescription(ProjectBundle.message("module.javadoc.add.path.prompt"));
-          VirtualFile[] files = FileChooser.chooseFiles(myDescriptor, myTable, myProject, null);
+          VirtualFile[] files = FileChooser.chooseFiles(myDescriptor, myTable, getProject(), null);
           final MyTableModel tableModel = (MyTableModel)myTable.getModel();
           boolean changes = false;
           for (final VirtualFile file : files) {
@@ -139,6 +140,11 @@ public class JavadocEditor extends ModuleElementsEditor {
       new JBLabel(ProjectBundle.message("project.roots.javadoc.tab.description"), UIUtil.ComponentStyle.SMALL, UIUtil.FontColor.BRIGHTER),
       BorderLayout.NORTH);
     return mainPanel;
+  }
+
+  @NotNull
+  private Project getProject() {
+    return myProject;
   }
 
   protected DefaultTableModel createModel() {

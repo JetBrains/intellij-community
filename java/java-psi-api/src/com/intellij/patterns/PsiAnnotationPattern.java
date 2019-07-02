@@ -43,10 +43,14 @@ public class PsiAnnotationPattern extends PsiElementPattern<PsiAnnotation, PsiAn
 
       @Override
       public boolean accepts(@NotNull PsiAnnotation annotation, ProcessingContext context) {
-        PsiElement attr = getParent(annotation);
-        if (attr instanceof PsiArrayInitializerMemberValue) attr = getParent(attr);
+        PsiElement attr = getParentElement(annotation);
+        if (attr instanceof PsiArrayInitializerMemberValue) attr = getParentElement(attr);
         return attrPattern.accepts(attr);
       }
     });
+  }
+
+  private PsiElement getParentElement(@NotNull PsiElement element) {
+    return getParent(element);
   }
 }

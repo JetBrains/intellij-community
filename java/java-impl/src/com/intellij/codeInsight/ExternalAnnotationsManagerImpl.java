@@ -85,7 +85,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     myBus.connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
-        dropCache();
+        dropAnnotationsCache();
       }
     });
 
@@ -178,20 +178,24 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
         UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction() {
           @Override
           public void undo() {
-            dropCache();
+            dropAnnotationsCache();
             notifyChangedExternally();
           }
 
           @Override
           public void redo() {
-            dropCache();
+            dropAnnotationsCache();
             notifyChangedExternally();
           }
         });
       } finally {
-        dropCache();
+        dropAnnotationsCache();
       }
     });
+  }
+
+  private void dropAnnotationsCache() {
+    dropCache();
   }
 
   private void annotateExternally(@Nullable XmlFile annotationsFile, @NotNull List<ExternalAnnotation> annotations) {
@@ -230,7 +234,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
           notifyAfterAnnotationChanging(annotation.getOwner(), annotation.getAnnotationFQName(), false);
         }
         finally {
-          dropCache();
+          dropAnnotationsCache();
           markForUndo(annotation.getOwner().getContainingFile());
         }
       }
@@ -538,7 +542,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
       }
     }
     finally {
-      dropCache();
+      dropAnnotationsCache();
     }
   }
 
@@ -619,7 +623,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
       return processedAnything;
     }
     finally {
-      dropCache();
+      dropAnnotationsCache();
     }
   }
 
@@ -713,7 +717,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
       sdkModificator.addRoot(vFile, AnnotationOrderRootType.getInstance());
       sdkModificator.commitChanges();
     }
-    dropCache();
+    dropAnnotationsCache();
   }
 
   private static void sortItems(@NotNull XmlFile xmlFile) {
@@ -957,7 +961,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
   private class MyVirtualFileListener implements VirtualFileListener {
     private void processEvent(VirtualFileEvent event) {
       if (event.isFromRefresh() && ANNOTATIONS_XML.equals(event.getFileName())) {
-        dropCache();
+        dropAnnotationsCache();
         notifyChangedExternally();
       }
     }
@@ -996,7 +1000,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     public void documentChanged(@NotNull DocumentEvent event) {
       final VirtualFile file = myFileDocumentManager.getFile(event.getDocument());
       if (file != null && ANNOTATIONS_XML.equals(file.getName()) && isUnderAnnotationRoot(file)) {
-        dropCache();
+        dropAnnotationsCache();
       }
     }
   }
