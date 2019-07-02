@@ -19,6 +19,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -63,6 +64,9 @@ public class VcsUtil {
   private static final int ourMaxLoadedFileSize = computeLoadedFileSize();
 
   @NotNull private static final VcsRoot FICTIVE_ROOT = new VcsRoot(null, null);
+
+  private static final int MAX_COMMIT_MESSAGE_LENGTH = 50000;
+  private static final int MAX_COMMIT_MESSAGE_LINES = 3000;
 
   public static int getMaxVcsLoadedFileSize() {
     return ourMaxLoadedFileSize;
@@ -603,4 +607,34 @@ public class VcsUtil {
       .collect(Collectors.toSet());
   }
 
+  @NotNull
+  public static String trimCommitMessageToSaneSize(@NotNull String message) {
+    int nthLine = nthIndexOf(message, '\n', MAX_COMMIT_MESSAGE_LINES);
+    if (nthLine != -1 && nthLine < MAX_COMMIT_MESSAGE_LENGTH) {
+      return trimCommitMessageAt(message, nthLine);
+    }
+    if (message.length() > MAX_COMMIT_MESSAGE_LENGTH + 50) {
+      return trimCommitMessageAt(message, MAX_COMMIT_MESSAGE_LENGTH);
+    }
+    return message;
+  }
+
+  private static String trimCommitMessageAt(@NotNull String message, int index) {
+    return String.format("%s\n\n... Commit message is too long and was truncated by %s ...",
+                         message.substring(0, index),
+                         ApplicationNamesInfo.getInstance().getProductName());
+  }
+
+  private static int nthIndexOf(@NotNull String text, char c, int n) {
+    assert n > 0;
+    int length = text.length();
+    int count = 0;
+    for (int i = 0; i < length; i++) {
+      if (text.charAt(i) == c) {
+        count++;
+        if (count == n) return i;
+      }
+    }
+    return -1;
+  }
 }

@@ -164,6 +164,7 @@ public class GitFileAnnotation extends FileAnnotation {
 
     String commitMessage = getCommitMessage(revisionNumber);
     if (commitMessage == null) commitMessage = lineInfo.getSubject() + "\n...";
+    commitMessage = VcsUtil.trimCommitMessageToSaneSize(commitMessage);
 
     return "commit " + revisionNumber.asString() +
            "\nAuthor: " + lineInfo.getAuthor() +

@@ -20,6 +20,7 @@ import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.util.VcsUserUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -128,6 +129,8 @@ public class CommitPresentationUtil {
   private static String formatCommitText(@NotNull Project project,
                                          @NotNull String fullMessage,
                                          @NotNull Set<String> resolvedHashes) {
+    fullMessage = VcsUtil.trimCommitMessageToSaneSize(fullMessage);
+
     Font font = getCommitMessageFont();
     Convertor<String, String> convertor = s -> replaceHashes(s, resolvedHashes);
 
