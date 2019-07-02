@@ -356,14 +356,6 @@ public class ExpectedTypesProvider {
     }
 
     @Override
-    public void visitBreakStatement(PsiBreakStatement statement) {
-      PsiElement exitedElement = statement.findExitedElement();
-      if (exitedElement instanceof PsiSwitchExpression) {
-        Collections.addAll(myResult, getExpectedTypes((PsiSwitchExpression)exitedElement, myForCompletion));
-      }
-    }
-
-    @Override
     public void visitYieldStatement(PsiYieldStatement statement) {
       PsiSwitchExpression expression = statement.findEnclosingExpression();
       if (expression != null) {

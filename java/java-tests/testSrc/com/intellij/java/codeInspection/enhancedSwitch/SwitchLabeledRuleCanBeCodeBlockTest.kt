@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInspection.enhancedSwitch
 
 import com.intellij.JavaTestUtil
@@ -13,24 +13,17 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
  * @author Pavel.Dolgov
  */
 class SwitchLabeledRuleCanBeCodeBlockTest : LightJavaCodeInsightFixtureTestCase() {
-  val inspection = SwitchLabeledRuleCanBeCodeBlockInspection()
-
-  override fun setUp() {
-    super.setUp()
-    myFixture.enableInspections(inspection)
-
-    val currentProfile = ProjectInspectionProfileManager.getInstance(project).currentProfile
-    currentProfile.setErrorLevel(HighlightDisplayKey.find(inspection.shortName), HighlightDisplayLevel.WARNING, project)
-  }
-
-  override fun getProjectDescriptor(): LightProjectDescriptor = LightJavaCodeInsightFixtureTestCase.JAVA_12
-
+  override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_13
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/switchLabeledRuleCanBeCodeBlock"
 
   fun testInExpression() = doTest()
   fun testInStatement() = doTest()
 
   private fun doTest() {
+    val inspection = SwitchLabeledRuleCanBeCodeBlockInspection()
+    myFixture.enableInspections(inspection)
+    val currentProfile = ProjectInspectionProfileManager.getInstance(project).currentProfile
+    currentProfile.setErrorLevel(HighlightDisplayKey.find(inspection.shortName), HighlightDisplayLevel.WARNING, project)
     myFixture.testHighlighting("${getTestName(false)}.java")
   }
 }

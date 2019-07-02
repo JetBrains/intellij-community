@@ -66,7 +66,7 @@ public class JavaSwitchStatementUnwrapper extends JavaUnwrapper {
               PsiElement start = codeBlock.getFirstBodyElement();
               final PsiElement end = codeBlock.getLastBodyElement();
               while (start != end && start != null) {
-                if (start instanceof PsiBreakStatement && ((PsiBreakStatement)start).getExpression() == null) {
+                if (start instanceof PsiBreakStatement && ((PsiBreakStatement)start).getLabelIdentifier() == null) {
                   break outer;
                 }
                 removeBreakStatements(start, switchStatement);
@@ -87,7 +87,7 @@ public class JavaSwitchStatementUnwrapper extends JavaUnwrapper {
           }
           element = element.getNextSibling();
           if (element == null || element instanceof PsiJavaToken ||
-              element instanceof PsiBreakStatement && ((PsiBreakStatement)element).getExpression() == null) {
+              element instanceof PsiBreakStatement && ((PsiBreakStatement)element).getLabelIdentifier() == null) {
             break;
           }
         }
@@ -98,7 +98,7 @@ public class JavaSwitchStatementUnwrapper extends JavaUnwrapper {
 
   private static void removeBreakStatements(PsiElement element, PsiSwitchStatement switchStatement) {
     for (PsiBreakStatement breakStatement : PsiTreeUtil.findChildrenOfType(element, PsiBreakStatement.class)) {
-      if (breakStatement.getExpression() == null && breakStatement.findExitedElement() == switchStatement) {
+      if (breakStatement.getLabelIdentifier() == null && breakStatement.findExitedStatement() == switchStatement) {
         breakStatement.delete();
       }
     }

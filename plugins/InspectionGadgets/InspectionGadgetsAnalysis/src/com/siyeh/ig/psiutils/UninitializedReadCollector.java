@@ -189,12 +189,7 @@ public class UninitializedReadCollector {
         assigns = false;
       }
       else if (statement instanceof PsiBreakStatement) {
-        final PsiBreakStatement breakStatement = (PsiBreakStatement)statement;
-        final PsiExpression valueExpression = breakStatement.getValueExpression();
-        if (expressionAssignsVariable(valueExpression, variable, stamp, checkedMethods)) {
-          assigns = true;
-        }
-        if (breakStatement.getLabelIdentifier() != null || !assigns) {
+        if (((PsiBreakStatement)statement).getLabelIdentifier() != null || !assigns) {
           return false;
         }
       }

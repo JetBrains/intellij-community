@@ -64,7 +64,6 @@ public class StatementExtractor {
           PsiTreeUtil.getParentOfType(parentElement, PsiSwitchExpression.class, true, PsiMember.class, PsiLambdaExpression.class);
         if (switchExpression != null && PsiTreeUtil.isAncestor(root, switchExpression, false)) {
           boolean isYield =
-            parentElement instanceof PsiBreakStatement && ((PsiBreakStatement)parentElement).findExitedElement() == switchExpression ||
             parentElement instanceof PsiYieldStatement && ((PsiYieldStatement)parentElement).findEnclosingExpression() == switchExpression;
           boolean isRuleExpression =
             parentElement instanceof PsiExpressionStatement && parentElement.getParent() instanceof PsiSwitchLabeledRuleStatement &&
@@ -253,13 +252,6 @@ public class StatementExtractor {
         }
 
         @Override
-        public void visitBreakStatement(PsiBreakStatement statement) {
-          if (statement.getValueExpression() != null && statement.findExitedElement() == copy) {
-            process(statement);
-          }
-        }
-
-        @Override
         public void visitYieldStatement(PsiYieldStatement statement) {
           if (statement.getExpression() != null && statement.findEnclosingExpression() == copy) {
             process(statement);
@@ -282,7 +274,7 @@ public class StatementExtractor {
         }
       });
       replacementMap.forEach((statement, replacements) -> {
-        boolean keep = (statement instanceof PsiBreakStatement || statement instanceof PsiYieldStatement) && shouldKeepBreak(statement);
+        boolean keep = statement instanceof PsiYieldStatement && shouldKeepBreak(statement);
         if (!keep && replacements.length == 1) {
           statement.replace(replacements[0]);
         }
@@ -299,11 +291,8 @@ public class StatementExtractor {
           if (!keep) {
             statement.delete();
           }
-          else if (statement instanceof PsiYieldStatement) {
-            statement.replace(factory.createStatementFromText("break;", null));
-          }
           else {
-            Objects.requireNonNull(((PsiBreakStatement)statement).getValueExpression()).delete();
+            statement.replace(factory.createStatementFromText("break;", null));
           }
         }
       });

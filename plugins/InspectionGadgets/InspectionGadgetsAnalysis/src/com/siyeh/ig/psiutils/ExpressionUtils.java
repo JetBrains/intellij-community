@@ -1420,13 +1420,6 @@ public class ExpressionUtils {
           }
         }
       }
-      else if (parent instanceof PsiBreakStatement) {
-        final PsiElement exitedElement = ((PsiBreakStatement)parent).findExitedElement();
-        if (exitedElement instanceof PsiSwitchExpression) {
-          expression = (PsiExpression)exitedElement;
-          continue;
-        }
-      }
       else if (parent instanceof PsiYieldStatement) {
         PsiSwitchExpression enclosing = ((PsiYieldStatement)parent).findEnclosingExpression();
         if (enclosing != null) {

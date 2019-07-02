@@ -1,14 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.source.PsiLabelReference;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBreakStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiBreakStatementImpl");
@@ -18,39 +20,25 @@ public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBre
   }
 
   @Override
-  public PsiReferenceExpression getLabelExpression() {
-    PsiExpression expression = getExpression();
-    boolean isLabel = PsiImplUtil.isUnqualifiedReference(expression) && !(PsiImplUtil.findEnclosingSwitchOrLoop(this) instanceof PsiSwitchExpression);
-    return isLabel ? (PsiReferenceExpression)expression : null;
+  public PsiIdentifier getLabelIdentifier() {
+    return (PsiIdentifier)findPsiChildByType(JavaTokenType.IDENTIFIER);
   }
 
+  @Nullable
   @Override
-  public PsiExpression getValueExpression() {
-    PsiExpression expression = getExpression();
-    boolean isValue = expression != null && PsiImplUtil.findEnclosingSwitchOrLoop(this) instanceof PsiSwitchExpression;
-    return isValue ? expression : null;
-  }
-
-  @Override
-  public PsiExpression getExpression() {
-    return (PsiExpression)findPsiChildByType(ElementType.EXPRESSION_BIT_SET);
-  }
-
-  @Override
-  public PsiElement findExitedElement() {
+  public PsiStatement findExitedStatement() {
     PsiElement enclosing = PsiImplUtil.findEnclosingSwitchOrLoop(this);
-    PsiExpression expression = getExpression();
-
-    if (enclosing instanceof PsiSwitchExpression || !PsiImplUtil.isUnqualifiedReference(expression)) {
-      return enclosing;
+    if (enclosing instanceof PsiSwitchExpression) {
+      return null;
     }
 
-    PsiLabeledStatement labeled = PsiImplUtil.findEnclosingLabeledStatement(this, expression.getText());
-    if (labeled != null) {
-      return labeled.getStatement();
+    PsiIdentifier label = getLabelIdentifier();
+    if (label != null) {
+      PsiLabeledStatement labeled = PsiImplUtil.findEnclosingLabeledStatement(this, label.getText());
+      return labeled != null ? labeled.getStatement() : null;
     }
 
-    return null;
+    return (PsiStatement)enclosing;
   }
 
   @Override
@@ -82,6 +70,12 @@ public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBre
     else {
       visitor.visitElement(this);
     }
+  }
+
+  @Override
+  public PsiReference getReference() {
+    PsiIdentifier label = getLabelIdentifier();
+    return label != null ? new PsiLabelReference(this, label) : null;
   }
 
   @Override

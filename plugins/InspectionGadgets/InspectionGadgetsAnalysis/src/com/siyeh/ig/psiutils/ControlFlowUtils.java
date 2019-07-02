@@ -203,7 +203,7 @@ public class ControlFlowUtils {
       }
       if (statement instanceof PsiBreakStatement) {
         final PsiBreakStatement breakStatement = (PsiBreakStatement)statement;
-        if (breakStatement.getLabelExpression() == null) {
+        if (breakStatement.getLabelIdentifier() == null) {
           return true;
         }
       }
@@ -609,7 +609,7 @@ public class ControlFlowUtils {
   @Contract("null, _ -> false")
   public static boolean statementBreaksLoop(PsiStatement statement, PsiLoopStatement loop) {
     if(statement instanceof PsiBreakStatement) {
-      return ((PsiBreakStatement)statement).findExitedElement() == loop;
+      return ((PsiBreakStatement)statement).findExitedStatement() == loop;
     }
     if(statement instanceof PsiReturnStatement) {
       PsiExpression returnValue = ((PsiReturnStatement)statement).getReturnValue();
@@ -1118,7 +1118,7 @@ public class ControlFlowUtils {
 
     @Override
     public void visitBreakStatement(PsiBreakStatement statement) {
-      if (statement.getLabelExpression() != null) {
+      if (statement.getLabelIdentifier() != null) {
         return;
       }
       m_found = true;
@@ -1232,7 +1232,7 @@ public class ControlFlowUtils {
         return;
       }
       super.visitBreakStatement(statement);
-      final PsiStatement exitedStatement = ObjectUtils.tryCast(statement.findExitedElement(), PsiStatement.class);
+      final PsiStatement exitedStatement = statement.findExitedStatement();
       if (exitedStatement == null) {
         return;
       }

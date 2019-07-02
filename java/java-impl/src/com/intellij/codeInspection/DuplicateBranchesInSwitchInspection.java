@@ -261,7 +261,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
 
   @Contract("null -> false")
   private static boolean isBreakWithoutLabel(@Nullable PsiStatement statement) {
-    return statement instanceof PsiBreakStatement && ((PsiBreakStatement)statement).getLabelExpression() == null;
+    return statement instanceof PsiBreakStatement && ((PsiBreakStatement)statement).getLabelIdentifier() == null;
   }
 
   @Contract("_,null -> false")

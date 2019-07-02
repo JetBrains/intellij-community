@@ -743,14 +743,12 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
   public void testBreakStatementSpacing() {
     getSettings().CASE_STATEMENT_ON_NEW_LINE = false;
     doMethodTest("String s = switch (i) {\n" +
-                 "    case 0: break(foo) ;\n" +
-                 "    case 1: break\n        42 ;\n" +
+                 "    case 1: break\n        label ;\n" +
                  "    case 3: break  label ;\n" +
                  "    case 4: break  ;\n" +
                  "}",
                  "String s = switch (i) {\n" +
-                 "    case 0: break (foo);\n" +
-                 "    case 1: break 42;\n" +
+                 "    case 1: break label;\n" +
                  "    case 3: break label;\n" +
                  "    case 4: break;\n" +
                  "}");

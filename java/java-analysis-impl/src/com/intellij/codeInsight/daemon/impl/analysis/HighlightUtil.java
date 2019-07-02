@@ -794,46 +794,22 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @Nullable
-  static HighlightInfo checkBreakOutsideSwitchOrLoop(@NotNull PsiBreakStatement statement) {
-    PsiElement enclosing = PsiImplUtil.findEnclosingSwitchOrLoop(statement);
-    if (enclosing == null) {
-      String message = JavaErrorMessages.message("break.outside.switch.or.loop");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
-    }
-
-    return null;
-  }
-
-  @Nullable
-  static HighlightInfo checkValueBreakExpression(@NotNull PsiBreakStatement statement,
-                                                 @Nullable PsiExpression expression,
-                                                 @NotNull LanguageLevel languageLevel) {
-    PsiElement enclosing = PsiImplUtil.findEnclosingSwitchOrLoop(statement);
-    boolean plainRef = PsiImplUtil.isUnqualifiedReference(expression);
-
-    if (enclosing instanceof PsiSwitchExpression) {
-      if (languageLevel == LanguageLevel.JDK_13_PREVIEW) {
-        if (expression == null || plainRef && ((PsiReferenceExpression)expression).resolve() instanceof PsiLabeledStatement) {
-          String message = JavaErrorMessages.message("break.outside.switch.expr");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
-        }
-        else {
-          String message = "Value breaks are superseded by 'yield' statements";
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
-        }
-      }
-      if (expression == null) {
-        String message = JavaErrorMessages.message("value.break.missing");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
-      }
-      if (plainRef && PsiTreeUtil.isAncestor(((PsiReferenceExpression)expression).resolve(), enclosing, true)) {
+  static HighlightInfo checkBreakTarget(@NotNull PsiBreakStatement statement, @NotNull LanguageLevel languageLevel) {
+    if (statement.findExitedStatement() == null) {
+      if (Feature.ENHANCED_SWITCH.isSufficient(languageLevel) && PsiImplUtil.findEnclosingSwitchOrLoop(statement) instanceof PsiSwitchExpression) {
         String message = JavaErrorMessages.message("break.outside.switch.expr");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
       }
-    }
-    else if (expression != null && (!plainRef || ((PsiReferenceExpression)expression).resolve() instanceof PsiVariable)) {
-      String message = JavaErrorMessages.message("value.break.unexpected");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
+
+      PsiIdentifier label = statement.getLabelIdentifier();
+      if (label != null) {
+        String message = JavaErrorMessages.message("unresolved.label", label.getText());
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(label).descriptionAndTooltip(message).create();
+      }
+      else {
+        String message = JavaErrorMessages.message("break.outside.switch.or.loop");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
+      }
     }
 
     return null;

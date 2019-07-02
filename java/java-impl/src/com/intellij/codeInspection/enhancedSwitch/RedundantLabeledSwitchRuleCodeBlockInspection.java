@@ -33,12 +33,7 @@ public class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspecti
           PsiCodeBlock codeBlock = ((PsiBlockStatement)body).getCodeBlock();
           PsiStatement bodyStatement = getSingleStatement(codeBlock);
 
-          if (bodyStatement instanceof PsiBreakStatement) {
-            if (((PsiBreakStatement)bodyStatement).getValueExpression() != null) {
-              registerProblem(bodyStatement.getFirstChild());
-            }
-          }
-          else if (bodyStatement instanceof PsiYieldStatement) {
+          if (bodyStatement instanceof PsiYieldStatement) {
             if (((PsiYieldStatement)bodyStatement).getExpression() != null) {
               registerProblem(bodyStatement.getFirstChild());
             }
@@ -83,10 +78,7 @@ public class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspecti
       PsiBlockStatement body = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiBlockStatement.class);
       if (body != null && body.getParent() instanceof PsiSwitchLabeledRuleStatement) {
         PsiStatement bodyStatement = getSingleStatement(body.getCodeBlock());
-        if (bodyStatement instanceof PsiBreakStatement) {
-          unwrapBreakValue(body, (PsiBreakStatement)bodyStatement);
-        }
-        else if (bodyStatement instanceof PsiYieldStatement) {
+        if (bodyStatement instanceof PsiYieldStatement) {
           unwrapYieldValue(body, (PsiYieldStatement)bodyStatement);
         }
         else if (bodyStatement instanceof PsiThrowStatement || bodyStatement instanceof PsiExpressionStatement) {
@@ -95,22 +87,8 @@ public class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspecti
       }
     }
 
-    private static void unwrapBreakValue(PsiStatement body, PsiBreakStatement breakStatement) {
-      PsiExpression valueExpression = breakStatement.getValueExpression();
-      if (valueExpression != null) {
-        PsiElementFactory factory = JavaPsiFacade.getElementFactory(body.getProject());
-        PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText("x=1;", body);
-        statement.getExpression().replace(valueExpression);
-
-        CommentTracker tracker = new CommentTracker();
-        // replaceAndRestoreComments() will work with a copy of the expression, so it won't see the original comments
-        tracker.markUnchanged(valueExpression);
-        tracker.replaceAndRestoreComments(body, statement);
-      }
-    }
-
-    private static void unwrapYieldValue(PsiStatement body, PsiYieldStatement breakStatement) {
-      PsiExpression valueExpression = breakStatement.getExpression();
+    private static void unwrapYieldValue(PsiStatement body, PsiYieldStatement yieldStatement) {
+      PsiExpression valueExpression = yieldStatement.getExpression();
       if (valueExpression != null) {
         PsiElementFactory factory = JavaPsiFacade.getElementFactory(body.getProject());
         PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText("x=1;", body);

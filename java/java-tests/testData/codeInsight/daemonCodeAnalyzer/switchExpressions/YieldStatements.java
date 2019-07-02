@@ -1,40 +1,47 @@
 class YieldStatements {
+  static final int ref = -1;
+
   void m(int i) {
-    System.out.println(switch (i) {
-      case 0: yield "zero";
-      default: <error descr="Value breaks are superseded by 'yield' statements">break "many";</error>
-    });
+    <error descr="Case statement outside switch">default:</error> <error descr="Yield outside of switch expression">yield 0;</error>
+
+    l1: yield <error descr="Cannot resolve symbol 'l1'">l1</error>;
 
     switch (i) {
       default: <error descr="Yield outside of switch expression">yield 0;</error>
     }
+
     System.out.println(switch (i) {
-      default:
+      case 1 -> { while (true) yield ref; }
+      case 2 -> { while (true) break <error descr="Undefined label: 'wtf'">wtf</error>; }
+      case 3 -> { yield ref; }
+      case 4 -> { yield (ref); }
+      case 5 -> { <error descr="Break outside of enclosing switch expression">break wtf;</error> }
+      case 6 -> {
+        int a = 0;
+        a: switch (0) { default: yield a; }
+      }
+      case 7 -> {
         Runnable r = () -> { <error descr="Yield outside of switch expression">yield 0;</error> };
         r.run();
         yield 0;
-    });
-    System.out.println(switch (i) {
-      default: switch (i) {
-        default: yield "0";
       }
+      case 8 -> {
+        switch (i) { default -> { yield 0; } }
+      }
+      case 9 -> { yield<error descr="Expression expected">;</error> }
+      case 10 -> {
+        int yield = i;
+        yield yield;
+      }
+      case 11 -> { yield <error descr="Expression type should not be 'void'">m(0)</error>; }
+      default -> throw new RuntimeException();
     });
 
     out: while (true) {
       System.out.println(switch (i) {
         case 0: <error descr="Break outside of enclosing switch expression">break;</error>
-        case 1: <error descr="Value breaks are superseded by 'yield' statements">break i;</error>
         default: <error descr="Break outside of enclosing switch expression">break out;</error>
       });
     }
-
-    System.out.println(switch (i) {
-      default: yield <error descr="Expression type should not be 'void'">m(0)</error>;
-    });
-
-    int yield = i;
-    i = switch (i) {
-      default: yield yield;
-    };
   }
 }

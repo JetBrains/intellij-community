@@ -1334,7 +1334,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   public void visitBreakStatement(PsiBreakStatement statement) {
     final PsiBreakStatement other = (PsiBreakStatement)myMatchingVisitor.getElement();
 
-    myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(statement.getExpression(), other.getExpression()));
+    myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(statement.getLabelIdentifier(), other.getLabelIdentifier()));
   }
 
   @Override

@@ -117,12 +117,6 @@ public class LambdaUtil {
         return isValidLambdaContext(parentContext);
       }
     }
-    if (context instanceof PsiBreakStatement) {
-      PsiElement element = ((PsiBreakStatement)context).findExitedElement();
-      if (element instanceof PsiSwitchExpression) {
-        return isValidLambdaContext(element.getParent());
-      }
-    }
     if (context instanceof PsiYieldStatement) {
       PsiSwitchExpression switchExpression = ((PsiYieldStatement)context).findEnclosingExpression();
       if (switchExpression != null) {

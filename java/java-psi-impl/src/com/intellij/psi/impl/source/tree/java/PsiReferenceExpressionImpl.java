@@ -31,7 +31,6 @@ import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -175,7 +174,6 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
 
   public static final class OurGenericsResolver implements ResolveCache.PolyVariantContextResolver<PsiJavaReference> {
     public static final OurGenericsResolver INSTANCE = new OurGenericsResolver();
-    private static final TokenSet EXACT_REFS = TokenSet.create(JavaElementType.REFERENCE_EXPRESSION, JavaElementType.BREAK_STATEMENT);
 
     @NotNull
     @Override
@@ -187,7 +185,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       List<ResolveResult[]> qualifiers = resolveAllQualifiers(expression, containingFile);
       JavaResolveResult[] result = expression.resolve(parentType, containingFile);
 
-      if (result.length == 0 && incompleteCode && !EXACT_REFS.contains(parentType)) {
+      if (result.length == 0 && incompleteCode && parentType != JavaElementType.REFERENCE_EXPRESSION) {
         result = expression.resolve(JavaElementType.REFERENCE_EXPRESSION, containingFile);
       }
 
@@ -290,32 +288,6 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
         return resolveToClass(classNameElement, containingFile);
       }
       return resolve(JavaElementType.REFERENCE_EXPRESSION, containingFile);
-    }
-
-    if (parentType == JavaElementType.BREAK_STATEMENT && getQualifierExpression() == null) {
-      PsiElement breakStatement = getParent();
-
-      JavaResolveResult[] labels = JavaResolveResult.EMPTY_ARRAY;
-      PsiLabeledStatement labeled = PsiImplUtil.findEnclosingLabeledStatement(breakStatement, getText());
-      if (labeled != null) {
-        labels = new JavaResolveResult[]{new CandidateInfo(labeled, PsiSubstitutor.EMPTY)};
-      }
-
-      boolean insideSwitchExpression = false;
-      PsiElement context = breakStatement;
-      while ((context = PsiImplUtil.findEnclosingSwitchOrLoop(context.getParent())) != null) {
-        if (context instanceof PsiSwitchExpression) {
-          insideSwitchExpression = true;
-          break;
-        }
-      }
-      if (!insideSwitchExpression) {
-        return labels;
-      }
-      else if (labels.length > 0) {
-        JavaResolveResult[] vars = resolveToVariable(containingFile);
-        return ArrayUtil.mergeArrays(labels, vars);
-      }
     }
 
     return resolveToVariable(containingFile);

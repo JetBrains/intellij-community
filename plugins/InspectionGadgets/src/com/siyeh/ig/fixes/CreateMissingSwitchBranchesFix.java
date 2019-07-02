@@ -135,11 +135,9 @@ public class CreateMissingSwitchBranchesFix extends BaseSwitchFix {
           if (body instanceof PsiExpressionStatement) {
             ContainerUtil.addIfNotNull(elementsToReplace, ((PsiExpressionStatement)body).getExpression());
           }
-        } else {
+        }
+        else {
           PsiElement next = PsiTreeUtil.skipWhitespacesAndCommentsForward(label);
-          if (next instanceof PsiBreakStatement) {
-            ContainerUtil.addIfNotNull(elementsToReplace, ((PsiBreakStatement)next).getValueExpression());
-          }
           if (next instanceof PsiYieldStatement) {
             ContainerUtil.addIfNotNull(elementsToReplace, ((PsiYieldStatement)next).getExpression());
           }

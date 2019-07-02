@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -133,8 +133,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     if (CATCH_OR_FINALLY.accepts(position) ||
         JavaKeywordCompletion.START_SWITCH.accepts(position) ||
         JavaKeywordCompletion.isInstanceofPlace(position) ||
-        JavaKeywordCompletion.isAfterPrimitiveOrArrayType(position) ||
-        LabelReferenceCompletion.isBreakValueOrLabelPosition(position) == Boolean.FALSE) {
+        JavaKeywordCompletion.isAfterPrimitiveOrArrayType(position)) {
       return null;
     }
 
@@ -495,15 +494,9 @@ public class JavaCompletionContributor extends CompletionContributor {
           }
         }
 
-        // break <label>
-        if (LabelReferenceCompletion.isBreakValueOrLabelPosition(position) == Boolean.FALSE) {
-          items.putValues(result1, LabelReferenceCompletion.processLabelVariants(PsiImplUtil.findAllEnclosingLabels(position)));
-        }
-
         return;
       }
 
-      // continue <label>
       if (reference instanceof PsiLabelReference) {
         items.putValues(result1, LabelReferenceCompletion.processLabelReference((PsiLabelReference)reference));
         return;

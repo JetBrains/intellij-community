@@ -28,7 +28,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
@@ -412,13 +411,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitBreakStatement(PsiBreakStatement statement) {
     super.visitBreakStatement(statement);
-    PsiExpression expression = statement.getExpression();
-    if (!myHolder.hasErrorResults() && expression == null) {
-      myHolder.add(HighlightUtil.checkBreakOutsideSwitchOrLoop(statement));
-    }
-    if (!myHolder.hasErrorResults() && Feature.ENHANCED_SWITCH.isAvailable(myFile)) {
-      myHolder.add(HighlightUtil.checkValueBreakExpression(statement, expression, myLanguageLevel));
-    }
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkBreakTarget(statement, myLanguageLevel));
   }
 
   @Override
@@ -555,9 +548,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     PsiElement parent = expression.getParent();
     PsiType type = expression.getType();
 
-    if (!myHolder.hasErrorResults() && parent instanceof PsiBreakStatement && !PsiImplUtil.isUnqualifiedReference(expression)) {
-      myHolder.add(checkFeature(expression, Feature.SWITCH_EXPRESSION));
-    }
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkMustBeBoolean(expression, type));
     if (!myHolder.hasErrorResults() && expression instanceof PsiArrayAccessExpression) {
       myHolder.add(HighlightUtil.checkValidArrayAccessExpression((PsiArrayAccessExpression)expression));

@@ -27,7 +27,6 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testBreakNormal0() { doParserTest("break;"); }
   public void testBreakNormal1() { doParserTest("break LABEL;"); }
   public void testBreakIncomplete() { doParserTest("break"); }
-  public void testBreakExpr() { doParserTest("break boo();"); }
 
   public void testYield() { doParserTest("yield yield;"); }
   public void testYieldNested() { doParserTest("yield switch (0) { default: yield 42; };"); }
