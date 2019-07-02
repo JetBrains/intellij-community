@@ -34,7 +34,7 @@ open class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
      }
 
     override fun getFrameIcon(ctx: ScaleContext): Icon {
-        val image = ImageUtil.ensureHiDPI(frame.iconImage, ctx)
+        val image = ImageUtil.ensureHiDPI(frame.iconImage, ctx) ?: return super.getFrameIcon(ctx)
         return JBImageIcon(ImageUtil.scaleImage(image, iconSize, iconSize))
     }
 
