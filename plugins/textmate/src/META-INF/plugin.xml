@@ -36,6 +36,7 @@
     <idIndexer filetype="textmate" implementationClass="com.intellij.psi.impl.cache.impl.id.PlainTextIndexer"/>
     <indexPatternBuilder implementation="org.jetbrains.plugins.textmate.TextMatePatternBuilder"/>
     <spellchecker.support language="textmate" implementationClass="org.jetbrains.plugins.textmate.spellchecker.TextMateSpellingStrategy"/>
+    <completion.contributor language="textmate" implementationClass="org.jetbrains.plugins.textmate.editor.TextMateCompletionContributor"/>
   </extensions>
   <actions>
     <action id="install-vscode-plugin" class="org.jetbrains.plugins.textmate.actions.InstallVSCodePluginAction"
