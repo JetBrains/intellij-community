@@ -37,17 +37,12 @@ import javax.swing.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class UnnecessaryLocalVariableInspection extends BaseInspection {
-  /**
-   * @noinspection PublicField, WeakerAccess
-   */
   public boolean m_ignoreImmediatelyReturnedVariables;
-  /**
-   * @deprecated unused, left for compatibility
-   * @noinspection PublicField
-   */
+
+  /** @deprecated unused, left for compatibility */
   @Deprecated
   public boolean m_ignoreAnnotatedVariables;
-  @SuppressWarnings("WeakerAccess")
+
   public boolean m_ignoreAnnotatedVariablesNew = true;
 
   @Override

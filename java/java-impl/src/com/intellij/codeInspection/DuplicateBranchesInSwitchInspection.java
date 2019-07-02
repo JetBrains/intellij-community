@@ -638,11 +638,8 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     private final boolean myIsSimpleExit;
     private final boolean myCanFallThrough;
 
-    Branch(@NotNull PsiSwitchLabelStatement[] labels, @NotNull List<PsiStatement> statementList,
-           boolean hasImplicitBreak, @NotNull String[] commentTexts) {
-      super(labels,
-            statementsWithoutTrailingBreak(statementList),
-            commentTexts);
+    Branch(@NotNull PsiSwitchLabelStatement[] labels, @NotNull List<PsiStatement> statementList, boolean hasImplicitBreak, @NotNull String[] comments) {
+      super(labels, statementsWithoutTrailingBreak(statementList), comments);
 
       int lastIndex = statementList.size() - 1;
       PsiStatement lastStatement = statementList.get(lastIndex);
@@ -677,9 +674,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
       return new DeleteRedundantBranchFix();
     }
 
-    /**
-     * switch labels with comments and spaces
-     */
+    // 'switch' labels with comments and spaces
     @NotNull
     List<PsiElement> getBranchPrefix() {
       List<PsiElement> result = new ArrayList<>();
@@ -785,10 +780,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     private final boolean myIsSimpleExit;
 
     Rule(@NotNull PsiSwitchLabeledRuleStatement rule, @NotNull PsiStatement body, @NotNull String[] commentTexts) {
-      super(new PsiSwitchLabeledRuleStatement[]{rule},
-            new PsiStatement[]{body},
-            commentTexts);
-
+      super(new PsiSwitchLabeledRuleStatement[]{rule}, new PsiStatement[]{body}, commentTexts);
       myIsSimpleExit = body instanceof PsiExpressionStatement || body instanceof PsiThrowStatement;
     }
 

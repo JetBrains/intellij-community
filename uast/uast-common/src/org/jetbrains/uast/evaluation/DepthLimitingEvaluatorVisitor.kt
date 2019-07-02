@@ -6,8 +6,10 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.values.UUndeterminedValue
 import org.jetbrains.uast.visitor.UastTypedVisitor
 
-internal class DepthLimitingEvaluatorVisitor(val depthLimit: kotlin.Int,
-                                             delegator: (org.jetbrains.uast.evaluation.DepthLimitingEvaluatorVisitor) -> org.jetbrains.uast.visitor.UastTypedVisitor<org.jetbrains.uast.evaluation.UEvaluationState, org.jetbrains.uast.evaluation.UEvaluationInfo>) : UastTypedVisitor<UEvaluationState, UEvaluationInfo> {
+internal class DepthLimitingEvaluatorVisitor(
+  private val depthLimit: Int,
+  delegator: (DepthLimitingEvaluatorVisitor) -> UastTypedVisitor<UEvaluationState, UEvaluationInfo>
+) : UastTypedVisitor<UEvaluationState, UEvaluationInfo> {
 
   private val delegate = delegator(this)
 

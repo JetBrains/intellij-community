@@ -27,7 +27,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   private final ControlFlowPolicy myPolicy;
 
   private ControlFlowImpl myCurrentFlow;
-  private final Stack<PsiParameter> myCatchParameters = new Stack<>();// stack of PsiParameter for catch
+  private final Stack<PsiParameter> myCatchParameters = new Stack<>();// stack of PsiParameter for 'catch'
   private final Stack<PsiElement> myCatchBlocks = new Stack<>();
 
   private final Stack<FinallyBlockSubroutine> myFinallyBlocks = new Stack<>();
@@ -239,7 +239,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     for (int i = myUnhandledExceptionCatchBlocks.size() - 1; i >= 0; i--) {
       ProgressManager.checkCanceled();
       PsiElement block = myUnhandledExceptionCatchBlocks.get(i);
-      // cannot jump to outer catch blocks (belonging to outer try stmt) if current try{} has finally block
+      // cannot jump to outer catch blocks (belonging to outer try stmt) if current try{} has 'finally' block
       if (block == null) {
         if (!myFinallyBlocks.isEmpty()) {
           break;
@@ -255,7 +255,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       }
     }
 
-    // generate jump to the top finally block
+    // generate a jump to the top 'finally' block
     if (!myFinallyBlocks.isEmpty()) {
       final PsiElement finallyBlock = myFinallyBlocks.peek().getElement();
       ConditionalThrowToInstruction throwToInstruction = new ConditionalThrowToInstruction(-2);
@@ -852,8 +852,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   @Override
   public void visitSwitchLabeledRuleStatement(PsiSwitchLabeledRuleStatement statement) {
     startElement(statement);
-    PsiExpressionList caseValues = statement.getCaseValues();
 
+    PsiExpressionList caseValues = statement.getCaseValues();
     if (caseValues != null) {
       for (PsiExpression caseValue : caseValues.getExpressions()) {
         ProgressManager.checkCanceled();
@@ -983,7 +983,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   /**
-   * find offsets of catch(es) corresponding to this throw statement
+   * Find offsets of catch(es) corresponding to this throw statement
    * myCatchParameters and myCatchBlocks arrays should be sorted in ascending scope order (from outermost to innermost)
    *
    * @return list of targets or list of single null element if no appropriate targets found
@@ -1066,7 +1066,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     if (description != null) {
       description.accept(this);
     }
-    // if description is evaluated, the assert statement cannot complete normally
+    // if description is evaluated, the 'assert' statement cannot complete normally
     // though non-necessarily AssertionError will be thrown (description may throw something, or AssertionError ctor, etc.)
     PsiClassType exceptionClass = JavaPsiFacade.getElementFactory(statement.getProject()).createTypeByFQClassName(
       CommonClassNames.JAVA_LANG_THROWABLE, statement.getResolveScope());
@@ -1217,7 +1217,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       // unchecked exception throwing completion
       myCurrentFlow.addInstruction(new ReturnInstruction(procStart - 1, throwExceptionCompletion));
 
-      // checked exception throwing completion. need to dispatch to the correct catch clause
+      // checked exception throwing completion; need to dispatch to the correct catch clause
       final List<PsiElement> unhandledExceptionCatchBlocks = finallyBlockToUnhandledExceptions.remove(finallyBlock);
       for (int i = 0; unhandledExceptionCatchBlocks != null && i < unhandledExceptionCatchBlocks.size(); i++) {
         ProgressManager.checkCanceled();
@@ -1476,18 +1476,16 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
         switch (shortcut) {
           case NO_SHORTCUT:
-            assert lOperand != null;
             myCurrentFlow.addInstruction(new ConditionalGoToInstruction(0, role, lOperand));
             addElementOffsetLater(gotoElement, gotoIsAtStart);
+            break;
 
-            break;
           case STOP_EXPRESSION:
-            if (lOperand != null) {
-              myCurrentFlow.addInstruction(new GoToInstruction(0, role));
-              addElementOffsetLater(gotoElement, gotoIsAtStart);
-              rValue = null;
-            }
+            myCurrentFlow.addInstruction(new GoToInstruction(0, role));
+            addElementOffsetLater(gotoElement, gotoIsAtStart);
+            rValue = null;
             break;
+
           case SKIP_CURRENT_OPERAND:
             break;
         }

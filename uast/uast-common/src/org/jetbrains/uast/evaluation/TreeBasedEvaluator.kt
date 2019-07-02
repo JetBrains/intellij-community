@@ -128,8 +128,7 @@ class TreeBasedEvaluator(
       data: UEvaluationState
     ): UEvaluationInfo {
       storeState(node, data)
-      val resolvedElement = node.resolveToUElement()
-      return when (resolvedElement) {
+      return when (val resolvedElement = node.resolveToUElement()) {
         is UEnumConstant -> UEnumEntryValueConstant(resolvedElement, node)
         is UField -> if (resolvedElement.hasModifierProperty(PsiModifier.FINAL)) {
           data[resolvedElement].ifUndetermined {
