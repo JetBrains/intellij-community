@@ -79,7 +79,10 @@ class PyInlineFunctionTest : PyTestCase() {
   fun testFunctionWithLambda() = doTest()
   fun testRefInDunderAll() = doTest(inlineThis = false, remove = true)
   fun testRemovingDocstring() = doTest()
-  fun testKeepFirstComment() = doTest()
+  fun testRemovingTypeComment() = doTest()
+  fun testRemovingDocstringAndTypeComment() = doTest()
+  fun testRemovingDocstringOfEmptyFunction() = doTest()
+  fun testKeepingComments() = doTest()
   //fun testInlineImportedAs() = doTest(inlineThis = false)
   fun testRemoveFunctionWithStub() {
     doTest(inlineThis = false, remove = true)

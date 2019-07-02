@@ -132,7 +132,6 @@ class PyInlineFunctionProcessor(project: Project,
 
     val functionScope = ControlFlowCache.getScope(myFunction)
     PyClassRefactoringUtil.rememberNamedReferences(myFunction)
-    val hasDocstring = myFunction.docStringExpression != null
 
     references.forEach { usage ->
       val reference = usage.element as PyReferenceExpression
@@ -146,7 +145,11 @@ class PyInlineFunctionProcessor(project: Project,
       val containingStatement = PsiTreeUtil.getParentOfType(callSite, PyStatement::class.java) ?: error("Unable to find statement for ${reference.name}")
       val scopeAnchor = if (containingStatement is PyFunction) containingStatement else reference
 
-      val replacementFunction = myFunction.statementList.copy() as PyStatementList
+      val functionCopy = myFunction.copy() as PyFunction
+      functionCopy.typeComment?.delete()
+      PsiTreeUtil.getParentOfType(functionCopy.docStringExpression, PyStatement::class.java)?.delete()
+
+      val replacement = functionCopy.statementList
       val namesInOuterScope = PyRefactoringUtil.collectUsedNames(refScopeOwner)
       val builtinCache = PyBuiltinCache.getInstance(reference)
 
@@ -191,7 +194,7 @@ class PyInlineFunctionProcessor(project: Project,
       })
 
 
-      replacementFunction.accept(object : PyRecursiveElementVisitor() {
+      replacement.accept(object : PyRecursiveElementVisitor() {
         override fun visitPyReferenceExpression(node: PyReferenceExpression) {
           if (!node.isQualified) {
             val parentLambda = PsiTreeUtil.getParentOfType(node, PyLambdaExpression::class.java)
@@ -253,17 +256,16 @@ class PyInlineFunctionProcessor(project: Project,
         callSite.replace(newReturn.assignedValue!!)
       }
 
-      CodeStyleManager.getInstance(myProject).reformat(replacementFunction, true)
+      CodeStyleManager.getInstance(myProject).reformat(replacement, true)
 
       val insertElement = { elem: PsiElement -> containingStatement.parent.addBefore(elem, containingStatement) }
 
       declarations.forEach { insertElement(it) }
-      if (replacementFunction.firstChild != null) {
-        val directChildren = SyntaxTraverser.psiApi().children(replacementFunction).filter { it !is PsiWhiteSpace }.toList()
-        val statementsAndComments = if (hasDocstring) directChildren.drop(1) else directChildren
-        val statements = statementsAndComments.filterIsInstance<PyStatement>()
+      if (replacement.firstChild != null) {
+        val children = SyntaxTraverser.psiApi().children(replacement).filter { it !is PsiWhiteSpace }.toList()
+        val statements = children.filterIsInstance<PyStatement>()
         if (statements.size > 1 || statements.firstOrNull() !is PyPassStatement) {
-          statementsAndComments.asSequence()
+          children.asSequence()
             .map { insertElement(it) }
             .filterIsInstance<PyStatement>()
             .forEach { PyClassRefactoringUtil.restoreNamedReferences(it) }
