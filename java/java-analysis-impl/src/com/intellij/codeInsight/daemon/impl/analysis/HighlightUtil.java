@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.ContainerProvider;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.JavaModuleSystemEx;
@@ -1192,6 +1193,16 @@ public class HighlightUtil extends HighlightUtilBase {
           String message = JavaErrorMessages.message("text.block.new.line");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
+      }
+      StringBuilder chars = new StringBuilder();
+      boolean success = CodeInsightUtilCore.parseStringCharacters(text, chars, null);
+      if (!success) {
+        String message = JavaErrorMessages.message("illegal.escape.character.in.string.literal");
+        TextRange textRange = chars.length() < text.length() - 1 ? new TextRange(chars.length(), chars.length() + 1) 
+                                                                 : expression.getTextRange();
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+          .range(expression, textRange)
+          .descriptionAndTooltip(message).create();
       }
     }
 
