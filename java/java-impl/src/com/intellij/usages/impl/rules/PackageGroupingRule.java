@@ -52,6 +52,10 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
     return super.getGroupForFile(dir);
   }
 
+  private Project getProject() {
+    return myProject;
+  }
+
   @Override
   public String getActionTitle() {
     return UsageViewBundle.message("action.group.by.package");
@@ -88,7 +92,7 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
     public FileStatus getFileStatus() {
       if (!isValid()) return null;
       PsiDirectory[] dirs = myPackage.getDirectories();
-      return dirs.length == 1 ? FileStatusManager.getInstance(myProject).getStatus(dirs[0].getVirtualFile()) : null;
+      return dirs.length == 1 ? FileStatusManager.getInstance(getProject()).getStatus(dirs[0].getVirtualFile()) : null;
     }
 
     @Override

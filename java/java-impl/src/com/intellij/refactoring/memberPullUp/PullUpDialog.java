@@ -43,7 +43,7 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
   private final InterfaceContainmentVerifier myInterfaceContainmentVerifier = new InterfaceContainmentVerifier() {
     @Override
     public boolean checkedInterfacesContain(PsiMethod psiMethod) {
-      return PullUpProcessor.checkedInterfacesContain(myMemberInfos, psiMethod);
+      return PullUpProcessor.checkedInterfacesContain(getMemberInfos(), psiMethod);
     }
   };
 
@@ -58,6 +58,10 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
     myCallback = callback;
 
     init();
+  }
+
+  private List<MemberInfo> getMemberInfos() {
+    return myMemberInfos;
   }
 
   public int getJavaDocPolicy() {
@@ -80,14 +84,18 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
       @Override
       public void itemStateChanged(ItemEvent e) {
         if (e.getStateChange() == ItemEvent.SELECTED) {
-          if (myMemberSelectionPanel != null) {
-            ((MyMemberInfoModel)myMemberInfoModel).setSuperClass(getSuperClass());
-            myMemberSelectionPanel.getTable().setMemberInfos(myMemberInfos);
-            myMemberSelectionPanel.getTable().fireExternalDataChange();
-          }
+          updateMemberPanels();
         }
       }
     });
+  }
+
+  private void updateMemberPanels() {
+    if (myMemberSelectionPanel != null) {
+      ((MyMemberInfoModel)myMemberInfoModel).setSuperClass(getSuperClass());
+      myMemberSelectionPanel.getTable().setMemberInfos(myMemberInfos);
+      myMemberSelectionPanel.getTable().fireExternalDataChange();
+    }
   }
 
   @Override
@@ -177,15 +185,15 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
 
   private class MyMemberInfoModel extends UsesAndInterfacesDependencyMemberInfoModel<PsiMember, MemberInfo> {
     MyMemberInfoModel() {
-      super(myClass, getSuperClass(), false, myInterfaceContainmentVerifier);
+      super(getPsiClass(), getSuperClass(), false, myInterfaceContainmentVerifier);
     }
 
     @Override
     public boolean isMemberEnabled(MemberInfo member) {
       final PsiClass currentSuperClass = getSuperClass();
       if(currentSuperClass == null) return true;
-      if (myMemberInfoStorage.getDuplicatedMemberInfos(currentSuperClass).contains(member)) return false;
-      if (myMemberInfoStorage.getExtending(currentSuperClass).contains(member.getMember())) return false;
+      if (getMemberInfoStorage().getDuplicatedMemberInfos(currentSuperClass).contains(member)) return false;
+      if (getMemberInfoStorage().getExtending(currentSuperClass).contains(member.getMember())) return false;
       final boolean isInterface = currentSuperClass.isInterface();
       if (!isInterface) return true;
 
@@ -195,7 +203,8 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
         return element.hasModifierProperty(PsiModifier.STATIC);
       }
       if (element instanceof PsiMethod) {
-        final PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(currentSuperClass, myClass, PsiSubstitutor.EMPTY);
+        final PsiSubstitutor superSubstitutor =
+          TypeConversionUtil.getSuperClassSubstitutor(currentSuperClass, getPsiClass(), PsiSubstitutor.EMPTY);
         final MethodSignature signature = ((PsiMethod) element).getSignature(superSubstitutor);
         final PsiMethod superClassMethod = MethodSignatureUtil.findMethodBySignature(currentSuperClass, signature, false);
         if (superClassMethod != null && !PsiUtil.isLanguageLevel8OrHigher(currentSuperClass)) return false;
@@ -248,5 +257,13 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
     public Boolean isFixedAbstract(MemberInfo member) {
       return Boolean.TRUE;
     }
+  }
+
+  private PsiClass getPsiClass() {
+    return myClass;
+  }
+
+  private MemberInfoStorage getMemberInfoStorage() {
+    return myMemberInfoStorage;
   }
 }

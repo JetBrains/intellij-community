@@ -81,7 +81,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
         @Override
         public void documentChanged(@NotNull final DocumentEvent e) {
           updateParamTree();
-          updateTree();
+          updateInjectionPanelTree();
         }
       });
       return document;
@@ -127,6 +127,10 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
         performToggleAction();
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), myParamsTable);
+  }
+
+  private void updateInjectionPanelTree() {
+    updateTree();
   }
 
   private void performToggleAction() {
@@ -372,7 +376,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
       if (psiClass != null) {
         setPsiClass(psiClass.getQualifiedName());
         updateParamTree();
-        updateTree();
+        updateInjectionPanelTree();
       }
     }
   }

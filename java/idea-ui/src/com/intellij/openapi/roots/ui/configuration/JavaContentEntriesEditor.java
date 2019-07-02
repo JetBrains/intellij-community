@@ -49,9 +49,13 @@ public class JavaContentEntriesEditor extends CommonContentEntriesEditor {
     return new JavaContentEntryEditor(contentEntryUrl, getEditHandlers()) {
       @Override
       protected ModifiableRootModel getModel() {
-        return JavaContentEntriesEditor.this.getModel();
+        return getModifiableModel();
       }
     };
+  }
+
+  private ModifiableRootModel getModifiableModel() {
+    return getModel();
   }
 
   @Override
