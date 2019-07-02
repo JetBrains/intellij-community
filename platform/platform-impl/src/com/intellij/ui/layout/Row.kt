@@ -7,6 +7,7 @@ import com.intellij.ui.components.noteComponent
 import javax.swing.ButtonGroup
 import javax.swing.JComponent
 import javax.swing.JLabel
+import kotlin.reflect.KMutableProperty0
 
 interface RowBuilder {
   val buttonGroup: ButtonGroup?
@@ -44,6 +45,14 @@ interface RowBuilder {
   fun buttonGroup(init: Row.() -> Unit): Row {
     return createChildRow(buttonGroup = ButtonGroup()).apply(init)
   }
+}
+
+inline fun <reified T : Any> RowBuilder.buttonGroup(prop: KMutableProperty0<T>, init: RowBuilderWithButtonGroupProperty<T>.() -> Unit) {
+  RowBuilderWithButtonGroupProperty(this, prop.toBinding()).init()
+}
+
+inline fun <reified T : Any> RowBuilder.buttonGroup(noinline getter: () -> T, noinline setter: (T) -> Unit, init: RowBuilderWithButtonGroupProperty<T>.() -> Unit) {
+  RowBuilderWithButtonGroupProperty(this, PropertyBinding(getter, setter)).init()
 }
 
 abstract class Row : Cell(), RowBuilder {

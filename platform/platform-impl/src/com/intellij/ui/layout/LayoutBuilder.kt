@@ -11,7 +11,6 @@ import java.awt.event.ActionListener
 import javax.swing.ButtonGroup
 import javax.swing.JComponent
 import javax.swing.JLabel
-import kotlin.reflect.KMutableProperty0
 
 open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal val builder: LayoutBuilderImpl, override val buttonGroup: ButtonGroup? = null) : RowBuilder {
   override fun createChildRow(label: JLabel?, buttonGroup: ButtonGroup?, isSeparated: Boolean, noGrid: Boolean, title: String?): Row {
@@ -20,10 +19,6 @@ open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi intern
 
   override fun createNoteOrCommentRow(component: JComponent): Row {
     return builder.rootRow.createNoteOrCommentRow(component)
-  }
-
-  fun <T : Any> buttonGroup(prop: KMutableProperty0<T>, init: LayoutBuilderWithButtonGroupProperty<T>.() -> Unit) {
-    LayoutBuilderWithButtonGroupProperty(builder, prop).init()
   }
 
   inline fun buttonGroup(crossinline elementActionListener: () -> Unit, init: LayoutBuilder.() -> Unit): ButtonGroup {
@@ -44,8 +39,18 @@ open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi intern
     get() = builder
 }
 
-class LayoutBuilderWithButtonGroupProperty<T : Any>
-    @PublishedApi internal constructor(builder: LayoutBuilderImpl, private val prop: KMutableProperty0<T>) : LayoutBuilder(builder, ButtonGroup()) {
+class RowBuilderWithButtonGroupProperty<T : Any>
+    @PublishedApi internal constructor(private val builder: RowBuilder, private val prop: PropertyBinding<T>) : RowBuilder {
+
+  override val buttonGroup: ButtonGroup? = ButtonGroup()
+
+  override fun createChildRow(label: JLabel?, buttonGroup: ButtonGroup?, isSeparated: Boolean, noGrid: Boolean, title: String?): Row {
+    return builder.createChildRow(label, buttonGroup, isSeparated, noGrid, title)
+  }
+
+  override fun createNoteOrCommentRow(component: JComponent): Row {
+    return builder.createNoteOrCommentRow(component)
+  }
 
   fun Row.radioButton(text: String, value: T): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text, prop.get() == value)
