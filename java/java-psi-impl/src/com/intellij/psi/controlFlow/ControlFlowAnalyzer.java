@@ -842,10 +842,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   @Override
   public void visitSwitchLabelStatement(PsiSwitchLabelStatement statement) {
     startElement(statement);
-    PsiExpression caseValue = statement.getCaseValue();
-
-    generateExpressionInstructions(caseValue);
-
+    generateCaseValueInstructions(statement.getCaseValues());
     finishElement(statement);
   }
 
@@ -853,13 +850,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   public void visitSwitchLabeledRuleStatement(PsiSwitchLabeledRuleStatement statement) {
     startElement(statement);
 
-    PsiExpressionList caseValues = statement.getCaseValues();
-    if (caseValues != null) {
-      for (PsiExpression caseValue : caseValues.getExpressions()) {
-        ProgressManager.checkCanceled();
-        generateExpressionInstructions(caseValue);
-      }
-    }
+    generateCaseValueInstructions(statement.getCaseValues());
 
     PsiStatement body = statement.getBody();
     if (body != null) {
@@ -875,6 +866,15 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     finishElement(statement);
+  }
+
+  private void generateCaseValueInstructions(@Nullable PsiExpressionList values) {
+    if (values != null) {
+      for (PsiExpression caseValue : values.getExpressions()) {
+        ProgressManager.checkCanceled();
+        generateExpressionInstructions(caseValue);
+      }
+    }
   }
 
   @Override
