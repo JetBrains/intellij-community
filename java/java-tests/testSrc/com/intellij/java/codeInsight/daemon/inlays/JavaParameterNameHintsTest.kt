@@ -1163,7 +1163,11 @@ public class Test {
 
   
   fun assertSingleInlayWithText(expectedText: String) {
-    val inlays = myFixture.editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength)
+    val inlays = ParameterHintsPresentationManager.getInstance().getParameterHintsInRange(
+      editor,
+      0,
+      editor.document.textLength
+    )
     assertThat(inlays).hasSize(1)
     val realText = getHintText(inlays[0])
     assertThat(realText).isEqualTo(expectedText)
