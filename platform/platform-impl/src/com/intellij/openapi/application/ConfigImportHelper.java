@@ -379,7 +379,7 @@ public final class ConfigImportHelper {
       // the filter prevents web token reuse and accidental overwrite of files already created by this instance (port/lock/tokens etc.)
       FileUtil.copyDir(oldConfigDir.toFile(), newConfigDir.toFile(), path -> !blockImport(path.toPath(), oldConfigDir, newConfigDir));
 
-      if (SystemInfo.isMac) {
+      if (SystemInfo.isMac && (PlatformUtils.isIntelliJ() || "AndroidStudio".equals(PlatformUtils.getPlatformPrefix()))) {
         setKeymapIfNeeded(oldConfigDir, newConfigDir, log);
       }
 
