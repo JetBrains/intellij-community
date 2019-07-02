@@ -16,6 +16,7 @@
 package org.jetbrains.java.generate.velocity;
 
 import com.intellij.codeInsight.generation.VelocityIncludesClassLoader;
+import com.intellij.openapi.util.ClassLoaderUtil;
 import org.apache.commons.collections.ExtendedProperties;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
@@ -51,9 +52,10 @@ public class VelocityFactory {
     prop.addProperty(RuntimeConstants.RESOURCE_LOADER, "includes");
     prop.addProperty("includes.resource.loader.class", VelocityIncludesClassLoader.class.getName());
     prop.addProperty(RuntimeConstants.VM_PERM_ALLOW_INLINE_REPLACE_GLOBAL, "true");
+
     VelocityEngine velocity = new VelocityEngine();
     velocity.setExtendedProperties(prop);
-    velocity.init();
+    ClassLoaderUtil.runWithClassLoader(VelocityIncludesClassLoader.class.getClassLoader(), () -> velocity.init());
     return velocity;
   }
 
