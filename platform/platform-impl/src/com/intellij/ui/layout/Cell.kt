@@ -292,7 +292,7 @@ abstract class Cell {
     return component
   }
 
-  fun textFieldWithBrowseButton(browseDialogTitle: String,
+  fun textFieldWithBrowseButton(browseDialogTitle: String? = null,
                                 value: String? = null,
                                 project: Project? = null,
                                 fileChooserDescriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
@@ -302,6 +302,33 @@ abstract class Cell {
     value?.let { component.text = it }
     component(comment = comment)
     return component
+  }
+
+  fun textFieldWithBrowseButton(
+    prop: KMutableProperty0<String>,
+    browseDialogTitle: String? = null,
+    project: Project? = null,
+    fileChooserDescriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
+    fileChosen: ((chosenFile: VirtualFile) -> String)? = null,
+    comment: String? = null
+  ): CellBuilder<TextFieldWithBrowseButton> {
+    val component = textFieldWithBrowseButton(project, browseDialogTitle, fileChooserDescriptor, fileChosen)
+    component.text = prop.get()
+    return component(comment = comment).withBinding(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, prop.toBinding())
+  }
+
+  fun textFieldWithBrowseButton(
+    getter: () -> String,
+    setter: (String) -> Unit,
+    browseDialogTitle: String? = null,
+    project: Project? = null,
+    fileChooserDescriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
+    fileChosen: ((chosenFile: VirtualFile) -> String)? = null,
+    comment: String? = null
+  ): CellBuilder<TextFieldWithBrowseButton> {
+    val component = textFieldWithBrowseButton(project, browseDialogTitle, fileChooserDescriptor, fileChosen)
+    component.text = getter()
+    return component(comment = comment).withBinding(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, PropertyBinding(getter, setter))
   }
 
   fun gearButton(vararg actions: AnAction) {

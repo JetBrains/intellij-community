@@ -232,7 +232,7 @@ private abstract class MyDialogWrapper(project: Project?,
 fun <T : JComponent> installFileCompletionAndBrowseDialog(project: Project?,
                                                           component: ComponentWithBrowseButton<T>,
                                                           textField: JTextField,
-                                                          @Nls(capitalization = Nls.Capitalization.Title) browseDialogTitle: String,
+                                                          @Nls(capitalization = Nls.Capitalization.Title) browseDialogTitle: String?,
                                                           fileChooserDescriptor: FileChooserDescriptor,
                                                           textComponentAccessor: TextComponentAccessor<T>,
                                                           fileChosen: ((chosenFile: VirtualFile) -> String)? = null) {
@@ -282,7 +282,7 @@ fun textFieldWithHistoryWithBrowseButton(project: Project?,
 
 @JvmOverloads
 fun textFieldWithBrowseButton(project: Project?,
-                              browseDialogTitle: String,
+                              browseDialogTitle: String?,
                               fileChooserDescriptor: FileChooserDescriptor,
                               fileChosen: ((chosenFile: VirtualFile) -> String)? = null): TextFieldWithBrowseButton {
   val component = TextFieldWithBrowseButton()
