@@ -282,7 +282,11 @@ class PyInlineFunctionProcessor(project: Project,
       }
     }
 
-    imports.forEach { PyClassRefactoringUtil.optimizeImports(it.element!!.containingFile!!) }
+    imports.asSequence()
+      .map { it.element?.containingFile }
+      .filterNotNull()
+      .distinct()
+      .forEach { PyClassRefactoringUtil.optimizeImports(it) }
 
     if (myRemoveDeclaration) {
       val stubFunction = PyiUtil.getPythonStub(myFunction)
