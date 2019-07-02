@@ -510,7 +510,7 @@ public class JBScrollPane extends JScrollPane {
       // so that if we don't ask after resetting the bounds we may have gotten the wrong answer.
       if (viewport != null) {
         viewport.setBounds(bounds);
-        if (scrollable != null && hsbOpaque && vsbOpaque) {
+        if (scrollable != null) {
           viewTracksViewportWidth = scrollable.getScrollableTracksViewportWidth();
           viewTracksViewportHeight = scrollable.getScrollableTracksViewportHeight();
           viewportExtentSize = viewport.toViewCoordinates(bounds.getSize());
