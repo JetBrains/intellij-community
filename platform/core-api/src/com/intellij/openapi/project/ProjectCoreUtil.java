@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-
 public class ProjectCoreUtil {
+
+  /**
+   * @deprecated for internal use only, see {@link #theOnlyOpenProject()}
+   */
   @Deprecated
   @ApiStatus.Internal
   public static volatile Project theProject;
@@ -42,8 +45,9 @@ public class ProjectCoreUtil {
 
   /**
    * For internal usage only.
-   * Please use {@link com.intellij.psi.PsiElement#getProject()} or {@link com.intellij.openapi.project.ProjectManager#getOpenProjects()} instead.
-   * @return the only open project if there is one, null if no projects open, or several projects are open, or default project is created
+   *
+   * @return the only open project if there is one, {@code null} if no projects open, or several projects are open, or default project is created
+   * @deprecated Please use {@link com.intellij.psi.PsiElement#getProject()} or {@link com.intellij.openapi.project.ProjectManager#getOpenProjects()} instead.
    */
   @Deprecated
   @ApiStatus.Internal
