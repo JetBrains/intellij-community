@@ -95,7 +95,7 @@ class MacDmgBuilder {
   }
 
   private def getJavaExePath(String archivePath, boolean isModular) {
-    def topLevelDir = isModular && buildContext.bundledJreManager.hasJbrRootDir(new File(archivePath)) ? 'jbr' : 'jdk'
+    def topLevelDir = buildContext.bundledJreManager.jbrRootDir(new File(archivePath)) ?: 'jdk'
     return "../${topLevelDir}/Contents/Home/${isModular ? '' : 'jre/'}bin/java"
   }
 

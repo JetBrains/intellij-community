@@ -266,7 +266,7 @@ class BundledJreManager {
     return secondBundledJreVersion.toInteger() >= 9
   }
 
-  private final Map<File, Boolean> jbrArchiveInspectionCache = new ConcurrentHashMap<>()
+  private final Map<File, String> jbrArchiveInspectionCache = new ConcurrentHashMap<>()
 
   /**
    * If {@code true} then JRE top directory was renamed to JBR, see JBR-1295
@@ -277,9 +277,16 @@ class BundledJreManager {
         new CompressorStreamFactory().createCompressorInputStream(
           new BufferedInputStream(new FileInputStream(archive))
         ))
-      def entry = tarArchive.nextTarEntry?.name
-      if (entry == null) throw new IllegalStateException("Unable to read $archive")
-      entry.startsWith('jbr')
-    }
+      tarArchive.nextTarEntry?.name ?: {
+        throw new IllegalStateException("Unable to read $archive")
+      }()
+    }.startsWith('jbr')
+  }
+
+  /**
+   * @return JBR top directory, see JBR-1295
+   */
+  String jbrRootDir(File archive) {
+    hasJbrRootDir(archive) ? jbrArchiveInspectionCache[archive] : null
   }
 }
