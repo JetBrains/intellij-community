@@ -18,10 +18,11 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -149,7 +150,8 @@ public class LocalHistoryImpl extends LocalHistory implements BaseComponent, Dis
     return label(myVcs.putSystemLabel(name, getProjectId(p), color));
   }
 
-  public void addVFSListenerAfterLocalHistoryOne(VirtualFileListener virtualFileListener, Disposable disposable) {
+  @ApiStatus.Internal
+  public void addVFSListenerAfterLocalHistoryOne(BulkFileListener virtualFileListener, Disposable disposable) {
     myEventDispatcher.addVirtualFileListener(virtualFileListener, disposable);
   }
 
@@ -176,7 +178,7 @@ public class LocalHistoryImpl extends LocalHistory implements BaseComponent, Dis
   }
 
   @Override
-  public boolean isUnderControl(VirtualFile f) {
+  public boolean isUnderControl(@NotNull VirtualFile f) {
     return isInitialized() && myGateway.isVersioned(f);
   }
 

@@ -46,6 +46,6 @@ public abstract class LocalHistory {
   @Nullable
   public abstract byte[] getByteContent(VirtualFile f, FileRevisionTimestampComparator c);
 
-  public abstract boolean isUnderControl(VirtualFile f);
+  public abstract boolean isUnderControl(@NotNull VirtualFile f);
 
 }
