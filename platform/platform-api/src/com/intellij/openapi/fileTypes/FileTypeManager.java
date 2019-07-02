@@ -18,7 +18,6 @@ package com.intellij.openapi.fileTypes;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.Topic;
@@ -33,7 +32,6 @@ import java.util.List;
 /**
  * Manages the relationship between filenames and {@link FileType} instances.
  */
-
 public abstract class FileTypeManager extends FileTypeRegistry {
   static {
     FileTypeRegistry.ourInstanceGetter = () -> getInstance();
@@ -84,13 +82,12 @@ public abstract class FileTypeManager extends FileTypeRegistry {
   }
 
   /**
-   * Checks if the specified file is ignored by IDEA. Ignored files are not visible in
+   * Checks if the specified file is ignored by the IDE. Ignored files are not visible in
    * different project views and cannot be opened in the editor. They will neither be parsed nor compiled.
    *
    * @param name The name of the file to check.
-   * @return true if the file is ignored, false otherwise.
+   * @return {@code true} if the file is ignored, {@code false} otherwise.
    */
-
   public abstract boolean isFileIgnored(@NonNls @NotNull String name);
 
   /**
@@ -98,7 +95,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    *
    * @param type The file type for which the extensions are requested.
    * @return The array of extensions associated with the file type.
-   * @deprecated since more generic way of associations by means of wildcards exist not every associations matches extension paradigm
+   * @deprecated since more generic way of associations using wildcards exist, not every association matches extension paradigm
    */
   @Deprecated
   @NotNull
@@ -115,7 +112,6 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    * @param listener The listener instance.
    * @deprecated Subscribe to {@link #TOPIC} on any message bus level instead.
    */
-
   @Deprecated
   public abstract void addFileTypeListener(@NotNull FileTypeListener listener);
 
@@ -126,17 +122,16 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    * @param listener The listener instance.
    * @deprecated Subscribe to {@link #TOPIC} on any message bus level instead.
    */
-
   @Deprecated
   public abstract void removeFileTypeListener(@NotNull FileTypeListener listener);
 
   /**
-   * If fileName is already associated with any known file type returns it.
+   * If file is already associated with any known file type returns it.
    * Otherwise asks user to select file type and associates it with fileName extension if any selected.
    *
+   * @param file file to ask for file type association
+   * @return Known file type or {@code null}. Never returns {@link FileTypes#UNKNOWN}.
    * @deprecated Use {@link #getKnownFileTypeOrAssociate(VirtualFile, Project)} instead
-   * @param file - a file to ask for file type association
-   * @return Known file type or null. Never returns {@link FileTypes#UNKNOWN}.
    */
   @Nullable
   @Deprecated
@@ -148,7 +143,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
   /**
    * Returns the semicolon-delimited list of patterns for files and folders
    * which are excluded from the project structure though they may be present
-   * physically on the HD.
+   * physically on disk.
    *
    * @return Semicolon-delimited list of patterns.
    */
