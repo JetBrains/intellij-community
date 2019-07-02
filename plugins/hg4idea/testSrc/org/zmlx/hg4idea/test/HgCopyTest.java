@@ -31,7 +31,7 @@ public class HgCopyTest extends HgSingleUserTest {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
     runHgOnProjectRepo("commit", "-m", "added file");
     copyFileInCommand(file, "b.txt");
-    verify(runHgOnProjectRepo("status"), HgTestOutputParser.added("b.txt"));
+    verifyStatus(HgTestOutputParser.added("b.txt"));
   }
 
   @Test
@@ -39,16 +39,16 @@ public class HgCopyTest extends HgSingleUserTest {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
     runHgOnProjectRepo("commit", "-m", "added file");
     VcsTestUtil.editFileInCommand(myProject, file, "newer content");
-    verify(runHgOnProjectRepo("status"), HgTestOutputParser.modified("a.txt"));
+    verifyStatus(HgTestOutputParser.modified("a.txt"));
     copyFileInCommand(file, "b.txt");
-    verify(runHgOnProjectRepo("status"), HgTestOutputParser.modified("a.txt"), HgTestOutputParser.added("b.txt"));
+    verifyStatus(HgTestOutputParser.modified("a.txt"), HgTestOutputParser.added("b.txt"));
   }
 
   @Test
   public void testCopyUnversionedFile() throws Exception {
     VirtualFile file = makeFile(new File(myWorkingCopyDir.getPath(), "a.txt"));
     copyFileInCommand(file, "b.txt");
-    verify(runHgOnProjectRepo("status"), HgTestOutputParser.added("b.txt"), HgTestOutputParser.unknown("a.txt"));
+    verifyStatus(HgTestOutputParser.added("b.txt"), HgTestOutputParser.unknown("a.txt"));
   }
 
   @Test
@@ -57,7 +57,7 @@ public class HgCopyTest extends HgSingleUserTest {
     runHgOnProjectRepo("commit", "-m", "added file");
     copyFileInCommand(file, "b.txt");
     copyFileInCommand(file, "c.txt");
-    verify(runHgOnProjectRepo("status"), HgTestOutputParser.added("b.txt"), HgTestOutputParser.added("c.txt"));
+    verifyStatus(HgTestOutputParser.added("b.txt"), HgTestOutputParser.added("c.txt"));
   }
 
   @Test
@@ -66,7 +66,7 @@ public class HgCopyTest extends HgSingleUserTest {
     createFileInCommand(parent, "a.txt", "new file content");
     runHgOnProjectRepo("commit", "-m", "added file");
     copyDir(parent, "org");
-    verify(runHgOnProjectRepo("status"), HgTestOutputParser.added("org", "a.txt"));
+    verifyStatus(HgTestOutputParser.added("org", "a.txt"));
   }
 
 
