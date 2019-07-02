@@ -108,7 +108,12 @@ public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends Base
           if (target instanceof PsiLocalVariable) {
             final PsiVariable variable = (PsiLocalVariable)target;
             final PsiExpression definition = DeclarationSearchUtils.findDefinition(referenceExpression, variable);
-            expressions.add(definition);
+            if (definition == null) {
+              libraryCode.set(Boolean.FALSE);
+            }
+            else {
+              expressions.add(definition);
+            }
           }
           else if (!(target instanceof PsiCompiledElement)) {
             libraryCode.set(Boolean.FALSE);
