@@ -3,6 +3,7 @@ package com.intellij.application.options.editor
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.search.BooleanOptionDescription
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.layout.*
 import kotlin.reflect.KMutableProperty0
 
@@ -17,4 +18,8 @@ class CheckboxDescriptor(val name: String, val binding: PropertyBinding<Boolean>
 
     override fun isOptionEnabled() = binding.get.invoke()
   }
+}
+
+fun Cell.checkBox(ui: CheckboxDescriptor): CellBuilder<JBCheckBox> {
+  return checkBox(ui.name, ui.binding.get, ui.binding.set, ui.comment)
 }

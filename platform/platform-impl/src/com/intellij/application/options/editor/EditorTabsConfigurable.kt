@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ApplicationBundle.message
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.layout.*
 import javax.swing.JCheckBox
 import javax.swing.JComboBox
@@ -84,10 +83,6 @@ class EditorTabsConfigurable : BoundConfigurable("Editor Tabs", "reference.setti
         }
       }
     }
-  }
-
-  private fun Cell.checkBox(ui: CheckboxDescriptor): CellBuilder<JBCheckBox> {
-    return checkBox(ui.name, ui.binding.get, ui.binding.set, ui.comment)
   }
 
   private fun <T : JComponent> CellBuilder<T>.enableIfTabsVisible() {
