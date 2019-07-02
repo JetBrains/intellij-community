@@ -17,7 +17,7 @@ public abstract class ShowSettingsUtil {
     return ServiceManager.getService(ShowSettingsUtil.class);
   }
 
-  public abstract void showSettingsDialog(Project project, ConfigurableGroup... group);
+  public abstract void showSettingsDialog(@NotNull Project project, @NotNull ConfigurableGroup... groups);
 
   public abstract <T extends Configurable> void showSettingsDialog(@Nullable Project project, @NotNull Class<T> toSelect);
 
@@ -33,19 +33,19 @@ public abstract class ShowSettingsUtil {
                                           @NotNull Predicate<? super Configurable> predicate,
                                           @Nullable Consumer<? super Configurable> additionalConfiguration);
 
-  public abstract boolean editConfigurable(Project project, Configurable configurable);
+  public abstract boolean editConfigurable(Project project, @NotNull Configurable configurable);
 
-  public abstract boolean editConfigurable(@Nullable Project project, Configurable configurable, @Nullable Runnable advancedInitialization);
+  public abstract boolean editConfigurable(@Nullable Project project, @NotNull Configurable configurable, @Nullable Runnable advancedInitialization);
 
   public abstract boolean editConfigurable(@Nullable Component parent, @NotNull Configurable configurable);
 
-  public abstract boolean editConfigurable(Component parent, Configurable configurable, Runnable advancedInitialization);
+  public abstract boolean editConfigurable(Component parent, @NotNull Configurable configurable, Runnable advancedInitialization);
 
-  public abstract boolean editConfigurable(Project project, @NonNls String dimensionServiceKey, Configurable configurable);
+  public abstract boolean editConfigurable(Project project, @NonNls @NotNull String dimensionServiceKey, @NotNull Configurable configurable);
 
-  public abstract boolean editConfigurable(Project project, @NonNls String dimensionServiceKey, Configurable configurable, boolean showApplyButton);
+  public abstract boolean editConfigurable(Project project, @NonNls @NotNull String dimensionServiceKey, @NotNull Configurable configurable, boolean showApplyButton);
 
-  public abstract boolean editConfigurable(Component parent, String dimensionServiceKey, Configurable configurable);
+  public abstract boolean editConfigurable(Component parent, @NonNls @NotNull String dimensionServiceKey, @NotNull Configurable configurable);
 
   public static String getSettingsMenuName() {
     return SystemInfo.isMac ? "Preferences" : "Settings";

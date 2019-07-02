@@ -79,9 +79,9 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   @Override
-  public void showSettingsDialog(@NotNull Project project, @NotNull ConfigurableGroup... group) {
+  public void showSettingsDialog(@NotNull Project project, @NotNull ConfigurableGroup... groups) {
     try {
-      getDialog(project, Arrays.asList(group), null).show();
+      getDialog(project, Arrays.asList(groups), null).show();
     }
     catch (Exception e) {
       LOG.error(e);
@@ -175,12 +175,12 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   @Override
-  public boolean editConfigurable(Project project, Configurable configurable) {
+  public boolean editConfigurable(Project project, @NotNull Configurable configurable) {
     return editConfigurable(project, createDimensionKey(configurable), configurable);
   }
 
   @Override
-  public boolean editConfigurable(Project project, String dimensionServiceKey, @NotNull Configurable configurable) {
+  public boolean editConfigurable(Project project, @NotNull String dimensionServiceKey, @NotNull Configurable configurable) {
     return editConfigurable(project, dimensionServiceKey, configurable, isWorthToShowApplyButton(configurable));
   }
 
@@ -191,12 +191,12 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   @Override
-  public boolean editConfigurable(Project project, String dimensionServiceKey, @NotNull Configurable configurable, boolean showApplyButton) {
+  public boolean editConfigurable(Project project, @NotNull String dimensionServiceKey, @NotNull Configurable configurable, boolean showApplyButton) {
     return editConfigurable(null, project, configurable, dimensionServiceKey, null, showApplyButton);
   }
 
   @Override
-  public boolean editConfigurable(Project project, Configurable configurable, Runnable advancedInitialization) {
+  public boolean editConfigurable(Project project, @NotNull Configurable configurable, Runnable advancedInitialization) {
     return editConfigurable(null, project, configurable, createDimensionKey(configurable), advancedInitialization, isWorthToShowApplyButton(configurable));
   }
 
@@ -213,7 +213,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   private static boolean editConfigurable(@Nullable Component parent,
                                           @Nullable Project project,
                                           @NotNull Configurable configurable,
-                                          String dimensionKey,
+                                          @NotNull String dimensionKey,
                                           @Nullable final Runnable advancedInitialization,
                                           boolean showApplyButton) {
     final DialogWrapper editor;
@@ -240,7 +240,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   @Override
-  public boolean editConfigurable(Component parent, String dimensionServiceKey, Configurable configurable) {
+  public boolean editConfigurable(Component parent, @NotNull String dimensionServiceKey, @NotNull Configurable configurable) {
     return editConfigurable(parent, null, configurable, dimensionServiceKey, null, isWorthToShowApplyButton(configurable));
   }
 }
