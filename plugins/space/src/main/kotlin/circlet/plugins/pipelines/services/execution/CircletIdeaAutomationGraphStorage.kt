@@ -137,6 +137,8 @@ class CircletIdeaGraphStorageTransaction(private val task: ProjectTask) : GraphS
             null,
             ExecutionStatus.SCHEDULED,
             graphExecution, bootstrapJob))
+
+        graphExecution.executionMeta = graphExecution.graph.originalMeta.prependJobs(listOf(bootstrapJob))
         return res.asSequence()
     }
 
@@ -185,7 +187,7 @@ class CircletIdeaJobExecutionProvider : JobExecutionProvider {
     private var savedHandler: ((tx: GraphStorageTransaction, job: AJobExecutionEntity, newStatus: ExecutionStatus) -> Unit)? = null
 
     override fun scheduleExecution(jobs: Iterable<AJobExecutionEntity>) {
-        TODO("not implemented CircletIdeaJobExecutionProvider::scheduleExecution") //To change body of created functions use File | Settings | File Templates.
+        TODO("not implemented CircletIdeaJobExecutionProvider::scheduleExecution ${jobs.joinToString()}") //To change body of created functions use File | Settings | File Templates.
     }
 
     override fun scheduleTermination(jobs: Iterable<AJobExecutionEntity>) {
