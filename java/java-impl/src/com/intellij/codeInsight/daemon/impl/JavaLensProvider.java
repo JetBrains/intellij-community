@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import kotlin.Unit;
 import org.jetbrains.annotations.Nls;
@@ -32,6 +33,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.List;
 
 public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
@@ -128,7 +130,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
         int lineStart = editor1.getDocument().getLineStartOffset(line);
         int indent = offset - lineStart;
 
-        InlayPresentation[] presentations = new InlayPresentation[hints.size() * 2 + 2];
+        InlayPresentation[] presentations = new InlayPresentation[hints.size() * 2 + 1];
         presentations[0] = factory.text(StringUtil.repeat(" ", indent));
         int o = 1;
         for (int i = 0; i < hints.size(); i++) {
@@ -138,11 +140,16 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
           }
           presentations[o++] = createPresentation(factory, element, editor1, hint);
         }
-        presentations[o++] = factory.text(" ");
-        presentations[o] = settings(factory, element, editor);
+        presentations[o] = factory.text("          "); // placeholder for "Settings..."
 
-        InlayPresentation presentation = factory.seq(presentations);
-        sink.addBlockElement(lineStart, true, true, 0, presentation);
+        InlayPresentation seq = factory.seq(presentations);
+        InlayPresentation withAppearingSettings = factory.changeOnHover(seq, () -> {
+          InlayPresentation[] trimmedSpace = Arrays.copyOf(presentations, presentations.length - 1);
+          InlayPresentation[] spaceAndSettings = {factory.text("  "), settings(factory, element, editor)};
+          InlayPresentation[] withSettings = ArrayUtil.mergeArrays(trimmedSpace, spaceAndSettings);
+          return factory.seq(withSettings);
+        }, e -> true, () -> null);
+        sink.addBlockElement(lineStart, true, true, 0, withAppearingSettings);
       }
       return true;
     };
@@ -156,12 +163,12 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
     //Icon icon = AllIcons.Toolwindows.ToolWindowFind;
     //Icon icon = IconLoader.getIcon("/toolwindows/toolWindowFind_dark.svg", AllIcons.class);
 
-    InlayPresentation text = factory.text(result.getRegularText());
+    InlayPresentation text = factory.smallText(result.getRegularText());
 
     return factory.changeOnHover(text, () -> {
       ((EditorEx)editor).setCustomCursor(this, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-      InlayPresentation hoverText = factory.text(result.getHoverText());
+      InlayPresentation hoverText = factory.smallText(result.getHoverText());
       InlayPresentation onClick = factory.onClick(hoverText, MouseButton.Left, (event, point) -> {
         result.onClick(editor, element);
         mouseExited((EditorEx)editor);
@@ -202,12 +209,6 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
       @NotNull
       @Override
       public String getRegularText() {
-        return "           ";
-      }
-
-      @NotNull
-      @Override
-      public String getHoverText() {
         return "Settings...";
       }
     });
