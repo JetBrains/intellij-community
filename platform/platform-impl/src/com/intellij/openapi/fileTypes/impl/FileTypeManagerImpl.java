@@ -60,6 +60,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.ide.PooledThreadExecutor;
+import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -349,9 +350,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     final List<FileTypeBean> fileTypeBeans = FileTypeManager.EP_NAME.getExtensionList();
 
     for (FileTypeBean bean : fileTypeBeans) {
-      bean.addMatchers(ContainerUtil.concat(parse(bean.extensions),
-                                            parse(bean.fileNames, (token) -> new ExactFileNameMatcher(token)),
-                                            parse(bean.fileNamesCaseInsensitive, (token) -> new ExactFileNameMatcher(token, true))));
+      bean.addMatchers(ContainerUtil.concat(
+        parse(bean.extensions),
+        parse(bean.fileNames, (token) -> new ExactFileNameMatcher(token)),
+        parse(bean.fileNamesCaseInsensitive, (token) -> new ExactFileNameMatcher(token, true)),
+        parse(bean.patterns, (token) -> FileNameMatcherFactory.getInstance().createMatcher(token))));
     }
 
     for (FileTypeBean bean : fileTypeBeans) {
