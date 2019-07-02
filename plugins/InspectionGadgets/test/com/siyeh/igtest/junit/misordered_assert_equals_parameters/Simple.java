@@ -1,5 +1,7 @@
 import org.junit.Assert;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.concurrent.TimeUnit;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -46,6 +48,13 @@ class Simple {
     String name = "foobar";
     Memento m = new Memento(name);
     Assert.<warning descr="Arguments to 'assertEquals()' in wrong order">assertEquals</warning>(m.getName(), name);
+  }
+
+  public static void assertOutputEquals(String exp, int root) throws IOException {
+    StringWriter writer = new StringWriter();
+    writer.write(root);
+    String actual = writer.toString();
+    Assert.assertEquals(exp, actual);
   }
 }
 class Memento {

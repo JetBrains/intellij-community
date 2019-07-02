@@ -15,10 +15,8 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
@@ -88,40 +86,71 @@ public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends Base
     return AssertHint.create(expression, methodName -> methodNames.contains(methodName) ? 2 : null, checkTestNG());
   }
 
-  static boolean isOnlyLibraryCodeUsed(PsiExpression expression) {
+  static boolean looksLikeExpectedArgument(PsiExpression expression) {
     if (expression == null) {
       return false;
     }
 
-    final Ref<Boolean> libraryCode = Ref.create(Boolean.TRUE);
+    final Ref<Boolean> expectedArgument = Ref.create(Boolean.TRUE);
     final List<PsiExpression> expressions = new SmartList<>();
     expressions.add(expression);
     while (!expressions.isEmpty()) {
       expressions.remove(expressions.size() - 1).accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
         public void visitReferenceExpression(PsiReferenceExpression referenceExpression) {
-          if (!libraryCode.get().booleanValue()) {
+          if (!expectedArgument.get().booleanValue()) {
             return;
           }
           super.visitReferenceExpression(referenceExpression);
           final PsiElement target = referenceExpression.resolve();
-          if (target instanceof PsiLocalVariable) {
-            final PsiVariable variable = (PsiLocalVariable)target;
-            final PsiExpression definition = DeclarationSearchUtils.findDefinition(referenceExpression, variable);
-            if (definition == null) {
-              libraryCode.set(Boolean.FALSE);
-            }
-            else {
-              expressions.add(definition);
+          if (target instanceof PsiEnumConstant || target instanceof PsiClass) {
+            return;
+          }
+          else if (target instanceof PsiField) {
+            final PsiField field = (PsiField)target;
+            if (field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL)) {
+              return;
             }
           }
-          else if (!(target instanceof PsiCompiledElement)) {
-            libraryCode.set(Boolean.FALSE);
+          else if (target instanceof PsiParameter) {
+            final PsiParameter parameter = (PsiParameter)target;
+            if ("expected".equals(parameter.getName())) {
+              return;
+            }
+            expectedArgument.set(Boolean.FALSE);
+            return;
+          }
+          else if (target instanceof PsiLocalVariable) {
+            final PsiVariable variable = (PsiLocalVariable)target;
+            final PsiCodeBlock block = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+            if (block == null) {
+              return; // broken code
+            }
+            final PsiExpression definition = DeclarationSearchUtils.findDefinition(referenceExpression, variable);
+            if (definition == null) {
+              expectedArgument.set(Boolean.FALSE);
+              return;
+            }
+            if (PsiUtil.isConstantExpression(definition) || PsiType.NULL.equals(definition.getType())) {
+              return;
+            }
+            final PsiElement[] refs = DefUseUtil.getRefs(block, variable, definition);
+            final int offset = referenceExpression.getTextOffset();
+            for (PsiElement ref : refs) {
+              if (ref.getTextOffset() < offset) {
+                expectedArgument.set(Boolean.FALSE);
+                return;
+              }
+            }
+            expressions.add(definition);
+          }
+          if (!(target instanceof PsiCompiledElement)) {
+            expectedArgument.set(Boolean.FALSE);
           }
         }
       });
     }
-    return libraryCode.get().booleanValue();
+    return expectedArgument.get().booleanValue();
   }
 
   @Override
@@ -142,62 +171,6 @@ public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends Base
         return;
       }
       registerMethodCallError(expression);
-    }
-
-    private boolean looksLikeExpectedArgument(@Nullable PsiExpression expression) {
-      expression = ParenthesesUtils.stripParentheses(expression);
-      if (expression == null) {
-        return false;
-      }
-      final PsiType type = expression.getType();
-      if (PsiUtil.isConstantExpression(expression) || PsiType.NULL.equals(type)) {
-        return true;
-      }
-      if (expression instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
-        final PsiElement target = referenceExpression.resolve();
-        if (target instanceof PsiEnumConstant) {
-          return true;
-        }
-        else if ((target instanceof PsiField)) {
-          final PsiField field = (PsiField)target;
-          if (field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL)) {
-            return true;
-          }
-        }
-        else if (target instanceof PsiLocalVariable) {
-          final PsiVariable variable = (PsiLocalVariable)target;
-          final PsiCodeBlock block = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
-          if (block == null) {
-            return false;
-          }
-          final PsiExpression definition = DeclarationSearchUtils.findDefinition(referenceExpression, variable);
-          if (definition == null) {
-            return false;
-          }
-          if (PsiUtil.isConstantExpression(definition) || PsiType.NULL.equals(definition.getType())) {
-            return true;
-          }
-          final PsiElement[] refs = DefUseUtil.getRefs(block, variable, definition);
-          final int offset = referenceExpression.getTextOffset();
-          for (PsiElement ref : refs) {
-            if (ref.getTextOffset() < offset) {
-              return false;
-            }
-          }
-          if (isOnlyLibraryCodeUsed(definition)) {
-            return true;
-          }
-        }
-      }
-      else if (expression instanceof PsiCallExpression && type instanceof PsiClassType) {
-        final PsiClassType classType = (PsiClassType)type;
-        final PsiClass aClass = classType.resolve();
-        if (aClass instanceof PsiCompiledElement) {
-            return isOnlyLibraryCodeUsed(expression);
-        }
-      }
-      return false;
     }
   }
 }
