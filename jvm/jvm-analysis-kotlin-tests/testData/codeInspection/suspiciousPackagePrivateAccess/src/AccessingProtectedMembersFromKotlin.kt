@@ -7,8 +7,8 @@ class AccessingProtectedKotlinMembersFromObjectLiteral {
       fun bar2() {
         object : Runnable {
           override fun run() {
-            foo()
-            val s2 = property
+            <warning descr ="Function ProtectedMembersKotlin.foo() is protected and used not through a subclass here, but declared in a different module 'dep'">foo</warning>()
+            val s2 = <warning descr = "Property ProtectedMembersKotlin.property is protected and used not through a subclass here, but declared in a different module 'dep'">property</warning>
           }
         }
       }
@@ -23,8 +23,8 @@ class AccessingProtectedMembersFromKotlin : ProtectedMembersKotlin() {
     val s = property
     object : Runnable {
       override fun run() {
-        foo()
-        val s2 = property
+        <warning descr ="Function ProtectedMembersKotlin.foo() is protected and used not through a subclass here, but declared in a different module 'dep'">foo</warning>()
+        val s2 = <warning descr = "Property ProtectedMembersKotlin.property is protected and used not through a subclass here, but declared in a different module 'dep'">property</warning>
       }
     }
   }
