@@ -136,6 +136,9 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
     else if (isCharLiteral(token)) {
       return escapeCharCharacters(text, token);
     }
+    else if (isTextBlock(token)) {
+      return escapeTextBlock(text);
+    }
     return text;
   }
 
@@ -177,7 +180,7 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
     if (elementAtSelectionStart == null) {
       return null;
     }
-    if (!isStringLiteral(elementAtSelectionStart) && !isCharLiteral(elementAtSelectionStart)) {
+    if (!isStringLiteral(elementAtSelectionStart) && !isCharLiteral(elementAtSelectionStart) && !isTextBlock(elementAtSelectionStart)) {
       return null;
     }
 
@@ -208,12 +211,21 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
     ASTNode node = token.getNode();
     return node != null && node.getElementType() == JavaTokenType.STRING_LITERAL;
   }
+  
+  protected boolean isTextBlock(@NotNull PsiElement token) {
+    ASTNode node = token.getNode();
+    return node != null && node.getElementType() == JavaTokenType.TEXT_BLOCK_LITERAL;
+  }
 
   @Nullable
   protected TextRange getEscapedRange(@NotNull PsiElement token) {
     if (isCharLiteral(token) || isStringLiteral(token)) {
       TextRange tokenRange = token.getTextRange();
       return new TextRange(tokenRange.getStartOffset() + 1, tokenRange.getEndOffset() - 1); // Excluding String/char literal quotes
+    }
+    else if (isTextBlock(token) && token.getTextLength() >= 7) {
+      TextRange tokenRange = token.getTextRange();
+      return new TextRange(tokenRange.getStartOffset() + 4, tokenRange.getEndOffset() - 3);
     }
     else {
       return null;
@@ -224,6 +236,21 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
   protected String escapeCharCharacters(@NotNull String s, @NotNull PsiElement token) {
     StringBuilder buffer = new StringBuilder();
     StringUtil.escapeStringCharacters(s.length(), s, isStringLiteral(token) ? "\"" : "\'", buffer);
+    return buffer.toString();
+  }
+
+  @NotNull
+  protected String escapeTextBlock(@NotNull String text) {
+    StringBuilder buffer = new StringBuilder(text.length());
+    final String[] lines = LineTokenizer.tokenize(text.toCharArray(), false, true);
+    for (int i = 0; i < lines.length; i++) {
+      String line = lines[i];
+      //todo don't escape single quote; prefer \""" if the next char is not a quote
+      StringUtil.escapeStringCharacters(line.length(), line, buffer);
+      if (i < lines.length - 1) {
+        buffer.append("\n");
+      }
+    }
     return buffer.toString();
   }
 }

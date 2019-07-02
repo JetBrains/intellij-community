@@ -2,6 +2,7 @@
 package com.intellij.java.codeInsight.daemon
 
 import com.intellij.JavaTestUtil
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 class JavaTextBlocksHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
@@ -20,4 +21,17 @@ class JavaTextBlocksHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.configureByFile("${getTestName(false)}.java")
     myFixture.checkHighlighting()
   }
+
+  fun testEscapeQuotes() {
+    doTestPaste("\"\"\"\ntarget\"\"\"".trimIndent())
+  }
+
+  private fun doTestPaste(textToPaste: String) {
+    myFixture.configureByText("plain.txt", "<selection>$textToPaste</selection>")
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_COPY)
+    myFixture.configureByFile("${getTestName(false)}.java")
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE)
+    myFixture.checkResultByFile("${getTestName(false)}.after.java")
+  }
+
 }
