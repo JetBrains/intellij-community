@@ -83,6 +83,8 @@ class PyInlineFunctionTest : PyTestCase() {
   fun testRemovingDocstringAndTypeComment() = doTest()
   fun testRemovingDocstringOfEmptyFunction() = doTest()
   fun testKeepingComments() = doTest()
+  fun testInvocationOnImport() = doTest(inlineThis = false, remove = true)
+  fun testImportedLocally() = doTest(inlineThis = false, remove = true)
   //fun testInlineImportedAs() = doTest(inlineThis = false)
   fun testRemoveFunctionWithStub() {
     doTest(inlineThis = false, remove = true)
