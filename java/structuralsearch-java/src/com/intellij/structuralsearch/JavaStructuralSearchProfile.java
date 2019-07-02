@@ -1014,6 +1014,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   private static boolean isApplicableMinCount(@NotNull PsiElement variableNode) {
     final PsiElement parent = variableNode.getParent();
     if (parent instanceof PsiContinueStatement) return true;
+    if (parent instanceof PsiBreakStatement) return true;
 
     final PsiElement grandParent = parent.getParent();
     if (grandParent instanceof PsiReferenceList) return true;
@@ -1025,7 +1026,6 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       if (grandParent instanceof PsiReturnStatement) return true;
       if (grandParent instanceof PsiAssertStatement) return ((PsiAssertStatement)grandParent).getAssertDescription() == parent;
       if (grandParent instanceof PsiNameValuePair) return ((PsiNameValuePair)grandParent).getValue() == parent;
-      if (grandParent instanceof PsiBreakStatement) return true;
       if (grandParent instanceof PsiForStatement) return true;
     }
     if (grandParent instanceof PsiExpressionList) {
