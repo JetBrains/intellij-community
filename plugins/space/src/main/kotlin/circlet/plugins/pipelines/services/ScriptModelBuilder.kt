@@ -1,6 +1,7 @@
 package circlet.plugins.pipelines.services
 
 import circlet.components.*
+import circlet.pipelines.config.api.*
 import circlet.pipelines.config.dsl.compile.*
 import circlet.pipelines.config.dsl.script.exec.common.*
 import circlet.pipelines.config.utils.*
@@ -83,6 +84,7 @@ object ScriptModelBuilder : KLogging() {
             DslJarCompiler(logger).compile(DslSourceFileDelegatingFileProvider(dslFile.path), targetJar, kotlinCompilerPath, url.file)
 
             val config = DslScriptExecutor().evaluateModel(targetJar, "", "", "")
+            config.applyIds()
 
             return ScriptViewModel(lifetime, config)
         }
