@@ -16,6 +16,7 @@
 package com.intellij.util.net;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -74,6 +75,9 @@ public class IOExceptionDialog extends DialogWrapper {
    * @return {@code true} if "Try Again" button pressed and {@code false} if "Cancel" button pressed
    */
   public static boolean showErrorDialog(final String title, final String text) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      throw new RuntimeException(title + ": " + text);
+    }
     final Ref<Boolean> ok = Ref.create(false);
     try {
       GuiUtils.runOrInvokeAndWait(() -> {
