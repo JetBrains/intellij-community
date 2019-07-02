@@ -1,5 +1,6 @@
 package circlet.plugins.pipelines.services.execution
 
+import circlet.pipelines.config.api.*
 import circlet.pipelines.engine.*
 import circlet.plugins.pipelines.services.*
 import circlet.plugins.pipelines.viewmodel.*
@@ -27,6 +28,8 @@ class CircletTaskRunner(val project: Project) {
             throw com.intellij.execution.ExecutionException("Script is null")
         }
 
+        val config = script.config
+        config.applyIds()
         val task = script.config.tasks.firstOrNull { x -> x.name == taskName }
         if (task == null) {
             //logData.add("Task $taskName doesn't exist")
@@ -58,9 +61,8 @@ class CircletTaskRunner(val project: Project) {
         }
 
         var messageCounter = 0
-        val newLine = System.getProperty("line.separator", "\n")
         timer = UiDispatch.dispatchInterval(1000) {
-            processHandler.notifyTextAvailable("Dummy message for task: $taskName. message #${messageCounter++}$newLine", ProcessOutputTypes.STDOUT)
+            processHandler.println("Dummy message for task: $taskName. message #${messageCounter++}")
         }
 
         val orgInfo = OrgInfo("jetbrains.team")
@@ -69,7 +71,7 @@ class CircletTaskRunner(val project: Project) {
             SystemTimeTicker())
         val automationStarterCommon = AutomationStarterCommon(
             orgInfo,
-            CircletIdeaAutomationGraphStorage(),
+            CircletIdeaAutomationGraphStorage(task),
             CircletIdeaAutomationBootstrapper(),
             automationGraphEngineCommon,
             CircletIdeaAutomationTracer())
@@ -84,16 +86,27 @@ class CircletTaskRunner(val project: Project) {
         val trigger = TriggerData.ManualTriggerData(currentTime, principalId)
         val context = TaskStartContext(projectKey, repositoryData, branch, commit, emptyList(), trigger)
 
-
         async(lifetime, Ui) {
-            processHandler.notifyTextAvailable("smth inside asyng$newLine", ProcessOutputTypes.SYSTEM)
-            //val startTaskRes = automationStarterCommon.startTask(metaTaskId, context)
+            processHandler.println("startTask. before")
+            automationStarterCommon.startTask(metaTaskId, context)
+            processHandler.println("startTask. after")
+        }.invokeOnCompletion {
+            if (it != null) {
+                processHandler.notifyTextAvailable("Run task failed. ${it.message}$newLine", ProcessOutputTypes.STDERR)
+            }
         }
 
         viewModel.taskIsRunning.value = true
         logData.add("Run task $taskName")
-        processHandler.notifyTextAvailable("Run task $taskName", ProcessOutputTypes.SYSTEM)
+        processHandler.println("Run task $taskName")
         viewModel.taskIsRunning.value = false
         return processHandler
+    }
+
+    private val newLine: String = System.getProperty("line.separator", "\n")
+
+    private fun ProcessHandler.println(text: String) {
+        this.notifyTextAvailable("$text$newLine", ProcessOutputTypes.SYSTEM)
+
     }
 }
