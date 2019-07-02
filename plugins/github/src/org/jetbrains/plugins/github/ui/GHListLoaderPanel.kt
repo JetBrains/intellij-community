@@ -33,7 +33,7 @@ internal abstract class GHListLoaderPanel<L : GHListLoader>(protected val listLo
     addToCenter(createCenterPanel(simplePanel(scrollPane).addToTop(infoPanel)))
 
     listLoader.addLoadingStateChangeListener(this) {
-      updateProgress()
+      setLoading(listLoader.loading)
       updateEmptyText()
     }
 
@@ -42,7 +42,7 @@ internal abstract class GHListLoaderPanel<L : GHListLoader>(protected val listLo
       updateEmptyText()
     }
 
-    updateProgress()
+    setLoading(listLoader.loading)
     updateInfoPanel()
     updateEmptyText()
   }
@@ -50,17 +50,6 @@ internal abstract class GHListLoaderPanel<L : GHListLoader>(protected val listLo
   abstract fun createCenterPanel(content: JComponent): JPanel
 
   abstract fun setLoading(isLoading: Boolean)
-
-  private fun updateProgress() {
-    if (listLoader.loading) {
-      setLoading(true)
-    }
-    else {
-      setLoading(false)
-      scrollPane.viewport.validate()
-      if (listLoader.error == null) potentiallyLoadMore()
-    }
-  }
 
   private fun updateEmptyText() {
     val emptyText = (contentComponent as? ComponentWithEmptyText)?.emptyText ?: return
@@ -97,8 +86,8 @@ internal abstract class GHListLoaderPanel<L : GHListLoader>(protected val listLo
     val error = listLoader.error
     if (error != null && listLoader.hasLoadedItems) {
       infoPanel.setInfo("<html><body>${getErrorPrefix(false)}<br/>" +
-        "${getLoadingErrorText(error,"<br/>")}<a href=''>Retry</a></body></html>",
-        HtmlInfoPanel.Severity.ERROR) { listLoader.reset() }
+                        "${getLoadingErrorText(error, "<br/>")}<a href=''>Retry</a></body></html>",
+                        HtmlInfoPanel.Severity.ERROR) { listLoader.reset() }
     }
     else infoPanel.setInfo(null)
   }

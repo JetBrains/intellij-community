@@ -45,13 +45,14 @@ abstract class GHListLoaderBase<T>(protected val progressManager: ProgressManage
         if (indicator.isCanceled) return@handleOnEdt
         when {
           error != null && !GithubAsyncUtil.isCancellation(error) -> {
+            loading = false
             this.error = if (error is CompletionException) error.cause!! else error
           }
           list != null -> {
+            loading = false
             handleResult(list)
           }
         }
-        loading = false
       }
     }
   }
