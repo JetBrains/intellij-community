@@ -47,7 +47,8 @@ class CircletIdeaAJobExecutionEntity(
     override var endTime: Long?,
     override var status: ExecutionStatus,
     override val graph: AGraphExecutionEntity,
-    override val meta: ProjectJob.Process<*, *>) : AJobExecutionEntity
+    override val meta: ProjectJob.Process<*, *>,
+    override val context: JobStartContext) : AJobExecutionEntity
 
 
 class TaskLongIdStorage {
@@ -100,7 +101,15 @@ class CircletIdeaGraphStorageTransaction(private val task: ProjectTask) : GraphS
             jobs)
 
         metaTask.originalMeta.jobs.traverseJobs {
-            jobs.add(CircletIdeaAJobExecutionEntity(idStorage.getOrCreateId(it.id), now, null, null, ExecutionStatus.SCHEDULED, graphExecutionEntity, it))
+            jobs.add(CircletIdeaAJobExecutionEntity(
+                idStorage.getOrCreateId(it.id),
+                now,
+                null,
+                null,
+                ExecutionStatus.SCHEDULED,
+                graphExecutionEntity,
+                it,
+                JobStartContext()))
 
         }
 
@@ -136,14 +145,12 @@ class CircletIdeaGraphStorageTransaction(private val task: ProjectTask) : GraphS
             null,
             null,
             ExecutionStatus.SCHEDULED,
-            graphExecution, bootstrapJob))
+            graphExecution,
+            bootstrapJob,
+            JobStartContext()))
 
         graphExecution.executionMeta = graphExecution.graph.originalMeta.prependJobs(listOf(bootstrapJob))
         return res.asSequence()
-    }
-
-    override fun findJobExecutionByWorkerId(workerId: String): AJobExecutionEntity? {
-        TODO("findJobExecutionByWorkerId not implemented")
     }
 }
 
