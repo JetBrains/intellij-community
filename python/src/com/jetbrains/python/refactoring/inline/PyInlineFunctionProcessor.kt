@@ -295,16 +295,17 @@ class PyInlineFunctionProcessor(project: Project,
       .forEach { PyClassRefactoringUtil.optimizeImports(it) }
 
     if (myRemoveDeclaration) {
+      val file = myFunction.containingFile
       val stubFunction = PyiUtil.getPythonStub(myFunction)
       if (stubFunction != null && stubFunction.isWritable) {
         stubFunction.delete()
       }
-      val typingOverloads = PyiUtil.getOverloads(myFunction, TypeEvalContext.userInitiated(myProject, myFunction.containingFile))
+      val typingOverloads = PyiUtil.getOverloads(myFunction, TypeEvalContext.userInitiated(myProject, file))
       if (typingOverloads.isNotEmpty()) {
         typingOverloads.forEach { it.delete() }
-        PyClassRefactoringUtil.optimizeImports(myFunction.containingFile)
       }
       myFunction.delete()
+      PyClassRefactoringUtil.optimizeImports(file)
       dunderAll.forEach { it.element?.delete() }
     }
   }

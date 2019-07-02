@@ -87,6 +87,11 @@ class PyInlineFunctionTest : PyTestCase() {
   fun testImportedLocally() = doTest(inlineThis = false, remove = true)
   //fun testInlineImportedAs() = doTest(inlineThis = false)
   fun testSelfUsageDetection() = doTest(inlineThis = false, remove = true)
+  fun testOptimizeImportsAtDeclarationSite() {
+    doTest(inlineThis = false, remove = true)
+    val testName = getTestName(true)
+    myFixture.checkResultByFile("src.py", "$testName/src.after.py",true)
+  }
   fun testRemoveFunctionWithStub() {
     doTest(inlineThis = false, remove = true)
     val testName = getTestName(true)
