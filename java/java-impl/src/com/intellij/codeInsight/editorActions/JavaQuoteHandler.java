@@ -1,8 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
@@ -104,6 +106,17 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
       }
     }
     return null;
+  }
+
+  @Override
+  public boolean hasNonClosedLiteral(Editor editor, HighlighterIterator iterator, int offset) {
+    if (iterator.getTokenType() == JavaTokenType.TEXT_BLOCK_LITERAL) {
+      Document document = iterator.getDocument();
+      if (document != null && StringUtil.equals(document.getCharsSequence().subSequence(iterator.getStart(), offset + 1), "\"\"\"")) {
+        return true;
+      }
+    }
+    return super.hasNonClosedLiteral(editor, iterator, offset);
   }
 
   @Override
