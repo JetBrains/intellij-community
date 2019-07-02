@@ -2922,9 +2922,6 @@ public class HighlightUtil extends HighlightUtilBase {
         String t2 = format(ObjectUtils.notNull(results[1].getElement()));
         description = JavaErrorMessages.message("ambiguous.reference", refName.getText(), t1, t2);
       }
-      else if (refParent instanceof PsiBreakStatement && !(PsiImplUtil.findEnclosingSwitchOrLoop(refParent) instanceof PsiSwitchExpression)) {
-        description = JavaErrorMessages.message("unresolved.label", refName.getText());
-      }
       else {
         description = JavaErrorMessages.message("cannot.resolve.symbol", refName.getText());
       }
