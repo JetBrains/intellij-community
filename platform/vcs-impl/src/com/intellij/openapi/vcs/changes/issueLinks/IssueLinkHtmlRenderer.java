@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
 
 import java.util.List;
@@ -40,7 +41,7 @@ public class IssueLinkHtmlRenderer {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static String formatTextWithLinks(Project project, String str, Convertor<? super String, String> convertor) {
     if (StringUtil.isEmpty(str)) return "";
-    String comment = XmlStringUtil.escapeString(str, false);
+    String comment = XmlStringUtil.escapeString(VcsUtil.trimCommitMessageToSaneSize(str), false);
 
     StringBuilder commentBuilder = new StringBuilder();
     IssueNavigationConfiguration config = IssueNavigationConfiguration.getInstance(project);
