@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
   }
 
   /**
-   * @deprecated use {@link FileTypeFactory} instead
+   * @deprecated use {@code com.intellij.fileType} extension point or {@link FileTypeFactory} instead
    */
   @Deprecated
   public abstract void registerFileType(@NotNull FileType type, @NotNull List<? extends FileNameMatcher> defaultAssociations);
@@ -70,7 +70,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    * @param type                        The file type to register.
    * @param defaultAssociatedExtensions The list of extensions which cause the file to be
    *                                    treated as the specified file type. The extensions should not start with '.'.
-   * @deprecated use {@link FileTypeFactory} instead
+   * @deprecated use {@code com.intellij.fileType} extension point or {@link FileTypeFactory} instead
    */
   @Deprecated
   public final void registerFileType(@NotNull FileType type, @NonNls @Nullable String... defaultAssociatedExtensions) {
