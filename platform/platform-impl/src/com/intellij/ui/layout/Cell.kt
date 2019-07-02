@@ -247,6 +247,12 @@ abstract class Cell {
     return builder.withTextBinding(prop.toBinding())
   }
 
+  fun textField(getter: () -> String, setter: (String) -> Unit, columns: Int? = null): CellBuilder<JTextField> {
+    val component = JTextField(getter(),columns ?: 0)
+    val builder = component()
+    return builder.withTextBinding(PropertyBinding(getter, setter))
+  }
+
   fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null, range: UINumericRange? = null): CellBuilder<JTextField> {
     return textField(
       { prop.get().toString() },
@@ -255,10 +261,12 @@ abstract class Cell {
     )
   }
 
-  fun textField(getter: () -> String, setter: (String) -> Unit, columns: Int? = null): CellBuilder<JTextField> {
-    val component = JTextField(getter(),columns ?: 0)
-    val builder = component()
-    return builder.withTextBinding(PropertyBinding(getter, setter))
+  fun intTextField(getter: () -> Int, setter: (Int) -> Unit, columns: Int? = null, range: UINumericRange? = null): CellBuilder<JTextField> {
+    return textField(
+      { getter().toString() },
+      { value -> value.toIntOrNull()?.let { setter(range?.fit(it) ?: it) } },
+      columns
+    )
   }
 
   fun spinner(prop: KMutableProperty0<Int>, minValue: Int, maxValue: Int, step: Int = 1): CellBuilder<JBIntSpinner> {
