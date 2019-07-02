@@ -53,7 +53,7 @@ public class HgAddTest extends HgSingleUserTest {
   @Test
   public void fileAddedViaHgShouldBeAddedInChangeList() throws Exception {
     final VirtualFile vf = createFileInCommand(AFILE, INITIAL_FILE_CONTENT);
-    myRepo.add();
+    addAll();
     myChangeListManager.checkFilesAreInList(true, vf);
   }
 
@@ -83,9 +83,8 @@ public class HgAddTest extends HgSingleUserTest {
     final VirtualFile afile = createFileInCommand(AFILE, INITIAL_FILE_CONTENT);
     final VirtualFile bdir = createDirInCommand(myWorkingCopyDir, BDIR);
     final VirtualFile bfile = createFileInCommand(bdir, BFILE, INITIAL_FILE_CONTENT);
-    myRepo.add();
+    addAll();
     verifyStatus(added(AFILE), added(BFILE_PATH));
     myChangeListManager.checkFilesAreInList(true, afile, bfile);
   }
-
 }

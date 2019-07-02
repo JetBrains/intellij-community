@@ -19,6 +19,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Test;
 import org.zmlx.hg4idea.command.HgPushCommand;
 
+import java.io.File;
+import java.io.IOException;
+
 import static org.junit.Assert.assertNotNull;
 
 /**
@@ -33,11 +36,11 @@ public class HgPushTest extends HgCollaborativeTest {
   @Test
   public void testNativeCommands() throws Exception {
     createFileInCommand(AFILE, "initial content");
-    myRepo.add();
-    myRepo.commit();
-    myRepo.push();
+    addAll();
+    commitAll("add");
+    runHgOnProjectRepo("push");
 
-    myParentRepo.update();
+    updateParentRepo();
     assertNotNull(myParentRepo.getDir().findChild(AFILE));
   }
 
@@ -57,7 +60,13 @@ public class HgPushTest extends HgCollaborativeTest {
 
     new HgPushCommand(myProject, myRepo.getDir(), myParentRepo.getDir().getUrl()).executeInCurrentThread();
 
-    myParentRepo.update();
+    updateParentRepo();
     assertNotNull(myParentRepo.getDir().findChild(AFILE));
+  }
+
+  private void updateParentRepo() throws IOException {
+    VirtualFile parentRepoDir = myParentRepo.getDir();
+    runHg(new File(parentRepoDir.getPath()), "update");
+    parentRepoDir.refresh(false, true);
   }
 }
