@@ -27,16 +27,16 @@ class AccessingProtectedMembersFromSubclass : ProtectedMembers() {
 
     val runnable = object : Runnable {
       override fun run() {
-        <warning descr ="Method ProtectedMembers.method() is protected and used not through a subclass here, but declared in a different module 'dep'">method</warning>()
-        <warning descr ="Method ProtectedMembers.staticMethod() is protected and used not through a subclass here, but declared in a different module 'dep'">staticMethod</warning>()
+        <warning descr="Method ProtectedMembers.method() is protected and used not through a subclass here, but declared in a different module 'dep'">method</warning>()
+        <warning descr="Method ProtectedMembers.staticMethod() is protected and used not through a subclass here, but declared in a different module 'dep'">staticMethod</warning>()
       }
     }
   }
 
   private val runnable = object : Runnable {
     override fun run() {
-      <warning descr ="Method ProtectedMembers.method() is protected and used not through a subclass here, but declared in a different module 'dep'">method</warning>()
-      <warning descr ="Method ProtectedMembers.staticMethod() is protected and used not through a subclass here, but declared in a different module 'dep'">staticMethod</warning>()
+      <warning descr="Method ProtectedMembers.method() is protected and used not through a subclass here, but declared in a different module 'dep'">method</warning>()
+      <warning descr="Method ProtectedMembers.staticMethod() is protected and used not through a subclass here, but declared in a different module 'dep'">staticMethod</warning>()
     }
   }
 
@@ -48,8 +48,8 @@ class AccessingProtectedMembersFromSubclass : ProtectedMembers() {
 
   private inner class OwnInnerClass {
     fun bar() {
-      <warning descr ="Method ProtectedMembers.method() is protected and used not through a subclass here, but declared in a different module 'dep'">method</warning>()
-      <warning descr ="Method ProtectedMembers.staticMethod() is protected and used not through a subclass here, but declared in a different module 'dep'">staticMethod</warning>()
+      <warning descr="Method ProtectedMembers.method() is protected and used not through a subclass here, but declared in a different module 'dep'">method</warning>()
+      <warning descr="Method ProtectedMembers.staticMethod() is protected and used not through a subclass here, but declared in a different module 'dep'">staticMethod</warning>()
     }
   }
 }
@@ -69,7 +69,7 @@ class AccessingProtectedMembersFromObjectLiteral {
         method()
         object : Runnable {
           override fun run() {
-            <warning descr ="Method ProtectedMembers.method() is protected and used not through a subclass here, but declared in a different module 'dep'">method</warning>()
+            <warning descr="Method ProtectedMembers.method() is protected and used not through a subclass here, but declared in a different module 'dep'">method</warning>()
           }
         }
       }
