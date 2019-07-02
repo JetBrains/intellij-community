@@ -6,10 +6,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaLensSettings;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaTelescope;
 import com.intellij.codeInsight.hints.*;
 import com.intellij.codeInsight.hints.config.SingleLanguageInlayHintsConfigurable;
-import com.intellij.codeInsight.hints.presentation.AttributesTransformerPresentation;
-import com.intellij.codeInsight.hints.presentation.InlayPresentation;
-import com.intellij.codeInsight.hints.presentation.MouseButton;
-import com.intellij.codeInsight.hints.presentation.PresentationFactory;
+import com.intellij.codeInsight.hints.presentation.*;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.lang.Language;
@@ -26,6 +23,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.SmartList;
+import kotlin.Unit;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -164,15 +162,19 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
       ((EditorEx)editor).setCustomCursor(this, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
       InlayPresentation hoverText = factory.text(result.getHoverText());
-      InlayPresentation onClick = factory.onClick(hoverText, MouseButton.Left, (event, point) -> {
+      InlayPresentation withPossibleUnderline = new EffectInlayPresentation(hoverText, null, editor.getLineHeight(), ((EditorImpl)editor).getAscent(), editor.getLineHeight());
+      InlayPresentation onClick = factory.onClick(withPossibleUnderline, MouseButton.Left, (event, point) -> {
         result.onClick(editor, element);
+        mouseExited((EditorEx)editor);
         return null;
       });                 
       return referenceColor(onClick);
-    }, __ -> true, ()->{
-      ((EditorEx)editor).setCustomCursor(this, null);
-      return null;
-    });
+    }, __ -> true, () -> mouseExited((EditorEx)editor));
+  }
+
+  private Unit mouseExited(@NotNull EditorEx editor) {
+    editor.setCustomCursor(this, null);
+    return null;
   }
 
   @NotNull
