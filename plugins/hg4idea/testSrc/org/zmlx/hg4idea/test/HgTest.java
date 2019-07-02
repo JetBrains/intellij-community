@@ -33,6 +33,7 @@ import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgVcs;
 
 import java.io.*;
+import java.util.Arrays;
 
 import static org.junit.Assert.assertTrue;
 
@@ -129,13 +130,22 @@ public abstract class HgTest extends AbstractJunitVcsTestCase {
 
   /**
    * Verifies the status of the file calling native 'hg status' command.
+   * Hg status output may contain extra unversioned files a.e. hg-checkexec-XXX
+   * for more details see https://www.mercurial-scm.org/pipermail/mercurial/2014-April/047031.html
    *
    * @param status status as returned by {@link #added(java.lang.String)} and other methods.
    * @throws IOException
    */
   protected void verifyStatus(String... status) throws IOException {
-    verify(runHg(myProjectDir, "status"), status);
-}
+    verifyStatus(myProjectDir, status);
+  }
+
+  protected void verifyStatus(@Nullable File workingDir, String... status) throws IOException {
+    ProcessOutput statusOutput = runHg(workingDir, "status");
+    verify(statusOutput);
+    assertTrue(statusOutput.getStdoutLines().containsAll(Arrays.asList(status)));
+  }
+
   /**
    * Calls "hg add ." to add everything to the index.
    */

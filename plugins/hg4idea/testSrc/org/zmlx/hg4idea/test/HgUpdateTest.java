@@ -52,7 +52,7 @@ public class HgUpdateTest extends HgCollaborativeTest {
 
     File aFile = fillFile(remoteRepo, new String[]{"com", "a.txt"}, "file contents");
     verify(runHg(remoteRepo, "add", aFile.getPath()));
-    verify(runHg(remoteRepo, "status"), HgTestOutputParser.added("com", "a.txt"));
+    verifyStatus(remoteRepo, HgTestOutputParser.added("com", "a.txt"));
     verify(runHg(remoteRepo, "commit", "-m", "initial contents"));
 
     myRepo = myParentRepo.cloneRepository();
