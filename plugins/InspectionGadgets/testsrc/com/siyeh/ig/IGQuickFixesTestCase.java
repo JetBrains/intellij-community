@@ -83,7 +83,8 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
 
   protected void doTest(final String testName, final String hint) {
     myFixture.configureByFile(getRelativePath() + "/" + testName + ".java");
-    IntentionAction action = myFixture.findSingleIntention(hint);
+    IntentionAction action = myFixture.getAvailableIntention(hint);
+    assertNotNull(action);
     myFixture.launchAction(action);
     myFixture.checkResultByFile(getRelativePath() + "/" + testName + ".after.java");
   }
