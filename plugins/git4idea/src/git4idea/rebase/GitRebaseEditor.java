@@ -127,7 +127,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
       return;
     }
     int i = 0;
-    while (i < entries.size() && entries.get(i).getAction() == GitRebaseEntry.Action.SKIP.INSTANCE) {
+    while (i < entries.size() && entries.get(i).getAction() == GitRebaseEntry.Action.DROP.INSTANCE) {
       i++;
     }
     if (i < entries.size()) {
