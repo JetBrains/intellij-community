@@ -476,18 +476,12 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   }
 
   private abstract static class Token implements Node {
-    protected PsiBuilderImpl myBuilder;
+    PsiBuilderImpl myBuilder;
     private IElementType myTokenType;
     private int myTokenStart;
     private int myTokenEnd;
-    private int myHC = -1;
-    private StartMarker myParentNode;
-
-    public void clean() {
-      myBuilder = null;
-      myHC = -1;
-      myParentNode = null;
-    }
+    int myHC = -1;
+    StartMarker myParentNode;
 
     @Override
     public int hc() {
@@ -555,6 +549,12 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   }
 
   private static class TokenNode extends Token implements LighterASTTokenNode {
+    void clean() {
+      myBuilder = null;
+      myHC = -1;
+      myParentNode = null;
+    }
+
     @Override
     public String toString() {
       return getText().toString();
@@ -562,17 +562,15 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   }
 
   private static class LazyParseableToken extends Token implements LighterLazyParseableNode {
-    private MyTreeStructure myParentStructure;
+    private final MyTreeStructure myParentStructure;
+    private final int myStartIndex;
+    private final int myEndIndex;
     private FlyweightCapableTreeStructure<LighterASTNode> myParsed;
-    private int myStartIndex;
-    private int myEndIndex;
 
-    @Override
-    public void clean() {
-      myBuilder.myChameleonCache.remove(getStartOffset());
-      super.clean();
-      myParentStructure = null;
-      myParsed = null;
+    LazyParseableToken(MyTreeStructure parentStructure, int startIndex, int endIndex) {
+      myParentStructure = parentStructure;
+      myStartIndex = startIndex;
+      myEndIndex = endIndex;
     }
 
     @Override
@@ -1464,40 +1462,26 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   }
 
   private static class MyTreeStructure implements FlyweightCapableTreeStructure<LighterASTNode> {
-    private final LimitedPool<Token> myPool;
-    private final LimitedPool<LazyParseableToken> myLazyPool;
+    private final LimitedPool<TokenNode> myPool;
     private final StartMarker myRoot;
 
     MyTreeStructure(@NotNull StartMarker root, @Nullable final MyTreeStructure parentTree) {
       if (parentTree == null) {
-        myPool = new LimitedPool<>(1000, new LimitedPool.ObjectFactory<Token>() {
+        myPool = new LimitedPool<>(1000, new LimitedPool.ObjectFactory<TokenNode>() {
           @Override
-          public void cleanup(@NotNull final Token token) {
+          public void cleanup(@NotNull TokenNode token) {
             token.clean();
           }
 
           @NotNull
           @Override
-          public Token create() {
+          public TokenNode create() {
             return new TokenNode();
-          }
-        });
-        myLazyPool = new LimitedPool<>(200, new LimitedPool.ObjectFactory<LazyParseableToken>() {
-          @Override
-          public void cleanup(@NotNull final LazyParseableToken token) {
-            token.clean();
-          }
-
-          @NotNull
-          @Override
-          public LazyParseableToken create() {
-            return new LazyParseableToken();
           }
         });
       }
       else {
         myPool = parentTree.myPool;
-        myLazyPool = parentTree.myLazyPool;
       }
       myRoot = root;
     }
@@ -1569,11 +1553,8 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       if (nodes == null) return;
       for (int i = 0; i < count; i++) {
         final LighterASTNode node = nodes[i];
-        if (node instanceof LazyParseableToken) {
-          myLazyPool.recycle((LazyParseableToken)node);
-        }
-        else if (node instanceof Token) {
-          myPool.recycle((Token)node);
+        if (node instanceof TokenNode) {
+          myPool.recycle((TokenNode)node);
         }
       }
     }
@@ -1642,9 +1623,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       int startInFile = start + builder.myOffset;
       LazyParseableToken token = builder.myChameleonCache.get(startInFile);
       if (token == null) {
-        token = myLazyPool.alloc();
-        token.myStartIndex = startLexemeIndex;
-        token.myEndIndex = endLexemeIndex;
+        token = new LazyParseableToken(this, startLexemeIndex, endLexemeIndex);
         token.initToken(type, builder, parent, start, end);
         builder.myChameleonCache.put(startInFile, token);
       } else {
@@ -1652,7 +1631,6 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
           throw new AssertionError("Wrong chameleon cached");
         }
       }
-      token.myParentStructure = this;
       return token;
     }
 
