@@ -221,8 +221,8 @@ abstract class Cell {
 
   fun <T> comboBox(model: ComboBoxModel<T>,
                    modelBinding: PropertyBinding<T?>,
-                   growPolicy: GrowPolicy?,
-                   renderer: ListCellRenderer<T?>?): CellBuilder<ComboBox<T>> {
+                   growPolicy: GrowPolicy? = null,
+                   renderer: ListCellRenderer<T?>? = null): CellBuilder<ComboBox<T>> {
     val component = ComboBox(model)
     if (renderer != null) {
       component.renderer = renderer
@@ -376,9 +376,9 @@ abstract class Cell {
 
 }
 
-fun <T> listCellRenderer(renderer: ColoredListCellRenderer<T?>.(value: T, index: Int, isSelected: Boolean) -> Unit): ColoredListCellRenderer<T?> {
-  return object : ColoredListCellRenderer<T?>() {
-    override fun customizeCellRenderer(list: JList<out T?>, value: T?, index: Int, selected: Boolean, hasFocus: Boolean) {
+fun <T> listCellRenderer(renderer: SimpleListCellRenderer<T?>.(value: T, index: Int, isSelected: Boolean) -> Unit): SimpleListCellRenderer<T?> {
+  return object : SimpleListCellRenderer<T?>() {
+    override fun customize(list: JList<out T?>, value: T?, index: Int, selected: Boolean, hasFocus: Boolean) {
       if (value != null) {
         renderer(this, value, index, selected)
       }
