@@ -5,7 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.colors.EditorColorsListener
-import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.ui.Messages
@@ -71,7 +71,7 @@ private fun JBPopup.showAbove(component: JComponent) {
 }
 
 class ChangesViewCommitPanel(private val changesView: ChangesListView, private val rootComponent: JComponent) :
-  BorderLayoutPanel(), ChangesViewCommitWorkflowUi, ComponentContainer, DataProvider {
+  BorderLayoutPanel(), ChangesViewCommitWorkflowUi, EditorColorsListener, ComponentContainer, DataProvider {
 
   private val project get() = changesView.project
 
@@ -110,7 +110,6 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
     Disposer.register(this, commitMessage)
 
     buildLayout()
-    project.messageBus.connect(this).subscribe(EditorColorsManager.TOPIC, EditorColorsListener { needUpdateCommitOptionsUi = true })
 
     with(changesView) {
       setInclusionListener { inclusionEventDispatcher.multicaster.inclusionChanged() }
@@ -154,6 +153,10 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
     DumbAwareAction.create {
       if (commitButton.isEnabled) commitButton.showPopup()
     }.registerCustomShortcutSet(getDefaultShowPopupShortcut(), component, this)
+  }
+
+  override fun globalSchemeChange(scheme: EditorColorsScheme?) {
+    needUpdateCommitOptionsUi = true
   }
 
   override val commitMessageUi: CommitMessageUi get() = commitMessage

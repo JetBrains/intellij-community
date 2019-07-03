@@ -15,7 +15,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsListener;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -53,7 +54,7 @@ import static com.intellij.vcs.commit.message.CommitMessageInspectionProfile.get
 import static java.util.Collections.singletonList;
 import static javax.swing.BorderFactory.createEmptyBorder;
 
-public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageUi, CommitMessageI {
+public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageUi, CommitMessageI, EditorColorsListener {
   public static final Key<CommitMessage> DATA_KEY = Key.create("Vcs.CommitMessage.Panel");
 
   private static final EditorCustomization BACKGROUND_FROM_COLOR_SCHEME_CUSTOMIZATION = editor -> editor.setBackgroundColor(null);
@@ -92,15 +93,12 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     }
 
     setBorder(createEmptyBorder());
-
-    fixEditorBackgroundOnColorSchemeChange(project);
   }
 
-  private void fixEditorBackgroundOnColorSchemeChange(@NotNull Project project) {
-    project.getMessageBus().connect(this).subscribe(EditorColorsManager.TOPIC, scheme -> {
-      Editor editor = myEditorField.getEditor();
-      if (editor instanceof EditorEx) BACKGROUND_FROM_COLOR_SCHEME_CUSTOMIZATION.customize((EditorEx)editor);
-    });
+  @Override
+  public void globalSchemeChange(@Nullable EditorColorsScheme scheme) {
+    Editor editor = myEditorField.getEditor();
+    if (editor instanceof EditorEx) BACKGROUND_FROM_COLOR_SCHEME_CUSTOMIZATION.customize((EditorEx)editor);
   }
 
   @NotNull
