@@ -351,7 +351,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
         versionChanged = true;
         LOG.info("Version has changed for index " + name + ". The index will be rebuilt.");
       } else {
-        LOG.info("Index " + name + " will be built.");
+        LOG.debug("Index " + name + " will be built.");
       }
       if (extension.hasSnapshotMapping() && versionChanged) {
         FileUtil.deleteWithRenaming(IndexInfrastructure.getPersistentIndexRootDir(name));
