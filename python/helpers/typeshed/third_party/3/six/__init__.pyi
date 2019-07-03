@@ -40,7 +40,7 @@ _V = TypeVar('_V')
 # https://github.com/python/typeshed/issues/17
 PY2 = False
 PY3 = True
-PY34 = ...  # type: bool
+PY34: bool
 
 string_types = str,
 integer_types = int,
@@ -48,7 +48,7 @@ class_types = type,
 text_type = str
 binary_type = bytes
 
-MAXSIZE = ...  # type: int
+MAXSIZE: int
 
 # def add_move
 # def remove_move

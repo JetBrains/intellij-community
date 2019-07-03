@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.tools
 
+import com.intellij.util.io.delete
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -10,14 +11,17 @@ import java.nio.file.Paths
  *
  * As a result it leaves top-level modules and packages that are listed in `whiteList`.
  * It allows us to reduce the size of bundled `typeshed` and do not run indexing and other analyzing processes on disabled stubs.
+ *
+ * @see [com.jetbrains.python.tools.splitBuiltins]
  */
 
-val repo = Paths.get("../../../../../../../../../typeshed").abs().normalize()
-val bundled = Paths.get("../../../../../../../../community/python/helpers/typeshed").abs().normalize()
+val repo: Path = Paths.get("../../../../../../../../../typeshed").abs().normalize()
+val bundled: Path = Paths.get("../../../../../../../../community/python/helpers/typeshed").abs().normalize()
 
 println("Repo: ${repo.abs()}")
 println("Bundled: ${bundled.abs()}")
 
+println("Syncing")
 sync(repo, bundled)
 
 val whiteList = setOf("typing", "six", "__builtin__", "builtins", "exceptions", "types", "datetime", "functools", "shutil", "re", "time",
@@ -25,13 +29,17 @@ val whiteList = setOf("typing", "six", "__builtin__", "builtins", "exceptions", 
                       "pathlib", "io", "_io", "itertools", "ssl", "multiprocessing", "asyncio", "mock", "unittest", "_importlib_modulespec",
                       "typing_extensions")
 
-clean(topLevelPackages(bundled), whiteList)
+println("Cleaning")
+cleanTopLevelPackages(bundled, whiteList)
+
+println("Splitting builtins")
+splitBuiltins(bundled)
 
 fun sync(repo: Path, bundled: Path) {
   if (!Files.exists(repo)) throw IllegalArgumentException("Not found: ${repo.abs()}")
 
   if (Files.exists(bundled)) {
-    bundled.deleteRecursively()
+    bundled.delete()
     println("Removed: ${bundled.abs()}")
   }
 
@@ -62,23 +70,16 @@ fun sync(repo: Path, bundled: Path) {
     }
 }
 
-fun topLevelPackages(typeshed: Path): List<Path> {
-  return sequenceOf(typeshed)
+fun cleanTopLevelPackages(typeshed: Path, whiteList: Set<String>) {
+  sequenceOf(typeshed)
     .flatMap { sequenceOf(it.resolve("stdlib"), it.resolve("third_party")) }
     .flatMap { Files.newDirectoryStream(it).asSequence() }
     .flatMap { Files.newDirectoryStream(it).asSequence() }
-    .toList()
-}
-
-fun clean(topLevelPackages: List<Path>, whiteList: Set<String>) {
-  topLevelPackages
-    .asSequence()
     .filter { it.nameWithoutExtension() !in whiteList }
-    .forEach { it.deleteRecursively() }
+    .forEach { it.delete() }
 }
 
 fun Path.abs() = toAbsolutePath()
-fun Path.deleteRecursively() = toFile().deleteRecursively()
 fun Path.copyRecursively(target: Path) = toFile().copyRecursively(target.toFile())
 fun Path.name() = toFile().name
 fun Path.nameWithoutExtension() = toFile().nameWithoutExtension

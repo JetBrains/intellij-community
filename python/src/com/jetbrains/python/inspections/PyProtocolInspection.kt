@@ -12,8 +12,7 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.inspectProtocolSubclass
 import com.jetbrains.python.codeInsight.typing.isProtocol
 import com.jetbrains.python.psi.*
-import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.TYPING_RUNTIME
-import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.TYPING_RUNTIME_EXT
+import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.*
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.resolve.RatedResolveResult
@@ -89,16 +88,20 @@ class PyProtocolInspection : PyInspection() {
         if (base is PyReferenceExpression) {
           val qNames = PyResolveUtil.resolveImportedElementQNameLocally(base).asSequence().map { it.toString() }
           if (qNames.any { it == PyTypingTypeProvider.PROTOCOL || it == PyTypingTypeProvider.PROTOCOL_EXT }) {
-            registerProblem(base, "Only @runtime protocols can be used with instance and class checks", GENERIC_ERROR)
+            registerProblem(base, "Only @runtime_checkable protocols can be used with instance and class checks", GENERIC_ERROR)
             return
           }
         }
 
         val type = myTypeEvalContext.getType(base)
-        if (type is PyClassType &&
-            isProtocol(type, myTypeEvalContext) &&
-            !PyKnownDecoratorUtil.getKnownDecorators(type.pyClass, myTypeEvalContext).any { it == TYPING_RUNTIME || it == TYPING_RUNTIME_EXT}) {
-          registerProblem(base, "Only @runtime protocols can be used with instance and class checks", GENERIC_ERROR)
+        if (
+          type is PyClassType &&
+          isProtocol(type, myTypeEvalContext) &&
+          !PyKnownDecoratorUtil.getKnownDecorators(type.pyClass, myTypeEvalContext).any {
+            it == TYPING_RUNTIME_CHECKABLE || it == TYPING_RUNTIME_CHECKABLE_EXT || it == TYPING_RUNTIME || it == TYPING_RUNTIME_EXT
+          }
+        ) {
+          registerProblem(base, "Only @runtime_checkable protocols can be used with instance and class checks", GENERIC_ERROR)
         }
       }
     }

@@ -11,7 +11,8 @@ are important to the project's success.
 1. Read the [README.md file](README.md).
 2. Set up your environment to be able to [run all tests](README.md#running-the-tests).  They should pass.
 3. [Prepare your changes](#preparing-changes):
-    * [Contact us](#discussion) before starting significant work.
+    * Small fixes and additions can be submitted directly as pull requests,
+      but [contact us](#discussion) before starting significant work.
     * IMPORTANT: For new libraries, [get permission from the library owner first](#adding-a-new-library).
     * Create your stubs [conforming to the coding style](#stub-file-coding-style).
     * Make sure your tests pass cleanly on `mypy`, `pytype`, and `flake8`.
@@ -120,30 +121,33 @@ has more information).
 
 ### What to include
 
-Stubs should include all public objects (classes, functions, constants,
-etc.) in the module they cover. Omitting objects can confuse users,
-because users who see an error like "module X has no attribute Y" will
-not know whether the error appeared because their code had a bug or
-because the stub is wrong. If you are submitting stubs to typeshed and
-you are unable to provide fully typed stubs for some of the objects in
-the library, you can use stubgen (see below) to generate untyped stubs.
-Although we prefer having exact types for all stubs, such stubs are
-better than nothing.
+Stubs should include the complete interface (classes, functions,
+constants, etc.) of the module they cover, but it is not always
+clear exactly what is part of the interface.
 
-What counts as a "public object" is not always clear. Use your judgment,
-but objects that are listed in the module's documentation, that are
-included in ``__all__`` (if present), and whose names do not start with an
-underscore are more likely to merit inclusion in a stub. If in doubt, err
-on the side of including more objects.
+The following should always be included:
+- All objects listed in the module's documentation.
+- All objects included in ``__all__`` (if present).
 
-**NEW:** Sometimes it makes sense to include non-public objects
-in a stub.  Mark these with a comment of the form ``# undocumented``.
-See the [motivation](https://github.com/python/typeshed/issues/1902).
+Other objects may be included if they are being used in practice
+or if they are not prefixed with an underscore. This means
+that typeshed will generally accept contributions that add missing
+objects, even if they are undocumented. Undocumented objects should
+be marked with a comment of the form ``# undocumented``.
 Example:
 
 ```python
 def list2cmdline(seq: Sequence[str]) -> str: ...  # undocumented
 ```
+
+We accept such undocumented objects because omitting objects can confuse
+users. Users who see an error like "module X has no attribute Y" will
+not know whether the error appeared because their code had a bug or
+because the stub is wrong. Although it may also be helpful for a type
+checker to point out usage of private objects, we usually prefer false
+negatives (no errors for wrong code) over false positives (type errors
+for correct code). In addition, even for private objects a type checker
+can be helpful in pointing out that an incorrect type was used.
 
 ### Incomplete stubs
 
@@ -234,7 +238,7 @@ rule is that they should be as concise as possible.  Specifically:
 * use variable annotations instead of type comments, even for stubs
   that target older versions of Python;
 * for arguments with a type and a default, use spaces around the `=`.
-The code formatter [black](https://github.com/ambv/black) will format
+The code formatter [black](https://github.com/python/black) will format
 stubs according to this standard.
 
 Stub files should only contain information necessary for the type

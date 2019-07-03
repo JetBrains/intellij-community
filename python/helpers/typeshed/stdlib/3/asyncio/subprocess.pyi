@@ -7,15 +7,15 @@ from typing import Any, Generator, List, Optional, Text, Tuple, Union, IO
 
 __all__: List[str]
 
-PIPE = ...  # type: int
-STDOUT = ...  # type: int
-DEVNULL = ...  # type: int
+PIPE: int
+STDOUT: int
+DEVNULL: int
 
 class SubprocessStreamProtocol(streams.FlowControlMixin,
                                protocols.SubprocessProtocol):
-    stdin = ...  # type: Optional[streams.StreamWriter]
-    stdout = ...  # type: Optional[streams.StreamReader]
-    stderr = ...  # type: Optional[streams.StreamReader]
+    stdin: Optional[streams.StreamWriter]
+    stdout: Optional[streams.StreamReader]
+    stderr: Optional[streams.StreamReader]
     def __init__(self, limit: int, loop: events.AbstractEventLoop) -> None: ...
     def connection_made(self, transport: transports.BaseTransport) -> None: ...
     def pipe_data_received(self, fd: int, data: Union[bytes, Text]) -> None: ...
@@ -24,10 +24,10 @@ class SubprocessStreamProtocol(streams.FlowControlMixin,
 
 
 class Process:
-    stdin = ...  # type: Optional[streams.StreamWriter]
-    stdout = ...  # type: Optional[streams.StreamReader]
-    stderr = ...  # type: Optional[streams.StreamReader]
-    pid = ...  # type: int
+    stdin: Optional[streams.StreamWriter]
+    stdout: Optional[streams.StreamReader]
+    stderr: Optional[streams.StreamReader]
+    pid: int
     def __init__(self,
                  transport: transports.BaseTransport,
                  protocol: protocols.BaseProtocol,

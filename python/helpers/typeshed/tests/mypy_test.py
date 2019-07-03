@@ -21,6 +21,7 @@ parser = argparse.ArgumentParser(description="Test runner for typeshed. "
                                              "Patterns are unanchored regexps on the full path.")
 parser.add_argument('-v', '--verbose', action='count', default=0, help="More output")
 parser.add_argument('-n', '--dry-run', action='store_true', help="Don't actually run mypy")
+parser.add_argument('-a', '--new-analyzer', action='store_true', help="Use new mypy semantic analyzer")
 parser.add_argument('-x', '--exclude', type=str, nargs='*', help="Exclude pattern")
 parser.add_argument('-p', '--python-version', type=str, nargs='*',
                     help="These versions only (major[.minor])")
@@ -132,6 +133,8 @@ def main():
             flags.append('--no-site-packages')
             flags.append('--show-traceback')
             flags.append('--no-implicit-optional')
+            if args.new_analyzer:
+                flags.append('--new-semantic-analyzer')
             if args.warn_unused_ignores:
                 flags.append('--warn-unused-ignores')
             sys.argv = ['mypy'] + flags + files
@@ -141,7 +144,7 @@ def main():
                 print("running mypy", ' '.join(flags), "# with", len(files), "files")
             try:
                 if not args.dry_run:
-                    mypy_main('')
+                    mypy_main('', sys.stdout, sys.stderr)
             except SystemExit as err:
                 code = max(code, err.code)
     if code:

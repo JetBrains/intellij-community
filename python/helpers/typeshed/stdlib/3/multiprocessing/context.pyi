@@ -21,10 +21,10 @@ class TimeoutError(ProcessError): ...
 class AuthenticationError(ProcessError): ...
 
 class BaseContext(object):
-    ProcessError = ...  # type: Type[Exception]
-    BufferTooShort = ...  # type: Type[Exception]
-    TimeoutError = ...  # type: Type[Exception]
-    AuthenticationError = ...  # type: Type[Exception]
+    ProcessError: Type[Exception]
+    BufferTooShort: Type[Exception]
+    TimeoutError: Type[Exception]
+    AuthenticationError: Type[Exception]
 
     # N.B. The methods below are applied at runtime to generate
     # multiprocessing.*, so the signatures should be identical (modulo self).
@@ -121,7 +121,7 @@ class Process(object):
     def _Popen(process_obj: Any) -> DefaultContext: ...
 
 class DefaultContext(object):
-    Process = ...  # type: Type[multiprocessing.Process]
+    Process: Type[multiprocessing.Process]
 
     def __init__(self, context: BaseContext) -> None: ...
     def get_context(self, method: Optional[str] = ...) -> BaseContext: ...
@@ -150,15 +150,15 @@ if sys.platform != 'win32':
 
     class ForkContext(BaseContext):
         _name: str
-        Process = ...  # type: Type[ForkProcess]
+        Process: Type[ForkProcess]
 
     class SpawnContext(BaseContext):
         _name: str
-        Process = ...  # type: Type[SpawnProcess]
+        Process: Type[SpawnProcess]
 
     class ForkServerContext(BaseContext):
         _name: str
-        Process = ...  # type: Type[ForkServerProcess]
+        Process: Type[ForkServerProcess]
 else:
     # TODO: type should be BaseProcess once a stub in multiprocessing.process exists
     class SpawnProcess(Any):  # type: ignore
@@ -169,7 +169,7 @@ else:
 
     class SpawnContext(BaseContext):
         _name: str
-        Process = ...  # type: Type[SpawnProcess]
+        Process: Type[SpawnProcess]
 
 def _force_start_method(method: str) -> None: ...
 # TODO: type should be BaseProcess once a stub in multiprocessing.process exists
