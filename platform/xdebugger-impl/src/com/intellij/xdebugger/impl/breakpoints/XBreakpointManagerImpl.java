@@ -121,7 +121,6 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
     return doAddBreakpoint(type, properties, false);
   }
 
-  @SuppressWarnings("unused")
   @NotNull
   public <T extends XBreakpointProperties> XBreakpoint<T> addDefaultBreakpoint(final XBreakpointType<XBreakpoint<T>,T> type, @Nullable final T properties) {
     return doAddBreakpoint(type, properties, true);
@@ -199,7 +198,6 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
     doRemoveBreakpoint(breakpoint);
   }
 
-  @SuppressWarnings("unused")
   public void removeDefaultBreakpoint(@NotNull final XBreakpoint<?> breakpoint) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (!isDefaultBreakpoint(breakpoint)) {
