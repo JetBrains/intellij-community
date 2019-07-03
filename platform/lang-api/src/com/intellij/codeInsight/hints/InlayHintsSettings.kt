@@ -44,10 +44,9 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
   /**
    * @param uninitSettings is a setting, that was obtained from createSettings method of provider
    */
-  fun <T: Any> findSettings(key: SettingsKey<T>, language: Language, uninitSettings: T): T = synchronized(lock) {
+  fun <T: Any> findSettings(key: SettingsKey<T>, language: Language, uninitSettings: ()->T): T = synchronized(lock) {
     val fullId = key.getFullId(language)
-    @Suppress("UNCHECKED_CAST")
-    return getSettingCached(fullId, uninitSettings) as T
+    return getSettingCached(fullId, uninitSettings)
   }
 
   fun <T: Any> storeSettings(key: SettingsKey<T>, language: Language, value: T) = synchronized(lock){
@@ -88,13 +87,14 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
   }
 
   // may return parameter settings object or cached object
-  private fun getSettingCached(id: String, settings: Any): Any {
-    val cachedValue = myCachedSettingsMap[id]
+  private fun <T : Any> getSettingCached(id: String, settings: ()->T): T {
+    @Suppress("UNCHECKED_CAST")
+    val cachedValue = myCachedSettingsMap[id] as T?
     if (cachedValue != null) return cachedValue
-    return getSettingNotCached(id, settings)
+    return getSettingNotCached(id, settings())
   }
 
-  private fun getSettingNotCached(id: String, settings: Any): Any {
+  private fun <T : Any> getSettingNotCached(id: String, settings: T): T {
     val state = myState.settingsMapElement
     val settingsElement = state.getChild(id) ?: return settings
     val settingsElementChildren= settingsElement.children
