@@ -30,7 +30,7 @@ class InferenceUnitNode internal constructor(val core: InferenceUnit,
 
   /**
    * Direct dependency on other unit.
-   * If appears when we know that this [InferenceUnit.initialTypeParameter] must be a subtype of some other one.
+   * It appears when we know that this [InferenceUnit.initialTypeParameter] must be a subtype of some other one.
    * In java code it might be expressed as `<T extends U> void foo(){}`, so unit for `T` will have [parent] set to `U`
    */
   val parent: InferenceUnitNode? by lazy { supertypes.firstOrNull() }

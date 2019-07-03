@@ -3,9 +3,12 @@ package org.jetbrains.plugins.groovy.intentions.style.inference
 
 import com.intellij.psi.*
 import com.intellij.psi.search.searches.ReferencesSearch
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression
@@ -16,8 +19,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.Expression
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.OperatorExpressionConstraint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
-import java.util.LinkedHashMap
-import java.util.LinkedHashSet
+import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.component1
 import kotlin.collections.component2
@@ -28,6 +30,7 @@ class InferenceDriver(val method: GrMethod) {
   private val elementFactory: GroovyPsiElementFactory = GroovyPsiElementFactory.getInstance(method.project)
   private val nameGenerator = NameGenerator(method.typeParameters.mapNotNull { it.name })
   private val constantTypeParameters: MutableList<PsiTypeParameter> = ArrayList()
+  private val closureParameters: MutableMap<GrParameter, ParametrizedClosure> = LinkedHashMap()
   private val defaultTypeParameterList: PsiTypeParameterList = (method.typeParameterList?.copy()
                                                                 ?: elementFactory.createTypeParameterList()) as PsiTypeParameterList
   private val parameterIndex: MutableMap<GrParameter, PsiTypeParameter> = LinkedHashMap()
@@ -51,7 +54,7 @@ class InferenceDriver(val method: GrMethod) {
   }
 
   val flexibleTypes: List<PsiType> by lazy {
-    virtualMethod.parameters.map { it.type }
+    virtualMethod.parameters.map { it.type } + closureParameters.values.flatMap { it.typeParameters }.map { it.type() }
   }
 
   val forbiddingTypes: List<PsiType> by lazy {
@@ -72,6 +75,23 @@ class InferenceDriver(val method: GrMethod) {
       parameterIndex[parameter] = newTypeParameter
       parameter.setType(newTypeParameter.type())
     }
+    createParametrizedClosures(generator)
+  }
+
+  // To find which arguments are closures we need to analyze random call of the processed method.
+  private fun createParametrizedClosures(generator: NameGenerator) {
+    val call = ReferencesSearch.search(method).mapNotNull { it.element.parent as? GrCall }.firstOrNull() ?: return
+    // todo: default-valued parameters
+    val argumentList = call.expressionArguments + call.closureArguments
+    argumentList.zip(virtualMethod.parameters).filter { it.first is GrClosableBlock }.forEach { (argument, parameter) ->
+      val parametrizedClosure = ParametrizedClosure(parameter)
+      closureParameters[parameter] = parametrizedClosure
+      repeat((argument as GrClosableBlock).allParameters.size) {
+        val newTypeParameter = createNewTypeParameter(generator)
+        virtualMethod.typeParameterList!!.add(newTypeParameter)
+        parametrizedClosure.typeParameters.add(newTypeParameter)
+      }
+    }
   }
 
   private fun createNewTypeParameter(generator: NameGenerator? = null): PsiTypeParameter =
@@ -80,6 +100,11 @@ class InferenceDriver(val method: GrMethod) {
 
   fun collectOuterCalls(session: GroovyInferenceSession) {
     collectOuterMethodCalls(session)
+    virtualMethod.parameters.zip(method.parameters).forEach { (virtualParameter, actualParameter) ->
+      if (virtualParameter in closureParameters.keys) {
+        setUpClosuresSignature(session, closureParameters[virtualParameter]!!, ReferencesSearch.search(actualParameter).findAll())
+      }
+    }
   }
 
 
@@ -100,7 +125,9 @@ class InferenceDriver(val method: GrMethod) {
     virtualMethod.typeParameterList?.replace(defaultTypeParameterList.copy())
     constantTypeParameters.addAll(virtualMethod.typeParameters)
     for ((parameter, typeParameter) in parameterIndex) {
-      parameter.setType(createDeeplyParametrizedType(signatureSubstitutor.substitute(typeParameter)!!, virtualMethod.typeParameterList!!))
+      parameter.setType(
+        createDeeplyParametrizedType(signatureSubstitutor.substitute(typeParameter)!!, virtualMethod.typeParameterList!!, parameter,
+                                     signatureSubstitutor))
     }
   }
 
@@ -119,7 +146,9 @@ class InferenceDriver(val method: GrMethod) {
    * If [target] is parametrized, all it's parameter types will also be parametrized.
    */
   private fun createDeeplyParametrizedType(target: PsiType,
-                                           typeParameterList: PsiTypeParameterList
+                                           typeParameterList: PsiTypeParameterList,
+                                           parameter: GrParameter?,
+                                           signatureSubstitutor: PsiSubstitutor
   ): PsiType {
     val visitor = object : PsiTypeMapper() {
 
@@ -153,8 +182,23 @@ class InferenceDriver(val method: GrMethod) {
       }
 
     }
-    when (target) {
-      is PsiArrayType -> {
+    when {
+      isClosureType(target) -> {
+        val closureParameter = closureParameters[parameter]!!
+        val initialTypeParameters = typeParameterList.typeParameters
+        closureParameter.typeParameters.run {
+          forEach {
+            val topLevelType = createDeeplyParametrizedType(signatureSubstitutor.substitute(it)!!, typeParameterList, null,
+                                                            signatureSubstitutor)
+            closureParameter.types.add(topLevelType)
+          }
+          val createdTypeParameters = typeParameterList.typeParameters.subtract(initialTypeParameters.asIterable())
+          clear()
+          addAll(createdTypeParameters)
+        }
+        return target.accept(visitor)
+      }
+      target is PsiArrayType -> {
         return registerTypeParameter(typeParameterList).createArrayType()
       }
       else -> {
@@ -190,7 +234,20 @@ class InferenceDriver(val method: GrMethod) {
           }
           resolveResult.contextSubstitutor.substitute(type)?.run { contravariantTypes.add(this) }
         }
-        inferenceSession.addConstraint(ExpressionConstraint(null, callExpression))
+        if (isClosureType(receiver)) {
+          val parameter = callExpression.firstChild.run {
+            closureParameters[reference?.resolve() as? GrParameter ?: firstChild.reference?.resolve()]
+          }
+          parameter?.run {
+            callExpression.expressionArguments.zip(parameter.types).forEach { (expression, parameterType) ->
+              inferenceSession.addConstraint(
+                ExpressionConstraint(inferenceSession.substituteWithInferenceVariables(parameterType), expression))
+            }
+          }
+        }
+        else {
+          inferenceSession.addConstraint(ExpressionConstraint(null, callExpression))
+        }
         super.visitCallExpression(callExpression)
       }
 
@@ -207,9 +264,18 @@ class InferenceDriver(val method: GrMethod) {
 
   fun acceptFinalSubstitutor(resultSubstitutor: PsiSubstitutor) {
     val targetParameters = parameterIndex.keys
+    if (targetParameters.any { isClosureType(it.type) }) {
+      ParametrizedClosure.ensureImports(elementFactory, virtualMethod.containingFile as GroovyFile)
+    }
     targetParameters.forEach { param ->
       param.setType(resultSubstitutor.substitute(param.type))
       when {
+        isClosureType(param.type) -> {
+          closureParameters[param]!!.run {
+            substituteTypes(resultSubstitutor)
+            renderTypes(elementFactory)
+          }
+        }
         param.type is PsiArrayType -> param.setType(
           resultSubstitutor.substitute((param.type as PsiArrayType).componentType).createArrayType())
       }
@@ -251,9 +317,9 @@ class InferenceDriver(val method: GrMethod) {
       }
     }
     virtualMethod.parameters.forEach { it.type.accept(visitor) }
-    val resultingTypeParameterList = elementFactory.createTypeParameterList()
-    necessaryTypeParameters.forEach { resultingTypeParameterList.add(it) }
-    return resultingTypeParameterList
+    closureParameters.values.flatMap { it.types }.forEach { it.accept(visitor) }
+    return elementFactory.createMethodFromText(
+      "def <${necessaryTypeParameters.joinToString(", ") { it.text }}> void foo() {}").typeParameterList!!
   }
 
 

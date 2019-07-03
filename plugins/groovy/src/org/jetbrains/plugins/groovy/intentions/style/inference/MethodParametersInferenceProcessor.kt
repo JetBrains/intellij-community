@@ -7,6 +7,7 @@ import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUn
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.createGraphFromInferenceVariables
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.determineDependencies
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.putAll
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 
@@ -52,15 +53,24 @@ class MethodParametersInferenceProcessor(method: GrMethod) {
   private fun inferTypeParameters(initialGraph: InferenceUnitGraph) {
     val inferredGraph = determineDependencies(initialGraph)
     var resultSubstitutor = PsiSubstitutor.EMPTY
+    val endpoints = mutableSetOf<InferenceUnitNode>()
     for (unit in inferredGraph.resolveOrder()) {
-      val preferableType = getPreferableType(unit, resultSubstitutor)
-      resultSubstitutor = resultSubstitutor.put(unit.core.initialTypeParameter, preferableType)
+      val preferableType = getPreferableType(unit, resultSubstitutor, endpoints)
+      if (unit !in endpoints) {
+        resultSubstitutor = resultSubstitutor.put(unit.core.initialTypeParameter, preferableType)
+      }
     }
-    driver.acceptFinalSubstitutor(resultSubstitutor)
+    val endpointTypes = endpoints.map {
+      val completelySubstitutedType = resultSubstitutor.recursiveSubstitute(it.typeInstantiation)
+      driver.createBoundedTypeParameterElement(it.type.name, resultSubstitutor, completelySubstitutedType).type()
+    }
+    val endpointSubstitutor = PsiSubstitutor.EMPTY.putAll(endpoints.map { it.core.initialTypeParameter }.toTypedArray(),
+                                                          endpointTypes.toTypedArray())
+    driver.acceptFinalSubstitutor(resultSubstitutor.putAll(endpointSubstitutor))
   }
 
   private fun getPreferableType(unit: InferenceUnitNode,
-                                resultSubstitutor: PsiSubstitutor): PsiType {
+                                resultSubstitutor: PsiSubstitutor, endpoints: MutableSet<InferenceUnitNode>): PsiType {
     val mayBeDirectlyInstantiated =
       !unit.forbidInstantiation &&
       when {
@@ -79,8 +89,14 @@ class MethodParametersInferenceProcessor(method: GrMethod) {
       }
       else -> {
         val advice = unit.parent?.type ?: unit.typeInstantiation
-        val newTypeParameter = driver.createBoundedTypeParameterElement(unit.type.name, resultSubstitutor, advice)
-        return newTypeParameter.type()
+        if (advice == unit.typeInstantiation) {
+          endpoints.add(unit)
+          return unit.type
+        }
+        else {
+          val newTypeParameter = driver.createBoundedTypeParameterElement(unit.type.name, resultSubstitutor, advice)
+          return newTypeParameter.type()
+        }
       }
     }
   }

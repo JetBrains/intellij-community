@@ -5,9 +5,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.util.TestUtils
 
-/**
- * @author knisht
- */
+
 class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
 
   final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_3_0
@@ -182,7 +180,47 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testBasicClosure() {
+    doTest(true)
+  }
+
+  void testImplicitClosureParameter() {
+    doTest(true)
+  }
+
+  void testTypeParameterInClosureSignature() {
+    doTest(true)
+  }
+
+  void testClosureParameterDependsOnMethodParameter() {
+    doTest(true)
+  }
+
+  void testClosureParameterDependsOnMethodParameter2() {
+    doTest(true)
+  }
+
+  void testTwoClosuresAsArgument() {
+    doTest(true)
+  }
+
+  void testDeepClosureDependency() {
+    doTest(true)
+  }
+
   void testParametrizedArray() {
+    doTest(true)
+  }
+
+  void testDifferentCallPlaces() {
+    doTest(true)
+  }
+
+  void testAuxiliaryStatements() {
+    doTest(true)
+  }
+
+  void testExplicitCallForClosureParameter() {
     doTest(true)
   }
 
@@ -193,4 +231,9 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
   void testVariance2() {
     doTest(true)
   }
+
+  void testMutualDependency() {
+    doTest(true)
+  }
+
 }

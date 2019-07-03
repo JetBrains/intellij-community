@@ -4,10 +4,15 @@ package org.jetbrains.plugins.groovy.intentions.style
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle
 import org.jetbrains.plugins.groovy.intentions.base.Intention
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate
 import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParametersInferenceProcessor
+import org.jetbrains.plugins.groovy.intentions.style.inference.ParametrizedClosure
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 
@@ -40,7 +45,20 @@ internal class InferMethodParametersTypesIntention : Intention() {
     else {
       method.typeParameterList?.delete()
     }
-    method.parameters.zip(virtualMethod.parameters).forEach { (actual, inferred) -> actual.setType(inferred.type) }
+    var hasAnnotations = false
+    method.parameters.zip(virtualMethod.parameters).forEach { (actual, inferred) ->
+      actual.setType(inferred.type)
+      val annotations = inferred.annotations
+      // todo: user-defined annotations may not coincide with @ClosureParams
+      annotations.forEach {
+        hasAnnotations = true
+        actual.modifierList.addAnnotation(it.text.substring(1))
+      }
+    }
+    if (hasAnnotations) {
+      ParametrizedClosure.ensureImports(GroovyPsiElementFactory.getInstance(method.project), method.containingFile as GroovyFile)
+    }
+    method.typeParameters.forEach { GrReferenceAdjuster.shortenAllReferencesIn(it.originalElement as GroovyPsiElement?) }
     if (method.isConstructor || method.returnTypeElementGroovy != null && !method.hasTypeParameters()) {
       method.modifierList.setModifierProperty("def", false)
     }

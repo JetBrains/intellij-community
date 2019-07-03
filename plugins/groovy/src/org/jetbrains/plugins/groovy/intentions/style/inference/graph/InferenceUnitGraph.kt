@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.intentions.style.inference.graph
 
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiIntersectionType
+import com.intellij.psi.PsiType
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrder
 import org.jetbrains.plugins.groovy.intentions.style.inference.InferenceGraphNode
 
@@ -46,8 +47,8 @@ data class InferenceUnitGraph(val units: List<InferenceUnitNode>) {
  * Runs inference between nodes in the graph/
  */
 fun determineDependencies(graph: InferenceUnitGraph): InferenceUnitGraph {
-  val condensatedGraph = condensate(graph)
-  val sortedGraph = topologicalOrder(condensatedGraph)
+  val condensedGraph = condense(graph)
+  val sortedGraph = topologicalOrder(condensedGraph)
   val tree = setTreeStructure(sortedGraph)
   val collapsedTree = collapseTreeEdges(tree)
   return propagatePossibleInstantiations(collapsedTree)
@@ -57,9 +58,9 @@ fun determineDependencies(graph: InferenceUnitGraph): InferenceUnitGraph {
  * Handles cyclic dependencies.
  * If there is cyclic dependency among units, than all these units represent one type and can be merged.
  *
- * @return new condensated graph and mapping between nodes and their new parent
+ * @return new condensed graph and mapping between nodes and their new parent
  */
-private fun condensate(graph: InferenceUnitGraph): InferenceUnitGraph {
+private fun condense(graph: InferenceUnitGraph): InferenceUnitGraph {
   val nodeMap = LinkedHashMap<InferenceUnitNode, InferenceGraphNode>()
   val representativeMap = mutableMapOf<InferenceUnit, InferenceUnit>()
   graph.units.forEach { nodeMap[it] = InferenceGraphNode(it); }
@@ -73,7 +74,7 @@ private fun condensate(graph: InferenceUnitGraph): InferenceUnitGraph {
   val components = InferenceVariablesOrder.initNodes(nodeMap.values).map { it.value!! }
   val builder = InferenceUnitGraphBuilder()
   for (component in components) {
-    val representative = component.sortedBy { it.toString() }.first()
+    val representative = component.minBy { it.toString() }!!
     var isForbidden = false
     component.forEach {
       representativeMap[it.core] = representative.core
@@ -247,6 +248,10 @@ private fun propagatePossibleInstantiations(unitGraph: InferenceUnitGraph): Infe
       val isDetached = core.flexible && (subtypes + supertypes).isEmpty()
       val hasNoDependencies = parent == null && subtypes.isEmpty()
       if (mayBeInstantiatedToSupertype) {
+        if (typeInstantiation != PsiType.NULL && typeInstantiation.canonicalText !in unitGraph.units.map { it.core.initialTypeParameter.name }) {
+          // todo: there should be intersection creating
+          builder.setType(parent!!.core, typeInstantiation)
+        }
         builder.setType(core, parent!!.type)
       }
       else if (!(isDetached || hasNoDependencies)) {

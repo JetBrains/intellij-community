@@ -7,6 +7,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrd
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
 
 
@@ -82,4 +83,18 @@ fun PsiType.ensureWildcards(factory: GroovyPsiElementFactory, manager: PsiManage
     }
 
   })
+}
+
+fun isClosureType(type: PsiType?): Boolean {
+  return (type as? PsiClassType)?.rawType()?.equalsToText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE) ?: false
+}
+
+fun PsiSubstitutor.recursiveSubstitute(type: PsiType): PsiType {
+  val substituted = substitute(type)
+  return if (substituted == type) {
+    type
+  }
+  else {
+    recursiveSubstitute(substituted)
+  }
 }
