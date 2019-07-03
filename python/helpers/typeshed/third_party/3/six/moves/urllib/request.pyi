@@ -35,3 +35,5 @@ from urllib.request import urlcleanup as urlcleanup
 from urllib.request import URLopener as URLopener
 from urllib.request import FancyURLopener as FancyURLopener
 # from urllib.request import proxy_bypass as proxy_bypass
+from urllib.request import parse_http_list as parse_http_list
+from urllib.request import parse_keqv_list as parse_keqv_list

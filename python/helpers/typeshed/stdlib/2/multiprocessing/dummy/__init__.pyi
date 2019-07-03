@@ -14,10 +14,10 @@ from Queue import Queue
 
 
 class DummyProcess(threading.Thread):
-    _children = ...  # type: weakref.WeakKeyDictionary
-    _parent = ...  # type: threading.Thread
-    _pid = ...  # type: None
-    _start_called = ...  # type: bool
+    _children: weakref.WeakKeyDictionary
+    _parent: threading.Thread
+    _pid: None
+    _start_called: bool
     def __init__(self, group=..., target=..., name=..., args=..., kwargs=...) -> None: ...
     @property
     def exitcode(self) -> Optional[int]: ...
@@ -27,15 +27,15 @@ Process = DummyProcess
 
 # This should be threading._Condition but threading.pyi exports it as Condition
 class Condition(threading.Condition):
-    notify_all = ...  # type: Any
+    notify_all: Any
 
 class Namespace(object):
     def __init__(self, **kwds) -> None: ...
 
 class Value(object):
-    _typecode = ...  # type: Any
-    _value = ...  # type: Any
-    value = ...  # type: Any
+    _typecode: Any
+    _value: Any
+    value: Any
     def __init__(self, typecode, value, lock=...) -> None: ...
     def _get(self) -> Any: ...
     def _set(self, value) -> None: ...

@@ -23,6 +23,13 @@ Protocol: _SpecialForm = ...
 Callable: _SpecialForm = ...
 Type: _SpecialForm = ...
 ClassVar: _SpecialForm = ...
+if sys.version_info >= (3, 8):
+    Final: _SpecialForm = ...
+    _F = TypeVar('_F', bound=Callable[..., Any])
+    def final(f: _F) -> _F: ...
+    Literal: _SpecialForm = ...
+    # TypedDict is a (non-subscriptable) special form.
+    TypedDict: object = ...
 
 class GenericMeta(type): ...
 
@@ -65,50 +72,55 @@ _KT_co = TypeVar('_KT_co', covariant=True)  # Key type covariant containers.
 _VT_co = TypeVar('_VT_co', covariant=True)  # Value type covariant containers.
 _T_contra = TypeVar('_T_contra', contravariant=True)  # Ditto contravariant.
 _TC = TypeVar('_TC', bound=Type[object])
+_C = TypeVar("_C", bound=Callable)
 
-def runtime(cls: _TC) -> _TC: ...
+def runtime_checkable(cls: _TC) -> _TC: ...
 
-@runtime
+@runtime_checkable
 class SupportsInt(Protocol, metaclass=ABCMeta):
     @abstractmethod
     def __int__(self) -> int: ...
 
-@runtime
+@runtime_checkable
 class SupportsFloat(Protocol, metaclass=ABCMeta):
     @abstractmethod
     def __float__(self) -> float: ...
 
-@runtime
+@runtime_checkable
 class SupportsComplex(Protocol, metaclass=ABCMeta):
     @abstractmethod
     def __complex__(self) -> complex: ...
 
-@runtime
+@runtime_checkable
 class SupportsBytes(Protocol, metaclass=ABCMeta):
     @abstractmethod
     def __bytes__(self) -> bytes: ...
 
-@runtime
+@runtime_checkable
 class SupportsAbs(Protocol[_T_co]):
     @abstractmethod
     def __abs__(self) -> _T_co: ...
 
-@runtime
+@runtime_checkable
 class SupportsRound(Protocol[_T_co]):
+    @overload
     @abstractmethod
-    def __round__(self, ndigits: int = ...) -> _T_co: ...
+    def __round__(self) -> int: ...
+    @overload
+    @abstractmethod
+    def __round__(self, ndigits: int) -> _T_co: ...
 
-@runtime
+@runtime_checkable
 class Reversible(Protocol[_T_co]):
     @abstractmethod
     def __reversed__(self) -> Iterator[_T_co]: ...
 
-@runtime
+@runtime_checkable
 class Sized(Protocol, metaclass=ABCMeta):
     @abstractmethod
     def __len__(self) -> int: ...
 
-@runtime
+@runtime_checkable
 class Hashable(Protocol, metaclass=ABCMeta):
     # TODO: This is special, in that a subclass of a hashable class may not be hashable
     #   (for example, list vs. object). It's not obvious how to represent this. This class
@@ -116,12 +128,12 @@ class Hashable(Protocol, metaclass=ABCMeta):
     @abstractmethod
     def __hash__(self) -> int: ...
 
-@runtime
+@runtime_checkable
 class Iterable(Protocol[_T_co]):
     @abstractmethod
     def __iter__(self) -> Iterator[_T_co]: ...
 
-@runtime
+@runtime_checkable
 class Iterator(Iterable[_T_co], Protocol[_T_co]):
     @abstractmethod
     def __next__(self) -> _T_co: ...
@@ -157,7 +169,7 @@ class Generator(Iterator[_T_co], Generic[_T_co, _T_contra, _V_co]):
 # Awaitable, AsyncIterator, AsyncIterable, Coroutine, Collection.
 # See https: //github.com/python/typeshed/issues/655 for why this is not easy.
 
-@runtime
+@runtime_checkable
 class Awaitable(Protocol[_T_co]):
     @abstractmethod
     def __await__(self) -> Generator[Any, None, _T_co]: ...
@@ -188,12 +200,12 @@ class Coroutine(Awaitable[_V_co], Generic[_T_co, _T_contra, _V_co]):
 class AwaitableGenerator(Awaitable[_V_co], Generator[_T_co, _T_contra, _V_co],
                          Generic[_T_co, _T_contra, _V_co, _S], metaclass=ABCMeta): ...
 
-@runtime
+@runtime_checkable
 class AsyncIterable(Protocol[_T_co]):
     @abstractmethod
     def __aiter__(self) -> AsyncIterator[_T_co]: ...
 
-@runtime
+@runtime_checkable
 class AsyncIterator(AsyncIterable[_T_co],
                     Protocol[_T_co]):
     @abstractmethod
@@ -227,14 +239,14 @@ if sys.version_info >= (3, 6):
         @property
         def ag_running(self) -> bool: ...
 
-@runtime
+@runtime_checkable
 class Container(Protocol[_T_co]):
     @abstractmethod
-    def __contains__(self, x: object) -> bool: ...
+    def __contains__(self, __x: object) -> bool: ...
 
 
 if sys.version_info >= (3, 6):
-    @runtime
+    @runtime_checkable
     class Collection(Iterable[_T_co], Container[_T_co], Protocol[_T_co]):
         # Implement Sized (but don't have it as a base class).
         @abstractmethod
@@ -242,7 +254,7 @@ if sys.version_info >= (3, 6):
 
     _Collection = Collection
 else:
-    @runtime
+    @runtime_checkable
     class _Collection(Iterable[_T_co], Container[_T_co], Protocol[_T_co]):
         # Implement Sized (but don't have it as a base class).
         @abstractmethod
@@ -307,8 +319,7 @@ class AbstractSet(_Collection[_T_co], Generic[_T_co]):
     def __or__(self, s: AbstractSet[_T]) -> AbstractSet[Union[_T_co, _T]]: ...
     def __sub__(self, s: AbstractSet[Any]) -> AbstractSet[_T_co]: ...
     def __xor__(self, s: AbstractSet[_T]) -> AbstractSet[Union[_T_co, _T]]: ...
-    # TODO: Argument can be a more general ABC?
-    def isdisjoint(self, s: AbstractSet[Any]) -> bool: ...
+    def isdisjoint(self, s: Iterable[Any]) -> bool: ...
 
 class MutableSet(AbstractSet[_T], Generic[_T]):
     @abstractmethod
@@ -328,26 +339,42 @@ class MappingView:
     def __len__(self) -> int: ...
 
 class ItemsView(MappingView, AbstractSet[Tuple[_KT_co, _VT_co]], Generic[_KT_co, _VT_co]):
+    def __and__(self, o: Iterable[_T]) -> AbstractSet[Union[Tuple[_KT_co, _VT_co], _T]]: ...
+    def __rand__(self, o: Iterable[_T]) -> AbstractSet[Union[Tuple[_KT_co, _VT_co], _T]]: ...
     def __contains__(self, o: object) -> bool: ...
     def __iter__(self) -> Iterator[Tuple[_KT_co, _VT_co]]: ...
+    def __or__(self, o: Iterable[_T]) -> AbstractSet[Union[Tuple[_KT_co, _VT_co], _T]]: ...
+    def __ror__(self, o: Iterable[_T]) -> AbstractSet[Union[Tuple[_KT_co, _VT_co], _T]]: ...
+    def __sub__(self, o: Iterable[_T]) -> AbstractSet[Union[Tuple[_KT_co, _VT_co], _T]]: ...
+    def __rsub__(self, o: Iterable[_T]) -> AbstractSet[Union[Tuple[_KT_co, _VT_co], _T]]: ...
+    def __xor__(self, o: Iterable[_T]) -> AbstractSet[Union[Tuple[_KT_co, _VT_co], _T]]: ...
+    def __rxor__(self, o: Iterable[_T]) -> AbstractSet[Union[Tuple[_KT_co, _VT_co], _T]]: ...
 
 class KeysView(MappingView, AbstractSet[_KT_co], Generic[_KT_co]):
+    def __and__(self, o: Iterable[_T]) -> AbstractSet[Union[_KT_co, _T]]: ...
+    def __rand__(self, o: Iterable[_T]) -> AbstractSet[Union[_KT_co, _T]]: ...
     def __contains__(self, o: object) -> bool: ...
     def __iter__(self) -> Iterator[_KT_co]: ...
+    def __or__(self, o: Iterable[_T]) -> AbstractSet[Union[_KT_co, _T]]: ...
+    def __ror__(self, o: Iterable[_T]) -> AbstractSet[Union[_KT_co, _T]]: ...
+    def __sub__(self, o: Iterable[_T]) -> AbstractSet[Union[_KT_co, _T]]: ...
+    def __rsub__(self, o: Iterable[_T]) -> AbstractSet[Union[_KT_co, _T]]: ...
+    def __xor__(self, o: Iterable[_T]) -> AbstractSet[Union[_KT_co, _T]]: ...
+    def __rxor__(self, o: Iterable[_T]) -> AbstractSet[Union[_KT_co, _T]]: ...
 
 class ValuesView(MappingView, Iterable[_VT_co], Generic[_VT_co]):
     def __contains__(self, o: object) -> bool: ...
     def __iter__(self) -> Iterator[_VT_co]: ...
 
-@runtime
+@runtime_checkable
 class ContextManager(Protocol[_T_co]):
     def __enter__(self) -> _T_co: ...
-    def __exit__(self, exc_type: Optional[Type[BaseException]],
-                 exc_value: Optional[BaseException],
-                 traceback: Optional[TracebackType]) -> Optional[bool]: ...
+    def __exit__(self, __exc_type: Optional[Type[BaseException]],
+                 __exc_value: Optional[BaseException],
+                 __traceback: Optional[TracebackType]) -> Optional[bool]: ...
 
 if sys.version_info >= (3, 5):
-    @runtime
+    @runtime_checkable
     class AsyncContextManager(Protocol[_T_co]):
         def __aenter__(self) -> Awaitable[_T_co]: ...
         def __aexit__(self, exc_type: Optional[Type[BaseException]],
@@ -490,13 +517,13 @@ class ByteString(Sequence[int], metaclass=ABCMeta): ...
 class Match(Generic[AnyStr]):
     pos = 0
     endpos = 0
-    lastindex = 0
-    lastgroup = ...  # type: AnyStr
-    string = ...  # type: AnyStr
+    lastindex: Optional[int]
+    lastgroup: Optional[AnyStr]
+    string: AnyStr
 
     # The regular expression object whose match() or search() method produced
     # this match instance.
-    re = ...  # type: Pattern[AnyStr]
+    re: Pattern[AnyStr]
 
     def expand(self, template: AnyStr) -> AnyStr: ...
 
@@ -521,9 +548,9 @@ class Match(Generic[AnyStr]):
 
 class Pattern(Generic[AnyStr]):
     flags = 0
-    groupindex = ...  # type: Mapping[str, int]
+    groupindex: Mapping[str, int]
     groups = 0
-    pattern = ...  # type: AnyStr
+    pattern: AnyStr
 
     def search(self, string: AnyStr, pos: int = ...,
                endpos: int = ...) -> Optional[Match[AnyStr]]: ...
@@ -566,10 +593,10 @@ def cast(tp: str, obj: Any) -> Any: ...
 
 # NamedTuple is special-cased in the type checker
 class NamedTuple(tuple):
-    _field_types = ...  # type: collections.OrderedDict[str, Type[Any]]
+    _field_types: collections.OrderedDict[str, Type[Any]]
     _field_defaults: Dict[str, Any] = ...
-    _fields = ...  # type: Tuple[str, ...]
-    _source = ...  # type: str
+    _fields: Tuple[str, ...]
+    _source: str
 
     def __init__(self, typename: str, fields: Iterable[Tuple[str, Any]] = ..., *,
                  verbose: bool = ..., rename: bool = ..., **kwargs: Any) -> None: ...
@@ -580,4 +607,18 @@ class NamedTuple(tuple):
     def _asdict(self) -> collections.OrderedDict[str, Any]: ...
     def _replace(self: _T, **kwargs: Any) -> _T: ...
 
+# Internal mypy fallback type for all typed dicts (does not exist at runtime)
+class _TypedDict(Mapping[str, object], metaclass=ABCMeta):
+    def copy(self: _T) -> _T: ...
+    # Using NoReturn so that only calls using mypy plugin hook that specialize the signature
+    # can go through.
+    def setdefault(self, k: NoReturn, default: object) -> object: ...
+    # Mypy plugin hook for 'pop' expects that 'default' has a type variable type.
+    def pop(self, k: NoReturn, default: _T = ...) -> object: ...
+    def update(self: _T, __m: _T) -> None: ...
+    def __delitem__(self, k: NoReturn) -> None: ...
+
 def NewType(name: str, tp: Type[_T]) -> Type[_T]: ...
+
+# This itself is only available during type checking
+def type_check_only(func_or_cls: _C) -> _C: ...

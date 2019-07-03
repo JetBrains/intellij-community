@@ -7,14 +7,22 @@ matrix:
     - name: "pytype"
       python: 3.6
       env:
-        - TEST_CMD="./tests/pytype_test.py --num-parallel=4"
+        - TEST_CMD="./tests/pytype_test.py"
         - INSTALL="test"
     - name: "mypy"
       env:
         - TEST_CMD="./tests/mypy_test.py"
         - INSTALL="mypy"
+    - name: "mypy new analyzer"
+      env:
+        - TEST_CMD="./tests/mypy_test.py -a"
+        - INSTALL="mypy"
     - name: "mypy self test"
       env: TEST_CMD="./tests/mypy_selftest.py"
+    - name: "mypy self test (new analyzer)"
+      env:
+        - NEWSEMANAL=1
+        - TEST_CMD="./tests/mypy_selftest.py"
     - name: "check file consistency"
       env: TEST_CMD="./tests/check_consistent.py"
     - name: "flake8"

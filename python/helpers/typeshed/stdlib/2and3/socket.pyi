@@ -575,6 +575,8 @@ class socket:
                          __flags: int = ...) -> Tuple[int, List[_CMSG], int, Any]: ...
         def sendmsg(self, __buffers: Iterable[bytes], __ancdata: Iterable[_CMSG] = ...,
                     __flags: int = ..., __address: _Address = ...) -> int: ...
+    if sys.version_info >= (3, 4):
+        def set_inheritable(self, inheritable: bool) -> None: ...
 
 
 # ----- functions -----
@@ -588,7 +590,7 @@ def create_connection(address: Tuple[Optional[str], int],
 def getaddrinfo(
         host: Optional[Union[bytearray, bytes, Text]], port: Union[str, int, None], family: int = ...,
         socktype: int = ..., proto: int = ...,
-        flags: int = ...) -> List[Tuple[int, int, int, str, Tuple[Any, ...]]]:
+        flags: int = ...) -> List[Tuple[AddressFamily, SocketKind, int, str, Tuple[Any, ...]]]:
     ...
 
 def getfqdn(name: str = ...) -> str: ...
