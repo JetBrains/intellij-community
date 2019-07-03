@@ -12,8 +12,8 @@ class JavaLensConfigurable(val settings: JavaLensSettings) : ImmediateConfigurab
   private val inheritCB = CheckBox("Show Inheritors")
 
   override fun createComponent(listener: ChangeListener): javax.swing.JPanel {
-    usagesCB.isSelected = settings.showUsages
-    inheritCB.isSelected = settings.showInheritors
+    usagesCB.isSelected = settings.isShowUsages
+    inheritCB.isSelected = settings.isShowImplementations
     usagesCB.addItemListener { handleChange(listener) }
     inheritCB.addItemListener { handleChange(listener) }
     val panel = com.intellij.ui.layout.panel {
@@ -29,8 +29,8 @@ class JavaLensConfigurable(val settings: JavaLensSettings) : ImmediateConfigurab
   }
 
   private fun handleChange(listener: ChangeListener) {
-    settings.showUsages = usagesCB.isSelected
-    settings.showInheritors = inheritCB.isSelected
+    settings.isShowUsages = usagesCB.isSelected
+    settings.isShowImplementations = inheritCB.isSelected
     listener.settingsChanged()
   }
 }

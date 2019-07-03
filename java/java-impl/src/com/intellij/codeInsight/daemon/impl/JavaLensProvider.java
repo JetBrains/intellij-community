@@ -6,14 +6,23 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaLensSettings;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaTelescope;
 import com.intellij.codeInsight.hints.*;
 import com.intellij.codeInsight.hints.config.SingleLanguageInlayHintsConfigurable;
-import com.intellij.codeInsight.hints.presentation.*;
+import com.intellij.codeInsight.hints.presentation.AttributesTransformerPresentation;
+import com.intellij.codeInsight.hints.presentation.InlayPresentation;
+import com.intellij.codeInsight.hints.presentation.MouseButton;
+import com.intellij.codeInsight.hints.presentation.PresentationFactory;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.InlayModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.EffectType;
@@ -24,7 +33,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import kotlin.Unit;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,8 +44,20 @@ import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.List;
 
-public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
-  private static final SettingsKey<JavaLensSettings> KEY = new SettingsKey<>("JavaLens");
+public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings>, EditorMouseMotionListener {
+  static final SettingsKey<JavaLensSettings> KEY = new SettingsKey<>("JavaLens");
+
+  public JavaLensProvider() {
+    ApplicationManager.getApplication().getMessageBus()
+    .connect().subscribe(JavaLensSettings.JAVA_LENS_SETTINGS_CHANGED, settings->{
+      if (settings.isShowUsages() || settings.isShowImplementations()) {
+        EditorFactory.getInstance().getEventMulticaster().addEditorMouseMotionListener(this);
+      }
+      else {
+        EditorFactory.getInstance().getEventMulticaster().removeEditorMouseMotionListener(this);
+      }
+    });
+  }
 
   public interface InlResult {
     void onClick(@NotNull Editor editor, @NotNull PsiElement element);
@@ -60,9 +80,8 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
       PsiMember member = (PsiMember)element;
       if (member.getName() == null) return true;
 
-
       List<InlResult> hints = new SmartList<>();
-      if (settings.getShowUsages()) {
+      if (settings.isShowUsages()) {
         String usagesHint = JavaTelescope.usagesHint(member, file);
         if (usagesHint != null) {
           hints.add(new InlResult() {
@@ -79,7 +98,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
           });
         }
       }
-      if (settings.getShowInheritors()) {
+      if (settings.isShowImplementations()) {
         if (element instanceof PsiClass) {
           int inheritors = JavaTelescope.collectInheritingClasses((PsiClass)element);
           if (inheritors != 0) {
@@ -148,7 +167,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
           InlayPresentation[] spaceAndSettings = {factory.text("  "), settings(factory, element, editor)};
           InlayPresentation[] withSettings = ArrayUtil.mergeArrays(trimmedSpace, spaceAndSettings);
           return factory.seq(withSettings);
-        }, e -> true, () -> null);
+        }, e -> true);
         sink.addBlockElement(lineStart, true, true, 0, withAppearingSettings);
       }
       return true;
@@ -166,21 +185,13 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
     InlayPresentation text = factory.smallText(result.getRegularText());
 
     return factory.changeOnHover(text, () -> {
-      ((EditorEx)editor).setCustomCursor(this, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
       InlayPresentation hoverText = factory.smallText(result.getHoverText());
-      InlayPresentation onClick = factory.onClick(hoverText, MouseButton.Left, (event, point) -> {
+      InlayPresentation onClick = factory.onClick(hoverText, MouseButton.Left, (___, __) -> {
         result.onClick(editor, element);
-        mouseExited((EditorEx)editor);
         return null;
-      });                 
+      });
       return referenceColor(onClick);
-    }, __ -> true, () -> mouseExited((EditorEx)editor));
-  }
-
-  private Unit mouseExited(@NotNull EditorEx editor) {
-    editor.setCustomCursor(this, null);
-    return null;
+    }, __ -> true);
   }
 
   @NotNull
@@ -254,5 +265,20 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
   @Override
   public boolean isVisibleInSettings() {
     return false;
+  }
+
+  @Override
+  public void mouseMoved(@NotNull EditorMouseEvent e) {
+    Point point = e.getMouseEvent().getPoint();
+    Editor editor = e.getEditor();
+    boolean hoverOverJavaLens = isHoverOverJavaLens(editor, point);
+    Cursor cursor = hoverOverJavaLens ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : null;
+    ((EditorEx)editor).setCustomCursor(this, cursor);
+  }
+
+  private static boolean isHoverOverJavaLens(@NotNull Editor editor, @NotNull Point point) {
+    InlayModel inlayModel = editor.getInlayModel();
+    Inlay at = inlayModel.getElementAt(point);
+    return at != null && InlayHintsSinkImpl.Companion.getSettingsKey(at) == KEY;
   }
 }
