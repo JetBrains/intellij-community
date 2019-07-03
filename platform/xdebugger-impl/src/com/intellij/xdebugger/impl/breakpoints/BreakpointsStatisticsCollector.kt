@@ -38,7 +38,7 @@ class BreakpointsStatisticsCollector : ProjectUsagesCollector() {
         .map {
           val data = FeatureUsageData()
           data.addData("suspendPolicy", breakpointManager.getBreakpointDefaults(it).getSuspendPolicy().toString())
-          data.addData("type", getReportableTypeId(it))
+          addType(it, data)
           newBooleanMetric("not.default.suspend", true, data)
         }
         .toMutableSet()
@@ -83,10 +83,10 @@ class BreakpointsStatisticsCollector : ProjectUsagesCollector() {
   }
 }
 
-fun getReportableTypeId(type: XBreakpointType<*, *>): String {
+fun addType(type: XBreakpointType<*, *>, data: FeatureUsageData) {
   val info = getPluginInfo(type.javaClass)
-  if (info.isDevelopedByJetBrains()) return type.getId()
-  return if (info.isSafeToReport()) "custom.${info.id}" else "custom"
+  data.addPluginInfo(info)
+  data.addData("type", if (info.isDevelopedByJetBrains()) type.getId() else "custom")
 }
 
 class BreakpointsUtilValidator : CustomWhiteListRule() {

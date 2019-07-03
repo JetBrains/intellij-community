@@ -17,7 +17,7 @@ class BreakpointsUsageCollector {
     fun reportNewBreakpoint(breakpoint: XBreakpoint<*>, type: XBreakpointType<*, *>, withinSession: Boolean) {
       if (breakpoint is XBreakpointBase<*, *, *>) {
         val data = FeatureUsageData()
-        data.addData("type", getReportableTypeId(type))
+        addType(type, data)
         data.addData("within.session", withinSession)
         FUCounterUsageLogger.getInstance().logEvent(breakpoint.getProject(), GROUP, "breakpoint.added", data)
       }
