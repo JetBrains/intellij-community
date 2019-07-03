@@ -14,6 +14,7 @@ import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
 import net.miginfocom.layout.BoundSize
 import net.miginfocom.layout.CC
+import net.miginfocom.layout.LayoutUtil
 import java.awt.Component
 import javax.swing.*
 import javax.swing.border.LineBorder
@@ -185,7 +186,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   }
 
   // cell mode not tested with "gear" button, wait first user request
-  override fun setCellMode(value: Boolean, isVerticalFlow: Boolean) {
+  override fun setCellMode(value: Boolean, isVerticalFlow: Boolean, fullWidth: Boolean) {
     if (value) {
       assert(componentIndexWhenCellModeWasEnabled == -1)
       componentIndexWhenCellModeWasEnabled = components.size
@@ -198,6 +199,9 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
         val component = components.get(firstComponentIndex)
         val cc = componentConstraints.getOrPut(component) { CC() }
         cc.split(components.size - firstComponentIndex)
+        if (fullWidth) {
+          cc.spanX(LayoutUtil.INF)
+        }
         if (isVerticalFlow) {
           cc.flowY()
           // because when vertical buttons placed near scroll pane, it wil be centered by baseline (and baseline not applicable for grow elements, so, will be centered)

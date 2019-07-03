@@ -81,18 +81,20 @@ abstract class Row : Cell(), RowBuilder {
 
   /**
    * Shares cell between components.
+   *
+   * @param isFullWidth If true, the cell occupies the full width of the enclosing component.
    */
-  inline fun cell(isVerticalFlow: Boolean = false, init: Cell.() -> Unit) {
-    setCellMode(true, isVerticalFlow)
+  inline fun cell(isVerticalFlow: Boolean = false, isFullWidth: Boolean = false, init: Cell.() -> Unit) {
+    setCellMode(true, isVerticalFlow, isFullWidth)
     init()
-    setCellMode(false, isVerticalFlow)
+    setCellMode(false, isVerticalFlow, isFullWidth)
   }
 
   @PublishedApi
   internal abstract fun createRow(label: String?, buttonGroup: ButtonGroup?): Row
 
   @PublishedApi
-  internal abstract fun setCellMode(value: Boolean, isVerticalFlow: Boolean)
+  internal abstract fun setCellMode(value: Boolean, isVerticalFlow: Boolean, fullWidth: Boolean)
 
   // backward compatibility
   @Deprecated(level = DeprecationLevel.HIDDEN, message = "deprecated")
