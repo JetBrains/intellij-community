@@ -34,7 +34,7 @@ class CircletIdeaAGraphExecutionEntity(
     override var status: ExecutionStatus,
     override val graph: AGraphMetaEntity,
     override var executionMeta: ProjectAction,
-    private val jobsList: List<AJobExecutionEntity<*>>) : AGraphExecutionEntity {
+    val jobsList: MutableList<AJobExecutionEntity<*>>) : AGraphExecutionEntity {
 
     override val jobs: Sequence<AJobExecutionEntity<*>>
         get() = jobsList.asSequence()
@@ -139,20 +139,23 @@ class CircletIdeaGraphStorageTransaction(private val task: ProjectTask) : GraphS
     }
 
     override fun batchCreateJobExecutions(graphExecution: AGraphExecutionEntity, bootstrapJob: ProjectJob.Process.Container): Sequence<AJobExecutionEntity<*>> {
-        val res = mutableListOf<AJobExecutionEntity<*>>()
-        res.addAll(graphExecution.jobs)
-        res.add(CircletIdeaAJobExecutionEntity(
-            idStorage.getOrCreateId(bootstrapJob.id),
-            System.currentTimeMillis(),
-            null,
-            null,
-            ExecutionStatus.SCHEDULED,
-            graphExecution,
-            bootstrapJob,
-            JobStartContext()))
+        if (graphExecution is CircletIdeaAGraphExecutionEntity) {
+            graphExecution.jobsList.add(CircletIdeaAJobExecutionEntity(
+                idStorage.getOrCreateId(bootstrapJob.id),
+                System.currentTimeMillis(),
+                null,
+                null,
+                ExecutionStatus.SCHEDULED,
+                graphExecution,
+                bootstrapJob,
+                JobStartContext()))
 
-        graphExecution.executionMeta = graphExecution.graph.originalMeta.prependJobs(listOf(bootstrapJob))
-        return res.asSequence()
+            graphExecution.executionMeta = graphExecution.graph.originalMeta.prependJobs(listOf(bootstrapJob))
+            return graphExecution.jobs
+        }
+        else {
+            error("Unknown $graphExecution")
+        }
     }
 }
 
