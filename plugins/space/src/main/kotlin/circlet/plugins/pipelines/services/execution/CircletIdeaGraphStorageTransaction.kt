@@ -59,7 +59,6 @@ class CircletIdeaGraphStorageTransaction(private val task: ProjectTask) : GraphS
                     JobStartContext()
                 )
             )
-
         }
 
         return graphExecutionEntity
