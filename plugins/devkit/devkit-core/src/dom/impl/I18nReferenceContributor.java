@@ -31,7 +31,7 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
   private static final String[] EXTENSION_TAG_NAMES = new String[]{
     "localInspection", "globalInspection",
     "configurable", "applicationConfigurable", "projectConfigurable",
-    "editorSmartKeysConfigurable"
+    "editorSmartKeysConfigurable", "editorOptionsProvider"
   };
 
   private static final String[] TYPE_NAME_TAG = new String[]{"typeName"};
