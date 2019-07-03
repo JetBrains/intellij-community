@@ -63,8 +63,7 @@ class CircletTaskRunner(val project: Project) {
         val provider = CircletIdeaJobExecutionProvider(lifetime, { text -> processHandler.println(text) }, { code -> processHandler.destroyProcess()})
         val automationGraphEngineCommon = AutomationGraphEngineCommon(
             provider,
-            SystemTimeTicker(),
-            listOf(provider))
+            SystemTimeTicker())
         val automationStarterCommon = AutomationStarterCommon(
             orgInfo,
             CircletIdeaAutomationGraphStorage(task),
