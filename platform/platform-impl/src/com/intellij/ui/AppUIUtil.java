@@ -107,7 +107,7 @@ public final class AppUIUtil {
     }
 
     if (!images.isEmpty()) {
-      if (!SystemInfo.isMac) {
+      if (!SystemInfoRt.isMac) {
         window.setIconImages(images);
       }
       else if (!ourMacDocIconSet && PluginManagerCore.isRunningFromSources()) {
@@ -143,6 +143,13 @@ public final class AppUIUtil {
   public static Icon loadSmallApplicationIcon(@NotNull ScaleContext ctx, int size) {
     Image image = loadSmallApplicationIconImage(ctx, size);
     return new JBImageIcon(image);
+  }
+
+
+  public static Icon loadApplicationIconImage(@NotNull ScaleContext ctx, int size) {
+    String url = ApplicationInfoImpl.getShadowInstance().getApplicationSvgIconUrl();
+    Image image = loadApplicationIconImage(url, ctx, size, null);
+    return image != null ? new JBImageIcon(ImageUtil.ensureHiDPI(image, ctx)) : null;
   }
 
   /**
