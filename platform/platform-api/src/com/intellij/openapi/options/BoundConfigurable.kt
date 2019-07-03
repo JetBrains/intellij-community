@@ -44,7 +44,7 @@ abstract class BoundCompositeConfigurable<T : UnnamedConfigurable>(
 
   abstract fun createConfigurables(): List<T>
 
-  private val configurables by lazy {
+  protected val configurables by lazy {
     configurablesCreated = true
     createConfigurables()
   }

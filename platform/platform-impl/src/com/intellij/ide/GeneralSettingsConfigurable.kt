@@ -132,7 +132,7 @@ class GeneralSettingsConfigurable: BoundCompositeConfigurable<SearchableConfigur
         }
       }
 
-      for (configurable in createConfigurables()) {
+      for (configurable in configurables) {
         row {
           configurable.createComponent()?.invoke()
         }
