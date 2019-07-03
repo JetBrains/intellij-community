@@ -472,10 +472,7 @@ class DistributionJARsBuilder {
                                                    publishingSpec.includeInCustomPluginRepository &&
                                                    buildContext.proprietaryBuildTools.artifactsServer != null
             //plugins included into the built-in custom plugin repository should use EXACT range because such custom repositories are used for nightly builds and there may be API differences between different builds
-            compatibleBuildRange = includeInBuiltinCustomRepository ? CompatibleBuildRange.EXACT :
-                                   //when publishing plugins with EAP build let's use restricted range to ensure that users will update to a newer version of the plugin when they update to the next EAP or release build
-                                   buildContext.applicationInfo.isEAP ? CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE
-                                                                      : CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
+            compatibleBuildRange = includeInBuiltinCustomRepository ? CompatibleBuildRange.EXACT : CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
           }
 
           setPluginVersionAndSince(patchedPluginXmlPath, getPluginVersion(plugin),
