@@ -61,7 +61,7 @@ internal class GithubPullRequestDetailsComponent(private val dataLoader: GithubP
 
   override fun handleResult(result: GHPullRequest) {
     detailsModel.details = result
-    if (result.state != GHPullRequestState.MERGED && result.mergeable == GHPullRequestMergeableState.UNKNOWN) {
+    if (result.state == GHPullRequestState.OPEN && result.mergeable == GHPullRequestMergeableState.UNKNOWN) {
       ApplicationManager.getApplication().invokeLater {
         dataLoader.findDataProvider(result.number)?.reloadDetails()
       }
