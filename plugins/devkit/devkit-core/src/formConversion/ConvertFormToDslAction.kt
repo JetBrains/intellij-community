@@ -60,6 +60,16 @@ class ConvertFormToDslAction : AnAction() {
     boundInstanceUClass?.qualifiedName?.let {
       imports.add(it)
     }
+    if (dialog.generateDescriptors) {
+      imports.add("com.intellij.application.options.editor.*")
+    }
+
+    val optionDescriptors = if (dialog.generateDescriptors)
+      buildString {
+        generateOptionDescriptors(form.root, this)
+      }
+    else
+      ""
 
     val formText = buildString {
       append("val panel = panel {\n")
@@ -77,13 +87,20 @@ class ConvertFormToDslAction : AnAction() {
         append("import $usedImport\n")
       }
       append("\n")
+
+      if (optionDescriptors.isNotEmpty()) {
+        append("val model = ${dialog.boundInstanceExpression}")
+        append(optionDescriptors)
+        append("\n")
+      }
+
       append("class $uiName")
       if (boundInstanceUClass != null) {
         append("(val model: ${dialog.boundInstanceType.substringAfterLast('.')})")
       }
       append(" {")
 
-      for (binding in form.componentProperties) {
+      for (binding in form.componentBindings) {
         val typeParameters = buildTypeParametersString(module, binding.type)
         append("lateinit var ${binding.name}: ${binding.type.substringAfterLast('.')}$typeParameters\n")
       }
@@ -115,6 +132,28 @@ class ConvertFormToDslAction : AnAction() {
     return UiForm(module, call)
   }
 
+  private fun generateOptionDescriptors(call: FormCall, optionDescriptors: StringBuilder) {
+    val propertyName = call.binding
+    if (call.callee == "checkBox" && propertyName != null && call.args.size >= 2) {
+      optionDescriptors.append("val $propertyName = CheckboxDescriptor(${call.args[0]}, ")
+
+      val propertyBindingArg = if (call.args.size == 2) {
+        "${call.args[1]}.toBinding()"
+      }
+      else {
+        "PropertyBinding(${call.args[1]}, ${call.args[2]})"
+      }
+      optionDescriptors.append(propertyBindingArg).append(")\n")
+
+      call.args.clear()
+      call.args.add(propertyName)
+    }
+
+    for (content in call.contents) {
+      generateOptionDescriptors(content, optionDescriptors)
+    }
+  }
+
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = e.getData(CommonDataKeys.PSI_FILE) is PsiJavaFile &&
                                e.getData(CommonDataKeys.EDITOR) != null
@@ -126,8 +165,9 @@ class FormCall(
   val args: MutableList<String> = mutableListOf(),
   val contents: MutableList<FormCall> = mutableListOf(),
   var origin: IComponent? = null,
-  val binding: String? = null,
-  val bindingType: String? = null
+  var binding: String? = null,
+  var bindingType: String? = null,
+  var generateProperty: Boolean = false
 ) {
   constructor(callee: String, vararg args: String): this(callee) {
     this.args.addAll(args.toList())
@@ -169,21 +209,21 @@ class FormCall(
       }
       builder.append("}")
     }
-    if (binding != null) {
+    if (generateProperty) {
       builder.append(".also { $binding = it }")
     }
     builder.append("\n")
   }
 }
 
-data class ComponentProperty(val name: String, val type: String)
+data class ComponentBinding(val name: String, val type: String)
 
 class UiForm(module: Module, val root: FormCall) {
   private val _imports = sortedSetOf<String>()
-  private val _componentProperties = mutableListOf<ComponentProperty>()
+  private val _componentBindings = mutableListOf<ComponentBinding>()
 
   val imports: Collection<String> get() { return _imports }
-  val componentProperties: Collection<ComponentProperty> get() { return _componentProperties }
+  val componentBindings: Collection<ComponentBinding> get() { return _componentBindings }
 
   init {
     collectUsedImportsAndBindings(module, root)
@@ -203,9 +243,11 @@ class UiForm(module: Module, val root: FormCall) {
         }
       }
     }
-    formCall.bindingType?.let { bindingType ->
-      _imports.add(bindingType)
-      formCall.binding?.let { bindingName -> _componentProperties.add(ComponentProperty(bindingName, bindingType))}
+    if (formCall.generateProperty) {
+      formCall.bindingType?.let { bindingType ->
+        _imports.add(bindingType)
+        formCall.binding?.let { bindingName -> _componentBindings.add(ComponentBinding(bindingName, bindingType))}
+      }
     }
 
     for (content in formCall.contents) {
@@ -277,12 +319,16 @@ class FormToDslConverter(private val module: Module, private val boundInstanceUC
   }
 
   private fun convertComponentOrContainer(component: IComponent): FormCall {
-    if (component is LwContainer) {
+    val result = if (component is LwContainer) {
       return convertContainer(component)
     }
     else {
-      return convertComponent(component).also { it.origin = component }
+      convertComponent(component)
     }
+    result.origin = component
+    result.binding = component.binding
+    result.bindingType = component.componentClassName
+    return result
   }
 
   private fun convertComponent(component: IComponent): FormCall {
@@ -296,6 +342,11 @@ class FormToDslConverter(private val module: Module, private val boundInstanceUC
       "javax.swing.JTextField" -> {
         val methodName = if (propertyBinding?.type?.canonicalText == "int") "intTextField" else "textField"
         FormCall(methodName)
+          .addArgOrDefault(propertyBinding?.bindingCallParameters, "{ \"\" }", "{}")
+      }
+
+      "com.intellij.openapi.ui.TextFieldWithBrowseButton" -> {
+        FormCall("textFieldWithBrowseButton")
           .addArgOrDefault(propertyBinding?.bindingCallParameters, "{ \"\" }", "{}")
       }
 
@@ -314,9 +365,7 @@ class FormToDslConverter(private val module: Module, private val boundInstanceUC
         val typeParameters = buildTypeParametersString(module, component.componentClassName)
 
         val classShortName = component.componentClassName.substringAfterLast('.')
-        FormCall("$classShortName$typeParameters()",
-                 binding = component.binding,
-                 bindingType = component.componentClassName)
+        FormCall("$classShortName$typeParameters()", generateProperty = true)
       }
     }
   }
@@ -378,10 +427,14 @@ private fun IComponent.getPropertyValue(name: String): Any? {
 
 fun FormCall.checkConvertButtonGroup(ids: Array<String>) {
   if (contents.any { it.isRadioButtonRow(ids) }) {
+    val firstIndex = contents.indexOfFirst { it.isRadioButtonRow(ids) }
+    val lastIndex = contents.indexOfLast { it.isRadioButtonRow(ids) }
+
     val buttonGroupNode = FormCall("buttonGroup")
-    buttonGroupNode.contents.addAll(contents)
-    contents.clear()
-    contents.add(buttonGroupNode)
+    val buttonGroupControls = contents.subList(firstIndex, lastIndex + 1)
+    buttonGroupNode.contents.addAll(buttonGroupControls)
+    contents.removeAll(buttonGroupControls)
+    contents.add(firstIndex, buttonGroupNode)
 
     return
   }

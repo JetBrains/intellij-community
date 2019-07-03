@@ -17,6 +17,8 @@ class ConvertFormDialog(val project: Project, var className: String) : DialogWra
   }
 
   var boundInstanceType: String = ""
+  var boundInstanceExpression: String = ""
+  var generateDescriptors = false
 
   override fun createCenterPanel(): JComponent? {
     return panel {
@@ -27,6 +29,12 @@ class ConvertFormDialog(val project: Project, var className: String) : DialogWra
         EditorTextFieldWithBrowseButton(project, true)()
           .withBinding(EditorTextFieldWithBrowseButton::getText, EditorTextFieldWithBrowseButton::setText,
                        ::boundInstanceType.toBinding())
+      }
+      row("Bound instance expression") {
+        textField(::boundInstanceExpression)
+      }
+      row {
+        checkBox("Generate descriptors for Search Everywhere", ::generateDescriptors)
       }
     }
   }
