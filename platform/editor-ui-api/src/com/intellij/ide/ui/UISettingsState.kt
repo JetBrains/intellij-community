@@ -155,7 +155,7 @@ class UISettingsState : BaseState() {
   var dndWithPressedAltOnly by property(false)
   @get:OptionTag("DEFAULT_AUTOSCROLL_TO_SOURCE")
   var defaultAutoScrollToSource by property(false)
-  @Transient
+  @get:Transient
   var presentationMode: Boolean = false
   @get:OptionTag("PRESENTATION_MODE_FONT_SIZE")
   var presentationModeFontSize by property(24)
