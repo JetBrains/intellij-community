@@ -5,7 +5,6 @@ import circlet.pipelines.engine.*
 import circlet.pipelines.engine.api.*
 import circlet.pipelines.engine.storage.*
 import circlet.pipelines.engine.utils.*
-import circlet.pipelines.utils.*
 import libraries.common.*
 import libraries.klogging.*
 
@@ -24,7 +23,8 @@ class AfterTransactionCallback {
 
 class CircletIdeaAGraphMetaEntity(
     override val id: Long,
-    override val originalMeta: ProjectAction) : AGraphMetaEntity
+    override val originalMeta: ProjectAction
+) : AGraphMetaEntity
 
 class CircletIdeaAGraphExecutionEntity(
     override val id: Long,
@@ -34,7 +34,8 @@ class CircletIdeaAGraphExecutionEntity(
     override var status: ExecutionStatus,
     override val graph: AGraphMetaEntity,
     override var executionMeta: ProjectAction,
-    val jobsList: MutableList<AJobExecutionEntity<*>>) : AGraphExecutionEntity {
+    val jobsList: MutableList<AJobExecutionEntity<*>>
+) : AGraphExecutionEntity {
 
     override val jobs: Sequence<AJobExecutionEntity<*>>
         get() = jobsList.asSequence()
@@ -49,14 +50,14 @@ class CircletIdeaAJobExecutionEntity(
     override var status: ExecutionStatus,
     override val graph: AGraphExecutionEntity,
     override val meta: ProjectJob.Process.Container,
-    override val context: JobStartContext)
-    : AContainerExecutionEntity
+    override val context: JobStartContext
+) : AContainerExecutionEntity
 
 
 class TaskLongIdStorage {
-    private var nextId : Long = 0
+    private var nextId: Long = 0
     private val map = mutableMapOf<String, Long>()
-    fun getOrCreateId(stringId: String) : Long {
+    fun getOrCreateId(stringId: String): Long {
         return map.getOrPut(stringId) {
             nextId++
         }
@@ -100,18 +101,22 @@ class CircletIdeaGraphStorageTransaction(private val task: ProjectTask) : GraphS
             ExecutionStatus.PENDING,
             metaTask,
             metaTask.originalMeta,
-            jobs)
+            jobs
+        )
 
         metaTask.originalMeta.jobs.traverseJobs {
-            jobs.add(CircletIdeaAJobExecutionEntity(
-                idStorage.getOrCreateId(it.id),
-                now,
-                null,
-                null,
-                ExecutionStatus.SCHEDULED,
-                graphExecutionEntity,
-                it,
-                JobStartContext()))
+            jobs.add(
+                CircletIdeaAJobExecutionEntity(
+                    idStorage.getOrCreateId(it.id),
+                    now,
+                    null,
+                    null,
+                    ExecutionStatus.SCHEDULED,
+                    graphExecutionEntity,
+                    it,
+                    JobStartContext()
+                )
+            )
 
         }
 
@@ -140,19 +145,21 @@ class CircletIdeaGraphStorageTransaction(private val task: ProjectTask) : GraphS
 
     override fun batchCreateJobExecutions(graphExecution: AGraphExecutionEntity, bootstrapJob: ProjectJob.Process.Container) {
         if (graphExecution is CircletIdeaAGraphExecutionEntity) {
-            graphExecution.jobsList.add(CircletIdeaAJobExecutionEntity(
-                idStorage.getOrCreateId(bootstrapJob.id),
-                System.currentTimeMillis(),
-                null,
-                null,
-                ExecutionStatus.SCHEDULED,
-                graphExecution,
-                bootstrapJob,
-                JobStartContext()))
+            graphExecution.jobsList.add(
+                CircletIdeaAJobExecutionEntity(
+                    idStorage.getOrCreateId(bootstrapJob.id),
+                    System.currentTimeMillis(),
+                    null,
+                    null,
+                    ExecutionStatus.SCHEDULED,
+                    graphExecution,
+                    bootstrapJob,
+                    JobStartContext()
+                )
+            )
 
             graphExecution.executionMeta = graphExecution.graph.originalMeta.prependJobs(listOf(bootstrapJob))
-        }
-        else {
+        } else {
             error("Unknown $graphExecution")
         }
     }
@@ -167,12 +174,14 @@ class CircletIdeaAutomationGraphStorage(private val task: ProjectTask) : Automat
     }
 }
 
-class CircletIdeaAutomationBootstrapper: AutomationBootstrapper {
+class CircletIdeaAutomationBootstrapper : AutomationBootstrapper {
     override fun createBootstrapJob(execution: AGraphExecutionEntity, repository: RepositoryData, orgUrl: String): ProjectJob.Process.Container {
         val container = ProjectJob.Process.Container(
             "hello-world",
             ProjectJob.ProcessData(
-                exec = ProjectJob.ProcessExecutable.ContainerExecutable.DefaultCommand(emptyList())))
+                exec = ProjectJob.ProcessExecutable.ContainerExecutable.DefaultCommand(emptyList())
+            )
+        )
         container.applyIds()
         return container
     }
@@ -198,7 +207,7 @@ class CircletIdeaJobExecutionProvider : JobExecutionProvider<CircletIdeaGraphSto
     private var savedHandler: ((tx: CircletIdeaGraphStorageTransaction, job: AJobExecutionEntity<*>, newStatus: ExecutionStatus) -> Unit)? = null
 
     override fun scheduleExecution(tx: CircletIdeaGraphStorageTransaction, jobs: Iterable<AJobExecutionEntity<*>>) {
-        jobs.forEach {job ->
+        jobs.forEach { job ->
             when (job) {
                 is CircletIdeaAJobExecutionEntity -> {
                     val image = job.meta.image
@@ -215,7 +224,7 @@ class CircletIdeaJobExecutionProvider : JobExecutionProvider<CircletIdeaGraphSto
 
     override fun subscribeIdempotently(handler: (tx: CircletIdeaGraphStorageTransaction, job: AJobExecutionEntity<*>, newStatus: ExecutionStatus) -> Unit) {
         if (savedHandler != null) {
-            logger.warn { "subscribeIdempotently. savedHandler != null"}
+            logger.warn { "subscribeIdempotently. savedHandler != null" }
         }
         this.savedHandler = handler
     }
