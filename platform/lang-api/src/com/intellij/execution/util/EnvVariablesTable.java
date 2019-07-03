@@ -221,9 +221,12 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
     @Override
     public void performPaste(@NotNull DataContext dataContext) {
       String content = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
+      if (StringUtil.isEmpty(content)) {
+        return;
+      }
       Map<String, String> map = parseEnvsFromText(content);
-      if (map.isEmpty() && !StringUtil.isEmpty(content)) {
-        TableView<EnvironmentVariable> view = getTableView();
+      TableView<EnvironmentVariable> view = getTableView();
+      if ((view.isEditing() || map.isEmpty())) {
         int row = view.getEditingRow();
         int column = view.getEditingColumn();
         if (row < 0 || column < 0) {
