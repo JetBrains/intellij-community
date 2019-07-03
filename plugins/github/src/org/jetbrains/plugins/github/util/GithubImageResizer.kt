@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.util
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Computable
@@ -38,5 +39,10 @@ class GithubImageResizer(private val progressManager: ProgressManager) : Disposa
 
   companion object {
     private fun getThreadPoolSize() = Math.max(Runtime.getRuntime().availableProcessors() / 2, 1)
+
+    @JvmStatic
+    fun getInstance(): GithubImageResizer {
+      return service()
+    }
   }
 }

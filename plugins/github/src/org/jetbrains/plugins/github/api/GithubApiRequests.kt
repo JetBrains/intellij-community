@@ -35,14 +35,27 @@ object GithubApiRequests {
     object Repos : Entity("/repos") {
       @JvmOverloads
       @JvmStatic
-      fun pages(server: GithubServerPath, allAssociated: Boolean = true, pagination: GithubRequestPagination? = null) =
-        GithubApiPagesLoader.Request(get(server, allAssociated, pagination), ::get)
+      fun pages(server: GithubServerPath,
+                type: Type = Type.DEFAULT,
+                visibility: Visibility = Visibility.DEFAULT,
+                affiliation: Affiliation = Affiliation.DEFAULT,
+                pagination: GithubRequestPagination? = null) =
+        GithubApiPagesLoader.Request(get(server, type, visibility, affiliation, pagination), ::get)
 
       @JvmOverloads
       @JvmStatic
-      fun get(server: GithubServerPath, allAssociated: Boolean = true, pagination: GithubRequestPagination? = null) =
-        get(getUrl(server, CurrentUser.urlSuffix, urlSuffix,
-                   getQuery(if (allAssociated) "" else "type=owner", pagination?.toString().orEmpty())))
+      fun get(server: GithubServerPath,
+              type: Type = Type.DEFAULT,
+              visibility: Visibility = Visibility.DEFAULT,
+              affiliation: Affiliation = Affiliation.DEFAULT,
+              pagination: GithubRequestPagination? = null): GithubApiRequest<GithubResponsePage<GithubRepo>> {
+        if (type != Type.DEFAULT && (visibility != Visibility.DEFAULT || affiliation != Affiliation.DEFAULT)) {
+          throw IllegalArgumentException("Param 'type' should not be used together with 'visibility' or 'affiliation'")
+        }
+
+        return get(getUrl(server, CurrentUser.urlSuffix, urlSuffix,
+                          getQuery(type.toString(), visibility.toString(), affiliation.toString(), pagination?.toString().orEmpty())))
+      }
 
       @JvmStatic
       fun get(url: String) = Get.jsonPage<GithubRepo>(url).withOperationName("get user repositories")
@@ -52,6 +65,18 @@ object GithubApiRequests {
         Post.json<GithubRepo>(getUrl(server, CurrentUser.urlSuffix, urlSuffix),
                               GithubRepoRequest(name, description, private, autoInit))
           .withOperationName("create user repository")
+    }
+
+    object Orgs : Entity("/orgs") {
+      @JvmOverloads
+      @JvmStatic
+      fun pages(server: GithubServerPath, pagination: GithubRequestPagination? = null) =
+        GithubApiPagesLoader.Request(get(server, pagination), ::get)
+
+      fun get(server: GithubServerPath, pagination: GithubRequestPagination? = null) =
+        get(getUrl(server, CurrentUser.urlSuffix, urlSuffix, getQuery(pagination?.toString().orEmpty())))
+
+      fun get(url: String) = Get.jsonPage<GithubOrg>(url).withOperationName("get user organizations")
     }
 
     object RepoSubs : Entity("/subscriptions") {
@@ -72,12 +97,13 @@ object GithubApiRequests {
 
     object Repos : Entity("/repos") {
       @JvmStatic
-      fun pages(server: GithubServerPath, organisation: String) = GithubApiPagesLoader.Request(get(server, organisation), ::get)
+      fun pages(server: GithubServerPath, organisation: String, pagination: GithubRequestPagination? = null) =
+        GithubApiPagesLoader.Request(get(server, organisation, pagination), ::get)
 
       @JvmOverloads
       @JvmStatic
       fun get(server: GithubServerPath, organisation: String, pagination: GithubRequestPagination? = null) =
-        get(getUrl(server, Organisations.urlSuffix, "/", organisation, urlSuffix, pagination?.toString().orEmpty()))
+        get(getUrl(server, Organisations.urlSuffix, "/", organisation, urlSuffix, getQuery(pagination?.toString().orEmpty())))
 
       @JvmStatic
       fun get(url: String) = Get.jsonPage<GithubRepo>(url).withOperationName("get organisation repositories")

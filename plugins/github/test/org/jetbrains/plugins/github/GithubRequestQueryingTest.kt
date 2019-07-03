@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GithubRepo
 import org.jetbrains.plugins.github.api.data.request.GithubRequestPagination
+import org.jetbrains.plugins.github.api.data.request.Type
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.test.GithubTest
 
@@ -39,8 +40,9 @@ class GithubRequestQueryingTest : GithubTest() {
     retry {
       val result = GithubApiPagesLoader
         .loadAll(mainAccount.executor, EmptyProgressIndicator(),
-                 GithubApiRequests.CurrentUser.Repos.pages(mainAccount.account.server, false,
-                                                           GithubRequestPagination(pageSize = 2)))
+                 GithubApiRequests.CurrentUser.Repos.pages(mainAccount.account.server,
+                                                           type = Type.OWNER,
+                                                           pagination = GithubRequestPagination(pageSize = 2)))
 
       assertContainsElements(result, mainRepos)
       assertDoesntContain(result, secondaryRepos)
@@ -52,7 +54,8 @@ class GithubRequestQueryingTest : GithubTest() {
     retry {
       val result = GithubApiPagesLoader
         .loadAll(mainAccount.executor, EmptyProgressIndicator(),
-                 GithubApiRequests.CurrentUser.Repos.pages(mainAccount.account.server, false))
+                 GithubApiRequests.CurrentUser.Repos.pages(mainAccount.account.server,
+                                                           type = Type.OWNER))
 
       assertContainsElements(result, mainRepos)
       assertDoesntContain(result, orgRepo)

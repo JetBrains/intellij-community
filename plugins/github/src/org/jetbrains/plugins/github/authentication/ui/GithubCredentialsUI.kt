@@ -18,8 +18,10 @@ import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.exceptions.GithubParseException
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils
 import org.jetbrains.plugins.github.ui.util.Validator
+import java.awt.event.ActionListener
 import java.net.UnknownHostException
 import java.util.function.Supplier
+import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JPasswordField
@@ -35,6 +37,25 @@ sealed class GithubCredentialsUI {
 
   abstract fun handleAcquireError(error: Throwable): ValidationInfo
   abstract fun setBusy(busy: Boolean)
+
+  protected val loginButton = JButton("Log In").apply { isVisible = false }
+  protected val cancelButton = JButton("Cancel").apply { isVisible = false }
+
+  fun setLoginAction(actionListener: ActionListener) {
+    loginButton.addActionListener(actionListener)
+  }
+
+  fun setCancelAction(actionListener: ActionListener) {
+    cancelButton.addActionListener(actionListener)
+  }
+
+  fun setLoginButtonVisible(visible: Boolean) {
+    loginButton.isVisible = visible
+  }
+
+  fun setCancelButtonVisible(visible: Boolean) {
+    cancelButton.isVisible = visible
+  }
 
   internal class PasswordUI(private val serverTextField: ExtendableTextField,
                             private val clientName: String,
@@ -58,7 +79,7 @@ sealed class GithubCredentialsUI {
     override fun getPanel(): JPanel = JBUI.Panels.simplePanel()
       .addToTop(panel {
         row {
-          if (!dialogMode) label("Log in to GitHub", bold = true)
+          if (!dialogMode) label("Log In to GitHub", bold = true)
           right { switchUiLink() }
         }
       })
@@ -66,6 +87,12 @@ sealed class GithubCredentialsUI {
         row("Server:") { serverTextField() }
         row("Login:") { loginTextField() }
         row("Password:") { passwordField(comment = "Password is not saved and used only to acquire GitHub token") }
+        row("") {
+          cell {
+            loginButton()
+            cancelButton()
+          }
+        }
       })
 
     override fun getPreferredFocus() = if (loginTextField.isEditable && loginTextField.text.isEmpty()) loginTextField else passwordField
@@ -132,13 +159,19 @@ sealed class GithubCredentialsUI {
     override fun getPanel() = JBUI.Panels.simplePanel()
       .addToTop(panel {
         row {
-          if (!dialogMode) label("Log in to GitHub", bold = true)
+          if (!dialogMode) label("Log In to GitHub", bold = true)
           right { switchUiLink() }
         }
       })
       .addToCenter(panel {
         row("Server:") { serverTextField() }
         row("Token:") { tokenTextField() }
+        row("") {
+          cell {
+            loginButton()
+            cancelButton()
+          }
+        }
       })
 
 

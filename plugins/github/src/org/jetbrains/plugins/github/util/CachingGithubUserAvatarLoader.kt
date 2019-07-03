@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.util
 
 import com.google.common.cache.CacheBuilder
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -70,6 +71,11 @@ class CachingGithubUserAvatarLoader(private val progressManager: ProgressManager
   }
 
   companion object {
+    @JvmStatic
+    fun getInstance(): CachingGithubUserAvatarLoader {
+      return service()
+    }
+
     private const val MAXIMUM_ICON_SIZE = 40
   }
 }

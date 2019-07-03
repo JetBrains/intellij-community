@@ -26,5 +26,6 @@ object VcsCloneDialogUiSpec {
   object Components {
     // insets for component without full-height scrollbar
     val rightInsets = JBUI.insetsRight((UIUtil.PANEL_REGULAR_INSETS.right))
+    val avatarSize = JBValue.UIInteger("VcsCloneDialog.Accounts.AvatarSize", 22)
   }
 }

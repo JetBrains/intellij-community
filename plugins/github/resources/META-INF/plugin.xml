@@ -45,6 +45,8 @@
         implementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountsStatisticsCollector"/>
 
     <diff.DiffExtension implementation="org.jetbrains.plugins.github.pullrequest.comment.GithubPullRequestCommentsDiffExtension"/>
+    <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
+        implementation="org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtension"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">

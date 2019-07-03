@@ -7,6 +7,11 @@ class GithubRequestPagination @JvmOverloads constructor(val pageNumber: Int = 1,
   }
 
   companion object {
+    /**
+     * Max page size
+     */
     const val DEFAULT_PAGE_SIZE = 100
+
+    val DEFAULT = GithubRequestPagination()
   }
 }
