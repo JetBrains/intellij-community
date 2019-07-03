@@ -6,6 +6,7 @@ import circlet.pipelines.engine.api.*
 import circlet.pipelines.engine.storage.*
 import circlet.pipelines.engine.utils.*
 import circlet.pipelines.utils.*
+import libraries.common.*
 import libraries.klogging.*
 
 //copypasted from server. todo remove
