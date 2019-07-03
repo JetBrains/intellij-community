@@ -33,9 +33,9 @@ class CircletIdeaAGraphExecutionEntity(
     override var status: ExecutionStatus,
     override val graph: AGraphMetaEntity,
     override var executionMeta: ProjectAction,
-    private val jobsList: List<AJobExecutionEntity>) : AGraphExecutionEntity {
+    private val jobsList: List<AJobExecutionEntity<*>>) : AGraphExecutionEntity {
 
-    override val jobs: Sequence<AJobExecutionEntity>
+    override val jobs: Sequence<AJobExecutionEntity<*>>
         get() = jobsList.asSequence()
 }
 
@@ -47,8 +47,9 @@ class CircletIdeaAJobExecutionEntity(
     override var endTime: Long?,
     override var status: ExecutionStatus,
     override val graph: AGraphExecutionEntity,
-    override val meta: ProjectJob.Process<*, *>,
-    override val context: JobStartContext) : AJobExecutionEntity
+    override val meta: ProjectJob.Process.Container,
+    override val context: JobStartContext)
+    : AContainerExecutionEntity
 
 
 class TaskLongIdStorage {
@@ -77,7 +78,7 @@ class CircletIdeaGraphStorageTransaction(private val task: ProjectTask) : GraphS
         callback.afterTransaction(body)
     }
 
-    override fun getAllNotFinishedJobs(graphExecution: AGraphExecutionEntity): Iterable<AJobExecutionEntity> {
+    override fun getAllNotFinishedJobs(graphExecution: AGraphExecutionEntity): Iterable<AJobExecutionEntity<*>> {
         TODO("getAllNotFinishedJobs not implemented")
     }
 
@@ -89,7 +90,7 @@ class CircletIdeaGraphStorageTransaction(private val task: ProjectTask) : GraphS
     override fun createTaskExecution(metaTask: AGraphMetaEntity, taskStartContext: TaskStartContext): AGraphExecutionEntity {
         logger.debug { "createTaskExecution $metaTask" }
         val now = System.currentTimeMillis()
-        val jobs = mutableListOf<AJobExecutionEntity>()
+        val jobs = mutableListOf<AJobExecutionEntity<*>>()
         val graphExecutionEntity = CircletIdeaAGraphExecutionEntity(
             metaTask.id,
             now,
@@ -136,8 +137,8 @@ class CircletIdeaGraphStorageTransaction(private val task: ProjectTask) : GraphS
         logger.debug { "createSshKey $fingerPrint" }
     }
 
-    override fun batchCreateJobExecutions(graphExecution: AGraphExecutionEntity, bootstrapJob: ProjectJob.Process.Container): Sequence<AJobExecutionEntity> {
-        val res = mutableListOf<AJobExecutionEntity>()
+    override fun batchCreateJobExecutions(graphExecution: AGraphExecutionEntity, bootstrapJob: ProjectJob.Process.Container): Sequence<AJobExecutionEntity<*>> {
+        val res = mutableListOf<AJobExecutionEntity<*>>()
         res.addAll(graphExecution.jobs)
         res.add(CircletIdeaAJobExecutionEntity(
             idStorage.getOrCreateId(bootstrapJob.id),
@@ -154,8 +155,8 @@ class CircletIdeaGraphStorageTransaction(private val task: ProjectTask) : GraphS
     }
 }
 
-class CircletIdeaAutomationGraphStorage(private val task: ProjectTask) : AutomationGraphStorage {
-    override suspend fun <T> invoke(body: (GraphStorageTransaction) -> T): T {
+class CircletIdeaAutomationGraphStorage(private val task: ProjectTask) : AutomationGraphStorage<CircletIdeaGraphStorageTransaction> {
+    override suspend fun <T> invoke(body: (CircletIdeaGraphStorageTransaction) -> T): T {
         val tx = CircletIdeaGraphStorageTransaction(task)
         val res = body(tx)
         tx.executeAfterTransactionHooks()
@@ -187,33 +188,33 @@ class CircletIdeaAutomationTracer : AutomationTracer {
     }
 }
 
-class CircletIdeaJobExecutionProvider : JobExecutionProvider {
+class CircletIdeaJobExecutionProvider : JobExecutionProvider<CircletIdeaGraphStorageTransaction> {
 
     companion object : KLogging()
 
-    private var savedHandler: ((tx: GraphStorageTransaction, job: AJobExecutionEntity, newStatus: ExecutionStatus) -> Unit)? = null
+    private var savedHandler: ((tx: CircletIdeaGraphStorageTransaction, job: AJobExecutionEntity<*>, newStatus: ExecutionStatus) -> Unit)? = null
 
-    override fun scheduleExecution(jobs: Iterable<AJobExecutionEntity>) {
-        TODO("not implemented CircletIdeaJobExecutionProvider::scheduleExecution ${jobs.joinToString()}") //To change body of created functions use File | Settings | File Templates.
+    override fun scheduleExecution(tx: CircletIdeaGraphStorageTransaction, jobs: Iterable<AJobExecutionEntity<*>>) {
+        TODO("scheduleExecution not implemented")
     }
 
-    override fun scheduleTermination(jobs: Iterable<AJobExecutionEntity>) {
-        TODO("not implemented CircletIdeaJobExecutionProvider::scheduleTermination") //To change body of created functions use File | Settings | File Templates.
+    override fun scheduleTermination(jobs: Iterable<AJobExecutionEntity<*>>) {
+        TODO("scheduleTermination not implemented")
     }
 
-    override fun subscribeIdempotently(handler: (tx: GraphStorageTransaction, job: AJobExecutionEntity, newStatus: ExecutionStatus) -> Unit) {
+    override fun subscribeIdempotently(handler: (tx: CircletIdeaGraphStorageTransaction, job: AJobExecutionEntity<*>, newStatus: ExecutionStatus) -> Unit) {
         if (savedHandler != null) {
             logger.warn { "subscribeIdempotently. savedHandler != null"}
         }
         this.savedHandler = handler
     }
 
-    override fun onBeforeGraphStatusChanged(tx: GraphStorageTransaction, entity: AGraphExecutionEntity, oldStatus: ExecutionStatus, newStatus: ExecutionStatus) {
-        TODO("not implemented CircletIdeaJobExecutionProvider::onBeforeGraphStatusChanged") //To change body of created functions use File | Settings | File Templates.
+    override fun onBeforeGraphStatusChanged(tx: CircletIdeaGraphStorageTransaction, entity: AGraphExecutionEntity, oldStatus: ExecutionStatus, newStatus: ExecutionStatus) {
+        TODO("onBeforeGraphStatusChanged not implemented")
     }
 
-    override fun onBeforeJobStatusChanged(tx: GraphStorageTransaction, entity: AJobExecutionEntity, oldStatus: ExecutionStatus, newStatus: ExecutionStatus) {
-        TODO("not implemented CircletIdeaJobExecutionProvider::onBeforeJobStatusChanged") //To change body of created functions use File | Settings | File Templates.
+    override fun onBeforeJobStatusChanged(tx: CircletIdeaGraphStorageTransaction, entity: AJobExecutionEntity<*>, oldStatus: ExecutionStatus, newStatus: ExecutionStatus) {
+        TODO("onBeforeJobStatusChanged not implemented")
     }
 
 }
