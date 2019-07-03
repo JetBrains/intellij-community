@@ -3,7 +3,6 @@ package com.jetbrains.python.refactoring
 
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.refactoring.util.CommonRefactoringUtil
-import com.jetbrains.python.codeInsight.PyCodeInsightSettings
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyElement
@@ -12,7 +11,6 @@ import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
 import com.jetbrains.python.refactoring.inline.PyInlineFunctionHandler
 import com.jetbrains.python.refactoring.inline.PyInlineFunctionProcessor
-import junit.framework.TestCase
 
 /**
  * @author Aleksei.Kniazev
@@ -28,7 +26,7 @@ class PyInlineFunctionTest : PyTestCase() {
     var element = TargetElementUtil.findTargetElement(myFixture.editor, TargetElementUtil.getInstance().referenceSearchFlags)
     if (element!!.containingFile is PyiFile) element = PyiUtil.getOriginalElement(element as PyElement)
     val reference = TargetElementUtil.findReference(myFixture.editor)
-    TestCase.assertTrue(element is PyFunction)
+    assertTrue(element is PyFunction)
     PyInlineFunctionProcessor(myFixture.project, myFixture. editor, element as PyFunction, reference, inlineThis, remove).run()
     myFixture.checkResultByFile("$testName/main.after.py")
   }
@@ -44,10 +42,10 @@ class PyInlineFunctionTest : PyTestCase() {
       else {
         PyInlineFunctionHandler.getInstance().inlineElement(myFixture.project, myFixture.editor, element)
       }
-      TestCase.fail("Expected error: $expectedError, but got none")
+      fail("Expected error: $expectedError, but got none")
     }
     catch (e: CommonRefactoringUtil.RefactoringErrorHintException) {
-      TestCase.assertEquals(expectedError, e.message)
+      assertEquals(expectedError, e.message)
     }
   }
 
@@ -60,7 +58,6 @@ class PyInlineFunctionTest : PyTestCase() {
   fun testMultipleReturns() = doTest()
   fun testImporting() = doTest()
   fun testImportAs() = doTest()
-  //fun testExistingImports() = doTest()
   fun testMethodInsideClass() = doTest()
   fun testMethodOutsideClass() = doTest()
   fun testNoReturnsAsExpressionStatement() = doTest()
@@ -85,8 +82,10 @@ class PyInlineFunctionTest : PyTestCase() {
   fun testKeepingComments() = doTest()
   fun testInvocationOnImport() = doTest(inlineThis = false, remove = true)
   fun testImportedLocally() = doTest(inlineThis = false, remove = true)
-  //fun testInlineImportedAs() = doTest(inlineThis = false)
   fun testSelfUsageDetection() = doTest(inlineThis = false, remove = true)
+  fun testIgnoreSolePassStatement() = doTest()
+  fun testInlineDocstringOnlyFunction() = doTest()
+  fun testTurnDocstringOnlyFunctionIntoPass() = doTest()
   fun testOptimizeImportsAtDeclarationSite() {
     doTest(inlineThis = false, remove = true)
     val testName = getTestName(true)
@@ -113,6 +112,7 @@ class PyInlineFunctionTest : PyTestCase() {
   fun testOverridden() = doTestError("Cannot inline overridden methods")
   fun testNested() = doTestError("Cannot inline functions with another function declaration")
   fun testInterruptedFlow() = doTestError("Cannot inline functions that interrupt control flow")
+  fun testFunctionFromBinaryStub() = doTestError("Cannot inline function from binary module")
   fun testUsedAsDecorator() = doTestError("Function foo is used as a decorator and cannot be inlined. Function definition will not be removed", isReferenceError = true)
   fun testUsedAsReference() = doTestError("Function foo is used as a reference and cannot be inlined. Function definition will not be removed", isReferenceError = true)
   fun testUsesArgumentUnpacking() = doTestError("Function foo uses argument unpacking and cannot be inlined. Function definition will not be removed", isReferenceError = true)

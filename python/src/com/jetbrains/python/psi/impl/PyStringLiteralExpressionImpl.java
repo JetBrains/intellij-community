@@ -28,6 +28,7 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
@@ -202,6 +203,11 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   @NotNull
   public final PsiReference[] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this, Hints.NO_HINTS);
+  }
+
+  @Override
+  public PsiReference getReference() {
+    return ArrayUtil.getFirstElement(getReferences());
   }
 
   @Override

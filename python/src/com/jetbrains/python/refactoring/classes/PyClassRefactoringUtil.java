@@ -57,7 +57,6 @@ public final class PyClassRefactoringUtil {
   private static final Key<PsiNamedElement> ENCODED_IMPORT = Key.create("PyEncodedImport");
   private static final Key<Boolean> ENCODED_USE_FROM_IMPORT = Key.create("PyEncodedUseFromImport");
   private static final Key<String> ENCODED_IMPORT_AS = Key.create("PyEncodedImportAs");
-  private static final Key<PyReferenceExpression> REPLACEMENT_EXPRESSION = Key.create("PyReplacementExpression");
 
 
   private PyClassRefactoringUtil() {
@@ -252,7 +251,6 @@ public final class PyClassRefactoringUtil {
       PsiNamedElement target = sourceNode.getCopyableUserData(ENCODED_IMPORT);
       final String asName = sourceNode.getCopyableUserData(ENCODED_IMPORT_AS);
       final Boolean useFromImport = sourceNode.getCopyableUserData(ENCODED_USE_FROM_IMPORT);
-      final PyReferenceExpression replacement = sourceNode.getCopyableUserData(REPLACEMENT_EXPRESSION);
       if (target instanceof PsiDirectory) {
         target = (PsiNamedElement)PyUtil.getPackageElement((PsiDirectory)target, sourceNode);
       }
@@ -271,9 +269,6 @@ public final class PyClassRefactoringUtil {
       }
       else {
         insertImport(targetNode, target, asName, true);
-      }
-      if (replacement != null) {
-        sourceNode.replace(replacement);
       }
     }
     finally {
@@ -434,20 +429,25 @@ public final class PyClassRefactoringUtil {
   }
 
   /**
-   * Forces the use of 'import as' when restoring references (i.e. if there are name clashes). Takes an optional replacement expression
-   * to insert in place of the node after import.
+   * Forces the use of 'import as' when restoring references (i.e. if there are name clashes)
    * @param node with encoded import
    * @param asName new alias for import
-   * @param replacement reference after import
    */
-  public static void forceAsName(@NotNull PyReferenceExpression node, @NotNull String asName, @Nullable PyReferenceExpression replacement) {
+  public static void forceAsName(@NotNull PyReferenceExpression node, @NotNull String asName) {
     if (node.getCopyableUserData(ENCODED_IMPORT) == null) {
       LOG.warn("As name is forced on the referenceExpression, that has no encoded import. Forcing it will likely be ignored.");
     }
     node.putCopyableUserData(ENCODED_IMPORT_AS, asName);
-    if (replacement != null) {
-      node.putCopyableUserData(REPLACEMENT_EXPRESSION, replacement);
-    }
+  }
+
+  public static void transferEncodedImports(@NotNull PyReferenceExpression source, @NotNull PyReferenceExpression target) {
+    target.putCopyableUserData(ENCODED_IMPORT, source.getCopyableUserData(ENCODED_IMPORT));
+    target.putCopyableUserData(ENCODED_IMPORT_AS, source.getCopyableUserData(ENCODED_IMPORT_AS));
+    target.putCopyableUserData(ENCODED_USE_FROM_IMPORT, source.getCopyableUserData(ENCODED_USE_FROM_IMPORT));
+
+    source.putCopyableUserData(ENCODED_IMPORT, null);
+    source.putCopyableUserData(ENCODED_IMPORT_AS, null);
+    source.putCopyableUserData(ENCODED_USE_FROM_IMPORT, null);
   }
 
   public static boolean hasEncodedTarget(@NotNull PyReferenceExpression node) {

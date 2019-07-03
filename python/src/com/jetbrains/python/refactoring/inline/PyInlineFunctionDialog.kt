@@ -12,7 +12,6 @@ import com.intellij.refactoring.inline.InlineOptionsDialog
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyImportStatementBase
-import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.pyi.PyiUtil
 
 /**
@@ -27,10 +26,7 @@ class PyInlineFunctionDialog(project: Project,
   private val myNumberOfOccurrences: Int = getNumberOfOccurrences(myFunction)
 
   init {
-    myInvokedOnReference = if (myReference != null) {
-      val expression = myReference.element as PyReferenceExpression
-      PsiTreeUtil.getParentOfType(expression, PyImportStatementBase::class.java) == null
-    } else false
+    myInvokedOnReference = PsiTreeUtil.getParentOfType(myReference?.element, PyImportStatementBase::class.java) == null
     title = if (isMethod) "Inline method $myFunctionName" else "Inline function $myFunctionName"
     init()
   }
@@ -65,10 +61,8 @@ class PyInlineFunctionDialog(project: Project,
     val originalNum = super.getNumberOfOccurrences(nameIdentifierOwner)
     val stubOrImplementation = if (PyiUtil.isInsideStub(myFunction)) PyiUtil.getOriginalElement(myFunction) else PyiUtil.getPythonStub(myFunction)
     if (originalNum != -1 && stubOrImplementation != null) {
-      val fromDeclaration = ReferencesSearch.search(stubOrImplementation, GlobalSearchScope.projectScope(myProject)).asSequence()
-        .filter(this::ignoreOccurrence)
-        .count()
-      return originalNum + fromDeclaration
+      val fromOtherLocation = super.getNumberOfOccurrences(stubOrImplementation as PsiNameIdentifierOwner)
+      if (fromOtherLocation != -1) return originalNum + fromOtherLocation
     }
     return originalNum
   }
