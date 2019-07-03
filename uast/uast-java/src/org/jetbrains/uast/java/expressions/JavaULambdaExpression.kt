@@ -15,14 +15,8 @@
  */
 package org.jetbrains.uast.java
 
-import com.intellij.psi.PsiCodeBlock
-import com.intellij.psi.PsiExpression
-import com.intellij.psi.PsiLambdaExpression
-import com.intellij.psi.PsiType
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UExpression
-import org.jetbrains.uast.ULambdaExpression
-import org.jetbrains.uast.UastEmptyExpression
+import com.intellij.psi.*
+import org.jetbrains.uast.*
 
 class JavaULambdaExpression(
   override val sourcePsi: PsiLambdaExpression,
@@ -39,8 +33,57 @@ class JavaULambdaExpression(
     val b = sourcePsi.body
     when (b) {
       is PsiCodeBlock -> JavaConverter.convertBlock(b, this)
-      is PsiExpression -> JavaConverter.convertOrEmpty(b, this)
+      is PsiExpression -> wrapLambdaBody(this, b)
       else -> UastEmptyExpression(this)
     }
   }
+
+}
+
+private fun wrapLambdaBody(parent: JavaULambdaExpression, b: PsiExpression): UBlockExpression =
+  JavaImplicitUBlockExpression(parent).apply {
+    expressions = listOf(JavaImplicitUReturnExpression(this).apply {
+      returnExpression = JavaConverter.convertOrEmpty(b, this)
+    })
+  }
+
+private class JavaImplicitUReturnExpression(givenParent: UElement?) : JavaAbstractUExpression(givenParent), UReturnExpression {
+  override val sourcePsi: PsiElement?
+    get() = null
+  override val psi: PsiElement?
+    get() = null
+
+  override lateinit var returnExpression: UExpression
+    internal set
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+    other as JavaImplicitUReturnExpression
+    val b = returnExpression != other.returnExpression
+    if (b) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int = 31 + returnExpression.hashCode()
+
+}
+
+private class JavaImplicitUBlockExpression(givenParent: UElement?) : JavaAbstractUExpression(givenParent), UBlockExpression {
+  override val sourcePsi: PsiElement?
+    get() = null
+  override lateinit var expressions: List<UExpression>
+    internal set
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+    other as JavaImplicitUBlockExpression
+    if (expressions != other.expressions) return false
+    return true
+  }
+
+  override fun hashCode(): Int = 31 + expressions.hashCode()
+
 }

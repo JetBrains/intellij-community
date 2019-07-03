@@ -28,6 +28,7 @@ abstract class JavaAbstractUElement(givenParent: UElement?) : JavaUElementWithCo
     getPsiParentForLazyConversion()
       ?.let { JavaConverter.unwrapElements(it).toUElement() }
       ?.let { unwrapSwitch(it) }
+      ?.let { wrapSingleExpressionLambda(it) }
       ?.also {
         if (it === this) throw IllegalStateException("lazy parent loop for $this")
         if (it.sourcePsi != null && it.sourcePsi === this.sourcePsi)
@@ -49,6 +50,13 @@ abstract class JavaAbstractUElement(givenParent: UElement?) : JavaUElementWithCo
   override val psi: PsiElement?
     get() = sourcePsi
 
+}
+
+private fun JavaAbstractUElement.wrapSingleExpressionLambda(uParent: UElement): UElement {
+  val sourcePsi = sourcePsi
+  return if (uParent is JavaULambdaExpression && sourcePsi is PsiExpression)
+    (uParent.body as? UBlockExpression)?.expressions?.singleOrNull() ?: uParent
+  else uParent
 }
 
 private fun JavaAbstractUElement.unwrapSwitch(uParent: UElement): UElement {

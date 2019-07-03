@@ -57,4 +57,7 @@ class SimpleJavaRenderLogTest : AbstractJavaRenderLogTest() {
 
   @Test
   fun testImports() = doTest("Simple/External.java")
+
+  @Test
+  fun testLambda() = doTest("Simple/Lambda.java")
 }
