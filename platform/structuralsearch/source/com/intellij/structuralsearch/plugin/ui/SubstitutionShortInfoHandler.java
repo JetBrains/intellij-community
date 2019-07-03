@@ -264,6 +264,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
       if (labelText.isEmpty()) {
         continue;
       }
+      variables.remove(name);
       final Inlay<FilterRenderer> inlay = inlays.get(name);
       if (inlay == null) {
         inlays.put(name, inlayModel.addInlineElement(offset + variableNameLength, new FilterRenderer(labelText)));
@@ -272,17 +273,22 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
         final FilterRenderer renderer = inlay.getRenderer();
         renderer.setText(labelText);
         inlay.updateSize();
-        variables.remove(name);
       }
     }
-    final Inlay<FilterRenderer> inlay = inlays.get(Configuration.CONTEXT_VAR_NAME);
-    if (inlay == null) {
-      final NamedScriptableDefinition variable = configuration.findVariable(Configuration.CONTEXT_VAR_NAME);
-      final String labelText = getShortParamString(variable, false);
-      if (!labelText.isEmpty()) {
+    final NamedScriptableDefinition contextVariable = configuration.findVariable(Configuration.CONTEXT_VAR_NAME);
+    final String labelText = getShortParamString(contextVariable, false);
+    if (!labelText.isEmpty()) {
+      variables.remove(Configuration.CONTEXT_VAR_NAME);
+      final Inlay<FilterRenderer> inlay = inlays.get(Configuration.CONTEXT_VAR_NAME);
+      if (inlay == null) {
         inlays.put(Configuration.CONTEXT_VAR_NAME,
                    inlayModel.addBlockElement(text.length() + variableNameLength, true, false, 0,
                                               new FilterRenderer("complete pattern: " + labelText)));
+      }
+      else {
+        final FilterRenderer renderer = inlay.getRenderer();
+        renderer.setText("complete pattern: " + labelText);
+        inlay.updateSize();
       }
     }
     for (String variable : variables) {
