@@ -26,14 +26,12 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
 import git4idea.GitProtectedBranchesKt;
 import git4idea.actions.GitOngoingOperationAction;
 import git4idea.branch.*;
-import git4idea.config.GitVcsSettings;
 import git4idea.push.GitPushSource;
 import git4idea.rebase.GitRebaseSpec;
 import git4idea.repo.GitRepository;
@@ -45,7 +43,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.dvcs.DvcsUtil.getShortHash;
 import static com.intellij.dvcs.ui.BranchActionGroupPopup.wrapWithMoreActionIfNeeded;
@@ -227,17 +228,15 @@ class GitBranchPopupActions {
     protected final String myBranchName;
     @NotNull private final GitRepository mySelectedRepository;
     private final GitBranchManager myGitBranchManager;
-    @NotNull private final GitVcsSettings myGitVcsSettings;
     @NotNull private final GitBranchIncomingOutgoingManager myIncomingOutgoingManager;
 
     LocalBranchActions(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName,
                        @NotNull GitRepository selectedRepository) {
       myProject = project;
-      myRepositories = ContainerUtil.immutableList(repositories);
+      myRepositories = immutableList(repositories);
       myBranchName = branchName;
       mySelectedRepository = selectedRepository;
       myGitBranchManager = ServiceManager.getService(project, GitBranchManager.class);
-      myGitVcsSettings = GitVcsSettings.getInstance(myProject);
       myIncomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(myProject);
       getTemplatePresentation().setText(calcBranchText(), false); // no mnemonics
       getTemplatePresentation().putClientProperty(JComponent.TOOL_TIP_TEXT_KEY, constructTooltip());
@@ -732,14 +731,11 @@ class GitBranchPopupActions {
     private final Project myProject;
     private final List<? extends GitRepository> myRepositories;
     private final String myTagName;
-    private final GitRepository mySelectedRepository;
 
-    TagActions(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String tagName,
-               @NotNull GitRepository selectedRepository) {
+    TagActions(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String tagName) {
       myProject = project;
       myRepositories = repositories;
       myTagName = tagName;
-      mySelectedRepository = selectedRepository;
       getTemplatePresentation().setText(tagName, false); // no mnemonics
       setIcons(EmptyIcon.ICON_16, EmptyIcon.ICON_16, EmptyIcon.ICON_16, EmptyIcon.ICON_16); // no favorites
     }
