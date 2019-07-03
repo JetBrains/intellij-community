@@ -1,15 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.propertyBased;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiSwitchBlock;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -27,7 +25,12 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 @SkipSlowTestLocally
-public class Java12SwitchExpressionSanityTest extends LightJavaCodeInsightFixtureTestCase {
+public class JavaSwitchExpressionSanityTest extends LightJavaCodeInsightFixtureTestCase {
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_13;
+  }
 
   @Override
   protected void tearDown() throws Exception {
@@ -43,22 +46,8 @@ public class Java12SwitchExpressionSanityTest extends LightJavaCodeInsightFixtur
     }
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_12_PREVIEW, getTestRootDisposable());
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_12;
-  }
-
   public void testIntentionsAroundSwitch() {
-    MadTestingUtil.enableAllInspections(getProject(), getTestRootDisposable(),
-                                        "BoundedWildcard" // IDEA-194460
-    );
+    MadTestingUtil.enableAllInspections(getProject(), getTestRootDisposable(), "BoundedWildcard");  // IDEA-194460
 
     Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
       file -> {
@@ -108,7 +97,7 @@ public class Java12SwitchExpressionSanityTest extends LightJavaCodeInsightFixtur
         return super.generateDocOffset(env, logMessage);
       }
 
-      List<Generator<Integer>> generators = 
+      List<Generator<Integer>> generators =
         ContainerUtil.map(children, stmt ->
         Generator.integers(getRangeElement(stmt).getTextRange().getStartOffset(),
                            getRangeElement(stmt).getTextRange().getEndOffset()).noShrink());
