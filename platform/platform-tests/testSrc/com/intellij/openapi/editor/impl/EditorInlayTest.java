@@ -12,6 +12,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.assertArrayEquals;
 
@@ -392,6 +394,25 @@ public class EditorInlayTest extends AbstractEditorTest {
                         @NotNull TextAttributes textAttributes) {}
     });
     assertEquals(123, myEditor.getContentComponent().getPreferredSize().width);
+  }
+
+  public void testOrderForAboveInlaysWithSamePriority() {
+    initText("text");
+    addBlockInlay(0, true);
+    addBlockInlay(0, true);
+    List<Inlay> list1 = myEditor.getInlayModel().getBlockElementsInRange(0, 0);
+    List<Inlay> list2 = myEditor.getInlayModel().getBlockElementsForVisualLine(0, true);
+    Collections.reverse(list2);
+    assertEquals(list1, list2);
+  }
+
+  public void testOrderForBelowInlaysWithSamePriority() {
+    initText("text");
+    addBlockInlay(0, false);
+    addBlockInlay(0, false);
+    List<Inlay> list1 = myEditor.getInlayModel().getBlockElementsInRange(0, 0);
+    List<Inlay> list2 = myEditor.getInlayModel().getBlockElementsForVisualLine(0, false);
+    assertEquals(list1, list2);
   }
 
   private static void checkCaretPositionAndSelection(int offset, int logicalColumn, int visualColumn,

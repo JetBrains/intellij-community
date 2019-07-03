@@ -451,8 +451,8 @@ public class EditorTestUtil {
     });
   }
 
-  public static Inlay addBlockInlay(@NotNull Editor editor, int offset) {
-    return editor.getInlayModel().addBlockElement(offset, false, false, 0, new EditorCustomElementRenderer() {
+  public static Inlay addBlockInlay(@NotNull Editor editor, int offset, boolean showAbove) {
+    return editor.getInlayModel().addBlockElement(offset, false, showAbove, 0, new EditorCustomElementRenderer() {
       @Override
       public int calcWidthInPixels(@NotNull Inlay inlay) { return 0;}
 
