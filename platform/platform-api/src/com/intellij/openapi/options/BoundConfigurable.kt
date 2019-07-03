@@ -2,29 +2,77 @@
 package com.intellij.openapi.options
 
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.ClearableLazyValue
 import javax.swing.JComponent
 
 /**
  * @author yole
  */
 abstract class BoundConfigurable(private val displayName: String, private val helpTopic: String? = null) : Configurable {
-  private val panel: DialogPanel by lazy { createPanel() }
+  private val panel = object : ClearableLazyValue<DialogPanel>() {
+    override fun compute() = createPanel()
+  }
 
   abstract fun createPanel(): DialogPanel
 
-  final override fun createComponent(): JComponent? = panel
+  final override fun createComponent(): JComponent? = panel.value
 
-  override fun isModified() = panel.isModified()
+  override fun isModified() = panel.value.isModified()
 
   override fun getDisplayName(): String = displayName
 
   override fun reset() {
-    panel.reset()
+    panel.value.reset()
   }
 
   override fun apply() {
-    panel.apply()
+    panel.value.apply()
+  }
+
+  override fun disposeUIResources() {
+    panel.drop()
   }
 
   override fun getHelpTopic(): String? = helpTopic
+}
+
+abstract class BoundCompositeConfigurable<T : UnnamedConfigurable>(
+  displayName: String,
+  helpTopic: String? = null
+) : BoundConfigurable(displayName, helpTopic) {
+  private var configurablesCreated = false
+
+  abstract fun createConfigurables(): List<T>
+
+  private val configurables by lazy {
+    configurablesCreated = true
+    createConfigurables()
+  }
+
+  override fun isModified(): Boolean {
+    return super.isModified() || configurables.any { it.isModified }
+  }
+
+  override fun reset() {
+    super.reset()
+    for (configurable in configurables) {
+      configurable.reset()
+    }
+  }
+
+  override fun apply() {
+    super.apply()
+    for (configurable in configurables) {
+      configurable.apply()
+    }
+  }
+
+  override fun disposeUIResources() {
+    super.disposeUIResources()
+    if (configurablesCreated) {
+      for (configurable in configurables) {
+        configurable.disposeUIResources()
+      }
+    }
+  }
 }
