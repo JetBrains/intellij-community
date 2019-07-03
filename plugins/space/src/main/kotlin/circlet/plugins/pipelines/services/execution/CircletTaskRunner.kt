@@ -38,8 +38,6 @@ class CircletTaskRunner(val project: Project) {
 
         logger.info("Run task $taskName")
 
-        var timer : Cancellable? = null
-
         val processHandler = object : ProcessHandler() {
             override fun getProcessInput(): OutputStream? {
                 return null
@@ -56,19 +54,17 @@ class CircletTaskRunner(val project: Project) {
             override fun destroyProcessImpl() {
                 logger.info("destroyProcessImpl for task $taskName")
                 notifyProcessTerminated(0)
-                timer?.cancel()
             }
         }
 
-        var messageCounter = 0
-        timer = UiDispatch.dispatchInterval(1000) {
-            //processHandler.println("Dummy message for task: $taskName. message #${messageCounter++}")
-        }
+
 
         val orgInfo = OrgInfo("jetbrains.team")
+        val provider = CircletIdeaJobExecutionProvider(lifetime, { text -> processHandler.println(text) }, { code -> processHandler.destroyProcess()})
         val automationGraphEngineCommon = AutomationGraphEngineCommon(
-            CircletIdeaJobExecutionProvider(lifetime) { text -> processHandler.println(text) },
-            SystemTimeTicker())
+            provider,
+            SystemTimeTicker(),
+            listOf(provider))
         val automationStarterCommon = AutomationStarterCommon(
             orgInfo,
             CircletIdeaAutomationGraphStorage(task),
@@ -87,9 +83,7 @@ class CircletTaskRunner(val project: Project) {
         val context = TaskStartContext(projectKey, repositoryData, branch, commit, emptyList(), trigger)
 
         async(lifetime, Ui) {
-            processHandler.println("startTask. before")
             automationStarterCommon.startTask(metaTaskId, context)
-            processHandler.println("startTask. after")
         }.invokeOnCompletion {
             if (it != null) {
                 processHandler.notifyTextAvailable("Run task failed. ${it.message}$newLine", ProcessOutputTypes.STDERR)

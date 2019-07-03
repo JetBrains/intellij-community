@@ -9,7 +9,10 @@ import runtime.reactive.*
 
 data class DummyContainer(val lifetimeSource: LifetimeSource)
 
-class CircletIdeaJobExecutionProvider(private val lifetime: Lifetime, private val logCallback: (String) -> Unit) : JobExecutionProvider<CircletIdeaGraphStorageTransaction> {
+class CircletIdeaJobExecutionProvider(
+    private val lifetime: Lifetime,
+    private val logCallback: (String) -> Unit,
+    private val notifyProcessTerminated: (Int) -> Unit) : JobExecutionProvider<CircletIdeaGraphStorageTransaction> {
 
     companion object : KLogging()
 
@@ -34,13 +37,14 @@ class CircletIdeaJobExecutionProvider(private val lifetime: Lifetime, private va
                     val timer = UiDispatch.dispatchInterval(1000) {
                         logCallback("run dummy container '$image'. counter = ${counter++}")
                         if (counter == 3) {
-                            changeState(tx, job, generateFinalState(image))
                             jobLifetimeSource.terminate()
                         }
                     }
                     jobLifetimeSource.add {
                         runningJobs.remove(jobId)?.lifetimeSource?.terminate()
                         timer.cancel()
+                        logCallback("stop: image=$image, id=$jobId")
+                        changeState(tx, job, generateFinalState(image))
                     }
 
                 }
@@ -61,15 +65,16 @@ class CircletIdeaJobExecutionProvider(private val lifetime: Lifetime, private va
     }
 
     override fun onBeforeGraphStatusChanged(tx: CircletIdeaGraphStorageTransaction, entity: AGraphExecutionEntity, oldStatus: ExecutionStatus, newStatus: ExecutionStatus) {
-        TODO("onBeforeGraphStatusChanged not implemented")
+        if (newStatus.isFinished()) {
+            notifyProcessTerminated(0)
+        }
     }
 
     override fun onBeforeJobStatusChanged(tx: CircletIdeaGraphStorageTransaction, entity: AJobExecutionEntity<*>, oldStatus: ExecutionStatus, newStatus: ExecutionStatus) {
-        TODO("onBeforeJobStatusChanged not implemented")
+        //todo
     }
 
     private fun changeState(tx: CircletIdeaGraphStorageTransaction, job: AJobExecutionEntity<*>, newStatus: ExecutionStatus) {
-        job.status = newStatus
         savedHandler!!(tx, job, newStatus)
     }
 
