@@ -205,6 +205,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
           refResult.set(null);
         }
       });
+      result = refResult.get();
     }
 
     if (result == null || result.first == null) {
