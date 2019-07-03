@@ -68,7 +68,8 @@ public class StringLiteralManipulator extends AbstractElementManipulator<PsiLite
       }
       
       if (type == JavaTokenType.TEXT_BLOCK_LITERAL) {
-        return length < 7 ? TextRange.from(0, length) : new TextRange(4, Math.max(4, length - 3));
+        int startOffset = element.getValue() == null ? -1 : element.getText().indexOf('\n');
+        return startOffset < 0 ? TextRange.from(0, length) : new TextRange(startOffset + 1, Math.max(startOffset + 1, length - 3));
       }
 
       isQuoted = type == JavaTokenType.STRING_LITERAL || type == JavaTokenType.CHARACTER_LITERAL;

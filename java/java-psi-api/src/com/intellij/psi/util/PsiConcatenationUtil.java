@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.util;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ObjectUtils;
@@ -32,13 +32,13 @@ public class PsiConcatenationUtil {
                                        List<? super PsiExpression> formatParameters, boolean printfFormat) {
     if (expression instanceof PsiLiteralExpression) {
       final PsiLiteralExpression literalExpression = (PsiLiteralExpression) expression;
-      final String text = String.valueOf(literalExpression.getValue());
-      final String formatText;
+      TextRange range = ElementManipulators.getValueTextRange(expression);
+      String formatText = range.substring(literalExpression.getText());
       if (printfFormat) {
-        formatText = StringUtil.escapeStringCharacters(text).replace("%", "%%").replace("\\'", "'");
+        formatText = formatText.replace("%", "%%").replace("\\'", "'");
       }
       else {
-        formatText = StringUtil.escapeStringCharacters(text).replace("'", "''").replaceAll("((\\{|})+)", "'$1'");
+        formatText = formatText.replace("'", "''").replaceAll("((\\{|})+)", "'$1'");
       }
       formatString.append(formatText);
     } else if (expression instanceof PsiPolyadicExpression) {

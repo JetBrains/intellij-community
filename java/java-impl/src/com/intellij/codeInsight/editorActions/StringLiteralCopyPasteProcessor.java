@@ -25,11 +25,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.StringLiteralManipulator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -223,13 +221,13 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
       TextRange tokenRange = token.getTextRange();
       return new TextRange(tokenRange.getStartOffset() + 1, tokenRange.getEndOffset() - 1); // Excluding String/char literal quotes
     }
-    else if (isTextBlock(token) && token.getTextLength() >= 7) {
-      TextRange tokenRange = token.getTextRange();
-      return new TextRange(tokenRange.getStartOffset() + 4, tokenRange.getEndOffset() - 3);
+    else if (isTextBlock(token)) {
+      PsiElement parent = token.getParent();
+      if (parent instanceof PsiLiteralExpression && ((PsiLiteralExpression)parent).getValue() != null) {
+        return StringLiteralManipulator.getValueRange((PsiLiteralExpression)parent);
+      }
     }
-    else {
-      return null;
-    }
+    return null;
   }
 
   @NotNull

@@ -1,5 +1,7 @@
 class C {
     //keep me
     String s = String.format("""
-  the text block\n<caret>%d%d to be""", 1, 2);
+      the text\n block
+      lin<caret>e2
+    %d%d to be""", 1, 2);
 }
