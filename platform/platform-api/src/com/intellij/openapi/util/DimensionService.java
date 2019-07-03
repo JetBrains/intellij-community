@@ -16,6 +16,7 @@ import com.intellij.util.containers.ObjectIntHashMap;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.JBUI;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +30,10 @@ import java.util.Map;
  * This class represents map between strings and rectangles. It's intended to store
  * sizes of window, dialogs, etc.
  */
-@State(name = "DimensionService", storages = @Storage(value = "dimensions.xml", roamingType = RoamingType.DISABLED))
+@State(name = "DimensionService", storages = {
+  @Storage(value = "window.state.xml", roamingType = RoamingType.DISABLED),
+  @Storage(value = "dimensions.xml", roamingType = RoamingType.DISABLED, deprecated = true),
+})
 public class DimensionService extends SimpleModificationTracker implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(DimensionService.class);
 
@@ -222,12 +226,10 @@ public class DimensionService extends SimpleModificationTracker implements Persi
     }
   }
 
-  /**
-   * @deprecated Use {@link com.intellij.ide.util.PropertiesComponent}
-   */
-  @Deprecated
-  public int getExtendedState(String key) {
-    return myKey2ExtendedState.get(key);
+  @ApiStatus.Internal
+  public boolean getDefaultMaximizedFor(@NotNull String key) {
+    //  backward compatibility when this service is used instead of DimensionService
+    return Frame.MAXIMIZED_BOTH == myKey2ExtendedState.get(key);
   }
 
   @Nullable

@@ -54,7 +54,10 @@ import java.util.Set;
 @State(
   name = "WindowManager",
   defaultStateAsResource = true,
-  storages = @Storage(value = "window.manager.xml", roamingType = RoamingType.DISABLED)
+  storages = {
+    @Storage(value = "window.state.xml", roamingType = RoamingType.DISABLED),
+    @Storage(value = "window.manager.xml", roamingType = RoamingType.DISABLED, deprecated = true),
+  }
 )
 public final class WindowManagerImpl extends WindowManagerEx implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(WindowManagerImpl.class);
