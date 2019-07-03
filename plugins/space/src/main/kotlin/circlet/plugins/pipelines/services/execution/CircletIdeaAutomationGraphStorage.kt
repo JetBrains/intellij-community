@@ -138,7 +138,7 @@ class CircletIdeaGraphStorageTransaction(private val task: ProjectTask) : GraphS
         logger.debug { "createSshKey $fingerPrint" }
     }
 
-    override fun batchCreateJobExecutions(graphExecution: AGraphExecutionEntity, bootstrapJob: ProjectJob.Process.Container): Sequence<AJobExecutionEntity<*>> {
+    override fun batchCreateJobExecutions(graphExecution: AGraphExecutionEntity, bootstrapJob: ProjectJob.Process.Container) {
         if (graphExecution is CircletIdeaAGraphExecutionEntity) {
             graphExecution.jobsList.add(CircletIdeaAJobExecutionEntity(
                 idStorage.getOrCreateId(bootstrapJob.id),
@@ -151,7 +151,6 @@ class CircletIdeaGraphStorageTransaction(private val task: ProjectTask) : GraphS
                 JobStartContext()))
 
             graphExecution.executionMeta = graphExecution.graph.originalMeta.prependJobs(listOf(bootstrapJob))
-            return graphExecution.jobs
         }
         else {
             error("Unknown $graphExecution")
