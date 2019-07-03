@@ -154,34 +154,25 @@ object UpdateChecker {
   }
 
   private fun checkPlatformUpdate(settings: UpdateSettings): CheckForUpdateResult {
-    val updateInfo: UpdatesInfo?
-    try {
+    val updateInfo = try {
       var updateUrl = Urls.newFromEncoded(updateUrl)
       if (updateUrl.scheme != URLUtil.FILE_PROTOCOL) {
         updateUrl = prepareUpdateCheckArgs(updateUrl)
       }
       LogUtil.debug(LOG, "load update xml (UPDATE_URL='%s')", updateUrl)
-
-      updateInfo = HttpRequests.request(updateUrl)
-        .connect {
-          try {
-            //We should ping update server anyway
-            val updatesInfo = UpdatesInfo(JDOMUtil.load(it.reader))
-            if (settings.isPlatformUpdateEnabled) updatesInfo else null
-          }
-          catch (e: JDOMException) {
-            // corrupted content, don't bother telling user
-            LOG.info(e)
-            null
-          }
-        }
+      HttpRequests.request(updateUrl).connect { UpdatesInfo(JDOMUtil.load(it.reader)) }
+    }
+    catch (e: JDOMException) {
+      // corrupted content, don't bother telling user
+      LOG.info(e)
+      null
     }
     catch (e: Exception) {
       LOG.info(e)
       return CheckForUpdateResult(UpdateStrategy.State.CONNECTION_ERROR, e)
     }
 
-    if (updateInfo == null) {
+    if (updateInfo == null || !settings.isPlatformUpdateEnabled) {
       return CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED, null)
     }
 
