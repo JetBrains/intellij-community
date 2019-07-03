@@ -12,6 +12,7 @@ import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicListUI;
 import java.awt.*;
+import java.util.Arrays;
 
 /**
  * @author Sergey.Malenkov
@@ -38,7 +39,7 @@ public final class WideSelectionListUI extends BasicListUI {
     Rectangle paintBounds = myPaintBounds;
     if (paintBounds != null) {
       boolean selected = selectionModel.isSelectedIndex(row);
-      boolean focused = row == leadSelectionIndex && list.hasFocus();
+      boolean focused = row == leadSelectionIndex && (!list.isFocusable() || list.hasFocus());
       Object value = model.getElementAt(row);
       Color background = getBackground(list, value, row);
       if (background != null) {
@@ -156,11 +157,14 @@ public final class WideSelectionListUI extends BasicListUI {
       ListModel dataModel = list.getModel();
       int dataModelSize = dataModel.getSize();
       ListCellRenderer renderer = list.getCellRenderer();
+      int[] selectedIndices = list.getSelectedIndices();
+      boolean hasFocus = !list.isFocusable() || list.hasFocus();
       if (renderer != null) {
         for (int index = 0; index < dataModelSize; index++) {
           Object value = dataModel.getElementAt(index);
           //noinspection unchecked
-          Component c = renderer.getListCellRendererComponent(list, value, index, false, false);
+          boolean selected = Arrays.binarySearch(selectedIndices, index) >= 0;
+          Component c = renderer.getListCellRendererComponent(list, value, index, selected, hasFocus);
           rendererPane.add(c);
           Dimension cellSize = UIUtil.updateListRowHeight(c.getPreferredSize());
           if (fixedCellWidth == -1) {
