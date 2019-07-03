@@ -9,7 +9,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
-@ApiStatus.AvailableSince("2019.2")
 public class PySlashParameterImpl extends PyBaseElementImpl<PySlashParameterStub> implements PySlashParameter {
 
   public PySlashParameterImpl(ASTNode node) {

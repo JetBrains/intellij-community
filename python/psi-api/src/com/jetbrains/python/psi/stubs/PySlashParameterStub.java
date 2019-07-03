@@ -6,6 +6,5 @@ import com.jetbrains.python.psi.PySlashParameter;
 import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.NonExtendable
-@ApiStatus.AvailableSince("2019.2")
 public interface PySlashParameterStub extends StubElement<PySlashParameter> {
 }

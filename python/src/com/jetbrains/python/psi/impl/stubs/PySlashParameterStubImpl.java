@@ -9,7 +9,6 @@ import com.jetbrains.python.psi.stubs.PySlashParameterStub;
 import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Internal
-@ApiStatus.AvailableSince("2019.2")
 public class PySlashParameterStubImpl extends StubBase<PySlashParameter> implements PySlashParameterStub {
 
   public PySlashParameterStubImpl(StubElement parent) {

@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
-@ApiStatus.AvailableSince("2019.2")
 public class PyAssignmentExpressionImpl extends PyElementImpl implements PyAssignmentExpression {
 
   public PyAssignmentExpressionImpl(@NotNull ASTNode astNode) {

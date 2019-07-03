@@ -9,7 +9,6 @@ import org.jetbrains.annotations.Nullable;
  * Represents assignment expressions introduced in Python 3.8 (PEP 572).
  */
 @ApiStatus.NonExtendable
-@ApiStatus.AvailableSince("2019.2")
 public interface PyAssignmentExpression extends PyExpression {
 
   /**
