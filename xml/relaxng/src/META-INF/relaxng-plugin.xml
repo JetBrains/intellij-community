@@ -4,7 +4,8 @@
     <xml.schemaProvider implementation="org.intellij.plugins.relaxNG.config.NoNamespaceSchemaProvider" />
     <hectorComponentProvider implementation="org.intellij.plugins.relaxNG.config.NoNamespaceConfigImpl$HectorProvider" />
 
-    <fileTypeFactory implementation="org.intellij.plugins.relaxNG.compact.RncFileType$Factory" />
+    <fileType name="RNG Compact" language="RELAX-NG" extensions="rnc"
+              implementationClass="org.intellij.plugins.relaxNG.compact.RncFileType" fieldName="INSTANCE"/>
     <completion.contributor language="RELAX-NG" implementationClass="org.intellij.plugins.relaxNG.compact.RncCompletionContributor" />
     <standardResourceProvider implementation="org.intellij.plugins.relaxNG.ApplicationLoader$ResourceProvider" />
 
