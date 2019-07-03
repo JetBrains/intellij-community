@@ -404,11 +404,12 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
 
     List<BreakpointState<?, ?, ?>> defaultBreakpoints = new SmartList<>();
     for (Set<XBreakpointBase<?, ?, ?>> typeDefaultBreakpoints : myDefaultBreakpoints.values()) {
+      if (typeDefaultBreakpoints.stream().noneMatch(breakpoint -> differsFromDefault(breakpoint.getType(), breakpoint.getState()))) {
+        continue;
+      }
       for (XBreakpointBase<?, ?, ?> breakpoint : typeDefaultBreakpoints) {
         final BreakpointState breakpointState = breakpoint.getState();
-        if (differsFromDefault(breakpoint.getType(), breakpointState)) {
-          defaultBreakpoints.add(breakpointState);
-        }
+        defaultBreakpoints.add(breakpointState);
       }
     }
 
@@ -470,7 +471,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
     ApplicationManager.getApplication().runReadAction(() -> {
       ContainerUtil.notNullize(state.getDefaultBreakpoints()).forEach(breakpointState -> loadBreakpoint(breakpointState, true));
 
-      loadDefaultBreakpointsFromType();
+      XBreakpointUtil.breakpointTypes().remove(myDefaultBreakpoints::containsKey).forEach(this::addDefaultBreakpoint);
 
       myBreakpoints.values().forEach(this::doRemoveBreakpoint);
 
@@ -490,21 +491,6 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
     });
     myLineBreakpointManager.updateBreakpointsUI();
     myDefaultGroup = state.getDefaultGroup();
-  }
-
-  @SuppressWarnings("unchecked")
-  private void loadDefaultBreakpointsFromType() {
-    for (XBreakpointType breakpointType : XBreakpointUtil.breakpointTypes()) {
-      XBreakpointBase defaultBreakpoint = (XBreakpointBase) createDefaultBreakpoint(breakpointType);
-      if (defaultBreakpoint == null) {
-        continue;
-      }
-
-      BreakpointState defaultBreakpointState = defaultBreakpoint.getState();
-      if (getDefaultBreakpoints(breakpointType).stream().allMatch(existingBreakpoint -> statesAreDifferent(defaultBreakpointState, ((XBreakpointBase) existingBreakpoint).getState(), false))) {
-        addBreakpoint(defaultBreakpoint, true, false);
-      }
-    }
   }
 
   private <P extends XBreakpointProperties> void addDefaultBreakpoint(XBreakpointType<?, P> type) {
