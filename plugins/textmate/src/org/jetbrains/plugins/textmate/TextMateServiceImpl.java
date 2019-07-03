@@ -204,7 +204,7 @@ public class TextMateServiceImpl extends TextMateService {
   @Override
   @Nullable
   public TextMateLanguageDescriptor getLanguageDescriptorByFileName(@NotNull String fileName) {
-    for (String extension : getExtensions(fileName)) {
+    for (String extension : getExtensions(StringUtil.toLowerCase(fileName))) {
       final TextMateLanguageDescriptor languageDescriptor = getLanguageDescriptorByExtension(extension);
       if (languageDescriptor != null) {
         return languageDescriptor;
@@ -432,7 +432,7 @@ public class TextMateServiceImpl extends TextMateService {
     for (String extension : extensions) {
       FileType registeredType = fileTypeManager.getFileTypeByFileName(extension);
       if (isTypeShouldBeReplacedByTextMateType(registeredType)) {
-        matchers.add(FileTypeManager.parseFromString(extension));
+        matchers.add(new ExactFileNameMatcher(extension, true));
       }
 
       registeredType = fileTypeManager.getFileTypeByExtension(extension);

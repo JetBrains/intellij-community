@@ -65,6 +65,10 @@ public class VSCBundle extends Bundle {
                   if (extensions instanceof ArrayList) {
                     idToExtension.put((String)id, ContainerUtil.map((ArrayList)extensions, (ext) -> StringUtil.trimStart((String)ext, ".")));
                   }
+                  Object filenames = ((Map)language).get("filenames");
+                  if (filenames instanceof ArrayList) {
+                    idToExtension.put((String)id, ContainerUtil.map((ArrayList)filenames, (filename) -> filename));
+                  }
                   Object configuration = ((Map)language).get("configuration");
                   if (configuration instanceof String) {
                     idToConfig.put((String)id, (String)configuration);
