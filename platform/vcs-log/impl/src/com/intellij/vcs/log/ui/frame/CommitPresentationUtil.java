@@ -1,18 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
-import com.intellij.codeInspection.ex.Tools;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.vcs.commit.message.BaseCommitMessageInspection;
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile;
 import com.intellij.vcs.commit.message.SubjectLimitInspection;
 import com.intellij.vcs.log.CommitId;
@@ -173,15 +170,7 @@ public class CommitPresentationUtil {
   }
 
   public static boolean isSubjectMarginEnabled(@NotNull Project project) {
-    return isInspectionEnabled(project, SubjectLimitInspection.class);
-  }
-
-  private static <T extends BaseCommitMessageInspection> boolean isInspectionEnabled(@NotNull Project project,
-                                                                                     @NotNull Class<T> inspectionClass) {
-    CommitMessageInspectionProfile inspectionProfile = CommitMessageInspectionProfile.getInstance(project);
-    List<Tools> tools = inspectionProfile.getAllEnabledInspectionTools(project);
-    T inspection = inspectionProfile.getTool(inspectionClass);
-    return ContainerUtil.find(tools, tool -> tool.getTool().getTool().equals(inspection)) != null;
+    return CommitMessageInspectionProfile.getInstance(project).isToolEnabled(SubjectLimitInspection.class);
   }
 
   @NotNull

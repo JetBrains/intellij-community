@@ -6,11 +6,13 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -42,6 +44,18 @@ public class CommitMessageInspectionProfile extends InspectionProfileImpl
     return ServiceManager.getService(project, CommitMessageInspectionProfile.class);
   }
 
+  @NotNull
+  public static BodyLimitSettings getBodyLimitSettings(@NotNull Project project) {
+    VcsConfiguration configuration = VcsConfiguration.getInstance(project);
+    CommitMessageInspectionProfile profile = getInstance(project);
+
+    return new BodyLimitSettings(
+      profile.getBodyRightMargin(),
+      configuration.USE_COMMIT_MESSAGE_MARGIN && profile.isToolEnabled(BodyLimitInspection.class),
+      configuration.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN
+    );
+  }
+
   public static int getBodyRightMargin(@NotNull Project project) {
     return getInstance(project).getBodyRightMargin();
   }
@@ -63,10 +77,16 @@ public class CommitMessageInspectionProfile extends InspectionProfileImpl
     return getTool(SubjectLimitInspection.class).RIGHT_MARGIN;
   }
 
-  public <T extends LocalInspectionTool> T getTool(Class<T> aClass) {
+  @NotNull
+  private <T extends LocalInspectionTool> T getTool(@NotNull Class<T> aClass) {
     InspectionToolWrapper tool = getInspectionTool(InspectionProfileEntry.getShortName(aClass.getSimpleName()), myProject);
     //noinspection unchecked
     return (T)ObjectUtils.notNull(tool).getTool();
+  }
+
+  public <T extends LocalInspectionTool> boolean isToolEnabled(@NotNull Class<T> aClass) {
+    ToolsImpl tools = getToolsOrNull(InspectionProfileEntry.getShortName(aClass.getSimpleName()), myProject);
+    return tools != null && tools.isEnabled();
   }
 
   @Override
