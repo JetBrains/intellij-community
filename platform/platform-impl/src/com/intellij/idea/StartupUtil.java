@@ -623,6 +623,7 @@ public class StartupUtil {
     appStarter.startupWizardFinished();
   }
 
+  // must be called from EDT
   public static boolean patchSystem(@NotNull Logger log) {
     if (!ourSystemPatched.compareAndSet(false, true)) {
       return false;
