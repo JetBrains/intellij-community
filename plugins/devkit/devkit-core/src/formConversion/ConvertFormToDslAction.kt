@@ -361,6 +361,10 @@ class FormToDslConverter(private val module: Module, private val boundInstanceUC
       "com.intellij.ui.components.JBLabel" ->
         FormCall("label", convertComponentText(component))
 
+      "javax.swing.JComboBox",
+      "com.intellij.openapi.ui.ComboBox" ->
+        FormCall("comboBox", "TODO()")
+
       else -> {
         val typeParameters = buildTypeParametersString(module, component.componentClassName)
 
