@@ -5,7 +5,6 @@ import com.intellij.dvcs.DvcsRememberedInputs
 import com.intellij.dvcs.repo.ClonePathProvider
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.CheckoutProvider
@@ -14,8 +13,6 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.layout.*
 import com.intellij.util.containers.ContainerUtil
-import java.nio.file.InvalidPathException
-import java.nio.file.Paths
 import javax.swing.JPanel
 import javax.swing.event.DocumentEvent
 
@@ -24,7 +21,7 @@ abstract class DvcsCloneDialogComponent(var project: Project,
                                         rememberedInputs: DvcsRememberedInputs) : VcsCloneComponent {
   private val mainPanel: JPanel
   private val urlEditor = JBTextField()
-  private val directoryField = MyTextFieldWithBrowseButton(ClonePathProvider.defaultParentDirectoryPath(project, rememberedInputs))
+  private val directoryField = SelectChildTextFieldWithBrowseButton(ClonePathProvider.defaultParentDirectoryPath(project, rememberedInputs))
 
   init {
     val fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor()
@@ -68,31 +65,4 @@ abstract class DvcsCloneDialogComponent(var project: Project,
 
   fun getDirectory() = directoryField.text
   fun getUrl() = urlEditor.text
-
-  class MyTextFieldWithBrowseButton constructor(defaultParentPath: String) : TextFieldWithBrowseButton() {
-    private val myDefaultParentPath = Paths.get(defaultParentPath).toAbsolutePath()
-    private var myModifiedByUser = false
-
-    init {
-      text = myDefaultParentPath.toString()
-      textField.document.addDocumentListener(object : DocumentAdapter() {
-        override fun textChanged(e: DocumentEvent) {
-          myModifiedByUser = true
-        }
-      })
-    }
-
-    fun trySetChildPath(child: String) {
-      if (!myModifiedByUser) {
-        try {
-          text = myDefaultParentPath.resolve(child).toString()
-        }
-        catch (ignored: InvalidPathException) {
-        }
-        finally {
-          myModifiedByUser = false
-        }
-      }
-    }
-  }
 }

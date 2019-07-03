@@ -30,7 +30,7 @@ public class CloneDvcsValidationUtils {
 
 
   @Nullable
-  static ValidationInfo createDestination(@NotNull String path) {
+  public static ValidationInfo createDestination(@NotNull String path) {
     try {
       Path directoryPath = Paths.get(path);
       if (!directoryPath.toFile().exists()) {
@@ -55,7 +55,7 @@ public class CloneDvcsValidationUtils {
    * @return null if destination directory is OK.
    */
   @Nullable
-  static ValidationInfo checkDirectory(String directoryPath, JTextField component) {
+  public static ValidationInfo checkDirectory(String directoryPath, JTextField component) {
     if (directoryPath.length() == 0) {
       return new ValidationInfo("");
     }
@@ -89,7 +89,7 @@ public class CloneDvcsValidationUtils {
    * @return null if repository URL is OK.
    */
   @Nullable
-  static ValidationInfo checkRepositoryURL(JComponent component, String repository) {
+  public static ValidationInfo checkRepositoryURL(JComponent component, String repository) {
     if (repository.length() == 0) {
       return new ValidationInfo(DvcsBundle.getString("clone.repository.url.error.empty"), component);
     }
