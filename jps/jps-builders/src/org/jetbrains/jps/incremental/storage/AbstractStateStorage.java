@@ -93,6 +93,17 @@ public abstract class AbstractStateStorage<Key, T> implements StorageOwner {
     }
   }
 
+  public void appendDataWithoutCache(final Key key, final T data) throws IOException {
+    if (data != null) {
+      synchronized (myDataLock) {
+        myMap.appendDataWithoutCache(key, data);
+      }
+    }
+    else {
+      remove(key);
+    }
+  }
+
   public void remove(Key key) throws IOException {
     synchronized (myDataLock) {
       myMap.remove(key);

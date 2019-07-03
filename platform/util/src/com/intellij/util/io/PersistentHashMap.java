@@ -252,44 +252,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
       @Override
       protected void onDropFromCache(final Key key, @NotNull final BufferExposingByteArrayOutputStream bytes) {
-        myEnumerator.lockStorage();
-        try {
-          long previousRecord;
-          final int id;
-          if (myDirectlyStoreLongFileOffsetMode) {
-            previousRecord = ((PersistentBTreeEnumerator<Key>)myEnumerator).getNonNegativeValue(key);
-            id = -1;
-          }
-          else {
-            id = enumerate(key);
-            previousRecord = readValueId(id);
-          }
-
-          long headerRecord = myValueStorage.appendBytes(bytes.toByteArraySequence(), previousRecord);
-
-          if (myDirectlyStoreLongFileOffsetMode) {
-            ((PersistentBTreeEnumerator<Key>)myEnumerator).putNonNegativeValue(key, headerRecord);
-          }
-          else {
-            updateValueId(id, headerRecord, previousRecord, key, 0);
-          }
-
-          if (previousRecord == NULL_ADDR) {
-            myLiveAndGarbageKeysCounter += LIVE_KEY_MASK;
-          }
-
-          if (bytes.getInternalBuffer().length <= MAX_RECYCLED_BUFFER_SIZE) {
-            // Avoid internal fragmentation by not retaining / reusing large append buffers (IDEA-208533)
-            myStreamPool.recycle(bytes);
-          }
-        }
-        catch (IOException e) {
-          markCorrupted();
-          throw new RuntimeException(e);
-        }
-        finally {
-          myEnumerator.unlockStorage();
-        }
+        appendDataWithoutCache(key, bytes);
       }
     };
   }
@@ -463,6 +426,70 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
         myEnumerator.markCorrupted();
         throw ex;
       }
+    }
+  }
+
+  /**
+   * This method is used to append value directly into the chunk without saving to cache.
+   * It can be used in case of non changed appended data like in JSP. The main goal for now
+   * is to avoid binary data changes in saving during JPS builds because of flushing cache.
+   */
+  public final void appendDataWithoutCache(Key key, @NotNull Value value) throws IOException {
+    if (myIsReadOnly) throw new IncorrectOperationException();
+    synchronized (myEnumerator) {
+      try {
+        final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
+        AppendStream appenderStream = ourFlyweightAppenderStream.getValue();
+        appenderStream.setOut(bytes);
+        myValueExternalizer.save(appenderStream, value);
+        appenderStream.setOut(null);
+        appendDataWithoutCache(key, bytes);
+      }
+      catch (IOException ex) {
+        myEnumerator.markCorrupted();
+        throw ex;
+      }
+    }
+  }
+
+  private void appendDataWithoutCache(Key key, @NotNull final BufferExposingByteArrayOutputStream bytes) {
+    myEnumerator.lockStorage();
+    try {
+      long previousRecord;
+      final int id;
+      if (myDirectlyStoreLongFileOffsetMode) {
+        previousRecord = ((PersistentBTreeEnumerator<Key>)myEnumerator).getNonNegativeValue(key);
+        id = -1;
+      }
+      else {
+        id = enumerate(key);
+        previousRecord = readValueId(id);
+      }
+
+      long headerRecord = myValueStorage.appendBytes(bytes.toByteArraySequence(), previousRecord);
+
+      if (myDirectlyStoreLongFileOffsetMode) {
+        ((PersistentBTreeEnumerator<Key>)myEnumerator).putNonNegativeValue(key, headerRecord);
+      }
+      else {
+        updateValueId(id, headerRecord, previousRecord, key, 0);
+      }
+
+      if (previousRecord == NULL_ADDR) {
+        myLiveAndGarbageKeysCounter += LIVE_KEY_MASK;
+      }
+
+      if (bytes.getInternalBuffer().length <= MAX_RECYCLED_BUFFER_SIZE) {
+        // Avoid internal fragmentation by not retaining / reusing large append buffers (IDEA-208533)
+        myStreamPool.recycle(bytes);
+      }
+    }
+    catch (IOException e) {
+      markCorrupted();
+      throw new RuntimeException(e);
+    }
+    finally {
+      myEnumerator.unlockStorage();
     }
   }
 
