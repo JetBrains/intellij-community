@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -14,46 +15,23 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.FrameTitleBuilder
 import net.miginfocom.swing.MigLayout
-import sun.swing.SwingUtilities2
-import java.awt.Dimension
-import java.awt.Font
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
-import javax.swing.JLabel
 import javax.swing.JPanel
-import javax.swing.plaf.FontUIResource
 
 
-open class SelectedEditorFilePath() {
-  companion object {
-    const val fileSeparatorChar = '\\'
-    const val ellipsisSymbol = "\u2026"
-    const val delimiterSymbol = " - "
-  }
+open class SelectedEditorFilePath {
+  private val LOGGER = logger<SelectedEditorFilePath>()
 
-  private var clippedText: String? = null
-  private var clippedProjectName: String = ""
+  private val projectTitle = ProjectTitlePane()
+  private val classTitle = ClippingTitle()
+  private val productTitle = DefaultPartTitle()
+  private val productVersion = DefaultPartTitle()
 
-  fun isClipped(): Boolean {
-    return !clippedText.equals(path)
-  }
+  protected val components = listOf(projectTitle, classTitle, productTitle, productVersion)
 
-  protected val projectLabel = object : JLabel() {
-    override fun setFont(font: Font) {
-      super.setFont(fontUIResource(font))
-    }
-  }.apply {
-    font = fontUIResource(font)
-  }
-
-  protected val classTitle = JLabel()
-  private val productTitle = JLabel()
-  private val productVersionTitle = JLabel()
-
-  private fun fontUIResource(font: Font) = FontUIResource(font.deriveFont(font.style or Font.BOLD))
-
-  private val pane = object : JPanel(MigLayout("ins 0, gap 0", "[min!][pref][pref][pref]push")) {
+  private val pane = object : JPanel(MigLayout("ins 0, gap 0", "[min!][pref][pref][pref]push")){
     override fun addNotify() {
       super.addNotify()
       installListeners()
@@ -63,50 +41,19 @@ open class SelectedEditorFilePath() {
       super.removeNotify()
       unInstallListeners()
     }
-
-    override fun getMinimumSize(): Dimension {
-      val minimumSize = super.getMinimumSize()
-      if (shortProjectName.isEmpty()) return minimumSize
-
-      val fm = projectLabel.getFontMetrics(projectLabel.font)
-      val shortPnWidth = SwingUtilities2.stringWidth(projectLabel, fm, shortProjectName)
-
-      return Dimension(shortPnWidth, minimumSize.height)
-    }
   }.apply {
-    add(projectLabel)
-    add(classTitle, "growx")
-    add(productTitle)
-    add(productVersionTitle)
+    add(projectTitle.component)
+    add(classTitle.component, "growx")
+    add(productTitle.component)
+    add(productVersion.component)
   }
 
   open fun getView(): JComponent {
     return pane
   }
 
-  private val resizedListener = object : ComponentAdapter() {
-    override fun componentResized(e: ComponentEvent?) {
-      update()
-    }
-  }
-
-  private var projectName: String = ""
-  private var shortProjectName: String = ""
-
-  private var shortPath: String = ""
-
-  private var path: String = ""
-    set(value) {
-      if (value == field) return
-      field = value
-      shortPath = path.split(fileSeparatorChar).last()
-
-      update()
-    }
-
   private var disposable: Disposable? = null
   private var project: Project? = null
-
   protected open fun installListeners() {
     project ?: return
 
@@ -126,8 +73,21 @@ open class SelectedEditorFilePath() {
     getView().removeComponentListener(resizedListener)
   }
 
+  fun isClipped(): Boolean {
+    for (component in components) {
+      if(component.isClipped) return true
+    }
+    return false
+  }
+
+  private val resizedListener = object : ComponentAdapter() {
+    override fun componentResized(e: ComponentEvent?) {
+      update()
+    }
+  }
+
   private fun updatePath() {
-    path = project?.let {
+    classTitle.longText = project?.let {
       val fileEditorManager = FileEditorManager.getInstance(it)
 
       val file = if (fileEditorManager is FileEditorManagerEx) {
@@ -175,108 +135,101 @@ open class SelectedEditorFilePath() {
   }
 
   protected fun updateProjectName() {
+    if (!SystemInfo.isMac && !SystemInfo.isGNOME) productTitle.longText = ApplicationNamesInfo.getInstance().fullProductName else productTitle.ignore()
+
+    if(java.lang.Boolean.getBoolean("ide.ui.version.in.title")) productVersion.longText = ApplicationInfo.getInstance().fullVersion else productVersion.ignore()
+
+
     project?.let {
-      shortProjectName = it.name
-      projectName = FrameTitleBuilder.getInstance().getProjectTitle(it) ?: shortProjectName
+      val short = it.name
+      val long = FrameTitleBuilder.getInstance().getProjectTitle(it) ?: short
+
+      projectTitle.setProject(long, short)
       update()
     }
   }
 
   private fun update() {
-    val product = if (!SystemInfo.isMac && !SystemInfo.isGNOME) "${ApplicationNamesInfo.getInstance().fullProductName}${if (java.lang.Boolean.getBoolean(
-        "ide.ui.version.in.title")) " ${ApplicationInfo.getInstance().fullVersion}"
-    else ""}"
-    else ""
-    val fullToolTip = projectName + delimiterSymbol + path + product
+    val insets = getView().getInsets(null)
+    val width: Int = getView().width - (insets.right + insets.left)
 
-    clippedText = path.let {
-      val fm = classTitle.getFontMetrics(classTitle.font)
-      val pnfm = projectLabel.getFontMetrics(projectLabel.font)
+    components.forEach{it.refresh()}
 
-      val insets = classTitle.getInsets(null)
-      val width: Int = getView().width - (insets.right + insets.left)
+    when {
+      width > projectTitle.longWidth + classTitle.longWidth + productTitle.longWidth + productVersion.longWidth -> {
+        //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.showLong, productVersion.showLong")
 
-      var pnWidth = SwingUtilities2.stringWidth(projectLabel, pnfm, projectName)
-      val shortPnWidth = SwingUtilities2.stringWidth(projectLabel, pnfm, shortProjectName)
-
-      val classWidth = SwingUtilities2.stringWidth(classTitle, fm, path)
-      val productWidth = SwingUtilities2.stringWidth(classTitle, fm, product)
-      val shortClassWidth = SwingUtilities2.stringWidth(classTitle, fm, shortPath)
-
-      val symbolWidth = SwingUtilities2.stringWidth(classTitle, fm, ellipsisSymbol)
-      val delimiterWidth = SwingUtilities2.stringWidth(classTitle, fm, delimiterSymbol)
-
-      if (pnWidth + classWidth + delimiterWidth + (if (path.isEmpty()) 0 else delimiterWidth) + productWidth < width) {
-        projectLabel.toolTipText = null
-        classTitle.toolTipText = null
-        clippedProjectName = projectName
-
-        return@let "${if (path.isEmpty()) "" else "$delimiterSymbol$path"}$delimiterSymbol$product"
+        projectTitle.showLong()
+        classTitle.showLong()
+        productTitle.showLong()
+        productVersion.showLong()
       }
 
-      val pn = if (pnWidth + classWidth + delimiterWidth > width) {
-        pnWidth = shortPnWidth
+      width > projectTitle.longWidth + classTitle.longWidth + productTitle.longWidth + productVersion.shortWidth -> {
+        //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.showLong, productVersion.SHOW_SHORT")
 
-        shortProjectName
+        projectTitle.showLong()
+        classTitle.showLong()
+        productTitle.showLong()
+        productVersion.showShort()
       }
-      else {
-        projectName
+
+      width > projectTitle.longWidth + classTitle.longWidth + productTitle.longWidth -> {
+        //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.showLong, productVersion.HIDE")
+
+        projectTitle.showLong()
+        classTitle.showLong()
+        productTitle.showLong()
+        productVersion.hide()
       }
 
-      when {
-        pnWidth > width -> {
-          projectLabel.toolTipText = fullToolTip
-          classTitle.toolTipText = fullToolTip
-          clippedProjectName = ""
-          ""
-        }
+      width > projectTitle.longWidth + classTitle.longWidth + productTitle.shortWidth -> {
+        //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.SHOW_SHORT, productVersion.HIDE")
 
-        pnWidth == width || pnWidth + symbolWidth + delimiterWidth >= width -> {
-          projectLabel.toolTipText = fullToolTip
-          classTitle.toolTipText = fullToolTip
-          clippedProjectName = pn
-          ""
-        }
-
-        classWidth > width - pnWidth - delimiterWidth -> {
-          projectLabel.toolTipText = fullToolTip
-          classTitle.toolTipText = fullToolTip
-          clippedProjectName = pn
-          val clipString = clipString(classTitle, path, width - pnWidth - delimiterWidth)
-          if (clipString.isEmpty()) "" else "$delimiterSymbol$clipString"
-        }
-        else -> {
-          projectLabel.toolTipText = if (pn == shortProjectName) projectName else null
-          classTitle.toolTipText = null
-          clippedProjectName = pn
-          if (path.isEmpty()) "" else "$delimiterSymbol$path"
-        }
+        projectTitle.showLong()
+        classTitle.showLong()
+        productTitle.showShort()
+        productVersion.hide()
       }
-    }
-    projectLabel.text = clippedProjectName
-    classTitle.text = clippedText
-  }
 
-  private fun clipString(component: JComponent, string: String, maxWidth: Int): String {
-    val fm = component.getFontMetrics(component.font)
-    val symbolWidth = SwingUtilities2.stringWidth(component, fm, ellipsisSymbol)
-    return when {
-      symbolWidth >= maxWidth -> ""
-      else -> {
-        val availTextWidth = maxWidth - symbolWidth
+      width > projectTitle.longWidth + classTitle.longWidth -> {
+        //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.HIDE, productVersion.HIDE")
 
-        val separate = string.split(fileSeparatorChar)
-        var str = ""
-        var stringWidth = 0
-        for (i in separate.lastIndex downTo 1) {
-          stringWidth += SwingUtilities2.stringWidth(component, fm, separate[i] + fileSeparatorChar)
-          if (stringWidth <= availTextWidth) {
-            str = fileSeparatorChar + separate[i] + str
-          }
-        }
+        projectTitle.showLong()
+        classTitle.showLong()
+        productTitle.hide()
+        productVersion.hide()
+      }
 
-        return if (str.isEmpty()) "" else ellipsisSymbol + str
+      width > projectTitle.longWidth + classTitle.shortWidth -> {
+        //LOGGER.info("projectTitle.showLong, classTitle.SHRINK: ${width - projectTitle.longWidth}, productTitle.HIDE, productVersion.HIDE")
+
+        projectTitle.showLong()
+        productTitle.hide()
+        productVersion.hide()
+        classTitle.shrink(width - projectTitle.longWidth)
+      }
+
+      width > projectTitle.shortWidth + classTitle.shortWidth -> {
+        //LOGGER.info("projectTitle.showLong, classTitle.SHOW_SHORT, productTitle.HIDE, productVersion.HIDE")
+
+        projectTitle.shrink(width - classTitle.shortWidth)
+        productTitle.hide()
+        productVersion.hide()
+        classTitle.showShort()
+      }
+
+      width > projectTitle.shortWidth -> {
+        //LOGGER.info("projectTitle.SHOW_SHORT, classTitle.HIDE, productTitle.HIDE, productVersion.HIDE")
+
+        projectTitle.showShort()
+        productTitle.hide()
+        productVersion.hide()
+        classTitle.hide()
       }
     }
+
+    components.forEach { it.component.toolTipText = if (!isClipped()) null else "${projectTitle.toolTip}${classTitle.toolTip}${productTitle.toolTip}${productVersion.toolTip}" }
+
   }
 }
