@@ -43,6 +43,9 @@ public interface InlayModel {
    *
    * @param relatesToPrecedingText whether element is associated with preceding or following text
    *                               (see {@link Inlay#isRelatedToPrecedingText()})
+   * @param showAbove whether element will be displayed above or below corresponding visual line
+   * @param priority if multiple elements are requested to be displayed for the same visual line, this parameter defines the relative
+   *                 positioning of such elements (larger priority value means the element will be rendered closer to the text)
    * @return {@code null} if requested element cannot be created, e.g. if corresponding functionality
    *         is not supported by current editor instance.
    */
