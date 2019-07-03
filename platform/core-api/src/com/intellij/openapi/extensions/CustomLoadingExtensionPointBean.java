@@ -17,8 +17,9 @@ public class CustomLoadingExtensionPointBean extends AbstractExtensionPointBean 
 
   @NotNull
   protected <T> T instantiateExtension(@Nullable String className, @NotNull PicoContainer picoContainer) {
+    T instance;
     if (factoryClass == null) {
-      return ExtensionInstantiator.instantiateWithPicoContainerOnlyIfNeeded(className, picoContainer, myPluginDescriptor);
+      instance = ExtensionInstantiator.instantiateWithPicoContainerOnlyIfNeeded(className, picoContainer, myPluginDescriptor);
     }
     else {
       ExtensionFactory factory;
@@ -29,7 +30,11 @@ public class CustomLoadingExtensionPointBean extends AbstractExtensionPointBean 
         throw new PluginException(e, myPluginDescriptor == null ? null : myPluginDescriptor.getPluginId());
       }
       //noinspection unchecked
-      return (T)factory.createInstance(factoryArgument, className);
+      instance = (T)factory.createInstance(factoryArgument, className);
     }
+    if (instance instanceof PluginAware) {
+      ((PluginAware)instance).setPluginDescriptor(myPluginDescriptor);
+    }
+    return instance;
   }
 }
