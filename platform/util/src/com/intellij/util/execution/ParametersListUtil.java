@@ -29,10 +29,10 @@ public class ParametersListUtil {
   public static final Function<List<String>, String> COLON_LINE_JOINER = strings -> StringUtil.join(strings, ";");
   public static final Function<String, List<String>> COMMA_LINE_PARSER = text -> {
     ArrayList<String> result = new ArrayList<>();
-    for (String pattern : text.split(",")) {
-      String trimmedPattern = pattern.trim();
-      if (!trimmedPattern.isEmpty()) {
-        result.add(trimmedPattern);
+    for (String token : text.split(",")) {
+      String trimmedToken = token.trim();
+      if (!trimmedToken.isEmpty()) {
+        result.add(trimmedToken);
       }
     }
     return result;
