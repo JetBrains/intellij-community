@@ -200,7 +200,6 @@ fi
 # ---------------------------------------------------------------------
 # Run the IDE.
 # ---------------------------------------------------------------------
-JAVA_ERR_LOG=$("$MKTEMP" -t java.error.log.XXXXXX)
 IFS="$(printf '\n\t')"
 # shellcheck disable=SC2086
 "$JAVA_BIN" \
@@ -213,10 +212,4 @@ IFS="$(printf '\n\t')"
   ${IDE_PROPERTIES_PROPERTY} \
   __ide_jvm_args__ \
   com.intellij.idea.Main \
-  "$@" 2> "$JAVA_ERR_LOG"
-EC=$?
-if [ ${EC} -ne 0 ] && [ -s "$JAVA_ERR_LOG" ]; then
-  message "$(cat "$JAVA_ERR_LOG")"
-fi
-rm -f "$JAVA_ERR_LOG"
-exit ${EC}
+  "$@"
