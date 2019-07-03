@@ -16,6 +16,7 @@ import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
@@ -31,6 +32,7 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
                                settings: Settings,
                                sink: InlayHintsSink): InlayHintsCollector? {
     val project = file.project
+    val document = PsiDocumentManager.getInstance(project).getDocument(file)
     return object : FactoryInlayHintsCollector(editor) {
       override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
         if (file.project.service<DumbService>().isDumb) return true
@@ -56,7 +58,23 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
           if (modifierList != null) {
             val offset = modifierList.textRange.startOffset
             if (presentations.isNotEmpty()) {
-              sink.addInlineElement(offset, false, SequencePresentation(presentations))
+              val presentation = SequencePresentation(presentations)
+              val prevSibling = element.prevSibling
+              when {
+                // element is first in line
+                prevSibling is PsiWhiteSpace && prevSibling.textContains('\n') && document != null -> {
+                  val width = EditorUtil.getPlainSpaceWidth(editor)
+                  val line = document.getLineNumber(offset)
+                  val startOffset = document.getLineStartOffset(line)
+                  val column = offset - startOffset
+                  val shifted = factory.inset(presentation, left = column * width)
+
+                  sink.addBlockElement(offset, false, true, 0, shifted)
+                }
+                else -> {
+                  sink.addInlineElement(offset, false, factory.inset(presentation, left = 1, right = 1))
+                }
+              }
             }
           }
         }
@@ -78,19 +96,14 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
         }
       }
 
-      private fun annotationPresentation(annotation: PsiAnnotation): InsetPresentation = with(factory) {
+      private fun annotationPresentation(annotation: PsiAnnotation): InlayPresentation = with(factory) {
         val nameReferenceElement = annotation.nameReferenceElement
         val parameterList = annotation.parameterList
-        inset(
-          roundWithBackground(seq(
-            smallText("@"),
-            psiSingleReference(smallText(nameReferenceElement?.referenceName ?: "")) { nameReferenceElement?.resolve() },
-            parametersPresentation(parameterList)
-          )),
-          left = 1,
-          right = 1
-        )
-
+        roundWithBackground(seq(
+          smallText("@"),
+          psiSingleReference(smallText(nameReferenceElement?.referenceName ?: "")) { nameReferenceElement?.resolve() },
+          parametersPresentation(parameterList)
+        ))
       }
 
       private fun parametersPresentation(parameterList: PsiAnnotationParameterList) = with(factory) {
@@ -146,7 +159,8 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
       override fun createComponent(listener: ChangeListener): JComponent {
         return panel {
           row {
-            val showExternalCheckBox = JCheckBox(ApplicationBundle.message("editor.appearance.show.external.annotations"), settings.showExternal)
+            val showExternalCheckBox = JCheckBox(ApplicationBundle.message("editor.appearance.show.external.annotations"),
+                                                 settings.showExternal)
             showExternalCheckBox.addChangeListener {
               settings.showExternal = showExternalCheckBox.isSelected
               listener.settingsChanged()
@@ -154,7 +168,8 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
             showExternalCheckBox()
           }
           row {
-            val showInferredCheckBox = JCheckBox(ApplicationBundle.message("editor.appearance.show.inferred.annotations"), settings.showInferred)
+            val showInferredCheckBox = JCheckBox(ApplicationBundle.message("editor.appearance.show.inferred.annotations"),
+                                                 settings.showInferred)
             showInferredCheckBox.addChangeListener {
               settings.showInferred = showInferredCheckBox.isSelected
               listener.settingsChanged()
