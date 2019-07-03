@@ -162,8 +162,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
       ((EditorEx)editor).setCustomCursor(this, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
       InlayPresentation hoverText = factory.text(result.getHoverText());
-      InlayPresentation withPossibleUnderline = new EffectInlayPresentation(hoverText, null, editor.getLineHeight(), ((EditorImpl)editor).getAscent(), editor.getLineHeight());
-      InlayPresentation onClick = factory.onClick(withPossibleUnderline, MouseButton.Left, (event, point) -> {
+      InlayPresentation onClick = factory.onClick(hoverText, MouseButton.Left, (event, point) -> {
         result.onClick(editor, element);
         mouseExited((EditorEx)editor);
         return null;
