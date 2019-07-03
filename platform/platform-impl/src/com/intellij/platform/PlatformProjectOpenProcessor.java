@@ -274,6 +274,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     return projectManager.openProject(project) ? new Pair<>(project, module) : null;
   }
 
+  @Nullable
   private static Project tryLoadProject(VirtualFile baseDir) {
     try {
       for (ProjectOpenProcessor processor : ProjectOpenProcessor.EXTENSION_POINT_NAME.getExtensionList()) {

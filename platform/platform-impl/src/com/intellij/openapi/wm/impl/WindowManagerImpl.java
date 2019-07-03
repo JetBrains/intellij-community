@@ -30,6 +30,8 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.platform.WindowUtils;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -44,7 +46,10 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.peer.ComponentPeer;
 import java.awt.peer.FramePeer;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 @State(
   name = "WindowManager",
@@ -75,16 +80,32 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   // null key - root frame
   private final Map<Project, IdeFrameImpl> myProjectToFrame = new HashMap<>();
 
-  private final Map<Project, Set<JDialog>> myDialogsToDispose = new HashMap<>();
+  private final Map<Project, Set<JDialog>> myDialogsToDispose = new THashMap<>();
 
   @NotNull
   final FrameInfo myDefaultFrameInfo = new FrameInfo();
 
-  private final WindowAdapter myActivationListener;
+  private final WindowAdapter myActivationListener = new WindowAdapter() {
+    @Override
+    public void windowActivated(WindowEvent e) {
+      Window activeWindow = e.getWindow();
+      // must be
+      if (activeWindow instanceof IdeFrameImpl) {
+        Project project = ((IdeFrameImpl)activeWindow).getProject();
+        if (project != null) {
+          proceedDialogDisposalQueue(project);
+        }
+      }
+    }
+  };
 
-  /**
-   * invoked by reflection
-   */
+  private final ComponentAdapter myFrameStateListener = new ComponentAdapter() {
+    @Override
+    public void componentMoved(@NotNull ComponentEvent e) {
+      updateFrameBounds((IdeFrameImpl)e.getComponent());
+    }
+  };
+
   public WindowManagerImpl() {
     DataManager dataManager = DataManager.getInstance();
     if (dataManager instanceof DataManagerImpl) {
@@ -98,16 +119,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
     final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     keyboardFocusManager.addPropertyChangeListener(FOCUSED_WINDOW_PROPERTY_NAME, myWindowWatcher);
-
-    myActivationListener = new WindowAdapter() {
-      @Override
-      public void windowActivated(WindowEvent e) {
-        Window activeWindow = e.getWindow();
-        if (activeWindow instanceof IdeFrameImpl) { // must be
-          proceedDialogDisposalQueue(((IdeFrameImpl)activeWindow).getProject());
-        }
-      }
-    };
 
     if (UIUtil.hasLeakingAppleListeners()) {
       UIUtil.addAwtListener(event -> {
@@ -449,7 +460,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
     frame.setVisible(true);
     frame.setExtendedState(myDefaultFrameInfo.getExtendedState());
-    addFrameStateListener(frame);
+    frame.addComponentListener(myFrameStateListener);
     IdeMenuBar.installAppMenuIfNeeded(frame);
     return frame;
   }
@@ -472,40 +483,42 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     LOG.assertTrue(!myProjectToFrame.containsKey(project));
 
     IdeFrameImpl frame = myProjectToFrame.remove(null);
-    if (frame == null) {
+    boolean isNewFrame = frame == null;
+    if (isNewFrame) {
       frame = new IdeFrameImpl();
       frame.init();
-    }
 
-    final FrameInfo frameInfo = ProjectFrameBounds.getInstance(project).getRawFrameInfo();
-    boolean addComponentListener = frameInfo == null;
-    if (frameInfo != null && frameInfo.getBounds() != null) {
-      // update default frame info - newly created project frame should be the same as last opened
-      myDefaultFrameInfo.copyFrom(frameInfo);
-      Rectangle frameBounds = FrameBoundsConverter.convertFromDeviceSpace(frameInfo.getBounds());
-      myDefaultFrameInfo.setBounds(validateFrameBounds(frameBounds));
-    }
+      final FrameInfo frameInfo = ProjectFrameBounds.getInstance(project).getRawFrameInfo();
+      if (frameInfo != null && frameInfo.getBounds() != null) {
+        // update default frame info - newly created project frame should be the same as last opened
+        myDefaultFrameInfo.copyFrom(frameInfo);
+        Rectangle frameBounds = FrameBoundsConverter.convertFromDeviceSpace(frameInfo.getBounds());
+        myDefaultFrameInfo.setBounds(validateFrameBounds(frameBounds));
+      }
 
-    if (!(FrameState.isMaximized(frame.getExtendedState()) || FrameState.isFullScreen(frame)) ||
-        !FrameState.isMaximized(myDefaultFrameInfo.getExtendedState())) // going to quit maximized
-    {
-      Rectangle bounds = myDefaultFrameInfo.getBounds();
-      if (bounds != null) {
-        frame.setBounds(bounds);
+      if (!(FrameState.isMaximized(frame.getExtendedState()) || FrameState.isFullScreen(frame)) ||
+          !FrameState.isMaximized(myDefaultFrameInfo.getExtendedState()) /* going to quit maximized */) {
+        Rectangle bounds = myDefaultFrameInfo.getBounds();
+        if (bounds != null) {
+          frame.setBounds(bounds);
+        }
       }
     }
 
     frame.setProject(project);
     myProjectToFrame.put(project, frame);
-    frame.setVisible(true);
-    frame.setExtendedState(myDefaultFrameInfo.getExtendedState());
+
+    if (isNewFrame) {
+      frame.setVisible(true);
+      frame.setExtendedState(myDefaultFrameInfo.getExtendedState());
+    }
 
     frame.addWindowListener(myActivationListener);
-    if (addComponentListener) {
+    if (isNewFrame) {
       if (RecentProjectsManagerBase.getInstanceEx().isBatchOpening()) {
         frame.toBack();
       }
-      addFrameStateListener(frame);
+      frame.addComponentListener(myFrameStateListener);
     }
     myEventDispatcher.getMulticaster().frameCreated(frame);
     IdeMenuBar.installAppMenuIfNeeded(frame);
@@ -513,27 +526,15 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     return frame;
   }
 
-  private void addFrameStateListener(@NotNull IdeFrameImpl frame) {
-    frame.addComponentListener(new ComponentAdapter() {
-      @Override
-      public void componentMoved(@NotNull ComponentEvent e) {
-        updateFrameBounds(frame);
-      }
-    });
-  }
-
-  private void proceedDialogDisposalQueue(Project project) {
-    Set<JDialog> dialogs = myDialogsToDispose.get(project);
-    if (dialogs == null) return;
-    for (JDialog dialog : dialogs) {
-      dialog.dispose();
+  private void proceedDialogDisposalQueue(@NotNull Project project) {
+    Set<JDialog> dialogs = myDialogsToDispose.remove(project);
+    if (dialogs != null) {
+      dialogs.forEach(Window::dispose);
     }
-    myDialogsToDispose.put(project, null);
   }
 
-  private void queueForDisposal(JDialog dialog, Project project) {
-    Set<JDialog> dialogs = myDialogsToDispose.computeIfAbsent(project, k -> new HashSet<>());
-    dialogs.add(dialog);
+  private void queueForDisposal(@NotNull JDialog dialog, @NotNull Project project) {
+    myDialogsToDispose.computeIfAbsent(project, k -> new THashSet<>()).add(dialog);
   }
 
   @Override
