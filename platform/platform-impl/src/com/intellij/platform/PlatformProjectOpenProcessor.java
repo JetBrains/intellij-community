@@ -9,6 +9,7 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
@@ -198,10 +199,12 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
       boolean finalDummyProject = dummyProject;
       String finalDummyProjectName = dummyProjectName;
       Runnable process = () -> refResult.set(prepareAndOpenProject(virtualFile, options, finalBaseDir, finalDummyProject, finalDummyProjectName));
-      boolean progressCompleted = ProgressManager.getInstance().runProcessWithProgressSynchronously(process, "Loading Project...", true, null, frame.getComponent());
-      if (progressCompleted) {
-        result = refResult.get();
-      }
+      TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+        boolean progressCompleted = ProgressManager.getInstance().runProcessWithProgressSynchronously(process, "Loading Project...", true, null, frame.getComponent());
+        if (!progressCompleted) {
+          refResult.set(null);
+        }
+      });
     }
 
     if (result == null || result.first == null) {
