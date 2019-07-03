@@ -198,7 +198,15 @@ class CircletIdeaJobExecutionProvider : JobExecutionProvider<CircletIdeaGraphSto
     private var savedHandler: ((tx: CircletIdeaGraphStorageTransaction, job: AJobExecutionEntity<*>, newStatus: ExecutionStatus) -> Unit)? = null
 
     override fun scheduleExecution(tx: CircletIdeaGraphStorageTransaction, jobs: Iterable<AJobExecutionEntity<*>>) {
-        TODO("scheduleExecution not implemented")
+        jobs.forEach {job ->
+            when (job) {
+                is CircletIdeaAJobExecutionEntity -> {
+                    val image = job.meta.image
+                }
+                else -> error("unknown job $job")
+            }
+        }
+        TODO("scheduleExecution not implemented ${jobs.joinToString()}")
     }
 
     override fun scheduleTermination(jobs: Iterable<AJobExecutionEntity<*>>) {
