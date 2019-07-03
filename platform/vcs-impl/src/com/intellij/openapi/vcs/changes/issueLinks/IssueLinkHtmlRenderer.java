@@ -23,6 +23,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -33,13 +34,16 @@ public class IssueLinkHtmlRenderer {
   private IssueLinkHtmlRenderer() {
   }
 
-  public static String formatTextIntoHtml(final Project project, final String c) {
+  @NotNull
+  public static String formatTextIntoHtml(@NotNull Project project, @NotNull String c) {
     return "<html><head>" + UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) + "</head><body>" +
            formatTextWithLinks(project, c) + "</body></html>";
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static String formatTextWithLinks(Project project, String str, Convertor<? super String, String> convertor) {
+  @NotNull
+  public static String formatTextWithLinks(@NotNull Project project,
+                                           @NotNull String str,
+                                           @NotNull Convertor<? super String, String> convertor) {
     if (StringUtil.isEmpty(str)) return "";
     String comment = XmlStringUtil.escapeString(VcsUtil.trimCommitMessageToSaneSize(str), false);
 
@@ -59,7 +63,8 @@ public class IssueLinkHtmlRenderer {
     return comment.replace("\n", "<br>");
   }
 
-  public static String formatTextWithLinks(final Project project, final String c) {
+  @NotNull
+  public static String formatTextWithLinks(@NotNull Project project, @NotNull final String c) {
     return formatTextWithLinks(project, c, Convertor.SELF);
   }
 }
