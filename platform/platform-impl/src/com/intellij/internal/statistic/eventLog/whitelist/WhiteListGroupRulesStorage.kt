@@ -4,7 +4,7 @@ package com.intellij.internal.statistic.eventLog.whitelist
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupRules
 
 interface WhiteListGroupRulesStorage {
-  fun getEventsValidators() : Map<String, WhiteListGroupRules>
+  fun getEventsValidators(): Map<String, WhiteListGroupRules>
 
   fun isUnreachableWhitelist() : Boolean
 

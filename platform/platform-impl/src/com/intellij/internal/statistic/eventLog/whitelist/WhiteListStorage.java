@@ -25,7 +25,7 @@ public class WhiteListStorage implements WhiteListGroupRulesStorage {
 
   private static final ConcurrentMap<String, WhiteListStorage> instances = ContainerUtil.newConcurrentMap();
 
-  protected final Map<String, WhiteListGroupRules> eventsValidators = ContainerUtil.newConcurrentMap();
+  protected final ConcurrentMap<String, WhiteListGroupRules> eventsValidators = ContainerUtil.newConcurrentMap();
   private final Semaphore mySemaphore;
   private final String myRecorderId;
   private final AtomicBoolean isWhiteListInitialized;
@@ -92,6 +92,7 @@ public class WhiteListStorage implements WhiteListGroupRulesStorage {
            : WhiteListGroupRules.create(group, null, null);
   }
 
+  @Override
   public void update() {
     final String version = updateValidators(getWhiteListContent());
     if (!StringUtil.equals(version, myVersion)) {
@@ -127,6 +128,7 @@ public class WhiteListStorage implements WhiteListGroupRulesStorage {
     return !isWhiteListInitialized.get();
   }
 
+  @Override
   public void reload() {
     updateValidators(myWhitelistPersistence.getCachedWhiteList());
   }

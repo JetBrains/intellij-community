@@ -6,8 +6,8 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupRules;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule;
+import com.intellij.internal.statistic.eventLog.whitelist.MergedWhiteListStorage;
 import com.intellij.internal.statistic.eventLog.whitelist.WhiteListGroupRulesStorage;
-import com.intellij.internal.statistic.eventLog.whitelist.WhiteListStorage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,7 +32,7 @@ public class SensitiveDataValidator {
     return instances.computeIfAbsent(
       recorderId,
       id -> {
-        WhiteListStorage whiteListStorage = WhiteListStorage.getInstance(recorderId);
+        MergedWhiteListStorage whiteListStorage = MergedWhiteListStorage.getInstance(recorderId);
         return ApplicationManager.getApplication().isUnitTestMode()
                ? new BlindSensitiveDataValidator(whiteListStorage)
                : new SensitiveDataValidator(whiteListStorage);
@@ -89,10 +89,6 @@ public class SensitiveDataValidator {
     myWhiteListStorage.reload();
   }
 
-  private boolean isUnreachableWhitelist() {
-    return myWhiteListStorage.isUnreachableWhitelist();
-  }
-
   private static boolean isSystemEventId(@Nullable String eventId) {
     return "invoked".equals(eventId) || "registered".equals(eventId);
   }
@@ -118,7 +114,7 @@ public class SensitiveDataValidator {
 
 
   private static class BlindSensitiveDataValidator extends SensitiveDataValidator {
-    protected BlindSensitiveDataValidator(WhiteListStorage whiteListStorage) {
+    protected BlindSensitiveDataValidator(WhiteListGroupRulesStorage whiteListStorage) {
       super(whiteListStorage);
     }
 
