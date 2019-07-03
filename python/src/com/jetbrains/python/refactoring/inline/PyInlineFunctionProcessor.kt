@@ -15,6 +15,8 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.containers.MultiMap
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PyNames
+import com.jetbrains.python.codeInsight.PyDunderAllReference
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.psi.*
@@ -48,11 +50,8 @@ class PyInlineFunctionProcessor(project: Project,
     val usagesAndImports = refUsages.get()
     val (imports, usages) = usagesAndImports.partition { PsiTreeUtil.getParentOfType(it.element, PyImportStatementBase::class.java) != null }
     val filteredUsages = usages.filter { usage ->
+      if (usage.reference is PyDunderAllReference) return@filter true
       val element = usage.element!!
-      if (element is PyStringLiteralExpression) {
-        val file = element.containingFile as? PyFile
-        if (file?.dunderAll?.contains(element.stringValue) == true) return@filter true
-      }
       if (element.parent is PyDecorator) {
         if (!handleUsageError(element, "refactoring.inline.function.is.decorator", conflicts)) return false
         return@filter false
@@ -123,11 +122,14 @@ class PyInlineFunctionProcessor(project: Project,
 
   private fun doRefactor(usages: Array<out UsageInfo>) {
     val (unsortedRefs, imports) = usages.partition { PsiTreeUtil.getParentOfType(it.element, PyImportStatementBase::class.java) == null }
-    val (callRefs, dunderAll) = unsortedRefs.partition { it.element is PyReferenceExpression }
+    val (callRefs, dunderAll) = unsortedRefs.partition { it.reference !is PyDunderAllReference }
 
     val references = callRefs.sortedByDescending { usage ->
       SyntaxTraverser.psiApi().parents(usage.element).asSequence().filter { it is PyCallExpression }.count()
     }
+
+    val typeEvalContext = TypeEvalContext.userInitiated(myProject, null)
+    val resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(typeEvalContext)
 
     val selfUsed = myFunction.parameterList.parameters.firstOrNull()?.let { firstParam ->
       if (!firstParam.isSelf) return@let false
@@ -167,7 +169,7 @@ class PyInlineFunctionProcessor(project: Project,
       val importAsRefs = MultiMap.create<String, PyReferenceExpression>()
       val returnStatements = mutableListOf<PyReturnStatement>()
 
-      val mappedArguments = prepareArguments(callSite, declarations, generatedNames, scopeAnchor, reference, languageLevel, selfUsed)
+      val mappedArguments = prepareArguments(callSite, declarations, generatedNames, scopeAnchor, reference, languageLevel, resolveContext, selfUsed)
 
       myFunction.statementList.accept(object : PyRecursiveElementVisitor() {
         override fun visitPyReferenceExpression(node: PyReferenceExpression) {
@@ -175,7 +177,7 @@ class PyInlineFunctionProcessor(project: Project,
             val name = node.name!!
             if (name in namesInOuterScope && name !in mappedArguments) {
               val resolved = node.reference.resolve()
-              val target = (resolved as? PyFunction)?.containingClass ?: resolved
+              val target = if (resolved is PyFunction && resolved.containingClass != null && resolved.name == PyNames.INIT) resolved.containingClass else resolved
               if (!builtinCache.isBuiltin(target) && target !in PyResolveUtil.resolveLocally(refScopeOwner, name)) {
                 if (PyClassRefactoringUtil.hasEncodedTarget(node)) importAsTargets.add(name)
                 else nameClashes.add(name)
@@ -189,11 +191,7 @@ class PyInlineFunctionProcessor(project: Project,
           if (!node.isQualified) {
             val name = node.name!!
             if (name in namesInOuterScope && name !in mappedArguments && functionScope.containsDeclaration(name)) {
-              val resolved = node.reference.resolve()
-              val target = (resolved as? PyFunction)?.containingClass ?: resolved
-              if (!builtinCache.isBuiltin(target) && target !in PyResolveUtil.resolveLocally(refScopeOwner, name)) {
-                nameClashes.add(name)
-              }
+              nameClashes.add(name)
             }
           }
           super.visitPyTargetExpression(node)
@@ -243,7 +241,11 @@ class PyInlineFunctionProcessor(project: Project,
 
       importAsRefs.entrySet().forEach { (name, elements) ->
         val newRef = generateUniqueAssignment(languageLevel, name, generatedNames, scopeAnchor).assignedValue as PyReferenceExpression
-        elements.forEach { PyClassRefactoringUtil.forceAsName(it, newRef.name!!, newRef) }
+        elements.forEach {
+          PyClassRefactoringUtil.transferEncodedImports(it, newRef)
+          PyClassRefactoringUtil.forceAsName(newRef, newRef.name!!)
+          it.replace(newRef)
+        }
       }
 
       if (returnStatements.size == 1 && returnStatements[0].expression !is PyTupleExpression) {
@@ -300,7 +302,7 @@ class PyInlineFunctionProcessor(project: Project,
       if (stubFunction != null && stubFunction.isWritable) {
         stubFunction.delete()
       }
-      val typingOverloads = PyiUtil.getOverloads(myFunction, TypeEvalContext.userInitiated(myProject, file))
+      val typingOverloads = PyiUtil.getOverloads(myFunction, typeEvalContext)
       if (typingOverloads.isNotEmpty()) {
         typingOverloads.forEach { it.delete() }
       }
@@ -311,8 +313,7 @@ class PyInlineFunctionProcessor(project: Project,
   }
 
   private fun prepareArguments(callSite: PyCallExpression, declarations: MutableList<PyAssignmentStatement>, generatedNames: MutableSet<String>, scopeAnchor: PsiElement,
-                               reference: PyReferenceExpression, languageLevel: LanguageLevel, selfUsed: Boolean): Map<String, PyExpression> {
-    val context = PyResolveContext.noImplicits().withTypeEvalContext(TypeEvalContext.userInitiated(myProject, reference.containingFile))
+                               reference: PyReferenceExpression, languageLevel: LanguageLevel, context: PyResolveContext, selfUsed: Boolean): Map<String, PyExpression> {
     val mapping = PyCallExpressionHelper.mapArguments(callSite, context).firstOrNull() ?: error("Can't map arguments for ${reference.name}")
     val mappedParams = mapping.mappedParameters
     val firstImplicit = mapping.implicitParameters.firstOrNull()
