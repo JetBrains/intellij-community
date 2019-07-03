@@ -13,9 +13,6 @@ import com.intellij.util.ui.JBUI
 import com.siyeh.ig.psiutils.ExpressionUtils
 import org.intellij.lang.annotations.Language
 import javax.swing.JPanel
-import javax.swing.event.ChangeEvent
-import javax.swing.event.DocumentEvent
-import javax.swing.event.DocumentListener
 
 class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.Settings> {
   override fun getCollectorFor(file: PsiFile, editor: Editor, settings: Settings, sink: InlayHintsSink) =
@@ -41,8 +38,11 @@ class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.S
         }
         if (uniqueTypes.size < settings.uniqueTypeCount) return true // to hide hints for builders, where type is obvious
         val javaFactory = JavaTypeHintsPresentationFactory(factory, 3)
+        var lastType : PsiType? = null
         for ((index, currentCall) in chain.withIndex()) {
           val type = types[index]
+          if (lastType == type) continue
+          lastType = type
           val presentation = javaFactory.typeHint(type)
           val project = file.project
           val finalPresentation = InsetPresentation(MenuOnClickPresentation(presentation, project) {

@@ -74,7 +74,7 @@ public class Chains {
   public static void main(String[] args) {
     new A()
       .b()<hint text="[Chains . B]"/>
-      .c().b()<hint text="[Chains . B]"/>
+      .c().b()
       .a()<hint text="[Chains . A]"/>
       .c()<hint text="[Chains . C]"/>
       .b()<hint text="[Chains . B]"/>
