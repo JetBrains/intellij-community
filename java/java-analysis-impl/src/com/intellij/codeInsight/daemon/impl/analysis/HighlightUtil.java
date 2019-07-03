@@ -339,7 +339,7 @@ public class HighlightUtil extends HighlightUtilBase {
                                                  JavaHighlightUtil.formatType(lType),
                                                  JavaHighlightUtil.formatType(rType));
 
-      errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(assignment).descriptionAndTooltip(message).create();
+      errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(operationSign).descriptionAndTooltip(message).create();
     }
     return errorResult;
   }
