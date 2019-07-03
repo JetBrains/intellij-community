@@ -293,8 +293,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
   @Nullable
   public <B extends XBreakpoint<?>> B getDefaultBreakpoint(@NotNull XBreakpointType<B, ?> type) {
     Set<B> defaultBreakpoints = getDefaultBreakpoints(type);
-    Iterator<B> iterator = defaultBreakpoints.iterator();
-    return iterator.hasNext() ? iterator.next() : null;
+    return ContainerUtil.getFirstItem(defaultBreakpoints);
   }
 
   @Override
@@ -328,7 +327,8 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
 
   @Override
   public boolean isDefaultBreakpoint(@NotNull XBreakpoint<?> breakpoint) {
-    return getDefaultBreakpoints(breakpoint.getType()).contains(breakpoint);
+    //noinspection SuspiciousMethodCalls
+    return myDefaultBreakpoints.values().stream().anyMatch(s -> s.contains(breakpoint));
   }
 
   private <T extends XBreakpointProperties> EventDispatcher<XBreakpointListener> getOrCreateDispatcher(final XBreakpointType<?,T> type) {
