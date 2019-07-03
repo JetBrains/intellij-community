@@ -124,6 +124,11 @@ private class PySdkPopupFactory(val project: Project, val module: Module) {
 
   private fun shortenNameInPopup(sdk: Sdk) = name(sdk).trimMiddle(100)
 
+  private fun switchToSdk(sdk: Sdk) {
+    project.pythonSdk = sdk
+    module.pythonSdk = sdk
+  }
+
   private inner class SwitchToSdkAction(val sdk: Sdk) : AnAction() {
 
     init {
@@ -133,10 +138,7 @@ private class PySdkPopupFactory(val project: Project, val module: Module) {
       presentation.icon = icon(sdk)
     }
 
-    override fun actionPerformed(e: AnActionEvent) {
-      project.pythonSdk = sdk
-      module.pythonSdk = sdk
-    }
+    override fun actionPerformed(e: AnActionEvent) = switchToSdk(sdk)
   }
 
   private inner class InterpreterSettingsAction : AnAction("Interpreter Settings...") {
@@ -156,6 +158,7 @@ private class PySdkPopupFactory(val project: Project, val module: Module) {
           if (it != null && model.findSdk(it.name) == null) {
             model.addSdk(it)
             model.apply()
+            switchToSdk(it)
           }
         }
       )
