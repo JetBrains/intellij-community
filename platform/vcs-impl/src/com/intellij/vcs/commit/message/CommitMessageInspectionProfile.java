@@ -14,11 +14,13 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.messages.Topic;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.EventListener;
 import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -27,6 +29,8 @@ import java.util.stream.Stream;
 @State(name = "CommitMessageInspectionProfile", storages = @Storage("vcs.xml"))
 public class CommitMessageInspectionProfile extends InspectionProfileImpl
   implements PersistentStateComponent<CommitMessageInspectionProfile.State> {
+
+  @NotNull public static final Topic<ProfileListener> TOPIC = Topic.create("commit message inspection changes", ProfileListener.class);
 
   private static final String PROFILE_NAME = "Commit Dialog";
   public static final InspectionProfileImpl DEFAULT =
@@ -142,5 +146,9 @@ public class CommitMessageInspectionProfile extends InspectionProfileImpl
                    .map(LocalInspectionToolWrapper::new)
                    .collect(Collectors.toList());
     }
+  }
+
+  public interface ProfileListener extends EventListener {
+    void profileChanged();
   }
 }

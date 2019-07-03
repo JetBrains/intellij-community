@@ -2,10 +2,8 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.primitives.Ints;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -21,7 +19,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.ui.SeparatorComponent;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
@@ -107,15 +104,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
     setLayout(new BorderLayout());
     add(myLoadingPanel, BorderLayout.CENTER);
 
-    logData.getProject().getMessageBus().connect(this).subscribe(ProfileChangeAdapter.TOPIC, new ProfileChangeAdapter() {
-      @Override
-      public void profileChanged(@Nullable InspectionProfile profile) {
-        if (CommitMessageInspectionProfile.getInstance(myLogData.getProject()).equals(profile)) {
-          // only update after settings dialog is closed and settings are actually applied
-          ApplicationManager.getApplication().invokeLater(DetailsPanel.this::update, ModalityState.NON_MODAL);
-        }
-      }
-    });
+    logData.getProject().getMessageBus().connect(this).subscribe(CommitMessageInspectionProfile.TOPIC, () -> update());
 
     myEmptyText.setText("Commit details");
     Disposer.register(parent, this);

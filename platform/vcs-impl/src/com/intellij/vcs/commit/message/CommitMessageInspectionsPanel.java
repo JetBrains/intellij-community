@@ -168,6 +168,7 @@ public class CommitMessageInspectionsPanel extends BorderLayoutPanel implements 
       details.apply();
     }
     myModifiableModel.commit();
+    myProject.getMessageBus().syncPublisher(CommitMessageInspectionProfile.TOPIC).profileChanged();
     reset();
   }
 

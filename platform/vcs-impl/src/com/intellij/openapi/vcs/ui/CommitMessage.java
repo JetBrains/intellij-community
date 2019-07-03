@@ -93,6 +93,15 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     }
 
     setBorder(createEmptyBorder());
+
+    updateOnInspectionProfileChanged(project);
+  }
+
+  private void updateOnInspectionProfileChanged(@NotNull Project project) {
+    project.getMessageBus().connect(this).subscribe(CommitMessageInspectionProfile.TOPIC, () -> {
+      Editor editor = myEditorField.getEditor();
+      if (editor instanceof EditorEx) RightMarginCustomization.customize(project, (EditorEx)editor);
+    });
   }
 
   @Override
@@ -245,7 +254,11 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
     @Override
     public void customize(@NotNull EditorEx editor) {
-      BodyLimitSettings settings = getBodyLimitSettings(myProject);
+      customize(myProject, editor);
+    }
+
+    private static void customize(@NotNull Project project, @NotNull EditorEx editor) {
+      BodyLimitSettings settings = getBodyLimitSettings(project);
 
       editor.getSettings().setRightMargin(settings.getRightMargin());
       editor.getSettings().setRightMarginShown(settings.isShowRightMargin());
