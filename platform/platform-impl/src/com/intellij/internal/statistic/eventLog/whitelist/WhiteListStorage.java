@@ -1,14 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.whitelist;
 
-import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
 import com.intellij.internal.statistic.eventLog.EventLogExternalSettingsService;
 import com.intellij.internal.statistic.eventLog.EventLogSystemLogger;
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupRules;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -17,10 +15,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
-public class WhiteListStorage implements WhiteListGroupRulesStorage {
+public class WhiteListStorage extends BaseWhiteListStorage {
   private static final Logger LOG = Logger.getInstance("com.intellij.internal.statistic.eventLog.whitelist.WhiteListStorage");
 
   private static final ConcurrentMap<String, WhiteListStorage> instances = ContainerUtil.newConcurrentMap();
@@ -28,7 +24,6 @@ public class WhiteListStorage implements WhiteListGroupRulesStorage {
   protected final ConcurrentMap<String, WhiteListGroupRules> eventsValidators = ContainerUtil.newConcurrentMap();
   private final Semaphore mySemaphore;
   private final String myRecorderId;
-  private final AtomicBoolean isWhiteListInitialized;
   private String myVersion;
   private final EventLogWhitelistPersistence myWhitelistPersistence;
   private final EventLogExternalSettingsService mySettingsService;
@@ -44,7 +39,6 @@ public class WhiteListStorage implements WhiteListGroupRulesStorage {
   public WhiteListStorage(@NotNull String recorderId) {
     myRecorderId = recorderId;
     mySemaphore = new Semaphore();
-    isWhiteListInitialized = new AtomicBoolean(false);
     myWhitelistPersistence = new EventLogWhitelistPersistence(recorderId);
     mySettingsService = new EventLogExternalSettingsService(recorderId);
     myVersion = updateValidators(myWhitelistPersistence.getCachedWhiteList());
@@ -66,10 +60,7 @@ public class WhiteListStorage implements WhiteListGroupRulesStorage {
         isWhiteListInitialized.set(false);
         FUStatisticsWhiteListGroupsService.WLGroups groups = FUStatisticsWhiteListGroupsService.parseWhiteListContent(whiteListContent);
         if (groups != null) {
-          final BuildNumber buildNumber = BuildNumber.fromString(EventLogConfiguration.INSTANCE.getBuild());
-          final Map<String, WhiteListGroupRules> result = groups.groups.stream().
-            filter(group -> group.accepts(buildNumber)).
-            collect(Collectors.toMap(group -> group.id, group -> createRules(group, groups.rules)));
+          Map<String, WhiteListGroupRules> result = createValidators(groups);
 
           eventsValidators.putAll(result);
 
@@ -84,15 +75,6 @@ public class WhiteListStorage implements WhiteListGroupRulesStorage {
     return null;
   }
 
-  @NotNull
-  private static WhiteListGroupRules createRules(@NotNull FUStatisticsWhiteListGroupsService.WLGroup group,
-                                                 @Nullable FUStatisticsWhiteListGroupsService.WLRule globalRules) {
-    return globalRules != null
-           ? WhiteListGroupRules.create(group, globalRules.enums, globalRules.regexps)
-           : WhiteListGroupRules.create(group, null, null);
-  }
-
-  @Override
   public void update() {
     final String version = updateValidators(getWhiteListContent());
     if (!StringUtil.equals(version, myVersion)) {
@@ -123,12 +105,6 @@ public class WhiteListStorage implements WhiteListGroupRulesStorage {
     return myWhitelistPersistence.getCachedWhiteList();
   }
 
-  @Override
-  public boolean isUnreachableWhitelist() {
-    return !isWhiteListInitialized.get();
-  }
-
-  @Override
   public void reload() {
     updateValidators(myWhitelistPersistence.getCachedWhiteList());
   }

@@ -51,7 +51,7 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
 
   @Test
   fun test_refexg_escapes() {
-    var foo = "[aa] \\ \\p{Lower} (a|b|c) [a-zA-Z_0-9] X?+ X*+ X?? [\\p{L}&&[^\\p{Lu}]] "
+    val foo = "[aa] \\ \\p{Lower} (a|b|c) [a-zA-Z_0-9] X?+ X*+ X?? [\\p{L}&&[^\\p{Lu}]] "
     val pattern = Pattern.compile(RegexpWhiteListRule.escapeText(foo))
     assertTrue(pattern.matcher(foo).matches())
     assert(true)
@@ -243,9 +243,7 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
   }
 
   private fun createTestSensitiveDataValidator(content: String): TestSensitiveDataValidator {
-    val testSensitiveDataValidator = TestSensitiveDataValidator(content)
-    testSensitiveDataValidator.update()
-    return testSensitiveDataValidator
+    return TestSensitiveDataValidator(content)
   }
 
 
@@ -280,6 +278,10 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
   }
 
   class TestWhiteListStorage(private val myContent: String) : WhiteListStorage("TEST") {
+    init {
+      update()
+    }
+
     override fun isUnreachableWhitelist(): Boolean  = false
 
     override fun getWhiteListContent(): String {

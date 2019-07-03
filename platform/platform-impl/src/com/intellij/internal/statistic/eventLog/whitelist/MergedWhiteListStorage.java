@@ -42,13 +42,4 @@ public class MergedWhiteListStorage implements WhiteListGroupRulesStorage {
     return myWhiteListStorage.isUnreachableWhitelist() && myWhiteListStorageForTest.isUnreachableWhitelist();
   }
 
-  @Override
-  public void update() {
-    //todo (ivanova)
-  }
-
-  @Override
-  public void reload() {
-    //todo (ivanova)
-  }
 }

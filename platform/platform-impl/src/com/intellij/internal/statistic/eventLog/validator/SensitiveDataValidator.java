@@ -80,15 +80,6 @@ public class SensitiveDataValidator {
            Arrays.stream(rule.getEventIdRules()).anyMatch( r -> r instanceof TestModeValidationRule);
   }
 
-  //todo (ivanova) вынести эти методы
-  public void update() {
-    myWhiteListStorage.update();
-  }
-
-  public void reload() {
-    myWhiteListStorage.reload();
-  }
-
   private static boolean isSystemEventId(@Nullable String eventId) {
     return "invoked".equals(eventId) || "registered".equals(eventId);
   }

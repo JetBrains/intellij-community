@@ -8,20 +8,26 @@ import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsSe
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLGroups;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLRule;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLVersion;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class EventLogTestWhitelistPersistence {
+public class EventLogTestWhitelistPersistence extends BaseEventLogWhiteListPersistence{
+  private static final Logger
+    LOG = Logger.getInstance("com.intellij.internal.statistic.eventLog.validator.persistence.EventLogTestWhitelistPersistence");
   private static final String TEST_RULE = "{util#fus_test_mode}";
+  private static final String TEST_WHITE_LIST_DATA_FILE = "test-white-list.json";
+
+  public EventLogTestWhitelistPersistence(@NotNull String recorderId) {super(recorderId);}
 
   public static void addGroupWithCustomRules(@NotNull String recorderId, @NotNull String groupId, @NotNull String rules) throws IOException {
     final String content =
@@ -39,7 +45,7 @@ public class EventLogTestWhitelistPersistence {
 
   private static void addNewGroup(@NotNull String recorderId,
                                   @NotNull WLGroup group) throws IOException {
-    final EventLogWhitelistPersistence persistence = new EventLogWhitelistPersistence(recorderId);
+    final EventLogTestWhitelistPersistence persistence = new EventLogTestWhitelistPersistence(recorderId);
     final WLGroups whitelist = loadTestWhitelist(persistence);
 
     whitelist.groups.stream().
@@ -51,7 +57,7 @@ public class EventLogTestWhitelistPersistence {
   }
 
   @NotNull
-  private static WLGroups loadTestWhitelist(@NotNull EventLogWhitelistPersistence persistence) {
+  public static WLGroups loadTestWhitelist(@NotNull BaseEventLogWhiteListPersistence persistence) {
     final String existing = persistence.getCachedWhiteList();
     if (StringUtil.isNotEmpty(existing)) {
       final WLGroups loaded = FUStatisticsWhiteListGroupsService.parseWhiteListContent(existing);
@@ -80,5 +86,15 @@ public class EventLogTestWhitelistPersistence {
     rule.event_data = dataRules;
     group.rules = rule;
     return group;
+  }
+
+  @Override
+  Logger getLogger() {
+    return LOG;
+  }
+
+  @Override
+  String getWhiteListDataFileName() {
+    return TEST_WHITE_LIST_DATA_FILE;
   }
 }

@@ -8,6 +8,4 @@ interface WhiteListGroupRulesStorage {
 
   fun isUnreachableWhitelist() : Boolean
 
-  fun update()
-  fun reload()
 }
