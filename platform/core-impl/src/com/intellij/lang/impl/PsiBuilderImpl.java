@@ -38,9 +38,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.AbstractList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import static com.intellij.lang.WhitespacesBinders.DEFAULT_RIGHT_BINDER;
 
@@ -119,11 +117,11 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
          null, chameleon);
   }
 
-  public PsiBuilderImpl(@NotNull Project project,
-                        @NotNull ParserDefinition parserDefinition,
-                        @NotNull Lexer lexer,
-                        @NotNull LighterLazyParseableNode chameleon,
-                        @NotNull CharSequence text) {
+  PsiBuilderImpl(@NotNull Project project,
+                 @NotNull ParserDefinition parserDefinition,
+                 @NotNull Lexer lexer,
+                 @NotNull LighterLazyParseableNode chameleon,
+                 @NotNull CharSequence text) {
     this(project, chameleon.getContainingFile(), parserDefinition, lexer,
          chameleon.getCharTable(), text, null, null, ((LazyParseableToken)chameleon).myParentStructure, chameleon);
   }
@@ -189,7 +187,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   }
 
   private static boolean doLexingOptimizationCorrectionCheck() {
-    return false; // set to true to check that re-lexing of lazy parseables produces the same sequence as cached one
+    return false; // set to true to check that re-lexing of chameleons produces the same sequence as cached one
   }
 
   @Override
@@ -360,12 +358,11 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     public void addChild(@NotNull ProductionMarker node) {
       if (myFirstChild == null) {
         myFirstChild = node;
-        myLastChild = node;
       }
       else {
         myLastChild.myNext = node;
-        myLastChild = node;
       }
+      myLastChild = node;
     }
 
     @NotNull
@@ -638,6 +635,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       myMessage = null;
     }
 
+    @NotNull
     @Override
     public WhitespacesAndCommentsBinder getBinder(boolean done) {
       assert !done;
@@ -1290,7 +1288,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     final IElementType type = marker.myType;
     if (type == TokenType.ERROR_ELEMENT) {
       String error = marker.myBuilder.myOptionalData.getDoneError(marker.markerId);
-      return Factory.createErrorElement(error);
+      return Factory.createErrorElement(Objects.requireNonNull(error));
     }
 
     if (type == null) {
