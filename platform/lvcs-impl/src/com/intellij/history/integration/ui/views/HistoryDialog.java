@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.history.integration.ui.views;
 
@@ -43,6 +43,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +54,6 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 import static com.intellij.history.integration.LocalHistoryBundle.message;
@@ -253,7 +253,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       public void run() {
         if (isDisposed() || myProject.isDisposed()) return;
 
-        invokeAndWait(() -> {
+        UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
           if (isDisposed() || myProject.isDisposed()) return;
 
           isUpdating = true;
@@ -270,7 +270,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
         }
 
         final Runnable finalApply = apply;
-        invokeAndWait(() -> {
+        UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
           if (isDisposed() || myProject.isDisposed()) return;
 
           isUpdating = false;
@@ -287,20 +287,6 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
         });
       }
     });
-  }
-
-  private void invokeAndWait(Runnable runnable) {
-    try {
-      if (SwingUtilities.isEventDispatchThread()) {
-        runnable.run();
-      }
-      else {
-        SwingUtilities.invokeAndWait(runnable);
-      }
-    }
-    catch (InterruptedException | InvocationTargetException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   protected void updateActions() {
