@@ -4,10 +4,16 @@ import circlet.pipelines.engine.*
 import circlet.pipelines.engine.api.*
 import circlet.pipelines.engine.storage.*
 import libraries.klogging.*
+import runtime.*
+import runtime.reactive.*
 
-class CircletIdeaJobExecutionProvider : JobExecutionProvider<CircletIdeaGraphStorageTransaction> {
+data class DummyContainer(val lifetimeSource: LifetimeSource)
+
+class CircletIdeaJobExecutionProvider(private val lifetime: Lifetime, private val logCallback: (String) -> Unit) : JobExecutionProvider<CircletIdeaGraphStorageTransaction> {
 
     companion object : KLogging()
+
+    private val runningJobs = mutableMapOf<Long, DummyContainer>()
 
     private var savedHandler: ((tx: CircletIdeaGraphStorageTransaction, job: AJobExecutionEntity<*>, newStatus: ExecutionStatus) -> Unit)? = null
 
@@ -15,12 +21,32 @@ class CircletIdeaJobExecutionProvider : JobExecutionProvider<CircletIdeaGraphSto
         jobs.forEach { job ->
             when (job) {
                 is CircletIdeaAJobExecutionEntity -> {
+                    val jobId = job.id
                     val image = job.meta.image
+                    logCallback("prepare to run: image=$image, id=$jobId")
+                    val jobLifetimeSource = lifetime.nested()
+
+                    val dummyContainer = DummyContainer(jobLifetimeSource)
+                    runningJobs[jobId] = dummyContainer
+                    changeState(tx, job, ExecutionStatus.RUNNING)
+                    var counter = 0
+
+                    val timer = UiDispatch.dispatchInterval(1000) {
+                        logCallback("run dummy container '$image'. counter = ${counter++}")
+                        if (counter == 3) {
+                            changeState(tx, job, generateFinalState(image))
+                            jobLifetimeSource.terminate()
+                        }
+                    }
+                    jobLifetimeSource.add {
+                        runningJobs.remove(jobId)?.lifetimeSource?.terminate()
+                        timer.cancel()
+                    }
+
                 }
                 else -> error("unknown job $job")
             }
         }
-        TODO("scheduleExecution not implemented ${jobs.joinToString()}")
     }
 
     override fun scheduleTermination(jobs: Iterable<AJobExecutionEntity<*>>) {
@@ -42,4 +68,15 @@ class CircletIdeaJobExecutionProvider : JobExecutionProvider<CircletIdeaGraphSto
         TODO("onBeforeJobStatusChanged not implemented")
     }
 
+    private fun changeState(tx: CircletIdeaGraphStorageTransaction, job: AJobExecutionEntity<*>, newStatus: ExecutionStatus) {
+        job.status = newStatus
+        savedHandler!!(tx, job, newStatus)
+    }
+
+    private fun generateFinalState(imageName: String) : ExecutionStatus {
+        if (imageName.endsWith("_toFail")) {
+            return ExecutionStatus.FAILED
+        }
+        return ExecutionStatus.SUCCEEDED
+    }
 }

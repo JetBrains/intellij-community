@@ -62,12 +62,12 @@ class CircletTaskRunner(val project: Project) {
 
         var messageCounter = 0
         timer = UiDispatch.dispatchInterval(1000) {
-            processHandler.println("Dummy message for task: $taskName. message #${messageCounter++}")
+            //processHandler.println("Dummy message for task: $taskName. message #${messageCounter++}")
         }
 
         val orgInfo = OrgInfo("jetbrains.team")
         val automationGraphEngineCommon = AutomationGraphEngineCommon(
-            CircletIdeaJobExecutionProvider(),
+            CircletIdeaJobExecutionProvider(lifetime) { text -> processHandler.println(text) },
             SystemTimeTicker())
         val automationStarterCommon = AutomationStarterCommon(
             orgInfo,
