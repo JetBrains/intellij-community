@@ -48,6 +48,7 @@ import static com.intellij.util.ui.UIUtil.useSafely;
  */
 public final class ToolWindowsPane extends JBLayeredPane implements UISettingsListener, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.ToolWindowsPane");
+  public static final String TEMPORARY_ADDED = "TEMPORARY_ADDED";
 
   private final IdeFrameImpl myFrame;
 
@@ -876,11 +877,11 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   private final class AddSlidingComponentCmd extends FinalizableCommand {
-    private final Component myComponent;
+    private final JComponent myComponent;
     private final WindowInfoImpl myInfo;
     private final boolean myDirtyMode;
 
-    AddSlidingComponentCmd(@NotNull Component component,
+    AddSlidingComponentCmd(@NotNull JComponent component,
                            @NotNull WindowInfoImpl info,
                            final boolean dirtyMode,
                            @NotNull Runnable finishCallBack) {
@@ -900,11 +901,16 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
           Rectangle bounds =  myComponent.getBounds();
 
           useSafely(topImage.getGraphics(), topGraphics -> {
-            myLayeredPane.add(myComponent, JLayeredPane.PALETTE_LAYER);
-            myLayeredPane.moveToFront(myComponent);
-            myLayeredPane.setBoundsInPaletteLayer(myComponent, myInfo.getAnchor(), myInfo.getWeight());
-            myComponent.paint(topGraphics);
-            myLayeredPane.remove(myComponent);
+            myComponent.putClientProperty(TEMPORARY_ADDED, Boolean.TRUE);
+            try {
+              myLayeredPane.add(myComponent, JLayeredPane.PALETTE_LAYER);
+              myLayeredPane.moveToFront(myComponent);
+              myLayeredPane.setBoundsInPaletteLayer(myComponent, myInfo.getAnchor(), myInfo.getWeight());
+              myComponent.paint(topGraphics);
+              myLayeredPane.remove(myComponent);
+            } finally {
+              myComponent.putClientProperty(TEMPORARY_ADDED, null);
+            }
           });
 
           // Prepare bottom image.
