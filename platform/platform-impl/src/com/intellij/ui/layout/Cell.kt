@@ -69,6 +69,7 @@ inline fun <reified T : Any> KMutableProperty0<T>.toBinding(): PropertyBinding<T
 interface CellBuilder<T : JComponent> {
   val component: T
 
+  fun comment(text: String, maxLineLength: Int = 70): CellBuilder<T>
   fun focused(): CellBuilder<T>
   fun withValidation(callback: (T) -> ValidationInfo?): CellBuilder<T>
   fun onApply(callback: () -> Unit): CellBuilder<T>

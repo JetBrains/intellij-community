@@ -29,12 +29,14 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
                             private val indent: Int /* level number (nested rows) */) : Row() {
   companion object {
     // as static method to ensure that members of current row are not used
-    private fun createCommentRow(parent: MigLayoutRow, comment: String, component: JComponent, indent: Int, isParentRowLabeled: Boolean) {
+    private fun createCommentRow(parent: MigLayoutRow, comment: String, component: JComponent, indent: Int, isParentRowLabeled: Boolean, maxLineLength: Int) {
       val cc = CC()
-      parent.createChildRow().addComponent(ComponentPanelBuilder.createCommentComponent(comment, true), lazyOf(cc))
-      cc.horizontal.gapBefore = gapToBoundSize(getCommentLeftInset(parent.spacing, component) + indent, true)
+      parent.createChildRow().addComponent(ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength), lazyOf(cc))
       if (isParentRowLabeled) {
         cc.skip()
+      }
+      else {
+        cc.horizontal.gapBefore = gapToBoundSize(getCommentLeftInset(component) + indent, true)
       }
     }
 
@@ -211,7 +213,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
     val firstComponent = components.firstOrNull() ?: return 0
     if (firstComponent is JRadioButton || firstComponent is JCheckBox) {
-      return getCommentLeftInset(spacing, firstComponent)
+      return getCommentLeftInset(firstComponent)
     }
     else {
       return spacing.indentLevel
@@ -220,7 +222,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
   override operator fun <T : JComponent> T.invoke(vararg constraints: CCFlags, gapLeft: Int, growPolicy: GrowPolicy?, comment: String?): CellBuilder<T> {
     addComponent(this, constraints.create()?.let { lazyOf(it) } ?: lazy { CC() }, gapLeft, growPolicy, comment)
-    return CellBuilderImpl(builder, this)
+    return CellBuilderImpl(builder, this@MigLayoutRow, this)
   }
 
   // separate method to avoid JComponent as a receiver
@@ -246,11 +248,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
 
     if (comment != null && comment.isNotEmpty()) {
-      gapAfter = "${spacing.commentVerticalTopGap}px!"
-
-      val isParentRowLabeled = labeled
-      // create comment in a new sibling row (developer is still able to create sub rows because rows is not stored in a flat list)
-      createCommentRow(parent!!, comment, component, indent, isParentRowLabeled)
+      addCommentRow(component, comment)
     }
 
     if (buttonGroup != null && component is JRadioButton) {
@@ -293,6 +291,14 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     if (cc.isInitialized()) {
       componentConstraints.put(component, cc.value)
     }
+  }
+
+  fun addCommentRow(component: JComponent, comment: String, maxLineLength: Int = 70) {
+    gapAfter = "${spacing.commentVerticalTopGap}px!"
+
+    val isParentRowLabeled = labeled
+    // create comment in a new sibling row (developer is still able to create sub rows because rows is not stored in a flat list)
+    createCommentRow(parent!!, comment, component, indent, isParentRowLabeled, maxLineLength)
   }
 
   private fun shareCellWithPreviousComponentIfNeeded(component: JComponent, componentCC: Lazy<CC>): Boolean {
@@ -369,8 +375,14 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
 class CellBuilderImpl<T : JComponent> internal constructor(
   private val builder: MigLayoutBuilder,
+  private val row: MigLayoutRow,
   override val component: T
 ) : CellBuilder<T>, CheckboxCellBuilder {
+  override fun comment(text: String, maxLineLength: Int): CellBuilder<T> {
+    row.addCommentRow(component, text, maxLineLength)
+    return this
+  }
+
   override fun focused(): CellBuilder<T> {
     builder.preferredFocusedComponent = component
     return this
@@ -411,7 +423,7 @@ class CellBuilderImpl<T : JComponent> internal constructor(
   }
 }
 
-private fun getCommentLeftInset(spacing: SpacingConfiguration, component: JComponent): Int {
+private fun getCommentLeftInset(component: JComponent): Int {
   if (component is JTextField) {
     // 1px border, better to indent comment text
     return 1
