@@ -72,7 +72,8 @@ class AnsiTerminalEmulator {
       https://www.itu.int/rec/dologin_pub.asp?lang=e&id=T-REC-T.416-199303-I!!PDF-E&type=items
       uses ':' as separator characters instead       *
      */
-    List<String> sgrSequenceParts = StringUtil.split(sgrSequenceBody, StringUtil.containsChar(sgrSequenceBody, ':') ? ":" : ";");
+    String separator = StringUtil.containsChar(sgrSequenceBody, ':') ? ":" : ";";
+    List<String> sgrSequenceParts = StringUtil.split(sgrSequenceBody, separator, true, false);
     Iterator<Integer> sgrCodesIterator = ContainerUtil.map(sgrSequenceParts, it -> {
       try {
         return it.isEmpty() ? 0 : Integer.parseInt(it);
