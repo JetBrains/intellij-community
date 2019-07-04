@@ -4,6 +4,7 @@ package com.intellij.codeInspection.apiUsage
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.PsiUtil
 import com.intellij.uast.UastVisitorAdapter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
@@ -221,6 +222,18 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
     }
     else {
       checkMethodOverriding(node)
+    }
+    return true
+  }
+
+  override fun visitLambdaExpression(node: ULambdaExpression): Boolean {
+    val explicitClassReference = (node.uastParent as? UCallExpression)?.classReference
+    if (explicitClassReference == null) {
+      //a reference to the functional interface will be added by compiler
+      val resolved = PsiUtil.resolveGenericsClassInType(node.functionalInterfaceType).element
+      if (resolved != null) {
+        apiUsageProcessor.processReference(node, resolved, null)
+      }
     }
     return true
   }
