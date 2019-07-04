@@ -101,6 +101,9 @@
     <completion.contributor
         language="IgnoreLang"
         implementationClass="com.intellij.openapi.vcs.changes.ignore.codeInsight.SyntaxCompletionContributor"/>
+    <completion.contributor
+        language="IgnoreLang"
+        implementationClass="com.intellij.openapi.vcs.changes.ignore.codeInsight.FileExtensionCompletionContributor"/>
 
     <lang.syntaxHighlighterFactory language="IgnoreLang"
                                    implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreLanguageHighlighterFactory"/>
