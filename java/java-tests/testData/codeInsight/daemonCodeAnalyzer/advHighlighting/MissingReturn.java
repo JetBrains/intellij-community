@@ -6,7 +6,7 @@ interface ii {}
 
 
 
- int f1() throws Exception {
+ int <error descr="Invalid return type">f1</error>() throws Exception {
  <error descr="Missing return statement">}</error>
  
  Object f2(int i) throws Exception {
@@ -217,7 +217,7 @@ interface ii {}
 
 
 
- int f1() throws Exception {
+ int <error descr="Invalid return type">f1</error>() throws Exception {
  <error descr="Missing return statement">}</error>
  
  Object f2(int i) throws Exception {
@@ -421,7 +421,7 @@ interface ii {}
 
 
 
- int f1() throws Exception {
+ int <error descr="Invalid return type">f1</error>() throws Exception {
  <error descr="Missing return statement">}</error>
  
  Object f2(int i) throws Exception {
@@ -626,7 +626,7 @@ interface ii {}
 
 
 
- int f1() throws Exception {
+ int <error descr="Invalid return type">f1</error>() throws Exception {
  <error descr="Missing return statement">}</error>
  
  Object f2(int i) throws Exception {
@@ -829,7 +829,7 @@ interface ii {}
 
 
 
- int f1() throws Exception {
+ int <error descr="Invalid return type">f1</error>() throws Exception {
  <error descr="Missing return statement">}</error>
  
  Object f2(int i) throws Exception {

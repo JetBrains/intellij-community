@@ -26,7 +26,7 @@ public class ConcurrentCollectors {
     }
 
     static class Test3 {
-        static <T, K, D, M1 extends Map<K, D>> C<T, M1> groupingBy(F<M1> f,
+        static <T, K, D, M1 extends Map<K, D>> C<T, M1> <error descr="Invalid return type">groupingBy</error>(F<M1> f,
                                                                    C<T, D> c,
                                                                    BiConsumer<M1, T> consumer) {
             return new CImpl<error descr="Cannot infer arguments"><></error>(f, consumer, arg(c.getOp()));

@@ -2,7 +2,7 @@
 
 class Test {
 
-  <caret><selection>Object</selection> foo() {
+  Object foo() {
     return null;
   }
 }

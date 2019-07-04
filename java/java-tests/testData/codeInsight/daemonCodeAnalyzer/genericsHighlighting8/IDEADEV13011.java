@@ -16,7 +16,7 @@ class LimitedPool<T> {
     void cleanup(T t);
   }
 
-  public T alloc() {
+  public T <error descr="Invalid return type">alloc</error>() {
     if (index >= capacity) return factory.create();
 
     if (storage[index] == null) {

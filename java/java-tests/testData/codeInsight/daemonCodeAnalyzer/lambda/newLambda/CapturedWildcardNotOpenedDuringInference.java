@@ -11,7 +11,7 @@ interface Foo<T> {
 }
 
 class Bar {
-  Foo<List<String>> transform(final Foo<? extends String> foo) {
+  Foo<List<String>> <error descr="Invalid return type">transform</error>(final Foo<? extends String> foo) {
     <error descr="Incompatible types. Found: 'Foo<? extends java.util.List<? extends java.lang.String>>', required: 'Foo<java.util.List<java.lang.String>>'">return foo
       .map(v2 -> tuple(v2))
       .onClose();</error>

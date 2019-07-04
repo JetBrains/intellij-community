@@ -64,7 +64,7 @@ public class DataProviderReturnTypeInspection extends AbstractBaseJavaLocalInspe
 
     String[] applicableReturnTypes = supportOneDimensional ? KNOWN_WITH_ONE_DIMENSIONAL_RETURN_TYPES : KNOWN_RETURN_TYPES;
     for (String typeText : applicableReturnTypes) {
-      fixes.add(new MethodReturnTypeFix(method, elementFactory.createTypeFromText(typeText, method), false));
+      fixes.add(new MethodReturnTypeFix(method, elementFactory.createTypeFromText(typeText, method), false, false));
     }
 
     return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
