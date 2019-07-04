@@ -33,6 +33,7 @@ import java.util.concurrent.Future;
 
 import static com.intellij.ide.CliResult.error;
 import static com.intellij.ide.CliResult.ok;
+import static com.intellij.openapi.util.Pair.pair;
 
 /**
  * @author yole
@@ -51,11 +52,10 @@ public class CommandLineProcessor {
       if (project == null) {
         final String message = "Cannot open project '" + FileUtil.toSystemDependentName(path) + "'";
         Messages.showErrorDialog(message, "Cannot Open Project");
-        return of(error(1, message));
+        return pair(null, error(1, message));
       }
 
-      return of(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForProject(project)
-                                    : ok());
+      return pair(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForProject(project) : ok());
     }
     else {
       return doOpenFile(file, -1, false, shouldWait);
@@ -70,19 +70,17 @@ public class CommandLineProcessor {
       if (project == null) {
         final String message = "No project found to open file in";
         Messages.showErrorDialog(message, "Cannot Open File");
-        return of(error(1, message));
+        return pair(null, error(1, message));
       }
 
-      return of(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForFile(file)
-                                    : ok());
+      return pair(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForFile(file) : ok());
     }
     else {
       NonProjectFileWritingAccessProvider.allowWriting(Collections.singletonList(file));
       Project project = findBestProject(file, projects);
       (line > 0 ? new OpenFileDescriptor(project, file, line - 1, 0) : PsiNavigationSupport.getInstance().createNavigatable(project, file, -1)).navigate(true);
 
-      return of(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForFile(file)
-                                    : ok());
+      return pair(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForFile(file) : ok());
     }
   }
 
@@ -112,7 +110,7 @@ public class CommandLineProcessor {
     LOG.info("Dir: " + currentDirectory);
     for (String arg : args) LOG.info(arg);
     LOG.info("-----");
-    if (args.isEmpty()) return of(ok());
+    if (args.isEmpty()) return pair(null, ok());
 
     String command = args.get(0);
     for (ApplicationStarter starter : ApplicationStarter.EP_NAME.getIterable()) {
@@ -123,13 +121,13 @@ public class CommandLineProcessor {
       if (command.equals(starter.getCommandName())) {
         if (starter.canProcessExternalCommandLine()) {
           LOG.info("Processing command with " + starter);
-          return of(starter.processExternalCommandLineAsync(ArrayUtilRt.toStringArray(args), currentDirectory));
+          return pair(null, starter.processExternalCommandLineAsync(ArrayUtilRt.toStringArray(args), currentDirectory));
         }
         else {
           String title = "Cannot execute command '" + command + "'";
           String message = "Only one instance of " + ApplicationNamesInfo.getInstance().getProductName() + " can be run at a time.";
           Messages.showErrorDialog(message, title);
-          return of(error(1, message));
+          return pair(null, error(1, message));
         }
       }
     }
@@ -137,7 +135,7 @@ public class CommandLineProcessor {
     if (command.startsWith(JetBrainsProtocolHandler.PROTOCOL)) {
       JetBrainsProtocolHandler.processJetBrainsLauncherParameters(command);
       ApplicationManager.getApplication().invokeLater(() -> JBProtocolCommand.handleCurrentCommand());
-      return of(ok());
+      return pair(null, ok());
     }
 
     final boolean shouldWait = args.contains(WAIT_KEY);
@@ -190,7 +188,7 @@ public class CommandLineProcessor {
         else {
           final String message = "Cannot find file '" + arg + "'";
           Messages.showErrorDialog(message, "Cannot Find File");
-          return of(error(1, message));
+          return pair(null, error(1, message));
         }
       }
       else {
@@ -201,7 +199,7 @@ public class CommandLineProcessor {
         else {
           final String message = "Cannot find file '" + arg + "'";
           Messages.showErrorDialog(message, "Cannot Find File");
-          return of(error(1, message));
+          return pair(null, error(1, message));
         }
       }
 
@@ -210,20 +208,9 @@ public class CommandLineProcessor {
     }
 
     if (shouldWait && projectAndCallback == null) {
-      return of(error(1, "--wait must be supplied with file or project to wait for"));
+      return pair(null, error(1, "--wait must be supplied with file or project to wait for"));
     }
 
-    return ObjectUtils.coalesce(projectAndCallback, of(ok()));
+    return ObjectUtils.coalesce(projectAndCallback, pair(null, ok()));
   }
-
-  @NotNull
-  public static Pair<Project, Future<? extends CliResult>> of(@Nullable Project project, @NotNull Future<? extends CliResult> future) {
-    return Pair.create(project, future);
-  }
-
-  @NotNull
-  public static Pair<Project, Future<? extends CliResult>> of(@NotNull Future<? extends CliResult> future) {
-    return Pair.create(null, future);
-  }
-
 }
