@@ -6,7 +6,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 
 @CompileStatic
-class Normal12CompletionTest extends NormalCompletionTestCase {
+class Normal13CompletionTest extends NormalCompletionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
@@ -18,7 +18,7 @@ class Normal12CompletionTest extends NormalCompletionTestCase {
   void testSecondLabelInOldSwitch() throws Throwable { doTest() }
   void testSecondLabelInRuleSwitch() throws Throwable { doTest() }
   void testSwitchExpressionStart() throws Throwable { doTest() }
-  void testBreakInSwitchExpression() throws Throwable { doTest() }
-  void testInsideBreakInSwitchExpression() throws Throwable { doTest() }
+  void testYieldInSwitchExpression() throws Throwable { doTest() }
+  void testInsideYieldInSwitchExpression() throws Throwable { doTest() }
   void testInsideRuleInSwitchExpression() throws Throwable { doTest() }
 }
