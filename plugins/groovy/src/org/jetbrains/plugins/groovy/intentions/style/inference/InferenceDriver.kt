@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.intentions.style.inference
 
 import com.intellij.psi.*
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
@@ -15,10 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpressionConstraint
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.OperatorExpressionConstraint
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.*
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.component1
@@ -34,6 +32,18 @@ class InferenceDriver(val method: GrMethod) {
   private val defaultTypeParameterList: PsiTypeParameterList = (method.typeParameterList?.copy()
                                                                 ?: elementFactory.createTypeParameterList()) as PsiTypeParameterList
   private val parameterIndex: MutableMap<GrParameter, PsiTypeParameter> = LinkedHashMap()
+  private val methodReferences by lazy {
+    ReferencesSearch.search(method).findAll()
+  }
+
+  /**
+   * Gathers expressions that will be assigned to parameters of [virtualMethod]
+   */
+  private val extractedExpressions by lazy {
+    val allAcceptedExpressions = extractAcceptedExpressions(method, method.parameters.filter { it.typeElement == null }, mutableSetOf())
+    val proxyMapping = method.parameters.zip(virtualMethod.parameters).toMap()
+    allAcceptedExpressions.map { (parameter, expressions) -> Pair(proxyMapping.getValue(parameter), expressions) }
+  }
   val contravariantTypes = mutableSetOf<PsiType>()
   val virtualMethod: GrMethod
   val virtualParametersMapping: Map<String, GrParameter>
@@ -78,20 +88,51 @@ class InferenceDriver(val method: GrMethod) {
     createParametrizedClosures(generator)
   }
 
-  // To find which arguments are closures we need to analyze random call of the processed method.
-  private fun createParametrizedClosures(generator: NameGenerator) {
-    val call = ReferencesSearch.search(method).mapNotNull { it.element.parent as? GrCall }.firstOrNull() ?: return
-    // todo: default-valued parameters
-    val argumentList = call.expressionArguments + call.closureArguments
-    argumentList.zip(virtualMethod.parameters).filter { it.first is GrClosableBlock }.forEach { (argument, parameter) ->
-      val parametrizedClosure = ParametrizedClosure(parameter)
-      closureParameters[parameter] = parametrizedClosure
-      repeat((argument as GrClosableBlock).allParameters.size) {
-        val newTypeParameter = createNewTypeParameter(generator)
-        virtualMethod.typeParameterList!!.add(newTypeParameter)
-        parametrizedClosure.typeParameters.add(newTypeParameter)
+  private fun extractAcceptedExpressions(method: GrMethod,
+                                         targetParameters: Collection<GrParameter>,
+                                         visitedMethods: MutableSet<GrMethod>): Map<GrParameter, List<GrExpression>> {
+    if (targetParameters.isEmpty()) {
+      return emptyMap()
+    }
+    visitedMethods.add(method)
+    val referencesStorage = mutableMapOf<GrParameter, MutableList<GrExpression>>()
+    targetParameters.forEach { referencesStorage[it] = mutableListOf() }
+    for (call in ReferencesSearch.search(method).findAll().mapNotNull { it.element.parent as? GrCall }) {
+      val argumentList = call.expressionArguments + call.closureArguments
+      val targetExpressions = argumentList.zip(method.parameters).filter { it.second in targetParameters }
+      val insufficientExpressions = targetExpressions.filter { it.first.type?.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ?: true }
+      (targetExpressions - insufficientExpressions).forEach { referencesStorage[it.second]!!.add(it.first) }
+      val enclosingMethodParameterMapping = insufficientExpressions.mapNotNull { (expression, targetParameter) ->
+        val resolved = expression.reference?.resolve() as? GrParameter
+        resolved?.run {
+          Pair(this, targetParameter)
+        }
+      }.toMap()
+      val enclosingMethod = call.parentOfType(GrMethod::class)
+      if (enclosingMethod != null && !visitedMethods.contains(enclosingMethod)) {
+        val acceptedExpressionsForEnclosingParameters = extractAcceptedExpressions(enclosingMethod, enclosingMethodParameterMapping.keys,
+                                                                                   visitedMethods)
+        acceptedExpressionsForEnclosingParameters.forEach { referencesStorage[enclosingMethodParameterMapping[it.key]]!!.addAll(it.value) }
       }
     }
+    return referencesStorage
+  }
+
+  // To find which arguments are closures we need to analyze random call of the processed method.
+  private fun createParametrizedClosures(generator: NameGenerator) {
+    extractedExpressions
+      .filter { (_, acceptedTypes) -> acceptedTypes.all { it is GrClosableBlock } && acceptedTypes.isNotEmpty() }
+      .forEach { (parameter, calls) ->
+        // todo: default-valued parameters
+        val parametrizedClosure = ParametrizedClosure(parameter)
+        closureParameters[parameter] = parametrizedClosure
+        repeat((calls.first() as GrClosableBlock).allParameters.size) {
+          val newTypeParameter = createNewTypeParameter(generator)
+          virtualMethod.typeParameterList!!.add(newTypeParameter)
+          parametrizedClosure.typeParameters.add(newTypeParameter)
+        }
+      }
+
   }
 
   private fun createNewTypeParameter(generator: NameGenerator? = null): PsiTypeParameter =
@@ -112,9 +153,13 @@ class InferenceDriver(val method: GrMethod) {
     for (parameter in virtualMethod.parameters) {
       inferenceSession.addConstraint(ExpressionConstraint(parameter.type, parameter.initializerGroovy ?: continue))
     }
-    val references = ReferencesSearch.search(method).findAll()
-    for (call in references.mapNotNull { it.element.parent as? GrExpression }) {
+    for (call in methodReferences.mapNotNull { it.element.parent as? GrExpression }) {
       inferenceSession.addConstraint(ExpressionConstraint(null, call))
+    }
+    for ((parameter, expressions) in extractedExpressions) {
+      expressions.forEach {
+        inferenceSession.addConstraint(TypeConstraint(parameter.type, it.type ?: return, method))
+      }
     }
   }
 
@@ -283,7 +328,7 @@ class InferenceDriver(val method: GrMethod) {
       param.setType(resultSubstitutor.substitute(param.type))
       when {
         isClosureType(param.type) -> {
-          closureParameters[param]!!.run {
+          closureParameters[param]?.run {
             substituteTypes(resultSubstitutor)
             renderTypes(elementFactory)
           }
