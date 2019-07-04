@@ -52,6 +52,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.*;
+import org.jetbrains.idea.maven.server.security.MavenToken;
 import org.jetbrains.maven.embedder.MavenEmbedder;
 import org.jetbrains.maven.embedder.MavenEmbedderSettings;
 import org.jetbrains.maven.embedder.MavenExecutionResult;
@@ -277,8 +278,9 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
   @Override
   @NotNull
   public Collection<MavenServerExecutionResult> resolveProject(@NotNull final Collection<File> files,
-                                                   @NotNull final Collection<String> activeProfiles,
-                                                   @NotNull final Collection<String> inactiveProfiles) {
+                                                               @NotNull final Collection<String> activeProfiles,
+                                                               @NotNull final Collection<String> inactiveProfiles, MavenToken token) {
+    MavenServerUtil.checkToken(token);
     return ContainerUtilRt.mapNotNull(files, new Function<File, MavenServerExecutionResult>() {
       @Override
       public MavenServerExecutionResult fun(final File file) {
@@ -355,15 +357,19 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
 
   @Override
   @Nullable
-  public String evaluateEffectivePom(@NotNull File file, @NotNull List<String> activeProfiles, @NotNull List<String> inactiveProfiles) {
+  public String evaluateEffectivePom(@NotNull File file,
+                                     @NotNull List<String> activeProfiles,
+                                     @NotNull List<String> inactiveProfiles,
+                                     MavenToken token) {
     throw new UnsupportedOperationException();
   }
 
   @Override
   @NotNull
   public MavenArtifact resolve(@NotNull final MavenArtifactInfo info,
-                               @NotNull final List<MavenRemoteRepository> remoteRepositories)
+                               @NotNull final List<MavenRemoteRepository> remoteRepositories, MavenToken token)
     throws MavenServerProcessCanceledException, RemoteException {
+    MavenServerUtil.checkToken(token);
     return doExecute(new Executor<MavenArtifact>() {
       @Override
       public MavenArtifact execute() throws Exception {
@@ -375,7 +381,8 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
   @Override
   @NotNull
   public List<MavenArtifact> resolveTransitively(@NotNull final List<MavenArtifactInfo> artifacts,
-                                                 @NotNull final List<MavenRemoteRepository> remoteRepositories) throws RemoteException {
+                                                 @NotNull final List<MavenRemoteRepository> remoteRepositories, MavenToken token) throws RemoteException {
+    MavenServerUtil.checkToken(token);
     try {
       Set<Artifact> toResolve = new LinkedHashSet<Artifact>();
       for (MavenArtifactInfo each : artifacts) {
@@ -439,7 +446,8 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
   public Collection<MavenArtifact> resolvePlugin(@NotNull final MavenPlugin plugin,
                                                  @NotNull final List<MavenRemoteRepository> repositories,
                                                  final int nativeMavenProjectId,
-                                                 final boolean transitive) throws MavenServerProcessCanceledException, RemoteException {
+                                                 final boolean transitive, MavenToken token) throws MavenServerProcessCanceledException, RemoteException {
+    MavenServerUtil.checkToken(token);
     return doExecute(new Executor<Collection<MavenArtifact>>() {
       @Override
       public Collection<MavenArtifact> execute() throws Exception {
@@ -500,7 +508,8 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
                                             @NotNull final List<String> goals,
                                             @NotNull final List<String> selectedProjects,
                                             final boolean alsoMake,
-                                            final boolean alsoMakeDependents) throws RemoteException, MavenServerProcessCanceledException {
+                                            final boolean alsoMakeDependents, MavenToken token) throws RemoteException, MavenServerProcessCanceledException {
+    MavenServerUtil.checkToken(token);
     return doExecute(new Executor<MavenServerExecutionResult>() {
       @Override
       public MavenServerExecutionResult execute() throws Exception {
@@ -625,7 +634,8 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
                         @NotNull MavenServerConsole console,
                         @NotNull MavenServerProgressIndicator indicator,
                         boolean alwaysUpdateSnapshots,
-                        @Nullable Properties userProperties) {
+                        @Nullable Properties userProperties, MavenToken token) {
+    MavenServerUtil.checkToken(token);
     try {
       ((CustomArtifactFactory)getComponent(ArtifactFactory.class)).customize();
       ((CustomArtifactFactory)getComponent(ProjectArtifactFactory.class)).customize();
@@ -645,8 +655,9 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
   @Override
   public List<String> retrieveAvailableVersions(@NotNull String groupId,
                                                 @NotNull String artifactId,
-                                                @NotNull List<MavenRemoteRepository> remoteRepositories)
+                                                @NotNull List<MavenRemoteRepository> remoteRepositories, MavenToken token)
     throws RemoteException {
+    MavenServerUtil.checkToken(token);
     try {
       Artifact artifact =
         new DefaultArtifact(groupId, artifactId, VersionRange.createFromVersion(""), Artifact.SCOPE_COMPILE, "pom", null,
@@ -673,7 +684,8 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
   }
 
   @Override
-  public void customizeComponents() throws RemoteException {
+  public void customizeComponents(MavenToken token) throws RemoteException {
+    MavenServerUtil.checkToken(token);
   }
 
   private void setConsoleAndIndicator(MavenServerConsole console, MavenServerProgressIndicator indicator) {
@@ -685,7 +697,8 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
   }
 
   @Override
-  public void reset() {
+  public void reset(MavenToken token) {
+    MavenServerUtil.checkToken(token);
     try {
       setConsoleAndIndicator(null, null);
 
@@ -701,7 +714,8 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
   }
 
   @Override
-  public void release() {
+  public void release(MavenToken token) {
+    MavenServerUtil.checkToken(token);
     try {
       myImpl.release();
     }
@@ -711,7 +725,8 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
   }
 
   @Override
-  public void clearCaches() throws RemoteException {
+  public void clearCaches(MavenToken token) throws RemoteException {
+    MavenServerUtil.checkToken(token);
     withProjectCachesDo(new Function<Map, Object>() {
       @Override
       public Object fun(Map map) {
@@ -722,7 +737,8 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
   }
 
   @Override
-  public void clearCachesFor(final MavenId projectId) throws RemoteException {
+  public void clearCachesFor(final MavenId projectId, MavenToken token) throws RemoteException {
+    MavenServerUtil.checkToken(token);
     withProjectCachesDo(new Function<Map, Object>() {
       @Override
       public Object fun(Map map) {
@@ -733,7 +749,8 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
   }
 
   @Override
-  public MavenModel readModel(File file) throws RemoteException {
+  public MavenModel readModel(File file, MavenToken token) throws RemoteException {
+    MavenServerUtil.checkToken(token);
     return null;
   }
 

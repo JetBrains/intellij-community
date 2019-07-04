@@ -73,6 +73,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.embedder.MavenExecutionResult;
 import org.jetbrains.idea.maven.server.embedder.*;
+import org.jetbrains.idea.maven.server.security.MavenToken;
 import org.sonatype.aether.RepositorySystemSession;
 import org.sonatype.aether.graph.Dependency;
 import org.sonatype.aether.repository.LocalRepositoryManager;
@@ -501,10 +502,11 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
                         @NotNull MavenServerConsole console,
                         @NotNull MavenServerProgressIndicator indicator,
                         boolean alwaysUpdateSnapshots,
-                        @Nullable Properties userProperties) throws RemoteException {
+                        @Nullable Properties userProperties, MavenToken token) throws RemoteException {
+    MavenServerUtil.checkToken(token);
 
     try {
-      customizeComponents();
+      customizeComponents(token);
 
       ((CustomMaven3ArtifactFactory)getComponent(ArtifactFactory.class)).customize();
       ((CustomMaven30ArtifactResolver)getComponent(ArtifactResolver.class)).customize(workspaceMap, failOnUnresolvedDependency);
@@ -527,7 +529,8 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   }
 
   @Override
-  public void customizeComponents() throws RemoteException {
+  public void customizeComponents(MavenToken token) throws RemoteException {
+    MavenServerUtil.checkToken(token);
     // replace some plexus components
     myContainer.addComponent(getComponent(ArtifactFactory.class, "ide"), ArtifactFactory.ROLE);
     myContainer.addComponent(getComponent(ArtifactResolver.class, "ide"), ArtifactResolver.ROLE);
@@ -562,7 +565,8 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   @Override
   public Collection<MavenServerExecutionResult> resolveProject(@NotNull final Collection<File> files,
                                                                @NotNull Collection<String> activeProfiles,
-                                                               @NotNull Collection<String> inactiveProfiles) throws RemoteException {
+                                                               @NotNull Collection<String> inactiveProfiles, MavenToken token) throws RemoteException {
+    MavenServerUtil.checkToken(token);
     final DependencyTreeResolutionListener listener = new DependencyTreeResolutionListener(myConsoleWrapper);
 
     Collection<MavenExecutionResult> results =
@@ -583,8 +587,12 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
 
   @Nullable
   @Override
-  public String evaluateEffectivePom(@NotNull File file, @NotNull List<String> activeProfiles, @NotNull List<String> inactiveProfiles)
+  public String evaluateEffectivePom(@NotNull File file,
+                                     @NotNull List<String> activeProfiles,
+                                     @NotNull List<String> inactiveProfiles,
+                                     MavenToken token)
     throws RemoteException, MavenServerProcessCanceledException {
+    MavenServerUtil.checkToken(token);
     return MavenEffectivePomDumper.evaluateEffectivePom(this, file, activeProfiles, inactiveProfiles);
   }
 
@@ -976,7 +984,9 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
 
   @NotNull
   @Override
-  public MavenArtifact resolve(@NotNull MavenArtifactInfo info, @NotNull List<MavenRemoteRepository> remoteRepositories)
+  public MavenArtifact resolve(@NotNull MavenArtifactInfo info,
+                               @NotNull List<MavenRemoteRepository> remoteRepositories,
+                               MavenToken token)
     throws RemoteException, MavenServerProcessCanceledException {
     return doResolve(info, remoteRepositories);
   }
@@ -984,8 +994,9 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   @NotNull
   @Override
   public List<MavenArtifact> resolveTransitively(@NotNull List<MavenArtifactInfo> artifacts,
-                                                 @NotNull List<MavenRemoteRepository> remoteRepositories)
+                                                 @NotNull List<MavenRemoteRepository> remoteRepositories, MavenToken token)
     throws RemoteException, MavenServerProcessCanceledException {
+    MavenServerUtil.checkToken(token);
 
     try {
       Set<Artifact> toResolve = new LinkedHashSet<Artifact>();
@@ -1018,7 +1029,8 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   public Collection<MavenArtifact> resolvePlugin(@NotNull final MavenPlugin plugin,
                                                  @NotNull final List<MavenRemoteRepository> repositories,
                                                  int nativeMavenProjectId,
-                                                 final boolean transitive) throws RemoteException, MavenServerProcessCanceledException {
+                                                 final boolean transitive, MavenToken token) throws RemoteException, MavenServerProcessCanceledException {
+    MavenServerUtil.checkToken(token);
     try {
       Plugin mavenPlugin = new Plugin();
       mavenPlugin.setGroupId(plugin.getGroupId());
@@ -1131,7 +1143,8 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
                                             @NotNull List<String> goals,
                                             @NotNull List<String> selectedProjects,
                                             boolean alsoMake,
-                                            boolean alsoMakeDependents) throws RemoteException, MavenServerProcessCanceledException {
+                                            boolean alsoMakeDependents, MavenToken token) throws RemoteException, MavenServerProcessCanceledException {
+    MavenServerUtil.checkToken(token);
     MavenExecutionResult result =
       doExecute(file, new ArrayList<String>(activeProfiles), new ArrayList<String>(inactiveProfiles), goals, selectedProjects, alsoMake,
                 alsoMakeDependents);
@@ -1175,7 +1188,8 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   }
 
   @Override
-  public void reset() throws RemoteException {
+  public void reset(MavenToken token) throws RemoteException {
+    MavenServerUtil.checkToken(token);
     try {
       setConsoleAndIndicator(null, null);
 
@@ -1199,17 +1213,20 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   }
 
   @Override
-  public void release() throws RemoteException {
+  public void release(MavenToken token) throws RemoteException {
+    MavenServerUtil.checkToken(token);
     myContainer.dispose();
   }
 
   @Override
-  public void clearCaches() throws RemoteException {
+  public void clearCaches(MavenToken token) throws RemoteException {
+    MavenServerUtil.checkToken(token);
     // do nothing
   }
 
   @Override
-  public void clearCachesFor(final MavenId projectId) throws RemoteException {
+  public void clearCachesFor(final MavenId projectId, MavenToken token) throws RemoteException {
+    MavenServerUtil.checkToken(token);
     // do nothing
   }
 

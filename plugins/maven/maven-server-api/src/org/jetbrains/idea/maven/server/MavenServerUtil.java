@@ -18,16 +18,18 @@ package org.jetbrains.idea.maven.server;
 import com.intellij.openapi.util.SystemInfoRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.idea.maven.server.security.MavenToken;
+import org.jetbrains.idea.maven.server.security.TokenReader;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 public class MavenServerUtil {
   private static final Properties mySystemPropertiesCache;
+  private static MavenToken ourToken;
+
+
 
   static {
     Properties res = new Properties();
@@ -94,5 +96,30 @@ public class MavenServerUtil {
   @TestOnly
   public static void removeProperty(String propertyName) {
     mySystemPropertiesCache.remove(propertyName);
+  }
+
+  public static void checkToken(MavenToken token) throws SecurityException {
+    if (ourToken == null || !ourToken.equals(token)) {
+      throw new SecurityException();
+    }
+  }
+
+  public static MavenToken getToken() {
+    return ourToken;
+  }
+
+  public static void readToken() {
+    try {
+      ourToken = new TokenReader(new Scanner(System.in), 10000).getToken();
+    }
+    catch (RuntimeException e) {
+      throw e;
+    }
+    catch (Error e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      throw new RuntimeException(e);
+    }
   }
 }

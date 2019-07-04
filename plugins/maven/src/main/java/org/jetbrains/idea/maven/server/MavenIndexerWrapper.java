@@ -33,7 +33,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
 import java.util.Set;
 
-public abstract class MavenIndexerWrapper extends RemoteObjectWrapper<MavenServerIndexer> {
+public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<MavenServerIndexer> {
   private final TIntObjectHashMap<IndexData> myDataMap = new TIntObjectHashMap<>();
 
   public MavenIndexerWrapper(@Nullable RemoteObjectWrapper<?> parent) {
@@ -76,7 +76,7 @@ public abstract class MavenIndexerWrapper extends RemoteObjectWrapper<MavenServe
     if (w == null) return;
 
     try {
-      w.releaseIndex(data.remoteId);
+      w.releaseIndex(data.remoteId, ourToken);
     }
     catch (RemoteException e) {
       handleRemoteError(e);
@@ -85,7 +85,7 @@ public abstract class MavenIndexerWrapper extends RemoteObjectWrapper<MavenServe
 
   public synchronized boolean indexExists(File dir) {
     try {
-      return getOrCreateWrappee().indexExists(dir);
+      return getOrCreateWrappee().indexExists(dir, ourToken);
     }
     catch (RemoteException e) {
       handleRemoteError(e);
@@ -94,7 +94,7 @@ public abstract class MavenIndexerWrapper extends RemoteObjectWrapper<MavenServe
   }
 
   public int getIndexCount() {
-    return perform(() -> getOrCreateWrappee().getIndexCount());
+    return perform(() -> getOrCreateWrappee().getIndexCount(ourToken));
   }
 
   public void updateIndex(final int localId,
@@ -102,9 +102,9 @@ public abstract class MavenIndexerWrapper extends RemoteObjectWrapper<MavenServe
                           final MavenProgressIndicator indicator) throws MavenProcessCanceledException,
                                                                          MavenServerIndexerException {
     performCancelable(() -> {
-      MavenServerProgressIndicator indicatorWrapper = MavenServerManager.wrapAndExport(indicator);
+      MavenServerProgressIndicator indicatorWrapper = wrapAndExport(indicator);
       try {
-        getOrCreateWrappee().updateIndex(getRemoteId(localId), MavenServerManager.convertSettings(settings), indicatorWrapper);
+        getOrCreateWrappee().updateIndex(getRemoteId(localId), MavenServerManager.convertSettings(settings), indicatorWrapper, ourToken);
       }
       finally {
         UnicastRemoteObject.unexportObject(indicatorWrapper, true);
@@ -115,9 +115,9 @@ public abstract class MavenIndexerWrapper extends RemoteObjectWrapper<MavenServe
 
   public void processArtifacts(final int indexId, final MavenIndicesProcessor processor) throws MavenServerIndexerException {
     perform(() -> {
-      MavenServerIndicesProcessor processorWrapper = MavenServerManager.wrapAndExport(processor);
+      MavenServerIndicesProcessor processorWrapper = wrapAndExport(processor);
       try {
-        getOrCreateWrappee().processArtifacts(getRemoteId(indexId), processorWrapper);
+        getOrCreateWrappee().processArtifacts(getRemoteId(indexId), processorWrapper, ourToken);
       }
       finally {
         UnicastRemoteObject.unexportObject(processorWrapper, true);
@@ -127,11 +127,11 @@ public abstract class MavenIndexerWrapper extends RemoteObjectWrapper<MavenServe
   }
 
   public IndexedMavenId addArtifact(final int localId, final File artifactFile) throws MavenServerIndexerException {
-    return perform(() -> getOrCreateWrappee().addArtifact(getRemoteId(localId), artifactFile));
+    return perform(() -> getOrCreateWrappee().addArtifact(getRemoteId(localId), artifactFile, ourToken));
   }
 
   public Set<MavenArtifactInfo> search(final int localId, final Query query, final int maxResult) throws MavenServerIndexerException {
-    return perform(() -> getOrCreateWrappee().search(getRemoteId(localId), query, maxResult));
+    return perform(() -> getOrCreateWrappee().search(getRemoteId(localId), query, maxResult, ourToken));
   }
 
   private synchronized int getRemoteId(int localId) throws RemoteException, MavenServerIndexerException {
@@ -139,13 +139,14 @@ public abstract class MavenIndexerWrapper extends RemoteObjectWrapper<MavenServe
     MavenLog.LOG.assertTrue(result != null, "index " + localId + " not found");
 
     if (result.remoteId == -1) {
-      result.remoteId = getOrCreateWrappee().createIndex(result.indexId, result.repositoryId, result.file, result.url, result.indexDir);
+      result.remoteId = getOrCreateWrappee().createIndex(result.indexId, result.repositoryId, result.file, result.url, result.indexDir,
+                                                         ourToken);
     }
     return result.remoteId;
   }
 
   public Collection<MavenArchetype> getArchetypes() {
-    return perform(() -> getOrCreateWrappee().getArchetypes());
+    return perform(() -> getOrCreateWrappee().getArchetypes(ourToken));
   }
 
   @TestOnly
@@ -153,7 +154,7 @@ public abstract class MavenIndexerWrapper extends RemoteObjectWrapper<MavenServe
     MavenServerIndexer w = getWrappee();
     if (w == null) return;
     try {
-      w.release();
+      w.release(ourToken);
     }
     catch (RemoteException e) {
       handleRemoteError(e);
@@ -169,7 +170,7 @@ public abstract class MavenIndexerWrapper extends RemoteObjectWrapper<MavenServe
     private final @Nullable String url;
     private final @NotNull File indexDir;
 
-    IndexData(String indexId, String repositoryId, File file, String url, File indexDir) {
+    IndexData(@NotNull String indexId, @NotNull String repositoryId, @Nullable File file, @Nullable String url, @NotNull File indexDir) {
       this.indexId = indexId;
       this.repositoryId = repositoryId;
       this.file = file;
@@ -177,5 +178,24 @@ public abstract class MavenIndexerWrapper extends RemoteObjectWrapper<MavenServe
       this.indexDir = indexDir;
     }
   }
+
+  private MavenServerIndicesProcessor wrapAndExport(final MavenIndicesProcessor processor) {
+    return doWrapAndExport(new RemoteMavenServerIndicesProcessor(processor));
+  }
+
+
+  private static class RemoteMavenServerIndicesProcessor extends MavenRemoteObject implements MavenServerIndicesProcessor {
+    private final MavenIndicesProcessor myProcessor;
+
+    private RemoteMavenServerIndicesProcessor(MavenIndicesProcessor processor) {
+      myProcessor = processor;
+    }
+
+    @Override
+    public void processArtifacts(Collection<IndexedMavenId> artifacts) {
+      myProcessor.processArtifacts(artifacts);
+    }
+  }
+
 }
 
