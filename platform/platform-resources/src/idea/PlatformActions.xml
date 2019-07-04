@@ -1298,5 +1298,8 @@
 
     <action class="com.intellij.diagnostic.GenerateJarAccessLogAction" internal="true" text="Generate Jar Access Log"/>
     <action class="com.intellij.diagnostic.TriggerLowMemoryNotificationAction" internal="true" text="Trigger Low Memory Notification"/>
+
+    <action id="NextWindow" class="com.intellij.openapi.wm.impl.NextWindow"  text="Activate Next Window"/>
+    <action id="PreviousWindow" class="com.intellij.openapi.wm.impl.PreviousWindow" text="Activate Previous Window"/>
   </actions>
 </idea-plugin>
