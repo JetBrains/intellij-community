@@ -298,34 +298,25 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     @Override
     public int hc() {
       if (myHC == -1) {
-        PsiBuilderImpl builder = myBuilder;
-        int hc = 0;
-        final CharSequence buf = builder.myText;
-        final char[] bufArray = builder.myTextArray;
-        ProductionMarker child = myFirstChild;
-        int lexIdx = myLexemeIndex;
+        myHC = calcHc();
+      }
+      return myHC;
+    }
 
-        while (child != null) {
-          int lastLeaf = child.myLexemeIndex;
-          for (int i = builder.myLexStarts[lexIdx]; i < builder.myLexStarts[lastLeaf]; i++) {
-            hc += bufArray != null ? bufArray[i] : buf.charAt(i);
-          }
-          lexIdx = lastLeaf;
-          hc += child.hc();
-          if (child instanceof StartMarker) {
-            lexIdx = child.getEndIndex();
-          }
-          child = child.myNext;
-        }
+    private int calcHc() {
+      PsiBuilderImpl builder = myBuilder;
+      int hc = 0;
+      ProductionMarker child = myFirstChild;
+      int lexIdx = myLexemeIndex;
 
-        for (int i = builder.myLexStarts[lexIdx]; i < builder.myLexStarts[getEndIndex()]; i++) {
-          hc += bufArray != null ? bufArray[i] : buf.charAt(i);
-        }
-
-        myHC = hc;
+      while (child != null) {
+        int lastLeaf = child.myLexemeIndex;
+        hc += builder.fragmentHc(builder.myLexStarts[lexIdx], builder.myLexStarts[lastLeaf]) + child.hc();
+        lexIdx = child instanceof StartMarker ? child.getEndIndex() : lastLeaf;
+        child = child.myNext;
       }
 
-      return myHC;
+      return hc + builder.fragmentHc(builder.myLexStarts[lexIdx], builder.myLexStarts[getEndIndex()]);
     }
 
     @Override
@@ -486,27 +477,10 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     @Override
     public int hc() {
       if (myHC == -1) {
-        int hc = 0;
-        if (myTokenType instanceof TokenWrapper) {
-          final String value = ((TokenWrapper)myTokenType).getValue();
-          for (int i = 0; i < value.length(); i++) {
-            hc += value.charAt(i);
-          }
-        }
-        else {
-          final int start = myTokenStart;
-          final int end = myTokenEnd;
-          final CharSequence buf = myBuilder.myText;
-          final char[] bufArray = myBuilder.myTextArray;
-
-          for (int i = start; i < end; i++) {
-            hc += bufArray != null ? bufArray[i] : buf.charAt(i);
-          }
-        }
-
-        myHC = hc;
+        myHC = myTokenType instanceof TokenWrapper
+               ? LeafElement.leafHC(((TokenWrapper)myTokenType).getValue())
+               : myBuilder.fragmentHc(myTokenStart, myTokenEnd);
       }
-
       return myHC;
     }
 
@@ -546,6 +520,18 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       myTokenStart = start;
       myTokenEnd = end;
     }
+  }
+
+  private int fragmentHc(int start, int end) {
+    return myTextArray != null ? arrayHc(start, end, myTextArray) : LeafElement.leafHC(myText, start, end);
+  }
+
+  private static int arrayHc(int start, int end, char[] textArray) {
+    int hc = 0;
+    for (int i = start; i < end; i++) {
+      hc += textArray[i];
+    }
+    return hc;
   }
 
   private static class TokenNode extends Token implements LighterASTTokenNode {

@@ -212,14 +212,15 @@ public abstract class LeafElement extends TreeElement {
     return leafHC(getChars());
   }
 
-  static int leafHC(CharSequence text) {
-    final int len = text.length();
-    int hc = 0;
+  public static int leafHC(CharSequence text) {
+    return leafHC(text, 0, text.length());
+  }
 
-    for (int i = 0; i < len; i++) {
+  public static int leafHC(CharSequence text, int start, int end) {
+    int hc = 0;
+    for (int i = start; i < end; i++) {
       hc += text.charAt(i);
     }
-
     return hc;
   }
 
