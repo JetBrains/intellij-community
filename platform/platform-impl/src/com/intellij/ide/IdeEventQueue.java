@@ -355,7 +355,7 @@ public final class IdeEventQueue extends EventQueue {
   @Override
   public void dispatchEvent(@NotNull AWTEvent e) {
     long startedAt = System.currentTimeMillis();
-    PerformanceWatcher performanceWatcher = PerformanceWatcher.getInstance();
+    PerformanceWatcher performanceWatcher = appIsLoaded() ? PerformanceWatcher.getInstance() : null;
     try {
       if (performanceWatcher != null) {
         performanceWatcher.edtEventStarted(startedAt);
