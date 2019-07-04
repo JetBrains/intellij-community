@@ -38,7 +38,7 @@ public interface Filter {
 
   class Result extends ResultItem {
     private NextAction myNextAction = NextAction.EXIT;
-    private final List<ResultItem> myResultItems;
+    private final List<? extends ResultItem> myResultItems;
 
     public Result(final int highlightStartOffset, final int highlightEndOffset, @Nullable final HyperlinkInfo hyperlinkInfo) {
       this(highlightStartOffset, highlightEndOffset, hyperlinkInfo, null);
@@ -69,18 +69,18 @@ public interface Filter {
       myResultItems = null;
     }
 
-    public Result(@NotNull List<ResultItem> resultItems) {
+    public Result(@NotNull List<? extends ResultItem> resultItems) {
       super(-1, -1, null, null, null);
       myResultItems = resultItems;
     }
 
     @NotNull
     public List<ResultItem> getResultItems() {
-      List<ResultItem> resultItems = myResultItems;
+      List<? extends ResultItem> resultItems = myResultItems;
       if (resultItems == null) {
         resultItems = Collections.singletonList(this);
       }
-      return resultItems;
+      return Collections.unmodifiableList(resultItems);
     }
 
     /**

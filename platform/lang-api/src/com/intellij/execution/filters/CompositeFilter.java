@@ -44,9 +44,9 @@ public class CompositeFilter implements Filter, FilterMixin {
     this(project, new ArrayList<>());
   }
 
-  public CompositeFilter(@NotNull Project project, @NotNull List<Filter> filters) {
+  public CompositeFilter(@NotNull Project project, @NotNull List<? extends Filter> filters) {
     myDumbService = DumbService.getInstance(project);
-    myFilters = filters;
+    myFilters = new ArrayList<>(filters);
     myFilters.forEach(filter -> myIsAnyHeavy |= filter instanceof FilterMixin);
   }
 
@@ -103,7 +103,7 @@ public class CompositeFilter implements Filter, FilterMixin {
   }
 
   @NotNull
-  private static Result createFinalResult(@NotNull List<ResultItem> resultItems) {
+  private static Result createFinalResult(@NotNull List<? extends ResultItem> resultItems) {
     if (resultItems.size() == 1) {
       ResultItem resultItem = resultItems.get(0);
       return new Result(resultItem.getHighlightStartOffset(), resultItem.getHighlightEndOffset(), resultItem.getHyperlinkInfo(),
@@ -173,7 +173,7 @@ public class CompositeFilter implements Filter, FilterMixin {
   }
 
   @Override
-  public void applyHeavyFilter(@NotNull Document copiedFragment, int startOffset, int startLineNumber, @NotNull Consumer<AdditionalHighlight> consumer) {
+  public void applyHeavyFilter(@NotNull Document copiedFragment, int startOffset, int startLineNumber, @NotNull Consumer<? super AdditionalHighlight> consumer) {
     final boolean dumb = isDumb();
     List<Filter> filters = myFilters;
     int count = filters.size();
