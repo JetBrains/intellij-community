@@ -13,6 +13,7 @@ import javax.tools.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -60,6 +61,17 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
       return new File(s);
     }
   };
+  private static final Method ourContainsMethod;
+  static {
+    Method method = null;
+    try {
+      method = JavaFileManager.class.getDeclaredMethod("contains", Location.class, FileObject.class);
+    }
+    catch (Throwable ignored) {
+    }
+    ourContainsMethod = method;
+  }
+  
   private Map<File, Set<File>> myOutputsMap = Collections.emptyMap();
   @Nullable
   private String myEncodingName;
@@ -169,7 +181,7 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
       }
     }
     final File file = (dir == null? new File(fileName).getAbsoluteFile() : new File(dir, fileName));
-    return new OutputFileObject(myContext, dir, fileName, file, kind, className, src != null? src.toUri() : null, myEncodingName);
+    return new OutputFileObject(myContext, dir, fileName, file, kind, className, src != null? src.toUri() : null, myEncodingName, location);
   }
 
   @Override
@@ -420,7 +432,7 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
             // Not a directory; either a file or non-existent, create the archive
             try {
               if (archive == null) {
-                archive = myFileOperations.openArchive(root, myEncodingName);
+                archive = myFileOperations.openArchive(root, myEncodingName, location);
               }
               if (archive != null) {
                 result.add(archive.list(packageName.replace('.', '/'), kinds, recurse));
@@ -470,6 +482,23 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
     }
     //noinspection unchecked
     return kinds.contains(JavaFileObject.Kind.SOURCE) ? (Iterable<JavaFileObject>)wrapJavaFileObjects(allFiles) : allFiles;
+  }
+
+  // this method overrides corresponding API method since javac 9
+  public boolean contains(Location location, FileObject fo) {
+    if (fo instanceof JpsFileObject) {
+      return location.equals(((JpsFileObject)fo).getLocation());
+    }
+    if (ourContainsMethod == null) {
+      throw new UnsupportedOperationException("Operation is not supported for file objects " + fo.getClass().getName());
+    }
+    // delegate the call further
+    try {
+      return ((Boolean)ourContainsMethod.invoke(getStdManager(), location, fo)).booleanValue();
+    }
+    catch (Throwable e) {
+      throw new UnsupportedOperationException(e);
+    }
   }
 
   public void onOutputFileGenerated(File file) {

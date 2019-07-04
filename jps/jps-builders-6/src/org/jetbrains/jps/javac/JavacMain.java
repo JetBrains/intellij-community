@@ -172,7 +172,7 @@ public class JavacMain {
         }
       };
 
-      final StandardJavaFileManager fm = wrapWithCallDispatcher(StandardJavaFileManager.class, fileManager, fileManager.getStdManager());
+      final StandardJavaFileManager fm = wrapWithCallDispatcher(StandardJavaFileManager.class, fileManager, fileManager.getClass().getSuperclass(), fileManager.getStdManager());
       final JavaCompiler.CompilationTask task = tryInstallClientCodeWrapperCallDispatcher(compiler.getTask(
         out, fm, diagnosticConsumer, _options, null, fileManager.getJavaFileObjectsFromFiles(sources)
       ), fm);
@@ -241,8 +241,8 @@ public class JavacMain {
           final Method putMethod = contextObject.getClass().getMethod("put", Class.class, Object.class);
           putMethod.invoke(contextObject, JavaFileManager.class, null);  // must clear previous value first
           putMethod.invoke(contextObject, JavaFileManager.class, wrapWithCallDispatcher(
-            StandardJavaFileManager.class, (StandardJavaFileManager)currentManager, delegateTo
-          ));
+            StandardJavaFileManager.class, (StandardJavaFileManager)currentManager, Object.class, delegateTo)
+          );
         }
       }
     }
@@ -280,14 +280,14 @@ public class JavacMain {
   // methods added to newer versions of StandardJavaFileManager interfaces have default implementations that
   // do not delegate to corresponding methods of FileManager's base implementation
   // this proxy object makes sure the calls, not implemented in our file manager, are dispatched further to the base file manager implementation
-  private static <T> T wrapWithCallDispatcher(final Class<T> ifaceClass, final T targetObject, final T delegateTo) {
+  private static <T> T wrapWithCallDispatcher(final Class<T> ifaceClass, final T targetObject, final Class<?> parentToTopSearchAt, final T delegateTo) {
     //return fileManager;
     return ifaceClass.cast(Proxy.newProxyInstance(targetObject.getClass().getClassLoader(), new Class[]{ifaceClass}, new InvocationHandler() {
       private final Map<Method, Boolean> ourImplStatus = Collections.synchronizedMap(new HashMap<Method, Boolean>());
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         try {
-          return method.invoke(getApiCallHandler(method), args);
+          return method.invoke(getApiCallHandler(method, parentToTopSearchAt), args);
         }
         catch (InvocationTargetException e) {
           final Throwable cause = e.getCause();
@@ -295,16 +295,21 @@ public class JavacMain {
         }
       }
 
-      private T getApiCallHandler(Method method) {
+      private T getApiCallHandler(Method method, Class<?> parentToTopSearchAt) {
         Boolean isImplemented = ourImplStatus.get(method);
         if (isImplemented == null) {
-          try {
-            // important: look for implemented methods in the actual class
-            targetObject.getClass().getDeclaredMethod(method.getName(), method.getParameterTypes());
-            isImplemented = Boolean.TRUE;
-          }
-          catch (NoSuchMethodException e) {
-            isImplemented = Boolean.FALSE;
+          isImplemented = Boolean.FALSE;
+          // important: look for implemented methods starting from the actual class
+          Class<?> aClass = targetObject.getClass();
+          while (!(parentToTopSearchAt.equals(aClass) || Object.class.equals(aClass))) {
+            try {
+              aClass.getDeclaredMethod(method.getName(), method.getParameterTypes());
+              isImplemented = Boolean.TRUE;
+              break;
+            }
+            catch (NoSuchMethodException e) {
+              aClass = aClass.getSuperclass();
+            }
           }
           ourImplStatus.put(method, isImplemented);
         }

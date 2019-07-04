@@ -4,7 +4,7 @@ package org.jetbrains.jps.javac;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.PathUtils;
 
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.*;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
@@ -16,9 +16,13 @@ public class InputFileObject extends JpsFileObject {
   private Reference<File> myAbsFileRef;
 
   InputFileObject(File f, String encoding) {
-    super(createUri(f), findKind(f.getName()));
+    super(createUri(f), findKind(f.getName()), StandardLocation.SOURCE_PATH);
     this.myFile = f;
     myEncoding = encoding;
+  }
+
+  public File getFile() {
+    return myFile;
   }
 
   @NotNull

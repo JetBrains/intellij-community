@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.CharArrayCharSequence;
 
-import javax.tools.SimpleJavaFileObject;
+import javax.tools.*;
 import java.io.*;
 import java.net.URI;
 import java.nio.CharBuffer;
@@ -16,9 +16,16 @@ import java.nio.CharBuffer;
  */
 public abstract class JpsFileObject extends SimpleJavaFileObject {
   private static final Kind[] ourAvailableKinds = Kind.values();
+  private final JavaFileManager.Location myLocation;
 
-  public JpsFileObject(URI uri, Kind kind) {
+  public JpsFileObject(URI uri, Kind kind, @Nullable JavaFileManager.Location location) {
     super(uri, kind);
+    myLocation = location;
+  }
+
+  @Nullable
+  public JavaFileManager.Location getLocation() {
+    return myLocation;
   }
 
   protected static Kind findKind(String name) {
