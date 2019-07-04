@@ -467,59 +467,107 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   }
 
   private abstract static class Token implements Node {
-    PsiBuilderImpl myBuilder;
-    private IElementType myTokenType;
-    private int myTokenStart;
-    private int myTokenEnd;
     int myHC = -1;
     StartMarker myParentNode;
 
     @Override
-    public int hc() {
+    public final int hc() {
       if (myHC == -1) {
-        myHC = myTokenType instanceof TokenWrapper
-               ? LeafElement.leafHC(((TokenWrapper)myTokenType).getValue())
-               : myBuilder.fragmentHc(myTokenStart, myTokenEnd);
+        myHC = getTokenType() instanceof TokenWrapper
+               ? LeafElement.leafHC(((TokenWrapper)getTokenType()).getValue())
+               : getBuilder().fragmentHc(getStartOffsetInBuilder(), getEndOffsetInBuilder());
       }
       return myHC;
     }
 
     @Override
-    public int getEndOffset() {
-      return myTokenEnd + myBuilder.myOffset;
+    public final int getEndOffset() {
+      return getEndOffsetInBuilder() + getBuilder().myOffset;
     }
 
     @Override
-    public int getStartOffset() {
-      return myTokenStart + myBuilder.myOffset;
+    public final int getStartOffset() {
+      return getStartOffsetInBuilder() + getBuilder().myOffset;
     }
 
     @NotNull
-    public CharSequence getText() {
-      if (myTokenType instanceof TokenWrapper) {
-        return ((TokenWrapper)myTokenType).getValue();
+    public final CharSequence getText() {
+      if (getTokenType() instanceof TokenWrapper) {
+        return ((TokenWrapper)getTokenType()).getValue();
       }
 
-      return myBuilder.myText.subSequence(myTokenStart, myTokenEnd);
+      return getBuilder().myText.subSequence(getStartOffsetInBuilder(), getEndOffsetInBuilder());
     }
 
-    @NotNull
+    PsiBuilderImpl getBuilder() {
+      return myParentNode.myBuilder;
+    }
+
+    abstract int getStartOffsetInBuilder();
+    abstract int getEndOffsetInBuilder();
+
+    void clean() {
+      myHC = -1;
+      myParentNode = null;
+    }
+
+    @Override
+    public String toString() {
+      return getText().toString();
+    }
+
+  }
+
+  private abstract static class TokenRange extends Token {
+    private int myTokenStart;
+    private int myTokenEnd;
+    private IElementType myTokenType;
+
+    @Override
+    int getStartOffsetInBuilder() {
+      return myTokenStart;
+    }
+
+    @Override
+    int getEndOffsetInBuilder() {
+      return myTokenEnd;
+    }
+
     @Override
     public IElementType getTokenType() {
       return myTokenType;
     }
 
-    void initToken(@NotNull IElementType type,
-                   @NotNull PsiBuilderImpl builder,
-                   StartMarker parent,
-                   int start,
-                   int end) {
+    void initToken(@NotNull IElementType type, StartMarker parent, int start, int end) {
       myParentNode = parent;
-      myBuilder = builder;
       myTokenType = type;
       myTokenStart = start;
       myTokenEnd = end;
     }
+
+  }
+
+  private static class TokenRangeNode extends TokenRange implements LighterASTTokenNode { }
+
+  private static class SingleLexemeNode extends Token implements LighterASTTokenNode {
+    private int myLexemeIndex;
+
+    @Override
+    int getStartOffsetInBuilder() {
+      return getBuilder().myLexStarts[myLexemeIndex];
+    }
+
+    @Override
+    int getEndOffsetInBuilder() {
+      return getBuilder().myLexStarts[myLexemeIndex + 1];
+    }
+
+    @NotNull
+    @Override
+    public IElementType getTokenType() {
+      return getBuilder().myLexTypes[myLexemeIndex];
+    }
+
   }
 
   private int fragmentHc(int start, int end) {
@@ -534,20 +582,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     return hc;
   }
 
-  private static class TokenNode extends Token implements LighterASTTokenNode {
-    void clean() {
-      myBuilder = null;
-      myHC = -1;
-      myParentNode = null;
-    }
-
-    @Override
-    public String toString() {
-      return getText().toString();
-    }
-  }
-
-  private static class LazyParseableToken extends Token implements LighterLazyParseableNode {
+  private static class LazyParseableToken extends TokenRange implements LighterLazyParseableNode {
     private final MyTreeStructure myParentStructure;
     private final int myStartIndex;
     private final int myEndIndex;
@@ -561,12 +596,12 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
     @Override
     public PsiFile getContainingFile() {
-      return myBuilder.myFile;
+      return getBuilder().myFile;
     }
 
     @Override
     public CharTable getCharTable() {
-      return myBuilder.myCharTable;
+      return getBuilder().myCharTable;
     }
 
     public FlyweightCapableTreeStructure<LighterASTNode> parseContents() {
@@ -580,7 +615,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     @Override
     public boolean accept(@NotNull Visitor visitor) {
       for (int i = myStartIndex; i < myEndIndex; i++) {
-        IElementType type = myBuilder.myLexTypes[i];
+        IElementType type = getBuilder().myLexTypes[i];
         if (!visitor.visit(type)) {
           return false;
         }
@@ -595,13 +630,13 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       if (tokenCount == 1) return null; // not expand single lazy parseable token case
 
       int[] lexStarts = new int[tokenCount + 1];
-      System.arraycopy(myBuilder.myLexStarts, myStartIndex, lexStarts, 0, tokenCount);
-      int diff = myBuilder.myLexStarts[myStartIndex];
+      System.arraycopy(getBuilder().myLexStarts, myStartIndex, lexStarts, 0, tokenCount);
+      int diff = getBuilder().myLexStarts[myStartIndex];
       for(int i = 0; i < tokenCount; ++i) lexStarts[i] -= diff;
       lexStarts[tokenCount] = getEndOffset() - getStartOffset();
 
       IElementType[] lexTypes = new IElementType[tokenCount + 1];
-      System.arraycopy(myBuilder.myLexTypes, myStartIndex, lexTypes, 0, tokenCount);
+      System.arraycopy(getBuilder().myLexTypes, myStartIndex, lexTypes, 0, tokenCount);
 
       return new TokenSequence(lexStarts, lexTypes, tokenCount);
     }
@@ -1401,7 +1436,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     public boolean typesEqual(@NotNull final ASTNode n1, @NotNull final LighterASTNode n2) {
       if (n1 instanceof PsiWhiteSpaceImpl) {
         return ourAnyLanguageWhitespaceTokens.contains(n2.getTokenType()) ||
-               n2 instanceof Token && ((Token)n2).myBuilder.myWhitespaces.contains(n2.getTokenType());
+               n2 instanceof Token && ((Token)n2).getBuilder().myWhitespaces.contains(n2.getTokenType());
       }
       IElementType n1t;
       IElementType n2t;
@@ -1449,26 +1484,40 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   }
 
   private static class MyTreeStructure implements FlyweightCapableTreeStructure<LighterASTNode> {
-    private final LimitedPool<TokenNode> myPool;
+    private final LimitedPool<TokenRangeNode> myRangePool;
+    private final LimitedPool<SingleLexemeNode> myLexemePool;
     private final StartMarker myRoot;
 
     MyTreeStructure(@NotNull StartMarker root, @Nullable final MyTreeStructure parentTree) {
       if (parentTree == null) {
-        myPool = new LimitedPool<>(1000, new LimitedPool.ObjectFactory<TokenNode>() {
+        myRangePool = new LimitedPool<>(1000, new LimitedPool.ObjectFactory<TokenRangeNode>() {
           @Override
-          public void cleanup(@NotNull TokenNode token) {
+          public void cleanup(@NotNull TokenRangeNode token) {
             token.clean();
           }
 
           @NotNull
           @Override
-          public TokenNode create() {
-            return new TokenNode();
+          public TokenRangeNode create() {
+            return new TokenRangeNode();
+          }
+        });
+        myLexemePool = new LimitedPool<>(1000, new LimitedPool.ObjectFactory<SingleLexemeNode>() {
+          @NotNull
+          @Override
+          public SingleLexemeNode create() {
+            return new SingleLexemeNode();
+          }
+
+          @Override
+          public void cleanup(@NotNull SingleLexemeNode node) {
+            node.clean();
           }
         });
       }
       else {
-        myPool = parentTree.myPool;
+        myRangePool = parentTree.myRangePool;
+        myLexemePool = parentTree.myLexemePool;
       }
       myRoot = root;
     }
@@ -1540,8 +1589,11 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       if (nodes == null) return;
       for (int i = 0; i < count; i++) {
         final LighterASTNode node = nodes[i];
-        if (node instanceof TokenNode) {
-          myPool.recycle((TokenNode)node);
+        if (node instanceof TokenRangeNode) {
+          myRangePool.recycle((TokenRangeNode)node);
+        }
+        else if (node instanceof SingleLexemeNode) {
+          myLexemePool.recycle((SingleLexemeNode)node);
         }
       }
     }
@@ -1597,8 +1649,15 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
         return obtainLazyToken(type, builder, startLexemeIndex, endLexemeIndex, parent, start, end);
       }
 
-      Token lexeme = myPool.alloc();
-      lexeme.initToken(type, builder, parent, start, end);
+      if (startLexemeIndex == endLexemeIndex - 1 && type == builder.myLexTypes[startLexemeIndex]) {
+        SingleLexemeNode lexeme = myLexemePool.alloc();
+        lexeme.myParentNode = parent;
+        lexeme.myLexemeIndex = startLexemeIndex;
+        return lexeme;
+      }
+
+      TokenRangeNode lexeme = myRangePool.alloc();
+      lexeme.initToken(type, parent, start, end);
       return lexeme;
     }
 
@@ -1611,10 +1670,10 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       LazyParseableToken token = builder.myChameleonCache.get(startInFile);
       if (token == null) {
         token = new LazyParseableToken(this, startLexemeIndex, endLexemeIndex);
-        token.initToken(type, builder, parent, start, end);
+        token.initToken(type, parent, start, end);
         builder.myChameleonCache.put(startInFile, token);
       } else {
-        if (token.myBuilder != builder || token.myStartIndex != startLexemeIndex || token.myEndIndex != endLexemeIndex) {
+        if (token.getBuilder() != builder || token.myStartIndex != startLexemeIndex || token.myEndIndex != endLexemeIndex) {
           throw new AssertionError("Wrong chameleon cached");
         }
       }
@@ -1651,7 +1710,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     public ASTNode convert(final Node n) {
       if (n instanceof Token) {
         final Token token = (Token)n;
-        return token.myBuilder.createLeaf(token.getTokenType(), token.myTokenStart, token.myTokenEnd);
+        return token.getBuilder().createLeaf(token.getTokenType(), token.getStartOffsetInBuilder(), token.getEndOffsetInBuilder());
       }
       else if (n instanceof ErrorItem) {
         return Factory.createErrorElement(((ErrorItem)n).myMessage);
