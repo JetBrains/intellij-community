@@ -28,10 +28,8 @@ import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -837,7 +835,9 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
         if (toggleNow || MouseEvent.MOUSE_PRESSED == event.getID()) {
           Component component = tree.getDeepestRendererComponentAt(event.getX(), event.getY());
-          if (component != null && NODE_ICON.equals(component.getName())) {
+          if (component instanceof JLabel && NODE_ICON.equals(component.getName())) {
+            MyControl.MyIcon icon = ObjectUtils.tryCast(((JLabel)component).getIcon(), MyControl.MyIcon.class);
+            if (icon == null || icon.expanded == null) return false; // do not consume the mouse event for a leaf node
             if (toggleNow) {
               toggleExpandState(tree.getPathForLocation(event.getX(), event.getY()));
             }
