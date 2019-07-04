@@ -68,9 +68,7 @@ import com.intellij.structuralsearch.plugin.replace.ui.ReplaceCommand;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.filters.FilterPanel;
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
-import com.intellij.ui.EditorTextField;
-import com.intellij.ui.OnePixelSplitter;
-import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
@@ -82,6 +80,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.ItemEvent;
@@ -238,6 +237,8 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
       @Override
       protected void updateBorder(@NotNull EditorEx editor) {
         setupBorder(editor);
+        final JScrollPane scrollPane = editor.getScrollPane();
+        scrollPane.setBorder(new ErrorBorder(scrollPane.getBorder()));
       }
     };
     final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
@@ -376,10 +377,14 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
   protected JComponent createCenterPanel() {
     mySearchEditorPanel = new OnePixelSplitter(false, 1.0f);
     mySearchEditorPanel.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
-    mySearchEditorPanel.getDivider().setOpaque(false);
     mySearchCriteriaEdit = createEditor();
     mySearchEditorPanel.setFirstComponent(mySearchCriteriaEdit);
     mySearchEditorPanel.add(BorderLayout.CENTER, mySearchCriteriaEdit);
+
+    final JPanel wrapper = new JPanel(new BorderLayout());
+    final Color color = UIManager.getColor("Borders.ContrastBorderColor");
+    wrapper.setBorder(IdeBorderFactory.createBorder(color));
+    wrapper.add(mySearchEditorPanel, BorderLayout.CENTER);
 
     myReplacePanel = createReplacePanel();
     myReplacePanel.setVisible(myReplace);
@@ -413,7 +418,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     centerPanel.setLayout(layout);
     layout.setHorizontalGroup(
       layout.createParallelGroup()
-        .addComponent(mySearchEditorPanel)
+        .addComponent(wrapper)
         .addComponent(myReplacePanel)
         .addComponent(myScopePanel)
         .addGroup(layout.createSequentialGroup()
@@ -424,7 +429,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     );
     layout.setVerticalGroup(
       layout.createSequentialGroup()
-        .addComponent(mySearchEditorPanel)
+        .addComponent(wrapper)
         .addGap(2)
         .addComponent(myReplacePanel)
         .addComponent(myScopePanel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
@@ -1155,6 +1160,36 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
   @Override
   protected String getHelpId() {
     return "find.structuredSearch";
+  }
+
+  private static class ErrorBorder implements Border {
+    private final Border myErrorBorder;
+
+    ErrorBorder(Border errorBorder) {
+      myErrorBorder = errorBorder;
+    }
+
+    @Override
+    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+      EditorTextField editorTextField = ComponentUtil.getParentOfType((Class<? extends EditorTextField>)EditorTextField.class, c);
+      if (editorTextField == null) {
+        return;
+      }
+      final Object object = editorTextField.getClientProperty("JComponent.outline");
+      if ("error".equals(object) || "warning".equals(object)) {
+        myErrorBorder.paintBorder(c, g, x, y, width, height);
+      }
+    }
+
+    @Override
+    public Insets getBorderInsets(Component c) {
+      return myErrorBorder.getBorderInsets(c);
+    }
+
+    @Override
+    public boolean isBorderOpaque() {
+      return false;
+    }
   }
 
   private class SwitchAction extends AnAction implements DumbAware {

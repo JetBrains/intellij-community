@@ -104,10 +104,9 @@ public class FilterPanel implements FilterTable {
         }
       })
       .setRemoveActionUpdater(e -> myValid && myFilterTable.getTable().getSelectedRow() != 0)
-      .setPanelBorder(null)
+      .setPanelBorder(JBUI.Borders.empty())
       .createPanel();
     myFilterPanel.setPreferredSize(new Dimension(350, 60));
-    myFilterPanel.setBorder(BorderFactory.createCompoundBorder(JBUI.Borders.empty(3, 0), myFilterPanel.getBorder()));
   }
 
   @Override
