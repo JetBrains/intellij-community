@@ -32,4 +32,22 @@ public class JavaLensSettings {
     this.showImplementations = showImplementations;
     settingsChanged();
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    JavaLensSettings settings = (JavaLensSettings)o;
+
+    if (showUsages != settings.showUsages) return false;
+    return showImplementations == settings.showImplementations;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = showUsages ? 1 : 0;
+    result = 31 * result + (showImplementations ? 1 : 0);
+    return result;
+  }
 }
