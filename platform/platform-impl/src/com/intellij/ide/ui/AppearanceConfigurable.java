@@ -198,9 +198,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     update |= settings.getDisableMnemonics() != myComponent.myDisableMnemonics.isSelected();
     settings.setDisableMnemonics(myComponent.myDisableMnemonics.isSelected());
 
-    update |= settings.getUseSmallLabelsOnTabs() != myComponent.myUseSmallLabelsOnTabs.isSelected();
-    settings.setUseSmallLabelsOnTabs(myComponent.myUseSmallLabelsOnTabs.isSelected());
-
     update |= settings.getWideScreenSupport() != myComponent.myWidescreenLayoutCheckBox.isSelected();
     settings.setWideScreenSupport(myComponent.myWidescreenLayoutCheckBox.isSelected());
 
@@ -355,7 +352,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     myComponent.myDarkWindowHeaders.setSelected(Registry.is("ide.mac.allowDarkWindowDecorations"));
     myComponent.myOverrideLAFFonts.setSelected(settings.getOverrideLafFonts());
     myComponent.myDisableMnemonics.setSelected(settings.getDisableMnemonics());
-    myComponent.myUseSmallLabelsOnTabs.setSelected(settings.getUseSmallLabelsOnTabs());
     myComponent.myWidescreenLayoutCheckBox.setSelected(settings.getWideScreenSupport());
     myComponent.myLeftLayoutCheckBox.setSelected(settings.getLeftHorizontalSplit());
     myComponent.myRightLayoutCheckBox.setSelected(settings.getRightHorizontalSplit());
@@ -431,7 +427,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     isModified |= myComponent.myDisableMnemonics.isSelected() != settings.getDisableMnemonics();
     isModified |= myComponent.myDisableMnemonicInControlsCheckBox.isSelected() != settings.getDisableMnemonicsInControls();
 
-    isModified |= myComponent.myUseSmallLabelsOnTabs.isSelected() != settings.getUseSmallLabelsOnTabs();
     isModified |= myComponent.myWidescreenLayoutCheckBox.isSelected() != settings.getWideScreenSupport();
     isModified |= myComponent.myLeftLayoutCheckBox.isSelected() != settings.getLeftHorizontalSplit();
     isModified |= myComponent.myRightLayoutCheckBox.isSelected() != settings.getRightHorizontalSplit();
@@ -505,7 +500,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     private JCheckBox myHideNavigationPopupsCheckBox;
     private JCheckBox myAltDNDCheckBox;
     private JCheckBox myAllowMergeButtons;
-    private JBCheckBox myUseSmallLabelsOnTabs;
     private JBCheckBox myWidescreenLayoutCheckBox;
     private JCheckBox myLeftLayoutCheckBox;
     private JCheckBox myRightLayoutCheckBox;
