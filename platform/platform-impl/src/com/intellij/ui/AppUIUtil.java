@@ -51,7 +51,6 @@ import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -230,30 +229,6 @@ public final class AppUIUtil {
     String wmClass = name.startsWith(VENDOR_PREFIX) ? name : VENDOR_PREFIX + name;
     if (PluginManagerCore.isRunningFromSources()) wmClass += "-debug";
     return wmClass;
-  }
-
-  private static void registerFont(@NotNull String name, @Nullable File fontDir) {
-    try {
-      Font font;
-      if (fontDir == null) {
-        URL url = AppUIUtil.class.getResource("/fonts/" + name);
-        if (url == null) {
-          getLogger().warn("Resource missing: " + name);
-          return;
-        }
-
-        try (InputStream is = url.openStream()) {
-          font = Font.createFont(Font.TRUETYPE_FONT, is);
-        }
-      }
-      else {
-        font = Font.createFont(Font.TRUETYPE_FONT, new File(fontDir, name));
-      }
-      GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(font);
-    }
-    catch (Throwable t) {
-      getLogger().warn("Cannot register font: " + name, t);
-    }
   }
 
   public static void hideToolWindowBalloon(@NotNull String id, @NotNull Project project) {
