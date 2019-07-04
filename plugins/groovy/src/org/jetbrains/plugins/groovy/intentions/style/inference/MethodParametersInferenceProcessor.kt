@@ -20,15 +20,17 @@ class MethodParametersInferenceProcessor(method: GrMethod) {
   /**
    * Performs full substitution for non-typed parameters of [InferenceDriver.virtualMethod]
    * Inference is performed in 3 phases:
-   * 1. Creating a type parameter for each of existing non-typed parameter
+   * 1. Creating a type parameter for each of existing non-typed parameters
    * 2. Inferring new parameters signature cause of possible generic types. Creating new type parameters.
    * 3. Inferring dependencies between new type parameters and instantiating them.
    */
   fun runInferenceProcess(): GrMethod {
-    driver.setUpNewTypeParameters()
-    setUpParametersSignature()
-    val graph = setUpGraph()
-    inferTypeParameters(graph)
+    if (!driver.treatedAsOverriddenMethod()) {
+      driver.setUpNewTypeParameters()
+      setUpParametersSignature()
+      val graph = setUpGraph()
+      inferTypeParameters(graph)
+    }
     return driver.virtualMethod
   }
 

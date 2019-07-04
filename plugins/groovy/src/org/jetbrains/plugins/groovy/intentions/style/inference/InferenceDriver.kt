@@ -349,4 +349,41 @@ class InferenceDriver(val method: GrMethod) {
       defaultTypeParameterList.add(this)
     }
   }
+
+  fun treatedAsOverriddenMethod(): Boolean {
+    method.containingClass ?: return false
+    val candidateMethodsDomain = if (method.annotations.any { it.qualifiedName == CommonClassNames.JAVA_LANG_OVERRIDE }) {
+      method.containingClass!!.supers
+    }
+    else {
+      method.containingClass!!.interfaces
+    }
+    val alreadyOverriddenMethods = (method.containingClass!!.supers + method.containingClass)
+      .flatMap { it.findMethodsByName(method.name, true).asIterable() }
+      .flatMap { it.findSuperMethods().asIterable() }
+    val overridableMethod = candidateMethodsDomain
+      .flatMap { it.findMethodsByName(method.name, true).asIterable() }
+      .subtract(alreadyOverriddenMethods)
+      .firstOrNull { methodsMatch(it as GrMethod, method) }
+    if (overridableMethod != null) {
+      (overridableMethod as GrMethod).parameters
+        .zip(virtualMethod.parameters)
+        .forEach { (patternParameter, virtualParameter) -> virtualParameter.setType(patternParameter.type) }
+      return true
+    }
+    else {
+      return false
+    }
+  }
+
+  private fun methodsMatch(pattern: GrMethod,
+                           tested: GrMethod): Boolean {
+    val parameterList = pattern.parameters.zip(tested.parameters)
+    if (parameterList.size != pattern.parameterList.parametersCount || parameterList.size != tested.parameterList.parametersCount) {
+      return false
+    }
+    return parameterList.all { (patternParameter, testedParameter) ->
+      testedParameter.typeElement == null || testedParameter.type == patternParameter.type
+    }
+  }
 }

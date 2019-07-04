@@ -9,6 +9,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
 
   final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_3_0
+
   InferMethodParametersTypesIntentionTest() {
     super("Add explicit types to parameters")
   }
@@ -241,6 +242,22 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
   }
 
   void testMutualDependency() {
+    doTest(true)
+  }
+
+  void testOverriddenMethod() {
+    doTest(true)
+  }
+
+  void testOverriddenMethodInClass() {
+    doTest(true)
+  }
+
+  void testOverriddenMethodWithoutOverrideAnnotation() {
+    doTest(true)
+  }
+
+  void testOverriddenMethodWithOtherOverloads() {
     doTest(true)
   }
 }

@@ -30,23 +30,6 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
  * @author nik
  */
 public class GroovySourceRootDetector extends JavaSourceRootDetector {
-
-  class A implements Comparable<B> {
-
-    @Override
-    public int compareTo(@NotNull B o) {
-      return 0;
-    }
-  }
-
-  class B implements Comparable<A> {
-
-    @Override
-    public int compareTo(@NotNull A o) {
-      return 0;
-    }
-  }
-
   @NotNull
   @Override
   protected String getLanguageName() {
