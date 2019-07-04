@@ -365,8 +365,8 @@ public final class IdeEventQueue extends EventQueue {
         return;
       }
 
-    if (isMetaKeyPressedOnLinux(e)) return;
-    if (isSpecialSymbolMatchingShortcut(e)) return;
+      if (isMetaKeyPressedOnLinux(e)) return;
+      if (isSpecialSymbolMatchingShortcut(e)) return;
 
       if (e.getSource() instanceof TrayIcon) {
         if (e instanceof ActionEvent) {
@@ -377,7 +377,7 @@ public final class IdeEventQueue extends EventQueue {
         return;
       }
 
-      checkForTimeJump();
+      checkForTimeJump(startedAt);
 
       if (!appIsLoaded()) {
         try {
@@ -538,8 +538,7 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   //As we rely on system time monotonicity in many places let's log anomalies at least.
-  private void checkForTimeJump() {
-    long now = System.currentTimeMillis();
+  private void checkForTimeJump(long now) {
     if (myLastEventTime > now + 1000) {
       LOG.warn("System clock's jumped back by ~" + (myLastEventTime - now) / 1000 + " sec");
     }
