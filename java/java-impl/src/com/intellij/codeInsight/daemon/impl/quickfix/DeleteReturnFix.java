@@ -7,7 +7,6 @@ import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
@@ -24,7 +23,8 @@ public class DeleteReturnFix extends LocalQuickFixAndIntentionActionOnPsiElement
 
   private final SmartPsiElementPointer<PsiReturnStatement> myStatementPtr;
   private final SmartPsiElementPointer<PsiExpression> myValuePtr;
-  private final String myMessage;
+  private final boolean myIsLastStatement;
+  private final boolean myHasSideEffects;
 
   public DeleteReturnFix(@NotNull PsiMethod method, @NotNull PsiReturnStatement returnStatement, @NotNull PsiExpression returnValue) {
     super(returnStatement);
@@ -32,16 +32,16 @@ public class DeleteReturnFix extends LocalQuickFixAndIntentionActionOnPsiElement
     SmartPointerManager manager = SmartPointerManager.getInstance(returnStatement.getProject());
     myStatementPtr = manager.createSmartPsiElementPointer(returnStatement);
     myValuePtr = manager.createSmartPsiElementPointer(returnValue);
-    String toDelete = ControlFlowUtils.blockCompletesWithStatement(codeBlock, returnStatement) ? "statement" : "value";
-    boolean hasSideEffects = SideEffectChecker.mayHaveSideEffects(returnValue);
-    myMessage = QuickFixBundle.message(hasSideEffects ? "delete.return.fix.side.effects.text" : "delete.return.fix.text", toDelete);
+    myIsLastStatement = ControlFlowUtils.blockCompletesWithStatement(codeBlock, returnStatement);
+    myHasSideEffects = SideEffectChecker.mayHaveSideEffects(returnValue);
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   @Override
   public String getText() {
-    return myMessage;
+    String toDelete = myIsLastStatement ? "statement" : "value";
+    return QuickFixBundle.message(myHasSideEffects ? "delete.return.fix.side.effects.text" : "delete.return.fix.text", toDelete);
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -61,13 +61,8 @@ public class DeleteReturnFix extends LocalQuickFixAndIntentionActionOnPsiElement
     if (returnStatement == null) return;
     PsiExpression returnValue = myValuePtr.getElement();
     if (returnValue == null) return;
-    PsiMethod method = PsiTreeUtil.getParentOfType(returnStatement, PsiMethod.class, true, PsiLambdaExpression.class);
-    if (method == null) return;
-    PsiCodeBlock codeBlock = method.getBody();
-    if (codeBlock == null) return;
-    boolean isLastStatement = ControlFlowUtils.blockCompletesWithStatement(codeBlock, returnStatement);
     CommentTracker ct = new CommentTracker();
-    if (SideEffectChecker.mayHaveSideEffects(returnValue)) {
+    if (myHasSideEffects) {
       returnValue = Objects.requireNonNull(RefactoringUtil.ensureCodeBlock(returnValue));
       returnStatement = (PsiReturnStatement)returnValue.getParent();
     }
@@ -75,7 +70,7 @@ public class DeleteReturnFix extends LocalQuickFixAndIntentionActionOnPsiElement
     sideEffects.forEach(ct::markUnchanged);
     PsiStatement[] statements = StatementExtractor.generateStatements(sideEffects, returnValue);
     if (statements.length > 0) BlockUtils.addBefore(returnStatement, statements);
-    PsiElement toDelete = isLastStatement ? returnStatement : returnValue;
+    PsiElement toDelete = myIsLastStatement ? returnStatement : returnValue;
     ct.deleteAndRestoreComments(toDelete);
   }
 }
