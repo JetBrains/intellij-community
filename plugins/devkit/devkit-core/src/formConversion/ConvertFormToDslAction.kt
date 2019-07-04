@@ -76,6 +76,10 @@ fun convertFormToUiDsl(boundClass: PsiClass, formFile: PsiFile) {
   if (dialog.generateDescriptors) {
     imports.add("com.intellij.application.options.editor.*")
   }
+  if (dialog.baseClass == ConvertFormDialog.FormBaseClass.Configurable) {
+    imports.add("com.intellij.openapi.options.BoundConfigurable")
+    imports.add("com.intellij.openapi.ui.DialogPanel")
+  }
 
   val optionDescriptors = if (dialog.generateDescriptors) {
     buildString {
@@ -84,12 +88,6 @@ fun convertFormToUiDsl(boundClass: PsiClass, formFile: PsiFile) {
   }
   else {
     ""
-  }
-
-    val formText = buildString {
-    append("val panel = panel {\n")
-    form.root.render(this)
-    append("}\n")
   }
   val uiName = dialog.className
   val ktFileType = FileTypeRegistry.getInstance().getFileTypeByExtension("kt")
@@ -104,13 +102,16 @@ fun convertFormToUiDsl(boundClass: PsiClass, formFile: PsiFile) {
     append("\n")
 
     if (optionDescriptors.isNotEmpty()) {
-      append("val model = ${dialog.boundInstanceExpression}")
+      append("private val model = ${dialog.boundInstanceExpression}")
       append(optionDescriptors)
       append("\n")
     }
 
     append("class $uiName")
-    if (boundInstanceUClass != null) {
+    if (dialog.baseClass == ConvertFormDialog.FormBaseClass.Configurable) {
+      append(" : BoundConfigurable(TODO(), TODO())")
+    }
+    else if (boundInstanceUClass != null) {
       append("(val model: ${dialog.boundInstanceType.substringAfterLast('.')})")
     }
     append(" {")
@@ -120,7 +121,25 @@ fun convertFormToUiDsl(boundClass: PsiClass, formFile: PsiFile) {
       append("lateinit var ${binding.name}: ${binding.type.substringAfterLast('.')}$typeParameters\n")
     }
 
-    append(formText)
+    if (dialog.baseClass == ConvertFormDialog.FormBaseClass.Configurable) {
+      append("override fun createPanel(): DialogPanel {\n")
+      if (dialog.boundInstanceExpression.isNotEmpty()) {
+        append("val model = ${dialog.boundInstanceExpression}\n")
+      }
+      else if (boundInstanceUClass != null) {
+        append("val model: ${dialog.boundInstanceType.substringAfterLast('.')} = TODO()\n")
+      }
+
+      append("return panel {\n")
+      form.root.render(this)
+      append("}\n")
+    }
+    else {
+      append("val panel = panel {\n")
+      form.root.render(this)
+      append("}\n")
+    }
+
     append("}")
   }
   val ktFile = PsiFileFactory.getInstance(project).createFileFromText("$uiName.kt", ktFileType, ktFileText)

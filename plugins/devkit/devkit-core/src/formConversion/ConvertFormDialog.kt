@@ -11,14 +11,17 @@ import javax.swing.JComponent
  * @author yole
  */
 class ConvertFormDialog(val project: Project, var className: String) : DialogWrapper(project) {
-  init {
-    init()
-    title = "Convert Form to UI DSL"
-  }
+  enum class FormBaseClass { None, Configurable }
 
   var boundInstanceType: String = ""
   var boundInstanceExpression: String = ""
   var generateDescriptors = false
+  var baseClass = FormBaseClass.None
+
+  init {
+    init()
+    title = "Convert Form to UI DSL"
+  }
 
   override fun createCenterPanel(): JComponent? {
     return panel {
@@ -33,8 +36,16 @@ class ConvertFormDialog(val project: Project, var className: String) : DialogWra
       row("Bound instance expression") {
         textField(::boundInstanceExpression)
       }
-      row {
-        checkBox("Generate descriptors for Search Everywhere", ::generateDescriptors)
+      titledRow("Base class") {
+        buttonGroup(::baseClass) {
+          row { radioButton("None", FormBaseClass.None) }
+          row {
+            radioButton("Configurable", FormBaseClass.Configurable)
+            row {
+              checkBox("Generate descriptors for Search Everywhere", ::generateDescriptors)
+            }
+          }
+        }
       }
     }
   }
