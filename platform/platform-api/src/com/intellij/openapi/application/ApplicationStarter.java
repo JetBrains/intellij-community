@@ -3,20 +3,13 @@ package com.intellij.openapi.application;
 
 import com.intellij.ide.CliResult;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.Future;
 
 /**
- * This extension point allows to run custom [command-line] application based on IDEA platform
- * <pre>
- * &lt;extensions xmlns="com.intellij"&gt;
- *   &lt;applicationStarter implementation="my.plugin.package.MyApplicationStarter"/&gt;
- * &lt;/extensions&gt;
- * </pre>
- * my.plugin.package.MyApplicationStarter class must implement {@link ApplicationStarter} interface.
+ * This extension point allows running custom [command-line] application based on IDEA platform.
  *
  * @author max
  */
@@ -29,7 +22,6 @@ public interface ApplicationStarter {
    *
    * @return command-line selector.
    */
-  @NonNls
   String getCommandName();
 
   /**
