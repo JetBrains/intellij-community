@@ -218,7 +218,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
         if (!shouldBeInserted) continue;
 
         AttributeValuePresentation presenter =
-          extension.getAttributeValuePresentation(attributeDecl, XmlEditUtil.getAttributeQuote(containingFile), containingFile);
+          extension.getAttributeValuePresentation(tag, attributeName, XmlEditUtil.getAttributeQuote(containingFile));
         boolean htmlCode = HtmlUtil.hasHtml(containingFile) || HtmlUtil.supportsXmlTypedHandlers(containingFile);
         if (tag == null || tag.getAttributeValue(attributeName) == null) {
           if (!notRequiredAttributes.contains(attributeName)) {

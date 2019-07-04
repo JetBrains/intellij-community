@@ -157,9 +157,9 @@ public abstract class XmlExtension {
   }
 
   @NotNull
-  public AttributeValuePresentation getAttributeValuePresentation(@Nullable XmlAttributeDescriptor descriptor,
-                                                                  @NotNull String defaultAttributeQuote,
-                                                                  @NotNull PsiElement context) {
+  public AttributeValuePresentation getAttributeValuePresentation(@Nullable XmlTag tag,
+                                                                  @NotNull String attributeName,
+                                                                  @NotNull String defaultAttributeQuote) {
     return new AttributeValuePresentation() {
       @NotNull
       @Override
