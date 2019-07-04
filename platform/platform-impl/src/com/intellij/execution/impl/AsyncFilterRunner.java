@@ -39,7 +39,7 @@ class AsyncFilterRunner {
   private final Queue<HighlighterJob> myQueue = new ConcurrentLinkedQueue<>();
   @NotNull private List<FilterResult> myResults = new ArrayList<>();
 
-  AsyncFilterRunner(EditorHyperlinkSupport hyperlinks, Editor editor) {
+  AsyncFilterRunner(@NotNull EditorHyperlinkSupport hyperlinks, @NotNull Editor editor) {
     myHyperlinks = hyperlinks;
     myEditor = editor;
   }
