@@ -59,10 +59,11 @@ public interface Computable <T> {
     @NotNull
     @Override
     public final T compute() {
-      if (myValue == null) {
-        myValue = internalCompute();
+      T value = myValue;
+      if (value == null) {
+        myValue = value = internalCompute();
       }
-      return myValue;
+      return value;
     }
   }
 }

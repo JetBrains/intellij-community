@@ -98,10 +98,11 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   @NotNull
   @Override
   public TextRange getRangeInElement() {
-    if (myRangeInElement == null) {
-      myRangeInElement = calculateDefaultRangeInElement();
+    TextRange rangeInElement = myRangeInElement;
+    if (rangeInElement == null) {
+      myRangeInElement = rangeInElement = calculateDefaultRangeInElement();
     }
-    return myRangeInElement;
+    return rangeInElement;
   }
 
   protected TextRange calculateDefaultRangeInElement() {

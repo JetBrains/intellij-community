@@ -152,10 +152,11 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
   @NotNull
   @Override
   public String getPresentableText(boolean annotated) {
-    if (myPresentableText == null) {
-      myPresentableText = getText(TextType.PRESENTABLE, annotated);
+    String presentableText = myPresentableText;
+    if (presentableText == null) {
+      myPresentableText = presentableText = getText(TextType.PRESENTABLE, annotated);
     }
-    return myPresentableText;
+    return presentableText;
   }
 
   @NotNull
@@ -173,10 +174,11 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
   @NotNull
   @Override
   public String getInternalCanonicalText() {
-    if (myInternalCanonicalText == null) {
-      myInternalCanonicalText = getText(TextType.INT_CANONICAL, true);
+    String canonicalText = myInternalCanonicalText;
+    if (canonicalText == null) {
+      myInternalCanonicalText = canonicalText = getText(TextType.INT_CANONICAL, true);
     }
-    return myInternalCanonicalText;
+    return canonicalText;
   }
 
   private enum TextType { PRESENTABLE, CANONICAL, INT_CANONICAL }

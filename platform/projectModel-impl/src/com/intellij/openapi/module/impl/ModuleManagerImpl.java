@@ -563,10 +563,11 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   public Module[] getSortedModules() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     deliverPendingEvents();
-    if (myCachedSortedModules == null) {
-      myCachedSortedModules = myModuleModel.getSortedModules();
+    Module[] sortedModules = myCachedSortedModules;
+    if (sortedModules == null) {
+      myCachedSortedModules = sortedModules = myModuleModel.getSortedModules();
     }
-    return myCachedSortedModules;
+    return sortedModules;
   }
 
   @Override

@@ -89,10 +89,11 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
   }
 
   private Map<TreeElement, ChangeInfoImpl> getAllChanges() {
-    if (myChanges == null) {
-      myChanges = new ChildrenDiff().calcChanges();
+    Map<TreeElement, ChangeInfoImpl> changes = myChanges;
+    if (changes == null) {
+      myChanges = changes = new ChildrenDiff().calcChanges();
     }
-    return myChanges;
+    return changes;
   }
   
   private class ChildrenDiff {

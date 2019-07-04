@@ -570,10 +570,11 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     }
 
     public FlyweightCapableTreeStructure<LighterASTNode> parseContents() {
-      if (myParsed == null) {
-        myParsed = ((ILightLazyParseableElementType)getTokenType()).parseContents(this);
+      FlyweightCapableTreeStructure<LighterASTNode> parsed = myParsed;
+      if (parsed == null) {
+        myParsed = parsed = ((ILightLazyParseableElementType)getTokenType()).parseContents(this);
       }
-      return myParsed;
+      return parsed;
     }
 
     @Override

@@ -84,10 +84,11 @@ public class PsiEnumConstantInitializerImpl extends PsiClassImpl implements PsiE
   @Override
   @NotNull
   public PsiClassType getBaseClassType() {
-    if (myCachedBaseType == null) {
-      myCachedBaseType = JavaPsiFacade.getElementFactory(getProject()).createType(getBaseClass());
+    PsiClassType cachedBaseType = myCachedBaseType;
+    if (cachedBaseType == null) {
+      myCachedBaseType = cachedBaseType = JavaPsiFacade.getElementFactory(getProject()).createType(getBaseClass());
     }
-    return myCachedBaseType;
+    return cachedBaseType;
   }
 
   @Override

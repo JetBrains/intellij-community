@@ -168,10 +168,11 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   @Override
   @NotNull
   public RefManager getRefManager() {
-    if (myRefManager == null) {
-      myRefManager = DumbService.getInstance(myProject).runReadActionInSmartMode(() -> new RefManagerImpl(myProject, myCurrentScope, this));
+    RefManager refManager = myRefManager;
+    if (refManager == null) {
+      myRefManager = refManager = DumbService.getInstance(myProject).runReadActionInSmartMode(() -> new RefManagerImpl(myProject, myCurrentScope, this));
     }
-    return myRefManager;
+    return refManager;
   }
 
   public boolean isToCheckMember(@NotNull RefElement owner, @NotNull InspectionProfileEntry tool) {
