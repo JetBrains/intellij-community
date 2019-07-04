@@ -74,6 +74,56 @@ public final class IdeEventQueue extends EventQueue {
   private static TransactionGuardImpl ourTransactionGuard;
   private static ProgressManager ourProgressManager;
 
+  private final static LinkedHashSet<Window> activatedWindows = new LinkedHashSet<>();
+
+  private static void cleanActivatedWindowSet() {
+    for (Iterator<Window> iter = activatedWindows.iterator(); iter.hasNext(); ) {
+      Window window = iter.next();
+      if (!window.isVisible()) {
+        iter.remove();
+      }
+    }
+    assert !activatedWindows.isEmpty();
+  }
+
+  public Window nextWindowAfter (@NotNull Window w) {
+    cleanActivatedWindowSet();
+    assert activatedWindows.contains(w);
+
+    Window[] windows = activatedWindows.toArray(new Window[0]);
+
+    if (w.equals(windows[windows.length - 1])) {
+      return windows[0];
+    }
+
+    for (int i = (windows.length - 2); i >= 0; i--) {
+      if (w.equals(windows[i])) {
+        return windows[i + 1];
+      }
+    }
+
+    throw new IllegalArgumentException("The window after "  + w.getName() +  " has not been found");
+  }
+
+  public Window nextWindowBefore (@NotNull Window w) {
+      cleanActivatedWindowSet();
+      assert activatedWindows.contains(w);
+
+    Window[] windows = activatedWindows.toArray(new Window[0]);
+
+      if (w.equals(windows[0])) {
+        return windows[windows.length - 1];
+      }
+
+      for (int i = 1; i < windows.length; i++) {
+        if (w.equals(windows[i])) {
+          return windows[i - 1];
+        }
+      }
+
+      throw new IllegalArgumentException("The window after "  + w.getName() +  " has not been found");
+    }
+
   /**
    * Adding/Removing of "idle" listeners should be thread safe.
    */
@@ -353,6 +403,12 @@ public final class IdeEventQueue extends EventQueue {
 
   @Override
   public void dispatchEvent(@NotNull AWTEvent e) {
+
+    if (e.getID() == WindowEvent.WINDOW_ACTIVATED) {
+      activatedWindows.add((Window)e.getSource());
+      cleanActivatedWindowSet();
+    }
+
     long startedAt = System.currentTimeMillis();
     if (SystemProperties.getBooleanProperty("skip.typed.event", true) && skipTypedKeyEventsIfFocusReturnsToOwner(e)) {
       return;
