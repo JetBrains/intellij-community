@@ -42,7 +42,7 @@ public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
   private final EditorImpl myEditor;
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
 
-  final List<InlayImpl> myInlaysInvalidatedOnMove = new ArrayList<>();
+  private final List<InlayImpl> myInlaysInvalidatedOnMove = new ArrayList<>();
   final RangeMarkerTree<InlineInlayImpl> myInlineElementsTree;
   final MarkerTreeWithPartialSums<BlockInlayImpl> myBlockElementsTree;
   final RangeMarkerTree<AfterLineEndInlayImpl> myAfterLineEndElementsTree;
@@ -77,7 +77,7 @@ public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
                 caretPosition.column >= inlaysStartPosition.column && caretPosition.column <= inlaysStartPosition.column + inlayCount) {
               myInlaysAtCaret = inlays;
               for (int i = 0; i < inlayCount; i++) {
-                ((InlayImpl)inlays.get(i)).setStickingToRight(i >= (caretPosition.column - inlaysStartPosition.column));
+                ((InlayImpl)inlays.get(i)).setStickingToRight(i >= caretPosition.column - inlaysStartPosition.column);
               }
             }
           }
@@ -304,7 +304,6 @@ public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
     boolean hasAfterLineEndElements = hasAfterLineEndElements();
     if (!hasInlineElements && !hasBlockElements && !hasAfterLineEndElements) return null;
 
-    int offset = -1;
     VisualPosition visualPosition = myEditor.xyToVisualPosition(point);
     if (hasBlockElements) {
       int visualLine = visualPosition.line;
@@ -315,10 +314,12 @@ public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
         for (int i = inlays.size() - 1; i >= 0; i--) {
           Inlay inlay = inlays.get(i);
           int height = inlay.getHeightInPixels();
-          if (yDiff <= height) return inlay;
+          if (yDiff <= height) {
+            Rectangle bounds = inlay.getBounds();
+            if (bounds != null && bounds.contains(point)) return inlay;
+          }
           yDiff -= height;
         }
-        throw new IllegalStateException();
       }
       else {
         int lineBottom = baseY + myEditor.getLineHeight();
@@ -327,13 +328,16 @@ public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
           int yDiff = point.y - lineBottom;
           for (Inlay inlay : inlays) {
             int height = inlay.getHeightInPixels();
-            if (yDiff < height) return inlay;
+            if (yDiff < height) {
+              Rectangle bounds = inlay.getBounds();
+              if (bounds != null && bounds.contains(point)) return inlay;
+            }
             yDiff -= height;
           }
-          throw new IllegalStateException();
         }
       }
     }
+    int offset = -1;
     if (hasInlineElements) {
       offset = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(visualPosition));
       List<Inlay> inlays = getInlineElementsInRange(offset, offset);
