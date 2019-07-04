@@ -39,7 +39,7 @@ class EditorTabsConfigurable : BoundConfigurable("Editor Tabs", "reference.setti
                                                   and myScrollTabLayoutInEditorCheckBox.selected)
           }
         }
-        row { checkBox(showFileException).enableIfTabsVisible() }
+        row { checkBox(showFileExtension).enableIfTabsVisible() }
         row { checkBox(showDirectoryForNonUniqueFilenames).enableIfTabsVisible() }
         row { checkBox(markModifiedTabsWithAsterisk).enableIfTabsVisible() }
         row { checkBox(showTabsTooltips).enableIfTabsVisible() }

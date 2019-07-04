@@ -10,7 +10,7 @@ class EditorTabsOptionsTopHitProvider : OptionsSearchTopHitProvider.ApplicationL
     showDirectoryForNonUniqueFilenames
     , markModifiedTabsWithAsterisk
     , showTabsTooltips
-    , showFileException
+    , showFileExtension
     , hideTabsIfNeeded
     , sortTabsAlphabetically
     , openTabsAtTheEnd
