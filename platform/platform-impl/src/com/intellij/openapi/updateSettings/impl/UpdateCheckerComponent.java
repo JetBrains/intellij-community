@@ -8,12 +8,18 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.DateFormatUtil;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,7 +55,14 @@ public final class UpdateCheckerComponent implements Runnable {
         scheduleFirstCheck();
         snapPackageNotification();
 
-        UpdateInstaller.cleanupPatch();
+        MessageBusConnection connection = app.getMessageBus().connect();
+        connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+          @Override
+          public void projectOpened(@NotNull Project project) {
+            connection.disconnect();
+            StartupManager.getInstance(project).registerPostStartupActivity(() -> UpdateInstaller.cleanupPatch());
+          }
+        });
       });
     }
   }
