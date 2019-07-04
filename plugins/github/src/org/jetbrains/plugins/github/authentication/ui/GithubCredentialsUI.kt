@@ -98,13 +98,10 @@ sealed class GithubCredentialsUI {
 
     override fun handleAcquireError(error: Throwable): ValidationInfo {
       return when (error) {
-        is LoginNotUniqueException -> ValidationInfo(
-          "Account already added", loginTextField).withOKEnabled()
+        is LoginNotUniqueException -> ValidationInfo("Account already added", loginTextField).withOKEnabled()
         is UnknownHostException -> ValidationInfo("Server is unreachable").withOKEnabled()
-        is GithubAuthenticationException -> ValidationInfo(
-          "Incorrect credentials. ${error.message.orEmpty()}").withOKEnabled()
-        is GithubParseException -> ValidationInfo(
-          error.message ?: "Invalid server path", serverTextField)
+        is GithubAuthenticationException -> ValidationInfo("Incorrect credentials. ${error.message.orEmpty()}").withOKEnabled()
+        is GithubParseException -> ValidationInfo(error.message ?: "Invalid server path", serverTextField)
         else -> ValidationInfo("Invalid authentication data.\n ${error.message}").withOKEnabled()
       }
     }
@@ -151,9 +148,7 @@ sealed class GithubCredentialsUI {
       DialogValidationUtils.notBlank(tokenTextField, "Token cannot be empty")
     }
 
-    override fun createExecutor(): GithubApiRequestExecutor {
-      return factory.create(tokenTextField.text)
-    }
+    override fun createExecutor() = factory.create(tokenTextField.text)
 
     override fun acquireLoginAndToken(server: GithubServerPath,
                                       executor: GithubApiRequestExecutor,
@@ -185,13 +180,10 @@ sealed class GithubCredentialsUI {
 
     override fun handleAcquireError(error: Throwable): ValidationInfo {
       return when (error) {
-        is LoginNotUniqueException -> ValidationInfo(
-          "Account ${error.login} already added").withOKEnabled()
+        is LoginNotUniqueException -> ValidationInfo("Account ${error.login} already added").withOKEnabled()
         is UnknownHostException -> ValidationInfo("Server is unreachable").withOKEnabled()
-        is GithubAuthenticationException -> ValidationInfo(
-          "Incorrect credentials. ${error.message.orEmpty()}").withOKEnabled()
-        is GithubParseException -> ValidationInfo(
-          error.message ?: "Invalid server path", serverTextField)
+        is GithubAuthenticationException -> ValidationInfo("Incorrect credentials. ${error.message.orEmpty()}").withOKEnabled()
+        is GithubParseException -> ValidationInfo(error.message ?: "Invalid server path", serverTextField)
         else -> ValidationInfo("Invalid authentication data.\n ${error.message}").withOKEnabled()
       }
     }
