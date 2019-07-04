@@ -8,5 +8,7 @@ public class ProtectedMembers {
   }
 
   protected static class StaticInner {
+    protected void protectedMethod() {
+    }
   }
 }
