@@ -41,33 +41,8 @@ class ProjectData {
   private final Map<Editor, EditorData> myEditors = new HashMap<>();
   private final Map<ToolWindow, ToolWindowData> myToolWindows = new HashMap<>();
 
-  private final AtomicInteger myActiveDebugSessions = new AtomicInteger(0);
-
   ProjectData(@NotNull Project project) {
     myProject = project;
-
-    //
-    // Listen EXECUTION_TOPIC
-    //
-    myProject.getMessageBus().connect().subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
-      @Override
-      public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler) {
-        // System.out.println("processStarted: " + executorId);
-        if (ToolWindowId.DEBUG.equals(env.getExecutor().getToolWindowId()))
-          myActiveDebugSessions.incrementAndGet();
-      }
-      @Override
-      public void processTerminated(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler, int exitCode) {
-        // System.out.println("processTerminated: " + executorId);
-        if (ToolWindowId.DEBUG.equals(env.getExecutor().getToolWindowId())) {
-          final int val = myActiveDebugSessions.decrementAndGet();
-          if (val < 0) {
-            LOG.error("received 'processTerminated' when no process wasn't started");
-            myActiveDebugSessions.incrementAndGet();
-          }
-        }
-      }
-    });
 
     //
     // Listen ToolWindowManager
@@ -81,9 +56,6 @@ class ProjectData {
             (activeId.equals(ToolWindowId.DEBUG) ||
              activeId.equals(ToolWindowId.RUN_DASHBOARD) ||
              activeId.equals(ToolWindowId.SERVICES))) {
-          // System.out.println("stateChanged, dbgSessionsCount=" + pd.getDbgSessions());
-          if (getDbgSessions() <= 0)
-            return;
 
           get(BarType.DEBUGGER).show();
         }
@@ -162,9 +134,6 @@ class ProjectData {
 
   @Nullable BarContainer findDebugToolWindowByComponent(Component child) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-
-    if (myActiveDebugSessions.get() <= 0)
-      return null;
 
     final ToolWindowManagerEx twm = ToolWindowManagerEx.getInstanceEx(myProject);
     if (twm == null)
@@ -272,8 +241,6 @@ class ProjectData {
   }
 
   Collection<BarContainer> getAllContainers() { return myPermanentBars.values(); }
-
-  int getDbgSessions() { return myActiveDebugSessions.get(); }
 
   static long getUsedKeyMask() { return InputEvent.ALT_DOWN_MASK | InputEvent.META_DOWN_MASK | InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK; }
 
