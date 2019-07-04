@@ -9,6 +9,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 /**
  * This class allows to disable (temporarily or permanently) showing certain popups on mouse hover (currently, error/warning descriptions
  * and quick documentation on mouse hover are impacted). If several requests to disable popups have been performed, corresponding number of
@@ -17,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 public class EditorMouseHoverPopupControl {
   private static final Logger LOG = Logger.getInstance(EditorMouseHoverPopupControl.class);
   private static final Key<Integer> MOUSE_TRACKING_DISABLED_COUNT = Key.create("MOUSE_TRACKING_DISABLED_COUNT");
+  private final Collection<Runnable> ourListeners = new CopyOnWriteArrayList<>();
 
   public static void disablePopups(@NotNull Editor editor) {
     setTrackingDisabled(editor, true);
@@ -43,6 +47,12 @@ public class EditorMouseHoverPopupControl {
       count = 0;
     }
     holder.putUserData(MOUSE_TRACKING_DISABLED_COUNT, count == 0 ? null : count);
+    if ((userData == null) != (count == 0)) {
+      EditorMouseHoverPopupControl instance = getInstance();
+      if (instance != null) {
+        instance.ourListeners.forEach(Runnable::run);
+      }
+    }
   }
 
   public static boolean arePopupsDisabled(@NotNull Editor editor) {
@@ -50,5 +60,13 @@ public class EditorMouseHoverPopupControl {
     return editor.getUserData(MOUSE_TRACKING_DISABLED_COUNT) != null ||
            editor.getDocument().getUserData(MOUSE_TRACKING_DISABLED_COUNT) != null ||
            editor.getComponent().getClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING) != null; /* remove this clause in 2020.1 */
+  }
+
+  public static EditorMouseHoverPopupControl getInstance() {
+    return ApplicationManager.getApplication().getComponent(EditorMouseHoverPopupControl.class);
+  }
+
+  public void addListener(@NotNull Runnable listener) {
+    ourListeners.add(listener);
   }
 }

@@ -120,6 +120,10 @@
     </component>
 
     <component>
+      <implementation-class>com.intellij.openapi.editor.impl.EditorMouseHoverPopupControl</implementation-class>
+    </component>
+
+    <component>
       <implementation-class>com.intellij.internal.performance.LatenciometerListener</implementation-class>
     </component>
 
