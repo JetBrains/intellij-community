@@ -46,7 +46,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   public static final String EXCLUDED_ROOTS_TAG = "excluded";
   private String myName;
   private final LibraryTable myLibraryTable;
-  private final Map<OrderRootType, VirtualFilePointerContainer> myRoots = new HashMap<>(2);
+  private final Map<OrderRootType, VirtualFilePointerContainer> myRoots = new HashMap<>(3);
   @Nullable private VirtualFilePointerContainer myExcludedRoots;
   private final LibraryImpl mySource;
   private PersistentLibraryKind<?> myKind;
@@ -86,7 +86,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     }
     for (OrderRootType rootType : getAllRootTypes()) {
       final VirtualFilePointerContainer thatContainer = from.myRoots.get(rootType);
-      if (thatContainer != null) {
+      if (thatContainer != null && !thatContainer.isEmpty()) {
         getOrCreateContainer(rootType).addAll(thatContainer);
       }
     }
@@ -228,22 +228,6 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   }
 
   @NotNull
-  private Map<OrderRootType, VirtualFilePointerContainer> initRoots() {
-    Disposer.register(this, myPointersDisposable);
-
-    Map<OrderRootType, VirtualFilePointerContainer> result = new HashMap<>(4);
-
-    VirtualFilePointerListener listener = getListener();
-
-    for (OrderRootType rootType : getAllRootTypes()) {
-      VirtualFilePointerContainer container = VirtualFilePointerManager.getInstance().createContainer(myPointersDisposable, listener);
-      result.put(rootType, container);
-    }
-
-    return result;
-  }
-
-  @NotNull
   private VirtualFilePointerListener getListener() {
     Project project = myLibraryTable instanceof ProjectLibraryTable ? ((ProjectLibraryTable)myLibraryTable).getProject() : null;
     return myRootModel != null ? ((RootModelImpl)myRootModel).getRootsChangedListener() : project != null ? ProjectRootManagerImpl
@@ -341,10 +325,11 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   @NotNull
   private VirtualFilePointerContainer getOrCreateExcludedRoots() {
-    if (myExcludedRoots == null) {
-      myExcludedRoots = VirtualFilePointerManager.getInstance().createContainer(myPointersDisposable);
+    VirtualFilePointerContainer excludedRoots = myExcludedRoots;
+    if (excludedRoots == null) {
+      myExcludedRoots = excludedRoots = VirtualFilePointerManager.getInstance().createContainer(myPointersDisposable);
     }
-    return myExcludedRoots;
+    return excludedRoots;
   }
 
   //TODO<rv> Remove the next two methods as a temporary solution. Sort in OrderRootType.
@@ -397,7 +382,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     }
     for (OrderRootType rootType : sortRootTypes(storableRootTypes)) {
       VirtualFilePointerContainer roots = myRoots.get(rootType);
-      if ((roots == null || roots.size() == 0) && rootType.skipWriteIfEmpty()) {
+      if ((roots == null || roots.isEmpty()) && rootType.skipWriteIfEmpty()) {
         //compatibility iml/ipr
         continue;
       }
@@ -408,7 +393,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
       }
       element.addContent(rootTypeElement);
     }
-    if (myExcludedRoots != null && myExcludedRoots.size() > 0) {
+    if (myExcludedRoots != null && !myExcludedRoots.isEmpty()) {
       Element excluded = new Element(EXCLUDED_ROOTS_TAG);
       myExcludedRoots.writeExternal(excluded, JpsLibraryTableSerializer.ROOT_TAG, false);
       element.addContent(excluded);
@@ -697,10 +682,10 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
     final LibraryImpl library = (LibraryImpl)o;
 
-    if (myName != null ? !myName.equals(library.myName) : library.myName != null) return false;
+    if (!Objects.equals(myName, library.myName)) return false;
     if (!myRoots.equals(library.myRoots)) return false;
-    if (myKind != null ? !myKind.equals(library.myKind) : library.myKind != null) return false;
-    if (myProperties != null ? !myProperties.equals(library.myProperties) : library.myProperties != null) return false;
+    if (!Objects.equals(myKind, library.myKind)) return false;
+    if (!Objects.equals(myProperties, library.myProperties)) return false;
     return Comparing.equal(myExcludedRoots, library.myExcludedRoots);
   }
 

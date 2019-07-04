@@ -67,7 +67,7 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
       for (Element jarDir : jarDirs) {
         String url = jarDir.getAttributeValue(URL_ATTR);
         if (url == null) throw new InvalidDataException("path element without url: " + JDOMUtil.getValue(jarDir));
-        boolean recursive = Boolean.valueOf(jarDir.getAttributeValue(RECURSIVE_ATTR, "false"));
+        boolean recursive = Boolean.parseBoolean(jarDir.getAttributeValue(RECURSIVE_ATTR, "false"));
         addJarDirectory(url, recursive);
       }
     }
@@ -209,7 +209,7 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
   @NotNull
   private Trinity<String[], VirtualFile[], VirtualFile[]> cacheThings() {
     Trinity<String[], VirtualFile[], VirtualFile[]> result;
-    if (myList.isEmpty() && myJarDirectories.isEmpty() && myJarRecursiveDirectories.isEmpty()) {
+    if (isEmpty()) {
       result = EMPTY;
     }
     else {
@@ -279,6 +279,11 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
     myCachedThings = result;
     myTimeStampOfCachedThings = myVirtualFilePointerManager.getModificationCount();
     return result;
+  }
+
+  @Override
+  public boolean isEmpty() {
+    return myList.isEmpty() && myJarDirectories.isEmpty() && myJarRecursiveDirectories.isEmpty();
   }
 
   @Override

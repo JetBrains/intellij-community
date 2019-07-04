@@ -45,6 +45,8 @@ public interface VirtualFilePointerContainer {
   @NotNull
   String[] getUrls();
 
+  boolean isEmpty();
+
   @NotNull
   VirtualFile[] getFiles();
 
