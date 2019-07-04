@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style
 
+import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -59,7 +60,7 @@ internal class InferMethodParametersTypesIntention : Intention() {
       ParametrizedClosure.ensureImports(GroovyPsiElementFactory.getInstance(method.project), method.containingFile as GroovyFile)
     }
     method.typeParameters.forEach { GrReferenceAdjuster.shortenAllReferencesIn(it.originalElement as GroovyPsiElement?) }
-    if (method.isConstructor || method.returnTypeElementGroovy != null && !method.hasTypeParameters()) {
+    if ((method.isConstructor && !method.hasTypeParameters()) || method.hasModifier(JvmModifier.STATIC)) {
       method.modifierList.setModifierProperty("def", false)
     }
   }

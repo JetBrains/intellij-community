@@ -1,4 +1,4 @@
-static def <T0> void foo(T0[] t) {
+static <T0> void foo(T0[] t) {
 
 }
 

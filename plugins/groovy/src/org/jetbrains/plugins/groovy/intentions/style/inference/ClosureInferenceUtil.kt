@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.intentions.style.inference
 import com.intellij.psi.PsiReference
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
+import org.jetbrains.plugins.groovy.lang.psi.api.EmptyGroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpressionConstraint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
@@ -12,8 +13,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 fun setUpClosuresSignature(inferenceSession: GroovyInferenceSession,
                            closureParameter: ParametrizedClosure,
                            references: Collection<PsiReference>) {
-  //val refs = ReferencesSearch.search(closureParameter.parameter, closureParameter.parameter.resolveScope).findAll()
-  for (call in references.mapNotNull { it.element.parentOfType(GrCall::class) }) {
+  for (call in references
+    .mapNotNull { it.element.parentOfType(GrCall::class) }
+    .filter { it.advancedResolve() == EmptyGroovyResolveResult }) {
     for (index in call.expressionArguments.indices) {
       inferenceSession.addConstraint(
         ExpressionConstraint(inferenceSession.substituteWithInferenceVariables(closureParameter.typeParameters[index].type()),

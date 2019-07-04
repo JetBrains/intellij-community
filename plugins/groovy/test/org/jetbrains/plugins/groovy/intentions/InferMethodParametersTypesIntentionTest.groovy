@@ -172,6 +172,10 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testParametrizedInterface3() {
+    doTest(true)
+  }
+
   void testIntersectionInArgument() {
     doTest(true)
   }
@@ -224,6 +228,10 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testSentClosure() {
+    doTest(true)
+  }
+
   void testVariance() {
     doTest(true)
   }
@@ -235,5 +243,4 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
   void testMutualDependency() {
     doTest(true)
   }
-
 }

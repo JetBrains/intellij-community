@@ -225,7 +225,7 @@ class InferenceDriver(val method: GrMethod) {
         val candidate = resolveResult?.candidate
         val receiver = candidate?.receiver as? PsiClassType
         receiver?.run {
-          boundsCollector.computeIfAbsent(receiver.className) { mutableListOf() }.add(candidate.method.containingClass)
+          boundsCollector.computeIfAbsent(extractEndpointType(receiver).className) { mutableListOf() }.add(candidate.method.containingClass)
         }
         candidate?.argumentMapping?.expectedTypes?.forEach { (type, argument) ->
           val argumentType = (argument.type as? PsiClassType)
@@ -260,6 +260,18 @@ class InferenceDriver(val method: GrMethod) {
     })
     appearedClassTypes.putAll(boundsCollector)
   }
+
+  /**
+   * Reaches type parameter that does not extend other type parameter
+   * @param type should be a type parameter
+   */
+  private tailrec fun extractEndpointType(type: PsiClassType): PsiClassType =
+    if (type.superTypes.size == 1 && type.superTypes.first() in virtualMethod.typeParameters.map { it.type() }) {
+      extractEndpointType(type.superTypes.first() as PsiClassType)
+    }
+    else {
+      type
+    }
 
 
   fun acceptFinalSubstitutor(resultSubstitutor: PsiSubstitutor) {
