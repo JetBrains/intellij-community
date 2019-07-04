@@ -63,8 +63,6 @@ import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.awt.event.*;
 import java.io.File;
-import java.io.InputStream;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -639,9 +637,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
                                      ? ApplicationNamesInfo.getInstance().getFullProductNameWithEdition()
                                      : ApplicationNamesInfo.getInstance().getFullProductName();
       JLabel appName = new JLabel(applicationName);
-      Font font = getProductFont();
       appName.setForeground(JBColor.foreground());
-      appName.setFont(font.deriveFont(JBUIScale.scale(36f)).deriveFont(Font.PLAIN));
+      appName.setFont(getProductFont(36).deriveFont(Font.PLAIN));
       appName.setHorizontalAlignment(SwingConstants.CENTER);
       String appVersion = "Version ";
 
@@ -652,7 +649,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       }
 
       JLabel version = new JLabel(appVersion);
-      version.setFont(getProductFont().deriveFont(JBUIScale.scale(16f)));
+      version.setFont(getProductFont(16));
       version.setHorizontalAlignment(SwingConstants.CENTER);
       version.setForeground(Gray._128);
 
@@ -662,21 +659,16 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       return panel;
     }
 
-    private Font getProductFont() {
-      String name = "/fonts/Roboto-Light.ttf";
-      URL url = AppUIUtil.class.getResource(name);
-      if (url == null) {
-        Logger.getInstance(AppUIUtil.class).warn("Resource missing: " + name);
-      } else {
-
-        try (InputStream is = url.openStream()) {
-          return Font.createFont(Font.TRUETYPE_FONT, is);
-        }
-        catch (Throwable t) {
-          Logger.getInstance(AppUIUtil.class).warn("Cannot load font: " + url, t);
-        }
+    @NotNull
+    private Font getProductFont(int size) {
+      try {
+        //noinspection SpellCheckingInspection
+        return new Font("Roboto Light", Font.PLAIN, JBUIScale.scale(size));
       }
-      return StartupUiUtil.getLabelFont();
+      catch (Throwable t) {
+        Logger.getInstance(AppUIUtil.class).warn(t);
+      }
+      return StartupUiUtil.getLabelFont().deriveFont(JBUIScale.scale((float)size));
     }
 
     private JComponent createRecentProjects() {
