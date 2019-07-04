@@ -48,6 +48,12 @@ class AccessingProtectedMembersFromSubclass extends ProtectedMembers {
         <warning descr="Method ProtectedMembers.staticMethod() is protected and used not through a subclass here, but declared in a different module 'dep'">staticMethod</warning>();
       }
     }
+
+    new StaticInner() {
+      protected void protectedMethod() {
+        super.protectedMethod();
+      }
+    };
   }
 
   public static class StaticInnerImpl1 extends ProtectedMembers.StaticInner {

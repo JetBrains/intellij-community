@@ -82,6 +82,11 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
       PsiClass accessObjectType = getAccessObjectType(qualifier);
       if (target instanceof PsiJvmMember) {
         checkAccess(sourceNode, (PsiJvmMember)target, accessObjectType);
+        if (!(target instanceof PsiClass)) {
+          if (accessObjectType != null) {
+            checkAccess(sourceNode, accessObjectType, null);
+          }
+        }
       }
     }
 
