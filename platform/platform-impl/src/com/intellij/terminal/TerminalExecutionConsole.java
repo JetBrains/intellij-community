@@ -323,8 +323,12 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
                                                   @NotNull TerminalTextBuffer textBuffer) {
       JBTerminalPanel panel = new JBTerminalPanel((JBTerminalSystemSettingsProviderBase)settingsProvider, textBuffer, styleState) {
         @Override
-        public Dimension requestResize(Dimension newSize, RequestOrigin origin, int cursorY, JediTerminal.ResizeHandler resizeHandler) {
-          Dimension dimension = super.requestResize(newSize, origin, cursorY, resizeHandler);
+        public Dimension requestResize(Dimension newSize,
+                                       RequestOrigin origin,
+                                       int cursorX,
+                                       int cursorY,
+                                       JediTerminal.ResizeHandler resizeHandler) {
+          Dimension dimension = super.requestResize(newSize, origin, cursorX, cursorY, resizeHandler);
           myOnResizedRunner.setReady();
           return dimension;
         }
