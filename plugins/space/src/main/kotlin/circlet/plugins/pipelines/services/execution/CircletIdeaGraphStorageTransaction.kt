@@ -3,7 +3,7 @@ package circlet.plugins.pipelines.services.execution
 import circlet.pipelines.config.api.*
 import circlet.pipelines.engine.*
 import circlet.pipelines.engine.api.*
-import circlet.pipelines.engine.storage.*
+import circlet.pipelines.engine.api.storage.*
 import libraries.klogging.*
 
 class CircletIdeaGraphStorageTransaction(private val task: ProjectTask) : GraphStorageTransaction {

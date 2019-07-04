@@ -1,8 +1,7 @@
 package circlet.plugins.pipelines.services.execution
 
-import circlet.pipelines.engine.*
 import circlet.pipelines.engine.api.*
-import circlet.pipelines.engine.storage.*
+import circlet.pipelines.engine.api.storage.*
 import libraries.klogging.*
 import runtime.*
 import runtime.reactive.*
@@ -53,7 +52,7 @@ class CircletIdeaJobExecutionProvider(
         }
     }
 
-    override fun scheduleTermination(jobs: Iterable<AJobExecutionEntity<*>>) {
+    override fun scheduleTermination(tx: CircletIdeaGraphStorageTransaction, jobs: Iterable<AJobExecutionEntity<*>>) {
         TODO("scheduleTermination not implemented")
     }
 

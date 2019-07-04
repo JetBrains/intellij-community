@@ -2,7 +2,7 @@ package circlet.plugins.pipelines.services.execution
 
 import circlet.pipelines.config.api.*
 import circlet.pipelines.engine.*
-import circlet.pipelines.engine.storage.*
+import circlet.pipelines.engine.api.storage.*
 
 class CircletIdeaAutomationBootstrapper : AutomationBootstrapper {
     override fun createBootstrapJob(execution: AGraphExecutionEntity, repository: RepositoryData, orgUrl: String): ProjectJob.Process.Container {
