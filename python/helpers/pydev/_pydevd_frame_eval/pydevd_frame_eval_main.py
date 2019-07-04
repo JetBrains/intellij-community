@@ -1,6 +1,7 @@
 import os
 import sys
 
+from _pydev_bundle.pydev_monkey import log_error_once
 from _pydevd_bundle.pydevd_constants import IS_PYCHARM
 
 IS_PY36_OR_GREATER = sys.version_info >= (3, 6)
@@ -13,22 +14,41 @@ clear_thread_local_info = None
 
 # "NO" means we should not use frame evaluation, 'YES' we should use it (and fail if not there) and unspecified uses if possible.
 use_frame_eval = os.environ.get('PYDEVD_USE_FRAME_EVAL', None)
+use_cython = os.getenv('PYDEVD_USE_CYTHON', None)
 
-if use_frame_eval == 'NO':
+
+if not IS_PY36_OR_GREATER:
     pass
 
-elif use_frame_eval == 'YES':
-    # Fail if unable to use
-    from _pydevd_frame_eval.pydevd_frame_eval_cython_wrapper import frame_eval_func, stop_frame_eval, dummy_trace_dispatch, clear_thread_local_info
+elif use_cython == 'NO':
+    log_error_once("warning: PYDEVD_USE_CYTHON environment variable is set to 'NO'. "
+                   "Frame evaluator will be also disabled because it requires Cython extensions to be enabled in order to operate correctly.")
 
-elif use_frame_eval is None:
-    # Try to use if possible
-    if IS_PY36_OR_GREATER:
+else:
+    if use_frame_eval == 'NO':
+        pass
+
+    elif use_frame_eval == 'YES':
         try:
-            from _pydevd_frame_eval.pydevd_frame_eval_cython_wrapper import frame_eval_func, stop_frame_eval, dummy_trace_dispatch, clear_thread_local_info
+            import _pydevd_bundle.pydevd_cython_wrapper
         except ImportError:
-            from _pydev_bundle.pydev_monkey import log_error_once
+            # Frame evaluator doesn't work without the Cython speedups.
+            pass
+        else:
+            # Fail if unable to use
+            from _pydevd_frame_eval.pydevd_frame_eval_cython_wrapper import frame_eval_func, stop_frame_eval, dummy_trace_dispatch, clear_thread_local_info
 
+    elif use_frame_eval is None:
+        # Try to use if possible
+        try:
+            try:
+                import _pydevd_bundle.pydevd_cython_wrapper
+            except ImportError:
+                # Frame evaluator doesn't work without the Cython speedups.
+                pass
+            else:
+                from _pydevd_frame_eval.pydevd_frame_eval_cython_wrapper import frame_eval_func, stop_frame_eval, dummy_trace_dispatch, clear_thread_local_info
+        except ImportError:
             dirname = os.path.dirname(os.path.dirname(__file__))
             if not IS_PYCHARM:
                 log_error_once("warning: Debugger speedups using cython not found. Run '\"%s\" \"%s\" build_ext --inplace' to build." % (
@@ -39,5 +59,5 @@ elif use_frame_eval is None:
                 if sys.version_info < (3, 8):
                     show_frame_eval_warning = True
 
-else:
-    raise RuntimeError('Unexpected value for PYDEVD_USE_FRAME_EVAL: %s (accepted: YES, NO)' % (use_frame_eval,))
+    else:
+        raise RuntimeError('Unexpected value for PYDEVD_USE_FRAME_EVAL: %s (accepted: YES, NO)' % (use_frame_eval,))

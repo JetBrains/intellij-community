@@ -1,4 +1,8 @@
 import sys
+
+# This version number is always available
+from _pydevd_bundle.pydevd_additional_thread_info_regular import version as regular_version
+
 try:
     try:
         from _pydevd_bundle_ext import pydevd_cython as mod
@@ -31,9 +35,17 @@ except ImportError:
     mod = getattr(__import__(check_name), mod_name)
 
 # Regardless of how it was found, make sure it's later available as the
-# initial name so that the expected types from cython in frame eval
+# initial name so that the expected types from Cython in frame eval
 # are valid.
 sys.modules['_pydevd_bundle.pydevd_cython'] = mod
+
+# This version number from the already compiled Cython extension
+version = getattr(mod, 'version', 0)
+
+if version != regular_version:
+    exc = ImportError()
+    exc.version_mismatch = True
+    raise exc
 
 trace_dispatch = mod.trace_dispatch
 
@@ -48,5 +60,3 @@ global_cache_frame_skips = mod.global_cache_frame_skips
 _set_additional_thread_info_lock = mod._set_additional_thread_info_lock
 
 fix_top_level_trace_and_get_trace_func = mod.fix_top_level_trace_and_get_trace_func
-
-version = getattr(mod, 'version', 0)
