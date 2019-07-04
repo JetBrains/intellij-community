@@ -21,4 +21,5 @@ class Normal13CompletionTest extends NormalCompletionTestCase {
   void testYieldInSwitchExpression() { doTest() }
   void testInsideYieldInSwitchExpression() { doTest() }
   void testInsideRuleInSwitchExpression() { doTest() }
+  void testBreakDeepInsideSwitchExpression() { doTest() }
 }
