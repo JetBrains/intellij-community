@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.PathUtils;
 import org.jetbrains.jps.incremental.BinaryContent;
 
+import javax.tools.*;
 import java.io.*;
 import java.net.URI;
 
@@ -47,8 +48,8 @@ public final class OutputFileObject extends JpsFileObject {
                           @NotNull Kind kind,
                           @Nullable String className,
                           @Nullable final URI sourceUri,
-                          @Nullable final String encodingName) {
-    this(context, outputRoot, relativePath, file, kind, className, sourceUri, encodingName, null);
+                          @Nullable final String encodingName, final JavaFileManager.Location location) {
+    this(context, outputRoot, relativePath, file, kind, className, sourceUri, encodingName, null, location);
   }
 
   public OutputFileObject(@Nullable JpsJavacFileManager.Context context,
@@ -59,8 +60,8 @@ public final class OutputFileObject extends JpsFileObject {
                           @Nullable String className,
                           @Nullable final URI srcUri,
                           @Nullable final String encodingName,
-                          @Nullable BinaryContent content) {
-    super(PathUtils.toURI(file.getPath()), kind);
+                          @Nullable BinaryContent content, final JavaFileManager.Location location) {
+    super(PathUtils.toURI(file.getPath()), kind, location);
     myContext = context;
     mySourceUri = srcUri;
     myContent = content;

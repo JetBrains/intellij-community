@@ -91,6 +91,7 @@ message Message {
      optional string class_name = 5;
      optional string source_uri = 6;
      optional bytes content = 7;
+     optional string location = 8;
     }
 
     message ClassData {
