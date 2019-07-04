@@ -364,7 +364,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
       if (LangDataKeys.CONSOLE_VIEW.is(dataId)) {
         return TerminalExecutionConsole.this;
       }
-      return null;
+      return super.getData(dataId);
     }
   }
 
