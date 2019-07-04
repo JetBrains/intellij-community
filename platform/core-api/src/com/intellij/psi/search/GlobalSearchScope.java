@@ -2,6 +2,7 @@
 package com.intellij.psi.search;
 
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
@@ -644,9 +645,8 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     public boolean contains(@NotNull VirtualFile file) {
       if (!super.contains(file)) return false;
 
-      final FileType fileType = file.getFileType();
       for (FileType otherFileType : myFileTypes) {
-        if (fileType.equals(otherFileType)) return true;
+        if (FileTypeRegistry.getInstance().isFileOfType(file, otherFileType)) return true;
       }
 
       return false;
