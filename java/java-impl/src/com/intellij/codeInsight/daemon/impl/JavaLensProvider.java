@@ -45,7 +45,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings>, EditorMouseMotionListener {
-  static final SettingsKey<JavaLensSettings> KEY = new SettingsKey<>("JavaLens");
+  private static final SettingsKey<JavaLensSettings> KEY = new SettingsKey<>("JavaLens");
 
   public JavaLensProvider() {
     ApplicationManager.getApplication().getMessageBus()
@@ -175,18 +175,17 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings>, E
   }
 
   @NotNull
-  private InlayPresentation createPresentation(@NotNull PresentationFactory factory,
-                                               @NotNull PsiElement element,
-                                               @NotNull Editor editor,
-                                               @NotNull InlResult result) {
+  private static InlayPresentation createPresentation(@NotNull PresentationFactory factory,
+                                                      @NotNull PsiElement element,
+                                                      @NotNull Editor editor,
+                                                      @NotNull InlResult result) {
     //Icon icon = AllIcons.Toolwindows.ToolWindowFind;
     //Icon icon = IconLoader.getIcon("/toolwindows/toolWindowFind_dark.svg", AllIcons.class);
 
     InlayPresentation text = factory.smallText(result.getRegularText());
 
     return factory.changeOnHover(text, () -> {
-      InlayPresentation hoverText = factory.smallText(result.getHoverText());
-      InlayPresentation onClick = factory.onClick(hoverText, MouseButton.Left, (___, __) -> {
+      InlayPresentation onClick = factory.onClick(text, MouseButton.Left, (___, __) -> {
         result.onClick(editor, element);
         return null;
       });
@@ -206,7 +205,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings>, E
   }
 
   @NotNull
-  private InlayPresentation settings(@NotNull PresentationFactory factory,
+  private static InlayPresentation settings(@NotNull PresentationFactory factory,
                                             @NotNull PsiElement element,
                                             @NotNull Editor editor) {
     return createPresentation(factory, element, editor, new InlResult() {

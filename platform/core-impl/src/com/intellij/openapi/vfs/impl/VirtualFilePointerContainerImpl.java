@@ -131,6 +131,8 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
   @Override
   public void killAll() {
     myList.clear();
+    myJarDirectories.clear();
+    myJarRecursiveDirectories.clear();
   }
 
   @Override
@@ -337,17 +339,17 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
   }
 
   @NotNull
-  protected VirtualFilePointer create(@NotNull VirtualFile file) {
+  private VirtualFilePointer create(@NotNull VirtualFile file) {
     return myVirtualFilePointerManager.create(file, myParent, myListener);
   }
 
   @NotNull
-  protected VirtualFilePointer create(@NotNull String url) {
+  private VirtualFilePointer create(@NotNull String url) {
     return myVirtualFilePointerManager.create(url, myParent, myListener);
   }
 
   @NotNull
-  protected VirtualFilePointer duplicate(@NotNull VirtualFilePointer virtualFilePointer) {
+  private VirtualFilePointer duplicate(@NotNull VirtualFilePointer virtualFilePointer) {
     return myVirtualFilePointerManager.duplicate(virtualFilePointer, myParent, myListener);
   }
 

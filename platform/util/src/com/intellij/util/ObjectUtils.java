@@ -71,7 +71,7 @@ public class ObjectUtils {
     // java.lang.reflect.Proxy.ProxyClassFactory fails if the class is not available via the classloader.
     // We must use interface own classloader because classes from plugins are not available via ObjectUtils' classloader.
     //noinspection unchecked
-    return (T)Proxy.newProxyInstance(ofInterface.getClassLoader(), new Class[]{ofInterface}, (proxy, method, args) -> {
+    return (T)Proxy.newProxyInstance(ofInterface.getClassLoader(), new Class[]{ofInterface}, (__, method, args) -> {
       if ("toString".equals(method.getName()) && args.length == 0) {
         return name;
       }
