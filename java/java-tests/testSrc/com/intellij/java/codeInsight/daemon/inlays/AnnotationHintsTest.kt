@@ -2,21 +2,23 @@
 package com.intellij.java.codeInsight.daemon.inlays
 
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import org.intellij.lang.annotations.Language
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import org.junit.Assert
 
-class AnnotationHintsTest: LightCodeInsightFixtureTestCase() {
-  fun check(@Language("Java") text: String) {
-    myFixture.configureByText("A.java", text)
-    myFixture.testInlays({ (it.renderer as PresentationRenderer).presentation.toString() }, { it.renderer is PresentationRenderer })
-  }
+class AnnotationHintsTest: LightJavaCodeInsightFixtureTestCase() {
 
   fun `test contract inferred annotation`() {
-    check("""
+    val text = """
 class Demo {
-  <hint text="[[@ Contract [( [[pure  =  true]] )]]]"/>private static int pure(int x, int y) {
+  private static int pure(int x, int y) {
     return x * y + 10;
   }
-}""")
+}"""
+    myFixture.configureByText("A.java", text)
+    myFixture.doHighlighting()
+    // until proper infrastructure to test hints appeared
+    val inlays = myFixture.editor.inlayModel.getBlockElementsInRange(0, myFixture.file.textRange.endOffset)
+    Assert.assertEquals(1, inlays.size)
+    assertEquals("[[@ Contract [( [[pure  =  true]] )]]]", (inlays.first().renderer as PresentationRenderer).presentation.toString())
   }
 }
