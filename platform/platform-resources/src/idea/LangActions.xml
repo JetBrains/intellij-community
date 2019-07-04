@@ -1200,11 +1200,11 @@
       <action id="ServiceView.SplitByType" class="com.intellij.execution.services.SplitByTypeAction"
               text="Split By Type" icon="AllIcons.Modules.Split"/>
     </group>
-    <group id="ServiceViewNodeToolbar">
+    <group id="ServiceViewItemToolbar">
       <group class="com.intellij.execution.services.ServiceViewActionProvider$ItemToolbarActionGroup" id="ServiceViewItemToolbarGroup"/>
       <separator/>
     </group>
-    <group id="ServiceViewNodePopup">
+    <group id="ServiceViewItemPopup">
       <group class="com.intellij.execution.services.ServiceViewActionProvider$ItemPopupActionGroup" id="ServiceViewItemPopupGroup"/>
       <separator/>
       <reference id="ServiceView.ShowInNewTab"/>
