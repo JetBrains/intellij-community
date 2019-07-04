@@ -74,6 +74,7 @@ public final class IdeEventQueue extends EventQueue {
   private static final boolean JAVA11_ON_MAC = SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast(11, 0, 0);
   private static TransactionGuardImpl ourTransactionGuard;
   private static ProgressManager ourProgressManager;
+  private static PerformanceWatcher ourPerformanceWatcher;
 
   /**
    * Adding/Removing of "idle" listeners should be thread safe.
@@ -355,7 +356,7 @@ public final class IdeEventQueue extends EventQueue {
   @Override
   public void dispatchEvent(@NotNull AWTEvent e) {
     long startedAt = System.currentTimeMillis();
-    PerformanceWatcher performanceWatcher = appIsLoaded() ? PerformanceWatcher.getInstance() : null;
+    PerformanceWatcher performanceWatcher = obtainPerformanceWatcher();
     try {
       if (performanceWatcher != null) {
         performanceWatcher.edtEventStarted(startedAt);
@@ -504,6 +505,18 @@ public final class IdeEventQueue extends EventQueue {
       }
     }
     return manager;
+  }
+
+  @Nullable
+  private static PerformanceWatcher obtainPerformanceWatcher() {
+    PerformanceWatcher watcher = ourPerformanceWatcher;
+    if (watcher == null) {
+      Application app = ApplicationManager.getApplication();
+      if (app != null && !app.isDisposed()) {
+        ourPerformanceWatcher = watcher = PerformanceWatcher.getInstance();
+      }
+    }
+    return watcher;
   }
 
   private static boolean isMetaKeyPressedOnLinux(@NotNull AWTEvent e) {
