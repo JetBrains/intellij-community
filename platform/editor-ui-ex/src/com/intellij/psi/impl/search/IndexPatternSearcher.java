@@ -14,6 +14,7 @@ import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.patterns.StringPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.CacheUtil;
 import com.intellij.psi.impl.cache.TodoCacheManager;
@@ -212,7 +213,7 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
     if (pattern != null) {
       ProgressManager.checkCanceled();
 
-      CharSequence input = new CharSequenceSubSequence(chars, commentStart, commentEnd);
+      CharSequence input = StringPattern.newBombedCharSequence(new CharSequenceSubSequence(chars, commentStart, commentEnd));
       Matcher matcher = pattern.matcher(input);
       while (true) {
         //long time1 = System.currentTimeMillis();
@@ -273,7 +274,7 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
                                       WHITESPACE + commentRange.allowedContinuationPrefixChars) + 1 != commentStartOffset) {
         break;
       }
-      CharSequence commentText = text.subSequence(commentStartOffset, continuationEndOffset);
+      CharSequence commentText = StringPattern.newBombedCharSequence(text.subSequence(commentStartOffset, continuationEndOffset));
       for (IndexPattern pattern: allIndexPatterns) {
         Pattern p = pattern.getPattern();
         if (p != null && p.matcher(commentText).find()) break outer;
