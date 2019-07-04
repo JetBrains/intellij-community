@@ -70,12 +70,12 @@ public class EditorHyperlinkSupport {
 
       @Override
       public void mouseReleased(@NotNull EditorMouseEvent e) {
+        MouseEvent initialMouseEvent = myInitialMouseEvent;
+        myInitialMouseEvent = null;
         final MouseEvent mouseEvent = e.getMouseEvent();
         if (mouseEvent.getButton() == MouseEvent.BUTTON1 && !mouseEvent.isPopupTrigger()) {
-          MouseEvent initialMouse = myInitialMouseEvent;
-          myInitialMouseEvent = null;
-          if (initialMouse != null && (mouseEvent.getComponent() != initialMouse.getComponent() ||
-                                       !mouseEvent.getPoint().equals(initialMouse.getPoint()))) {
+          if (initialMouseEvent != null && (mouseEvent.getComponent() != initialMouseEvent.getComponent() ||
+                                       !mouseEvent.getPoint().equals(initialMouseEvent.getPoint()))) {
             return;
           }
 
