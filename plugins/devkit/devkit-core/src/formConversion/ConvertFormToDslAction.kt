@@ -36,7 +36,6 @@ class ConvertFormToDslAction : AnAction() {
     val editor = e.getRequiredData(CommonDataKeys.EDITOR)
     val psiFile = e.getRequiredData(CommonDataKeys.PSI_FILE) as PsiJavaFile
     val project = psiFile.project
-    val module = ModuleUtil.findModuleForPsiElement(psiFile) ?: return
     val element = psiFile.findElementAt(editor.caretModel.offset)
     val psiClass = PsiTreeUtil.getParentOfType(element, PsiClass::class.java) ?: run {
       HintManager.getInstance().showErrorHint(editor, "Please put a caret inside a Java class bound to a form")
@@ -48,115 +47,125 @@ class ConvertFormToDslAction : AnAction() {
       return
     }
 
-    val dialog = ConvertFormDialog(project, "${psiClass.name}Ui")
-    if (!dialog.showAndGet()) return
-
-    val boundInstanceUClass = findBoundInstanceUClass(project, dialog.boundInstanceType)
-
-    val rootContainer = getRootContainer(formFile.text, PsiPropertiesProvider(module))
-    val form = convertRootContainer(module, rootContainer, boundInstanceUClass)
-
-    val imports = LinkedHashSet(form.imports)
-    boundInstanceUClass?.qualifiedName?.let {
-      imports.add(it)
-    }
-    if (dialog.generateDescriptors) {
-      imports.add("com.intellij.application.options.editor.*")
-    }
-
-    val optionDescriptors = if (dialog.generateDescriptors)
-      buildString {
-        generateOptionDescriptors(form.root, this)
-      }
-    else
-      ""
-
-    val formText = buildString {
-      append("val panel = panel {\n")
-      form.root.render(this)
-      append("}\n")
-    }
-    val uiName = dialog.className
-    val ktFileType = FileTypeRegistry.getInstance().getFileTypeByExtension("kt")
-    val ktFileText = buildString {
-      if (psiFile.packageName.isNotEmpty()) {
-        append("package ${psiFile.packageName}\n\n")
-      }
-      append("import com.intellij.ui.layout.*\n")
-      for (usedImport in imports) {
-        append("import $usedImport\n")
-      }
-      append("\n")
-
-      if (optionDescriptors.isNotEmpty()) {
-        append("val model = ${dialog.boundInstanceExpression}")
-        append(optionDescriptors)
-        append("\n")
-      }
-
-      append("class $uiName")
-      if (boundInstanceUClass != null) {
-        append("(val model: ${dialog.boundInstanceType.substringAfterLast('.')})")
-      }
-      append(" {")
-
-      for (binding in form.componentBindings) {
-        val typeParameters = buildTypeParametersString(module, binding.type)
-        append("lateinit var ${binding.name}: ${binding.type.substringAfterLast('.')}$typeParameters\n")
-      }
-
-      append(formText)
-      append("}")
-    }
-    val ktFile = PsiFileFactory.getInstance(project).createFileFromText("$uiName.kt", ktFileType, ktFileText)
-    WriteCommandAction.runWriteCommandAction(project) {
-      val ktFileReal = psiFile.containingDirectory.add(ktFile) as PsiFile
-      CodeStyleManager.getInstance(project).reformat(ktFileReal)
-      ktFileReal.navigate(true)
-    }
-  }
-
-  private fun findBoundInstanceUClass(project: Project, boundInstanceType: String): UClass? {
-    val psiClass = JavaPsiFacade.getInstance(project).findClass(boundInstanceType, ProjectScope.getAllScope(project))
-    if (psiClass == null) return null
-    return psiClass.navigationElement.toUElement(UClass::class.java)
-  }
-
-  private fun convertRootContainer(module: Module,
-                                   rootContainer: LwRootContainer,
-                                   boundInstanceUClass: UClass?): UiForm {
-    val call = FormToDslConverter(module, boundInstanceUClass).convertContainer(rootContainer)
-    for (buttonGroup in rootContainer.buttonGroups) {
-      call.checkConvertButtonGroup(buttonGroup.componentIds)
-    }
-    return UiForm(module, call)
-  }
-
-  private fun generateOptionDescriptors(call: FormCall, optionDescriptors: StringBuilder) {
-    val propertyName = call.binding
-    if (call.callee == "checkBox" && propertyName != null && call.args.size >= 2) {
-      optionDescriptors.append("val $propertyName = CheckboxDescriptor(${call.args[0]}, ")
-
-      val propertyBindingArg = if (call.args.size == 2) {
-        "${call.args[1]}.toBinding()"
-      }
-      else {
-        "PropertyBinding(${call.args[1]}, ${call.args[2]})"
-      }
-      optionDescriptors.append(propertyBindingArg).append(")\n")
-
-      call.args.clear()
-      call.args.add(propertyName)
-    }
-
-    for (content in call.contents) {
-      generateOptionDescriptors(content, optionDescriptors)
-    }
+    convertFormToUiDsl(psiClass, formFile)
   }
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = e.getData(CommonDataKeys.PSI_FILE) is PsiJavaFile &&
                                e.getData(CommonDataKeys.EDITOR) != null
+  }
+}
+
+fun convertFormToUiDsl(boundClass: PsiClass, formFile: PsiFile) {
+  val project = boundClass.project
+  val psiFile = boundClass.containingFile as PsiJavaFile
+  val module = ModuleUtil.findModuleForPsiElement(psiFile) ?: return
+
+  val dialog = ConvertFormDialog(project, "${boundClass.name}Ui")
+  if (!dialog.showAndGet()) return
+
+  val boundInstanceUClass = findBoundInstanceUClass(project, dialog.boundInstanceType)
+
+  val rootContainer = getRootContainer(formFile.text, PsiPropertiesProvider(module))
+  val form = convertRootContainer(module, rootContainer, boundInstanceUClass)
+
+  val imports = LinkedHashSet(form.imports)
+  boundInstanceUClass?.qualifiedName?.let {
+    imports.add(it)
+  }
+  if (dialog.generateDescriptors) {
+    imports.add("com.intellij.application.options.editor.*")
+  }
+
+  val optionDescriptors = if (dialog.generateDescriptors) {
+    buildString {
+      generateOptionDescriptors(form.root, this)
+    }
+  }
+  else {
+    ""
+  }
+
+    val formText = buildString {
+    append("val panel = panel {\n")
+    form.root.render(this)
+    append("}\n")
+  }
+  val uiName = dialog.className
+  val ktFileType = FileTypeRegistry.getInstance().getFileTypeByExtension("kt")
+  val ktFileText = buildString {
+    if (psiFile.packageName.isNotEmpty()) {
+      append("package ${psiFile.packageName}\n\n")
+    }
+    append("import com.intellij.ui.layout.*\n")
+    for (usedImport in imports) {
+      append("import $usedImport\n")
+    }
+    append("\n")
+
+    if (optionDescriptors.isNotEmpty()) {
+      append("val model = ${dialog.boundInstanceExpression}")
+      append(optionDescriptors)
+      append("\n")
+    }
+
+    append("class $uiName")
+    if (boundInstanceUClass != null) {
+      append("(val model: ${dialog.boundInstanceType.substringAfterLast('.')})")
+    }
+    append(" {")
+
+    for (binding in form.componentBindings) {
+      val typeParameters = buildTypeParametersString(module, binding.type)
+      append("lateinit var ${binding.name}: ${binding.type.substringAfterLast('.')}$typeParameters\n")
+    }
+
+    append(formText)
+    append("}")
+  }
+  val ktFile = PsiFileFactory.getInstance(project).createFileFromText("$uiName.kt", ktFileType, ktFileText)
+  WriteCommandAction.runWriteCommandAction(project) {
+    val ktFileReal = psiFile.containingDirectory.add(ktFile) as PsiFile
+    CodeStyleManager.getInstance(project).reformat(ktFileReal)
+    ktFileReal.navigate(true)
+  }
+}
+
+private fun findBoundInstanceUClass(project: Project, boundInstanceType: String): UClass? {
+  val psiClass = JavaPsiFacade.getInstance(project).findClass(boundInstanceType, ProjectScope.getAllScope(project))
+  if (psiClass == null) return null
+  return psiClass.navigationElement.toUElement(UClass::class.java)
+}
+
+private fun convertRootContainer(module: Module,
+                                 rootContainer: LwRootContainer,
+                                 boundInstanceUClass: UClass?): UiForm {
+  val call = FormToDslConverter(module, boundInstanceUClass).convertContainer(rootContainer)
+  for (buttonGroup in rootContainer.buttonGroups) {
+    call.checkConvertButtonGroup(buttonGroup.componentIds)
+  }
+  return UiForm(module, call)
+}
+
+private fun generateOptionDescriptors(call: FormCall, optionDescriptors: StringBuilder) {
+  val propertyName = call.binding
+  if (call.callee == "checkBox" && propertyName != null && call.args.size >= 2) {
+    optionDescriptors.append("val $propertyName = CheckboxDescriptor(${call.args[0]}, ")
+
+    val propertyBindingArg = if (call.args.size == 2) {
+      "${call.args[1]}.toBinding()"
+    }
+    else {
+      "PropertyBinding(${call.args[1]}, ${call.args[2]})"
+    }
+    optionDescriptors.append(propertyBindingArg).append(")\n")
+
+    call.args.clear()
+    call.args.add(propertyName)
+  }
+
+  for (content in call.contents) {
+    generateOptionDescriptors(content, optionDescriptors)
   }
 }
 
