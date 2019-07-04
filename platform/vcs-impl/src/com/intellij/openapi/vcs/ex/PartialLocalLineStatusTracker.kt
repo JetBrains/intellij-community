@@ -716,6 +716,10 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     eventDispatcher.multicaster.onExcludedFromCommitChange(this)
   }
 
+  internal fun resetExcludedFromCommitMarkers() {
+    setExcludedFromCommit(false)
+    dropExistingUndoActions()
+  }
 
   @CalledInAwt
   internal fun storeTrackerState(): FullState {
@@ -742,7 +746,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
   @CalledInAwt
   private fun collectRangeStates(): List<RangeState> {
     return documentTracker.readLock {
-      blocks.map { RangeState(it.range, it.marker.changelistId) }
+      blocks.map { RangeState(it.range, it.marker.changelistId, it.excludedFromCommit) }
     }
   }
 
@@ -792,6 +796,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     assert(blocks.size == states.size)
     blocks.forEachIndexed { i, block ->
       block.marker = idToMarker[states[i].changelistId] ?: defaultMarker
+      states[i].excludedFromCommit?.let { block.excludedFromCommit = it }
     }
 
     updateAffectedChangeLists()
@@ -852,7 +857,8 @@ class ChangelistsLocalLineStatusTracker(project: Project,
 
   internal class RangeState(
     val range: com.intellij.diff.util.Range,
-    val changelistId: String
+    val changelistId: String,
+    val excludedFromCommit: Boolean? = null // should not be persisted
   )
 
   protected data class ChangeListMarker(val changelistId: String) {

@@ -871,7 +871,7 @@ class LineStatusTrackerManager(
       for (data in trackers.values) {
         val tracker = data.tracker
         if (tracker is ChangelistsLocalLineStatusTracker) {
-          tracker.setExcludedFromCommit(false)
+          tracker.resetExcludedFromCommitMarkers()
           documents.add(tracker.document)
         }
       }
