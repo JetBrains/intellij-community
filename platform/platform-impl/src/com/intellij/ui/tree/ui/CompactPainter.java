@@ -67,7 +67,7 @@ final class CompactPainter implements Control.Painter {
   }
 
   private boolean getPaintLines() {
-    return myPaintLines != null ? myPaintLines : UIManager.getBoolean("Tree.paintLines");
+    return ClassicPainter.getPaintLines(myPaintLines);
   }
 
   private int getLeftIndent() {

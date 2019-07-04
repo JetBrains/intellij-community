@@ -233,6 +233,9 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     update |= settings.getShowIconInQuickNavigation() != myComponent.myHideIconsInQuickNavigation.isSelected();
     settings.setShowIconInQuickNavigation(myComponent.myHideIconsInQuickNavigation.isSelected());
 
+    update |= settings.getShowTreeIndentGuides() != myComponent.myShowTreeIndentGuides.isSelected();
+    settings.setShowTreeIndentGuides(myComponent.myShowTreeIndentGuides.isSelected());
+
     if (isModified(myComponent.myDarkWindowHeaders, Registry.is("ide.mac.allowDarkWindowDecorations"))) {
       Registry.get("ide.mac.allowDarkWindowDecorations").setValue(myComponent.myDarkWindowHeaders.isSelected());
       update = true;
@@ -345,6 +348,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     myComponent.myCycleScrollingCheckBox.setSelected(settings.getCycleScrolling());
 
     myComponent.myHideIconsInQuickNavigation.setSelected(settings.getShowIconInQuickNavigation());
+    myComponent.myShowTreeIndentGuides.setSelected(settings.getShowTreeIndentGuides());
     myComponent.myMoveMouseOnDefaultButtonCheckBox.setSelected(settings.getMoveMouseOnDefaultButton());
     myComponent.myHideNavigationPopupsCheckBox.setSelected(settings.getHideNavigationOnFocusLoss());
     myComponent.myAltDNDCheckBox.setSelected(settings.getDndWithPressedAltOnly());
@@ -436,6 +440,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     isModified |= myComponent.myColorBlindnessPanel.getColorBlindness() != settings.getColorBlindness();
 
     isModified |= myComponent.myHideIconsInQuickNavigation.isSelected() != settings.getShowIconInQuickNavigation();
+    isModified |= myComponent.myShowTreeIndentGuides.isSelected() != settings.getShowTreeIndentGuides();
 
     isModified |= !Comparing.equal(myComponent.myPresentationModeFontSize.getEditor().getItem(), Integer.toString(settings.getPresentationModeFontSize()));
 
@@ -494,6 +499,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     private JCheckBox myOverrideLAFFonts;
 
     private JCheckBox myHideIconsInQuickNavigation;
+    private JCheckBox myShowTreeIndentGuides;
     private JCheckBox myCbDisplayIconsInMenu;
     private JCheckBox myDisableMnemonics;
     private JCheckBox myDisableMnemonicInControlsCheckBox;

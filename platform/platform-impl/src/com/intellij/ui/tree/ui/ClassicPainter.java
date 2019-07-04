@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree.ui;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.PaintUtil;
@@ -72,8 +73,15 @@ final class ClassicPainter implements Control.Painter {
     control.paint(c, g, controlX, y, controlWidth, height, expanded, selected);
   }
 
+  static boolean getPaintLines(@Nullable Boolean paintLines) {
+    if (paintLines != null) return paintLines;
+    if (UIManager.getBoolean("Tree.paintLines")) return true;
+    UISettings settings = UISettings.getInstanceOrNull();
+    return settings != null && settings.getShowTreeIndentGuides();
+  }
+
   private boolean getPaintLines() {
-    return myPaintLines != null ? myPaintLines : UIManager.getBoolean("Tree.paintLines");
+    return getPaintLines(myPaintLines);
   }
 
   private int getLeftIndent(int min) {
