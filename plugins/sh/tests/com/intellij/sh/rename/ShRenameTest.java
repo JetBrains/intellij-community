@@ -61,5 +61,31 @@ public class ShRenameTest extends LightPlatformCodeInsightTestCase {
     type(newName);
     templateState.gotoEnd();
     checkResultByFile(getTestName(true) + "-after.sh");
+    doTestWithPlainTextRenamer(newName);
+  }
+
+  private void doTestWithPlainTextRenamer(@NotNull String newName) {
+    configureByFile(getTestName(true) + "-before.sh");
+    runWithoutInplaceRename(() -> {
+      executeAction(IdeActions.ACTION_RENAME);
+      getEditor().getUserData(ShRenameAllOccurrencesHandler.RENAMER_KEY).renameTo(newName);
+    });
+    checkResultByFile(getTestName(true) + "-after.sh");
+  }
+
+  static void runWithoutInplaceRename(@NotNull Runnable runnable) {
+    String oldValue = System.getProperty(ShRenameAllOccurrencesHandler.MAX_SEGMENTS_PROP_NAME);
+    System.setProperty(ShRenameAllOccurrencesHandler.MAX_SEGMENTS_PROP_NAME, String.valueOf(0));
+    try {
+      runnable.run();
+    }
+    finally {
+      if (oldValue == null) {
+        System.clearProperty(ShRenameAllOccurrencesHandler.MAX_SEGMENTS_PROP_NAME);
+      }
+      else {
+        System.setProperty(ShRenameAllOccurrencesHandler.MAX_SEGMENTS_PROP_NAME, oldValue);
+      }
+    }
   }
 }
