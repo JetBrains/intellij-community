@@ -3,6 +3,7 @@ package com.intellij.xdebugger;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
@@ -24,25 +25,27 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
 
   public void testAddRemove() {
     Set<XBreakpoint<MyBreakpointProperties>> defaultBreakpoints = myBreakpointManager.getDefaultBreakpoints(MY_SIMPLE_BREAKPOINT_TYPE);
-    assertSameElements(getAllBreakpoints(), defaultBreakpoints);
+    assertOneElement(defaultBreakpoints);
+    XBreakpoint<MyBreakpointProperties> defaultBreakpoint = ContainerUtil.getOnlyItem(defaultBreakpoints);
+    assertSameElements(getAllBreakpoints(), defaultBreakpoint);
 
     XLineBreakpoint<MyBreakpointProperties> lineBreakpoint =
       addLineBreakpoint(myBreakpointManager, "url", 239, new MyBreakpointProperties("123"));
 
     XBreakpoint<MyBreakpointProperties> breakpoint = addBreakpoint(myBreakpointManager, new MyBreakpointProperties("abc"));
 
-    assertSameElements(getAllBreakpoints(), breakpoint, lineBreakpoint, defaultBreakpoints);
+    assertSameElements(getAllBreakpoints(), breakpoint, lineBreakpoint, defaultBreakpoint);
     assertSame(lineBreakpoint, assertOneElement(myBreakpointManager.getBreakpoints(MY_LINE_BREAKPOINT_TYPE)));
-    assertSameElements(myBreakpointManager.getBreakpoints(MY_SIMPLE_BREAKPOINT_TYPE), breakpoint, defaultBreakpoints);
+    assertSameElements(myBreakpointManager.getBreakpoints(MY_SIMPLE_BREAKPOINT_TYPE), breakpoint, defaultBreakpoint);
 
     removeBreakPoint(myBreakpointManager, lineBreakpoint);
-    assertSameElements(getAllBreakpoints(), breakpoint, defaultBreakpoints);
+    assertSameElements(getAllBreakpoints(), breakpoint, defaultBreakpoint);
     assertTrue(myBreakpointManager.getBreakpoints(MY_LINE_BREAKPOINT_TYPE).isEmpty());
-    assertSameElements(myBreakpointManager.getBreakpoints(MY_SIMPLE_BREAKPOINT_TYPE), breakpoint, defaultBreakpoints);
+    assertSameElements(myBreakpointManager.getBreakpoints(MY_SIMPLE_BREAKPOINT_TYPE), breakpoint, defaultBreakpoint);
 
     removeBreakPoint(myBreakpointManager, breakpoint);
-    assertSameElements(getAllBreakpoints(), defaultBreakpoints);
-    assertSameElements(myBreakpointManager.getBreakpoints(MY_SIMPLE_BREAKPOINT_TYPE), defaultBreakpoints);
+    assertSameElements(getAllBreakpoints(), defaultBreakpoint);
+    assertSameElements(myBreakpointManager.getBreakpoints(MY_SIMPLE_BREAKPOINT_TYPE), defaultBreakpoint);
   }
 
   public void testSerialize() {
