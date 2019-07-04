@@ -322,8 +322,8 @@ class ClassfileAnalyzer {
     private final Ref<Boolean> myLocalClassFlag = Ref.create(false);
     private final Ref<Boolean> myAnonymousClassFlag = Ref.create(false);
 
-    private final Set<MethodRepr> myMethods = new THashSet<>();
-    private final Set<FieldRepr> myFields = new THashSet<>();
+    private final Set<MethodRepr> myMethods = new OrderedSet<>();
+    private final Set<FieldRepr> myFields = new OrderedSet<>();
     private final Set<UsageRepr.Usage> myUsages = new OrderedSet<>();
     private final Set<ElemType> myTargets = EnumSet.noneOf(ElemType.class);
     private RetentionPolicy myRetentionPolicy = null;
@@ -432,7 +432,7 @@ class ClassfileAnalyzer {
       processSignature(signature);
 
       return new FieldVisitor(ASM_API_VERSION) {
-        final Set<TypeRepr.ClassType> annotations = new THashSet<>();
+        final Set<TypeRepr.ClassType> annotations = new OrderedSet<>();
 
         @Override
         public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
@@ -460,8 +460,8 @@ class ClassfileAnalyzer {
     @Override
     public MethodVisitor visitMethod(final int access, final String n, final String desc, final String signature, final String[] exceptions) {
       final Ref<Object> defaultValue = Ref.create();
-      final Set<TypeRepr.ClassType> annotations = new THashSet<>();
-      final Set<ParamAnnotation> paramAnnotations = new THashSet<>();
+      final Set<TypeRepr.ClassType> annotations = new OrderedSet<>();
+      final Set<ParamAnnotation> paramAnnotations = new OrderedSet<>();
       processSignature(signature);
 
       return new MethodVisitor(ASM_API_VERSION) {

@@ -4,9 +4,8 @@ package org.jetbrains.jps.javac.ast.api;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.util.ThrowableConsumer;
+import com.intellij.util.containers.OrderedSet;
 import gnu.trove.THashSet;
-import gnu.trove.TObjectIntHashMap;
-import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NotNull;
 
 import javax.lang.model.element.Modifier;
@@ -26,15 +25,15 @@ public class JavacFileData {
   private static final byte FUN_EXPR_MARKER = 3;
 
   private final String myFilePath;
-  private final TObjectIntHashMap<JavacRef> myRefs;
-  private final TObjectIntHashMap<JavacRef> myImportRefs;
+  private final Set<JavacRef> myRefs;
+  private final Set<JavacRef> myImportRefs;
   private final List<JavacTypeCast> myCasts;
   private final List<JavacDef> myDefs;
   private final Set<JavacRef> myImplicitRefs;
 
   public JavacFileData(@NotNull String path,
-                       @NotNull TObjectIntHashMap<JavacRef> refs,
-                       @NotNull TObjectIntHashMap<JavacRef> importRefs,
+                       @NotNull Set<JavacRef> refs,
+                       @NotNull Set<JavacRef> importRefs,
                        @NotNull List<JavacTypeCast> casts,
                        @NotNull List<JavacDef> defs,
                        @NotNull Set<JavacRef> implicitRefs) {
@@ -57,12 +56,12 @@ public class JavacFileData {
   }
 
   @NotNull
-  public TObjectIntHashMap<JavacRef> getRefs() {
+  public Set<JavacRef> getRefs() {
     return myRefs;
   }
 
   @NotNull
-  public TObjectIntHashMap<JavacRef> getImportRefs() {
+  public Set<JavacRef> getImportRefs() {
     return myImportRefs;
   }
 
@@ -111,33 +110,18 @@ public class JavacFileData {
     }
   }
 
-  private static void saveRefs(final DataOutput out, TObjectIntHashMap<JavacRef> refs) throws IOException {
-    final IOException[] exception = new IOException[]{null};
+  private static void saveRefs(final DataOutput out, Set<JavacRef> refs) throws IOException {
     DataInputOutputUtilRt.writeINT(out, refs.size());
-    if (!refs.forEachEntry(new TObjectIntProcedure<JavacRef>() {
-      @Override
-      public boolean execute(JavacRef ref, int count) {
-        try {
-          writeJavacRef(out, ref);
-          DataInputOutputUtilRt.writeINT(out, count);
-        }
-        catch (IOException e) {
-          exception[0] = e;
-          return false;
-        }
-        return true;
-      }
-    })) {
-      assert exception[0] != null;
-      throw exception[0];
+    for (JavacRef ref : refs) {
+      writeJavacRef(out, ref);
     }
   }
 
-  private static TObjectIntHashMap<JavacRef> readRefs(final DataInput in) throws IOException {
+  private static Set<JavacRef> readRefs(final DataInput in) throws IOException {
     final int size = DataInputOutputUtilRt.readINT(in);
-    TObjectIntHashMap<JavacRef> deserialized = new TObjectIntHashMap<JavacRef>(size);
+    Set<JavacRef> deserialized = new OrderedSet<JavacRef>(size);
     for (int i = 0; i < size; i++) {
-      deserialized.put(readJavacRef(in), DataInputOutputUtilRt.readINT(in));
+      deserialized.add(readJavacRef(in));
     }
     return deserialized;
   }

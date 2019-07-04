@@ -16,12 +16,13 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class BackwardReferenceIndexUtil {
   private static final Logger LOG = Logger.getInstance(BackwardReferenceIndexUtil.class);
 
   static void registerFile(String filePath,
-                           TObjectIntHashMap<? extends JavacRef> refs,
+                           Set<? extends JavacRef> refs,
                            Collection<? extends JavacDef> defs,
                            Collection<? extends JavacTypeCast> casts,
                            Collection<? extends JavacRef> implicitToString,
@@ -84,25 +85,31 @@ public class BackwardReferenceIndexUtil {
       }
 
       Map<CompilerRef, Integer> convertedRefs = new THashMap<>();
-      IOException[] exception = new IOException[]{null};
-      refs.forEachEntry((ref, count) -> {
-        final CompilerRef compilerRef;
-        try {
-          compilerRef = writer.enumerateNames(ref, name -> anonymousClassEnumerator.getCompilerRefIfAnonymous(name));
-          if (compilerRef != null) {
-            Integer old = convertedRefs.get(compilerRef);
-            convertedRefs.put(compilerRef, old == null ? count : (old + count));
-          }
+      for (JavacRef ref : refs) {
+        final CompilerRef compilerRef = writer.enumerateNames(ref, name -> anonymousClassEnumerator.getCompilerRefIfAnonymous(name));
+        if (compilerRef != null) {
+          convertedRefs.put(compilerRef, 1);
         }
-        catch (IOException e) {
-          exception[0] = e;
-          return false;
-        }
-        return true;
-      });
-      if (exception[0] != null) {
-        throw exception[0];
       }
+      //IOException[] exception = new IOException[]{null};
+      //refs.forEachEntry((ref, count) -> {
+      //  final CompilerRef compilerRef;
+      //  try {
+      //    compilerRef = writer.enumerateNames(ref, name -> anonymousClassEnumerator.getCompilerRefIfAnonymous(name));
+      //    if (compilerRef != null) {
+      //      Integer old = convertedRefs.get(compilerRef);
+      //      convertedRefs.put(compilerRef, old == null ? count : (old + count));
+      //    }
+      //  }
+      //  catch (IOException e) {
+      //    exception[0] = e;
+      //    return false;
+      //  }
+      //  return true;
+      //});
+      //if (exception[0] != null) {
+      //  throw exception[0];
+      //}
 
       for (JavacTypeCast cast : casts) {
         CompilerRef enumeratedCastType = writer.enumerateNames(cast.getCastType(), name -> null);

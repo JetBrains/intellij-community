@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java.dependencyView;
 
+import com.intellij.util.containers.OrderedSet;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.THashSet;
@@ -217,7 +218,7 @@ public class ClassRepr extends ClassFileRepr {
                    final Set<UsageRepr.Usage> usages) {
     super(access, sig, name, annotations, fileName, context, usages);
     mySuperClass = TypeRepr.createClassType(context, superClass);
-    myInterfaces = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, interfaces, new THashSet<>(1));
+    myInterfaces = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, interfaces, new OrderedSet<>(1));
     myFields = fields;
     myMethods = methods;
     this.myAnnotationTargets = annotationTargets;
@@ -232,9 +233,9 @@ public class ClassRepr extends ClassFileRepr {
     super(context, in);
     try {
       mySuperClass = (TypeRepr.ClassType)TypeRepr.externalizer(context).read(in);
-      myInterfaces = RW.read(TypeRepr.externalizer(context), new THashSet<>(1), in);
-      myFields = RW.read(FieldRepr.externalizer(context), new THashSet<>(), in);
-      myMethods = RW.read(MethodRepr.externalizer(context), new THashSet<>(), in);
+      myInterfaces = RW.read(TypeRepr.externalizer(context), new OrderedSet<>(1), in);
+      myFields = RW.read(FieldRepr.externalizer(context), new OrderedSet<>(), in);
+      myMethods = RW.read(MethodRepr.externalizer(context), new OrderedSet<>(), in);
       myAnnotationTargets = RW.read(UsageRepr.AnnotationUsage.elementTypeExternalizer, EnumSet.noneOf(ElemType.class), in);
 
       final String s = RW.readUTF(in);
