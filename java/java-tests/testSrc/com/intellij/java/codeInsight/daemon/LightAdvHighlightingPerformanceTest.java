@@ -88,7 +88,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
 
   public void testAClassLoader() {
     List<HighlightInfo> errors = doTest(800);
-    if (92 != errors.size()) {
+    if (93 != errors.size()) {
       doTest(getFilePath("_hl"), false, false);
       fail("Actual: " + errors.size());
     }
