@@ -17,7 +17,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
@@ -190,32 +189,15 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
   @Nullable
   private static PsiClass getContextClass(@NotNull UElement sourceNode, boolean forClassReference) {
     PsiElement sourcePsi = sourceNode.getSourcePsi();
-    if (sourcePsi == null) return null;
-    PsiClass javaContextClass = JavaResolveUtil.getContextClass(sourcePsi);
-    if (javaContextClass != null) {
-      return javaContextClass;
-    }
     UClass sourceClass = UastUtils.findContaining(sourcePsi, UClass.class);
     if (sourceClass == null) return null;
-    if (forClassReference && isInKotlinSuperTypeList(sourcePsi)) {
+    if (forClassReference && sourceClass.getUastSuperTypes().stream().anyMatch(it -> UastUtils.isPsiAncestor(it, sourceNode))) {
       UElement parent = sourceClass.getUastParent();
       if (parent == null) return null;
       UClass parentClass = UastUtils.findContaining(parent.getSourcePsi(), UClass.class);
       return parentClass != null ? parentClass.getJavaPsi() : null;
     }
     return sourceClass.getJavaPsi();
-  }
-
-  private static boolean isInKotlinSuperTypeList(PsiElement psiElement) {
-    PsiElement place = psiElement;
-    while (place != null) {
-      String className = place.getClass().getName();
-      if (className.equals("org.jetbrains.kotlin.psi.KtSuperTypeList")) {
-        return true;
-      }
-      place = place.getContext();
-    }
-    return false;
   }
 
   @Tag("modules-set")
