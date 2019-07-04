@@ -9,10 +9,12 @@ import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
+import org.jetbrains.idea.maven.server.security.MavenToken;
 
 public class Maven3ServerImpl extends MavenRemoteObject implements MavenServer {
   @Override
-  public void set(MavenServerLogger logger, MavenServerDownloadListener downloadListener) throws RemoteException {
+  public void set(MavenServerLogger logger, MavenServerDownloadListener downloadListener, MavenToken token) {
+    MavenServerUtil.checkToken(token);
     try {
       Maven3ServerGlobals.set(logger, downloadListener);
     }
@@ -22,7 +24,8 @@ public class Maven3ServerImpl extends MavenRemoteObject implements MavenServer {
   }
 
   @Override
-  public MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings) throws RemoteException {
+  public MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings, MavenToken token) {
+    MavenServerUtil.checkToken(token);
     try {
       Maven3ServerEmbedderImpl result = new Maven3ServerEmbedderImpl(settings);
       UnicastRemoteObject.exportObject(result, 0);
@@ -34,7 +37,8 @@ public class Maven3ServerImpl extends MavenRemoteObject implements MavenServer {
   }
 
   @Override
-  public MavenServerIndexer createIndexer() throws RemoteException {
+  public MavenServerIndexer createIndexer(MavenToken token) {
+    MavenServerUtil.checkToken(token);
     try {
       Maven3ServerIndexerImpl result = new Maven3ServerIndexerImpl(new Maven3ServerEmbedderImpl(new MavenEmbedderSettings(new MavenServerSettings()))) {
         @Override
@@ -52,9 +56,10 @@ public class Maven3ServerImpl extends MavenRemoteObject implements MavenServer {
 
   @Override
   @NotNull
-  public MavenModel interpolateAndAlignModel(MavenModel model, File basedir) {
+  public MavenModel interpolateAndAlignModel(MavenModel model, File basedir, MavenToken token) {
+    MavenServerUtil.checkToken(token);
     try {
-      return Maven3ServerEmbedderImpl.interpolateAndAlignModel(model, basedir);
+      return Maven3XServerEmbedder.interpolateAndAlignModel(model, basedir);
     }
     catch (Exception e) {
       throw rethrowException(e);
@@ -62,9 +67,10 @@ public class Maven3ServerImpl extends MavenRemoteObject implements MavenServer {
   }
 
   @Override
-  public MavenModel assembleInheritance(MavenModel model, MavenModel parentModel) {
+  public MavenModel assembleInheritance(MavenModel model, MavenModel parentModel, MavenToken token) {
+    MavenServerUtil.checkToken(token);
     try {
-      return Maven3ServerEmbedderImpl.assembleInheritance(model, parentModel);
+      return Maven3XServerEmbedder.assembleInheritance(model, parentModel);
     }
     catch (Exception e) {
       throw rethrowException(e);
@@ -75,7 +81,8 @@ public class Maven3ServerImpl extends MavenRemoteObject implements MavenServer {
   public ProfileApplicationResult applyProfiles(MavenModel model,
                                                 File basedir,
                                                 MavenExplicitProfiles explicitProfiles,
-                                                Collection<String> alwaysOnProfiles) {
+                                                Collection<String> alwaysOnProfiles, MavenToken token) {
+    MavenServerUtil.checkToken(token);
     try {
       return Maven3ServerEmbedderImpl.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
     }

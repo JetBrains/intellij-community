@@ -9,10 +9,11 @@ import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
+import org.jetbrains.idea.maven.server.security.MavenToken;
 
 public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer {
   @Override
-  public void set(MavenServerLogger logger, MavenServerDownloadListener downloadListener) {
+  public void set(MavenServerLogger logger, MavenServerDownloadListener downloadListener, MavenToken token) {
     try {
       Maven3ServerGlobals.set(logger, downloadListener);
     }
@@ -22,7 +23,7 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
   }
 
   @Override
-  public MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings) {
+  public MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings, MavenToken token) {
     try {
       Maven36ServerEmbedderImpl result = new Maven36ServerEmbedderImpl(settings);
       UnicastRemoteObject.exportObject(result, 0);
@@ -34,7 +35,7 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
   }
 
   @Override
-  public MavenServerIndexer createIndexer() {
+  public MavenServerIndexer createIndexer(MavenToken token) {
     try {
       Maven3ServerIndexerImpl result = new Maven3ServerIndexerImpl(new Maven3ServerEmbedderImpl(new MavenEmbedderSettings(new MavenServerSettings()))) {
         @Override
@@ -52,7 +53,7 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
 
   @Override
   @NotNull
-  public MavenModel interpolateAndAlignModel(MavenModel model, File basedir) {
+  public MavenModel interpolateAndAlignModel(MavenModel model, File basedir, MavenToken token) {
     try {
       return Maven3XServerEmbedder.interpolateAndAlignModel(model, basedir);
     }
@@ -62,7 +63,7 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
   }
 
   @Override
-  public MavenModel assembleInheritance(MavenModel model, MavenModel parentModel) {
+  public MavenModel assembleInheritance(MavenModel model, MavenModel parentModel, MavenToken token) {
     try {
       return Maven3XServerEmbedder.assembleInheritance(model, parentModel);
     }
@@ -75,7 +76,7 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
   public ProfileApplicationResult applyProfiles(MavenModel model,
                                                 File basedir,
                                                 MavenExplicitProfiles explicitProfiles,
-                                                Collection<String> alwaysOnProfiles) {
+                                                Collection<String> alwaysOnProfiles, MavenToken token) {
     try {
       return Maven3XServerEmbedder.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
     }
