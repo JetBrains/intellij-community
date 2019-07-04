@@ -7,7 +7,7 @@ import com.intellij.projectImport.ProjectOpenProcessor
 import javax.swing.Icon
 
 class MavenProjectOpenProcessor : ProjectOpenProcessor() {
-  private val importProvider = MavenExternalSystemImportProvider()
+  private val importProvider = MavenOpenProjectProvider()
 
   override fun getName(): String =
     importProvider.builder.name
@@ -16,7 +16,7 @@ class MavenProjectOpenProcessor : ProjectOpenProcessor() {
     importProvider.builder.icon
 
   override fun canOpenProject(file: VirtualFile): Boolean =
-    importProvider.canSetupProjectFrom(file)
+    importProvider.canOpenProject(file)
 
   override fun doOpenProject(projectFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? =
     importProvider.openProject(projectFile, projectToClose, forceOpenInNewFrame)
