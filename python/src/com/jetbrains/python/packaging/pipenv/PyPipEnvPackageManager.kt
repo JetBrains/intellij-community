@@ -102,6 +102,7 @@ class PyPipEnvPackageManager(val sdk: Sdk) : PyPackageManager() {
 
   override fun refreshAndGetPackages(alwaysRefresh: Boolean): List<PyPackage> {
     if (alwaysRefresh || packages == null) {
+      packages = null
       val output = try {
         runPipEnv(sdk, "graph", "--json")
       }
