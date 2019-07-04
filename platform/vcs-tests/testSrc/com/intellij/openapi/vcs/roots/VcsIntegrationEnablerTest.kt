@@ -103,7 +103,7 @@ class VcsIntegrationEnablerTest : VcsRootBaseTest() {
     return ContainerUtil.map(roots) { s ->
       val path = VcsTestUtil.toAbsolute(s, myProject)
       LocalFileSystem.getInstance().refreshAndFindFileByPath(path)
-      VcsRoot(vcs, VcsUtil.getVirtualFile(path))
+      VcsRoot(vcs, VcsUtil.getVirtualFile(path)!!)
     }
   }
 

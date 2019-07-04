@@ -52,9 +52,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.intellij.util.ObjectUtils.notNull;
-import static java.util.stream.Collectors.groupingBy;
-
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class VcsUtil {
   protected static final char[] ourCharsToBeChopped = {'/', '\\'};
@@ -62,8 +59,6 @@ public class VcsUtil {
 
   public static final String MAX_VCS_LOADED_SIZE_KB = "idea.max.vcs.loaded.size.kb";
   private static final int ourMaxLoadedFileSize = computeLoadedFileSize();
-
-  @NotNull private static final VcsRoot FICTIVE_ROOT = new VcsRoot(null, null);
 
   private static final int MAX_COMMIT_MESSAGE_LENGTH = 50000;
   private static final int MAX_COMMIT_MESSAGE_LINES = 3000;
@@ -556,9 +551,25 @@ public class VcsUtil {
   public static <T> Map<VcsRoot, List<T>> groupByRoots(@NotNull Project project,
                                                        @NotNull Collection<? extends T> items,
                                                        @NotNull Function<? super T, ? extends FilePath> filePathMapper) {
+    return groupByRoots(project, items, false, filePathMapper);
+  }
+
+  @NotNull
+  public static <T> Map<VcsRoot, List<T>> groupByRoots(@NotNull Project project,
+                                                       @NotNull Collection<? extends T> items,
+                                                       boolean putNonVcs,
+                                                       @NotNull Function<? super T, ? extends FilePath> filePathMapper) {
     ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
 
-    return items.stream().collect(groupingBy(item -> notNull(manager.getVcsRootObjectFor(filePathMapper.fun(item)), FICTIVE_ROOT)));
+    Map<VcsRoot, List<T>> map = new HashMap<>();
+    for (T item : items) {
+      VcsRoot vcsRoot = manager.getVcsRootObjectFor(filePathMapper.fun(item));
+      if (vcsRoot != null || putNonVcs) {
+        List<T> list = map.computeIfAbsent(vcsRoot, key -> new ArrayList<>());
+        list.add(item);
+      }
+    }
+    return map;
   }
 
   @NotNull

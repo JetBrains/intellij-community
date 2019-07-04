@@ -17,7 +17,10 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * @author yole
@@ -25,11 +28,11 @@ import org.jetbrains.annotations.Nullable;
 public class VcsRoot {
 
   @Nullable private final AbstractVcs myVcs;
-  @Nullable private final VirtualFile myPath;
+  @NotNull private final VirtualFile myPath;
 
   private int hashcode;
 
-  public VcsRoot(@Nullable AbstractVcs vcs, @Nullable VirtualFile path) {
+  public VcsRoot(@Nullable AbstractVcs vcs, @NotNull VirtualFile path) {
     myVcs = vcs;
     myPath = path;
   }
@@ -39,7 +42,7 @@ public class VcsRoot {
     return myVcs;
   }
 
-  @Nullable
+  @NotNull
   public VirtualFile getPath() {
     return myPath;
   }
@@ -51,7 +54,7 @@ public class VcsRoot {
 
     VcsRoot root = (VcsRoot)o;
 
-    if (myPath != null ? !myPath.equals(root.myPath) : root.myPath != null) return false;
+    if (!Objects.equals(myPath, root.myPath)) return false;
     if (myVcs != null ? !myVcs.equals(root.myVcs) : root.myVcs != null) return false;
 
     return true;
@@ -60,7 +63,7 @@ public class VcsRoot {
   public int hashCode() {
     if (hashcode == 0) {
       hashcode = myVcs != null ? myVcs.hashCode() : 0;
-      hashcode = 31 * hashcode + (myPath != null ? myPath.hashCode() : 0);
+      hashcode = 31 * hashcode + myPath.hashCode();
     }
     return hashcode;
   }
