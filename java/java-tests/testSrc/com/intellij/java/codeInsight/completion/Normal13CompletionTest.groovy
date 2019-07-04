@@ -13,12 +13,12 @@ class Normal13CompletionTest extends NormalCompletionTestCase {
     return JAVA_13
   }
 
-  void testDefaultInRuleSwitch() throws Throwable { doTest() }
-  void testLabelInRuleSwitch() throws Throwable { doTest() }
-  void testSecondLabelInOldSwitch() throws Throwable { doTest() }
-  void testSecondLabelInRuleSwitch() throws Throwable { doTest() }
-  void testSwitchExpressionStart() throws Throwable { doTest() }
-  void testYieldInSwitchExpression() throws Throwable { doTest() }
-  void testInsideYieldInSwitchExpression() throws Throwable { doTest() }
-  void testInsideRuleInSwitchExpression() throws Throwable { doTest() }
+  void testDefaultInRuleSwitch() { doTest() }
+  void testLabelInRuleSwitch() { doTest() }
+  void testSecondLabelInOldSwitch() { doTest() }
+  void testSecondLabelInRuleSwitch() { doTest() }
+  void testSwitchExpressionStart() { doTest() }
+  void testYieldInSwitchExpression() { doTest() }
+  void testInsideYieldInSwitchExpression() { doTest() }
+  void testInsideRuleInSwitchExpression() { doTest() }
 }
