@@ -308,14 +308,12 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
         return Nullability.NULLABLE;
       }
     }
-    // when is unknown -> default value
-    return isNotNullByDefaultNullabilityAnnotation(nonNull) && when == null ? Nullability.NOT_NULL : Nullability.UNKNOWN;
-  }
 
-  // It is known, that by default some annotations is NotNull always
-  private static boolean isNotNullByDefaultNullabilityAnnotation(@NotNull PsiAnnotation nonNull) {
-    String qName = nonNull.getQualifiedName();
-    return qName != null && qName.equals(JAVAX_ANNOTATION_NONNULL);
+    // 'when' is unknown and annotation is known -> default value (for javax.annotation.Nonnull is ALWAYS)
+    if (when == null && JAVAX_ANNOTATION_NONNULL.equals(nonNull.getQualifiedName())) {
+      return Nullability.NOT_NULL;
+    }
+    return Nullability.UNKNOWN;
   }
 
   @NotNull
