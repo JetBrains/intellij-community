@@ -1124,6 +1124,9 @@
         <action internal="true" id="RecordStateCollectors"
                 class="com.intellij.internal.statistic.actions.RecordStateStatisticsEventLogAction"
                 text="Record State Collectors to Event Log"/>
+        <action internal="true" id="CleanupLocalWhitelistAction"
+                class="com.intellij.internal.statistic.actions.CleanupLocalWhitelistAction"
+                text="Clean Up Local Whitelist"/>
       </group>
 
       <group id="Internal.PMM" popup="true" text="PMM Utils">
