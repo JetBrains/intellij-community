@@ -16,6 +16,10 @@ import runtime.reactive.*
 class CircletAutomationListener(val project: Project): LifetimedComponent by SimpleLifetimedComponent() {
 
     fun listen(viewModel: ScriptWindowViewModel) {
+        val application = ApplicationManager.getApplication()
+        if (application.isUnitTestMode || application.isHeadlessEnvironment) {
+            return
+        }
         val logBuildLifetimes = SequentialLifetimes(lifetime)
         viewModel.logBuildData.forEach(lifetime) {
             val data = it
