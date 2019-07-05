@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.util.Bitness;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Version;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.ApiStatus;
@@ -22,8 +21,7 @@ import org.jetbrains.jps.model.java.JdkVersionDetector.JdkVersionInfo;
 import java.io.File;
 
 public class JdkBundle {
-  private static final String BUNDLED_JDK_DIR_NAME =
-    SystemInfo.isMac ? "jdk" : SystemInfo.is64Bit ? "jre64" : SystemInfo.isWindows ? "jre32" : "jre";
+  private static final String BUNDLED_JDK_DIR_NAME = "jbr";
 
   private final File myLocation;
   private final JdkVersionInfo myVersionInfo;
