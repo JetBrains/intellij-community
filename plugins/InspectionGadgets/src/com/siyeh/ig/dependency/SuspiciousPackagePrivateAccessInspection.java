@@ -207,12 +207,10 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
 
   private static boolean isReferenceBelongsToEnclosingClass(@NotNull UElement sourceNode, @NotNull UClass sourceClass,
                                                             boolean forClassReference) {
-    if (sourceClass instanceof UAnonymousClass) {
-      UElement parent = sourceClass.getUastParent();
-      if (parent instanceof UCallExpression) {
-        if (((UCallExpression)parent).getValueArguments().stream().anyMatch(it -> UastUtils.isPsiAncestor(it, sourceNode))) {
-          return true;
-        }
+    UElement parent = sourceClass.getUastParent();
+    if (parent instanceof UObjectLiteralExpression) {
+      if (((UCallExpression)parent).getValueArguments().stream().anyMatch(it -> UastUtils.isPsiAncestor(it, sourceNode))) {
+        return true;
       }
     }
     return forClassReference && sourceClass.getUastSuperTypes().stream().anyMatch(it -> UastUtils.isPsiAncestor(it, sourceNode));
