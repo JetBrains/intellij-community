@@ -4,6 +4,8 @@ package com.intellij.openapi.externalSystem.model;
 import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Serializable;
+
 /**
  * The basic design of external system integration assumes that target project info if represented as a generic graph
  * of {@link DataNode} objects where every {@link DataNode} content type is identified by an instance of this class.
@@ -15,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
  * @param <T>  data class
  */
 @SuppressWarnings("UnusedDeclaration")
-public final class Key<T> implements Comparable<Key<?>> {
+public final class Key<T> implements Comparable<Key<?>>, Serializable {
   @NotNull private final String dataClass;
 
   private final int processingWeight;
