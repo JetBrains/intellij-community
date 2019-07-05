@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 final class BreadcrumbsInitializingActivity implements StartupActivity, DumbAware {
@@ -43,6 +44,8 @@ final class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwar
 
     VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(project), project);
     connection.subscribe(UISettingsListener.TOPIC, uiSettings -> reinitBreadcrumbsInAllEditors(project));
+
+    UIUtil.invokeLaterIfNeeded(() -> reinitBreadcrumbsInAllEditors(project));
   }
 
   private static final class MyFileEditorManagerListener implements FileEditorManagerListener {
