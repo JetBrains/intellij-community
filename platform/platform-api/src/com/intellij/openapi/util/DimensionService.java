@@ -228,7 +228,6 @@ public class DimensionService extends SimpleModificationTracker implements Persi
 
   @ApiStatus.Internal
   public boolean getDefaultMaximizedFor(@NotNull String key) {
-    //  backward compatibility when this service is used instead of DimensionService
     return Frame.MAXIMIZED_BOTH == myKey2ExtendedState.get(key);
   }
 
