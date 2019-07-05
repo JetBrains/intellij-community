@@ -46,17 +46,11 @@ open class StubsGenerator(private val stubsVersion: String, private val stubsSto
 
   override fun getIndexValue(fileContent: FileContentImpl): SerializedStubTree? {
     val stub = buildStubForFile(fileContent, serializationManager)
-
     if (stub == null) {
       return null
     }
 
-    val bytes = BufferExposingByteArrayOutputStream()
-    serializationManager.serialize(stub, bytes)
-
-    val tree = SerializedStubTree(bytes.internalBuffer, bytes.size(), stub)
-    tree.indexTree()
-    return tree
+    return SerializedStubTree(stub, serializationManager, FILE_LOCAL_STUB_FORWARD_INDEX_EXTERNALIZER)
   }
 
   override fun createStorage(stubsStorageFilePath: String): PersistentHashMap<HashCode, SerializedStubTree> {
@@ -117,17 +111,14 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
           val value = fromStorage.get(key)
 
           // re-serialize stub tree to correctly enumerate strings in the new string enumerator
-          val newStubTree = value.reSerialize(serializationManager, newSerializationManager)
+          val newStubTree = value.reSerialize(serializationManager, newSerializationManager, FILE_LOCAL_STUB_FORWARD_INDEX_EXTERNALIZER, FILE_LOCAL_STUB_FORWARD_INDEX_EXTERNALIZER)
 
           if (storage.containsMapping(key)) {
             if (newStubTree != storage.get(key)) { // TODO: why are they slightly different???
               storage.get(key).getStub(false, newSerializationManager)
 
               val stub = value.getStub(false, serializationManager)
-              val bytes2 = BufferExposingByteArrayOutputStream()
-              newSerializationManager.serialize(stub, bytes2)
-
-              val newStubTree2 = SerializedStubTree(bytes2.internalBuffer, bytes2.size(), null)
+              val newStubTree2 = SerializedStubTree(stub, newSerializationManager, FILE_LOCAL_STUB_FORWARD_INDEX_EXTERNALIZER)
 
               TestCase.assertTrue(newStubTree == newStubTree2) // wtf!!! why are they equal now???
             }
