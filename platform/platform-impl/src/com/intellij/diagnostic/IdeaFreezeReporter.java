@@ -17,10 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.lang.management.ThreadInfo;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class IdeaFreezeReporter {
   private static final int FREEZE_THRESHOLD = ApplicationManager.getApplication().isInternal() ? 5 : 25; // seconds
@@ -38,7 +35,10 @@ public class IdeaFreezeReporter {
 
       @Override
       public void uiFreezeStarted() {
-        myFreezeRecording = Registry.is("performance.watcher.freeze.report") && !DebugAttachDetector.isAttached();
+        myFreezeRecording = Registry.is("performance.watcher.freeze.report") &&
+                            // only report to JetBrains
+                            IdeErrorsDialog.getSubmitter(new Freeze(Collections.emptyList()), null) instanceof ITNReporter &&
+                            !DebugAttachDetector.isAttached();
       }
 
       @Override
