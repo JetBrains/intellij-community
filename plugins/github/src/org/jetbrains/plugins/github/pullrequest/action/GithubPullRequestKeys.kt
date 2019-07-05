@@ -2,8 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.openapi.actionSystem.DataKey
-import org.jetbrains.plugins.github.api.data.GHPullRequestShort
-import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 
 object GithubPullRequestKeys {
   @JvmStatic

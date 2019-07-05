@@ -13,7 +13,7 @@ import com.intellij.ui.CollectionListModel
 import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.*
-import org.jetbrains.plugins.github.api.data.GHPullRequestShort
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.request.search.GithubIssueSearchType
 import org.jetbrains.plugins.github.api.util.GithubApiSearchQueryBuilder
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader

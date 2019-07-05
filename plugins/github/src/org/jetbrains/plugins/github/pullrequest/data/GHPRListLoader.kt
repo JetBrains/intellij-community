@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
 import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.plugins.github.api.data.GHPullRequestShort
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import java.util.concurrent.CompletableFuture
 
 internal interface GHPRListLoader : GHListLoader {

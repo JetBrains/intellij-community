@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.testFramework.LightVirtualFile
-import org.jetbrains.plugins.github.api.data.GHPullRequestShort
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
 
 internal class GHPRVirtualFile(val pullRequest: GHPullRequestShort,
