@@ -55,6 +55,16 @@ public class IgnoreParserDefinition implements ParserDefinition {
      * Regular comment started with #
      */
     public static final TokenSet COMMENTS = TokenSet.create(IgnoreTypes.COMMENT);
+
+    /**
+     * Section comment started with ##
+     */
+    public static final TokenSet SECTIONS = TokenSet.create(IgnoreTypes.SECTION);
+
+    /**
+     * Header comment started with ###
+     */
+    public static final TokenSet HEADERS = TokenSet.create(IgnoreTypes.HEADER);
   }
 
   /**
