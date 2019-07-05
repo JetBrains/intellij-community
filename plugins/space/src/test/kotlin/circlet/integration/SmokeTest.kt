@@ -1,5 +1,6 @@
 package circlet.integration
 
+import circlet.pipelines.config.api.*
 import circlet.pipelines.config.dsl.api.*
 import circlet.pipelines.config.dsl.script.exec.common.*
 import circlet.plugins.pipelines.services.*
@@ -17,6 +18,8 @@ class TestProjectExecutor(override val listener: ProjectElementListener) : Proje
     override val vcsRevision: String = "revision.0"
     override val vcsBranch: String = "test"
 }
+
+private const val scriptFileName : String = "circlet.kts"
 
 class SmokeTest : JavaCodeInsightFixtureTestCase() {
 
@@ -42,7 +45,6 @@ class SmokeTest : JavaCodeInsightFixtureTestCase() {
     // dsl exist on start
     fun testBuildModelWhenDslExistsFromBeginning() {
         val project = myFixture.project
-        val scriptFileName = "circlet.kts"
         val projectFileFolderName = PathUtil.getFileName(project.basePath!!)
         myFixture.copyFileToProject(scriptFileName, "../$projectFileFolderName/$scriptFileName")
 
@@ -64,6 +66,15 @@ class SmokeTest : JavaCodeInsightFixtureTestCase() {
         script = newScript
         assertFalse(script.isScriptEmpty(), "script should not be empty after build")
 
+        assertEquals(createGoldModel(), script.config)
+    }
+
+    private fun ScriptViewModel.isScriptEmpty(): Boolean {
+        val config = this.config
+        return config.pipelines.isEmpty() && config.targets.isEmpty() && config.tasks.isEmpty()
+    }
+
+    private fun createGoldModel() : ProjectConfig {
         val projectElementListener = ProjectConfigBuilder()
         val executor = TestProjectExecutor(projectElementListener)
 
@@ -78,12 +89,6 @@ class SmokeTest : JavaCodeInsightFixtureTestCase() {
             }
         }
 
-        val expectedModelConfig = projectElementListener.build()
-        assertEquals(expectedModelConfig, script.config)
-    }
-
-    private fun ScriptViewModel.isScriptEmpty(): Boolean {
-        val config = this.config
-        return config.pipelines.isEmpty() && config.targets.isEmpty() && config.tasks.isEmpty()
+        return projectElementListener.build()
     }
 }
