@@ -6,8 +6,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListG
 interface WhitelistGroupRulesStorage {
   fun getGroupRules(groupId: String): WhiteListGroupRules?
 
-  fun isUnreachableWhitelist() : Boolean
-
+  fun isUnreachableWhitelist(): Boolean
 }
 
 /**

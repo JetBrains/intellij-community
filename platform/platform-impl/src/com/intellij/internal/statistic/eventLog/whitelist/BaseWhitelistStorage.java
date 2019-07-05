@@ -13,16 +13,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public abstract class BaseWhitelistStorage implements WhitelistGroupRulesStorage {
+  @NotNull
   protected final AtomicBoolean isWhiteListInitialized;
 
-  protected BaseWhitelistStorage() {isWhiteListInitialized = new AtomicBoolean(false);}
-
-  @NotNull
-  protected static WhiteListGroupRules createRules(@NotNull FUStatisticsWhiteListGroupsService.WLGroup group,
-                                                   @Nullable FUStatisticsWhiteListGroupsService.WLRule globalRules) {
-    return globalRules != null
-           ? WhiteListGroupRules.create(group, globalRules.enums, globalRules.regexps)
-           : WhiteListGroupRules.create(group, null, null);
+  protected BaseWhitelistStorage() {
+    isWhiteListInitialized = new AtomicBoolean(false);
   }
 
   @Override
@@ -36,5 +31,13 @@ public abstract class BaseWhitelistStorage implements WhitelistGroupRulesStorage
     return groups.groups.stream().
       filter(group -> group.accepts(buildNumber)).
       collect(Collectors.toMap(group -> group.id, group -> createRules(group, groups.rules)));
+  }
+
+  @NotNull
+  protected static WhiteListGroupRules createRules(@NotNull FUStatisticsWhiteListGroupsService.WLGroup group,
+                                                   @Nullable FUStatisticsWhiteListGroupsService.WLRule globalRules) {
+    return globalRules != null
+           ? WhiteListGroupRules.create(group, globalRules.enums, globalRules.regexps)
+           : WhiteListGroupRules.create(group, null, null);
   }
 }

@@ -9,32 +9,34 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.ConcurrentMap;
 
-public class MergedWhitelistStorage implements WhitelistGroupRulesStorage {
-  private static final ConcurrentMap<String, MergedWhitelistStorage> myInstances = ContainerUtil.newConcurrentMap();
+public class CompositeWhitelistStorage implements WhitelistGroupRulesStorage {
+  private static final ConcurrentMap<String, CompositeWhitelistStorage> ourInstances = ContainerUtil.newConcurrentMap();
 
+  @NotNull
   private final WhitelistGroupRulesStorage myWhiteListStorage;
+  @NotNull
   private final WhitelistGroupRulesStorage myWhiteListStorageForTest;
 
-  private MergedWhitelistStorage(WhitelistGroupRulesStorage whiteListStorage,
-                                 WhitelistGroupRulesStorage whiteListStorageForTest) {
+  private CompositeWhitelistStorage(@NotNull WhitelistGroupRulesStorage whiteListStorage,
+                                    @NotNull WhitelistGroupRulesStorage whiteListStorageForTest) {
     myWhiteListStorage = whiteListStorage;
     myWhiteListStorageForTest = whiteListStorageForTest;
   }
 
   @NotNull
-  public static MergedWhitelistStorage getInstance(@NotNull String recorderId) {
+  public static CompositeWhitelistStorage getInstance(@NotNull String recorderId) {
     WhitelistGroupRulesStorage whiteListStorage =
       ApplicationManager.getApplication().isUnitTestMode() ? InMemoryWhitelistStorage.INSTANCE : WhitelistStorage.getInstance(recorderId);
     WhitelistStorageForTest whiteListStorageForTest = WhitelistStorageForTest.getInstance(recorderId);
 
-    return myInstances.computeIfAbsent(recorderId, id -> new MergedWhitelistStorage(whiteListStorage, whiteListStorageForTest));
+    return ourInstances.computeIfAbsent(recorderId, id -> new CompositeWhitelistStorage(whiteListStorage, whiteListStorageForTest));
   }
 
   @Nullable
   @Override
   public WhiteListGroupRules getGroupRules(@NotNull String groupId) {
     WhiteListGroupRules testGroupRules = myWhiteListStorageForTest.getGroupRules(groupId);
-    if(testGroupRules != null) return testGroupRules;
+    if (testGroupRules != null) return testGroupRules;
     return myWhiteListStorage.getGroupRules(groupId);
   }
 

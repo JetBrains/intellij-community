@@ -12,6 +12,7 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
@@ -22,10 +23,15 @@ public class WhitelistStorage extends BaseWhitelistStorage {
   private static final ConcurrentMap<String, WhitelistStorage> ourInstances = ContainerUtil.newConcurrentMap();
 
   protected final ConcurrentMap<String, WhiteListGroupRules> eventsValidators = ContainerUtil.newConcurrentMap();
+  @NotNull
   private final Semaphore mySemaphore;
+  @NotNull
   private final String myRecorderId;
+  @Nullable
   private String myVersion;
+  @NotNull
   private final EventLogWhitelistPersistence myWhitelistPersistence;
+  @NotNull
   private final EventLogExternalSettingsService mySettingsService;
 
   @NotNull
@@ -40,6 +46,16 @@ public class WhitelistStorage extends BaseWhitelistStorage {
     myRecorderId = recorderId;
     mySemaphore = new Semaphore();
     myWhitelistPersistence = new EventLogWhitelistPersistence(recorderId);
+    mySettingsService = new EventLogExternalSettingsService(recorderId);
+    myVersion = updateValidators(myWhitelistPersistence.getCachedWhiteList());
+    EventLogSystemLogger.logWhitelistLoad(recorderId, myVersion);
+  }
+
+  @TestOnly
+  protected WhitelistStorage(@NotNull String recorderId, @NotNull EventLogWhitelistPersistence eventLogWhitelistPersistence) {
+    myRecorderId = recorderId;
+    mySemaphore = new Semaphore();
+    myWhitelistPersistence = eventLogWhitelistPersistence;
     mySettingsService = new EventLogExternalSettingsService(recorderId);
     myVersion = updateValidators(myWhitelistPersistence.getCachedWhiteList());
     EventLogSystemLogger.logWhitelistLoad(recorderId, myVersion);

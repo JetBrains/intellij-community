@@ -6,10 +6,9 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupRules;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule;
-import com.intellij.internal.statistic.eventLog.whitelist.MergedWhitelistStorage;
+import com.intellij.internal.statistic.eventLog.whitelist.CompositeWhitelistStorage;
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistGroupRulesStorage;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,17 +21,16 @@ import static com.intellij.internal.statistic.eventLog.validator.ValidationResul
 import static com.intellij.internal.statistic.utils.StatisticsUtilKt.addPluginInfoTo;
 
 public class SensitiveDataValidator {
-  private static final Logger LOG = Logger.getInstance("com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator");
-  private static final ConcurrentMap<String, SensitiveDataValidator> instances = ContainerUtil.newConcurrentMap();
-
+  private static final ConcurrentMap<String, SensitiveDataValidator> ourInstances = ContainerUtil.newConcurrentMap();
+  @NotNull
   protected final WhitelistGroupRulesStorage myWhiteListStorage;
 
   @NotNull
   public static SensitiveDataValidator getInstance(@NotNull String recorderId) {
-    return instances.computeIfAbsent(
+    return ourInstances.computeIfAbsent(
       recorderId,
       id -> {
-        MergedWhitelistStorage whiteListStorage = MergedWhitelistStorage.getInstance(recorderId);
+        CompositeWhitelistStorage whiteListStorage = CompositeWhitelistStorage.getInstance(recorderId);
         return ApplicationManager.getApplication().isUnitTestMode()
                ? new BlindSensitiveDataValidator(whiteListStorage)
                : new SensitiveDataValidator(whiteListStorage);
@@ -40,7 +38,7 @@ public class SensitiveDataValidator {
     );
   }
 
-  protected SensitiveDataValidator(WhitelistGroupRulesStorage storage) {
+  protected SensitiveDataValidator(@NotNull WhitelistGroupRulesStorage storage) {
     myWhiteListStorage = storage;
   }
 
@@ -77,7 +75,7 @@ public class SensitiveDataValidator {
 
   private static boolean isTestModeEnabled(@Nullable WhiteListGroupRules rule) {
     return TestModeValidationRule.isTestModeEnabled() && rule != null &&
-           Arrays.stream(rule.getEventIdRules()).anyMatch( r -> r instanceof TestModeValidationRule);
+           Arrays.stream(rule.getEventIdRules()).anyMatch(r -> r instanceof TestModeValidationRule);
   }
 
   private static boolean isSystemEventId(@Nullable String eventId) {
@@ -105,7 +103,7 @@ public class SensitiveDataValidator {
 
 
   private static class BlindSensitiveDataValidator extends SensitiveDataValidator {
-    protected BlindSensitiveDataValidator(WhitelistGroupRulesStorage whiteListStorage) {
+    protected BlindSensitiveDataValidator(@NotNull WhitelistGroupRulesStorage whiteListStorage) {
       super(whiteListStorage);
     }
 

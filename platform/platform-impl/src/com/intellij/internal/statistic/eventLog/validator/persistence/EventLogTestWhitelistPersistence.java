@@ -13,6 +13,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,9 +28,29 @@ public class EventLogTestWhitelistPersistence extends BaseEventLogWhitelistPersi
   private static final String TEST_RULE = "{util#fus_test_mode}";
   private static final String TEST_WHITE_LIST_DATA_FILE = "test-white-list.json";
 
-  public EventLogTestWhitelistPersistence(@NotNull String recorderId) {super(recorderId, TEST_WHITE_LIST_DATA_FILE);}
+  public EventLogTestWhitelistPersistence(@NotNull String recorderId) {
+    super(recorderId, TEST_WHITE_LIST_DATA_FILE);
+  }
 
-  public static void addGroupWithCustomRules(@NotNull String recorderId, @NotNull String groupId, @NotNull String rules) throws IOException {
+  @Override
+  @Nullable
+  public String getCachedWhiteList() {
+    File file = getWhiteListFile();
+    try {
+      if (file.exists()) return FileUtil.loadFile(file);
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+    return null;
+  }
+
+  public void cleanup() {
+    FileUtil.delete(getWhiteListFile());
+  }
+
+  public static void addGroupWithCustomRules(@NotNull String recorderId, @NotNull String groupId, @NotNull String rules)
+    throws IOException {
     final String content =
       "{\"id\":\"" + groupId + "\"," +
       "\"versions\":[ {\"from\" : \"1\"}]," +
@@ -57,7 +78,7 @@ public class EventLogTestWhitelistPersistence extends BaseEventLogWhitelistPersi
   }
 
   @NotNull
-  public static WLGroups loadTestWhitelist(@NotNull BaseEventLogWhitelistPersistence persistence) {
+  public static WLGroups loadTestWhitelist(@NotNull EventLogTestWhitelistPersistence persistence) {
     final String existing = persistence.getCachedWhiteList();
     if (StringUtil.isNotEmpty(existing)) {
       final WLGroups loaded = FUStatisticsWhiteListGroupsService.parseWhiteListContent(existing);
@@ -86,10 +107,5 @@ public class EventLogTestWhitelistPersistence extends BaseEventLogWhitelistPersi
     rule.event_data = dataRules;
     group.rules = rule;
     return group;
-  }
-
-
-  public void cleanup() {
-    FileUtil.delete(getWhiteListFile());
   }
 }

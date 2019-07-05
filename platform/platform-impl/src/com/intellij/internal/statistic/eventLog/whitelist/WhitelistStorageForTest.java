@@ -16,7 +16,9 @@ public class WhitelistStorageForTest extends BaseWhitelistStorage {
   private static final ConcurrentMap<String, WhitelistStorageForTest> ourInstances = ContainerUtil.newConcurrentMap();
   protected final ConcurrentMap<String, WhiteListGroupRules> eventsValidators = ContainerUtil.newConcurrentMap();
   private final Object myLock = new Object();
+  @NotNull
   private final EventLogTestWhitelistPersistence myTestWhitelistPersistence;
+  @NotNull
   private final String myRecorderId;
 
   @NotNull
@@ -24,7 +26,7 @@ public class WhitelistStorageForTest extends BaseWhitelistStorage {
     return ourInstances.computeIfAbsent(recorderId, id -> new WhitelistStorageForTest(id));
   }
 
-  private WhitelistStorageForTest(String recorderId) {
+  private WhitelistStorageForTest(@NotNull String recorderId) {
     myTestWhitelistPersistence = new EventLogTestWhitelistPersistence(recorderId);
     updateValidators();
     myRecorderId = recorderId;

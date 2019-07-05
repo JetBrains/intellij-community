@@ -4,9 +4,13 @@ package com.intellij.internal.statistic.eventLog.validator.persistence;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 
 
 public class EventLogWhitelistPersistence extends BaseEventLogWhitelistPersistence {
@@ -24,7 +28,8 @@ public class EventLogWhitelistPersistence extends BaseEventLogWhitelistPersisten
     try {
       FileUtil.writeToFile(file, gsonWhiteListContent);
       EventLogWhitelistSettingsPersistence.getInstance().setLastModified(myRecorderId, lastModified);
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       LOG.error(e);
     }
   }
@@ -33,4 +38,31 @@ public class EventLogWhitelistPersistence extends BaseEventLogWhitelistPersisten
     return EventLogWhitelistSettingsPersistence.getInstance().getLastModified(myRecorderId);
   }
 
+  @Override
+  @Nullable
+  public String getCachedWhiteList() {
+    File file = getWhiteListFile();
+    try {
+      if (!file.exists()) initBuiltinWhiteList(file);
+      if (file.exists()) return FileUtil.loadFile(file);
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+    return null;
+  }
+
+  private void initBuiltinWhiteList(File file) throws IOException {
+    try (InputStream stream = getClass().getClassLoader().getResourceAsStream(builtinWhiteListPath())) {
+      if (stream == null) return;
+      if (!file.getParentFile().mkdirs()) {
+        throw new IOException("Unable to create " + file.getParentFile().getAbsolutePath());
+      }
+      Files.copy(stream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+    }
+  }
+
+  private String builtinWhiteListPath() {
+    return "resources/" + FUS_WHITELIST_PATH + "/" + myRecorderId + "/" + myWhitelistFileName;
+  }
 }

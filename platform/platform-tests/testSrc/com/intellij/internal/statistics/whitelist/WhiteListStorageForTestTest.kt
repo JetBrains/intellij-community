@@ -1,7 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.internal.statistic.eventLog.whitelist
+package com.intellij.internal.statistics.whitelist
 
 
+import com.intellij.internal.statistic.eventLog.whitelist.WhitelistStorageForTest
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test

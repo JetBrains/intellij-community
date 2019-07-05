@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
+import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.LocalEnumCustomWhitelistRule
@@ -277,17 +278,12 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
     }
   }
 
-  class TestWhitelistStorage(private val myContent: String) : WhitelistStorage("TEST") {
-    init {
-      update()
-    }
+  class TestWhitelistStorage(myContent: String) : WhitelistStorage("TEST", TestEventLogWhitelistPersistence(myContent))
 
-    override fun isUnreachableWhitelist(): Boolean  = false
-
-    override fun getWhiteListContent(): String {
+  class TestEventLogWhitelistPersistence(private val myContent: String) : EventLogWhitelistPersistence("TEST") {
+    override fun getCachedWhiteList(): String? {
       return myContent
     }
-
   }
 
   internal enum class TestCustomActionId {FIRST, SECOND, THIRD}
