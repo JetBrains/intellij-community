@@ -16,12 +16,12 @@ class FeatureUsageCustomValidatorsTest : LightPlatformTestCase() {
 
   private fun doValidateEventId(validator: CustomWhiteListRule, eventId: String, eventData: FeatureUsageData) {
     val context = EventContext.create(eventId, eventData.build())
-    doTest(ValidationResultType.ACCEPTED, validator, eventId, context)
+    doTest(ValidationResultType.ACCEPTED, validator, context.eventId, context)
   }
 
   private fun doRejectEventId(validator: CustomWhiteListRule, eventId: String, eventData: FeatureUsageData) {
     val context = EventContext.create(eventId, eventData.build())
-    doTest(ValidationResultType.REJECTED, validator, eventId, context)
+    doTest(ValidationResultType.REJECTED, validator, context.eventId, context)
   }
 
   private fun doTest(expected: ValidationResultType, validator: CustomWhiteListRule, data: String, context: EventContext) {
@@ -42,6 +42,19 @@ class FeatureUsageCustomValidatorsTest : LightPlatformTestCase() {
   }
 
   @Test
+  fun `test validate module facet by id with spaces`() {
+    val disposable = Disposer.newDisposable()
+    try {
+      TestUsageStatisticsFacetType.registerTestFacetTypeWithSpace(disposable)
+      val validator = FacetTypeUsageCollector.FacetTypeUtilValidator()
+      doValidateEventId(validator, "Test Usage Statistics Facet", FeatureUsageData())
+    }
+    finally {
+      Disposer.dispose(disposable)
+    }
+  }
+
+  @Test
   fun `test validate third party module facet`() {
     val validator = FacetTypeUsageCollector.FacetTypeUtilValidator()
     doValidateEventId(validator, "third.party", FeatureUsageData())
@@ -54,6 +67,19 @@ class FeatureUsageCustomValidatorsTest : LightPlatformTestCase() {
       TestUsageStatisticsFacetType.registerTestFacetType(disposable)
       val validator = FacetTypeUsageCollector.FacetTypeUtilValidator()
       doRejectEventId(validator, "UnknownFacet", FeatureUsageData())
+    }
+    finally {
+      Disposer.dispose(disposable)
+    }
+  }
+
+  @Test
+  fun `test rejected unknown module facet with spaces`() {
+    val disposable = Disposer.newDisposable()
+    try {
+      TestUsageStatisticsFacetType.registerTestFacetType(disposable)
+      val validator = FacetTypeUsageCollector.FacetTypeUtilValidator()
+      doRejectEventId(validator, "Unknown Facet", FeatureUsageData())
     }
     finally {
       Disposer.dispose(disposable)

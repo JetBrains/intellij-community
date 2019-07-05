@@ -114,6 +114,18 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
   }
 
   @Test
+  fun test_simple_enum_rules_with_spaces() {
+    val validator = createTestSensitiveDataValidator(loadContent("test_simple_enum_rules.json"))
+
+    val elg = EventLogGroup("my.simple.enum.node.ref", 1)
+    assertEventAccepted(validator, elg, "NODE REF AAA")
+    assertEventAccepted(validator, elg, "NOD'E;REF:BBB")
+    assertEventAccepted(validator, elg, "NO\"DE REF CCC")
+
+    assertEventRejected(validator, elg, "NODEREFCCC")
+  }
+
+  @Test
   fun test_simple_regexp_rules() {
     // custom regexp is:   (.+)\s*:\s*(.*)  => matches  'aaa/java.lang.String'
     val validator = createTestSensitiveDataValidator(loadContent("test_simple_regexp_rules.json"))
@@ -136,6 +148,19 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
   }
 
   @Test
+  fun test_simple_regexp_rules_with_spaces() {
+    // custom regexp is:   [AB]_(.*) => matches  'A_x', 'A x'
+    val validator = createTestSensitiveDataValidator(loadContent("test_simple_regexp_rules.json"))
+
+    val elg = EventLogGroup("my.simple.regexp.with.underscore", 1)
+    assertEventAccepted(validator, elg, "A_x")
+    assertEventAccepted(validator, elg, "A x")
+    assertEventAccepted(validator, elg, "B:x")
+    assertEventAccepted(validator, elg, "B x")
+    assertEventRejected(validator, elg, "Bxx")
+  }
+
+  @Test
   fun test_simple_expression_rules() {
     // custom expression is:   "JUST_TEXT[_{regexp:\\d+(\\+)?}_]_xxx_{enum:AAA|BBB|CCC}_zzz{enum#myEnum}_yyy"
     val validator = createTestSensitiveDataValidator(loadContent("test_simple_expression_rules.json"))
@@ -153,6 +178,17 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
     assertEventAccepted(validator, elg, "foo")
     assertEventRejected(validator, elg, " foo")
     assertEventRejected(validator, elg, " AAA foo")
+  }
+
+  @Test
+  fun test_simple_expression_rules_with_spaces() {
+    // custom expression is:   "JUST_TEXT[_{regexp:\\d+(\\+)?}_]_xxx_{enum:AAA|BBB|CCC}_zzz{enum#myEnum}_yyy"
+    val validator = createTestSensitiveDataValidator(loadContent("test_simple_expression_rules.json"))
+    val elg = EventLogGroup("my.simple.expression", 1)
+
+    assertEventAccepted(validator, elg, "JUST_TEXT[_123456_]_xxx_CCC_zzzREF_AAA_yyy")
+    assertEventAccepted(validator, elg, "JUST TEXT[_123456_]_xxx CCC,zzzREF:AAA;yyy")
+    assertEventRejected(validator, elg, "JUSTTEXT[_123456_]_xxx!CCC_zzzREF:AAA;yyy")
   }
 //  @Test
 //  fun test_simple_util_rules() {
