@@ -92,11 +92,6 @@ public class DiffTree<OT, NT> {
 
   @NotNull
   private CompareResult build(@NotNull OT oldNode, @NotNull NT newNode, int level, @NotNull DiffTreeChangeBuilder<? super OT, ? super NT> consumer) {
-    if (level > 1000) {
-      consumer.nodeReplaced(oldNode, newNode);
-      return CompareResult.NOT_EQUAL;
-    }
-
     if (level == myNewChildrenLists.size()) {
       myNewChildrenLists.add(new Ref<>());
       myOldChildrenLists.add(new Ref<>());

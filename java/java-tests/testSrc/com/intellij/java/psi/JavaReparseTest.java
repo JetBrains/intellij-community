@@ -30,6 +30,7 @@ import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.annotations.Language;
@@ -245,7 +246,7 @@ public class JavaReparseTest extends AbstractReparseTestCase {
     assertEquals(treeBefore, treeAfter);
   }
 
-  public void testChangingVeryDeepTreeLeavesPsiTextConsistent() {
+  public void testChangingVeryDeepTreePerformance() {
     String call1 = "a('b').";
     String call2 = "c(new Some()).";
     String suffix = "x(); } }";
@@ -255,11 +256,16 @@ public class JavaReparseTest extends AbstractReparseTestCase {
     Document document = pdm.getDocument(file);
 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      document.insertString(document.getTextLength() - suffix.length(), call1);
-      pdm.commitDocument(document);
+      PlatformTestUtil.startPerformanceTest("deep reparse", 200, () -> {
+        document.insertString(document.getTextLength() - suffix.length(), call1);
+        pdm.commitDocument(document);
 
-      document.insertString(document.getTextLength() - suffix.length(), call2);
-      pdm.commitDocument(document);
+        document.insertString(document.getTextLength() - suffix.length(), call2);
+        pdm.commitDocument(document);
+
+        document.insertString(document.getTextLength() - suffix.length(), "\n");
+        pdm.commitDocument(document);
+      }).assertTiming();
 
       PsiTestUtil.checkFileStructure(file);
     });
