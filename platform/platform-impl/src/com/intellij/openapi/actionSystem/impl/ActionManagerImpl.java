@@ -815,7 +815,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  /**\
+  /**
    * @param element description of link
    */
   private void processAddToGroupNode(AnAction action, Element element, final PluginId pluginId, boolean secondary) {
@@ -824,9 +824,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       assertActionIsGroupOrStub(action);
     }
 
-    String actionName = String.format(
-      "%s (%s)", action instanceof ActionStub? ((ActionStub)action).getClassName() : action.getClass().getName(),
-      action instanceof ActionStub ? ((ActionStub)action).getId() : myAction2Id.get(action));
+    String name = action instanceof ActionStub ? ((ActionStub)action).getClassName() : action.getClass().getName();
+    String id = action instanceof ActionStub ? ((ActionStub)action).getId() : myAction2Id.get(action);
+    String actionName = name + " (" + id + ")";
 
     if (!ADD_TO_GROUP_ELEMENT_NAME.equals(element.getName())) {
       reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
