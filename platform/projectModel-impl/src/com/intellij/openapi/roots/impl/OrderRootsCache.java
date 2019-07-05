@@ -16,7 +16,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -24,7 +24,7 @@ import java.util.function.Supplier;
  * @author nik
  */
 class OrderRootsCache {
-  private final AtomicReference<Map<CacheKey, VirtualFilePointerContainer>> myRoots = new AtomicReference<>();
+  private final AtomicReference<ConcurrentMap<CacheKey, VirtualFilePointerContainer>> myRoots = new AtomicReference<>();
   private final Disposable myParentDisposable;
   private Disposable myRootsDisposable; // accessed in EDT
 
@@ -43,8 +43,8 @@ class OrderRootsCache {
   }
 
   private static final VirtualFilePointerContainer EMPTY = ObjectUtils.sentinel("Empty roots container", VirtualFilePointerContainer.class);
-  @NotNull
-  private VirtualFilePointerContainer setCachedRoots(@NotNull CacheKey key, @NotNull Collection<String> urls) {
+
+  private VirtualFilePointerContainer createContainer(@NotNull Collection<String> urls) {
     // optimization: avoid creating heavy container for empty list, use 'EMPTY' stub for that case
     VirtualFilePointerContainer container;
     if (urls.isEmpty()) {
@@ -54,21 +54,18 @@ class OrderRootsCache {
       container = VirtualFilePointerManager.getInstance().createContainer(myRootsDisposable);
       ((VirtualFilePointerContainerImpl)container).addAll(urls);
     }
-    Map<CacheKey, VirtualFilePointerContainer> map = myRoots.get();
-    if (map == null) map = ConcurrencyUtil.cacheOrGet(myRoots, ContainerUtil.newConcurrentMap());
-    map.put(key, container);
     return container;
   }
 
   private VirtualFilePointerContainer getOrComputeContainer(@NotNull OrderRootType rootType,
                                                             int flags,
-                                                            @NotNull Supplier<? extends Collection<String>> computer) {
-    Map<CacheKey, VirtualFilePointerContainer> map = myRoots.get();
+                                                            @NotNull Supplier<? extends Collection<String>> rootUrlsComputer) {
+    ConcurrentMap<CacheKey, VirtualFilePointerContainer> map = myRoots.get();
     CacheKey key = new CacheKey(rootType, flags);
     VirtualFilePointerContainer cached = map == null ? null : map.get(key);
     if (cached == null) {
-      Collection<String> roots = computer.get();
-      cached = setCachedRoots(key, roots);
+      map = ConcurrencyUtil.cacheOrGet(myRoots, ContainerUtil.newConcurrentMap());
+      cached = map.computeIfAbsent(key, __ -> createContainer(rootUrlsComputer.get()));
     }
     return cached == EMPTY ? null : cached;
   }
