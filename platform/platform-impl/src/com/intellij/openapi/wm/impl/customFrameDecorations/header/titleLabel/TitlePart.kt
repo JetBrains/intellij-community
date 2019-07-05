@@ -18,7 +18,7 @@ interface TitlePart {
   val longWidth: Int
   val shortWidth: Int
 
-  val toolTip: String
+  val toolTipPart: String
   val isClipped: Boolean
 
   fun refresh()
@@ -28,6 +28,8 @@ interface TitlePart {
 
   fun showLong()
   fun showShort()
+
+  fun setToolTip(value: String?)
 }
 
 interface BaseTitlePart : TitlePart {

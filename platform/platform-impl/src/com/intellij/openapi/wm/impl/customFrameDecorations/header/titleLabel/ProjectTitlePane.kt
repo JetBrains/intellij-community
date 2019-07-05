@@ -31,6 +31,11 @@ class ProjectTitlePane : ShrinkingTitlePart {
     isOpaque = false
   }
 
+  override fun setToolTip(value: String?) {
+    unparsed.setToolTip(value)
+    projectTitle.setToolTip(value)
+  }
+
   override val component: JComponent
     get() = pane
 
@@ -75,8 +80,8 @@ class ProjectTitlePane : ShrinkingTitlePart {
     get() = if (parsed) projectTitle.longWidth else unparsed.longWidth
   override val shortWidth: Int
     get() = if (parsed) projectTitle.shortWidth else unparsed.shortWidth
-  override val toolTip: String
-    get() = unparsed.toolTip
+  override val toolTipPart: String
+    get() = unparsed.toolTipPart
   override val isClipped: Boolean
     get() = if (parsed) projectTitle.isClipped else unparsed.isClipped
 
@@ -152,6 +157,11 @@ class ProjectTitle : ShrinkingTitlePart {
     isOpaque = false
   }
 
+  override fun setToolTip(value: String?) {
+    label.toolTipText = value
+    description.setToolTip(value)
+  }
+
   override val component: JComponent
     get() = pane
 
@@ -179,7 +189,7 @@ class ProjectTitle : ShrinkingTitlePart {
     get() = longTextWidth
   override val shortWidth: Int
     get() = projectTextWidth
-  override val toolTip: String
+  override val toolTipPart: String
     get() = if (state == TitlePart.State.IGNORED || project.isEmpty()) "" else project
 
   override fun hide() {
