@@ -167,4 +167,21 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
                                "Debug 'Main_class_test.main()'\n" +
                                "Run 'Main_class_test.main()' with Coverage"));
   }
+
+  public void testEditConfigurationAction() {
+    myFixture.configureByText("MainTest.java", "public class MainTest {\n" +
+                                               "    public static void ma<caret>in(String[] args) {\n" +
+                                               "    }\n" +
+                                               "}");
+    List<GutterMark> marks = myFixture.findGuttersAtCaret();
+    assertEquals(1, marks.size());
+    GutterIconRenderer mark = (GutterIconRenderer)marks.get(0);
+    AnAction[] children = mark.getPopupMenuActions().getChildren(new TestActionEvent());
+    AnAction action = ContainerUtil.find(children, t -> t.getTemplateText().startsWith("Create"));
+    assertNotNull(action);
+    myFixture.testAction(action);
+    TestActionEvent event = new TestActionEvent();
+    action.update(event);
+    assertTrue(event.getPresentation().getText().startsWith("Edit"));
+  }
 }
