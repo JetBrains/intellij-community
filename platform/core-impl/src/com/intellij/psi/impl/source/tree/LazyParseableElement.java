@@ -122,15 +122,6 @@ public class LazyParseableElement extends CompositeElement {
   }
 
   @Override
-  public int getNotCachedLength() {
-    CharSequence text = myText();
-    if (text != null) {
-      return text.length();
-    }
-    return super.getNotCachedLength();
-  }
-
-  @Override
   public int hc() {
     CharSequence text = myText();
     return text == null ? super.hc() : LeafElement.leafHC(text);

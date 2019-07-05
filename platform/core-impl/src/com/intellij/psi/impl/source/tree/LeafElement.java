@@ -235,13 +235,8 @@ public abstract class LeafElement extends TreeElement {
   }
 
   @Override
-  public int getNotCachedLength() {
-    return myText.length();
-  }
-
-  @Override
   public int getCachedLength() {
-    return getNotCachedLength();
+    return myText.length();
   }
 
   @NotNull

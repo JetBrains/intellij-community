@@ -102,8 +102,6 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
   @Override
   public abstract TreeElement getLastChildNode();
 
-  public abstract int getNotCachedLength();
-
   public abstract int getCachedLength();
 
   @Override
