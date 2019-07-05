@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.MockLanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.DebugUtil;
@@ -29,6 +30,7 @@ import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
@@ -241,5 +243,25 @@ public class JavaReparseTest extends AbstractReparseTestCase {
     });
     String treeAfter = DebugUtil.psiTreeToString(myDummyFile, true);
     assertEquals(treeBefore, treeAfter);
+  }
+
+  public void testChangingVeryDeepTreeLeavesPsiTextConsistent() {
+    String call1 = "a('b').";
+    String call2 = "c(new Some()).";
+    String suffix = "x(); } }";
+    PsiFile file = myFixture.addFileToProject("a.java", "class Foo { { u." + StringUtil.repeat(call1 + call2, 500) + suffix);
+
+    PsiDocumentManager pdm = PsiDocumentManager.getInstance(getProject());
+    Document document = pdm.getDocument(file);
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      document.insertString(document.getTextLength() - suffix.length(), call1);
+      pdm.commitDocument(document);
+
+      document.insertString(document.getTextLength() - suffix.length(), call2);
+      pdm.commitDocument(document);
+
+      PsiTestUtil.checkFileStructure(file);
+    });
   }
 }
