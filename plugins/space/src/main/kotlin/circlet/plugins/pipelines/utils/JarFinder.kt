@@ -6,8 +6,22 @@ import kotlin.reflect.*
 
 //todo check if it's legal
 fun find(clazz: KClass<*>, name: String): URL {
-    return (clazz.java.classLoader as PluginClassLoader).urls.firstOrNull {
-        x -> x.file.contains("/$name")  }
-        ?: error("can't find $name jar")
+    // todo fix this very very strange code
+    val loader = clazz.java.classLoader
+    when (loader) {
+        is PluginClassLoader -> { // then idea starts with plugin
+            return loader.urls.firstOrNull {
+                x -> x.file.contains("/$name")  }
+                ?: error("can't find $name jar")
+        }
 
+        is URLClassLoader -> { // then running tests
+            return loader.urLs.firstOrNull {
+                x -> x.file.contains("/$name")  }
+                ?: error("can't find $name jar")
+        }
+        else -> {
+            error("unknown ")
+        }
+    }
 }
