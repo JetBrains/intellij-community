@@ -4,7 +4,7 @@ package com.intellij.openapi.fileTypes;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.RequiredElement;
+import com.intellij.openapi.extensions.RequiredElement;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.util.ArrayList;
