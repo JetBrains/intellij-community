@@ -2,14 +2,10 @@
 package com.intellij.vcs.log.statistics
 
 import com.intellij.internal.statistic.beans.MetricEvent
-import com.intellij.internal.statistic.beans.UsageDescriptor
 import com.intellij.internal.statistic.beans.newCounterMetric
 import com.intellij.internal.statistic.beans.newMetric
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
-import com.intellij.internal.statistic.utils.getBooleanUsage
-import com.intellij.internal.statistic.utils.getCountingUsage
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceManager.getService
 import com.intellij.openapi.components.ServiceManager.getServiceIfCreated
@@ -54,8 +50,6 @@ class VcsLogIndexProjectStatisticsCollector : ProjectUsagesCollector() {
     val usages = mutableSetOf<MetricEvent>()
 
     getIndexCollector(project)?.state?.let { indexCollectorState ->
-      usages.add(newCounterMetric("indexing.too.long.notification", indexCollectorState.indexingTooLongNotification))
-      usages.add(newCounterMetric("resume.indexing.click", indexCollectorState.resumeClick))
       val indexingTime = TimeUnit.MILLISECONDS.toMinutes(indexCollectorState.indexTime).toInt()
       usages.add(newCounterMetric("indexing.time.minutes", indexingTime))
     }
@@ -79,14 +73,10 @@ class VcsLogIndexProjectStatisticsCollector : ProjectUsagesCollector() {
 }
 
 class VcsLogIndexCollectorState {
-  var indexingTooLongNotification: Int = 0
-  var resumeClick: Int = 0
   var indexTime: Long = 0
 
   fun copy(): VcsLogIndexCollectorState {
     val copy = VcsLogIndexCollectorState()
-    copy.indexingTooLongNotification = indexingTooLongNotification
-    copy.resumeClick = resumeClick
     copy.indexTime = indexTime
     return copy
   }
@@ -113,18 +103,6 @@ class VcsLogIndexCollector : PersistentStateComponent<VcsLogIndexCollectorState>
   override fun loadState(state: VcsLogIndexCollectorState) {
     synchronized(lock) {
       this.state = state
-    }
-  }
-
-  fun reportIndexingTooLongNotification() {
-    synchronized(lock) {
-      state.indexingTooLongNotification++
-    }
-  }
-
-  fun reportResumeClick() {
-    synchronized(lock) {
-      state.resumeClick++
     }
   }
 
