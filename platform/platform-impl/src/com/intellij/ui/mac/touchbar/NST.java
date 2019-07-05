@@ -210,7 +210,7 @@ public class NST {
     final Memory mem = _packItems(items, fromIndex, itemsCount);
     ourNSTLibrary.appendScrubberItems(scrubObj, mem, mem == null ? 0 : (int)mem.size()); // called from AppKit, uses per-event autorelease-pool
   }
-  public static void enableScrubberItem(ID scrubObj, Collection<Integer> indices, boolean enabled) {
+  public static void enableScrubberItems(ID scrubObj, Collection<Integer> indices, boolean enabled) {
     if (indices == null || indices.isEmpty())
       return;
     final Memory mem = _makeIndices(indices);

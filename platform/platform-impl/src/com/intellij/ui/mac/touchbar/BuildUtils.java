@@ -249,6 +249,8 @@ class BuildUtils {
     final TBItemScrubber scrub = result.addScrubber();
     final @NotNull ListPopupStep listPopupStep = listPopup.getListStep();
     final @NotNull List stepValues = listPopupStep.getValues();
+    final List<Integer> disabledItems = new ArrayList<>();
+    int currIndex = 0;
     for (Object obj : stepValues) {
       final Icon ic = listPopupStep.getIconFor(obj);
       String txt = listPopupStep.getTextFor(obj);
@@ -275,9 +277,14 @@ class BuildUtils {
           app.invokeLater(edtAction, ms);
       };
       scrub.addItem(ic, txt, action);
+      if (!listPopupStep.isSelectable(obj)) {
+        disabledItems.add(currIndex);
+      }
+      ++currIndex;
     }
 
     result.selectVisibleItemsToShow();
+    scrub.enableItems(disabledItems, false);
     return result;
   }
 

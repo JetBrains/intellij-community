@@ -96,7 +96,7 @@ public class TouchbarTest {
         txt = "enable";
         action = ()->SwingUtilities.invokeLater(()->{
           ourEnabled = !ourEnabled;
-          NST.enableScrubberItem(scrubber.myNativePeer, _makeRandomCollection(size - 1), ourEnabled);
+          NST.enableScrubberItems(scrubber.myNativePeer, _makeRandomCollection(size - 1), ourEnabled);
         });
       }
 
