@@ -4,6 +4,7 @@ package com.intellij.util.io
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.CharsetToolkit
+import com.intellij.util.containers.ContainerUtil
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -244,7 +245,7 @@ inline fun <R> Path.directoryStreamIfExists(noinline filter: ((path: Path) -> Bo
 
 private val LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileUtil")
 
-private val illegalChars = setOf('/', '\\', '?', '<', '>', ':', '*', '|', '"', ':')
+private val illegalChars = ContainerUtil.set('/', '\\', '?', '<', '>', ':', '*', '|', '"', ':')
 
 // https://github.com/parshap/node-sanitize-filename/blob/master/index.js
 fun sanitizeFileName(name: String, replacement: String? = "_", isTruncate: Boolean = true): String {
