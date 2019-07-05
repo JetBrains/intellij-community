@@ -20,7 +20,9 @@ import org.jetbrains.plugins.textmate.language.syntax.SyntaxNodeDescriptor;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh;
 import org.jetbrains.plugins.textmate.plist.Plist;
 import org.jetbrains.plugins.textmate.regex.MatchData;
+import org.jetbrains.plugins.textmate.regex.RegexUtil;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -156,16 +158,19 @@ public class TextMateHighlightingLexer extends LexerBase implements DataStorageF
       return;
     }
     int linePosition = 0;
+    int lineByteOffset = 0;
     String line = myBuffer.subSequence(startLineOffset, endLineOffset).toString();
     if (!line.endsWith("\n")) {
       line += "\n";
     }
     LOG.debug("Highlighting line: " + line);
+
+    byte[] lineBytes = line.getBytes(StandardCharsets.UTF_8);
     final HashMultiset<List<TextMateLexerState>> localStates = HashMultiset.create();
     while (true) {
       final TextMateLexerState lexerState = myStates.peek();
       if (lexerState.syntaxRule.getStringAttribute(Constants.WHILE_KEY) != null
-          && !SyntaxMatchUtils.matchStringRegex(Constants.WHILE_KEY, line, lexerState, linePosition).matched()) {
+          && !SyntaxMatchUtils.matchStringRegex(Constants.WHILE_KEY, lineBytes, lineByteOffset, lexerState).matched()) {
         closeScopeSelector(linePosition + startLineOffset);
         closeScopeSelector(linePosition + startLineOffset);
         myStates.pop();
@@ -181,43 +186,43 @@ public class TextMateHighlightingLexer extends LexerBase implements DataStorageF
 
       String currentScope = SyntaxMatchUtils.selectorsToScope(openedTags);
       TextMateLexerState currentState =
-        SyntaxMatchUtils.matchFirst(lastRule, line, linePosition, TextMateWeigh.Priority.NORMAL, currentScope);
+        SyntaxMatchUtils.matchFirst(lastRule, lineBytes, lineByteOffset, TextMateWeigh.Priority.NORMAL, currentScope);
       SyntaxNodeDescriptor currentRule = currentState.syntaxRule;
       MatchData currentMatch = currentState.matchData;
 
       int endPosition;
-      MatchData endMatch = SyntaxMatchUtils.matchStringRegex(Constants.END_KEY, line, lastState, linePosition);
+      MatchData endMatch = SyntaxMatchUtils.matchStringRegex(Constants.END_KEY, lineBytes, lineByteOffset, lastState);
       if (endMatch.matched() && (!currentMatch.matched() ||
-                                 currentMatch.offset().getStartOffset() >= endMatch.offset().getStartOffset() ||
+                                 currentMatch.byteOffset().getStartOffset() >= endMatch.byteOffset().getStartOffset() ||
                                  lastState.equals(currentState))) {
         myStates.pop();
-        int startPosition = endPosition = endMatch.offset().getStartOffset();
+        int startPosition = endPosition = endMatch.charOffset(lineBytes).getStartOffset();
         closeScopeSelector(startPosition + startLineOffset); // closing content scope
         if (lastRule.getPlistAttribute(Constants.END_CAPTURES_KEY) == null
             && lastRule.getPlistAttribute(Constants.CAPTURES_KEY) == null
             && lastRule.getPlistAttribute(Constants.BEGIN_CAPTURES_KEY) == null
             ||
-            parseCaptures(Constants.END_CAPTURES_KEY, lastRule, endMatch, startLineOffset)
+            parseCaptures(Constants.END_CAPTURES_KEY, lastRule, endMatch, lineBytes, startLineOffset)
             ||
-            parseCaptures(Constants.CAPTURES_KEY, lastRule, endMatch, startLineOffset)) {
+            parseCaptures(Constants.CAPTURES_KEY, lastRule, endMatch, lineBytes, startLineOffset)) {
           // move line position only if anything was captured or if there is nothing to capture at all
-          endPosition = endMatch.offset().getEndOffset();
+          endPosition = endMatch.charOffset(lineBytes).getEndOffset();
         }
         closeScopeSelector(endPosition + startLineOffset); // closing basic scope
       }
       else if (currentMatch.matched()) {
-        int startPosition = currentMatch.offset().getStartOffset();
-        endPosition = currentMatch.offset().getEndOffset();
+        int startPosition = currentMatch.charOffset(lineBytes).getStartOffset();
+        endPosition = currentMatch.charOffset(lineBytes).getEndOffset();
         if (currentRule.getRegexAttribute(Constants.BEGIN_KEY) != null) {
           openScopeSelector(currentRule.getStringAttribute(Constants.NAME_KEY), startPosition + startLineOffset);
-          parseCaptures(Constants.BEGIN_CAPTURES_KEY, currentRule, currentMatch, startLineOffset);
-          parseCaptures(Constants.CAPTURES_KEY, currentRule, currentMatch, startLineOffset);
+          parseCaptures(Constants.BEGIN_CAPTURES_KEY, currentRule, currentMatch, lineBytes, startLineOffset);
+          parseCaptures(Constants.CAPTURES_KEY, currentRule, currentMatch, lineBytes, startLineOffset);
           openScopeSelector(currentRule.getStringAttribute(Constants.CONTENT_NAME_KEY), endPosition + startLineOffset);
           myStates.push(currentState);
         }
         else if (currentRule.getRegexAttribute(Constants.MATCH_KEY) != null) {
           openScopeSelector(currentRule.getStringAttribute(Constants.NAME_KEY), startPosition + startLineOffset);
-          parseCaptures(Constants.CAPTURES_KEY, currentRule, currentMatch, startLineOffset);
+          parseCaptures(Constants.CAPTURES_KEY, currentRule, currentMatch, lineBytes, startLineOffset);
           closeScopeSelector(endPosition + startLineOffset);
         }
       }
@@ -251,6 +256,7 @@ public class TextMateHighlightingLexer extends LexerBase implements DataStorageF
         // clear local states history on position changing
         localStates.clear();
         linePosition = endPosition;
+        lineByteOffset = RegexUtil.byteOffsetByCharOffset(line, linePosition);
       }
 
       final Application application = ApplicationManager.getApplication();
@@ -292,10 +298,10 @@ public class TextMateHighlightingLexer extends LexerBase implements DataStorageF
     }
   }
 
-  private boolean parseCaptures(String capturesKey, SyntaxNodeDescriptor rule, MatchData matchData, int startLineOffset) {
+  private boolean parseCaptures(String capturesKey, SyntaxNodeDescriptor rule, MatchData matchData, byte[] lineBytes, int startLineOffset) {
     Plist captures = rule.getPlistAttribute(capturesKey);
     if (captures != null) {
-      List<CaptureMatchData> matches = SyntaxMatchUtils.matchCaptures(captures, matchData);
+      List<CaptureMatchData> matches = SyntaxMatchUtils.matchCaptures(captures, matchData, lineBytes);
       Stack<CaptureMatchData> starts = new Stack<>(ContainerUtil.sorted(matches, CaptureMatchData.START_OFFSET_ORDERING));
       Stack<CaptureMatchData> ends = new Stack<>(ContainerUtil.sorted(matches, CaptureMatchData.END_OFFSET_ORDERING));
       while (!starts.isEmpty() || !ends.isEmpty()) {
