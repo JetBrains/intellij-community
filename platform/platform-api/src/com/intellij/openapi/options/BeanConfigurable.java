@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Setter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UI;
 import kotlin.reflect.KMutableProperty0;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -264,7 +265,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable {
     for (BeanField field: myFields) {
       panel.add(field.getComponent());
     }
-    return panel;
+    return UI.Panels.simplePanel().addToTop(panel);
   }
 
   @Override
