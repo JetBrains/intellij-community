@@ -34,9 +34,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-public class IdeaPluginRegistrationIndex
-  extends FileBasedIndexExtension<String, List<RegistrationEntry>>
-  implements PsiDependentIndex {
+public class IdeaPluginRegistrationIndex extends FileBasedIndexExtension<String, List<RegistrationEntry>> {
 
   private static final int INDEX_VERSION = 1;
 

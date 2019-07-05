@@ -53,7 +53,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.psi.impl.source.tree.JavaElementType.*;
 
-public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<FunctionalExpressionKey, Map<Integer, FunExprOccurrence>> implements PsiDependentIndex {
+public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<FunctionalExpressionKey, Map<Integer, FunExprOccurrence>> {
   public static final ID<FunctionalExpressionKey, Map<Integer, FunExprOccurrence>> INDEX_ID = ID.create("java.fun.expression");
   private static final KeyDescriptor<FunctionalExpressionKey> KEY_DESCRIPTOR = new KeyDescriptor<FunctionalExpressionKey>() {
     @Override

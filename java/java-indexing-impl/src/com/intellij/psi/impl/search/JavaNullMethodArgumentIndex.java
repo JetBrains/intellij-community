@@ -35,7 +35,7 @@ import java.util.*;
 
 import static com.intellij.psi.impl.source.tree.JavaElementType.*;
 
-public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMethodArgumentIndex.MethodCallData> implements PsiDependentIndex {
+public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMethodArgumentIndex.MethodCallData> {
   private static final Logger LOG = Logger.getInstance(JavaNullMethodArgumentIndex.class);
 
   public static final ID<MethodCallData, Void> INDEX_ID = ID.create("java.null.method.argument");

@@ -61,7 +61,7 @@ private fun resolveFieldFromIndexValue(method: PsiMethodImpl, isGetter: Boolean)
 
 data class PropertyIndexValue(val propertyRefText: String, val getter: Boolean)
 
-class JavaSimplePropertyIndex : FileBasedIndexExtension<Int, PropertyIndexValue>(), PsiDependentIndex {
+class JavaSimplePropertyIndex : FileBasedIndexExtension<Int, PropertyIndexValue>() {
   private val allowedExpressions by lazy {
     TokenSet.create(ElementType.REFERENCE_EXPRESSION, ElementType.THIS_EXPRESSION, ElementType.SUPER_EXPRESSION)
   }
