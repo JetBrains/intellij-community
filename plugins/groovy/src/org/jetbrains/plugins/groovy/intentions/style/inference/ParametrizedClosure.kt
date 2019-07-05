@@ -29,11 +29,8 @@ class ParametrizedClosure(val parameter: GrParameter) {
     "${typeParameters.joinToString(prefix = "<", postfix = ">") { it.text }} Closure ${types.joinToString(prefix = "(", postfix = ")")}"
 
 
-  fun renderTypes(elementFactory: GroovyPsiElementFactory) {
+  fun renderTypes() {
     parameter.modifierList.addAnnotation("$CLOSURE_PARAMS(value=$FROM_STRING, options=[\"${types.joinToString(",") { tryToExtractUnqualifiedName(it.canonicalText) }}\"])")
-    //parameter.addBefore(elementFactory.createAnnotationFromText(
-    //  "@$CLOSURE_PARAMS_FQ(value=$FROM_STRING_FQ, options=[\"${types.joinToString(",") { tryToExtractUnqualifiedName(it.canonicalText) }}\"])"),
-    //                    parameter.firstChild)
   }
 
   fun substituteTypes(resultSubstitutor: PsiSubstitutor) {

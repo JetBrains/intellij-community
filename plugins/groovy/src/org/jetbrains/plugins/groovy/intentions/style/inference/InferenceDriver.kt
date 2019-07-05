@@ -15,6 +15,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperat
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.*
 import java.util.*
@@ -140,12 +141,23 @@ class InferenceDriver(val method: GrMethod) {
 
 
   fun collectOuterCalls(session: GroovyInferenceSession) {
-    collectOuterMethodCalls(session)
-    virtualMethod.parameters.zip(method.parameters).forEach { (virtualParameter, actualParameter) ->
-      if (virtualParameter in closureParameters.keys) {
-        setUpClosuresSignature(session, closureParameters[virtualParameter]!!, ReferencesSearch.search(actualParameter).findAll())
+    for (parameter in closureParameters.keys) {
+      // allows to resolve Closure#call
+      parameter.setType(elementFactory.createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_CLOSURE))
+    }
+    val innerUsages = virtualMethod.block
+      ?.controlFlow
+      ?.filterIsInstance<ReadWriteVariableInstruction>()
+      ?.groupBy { it.element?.reference?.resolve() }
+    innerUsages?.run {
+      closureParameters.keys.forEach {
+        if (containsKey(it)) {
+          setUpClosuresSignature(session, closureParameters[it]!!, getValue(it))
+        }
+        it.setType(parameterIndex[it]!!.type())
       }
     }
+    collectOuterMethodCalls(session)
   }
 
 
@@ -330,7 +342,7 @@ class InferenceDriver(val method: GrMethod) {
         isClosureType(param.type) -> {
           closureParameters[param]?.run {
             substituteTypes(resultSubstitutor)
-            renderTypes(elementFactory)
+            renderTypes()
           }
         }
         param.type is PsiArrayType -> param.setType(
