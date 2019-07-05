@@ -165,6 +165,16 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     return myLineNumber;
   }
 
+  public int getLineStartOffset() {
+    PsiElement psiElement = getPsiElement();
+    if (psiElement == null || !psiElement.isValid()) return -1;
+    InjectedLanguageManager manager = InjectedLanguageManager.getInstance(psiElement.getProject());
+    PsiFile containingFile = manager.getTopLevelFile(psiElement);
+    Document document = PsiDocumentManager.getInstance(psiElement.getProject()).getDocument(containingFile);
+    if (document == null) return -1;
+    return document.getLineStartOffset(getLineNumber());
+  }
+
   @NotNull
   @Override
   public ProblemHighlightType getHighlightType() {
