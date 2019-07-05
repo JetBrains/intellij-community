@@ -229,7 +229,7 @@ open class SelectedEditorFilePath {
       }
     }
 
-    components.forEach { it.component.toolTipText = if (!isClipped()) null else "${projectTitle.toolTip}${classTitle.toolTip}${productTitle.toolTip}${productVersion.toolTip}" }
+    components.forEach { it.setToolTip(if (!isClipped()) null else "${projectTitle.toolTipPart}${classTitle.toolTipPart}${productTitle.toolTipPart}${productVersion.toolTipPart}") }
 
   }
 }
