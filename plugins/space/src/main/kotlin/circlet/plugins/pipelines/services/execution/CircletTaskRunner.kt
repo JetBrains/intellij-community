@@ -2,6 +2,7 @@ package circlet.plugins.pipelines.services.execution
 
 import circlet.pipelines.config.api.*
 import circlet.pipelines.engine.*
+import circlet.pipelines.engine.api.*
 import circlet.plugins.pipelines.services.*
 import circlet.plugins.pipelines.viewmodel.*
 import com.intellij.execution.process.*
