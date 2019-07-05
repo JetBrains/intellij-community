@@ -281,7 +281,7 @@ public class ShelvedChangesViewManager implements Disposable {
         updateViewContent();
         myPostUpdateEdtActivity.forEach(Runnable::run);
         myPostUpdateEdtActivity.clear();
-      }, ModalityState.NON_MODAL);
+      }, ModalityState.NON_MODAL, myProject.getDisposed());
     });
   }
 
