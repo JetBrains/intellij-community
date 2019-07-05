@@ -556,7 +556,9 @@ public class ExternalSystemApiUtil {
     }
   }
 
-  private static String stacktraceAsString(Throwable unwrapped) {
+  @NotNull
+  public static String stacktraceAsString(@NotNull Throwable throwable) {
+    Throwable unwrapped = RemoteUtil.unwrap(throwable);
     StringWriter writer = new StringWriter();
     unwrapped.printStackTrace(new PrintWriter(writer));
     return writer.toString();
