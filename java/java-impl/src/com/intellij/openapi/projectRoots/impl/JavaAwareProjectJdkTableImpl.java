@@ -53,12 +53,7 @@ public class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
   @Override
   public void loadState(@NotNull Element element) {
     myInternalJdk = null;
-    try {
-      super.loadState(element);
-    }
-    finally {
-      getInternalJdk();
-    }
+    super.loadState(element);
   }
 
   @TestOnly
