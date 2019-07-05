@@ -35,6 +35,7 @@ import com.intellij.openapi.vcs.changes.ignore.cache.PatternCache;
 import com.intellij.openapi.vcs.changes.ignore.psi.IgnoreEntry;
 import com.intellij.openapi.vcs.changes.ignore.psi.IgnoreFile;
 import com.intellij.openapi.vcs.changes.ignore.util.RegexUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -189,6 +190,24 @@ public class IgnoreReferenceSet extends FileReferenceSet {
     }
 
     myReferences = referencesList.toArray(FileReference.EMPTY);
+  }
+
+  @Override
+  protected String getNewAbsolutePath(@NotNull PsiFileSystemItem root, @NotNull String relativePath) {
+    PsiFile ignoreFile = getContainingFile();
+    if (root.getVirtualFile() != null &&
+        ignoreFile != null &&
+        ignoreFile.getVirtualFile() != null &&
+        ignoreFile.getVirtualFile().getParent() != null) {
+      VirtualFile relativeFile = VfsUtil.findRelativeFile(root.getVirtualFile(), relativePath.split(getSeparatorString()));
+      if (relativeFile != null) {
+        String relativeToIgnoreFileParent = VfsUtilCore.getRelativePath(relativeFile, ignoreFile.getVirtualFile().getParent());
+        if (relativeToIgnoreFileParent != null) {
+          return absoluteUrlNeedsStartSlash() ? "/" + relativeToIgnoreFileParent : relativeToIgnoreFileParent;
+        }
+      }
+    }
+    return super.getNewAbsolutePath(root, relativePath);
   }
 
   /**
