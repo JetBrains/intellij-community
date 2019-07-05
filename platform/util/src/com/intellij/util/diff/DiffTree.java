@@ -111,7 +111,7 @@ public class DiffTree<OT, NT> {
       result = CompareResult.NOT_EQUAL;
     }
     else if (oldChildrenSize == 0 && newChildrenSize == 0) {
-      if (!myComparator.hashCodesEqual(oldNode, newNode) || !myComparator.typesEqual(oldNode, newNode)) {
+      if (!myComparator.typesEqual(oldNode, newNode) || !myComparator.hashCodesEqual(oldNode, newNode)) {
         consumer.nodeReplaced(oldNode, newNode);
         result = CompareResult.NOT_EQUAL;
       }
@@ -273,7 +273,7 @@ public class DiffTree<OT, NT> {
       CompareResult c11 = looksEqual(oldChild, newChild);
 
       if (c11 == CompareResult.DRILL_DOWN_NEEDED) {
-        c11 = textMatch(oldChild, newChild) ? build(oldChild, newChild, level + 1, DiffTree.emptyConsumer()) : CompareResult.NOT_EQUAL;
+        c11 = textMatch(oldChild, newChild) ? build(oldChild, newChild, level + 1, emptyConsumer()) : CompareResult.NOT_EQUAL;
         assert c11 != CompareResult.DRILL_DOWN_NEEDED;
       }
       if (c11 != CompareResult.EQUAL) {

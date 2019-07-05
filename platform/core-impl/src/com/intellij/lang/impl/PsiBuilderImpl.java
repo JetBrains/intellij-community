@@ -228,7 +228,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   }
 
   private interface Node extends LighterASTNode {
-    int hc();
+    boolean tokenTextMatches(CharSequence chars);
   }
 
   public abstract static class ProductionMarker implements Node {
@@ -278,7 +278,6 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     private int myDoneLexeme = -1;
     private ProductionMarker myFirstChild;
     private ProductionMarker myLastChild;
-    private int myHC = -1;
 
     StartMarker(int markerId, PsiBuilderImpl builder) {
       super(markerId, builder);
@@ -292,31 +291,14 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       myType = null;
       myDoneLexeme = -1;
       myFirstChild = myLastChild = null;
-      myHC = -1;
     }
 
     @Override
-    public int hc() {
-      if (myHC == -1) {
-        myHC = calcHc();
+    public boolean tokenTextMatches(CharSequence chars) {
+      if (myFirstChild != null) {
+        throw new IllegalStateException("textMatches shouldn't be called on non-empty composite nodes");
       }
-      return myHC;
-    }
-
-    private int calcHc() {
-      PsiBuilderImpl builder = myBuilder;
-      int hc = 0;
-      ProductionMarker child = myFirstChild;
-      int lexIdx = myLexemeIndex;
-
-      while (child != null) {
-        int lastLeaf = child.myLexemeIndex;
-        hc += builder.fragmentHc(builder.myLexStarts[lexIdx], builder.myLexStarts[lastLeaf]) + child.hc();
-        lexIdx = child instanceof StartMarker ? child.getEndIndex() : lastLeaf;
-        child = child.myNext;
-      }
-
-      return hc + builder.fragmentHc(builder.myLexStarts[lexIdx], builder.myLexStarts[getEndIndex()]);
+      return chars.length() == 0;
     }
 
     @Override
@@ -467,17 +449,17 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   }
 
   private abstract static class Token implements Node {
-    int myHC = -1;
     StartMarker myParentNode;
 
     @Override
-    public final int hc() {
-      if (myHC == -1) {
-        myHC = getTokenType() instanceof TokenWrapper
-               ? LeafElement.leafHC(((TokenWrapper)getTokenType()).getValue())
-               : getBuilder().fragmentHc(getStartOffsetInBuilder(), getEndOffsetInBuilder());
-      }
-      return myHC;
+    public boolean tokenTextMatches(CharSequence chars) {
+      int start = getStartOffsetInBuilder();
+      int end = getEndOffsetInBuilder();
+      if (end - start != chars.length()) return false;
+
+      PsiBuilderImpl builder = getBuilder();
+      return builder.myTextArray != null ? CharArrayUtil.regionMatches(builder.myTextArray, start, end, chars)
+                                         : CharArrayUtil.regionMatches(builder.myText, start, end, chars);
     }
 
     @Override
@@ -507,7 +489,6 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     abstract int getEndOffsetInBuilder();
 
     void clean() {
-      myHC = -1;
       myParentNode = null;
     }
 
@@ -568,18 +549,6 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       return getBuilder().myLexTypes[myLexemeIndex];
     }
 
-  }
-
-  private int fragmentHc(int start, int end) {
-    return myTextArray != null ? arrayHc(start, end, myTextArray) : LeafElement.leafHC(myText, start, end);
-  }
-
-  private static int arrayHc(int start, int end, char[] textArray) {
-    int hc = 0;
-    for (int i = start; i < end; i++) {
-      hc += textArray[i];
-    }
-    return hc;
   }
 
   private static class LazyParseableToken extends TokenRange implements LighterLazyParseableNode {
@@ -675,13 +644,13 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     }
 
     @Override
-    public int hc() {
-      return 0;
+    public boolean tokenTextMatches(CharSequence chars) {
+      return chars.length() == 0;
     }
 
     @Override
     public int getEndOffset() {
-      return myBuilder.myLexStarts[myLexemeIndex] + myBuilder.myOffset;
+      return getStartOffset();
     }
 
     @Override
@@ -1489,7 +1458,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
         if (!Comparing.equal(e1.getErrorDescription(), getErrorMessage(n2))) return false;
       }
 
-      return ((TreeElement)n1).hc() == ((Node)n2).hc();
+      return ((Node)n2).tokenTextMatches(n1.getChars());
     }
   }
 
