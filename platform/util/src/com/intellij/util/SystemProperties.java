@@ -15,22 +15,16 @@ import org.jetbrains.annotations.TestOnly;
  */
 public class SystemProperties {
   private static String ourTestUserName;
-  private static String ourTestUserHome;
 
   private SystemProperties() { }
 
   @NotNull
   public static String getUserHome() {
-    return ourTestUserHome != null ? ourTestUserHome : System.getProperty("user.home");
+    return System.getProperty("user.home");
   }
 
   public static String getUserName() {
     return ourTestUserName != null ? ourTestUserName : System.getProperty("user.name");
-  }
-
-  @TestOnly
-  public static void setTestUserHome(@Nullable String userHome) {
-    ourTestUserHome = userHome;
   }
 
   @TestOnly
