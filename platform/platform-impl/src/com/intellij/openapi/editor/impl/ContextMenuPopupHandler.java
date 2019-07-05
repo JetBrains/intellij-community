@@ -2,13 +2,13 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.ui.customization.CustomActionsSchema;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorPopupHandler;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.update.Activatable;
-import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,27 +34,12 @@ public abstract class ContextMenuPopupHandler implements EditorPopupHandler {
       final Component c = e.getComponent();
       if (c != null && c.isShowing()) {
         JPopupMenu popupComponent = popupMenu.getComponent();
-        disableHoverPopupsWhileShowing(event.getEditor(), popupComponent);
+        EditorMouseHoverPopupControl.disablePopupsWhileShowing(event.getEditor(), popupComponent);
         popupComponent.show(c, e.getX(), e.getY());
         event.consume();
       }
     }
     return true;
-  }
-
-  private static void disableHoverPopupsWhileShowing(Editor editor, Component popupComponent) {
-    new UiNotifyConnector.Once(popupComponent, new Activatable.Adapter() {
-      @Override
-      public void showNotify() {
-        EditorMouseHoverPopupControl.disablePopups(editor);
-        new UiNotifyConnector.Once(popupComponent, new Adapter() {
-          @Override
-          public void hideNotify() {
-            EditorMouseHoverPopupControl.enablePopups(editor);
-          }
-        });
-      }
-    });
   }
 
   @Nullable
