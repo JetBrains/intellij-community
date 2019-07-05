@@ -73,7 +73,10 @@ public class IdeaFreezeReporter {
           }
           IdeaLoggingEvent event = createEvent(lengthInSeconds, attachments);
           if (event != null) {
-            MessagePool.getInstance().addIdeFatalMessage(event);
+            Throwable t = event.getThrowable();
+            if (IdeErrorsDialog.getSubmitter(t, IdeErrorsDialog.findPluginId(t)) instanceof ITNReporter) { // only report to JB
+              MessagePool.getInstance().addIdeFatalMessage(event);
+            }
           }
         }
         myCurrentDumps.clear();
