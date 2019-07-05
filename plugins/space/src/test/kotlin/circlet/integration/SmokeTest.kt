@@ -42,7 +42,7 @@ class SmokeTest : JavaCodeInsightFixtureTestCase() {
         return "src/test/resources/integrationTestGold"
     }
 
-    // dsl exist on start
+    // dsl exists on start
     fun testBuildModelWhenDslExistsFromBeginning() {
         val project = myFixture.project
         val projectFileFolderName = PathUtil.getFileName(project.basePath!!)
@@ -67,6 +67,27 @@ class SmokeTest : JavaCodeInsightFixtureTestCase() {
         assertFalse(script.isScriptEmpty(), "script should not be empty after build")
 
         assertEquals(createGoldModel(), script.config)
+    }
+
+    // dsl doesnt exist on start and added later
+    fun testBuildModelWhenDslDoesnotExistFromBeginning() {
+        val project = myFixture.project
+
+        val circletModelStore = ServiceManager.getService(project, CircletModelStore::class.java)
+        val viewModel = circletModelStore.viewModel
+
+        var script = viewModel.script.value
+        assertNull(script, "script should be null without dsl file")
+        assertFalse(viewModel.modelBuildIsRunning.value, "model build should not be started until view is shown")
+
+        val projectFileFolderName = PathUtil.getFileName(project.basePath!!)
+        myFixture.copyFileToProject(scriptFileName, "../$projectFileFolderName/$scriptFileName")
+
+        val newScript = viewModel.script.value
+        assertNotSame(script, newScript, "new instance of script should be created")
+        script = newScript
+        assertNotNull(script, "script should be not null after added dsl")
+        assertTrue(script.isScriptEmpty(), "script should be empty after added dsl")
     }
 
     private fun ScriptViewModel.isScriptEmpty(): Boolean {
