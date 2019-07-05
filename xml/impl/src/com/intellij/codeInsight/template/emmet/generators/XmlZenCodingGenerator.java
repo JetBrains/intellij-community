@@ -24,6 +24,7 @@ import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.lang.html.HtmlQuotesFormatPreprocessor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
@@ -45,8 +46,10 @@ import java.util.Map;
 public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
   @Override
   public TemplateImpl generateTemplate(@NotNull TemplateToken token, boolean hasChildren, @NotNull PsiElement context) {
-    String s = toString(token, hasChildren, context);
     TemplateImpl tokenTemplate = token.getTemplate();
+    if (!ApplicationManager.getApplication().isDispatchThread()) return tokenTemplate;
+    
+    String s = toString(token, hasChildren, context);
     assert tokenTemplate != null;
     TemplateImpl template = tokenTemplate.copy();
     template.setString(s);
