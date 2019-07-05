@@ -201,7 +201,7 @@ public final class ToolWindowImpl implements ToolWindowEx, Disposable {
 
   @Override
   public final boolean isVisible() {
-    return myToolWindowManager.isToolWindowVisible(myId);
+    return myToolWindowManager.isToolWindowRegistered(myId) && myToolWindowManager.isToolWindowVisible(myId);
   }
 
   @Override
