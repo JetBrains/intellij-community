@@ -126,6 +126,16 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
     if (resolve is PsiModifierListOwner) {
       val sourceNode = node.referenceNameElement ?: workaroundKotlinGetReferenceNameElement(node) ?: node
       apiUsageProcessor.processReference(sourceNode, resolve, node.qualifierExpression)
+
+      //todo support this for other JVM languages
+      val javaMethodReference = node.sourcePsi as? PsiMethodReferenceExpression
+      if (javaMethodReference != null) {
+        //a reference to the functional interface will be added by compiler
+        val resolved = PsiUtil.resolveGenericsClassInType(javaMethodReference.functionalInterfaceType).element
+        if (resolved != null) {
+          apiUsageProcessor.processReference(node, resolved, null)
+        }
+      }
     }
     return true
   }
