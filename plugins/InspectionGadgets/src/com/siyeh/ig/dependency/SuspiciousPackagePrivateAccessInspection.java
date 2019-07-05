@@ -196,13 +196,26 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
     PsiElement sourcePsi = sourceNode.getSourcePsi();
     UClass sourceClass = UastUtils.findContaining(sourcePsi, UClass.class);
     if (sourceClass == null) return null;
-    if (forClassReference && sourceClass.getUastSuperTypes().stream().anyMatch(it -> UastUtils.isPsiAncestor(it, sourceNode))) {
+    if (isReferenceBelongsToEnclosingClass(sourceNode, sourceClass, forClassReference)) {
       UElement parent = sourceClass.getUastParent();
       if (parent == null) return null;
-      UClass parentClass = UastUtils.findContaining(parent.getSourcePsi(), UClass.class);
+      UClass parentClass = UastUtils.getContainingUClass(sourceClass);
       return parentClass != null ? parentClass.getJavaPsi() : null;
     }
     return sourceClass.getJavaPsi();
+  }
+
+  private static boolean isReferenceBelongsToEnclosingClass(@NotNull UElement sourceNode, @NotNull UClass sourceClass,
+                                                            boolean forClassReference) {
+    if (sourceClass instanceof UAnonymousClass) {
+      UElement parent = sourceClass.getUastParent();
+      if (parent instanceof UCallExpression) {
+        if (((UCallExpression)parent).getValueArguments().stream().anyMatch(it -> UastUtils.isPsiAncestor(it, sourceNode))) {
+          return true;
+        }
+      }
+    }
+    return forClassReference && sourceClass.getUastSuperTypes().stream().anyMatch(it -> UastUtils.isPsiAncestor(it, sourceNode));
   }
 
   @Tag("modules-set")

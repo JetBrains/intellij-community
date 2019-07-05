@@ -54,6 +54,12 @@ class AccessingProtectedMembersFromSubclass extends ProtectedMembers {
         super.protectedMethod();
       }
     };
+
+    new BaseClassWithArg(method()) {
+    };
+
+    new BaseClassWithArg(field) {
+    };
   }
 
   public static class StaticInnerImpl1 extends ProtectedMembers.StaticInner {
@@ -72,6 +78,12 @@ class AccessingProtectedMembersFromSubclass extends ProtectedMembers {
   public static class OwnStaticInner {
     void bar() {
       <warning descr="Method ProtectedMembers.staticMethod() is protected and used not through a subclass here, but declared in a different module 'dep'">staticMethod</warning>();
+    }
+  }
+
+  private abstract static class BaseClassWithArg {
+    public BaseClassWithArg(String arg) {
+
     }
   }
 }
