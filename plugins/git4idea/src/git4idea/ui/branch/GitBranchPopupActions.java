@@ -445,8 +445,8 @@ class GitBranchPopupActions {
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        GitBrancher brancher = GitBrancher.getInstance(myProject);
-        brancher.deleteBranch(myBranchName, myRepositories);
+        GitBrancher.getInstance(myProject)
+          .deleteBranch(myBranchName, filter(myRepositories, repository -> !myBranchName.equals(repository.getCurrentBranchName())));
       }
     }
   }
@@ -619,7 +619,8 @@ class GitBranchPopupActions {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      GitBrancher.getInstance(myProject).showDiffWithLocal(myBranchName, myRepositories);
+      GitBrancher.getInstance(myProject)
+        .showDiffWithLocal(myBranchName, filter(myRepositories, repository -> !myBranchName.equals(repository.getCurrentBranchName())));
     }
 
     @Override
