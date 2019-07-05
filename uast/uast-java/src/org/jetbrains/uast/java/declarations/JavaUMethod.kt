@@ -31,8 +31,12 @@ open class JavaUMethod(
     sourcePsi.parameterList.parameters.map { JavaUParameter(it, this) }
   }
 
-  override val uastAnchor: UIdentifier
-    get() = UIdentifier((sourcePsi.originalElement as? PsiNameIdentifierOwner)?.nameIdentifier ?: sourcePsi.nameIdentifier, this)
+  override val uastAnchor: UIdentifier?
+    get() {
+      val psiElement = (sourcePsi.originalElement as? PsiNameIdentifierOwner)?.nameIdentifier ?: sourcePsi.nameIdentifier
+      if (psiElement?.isPhysical != true) return null // hah there is a Lombok and we have fake PsiElements even in Java (IDEA-216248)
+      return UIdentifier(psiElement, this)
+    }
 
   override fun equals(other: Any?): Boolean = other is JavaUMethod && sourcePsi == other.sourcePsi
   override fun hashCode(): Int = sourcePsi.hashCode()
