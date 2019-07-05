@@ -156,7 +156,7 @@ suspend fun saveProjectsAndApp(forceSavingAllSettings: Boolean, onlyProject: Pro
   }
 
   val duration = System.currentTimeMillis() - start
-  if (duration > 100 || LOG.isDebugEnabled) {
+  if (duration > 1000 || LOG.isDebugEnabled) {
     LOG.info("saveProjectsAndApp took $duration ms")
   }
 }
