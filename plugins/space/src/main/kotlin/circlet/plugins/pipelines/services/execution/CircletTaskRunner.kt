@@ -58,16 +58,17 @@ class CircletTaskRunner(val project: Project) {
             }
         }
 
-
-
+        val storage = CircletIdeaAutomationGraphStorage(task)
         val orgInfo = OrgInfo("jetbrains.team")
-        val provider = CircletIdeaJobExecutionProvider(lifetime, { text -> processHandler.println(text) }, { code -> processHandler.destroyProcess()})
+        val provider = CircletIdeaJobExecutionProvider(lifetime, { text -> processHandler.println(text) }, { code -> processHandler.destroyProcess()}, storage.singletonTx)
         val automationGraphEngineCommon = AutomationGraphEngineCommon(
             provider,
-            SystemTimeTicker())
+            provider,
+            SystemTimeTicker(),
+            listOf(provider))
         val automationStarterCommon = AutomationStarterCommon(
             orgInfo,
-            CircletIdeaAutomationGraphStorage(task),
+            storage,
             CircletIdeaAutomationBootstrapper(),
             automationGraphEngineCommon,
             CircletIdeaAutomationTracer())
