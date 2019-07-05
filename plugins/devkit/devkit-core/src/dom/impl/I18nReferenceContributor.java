@@ -6,37 +6,44 @@ package org.jetbrains.idea.devkit.dom.impl;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInspection.InspectionEP;
+import com.intellij.ide.TypeNameEP;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.ResourceBundleReference;
+import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.patterns.DomPatterns;
-import com.intellij.patterns.XmlAttributeValuePattern;
-import com.intellij.patterns.XmlPatterns;
-import com.intellij.patterns.XmlTagPattern;
+import com.intellij.patterns.*;
+import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScopesCore;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.xml.DomTarget;
+import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.Extension;
+import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.patterns.StandardPatterns.or;
+import static com.intellij.patterns.XmlPatterns.xmlTag;
+
 public class I18nReferenceContributor extends PsiReferenceContributor {
 
-  private static final String[] EXTENSION_TAG_NAMES = new String[]{
-    "localInspection", "globalInspection",
-    "configurable", "applicationConfigurable", "projectConfigurable",
-    "editorSmartKeysConfigurable", "editorOptionsProvider"
-  };
-
-  private static final String[] TYPE_NAME_TAG = new String[]{"typeName"};
   private static final String INTENTION_ACTION_TAG = "intentionAction";
   private static final String INTENTION_ACTION_BUNDLE_TAG = "bundleName";
+
+  private static final String CONFIGURABLE_EP = ConfigurableEP.class.getName();
+  private static final String INSPECTION_EP = InspectionEP.class.getName();
+
+  private static final String TYPE_NAME_EP = TypeNameEP.class.getName();
 
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
@@ -46,16 +53,16 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
   }
 
   private static void registerKeyProviders(PsiReferenceRegistrar registrar) {
-    registrar.registerReferenceProvider(extensionAttributePattern(EXTENSION_TAG_NAMES, "key", "groupKey"),
-                                        new PropertyKeyReferenceProvider(false, "groupKey", "groupBundle"),
-                                        PsiReferenceRegistrar.DEFAULT_PRIORITY);
+    registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"key", "groupKey"},
+                                                                  CONFIGURABLE_EP, INSPECTION_EP),
+                                        new PropertyKeyReferenceProvider(false, "groupKey", "groupBundle"));
 
-    registrar.registerReferenceProvider(extensionAttributePattern(TYPE_NAME_TAG, "resourceKey"),
-                                        new PropertyKeyReferenceProvider(false, "resourceKey", "resourceBundle"),
-                                        PsiReferenceRegistrar.DEFAULT_PRIORITY);
+    registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"resourceKey"},
+                                                                  TYPE_NAME_EP),
+                                        new PropertyKeyReferenceProvider(false, "resourceKey", "resourceBundle"));
 
     final XmlTagPattern.Capture intentionActionKeyTagPattern =
-      XmlPatterns.xmlTag().withLocalName("categoryKey").
+      xmlTag().withLocalName("categoryKey").
         withParent(DomPatterns.tagWithDom(INTENTION_ACTION_TAG, Extension.class));
     registrar.registerReferenceProvider(intentionActionKeyTagPattern,
                                         new PropertyKeyReferenceProvider(true, null, INTENTION_ACTION_BUNDLE_TAG));
@@ -71,28 +78,61 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
     };
 
     final XmlTagPattern.Capture resourceBundleTagPattern =
-      XmlPatterns.xmlTag().withLocalName("resource-bundle").
+      xmlTag().withLocalName("resource-bundle").
         withParent(DomPatterns.tagWithDom(IdeaPlugin.TAG_NAME, IdeaPlugin.class));
     registrar.registerReferenceProvider(resourceBundleTagPattern, bundleReferenceProvider);
 
-    XmlAttributeValuePattern bundlePattern = extensionAttributePattern(EXTENSION_TAG_NAMES, "bundle", "groupBundle");
-    registrar.registerReferenceProvider(bundlePattern, bundleReferenceProvider,
-                                        PsiReferenceRegistrar.DEFAULT_PRIORITY);
+    registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"bundle"}, "groupBundle",
+                                                                  CONFIGURABLE_EP, INSPECTION_EP),
+                                        bundleReferenceProvider);
 
-    XmlAttributeValuePattern typeNameBundlePattern = extensionAttributePattern(TYPE_NAME_TAG, "resourceBundle");
-    registrar.registerReferenceProvider(typeNameBundlePattern, bundleReferenceProvider,
-                                        PsiReferenceRegistrar.DEFAULT_PRIORITY);
+    registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"resourceBundle"},
+                                                                  TYPE_NAME_EP),
+                                        bundleReferenceProvider);
 
     final XmlTagPattern.Capture intentionActionBundleTagPattern =
-      XmlPatterns.xmlTag().withLocalName(INTENTION_ACTION_BUNDLE_TAG).
+      xmlTag().withLocalName(INTENTION_ACTION_BUNDLE_TAG).
         withParent(DomPatterns.tagWithDom(INTENTION_ACTION_TAG, Extension.class));
-    registrar.registerReferenceProvider(intentionActionBundleTagPattern, bundleReferenceProvider,
-                                        PsiReferenceRegistrar.DEFAULT_PRIORITY);
+    registrar.registerReferenceProvider(intentionActionBundleTagPattern, bundleReferenceProvider);
   }
 
-  private static XmlAttributeValuePattern extensionAttributePattern(String[] tagNames, String... attributeNames) {
+  private static XmlAttributeValuePattern extensionAttributePattern(String[] attributeNames,
+                                                                    String... extensionPointClassNames) {
+    //noinspection deprecation
     return XmlPatterns.xmlAttributeValue(attributeNames)
-      .withSuperParent(2, DomPatterns.tagWithDom(tagNames, DomPatterns.domElement(Extension.class)));
+      .inFile(DomPatterns.inDomFile(IdeaPlugin.class))
+      .withSuperParent(2, xmlTag().and(DomPatterns.withDom(DomPatterns.domElement(Extension.class)))
+        .referencing(or(
+          DomPatterns.domTargetElement(DomPatterns.domElement(ExtensionPoint.class))
+            .with(new PatternCondition<PomTargetPsiElement>("relevantEP") {
+              @Override
+              public boolean accepts(@NotNull PomTargetPsiElement element,
+                                     ProcessingContext context) {
+                final DomTarget domTarget = (DomTarget)element.getTarget();
+                final ExtensionPoint extensionPoint = (ExtensionPoint)domTarget.getDomElement();
+
+                return matchesEpClass(extensionPoint, extensionPointClassNames);
+              }
+            }),
+          DomPatterns.tagWithDom("extensionPoint", ExtensionPoint.class)
+            .with(new PatternCondition<XmlTag>("relevantEP via qualifiedName") {
+              @Override
+              public boolean accepts(@NotNull XmlTag tag, ProcessingContext context) {
+                ExtensionPoint extensionPoint = (ExtensionPoint)DomUtil.getDomElement(tag);
+                assert extensionPoint != null;
+                return matchesEpClass(extensionPoint, extensionPointClassNames);
+              }
+            })
+        ))
+      );
+  }
+
+  private static boolean matchesEpClass(ExtensionPoint extensionPoint, String[] extensionPointClassNames) {
+    final PsiClass beanClass = extensionPoint.getBeanClass().getValue();
+    for (String name : extensionPointClassNames) {
+      if (InheritanceUtil.isInheritor(beanClass, name)) return true;
+    }
+    return false;
   }
 
 

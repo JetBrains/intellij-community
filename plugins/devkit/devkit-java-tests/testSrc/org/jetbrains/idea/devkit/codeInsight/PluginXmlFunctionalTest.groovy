@@ -8,6 +8,7 @@ import com.intellij.codeInsight.completion.CompletionContributorEP
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.codeInspection.LocalInspectionEP
 import com.intellij.codeInspection.xml.DeprecatedClassUsageInspection
 import com.intellij.diagnostic.ITNReporter
 import com.intellij.lang.LanguageExtensionPoint
@@ -84,12 +85,19 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     moduleBuilder.addLibrary("platform-impl", platformImplJar)
     String langApiJar = PathUtil.getJarPathForClass(CompletionContributorEP.class)
     moduleBuilder.addLibrary("lang-api", langApiJar)
+    String analysisApiJar = PathUtil.getJarPathForClass(LocalInspectionEP.class)
+    moduleBuilder.addLibrary("analysis-api", analysisApiJar)
     String coreApiJar = PathUtil.getJarPathForClass(LanguageExtensionPoint.class) // FileTypeExtensionPoint is also there
     moduleBuilder.addLibrary("core-api", coreApiJar)
     String editorUIApi = PathUtil.getJarPathForClass(AnAction.class)
     moduleBuilder.addLibrary("editor-ui-api", editorUIApi)
     String coreImpl = PathUtil.getJarPathForClass(ServiceDescriptor.class)
     moduleBuilder.addLibrary("coreImpl", coreImpl)
+  }
+
+  void testExtensionI18n() {
+    doHighlightingTest("extensionI18n.xml",
+                       "extensionI18nBundle.properties")
   }
 
   void testExtensionsHighlighting() {
