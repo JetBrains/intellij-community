@@ -8,6 +8,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
@@ -309,6 +310,13 @@ class InferenceDriver(val method: GrMethod) {
       override fun visitAssignmentExpression(expression: GrAssignmentExpression) {
         inferenceSession.addConstraint(ExpressionConstraint(null, expression))
         super.visitAssignmentExpression(expression)
+      }
+
+      override fun visitVariable(variable: GrVariable) {
+        variable.initializerGroovy?.run {
+          inferenceSession.addConstraint(ExpressionConstraint(variable.declaredType, this))
+        }
+        super.visitVariable(variable)
       }
 
       override fun visitExpression(expression: GrExpression) {
