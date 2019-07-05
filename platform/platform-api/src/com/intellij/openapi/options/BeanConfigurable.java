@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Setter;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ui.JBUI;
 import kotlin.reflect.KMutableProperty0;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -259,7 +260,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable {
 
   @Override
   public JComponent createComponent() {
-    final JPanel panel = new JPanel(new GridLayout(myFields.size(), 1));
+    final JPanel panel = new JPanel(new GridLayout(myFields.size(), 1, 0, JBUI.scale(5)));
     for (BeanField field: myFields) {
       panel.add(field.getComponent());
     }
