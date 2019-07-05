@@ -80,6 +80,8 @@ public class CoreApplicationEnvironment {
     myParentDisposable = parentDisposable;
     myUnitTestMode = unitTestMode;
 
+    PluginManagerCore.dontLoadDisabledPlugins();
+
     myFileTypeRegistry = new CoreFileTypeRegistry();
 
     myApplication = createApplication(myParentDisposable);
