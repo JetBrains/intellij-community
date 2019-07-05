@@ -3,9 +3,24 @@ package com.intellij.internal.statistic.eventLog.whitelist
 
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupRules
 
-interface WhiteListGroupRulesStorage {
-  fun getEventsValidators(): Map<String, WhiteListGroupRules>
+interface WhitelistGroupRulesStorage {
+  fun getGroupRules(groupId: String): WhiteListGroupRules?
 
   fun isUnreachableWhitelist() : Boolean
 
+}
+
+/**
+ * Thread unsafe
+ */
+object InMemoryWhitelistStorage : WhitelistGroupRulesStorage {
+  val eventsValidators = HashMap<String, WhiteListGroupRules>()
+
+  override fun getGroupRules(groupId: String): WhiteListGroupRules? {
+    return eventsValidators[groupId]
+  }
+
+  override fun isUnreachableWhitelist(): Boolean {
+    return false
+  }
 }

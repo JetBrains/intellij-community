@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.actions;
 
-import com.intellij.internal.statistic.eventLog.whitelist.WhiteListStorageForTest;
+import com.intellij.internal.statistic.eventLog.whitelist.WhitelistStorageForTest;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -35,13 +35,13 @@ public class AddTestGroupToLocalWhitelistAction extends AnAction {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         final String recorderId = dialog.getRecorderId();
-        WhiteListStorageForTest whiteListStorageForTest = WhiteListStorageForTest.getInstance(recorderId);
+        WhitelistStorageForTest whiteListStorageForTest = WhitelistStorageForTest.getInstance(recorderId);
         try {
           if (dialog.isCustomRules()) {
-            whiteListStorageForTest.addGroupWithCustomRules(recorderId, dialog.getGroupId(), dialog.getCustomRules());
+            whiteListStorageForTest.addGroupWithCustomRules(dialog.getGroupId(), dialog.getCustomRules());
           }
           else {
-            whiteListStorageForTest.addTestGroup(recorderId, dialog.getGroupId());
+            whiteListStorageForTest.addTestGroup(dialog.getGroupId());
           }
           showNotification(project, NotificationType.INFORMATION, "Group '" + dialog.getGroupId() + "' was added to local whitelist");
         }

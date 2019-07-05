@@ -10,7 +10,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.LocalEnumCustomWhitelistRule
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.RegexpWhiteListRule
 import com.intellij.internal.statistic.eventLog.validator.rules.utils.WhiteListSimpleRuleFactory.parseSimpleExpression
-import com.intellij.internal.statistic.eventLog.whitelist.WhiteListStorage
+import com.intellij.internal.statistic.eventLog.whitelist.WhitelistStorage
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
@@ -254,16 +254,16 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
   }
 
 
-  internal inner class TestSensitiveDataValidator constructor(myContent: String) : SensitiveDataValidator(TestWhiteListStorage(myContent)) {
+  internal inner class TestSensitiveDataValidator constructor(myContent: String) : SensitiveDataValidator(TestWhitelistStorage(myContent)) {
 
     fun getEventRules(group: EventLogGroup): Array<FUSRule> {
-      val whiteListRule = myWhiteListStorage.getEventsValidators()[group.id]
+      val whiteListRule = myWhiteListStorage.getGroupRules(group.id)
 
       return if (whiteListRule == null) FUSRule.EMPTY_ARRAY else whiteListRule.eventIdRules
     }
 
     fun getEventDataRules(group: EventLogGroup): Map<String, Array<FUSRule>> {
-      val whiteListRule = myWhiteListStorage.getEventsValidators()[group.id]
+      val whiteListRule = myWhiteListStorage.getGroupRules(group.id)
 
       return if (whiteListRule == null) emptyMap() else whiteListRule.eventDataRules
     }
@@ -271,13 +271,13 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
     fun validateEventData(group: EventLogGroup, key: String, value: Any): ValidationResultType {
       if (FeatureUsageData.platformDataKeys.contains(key)) return ValidationResultType.ACCEPTED
 
-      val whiteListRule = myWhiteListStorage.getEventsValidators()[group.id]
+      val whiteListRule = myWhiteListStorage.getGroupRules(group.id)
       return if (whiteListRule == null || !whiteListRule.areEventDataRulesDefined()) ValidationResultType.UNDEFINED_RULE
       else whiteListRule.validateEventData(key, value, EventContext.create("", Collections.emptyMap())) // there are no configured rules
     }
   }
 
-  class TestWhiteListStorage(private val myContent: String) : WhiteListStorage("TEST") {
+  class TestWhitelistStorage(private val myContent: String) : WhitelistStorage("TEST") {
     init {
       update()
     }

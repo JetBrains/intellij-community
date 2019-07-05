@@ -16,10 +16,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
-public class WhiteListStorage extends BaseWhiteListStorage {
+public class WhitelistStorage extends BaseWhitelistStorage {
   private static final Logger LOG = Logger.getInstance("com.intellij.internal.statistic.eventLog.whitelist.WhiteListStorage");
 
-  private static final ConcurrentMap<String, WhiteListStorage> instances = ContainerUtil.newConcurrentMap();
+  private static final ConcurrentMap<String, WhitelistStorage> ourInstances = ContainerUtil.newConcurrentMap();
 
   protected final ConcurrentMap<String, WhiteListGroupRules> eventsValidators = ContainerUtil.newConcurrentMap();
   private final Semaphore mySemaphore;
@@ -29,14 +29,14 @@ public class WhiteListStorage extends BaseWhiteListStorage {
   private final EventLogExternalSettingsService mySettingsService;
 
   @NotNull
-  public static WhiteListStorage getInstance(@NotNull String recorderId) {
-    return instances.computeIfAbsent(
+  public static WhitelistStorage getInstance(@NotNull String recorderId) {
+    return ourInstances.computeIfAbsent(
       recorderId,
-      id -> new WhiteListStorage(id)
+      id -> new WhitelistStorage(id)
     );
   }
 
-  public WhiteListStorage(@NotNull String recorderId) {
+  protected WhitelistStorage(@NotNull String recorderId) {
     myRecorderId = recorderId;
     mySemaphore = new Semaphore();
     myWhitelistPersistence = new EventLogWhitelistPersistence(recorderId);
@@ -45,10 +45,10 @@ public class WhiteListStorage extends BaseWhiteListStorage {
     EventLogSystemLogger.logWhitelistLoad(recorderId, myVersion);
   }
 
+  @Nullable
   @Override
-  @NotNull
-  public Map<String, WhiteListGroupRules> getEventsValidators() {
-    return eventsValidators;
+  public WhiteListGroupRules getGroupRules(@NotNull String groupId) {
+    return eventsValidators.get(groupId);
   }
 
   @Nullable

@@ -2,39 +2,40 @@
 package com.intellij.internal.statistic.eventLog.whitelist;
 
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupRules;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
-public class MergedWhiteListStorage implements WhiteListGroupRulesStorage {
-  private static final ConcurrentMap<String, MergedWhiteListStorage> instances = ContainerUtil.newConcurrentMap();
+public class MergedWhitelistStorage implements WhitelistGroupRulesStorage {
+  private static final ConcurrentMap<String, MergedWhitelistStorage> myInstances = ContainerUtil.newConcurrentMap();
 
-  private final WhiteListGroupRulesStorage myWhiteListStorage;
-  private final WhiteListGroupRulesStorage myWhiteListStorageForTest;
+  private final WhitelistGroupRulesStorage myWhiteListStorage;
+  private final WhitelistGroupRulesStorage myWhiteListStorageForTest;
 
-  public MergedWhiteListStorage(WhiteListGroupRulesStorage whiteListStorage,
-                                WhiteListGroupRulesStorage whiteListStorageForTest) {
+  private MergedWhitelistStorage(WhitelistGroupRulesStorage whiteListStorage,
+                                 WhitelistGroupRulesStorage whiteListStorageForTest) {
     myWhiteListStorage = whiteListStorage;
     myWhiteListStorageForTest = whiteListStorageForTest;
   }
 
   @NotNull
-  public static MergedWhiteListStorage getInstance(@NotNull String recorderId) {
-    WhiteListStorage whiteListStorage = WhiteListStorage.getInstance(recorderId);
-    WhiteListStorageForTest whiteListStorageForTest = WhiteListStorageForTest.getInstance(recorderId);
+  public static MergedWhitelistStorage getInstance(@NotNull String recorderId) {
+    WhitelistGroupRulesStorage whiteListStorage =
+      ApplicationManager.getApplication().isUnitTestMode() ? InMemoryWhitelistStorage.INSTANCE : WhitelistStorage.getInstance(recorderId);
+    WhitelistStorageForTest whiteListStorageForTest = WhitelistStorageForTest.getInstance(recorderId);
 
-    return instances.computeIfAbsent(recorderId, id -> new MergedWhiteListStorage(whiteListStorage, whiteListStorageForTest));
+    return myInstances.computeIfAbsent(recorderId, id -> new MergedWhitelistStorage(whiteListStorage, whiteListStorageForTest));
   }
 
-  @NotNull
+  @Nullable
   @Override
-  public Map<String, WhiteListGroupRules> getEventsValidators() {
-    Map<String, WhiteListGroupRules> validators = new HashMap<>(myWhiteListStorage.getEventsValidators());
-    validators.putAll(myWhiteListStorageForTest.getEventsValidators());
-    return validators;
+  public WhiteListGroupRules getGroupRules(@NotNull String groupId) {
+    WhiteListGroupRules testGroupRules = myWhiteListStorageForTest.getGroupRules(groupId);
+    if(testGroupRules != null) return testGroupRules;
+    return myWhiteListStorage.getGroupRules(groupId);
   }
 
   @Override

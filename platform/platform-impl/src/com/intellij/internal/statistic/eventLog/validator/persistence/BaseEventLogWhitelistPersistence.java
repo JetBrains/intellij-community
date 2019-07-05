@@ -15,19 +15,23 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
-abstract public class BaseEventLogWhiteListPersistence {
+abstract public class BaseEventLogWhitelistPersistence {
+  private static final Logger
+    LOG = Logger.getInstance("com.intellij.internal.statistic.eventLog.validator.persistence.BaseEventLogWhiteListPersistence");
   public static final String FUS_WHITELIST_PATH = "event-log-whitelist";
 
   @NotNull
   protected final String myRecorderId;
+  private final String myWhitelistFile;
 
-  protected BaseEventLogWhiteListPersistence(@NotNull String id) {
+  protected BaseEventLogWhitelistPersistence(@NotNull String id, String whitelistFile) {
     myRecorderId = id;
+    myWhitelistFile = whitelistFile;
   }
 
   @NotNull
   File getWhiteListFile() {
-    return getFileInWhiteListCacheDirectory(getWhiteListDataFileName());
+    return getFileInWhiteListCacheDirectory(myWhitelistFile);
   }
 
   @NotNull
@@ -48,7 +52,7 @@ abstract public class BaseEventLogWhiteListPersistence {
       if (file.exists()) return FileUtil.loadFile(file);
     }
     catch (IOException e) {
-      getLogger().error(e);
+      LOG.error(e);
     }
     return null;
   }
@@ -64,9 +68,7 @@ abstract public class BaseEventLogWhiteListPersistence {
   }
 
   private String builtinWhiteListPath() {
-    return "resources/" + FUS_WHITELIST_PATH + "/" + myRecorderId + "/" + getWhiteListDataFileName();
+    return "resources/" + FUS_WHITELIST_PATH + "/" + myRecorderId + "/" + myWhitelistFile;
   }
 
-  abstract Logger getLogger();
-  abstract String getWhiteListDataFileName();
 }

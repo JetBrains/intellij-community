@@ -12,10 +12,10 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-public abstract class BaseWhiteListStorage implements WhiteListGroupRulesStorage {
+public abstract class BaseWhitelistStorage implements WhitelistGroupRulesStorage {
   protected final AtomicBoolean isWhiteListInitialized;
 
-  protected BaseWhiteListStorage() {isWhiteListInitialized = new AtomicBoolean(false);}
+  protected BaseWhitelistStorage() {isWhiteListInitialized = new AtomicBoolean(false);}
 
   @NotNull
   protected static WhiteListGroupRules createRules(@NotNull FUStatisticsWhiteListGroupsService.WLGroup group,

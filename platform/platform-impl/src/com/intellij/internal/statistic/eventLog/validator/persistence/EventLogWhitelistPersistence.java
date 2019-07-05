@@ -9,14 +9,14 @@ import java.io.File;
 import java.io.IOException;
 
 
-public class EventLogWhitelistPersistence extends BaseEventLogWhiteListPersistence{
+public class EventLogWhitelistPersistence extends BaseEventLogWhitelistPersistence {
   private static final Logger
     LOG = Logger.getInstance("com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence");
 
   private static final String WHITE_LIST_DATA_FILE = "white-list.json";
 
   public EventLogWhitelistPersistence(@NotNull String recorderId) {
-    super(recorderId);
+    super(recorderId, WHITE_LIST_DATA_FILE);
   }
 
   public void cacheWhiteList(@NotNull String gsonWhiteListContent, long lastModified) {
@@ -33,13 +33,4 @@ public class EventLogWhitelistPersistence extends BaseEventLogWhiteListPersisten
     return EventLogWhitelistSettingsPersistence.getInstance().getLastModified(myRecorderId);
   }
 
-  @Override
-  Logger getLogger() {
-    return LOG;
-  }
-
-  @Override
-  String getWhiteListDataFileName() {
-    return WHITE_LIST_DATA_FILE;
-  }
 }

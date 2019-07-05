@@ -21,13 +21,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class EventLogTestWhitelistPersistence extends BaseEventLogWhiteListPersistence{
+public class EventLogTestWhitelistPersistence extends BaseEventLogWhitelistPersistence {
   private static final Logger
     LOG = Logger.getInstance("com.intellij.internal.statistic.eventLog.validator.persistence.EventLogTestWhitelistPersistence");
   private static final String TEST_RULE = "{util#fus_test_mode}";
   private static final String TEST_WHITE_LIST_DATA_FILE = "test-white-list.json";
 
-  public EventLogTestWhitelistPersistence(@NotNull String recorderId) {super(recorderId);}
+  public EventLogTestWhitelistPersistence(@NotNull String recorderId) {super(recorderId, TEST_WHITE_LIST_DATA_FILE);}
 
   public static void addGroupWithCustomRules(@NotNull String recorderId, @NotNull String groupId, @NotNull String rules) throws IOException {
     final String content =
@@ -57,7 +57,7 @@ public class EventLogTestWhitelistPersistence extends BaseEventLogWhiteListPersi
   }
 
   @NotNull
-  public static WLGroups loadTestWhitelist(@NotNull BaseEventLogWhiteListPersistence persistence) {
+  public static WLGroups loadTestWhitelist(@NotNull BaseEventLogWhitelistPersistence persistence) {
     final String existing = persistence.getCachedWhiteList();
     if (StringUtil.isNotEmpty(existing)) {
       final WLGroups loaded = FUStatisticsWhiteListGroupsService.parseWhiteListContent(existing);
@@ -88,13 +88,8 @@ public class EventLogTestWhitelistPersistence extends BaseEventLogWhiteListPersi
     return group;
   }
 
-  @Override
-  Logger getLogger() {
-    return LOG;
-  }
 
-  @Override
-  String getWhiteListDataFileName() {
-    return TEST_WHITE_LIST_DATA_FILE;
+  public void cleanup() {
+    FileUtil.delete(getWhiteListFile());
   }
 }
