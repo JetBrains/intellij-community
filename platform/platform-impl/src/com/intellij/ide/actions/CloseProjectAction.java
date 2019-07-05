@@ -11,12 +11,13 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.wm.impl.ProjectFrameBounds;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
 
-public class CloseProjectAction extends AnAction implements DumbAware {
+public final class CloseProjectAction extends AnAction implements DumbAware {
   public CloseProjectAction() {
     getTemplatePresentation().setText(IdeUICustomization.getInstance().getCloseProjectActionText());
   }
@@ -25,6 +26,9 @@ public class CloseProjectAction extends AnAction implements DumbAware {
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     assert project != null;
+
+    // ensure that last closed project frame bounds will be used as newly created project frame bounds (if will be no another focused opened project)
+    ProjectFrameBounds.getInstance(project).updateDefaultFrameInfoOnProjectClose();
 
     ProjectManagerEx.getInstanceEx().closeAndDispose(project);
     // RecentProjectsManager cannot distinguish close as part of exit (no need to remove project),
