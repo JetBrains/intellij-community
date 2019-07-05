@@ -2,17 +2,29 @@
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorLocation
 import com.intellij.openapi.fileEditor.FileEditorState
+import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.ui.CollectionListModel
+import com.intellij.ui.components.panels.Wrapper
+import com.intellij.util.ui.AsyncProcessIcon
+import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
+import org.jetbrains.plugins.github.pullrequest.data.GHPRTimelineLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRHeaderPanel
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineComponent
+import org.jetbrains.plugins.github.ui.GHListLoaderPanel
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.handleOnEdt
+import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
 import javax.swing.JComponent
@@ -39,12 +51,52 @@ internal class GHPRFileEditor(private val file: GHPRVirtualFile)
     val header = GHPRHeaderPanel(detailsModel)
     Disposer.register(this, header)
 
-    panel = JBUI.Panels.simplePanel()
-      .withMaximumWidth(maxWidth)
-      .withBackground(UIUtil.getListBackground())
-      .withBorder(JBUI.Borders.empty(UIUtil.LARGE_VGAP, UIUtil.DEFAULT_HGAP * 2))
-      .addToTop(header)
+    val timelineListModel = CollectionListModel<GHPRTimelineItem>()
+    val timeline = GHPRTimelineComponent(timelineListModel)
+    val loadingIcon = AsyncProcessIcon("Loading").apply {
+      isVisible = false
+    }
 
+    val context = file.dataContext
+    val loader = GHPRTimelineLoader(service(), context.requestExecutor, context.serverPath, context.repositoryDetails.fullPath,
+                                    file.pullRequest.number, timelineListModel)
+    Disposer.register(this, loader)
+
+    val contentPanel = object : ScrollablePanel(), ComponentWithEmptyText, Disposable {
+      init {
+        isOpaque = false
+        border = JBUI.Borders.empty(UIUtil.LARGE_VGAP, UIUtil.DEFAULT_HGAP * 2)
+
+        layout = BorderLayout()
+
+        add(header, BorderLayout.NORTH)
+        add(timeline, BorderLayout.CENTER)
+        add(loadingIcon, BorderLayout.SOUTH)
+
+        emptyText.clear()
+      }
+
+      override fun getEmptyText() = timeline.emptyText
+
+      override fun dispose() {}
+    }
+    Disposer.register(contentPanel, loadingIcon)
+
+    panel = object : GHListLoaderPanel<GHPRTimelineLoader>(loader, contentPanel, true) {
+      override val loadingText = ""
+
+      init {
+        background = UIUtil.getListBackground()
+      }
+
+      override fun createCenterPanel(content: JComponent) = Wrapper(content)
+
+      override fun setLoading(isLoading: Boolean) {
+        loadingIcon.isVisible = isLoading
+      }
+    }
+    Disposer.register(panel, contentPanel)
+    Disposer.register(this, panel)
   }
 
   override fun getName() = file.name

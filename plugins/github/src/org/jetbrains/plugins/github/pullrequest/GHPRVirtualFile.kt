@@ -3,9 +3,11 @@ package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.testFramework.LightVirtualFile
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
+import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestsDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
 
-internal class GHPRVirtualFile(val pullRequest: GHPullRequestShort,
+internal class GHPRVirtualFile(val dataContext: GithubPullRequestsDataContext,
+                               val pullRequest: GHPullRequestShort,
                                val dataProvider: GithubPullRequestDataProvider)
   : LightVirtualFile(pullRequest.title, GHPRFileType.INSTANCE, "") {
 

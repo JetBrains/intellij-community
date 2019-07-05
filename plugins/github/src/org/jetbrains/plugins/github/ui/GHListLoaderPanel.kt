@@ -16,21 +16,29 @@ import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
 
 internal abstract class GHListLoaderPanel<L : GHListLoader>(protected val listLoader: L,
-                                                            private val contentComponent: JComponent)
+                                                            private val contentComponent: JComponent,
+                                                            private val loadAllAfterFirstScroll: Boolean = false)
   : BorderLayoutPanel(), Disposable {
 
+  private var userScrolled = false
   private val scrollPane = ScrollPaneFactory.createScrollPane(contentComponent,
                                                               ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                                               ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER).apply {
+    isOpaque = false
+    viewport.isOpaque = false
     border = JBUI.Borders.empty()
     verticalScrollBar.model.addChangeListener { potentiallyLoadMore() }
+    verticalScrollBar.model.addChangeListener { if (!userScrolled && verticalScrollBar.value > 0) userScrolled = true }
   }
+
   protected val infoPanel = HtmlInfoPanel()
 
   protected open val loadingText = "Loading..."
 
   init {
-    addToCenter(createCenterPanel(simplePanel(scrollPane).addToTop(infoPanel)))
+    addToCenter(createCenterPanel(simplePanel(scrollPane).addToTop(infoPanel).apply {
+      isOpaque = false
+    }))
 
     listLoader.addLoadingStateChangeListener(this) {
       setLoading(listLoader.loading)
@@ -95,7 +103,7 @@ internal abstract class GHListLoaderPanel<L : GHListLoader>(protected val listLo
   protected open fun getErrorPrefix(listEmpty: Boolean) = if (listEmpty) "Can't load list" else "Can't load full list"
 
   private fun potentiallyLoadMore() {
-    if (listLoader.canLoadMore() && isScrollAtThreshold()) {
+    if (listLoader.canLoadMore() && ((userScrolled && loadAllAfterFirstScroll) || isScrollAtThreshold())) {
       listLoader.loadMore()
     }
   }
@@ -109,6 +117,18 @@ internal abstract class GHListLoaderPanel<L : GHListLoader>(protected val listLo
     val scrollFraction = (visibleAmount + value) / maximum.toFloat()
     if (scrollFraction < 0.5) return false
     return true
+  }
+
+  override fun requestFocus() {
+    contentComponent.requestFocus()
+  }
+
+  override fun requestFocusInWindow(): Boolean {
+    return contentComponent.requestFocusInWindow()
+  }
+
+  override fun requestFocus(temporary: Boolean): Boolean {
+    return contentComponent.requestFocus(temporary)
   }
 
   override fun dispose() {}

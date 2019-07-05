@@ -174,7 +174,7 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
 
     private fun openTimelineForSelection(list: GithubPullRequestsList) {
       val pullRequest = list.selectedValue
-      val file = GHPRVirtualFile(pullRequest, dataLoader.getDataProvider(pullRequest.number))
+      val file = GHPRVirtualFile(dataContext, pullRequest, dataLoader.getDataProvider(pullRequest.number))
       fileEditorManager.openFile(file, true)
     }
 

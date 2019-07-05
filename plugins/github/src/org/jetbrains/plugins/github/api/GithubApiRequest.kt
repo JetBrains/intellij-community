@@ -8,6 +8,7 @@ import org.jetbrains.plugins.github.api.data.GithubSearchResult
 import org.jetbrains.plugins.github.api.data.graphql.GHGQLQueryRequest
 import org.jetbrains.plugins.github.api.data.graphql.GHGQLResponse
 import org.jetbrains.plugins.github.exceptions.GithubConfusingException
+import org.jetbrains.plugins.github.exceptions.GithubJsonException
 import java.io.IOException
 
 /**
@@ -129,39 +130,57 @@ sealed class GithubApiRequest<out T>(val url: String) {
           return GithubApiContentHelper.toJson(request, true)
         }
 
-      class Parsed<T>(url: String,
-                      requestFilePath: String,
-                      variablesObject: Any,
-                      private val clazz: Class<out T>)
+      class Parsed<out T>(url: String,
+                          requestFilePath: String,
+                          variablesObject: Any,
+                          private val clazz: Class<T>)
         : GQLQuery<T>(url, requestFilePath, variablesObject) {
         override fun extractResult(response: GithubApiResponse): T {
           val result: GHGQLResponse<out T> = parseGQLResponse(response, clazz)
           val data = result.data
-          if (data != null) return data
+          if (data != null) return data!!
           else throw GithubConfusingException(result.errors.toString())
         }
       }
 
-      class TraversedParsed<T>(url: String,
-                               requestFilePath: String,
-                               variablesObject: Any,
-                               private val clazz: Class<out T>,
-                               private vararg val pathFromData: String)
-        : GQLQuery<T?>(url, requestFilePath, variablesObject) {
+      class TraversedParsed<out T : Any>(url: String,
+                                         requestFilePath: String,
+                                         variablesObject: Any,
+                                         private val clazz: Class<out T>,
+                                         private vararg val pathFromData: String)
+        : GQLQuery<T>(url, requestFilePath, variablesObject) {
 
-        override fun extractResult(response: GithubApiResponse): T? {
-          val result: GHGQLResponse<out JsonNode> = parseGQLResponse(response, JsonNode::class.java)
-          val data = result.data
-          if (data != null && !data.isNull) {
-            var node: JsonNode = data
-            for (path in pathFromData) {
-              node = node[path] ?: return null
-            }
-            if (node.isNull) return null
-            return GithubApiContentHelper.fromJson(node.toString(), clazz, true)
-          }
-          else throw GithubConfusingException(result.errors.toString())
+        override fun extractResult(response: GithubApiResponse): T {
+          return parseResponse(response, clazz, pathFromData)
+                 ?: throw GithubJsonException("Non-nullable entity is null or entity path is invalid")
         }
+      }
+
+      class OptionalTraversedParsed<T>(url: String,
+                                       requestFilePath: String,
+                                       variablesObject: Any,
+                                       private val clazz: Class<T>,
+                                       private vararg val pathFromData: String)
+        : GQLQuery<T?>(url, requestFilePath, variablesObject) {
+        override fun extractResult(response: GithubApiResponse): T? {
+          return parseResponse(response, clazz, pathFromData)
+        }
+      }
+
+      internal fun <T> parseResponse(response: GithubApiResponse,
+                                     clazz: Class<T>,
+                                     pathFromData: Array<out String>): T? {
+        val result: GHGQLResponse<out JsonNode> = parseGQLResponse(response, JsonNode::class.java)
+        val data = result.data
+        if (data != null && !data.isNull) {
+          var node: JsonNode = data
+          for (path in pathFromData) {
+            node = node[path] ?: return null
+          }
+          if (node.isNull) return null
+          return GithubApiContentHelper.fromJson(node.toString(), clazz, true)
+        }
+        else throw GithubConfusingException(result.errors.toString())
       }
     }
   }
