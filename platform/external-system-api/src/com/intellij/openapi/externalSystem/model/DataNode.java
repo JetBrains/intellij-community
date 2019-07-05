@@ -7,6 +7,7 @@ import com.intellij.openapi.util.UserDataHolderEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -21,7 +22,7 @@ import java.util.function.Function;
  * <p/>
  * Not thread-safe.
  */
-public class DataNode<T> implements UserDataHolderEx {
+public class DataNode<T> implements UserDataHolderEx, Serializable {
   private static final Logger LOG = Logger.getInstance(DataNode.class);
 
   @SuppressWarnings("NullableProblems") @NotNull
