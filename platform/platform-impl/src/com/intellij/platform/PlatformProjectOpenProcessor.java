@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -42,11 +43,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
+import java.util.Objects;
 
 /**
  * @author max
@@ -131,35 +133,48 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     return doOpenProject(virtualFile, projectToClose, line, callback, options);
   }
 
+  /**
+   * @deprecated Use Path instead of VirtualFile.
+   */
   @Nullable
+  @Deprecated
   public static Project doOpenProject(@NotNull VirtualFile virtualFile,
                                       @Nullable Project projectToClose,
                                       int line,
                                       @Nullable ProjectOpenedCallback callback,
                                       @NotNull EnumSet<Option> options) {
-    VirtualFile baseDir = virtualFile;
+    return doOpenProject(Paths.get(virtualFile.getPath()), projectToClose, line, callback, options);
+  }
+
+  @Nullable
+  public static Project doOpenProject(@NotNull Path file,
+                                      @Nullable Project projectToClose,
+                                      int line,
+                                      @Nullable ProjectOpenedCallback callback,
+                                      @NotNull EnumSet<Option> options) {
     boolean dummyProject = false;
     String dummyProjectName = null;
     boolean forceOpenInNewFrame = options.contains(Option.FORCE_NEW_FRAME);
     boolean tempProject = options.contains(Option.TEMP_PROJECT);
 
-    if (!baseDir.isDirectory()) {
+    Path baseDir = file;
+    if (!Files.isDirectory(baseDir)) {
       if (tempProject) {
         baseDir = null;
       }
       else {
-        baseDir = virtualFile.getParent();
-        while (baseDir != null && !com.intellij.openapi.project.ProjectUtil.isProjectDirectoryExistsUsingIo(baseDir)) {
+        baseDir = file.getParent();
+        while (baseDir != null && !Files.exists(baseDir)) {
           baseDir = baseDir.getParent();
         }
       }
+
       // no reasonable directory -> create new temp one or use parent
       if (baseDir == null) {
         if (tempProject || Registry.is("ide.open.file.in.temp.project.dir")) {
           try {
-            dummyProjectName = virtualFile.getName();
-            File directory = FileUtil.createTempDirectory(dummyProjectName, null, true);
-            baseDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(directory);
+            dummyProjectName = file.getFileName().toString();
+            baseDir = FileUtil.createTempDirectory(dummyProjectName, null, true).toPath();
             dummyProject = true;
           }
           catch (IOException ex) {
@@ -167,7 +182,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
           }
         }
         if (baseDir == null) {
-          baseDir = virtualFile.getParent();
+          baseDir = file.getParent();
         }
       }
     }
@@ -190,15 +205,15 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
 
     Pair<Project, Module> result = null;
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      result = prepareAndOpenProject(virtualFile, options, baseDir, dummyProject, dummyProjectName);
+      result = prepareAndOpenProject(file, options, baseDir, dummyProject, dummyProjectName);
     }
     else {
       IdeFrameImpl frame = showFrame();
       Ref<Pair<Project, Module>> refResult = Ref.create();
-      VirtualFile finalBaseDir = baseDir;
+      Path finalBaseDir = baseDir;
       boolean finalDummyProject = dummyProject;
       String finalDummyProjectName = dummyProjectName;
-      Runnable process = () -> refResult.set(prepareAndOpenProject(virtualFile, options, finalBaseDir, finalDummyProject, finalDummyProjectName));
+      Runnable process = () -> refResult.set(prepareAndOpenProject(file, options, finalBaseDir, finalDummyProject, finalDummyProjectName));
       TransactionGuard.getInstance().submitTransactionAndWait(() -> {
         boolean progressCompleted = ProgressManager.getInstance().runProcessWithProgressSynchronously(process, "Loading Project...", true, null, frame.getComponent());
         if (!progressCompleted) {
@@ -213,8 +228,8 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
       return null;
     }
 
-    if (!virtualFile.isDirectory()) {
-      openFileFromCommandLine(result.first, virtualFile, line);
+    if (!Files.isDirectory(file)) {
+      openFileFromCommandLine(result.first, file, line);
     }
 
     if (callback != null) {
@@ -247,20 +262,20 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
   }
 
   @Nullable
-  private static Pair<Project, Module> prepareAndOpenProject(@NotNull VirtualFile virtualFile,
+  private static Pair<Project, Module> prepareAndOpenProject(@NotNull Path file,
                                                              @NotNull EnumSet<Option> options,
-                                                             VirtualFile baseDir,
+                                                             Path baseDir,
                                                              boolean dummyProject,
                                                              String dummyProjectName) {
     boolean newProject = false;
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     Project project;
-    VirtualFile dotIdeaDir = baseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
-    if (dotIdeaDir != null && dotIdeaDir.isDirectory()) {
+    Path dotIdeaDir = baseDir.resolve(Project.DIRECTORY_STORE_FOLDER);
+    if (Files.isDirectory(dotIdeaDir)) {
       project = tryLoadProject(baseDir);
     }
     else {
-      project = projectManager.newProject(dummyProject ? dummyProjectName : baseDir.getName(), baseDir.getPath(), !options.contains(Option.DO_NOT_USE_DEFAULT_PROJECT), dummyProject);
+      project = projectManager.newProject(dummyProject ? dummyProjectName : baseDir.getFileName().toString(), baseDir.toString(), !options.contains(Option.DO_NOT_USE_DEFAULT_PROJECT), dummyProject);
       newProject = true;
     }
 
@@ -270,7 +285,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
 
     ProjectBaseDirectory.getInstance(project).setBaseDir(baseDir);
 
-    Module module = configureNewProject(project, baseDir, virtualFile, dummyProject, newProject);
+    Module module = configureNewProject(project, baseDir, file, dummyProject, newProject);
 
     if (newProject) {
       project.save();
@@ -279,7 +294,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
   }
 
   @Nullable
-  private static Project tryLoadProject(VirtualFile baseDir) {
+  private static Project tryLoadProject(@NotNull Path baseDir) {
     try {
       for (ProjectOpenProcessor processor : ProjectOpenProcessor.EXTENSION_POINT_NAME.getExtensionList()) {
         processor.refreshProjectFiles(baseDir);
@@ -292,8 +307,11 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     }
   }
 
-  private static Module configureNewProject(Project project, VirtualFile baseDir, @NotNull VirtualFile dummyFileContentRoot,
-                                            boolean dummyProject, boolean newProject) {
+  private static Module configureNewProject(@NotNull Project project,
+                                            @NotNull Path baseDir,
+                                            @NotNull Path dummyFileContentRoot,
+                                            boolean dummyProject,
+                                            boolean newProject) {
     boolean runConfigurators = newProject || ModuleManager.getInstance(project).getModules().length == 0;
     final Ref<Module> module = new Ref<>();
     if (runConfigurators) {
@@ -303,17 +321,21 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
       module.set(ModuleManager.getInstance(project).getModules()[0]);
     }
 
-    if (runConfigurators && dummyProject) { // add content root for chosen (single) file
+    if (runConfigurators && dummyProject) {
+      // add content root for chosen (single) file
       ModuleRootModificationUtil.updateModel(module.get(), model -> {
         ContentEntry[] entries = model.getContentEntries();
-        if (entries.length == 1) model.removeContentEntry(entries[0]); // remove custom content entry created for temp directory
-        model.addContentEntry(dummyFileContentRoot);
+        // remove custom content entry created for temp directory
+        if (entries.length == 1) {
+          model.removeContentEntry(entries[0]);
+        }
+        model.addContentEntry(VfsUtilCore.pathToUrl(dummyFileContentRoot.toString()));
       });
     }
     return module.get();
   }
 
-  private static boolean checkExistingProjectOnOpen(@NotNull Project projectToClose, @Nullable ProjectOpenedCallback callback, VirtualFile baseDir) {
+  private static boolean checkExistingProjectOnOpen(@NotNull Project projectToClose, @Nullable ProjectOpenedCallback callback, Path baseDir) {
     if (ProjectAttachProcessor.canAttachToProject() && GeneralSettings.getInstance().getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK) {
       final int exitCode = ProjectUtil.confirmOpenOrAttachProject();
       if (exitCode == -1) {
@@ -325,7 +347,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
         }
       }
       else if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH) {
-        if (attachToProject(projectToClose, Paths.get(FileUtil.toSystemDependentName(baseDir.getPath())), callback)) {
+        if (attachToProject(projectToClose, baseDir, callback)) {
           return true;
         }
       }
@@ -348,11 +370,20 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     return false;
   }
 
+  /**
+   * @deprecated Use {@link #runDirectoryProjectConfigurators(Path, Project)}
+   */
+  @Deprecated
   public static Module runDirectoryProjectConfigurators(@NotNull VirtualFile baseDir, @NotNull Project project) {
+    return runDirectoryProjectConfigurators(Paths.get(baseDir.getPath()), project);
+  }
+
+  public static Module runDirectoryProjectConfigurators(@NotNull Path baseDir, @NotNull Project project) {
     final Ref<Module> moduleRef = new Ref<>();
+    VirtualFile virtualFile = getFileAndRefresh(baseDir);
     for (DirectoryProjectConfigurator configurator: DirectoryProjectConfigurator.EP_NAME.getIterable()) {
       try {
-        configurator.configureProject(project, baseDir, moduleRef);
+        configurator.configureProject(project, virtualFile, moduleRef);
       }
       catch (Exception e) {
         LOG.error(e);
@@ -370,13 +401,21 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     return false;
   }
 
-  private static void openFileFromCommandLine(Project project, VirtualFile file, int line) {
+  private static void openFileFromCommandLine(Project project, Path file, int line) {
     StartupManager.getInstance(project).registerPostStartupActivity(
       (DumbAwareRunnable)() -> ApplicationManager.getApplication().invokeLater(() -> {
-        if (!project.isDisposed() && file.isValid()) {
-          (line > 0 ? new OpenFileDescriptor(project, file, line - 1, 0) : PsiNavigationSupport.getInstance().createNavigatable(project, file, -1)).navigate(true);
+        if (!project.isDisposed() && Files.exists(file)) {
+          VirtualFile virtualFile = getFileAndRefresh(file);
+          (line > 0 ? new OpenFileDescriptor(project, virtualFile, line - 1, 0) : PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, -1)).navigate(true);
         }
       }, ModalityState.NON_MODAL));
+  }
+
+  @NotNull
+  private static VirtualFile getFileAndRefresh(Path file) {
+    VirtualFile virtualFile = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(file.toString())));
+    virtualFile.refresh(false, false);
+    return virtualFile;
   }
 
   @Nullable

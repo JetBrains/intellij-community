@@ -25,8 +25,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryKeyBean;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.SystemDock;
@@ -48,7 +46,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -327,22 +327,19 @@ public final class IdeaApplication {
 
       if (args.length > 0) {
         String filename = args[0];
-        File file = new File(currentDirectory, filename);
-
-        if (file.exists()) {
-          VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-          if (virtualFile != null) {
-            int line = -1;
-            if (args.length > 2 && CustomProtocolHandler.LINE_NUMBER_ARG_NAME.equals(args[1])) {
-              try {
-                line = Integer.parseInt(args[2]);
-              } catch (NumberFormatException ex) {
-                LOG.error("Wrong line number:" + args[2]);
-              }
+        Path file = currentDirectory == null ? Paths.get(filename) : Paths.get(currentDirectory, filename);
+        if (Files.exists(file)) {
+          int line = -1;
+          if (args.length > 2 && CustomProtocolHandler.LINE_NUMBER_ARG_NAME.equals(args[1])) {
+            try {
+              line = Integer.parseInt(args[2]);
             }
-            EnumSet<PlatformProjectOpenProcessor.Option> options = EnumSet.noneOf(PlatformProjectOpenProcessor.Option.class);
-            PlatformProjectOpenProcessor.doOpenProject(virtualFile, null, line, null, options);
+            catch (NumberFormatException ex) {
+              LOG.error("Wrong line number:" + args[2]);
+            }
           }
+          EnumSet<PlatformProjectOpenProcessor.Option> options = EnumSet.noneOf(PlatformProjectOpenProcessor.Option.class);
+          PlatformProjectOpenProcessor.doOpenProject(file, null, line, null, options);
         }
         return CliResult.error(1, "Can't find file:" + file);
       }

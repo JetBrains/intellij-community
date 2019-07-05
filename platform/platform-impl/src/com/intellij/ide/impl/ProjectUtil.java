@@ -42,6 +42,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -82,6 +83,10 @@ public class ProjectUtil {
 
   public static boolean closeAndDispose(@NotNull Project project) {
     return ProjectManagerEx.getInstanceEx().closeAndDispose(project);
+  }
+
+  public static Project openOrImport(@NotNull Path path, Project projectToClose, boolean forceOpenInNewFrame) {
+    return openOrImport(FileUtil.toSystemIndependentName(path.toString()), projectToClose, forceOpenInNewFrame);
   }
 
   /**

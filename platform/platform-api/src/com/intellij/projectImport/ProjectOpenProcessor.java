@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.nio.file.Path;
 
 public abstract class ProjectOpenProcessor {
   public static final ExtensionPointName<ProjectOpenProcessor> EXTENSION_POINT_NAME =
@@ -82,6 +83,6 @@ public abstract class ProjectOpenProcessor {
     return false;
   }
 
-  public void refreshProjectFiles(@NotNull VirtualFile baseDir) {
+  public void refreshProjectFiles(@NotNull Path baseDir) {
   }
 }

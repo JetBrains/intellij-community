@@ -19,8 +19,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.SystemDock;
 import com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectPanel;
 import com.intellij.platform.PlatformProjectOpenProcessor;
@@ -492,27 +490,25 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
 
   @Nullable
   public Project doOpenProject(@NotNull @SystemIndependent String projectPath, @Nullable Project projectToClose, boolean forceOpenInNewFrame) {
-    VirtualFile dotIdea = LocalFileSystem.getInstance()
-      .refreshAndFindFileByPath(FileUtilRt.toSystemIndependentName(projectPath) + "/" + Project.DIRECTORY_STORE_FOLDER);
-
     Project existing = ProjectUtil.findAndFocusExistingProjectForPath(projectPath);
     if (existing != null) {
       return existing;
     }
 
-    if (dotIdea != null) {
+    Path projectFile = Paths.get(projectPath);
+    if (Files.isDirectory(projectFile.resolve(Project.DIRECTORY_STORE_FOLDER))) {
       EnumSet<PlatformProjectOpenProcessor.Option> options = EnumSet.of(PlatformProjectOpenProcessor.Option.REOPEN);
       if (forceOpenInNewFrame) {
         options.add(PlatformProjectOpenProcessor.Option.FORCE_NEW_FRAME);
       }
-      return PlatformProjectOpenProcessor.doOpenProject(dotIdea.getParent(), projectToClose, -1, null, options);
+      return PlatformProjectOpenProcessor.doOpenProject(projectFile, projectToClose, -1, null, options);
     }
     else {
       // If .idea is missing in the recent project's dir; this might mean, for instance, that 'git clean' was called.
       // Reopening such a project should be similar to opening the dir first time (and trying to import known project formats)
       // IDEA-144453 IDEA rejects opening recent project if there are no .idea subfolder
       // CPP-12106 Auto-load CMakeLists.txt on opening from Recent projects when .idea and cmake-build-debug were deleted
-      return ProjectUtil.openOrImport(projectPath, projectToClose, forceOpenInNewFrame);
+      return ProjectUtil.openOrImport(projectFile, projectToClose, forceOpenInNewFrame);
     }
   }
 

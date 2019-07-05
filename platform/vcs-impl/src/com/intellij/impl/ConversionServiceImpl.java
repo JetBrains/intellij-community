@@ -16,9 +16,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.*;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -29,6 +29,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -39,7 +42,7 @@ public class ConversionServiceImpl extends ConversionService {
 
   @NotNull
   @Override
-  public ConversionResult convertSilently(@NotNull String projectPath) {
+  public ConversionResult convertSilently(@NotNull Path projectPath) {
     return convertSilently(projectPath, new ConversionListener() {
       @Override
       public void conversionNeeded() {
@@ -61,7 +64,7 @@ public class ConversionServiceImpl extends ConversionService {
 
   @NotNull
   @Override
-  public ConversionResult convertSilently(@NotNull String projectPath, @NotNull ConversionListener listener) {
+  public ConversionResult convertSilently(@NotNull Path projectPath, @NotNull ConversionListener listener) {
     try {
       if (!isConversionNeeded(projectPath)) {
         return ConversionResultImpl.CONVERSION_NOT_NEEDED;
@@ -71,14 +74,14 @@ public class ConversionServiceImpl extends ConversionService {
       ConversionContextImpl context = new ConversionContextImpl(projectPath);
       final List<ConversionRunner> runners = getConversionRunners(context);
 
-      Set<File> affectedFiles = new HashSet<>();
+      Set<Path> affectedFiles = new HashSet<>();
       for (ConversionRunner runner : runners) {
         affectedFiles.addAll(runner.getAffectedFiles());
       }
 
-      final List<File> readOnlyFiles = ConversionRunner.getReadOnlyFiles(affectedFiles);
+      final List<Path> readOnlyFiles = ConversionRunner.getReadOnlyFiles(affectedFiles);
       if (!readOnlyFiles.isEmpty()) {
-        listener.cannotWriteToFiles(readOnlyFiles);
+        listener.cannotWriteToFiles(ContainerUtil.map(readOnlyFiles, path -> path.toFile()));
         return ConversionResultImpl.ERROR_OCCURRED;
       }
       final File backupDir = ProjectConversionUtil.backupFiles(affectedFiles, context.getProjectBaseDir());
@@ -104,13 +107,13 @@ public class ConversionServiceImpl extends ConversionService {
 
   @NotNull
   @Override
-  public ConversionResult convert(@NotNull VirtualFile projectPath) {
+  public ConversionResult convert(@NotNull Path projectPath) {
     try {
-      if (!projectPath.isValid() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      if (!Files.exists(projectPath) || ApplicationManager.getApplication().isHeadlessEnvironment()) {
         return ConversionResultImpl.CONVERSION_NOT_NEEDED;
       }
 
-      final ConversionContextImpl context = new ConversionContextImpl(projectPath.getPath());
+      final ConversionContextImpl context = new ConversionContextImpl(projectPath);
       if (!isConversionNeeded(context)) {
         return ConversionResultImpl.CONVERSION_NOT_NEEDED;
       }
@@ -159,7 +162,7 @@ public class ConversionServiceImpl extends ConversionService {
     return converters;
   }
 
-  private static boolean isConversionNeeded(String projectPath) throws CannotConvertException {
+  private static boolean isConversionNeeded(@NotNull Path projectPath) throws CannotConvertException {
     return isConversionNeeded(new ConversionContextImpl(projectPath));
   }
 
@@ -243,7 +246,7 @@ public class ConversionServiceImpl extends ConversionService {
   }
 
   @Override
-  public void saveConversionResult(@NotNull String projectPath) {
+  public void saveConversionResult(@NotNull Path projectPath) {
     try {
       saveConversionResult(new ConversionContextImpl(projectPath));
     }
@@ -290,10 +293,10 @@ public class ConversionServiceImpl extends ConversionService {
 
   @Override
   @NotNull
-  public ConversionResult convertModule(@NotNull final Project project, @NotNull final File moduleFile) {
+  public ConversionResult convertModule(@NotNull final Project project, @NotNull final Path moduleFile) {
     final String url = project.getPresentableUrl();
     assert url != null : project;
-    final String projectPath = FileUtil.toSystemDependentName(url);
+    final Path projectPath = Paths.get(url);
 
     if (!isConversionNeeded(projectPath, moduleFile)) {
       return ConversionResultImpl.CONVERSION_NOT_NEEDED;
@@ -304,8 +307,8 @@ public class ConversionServiceImpl extends ConversionService {
     if (res != Messages.YES) {
       return ConversionResultImpl.CONVERSION_CANCELED;
     }
-    if (!moduleFile.canWrite()) {
-      Messages.showErrorDialog(project, IdeBundle.message("error.message.cannot.modify.file.0", moduleFile.getAbsolutePath()),
+    if (!Files.isWritable(moduleFile)) {
+      Messages.showErrorDialog(project, IdeBundle.message("error.message.cannot.modify.file.0", moduleFile.toAbsolutePath().toString()),
                                IdeBundle.message("dialog.title.convert.module"));
       return ConversionResultImpl.ERROR_OCCURRED;
     }
@@ -337,7 +340,7 @@ public class ConversionServiceImpl extends ConversionService {
     }
   }
 
-  private static boolean isConversionNeeded(String projectPath, File moduleFile) {
+  private static boolean isConversionNeeded(Path projectPath, Path moduleFile) {
     try {
       ConversionContextImpl context = new ConversionContextImpl(projectPath);
       final List<ConversionRunner> runners = createConversionRunners(context, Collections.emptySet());

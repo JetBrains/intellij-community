@@ -39,7 +39,6 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.ZipHandler;
@@ -55,6 +54,8 @@ import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -162,6 +163,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   private static final long LEAK_CHECK_INTERVAL = TimeUnit.MINUTES.toMillis(30);
   private static long CHECK_START = System.currentTimeMillis();
   private final Map<Project, String> myProjects = new WeakHashMap<>();
+
+  @Override
+  public Project newProject(@NotNull Path filePath, boolean useDefaultProjectSettings, boolean isDummy) {
+    return newProject(filePath.getFileName().toString(), FileUtil.toSystemIndependentName(filePath.toString()), useDefaultProjectSettings, isDummy);
+  }
 
   @Override
   @Nullable
@@ -519,17 +525,17 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @Override
   public Project loadAndOpenProject(@NotNull String originalFilePath) {
     String filePath = FileUtilRt.toSystemIndependentName(toCanonicalName(originalFilePath));
-    return loadAndOpenProject(LocalFileSystem.getInstance().findFileByPath(filePath), filePath);
+    return loadAndOpenProject(Paths.get(filePath), filePath);
   }
 
   @Override
   public Project loadAndOpenProject(@NotNull File file) {
-    VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
-    return loadAndOpenProject(virtualFile, Objects.requireNonNull(virtualFile).getPath());
+    Path path = file.toPath();
+    return loadAndOpenProject(path, FileUtil.toSystemIndependentName(path.toString()));
   }
 
-  private Project loadAndOpenProject(@Nullable VirtualFile virtualFile, @NotNull @SystemIndependent String filePath) {
-    final ConversionResult conversionResult = virtualFile == null ? null : ConversionService.getInstance().convert(virtualFile);
+  private Project loadAndOpenProject(@Nullable Path file, @NotNull @SystemIndependent String filePath) {
+    final ConversionResult conversionResult = file == null ? null : ConversionService.getInstance().convert(file);
     ProjectImpl project;
     if (conversionResult != null && conversionResult.openingIsCanceled()) {
       project = null;
@@ -584,7 +590,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
    */
   @Override
   @Nullable
-  public Project convertAndLoadProject(@NotNull VirtualFile path) {
+  public Project convertAndLoadProject(@NotNull Path path) {
     Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.PROJECT_CONVERSION);
     final ConversionResult conversionResult = ConversionService.getInstance().convert(path);
     activity.end();
@@ -592,7 +598,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       return null;
     }
 
-    String filePath = path.getPath();
+    String filePath = FileUtil.toSystemIndependentName(path.toString());
     ProjectImpl project = doCreateProject(null, filePath);
     try {
       if (!ApplicationManager.getApplication().isDispatchThread() && ProgressManager.getInstance().getProgressIndicator() != null) {
