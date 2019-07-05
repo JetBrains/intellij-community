@@ -41,7 +41,7 @@ public class TraceableDisposable {
   private Throwable KILL_TRACE;
 
   public TraceableDisposable(boolean debug) {
-    CREATE_TRACE = debug ? ThrowableInterner.intern(new Throwable(String.valueOf(System.currentTimeMillis()))) : null;
+    CREATE_TRACE = debug ? ThrowableInterner.intern(new Throwable()) : null;
   }
 
   public void kill(@NonNls @Nullable String msg) {
