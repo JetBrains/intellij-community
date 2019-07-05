@@ -314,12 +314,11 @@ public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
         for (int i = inlays.size() - 1; i >= 0; i--) {
           Inlay inlay = inlays.get(i);
           int height = inlay.getHeightInPixels();
-          if (yDiff <= height) {
-            Rectangle bounds = inlay.getBounds();
-            if (bounds != null && bounds.contains(point)) return inlay;
-          }
+          if (yDiff <= height) return point.x < inlay.getWidthInPixels() ? inlay : null;
           yDiff -= height;
         }
+        LOG.error("Inconsistent state");
+        return null;
       }
       else {
         int lineBottom = baseY + myEditor.getLineHeight();
@@ -328,12 +327,11 @@ public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
           int yDiff = point.y - lineBottom;
           for (Inlay inlay : inlays) {
             int height = inlay.getHeightInPixels();
-            if (yDiff < height) {
-              Rectangle bounds = inlay.getBounds();
-              if (bounds != null && bounds.contains(point)) return inlay;
-            }
+            if (yDiff < height) return point.x < inlay.getWidthInPixels() ? inlay : null;
             yDiff -= height;
           }
+          LOG.error("Inconsistent state");
+          return null;
         }
       }
     }
