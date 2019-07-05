@@ -921,4 +921,27 @@ public final class EditorUtil {
     Point caretPoint = editor.visualPositionToXY(caret.getVisualPosition());
     return visibleArea.contains(caretPoint);
   }
+
+  /**
+   * Virtual space (after line end, and after end of text), inlays and space between visual lines (where block inlays are located) is
+   * excluded
+   */
+  public static boolean isPointOverText(@NotNull Editor editor, @NotNull Point point) {
+    VisualPosition visualPosition = editor.xyToVisualPosition(point);
+    int visualLineStartY = editor.visualLineToY(visualPosition.line);
+    if (point.y < visualLineStartY || point.y >= visualLineStartY + editor.getLineHeight()) return false; // block inlay space
+    if (editor.getSoftWrapModel().isInsideOrBeforeSoftWrap(visualPosition)) return false; // soft wrap
+    LogicalPosition logicalPosition = editor.visualToLogicalPosition(visualPosition);
+    int offset = editor.logicalPositionToOffset(logicalPosition);
+    if (!logicalPosition.equals(editor.offsetToLogicalPosition(offset))) return false; // virtual space
+    List<Inlay> inlays = editor.getInlayModel().getInlineElementsInRange(offset, offset);
+    if (!inlays.isEmpty()) {
+      VisualPosition inlaysStart = editor.offsetToVisualPosition(offset);
+      if (inlaysStart.line == visualPosition.line) {
+        int relX = point.x - editor.visualPositionToXY(inlaysStart).x;
+        if (relX >= 0 && relX < inlays.stream().mapToInt(i -> i.getWidthInPixels()).sum()) return false; // inline inlay
+      }
+    }
+    return true;
+  }
 }
