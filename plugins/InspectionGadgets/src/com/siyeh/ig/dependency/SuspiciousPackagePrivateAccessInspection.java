@@ -197,8 +197,6 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
     UClass sourceClass = UastUtils.findContaining(sourcePsi, UClass.class);
     if (sourceClass == null) return null;
     if (isReferenceBelongsToEnclosingClass(sourceNode, sourceClass, forClassReference)) {
-      UElement parent = sourceClass.getUastParent();
-      if (parent == null) return null;
       UClass parentClass = UastUtils.getContainingUClass(sourceClass);
       return parentClass != null ? parentClass.getJavaPsi() : null;
     }
