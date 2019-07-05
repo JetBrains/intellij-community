@@ -15,14 +15,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.patterns.*;
-import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.xml.DomTarget;
-import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
@@ -32,7 +28,6 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.patterns.StandardPatterns.or;
 import static com.intellij.patterns.XmlPatterns.xmlTag;
 
 public class I18nReferenceContributor extends PsiReferenceContributor {
@@ -101,40 +96,21 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
     //noinspection deprecation
     return XmlPatterns.xmlAttributeValue(attributeNames)
       .inFile(DomPatterns.inDomFile(IdeaPlugin.class))
-      .withSuperParent(2, xmlTag().and(DomPatterns.withDom(DomPatterns.domElement(Extension.class)))
-        .referencing(or(
-          DomPatterns.domTargetElement(DomPatterns.domElement(ExtensionPoint.class))
-            .with(new PatternCondition<PomTargetPsiElement>("relevantEP") {
-              @Override
-              public boolean accepts(@NotNull PomTargetPsiElement element,
-                                     ProcessingContext context) {
-                final DomTarget domTarget = (DomTarget)element.getTarget();
-                final ExtensionPoint extensionPoint = (ExtensionPoint)domTarget.getDomElement();
-
-                return matchesEpClass(extensionPoint, extensionPointClassNames);
-              }
-            }),
-          DomPatterns.tagWithDom("extensionPoint", ExtensionPoint.class)
-            .with(new PatternCondition<XmlTag>("relevantEP via qualifiedName") {
-              @Override
-              public boolean accepts(@NotNull XmlTag tag, ProcessingContext context) {
-                ExtensionPoint extensionPoint = (ExtensionPoint)DomUtil.getDomElement(tag);
-                assert extensionPoint != null;
-                return matchesEpClass(extensionPoint, extensionPointClassNames);
-              }
-            })
-        ))
-      );
+      .withSuperParent(2, xmlTag()
+        .and(DomPatterns.withDom(DomPatterns.domElement(Extension.class).with(new PatternCondition<Extension>("relevantEP") {
+          @Override
+          public boolean accepts(@NotNull Extension extension,
+                                 ProcessingContext context) {
+            final ExtensionPoint extensionPoint = extension.getExtensionPoint();
+            assert extensionPoint != null;
+            final PsiClass beanClass = extensionPoint.getBeanClass().getValue();
+            for (String name : extensionPointClassNames) {
+              if (InheritanceUtil.isInheritor(beanClass, name)) return true;
+            }
+            return false;
+          }
+        }))));
   }
-
-  private static boolean matchesEpClass(ExtensionPoint extensionPoint, String[] extensionPointClassNames) {
-    final PsiClass beanClass = extensionPoint.getBeanClass().getValue();
-    for (String name : extensionPointClassNames) {
-      if (InheritanceUtil.isInheritor(beanClass, name)) return true;
-    }
-    return false;
-  }
-
 
   private static class MyResourceBundleReference extends ResourceBundleReference implements EmptyResolveMessageProvider {
 
