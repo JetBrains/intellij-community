@@ -9,6 +9,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression
@@ -33,9 +34,6 @@ class InferenceDriver(val method: GrMethod) {
   private val defaultTypeParameterList: PsiTypeParameterList = (method.typeParameterList?.copy()
                                                                 ?: elementFactory.createTypeParameterList()) as PsiTypeParameterList
   private val parameterIndex: MutableMap<GrParameter, PsiTypeParameter> = LinkedHashMap()
-  private val methodReferences by lazy {
-    ReferencesSearch.search(method).findAll()
-  }
 
   /**
    * Gathers expressions that will be assigned to parameters of [virtualMethod]
@@ -149,10 +147,10 @@ class InferenceDriver(val method: GrMethod) {
       ?.controlFlow
       ?.filterIsInstance<ReadWriteVariableInstruction>()
       ?.groupBy { it.element?.reference?.resolve() }
-    innerUsages?.run {
+    if (innerUsages != null) {
       closureParameters.keys.forEach {
-        if (containsKey(it)) {
-          setUpClosuresSignature(session, closureParameters[it]!!, getValue(it))
+        if (innerUsages.containsKey(it)) {
+          setUpClosuresSignature(session, closureParameters[it]!!, innerUsages.getValue(it))
         }
         it.setType(parameterIndex[it]!!.type())
       }
@@ -165,7 +163,7 @@ class InferenceDriver(val method: GrMethod) {
     for (parameter in virtualMethod.parameters) {
       inferenceSession.addConstraint(ExpressionConstraint(parameter.type, parameter.initializerGroovy ?: continue))
     }
-    for (call in methodReferences.mapNotNull { it.element.parent as? GrExpression }) {
+    for (call in ReferencesSearch.search(method).findAll().mapNotNull { it.element.parent as? GrExpression }) {
       inferenceSession.addConstraint(ExpressionConstraint(null, call))
     }
     for ((parameter, expressions) in extractedExpressions) {
@@ -240,7 +238,7 @@ class InferenceDriver(val method: GrMethod) {
 
     }
     when {
-      isClosureType(target) -> {
+      isClosureType(target) && closureParameters.containsKey(parameter) -> {
         val closureParameter = closureParameters[parameter]!!
         val initialTypeParameters = typeParameterList.typeParameters
         closureParameter.typeParameters.run {
@@ -256,18 +254,15 @@ class InferenceDriver(val method: GrMethod) {
         return target.accept(visitor)
       }
       target is PsiArrayType -> {
-        return registerTypeParameter(typeParameterList).createArrayType()
+        return target.componentType.accept(visitor).createArrayType()
+      }
+      target is PsiClassType && target.resolve() is PsiTypeParameter -> return registerTypeParameter(typeParameterList)
+      target is PsiIntersectionType -> return target.accept(visitor) as PsiClassType
+      target == PsiType.getJavaLangObject(virtualMethod.manager, virtualMethod.resolveScope) -> {
+        return registerTypeParameter(typeParameterList)
       }
       else -> {
-        return when (target) {
-          PsiType.getJavaLangObject(virtualMethod.manager, virtualMethod.resolveScope) -> {
-            registerTypeParameter(typeParameterList)
-          }
-          is PsiIntersectionType -> target.accept(visitor) as PsiClassType
-          else -> {
-            registerTypeParameter(typeParameterList, target.accept(visitor) as PsiClassType)
-          }
-        }
+        return registerTypeParameter(typeParameterList, target.accept(visitor) as PsiClassType)
       }
     }
   }
@@ -282,7 +277,10 @@ class InferenceDriver(val method: GrMethod) {
         val candidate = resolveResult?.candidate
         val receiver = candidate?.receiver as? PsiClassType
         receiver?.run {
-          boundsCollector.computeIfAbsent(extractEndpointType(receiver).className) { mutableListOf() }.add(candidate.method.containingClass)
+          val endpointClassName = extractEndpointType(receiver).className
+          if (endpointClassName != null) {
+            boundsCollector.computeIfAbsent(endpointClassName) { mutableListOf() }.add(candidate.method.containingClass)
+          }
         }
         candidate?.argumentMapping?.expectedTypes?.forEach { (type, argument) ->
           val argumentType = (argument.type as? PsiClassType)
@@ -306,6 +304,11 @@ class InferenceDriver(val method: GrMethod) {
           inferenceSession.addConstraint(ExpressionConstraint(null, callExpression))
         }
         super.visitCallExpression(callExpression)
+      }
+
+      override fun visitAssignmentExpression(expression: GrAssignmentExpression) {
+        inferenceSession.addConstraint(ExpressionConstraint(null, expression))
+        super.visitAssignmentExpression(expression)
       }
 
       override fun visitExpression(expression: GrExpression) {
