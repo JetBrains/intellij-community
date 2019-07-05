@@ -271,7 +271,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     abstract WhitespacesAndCommentsBinder getBinder(boolean done);
 
     abstract void setLexemeIndex(int lexemeIndex, boolean done);
-    
+
     abstract int getLexemeIndex(boolean done);
   }
 
@@ -611,16 +611,16 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     private TokenSequence getParsedTokenSequence() {
       int tokenCount = myEndIndex - myStartIndex;
       if (tokenCount == 1) return null; // not expand single lazy parseable token case
-      
+
       int[] lexStarts = new int[tokenCount + 1];
       System.arraycopy(myBuilder.myLexStarts, myStartIndex, lexStarts, 0, tokenCount);
       int diff = myBuilder.myLexStarts[myStartIndex];
       for(int i = 0; i < tokenCount; ++i) lexStarts[i] -= diff;
       lexStarts[tokenCount] = getEndOffset() - getStartOffset();
-      
+
       IElementType[] lexTypes = new IElementType[tokenCount + 1];
       System.arraycopy(myBuilder.myLexTypes, myStartIndex, lexTypes, 0, tokenCount);
-      
+
       return new TokenSequence(lexStarts, lexTypes, tokenCount);
     }
   }
@@ -926,10 +926,10 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
   @NotNull
   private ASTNode buildTree() {
-    final StartMarker rootMarker = prepareLightTree();
-    final boolean isTooDeep = myFile != null && BlockSupport.isTooDeep(myFile.getOriginalFile());
+    StartMarker rootMarker = prepareLightTree();
+    boolean possiblyTooDeep = myFile != null && BlockSupport.isTooDeep(myFile.getOriginalFile());
 
-    if (myOriginalTree != null && !isTooDeep) {
+    if (myOriginalTree != null && !possiblyTooDeep) {
       DiffLog diffLog = merge(myOriginalTree, rootMarker, myLastCommittedText);
       throw new BlockSupport.ReparsedSuccessfullyException(diffLog);
     }
@@ -937,9 +937,11 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     final TreeElement rootNode = createRootAST(rootMarker);
     bind(rootMarker, (CompositeElement)rootNode);
 
-    if (isTooDeep && !(rootNode instanceof FileElement)) {
-      final ASTNode childNode = rootNode.getFirstChildNode();
-      childNode.putUserData(BlockSupport.TREE_DEPTH_LIMIT_EXCEEDED, Boolean.TRUE);
+    if (possiblyTooDeep && !(rootNode instanceof FileElement)) {
+      ASTNode childNode = rootNode.getFirstChildNode();
+      if (childNode != null) {
+        childNode.putUserData(BlockSupport.TREE_DEPTH_LIMIT_EXCEEDED, Boolean.TRUE);
+      }
     }
 
     assert rootNode.getTextLength() == myText.length() : rootNode.getElementType();
@@ -1043,6 +1045,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     int lastErrorIndex = -1;
     int maxDepth = 0;
     int curDepth = 0;
+    boolean hasCollapsedChameleons = false;
     for (int i = 1; i < myProduction.size(); i++) {
       ProductionMarker item = myProduction.getStartMarkerAt(i);
 
@@ -1064,6 +1067,9 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
         curNode.addChild(item);
       }
       else {
+        if (isCollapsedChameleon(curNode)) {
+          hasCollapsedChameleons = true;
+        }
         assertMarkersBalanced(myProduction.getDoneMarkerAt(i) == curNode, item);
         curNode = nodes.pop();
         curDepth--;
@@ -1082,10 +1088,14 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
     assertMarkersBalanced(curNode == rootMarker, curNode);
 
-    checkTreeDepth(maxDepth, rootMarker.getTokenType() instanceof IFileElementType);
+    checkTreeDepth(maxDepth, rootMarker.getTokenType() instanceof IFileElementType, hasCollapsedChameleons);
 
     clearCachedTokenType();
     return rootMarker;
+  }
+
+  private static boolean isCollapsedChameleon(StartMarker marker) {
+    return marker.getTokenType() instanceof ILazyParseableElementTypeBase && marker.myFirstChild == null && marker.getTextLength() > 0;
   }
 
   private void assertMarkersBalanced(boolean condition, @Nullable ProductionMarker marker) {
@@ -1181,7 +1191,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     }
   }
 
-  private void checkTreeDepth(final int maxDepth, final boolean isFileRoot) {
+  private void checkTreeDepth(int maxDepth, boolean isFileRoot, boolean hasCollapsedChameleons) {
     if (myFile == null) return;
     final PsiFile file = myFile.getOriginalFile();
     final Boolean flag = file.getUserData(BlockSupport.TREE_DEPTH_LIMIT_EXCEEDED);
@@ -1190,7 +1200,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
         file.putUserData(BlockSupport.TREE_DEPTH_LIMIT_EXCEEDED, Boolean.TRUE);
       }
     }
-    else if (isFileRoot && flag != null) {
+    else if (isFileRoot && flag != null && !hasCollapsedChameleons) {
       file.putUserData(BlockSupport.TREE_DEPTH_LIMIT_EXCEEDED, null);
     }
   }
