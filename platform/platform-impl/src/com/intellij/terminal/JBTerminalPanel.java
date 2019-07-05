@@ -18,7 +18,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ui.UIUtil;
@@ -152,6 +152,12 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
       for (AnAction action : actionsToSkip) {
         for (Shortcut sc : action.getShortcutSet().getShortcuts()) {
           if (sc.isKeyboard() && sc.startsWith(eventShortcut)) {
+            if (!Registry.is("terminal.Ctrl-E.opens.RecentFiles.popup", false) && 
+                IdeActions.ACTION_RECENT_FILES.equals(ActionManager.getInstance().getId(action))) {
+              if (e.getModifiersEx() == InputEvent.CTRL_DOWN_MASK && e.getKeyCode() == KeyEvent.VK_E) {
+                return false;
+              }
+            }
             return true;
           }
         }
