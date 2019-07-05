@@ -49,20 +49,7 @@ object ScriptModelBuilder : KLogging() {
         }
         val logger = SubstituteLogger("ScriptModelBuilderLogger", events, false)
 
-        val basePath = project.basePath
-        if (basePath == null) {
-            logger.info("Can't build model for default project")
-            return createEmptyScriptViewModel(lifetime)
-        }
-
-        val baseDirFile = LocalFileSystem.getInstance().findFileByPath(basePath)
-
-        if (baseDirFile == null) {
-            logger.info("Can't find file for base dir")
-            return createEmptyScriptViewModel(lifetime)
-        }
-
-        val dslFile = DslFileFinder.find(baseDirFile)
+        val dslFile = DslFileFinder.find(project)
 
         if (dslFile == null)
         {

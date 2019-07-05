@@ -56,13 +56,6 @@ class CircletModelStore(val project: Project): LifetimedComponent by SimpleLifet
     }
 
     private fun checkIsDslFileExists() : Boolean {
-        val basePath = project.basePath
-        if (basePath != null) {
-            val baseDirFile = LocalFileSystem.getInstance().findFileByPath(basePath)
-            if (baseDirFile!= null) {
-                return DslFileFinder.find(baseDirFile) != null
-            }
-        }
-        return false
+        return DslFileFinder.find(project) != null
     }
 }
