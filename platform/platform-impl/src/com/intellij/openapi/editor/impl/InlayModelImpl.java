@@ -306,6 +306,7 @@ public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
 
     VisualPosition visualPosition = myEditor.xyToVisualPosition(point);
     if (hasBlockElements) {
+      int startX = myEditor.getContentComponent().getInsets().left;
       int visualLine = visualPosition.line;
       int baseY = myEditor.visualLineToY(visualLine);
       if (point.y < baseY) {
@@ -314,7 +315,10 @@ public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
         for (int i = inlays.size() - 1; i >= 0; i--) {
           Inlay inlay = inlays.get(i);
           int height = inlay.getHeightInPixels();
-          if (yDiff <= height) return point.x < inlay.getWidthInPixels() ? inlay : null;
+          if (yDiff <= height) {
+            int relX = point.x - startX;
+            return relX >= 0 && relX < inlay.getWidthInPixels() ? inlay : null;
+          }
           yDiff -= height;
         }
         LOG.error("Inconsistent state");
@@ -327,7 +331,10 @@ public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
           int yDiff = point.y - lineBottom;
           for (Inlay inlay : inlays) {
             int height = inlay.getHeightInPixels();
-            if (yDiff < height) return point.x < inlay.getWidthInPixels() ? inlay : null;
+            if (yDiff < height) {
+              int relX = point.x - startX;
+              return relX >= 0 && relX < inlay.getWidthInPixels() ? inlay : null;
+            }
             yDiff -= height;
           }
           LOG.error("Inconsistent state");

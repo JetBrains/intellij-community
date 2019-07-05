@@ -65,7 +65,7 @@ class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R,
         y += inlay.getHeightInPixels();
       }
     }
-    return new Point(0, y);
+    return new Point(myEditor.getContentComponent().getInsets().left, y);
   }
 
   @Override
