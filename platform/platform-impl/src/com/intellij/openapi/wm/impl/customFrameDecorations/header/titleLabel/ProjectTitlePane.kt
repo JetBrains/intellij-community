@@ -76,13 +76,14 @@ class ProjectTitlePane : ShrinkingTitlePart {
   override val shortWidth: Int
     get() = if (parsed) projectTitle.shortWidth else unparsed.shortWidth
   override val toolTip: String
-    get() = if (parsed) projectTitle.toolTip else unparsed.toolTip
+    get() = unparsed.toolTip
   override val isClipped: Boolean
     get() = if (parsed) projectTitle.isClipped else unparsed.isClipped
 
   override fun ignore() {
     state = TitlePart.State.IGNORED
     unparsed.ignore()
+    projectTitle.ignore()
   }
 
   override fun hide() {
