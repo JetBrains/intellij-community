@@ -1,6 +1,6 @@
 package circlet.plugins.pipelines.services.execution
 
-import circlet.pipelines.engine.*
+import circlet.pipelines.engine.api.*
 import circlet.pipelines.engine.api.utils.*
 import libraries.klogging.*
 

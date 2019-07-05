@@ -2,6 +2,7 @@ package circlet.plugins.pipelines.services.execution
 
 import circlet.pipelines.config.api.*
 import circlet.pipelines.engine.*
+import circlet.pipelines.engine.api.*
 import circlet.pipelines.engine.api.storage.*
 
 class CircletIdeaAutomationBootstrapper : AutomationBootstrapper {
