@@ -1,16 +1,14 @@
 package circlet.plugins.pipelines.services
 
-import circlet.components.*
 import circlet.pipelines.config.api.*
 import circlet.pipelines.config.dsl.compile.*
 import circlet.pipelines.config.dsl.script.exec.common.*
 import circlet.pipelines.config.utils.*
 import circlet.plugins.pipelines.utils.*
 import circlet.plugins.pipelines.viewmodel.*
-import circlet.utils.*
+import com.intellij.openapi.application.*
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
-import com.intellij.openapi.vfs.*
 import libraries.klogging.*
 import org.slf4j.event.*
 import org.slf4j.helpers.*
@@ -59,8 +57,8 @@ object ScriptModelBuilder : KLogging() {
 
         try
         {
-            val automationSettingsComponent = application.getComponent<CircletAutomationSettingsComponent>()
-            val path = normalizePath(automationSettingsComponent.state.kotlincFolderPath)
+            val p = PathManager.getSystemPath() + "/.kotlinc/"
+            val path = normalizePath(p)
 
             val kotlinCompilerPath = KotlinCompilerFinder(logger)
                 .find(if (path.endsWith('/')) path else "$path/")
