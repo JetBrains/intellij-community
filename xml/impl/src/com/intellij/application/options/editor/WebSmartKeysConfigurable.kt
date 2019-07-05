@@ -1,7 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.editor
 
-import com.intellij.openapi.options.BoundConfigurable
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.options.BoundCompositeConfigurable
+import com.intellij.openapi.options.ConfigurableEP
+import com.intellij.openapi.options.UnnamedConfigurable
+import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.layout.*
 import com.intellij.xml.XmlBundle
@@ -30,7 +34,7 @@ val mySelectWholeCssIdentifierOnDoubleClick = CheckboxDescriptor("Select whole C
                                                                  PropertyBinding(model::isSelectWholeCssIdentifierOnDoubleClick,
                                                                                  model::setSelectWholeCssIdentifierOnDoubleClick))
 
-class WebSmartKeysConfigurable(val model: WebEditorOptions) : BoundConfigurable("Web") {
+class WebSmartKeysConfigurable(val model: WebEditorOptions) : BoundCompositeConfigurable<UnnamedConfigurable>("HTML/CSS") {
   override fun createPanel(): DialogPanel {
     return panel {
       row {
@@ -65,6 +69,21 @@ class WebSmartKeysConfigurable(val model: WebEditorOptions) : BoundConfigurable(
           }
         }
       }
+      for (configurable in configurables) {
+        row {
+          configurable.createComponent()?.invoke(growX)
+        }
+      }
     }
   }
+
+  override fun createConfigurables(): List<UnnamedConfigurable> {
+    return ConfigurableWrapper.createConfigurables(EP_NAME)
+  }
+
+  companion object {
+    val EP_NAME = ExtensionPointName.create<WebSmartKeysConfigurableEP>("com.intellij.webSmartKeysConfigurable")
+  }
 }
+
+class WebSmartKeysConfigurableEP : ConfigurableEP<UnnamedConfigurable>()
