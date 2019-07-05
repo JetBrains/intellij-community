@@ -98,6 +98,7 @@ import static com.intellij.vcs.commit.ToggleAmendCommitOption.isAmendCommitOptio
 import static com.intellij.vcs.log.util.VcsUserUtil.isSamePerson;
 import static git4idea.GitUtil.*;
 import static git4idea.checkin.GitCommitAndPushExecutorKt.isPushAfterCommit;
+import static git4idea.checkin.GitSkipHooksCommitHandlerFactoryKt.isSkipHooks;
 import static git4idea.repo.GitSubmoduleKt.isSubmodule;
 import static java.util.Arrays.asList;
 import static one.util.streamex.StreamEx.of;
@@ -210,13 +211,18 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     return Git.getInstance().runCommand(h).getOutputOrThrow();
   }
 
+  private void updateState(@NotNull CommitContext commitContext) {
+    myNextCommitAmend = isAmendCommitMode(commitContext);
+    myNextCommitSkipHook = isSkipHooks(commitContext);
+  }
+
   @NotNull
   @Override
   public List<VcsException> commit(@NotNull List<Change> changes,
                                    @NotNull String commitMessage,
                                    @NotNull CommitContext commitContext,
                                    @NotNull Set<String> feedback) {
-    myNextCommitAmend = isAmendCommitMode(commitContext);
+    updateState(commitContext);
 
     GitRepositoryManager manager = getRepositoryManager(myProject);
     List<VcsException> exceptions = new ArrayList<>();
@@ -1143,7 +1149,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   public void reset() {
     myNextCommitAuthor = null;
     myNextCommitAuthorDate = null;
-    myNextCommitSkipHook = false;
   }
 
   public class GitCheckinOptions
@@ -1401,10 +1406,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
         return !filteredMovements.isEmpty();
       });
     }
-  }
-
-  public void setSkipHooksForNextCommit(boolean skipHooksForNextCommit) {
-    myNextCommitSkipHook = skipHooksForNextCommit;
   }
 
   @TestOnly

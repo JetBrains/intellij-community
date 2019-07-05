@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.checkin
 
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.CommitContext
@@ -11,6 +12,7 @@ import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.ui.NonFocusableCheckBox
 import com.intellij.util.ui.JBUI
+import com.intellij.vcs.commit.commitProperty
 import git4idea.GitUtil.getRepositoriesFromRoots
 import git4idea.GitUtil.getRepositoryManager
 import git4idea.GitVcs
@@ -18,16 +20,27 @@ import git4idea.repo.GitRepository
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
 
+private val IS_SKIP_HOOKS_KEY = Key.create<Boolean>("Git.Commit.IsSkipHooks")
+internal var CommitContext.isSkipHooks: Boolean by commitProperty(IS_SKIP_HOOKS_KEY)
+
 class GitSkipHooksCommitHandlerFactory : CheckinHandlerFactory() {
-  override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler = GitSkipHooksCommitHandler(panel)
+  override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler =
+    GitSkipHooksCommitHandler(panel, commitContext)
 }
 
-private class GitSkipHooksCommitHandler(private val panel: CheckinProjectPanel) : CheckinHandler() {
-  override fun getBeforeCheckinConfigurationPanel() = GitSkipHooksConfigurationPanel(panel)
+private class GitSkipHooksCommitHandler(
+  private val panel: CheckinProjectPanel,
+  private val commitContext: CommitContext
+) : CheckinHandler() {
+
+  override fun getBeforeCheckinConfigurationPanel() = GitSkipHooksConfigurationPanel(panel, commitContext)
 }
 
-private class GitSkipHooksConfigurationPanel(private val panel: CheckinProjectPanel) :
-  RefreshableOnComponent, CheckinChangeListSpecificComponent {
+private class GitSkipHooksConfigurationPanel(
+  private val panel: CheckinProjectPanel,
+  private val commitContext: CommitContext
+) : RefreshableOnComponent,
+    CheckinChangeListSpecificComponent {
 
   private val vcs = GitVcs.getInstance(panel.project)
   private val runHooks = NonFocusableCheckBox("Run Git hooks").apply {
@@ -48,7 +61,7 @@ private class GitSkipHooksConfigurationPanel(private val panel: CheckinProjectPa
   override fun refresh() = Unit
 
   override fun saveState() {
-    (vcs.checkinEnvironment as GitCheckinEnvironment).setSkipHooksForNextCommit(shouldSkipHook())
+    commitContext.isSkipHooks = shouldSkipHook()
   }
 
   override fun restoreState() {
