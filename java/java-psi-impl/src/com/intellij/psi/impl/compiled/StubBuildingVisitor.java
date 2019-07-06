@@ -97,8 +97,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     boolean isInterface = isSet(flags, Opcodes.ACC_INTERFACE);
     boolean isEnum = isSet(flags, Opcodes.ACC_ENUM);
     boolean isAnnotationType = isSet(flags, Opcodes.ACC_ANNOTATION);
-    short stubFlags = PsiClassStubImpl.packFlags(isDeprecated, isInterface, isEnum, false, false,
-                                                 isAnnotationType, false, false, myAnonymousInner, myLocalClassInner, false);
+    short stubFlags = PsiClassStubImpl.packFlags(
+      isDeprecated, isInterface, isEnum, false, false, isAnnotationType, false, false, myAnonymousInner, myLocalClassInner, false);
     myResult = new PsiClassStubImpl(JavaStubElementTypes.CLASS, myParent, fqn, shortName, null, stubFlags);
 
     myModList = new PsiModifierListStubImpl(myResult, packClassFlags(flags));
@@ -311,23 +311,17 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
   @Override
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-    // JLS 13.1 says: Any constructs introduced by the compiler that do not have a corresponding construct in the source code
-    // must be marked as synthetic, except for default constructors and the class initialization method.
-    // However Scala compiler erroneously generates ACC_BRIDGE instead of ACC_SYNTHETIC flag for in-trait implementation delegation.
-    // See IDEA-78649
-    if (isSet(access, Opcodes.ACC_SYNTHETIC)) return null;
-    if (name == null) return null;
-    if (SYNTHETIC_CLASS_INIT_METHOD.equals(name)) return null;
-    if (myAnonymousInner && SYNTHETIC_INIT_METHOD.equals(name)) return null;
+    if (isSet(access, Opcodes.ACC_SYNTHETIC) || name == null || SYNTHETIC_CLASS_INIT_METHOD.equals(name)) return null;
 
-    // skip semi-synthetic enum methods
+    boolean isConstructor = SYNTHETIC_INIT_METHOD.equals(name);
+    if (isConstructor && myAnonymousInner) return null;
+
     boolean isEnum = myResult.isEnum();
     if (isEnum) {
       if ("values".equals(name) && desc.startsWith("()")) return null;
       if ("valueOf".equals(name) && desc.startsWith("(Ljava/lang/String;)")) return null;
     }
 
-    boolean isConstructor = SYNTHETIC_INIT_METHOD.equals(name);
     boolean isDeprecated = isSet(access, Opcodes.ACC_DEPRECATED);
     boolean isVarargs = isSet(access, Opcodes.ACC_VARARGS);
     boolean isStatic = isSet(access, Opcodes.ACC_STATIC);
