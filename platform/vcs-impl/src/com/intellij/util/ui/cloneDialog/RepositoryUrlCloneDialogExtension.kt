@@ -39,7 +39,7 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
     }
 
     init {
-      mainPanel.border = JBUI.Borders.emptyRight(UIUtil.DEFAULT_VGAP)
+      mainPanel.border = JBUI.Borders.emptyRight(UIUtil.PANEL_REGULAR_INSETS.right)
       val northPanel = panel {
         row("Version control:") { comboBox() }
       }
