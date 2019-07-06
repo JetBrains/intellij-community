@@ -30,18 +30,13 @@ private class GitSkipHooksConfigurationPanel(private val panel: CheckinProjectPa
   RefreshableOnComponent, CheckinChangeListSpecificComponent {
 
   private val vcs = GitVcs.getInstance(panel.project)
-  private val runHooks = NonFocusableCheckBox("Run Git hooks")
+  private val runHooks = NonFocusableCheckBox("Run Git hooks").apply {
+    mnemonic = KeyEvent.VK_H
+    toolTipText = "<html>If unchecked, Git hook will be skipped with the '--no-verify' parameter</html>"
+  }
   private var selectedState = true
 
-  override fun getComponent(): JComponent {
-    with(runHooks) {
-      mnemonic = KeyEvent.VK_H
-      toolTipText = "<html>If unchecked, Git hook will be skipped with the '--no-verify' parameter</html>"
-      isVisible = getRepositoryManager(panel.project).repositories.any { it.hasCommitHooks() }
-      isSelected = true
-    }
-    return JBUI.Panels.simplePanel(runHooks)
-  }
+  override fun getComponent(): JComponent = JBUI.Panels.simplePanel(runHooks)
 
   override fun onChangeListSelected(list: LocalChangeList?) {
     if (runHooks.isEnabled) selectedState = runHooks.isSelected
@@ -56,7 +51,10 @@ private class GitSkipHooksConfigurationPanel(private val panel: CheckinProjectPa
     (vcs.checkinEnvironment as GitCheckinEnvironment).setSkipHooksForNextCommit(shouldSkipHook())
   }
 
-  override fun restoreState() = Unit
+  override fun restoreState() {
+    runHooks.isVisible = getRepositoryManager(panel.project).repositories.any { it.hasCommitHooks() }
+    runHooks.isSelected = true
+  }
 
   private fun shouldSkipHook() = runHooks.isVisible && !runHooks.isSelected
 
