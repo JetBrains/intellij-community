@@ -78,7 +78,7 @@ open class SingleChangeListCommitWorkflow(
 
     with(SingleChangeListCommitter(project, commitState, commitContext, vcsToCommit, DIALOG_TITLE, isDefaultChangeListFullyIncluded)) {
       addResultHandler(CommitHandlersNotifier(commitHandlers))
-      addResultHandler(resultHandler ?: DefaultCommitResultHandler(this))
+      addResultHandler(resultHandler ?: ShowNotificationCommitResultHandler(this))
 
       runCommit(DIALOG_TITLE, false)
     }

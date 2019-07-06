@@ -20,7 +20,7 @@ private fun escape(s: String) = replace(s, FROM, TO)
 
 private fun hasOnlyWarnings(exceptions: List<VcsException>) = exceptions.all { it.isWarning }
 
-class DefaultCommitResultHandler(private val committer: AbstractCommitter) : CommitResultHandler {
+class ShowNotificationCommitResultHandler(private val committer: AbstractCommitter) : CommitResultHandler {
   private val notifier = VcsNotifier.getInstance(committer.project)
 
   override fun onSuccess(commitMessage: String) = reportResult()

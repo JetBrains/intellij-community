@@ -40,7 +40,7 @@ public class CommitHelper {
     myCommitter = new SingleChangeListCommitter(project, commitState, commitContext, null, actionName, isDefaultChangeListFullyIncluded);
 
     myCommitter.addResultHandler(new CommitHandlersNotifier(handlers));
-    myCommitter.addResultHandler(notNull(resultHandler, new DefaultCommitResultHandler(myCommitter)));
+    myCommitter.addResultHandler(notNull(resultHandler, new ShowNotificationCommitResultHandler(myCommitter)));
   }
 
   @SuppressWarnings("unused") // Required for compatibility with external plugins.

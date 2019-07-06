@@ -60,7 +60,7 @@ import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.commit.ChangeListCommitState;
-import com.intellij.vcs.commit.DefaultCommitResultHandler;
+import com.intellij.vcs.commit.ShowNotificationCommitResultHandler;
 import com.intellij.vcs.commit.SingleChangeListCommitter;
 import com.intellij.vcsUtil.VcsUtil;
 import kotlin.text.StringsKt;
@@ -1226,7 +1226,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     SingleChangeListCommitter committer =
       new SingleChangeListCommitter(myProject, commitState, new CommitContext(), null, changeList.getName(), false);
 
-    committer.addResultHandler(new DefaultCommitResultHandler(committer));
+    committer.addResultHandler(new ShowNotificationCommitResultHandler(committer));
     committer.runCommit(changeList.getName(), synchronously);
   }
 

@@ -49,7 +49,7 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
 
     with(LocalChangesCommitter(project, commitState.changes, commitState.commitMessage, commitContext)) {
       addResultHandler(CommitHandlersNotifier(commitHandlers))
-      addResultHandler(DefaultCommitResultHandler(this))
+      addResultHandler(ShowNotificationCommitResultHandler(this))
       addResultHandler(ResultHandler(this@ChangesViewCommitWorkflow))
 
       runCommit("Commit Changes", false)
