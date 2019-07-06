@@ -9,7 +9,7 @@ PsiJavaFileStub [java.util.concurrent]
       PsiTypeParameterListStub
       PsiRefListStub[EXTENDS_LIST:java.util.concurrent.TimeUnit]
       PsiRefListStub[IMPLEMENTS_LIST:]
-§      PsiMethodStub[toNanos:long]
+      PsiMethodStub[toNanos:long]
         PsiModifierListStub[mask=1]
         PsiTypeParameterListStub
         PsiParameterListStub
