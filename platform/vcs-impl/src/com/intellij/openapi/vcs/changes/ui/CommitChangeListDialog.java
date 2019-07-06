@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool;
@@ -62,6 +63,7 @@ import static com.intellij.vcs.commit.AbstractCommitWorkflow.getCommitHandlerFac
 import static com.intellij.vcs.commit.SingleChangeListCommitWorkflowKt.getPresentableText;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
+import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.*;
 
@@ -200,7 +202,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
       return false;
     }
 
-    for (BaseCheckinHandlerFactory factory : getCommitHandlerFactories(project)) {
+    AbstractVcs<?>[] vcses = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
+    for (BaseCheckinHandlerFactory factory : getCommitHandlerFactories(asList(vcses))) {
       BeforeCheckinDialogHandler handler = factory.createSystemReadyHandler(project);
       if (handler != null && !handler.beforeCommitDialogShown(project, changes, (Iterable<CommitExecutor>)executors, showVcsCommit)) {
         return false;

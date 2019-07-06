@@ -11,7 +11,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckinProjectPanel
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
@@ -212,13 +211,16 @@ abstract class AbstractCommitWorkflow(val project: Project) {
 
   companion object {
     @JvmStatic
-    fun getCommitHandlerFactories(project: Project): List<BaseCheckinHandlerFactory> =
-      CheckinHandlersManager.getInstance().getRegisteredCheckinHandlerFactories(ProjectLevelVcsManager.getInstance(project).allActiveVcss)
+    fun getCommitHandlerFactories(vcses: Collection<AbstractVcs<*>>): List<BaseCheckinHandlerFactory> =
+      CheckinHandlersManager.getInstance().getRegisteredCheckinHandlerFactories(vcses.toTypedArray())
 
-    // TODO Seems, it is better to get handlers/factories for workflow.vcses, but not allActiveVcss
     @JvmStatic
-    fun getCommitHandlers(commitPanel: CheckinProjectPanel, commitContext: CommitContext) =
-      getCommitHandlerFactories(commitPanel.project)
+    fun getCommitHandlers(
+      vcses: Collection<AbstractVcs<*>>,
+      commitPanel: CheckinProjectPanel,
+      commitContext: CommitContext
+    ): List<CheckinHandler> =
+      getCommitHandlerFactories(vcses)
         .map { it.createHandler(commitPanel, commitContext) }
         .filter { it != CheckinHandler.DUMMY }
 

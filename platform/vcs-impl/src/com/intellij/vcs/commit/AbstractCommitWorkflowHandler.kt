@@ -69,7 +69,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     }
   }
 
-  protected fun initCommitHandlers() = workflow.initCommitHandlers(getCommitHandlers(commitPanel, commitContext))
+  protected fun initCommitHandlers() = workflow.initCommitHandlers(getCommitHandlers(workflow.vcses, commitPanel, commitContext))
 
   protected fun createCommitOptions(): CommitOptions = CommitOptionsImpl(
     if (workflow.isDefaultCommitEnabled) getVcsOptions(commitPanel, workflow.vcses, commitContext) else emptyMap(),

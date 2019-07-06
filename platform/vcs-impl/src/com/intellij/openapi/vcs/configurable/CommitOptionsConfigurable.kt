@@ -5,24 +5,26 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
-import com.intellij.vcs.commit.CommitWorkflowHandler
-import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitHandlers
-import com.intellij.vcs.commit.CommitOptionsPanel.Companion.verticalPanel
-import com.intellij.vcs.commit.NullCommitWorkflowHandler
-import com.intellij.vcs.commit.getDefaultCommitActionName
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBPanel
 import com.intellij.util.ui.UIUtil.removeMnemonic
+import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitHandlers
+import com.intellij.vcs.commit.CommitOptionsPanel.Companion.verticalPanel
+import com.intellij.vcs.commit.CommitWorkflowHandler
+import com.intellij.vcs.commit.NullCommitWorkflowHandler
+import com.intellij.vcs.commit.getDefaultCommitActionName
 import java.awt.GridLayout
 import java.io.File
 
 class CommitOptionsConfigurable(val project: Project) : JBPanel<CommitOptionsConfigurable>(GridLayout()), UnnamedConfigurable, Disposable {
   private val checkinPanel = CheckinPanel(project)
   private val commitContext = CommitContext()
-  private val checkinHandlers = getCommitHandlers(checkinPanel, commitContext)
+  private val checkinHandlers = getCommitHandlers(
+    ProjectLevelVcsManager.getInstance(project).allActiveVcss.toList(), checkinPanel, commitContext)
   private val beforeSettings = checkinHandlers.mapNotNull { it.beforeCheckinSettings }
 
   init {
