@@ -17,7 +17,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
-import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.VcsLogRootFilter;
 import com.intellij.vcs.log.VcsLogStructureFilter;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
@@ -36,8 +35,8 @@ import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.*;
 
-class StructureFilterPopupComponent extends FilterPopupComponent<FilterPair<VcsLogStructureFilter, VcsLogRootFilter>,
-  FilterModel.PairFilterModel<VcsLogStructureFilter, VcsLogRootFilter>> {
+public class StructureFilterPopupComponent
+  extends FilterPopupComponent<FilterPair<VcsLogStructureFilter, VcsLogRootFilter>, VcsLogClassicFilterUi.FileFilterModel> {
 
   private static final int FILTER_LABEL_LENGTH = 30;
   private static final int CHECKBOX_ICON_SIZE = 15;
@@ -47,9 +46,9 @@ class StructureFilterPopupComponent extends FilterPopupComponent<FilterPair<VcsL
   @NotNull private final MainVcsLogUiProperties myUiProperties;
   @NotNull private final VcsLogColorManager myColorManager;
 
-  StructureFilterPopupComponent(@NotNull MainVcsLogUiProperties uiProperties,
-                                @NotNull FilterModel.PairFilterModel<VcsLogStructureFilter, VcsLogRootFilter> filterModel,
-                                @NotNull VcsLogColorManager colorManager) {
+  public StructureFilterPopupComponent(@NotNull MainVcsLogUiProperties uiProperties,
+                                       @NotNull VcsLogClassicFilterUi.FileFilterModel filterModel,
+                                       @NotNull VcsLogColorManager colorManager) {
     super("Paths", filterModel);
     myUiProperties = uiProperties;
     myColorManager = colorManager;
@@ -203,7 +202,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<FilterPair<VcsL
   }
 
   private Set<VirtualFile> getAllRoots() {
-    return myFilterModel.getDataPack().getLogProviders().keySet();
+    return myFilterModel.getRoots();
   }
 
   private boolean isVisible(@NotNull VirtualFile root) {
@@ -350,7 +349,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<FilterPair<VcsL
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-      VcsLogDataPack dataPack = myFilterModel.getDataPack();
+      Set<VirtualFile> roots = myFilterModel.getRoots();
       VcsLogStructureFilter structureFilter = getStructureFilter(myFilterModel.getFilter());
 
       Collection<VirtualFile> files;
@@ -363,7 +362,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<FilterPair<VcsL
       }
 
       VcsStructureChooser chooser = new VcsStructureChooser(project, "Select Files or Folders to Filter by", files,
-                                                            new ArrayList<>(dataPack.getLogProviders().keySet()));
+                                                            new ArrayList<>(roots));
       if (chooser.showAndGet()) {
         VcsLogStructureFilter newFilter = VcsLogFilterObject.fromVirtualFiles(chooser.getSelectedFiles());
         myFilterModel.setFilter(new FilterPair<>(newFilter, null));
