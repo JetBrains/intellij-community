@@ -197,15 +197,12 @@ class GitUpdateInfoAsLog(private val project: Project,
     override fun getFilterValues(filterName: String): List<String>? {
       when (filterName) {
         RANGE_FILTER.name -> return ArrayList(rangeFilter.getTextPresentation())
-        BRANCH_FILTER.name, REVISION_FILTER.name -> return null
-        else -> return mainProperties.getFilterValues(filterName)
+        STRUCTURE_FILTER.name, ROOT_FILTER.name -> return mainProperties.getFilterValues(filterName)
+        else -> return null
       }
     }
 
     override fun saveFilterValues(filterName: String, values: List<String>?) {
-      if (filterName != RANGE_FILTER.name && filterName != BRANCH_FILTER.name && filterName != REVISION_FILTER.name) {
-        mainProperties.saveFilterValues(filterName, values)
-      }
     }
   }
 

@@ -5,6 +5,7 @@ import com.intellij.dvcs.branch.DvcsSyncSettings
 import com.intellij.dvcs.ui.DvcsBundle.message
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.progress.ProgressIndicator
@@ -14,6 +15,8 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBLabel
@@ -22,10 +25,15 @@ import com.intellij.ui.layout.*
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.VcsExecutablePathSelector
+import com.intellij.vcs.log.ui.VcsLogColorManagerImpl
+import com.intellij.vcs.log.ui.filter.StructureFilterPopupComponent
+import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi
 import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepositoryManager
+import git4idea.update.GitUpdateProjectInfoLogProperties
+import java.awt.Color
 import javax.swing.JLabel
 
 
@@ -243,6 +251,23 @@ internal class GitVcsPanel(private val project: Project,
       checkBox("Use credential helper",
                { applicationSettings.isUseCredentialHelper },
                { applicationSettings.isUseCredentialHelper = it })
+    }
+
+    if (AbstractCommonUpdateAction.showsCustomNotification(listOf(GitVcs.getInstance(project)))) {
+      row {
+        cell {
+          val updateInfoProperties = project.service<GitUpdateProjectInfoLogProperties>()
+          val roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(GitVcs.getInstance(project)).toSet()
+          val model = VcsLogClassicFilterUi.FileFilterModel(roots, updateInfoProperties, null)
+          val component = object : StructureFilterPopupComponent(updateInfoProperties, model, VcsLogColorManagerImpl(roots)) {
+            override fun shouldDrawLabel(): Boolean = false
+            override fun shouldIndicateHovering(): Boolean = false
+            override fun getDefaultSelectorForeground(): Color = UIUtil.getLabelForeground()
+          }.initUi()
+          label("Filter Update Project information by paths: ")
+          component()
+        }
+      }
     }
   }
 }
