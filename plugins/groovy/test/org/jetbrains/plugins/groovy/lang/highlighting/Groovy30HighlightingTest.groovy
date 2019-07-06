@@ -80,4 +80,8 @@ I i = {3}
   void 'test illegal single argument lambda'() {
     highlightingTest ()
   }
+
+  void 'test type use in annotation description'() {
+    highlightingTest()
+  }
 }

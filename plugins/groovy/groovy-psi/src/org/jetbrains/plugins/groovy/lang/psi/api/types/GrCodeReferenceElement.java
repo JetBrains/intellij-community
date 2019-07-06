@@ -8,7 +8,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
-public interface GrCodeReferenceElement extends GrReferenceElement<GrCodeReferenceElement> {
+public interface GrCodeReferenceElement extends GrReferenceElement<GrCodeReferenceElement>, GrTypeAnnotationOwner {
 
   @NotNull
   CodeReferenceKind getKind();

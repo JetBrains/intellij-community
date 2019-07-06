@@ -4,32 +4,32 @@ import java.lang.annotation.Target
 import static java.lang.annotation.ElementType.*
 import static java.lang.annotation.RetentionPolicy.RUNTIME
 
-@Target(<error descr="Expected 'TYPE_USE' to be an inline constant">[PARAMETER, FIELD, METHOD, ANNOTATION_TYPE, TYPE_USE, LOCAL_VARIABLE]</error>)
+@Target([PARAMETER, FIELD, METHOD, ANNOTATION_TYPE, TYPE_USE, LOCAL_VARIABLE])
 @Retention(RUNTIME)
 @interface JSR308 { }
 
 class JSR308BaseClass<T> {}
 interface JSR308Interface1<T> {}
-interface JSR308Interface2<T extends @JSR308 CharSequence> {}
+interface JSR308Interface2<T extends <error descr="Type annotations are not supported in current version">@JSR308</error> CharSequence> {}
 
-class JSR308Class extends @JSR308 JSR308BaseClass<@JSR308 List> implements @JSR308 JSR308Interface1<@JSR308 String>, @JSR308 JSR308Interface2<@JSR308 String> {
+class JSR308Class extends @JSR308 JSR308BaseClass<<error descr="Type annotations are not supported in current version">@JSR308</error> List> implements @JSR308 JSR308Interface1<<error descr="Type annotations are not supported in current version">@JSR308</error> String>, @JSR308 JSR308Interface2<<error descr="Type annotations are not supported in current version">@JSR308</error> String> {
   @JSR308 private  String name;
 
-  @JSR308 List<@JSR308 String> test(@JSR308 List<@JSR308 ? extends @JSR308 Object> list) throws @JSR308 IOException, @JSR308 java.sql.SQLException {
-    @JSR308 List<@JSR308 String> localVar = new @JSR308 ArrayList<@JSR308 String>();
+  @JSR308 List<<error descr="Type annotations are not supported in current version">@JSR308</error> String> test(@JSR308 List<@JSR308 ? extends <error descr="Type annotations are not supported in current version">@JSR308</error> Object> list) throws <error descr="Type annotations are not supported in current version">@JSR308</error> IOException, <error descr="Type annotations are not supported in current version">@JSR308</error> java.sql.SQLException {
+    @JSR308 List<<error descr="Type annotations are not supported in current version">@JSR308</error> String> localVar = new @JSR308 ArrayList<<error descr="Type annotations are not supported in current version">@JSR308</error> String>();
 
     try {
       for (e in list) {
-        String t = (@JSR308 String) e;
+        String t = (<error descr="Type annotations are not supported in current version">@JSR308</error> String) e;
         localVar.add(t);
       }
     } catch (@JSR308 Exception e) {
     }
 
-    String @JSR308 []  strs = new String @JSR308 [] <error descr="Array initializers are not supported in current version">{ 'a' }</error>
-    String @JSR308 [] @JSR308 [] strs2 = new String @JSR308 [] @JSR308 [] { new String[] <error descr="Array initializers are not supported in current version">{'a', 'b'}</error> }
-    String @JSR308 [] @JSR308 [] @JSR308 [] strs3 = new String @JSR308 [1] @JSR308 [2] @JSR308 []
-    String @JSR308 [] @JSR308 [] @JSR308 [] @JSR308 [] strs4 = new String @JSR308 [1] @JSR308 [2] @JSR308 [] @JSR308 []
+    String <error descr="Type annotations are not supported in current version">@JSR308</error> []  strs = new String @JSR308 [] <error descr="Array initializers are not supported in current version">{ 'a' }</error>
+    String <error descr="Type annotations are not supported in current version">@JSR308</error> [] @JSR308 [] strs2 = new String @JSR308 [] @JSR308 [] { new String[] <error descr="Array initializers are not supported in current version">{'a', 'b'}</error> }
+    String [][] <error descr="Type annotations are not supported in current version">@JSR308</error> [] strs3 = new String [1][2] @JSR308 []
+    String [] <error descr="Type annotations are not supported in current version">@JSR308</error> [] @JSR308 [] @JSR308 [] strs4 = new String [1] @JSR308 [2] @JSR308 [] @JSR308 []
 
     localVar.add(strs[0])
     localVar.add(strs2[0][1])

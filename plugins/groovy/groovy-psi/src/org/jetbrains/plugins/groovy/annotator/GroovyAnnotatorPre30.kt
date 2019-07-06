@@ -29,6 +29,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrI
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 
@@ -212,5 +214,17 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
       run = run.parent
     }
     return false
+  }
+
+  override fun visitTypeElement(typeElement: GrTypeElement) {
+    typeElement.annotations.forEach {
+      holder.createErrorAnnotation(it, message("unsupported.type.annotations"))
+    }
+  }
+
+  override fun visitCodeReferenceElement(refElement: GrCodeReferenceElement) {
+    refElement.annotations.forEach {
+      holder.createErrorAnnotation(it, message("unsupported.type.annotations"))
+    }
   }
 }
