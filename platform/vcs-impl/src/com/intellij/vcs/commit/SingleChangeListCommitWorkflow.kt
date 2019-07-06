@@ -78,6 +78,7 @@ open class SingleChangeListCommitWorkflow(
 
     with(SingleChangeListCommitter(project, commitState, commitContext, vcsToCommit, DIALOG_TITLE, isDefaultChangeListFullyIncluded)) {
       addResultHandler(CommitHandlersNotifier(commitHandlers))
+      addResultHandler(getCommitEventDispatcher())
       addResultHandler(resultHandler ?: ShowNotificationCommitResultHandler(this))
 
       runCommit(DIALOG_TITLE, false)
@@ -89,10 +90,8 @@ open class SingleChangeListCommitWorkflow(
 
     with(CustomCommitter(project, session, commitState.changes, commitState.commitMessage)) {
       addResultHandler(CommitHandlersNotifier(commitHandlers))
-      addResultHandler(CommitResultHandler {
-        eventDispatcher.multicaster.customCommitSucceeded()
-        cleaner.clean()
-      })
+      addResultHandler(CommitResultHandler { cleaner.clean() })
+      addResultHandler(getCommitCustomEventDispatcher())
       resultHandler?.let { addResultHandler(it) }
 
       runCommit(executor.actionText)

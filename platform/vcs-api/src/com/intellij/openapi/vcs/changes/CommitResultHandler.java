@@ -6,13 +6,14 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.EventListener;
 import java.util.List;
 
 /**
  * CommitResultHandler may be passed to {@link AbstractVcsHelper#commitChanges(Collection, LocalChangeList, String, CommitResultHandler)}.
  * It is called after commit is performed: successful or failed.
  */
-public interface CommitResultHandler {
+public interface CommitResultHandler extends EventListener {
 
   void onSuccess(@NotNull String commitMessage);
 

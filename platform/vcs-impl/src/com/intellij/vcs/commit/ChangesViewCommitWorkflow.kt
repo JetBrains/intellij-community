@@ -1,11 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
@@ -20,7 +18,6 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
 
   override val isDefaultCommitEnabled: Boolean get() = true
 
-  internal var areCommitOptionsCreated: Boolean = false
   internal lateinit var commitState: CommitState
 
   init {
@@ -49,8 +46,8 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
 
     with(LocalChangesCommitter(project, commitState.changes, commitState.commitMessage, commitContext)) {
       addResultHandler(CommitHandlersNotifier(commitHandlers))
+      addResultHandler(getCommitEventDispatcher())
       addResultHandler(ShowNotificationCommitResultHandler(this))
-      addResultHandler(ResultHandler(this@ChangesViewCommitWorkflow))
 
       runCommit("Commit Changes", false)
     }
@@ -59,21 +56,8 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
   private fun doCommitCustom(executor: CommitExecutor, session: CommitSession) =
     with(CustomCommitter(project, session, commitState.changes, commitState.commitMessage)) {
       addResultHandler(CommitHandlersNotifier(commitHandlers))
-      addResultHandler(CommitResultHandler { eventDispatcher.multicaster.customCommitSucceeded() })
+      addResultHandler(getCommitCustomEventDispatcher())
 
       runCommit(executor.actionText)
     }
-
-  private class ResultHandler(private val workflow: ChangesViewCommitWorkflow) : CommitResultHandler {
-    override fun onSuccess(commitMessage: String) = resetState()
-    override fun onCancel() = Unit
-    override fun onFailure(errors: List<VcsException>) = resetState()
-
-    private fun resetState() = runInEdt {
-      workflow.disposeCommitOptions()
-      workflow.areCommitOptionsCreated = false
-
-      workflow.clearCommitContext()
-    }
-  }
 }

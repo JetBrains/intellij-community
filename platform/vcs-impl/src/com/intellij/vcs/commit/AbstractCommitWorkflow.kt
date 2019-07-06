@@ -3,6 +3,7 @@ package com.intellij.vcs.commit
 
 import com.intellij.CommonBundle.getCancelButtonText
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
@@ -12,6 +13,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle.message
+import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction.addUnversionedFilesToVcs
@@ -51,12 +53,12 @@ interface CommitWorkflowListener : EventListener {
 
   fun beforeCommitChecksStarted()
   fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CheckinHandler.ReturnResult)
-
-  fun customCommitSucceeded()
 }
 
 abstract class AbstractCommitWorkflow(val project: Project) {
-  protected val eventDispatcher = EventDispatcher.create(CommitWorkflowListener::class.java)
+  private val eventDispatcher = EventDispatcher.create(CommitWorkflowListener::class.java)
+  private val commitEventDispatcher = EventDispatcher.create(CommitResultHandler::class.java)
+  private val commitCustomEventDispatcher = EventDispatcher.create(CommitResultHandler::class.java)
 
   var commitContext: CommitContext = CommitContext()
     private set
@@ -109,6 +111,11 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   }
 
   fun addListener(listener: CommitWorkflowListener, parent: Disposable) = eventDispatcher.addListener(listener, parent)
+  fun addCommitListener(listener: CommitResultHandler, parent: Disposable) = commitEventDispatcher.addListener(listener, parent)
+  fun addCommitCustomListener(listener: CommitResultHandler, parent: Disposable) = commitCustomEventDispatcher.addListener(listener, parent)
+
+  protected fun getCommitEventDispatcher(): CommitResultHandler = EdtCommitResultHandler(commitEventDispatcher.multicaster)
+  protected fun getCommitCustomEventDispatcher(): CommitResultHandler = commitCustomEventDispatcher.multicaster
 
   fun addUnversionedFiles(changeList: LocalChangeList, unversionedFiles: List<VirtualFile>, callback: (List<Change>) -> Unit): Boolean {
     if (unversionedFiles.isEmpty()) return true
@@ -231,4 +238,10 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     internal fun getCommitExecutors(project: Project, vcses: Collection<AbstractVcs<*>>): List<CommitExecutor> =
       vcses.flatMap { it.commitExecutors } + ChangeListManager.getInstance(project).registeredExecutors
   }
+}
+
+private class EdtCommitResultHandler(private val handler: CommitResultHandler) : CommitResultHandler {
+  override fun onSuccess(commitMessage: String) = runInEdt { handler.onSuccess(commitMessage) }
+  override fun onCancel() = runInEdt { handler.onCancel() }
+  override fun onFailure(errors: List<VcsException>) = runInEdt { handler.onFailure(errors) }
 }
