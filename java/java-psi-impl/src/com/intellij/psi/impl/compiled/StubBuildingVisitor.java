@@ -318,6 +318,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     if (isSet(access, Opcodes.ACC_SYNTHETIC)) return null;
     if (name == null) return null;
     if (SYNTHETIC_CLASS_INIT_METHOD.equals(name)) return null;
+    if (myAnonymousInner && SYNTHETIC_INIT_METHOD.equals(name)) return null;
 
     // skip semi-synthetic enum methods
     boolean isEnum = myResult.isEnum();
