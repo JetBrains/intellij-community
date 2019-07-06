@@ -5,6 +5,7 @@ import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -16,7 +17,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
@@ -27,9 +31,14 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
+import com.intellij.vcs.log.ui.filter.StructureFilterPopupComponent;
+import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
+import git4idea.GitVcs;
 import git4idea.branch.GitBranchIncomingOutgoingManager;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.update.GitUpdateProjectInfoLogProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,8 +48,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
+import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static com.intellij.util.containers.ContainerUtil.sorted;
+import static java.util.Collections.singletonList;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -74,6 +86,8 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
   private JPanel myCheckIncomingPanel;
   // TODO: add tooltip: Do not use credential helpers when using git from IDE. Only works with Git version >=2.9.0
   private JBCheckBox myUseCredHelperCheckbox;
+  private JComponent myUpdateProjectInfoFilter;
+  private JBLabel myUpdateProjectInfoFilterLabel;
 
 
   public GitVcsPanel(@NotNull Project project, @NotNull GitExecutableManager executableManager) {
@@ -317,5 +331,32 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     myIncomingStrategyComboBox = new ComboBox<>(new EnumComboBoxModel<>(GitIncomingCheckStrategy.class));
     mySupportedBranchUpLabel = new JBLabel("Supported from Git 2.9+");
     mySupportedBranchUpLabel.setBorder(JBUI.Borders.emptyLeft(2));
+
+    GitUpdateProjectInfoLogProperties updateInfoProperties = ServiceManager.getService(myProject, GitUpdateProjectInfoLogProperties.class);
+    Set<VirtualFile> roots = newHashSet(ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(GitVcs.getInstance(myProject)));
+    VcsLogClassicFilterUi.FileFilterModel model = new VcsLogClassicFilterUi.FileFilterModel(roots, updateInfoProperties, null);
+    VcsLogColorManagerImpl colorManager = new VcsLogColorManagerImpl(roots);
+    myUpdateProjectInfoFilter = new StructureFilterPopupComponent(updateInfoProperties, model, colorManager){
+      @NotNull
+      @Override
+      protected Color getDefaultSelectorForeground() {
+        return UIUtil.getLabelForeground();
+      }
+
+      @Override
+      protected boolean shouldIndicateHovering() {
+        return false;
+      }
+
+      @Override
+      protected boolean shouldDrawLabel() {
+        return false;
+      }
+    }.initUi();
+    myUpdateProjectInfoFilterLabel = new JBLabel("Filter Update Project information by paths: ");
+    if (!AbstractCommonUpdateAction.showsCustomNotification(singletonList(GitVcs.getInstance(myProject)))) {
+      myUpdateProjectInfoFilter.setVisible(false);
+      myUpdateProjectInfoFilterLabel.setVisible(false);
+    }
   }
 }
