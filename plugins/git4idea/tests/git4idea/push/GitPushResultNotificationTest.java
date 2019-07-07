@@ -61,17 +61,17 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
 
   public void test_single_success() {
     GitPushResultNotification notification = notification(singleResult(SUCCESS, "master", "origin/master", 1));
-    assertNotification(NotificationType.INFORMATION, "Push successful", "Pushed 1 commit to origin/master", notification);
+    assertNotification(NotificationType.INFORMATION, "Pushed 1 commit to origin/master", "", notification);
   }
 
   public void test_pushed_new_branch() {
     GitPushResultNotification notification = notification(singleResult(NEW_REF, "feature", "origin/feature", -1));
-    assertNotification(NotificationType.INFORMATION, "Push successful", "Pushed feature to new branch origin/feature", notification);
+    assertNotification(NotificationType.INFORMATION, "Pushed feature to new branch origin/feature", "", notification);
   }
 
   public void test_force_pushed() {
     GitPushResultNotification notification = notification(singleResult(FORCED_UPDATE, "feature", "origin/feature", -1));
-    assertNotification(NotificationType.INFORMATION, "Push successful", "Force pushed feature to origin/feature", notification);
+    assertNotification(NotificationType.INFORMATION, "Force pushed feature to origin/feature", "", notification);
   }
 
   public void test_success_and_fail() {
@@ -96,7 +96,7 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
 
   public void test_success_with_update() {
     GitPushResultNotification notification = notification(singleResult(SUCCESS, "master", "origin/master", 2, GitUpdateResult.SUCCESS));
-    UtilsKt.assertSuccessfulNotification("Push successful", "Pushed 2 commits to origin/master", notification);
+    UtilsKt.assertSuccessfulNotification("Pushed 2 commits to origin/master", "", notification);
   }
 
   public void test_success_and_resolved_conflicts() {
@@ -118,15 +118,14 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
     GitPushNativeResult tagResult = new GitPushNativeResult(NEW_REF, "refs/tags/v0.1");
     GitPushResultNotification notification = notification(convertFromNative(branchResult, singletonList(tagResult), 1,
                                                                             from("master"), to("origin/master")));
-    assertNotification(NotificationType.INFORMATION, "Push successful",
-                                   "Pushed 1 commit to origin/master, and tag v0.1 to origin", notification);
+    assertNotification(NotificationType.INFORMATION, "Pushed 1 commit to origin/master, and tag v0.1 to origin", "", notification);
   }
 
   public void test_nothing() {
     GitPushNativeResult branchResult = new GitPushNativeResult(UP_TO_DATE, "refs/heads/master");
     GitPushResultNotification notification = notification(convertFromNative(branchResult, Collections.emptyList(),
                                                                             0, from("master"), to("origin/master")));
-    assertNotification(NotificationType.INFORMATION, "Push successful", "Everything is up-to-date", notification);
+    assertNotification(NotificationType.INFORMATION, "Everything is up-to-date", "", notification);
   }
 
   public void test_only_tags() {
@@ -134,7 +133,7 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
     GitPushNativeResult tagResult = new GitPushNativeResult(NEW_REF, "refs/tags/v0.1");
     GitPushResultNotification notification = notification(convertFromNative(branchResult, singletonList(tagResult), 0,
                                                                             from("master"), to("origin/master")));
-    assertNotification(NotificationType.INFORMATION, "Push successful", "Pushed tag v0.1 to origin", notification);
+    assertNotification(NotificationType.INFORMATION, "Pushed tag v0.1 to origin", "", notification);
   }
 
   public void test_two_repo_with_tags() {
@@ -160,7 +159,7 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
     GitPushNativeResult tag2 = new GitPushNativeResult(NEW_REF, "refs/tags/v0.2");
     GitPushResultNotification notification = notification(convertFromNative(branchResult, asList(tag1, tag2), 0,
                                                                             from("master"), to("origin/master")));
-    assertNotification(NotificationType.INFORMATION, "Push successful", "Pushed 2 tags to origin", notification);
+    assertNotification(NotificationType.INFORMATION, "Pushed 2 tags to origin", "", notification);
   }
 
   private static Map<GitRepository, GitPushRepoResult> singleResult(final GitPushNativeResult.Type type,
@@ -220,7 +219,7 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
       updatedFiles.getTopLevelGroups().get(0).add("file.txt", "Git", null);
     }
     return GitPushResultNotification.create(myProject, new GitPushResult(map, updatedFiles, null, null, Collections.emptyMap()),
-                                            null, map.size() > 1);
+                                            null, map.size() > 1, null);
   }
 
   private static MockGitRepository repo(final String name) {

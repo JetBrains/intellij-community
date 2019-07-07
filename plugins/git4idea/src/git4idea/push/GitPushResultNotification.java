@@ -28,9 +28,16 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
+import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction;
+import com.intellij.openapi.vcs.update.UpdateInfoTree;
+import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.ViewUpdateInfoNotification;
+import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRepository;
+import git4idea.update.GitUpdateInfoAsLog;
 import git4idea.update.GitUpdateResult;
 import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.CalledInAwt;
@@ -39,6 +46,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.openapi.util.text.StringUtil.pluralize;
+import static com.intellij.openapi.vcs.update.ActionInfo.UPDATE;
+import static java.util.Collections.singletonList;
 
 class GitPushResultNotification extends Notification {
 
@@ -65,11 +76,13 @@ class GitPushResultNotification extends Notification {
   static GitPushResultNotification create(@NotNull Project project,
                                           @NotNull GitPushResult pushResult,
                                           @Nullable GitPushOperation pushOperation,
-                                          boolean multiRepoProject) {
+                                          boolean multiRepoProject,
+                                          @Nullable GitUpdateInfoAsLog.NotificationData notificationData) {
     GroupedPushResult grouped = GroupedPushResult.group(pushResult.getResults());
 
     String title;
     NotificationType type;
+    boolean singleRepoSuccess = false;
     if (!grouped.errors.isEmpty()) {
       if (!grouped.successful.isEmpty()) {
         title = "Push partially failed";
@@ -89,17 +102,61 @@ class GitPushResultNotification extends Notification {
       type = NotificationType.WARNING;
     }
     else {
-      title = "Push successful";
       type = NotificationType.INFORMATION;
+      if (!multiRepoProject) {
+        singleRepoSuccess = true;
+        GitPushRepoResult result = grouped.successful.values().iterator().next();
+        title = StringUtil.capitalize(formRepoDescription(result));
+      }
+      else {
+        title = "Push successful";
+      }
     }
 
-    String description = formDescription(pushResult.getResults(), multiRepoProject);
+    String description;
+    if (singleRepoSuccess) {
+      if (notificationData != null) {
+        int receivedCommitsCount = notificationData.getReceivedCommitsCount();
+        description = String.format("%d %s received during the push", receivedCommitsCount, commits(receivedCommitsCount));
+      }
+      else { // nothing was updated
+        description = "";
+      }
+    }
+    else {
+      description = formDescription(pushResult.getResults(), multiRepoProject);
+    }
 
     NotificationGroup group = type == NotificationType.INFORMATION ?
                               VcsNotifier.STANDARD_NOTIFICATION :
                               VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
 
     GitPushResultNotification notification = new GitPushResultNotification(group.getDisplayId(), title, description, type);
+
+    if (AbstractCommonUpdateAction.showsCustomNotification(singletonList(GitVcs.getInstance(project)))) {
+      if (notificationData != null) {
+        Integer filteredCommitsCount = notificationData.getFilteredCommitsCount();
+        String actionText;
+        if (filteredCommitsCount == null) {
+          actionText = "View received " + commits(notificationData.getReceivedCommitsCount());
+        }
+        else {
+          actionText = String.format("View %d %s matching the filter", filteredCommitsCount, commits(filteredCommitsCount));
+        }
+        notification.addAction(NotificationAction.createSimple(actionText, notificationData.getViewCommitAction()));
+      }
+    }
+    else {
+      UpdatedFiles updatedFiles = pushResult.getUpdatedFiles();
+      if (!updatedFiles.isEmpty()) {
+        UpdateInfoTree tree = ProjectLevelVcsManagerEx.getInstanceEx(project).showUpdateProjectInfo(updatedFiles, "Update", UPDATE, false);
+        if (tree != null) {
+          tree.setBefore(pushResult.getBeforeUpdateLabel());
+          tree.setAfter(pushResult.getAfterUpdateLabel());
+          notification.addAction(new ViewUpdateInfoNotification(project, tree, VIEW_FILES_UPDATED_DURING_THE_PUSH, notification));
+        }
+      }
+    }
 
     List<GitRepository> staleInfoRejected = EntryStream.of(pushResult.getResults())
       .filterValues(result -> result.getType() == GitPushRepoResult.Type.REJECTED_STALE_INFO)
@@ -119,6 +176,11 @@ class GitPushResultNotification extends Notification {
     }
 
     return notification;
+  }
+
+  @NotNull
+  private static String commits(int commitsNumber) {
+    return pluralize("commit", commitsNumber);
   }
 
   private static String formDescription(@NotNull Map<GitRepository, GitPushRepoResult> results, final boolean multiRepoProject) {
@@ -155,7 +217,7 @@ class GitPushResultNotification extends Notification {
     switch (result.getType()) {
       case SUCCESS:
         int commitNum = result.getNumberOfPushedCommits();
-        String commits = StringUtil.pluralize("commit", commitNum);
+        String commits = pluralize("commit", commitNum);
         description = String.format("pushed %d %s to %s", commitNum, commits, targetBranch);
         if (tagDescription != null) {
           description += ", and " + tagDescription;
