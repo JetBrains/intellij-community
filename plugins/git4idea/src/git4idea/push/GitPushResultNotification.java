@@ -134,10 +134,10 @@ class GitPushResultNotification extends Notification {
     GitPushResultNotification notification = new GitPushResultNotification(group.getDisplayId(), title, description, type);
 
     if (AbstractCommonUpdateAction.showsCustomNotification(singletonList(GitVcs.getInstance(project)))) {
-      if (notificationData != null) {
+      if (notificationData != null && notificationData.getReceivedCommitsCount() > 0) {
         Integer filteredCommitsCount = notificationData.getFilteredCommitsCount();
         String actionText;
-        if (filteredCommitsCount == null) {
+        if (filteredCommitsCount == null || filteredCommitsCount == 0) {
           actionText = "View received " + commits(notificationData.getReceivedCommitsCount());
         }
         else {
