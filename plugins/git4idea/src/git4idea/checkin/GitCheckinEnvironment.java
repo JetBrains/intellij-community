@@ -115,7 +115,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   private final Project myProject;
   public static final SimpleDateFormat COMMIT_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
   private final VcsDirtyScopeManager myDirtyScopeManager;
-  private final GitVcsSettings mySettings;
 
   private String myNextCommitAuthor = null; // The author for the next commit
   private boolean myNextCommitAmend; // If true, the next commit is amended
@@ -123,12 +122,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   private boolean myNextCommitSignOff;
   private boolean myNextCommitSkipHook;
 
-  public GitCheckinEnvironment(@NotNull Project project,
-                               @NotNull final VcsDirtyScopeManager dirtyScopeManager,
-                               final GitVcsSettings settings) {
+  public GitCheckinEnvironment(@NotNull Project project, @NotNull VcsDirtyScopeManager dirtyScopeManager) {
     myProject = project;
     myDirtyScopeManager = dirtyScopeManager;
-    mySettings = settings;
   }
 
   @Override
@@ -139,7 +135,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   @NotNull
   @Override
   public RefreshableOnComponent createCommitOptions(@NotNull CheckinProjectPanel commitPanel, @NotNull CommitContext commitContext) {
-    return new GitCheckinOptions(commitPanel, commitContext, isAmendCommitOptionSupported(commitPanel, this));
+    return new GitCheckinOptions(
+      commitPanel, commitContext, collectActiveMovementProviders(myProject), isAmendCommitOptionSupported(commitPanel, this));
   }
 
   @Override
@@ -1154,11 +1151,13 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
 
   public class GitCheckinOptions
     implements CheckinChangeListSpecificComponent, RefreshableOnComponent, AmendCommitModeListener, Disposable {
-    private final List<GitCheckinExplicitMovementProvider> myExplicitMovementProviders;
 
     @NotNull private final Project myProject;
+    @NotNull private final GitVcsSettings mySettings;
     @NotNull private final CheckinProjectPanel myCheckinProjectPanel;
     @NotNull private final CommitContext myCommitContext;
+    @NotNull private final List<GitCheckinExplicitMovementProvider> myExplicitMovementProviders;
+
     @NotNull private final JPanel myPanel;
     @NotNull private final EditorTextField myAuthorField;
     @Nullable private Date myAuthorDate;
@@ -1167,12 +1166,15 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     @NotNull private final BalloonBuilder myAuthorNotificationBuilder;
     @Nullable private Balloon myAuthorBalloon;
 
-    GitCheckinOptions(@NotNull CheckinProjectPanel panel, @NotNull CommitContext commitContext, boolean showAmendOption) {
+    GitCheckinOptions(@NotNull CheckinProjectPanel panel,
+                      @NotNull CommitContext commitContext,
+                      @NotNull List<GitCheckinExplicitMovementProvider> explicitMovementProviders,
+                      boolean showAmendOption) {
       myProject = panel.getProject();
+      mySettings = GitVcsSettings.getInstance(myProject);
       myCheckinProjectPanel = panel;
       myCommitContext = commitContext;
-
-      myExplicitMovementProviders = collectActiveMovementProviders(myProject);
+      myExplicitMovementProviders = explicitMovementProviders;
 
       myAuthorField = createTextField(myProject, getAuthors(myProject));
       myAuthorField.addFocusListener(new FocusAdapter() {
@@ -1392,24 +1394,24 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
       GitUserRegistry gitUserRegistry = GitUserRegistry.getInstance(myProject);
       return of(affectedGitRoots).map(vf -> gitUserRegistry.getUser(vf)).allMatch(user -> user != null && isSamePerson(author, user));
     }
+  }
 
-    @NotNull
-    private List<GitCheckinExplicitMovementProvider> collectActiveMovementProviders(@NotNull Project project) {
-      GitCheckinExplicitMovementProvider[] allProviders = GitCheckinExplicitMovementProvider.EP_NAME.getExtensions();
-      List<GitCheckinExplicitMovementProvider> enabledProviders = filter(allProviders, it -> it.isEnabled(project));
-      if (enabledProviders.isEmpty()) return Collections.emptyList();
-      if (Registry.is("git.explicit.commit.renames.prohibit.multiple.calls")) return enabledProviders;
+  @NotNull
+  private static List<GitCheckinExplicitMovementProvider> collectActiveMovementProviders(@NotNull Project project) {
+    GitCheckinExplicitMovementProvider[] allProviders = GitCheckinExplicitMovementProvider.EP_NAME.getExtensions();
+    List<GitCheckinExplicitMovementProvider> enabledProviders = filter(allProviders, it -> it.isEnabled(project));
+    if (enabledProviders.isEmpty()) return Collections.emptyList();
+    if (Registry.is("git.explicit.commit.renames.prohibit.multiple.calls")) return enabledProviders;
 
-      List<CommitChange> changes = map(ChangeListManager.getInstance(project).getAllChanges(), CommitChange::new);
-      List<FilePath> beforePaths = mapNotNull(changes, it -> it.beforePath);
-      List<FilePath> afterPaths = mapNotNull(changes, it -> it.afterPath);
+    List<CommitChange> changes = map(ChangeListManager.getInstance(project).getAllChanges(), CommitChange::new);
+    List<FilePath> beforePaths = mapNotNull(changes, it -> it.beforePath);
+    List<FilePath> afterPaths = mapNotNull(changes, it -> it.afterPath);
 
-      return filter(enabledProviders, it -> {
-        Collection<Movement> movements = it.collectExplicitMovements(project, beforePaths, afterPaths);
-        List<Movement> filteredMovements = filterExcludedChanges(movements, changes);
-        return !filteredMovements.isEmpty();
-      });
-    }
+    return filter(enabledProviders, it -> {
+      Collection<Movement> movements = it.collectExplicitMovements(project, beforePaths, afterPaths);
+      List<Movement> filteredMovements = filterExcludedChanges(movements, changes);
+      return !filteredMovements.isEmpty();
+    });
   }
 
   private static class ChangedPath {
