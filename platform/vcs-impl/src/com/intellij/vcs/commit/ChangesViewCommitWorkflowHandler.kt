@@ -164,6 +164,7 @@ class ChangesViewCommitWorkflowHandler(
       areCommitOptionsCreated = false
 
       workflow.clearCommitContext()
+      initCommitHandlers()
     }
   }
 }
