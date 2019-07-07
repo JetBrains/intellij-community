@@ -68,7 +68,7 @@ class GitPushResultNotification extends Notification {
                                     @NotNull String title,
                                     @NotNull String content,
                                     @NotNull NotificationType type) {
-    super(groupDisplayId, title, content, type);
+    super(groupDisplayId, "", emulateTitle(title, content), type);
   }
 
   @NotNull
@@ -176,6 +176,11 @@ class GitPushResultNotification extends Notification {
     }
 
     return notification;
+  }
+
+  @NotNull
+  static String emulateTitle(@NotNull String title, @NotNull String content) {
+    return "<b>" + title + "</b><br/>" + content;
   }
 
   @NotNull
