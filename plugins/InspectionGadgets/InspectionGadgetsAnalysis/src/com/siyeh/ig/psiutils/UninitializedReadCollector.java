@@ -18,11 +18,13 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Supplier;
 
 public class UninitializedReadCollector {
 
@@ -157,6 +159,11 @@ public class UninitializedReadCollector {
       final PsiSwitchLabeledRuleStatement switchLabeledRuleStatement = (PsiSwitchLabeledRuleStatement)statement;
       final PsiStatement body = switchLabeledRuleStatement.getBody();
       return statementAssignsVariable(body, variable, stamp, checkedMethods);
+    }
+    else if (statement instanceof PsiYieldStatement) {
+      final PsiYieldStatement yieldStatement = (PsiYieldStatement)statement;
+      final PsiExpression expression = yieldStatement.getExpression();
+      return expressionAssignsVariable(expression, variable, stamp, checkedMethods);
     }
     else {
       assert false : "unknown statement: " + statement;
