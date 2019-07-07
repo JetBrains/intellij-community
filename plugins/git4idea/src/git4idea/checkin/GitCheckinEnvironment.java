@@ -77,7 +77,10 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -98,6 +101,7 @@ import static com.intellij.vcs.commit.ToggleAmendCommitOption.isAmendCommitOptio
 import static com.intellij.vcs.log.util.VcsUserUtil.isSamePerson;
 import static git4idea.GitUtil.*;
 import static git4idea.checkin.GitCommitAndPushExecutorKt.isPushAfterCommit;
+import static git4idea.checkin.GitCommitOptionsKt.*;
 import static git4idea.checkin.GitSkipHooksCommitHandlerFactoryKt.isSkipHooks;
 import static git4idea.repo.GitSubmoduleKt.isSubmodule;
 import static java.util.Arrays.asList;
@@ -118,7 +122,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   private Date myNextCommitAuthorDate;
   private boolean myNextCommitSignOff;
   private boolean myNextCommitSkipHook;
-  private boolean myNextCommitCommitRenamesSeparately;
 
   public GitCheckinEnvironment(@NotNull Project project,
                                @NotNull final VcsDirtyScopeManager dirtyScopeManager,
@@ -136,7 +139,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   @NotNull
   @Override
   public RefreshableOnComponent createCommitOptions(@NotNull CheckinProjectPanel commitPanel, @NotNull CommitContext commitContext) {
-    return new GitCheckinOptions(myProject, commitPanel, isAmendCommitOptionSupported(commitPanel, this));
+    return new GitCheckinOptions(commitPanel, commitContext, isAmendCommitOptionSupported(commitPanel, this));
   }
 
   @Override
@@ -214,6 +217,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   private void updateState(@NotNull CommitContext commitContext) {
     myNextCommitAmend = isAmendCommitMode(commitContext);
     myNextCommitSkipHook = isSkipHooks(commitContext);
+    myNextCommitAuthor = getCommitAuthor(commitContext);
+    myNextCommitAuthorDate = getCommitAuthorDate(commitContext);
+    myNextCommitSignOff = isSignOffCommit(commitContext);
   }
 
   @NotNull
@@ -234,7 +240,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
       Collection<Change> rootChanges = sortedChanges.get(repository.getRoot());
       Collection<CommitChange> toCommit = map(rootChanges, CommitChange::new);
 
-      if (myNextCommitCommitRenamesSeparately) {
+      if (isCommitRenamesSeparately(commitContext)) {
         Pair<Collection<CommitChange>, List<VcsException>> pair = commitExplicitRenames(repository, toCommit, commitMessage);
         toCommit = pair.first;
         List<VcsException> moveExceptions = pair.second;
@@ -1146,16 +1152,13 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     myDirtyScopeManager.dirDirtyRecursively(root);
   }
 
-  public void reset() {
-    myNextCommitAuthor = null;
-    myNextCommitAuthorDate = null;
-  }
-
   public class GitCheckinOptions
     implements CheckinChangeListSpecificComponent, RefreshableOnComponent, AmendCommitModeListener, Disposable {
     private final List<GitCheckinExplicitMovementProvider> myExplicitMovementProviders;
 
+    @NotNull private final Project myProject;
     @NotNull private final CheckinProjectPanel myCheckinProjectPanel;
+    @NotNull private final CommitContext myCommitContext;
     @NotNull private final JPanel myPanel;
     @NotNull private final EditorTextField myAuthorField;
     @Nullable private Date myAuthorDate;
@@ -1164,11 +1167,14 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     @NotNull private final BalloonBuilder myAuthorNotificationBuilder;
     @Nullable private Balloon myAuthorBalloon;
 
-    GitCheckinOptions(@NotNull Project project, @NotNull CheckinProjectPanel panel, boolean showAmendOption) {
+    GitCheckinOptions(@NotNull CheckinProjectPanel panel, @NotNull CommitContext commitContext, boolean showAmendOption) {
+      myProject = panel.getProject();
+      myCheckinProjectPanel = panel;
+      myCommitContext = commitContext;
+
       myExplicitMovementProviders = collectActiveMovementProviders(myProject);
 
-      myCheckinProjectPanel = panel;
-      myAuthorField = createTextField(project, getAuthors(project));
+      myAuthorField = createTextField(myProject, getAuthors(myProject));
       myAuthorField.addFocusListener(new FocusAdapter() {
         @Override
         public void focusLost(FocusEvent e) {
@@ -1200,7 +1206,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
 
       mySignOffCheckbox = new JBCheckBox("Sign-off commit", mySettings.shouldSignOffCommit());
       mySignOffCheckbox.setMnemonic(KeyEvent.VK_G);
-      mySignOffCheckbox.setToolTipText(getToolTip(project, panel));
+      mySignOffCheckbox.setToolTipText(getToolTip(myProject, panel));
       myCommitRenamesSeparatelyCheckbox = new JBCheckBox(getExplicitMovementDescription(), mySettings.isCommitRenamesSeparately());
 
       GridBag gb = new GridBag().
@@ -1314,22 +1320,20 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
       myAuthorField.setText(null);
       clearAuthorWarn();
       myAuthorDate = null;
-      reset();
     }
 
     @Override
     public void saveState() {
-      myNextCommitAuthor = getAuthor();
-      if (myNextCommitAuthor != null) {
-        mySettings.saveCommitAuthor(myNextCommitAuthor);
-      }
-      myNextCommitAuthorDate = myAuthorDate;
+      String commitAuthor = getAuthor();
+      setCommitAuthor(myCommitContext, commitAuthor);
+      setCommitAuthorDate(myCommitContext, myAuthorDate);
+      setSignOffCommit(myCommitContext, mySignOffCheckbox.isSelected());
+      setCommitRenamesSeparately(
+        myCommitContext, myCommitRenamesSeparatelyCheckbox.isEnabled() && myCommitRenamesSeparatelyCheckbox.isSelected());
 
+      if (commitAuthor != null) mySettings.saveCommitAuthor(commitAuthor);
       mySettings.setSignOffCommit(mySignOffCheckbox.isSelected());
-      myNextCommitSignOff = mySignOffCheckbox.isSelected();
-
       mySettings.setCommitRenamesSeparately(myCommitRenamesSeparatelyCheckbox.isSelected());
-      myNextCommitCommitRenamesSeparately = myCommitRenamesSeparatelyCheckbox.isEnabled() && myCommitRenamesSeparatelyCheckbox.isSelected();
     }
 
     @Override
@@ -1406,11 +1410,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
         return !filteredMovements.isEmpty();
       });
     }
-  }
-
-  @TestOnly
-  public void setCommitRenamesSeparately(boolean commitRenamesSeparately) {
-    myNextCommitCommitRenamesSeparately = commitRenamesSeparately;
   }
 
   private static class ChangedPath {

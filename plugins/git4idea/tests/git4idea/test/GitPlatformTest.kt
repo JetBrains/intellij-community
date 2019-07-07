@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsShowConfirmationOption
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.vcs.AbstractVcsTestCase
 import com.intellij.util.ThrowableRunnable
@@ -38,6 +39,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   protected lateinit var appSettings: GitVcsApplicationSettings
   protected lateinit var git: TestGitImpl
   protected lateinit var vcs: GitVcs
+  protected lateinit var commitContext: CommitContext
   protected lateinit var dialogManager: TestDialogManager
   protected lateinit var vcsHelper: MockVcsHelper
   protected lateinit var logProvider: GitLogProvider
@@ -56,6 +58,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     git = overrideService<Git, TestGitImpl>()
     vcs = GitVcs.getInstance(project)
     vcs.doActivate()
+    commitContext = CommitContext()
 
     settings = GitVcsSettings.getInstance(project)
     appSettings = GitVcsApplicationSettings.getInstance()
@@ -204,7 +207,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   protected fun readDetails(hash: String) = readDetails(listOf(hash)).first()
 
   protected fun commit(changes: Collection<Change>) {
-    val exceptions = vcs.checkinEnvironment!!.commit(changes.toList(), "comment")
+    val exceptions = vcs.checkinEnvironment!!.commit(changes.toList(), "comment", commitContext, mutableSetOf())
     exceptions?.forEach { fail("Exception during executing the commit: " + it.message) }
     updateChangeListManager()
   }

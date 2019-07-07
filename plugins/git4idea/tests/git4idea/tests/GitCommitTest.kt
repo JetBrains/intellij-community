@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import git4idea.checkin.GitCheckinEnvironment
 import git4idea.checkin.GitCheckinExplicitMovementProvider
+import git4idea.checkin.isCommitRenamesSeparately
 import git4idea.config.GitVersion
 import git4idea.test.*
 import org.junit.Assume.assumeTrue
@@ -33,7 +34,7 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
     Registry.get("git.allow.explicit.commit.renames").setValue(true)
     Registry.get("git.force.commit.using.staging.area").setValue(useStagingArea)
 
-    (vcs.checkinEnvironment as GitCheckinEnvironment).setCommitRenamesSeparately(true)
+    commitContext.isCommitRenamesSeparately = true
   }
 
   override fun tearDown() {
@@ -41,8 +42,6 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
       val point = Extensions.getRootArea().getExtensionPoint(GitCheckinExplicitMovementProvider.EP_NAME)
       Registry.get("git.allow.explicit.commit.renames").resetToDefault()
       Registry.get("git.force.commit.using.staging.area").resetToDefault()
-
-      (vcs.checkinEnvironment as GitCheckinEnvironment).setCommitRenamesSeparately(false)
     }
     finally {
       super.tearDown()
