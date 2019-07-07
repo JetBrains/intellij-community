@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
@@ -160,11 +161,19 @@ abstract class GitMergeAction extends GitRepositoryAction {
       if (updatedRanges != null && AbstractCommonUpdateAction.showsCustomNotification(singletonList(GitVcs.getInstance(project)))) {
         Map<GitRepository, HashRange> ranges = updatedRanges.calcCurrentPositions();
         GitUpdateInfoAsLog.NotificationData notificationData = new GitUpdateInfoAsLog(project, ranges).calculateDataAndCreateLogTab();
-        String title = getTitleForUpdateNotification(notificationData.getUpdatedFilesCount(), notificationData.getReceivedCommitsCount());
-        String content = getBodyForUpdateNotification(notificationData.getUpdatedFilesCount(), notificationData.getReceivedCommitsCount(),
-                                                      notificationData.getFilteredCommitsCount());
-        Notification notification = VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, content, INFORMATION, null);
-        notification.addAction(NotificationAction.createSimple("View Commits", notificationData.getViewCommitAction()));
+
+        Notification notification;
+        if (notificationData.getReceivedCommitsCount() > 0) {
+          String title = getTitleForUpdateNotification(notificationData.getUpdatedFilesCount(), notificationData.getReceivedCommitsCount());
+          String content = getBodyForUpdateNotification(notificationData.getUpdatedFilesCount(), notificationData.getReceivedCommitsCount(),
+                                                        notificationData.getFilteredCommitsCount());
+          notification = VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, content, INFORMATION, null);
+          notification.addAction(NotificationAction.createSimple("View Commits", notificationData.getViewCommitAction()));
+        }
+        else {
+          notification = VcsNotifier.STANDARD_NOTIFICATION.createNotification(VcsBundle.message("message.text.all.files.are.up.to.date"),
+                                                                              "", INFORMATION, null);
+        }
         VcsNotifier.getInstance(project).notify(notification);
       }
       else {
