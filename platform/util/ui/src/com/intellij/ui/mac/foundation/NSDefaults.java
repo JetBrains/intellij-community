@@ -4,9 +4,12 @@ package com.intellij.ui.mac.foundation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class NSDefaults {
   private static final Logger LOG = Logger.getInstance(NSDefaults.class);
@@ -221,6 +224,16 @@ public class NSDefaults {
   public static boolean setShowFnKeysEnabled(String appId, boolean val) { return setShowFnKeysEnabled(appId, val, false); }
 
   public static boolean setShowFnKeysEnabled(String appId, boolean val, boolean performExtraDebugChecks) {
+    if (!isDomainExists(ourTouchBarDomain)) {
+      final Map<String, Object> vals = new HashMap<>();
+      vals.put(ourTouchBarNode, new HashMap<>());
+      createPersistentDomain(ourTouchBarDomain, vals);
+      if (!isDomainExists(ourTouchBarDomain)) {
+        LOG.error("can't create domain '" + ourTouchBarDomain + "'");
+        return false;
+      }
+    }
+
     final Path path = Path.createDomainPath(ourTouchBarDomain, ourTouchBarNode);
     String sval = path.readStringVal(appId);
     final boolean settingEnabled = sval != null && sval.equals(ourTouchBarShowFnValue);
@@ -260,6 +273,43 @@ public class NSDefaults {
     final Path result = new Path();
     result.myPath.add(new Path.Node("persistentDomainForName:", domain));
     return result.lastValidPos() >= 0;
+  }
+
+  public static void createPersistentDomain(@NotNull String domainName, @Nullable Map<String, Object> values) {
+    final Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
+    try {
+      final ID defaults = Foundation.invoke("NSUserDefaults", "standardUserDefaults");
+      if (defaults == null || defaults.equals(ID.NIL))
+        return;
+      final ID dict = Foundation.invoke("NSMutableDictionary", "new");
+      if (values != null) {
+        for (Map.Entry<String, Object> me: values.entrySet()) {
+          final Object val = me.getValue();
+          if (val instanceof String)
+            Foundation.invoke(dict,"setObject:forKey:", Foundation.nsString((String)val), Foundation.nsString(me.getKey()));
+          else if (val instanceof Map) {
+            final ID internalDict = Foundation.invoke("NSMutableDictionary", "new");
+            Foundation.invoke(dict,"setObject:forKey:", internalDict, Foundation.nsString(me.getKey()));
+          } else
+            LOG.error("unsupported type of domain value: " + String.valueOf(val));
+        }
+      }
+      Foundation.invoke(defaults, "setPersistentDomain:forName:", dict, Foundation.nsString(domainName));
+    } finally {
+      pool.drain();
+    }
+  }
+
+  public static void removePersistentDomain(@NotNull String domainName) {
+    final Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
+    try {
+      final ID defaults = Foundation.invoke("NSUserDefaults", "standardUserDefaults");
+      if (defaults == null || defaults.equals(ID.NIL))
+        return;
+      Foundation.invoke(defaults, "removePersistentDomainForName:", Foundation.nsString(domainName));
+    } finally {
+      pool.drain();
+    }
   }
 
   public static boolean isDarkMenuBar() {
