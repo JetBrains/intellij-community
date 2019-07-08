@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.FrameTitleBuilder
+import com.intellij.openapi.wm.impl.IdeFrameImpl
 import net.miginfocom.swing.MigLayout
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
@@ -27,11 +28,12 @@ open class SelectedEditorFilePath {
   private val projectTitle = ProjectTitlePane()
   private val classTitle = ClippingTitle()
   private val productTitle = DefaultPartTitle(" - ")
-  private val productVersion = DefaultPartTitle(" - ")
+  private val productVersion = DefaultPartTitle(" ")
+  private val superUserSuffix = DefaultPartTitle(" ")
 
-  protected val components = listOf(projectTitle, classTitle, productTitle, productVersion)
+  protected val components = listOf(projectTitle, classTitle, productTitle, productVersion, superUserSuffix)
 
-  private val pane = object : JPanel(MigLayout("ins 0, gap 0", "[min!][pref][pref][pref]push")){
+  private val pane = object : JPanel(MigLayout("ins 0, gap 0", "[min!][pref][pref][pref][pref]push")){
     override fun addNotify() {
       super.addNotify()
       installListeners()
@@ -46,6 +48,7 @@ open class SelectedEditorFilePath {
     add(classTitle.component, "growx")
     add(productTitle.component)
     add(productVersion.component)
+    add(superUserSuffix.component)
   }
 
   open fun getView(): JComponent {
@@ -139,6 +142,8 @@ open class SelectedEditorFilePath {
 
     if(java.lang.Boolean.getBoolean("ide.ui.version.in.title")) productVersion.longText = ApplicationInfo.getInstance().fullVersion else productVersion.ignore()
 
+    superUserSuffix.longText = IdeFrameImpl.getSuperUserSuffix() ?: ""
+
 
     project?.let {
       val short = it.name
@@ -156,22 +161,44 @@ open class SelectedEditorFilePath {
     components.forEach{it.refresh()}
 
     when {
-      width > projectTitle.longWidth + classTitle.longWidth + productTitle.longWidth + productVersion.longWidth -> {
+      width > projectTitle.longWidth + classTitle.longWidth + productTitle.longWidth + superUserSuffix.longWidth + productVersion.longWidth -> {
         //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.showLong, productVersion.showLong")
 
         projectTitle.showLong()
         classTitle.showLong()
         productTitle.showLong()
         productVersion.showLong()
+        superUserSuffix.showLong()
       }
 
-      width > projectTitle.longWidth + classTitle.longWidth + productTitle.longWidth + productVersion.shortWidth -> {
+      width > projectTitle.longWidth + classTitle.longWidth + productTitle.longWidth + productVersion.longWidth + superUserSuffix.shortWidth -> {
+        //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.showLong, superUserSuffix.SHOW_SHORT")
+
+        projectTitle.showLong()
+        classTitle.showLong()
+        productTitle.showLong()
+        productVersion.showLong()
+        superUserSuffix.showShort()
+      }
+
+      width > projectTitle.longWidth + classTitle.longWidth + productVersion.longWidth + productTitle.longWidth -> {
+        //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.showLong, superUserSuffix.HIDE")
+
+        projectTitle.showLong()
+        classTitle.showLong()
+        productTitle.showLong()
+        productVersion.showLong()
+        superUserSuffix.hide()
+      }
+
+      width > projectTitle.longWidth + classTitle.longWidth + productVersion.shortWidth + productTitle.longWidth -> {
         //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.showLong, productVersion.SHOW_SHORT")
 
         projectTitle.showLong()
         classTitle.showLong()
         productTitle.showLong()
         productVersion.showShort()
+        superUserSuffix.hide()
       }
 
       width > projectTitle.longWidth + classTitle.longWidth + productTitle.longWidth -> {
@@ -180,16 +207,18 @@ open class SelectedEditorFilePath {
         projectTitle.showLong()
         classTitle.showLong()
         productTitle.showLong()
+        superUserSuffix.hide()
         productVersion.hide()
       }
 
       width > projectTitle.longWidth + classTitle.longWidth + productTitle.shortWidth -> {
-        //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.SHOW_SHORT, productVersion.HIDE")
+        //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.SHOW_SHORT")
 
         projectTitle.showLong()
         classTitle.showLong()
         productTitle.showShort()
         productVersion.hide()
+        superUserSuffix.hide()
       }
 
       width > projectTitle.longWidth + classTitle.longWidth -> {
@@ -199,6 +228,7 @@ open class SelectedEditorFilePath {
         classTitle.showLong()
         productTitle.hide()
         productVersion.hide()
+        superUserSuffix.hide()
       }
 
       width > projectTitle.longWidth + classTitle.shortWidth -> {
@@ -207,6 +237,7 @@ open class SelectedEditorFilePath {
         projectTitle.showLong()
         productTitle.hide()
         productVersion.hide()
+        superUserSuffix.hide()
         classTitle.shrink(width - projectTitle.longWidth)
       }
 
@@ -216,6 +247,7 @@ open class SelectedEditorFilePath {
         projectTitle.shrink(width - classTitle.shortWidth)
         productTitle.hide()
         productVersion.hide()
+        superUserSuffix.hide()
         classTitle.showShort()
       }
 
@@ -225,6 +257,7 @@ open class SelectedEditorFilePath {
         projectTitle.showShort()
         productTitle.hide()
         productVersion.hide()
+        superUserSuffix.hide()
         classTitle.hide()
       }
     }
