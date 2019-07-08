@@ -21,12 +21,15 @@ import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.JScrollPane
+import kotlin.math.min
 
 class XThreadsFramesView(val project: Project) : XDebugView() {
     private val myPauseDisposables = SequentialDisposables(this)
 
     private val myThreadsList = XDebuggerThreadsList.createDefault()
     private val myFramesList = XDebuggerFramesList(project)
+
+    private val mySplitter: OnePixelDisproportionateSplitter
 
     private var myListenersEnabled = false
 
@@ -68,12 +71,12 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
         myThreadsContainer = ThreadsContainer(myThreadsList, null, disposable)
         myPauseDisposables.terminateCurrent()
 
-        val splitter = OnePixelSplitter(splitterProportionKey, splitterProportionDefaultValue).apply {
+        mySplitter = OnePixelDisproportionateSplitter(splitterProportionKey, splitterProportionDefaultValue).apply {
             firstComponent = myThreadsList.withSpeedSearch().toScrollPane()
             secondComponent = myFramesList.toScrollPane()
         }
 
-        mainPanel.add(splitter, BorderLayout.CENTER)
+        mainPanel.add(mySplitter, BorderLayout.CENTER)
 
         myThreadsList.addListSelectionListener { e ->
             if (e.valueIsAdjusting || !myListenersEnabled) return@addListSelectionListener
@@ -119,6 +122,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
                 clear()
 
                 start(session)
+                mySplitter.fixFirstComponent()
                 return@invokeLaterIfNeeded
             }
 
@@ -402,5 +406,38 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
         }
 
         override fun dispose() = terminateCurrent()
+    }
+
+    // todo extend Splitter in 19.3 (resizing without proportions @Vassiliy.Kudryashov)
+    private class OnePixelDisproportionateSplitter(proportionKey: String, defaultProportion: Float) : OnePixelSplitter(proportionKey, defaultProportion) {
+        private var myFirstFixedSize = -1
+        private var myIsFixed = false
+
+        private val JComponent.sizeForComponent: Int get() = if (isVertical) this.height else this.width
+
+        fun fixFirstComponent() {
+            assert(firstComponent != null)
+            myFirstFixedSize = firstComponent.sizeForComponent
+            myIsFixed = true
+        }
+
+        override fun doLayout() {
+            val total = this.sizeForComponent - dividerWidth
+            val firstFixedSize = myFirstFixedSize
+            if (myIsFixed && total > 0 && firstFixedSize > 0) {
+                val fixedProportion = (firstFixedSize.toFloat() + 0.9f) / total
+                myProportion = min(0.95f, fixedProportion)
+            }
+            super.doLayout()
+        }
+
+        override fun setProportion(proportion: Float) {
+            super.setProportion(proportion)
+
+            val total = this.sizeForComponent - dividerWidth
+            if (myIsFixed) {
+                myFirstFixedSize = (myProportion * total).toInt()
+            }
+        }
     }
 }
