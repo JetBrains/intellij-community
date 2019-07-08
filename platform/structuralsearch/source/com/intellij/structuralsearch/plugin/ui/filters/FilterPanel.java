@@ -94,7 +94,7 @@ public class FilterPanel implements FilterTable {
         if (point == null) return;
         showAddFilterPopup(button.getContextComponent(), point);
       })
-      .setAddActionUpdater(e -> myValid)
+      .setAddActionUpdater(e -> myValid && myFilters.stream().anyMatch(f -> f.isAvailable()))
       .setRemoveAction(button -> {
         myFilterTable.stopEditing();
         final int selectedRow = myFilterTable.getTable().getSelectedRow();
@@ -111,7 +111,6 @@ public class FilterPanel implements FilterTable {
 
   @Override
   public void addFilter(FilterAction filter) {
-    filter.getTemplatePresentation().setEnabledAndVisible(false);
     final JBTable table = myFilterTable.getTable();
     TableUtil.stopEditing(table);
     table.setRowHeight(table.getRowHeight()); // reset
@@ -137,26 +136,17 @@ public class FilterPanel implements FilterTable {
     }
   }
 
-  public final void addFilterIfPresent(FilterAction filter) {
-    if (filter.hasFilter()) {
-      filter.getTemplatePresentation().setEnabledAndVisible(false);
-      if (myTableModel.getRowCount() == 0) {
-        myTableModel.addRow(myHeader);
-      }
-      myTableModel.addRow(filter);
-    }
-    else {
-      filter.getTemplatePresentation().setEnabledAndVisible(true);
-    }
-  }
-
   public final void initFilter(FilterAction filter, List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
-    if (filter.isApplicable(nodes, completePattern, target) && !myTableModel.getItems().contains(filter)) {
-      addFilterIfPresent(filter);
+    if (filter.checkApplicable(nodes, completePattern, target)) {
+      if (filter.hasFilter() && !myTableModel.getItems().contains(filter)) {
+        if (myTableModel.getRowCount() == 0) {
+          myTableModel.addRow(myHeader);
+        }
+        myTableModel.addRow(filter);
+      }
     }
     else {
       filter.clearFilter();
-      filter.getTemplatePresentation().setEnabledAndVisible(false);
     }
   }
 
@@ -165,7 +155,6 @@ public class FilterPanel implements FilterTable {
     final int index = myTableModel.indexOf(filter);
     if (index >= 0) myTableModel.removeRow(index);
     if (myTableModel.getRowCount() == 1) myTableModel.removeRow(0); // remove header
-    filter.getTemplatePresentation().setEnabledAndVisible(true);
     filter.clearFilter();
     myConstraintChangedCallback.run();
   }

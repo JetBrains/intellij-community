@@ -22,6 +22,8 @@ public abstract class FilterAction extends AnAction implements Filter {
   protected final FilterTable myTable;
   private final int myPosition;
 
+  private boolean myApplicable = true;
+
   protected FilterAction(@Nullable String text, FilterTable table) {
     super(text);
     myTable = table;
@@ -36,6 +38,7 @@ public abstract class FilterAction extends AnAction implements Filter {
   @Override
   public final void actionPerformed(@NotNull AnActionEvent e) {
     initFilter();
+    myApplicable = false;
     myTable.addFilter(this);
   }
 
@@ -50,9 +53,22 @@ public abstract class FilterAction extends AnAction implements Filter {
 
   public abstract boolean hasFilter();
 
-  public void initFilter() {}
+  protected void initFilter() {}
 
   public abstract void clearFilter();
 
-  public abstract boolean isApplicable(List<? extends PsiElement> nodes, boolean completePattern, boolean target);
+  protected abstract boolean isApplicable(List<? extends PsiElement> nodes, boolean completePattern, boolean target);
+
+  public boolean isAvailable() {
+    return myApplicable && !hasFilter();
+  }
+
+  public boolean checkApplicable(List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
+    return myApplicable = isApplicable(nodes, completePattern, target);
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(!hasFilter() && myApplicable);
+  }
 }
