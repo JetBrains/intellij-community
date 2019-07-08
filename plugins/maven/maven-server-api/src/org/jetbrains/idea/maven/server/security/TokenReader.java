@@ -21,7 +21,7 @@ public class TokenReader {
       throw myExceptionRef.get();
     }
     if (myRef.get() == null) {
-      throw new IllegalStateException("Didn't received token");
+      throw new IllegalStateException("Didn't receive token");
     }
     return new MavenToken(myRef.get());
   }
