@@ -51,15 +51,15 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs<*>
   }
 
   override fun changeListUpdateDone() {
-    if (!needProcessIgnoredFiles() || ApplicationManager.getApplication().isUnitTestMode) return
+    if (ApplicationManager.getApplication().isUnitTestMode) return
 
     val files = UNPROCESSED_FILES_LOCK.read { unprocessedFiles.toList() }
     if (files.isEmpty()) return
 
     val restFiles = silentlyIgnoreFilesInsideConfigDir(files)
-    if (restFiles.isEmpty()) return
-
-    processFiles(restFiles)
+    if (needProcessIgnoredFiles() && restFiles.isNotEmpty()) {
+      processFiles(restFiles)
+    }
 
     UNPROCESSED_FILES_LOCK.write {
       unprocessedFiles.clear()
@@ -80,7 +80,7 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs<*>
   }
 
   override fun filesChanged(events: List<VFileEvent>) {
-    if (!needProcessIgnoredFiles() || ApplicationManager.getApplication().isUnitTestMode) return
+    if (ApplicationManager.getApplication().isUnitTestMode) return
 
     val potentiallyIgnoredFiles =
       events.asSequence()
@@ -215,5 +215,5 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs<*>
 
   private fun VFileEvent.isRename() = this is VFilePropertyChangeEvent && isRename
 
-  private fun needProcessIgnoredFiles() = ApplicationManager.getApplication().isInternal || Registry.`is`("vcs.ignorefile.generation", true)
+  private fun needProcessIgnoredFiles() = Registry.`is`("vcs.ignorefile.generation", true)
 }
