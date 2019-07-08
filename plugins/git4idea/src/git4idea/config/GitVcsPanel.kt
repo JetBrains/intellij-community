@@ -26,6 +26,7 @@ import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepositoryManager
+import javax.swing.JLabel
 
 
 internal class GitVcsPanel(private val project: Project,
@@ -40,6 +41,10 @@ internal class GitVcsPanel(private val project: Project,
   private var versionCheckRequested = false
 
   private val pathSelector: VcsExecutablePathSelector = createPathSelector()
+
+  private lateinit var branchUpdateInfoRow: Row
+  private lateinit var branchUpdateInfoCommentRow: Row
+  private lateinit var supportedBranchUpLabel: JLabel
 
   private fun createPathSelector() = VcsExecutablePathSelector("Git") { path ->
     val pathToGit = path ?: executableManager.detectedExecutable
@@ -78,6 +83,7 @@ internal class GitVcsPanel(private val project: Project,
                            projectSettingsPathToGit != null,
                            projectSettingsPathToGit,
                            executableManager.detectedExecutable)
+        updateBranchUpdateInfoRow()
       }
       .onIsModified {
         val projectSettingsPathToGit = projectSettings.pathToGit
@@ -100,6 +106,7 @@ internal class GitVcsPanel(private val project: Project,
           projectSettings.pathToGit = null
         }
         validateExecutableOnceAfterClose()
+        updateBranchUpdateInfoRow()
       }
   }
 
@@ -122,13 +129,11 @@ internal class GitVcsPanel(private val project: Project,
     }
   }
 
-  private fun updateBranchUpdateInfoRow(branchUpdateInfoRow: Row,
-                                        supportedBranchUpLabel: JBLabel,
-                                        selectedStrategy: GitIncomingCheckStrategy) {
+  private fun updateBranchUpdateInfoRow() {
     val branchInfoSupported = GitVersionSpecialty.INCOMING_OUTGOING_BRANCH_INFO.existsIn(project)
     branchUpdateInfoRow.enabled = Registry.`is`("git.update.incoming.outgoing.info") && branchInfoSupported
-    supportedBranchUpLabel.isVisible = !branchInfoSupported
-    supportedBranchUpLabel.foreground = if (!branchInfoSupported && selectedStrategy != GitIncomingCheckStrategy.Never) {
+    branchUpdateInfoCommentRow.visible = !branchInfoSupported
+    supportedBranchUpLabel.foreground = if (!branchInfoSupported && projectSettings.incomingCheckStrategy != GitIncomingCheckStrategy.Never) {
       DialogWrapper.ERROR_FOREGROUND_COLOR
     }
     else {
@@ -136,33 +141,26 @@ internal class GitVcsPanel(private val project: Project,
     }
   }
 
-  private fun LayoutBuilder.branchUpdateInfoRow(): Row {
-    lateinit var branchUpdateInfoRow: Row
+  private fun LayoutBuilder.branchUpdateInfoRow() {
     branchUpdateInfoRow = row {
-      val supportedBranchUpLabel = JBLabel("Supported for Git 2.9+")
+      supportedBranchUpLabel = JBLabel("Supported for Git 2.9+")
       cell {
         label("Explicitly check for incoming commits on remotes: ")
         comboBox(
           EnumComboBoxModel(GitIncomingCheckStrategy::class.java),
           {
-            projectSettings.incomingCheckStrategy.also { currentStrategy ->
-              updateBranchUpdateInfoRow(branchUpdateInfoRow, supportedBranchUpLabel, currentStrategy)
-            }
+            projectSettings.incomingCheckStrategy
           },
           { selectedStrategy ->
-            if (Registry.`is`("git.update.incoming.outgoing.info")) {
-              selectedStrategy as GitIncomingCheckStrategy
-              updateBranchUpdateInfoRow(branchUpdateInfoRow, supportedBranchUpLabel, selectedStrategy)
-              projectSettings.incomingCheckStrategy = selectedStrategy
-              GitBranchIncomingOutgoingManager.getInstance(project).updateIncomingScheduling()
-            }
+            projectSettings.incomingCheckStrategy = selectedStrategy as GitIncomingCheckStrategy
+            updateBranchUpdateInfoRow()
+            GitBranchIncomingOutgoingManager.getInstance(project).updateIncomingScheduling()
           })
       }
-      row {
+      branchUpdateInfoCommentRow = row {
         supportedBranchUpLabel()
       }
     }
-    return branchUpdateInfoRow
   }
 
   override fun getId() = "vcs.${GitVcs.NAME}"
