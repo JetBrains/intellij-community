@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 )
 interface GHPullRequestReviewer {
   // because we need scopes to access teams
-  class Team {
+  class Team : GHPullRequestReviewer {
     override fun toString(): String {
       return "Unknown Team"
     }
