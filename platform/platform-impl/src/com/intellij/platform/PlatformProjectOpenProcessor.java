@@ -29,8 +29,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
@@ -190,12 +188,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     if (!forceOpenInNewFrame && openProjects.length > 0) {
       if (projectToClose == null) {
-        // if several projects are opened, ask to reuse not last opened project frame, but last focused (to avoid focus switching)
-        IdeFrame lastFocusedFrame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
-        projectToClose = lastFocusedFrame == null ? null : lastFocusedFrame.getProject();
-        if (projectToClose == null) {
-          projectToClose = openProjects[openProjects.length - 1];
-        }
+        projectToClose = ProjectUtil.getProjectToClose(openProjects);
       }
 
       if (checkExistingProjectOnOpen(projectToClose, callback, baseDir)) {

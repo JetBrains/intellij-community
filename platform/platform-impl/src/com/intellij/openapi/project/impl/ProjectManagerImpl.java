@@ -529,12 +529,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @Override
+  @Nullable
   public Project loadAndOpenProject(@NotNull File file) {
     Path path = file.toPath();
     return loadAndOpenProject(path, FileUtil.toSystemIndependentName(path.toString()));
   }
 
-  private Project loadAndOpenProject(@Nullable Path file, @NotNull @SystemIndependent String filePath) {
+  @Nullable
+  public Project loadAndOpenProject(@Nullable Path file, @NotNull @SystemIndependent String filePath) {
     final ConversionResult conversionResult = file == null ? null : ConversionService.getInstance().convert(file);
     ProjectImpl project;
     if (conversionResult != null && conversionResult.openingIsCanceled()) {

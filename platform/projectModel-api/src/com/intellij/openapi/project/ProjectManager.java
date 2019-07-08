@@ -97,6 +97,7 @@ public abstract class ProjectManager {
   @Nullable
   public abstract Project loadAndOpenProject(@NotNull String filePath) throws IOException, JDOMException;
 
+  @Nullable
   @ApiStatus.Experimental
   @TestOnly
   public abstract Project loadAndOpenProject(@NotNull File file) throws IOException, JDOMException;
