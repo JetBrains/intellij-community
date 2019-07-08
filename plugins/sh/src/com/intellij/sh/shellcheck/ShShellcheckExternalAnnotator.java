@@ -81,7 +81,7 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<PsiFile, Sh
         String output = StreamUtil.readText(process.getInputStream(), commandLine.getCharset());
         Type type = TypeToken.getParameterized(List.class, Result.class).getType();
         Collection<Result> results = new Gson().fromJson(output, type);
-        return new ShellcheckResponse(results, timestamp);
+        return results != null ? new ShellcheckResponse(results, timestamp) : null;
       }
       return null;
     }
@@ -176,7 +176,7 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<PsiFile, Sh
     final Collection<Result> results;
     final long timestamp;
 
-    ShellcheckResponse(Collection<Result> results, long timestamp) {
+    ShellcheckResponse(@NotNull Collection<Result> results, long timestamp) {
       this.results = results;
       this.timestamp = timestamp;
     }
