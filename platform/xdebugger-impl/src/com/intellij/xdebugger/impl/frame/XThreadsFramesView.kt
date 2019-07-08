@@ -7,9 +7,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.ui.OnePixelSplitter
-import com.intellij.ui.PopupHandler
-import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.*
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.frame.XExecutionStack
@@ -20,7 +18,9 @@ import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Rectangle
 import javax.swing.JComponent
+import javax.swing.JList
 import javax.swing.JPanel
+import javax.swing.JScrollPane
 
 class XThreadsFramesView(val project: Project) : XDebugView() {
     private val myPauseDisposables = SequentialDisposables(this)
@@ -48,6 +48,18 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
 
         private fun Disposable.onTermination(disposable: Disposable) = Disposer.register(this, disposable)
         private fun Disposable.onTermination(action: () -> Unit) = Disposer.register(this, Disposable { action() })
+
+        private fun Component.toScrollPane(): JScrollPane {
+            return ScrollPaneFactory.createScrollPane(this)
+        }
+
+        private fun <T> T.withSpeedSearch(
+          shouldMatchFromTheBeginning: Boolean = false,
+          shouldMatchCamelCase: Boolean = true
+        ): T where T : JList<*> {
+            ListSpeedSearch(this).comparator = SpeedSearchComparator(shouldMatchFromTheBeginning, shouldMatchCamelCase)
+            return this
+        }
     }
 
     init {
@@ -56,12 +68,10 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
         myThreadsContainer = ThreadsContainer(myThreadsList, null, disposable)
         myPauseDisposables.terminateCurrent()
 
-        val splitter = OnePixelSplitter(
-            splitterProportionKey,
-            splitterProportionDefaultValue
-        )
-        splitter.firstComponent = ScrollPaneFactory.createScrollPane(myThreadsList)
-        splitter.secondComponent = ScrollPaneFactory.createScrollPane(myFramesList)
+        val splitter = OnePixelSplitter(splitterProportionKey, splitterProportionDefaultValue).apply {
+            firstComponent = myThreadsList.withSpeedSearch().toScrollPane()
+            secondComponent = myFramesList.toScrollPane()
+        }
 
         mainPanel.add(splitter, BorderLayout.CENTER)
 
