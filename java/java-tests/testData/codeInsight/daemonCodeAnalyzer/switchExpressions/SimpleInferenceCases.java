@@ -17,15 +17,13 @@ class MyTest {
 
   void m(int i) {
     String s = foo(switch (i) {default -> "str";});
-    String s1 = <error descr="Incompatible types. Required String but 'foo' was inferred to T:
-no instance(s) of type variable(s) exist so that Object conforms to String">foo(switch (i) {case 1 -> new Object(); default -> "str";});</error>
+    String s1 = <error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.String'">foo(switch (i) {case 1 -> new Object(); default -> "str";});</error>
     String s2 =  foo(() -> switch (i) {
             default -> "str";
         });
     String s3 = foo(() -> switch (i) {default -> bar();});
     String s4 = foo(() -> switch (i) {default -> { yield bar();}});
-    String s5 = foo(<error descr="Incompatible types. Required String but 'foo' was inferred to T:
-no instance(s) of type variable(s) exist so that Integer conforms to String">() -> switch (i) {default -> { yield 1;}}</error>);
+    String s5 = foo(<error descr="Incompatible types. Found: 'java.lang.Integer', required: 'java.lang.String'">() -> switch (i) {default -> { yield 1;}}</error>);
     String s6 = switch (i) {
       case 1 -> <error descr="Bad type in switch expression: int cannot be converted to java.lang.String">2</error>;
       default -> {

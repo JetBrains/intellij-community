@@ -2729,7 +2729,19 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @Nullable
-  static HighlightInfo createIncompatibleTypeHighlightInfo(PsiType lType, PsiType rType, @NotNull TextRange textRange, int navigationShift) {
+  static HighlightInfo createIncompatibleTypeHighlightInfo(PsiType lType,
+                                                           PsiType rType,
+                                                           @NotNull TextRange textRange,
+                                                           int navigationShift) {
+    return createIncompatibleTypeHighlightInfo(lType, rType, textRange, navigationShift, getReasonForIncompatibleTypes(rType));
+  }
+
+  @Nullable
+  static HighlightInfo createIncompatibleTypeHighlightInfo(PsiType lType,
+                                                           PsiType rType,
+                                                           @NotNull TextRange textRange,
+                                                           int navigationShift, 
+                                                           String reason) {
     Trinity<PsiType, PsiTypeParameter[], PsiSubstitutor> lTypeData = typeData(lType);
     Trinity<PsiType, PsiTypeParameter[], PsiSubstitutor> rTypeData = typeData(rType);
     lType = lTypeData.first;
@@ -2761,7 +2773,7 @@ public class HighlightUtil extends HighlightUtilBase {
                                                requiredRow,
                                                redIfNotMatch(rRawType, assignable),
                                                foundRow,
-                                               getReasonForIncompatibleTypes(rType));
+                                               reason);
     String description = JavaErrorMessages.message(
       "incompatible.types", JavaHighlightUtil.formatType(lType), JavaHighlightUtil.formatType(rType));
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).description(description).escapedToolTip(toolTip)

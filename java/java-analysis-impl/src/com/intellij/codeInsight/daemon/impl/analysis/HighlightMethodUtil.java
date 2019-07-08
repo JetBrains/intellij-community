@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
@@ -397,15 +398,7 @@ public class HighlightMethodUtil {
       }
 
       if (highlightInfo == null) {
-        String errorMessage = ((MethodCandidateInfo)resolveResult).getInferenceErrorMessage();
-        if (errorMessage != null) {
-          highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(errorMessage).range(fixRange).create();
-          if (highlightInfo != null) {
-            registerMethodCallIntentions(highlightInfo, methodCall, list, resolveHelper);
-            registerMethodReturnFixAction(highlightInfo, (MethodCandidateInfo)resolveResult, methodCall);
-            registerTargetTypeFixesBasedOnApplicabilityInference(methodCall, (MethodCandidateInfo)resolveResult, (PsiMethod)resolved, highlightInfo);
-          }
-        }
+        highlightInfo = createIncompatibleTypeHighlightInfo(methodCall, resolveHelper, (MethodCandidateInfo)resolveResult, fixRange);
       }
     }
     else {
@@ -487,6 +480,31 @@ public class HighlightMethodUtil {
     return highlightInfo;
   }
 
+  public static HighlightInfo createIncompatibleTypeHighlightInfo(@NotNull PsiCallExpression methodCall,
+                                                                  @NotNull PsiResolveHelper resolveHelper,
+                                                                  MethodCandidateInfo resolveResult,
+                                                                  TextRange fixRange) {
+    String errorMessage = resolveResult.getInferenceErrorMessage();
+    if (errorMessage == null) return null;
+    PsiMethod method = resolveResult.getElement();
+    HighlightInfo highlightInfo;
+    PsiType expectedTypeByParent = InferenceSession.getTargetTypeByParent(methodCall);
+    PsiType actualType = resolveResult.getSubstitutor(false).substitute(method.getReturnType());
+    if (expectedTypeByParent != null && actualType != null && !expectedTypeByParent.isAssignableFrom(actualType)) {
+      highlightInfo = HighlightUtil
+        .createIncompatibleTypeHighlightInfo(expectedTypeByParent, actualType, fixRange, 0, XmlStringUtil.escapeString(errorMessage));
+    }
+    else {
+      highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(errorMessage).range(fixRange).create();
+    }
+    if (highlightInfo != null && methodCall instanceof PsiMethodCallExpression) {
+      registerMethodCallIntentions(highlightInfo, (PsiMethodCallExpression)methodCall, ((PsiMethodCallExpression)methodCall).getArgumentList(), resolveHelper);
+      registerMethodReturnFixAction(highlightInfo, resolveResult, methodCall);
+      registerTargetTypeFixesBasedOnApplicabilityInference((PsiMethodCallExpression)methodCall, resolveResult, method, highlightInfo);
+    }
+    return highlightInfo;
+  }
+
   private static void registerUsageFixes(@NotNull PsiMethodCallExpression methodCall,
                                          @Nullable HighlightInfo highlightInfo,
                                          @NotNull TextRange range) {
@@ -526,7 +544,8 @@ public class HighlightMethodUtil {
       PsiType rType = methodCall.getType();
       if (rType != null && !variable.getType().isAssignableFrom(rType)) {
         PsiType expectedTypeByApplicabilityConstraints = resolveResult.getSubstitutor(false).substitute(resolved.getReturnType());
-        if (expectedTypeByApplicabilityConstraints != null && !variable.getType().isAssignableFrom(expectedTypeByApplicabilityConstraints)) {
+        if (expectedTypeByApplicabilityConstraints != null && !variable.getType().isAssignableFrom(expectedTypeByApplicabilityConstraints) &&
+            PsiTypesUtil.allTypeParametersResolved(variable, expectedTypeByApplicabilityConstraints)) {
           HighlightFixUtil.registerChangeVariableTypeFixes(variable, expectedTypeByApplicabilityConstraints, methodCall, highlightInfo);
         }
       }
