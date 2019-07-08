@@ -168,7 +168,7 @@ public abstract class VcsVFSListener implements Disposable {
     LOG.debug("executeAdd. add-option: ", myAddOption.getValue(), ", files to add: ", addedFiles);
     if (myAddOption.getValue() == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) return;
 
-    addedFiles = myProjectConfigurationFilesProcessor.processFiles(addedFiles);
+    addedFiles = myProjectConfigurationFilesProcessor.filterNotProjectConfigurationFiles(addedFiles);
 
     if (myAddOption.getValue() == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
       performAdding(addedFiles, copyFromMap);
