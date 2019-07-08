@@ -49,6 +49,12 @@ class PyInlineFunctionTest : PyTestCase() {
     }
   }
 
+  // PY-36803
+  fun testAlreadyImported() = doTest()
+
+  // PY-36803
+  fun testNameClashWithImport() = doTest()
+
   fun testSimple() = doTest()
   fun testNameClash() = doTest()
   fun testLocalFunctionUse() = doTest()
