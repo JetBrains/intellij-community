@@ -1056,7 +1056,9 @@
     <runDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.RunConfigurationDashboardGroupingRule"
                               id="runConfiguration" order="after folder"/>
     <actionPromoter implementation="com.intellij.execution.dashboard.actions.RunDashboardActionPromoter"/>
+    <actionPromoter implementation="com.intellij.execution.services.ServiceViewActionPromoter"/>
     <serviceViewContributor implementation="com.intellij.execution.dashboard.RunConfigurationsServiceViewContributor"/>
+    <navbar implementation="com.intellij.execution.services.ServiceViewNavBarExtension"/>
     <projectService serviceInterface="com.intellij.execution.ui.RunContentManager"
                     serviceImplementation="com.intellij.execution.ui.RunContentManagerImpl"/>
 
