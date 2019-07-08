@@ -19,6 +19,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.SearchTextField.FindAction;
+import com.intellij.util.ui.JBDimension;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,6 +92,9 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     }
 
     init();
+    if (configurable == null) {
+      getPeer().getRootPane().setMinimumSize(new JBDimension(900, 700));
+    }
   }
 
   @Override
