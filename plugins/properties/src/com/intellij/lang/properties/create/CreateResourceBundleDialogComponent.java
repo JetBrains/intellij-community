@@ -91,7 +91,6 @@ public class CreateResourceBundleDialogComponent {
   }
 
   public static class Dialog extends DialogWrapper {
-    @NotNull private final Project myProject;
     @NotNull private final PsiDirectory myDirectory;
     private final CreateResourceBundleDialogComponent myComponent;
     private PsiElement[] myCreatedFiles;
@@ -101,9 +100,8 @@ public class CreateResourceBundleDialogComponent {
       if (directory == null) {
         LOG.assertTrue(resourceBundle != null && getResourceBundlePlacementDirectory(resourceBundle) != null);
       }
-      myProject = project;
       myDirectory = directory == null ? resourceBundle.getDefaultPropertiesFile().getContainingFile().getContainingDirectory() : directory;
-      myComponent = new CreateResourceBundleDialogComponent(myProject, myDirectory, resourceBundle);
+      myComponent = new CreateResourceBundleDialogComponent(project, myDirectory, resourceBundle);
       init();
       initValidation();
       setTitle(resourceBundle == null ? "Create Resource Bundle" : "Add Locales to Resource Bundle " + resourceBundle.getBaseName());
