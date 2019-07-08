@@ -217,6 +217,11 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
             if (myCurrentIndex >= 0 && myCurrentIndex < myFramesList.model.size) {
                 myFramesList.selectedIndex = myCurrentIndex
             }
+            else if (myFramesList.model.items.isNotEmpty()) {
+                myCurrentIndex = 0
+                myFramesList.selectedIndex = 0
+            }
+
             val visibleRectangle = myVisibleRectangle
             if (visibleRectangle != null)
                 myFramesList.scrollRectToVisible(visibleRectangle)
