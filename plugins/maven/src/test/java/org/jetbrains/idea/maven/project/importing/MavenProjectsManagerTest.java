@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.FileContentUtil;
 import org.jetbrains.annotations.NotNull;
@@ -132,17 +133,20 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
     final VirtualFile oldDir = p2.getParent();
     WriteCommandAction.writeCommandAction(myProject).run(() -> {
+      VfsUtil.markDirtyAndRefresh(false, true, true, myProjectRoot);
       VirtualFile newDir = myProjectRoot.createChildDirectory(this, "foo");
 
       assertEquals(2, myProjectsTree.getRootProjects().size());
 
       p2.move(this, newDir);
+      VfsUtil.markDirtyAndRefresh(false, true, true, myProjectRoot);
       waitForReadingCompletion();
-
-      assertEquals(1, myProjectsTree.getRootProjects().size());
-
+    });
+    assertEquals(1, myProjectsTree.getRootProjects().size());
+    WriteCommandAction.writeCommandAction(myProject).run(() -> {
       p2.move(this, oldDir);
     });
+
 
     waitForReadingCompletion();
 
