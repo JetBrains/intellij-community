@@ -1,4 +1,4 @@
-package circlet.integration
+package circlet.app.idea.integration
 
 import circlet.pipelines.config.api.*
 import circlet.pipelines.config.dsl.api.*
