@@ -121,6 +121,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
 
   @Override
   public boolean indexExists(File dir, MavenToken token) throws RemoteException {
+    MavenServerUtil.checkToken(token);
     try {
       return IndexReader.indexExists(dir);
     }
@@ -132,6 +133,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
 
   @Override
   public int getIndexCount(MavenToken token) {
+    MavenServerUtil.checkToken(token);
     return myIndexer.getIndexingContexts().size();
   }
 
@@ -335,6 +337,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
 
   @Override
   public Collection<MavenArchetype> getArchetypes(MavenToken token) throws RemoteException {
+    MavenServerUtil.checkToken(token);
     Set<MavenArchetype> result = new THashSet<MavenArchetype>();
     doCollectArchetypes("internal-catalog", result);
     return result;

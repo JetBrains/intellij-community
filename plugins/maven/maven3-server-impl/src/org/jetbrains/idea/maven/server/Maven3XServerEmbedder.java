@@ -1048,6 +1048,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
                                @NotNull List<MavenRemoteRepository> remoteRepositories,
                                MavenToken token)
     throws RemoteException, MavenServerProcessCanceledException {
+    MavenServerUtil.checkToken(token);
     return doResolve(info, remoteRepositories);
   }
 
