@@ -361,6 +361,7 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
                                      @NotNull List<String> activeProfiles,
                                      @NotNull List<String> inactiveProfiles,
                                      MavenToken token) {
+    MavenServerUtil.checkToken(token);
     throw new UnsupportedOperationException();
   }
 

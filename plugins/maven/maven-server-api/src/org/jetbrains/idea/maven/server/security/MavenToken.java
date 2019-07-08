@@ -20,9 +20,7 @@ public class MavenToken implements Serializable {
 
     MavenToken token = (MavenToken)o;
 
-    if (!myUUID.equals(token.myUUID)) return false;
-
-    return true;
+    return myUUID.equals(token.myUUID);
   }
 
   @Override
