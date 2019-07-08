@@ -18,13 +18,18 @@ import java.io.*
 
 object ScriptModelBuilder : KLogging() {
     fun updateModel(project: Project, viewModel: ScriptWindowViewModel) {
+        logger.debug("update model requested")
         if (viewModel.modelBuildIsRunning.value) {
+            logger.debug("modelBuildIsRunning == true")
             return
         }
 
+        logger.debug("queue task. begin")
         ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Build DSL Model", false) {
             override fun run(indicator: ProgressIndicator) {
+                logger.debug("run task. begin")
                 if (viewModel.modelBuildIsRunning.value) {
+                    logger.debug("modelBuildIsRunning == true inside tak")
                     return
                 }
                 viewModel.modelBuildIsRunning.value = true
@@ -33,8 +38,11 @@ object ScriptModelBuilder : KLogging() {
                 viewModel.logBuildData.value = logBuildData
                 val model = build(lt, project, logBuildData)
                 viewModel.script.value = model
+                logger.debug("run task. end")
             }
         })
+
+        logger.debug("queue task. end")
     }
 
     private fun build(lifetime: Lifetime, project: Project, logBuildData: LogData): ScriptViewModel {
