@@ -49,6 +49,9 @@ internal class InferMethodParametersTypesIntention : Intention() {
     var hasAnnotations = false
     method.parameters.zip(virtualMethod.parameters).forEach { (actual, inferred) ->
       actual.setType(inferred.type)
+      if (actual.isVarArgs) {
+        actual.ellipsisDots!!.delete()
+      }
       val annotations = inferred.annotations
       // todo: user-defined annotations may not coincide with @ClosureParams
       annotations.forEach {

@@ -27,19 +27,24 @@ class MethodParametersInferenceProcessor(method: GrMethod) {
   fun runInferenceProcess(): GrMethod {
     if (!driver.treatedAsOverriddenMethod()) {
       driver.setUpNewTypeParameters()
-      setUpParametersSignature()
-      val graph = setUpGraph()
-      inferTypeParameters(graph)
+      val signatureSubstitutor = setUpParametersSignature()
+      if (driver.method.isConstructor) {
+        driver.acceptFinalSubstitutor(signatureSubstitutor)
+      }
+      else {
+        driver.parametrizeMethod(signatureSubstitutor)
+        val graph = setUpGraph()
+        inferTypeParameters(graph)
+      }
     }
     return driver.virtualMethod
   }
 
-  private fun setUpParametersSignature() {
+  private fun setUpParametersSignature(): PsiSubstitutor {
     val inferenceSession = CollectingGroovyInferenceSession(driver.virtualMethod.typeParameters, PsiSubstitutor.EMPTY, driver.virtualMethod,
                                                             driver.virtualParametersMapping)
     driver.collectOuterCalls(inferenceSession)
-    val signatureSubstitutor = inferenceSession.inferSubst()
-    driver.parametrizeMethod(signatureSubstitutor)
+    return inferenceSession.inferSubst()
   }
 
 
@@ -64,7 +69,7 @@ class MethodParametersInferenceProcessor(method: GrMethod) {
     }
     val endpointTypes = endpoints.map {
       val completelySubstitutedType = resultSubstitutor.recursiveSubstitute(it.typeInstantiation)
-      driver.createBoundedTypeParameterElement(it.type.name, resultSubstitutor, completelySubstitutedType).type()
+      driver.createBoundedTypeParameter(it.type.name, resultSubstitutor, completelySubstitutedType).type()
     }
     val endpointSubstitutor = PsiSubstitutor.EMPTY.putAll(endpoints.map { it.core.initialTypeParameter }.toTypedArray(),
                                                           endpointTypes.toTypedArray())
@@ -96,7 +101,7 @@ class MethodParametersInferenceProcessor(method: GrMethod) {
           return unit.type
         }
         else {
-          val newTypeParameter = driver.createBoundedTypeParameterElement(unit.type.name, resultSubstitutor, advice)
+          val newTypeParameter = driver.createBoundedTypeParameter(unit.type.name, resultSubstitutor, advice)
           return newTypeParameter.type()
         }
       }

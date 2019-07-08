@@ -277,4 +277,11 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testVarargInference() {
+    doTest(true)
+  }
+
+  void testGenericConstructor() {
+    doTest(true)
+  }
 }

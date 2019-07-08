@@ -35,6 +35,7 @@ class InferenceDriver(val method: GrMethod) {
   private val defaultTypeParameterList: PsiTypeParameterList = (method.typeParameterList?.copy()
                                                                 ?: elementFactory.createTypeParameterList()) as PsiTypeParameterList
   private val parameterIndex: MutableMap<GrParameter, PsiTypeParameter> = LinkedHashMap()
+  private val varargParameters: MutableSet<GrParameter> = mutableSetOf()
 
   /**
    * Gathers expressions that will be assigned to parameters of [virtualMethod]
@@ -68,7 +69,7 @@ class InferenceDriver(val method: GrMethod) {
   }
 
   val forbiddingTypes: List<PsiType> by lazy {
-    virtualMethod.parameters.mapNotNull { (it.type as? PsiArrayType)?.componentType } + contravariantTypes
+    virtualMethod.parameters.mapNotNull { (it.type as? PsiArrayType)?.componentType } + contravariantTypes + virtualMethod.parameters.filter { it.isVarArgs }.map { it.type }
   }
 
   /**
@@ -84,6 +85,10 @@ class InferenceDriver(val method: GrMethod) {
       virtualMethod.typeParameterList!!.add(newTypeParameter)
       parameterIndex[parameter] = newTypeParameter
       parameter.setType(newTypeParameter.type())
+      if (parameter.isVarArgs) {
+        varargParameters.add(parameter)
+        parameter.ellipsisDots!!.delete()
+      }
     }
     createParametrizedClosures(generator)
   }
@@ -257,6 +262,9 @@ class InferenceDriver(val method: GrMethod) {
       target is PsiArrayType -> {
         return target.componentType.accept(visitor).createArrayType()
       }
+      parameter in varargParameters -> {
+        return target.accept(visitor).createArrayType()
+      }
       target is PsiClassType && target.resolve() is PsiTypeParameter -> return registerTypeParameter(typeParameterList)
       target is PsiIntersectionType -> return target.accept(visitor) as PsiClassType
       target == PsiType.getJavaLangObject(virtualMethod.manager, virtualMethod.resolveScope) -> {
@@ -403,9 +411,9 @@ class InferenceDriver(val method: GrMethod) {
   }
 
 
-  fun createBoundedTypeParameterElement(name: String,
-                                        resultSubstitutor: PsiSubstitutor,
-                                        advice: PsiType): PsiTypeParameter {
+  fun createBoundedTypeParameter(name: String,
+                                 resultSubstitutor: PsiSubstitutor,
+                                 advice: PsiType): PsiTypeParameter {
     val mappedSupertypes = when {
       advice is PsiClassType && (advice.name != name) -> arrayOf(resultSubstitutor.substitute(advice) as PsiClassType)
       advice is PsiIntersectionType -> PsiIntersectionType.flatten(advice.conjuncts, mutableSetOf()).map {

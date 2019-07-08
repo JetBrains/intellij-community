@@ -38,7 +38,8 @@ fun createGraphFromInferenceVariables(variables: Collection<InferenceVariable>,
     val core = InferenceUnit(variable.parameter, flexible = variableType in driver.flexibleTypes,
                              constant = variableType in driver.constantTypes)
     builder.setType(core, validType)
-    if (variableType in driver.forbiddingTypes && variable.instantiation.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+    if (variableType in driver.forbiddingTypes && (variable.instantiation.equalsToText(
+        CommonClassNames.JAVA_LANG_OBJECT) || variable.instantiation is PsiIntersectionType)) {
       builder.forbidInstantiation(core)
     }
     variableMap[core] = variable
