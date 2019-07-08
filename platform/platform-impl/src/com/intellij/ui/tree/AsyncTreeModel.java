@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
 import com.intellij.openapi.Disposable;
@@ -31,6 +31,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
 
+import static com.intellij.openapi.util.registry.Registry.is;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
@@ -543,7 +544,12 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
         tree.map.put(loaded.object, loaded);
         TreePath path = new TreePath(loaded.object);
         loaded.insertPath(path);
-        treeStructureChanged(path, null, null);
+        try {
+          treeStructureChanged(is("async.tree.model.root.changed") ? path : null, null, null);
+        }
+        catch (Exception exception) {
+          LOG.error("user's model: " + model, exception);
+        }
         LOG.debug("new root: ", loaded.object);
         tree.queue.done(this, loaded);
       }
