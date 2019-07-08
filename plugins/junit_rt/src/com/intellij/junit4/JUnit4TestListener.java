@@ -85,7 +85,7 @@ public class JUnit4TestListener extends RunListener {
       for (int i = myStartedSuites.size() - 1; i>= 0; i--) {
         String className = JUnit4ReflectionUtil.getClassName((Description)myStartedSuites.get(i));
         if (!className.equals(myRootName)) {
-          myPrintStream.println("\n##teamcity[testSuiteFinished name=\'" + escapeName(getShortName(className)) + "\']");
+          myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(getShortName(className)) + "\']");
         }
       }
       myStartedSuites.clear();
@@ -139,7 +139,7 @@ public class JUnit4TestListener extends RunListener {
 
     for (int i = myStartedSuites.size() - 1; i >= idx; i--) {
       currentClass = (Description)myStartedSuites.remove(i);
-      myPrintStream.println("\n##teamcity[testSuiteFinished name=\'" + escapeName(getShortName(JUnit4ReflectionUtil.getClassName(currentClass))) + "\']");
+      myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(getShortName(JUnit4ReflectionUtil.getClassName(currentClass))) + "\']");
     }
 
     for (int i = idx; i < parentsHierarchy.size(); i++) {
@@ -147,12 +147,12 @@ public class JUnit4TestListener extends RunListener {
       final String fqName = JUnit4ReflectionUtil.getClassName(descriptionFromHistory);
       final String className = getShortName(fqName);
       if (!className.equals(myRootName)) {
-        myPrintStream.println("\n##teamcity[testSuiteStarted name=\'" + escapeName(className) + "\'" + getSuiteLocation(descriptionFromHistory, description, fqName) + "]");
+        myPrintStream.println("##teamcity[testSuiteStarted name=\'" + escapeName(className) + "\'" + getSuiteLocation(descriptionFromHistory, description, fqName) + "]");
       }
       myStartedSuites.add(descriptionFromHistory);
     }
 
-    myPrintStream.println("\n##teamcity[testStarted name=\'" + escapeName(methodName.replaceFirst("/", ".")) + "\' " + 
+    myPrintStream.println("##teamcity[testStarted name=\'" + escapeName(methodName.replaceFirst("/", ".")) + "\' " + 
                           getTestMethodLocation(methodName, classFQN) + "]");
     myCurrentTestStart = currentTime();
   }
@@ -200,7 +200,7 @@ public class JUnit4TestListener extends RunListener {
   private void testFinishedNoDumping(final String methodName) {
     if (methodName != null) {
       final long duration = currentTime() - myCurrentTestStart;
-      myPrintStream.println("\n##teamcity[testFinished name=\'" + escapeName(methodName.replaceFirst("/", ".")) +
+      myPrintStream.println("##teamcity[testFinished name=\'" + escapeName(methodName.replaceFirst("/", ".")) +
                             (duration > 0 ? "\' duration=\'" + duration : "") + "\']");
     }
     myCurrentTest = null;
@@ -240,7 +240,7 @@ public class JUnit4TestListener extends RunListener {
       return;
     }
 
-    myPrintStream.println("\n##teamcity[testFinished name=\'" + escapeName(CLASS_CONFIGURATION) + "\']");
+    myPrintStream.println("##teamcity[testFinished name=\'" + escapeName(CLASS_CONFIGURATION) + "\']");
     myCurrentTest = null;
   }
 
@@ -253,7 +253,7 @@ public class JUnit4TestListener extends RunListener {
     }
 
     myCurrentTest = description;
-    myPrintStream.println("\n##teamcity[testStarted name=\'" + escapeName(CLASS_CONFIGURATION) + "\'" + getSuiteLocation(JUnit4ReflectionUtil.getClassName(description)) + " ]");
+    myPrintStream.println("##teamcity[testStarted name=\'" + escapeName(CLASS_CONFIGURATION) + "\'" + getSuiteLocation(JUnit4ReflectionUtil.getClassName(description)) + " ]");
   }
 
   private void testFailure(Failure failure, Description description, String messageName, String methodName) {
@@ -290,7 +290,7 @@ public class JUnit4TestListener extends RunListener {
       ComparisonFailureData.registerSMAttributes(null, stringWriter.toString(), e.getMessage(), attrs, e);
     }
     finally {
-      myPrintStream.println("\n" + MapSerializerUtil.asString(messageName, attrs));
+      myPrintStream.println(MapSerializerUtil.asString(messageName, attrs));
     }
   }
 
