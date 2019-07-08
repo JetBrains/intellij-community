@@ -25,6 +25,7 @@ import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.FontUtil;
 import com.intellij.util.IconUtil;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -173,6 +174,11 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
 
     if (speedSearch.matchingFragments(text) != null) {
       SpeedSearchUtil.applySpeedSearchHighlighting(list, titleTextComponent, false, selected);
+    }
+
+    long timeStamp = placeInfo.getTimeStamp();
+    if (timeStamp != -1) {
+      titleTextComponent.append(" " + DateFormatUtil.formatPrettyDateTime(timeStamp), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES);
     }
 
     return titleTextComponent;

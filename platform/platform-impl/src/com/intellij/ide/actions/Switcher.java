@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -57,6 +58,7 @@ import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
@@ -70,6 +72,7 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.*;
 
@@ -83,6 +86,7 @@ import static javax.swing.KeyStroke.getKeyStroke;
  * @author Konstantin Bulenkov
  */
 public class Switcher extends AnAction implements DumbAware {
+  private static final Logger LOG = Logger.getInstance(Switcher.class);
   private static final Key<SwitcherPanel> SWITCHER_KEY = Key.create("SWITCHER_KEY");
   private static final Color SEPARATOR_COLOR = JBColor.namedColor("Popup.separatorColor", new JBColor(Gray.xC0, Gray.x4B));
   private static final String TOGGLE_CHECK_BOX_ACTION_ID = "SwitcherRecentEditedChangedToggleCheckBox";
@@ -1357,6 +1361,20 @@ public class Switcher extends AnAction implements DumbAware {
         setBackground(color);
       }
       SpeedSearchUtil.applySpeedSearchHighlighting(mySwitcherPanel, this, false, selected);
+
+      appendTimestamp(project, virtualFile);
+    }
+
+    private void appendTimestamp(@NotNull Project project, @NotNull VirtualFile file) {
+      try {
+        Long timestamp = IdeDocumentHistory.getInstance(project).getRecentFilesTimestamps().get(file.getPath());
+        if (timestamp != null) {
+          append(" ").append(DateFormatUtil.formatPrettyDateTime(timestamp), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES);
+        }
+      }
+      catch (IOException e) {
+        LOG.info("Cannot get a timestamp from a persistent hash map", e);
+      }
     }
   }
 
