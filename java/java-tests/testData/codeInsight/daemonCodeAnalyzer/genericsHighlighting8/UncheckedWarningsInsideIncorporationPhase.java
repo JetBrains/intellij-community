@@ -3,7 +3,7 @@ abstract class Group {
   public Group() {
   }
 
-  public <T extends Category> T <error descr="Invalid return type">get</error>(Key<T> key) {
+  public <T extends Category> T get(Key<T> key) {
     return <error descr="Incompatible types: Category is not convertible to T">getCategory(key);</error>
   }
 

@@ -1071,7 +1071,7 @@ public abstract class ClassLoader
       return parent;
   }
 
-  static ClassLoader <error descr="Invalid return type">createSystemClassLoader</error>(URL[] urls, ClassLoader parent)
+  static ClassLoader createSystemClassLoader(URL[] urls, ClassLoader parent)
   {
     return
 	new <error descr="Cannot resolve symbol 'URLClassLoader'">URLClassLoader</error>(urls, parent)

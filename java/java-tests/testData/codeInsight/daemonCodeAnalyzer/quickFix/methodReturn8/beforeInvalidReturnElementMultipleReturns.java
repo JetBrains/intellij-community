@@ -3,8 +3,8 @@ import java.util.*;
 
 class Test {
 
-  void <caret>m(boolean b) {
-    if (b) return new ArrayList<>();
+  void m(boolean b) {
+    if (b) <caret>return new ArrayList<>();
     return new LinkedList<>();
   }
 

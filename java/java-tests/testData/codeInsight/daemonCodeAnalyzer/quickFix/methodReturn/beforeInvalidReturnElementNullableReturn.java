@@ -2,8 +2,8 @@
 
 class Test {
 
-  void <caret>m(boolean b) {
-    if (b) return null;
+  void m(boolean b) {
+    if (b) return n<caret>ull;
     return 42;
   }
 

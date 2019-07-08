@@ -81,7 +81,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   public LocalQuickFixAndIntentionActionOnPsiElement createMethodReturnFix(@NotNull PsiMethod method,
                                                                            @NotNull PsiType toReturn,
                                                                            boolean fixWholeHierarchy) {
-    return new MethodReturnTypeFix(method, toReturn, fixWholeHierarchy, false);
+    return new MethodReturnTypeFix(method, toReturn, fixWholeHierarchy);
   }
 
   @NotNull

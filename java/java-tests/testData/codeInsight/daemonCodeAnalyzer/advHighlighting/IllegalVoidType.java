@@ -1,6 +1,6 @@
 class C {
-  <error descr="Illegal type: 'void'">void</error>[] <error descr="Invalid return type">m1</error>() { }
-  <error descr="Illegal type: 'void'">void</error> <error descr="Invalid return type">m2</error>()[] { }
+  <error descr="Illegal type: 'void'">void</error>[] m1() { }
+  <error descr="Illegal type: 'void'">void</error> m2()[] { }
   void m3(<error descr="Illegal type: 'void'">void</error> p) {}
 
   {

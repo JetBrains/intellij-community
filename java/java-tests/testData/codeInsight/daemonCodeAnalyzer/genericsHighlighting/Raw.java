@@ -76,7 +76,7 @@ class d {
 }
 
 class e {
-    String <error descr="Invalid return type">foo</error> () {
+    String foo () {
         MyList myList = new MyList();
         <error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.String'">return myList.get(0);</error>
     }
@@ -128,7 +128,7 @@ class A111<T> {
     return v;
   }
 
-  String <error descr="Invalid return type">g</error>(A111 a) {
+  String g(A111 a) {
     //noinspection unchecked
     <error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.String'">return a.f("");</error>
   }
@@ -151,7 +151,7 @@ class A11<T> extends A1 {
 class Test1<X> {
   X x;
   java.util.ArrayList<Number> foo = new java.util.ArrayList<Number>();
-  public static Number <error descr="Invalid return type">foo</error>() {
+  public static Number foo() {
     <error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.Number'">return new Test1().foo.get(0);</error>
   }
 }

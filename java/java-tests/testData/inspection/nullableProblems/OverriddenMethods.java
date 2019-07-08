@@ -39,7 +39,7 @@ interface I2 extends I1 {
 
 class A implements I1 {
   @Override
-  public Object <error descr="Invalid return type">foo</error>() {
+  public Object foo() {
     // returns something
   <error descr="Missing return statement">}</error>
 }

@@ -84,6 +84,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   };
   private final Map<PsiClass, MostlySingularMultiMap<MethodSignature, PsiMethod>> myDuplicateMethods = new THashMap<>();
   private final Set<PsiClass> myOverrideEquivalentMethodsVisitedClasses = new THashSet<>();
+  private final Map<PsiMethod, PsiType> myExpectedReturnTypes = new HashMap<>();
 
   private static class Holder {
     private static final boolean CHECK_ELEMENT_LEVEL = ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal();
@@ -191,6 +192,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myHolder = null;
       myDuplicateMethods.clear();
       myOverrideEquivalentMethodsVisitedClasses.clear();
+      myExpectedReturnTypes.clear();
     }
 
     return success;
@@ -669,10 +671,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     else if (parent instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)parent;
       if (method.isConstructor()) {
-        myHolder.add(HighlightMethodUtil.checkConstructorName(method));
-      }
-      else if (method.getBody() != null) {
-        myHolder.add(HighlightMethodUtil.checkReturnType(method));
+        HighlightInfo info = HighlightMethodUtil.checkConstructorName(method);
+        if (info != null) {
+          PsiType expectedType = myExpectedReturnTypes.computeIfAbsent(method, HighlightUtil::determineReturnType);
+          if (expectedType != null) HighlightUtil.registerReturnTypeFixes(info, method, expectedType);
+        }
+        myHolder.add(info);
       }
       myHolder.add(HighlightNamesUtil.highlightMethodName(method, identifier, true, colorsScheme));
       final PsiClass aClass = method.getContainingClass();
@@ -1593,7 +1597,14 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
     if (!myHolder.hasErrorResults()) {
       try {
-        myHolder.add(HighlightUtil.checkReturnStatementType(statement));
+        PsiElement parent = HighlightUtil.getReturnStatementParent(statement);
+        HighlightInfo info = parent != null ? HighlightUtil.checkReturnStatementType(statement, parent) : null;
+        if (info != null && parent instanceof PsiMethod) {
+          PsiMethod method = (PsiMethod)parent;
+          PsiType expectedType = myExpectedReturnTypes.computeIfAbsent(method, HighlightUtil::determineReturnType);
+          if (expectedType != null && !PsiType.VOID.equals(expectedType)) HighlightUtil.registerReturnTypeFixes(info, method, expectedType);
+        }
+        myHolder.add(info);
       }
       catch (IndexNotReadyException ignore) { }
     }

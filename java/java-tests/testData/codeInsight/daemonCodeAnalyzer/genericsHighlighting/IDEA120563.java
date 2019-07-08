@@ -9,7 +9,7 @@ public class WrongGenerics {
   }
 
   @SuppressWarnings("unchecked")
-  <T> Set<Foo<? extends T>> <error descr="Invalid return type">bar</error>(Set<Foo<? extends T>> foo) {
+  <T> Set<Foo<? extends T>> bar(Set<Foo<? extends T>> foo) {
     return <error descr="Inconvertible types; cannot cast 'java.util.Set<Foo<? extends T>>' to 'java.util.Set<Foo<?>>'">(Set<Foo<?>>) foo</error>;
   }
 

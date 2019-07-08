@@ -2,7 +2,7 @@
 
 class Test {
 
-  int <caret>m() {
-  }
+  int m() {
+  }<caret>
 
 }

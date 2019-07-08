@@ -2,8 +2,8 @@
 
 class Test {
 
-  void <caret>m() {
-    return 42;
+  void m() {
+    return 4<caret>2;
   }
 
 }

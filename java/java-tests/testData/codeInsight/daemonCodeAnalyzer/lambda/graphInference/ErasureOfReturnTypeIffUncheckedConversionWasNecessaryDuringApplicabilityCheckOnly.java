@@ -6,7 +6,7 @@ class Test {
     return list.stream().flatMap(List::stream).collect(Collectors.toList());
   }
 
-  private static List<Object> <error descr="Invalid return type">test1</error>(List<List> list) {
+  private static List<Object> test1(List<List> list) {
     <error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.util.List<java.lang.Object>'">return list.stream().flatMap(l -> l.stream()).collect(Collectors.toList());</error>
   }
 }

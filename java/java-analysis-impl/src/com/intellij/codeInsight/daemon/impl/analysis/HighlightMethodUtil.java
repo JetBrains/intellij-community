@@ -37,11 +37,7 @@ import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1217,123 +1213,6 @@ public class HighlightMethodUtil {
     return errorResult;
   }
 
-  @Nullable
-  static HighlightInfo checkReturnType(@NotNull PsiMethod method) {
-    PsiElement element = method.getNameIdentifier();
-    if (element == null) return null;
-    PsiType returnType = method.getReturnType();
-    PsiType expectedReturnType = constructReturnType(method);
-    if (expectedReturnType == null || expectedReturnType.equals(returnType)) return null;
-    String description = JavaErrorMessages.message("invalid.return.type");
-    HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
-    QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createMethodReturnFix(method, expectedReturnType, true, true));
-    return info;
-  }
-
-  @Nullable
-  private static PsiType constructReturnType(@NotNull PsiMethod method) {
-    PsiManager manager = method.getManager();
-    PsiType returnType = method.getReturnType();
-    PsiReturnStatement[] returnStatements = PsiUtil.findReturnStatements(method);
-    if (returnStatements.length == 0) {
-      return ControlFlowUtils.codeBlockMayCompleteNormally(method.getBody()) ? PsiType.VOID : returnType;
-    }
-    List<ReturnValueType> valueTypes = getValueTypes(returnStatements);
-    if (valueTypes == null) return null;
-    if (isValidReturnType(returnType, valueTypes, method, manager)) return returnType;
-    return StreamEx.of(valueTypes).foldLeft(null, (acc, vt) -> lub(acc, vt.myLeastType, vt.myType, method, manager));
-  }
-
-  @Nullable
-  private static List<ReturnValueType> getValueTypes(@NotNull PsiReturnStatement[] statements) {
-    List<ReturnValueType> valueTypes = new ArrayList<>();
-    for (PsiReturnStatement statement : statements) {
-      ReturnValueType valueType = ReturnValueType.create(statement);
-      if (valueType == null) return null;
-      valueTypes.add(valueType);
-    }
-    return valueTypes;
-  }
-
-  @Contract("null, _, _, _ -> false")
-  private static boolean isValidReturnType(@Nullable PsiType returnType, @NotNull List<ReturnValueType> valueTypes,
-                                           @NotNull PsiMethod method, @NotNull PsiManager manager) {
-    if (returnType == null) return false;
-    return valueTypes.stream()
-      .allMatch(vt -> TypeConversionUtil.isAssignable(returnType, lub(returnType, vt.myLeastType, vt.myType, method, manager)));
-  }
-
-  @Contract("null, _, _, _, _ -> param3")
-  @NotNull
-  private static PsiType lub(@Nullable PsiType returnType,
-                             @NotNull PsiType leastValueType,
-                             @NotNull PsiType valueType,
-                             @NotNull PsiMethod method,
-                             @NotNull PsiManager manager) {
-    if (returnType == null || PsiType.VOID.equals(returnType)) return valueType;
-    if (returnType == valueType) return returnType;
-
-    if (TypeConversionUtil.isPrimitiveAndNotNull(valueType)) {
-      if (TypeConversionUtil.isPrimitiveAndNotNull(returnType)) {
-        int r1 = TypeConversionUtil.getTypeRank(returnType);
-        int r2 = TypeConversionUtil.getTypeRank(leastValueType);
-        return r1 >= r2 ? returnType : valueType;
-      }
-      PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(returnType);
-      if (unboxedType != null && unboxedType.equals(valueType)) return returnType;
-      valueType = ((PsiPrimitiveType)valueType).getBoxedType(method);
-    }
-
-    if (TypeConversionUtil.isPrimitiveAndNotNull(returnType)) {
-      returnType = ((PsiPrimitiveType)returnType).getBoxedType(method);
-    }
-
-    return Objects.requireNonNull(GenericsUtil.getLeastUpperBound(returnType, valueType, manager));
-  }
-
-  private static class ReturnValueType {
-    final PsiType myType;
-    final PsiType myLeastType;
-
-    @Contract(pure = true)
-    private ReturnValueType(@NotNull PsiType type) {
-      myType = myLeastType = type;
-    }
-
-    @Contract(pure = true)
-    private ReturnValueType(@NotNull PsiType type, @NotNull PsiType leastType) {
-      myType = type;
-      myLeastType = leastType;
-    }
-
-    @Nullable
-    static ReturnValueType create(@NotNull PsiReturnStatement statement) {
-      PsiExpression value = statement.getReturnValue();
-      if (value == null) return new ReturnValueType(PsiType.VOID);
-      if (ExpressionUtils.nonStructuralChildren(value).anyMatch(c -> c instanceof PsiFunctionalExpression)) return null;
-      PsiType type = value.getType();
-      if (type == null || type instanceof PsiClassType && ((PsiClassType)type).resolve() == null) return null;
-      return new ReturnValueType(type, getLeastValueType(value, type));
-    }
-
-    @NotNull
-    private static PsiType getLeastValueType(@NotNull PsiExpression returnValue, @NotNull PsiType type) {
-      if (type instanceof PsiPrimitiveType) {
-        int rank = TypeConversionUtil.getTypeRank(type);
-        if (rank < TypeConversionUtil.BYTE_RANK || rank > TypeConversionUtil.INT_RANK) return type;
-        PsiConstantEvaluationHelper evaluator = JavaPsiFacade.getInstance(returnValue.getProject()).getConstantEvaluationHelper();
-        Object res = evaluator.computeConstantExpression(returnValue);
-        if (res instanceof Number) {
-          long value = ((Number)res).longValue();
-          if (-128 <= value && value <= 127) return PsiType.BYTE;
-          if (-32768 <= value && value <= 32767) return PsiType.SHORT;
-          if (0 <= value && value <= 0xFFFF) return PsiType.CHAR;
-        }
-      }
-      return type;
-    }
-  }
-
   static HighlightInfo checkConstructorName(@NotNull PsiMethod method) {
     PsiClass aClass = method.getContainingClass();
     if (aClass != null) {
@@ -1344,10 +1223,6 @@ public class HighlightMethodUtil {
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
         if (className != null) {
           QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createRenameElementFix(method, className));
-        }
-        PsiType returnType = constructReturnType(method);
-        if (returnType != null) {
-          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createMethodReturnFix(method, returnType, false, true));
         }
         return info;
       }
