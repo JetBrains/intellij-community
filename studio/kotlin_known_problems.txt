@@ -18,3 +18,4 @@ org.jetbrains.kotlin::Access to unresolved class org.jetbrains.kotlin.cli.common
 org.jetbrains.kotlin::Access to unresolved class org.jetbrains.kotlin.cli.common.messages.AnalyzerWithCompilerReport.Companion
 org.jetbrains.kotlin::Access to unresolved class org.jetbrains.kotlin.cli.common.messages.AnalyzerWithCompilerReport.SyntaxErrorReport
 org.jetbrains.kotlin::Access to unresolved class org.jetbrains.kotlin.cli.common.messages.PrintingMessageCollector
+org.jetbrains.kotlin::Access to unresolved class org.jetbrains.plugins.gradle.service.settings.GradleSettingsService
