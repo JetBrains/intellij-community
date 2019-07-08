@@ -70,13 +70,6 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="hamcrest" level="project" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.maven.artifactResolver.common" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.maven.artifactResolver.m2" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.maven.server.eventListener" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.maven.server.m2.impl" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.maven.server.m3.impl" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.maven.server.m30.impl" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.maven.server.m36.impl" scope="PROVIDED" />
   </component>
   <component name="copyright">
     <Base>
