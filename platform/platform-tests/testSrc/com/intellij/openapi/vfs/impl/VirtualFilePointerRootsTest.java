@@ -32,7 +32,6 @@ import java.util.List;
 
 @RunFirst
 @SkipSlowTestLocally
-@SuppressWarnings("SuspiciousPackagePrivateAccess")
 public class VirtualFilePointerRootsTest extends PlatformTestCase {
   private final Disposable disposable = Disposer.newDisposable();
   private VirtualFilePointerManagerImpl myVirtualFilePointerManager;

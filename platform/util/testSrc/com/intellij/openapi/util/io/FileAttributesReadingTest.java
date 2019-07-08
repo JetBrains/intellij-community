@@ -28,7 +28,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
-@SuppressWarnings("SuspiciousPackagePrivateAccess")
 public abstract class FileAttributesReadingTest {
   public static class MainTest extends FileAttributesReadingTest {
     @BeforeClass

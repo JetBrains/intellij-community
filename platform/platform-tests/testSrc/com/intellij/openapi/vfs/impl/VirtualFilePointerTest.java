@@ -52,7 +52,6 @@ import static org.junit.Assert.*;
 /**
  * @author dsl
  */
-@SuppressWarnings("SuspiciousPackagePrivateAccess")
 public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   private static final Logger LOG = Logger.getInstance(VirtualFilePointerTest.class);
 

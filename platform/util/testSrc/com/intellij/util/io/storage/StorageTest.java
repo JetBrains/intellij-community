@@ -14,7 +14,6 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author max
  */
-@SuppressWarnings("SuspiciousPackagePrivateAccess")
 public class StorageTest extends StorageTestBase {
   @Test
   public void testSmoke() throws Exception {
