@@ -161,7 +161,6 @@ public class CreateResourceBundleDialogComponent {
                                                                                           : myResourceBundle.getDefaultPropertiesFile() instanceof XmlPropertiesFile;
                                                                                   if (isXml) {
                                                                                     FileTemplate template = FileTemplateManager.getInstance(myProject).getInternalTemplate("XML Properties File.xml");
-                                                                                    LOG.assertTrue(template != null);
                                                                                     try {
                                                                                       return (PsiFile)FileTemplateUtil.createFromTemplate(template, n, null, myDirectory);
                                                                                     }
@@ -281,7 +280,7 @@ public class CreateResourceBundleDialogComponent {
 
   @SuppressWarnings("unchecked")
   private void createUIComponents() {
-    final JBList projectExistLocalesList = new JBList();
+    final JBList<Locale> projectExistLocalesList = new JBList<>();
     final MyExistLocalesListModel existLocalesListModel = new MyExistLocalesListModel();
     projectExistLocalesList.setModel(existLocalesListModel);
     projectExistLocalesList.setCellRenderer(getLocaleRenderer());
@@ -365,7 +364,7 @@ public class CreateResourceBundleDialogComponent {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
         if (clickCount == 1) {
-          myLocalesModel.add(ContainerUtil.map(projectExistLocalesList.getSelectedValues(), o -> (Locale)o));
+          myLocalesModel.add(projectExistLocalesList.getSelectedValuesList());
           return true;
         }
         return false;
@@ -376,8 +375,7 @@ public class CreateResourceBundleDialogComponent {
       @Override
       public void valueChanged(ListSelectionEvent e) {
         final List<Locale> currentItems = myLocalesModel.getItems();
-        for (Object o : projectExistLocalesList.getSelectedValues()) {
-          Locale l = (Locale) o;
+        for (Locale l : projectExistLocalesList.getSelectedValuesList()) {
           if (!restrictedLocales.contains(l) && !currentItems.contains(l)) {
             myAddLocaleFromExistButton.setEnabled(true);
             return;
