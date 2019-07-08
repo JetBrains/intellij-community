@@ -18,7 +18,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.Ref;
@@ -230,7 +229,7 @@ public class ProjectUtil {
     Ref<Project> result = new Ref<>();
     TransactionGuard.getInstance().submitTransactionAndWait(() -> {
       try {
-        result.set(((ProjectManagerImpl)ProjectManager.getInstance()).loadAndOpenProject(file, FileUtil.toSystemIndependentName(file.toString())));
+        result.set(ProjectManager.getInstance().loadAndOpenProject(file));
       }
       catch (Exception e) {
         Messages.showMessageDialog(IdeBundle.message("error.cannot.load.project", e.getMessage()),

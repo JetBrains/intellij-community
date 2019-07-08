@@ -12,6 +12,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 /**
  * Provides project management.
@@ -100,7 +101,13 @@ public abstract class ProjectManager {
   @Nullable
   @ApiStatus.Experimental
   @TestOnly
-  public abstract Project loadAndOpenProject(@NotNull File file) throws IOException, JDOMException;
+  public Project loadAndOpenProject(@NotNull File file) throws IOException, JDOMException {
+    return loadAndOpenProject(file.toPath());
+  }
+
+  @Nullable
+  @ApiStatus.Experimental
+  public abstract Project loadAndOpenProject(@NotNull Path file) throws IOException, JDOMException;
 
   /**
    * Closes the specified project, but does not dispose it.

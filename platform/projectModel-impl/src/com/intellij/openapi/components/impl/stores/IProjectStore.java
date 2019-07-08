@@ -8,6 +8,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 
+import java.nio.file.Path;
+
 public interface IProjectStore extends IComponentStore {
   @SystemIndependent
   @NotNull
@@ -66,5 +68,5 @@ public interface IProjectStore extends IComponentStore {
   @SystemIndependent
   String getDirectoryStorePathOrBase();
 
-  void setPath(@NotNull @SystemIndependent String path, boolean isRefreshVfsNeeded, @Nullable Project template);
+  void setPath(@NotNull Path path, boolean isRefreshVfsNeeded, @Nullable Project template);
 }
