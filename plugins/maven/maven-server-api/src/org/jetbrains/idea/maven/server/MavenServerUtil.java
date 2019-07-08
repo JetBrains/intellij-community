@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.util.ExceptionUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.server.security.MavenToken;
@@ -111,15 +112,8 @@ public class MavenServerUtil {
   public static void readToken() {
     try {
       ourToken = new TokenReader(new Scanner(System.in), 10000).getToken();
-    }
-    catch (RuntimeException e) {
-      throw e;
-    }
-    catch (Error e) {
-      throw e;
-    }
-    catch (Throwable e) {
-      throw new RuntimeException(e);
+    } catch (Throwable e) {
+      ExceptionUtilRt.rethrowUnchecked(e);
     }
   }
 }

@@ -210,7 +210,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
           });
         }
         finally {
-          embedder.release(MavenServerUtil.getToken());
+          embedder.release(token);
         }
       }
     }
@@ -361,7 +361,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
   public void release(MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
-      myEmbedder.release(MavenServerUtil.getToken());
+      myEmbedder.release(token);
     }
     catch (Exception e) {
       throw rethrowException(e);
