@@ -117,7 +117,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testReturnTernary() { doTest("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING); }
   public void testAssignTernary() { doTest("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING); }
   public void testEnsureCodeBlockAroundBreakStatementJava13Preview() { doTest("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING); }
-  public void testEnsureCodeBlockForThrowsJava12Preview() { doTest("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING); }
+  public void testEnsureCodeBlockForThrowsJava13Preview() { doTest("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING); }
   public void testFromSwitchStatementJava13Preview() { doTest("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING); }
 
   public void testVarTypeExtractedJava10() {

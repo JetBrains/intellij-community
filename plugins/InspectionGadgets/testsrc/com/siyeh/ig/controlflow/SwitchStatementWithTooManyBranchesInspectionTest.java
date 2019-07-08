@@ -62,7 +62,7 @@ public class SwitchStatementWithTooManyBranchesInspectionTest extends LightJavaI
                  "    }");
   }
 
-  public void testJava12Expression() {
+  public void testJava13Expression() {
     doMemberTest("    public int foo(int x) {\n" +
                  "         return /*'switch' has too many branches (11)*/switch/**/ (x) {\n" +
                  "            case 1 -> 0;\n" +
@@ -113,7 +113,7 @@ public class SwitchStatementWithTooManyBranchesInspectionTest extends LightJavaI
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_12;
+    return JAVA_13;
   }
 
   @Nullable

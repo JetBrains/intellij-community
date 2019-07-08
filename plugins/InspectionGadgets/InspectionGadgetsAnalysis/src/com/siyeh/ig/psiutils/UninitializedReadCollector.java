@@ -73,6 +73,7 @@ public class UninitializedReadCollector {
     if (statement instanceof PsiBreakStatement ||
         statement instanceof PsiContinueStatement ||
         statement instanceof PsiAssertStatement ||
+        statement instanceof PsiYieldStatement ||
         statement instanceof PsiEmptyStatement) {
       return false;
     }

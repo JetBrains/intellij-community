@@ -15,7 +15,7 @@ public class UnnecessaryContinueInspectionTest extends LightJavaCodeInsightFixtu
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_12;
+    return JAVA_13;
   }
 
   private void doTest() {

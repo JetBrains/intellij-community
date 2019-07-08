@@ -20,7 +20,7 @@ public enum LanguageLevel {
   JDK_1_9(9),
   JDK_10(10),
   JDK_11(11),
-  JDK_12(12), JDK_12_PREVIEW(12),
+  JDK_12(12),
   JDK_13(13), JDK_13_PREVIEW(13),
   JDK_X(14);
 

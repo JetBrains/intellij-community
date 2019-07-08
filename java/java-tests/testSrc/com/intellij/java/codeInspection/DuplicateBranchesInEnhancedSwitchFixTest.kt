@@ -16,5 +16,5 @@ class DuplicateBranchesInEnhancedSwitchFixTest : LightQuickFixParameterizedTestC
 
   override fun getBasePath() = "/inspection/duplicateBranchesInEnhancedSwitchFix"
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = LightJavaCodeInsightFixtureTestCase.JAVA_12
+  override fun getProjectDescriptor(): LightProjectDescriptor = LightJavaCodeInsightFixtureTestCase.JAVA_13
 }

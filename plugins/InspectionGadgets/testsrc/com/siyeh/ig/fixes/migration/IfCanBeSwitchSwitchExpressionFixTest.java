@@ -24,7 +24,7 @@ public class IfCanBeSwitchSwitchExpressionFixTest extends IGQuickFixesTestCase {
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
     super.tuneFixture(builder);
-    builder.setLanguageLevel(LanguageLevel.JDK_12_PREVIEW);
+    builder.setLanguageLevel(LanguageLevel.JDK_13_PREVIEW);
     builder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
   }
 

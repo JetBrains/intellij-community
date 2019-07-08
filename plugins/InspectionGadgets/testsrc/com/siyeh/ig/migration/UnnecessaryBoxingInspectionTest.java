@@ -13,7 +13,7 @@ public class UnnecessaryBoxingInspectionTest extends LightJavaInspectionTestCase
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_12;
+    return JAVA_13;
   }
 
   public void testUnnecessaryBoxing() {

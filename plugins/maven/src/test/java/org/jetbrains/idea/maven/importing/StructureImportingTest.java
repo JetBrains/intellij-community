@@ -859,19 +859,19 @@ public class StructureImportingTest extends MavenImportingTestCase {
                   "      <artifactId>maven-compiler-plugin</artifactId>\n" +
                   "      <version>3.8.0</version>\n" +
                   "      <configuration>\n" +
-                  "          <release>12</release>\n" +
+                  "          <release>13</release>\n" +
                   "          <compilerArgs>\n" +
                   "              <arg>--enable-preview</arg>\n" +
                   "          </compilerArgs>\n" +
-                  "          <source>12</source>\n" +
-                  "          <target>12</target>\n" +
+                  "          <source>13</source>\n" +
+                  "          <target>13</target>\n" +
                   "      </configuration>\n" +
                   "    </plugin>" +
                   "  </plugins>" +
                   "</build>");
 
     assertModules("project");
-    assertEquals(LanguageLevel.JDK_12_PREVIEW, getLanguageLevelForModule());
+    assertEquals(LanguageLevel.JDK_13_PREVIEW, getLanguageLevelForModule());
   }
 
   public void testInheritingLanguageLevelFromPluginManagementSection() {
