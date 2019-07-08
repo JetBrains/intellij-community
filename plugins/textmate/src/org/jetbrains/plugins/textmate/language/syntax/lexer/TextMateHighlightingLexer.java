@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.util.DataStorage;
 import com.intellij.openapi.editor.ex.util.DataStorageFactory;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,6 +31,7 @@ public class TextMateHighlightingLexer extends LexerBase implements DataStorageF
   private final Stack<TextMateLexerState> myStates = new Stack<>();
   private final Queue<Token> currentLineTokens = new LinkedList<>();
   private final String languageScopeName;
+  private final int myLineLimit;
 
   private CharSequence myBuffer;
   private int myEndOffset;
@@ -59,6 +61,7 @@ public class TextMateHighlightingLexer extends LexerBase implements DataStorageF
   public TextMateHighlightingLexer(String scopeName, SyntaxNodeDescriptor languageRootSyntaxNode) {
     languageScopeName = scopeName;
     myLanguageInitialState = TextMateLexerState.notMatched(languageRootSyntaxNode);
+    myLineLimit = Registry.get("textmate.line.highlighting.limit").asInteger();
   }
 
   @Override
@@ -147,6 +150,11 @@ public class TextMateHighlightingLexer extends LexerBase implements DataStorageF
   }
 
   private void parseLine(int startLineOffset, int endLineOffset) {
+    if (myLineLimit >= 0 && endLineOffset - startLineOffset > myLineLimit) {
+      parseLine(startLineOffset, startLineOffset + myLineLimit);
+      addToken(endLineOffset);
+      return;
+    }
     int linePosition = 0;
     String line = myBuffer.subSequence(startLineOffset, endLineOffset).toString();
     if (!line.endsWith("\n")) {

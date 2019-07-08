@@ -16,6 +16,10 @@
   </application-components>
 
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="textmate.line.highlighting.limit" defaultValue="1024"
+                 description="The maximum length of the line to be highlighted by TextMate lexer."/>
+    <registryKey description="Enables tmTheme emulation from current color scheme" key="textmate.theme.emulation" defaultValue="true"/>
+
     <fileTypeFactory implementation="org.jetbrains.plugins.textmate.TextMateFileTypeFactory"/>
     <applicationService id="textmateSettings"
                         serviceImplementation="org.jetbrains.plugins.textmate.configuration.TextMateSettings"/>
@@ -31,7 +35,6 @@
     <multiLangCommenter implementation="org.jetbrains.plugins.textmate.editor.TextMateCommentProvider"/>
     <lang.commenter language="textmate" implementationClass="org.jetbrains.plugins.textmate.editor.TextMateCommentProvider"/>
     <customLiveTemplate implementation="org.jetbrains.plugins.textmate.editor.TextMateCustomLiveTemplate"/>
-    <registryKey description="Enables tmTheme emulation from current color scheme" key="textmate.theme.emulation" defaultValue="true"/>
     <todoIndexer filetype="textmate" implementationClass="com.intellij.psi.impl.cache.impl.todo.PlainTextTodoIndexer"/>
     <idIndexer filetype="textmate" implementationClass="com.intellij.psi.impl.cache.impl.id.PlainTextIndexer"/>
     <indexPatternBuilder implementation="org.jetbrains.plugins.textmate.TextMatePatternBuilder"/>
@@ -40,7 +43,7 @@
   </extensions>
   <actions>
     <action id="install-vscode-plugin" class="org.jetbrains.plugins.textmate.actions.InstallVSCodePluginAction"
-            text="Install VSCode plugin..." description="Installs plugin for VSCode"
+            text="Install VSCode Plugin..." description="Installs plugin for VSCode"
             internal="true"/>
   </actions>
 </idea-plugin>
