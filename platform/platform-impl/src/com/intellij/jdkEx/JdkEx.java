@@ -2,10 +2,10 @@
 package com.intellij.jdkEx;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.MethodInvocator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import sun.awt.AWTAccessor;
 
 import java.awt.*;
@@ -14,6 +14,8 @@ import java.util.List;
 /**
  * Provides extensions for OpenJDK API, implemented in JetBrains JDK.
  * For OpenJDK defaults to some meaningful results where applicable or otherwise throws runtime exception.
+ *
+ * @author tav
  */
 @ApiStatus.Experimental
 public class JdkEx {
@@ -33,56 +35,75 @@ public class JdkEx {
     return new DefDisplayModeEx();
   }
 
+  // CUSTOM DECOR SUPPORT {{
+
   public static boolean isCustomDecorationSupported() {
     if (SystemInfo.isJetBrainsJvm && SystemInfo.isWin10OrNewer) {
-      try {
-        MethodInvocator invocator = new MethodInvocator(false, Class.forName("java.awt.Window"), "setHasCustomDecoration");
-        return invocator.isAvailable();
-      }
-      catch (ClassNotFoundException ignore) {
-      }
+      return MyCustomDecorMethods.SET_HAS_CUSTOM_DECORATION.isAvailable();
     }
     return false;
   }
 
   public static void setHasCustomDecoration(@NotNull Window window) {
-    if (SystemInfo.isJetBrainsJvm && SystemInfo.isWindows) {
-      try {
-        MethodInvocator invocator = new MethodInvocator(false, Class.forName("java.awt.Window"), "setHasCustomDecoration");
-        if (invocator.isAvailable()) {
-          invocator.invoke(window);
-        }
-      }
-      catch (ClassNotFoundException ignore) {
-      }
-    }
+    if (!isCustomDecorationSupported()) return;
+    MyCustomDecorMethods.SET_HAS_CUSTOM_DECORATION.invoke(window);
   }
 
   public static void setCustomDecorationHitTestSpots(@NotNull Window window, @NotNull List<Rectangle> spots) {
-    if (SystemInfo.isJetBrainsJvm && SystemInfo.isWindows) {
-      try {
-        MethodInvocator invocator =
-          new MethodInvocator(false, Class.forName("sun.awt.windows.WWindowPeer"), "setCustomDecorationHitTestSpots", List.class);
-        if (invocator.isAvailable()) {
-          invocator.invoke(AWTAccessor.getComponentAccessor().getPeer(window), spots);
-        }
-      }
-      catch (ClassNotFoundException ignore) {
-      }
-    }
+    if (!isCustomDecorationSupported()) return;
+    MyCustomDecorMethods.SET_CUSTOM_DECORATION_HITTEST_SPOTS.invoke(AWTAccessor.getComponentAccessor().getPeer(window), spots);
   }
 
   public static void setCustomDecorationTitleBarHeight(@NotNull Window window, int height) {
-    if (SystemInfo.isJetBrainsJvm && SystemInfo.isWindows) {
+    if (!isCustomDecorationSupported()) return;
+    MyCustomDecorMethods.SET_CUSTOM_DECORATION_TITLEBAR_HEIGHT.invoke(AWTAccessor.getComponentAccessor().getPeer(window), height);
+  }
+
+  // lazy init
+  private static class MyCustomDecorMethods {
+    public static final MyMethod SET_HAS_CUSTOM_DECORATION =
+      MyMethod.create(Window.class, "setHasCustomDecoration");
+    public static final MyMethod SET_CUSTOM_DECORATION_HITTEST_SPOTS =
+      MyMethod.create("sun.awt.windows.WWindowPeer", "setCustomDecorationHitTestSpots", List.class);
+    public static final MyMethod SET_CUSTOM_DECORATION_TITLEBAR_HEIGHT =
+      MyMethod.create("sun.awt.windows.WWindowPeer","setCustomDecorationTitleBarHeight", int.class);
+  }
+
+  // }} CUSTOM DECOR SUPPORT
+
+  private static class MyMethod {
+    private static final MyMethod EMPTY_INSTANCE = new MyMethod(null);
+
+    @Nullable MethodInvocator myInvocator;
+
+    public static MyMethod create(@NotNull String className, @NotNull String methodName, Class<?>... parameterTypes) {
       try {
-        MethodInvocator invocator =
-          new MethodInvocator(false, Class.forName("sun.awt.windows.WWindowPeer"), "setCustomDecorationTitleBarHeight", int.class);
-        if (invocator.isAvailable()) {
-          invocator.invoke(AWTAccessor.getComponentAccessor().getPeer(window), height);
-        }
+        return create(Class.forName(className), methodName, parameterTypes);
       }
       catch (ClassNotFoundException ignore) {
       }
+      return EMPTY_INSTANCE;
+    }
+
+    public static MyMethod create(@NotNull Class<?> cls, @NotNull String methodName, Class<?>... parameterTypes) {
+      return new MyMethod(new MethodInvocator(false, cls, methodName, parameterTypes));
+    }
+
+    private MyMethod(@Nullable MethodInvocator invocator) {
+      this.myInvocator = invocator;
+    }
+
+    public boolean isAvailable() {
+      return myInvocator != null && myInvocator.isAvailable();
+    }
+
+    @Nullable
+    public Object invoke(Object object, Object... arguments) {
+      if (isAvailable()) {
+        //noinspection ConstantConditions
+        return myInvocator.invoke(object, arguments);
+      }
+      return null;
     }
   }
 }
