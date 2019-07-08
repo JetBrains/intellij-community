@@ -16,6 +16,8 @@ import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
+import com.intellij.openapi.vcs.ui.VcsCloneComponent;
+import com.intellij.openapi.vcs.ui.VcsCloneComponentStub;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
@@ -338,5 +340,11 @@ public class SvnCheckoutProvider implements CheckoutProvider {
 
       return result;
     }
+  }
+
+  @NotNull
+  @Override
+  public VcsCloneComponent buildVcsCloneComponent(@NotNull Project project) {
+    return new VcsCloneComponentStub(this, "Checkout");
   }
 }

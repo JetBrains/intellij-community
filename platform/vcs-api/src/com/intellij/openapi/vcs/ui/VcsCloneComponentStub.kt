@@ -24,4 +24,6 @@ class VcsCloneComponentStub(private val checkoutProvider: CheckoutProvider,
   override fun isOkEnabled() = true
 
   override fun doValidateAll() = emptyList<ValidationInfo>()
+
+  override fun getOkButtonText() = primaryActionText
 }

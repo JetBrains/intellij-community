@@ -2,21 +2,17 @@
 package com.intellij.util.ui.cloneDialog
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.rd.attachChild
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.vcs.CheckoutProvider
+import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
-import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame.getSeparatorColor
-import com.intellij.ui.CollectionListModel
-import com.intellij.ui.ScrollPaneFactory
-import com.intellij.ui.ScrollingUtil
-import com.intellij.ui.border.CustomLineBorder
+import com.intellij.ui.*
 import com.intellij.util.ui.JBEmptyBorder
-import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.cloneDialog.RepositoryUrlCloneDialogExtension.RepositoryUrlMainExtensionComponent
 import java.awt.CardLayout
 import java.util.*
@@ -35,6 +31,20 @@ internal class VcsCloneDialog private constructor(private val project: Project,
   private val cardLayout = CardLayout()
   private val mainPanel = JPanel(cardLayout)
   private val extensionComponents: MutableMap<String, VcsCloneDialogExtensionComponent> = HashMap()
+  private val listModel = CollectionListModel<VcsCloneDialogExtension>(VcsCloneDialogExtension.EP_NAME.extensionList)
+
+  private val listener = object : VcsCloneDialogComponentStateListener {
+    override fun onOkActionNameChanged(name: String) = setOKButtonText(name)
+
+    override fun onOkActionEnabled(enabled: Boolean) {
+      isOKActionEnabled = enabled
+    }
+
+    override fun onListItemChanged() {
+      listModel.allContentsChanged()
+      pack()
+    }
+  }
 
   init {
     init()
@@ -44,11 +54,7 @@ internal class VcsCloneDialog private constructor(private val project: Project,
       rootPane.preferredSize = it
     }
 
-    val withoutRightInset = UIUtil.PANEL_REGULAR_INSETS.let {
-      // use empty right inset to align the scroll bar to the edge of panel
-      JBInsets(it.top, it.left, it.bottom, 0)
-    }
-    mainPanel.border = JBEmptyBorder(withoutRightInset)
+    mainPanel.border = JBEmptyBorder(VcsCloneDialogUiSpec.Dialog.mainComponentParentInsets)
 
     VcsCloneDialogExtension.EP_NAME.findExtension(initialExtensionClass)?.let {
       ScrollingUtil.selectItem(extensionList, it)
@@ -58,9 +64,6 @@ internal class VcsCloneDialog private constructor(private val project: Project,
   override fun getStyle() = DialogStyle.COMPACT
 
   override fun createCenterPanel(): JComponent {
-    val extensions = VcsCloneDialogExtension.EP_NAME.extensionList
-    val listModel = CollectionListModel<VcsCloneDialogExtension>(extensions)
-
     extensionList = VcsCloneDialogExtensionList(listModel).apply {
       addListSelectionListener(ListSelectionListener { e ->
         val source = e.source as VcsCloneDialogExtensionList
@@ -68,19 +71,14 @@ internal class VcsCloneDialog private constructor(private val project: Project,
       })
     }
     val scrollableList = ScrollPaneFactory.createScrollPane(extensionList, true).apply {
-      border = CustomLineBorder(getSeparatorColor(), JBUI.insetsRight(1))
+
+      border = IdeBorderFactory.createBorder(SideBorder.RIGHT)
     }
     return JBUI.Panels.simplePanel()
       .addToCenter(mainPanel)
-      .addToLeft(scrollableList).apply {
-        border = CustomLineBorder(getSeparatorColor(), JBUI.insetsBottom(1))
-      }
+      .addToLeft(scrollableList)
   }
 
-  override fun isOKActionEnabled(): Boolean {
-    return getSelectedComponent()?.isOkEnabled() ?: false
-  }
-  
   override fun doValidateAll(): List<ValidationInfo> {
     return getSelectedComponent()?.doValidateAll() ?: emptyList()
   }
@@ -97,13 +95,15 @@ internal class VcsCloneDialog private constructor(private val project: Project,
       scrollableMainPanel.verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
       scrollableMainPanel.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
       mainPanel.add(scrollableMainPanel, extensionId)
+      disposable.attachChild(component)
+      component.addComponentStateListener(listener)
       component
     })
 
-    setOKButtonText(mainComponent.getOkButtonText())
     if (mainComponent is RepositoryUrlMainExtensionComponent) {
       initialVcs?.let { mainComponent.openForVcs(it) }
     }
+    mainComponent.onComponentSelected()
     cardLayout.show(mainPanel, extensionId)
   }
 

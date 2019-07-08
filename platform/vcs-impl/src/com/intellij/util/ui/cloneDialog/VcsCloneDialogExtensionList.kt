@@ -8,39 +8,35 @@ import com.intellij.ui.components.JBList
 import com.intellij.util.ui.ListUiUtil
 import com.intellij.util.ui.UIUtil
 import java.awt.Component
-import java.awt.FlowLayout
-import javax.swing.*
-import javax.swing.border.EmptyBorder
+import javax.swing.JList
+import javax.swing.ListCellRenderer
+import javax.swing.ListModel
 
 class VcsCloneDialogExtensionList(listModel: ListModel<VcsCloneDialogExtension>) : JBList<VcsCloneDialogExtension>(listModel) {
   init {
     selectionModel = SingleSelectionModel()
-    cellRenderer = Renderer()
+    val renderer = Renderer()
+    cellRenderer = renderer
 
+    UIUtil.putClientProperty(this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, listOf(renderer))
     ScrollingUtil.installActions(this)
   }
 
-  class Renderer : ListCellRenderer<VcsCloneDialogExtension> {
-    val component = VcsCloneDialogExtensionListItem
-    val wrapper: JComponent
-
-    init {
-      wrapper = JPanel(FlowLayout(FlowLayout.LEADING)).apply {
-        border = EmptyBorder(UIUtil.PANEL_REGULAR_INSETS)
-        add(component)
-      }
-    }
-
+  class Renderer
+    : ListCellRenderer<VcsCloneDialogExtension>,
+      VcsCloneDialogExtensionListItem() {
     override fun getListCellRendererComponent(list: JList<out VcsCloneDialogExtension>,
-                                              value: VcsCloneDialogExtension,
+                                              extension: VcsCloneDialogExtension,
                                               index: Int,
                                               isSelected: Boolean,
                                               cellHasFocus: Boolean): Component {
-      component.setTitle(value.getName())
-      component.setTitleForeground(ListUiUtil.WithTallRow.foreground(list, isSelected))
-      component.setIcon(value.getIcon())
-      UIUtil.setBackgroundRecursively(wrapper, ListUiUtil.WithTallRow.background(list, isSelected))
-      return wrapper
+      setTitle(extension.getName())
+      setTitleForeground(ListUiUtil.WithTallRow.foreground(list, isSelected))
+      setIcon(extension.getIcon())
+      toolTipText = extension.getTooltip()
+      setAdditionalStatusLines(extension.getAdditionalStatusLines())
+      UIUtil.setBackgroundRecursively(this, ListUiUtil.WithTallRow.background(list, isSelected))
+      return this
     }
   }
 }

@@ -25,6 +25,16 @@ interface VcsCloneDialogExtension {
   fun getIcon(): Icon
 
   /**
+   * Additional status lines, which may contain some info and actions related to authorized accounts, internal errors, etc
+   */
+  fun getAdditionalStatusLines(): List<VcsCloneDialogExtensionStatusLine> = emptyList()
+
+  /**
+   * Optional tooltip for extension item
+   */
+  fun getTooltip(): String? = null
+
+  /**
    * Builds [VcsCloneDialogExtensionComponent] that would be displayed on center of get-from-vcs dialog when extension is selected.
    * Will be called lazily and once on first choosing of extension.
    */

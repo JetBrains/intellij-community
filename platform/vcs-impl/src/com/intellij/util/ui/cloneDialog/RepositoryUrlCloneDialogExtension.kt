@@ -12,8 +12,7 @@ import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.layout.*
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.JBEmptyBorder
 import java.awt.BorderLayout
 import java.awt.CardLayout
 import java.awt.event.ItemEvent
@@ -22,15 +21,28 @@ import javax.swing.Icon
 import javax.swing.JPanel
 
 class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
+  private val tooltip = CheckoutProvider.EXTENSION_POINT_NAME.extensions
+    .map { it.vcsName }
+    .joinToString { it.replace("_".toRegex(), "") }
+
   override fun getIcon(): Icon = AllIcons.Welcome.FromVCS
 
   override fun getName() = "Repository URL"
+
+  override fun getTooltip(): String? {
+    return tooltip
+  }
 
   override fun createMainComponent(project: Project): RepositoryUrlMainExtensionComponent {
     return RepositoryUrlMainExtensionComponent(project)
   }
 
-  class RepositoryUrlMainExtensionComponent(private val project: Project) : VcsCloneDialogExtensionComponent {
+  class RepositoryUrlMainExtensionComponent(private val project: Project) : VcsCloneDialogExtensionComponent() {
+    override fun onComponentSelected() {
+      dialogStateListener.onOkActionNameChanged(getCurrentVcsComponent()?.getOkButtonText() ?: "Clone")
+      dialogStateListener.onOkActionEnabled(true)
+    }
+
     private val vcsComponents = HashMap<String, VcsCloneComponent>()
     private val cardLayout = CardLayout()
     private val mainPanel = JPanel(BorderLayout())
@@ -39,7 +51,7 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
     }
 
     init {
-      mainPanel.border = JBUI.Borders.emptyRight(UIUtil.PANEL_REGULAR_INSETS.right)
+      mainPanel.border = JBEmptyBorder(VcsCloneDialogUiSpec.Components.rightInsets)
       val northPanel = panel {
         row("Version control:") { comboBox() }
       }
@@ -51,6 +63,7 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
       comboBox.addItemListener { e: ItemEvent ->
         if (e.stateChange == ItemEvent.SELECTED) {
           val provider = e.item as CheckoutProvider
+          onComponentSelected()
           cardLayout.show(centerPanel, provider.vcsName)
         }
       }
@@ -66,10 +79,6 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
 
     override fun getView() = mainPanel
 
-    override fun getOkButtonText(): String {
-      return getCurrentVcsComponent()?.getOkButtonText() ?: "Clone"
-    }
-
     fun openForVcs(clazz: Class<out CheckoutProvider>): RepositoryUrlMainExtensionComponent {
       comboBox.selectedItem = CheckoutProvider.EXTENSION_POINT_NAME.findExtension(clazz)
       return this
@@ -78,10 +87,6 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
     override fun doClone() {
       val listener = ProjectLevelVcsManager.getInstance(project).compositeCheckoutListener
       getCurrentVcsComponent()?.doClone(project, listener)
-    }
-
-    override fun isOkEnabled(): Boolean {
-      return getCurrentVcsComponent()?.isOkEnabled() ?: true
     }
 
     override fun doValidateAll(): List<ValidationInfo> {
