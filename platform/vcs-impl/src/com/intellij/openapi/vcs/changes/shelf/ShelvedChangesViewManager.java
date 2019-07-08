@@ -326,7 +326,7 @@ public class ShelvedChangesViewManager implements Disposable {
       myUpdateQueue.cancelAllUpdates();
       myPostUpdateEdtActivity.add(postUpdateRunnable);
       updateTreeModel();
-    }, ModalityState.NON_MODAL);
+    }, ModalityState.NON_MODAL, myProject.getDisposed());
   }
 
   @Override
