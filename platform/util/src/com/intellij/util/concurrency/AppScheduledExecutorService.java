@@ -134,7 +134,7 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
     return ((BackendThreadPoolExecutor)backendExecutorService).getCorePoolSize();
   }
 
-  private static class BackendThreadPoolExecutor extends ThreadPoolExecutor {
+  static class BackendThreadPoolExecutor extends ThreadPoolExecutor {
     BackendThreadPoolExecutor(@NotNull ThreadFactory factory) {
       super(1, Integer.MAX_VALUE, 1, TimeUnit.MINUTES, new SynchronousQueue<>(), factory);
     }
@@ -204,7 +204,7 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
       error();
     }
 
-    private void superSetKeepAliveTime(long time, TimeUnit unit) {
+    void superSetKeepAliveTime(long time, TimeUnit unit) {
       super.setKeepAliveTime(time, unit);
     }
 
