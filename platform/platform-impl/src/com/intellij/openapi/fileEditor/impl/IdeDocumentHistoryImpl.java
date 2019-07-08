@@ -190,6 +190,10 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   }
 
   private void registerViewed(@NotNull VirtualFile file) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+
     try {
       myRecentFilesTimestampsMap.put(file.getPath(), System.currentTimeMillis());
     }
