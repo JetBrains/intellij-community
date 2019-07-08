@@ -68,6 +68,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -167,8 +168,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   // this method not in ApplicationImpl constructor because application starter can perform this activity in parallel to another task
-  public static void registerMessageBusListeners(@NotNull Application app, @NotNull List<IdeaPluginDescriptor> pluginDescriptors, boolean isUnitTestMode) {
-    ConcurrentMap<String, List<ListenerDescriptor>> map = ContainerUtil.newConcurrentMap();
+  public static void registerMessageBusListeners(@NotNull Application app, @NotNull List<? extends IdeaPluginDescriptor> pluginDescriptors, boolean isUnitTestMode) {
+    Map<String, List<ListenerDescriptor>> map = ContainerUtil.newConcurrentMap();
     for (IdeaPluginDescriptor descriptor : pluginDescriptors) {
       List<ListenerDescriptor> listeners = ((IdeaPluginDescriptorImpl)descriptor).getListeners();
       if (!listeners.isEmpty()) {

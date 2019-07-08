@@ -46,12 +46,13 @@ public class VfsDependentEnum<T> {
   private final Object myLock = new Object();
   private boolean myTriedToLoadFile;
 
-  public VfsDependentEnum(String fileName, KeyDescriptor<T> descriptor, int version) {
+  public VfsDependentEnum(@NotNull String fileName, @NotNull KeyDescriptor<T> descriptor, int version) {
     myFile = new File(FSRecords.basePath(), DEPENDENT_PERSISTENT_LIST_START_PREFIX + fileName  + FSRecords.VFS_FILES_EXTENSION);
     myKeyDescriptor = descriptor;
     myVersion = version;
   }
 
+  @NotNull
   static File getBaseFile() {
     return new File(FSRecords.basePath(), DEPENDENT_PERSISTENT_LIST_START_PREFIX);
   }

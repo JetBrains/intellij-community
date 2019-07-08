@@ -5,10 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.EventDispatcher;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.messages.ListenerDescriptor;
@@ -53,10 +50,10 @@ public class MessageBusImpl implements MessageBus {
   /**
    * Caches subscribers for this bus and its children or parent, depending on the topic's broadcast policy
    */
-  private final ConcurrentMap<Topic, List<MessageBusConnectionImpl>> mySubscriberCache = ContainerUtil.newConcurrentMap();
+  private final Map<Topic, List<MessageBusConnectionImpl>> mySubscriberCache = ContainerUtil.newConcurrentMap();
   private final List<MessageBusImpl> myChildBuses = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  private volatile ConcurrentMap<String, List<ListenerDescriptor>> myTopicClassToListenerClass;
+  private volatile Map<String, List<ListenerDescriptor>> myTopicClassToListenerClass;
 
   private static final Object NA = new Object();
   private MessageBusImpl myParentBus;
@@ -80,7 +77,7 @@ public class MessageBusImpl implements MessageBus {
   }
 
   @ApiStatus.Internal
-  public void setLazyListeners(@NotNull ConcurrentMap<String, List<ListenerDescriptor>> map) {
+  public void setLazyListeners(@NotNull Map<String, List<ListenerDescriptor>> map) {
     if (myTopicClassToListenerClass != null) {
       throw new IllegalStateException("Already set: "+myTopicClassToListenerClass);
     }
@@ -291,7 +288,7 @@ public class MessageBusImpl implements MessageBus {
   }
 
   private boolean isDispatchingAnything() {
-    SortedMap<MessageBusImpl, Integer> waitingBuses = myRootBus.myWaitingBuses.get();
+    Map<MessageBusImpl, Integer> waitingBuses = myRootBus.myWaitingBuses.get();
     return waitingBuses != null && !waitingBuses.isEmpty();
   }
 
