@@ -224,31 +224,43 @@ void enableScrubberItems(id scrubObj, void* itemIndices, int count, bool enabled
 }
 
 // NOTE: called from EDT (when update UI)
-void showScrubberItems(id scrubObj, void* itemIndices, int count, bool show) {
-    if (itemIndices == NULL || count <= 0)
-        return;
-
+void showScrubberItems(id scrubObj, void* itemIndices, int count, bool show, bool inverseOthers) {
     NSScrubberContainer * container = scrubObj;
     NSScrubber *scrubber = container.view;
 
-    const int sizeInBytes = sizeof(int)*count;
-    int *indices = malloc(sizeInBytes);
-    memcpy(indices, itemIndices, sizeInBytes);
+    int *indices = NULL;
+    if (itemIndices != NULL && count > 0) {
+        const int sizeInBytes = sizeof(int)*count;
+        indices = malloc(sizeInBytes);
+        memcpy(indices, itemIndices, sizeInBytes);
+    }
 
     dispatch_async(dispatch_get_main_queue(), ^{
         // 1. mark items
-        for (int c = 0; c < count; ++c) {
-            ScrubberItem *itemData = [container.itemsCache objectAtIndex:indices[c]];
-            if (itemData == nil) {
-                nserror(@"scrubber [%@]: called showScrubberItems %d, but item-data at this index is null", container.identifier, indices[c]);
-                continue;
+        if (inverseOthers) {
+            for (int c = 0; c < container.itemsCache.count; ++c) {
+                ScrubberItem *itemData = [container.itemsCache objectAtIndex:c];
+                if (itemData == nil)
+                    continue;
+                itemData.visible = !show;
             }
-            itemData.visible = show;
+        }
+
+        if (indices != NULL) {
+            for (int c = 0; c < count; ++c) {
+                ScrubberItem *itemData = [container.itemsCache objectAtIndex:indices[c]];
+                if (itemData == nil) {
+                    nserror(@"scrubber [%@]: called showScrubberItems %d, but item-data at this index is null", container.identifier, indices[c]);
+                    continue;
+                }
+                itemData.visible = show;
+            }
         }
 
         // 2. recalculate positions
-        NSMutableIndexSet *indexSet = [[[NSMutableIndexSet alloc] init] autorelease];
-        [container.visibleItems removeAllObjects];
+        NSMutableIndexSet *visibleIndexSet = [[[NSMutableIndexSet alloc] init] autorelease];
+        NSMutableIndexSet *hiddenIndexSet = [[[NSMutableIndexSet alloc] init] autorelease];
+        NSMutableArray *newVisibleItems = [[[NSMutableArray alloc] initWithCapacity:10/*empiric average popup items count*/] autorelease];
         int position = 0;
         for (int c = 0; c < container.itemsCache.count; ++c) {
             const ScrubberItem * si = [container.itemsCache objectAtIndex:c];
@@ -257,27 +269,34 @@ void showScrubberItems(id scrubObj, void* itemIndices, int count, bool show) {
             if (si.visible) {
                 if (si.positionInsideScrubber < 0) {
                     // item is visible now => insert into scrubber
-                    [indexSet addIndex:position];
+                    [visibleIndexSet addIndex:position];
                 }
                 si.positionInsideScrubber = position++;
-                [container.visibleItems addObject:si];
+                [newVisibleItems addObject:si];
             } else {
                 if (si.positionInsideScrubber >= 0) {
                     // item is hidden now => remove from scrubber
-                    [indexSet addIndex:si.positionInsideScrubber];
+                    [hiddenIndexSet addIndex:si.positionInsideScrubber];
                     si.positionInsideScrubber = -1;
                 }
             }
         }
 
-        if (show) {
-            nstrace(@"\t show %d items", [indexSet count]);
-            [scrubber insertItemsAtIndexes:indexSet];
-        } else {
-            nstrace(@"\t hide %d items", [indexSet count]);
-            [scrubber removeItemsAtIndexes:indexSet];
+        if ([hiddenIndexSet count] > 0 || [visibleIndexSet count] > 0) {
+            [scrubber performSequentialBatchUpdates:^{
+              if ([hiddenIndexSet count] > 0) {
+                [scrubber removeItemsAtIndexes:hiddenIndexSet];
+              }
+              if ([visibleIndexSet count] > 0) {
+                [scrubber insertItemsAtIndexes:visibleIndexSet];
+              }
+              container.visibleItems = newVisibleItems;
+            }];
+
+            [scrubber reloadData];
         }
 
-        free(indices);
+        if (indices != NULL)
+            free(indices);
     });
 }

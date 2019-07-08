@@ -90,7 +90,7 @@ public class TouchbarTest {
         txt = "show";
         action = ()->SwingUtilities.invokeLater(()->{
           ourVisible = !ourVisible;
-          NST.showScrubberItem(scrubber.myNativePeer, _makeRandomCollection(size - 1), ourVisible);
+          NST.showScrubberItem(scrubber.myNativePeer, _makeRandomCollection(size - 1), ourVisible, false);
         });
       } else if (c == 2) {
         txt = "enable";

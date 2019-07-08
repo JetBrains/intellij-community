@@ -216,11 +216,9 @@ public class NST {
     final Memory mem = _makeIndices(indices);
     ourNSTLibrary.enableScrubberItems(scrubObj, mem, indices.size(), enabled);
   }
-  public static void showScrubberItem(ID scrubObj, Collection<Integer> indices, boolean show) {
-    if (indices == null || indices.isEmpty())
-      return;
+  public static void showScrubberItem(ID scrubObj, Collection<Integer> indices, boolean show, boolean inverseOthers) {
     final Memory mem = _makeIndices(indices);
-    ourNSTLibrary.showScrubberItems(scrubObj, mem, indices.size(), show);
+    ourNSTLibrary.showScrubberItems(scrubObj, mem, indices == null ? 0 : indices.size(), show, inverseOthers);
   }
 
   private static @Nullable Memory _packItems(List<? extends TBItemScrubber.ItemData> items, int fromIndex, int itemsCount) {

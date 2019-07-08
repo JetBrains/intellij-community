@@ -26,6 +26,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
@@ -251,6 +253,7 @@ class BuildUtils {
     final @NotNull List stepValues = listPopupStep.getValues();
     final List<Integer> disabledItems = new ArrayList<>();
     int currIndex = 0;
+    final Map<Object, Integer> obj2index = new HashMap<>();
     for (Object obj : stepValues) {
       final Icon ic = listPopupStep.getIconFor(obj);
       String txt = listPopupStep.getTextFor(obj);
@@ -280,8 +283,29 @@ class BuildUtils {
       if (!listPopupStep.isSelectable(obj)) {
         disabledItems.add(currIndex);
       }
+      obj2index.put(obj, currIndex);
       ++currIndex;
     }
+
+    final ListModel model = listPopup.getList().getModel();
+    model.addListDataListener(new ListDataListener() {
+      @Override
+      public void intervalAdded(ListDataEvent e) {}
+      @Override
+      public void intervalRemoved(ListDataEvent e) {}
+      @Override
+      public void contentsChanged(ListDataEvent e) {
+        final List<Integer> visibleIndices = new ArrayList<>();
+        for (int c = 0; c < model.getSize(); ++c) {
+          final Object visibleItem = model.getElementAt(c);
+          final Integer itemId = obj2index.get(visibleItem);
+          if (itemId != null)
+            visibleIndices.add(itemId);
+        }
+
+        scrub.showItems(visibleIndices, true, true);
+      }
+    });
 
     result.selectVisibleItemsToShow();
     scrub.enableItems(disabledItems, false);

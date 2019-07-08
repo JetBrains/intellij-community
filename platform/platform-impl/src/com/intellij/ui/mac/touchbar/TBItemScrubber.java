@@ -77,6 +77,10 @@ class TBItemScrubber extends TBItem implements NSTLibrary.ScrubberDelegate {
     NST.enableScrubberItems(myNativePeer, indices, enabled);
   }
 
+  void showItems(Collection<Integer> indices, boolean visible, boolean inverseOthers) {
+    NST.showScrubberItem(myNativePeer, indices, visible, inverseOthers);
+  }
+
   // NOTE: scrubber is immutable container => update doesn't called => _create/_update can be unsyncronized
 
   @Override

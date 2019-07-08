@@ -67,7 +67,7 @@ public interface NSTLibrary extends Library {
   void updatePopover(ID popoverObj, int itemWidth, String text, Pointer raster4ByteRGBA, int w, int h, ID tbObjExpand, ID tbObjTapAndHold);
 
   void enableScrubberItems(ID scrubObj, Memory itemIndices, int count, boolean enabled);
-  void showScrubberItems(ID scrubObj, Memory itemIndices, int count, boolean show);
+  void showScrubberItems(ID scrubObj, Memory itemIndices, int count, boolean show, boolean inverseOthers);
   void appendScrubberItems(ID scrubObj, Memory packedItems, int byteCount);
 
   void setArrowImage(ID buttObj, Pointer raster4ByteRGBA, int w, int h);
