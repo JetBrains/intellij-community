@@ -152,7 +152,7 @@ public class SaveProjectAsTemplateTest extends NewProjectWizardTestCase {
   @Override
   protected Project doCreateProject(@NotNull Path projectFile) throws Exception {
     FileUtil.ensureExists(projectFile.getParent().resolve(Project.DIRECTORY_STORE_FOLDER).toFile());
-    return createProject(projectFile.getParent().toFile(), getClass().getName() + "." + getName());
+    return createProject(projectFile.getParent());
   }
 
   @NotNull

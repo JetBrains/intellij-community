@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
-import com.intellij.util.*;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.mock.MockDocument;
 import com.intellij.mock.MockPsiFile;
@@ -48,6 +47,10 @@ import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.TestTimeOut;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ref.GCWatcher;
 import com.intellij.util.ui.UIUtil;
@@ -56,7 +59,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -204,8 +206,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
 
     final Document document = getDocument(file);
 
-    File temp = createTempDirectory();
-    final Project alienProject = createProject(temp + "/alien.ipr", DebugUtil.currentStackTrace());
+    final Project alienProject = createProject(createTempDirectory().toPath().resolve("alien.ipr"));
     boolean succ2 = ProjectManagerEx.getInstanceEx().openProject(alienProject);
     assertTrue(succ2);
     UIUtil.dispatchAllInvocationEvents(); // startup activities
@@ -351,8 +352,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
 
     final Document document = getDocument(file);
 
-    File temp = createTempDirectory();
-    final Project alienProject = createProject(temp + "/alien.ipr", DebugUtil.currentStackTrace());
+    final Project alienProject = createProject(createTempDirectory().toPath().resolve("alien.ipr"));
     boolean succ2 = ProjectManagerEx.getInstanceEx().openProject(alienProject);
     assertTrue(succ2);
     UIUtil.dispatchAllInvocationEvents(); // startup activities
@@ -631,7 +631,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
   }
 
   public void testReparseDoesNotModifyDocument() throws Exception {
-    VirtualFile file = createTempFile("txt", null, "1\n2\n3\n", Charset.forName("UTF-8"));
+    VirtualFile file = createTempFile("txt", null, "1\n2\n3\n", StandardCharsets.UTF_8);
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     String stripSpacesBefore = editorSettings.getStripTrailingSpaces();
     try {

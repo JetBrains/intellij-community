@@ -65,13 +65,11 @@ class ProjectRule(val projectDescriptor: LightProjectDescriptor = LightProjectDe
     private fun createLightProject(): ProjectEx {
       (PersistentFS.getInstance() as PersistentFSImpl).cleanPersistedContents()
 
-      val projectFile = generateTemporaryPath("light_temp_shared_project${ProjectFileType.DOT_DEFAULT_EXTENSION}")
-      val projectPath = projectFile.systemIndependentPath
-
+      val projectFile = TemporaryDirectory.generateTemporaryPath("light_temp_shared_project${ProjectFileType.DOT_DEFAULT_EXTENSION}")
       val buffer = ByteArrayOutputStream()
-      Throwable(projectPath, null).printStackTrace(PrintStream(buffer))
+      Throwable(projectFile.systemIndependentPath, null).printStackTrace(PrintStream(buffer))
 
-      val project = PlatformTestCase.createProject(projectPath, "Light project: $buffer") as ProjectEx
+      val project = PlatformTestCase.createProject(projectFile) as ProjectEx
       PlatformTestUtil.registerProjectCleanup {
         try {
           disposeProject()

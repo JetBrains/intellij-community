@@ -62,6 +62,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -88,7 +89,7 @@ public abstract class UsefulTestCase extends TestCase {
   @NotNull
   private final Disposable myTestRootDisposable = new TestDisposable();
 
-  static String ourPathToKeep;
+  static Path ourPathToKeep;
   private final List<String> myPathsToKeep = new ArrayList<>();
 
   private String myTempDir;
@@ -233,12 +234,12 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   private boolean hasTmpFilesToKeep() {
-    return ourPathToKeep != null && FileUtil.isAncestor(myTempDir, ourPathToKeep, false) || !myPathsToKeep.isEmpty();
+    return ourPathToKeep != null && FileUtil.isAncestor(myTempDir, ourPathToKeep.toString(), false) || !myPathsToKeep.isEmpty();
   }
 
   private boolean shouldKeepTmpFile(@NotNull File file) {
     String path = file.getPath();
-    if (FileUtil.pathsEqual(path, ourPathToKeep)) return true;
+    if (FileUtil.pathsEqual(path, ourPathToKeep.toString())) return true;
     for (String pathToKeep : myPathsToKeep) {
       if (FileUtil.pathsEqual(path, pathToKeep)) return true;
     }

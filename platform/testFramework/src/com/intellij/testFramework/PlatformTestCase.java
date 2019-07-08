@@ -58,7 +58,10 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
-import com.intellij.util.*;
+import com.intellij.util.MemoryDumpHelper;
+import com.intellij.util.PathUtil;
+import com.intellij.util.PlatformUtils;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.IndexableSetContributor;
@@ -271,21 +274,18 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   @NotNull
   protected Project doCreateProject(@NotNull Path projectFile) throws Exception {
-    return createProject(projectFile.toFile(), getClass().getName() + "." + getName());
+    return createProject(projectFile);
   }
 
   @NotNull
-  public static Project createProject(@NotNull File projectFile, @NotNull String creationPlace) {
-    return createProject(projectFile.getPath(), creationPlace);
+  public static Project createProject(@NotNull File projectFile) {
+    return createProject(projectFile.toPath());
   }
 
   @NotNull
-  public static Project createProject(@NotNull String path, @NotNull String creationPlace) {
-    String fileName = PathUtilRt.getFileName(path);
-
+  public static Project createProject(@NotNull Path file) {
     try {
-      String projectName = FileUtilRt.getNameWithoutExtension(fileName);
-      return ProjectManagerEx.getInstanceEx().newProject(projectName, path);
+      return Objects.requireNonNull(ProjectManagerEx.getInstanceEx().newProject(file, /* useDefaultProjectSettings = */ false, false));
     }
     catch (TooManyProjectLeakedException e) {
       if (ourReportedLeakedProjects) {
@@ -385,9 +385,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       }
     }
 
-    Path tempFile = TemporaryDirectoryKt
-      .generateTemporaryPath(
-        FileUtil.sanitizeFileName(getName(), false) + (isDirectoryBasedProject ? "" : ProjectFileType.DOT_DEFAULT_EXTENSION));
+    Path tempFile = TemporaryDirectory.generateTemporaryPath(FileUtil.sanitizeFileName(getName(), false) + (isDirectoryBasedProject ? "" : ProjectFileType.DOT_DEFAULT_EXTENSION));
     myFilesToDelete.add(tempFile.toFile());
     return tempFile;
   }
@@ -986,7 +984,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   protected static VirtualFile getOrCreateModuleDir(@NotNull Module module) throws IOException {
     File moduleDir = new File(PathUtil.getParentPath(module.getModuleFilePath()));
     FileUtil.ensureExists(moduleDir);
-    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleDir);
+    return Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleDir));
   }
 
   public static void waitForProjectLeakingThreads(@NotNull Project project, long timeout, @NotNull TimeUnit timeUnit) throws Exception {

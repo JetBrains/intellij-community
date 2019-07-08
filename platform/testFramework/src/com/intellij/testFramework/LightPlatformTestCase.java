@@ -63,7 +63,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
@@ -98,13 +97,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.Delayed;
@@ -114,8 +113,6 @@ import java.util.concurrent.TimeUnit;
  * @author yole
  */
 public abstract class LightPlatformTestCase extends UsefulTestCase implements DataProvider {
-  @NonNls private static final String LIGHT_PROJECT_MARK = "Light project: ";
-
   private static IdeaTestApplication ourApplication;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   protected static Project ourProject;
@@ -225,14 +222,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
     ApplicationManager.getApplication().runWriteAction(LightPlatformTestCase::cleanPersistedVFSContent);
 
-    final File projectFile = FileUtil.createTempFile(ProjectImpl.LIGHT_PROJECT_NAME, ProjectFileType.DOT_DEFAULT_EXTENSION);
-    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectFile);
-
-    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-    new Throwable(projectFile.getPath()).printStackTrace(new PrintStream(buffer));
-
-    ourProject = PlatformTestCase.createProject(projectFile, LIGHT_PROJECT_MARK + buffer);
-    ourPathToKeep = projectFile.getPath();
+    Path tempFile = TemporaryDirectory.generateTemporaryPath(ProjectImpl.LIGHT_PROJECT_NAME + ProjectFileType.DOT_DEFAULT_EXTENSION);
+    ourProject = PlatformTestCase.createProject(tempFile);
+    ourPathToKeep = tempFile;
     ourPsiManager = null;
 
     try {
@@ -728,11 +720,14 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
     // project may be disposed but empty folder may still be there
     if (ourPathToKeep != null) {
-      File parent = new File(ourPathToKeep).getParentFile();
-      if (parent.getName().startsWith(UsefulTestCase.TEMP_DIR_MARKER)) {
+      Path parent = ourPathToKeep.getParent();
+      if (parent.getFileName().toString().startsWith(UsefulTestCase.TEMP_DIR_MARKER)) {
         // delete only empty folders
-        //noinspection ResultOfMethodCallIgnored
-        parent.delete();
+        try {
+          Files.deleteIfExists(parent);
+        }
+        catch (IOException ignore) {
+        }
       }
     }
 

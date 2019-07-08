@@ -90,7 +90,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.inline.InlineRefactoringActionHandler;
 import com.intellij.refactoring.rename.RenameProcessor;
@@ -1525,7 +1524,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     configureByText(StdFileTypes.JAVA, "class X{ void f() {" + body + "<caret>\n} }");
 
     File temp = createTempDirectory();
-    final Project alienProject = createProject(temp + "/alien.ipr", DebugUtil.currentStackTrace());
+    final Project alienProject = createProject(createTempDirectory().toPath().resolve("alien.ipr"));
     boolean succ2 = ProjectManagerEx.getInstanceEx().openProject(alienProject);
     assertTrue(succ2);
     DaemonProgressIndicator.setDebug(true);

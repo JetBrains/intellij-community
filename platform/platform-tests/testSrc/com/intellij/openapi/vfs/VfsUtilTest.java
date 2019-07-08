@@ -28,7 +28,6 @@ import com.intellij.testFramework.PlatformLiteFixture;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.StartupUiUtil;
@@ -41,6 +40,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -309,7 +309,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     AtomicReference<Project> project = new AtomicReference<>();
     checkNewDirAndRefresh(temp ->
         WriteCommandAction.runWriteCommandAction(null, ()->{
-          project.set(PlatformTestCase.createProject(temp, ExceptionUtil.currentStackTrace()));
+          project.set(PlatformTestCase.createProject(temp));
           assertTrue(ProjectManagerEx.getInstanceEx().openProject(project.get()));
           assertTrue(project.get().isOpen());
         }),
@@ -325,7 +325,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     });
   }
 
-  private void checkNewDirAndRefresh(Consumer<? super File> dirCreatedCallback, Consumer<? super AtomicBoolean> getAllExcludedCalledChecker) throws IOException {
+  private void checkNewDirAndRefresh(Consumer<? super Path> dirCreatedCallback, Consumer<? super AtomicBoolean> getAllExcludedCalledChecker) throws IOException {
     AtomicBoolean getAllExcludedCalled = new AtomicBoolean();
     ProjectManagerImpl test = new ProjectManagerImpl() {
       @NotNull
@@ -346,7 +346,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
       VirtualDirectoryImpl vTemp = (VirtualDirectoryImpl)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
       assertNotNull(vTemp);
       vTemp.getChildren(); //to force full dir refresh?!
-      dirCreatedCallback.accept(temp);
+      dirCreatedCallback.accept(temp.toPath());
       File d = new File(temp, "d");
       assertTrue(d.mkdir());
       File d1 = new File(d, "d1");
