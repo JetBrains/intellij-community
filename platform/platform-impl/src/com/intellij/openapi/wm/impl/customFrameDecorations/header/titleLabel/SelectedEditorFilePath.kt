@@ -26,8 +26,8 @@ open class SelectedEditorFilePath {
 
   private val projectTitle = ProjectTitlePane()
   private val classTitle = ClippingTitle()
-  private val productTitle = DefaultPartTitle()
-  private val productVersion = DefaultPartTitle()
+  private val productTitle = DefaultPartTitle(" - ")
+  private val productVersion = DefaultPartTitle(" - ")
 
   protected val components = listOf(projectTitle, classTitle, productTitle, productVersion)
 
