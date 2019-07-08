@@ -224,7 +224,8 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
     else if (isTextBlock(token)) {
       PsiElement parent = token.getParent();
       if (parent instanceof PsiLiteralExpression && ((PsiLiteralExpression)parent).getValue() != null) {
-        return StringLiteralManipulator.getValueRange((PsiLiteralExpression)parent);
+        TextRange rangeInParent = StringLiteralManipulator.getValueRange((PsiLiteralExpression)parent);
+        return rangeInParent.shiftRight(parent.getTextRange().getStartOffset());
       }
     }
     return null;
