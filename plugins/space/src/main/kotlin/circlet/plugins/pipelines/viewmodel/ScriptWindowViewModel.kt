@@ -3,6 +3,7 @@ package circlet.plugins.pipelines.viewmodel
 import circlet.pipelines.config.api.*
 import com.intellij.openapi.project.*
 import runtime.reactive.*
+import java.util.*
 import javax.swing.tree.*
 
 class ScriptWindowViewModel(private val lifetime: Lifetime, private val project: Project) {
@@ -23,8 +24,14 @@ class ScriptWindowViewModel(private val lifetime: Lifetime, private val project:
 
 
 class ScriptViewModel internal constructor(
+    val id: String,
     val lifetime: Lifetime,
     val config: ProjectConfig) {
+}
+
+object ScriptViewModelFactory {
+    fun create(lifetime: Lifetime, config: ProjectConfig) = ScriptViewModel(UUID.randomUUID().toString(), lifetime, config)
+
 }
 
 class LogData(val dummy: String) {
@@ -36,7 +43,7 @@ class LogData(val dummy: String) {
 
 
 fun createEmptyScriptViewModel(lifetime: Lifetime) : ScriptViewModel {
-    return ScriptViewModel(lifetime, ProjectConfig(emptyList(), emptyList(), emptyList()))
+    return ScriptViewModelFactory.create(lifetime, ProjectConfig(emptyList(), emptyList(), emptyList()))
 
 }
 

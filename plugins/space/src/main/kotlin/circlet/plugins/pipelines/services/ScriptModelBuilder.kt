@@ -38,7 +38,7 @@ object ScriptModelBuilder : KLogging() {
                 viewModel.logBuildData.value = logBuildData
                 val model = build(lt, project, logBuildData)
                 viewModel.script.value = model
-                logger.debug("run task. end")
+                logger.debug("run task. end $model")
             }
         })
 
@@ -46,12 +46,13 @@ object ScriptModelBuilder : KLogging() {
     }
 
     private fun build(lifetime: Lifetime, project: Project, logBuildData: LogData): ScriptViewModel {
-
         val events = ObservableQueue.mutable<SubstituteLoggingEvent>()
         events.change.forEach(lifetime) {
             val ev = it.index
             val prefix = if (ev.level == Level.ERROR) "Error: " else ""
-            logBuildData.add("${prefix}${ev.message}")
+            val resMessage = "$prefix${ev.message}"
+            logBuildData.add(resMessage)
+            logger.debug(resMessage)
         }
         val logger = SubstituteLogger("ScriptModelBuilderLogger", events, false)
 
@@ -79,7 +80,7 @@ object ScriptModelBuilder : KLogging() {
             val config = DslScriptExecutor().evaluateModel(targetJar, "", "", "")
             config.applyIds()
 
-            return ScriptViewModel(lifetime, config)
+            return ScriptViewModelFactory.create(lifetime, config)
         }
         catch (e: Exception)
         {
