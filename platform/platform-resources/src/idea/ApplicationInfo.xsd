@@ -437,8 +437,22 @@
     <xs:attribute type="xs:string" name="background-url" use="required"/>
   </xs:complexType>
   <xs:complexType name="helpType">
-    <xs:attribute type="xs:string" name="file"/>
-    <xs:attribute type="xs:string" name="root"/>
+    <xs:attribute type="xs:string" name="file">
+      <xs:annotation>
+        <xs:documentation>
+          <strong>Deprecated: JavaHelp isn't used anymore, specify 'webhelp-url' attribute instead.</strong>
+        </xs:documentation>
+        <xs:documentation>deprecated</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="root">
+      <xs:annotation>
+        <xs:documentation>
+          <strong>Deprecated: JavaHelp isn't used anymore, specify 'webhelp-url' attribute instead.</strong>
+        </xs:documentation>
+        <xs:documentation>deprecated</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
     <xs:attribute type="xs:string" name="webhelp-url"/>
     <xs:attribute type="xs:boolean" name="has-help"/>
     <xs:attribute type="xs:boolean" name="has-context-help"/>

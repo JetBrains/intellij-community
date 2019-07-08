@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ex.ProgressSlide;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
@@ -35,6 +34,10 @@ import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+/**
+ * Provides access to content of *ApplicationInfo.xml file. Scheme for *ApplicationInfo.xml files is defined in platform/platform-resources/src/idea/ApplicationInfo.xsd,
+ * so you need to update it when adding or removing support for some XML elements in this class.
+ */
 public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myCodeName;
   private String myMajorVersion;

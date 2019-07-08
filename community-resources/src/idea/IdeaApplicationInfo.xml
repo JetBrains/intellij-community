@@ -23,7 +23,7 @@
   <update-urls check="https://www.jetbrains.com/updates/updates.xml"
                patches="https://download.jetbrains.com/idea/"/>
 
-  <help file="ideahelp.jar" root="idea"/>
+  <help webhelp-url="https://www.jetbrains.com/help/idea/"/>
   <documentation url="https://www.jetbrains.com/help/idea"/>
   <support url="https://intellij-support.jetbrains.com/hc/en-us/requests/new?ticket_form_id=66731&amp;product=IDEA&amp;build=$BUILD&amp;os=$OS&amp;timezone=$TIMEZONE"/>
   <youtrack url="https://youtrack.jetbrains.com/newissue?project=IDEA&amp;clearDraft=true&amp;description=$DESCR" />
