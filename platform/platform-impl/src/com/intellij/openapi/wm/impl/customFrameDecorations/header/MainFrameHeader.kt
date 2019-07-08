@@ -45,7 +45,7 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
       }
     }
 
-    val pane = JPanel(MigLayout("fillx, ins 0, novisualpadding", "[pref!][]"))
+    val pane = JPanel()
     pane.isOpaque = false
     setCustomFrameTopBorder({ myState != Frame.MAXIMIZED_VERT && myState != Frame.MAXIMIZED_BOTH }, {true})
     mySelectedEditorFilePath = CustomDecorationPath(frame)
@@ -73,13 +73,17 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
   }
 
   private fun relayoutFrameHeader(pane: JPanel, showMainMenu: Boolean) {
+    pane.layout = if(showMainMenu) {
+      MigLayout("fillx, ins 0, novisualpadding", "[pref!][]")
+    } else MigLayout("fillx, ins 0, novisualpadding", "[]")
+
     removeAll()
     add(productIcon)
     pane.removeAll()
     if (showMainMenu) {
-      pane.add(myIdeMenu, "wmin 0, wmax pref, top, hmin $MIN_HEIGHT")
+      pane.add(myIdeMenu, "wmin 0, wmax pref, top")
     }
-    pane.add(mySelectedEditorFilePath.getView(), "center, growx, wmin 0, gapbefore $H_GAP, gapafter $H_GAP, gapbottom 1")
+    pane.add(mySelectedEditorFilePath.getView(), "center, growx, wmin 0, gapafter $H_GAP, gapbottom 1")
     add(pane, "wmin 0, growx")
     add(buttonPanes.getView(), "top, wmin pref")
   }
