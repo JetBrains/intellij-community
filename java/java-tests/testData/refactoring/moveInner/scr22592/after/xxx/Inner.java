@@ -1,7 +1,7 @@
 package xxx;
 
 class Inner {
-    private Outer outer;
+    private final Outer outer;
 
     public Inner(Outer outer) {
         this.outer = outer;
