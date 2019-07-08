@@ -41,7 +41,14 @@ import com.intellij.openapi.vcs.ex.LineStatusTracker
 import com.intellij.openapi.vcs.ex.LocalLineStatusTracker
 import com.intellij.openapi.vcs.ex.SimpleLocalLineStatusTracker
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.EventDispatcher
@@ -95,6 +102,9 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     busConnection.subscribe(VcsFreezingProcess.Listener.TOPIC, MyFreezeListener())
     busConnection.subscribe(CommandListener.TOPIC, MyCommandListener())
 
+    ApplicationManager.getApplication().messageBus.connect(this)
+      .subscribe(VirtualFileManager.VFS_CHANGES, MyVirtualFileListener())
+
     StartupManager.getInstance(project).registerPreStartupActivity {
       if (isDisposed) return@registerPreStartupActivity
 
@@ -107,8 +117,6 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
       editorFactory.eventMulticaster.addDocumentListener(MyDocumentListener(), this)
 
       ChangeListManagerImpl.getInstance(project).addChangeListListener(MyChangeListListener())
-
-      VirtualFileManager.getInstance().addVirtualFileListener(MyVirtualFileListener(), this)
     }
   }
 
@@ -616,21 +624,25 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     }
   }
 
-  private inner class MyVirtualFileListener : VirtualFileListener {
-    override fun beforePropertyChange(event: VirtualFilePropertyEvent) {
-      if (VirtualFile.PROP_ENCODING == event.propertyName) {
-        onFileChanged(event.file)
+  private inner class MyVirtualFileListener : BulkFileListener {
+    override fun before(events: List<VFileEvent>) {
+      for (event in events) {
+        when (event) {
+          is VFileDeleteEvent -> handleFileDeletion(event.file)
+        }
       }
     }
 
-    override fun propertyChanged(event: VirtualFilePropertyEvent) {
-      if (event.isRename) {
-        handleFileMovement(event.file)
+    override fun after(events: List<VFileEvent>) {
+      for (event in events) {
+        when (event) {
+          is VFilePropertyChangeEvent -> when {
+            VirtualFile.PROP_ENCODING == event.propertyName -> onFileChanged(event.file)
+            event.isRename -> handleFileMovement(event.file)
+          }
+          is VFileMoveEvent -> handleFileMovement(event.file)
+        }
       }
-    }
-
-    override fun fileMoved(event: VirtualFileMoveEvent) {
-      handleFileMovement(event.file)
     }
 
     private fun handleFileMovement(file: VirtualFile) {
@@ -643,11 +655,11 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
       }
     }
 
-    override fun fileDeleted(event: VirtualFileEvent) {
+    private fun handleFileDeletion(file: VirtualFile) {
       if (!partialChangeListsEnabled) return
 
       synchronized(LOCK) {
-        forEachTrackerUnder(event.file) { data ->
+        forEachTrackerUnder(file) { data ->
           releaseTracker(data.tracker.document)
         }
       }
