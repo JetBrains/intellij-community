@@ -10,5 +10,5 @@ public interface ScreenAreaConsumer extends Disposable {
   @NotNull
   Rectangle getConsumedScreenBounds();
 
-  Component getUnderlyingAreaOwner();
+  Window getUnderlyingWindow();
 }

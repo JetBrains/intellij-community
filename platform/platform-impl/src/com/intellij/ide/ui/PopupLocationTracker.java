@@ -51,7 +51,7 @@ public class PopupLocationTracker {
       for (ScreenAreaConsumer consumer : ourAreaConsumers) {
         if (consumer == excludedConsumer) continue;
 
-        if (window == UIUtil.getWindow(consumer.getUnderlyingAreaOwner())) {
+        if (window == consumer.getUnderlyingWindow()) {
           Rectangle area = consumer.getConsumedScreenBounds();
           if (area.intersects(desiredScreenBounds)) {
             return false;

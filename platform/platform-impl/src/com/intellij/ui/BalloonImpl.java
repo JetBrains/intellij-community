@@ -798,8 +798,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
   }
 
   @Override
-  public Component getUnderlyingAreaOwner() {
-    return myLayeredPane;
+  public Window getUnderlyingWindow() {
+    return UIUtil.getWindow(myLayeredPane);
   }
 
   @NotNull

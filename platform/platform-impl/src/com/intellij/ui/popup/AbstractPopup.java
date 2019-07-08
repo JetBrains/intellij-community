@@ -1983,7 +1983,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   }
 
   @Override
-  public Component getUnderlyingAreaOwner() {
+  public Window getUnderlyingWindow() {
     return myWindow.getOwner();
   }
 
