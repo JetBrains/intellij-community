@@ -222,6 +222,7 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
         dialogBuilder.setOkActionEnabled(!StringUtil.isEmpty((String)pluginChooser.getSelectedItem()));
       }
     });
+    dialogBuilder.setHelpId("Required_Plugin");
     if (dialogBuilder.show() == DialogWrapper.OK_EXIT_CODE) {
       return new DependencyOnPlugin(((String)pluginChooser.getSelectedItem()),
                                     StringUtil.nullize(minVersionField.getText().trim()),
