@@ -72,14 +72,17 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
 
   protected static final ExternalSystemNode[] NO_CHILDREN = new ExternalSystemNode[0];
 
+  private static final List<ExternalSystemNode<?>> NO_CHILDREN_LIST = Collections.emptyList();
+  private static final List<String> NO_ERRORS_LIST = Collections.emptyList();
+
   private final ExternalProjectsView myExternalProjectsView;
-  private final List<ExternalSystemNode<?>> myChildrenList = ContainerUtil.newArrayList();
+  private List<ExternalSystemNode<?>> myChildrenList = NO_CHILDREN_LIST;
   protected DataNode<T> myDataNode;
   @Nullable
   private ExternalSystemNode myParent;
   private ExternalSystemNode[] myChildren;
   private ExternalProjectsStructure.ErrorLevel myErrorLevel = ExternalProjectsStructure.ErrorLevel.NONE;
-  private final List<String> myErrors = ContainerUtil.newArrayList();
+  private List<String> myErrors = NO_ERRORS_LIST;
   private ExternalProjectsStructure.ErrorLevel myTotalErrorLevel = null;
 
   public ExternalSystemNode(@NotNull ExternalProjectsView externalProjectsView,
@@ -223,7 +226,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
 
   public void cleanUpCache() {
     myChildren = null;
-    myChildrenList.clear();
+    myChildrenList = NO_CHILDREN_LIST;
     myTotalErrorLevel = null;
   }
 
@@ -233,7 +236,9 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
   }
 
   protected void sort(List<? extends ExternalSystemNode> list) {
-    Collections.sort(list, ORDER_AWARE_COMPARATOR);
+    if (!list.isEmpty()) {
+      Collections.sort(list, ORDER_AWARE_COMPARATOR);
+    }
   }
 
   public boolean addAll(Collection<? extends ExternalSystemNode> externalSystemNodes) {
@@ -242,6 +247,10 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
 
   private boolean addAll(Collection<? extends ExternalSystemNode> externalSystemNodes, boolean silently) {
     if (externalSystemNodes.isEmpty()) return false;
+
+    if (myChildrenList == NO_CHILDREN_LIST) {
+      myChildrenList = new ArrayList<>();
+    }
 
     for (ExternalSystemNode externalSystemNode : externalSystemNodes) {
       externalSystemNode.setParent(this);
@@ -267,7 +276,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
 
     for (ExternalSystemNode externalSystemNode : externalSystemNodes) {
       externalSystemNode.setParent(null);
-      myChildrenList.remove(externalSystemNode);
+      if (myChildrenList != NO_CHILDREN_LIST) myChildrenList.remove(externalSystemNode);
     }
     if (!silently) {
       childrenChanged();
@@ -336,8 +345,13 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
   public void setErrorLevel(ExternalProjectsStructure.ErrorLevel level, String... errors) {
     if (myErrorLevel == level) return;
     myErrorLevel = level;
-    myErrors.clear();
-    Collections.addAll(myErrors, errors);
+
+    if (errors.length == 0) {
+      myErrors = NO_ERRORS_LIST;
+    }
+    else {
+      myErrors = Arrays.asList(errors);
+    }
     myExternalProjectsView.updateUpTo(this);
   }
 
