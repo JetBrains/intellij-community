@@ -798,7 +798,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  /** @deprecated use {@link #getPlugin(IdeaLoggingEvent)} instead and take the plugin name and version from the returned instance */
+  /** @deprecated use {@link #getPlugin(IdeaLoggingEvent)} instead, and take the plugin name and version from the returned instance */
   @Deprecated
   public static @Nullable Pair<String, String> getPluginInfo(@NotNull IdeaLoggingEvent event) {
     IdeaPluginDescriptor plugin = getPlugin(event);
@@ -887,17 +887,14 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         return PluginManagerCore.getPluginByClassName(className);
       }
     }
-    Throwable cause = t.getCause();
-    if (cause != null) {
-      return findPluginId(cause);
-    }
 
-    return null;
+    Throwable cause = t.getCause();
+    return cause == null ? null : findPluginId(cause);
   }
 
   private static void logPluginDetection(String className, PluginId id) {
     if (LOG.isDebugEnabled()) {
-      String message = "Detected plugin " + id + " by class " + className;
+      String message = "Detected a plugin " + id + " by class " + className;
       IdeaPluginDescriptor descriptor = PluginManager.getPlugin(id);
       if (descriptor != null) {
         ClassLoader loader = descriptor.getPluginClassLoader();

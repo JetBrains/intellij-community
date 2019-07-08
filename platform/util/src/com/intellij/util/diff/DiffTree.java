@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.diff;
 
 import com.intellij.openapi.util.Ref;
@@ -57,7 +43,7 @@ public class DiffTree<OT, NT> {
                                    @NotNull ShallowNodeComparator<? super OT, ? super NT> comparator,
                                    @NotNull DiffTreeChangeBuilder<? super OT, ? super NT> consumer,
                                    @NotNull CharSequence oldText) {
-    final DiffTree<OT, NT> tree = new DiffTree<>(oldTree, newTree, comparator, oldText);
+    DiffTree<OT, NT> tree = new DiffTree<>(oldTree, newTree, comparator, oldText);
     tree.build(oldTree.getRoot(), newTree.getRoot(), 0, consumer);
   }
 
@@ -69,25 +55,20 @@ public class DiffTree<OT, NT> {
   }
 
   @NotNull
+  @SuppressWarnings("unchecked")
   private static <OT, NT> DiffTreeChangeBuilder<OT, NT> emptyConsumer() {
-    //noinspection unchecked
     return EMPTY_CONSUMER;
   }
+
   private static final DiffTreeChangeBuilder EMPTY_CONSUMER = new DiffTreeChangeBuilder() {
     @Override
-    public void nodeReplaced(@NotNull Object oldChild, @NotNull Object newChild) {
-
-    }
+    public void nodeReplaced(@NotNull Object oldChild, @NotNull Object newChild) { }
 
     @Override
-    public void nodeDeleted(@NotNull Object oldParent, @NotNull Object oldNode) {
-
-    }
+    public void nodeDeleted(@NotNull Object oldParent, @NotNull Object oldNode) { }
 
     @Override
-    public void nodeInserted(@NotNull Object oldParent, @NotNull Object newNode, int pos) {
-
-    }
+    public void nodeInserted(@NotNull Object oldParent, @NotNull Object newNode, int pos) { }
   };
 
   @NotNull
@@ -97,13 +78,13 @@ public class DiffTree<OT, NT> {
       myOldChildrenLists.add(new Ref<>());
     }
 
-    final Ref<OT[]> oldChildrenR = myOldChildrenLists.get(level);
+    Ref<OT[]> oldChildrenR = myOldChildrenLists.get(level);
     int oldChildrenSize = myOldTree.getChildren(oldNode, oldChildrenR);
-    final OT[] oldChildren = oldChildrenR.get();
+    OT[] oldChildren = oldChildrenR.get();
 
-    final Ref<NT[]> newChildrenR = myNewChildrenLists.get(level);
+    Ref<NT[]> newChildrenR = myNewChildrenLists.get(level);
     int newChildrenSize = myNewTree.getChildren(newNode, newChildrenR);
-    final NT[] newChildren = newChildrenR.get();
+    NT[] newChildren = newChildrenR.get();
 
     CompareResult result;
     if (Math.abs(oldChildrenSize - newChildrenSize) > CHANGE_PARENT_VERSUS_CHILDREN_THRESHOLD) {
@@ -182,7 +163,7 @@ public class DiffTree<OT, NT> {
   private ThreeElementMatchResult matchNext3Children(OT[] oldChildren, NT[] newChildren, int oldIndex, int newIndex, int oldLimit, int newLimit) {
     if (oldIndex >= oldLimit) return ThreeElementMatchResult.skipNew1;
     if (newIndex >= newLimit) return ThreeElementMatchResult.skipOld1;
-    
+
     OT oldChild1 = oldChildren[oldIndex];
     NT newChild1 = newChildren[newIndex];
 
@@ -204,18 +185,18 @@ public class DiffTree<OT, NT> {
     if (c12 == CompareResult.TYPE_ONLY) return ThreeElementMatchResult.skipNew1;
     if (c21 == CompareResult.TYPE_ONLY) return ThreeElementMatchResult.skipOld1;
 
-    // check that maybe two children are inserted/deleted
+    // check whether two children are inserted/deleted
     // (which frequently is a case when e.g. a PsiMethod inserted, the trailing PsiWhiteSpace is appended too)
     OT oldChild3 = oldIndex < oldLimit - 2 ? oldChildren[oldIndex + 2] : null;
     NT newChild3 = newIndex < newLimit - 2 ? newChildren[newIndex + 2] : null;
 
     if (looksEqual(oldChild1, newChild3) != CompareResult.NOT_EQUAL) return ThreeElementMatchResult.skipNew2;
     if (looksEqual(oldChild3, newChild1) != CompareResult.NOT_EQUAL) return ThreeElementMatchResult.skipOld2;
-    
+
     return ThreeElementMatchResult.noMatch;
   }
 
-  // Represents the result of matching among 3 next node children in before and after tree  
+  // Represents the result of matching among 3 next node children in before and after tree
   private enum ThreeElementMatchResult {
     // first children match completely
     fullStartMatch,
