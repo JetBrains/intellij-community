@@ -177,7 +177,7 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
     assertEquals(1, marks.size());
     GutterIconRenderer mark = (GutterIconRenderer)marks.get(0);
     AnAction[] children = mark.getPopupMenuActions().getChildren(new TestActionEvent());
-    AnAction action = ContainerUtil.find(children, t -> t.getTemplateText().startsWith("Create"));
+    AnAction action = ContainerUtil.find(children, t -> t.getTemplateText() != null && t.getTemplateText().startsWith("Create"));
     assertNotNull(action);
     myFixture.testAction(action);
     TestActionEvent event = new TestActionEvent();
