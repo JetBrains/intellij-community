@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -128,6 +129,12 @@ public abstract class FileAnnotation {
    */
   @Nullable
   public abstract String getToolTip(int lineNumber);
+
+  @Nullable
+  public String getHtmlToolTip(int lineNumber) {
+    String toolTip = getToolTip(lineNumber);
+    return XmlStringUtil.escapeString(toolTip);
+  }
 
   /**
    * @return last revision that modified this line.

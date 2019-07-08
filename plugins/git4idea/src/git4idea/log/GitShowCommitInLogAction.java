@@ -29,6 +29,8 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -56,7 +58,7 @@ public class GitShowCommitInLogAction extends DumbAwareAction {
       return;
     }
 
-    VcsLogContentUtil.openMainLogAndExecute(project, logUi -> jumpToRevisionUnderProgress(project, logUi, revision));
+    jumpToRevision(project, HashImpl.build(revision.asString()));
   }
 
   @Nullable
@@ -86,12 +88,16 @@ public class GitShowCommitInLogAction extends DumbAwareAction {
                                    Comparing.equal(getVcsKey(e), GitVcs.getKey()));
   }
 
+  static void jumpToRevision(@NotNull Project project, @NotNull Hash hash) {
+    VcsLogContentUtil.openMainLogAndExecute(project, logUi -> jumpToRevisionUnderProgress(project, logUi, hash));
+  }
+
   private static void jumpToRevisionUnderProgress(@NotNull Project project,
                                                   @NotNull VcsLogUiImpl logUi,
-                                                  @NotNull VcsRevisionNumber revision) {
-    Future<Boolean> future = logUi.getVcsLog().jumpToReference(revision.asString());
+                                                  @NotNull Hash hash) {
+    Future<Boolean> future = logUi.getVcsLog().jumpToReference(hash.asString());
     if (!future.isDone()) {
-      ProgressManager.getInstance().run(new Task.Backgroundable(project, "Searching for revision " + revision.asString(),
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, "Searching for revision " + hash.asString(),
                                                                 false/*can not cancel*/,
                                                                 PerformInBackgroundOption.ALWAYS_BACKGROUND) {
         @Override

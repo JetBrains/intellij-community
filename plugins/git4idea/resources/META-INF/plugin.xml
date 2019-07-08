@@ -264,6 +264,7 @@
     <openapi.vcs.changes.vcsPreservingExecutor implementation="git4idea.util.GitPreservingExecutor"/>
     <actionPromoter implementation="git4idea.actions.GitActionPromoter"/>
     <editorNotificationProvider implementation="git4idea.conflicts.MergeConflictResolveUtil$NotificationProvider"/>
+    <codeInsight.linkHandler prefix="#git_commit/" handlerClass="git4idea.log.GitCommitTooltipLinkHandler"/>
 
     <!-- Git ignore lang -->
     <fileType language="GitIgnore" extensions="gitignore" fieldName="INSTANCE" name="GitIgnore file" implementationClass="git4idea.ignore.lang.GitIgnoreFileType"/>

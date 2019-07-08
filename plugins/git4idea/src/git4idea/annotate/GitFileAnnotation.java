@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspectAdapter;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
@@ -35,12 +36,14 @@ import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitVcs;
 import git4idea.changes.GitCommittedChangeList;
 import git4idea.changes.GitCommittedChangeListProvider;
+import git4idea.log.GitCommitTooltipLinkHandler;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import gnu.trove.TObjectIntHashMap;
@@ -152,25 +155,54 @@ public class GitFileAnnotation extends FileAnnotation {
   @Nullable
   @Override
   public String getToolTip(int lineNumber) {
+    return getToolTip(lineNumber, false);
+  }
+
+  @Nullable
+  @Override
+  public String getHtmlToolTip(int lineNumber) {
+    return getToolTip(lineNumber, true);
+  }
+
+  @Nullable
+  private String getToolTip(int lineNumber, boolean asHtml) {
     LineInfo lineInfo = getLineInfo(lineNumber);
     if (lineInfo == null) return null;
 
+    StringBuilder sb = new StringBuilder();
     GitRevisionNumber revisionNumber = lineInfo.getRevisionNumber();
 
-    String path = null;
+    String revisionLink = asHtml ? GitCommitTooltipLinkHandler.createLink(revisionNumber.asString(), revisionNumber) : null;
+    if (revisionLink != null) {
+      sb.append("commit ").append(revisionLink);
+    }
+    else {
+      appendLine(sb, asHtml, "commit " + revisionNumber.asString());
+    }
+
+    appendLine(sb, asHtml, "Author: " + lineInfo.getAuthor());
+    appendLine(sb, asHtml, "Date: " + DateFormatUtil.formatDateTime(lineInfo.getAuthorDate()));
+
     if (!myFilePath.equals(lineInfo.myFilePath)) {
-      path = FileUtil.getLocationRelativeToUserHome(lineInfo.myFilePath.getPresentableUrl());
+      String path = FileUtil.getLocationRelativeToUserHome(lineInfo.myFilePath.getPresentableUrl());
+      appendLine(sb, asHtml, "Path: " + path);
     }
 
     String commitMessage = getCommitMessage(revisionNumber);
     if (commitMessage == null) commitMessage = lineInfo.getSubject() + "\n...";
-    commitMessage = VcsUtil.trimCommitMessageToSaneSize(commitMessage);
+    if (asHtml) {
+      sb.append("\n\n").append(IssueLinkHtmlRenderer.formatTextWithLinks(myProject, commitMessage));
+    }
+    else {
+      sb.append("\n\n").append(VcsUtil.trimCommitMessageToSaneSize(commitMessage));
+    }
 
-    return "commit " + revisionNumber.asString() +
-           "\nAuthor: " + lineInfo.getAuthor() +
-           "\nDate: " + DateFormatUtil.formatDateTime(lineInfo.getAuthorDate()) +
-           (path != null ? "\nPath: " + path : "") +
-           "\n\n" + commitMessage;
+    return sb.toString();
+  }
+
+  private static void appendLine(@NotNull StringBuilder sb, boolean asHtml, @NotNull String content) {
+    if (sb.length() != 0) sb.append('\n');
+    sb.append(asHtml ? XmlStringUtil.escapeString(content) : content);
   }
 
   @Nullable
