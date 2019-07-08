@@ -26,7 +26,6 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspectAdapter;
 import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
@@ -35,7 +34,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcsUtil.VcsUtil;
-import com.intellij.xml.util.XmlStringUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
@@ -168,40 +166,23 @@ public class GitFileAnnotation extends FileAnnotation {
     LineInfo lineInfo = getLineInfo(lineNumber);
     if (lineInfo == null) return null;
 
-    StringBuilder sb = new StringBuilder();
+    AnnotationTooltipBuilder atb = new AnnotationTooltipBuilder(myProject, asHtml);
     GitRevisionNumber revisionNumber = lineInfo.getRevisionNumber();
 
-    String revisionLink = asHtml ? GitCommitTooltipLinkHandler.createLink(revisionNumber.asString(), revisionNumber) : null;
-    if (revisionLink != null) {
-      sb.append("commit ").append(revisionLink);
-    }
-    else {
-      appendLine(sb, asHtml, "commit " + revisionNumber.asString());
-    }
-
-    appendLine(sb, asHtml, "Author: " + lineInfo.getAuthor());
-    appendLine(sb, asHtml, "Date: " + DateFormatUtil.formatDateTime(lineInfo.getAuthorDate()));
+    atb.appendRevisionLine(revisionNumber, it -> GitCommitTooltipLinkHandler.createLink(it.asString(), it));
+    atb.appendLine("Author: " + lineInfo.getAuthor());
+    atb.appendLine("Date: " + DateFormatUtil.formatDateTime(lineInfo.getAuthorDate()));
 
     if (!myFilePath.equals(lineInfo.myFilePath)) {
       String path = FileUtil.getLocationRelativeToUserHome(lineInfo.myFilePath.getPresentableUrl());
-      appendLine(sb, asHtml, "Path: " + path);
+      atb.appendLine("Path: " + path);
     }
 
     String commitMessage = getCommitMessage(revisionNumber);
     if (commitMessage == null) commitMessage = lineInfo.getSubject() + "\n...";
-    if (asHtml) {
-      sb.append("\n\n").append(IssueLinkHtmlRenderer.formatTextWithLinks(myProject, commitMessage));
-    }
-    else {
-      sb.append("\n\n").append(VcsUtil.trimCommitMessageToSaneSize(commitMessage));
-    }
+    atb.appendCommitMessageBlock(commitMessage);
 
-    return sb.toString();
-  }
-
-  private static void appendLine(@NotNull StringBuilder sb, boolean asHtml, @NotNull String content) {
-    if (sb.length() != 0) sb.append('\n');
-    sb.append(asHtml ? XmlStringUtil.escapeString(content) : content);
+    return atb.toString();
   }
 
   @Nullable

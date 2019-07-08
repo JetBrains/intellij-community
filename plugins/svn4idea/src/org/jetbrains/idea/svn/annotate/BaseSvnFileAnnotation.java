@@ -7,6 +7,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import git4idea.annotate.AnnotationTooltipBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -113,18 +114,30 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
     return new LineAnnotationAspect[]{REVISION_ASPECT, DATE_ASPECT, AUTHOR_ASPECT};
   }
 
+  @Nullable
   @Override
-  public String getToolTip(final int lineNumber) {
+  public String getToolTip(int lineNumber) {
+    return getToolTip(lineNumber, false);
+  }
+
+  @Nullable
+  @Override
+  public String getHtmlToolTip(int lineNumber) {
+    return getToolTip(lineNumber, true);
+  }
+
+  @Nullable
+  private String getToolTip(int lineNumber, boolean asHtml) {
     final CommitInfo info = myInfos.getOrNull(lineNumber);
-    if (info == null) return "";
+    if (info == null) return null;
 
     SvnFileRevision revision = myRevisionMap.get(info.getRevisionNumber());
-    if (revision != null) {
-      String prefix = myInfos.getAnnotationSource(lineNumber).showMerged() ? "Merge source revision" : "Revision";
+    if (revision == null) return null;
 
-      return prefix + " " + info.getRevisionNumber() + ": " + revision.getCommitMessage();
-    }
-    return "";
+    String prefix = myInfos.getAnnotationSource(lineNumber).showMerged() ? "Merge source revision" : "Revision";
+    return AnnotationTooltipBuilder.buildSimpleTooltip(getProject(), asHtml, prefix,
+                                                       String.valueOf(info.getRevisionNumber()),
+                                                       revision.getCommitMessage());
   }
 
   @Override
