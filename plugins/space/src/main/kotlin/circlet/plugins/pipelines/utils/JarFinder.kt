@@ -21,7 +21,7 @@ fun find(clazz: KClass<*>, name: String): URL {
                 ?: error("can't find $name jar")
         }
         else -> {
-            error("unknown ")
+            error("unknown classLoader $loader")
         }
     }
 }
