@@ -147,13 +147,13 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<PsiFile, Sh
     return params;
   }
 
-  private static void writeFileContentToStdin(@NotNull Process process, @NotNull String content, @NotNull Charset charset) throws IOException {
+  private static void writeFileContentToStdin(@NotNull Process process, @NotNull String content, @NotNull Charset charset) {
     try (OutputStream stdin = ObjectUtils.assertNotNull(process.getOutputStream())) {
       stdin.write(content.getBytes(charset));
       stdin.flush();
     }
     catch (IOException e) {
-      throw new IOException("Failed to write file content to stdin\n\n" + content, e);
+      LOG.debug("Failed to write file content to stdin\n\n" + content, e);
     }
   }
 
