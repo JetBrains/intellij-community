@@ -178,9 +178,15 @@ class PyInlineFunctionProcessor(project: Project,
             if (name in namesInOuterScope && name !in mappedArguments) {
               val resolved = node.reference.resolve()
               val target = if (resolved is PyFunction && resolved.containingClass != null && resolved.name == PyNames.INIT) resolved.containingClass else resolved
-              if (!builtinCache.isBuiltin(target) && target !in PyResolveUtil.resolveLocally(refScopeOwner, name)) {
-                if (PyClassRefactoringUtil.hasEncodedTarget(node)) importAsTargets.add(name)
-                else nameClashes.add(name)
+              if (!builtinCache.isBuiltin(target)) {
+                val resolvedLocally = PyResolveUtil.resolveLocally(refScopeOwner, name)
+                val localImports = resolvedLocally.asSequence()
+                  .filterIsInstance<PyImportElement>()
+                  .mapNotNull { it.importReferenceExpression?.reference }
+                if (target !in resolvedLocally && localImports.none { it.isReferenceTo(target!!) }) {
+                  if (PyClassRefactoringUtil.hasEncodedTarget(node)) importAsTargets.add(name)
+                  else nameClashes.add(name)
+                }
               }
             }
           }
