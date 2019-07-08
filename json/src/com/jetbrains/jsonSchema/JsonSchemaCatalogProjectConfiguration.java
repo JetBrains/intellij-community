@@ -6,16 +6,17 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 @State(name = "JsonSchemaCatalogProjectConfiguration", storages = @Storage("jsonCatalog.xml"))
 public class JsonSchemaCatalogProjectConfiguration implements PersistentStateComponent<JsonSchemaCatalogProjectConfiguration.MyState> {
   public volatile MyState myState = new MyState();
-  private final ConcurrentList<Runnable> myChangeHandlers = ContainerUtil.createConcurrentList();
+  private final List<Runnable> myChangeHandlers = ContainerUtil.createConcurrentList();
 
   public boolean isCatalogEnabled() {
     MyState state = getState();
