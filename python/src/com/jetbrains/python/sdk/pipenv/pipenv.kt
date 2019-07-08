@@ -389,6 +389,7 @@ class PipEnvPipFileWatcherComponent(val project: Project) : ProjectComponent {
               }
             }
             finally {
+              PythonSdkType.getSitePackagesDirectory(sdk)?.refresh(true, true)
               sdk.associatedModule?.baseDir?.refresh(true, false)
             }
           }
