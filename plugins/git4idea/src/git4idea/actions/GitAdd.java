@@ -83,10 +83,7 @@ public class GitAdd extends ScheduleForAdditionAction {
       try {
         if (!(vcsRoot.getVcs() instanceof GitVcs)) return;
 
-        VirtualFile root = vcsRoot.getPath();
-        if (root == null) return;
-
-        GitFileUtils.addPaths(project, root, paths);
+        GitFileUtils.addPaths(project, vcsRoot.getPath(), paths);
         VcsFileUtil.markFilesDirty(project, paths);
       }
       catch (VcsException ex) {

@@ -21,10 +21,7 @@ fun getGitRootFiles(project: Project, files: Collection<FilePath>): Map<VirtualF
   files.forEach { filePath ->
     val fileVcs = projectLevelVcsManager.getVcsRootObjectFor(filePath)
     if (fileVcs != null && fileVcs.vcs is GitVcs) {
-      val fileRoot = fileVcs.path
-      if (fileRoot != null) {
-        rootFiles.getOrPut(fileRoot) { HashSet() }.add(filePath)
-      }
+      rootFiles.getOrPut(fileVcs.path) { HashSet() }.add(filePath)
     }
   }
   return rootFiles

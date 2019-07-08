@@ -366,7 +366,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
         VcsRoot vcsRoot = vcsManager.getVcsRootObjectFor(path);
         if (vcsRoot != null) {
           VirtualFile root = vcsRoot.getPath();
-          if (git.equals(vcsRoot.getVcs()) && root != null) {
+          if (git.equals(vcsRoot.getVcs())) {
             result.add(root);
           }
         }

@@ -87,12 +87,9 @@ public class VcsRootIterator {
       for (VcsRoot root : allRoots) {
         final AbstractVcs vcs = root.getVcs();
         if (vcs == null || Comparing.equal(vcs.getName(), myVcsName)) continue;
-        final VirtualFile path = root.getPath();
-        if (path != null) {
-          final String url = path.getUrl();
-          if (url.startsWith(ourPath)) {
-            myExcludedByOthers.add(url);
-          }
+        final String url = root.getPath().getUrl();
+        if (url.startsWith(ourPath)) {
+          myExcludedByOthers.add(url);
         }
       }
 

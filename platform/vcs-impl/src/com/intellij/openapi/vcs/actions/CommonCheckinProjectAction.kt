@@ -9,7 +9,7 @@ open class CommonCheckinProjectAction : AbstractCommonCheckinAction() {
   override fun getRoots(dataContext: VcsContext): Array<FilePath> =
     ProjectLevelVcsManager.getInstance(dataContext.project!!).allVcsRoots
       .filter { it.vcs!!.checkinEnvironment != null }
-      .map { getFilePath(it.path!!) }
+      .map { getFilePath(it.path) }
       .toTypedArray()
 
   override fun approximatelyHasRoots(dataContext: VcsContext): Boolean = true

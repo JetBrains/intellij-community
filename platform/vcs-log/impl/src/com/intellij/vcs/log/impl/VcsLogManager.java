@@ -145,7 +145,7 @@ public class VcsLogManager implements Disposable {
     for (VcsRoot root : roots) {
       AbstractVcs vcs = root.getVcs();
       VirtualFile path = root.getPath();
-      if (vcs == null || path == null) {
+      if (vcs == null) {
         LOG.debug("Skipping invalid VCS root: " + root);
         continue;
       }

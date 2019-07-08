@@ -221,13 +221,10 @@ private fun openRelativePath(path: String, request: OpenFileRequest): Boolean {
   if (virtualFile == null) {
     for (openedProject in projects) {
       for (vcsRoot in ProjectLevelVcsManager.getInstance(openedProject).allVcsRoots) {
-        val root = vcsRoot.path
-        if (root != null) {
-          virtualFile = root.findFileByRelativePath(path)
-          if (virtualFile != null) {
-            project = openedProject
-            break
-          }
+        virtualFile = vcsRoot.path.findFileByRelativePath(path)
+        if (virtualFile != null) {
+          project = openedProject
+          break
         }
       }
     }

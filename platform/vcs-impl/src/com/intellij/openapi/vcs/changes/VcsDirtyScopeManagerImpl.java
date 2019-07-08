@@ -240,7 +240,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     for (VcsRoot root : roots) {
       AbstractVcs vcs = root.getVcs();
       VirtualFile path = root.getPath();
-      if (vcs != null && path != null) {
+      if (vcs != null) {
         dirtyRoots.putValue(vcs, VcsUtil.getFilePath(path));
       }
     }

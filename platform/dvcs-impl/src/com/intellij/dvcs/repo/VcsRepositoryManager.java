@@ -264,7 +264,7 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
     Map<VirtualFile, Repository> newRootsMap = new HashMap<>();
     for (VcsRoot root : myVcsManager.getAllVcsRoots()) {
       VirtualFile rootPath = root.getPath();
-      if (rootPath != null && !knownRoots.contains(rootPath)) {
+      if (!knownRoots.contains(rootPath)) {
         AbstractVcs vcs = root.getVcs();
         VcsRepositoryCreator repositoryCreator = getRepositoryCreator(vcs);
         if (repositoryCreator == null) continue;
