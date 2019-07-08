@@ -159,6 +159,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     protected fun updateCustomDecorationHitTestSpots() {
         val toList = getHitTestSpots().map {it.getRectangleOn(window)}.toList()
         JdkEx.setCustomDecorationHitTestSpots(window, toList)
+        JdkEx.setCustomDecorationTitleBarHeight(window, height)
     }
 
     abstract fun getHitTestSpots(): List<RelativeRectangle>

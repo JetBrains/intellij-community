@@ -71,4 +71,18 @@ public class JdkEx {
       }
     }
   }
+
+  public static void setCustomDecorationTitleBarHeight(@NotNull Window window, int height) {
+    if (SystemInfo.isJetBrainsJvm && SystemInfo.isWindows) {
+      try {
+        MethodInvocator invocator =
+          new MethodInvocator(false, Class.forName("sun.awt.windows.WWindowPeer"), "setCustomDecorationTitleBarHeight", int.class);
+        if (invocator.isAvailable()) {
+          invocator.invoke(AWTAccessor.getComponentAccessor().getPeer(window), height);
+        }
+      }
+      catch (ClassNotFoundException ignore) {
+      }
+    }
+  }
 }
