@@ -203,7 +203,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
       }
     }
 
-    Pair<Project, Module> result = null;
+    Pair<Project, Module> result;
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       result = prepareAndOpenProject(file, options, baseDir, dummyProject, dummyProjectName);
     }
