@@ -31,11 +31,11 @@ public class TokenReader {
     newThread.setDaemon(true);
     newThread.start();
 
-    waitUntilReadOrTimeout(timeoutMillis);
+    waitUntilReadOrTimeout(timeoutMillis, newThread);
   }
 
   @SuppressWarnings("BusyWait")
-  private void waitUntilReadOrTimeout(int timeoutMillis) {
+  private void waitUntilReadOrTimeout(int timeoutMillis, Thread newThread) {
     long started = System.currentTimeMillis();
     long deadline = started + timeoutMillis;
 
@@ -49,6 +49,7 @@ public class TokenReader {
       interrupted = true;
     }
     finally {
+      newThread.interrupt();
       if (interrupted) {
         Thread.currentThread().interrupt();
       }
@@ -64,12 +65,13 @@ public class TokenReader {
     @Override
     public void run() {
       try {
-        while (myScanner.hasNextLine()) {
+        while (myScanner.hasNextLine() && isInterrupted()) {
           String line = myScanner.nextLine();
           if (line != null) {
             line = line.trim();
             if (line.startsWith(PREFIX)) {
               myRef.set(line.substring(PREFIX.length()));
+              return;
             }
           }
         }

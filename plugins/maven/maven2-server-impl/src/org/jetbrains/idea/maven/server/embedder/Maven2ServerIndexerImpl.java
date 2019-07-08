@@ -198,7 +198,7 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
           myUpdater.fetchAndUpdateIndex(request);
         }
         finally {
-          embedder.release(MavenServerUtil.getToken());
+          embedder.release(token);
         }
       }
     }
@@ -343,7 +343,7 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
   public void release(MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
-      myEmbedder.release(MavenServerUtil.getToken());
+      myEmbedder.release(token);
     }
     catch (Exception e) {
       throw rethrowException(e);
