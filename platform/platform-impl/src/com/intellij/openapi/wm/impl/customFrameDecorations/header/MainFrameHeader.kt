@@ -74,17 +74,17 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
 
   private fun relayoutFrameHeader(pane: JPanel, showMainMenu: Boolean) {
     pane.layout = if(showMainMenu) {
-      MigLayout("fillx, ins 0, novisualpadding", "[pref!][]")
-    } else MigLayout("fillx, ins 0, novisualpadding", "[]")
+      MigLayout("fill, ins 0, novisualpadding", "[pref!][]")
+    } else MigLayout("fill, ins 0, novisualpadding", "[]")
 
     removeAll()
     add(productIcon)
     pane.removeAll()
     if (showMainMenu) {
-      pane.add(myIdeMenu, "wmin 0, wmax pref, top")
+      pane.add(myIdeMenu, "wmin 0, wmax pref, top, growy")
     }
     pane.add(mySelectedEditorFilePath.getView(), "center, growx, wmin 0, gapafter $H_GAP, gapbottom 1")
-    add(pane, "wmin 0, growx")
+    add(pane, "wmin 0, grow")
     add(buttonPanes.getView(), "top, wmin pref")
   }
 
