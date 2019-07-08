@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.idea.SplashManager;
@@ -20,13 +21,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.platform.CommandLineProjectOpenProcessor;
-import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -38,32 +40,31 @@ import static com.intellij.openapi.util.Pair.pair;
 /**
  * @author yole
  */
-public class CommandLineProcessor {
+public final class CommandLineProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.CommandLineProcessor");
   private static final String WAIT_KEY = "--wait";
 
   private CommandLineProcessor() { }
 
   @NotNull
-  private static Pair<Project, Future<? extends CliResult>> doOpenFileOrProject(VirtualFile file, boolean shouldWait) {
-    if (ProjectUtil.isValidProjectPath(file) || ProjectOpenProcessor.getImportProvider(file) != null) {
-      String path = file.getPath();
-      Project project = ProjectUtil.openOrImport(path, null, true);
-      if (project == null) {
-        final String message = "Cannot open project '" + FileUtil.toSystemDependentName(path) + "'";
-        Messages.showErrorDialog(message, "Cannot Open Project");
-        return pair(null, error(1, message));
-      }
-
-      return pair(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForProject(project) : ok());
+  private static Pair<Project, Future<? extends CliResult>> doOpenFileOrProject(@NotNull Path file, boolean shouldWait) {
+    OpenProjectTask openProjectOptions = new OpenProjectTask();
+    // do not check for .ipr files in specified directory (@develar: it is existing behaviour, I am not fully sure that it is correct)
+    openProjectOptions.setCheckDirectoryForFileBasedProjects(false);
+    Project project = ProjectUtil.openOrImport(file, openProjectOptions);
+    if (project == null) {
+      return doOpenFile(file, -1, false, shouldWait);
     }
     else {
-      return doOpenFile(file, -1, false, shouldWait);
+      return pair(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForProject(project) : ok());
     }
   }
 
   @NotNull
-  private static Pair<Project, Future<? extends CliResult>> doOpenFile(VirtualFile file, int line, boolean tempProject, boolean shouldWait) {
+  private static Pair<Project, Future<? extends CliResult>> doOpenFile(@NotNull Path ioFile, int line, boolean tempProject, boolean shouldWait) {
+    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(ioFile.toString()));
+    assert file != null;
+
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     if (projects.length == 0 || tempProject) {
       Project project = CommandLineProjectOpenProcessor.getInstance().openProjectAndFile(file, line, tempProject);
@@ -175,32 +176,27 @@ public class CommandLineProcessor {
       if (StringUtil.isQuotedString(arg)) {
         arg = StringUtil.unquoteString(arg);
       }
-      if (!new File(arg).isAbsolute()) {
-        arg = (currentDirectory != null ? new File(currentDirectory, arg) : new File(arg)).getAbsolutePath();
+
+      Path file = Paths.get(arg);
+      if (!file.isAbsolute()) {
+        file = currentDirectory == null ? file.toAbsolutePath() : Paths.get(currentDirectory).resolve(file);
       }
 
-      VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(arg);
+      if (!Files.exists(file)) {
+        String message = "Cannot find file '" + file + "'";
+        Messages.showErrorDialog(message, "Cannot Find File");
+        return pair(null, error(1, message));
+      }
+
       if (line != -1 || tempProject) {
-        if (file != null && !file.isDirectory()) {
-          projectAndCallback = doOpenFile(file, line, tempProject, shouldWait);
-          if (shouldWait) break;
-        }
-        else {
-          final String message = "Cannot find file '" + arg + "'";
-          Messages.showErrorDialog(message, "Cannot Find File");
-          return pair(null, error(1, message));
-        }
+        projectAndCallback = doOpenFile(file, line, tempProject, shouldWait);
       }
       else {
-        if (file != null) {
-          projectAndCallback = doOpenFileOrProject(file, shouldWait);
-          if (shouldWait) break;
-        }
-        else {
-          final String message = "Cannot find file '" + arg + "'";
-          Messages.showErrorDialog(message, "Cannot Find File");
-          return pair(null, error(1, message));
-        }
+        projectAndCallback = doOpenFileOrProject(file, shouldWait);
+      }
+
+      if (shouldWait) {
+        break;
       }
 
       line = -1;

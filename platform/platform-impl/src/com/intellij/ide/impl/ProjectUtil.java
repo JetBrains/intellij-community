@@ -99,6 +99,16 @@ public class ProjectUtil {
    */
   @Nullable
   public static Project openOrImport(@NotNull @SystemIndependent String path, Project projectToClose, boolean forceOpenInNewFrame) {
+    return openOrImport(path, new OpenProjectTask(forceOpenInNewFrame, projectToClose));
+  }
+
+  @Nullable
+  public static Project openOrImport(@NotNull Path path, @NotNull OpenProjectTask options) {
+    return openOrImport(FileUtil.toSystemIndependentName(path.toString()), options);
+  }
+
+  @Nullable
+  public static Project openOrImport(@NotNull @SystemIndependent String path, @NotNull OpenProjectTask options) {
     Project existing = findAndFocusExistingProjectForPath(path);
     if (existing != null) {
       return existing;
@@ -111,43 +121,44 @@ public class ProjectUtil {
 
     virtualFile.refresh(false, false);
 
-    ProjectOpenProcessor strong = ProjectOpenProcessor.getStrongImportProvider(virtualFile);
-    if (strong != null) {
-      return strong.doOpenProject(virtualFile, projectToClose, forceOpenInNewFrame);
+    for (ProjectOpenProcessor provider : ProjectOpenProcessor.EXTENSION_POINT_NAME.getIterable()) {
+      if (provider.isStrongProjectInfoHolder() && provider.canOpenProject(virtualFile)) {
+        return provider.doOpenProject(virtualFile, options.getProjectToClose(), options.getForceOpenInNewFrame());
+      }
     }
 
     if (isValidProjectPath(virtualFile)) {
-      return openProject(path, projectToClose, forceOpenInNewFrame);
+      return openProject(virtualFile.getPath(), options.getProjectToClose(), options.getForceOpenInNewFrame());
     }
 
-    if (virtualFile.isDirectory()) {
+    if (options.getCheckDirectoryForFileBasedProjects() && virtualFile.isDirectory()) {
       for (VirtualFile child : virtualFile.getChildren()) {
-        final String childPath = child.getPath();
+        String childPath = child.getPath();
         if (childPath.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
-          return openProject(childPath, projectToClose, forceOpenInNewFrame);
+          return openProject(childPath, options.getProjectToClose(), options.getForceOpenInNewFrame());
         }
       }
     }
 
     ProjectOpenProcessor provider = ProjectOpenProcessor.getImportProvider(virtualFile);
-    if (provider != null) {
-      final Project project = provider.doOpenProject(virtualFile, projectToClose, forceOpenInNewFrame);
-
-      if (project != null) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          if (!project.isDisposed()) {
-            final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);
-            if (toolWindow != null) {
-              toolWindow.activate(null);
-            }
-          }
-        }, ModalityState.NON_MODAL);
-      }
-
-      return project;
+    if (provider == null) {
+      return null;
     }
 
-    return null;
+    Project project = provider.doOpenProject(virtualFile, options.getProjectToClose(), options.getForceOpenInNewFrame());
+    if (project == null) {
+      return null;
+    }
+
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (!project.isDisposed()) {
+        final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);
+        if (toolWindow != null) {
+          toolWindow.activate(null);
+        }
+      }
+    }, ModalityState.NON_MODAL);
+    return project;
   }
 
   @Nullable
