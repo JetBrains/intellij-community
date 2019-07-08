@@ -66,10 +66,7 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
   }
 
   private void doGenerate(@NotNull VirtualFile ignoreFileRoot, @NotNull AbstractVcs vcs, boolean notify) {
-    if (notify && !needGenerateIgnoreFile(myProject, ignoreFileRoot)) {
-      LOG.debug("Skip VCS ignore file generation");
-      return;
-    }
+    if (skipGeneration(ignoreFileRoot, notify)) return;
 
     IgnoredFileContentProvider ignoredFileContentProvider = VcsImplUtil.getIgnoredFileContentProvider(myProject, vcs);
     if (ignoredFileContentProvider == null) {
@@ -94,6 +91,19 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
         writeToFile(ignoreFileRoot, ignoreFile, ignoreFileContent, false);
       }
     }
+  }
+
+  private boolean skipGeneration(@NotNull VirtualFile ignoreFileRoot, boolean notify) {
+    if (notify && !needGenerateIgnoreFile(myProject, ignoreFileRoot)) { // notify == true for non-internal ignore file generation
+      LOG.debug("Skip VCS ignore file generation");
+      return true;
+    }
+    else if (!needGenerateInternalIgnoreFile(myProject, ignoreFileRoot)) {
+      LOG.debug("Skip VCS internal ignore file generation");
+      return true;
+    }
+
+    return false;
   }
 
   private void writeToFile(@NotNull VirtualFile ignoreFileRoot, @NotNull File ignoreFile, @NotNull String ignoreFileContent, boolean openFile) {
@@ -183,6 +193,16 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
   private static File getIgnoreFile(@NotNull VirtualFile ignoreFileRoot, @NotNull String ignoreFileName) {
     File vcsRootFile = VfsUtilCore.virtualToIoFile(ignoreFileRoot);
     return new File(vcsRootFile.getPath(), ignoreFileName);
+  }
+
+  private static boolean needGenerateInternalIgnoreFile(@NotNull Project project, @NotNull VirtualFile ignoreFileRoot) {
+    boolean wasGeneratedPreviously = IgnoredFileRootStore.getInstance(project).containsRoot(ignoreFileRoot.getPath());
+    if (wasGeneratedPreviously) {
+      LOG.debug("Ignore file generated previously for root " + ignoreFileRoot.getPath());
+      return false;
+    }
+
+    return true;
   }
 
   private static boolean needGenerateIgnoreFile(@NotNull Project project, @NotNull VirtualFile ignoreFileRoot) {
