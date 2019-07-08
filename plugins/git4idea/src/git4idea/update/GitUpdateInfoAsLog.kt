@@ -7,13 +7,11 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.ui.GuiUtils
 import com.intellij.util.ContentUtilEx
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.vcs.log.CommitId
@@ -62,8 +60,12 @@ class GitUpdateInfoAsLog(private val project: Project,
   private class CommitsAndFiles(val updatedFilesCount: Int, val receivedCommitsCount: Int)
 
   @CalledInBackground
-  fun calculateDataAndCreateLogTab(): NotificationData {
+  fun calculateDataAndCreateLogTab(): NotificationData? {
     val commitsAndFiles = calculateDataFromGit()
+
+    if (commitsAndFiles == null) {
+      return null
+    }
 
     val logManager = VcsLogContentUtil.getOrCreateLog(project)
     if (!isPathFilterSet()) {
@@ -120,8 +122,11 @@ class GitUpdateInfoAsLog(private val project: Project,
     return dataPack.containsAll(ranges.asIterable().map { CommitId(it.value.end, it.key.root) }, log.dataManager!!.storage)
   }
 
-  private fun calculateDataFromGit(): CommitsAndFiles {
+  private fun calculateDataFromGit(): CommitsAndFiles? {
     val updatedCommitsCount = calcUpdatedCommitsCount()
+    if (updatedCommitsCount == 0) {
+      return null
+    }
     val updatedFilesCount = calcUpdatedFilesCount()
     return CommitsAndFiles(updatedFilesCount, updatedCommitsCount)
   }

@@ -163,7 +163,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
         GitUpdateInfoAsLog.NotificationData notificationData = new GitUpdateInfoAsLog(project, ranges).calculateDataAndCreateLogTab();
 
         Notification notification;
-        if (notificationData.getReceivedCommitsCount() > 0) {
+        if (notificationData != null) {
           String title = getTitleForUpdateNotification(notificationData.getUpdatedFilesCount(), notificationData.getReceivedCommitsCount());
           String content = getBodyForUpdateNotification(notificationData.getUpdatedFilesCount(), notificationData.getReceivedCommitsCount(),
                                                         notificationData.getFilteredCommitsCount());
