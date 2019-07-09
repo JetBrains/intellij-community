@@ -22,7 +22,7 @@ class CircletIdeaGraphStorageTransaction(private val storage: CircletIdeaAutomat
         callback.afterTransaction(body)
     }
 
-    override fun getAllNotFinishedJobs(graphExecution: AGraphExecutionEntity): Iterable<AJobExecutionEntity<*>> {
+    override fun getAllNotFinishedJobs(graphExecution: AGraphExecutionEntity): Iterable<AJobExecutionEntity<ProjectJob.Process<*, *>>> {
         TODO("getAllNotFinishedJobs not implemented")
     }
 
@@ -31,11 +31,15 @@ class CircletIdeaGraphStorageTransaction(private val storage: CircletIdeaAutomat
         return CircletIdeaAGraphMetaEntity(metaTaskId, storage.task)
     }
 
-    override fun findJobExecution(id: Long): AJobExecutionEntity<*>? {
+    override fun findJobExecution(id: Long): AJobExecutionEntity<ProjectJob.Process<*, *>>? {
         return storage.storedExecutions[id]
     }
 
-    override fun createTaskExecution(metaTask: AGraphMetaEntity, taskStartContext: TaskStartContext): AGraphExecutionEntity {
+    override fun createTaskExecution(
+        metaTask: AGraphMetaEntity,
+        taskStartContext: TaskStartContext,
+        bootstrapJobFactory: (AGraphExecutionEntity) -> ProjectJob.Process.Container?
+    ): AGraphExecutionEntity {
         logger.debug { "createTaskExecution $metaTask" }
         val now = System.currentTimeMillis()
         val jobs = mutableListOf<AJobExecutionEntity<*>>()
@@ -58,22 +62,19 @@ class CircletIdeaGraphStorageTransaction(private val storage: CircletIdeaAutomat
             }
         }
 
+        val bootstrapJob = bootstrapJobFactory(graphExecutionEntity)
+        if (bootstrapJob != null) {
+            graphExecutionEntity.jobsList.add(
+                createAJobExecutionEntity(bootstrapJob, graphExecutionEntity)
+            )
+            graphExecutionEntity.executionMeta = graphExecutionEntity.graphMeta.originalMeta.prependJobs(listOf(bootstrapJob))
+        }
+
         return graphExecutionEntity
     }
 
     override fun createSshKey(graphExecution: AGraphExecutionEntity, fingerPrint: String) {
         logger.debug { "createSshKey $fingerPrint" }
-    }
-
-    override fun batchCreateJobExecutions(graphExecution: AGraphExecutionEntity, bootstrapJob: ProjectJob.Process.Container) {
-        if (graphExecution !is CircletIdeaAGraphExecutionEntity) {
-            error("Unknown $graphExecution")
-        }
-
-        graphExecution.jobsList.add(
-            createAJobExecutionEntity(bootstrapJob, graphExecution)
-        )
-        graphExecution.executionMeta = graphExecution.graph.originalMeta.prependJobs(listOf(bootstrapJob))
     }
 
     private fun createAJobExecutionEntity(bootstrapJob: ProjectJob.Process.Container, graphExecution: AGraphExecutionEntity): AJobExecutionEntity<*> {
@@ -93,6 +94,10 @@ class CircletIdeaGraphStorageTransaction(private val storage: CircletIdeaAutomat
     }
 
     override fun findSnapshotForJobExecution(jobExec: AJobExecutionEntity<*>): AVolumeSnapshotEntity? {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun saveVolume(graphExecution: AGraphExecutionEntity, volumeId: String, volumeName: String) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }

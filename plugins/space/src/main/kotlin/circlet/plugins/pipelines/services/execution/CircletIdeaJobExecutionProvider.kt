@@ -22,23 +22,23 @@ class CircletIdeaJobExecutionProvider(
 
     private lateinit var savedHandler: (tx: GraphStorageTransaction, job: AJobExecutionEntity<*>, newStatus: ExecutionStatus) -> Unit
 
-    override fun scheduleExecution(jobExecIds: Iterable<Long>) = launch { execute(jobExecIds) }
+    override fun scheduleExecution(jobExecs: Iterable<JobExecutionData<*>>) = launch { startExecution(jobExecs) }
 
-    override fun scheduleTermination(jobExecIds: Iterable<Long>) = launch { terminate(jobExecIds) }
+    override fun scheduleTermination(jobExecs: Iterable<JobExecutionData<*>>) = launch { startTermination(jobExecs) }
 
-    override suspend fun execute(jobExecIds: Iterable<Long>) {
-        jobExecIds.forEach { jobId ->
-            val jobEntity = tx.findJobExecution(jobId) ?: error("Job execution [$jobId] is not found")
+    override suspend fun startExecution(jobExecs: Iterable<JobExecutionData<*>>) {
+        jobExecs.forEach { jobData ->
+            val jobEntity = tx.findJobExecution(jobData.id) ?: error("Job execution [$jobData] is not found")
             if (jobEntity !is CircletIdeaAJobExecutionEntity) {
                 error("unknown job $jobEntity")
             }
 
             val image = jobEntity.meta.image
-            logCallback("prepare to run: image=$image, id=$jobId")
+            logCallback("prepare to run: image=$image, id=$jobData")
             val jobLifetimeSource = lifetime.nested()
 
             val dummyContainer = DummyContainer(jobLifetimeSource)
-            runningJobs[jobId] = dummyContainer
+            runningJobs[jobData.id] = dummyContainer
             changeState(tx, jobEntity, ExecutionStatus.RUNNING)
 
             var counter = 0
@@ -51,17 +51,17 @@ class CircletIdeaJobExecutionProvider(
             }
 
             jobLifetimeSource.add {
-                runningJobs.remove(jobId)?.lifetimeSource?.terminate()
+                runningJobs.remove(jobData.id)?.lifetimeSource?.terminate()
                 timer.cancel()
-                logCallback("stop: image=$image, id=$jobId")
+                logCallback("stop: image=$image, id=$jobData")
 
                 changeState(tx, jobEntity, generateFinalState(image))
             }
         }
     }
 
-    override suspend fun terminate(jobExecIds: Iterable<Long>) {
-        TODO("terminate not implemented")
+    override suspend fun startTermination(jobExecs: Iterable<JobExecutionData<*>>) {
+        TODO("startTermination not implemented")
     }
 
     override fun subscribeIdempotently(handler: (tx: GraphStorageTransaction, job: AJobExecutionEntity<*>, newStatus: ExecutionStatus) -> Unit) {
