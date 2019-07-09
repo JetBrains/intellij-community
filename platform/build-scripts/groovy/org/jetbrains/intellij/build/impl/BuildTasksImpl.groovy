@@ -724,7 +724,7 @@ idea.fatal.error.notification=disabled
       it.getFiles(JpsOrderRootType.COMPILED)
     }
     new LayoutBuilder(buildContext, false).layout(buildContext.paths.artifacts) {
-      jar("updater-full.jar") {
+      jar(name: "updater-full.jar", duplicate: "preserve") {  // Android Studio: libraries can have conflicting files in META-INF especially
         module(updaterModule)
         libraryFiles.each { file ->
           ant.zipfileset(src: file.absolutePath)
