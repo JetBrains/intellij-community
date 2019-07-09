@@ -29,8 +29,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class MessageBusImpl implements MessageBus {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.messages.impl.MessageBusImpl");
-  private static final Comparator<MessageBusImpl> MESSAGE_BUS_COMPARATOR =
-    (bus1, bus2) -> ContainerUtil.compareLexicographically(bus1.myOrder, bus2.myOrder);
+  private static final Comparator<MessageBusImpl> MESSAGE_BUS_COMPARATOR = (bus1, bus2) -> ArrayUtil.lexicographicCompare(bus1.myOrder, bus2.myOrder);
   @SuppressWarnings("SSBasedInspection") private final ThreadLocal<Queue<DeliveryJob>> myMessageQueue = createThreadLocalQueue();
 
   /**
@@ -38,7 +37,7 @@ public class MessageBusImpl implements MessageBus {
    * Child bus's order is its parent order plus one more element, an int that's bigger than that of all sibling buses that come before
    * Sorting by these vectors lexicographically gives DFS order
    */
-  private List<Integer> myOrder;
+  private final int[] myOrder;
 
   private final ConcurrentMap<Topic, Object> myPublishers = ContainerUtil.newConcurrentMap();
 
@@ -67,13 +66,19 @@ public class MessageBusImpl implements MessageBus {
   private MessageDeliveryListener myListener;
 
   public MessageBusImpl(@NotNull Object owner, @NotNull MessageBus parentBus) {
-    this(owner);
-
+    myOwner = owner + " of " + owner.getClass();
+    myConnectionDisposable = Disposer.newDisposable(myOwner);
     myParentBus = (MessageBusImpl)parentBus;
     myRootBus = myParentBus.myRootBus;
-    myParentBus.onChildBusCreated(this);
+    myOrder = myParentBus.onChildBusCreated(this);
     LOG.assertTrue(myParentBus.myChildBuses.contains(this));
-    LOG.assertTrue(myOrder != null);
+  }
+
+  // root message bus constructor
+  private MessageBusImpl(@NotNull Object owner) {
+    myOwner = owner + " of " + owner.getClass();
+    myConnectionDisposable = Disposer.newDisposable(myOwner);
+    myOrder = ArrayUtil.EMPTY_INT_ARRAY;
   }
 
   @ApiStatus.Internal
@@ -82,12 +87,6 @@ public class MessageBusImpl implements MessageBus {
       throw new IllegalStateException("Already set: "+myTopicClassToListenerClass);
     }
     myTopicClassToListenerClass = map;
-  }
-
-  private MessageBusImpl(@NotNull Object owner) {
-    myOwner = owner + " of " + owner.getClass();
-    myConnectionDisposable = Disposer.newDisposable(myOwner);
-    myOrder = new ArrayList<>();
   }
 
   @Override
@@ -113,24 +112,24 @@ public class MessageBusImpl implements MessageBus {
    *
    * @param childBus newly created child bus
    */
-  private void onChildBusCreated(@NotNull MessageBusImpl childBus) {
+  @NotNull
+  private int[] onChildBusCreated(@NotNull MessageBusImpl childBus) {
     LOG.assertTrue(childBus.myParentBus == this);
 
+    int[] childOrder;
     synchronized (myChildBuses) {
-      MessageBusImpl lastChild = myChildBuses.isEmpty() ? null : myChildBuses.get(myChildBuses.size() - 1);
+      MessageBusImpl lastChild = ContainerUtil.getLastItem(myChildBuses);
       myChildBuses.add(childBus);
 
-      int lastChildIndex = lastChild == null ? 0 : lastChild.myOrder.get(lastChild.myOrder.size() - 1);
+      int lastChildIndex = lastChild == null ? 0 : ArrayUtil.getLastElement(lastChild.myOrder, 0);
       if (lastChildIndex == Integer.MAX_VALUE) {
         LOG.error("Too many child buses");
       }
-      List<Integer> childOrder = new ArrayList<>(myOrder.size() + 1);
-      childOrder.addAll(myOrder);
-      childOrder.add(lastChildIndex + 1);
-      childBus.myOrder = childOrder;
+      childOrder = ArrayUtil.append(myOrder, lastChildIndex + 1);
     }
 
     myRootBus.clearSubscriberCache();
+    return childOrder;
   }
 
   private void onChildBusDisposed(@NotNull MessageBusImpl childBus) {
