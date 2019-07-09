@@ -25,6 +25,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.reference.SoftReference;
 import com.intellij.serialization.SerializationException;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -46,6 +47,7 @@ import java.io.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.ref.Reference;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -85,7 +87,7 @@ public class PluginManagerCore {
   static final String EDIT = "edit";
 
   private static Set<String> ourDisabledPlugins;
-  private static MultiMap<String, String> ourBrokenPluginVersions;
+  private static Reference<MultiMap<String, String>> ourBrokenPluginVersions;
   private static final AtomicReference<IdeaPluginDescriptor[]> ourPlugins = new AtomicReference<>();
   private static List<IdeaPluginDescriptor> ourLoadedPlugins;
 
@@ -251,8 +253,9 @@ public class PluginManagerCore {
 
   @NotNull
   private static MultiMap<String, String> getBrokenPluginVersions() {
-    if (ourBrokenPluginVersions == null) {
-      ourBrokenPluginVersions = MultiMap.createSet();
+    MultiMap<String, String> result = SoftReference.dereference(ourBrokenPluginVersions);
+    if (result == null) {
+      result = MultiMap.createSet();
 
       if (System.getProperty("idea.ignore.disabled.plugins") == null) {
         try (InputStream resource = PluginManagerCore.class.getResourceAsStream("/brokenPlugins.txt");
@@ -272,16 +275,17 @@ public class PluginManagerCore {
             String pluginId = tokens.get(0);
             List<String> versions = tokens.subList(1, tokens.size());
 
-            ourBrokenPluginVersions.putValues(pluginId, versions);
+            result.putValues(pluginId, versions);
           }
         }
         catch (IOException e) {
           throw new RuntimeException("Failed to read /brokenPlugins.txt", e);
         }
       }
+      ourBrokenPluginVersions = new java.lang.ref.SoftReference<>(result);
     }
 
-    return ourBrokenPluginVersions;
+    return result;
   }
 
   public static void addDisablePluginListener(@NotNull Runnable listener) {
