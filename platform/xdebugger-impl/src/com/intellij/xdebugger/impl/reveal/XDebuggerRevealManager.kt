@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.Alarm
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.impl.RevealManagerState
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
@@ -16,6 +17,8 @@ open class XDebuggerRevealManager {
 
     companion object {
         fun getInstance(project: Project): XDebuggerRevealManager = (XDebuggerManager.getInstance(project) as XDebuggerManagerImpl).revealManager
+
+        const val DEFAULT_ICON_DELAY = 200L
     }
 
     private val myListeners = mutableListOf<XDebuggerRevealListener>()
@@ -23,6 +26,7 @@ open class XDebuggerRevealManager {
     private var myNodeHoverLifetime : Disposable? = null
     private var myActiveNode: XDebuggerTreeNode? = null
     private var myRevealedMembers = HashMap<String, RevealItemInfo>()
+    private val myRevealIconAlarm = Alarm()
 
     val revealComparator : Comparator<XValueNodeImpl> = Comparator.comparing<XValueNodeImpl, Boolean> { !isItemRevealed(it) }
     val compoundComparator = revealComparator.then(XValueNodeImpl.COMPARATOR)
@@ -48,11 +52,16 @@ open class XDebuggerRevealManager {
         val oldIcon = valueNode.icon
 
         val changeIconLifetime = Disposable {
-            node.setPresentation(oldIcon, valuePresentation, hasChildren)
+            if (node.icon != oldIcon) {
+                node.setPresentation(oldIcon, valuePresentation, hasChildren)
+            }
             myActiveNode = null
         }
         myActiveNode = node
-        node.setPresentation(AllIcons.Debugger.Reveal.RevealOff, valuePresentation, hasChildren)
+
+        myRevealIconAlarm.addRequest({
+            node.setPresentation(AllIcons.Debugger.Reveal.RevealOff, valuePresentation, hasChildren)
+        }, DEFAULT_ICON_DELAY)
         myNodeHoverLifetime = changeIconLifetime
         Disposer.register(lifetimeHolder, changeIconLifetime)
     }
@@ -93,6 +102,7 @@ open class XDebuggerRevealManager {
 
     private fun disposeCurrentNodeHoverSubscription() {
         Disposer.dispose(myNodeHoverLifetime ?: return)
+        myRevealIconAlarm.cancelAllRequests()
     }
 
     fun saveState(state: RevealManagerState) {
