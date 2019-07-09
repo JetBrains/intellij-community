@@ -19,7 +19,7 @@ import com.intellij.ide.dnd.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -71,7 +71,8 @@ public class ChangesDnDSupport implements DnDDropHandler, DnDTargetChecker {
 
   @NotNull
   private DnDImage createDraggedImage(@NotNull DnDActionInfo info) {
-    String imageText = VcsBundle.message("changes.view.dnd.label", getSelectionCount());
+    int count = getSelectionCount();
+    String imageText = count + " " + StringUtil.pluralize("file", count);
     Image image = DnDAwareTree.getDragImage(myTree, imageText, null).getFirst();
 
     return new DnDImage(image, new Point(-image.getWidth(null), -image.getHeight(null)));
