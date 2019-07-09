@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright 2000-2017 JetBrains s.r.o.
+  ~ Copyright 2000-2019 JetBrains s.r.o.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -49,9 +49,11 @@
     <lang.inspectionSuppressor language="JAVA" implementationClass="com.intellij.codeInspection.SuppressManagerImpl"/>
     <projectService serviceImplementation="com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis"/>
     <generatedSourcesFilter implementation="com.intellij.openapi.roots.JavaGeneratedSourcesFilter"/>
+    <!--suppress PluginXmlCapitalization -->
     <localInspection groupPath="Java" language="JAVA" shortName="FieldNotUsedInToString" displayName="Field not used in 'toString()' method" groupKey="group.names.toString.issues" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="false" level="WARNING" runForWholeFile="true"
                      implementationClass="org.jetbrains.java.generate.inspection.FieldNotUsedInToStringInspection"/>
+    <!--suppress PluginXmlCapitalization -->
     <localInspection groupPath="Java" language="JAVA" shortName="ClassHasNoToStringMethod" displayName="Class does not override 'toString()' method"
                      groupKey="group.names.toString.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.java.generate.inspection.ClassHasNoToStringMethodInspection"/>
