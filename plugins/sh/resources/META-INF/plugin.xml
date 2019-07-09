@@ -55,7 +55,7 @@
     <statistics.counterUsagesCollector groupId="shell.script" version="1"/>
 
     <highlightUsagesHandlerFactory implementation="com.intellij.sh.highlighting.ShOccurrencesHighlightingFactory"/>
-    <renameHandler implementation="com.intellij.sh.ShRenameHandler"/>
+    <renameHandler implementation="com.intellij.sh.rename.ShRenameHandler"/>
 
     <intentionAction>
       <className>com.intellij.sh.rename.ShRenameAllOccurrencesIntention</className>
