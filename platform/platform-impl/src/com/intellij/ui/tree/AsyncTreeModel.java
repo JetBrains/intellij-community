@@ -31,7 +31,6 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
 
-import static com.intellij.openapi.util.registry.Registry.is;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
@@ -544,12 +543,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
         tree.map.put(loaded.object, loaded);
         TreePath path = new TreePath(loaded.object);
         loaded.insertPath(path);
-        try {
-          treeStructureChanged(is("async.tree.model.root.changed") ? path : null, null, null);
-        }
-        catch (Exception exception) {
-          LOG.error("user's model: " + model, exception);
-        }
+        treeStructureChanged(path, null, null);
         LOG.debug("new root: ", loaded.object);
         tree.queue.done(this, loaded);
       }
@@ -948,6 +942,46 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
         if (path == null) return false;
       }
       return true;
+    }
+  }
+
+  @Override
+  protected void treeStructureChanged(TreePath path, int[] indices, Object[] children) {
+    try {
+      super.treeStructureChanged(path, indices, children);
+    }
+    catch (Exception exception) {
+      LOG.error("custom model: " + model, exception);
+    }
+  }
+
+  @Override
+  protected void treeNodesChanged(TreePath path, int[] indices, Object[] children) {
+    try {
+      super.treeNodesChanged(path, indices, children);
+    }
+    catch (Exception exception) {
+      LOG.error("custom model: " + model, exception);
+    }
+  }
+
+  @Override
+  protected void treeNodesInserted(TreePath path, int[] indices, Object[] children) {
+    try {
+      super.treeNodesInserted(path, indices, children);
+    }
+    catch (Exception exception) {
+      LOG.error("custom model: " + model, exception);
+    }
+  }
+
+  @Override
+  protected void treeNodesRemoved(TreePath path, int[] indices, Object[] children) {
+    try {
+      super.treeNodesRemoved(path, indices, children);
+    }
+    catch (Exception exception) {
+      LOG.error("custom model: " + model, exception);
     }
   }
 
