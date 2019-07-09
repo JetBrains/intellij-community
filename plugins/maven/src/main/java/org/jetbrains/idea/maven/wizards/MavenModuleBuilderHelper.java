@@ -78,6 +78,8 @@ public class MavenModuleBuilderHelper {
     final VirtualFile pom = WriteCommandAction.writeCommandAction(project, psiFiles).withName(myCommandName).compute(() -> {
         VirtualFile file = null;
         try {
+          file = root.findChild(MavenConstants.POM_XML);
+          if (file != null) file.delete(this);
           file = root.createChildData(this, MavenConstants.POM_XML);
           MavenUtil.runOrApplyMavenProjectFileTemplate(project, file, myProjectId, isInteractive);
         }
