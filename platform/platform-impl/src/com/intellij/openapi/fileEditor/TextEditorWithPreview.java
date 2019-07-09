@@ -187,7 +187,6 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
     return new MyFileEditorState(myLayout, myEditor.getState(level), myPreview.getState(level));
   }
 
-
   @Override
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myEditor.addPropertyChangeListener(listener);
@@ -330,9 +329,9 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
   @NotNull
   private ActionToolbar createRightToolbar() {
     final ActionGroup viewActions = new DefaultActionGroup(
-      new ChangeViewModeAction(Layout.SHOW_EDITOR),
-      new ChangeViewModeAction(Layout.SHOW_EDITOR_AND_PREVIEW),
-      new ChangeViewModeAction(Layout.SHOW_PREVIEW)
+      getShowEditorAction(),
+      getShowEditorAndPreviewAction(),
+      getShowPreviewAction()
     );
     final ActionGroup group = createRightToolbarActionGroup();
     final ActionGroup rightToolbarActions = group == null ?
@@ -348,6 +347,21 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
   @Nullable
   protected ActionGroup createRightToolbarActionGroup() {
     return null;
+  }
+
+  @NotNull
+  protected ToggleAction getShowEditorAction() {
+    return new ChangeViewModeAction(Layout.SHOW_EDITOR);
+  }
+
+  @NotNull
+  protected ToggleAction getShowPreviewAction() {
+    return new ChangeViewModeAction(Layout.SHOW_PREVIEW);
+  }
+
+  @NotNull
+  protected ToggleAction getShowEditorAndPreviewAction() {
+    return new ChangeViewModeAction(Layout.SHOW_EDITOR_AND_PREVIEW);
   }
 
   public enum Layout {
