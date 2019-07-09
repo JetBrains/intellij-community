@@ -61,6 +61,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
+import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
@@ -838,10 +839,16 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     final MatchOptions matchOptions = getConfiguration().getMatchOptions();
     matchOptions.setScope(new LocalSearchScope(file, IdeBundle.message("scope.current.file")));
     final CollectingMatchResultSink sink = new CollectingMatchResultSink();
-    new Matcher(project).findMatches(sink, matchOptions);
-    final List<MatchResult> matches = sink.getMatches();
-    removeMatchHighlights();
-    addMatchHighlights(matches, editor, file, matches.size() + " results found in current file");
+    try {
+      new Matcher(project).findMatches(sink, matchOptions);
+      final List<MatchResult> matches = sink.getMatches();
+      removeMatchHighlights();
+      addMatchHighlights(matches, editor, file, matches.size() + " results found in current file");
+    }
+    catch (StructuralSearchException e) {
+      reportMessage(e.getMessage().replace(ScriptSupport.UUID, ""), true, mySearchCriteriaEdit);
+      removeMatchHighlights();
+    }
   }
 
   private void addMatchHighlights(@NotNull List<MatchResult> matchResults,
