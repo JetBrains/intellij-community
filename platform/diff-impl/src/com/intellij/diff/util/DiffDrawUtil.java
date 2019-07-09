@@ -490,7 +490,7 @@ public class DiffDrawUtil {
       int end = offsets.getEndOffset();
 
       TextAttributes attributes = isEmptyRange ? null : getTextAttributes(type, editor, editorMode.background);
-      TextAttributes stripeAttributes = isEmptyRange || hideStripeMarkers || resolved || excludedInEditor
+      TextAttributes stripeAttributes = hideStripeMarkers || resolved || excludedInEditor
                                         ? null : getStripeTextAttributes(type, editor);
       boolean dottedLine = editorMode.border == BorderType.DOTTED;
 
