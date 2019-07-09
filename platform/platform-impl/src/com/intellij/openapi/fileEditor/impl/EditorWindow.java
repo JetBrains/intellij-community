@@ -66,9 +66,9 @@ public class EditorWindow {
 
   private boolean myIsDisposed;
   public static final Key<Integer> INITIAL_INDEX_KEY = Key.create("initial editor index");
-  private final Stack<Pair<String, Integer>> myRemovedTabs = new Stack<Pair<String, Integer>>() {
+  private final Stack<Pair<String, FileEditorOpenOptions>> myRemovedTabs = new Stack<Pair<String, FileEditorOpenOptions>>() {
     @Override
-    public void push(Pair<String, Integer> pair) {
+    public void push(Pair<String, FileEditorOpenOptions> pair) {
       if (size() >= UISettings.getInstance().getEditorTabLimit()) {
         remove(0);
       }
@@ -76,7 +76,7 @@ public class EditorWindow {
     }
   };
   private final AtomicBoolean myTabsHidingInProgress = new AtomicBoolean(false);
-  private final Stack<Pair<String, Integer>> myHiddenTabs = new Stack<>();
+  private final Stack<Pair<String, FileEditorOpenOptions>> myHiddenTabs = new Stack<>();
 
   protected EditorWindow(@NotNull EditorsSplitters owner) {
     myOwner = owner;
@@ -160,29 +160,29 @@ public class EditorWindow {
   void restoreClosedTab() {
     assert hasClosedTabs() : "Nothing to restore";
 
-    final Pair<String, Integer> info = myRemovedTabs.pop();
+    final Pair<String, FileEditorOpenOptions> info = myRemovedTabs.pop();
     final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(info.getFirst());
-    final Integer second = info.getSecond();
     if (file != null) {
       getManager().openFileImpl4(this, file, null,
                                  new FileEditorOpenOptions()
+                                   .withPin(info.getSecond().getPin())
                                    .withCurrentTab(true)
                                    .withFocusEditor(true)
-                                   .withIndex(second == null ? -1 : second.intValue()));
+                                   .withIndex(info.getSecond().getIndex()));
     }
   }
 
   private void restoreHiddenTabs() {
     while (!myHiddenTabs.isEmpty()) {
-      final Pair<String, Integer> info = myHiddenTabs.pop();
+      final Pair<String, FileEditorOpenOptions> info = myHiddenTabs.pop();
       myRemovedTabs.remove(info);
       final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(info.getFirst());
-      final Integer second = info.getSecond();
       if (file != null) {
         getManager().openFileImpl4(this, file, null,
                                    new FileEditorOpenOptions()
+                                     .withPin(info.getSecond().getPin())
                                      .withCurrentTab(true)
-                                     .withIndex(second == null ? -1 : second.intValue()));
+                                     .withIndex(info.getSecond().getIndex()));
       }
     }
   }
@@ -204,7 +204,8 @@ public class EditorWindow {
           final int componentIndex = findComponentIndex(editor.getComponent());
           if (componentIndex >= 0) { // editor could close itself on decomposition
             final int indexToSelect = calcIndexToSelect(file, componentIndex);
-            Pair<String, Integer> pair = Pair.create(file.getUrl(), componentIndex);
+            FileEditorOpenOptions options = new FileEditorOpenOptions().withIndex(componentIndex).withPin(editor.isPinned());
+            Pair<String, FileEditorOpenOptions> pair = Pair.create(file.getUrl(), options);
             myRemovedTabs.push(pair);
             if (myTabsHidingInProgress.get()) {
               myHiddenTabs.push(pair);
