@@ -320,7 +320,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   private void removeOrderEntryInternal(@NotNull OrderEntry entry) {
     LOG.assertTrue(myOrderEntries.contains(entry));
     Disposer.dispose((Disposable)entry);
-    myOrderEntries.remove(entry);
+    while (myOrderEntries.remove(entry));
   }
 
   @Override
