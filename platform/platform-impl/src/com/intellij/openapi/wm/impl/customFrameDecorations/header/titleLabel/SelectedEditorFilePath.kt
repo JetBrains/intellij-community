@@ -60,6 +60,30 @@ open class SelectedEditorFilePath {
   protected open fun installListeners() {
     project ?: return
 
+    if (disposable != null) {
+      unInstallListeners()
+    }
+
+    project?.let {
+      val disp = Disposer.newDisposable()
+      Disposer.register(it, disp)
+      disposable = disp
+
+      it.messageBus.connect(disp).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+        override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
+          updatePath()
+        }
+
+        override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
+          updatePath()
+        }
+
+        override fun selectionChanged(event: FileEditorManagerEvent) {
+          updatePath()
+        }
+      })
+    }
+
     updateProjectName()
     updatePath()
 
@@ -111,28 +135,6 @@ open class SelectedEditorFilePath {
 
   fun setProject(project: Project) {
     this.project = project
-
-    if (disposable != null) {
-      unInstallListeners()
-    }
-
-    val disp = Disposer.newDisposable()
-    Disposer.register(project, disp)
-    disposable = disp
-
-    project.messageBus.connect(disp).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
-      override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
-        updatePath()
-      }
-
-      override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
-        updatePath()
-      }
-
-      override fun selectionChanged(event: FileEditorManagerEvent) {
-        updatePath()
-      }
-    })
 
     installListeners()
   }
