@@ -41,10 +41,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
@@ -978,5 +975,27 @@ public class PlatformTestUtil {
     "/**\n" +
     " * Created by ${USER} on ${DATE}.\n" +
     " */\n", parentDisposable);
+  }
+
+  /**
+   * 1. Think twice before use - do you really need to use VFS.
+   * 2. Think again.
+   * 3. Be aware that this method doesn't refresh VFS as it should be done in tests (see {@link PlatformTestCase#synchronizeTempDirVfs}) (it is assumed that project is already created in a correct way).
+   */
+  @NotNull
+  public static VirtualFile getOrCreateProjectTestBaseDir(@NotNull Project project) {
+    try {
+      String path = Objects.requireNonNull(project.getBasePath());
+      VirtualFile result = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+      if (result != null) {
+        return result;
+      }
+
+      // createDirectories executes in write action
+      return Objects.requireNonNull(VfsUtil.createDirectories(Objects.requireNonNull(project.getBasePath())));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

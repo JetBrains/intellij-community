@@ -490,12 +490,13 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
 
   @Nullable
   public Project doOpenProject(@NotNull @SystemIndependent String projectPath, @Nullable Project projectToClose, boolean forceOpenInNewFrame) {
-    Project existing = ProjectUtil.findAndFocusExistingProjectForPath(projectPath);
+    Path projectFile = Paths.get(projectPath);
+
+    Project existing = ProjectUtil.findAndFocusExistingProjectForPath(projectFile);
     if (existing != null) {
       return existing;
     }
 
-    Path projectFile = Paths.get(projectPath);
     if (Files.isDirectory(projectFile.resolve(Project.DIRECTORY_STORE_FOLDER))) {
       EnumSet<PlatformProjectOpenProcessor.Option> options = EnumSet.of(PlatformProjectOpenProcessor.Option.REOPEN);
       if (forceOpenInNewFrame) {

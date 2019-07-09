@@ -222,9 +222,10 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
     ApplicationManager.getApplication().runWriteAction(LightPlatformTestCase::cleanPersistedVFSContent);
 
-    Path tempFile = TemporaryDirectory.generateTemporaryPath(ProjectImpl.LIGHT_PROJECT_NAME + ProjectFileType.DOT_DEFAULT_EXTENSION);
-    ourProject = PlatformTestCase.createProject(tempFile);
-    ourPathToKeep = tempFile;
+    Path tempDirectory = TemporaryDirectory.generateTemporaryPath(ProjectImpl.LIGHT_PROJECT_NAME + ProjectFileType.DOT_DEFAULT_EXTENSION);
+    PlatformTestCase.synchronizeTempDirVfs(tempDirectory);
+    ourProject = PlatformTestCase.createProject(tempDirectory);
+    ourPathToKeep = tempDirectory;
     ourPsiManager = null;
 
     try {

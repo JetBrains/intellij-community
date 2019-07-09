@@ -5,7 +5,6 @@ import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,19 +26,13 @@ public abstract class ProjectManagerEx extends ProjectManager {
   public abstract Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy);
 
   @Nullable
-  public abstract Project newProject(@NotNull Path filePath, boolean useDefaultProjectSettings, boolean isDummy);
-
-  @TestOnly
-  @NotNull
-  public final Project newProject(@Nullable String projectName, @NotNull String filePath) {
-    return ObjectUtils.assertNotNull(newProject(projectName, filePath, false, false));
-  }
+  public abstract Project newProject(@NotNull Path file, boolean useDefaultProjectSettings);
 
   @Nullable
   public abstract Project loadProject(@NotNull String filePath) throws IOException;
 
   @Nullable
-  public abstract Project loadProject(@NotNull String filePath, @Nullable String projectName) throws IOException;
+  public abstract Project loadProject(@NotNull Path file, @Nullable String projectName) throws IOException;
 
   public abstract boolean openProject(@NotNull Project project);
 

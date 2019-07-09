@@ -1523,7 +1523,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     String body = StringUtil.repeat("\"String field = null;\"\n", 1000);
     configureByText(StdFileTypes.JAVA, "class X{ void f() {" + body + "<caret>\n} }");
 
-    File temp = createTempDirectory();
     final Project alienProject = createProject(createTempDirectory().toPath().resolve("alien.ipr"));
     boolean succ2 = ProjectManagerEx.getInstanceEx().openProject(alienProject);
     assertTrue(succ2);

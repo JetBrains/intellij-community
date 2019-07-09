@@ -161,7 +161,7 @@ public class SaveProjectAsTemplateTest extends NewProjectWizardTestCase {
     final Module module = super.createMainModule();
     ApplicationManager.getApplication().runWriteAction(() -> {
       ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-      VirtualFile baseDir = module.getProject().getBaseDir();
+      VirtualFile baseDir = PlatformTestUtil.getOrCreateProjectTestBaseDir(module.getProject());
       ContentEntry entry = model.addContentEntry(baseDir);
       entry.addSourceFolder(baseDir, false);
       model.commit();

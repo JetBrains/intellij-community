@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.runInEdtAndWait
@@ -65,7 +66,7 @@ internal class TestManager(private val projectRule: ProjectRule, private val tem
     runInEdtAndWait {
       val normalizedFilePath = FileUtilRt.toSystemIndependentName(filePath!!)
       if (annotation!!.relativeToProject) {
-        val root = projectRule.project.baseDir
+        val root = PlatformTestUtil.getOrCreateProjectTestBaseDir(projectRule.project)
         runWriteAction {
           fileToDelete = root.findOrCreateChildData(this@TestManager, normalizedFilePath)
         }

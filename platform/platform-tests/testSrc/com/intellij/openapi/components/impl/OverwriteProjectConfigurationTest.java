@@ -52,7 +52,7 @@ public class OverwriteProjectConfigurationTest extends PlatformTestCase {
   }
 
   private Project createProject() {
-    Project project = ProjectManagerEx.getInstanceEx().newProject("test", myProjectDir.getAbsolutePath());
+    Project project = ProjectManagerEx.getInstanceEx().newProject(myProjectDir.toPath(), false);
     assertNotNull(project);
     disposeOnTearDown(project);
     return project;

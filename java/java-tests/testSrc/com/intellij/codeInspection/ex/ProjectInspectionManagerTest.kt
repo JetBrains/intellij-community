@@ -36,7 +36,7 @@ class ProjectInspectionManagerTest {
 
   private fun doTest(task: suspend (Project) -> Unit) {
     runBlocking {
-      loadAndUseProjectInLoadComponentStateMode(tempDirManager, { it.path }, task)
+      loadAndUseProjectInLoadComponentStateMode(tempDirManager, { Paths.get(it.path) }, task)
     }
   }
 
@@ -224,7 +224,7 @@ class ProjectInspectionManagerTest {
       <project version="4">
       </project>""".trimIndent()
     loadAndUseProjectInLoadComponentStateMode(tempDirManager, {
-      it.writeChild("test${ProjectFileType.DOT_DEFAULT_EXTENSION}", emptyProjectFile).path
+      Paths.get(it.writeChild("test${ProjectFileType.DOT_DEFAULT_EXTENSION}", emptyProjectFile).path)
     }) { project ->
       val projectInspectionProfileManager = ProjectInspectionProfileManager.getInstance(project)
       projectInspectionProfileManager.forceLoadSchemes()

@@ -60,6 +60,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
@@ -778,7 +779,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
       File temp = createTempDirectory();
       VirtualFile tempDir = ObjectUtils.assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp));
 
-      final Project newProject = ProjectManagerEx.getInstanceEx().newProject("new", tempDir.getPath());
+      Project newProject = ProjectManagerEx.getInstanceEx().newProject(Paths.get(tempDir.getPath()), false);
       Disposer.register(getTestRootDisposable(), () -> ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(newProject)));
       PlatformTestUtil.saveProject(newProject);
 

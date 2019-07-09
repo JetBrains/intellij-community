@@ -201,16 +201,21 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   @Nullable
-  public static VirtualFile findFile(@NotNull Path path, boolean refreshIfNeeded) {
-    return findFileByIoFile(path.toFile(), refreshIfNeeded);
+  public static VirtualFile findFile(@NotNull Path file, boolean refreshIfNeeded) {
+    return findFile(FileUtil.toSystemIndependentName(file.toAbsolutePath().toString()), refreshIfNeeded);
   }
 
   @Nullable
   public static VirtualFile findFileByIoFile(@NotNull File file, boolean refreshIfNeeded) {
+    return findFile(FileUtil.toSystemIndependentName(file.getAbsolutePath()), refreshIfNeeded);
+  }
+
+  @Nullable
+  private static VirtualFile findFile(@NotNull String filePath, boolean refreshIfNeeded) {
     LocalFileSystem fileSystem = LocalFileSystem.getInstance();
-    VirtualFile virtualFile = fileSystem.findFileByIoFile(file);
+    VirtualFile virtualFile = fileSystem.findFileByPath(filePath);
     if (refreshIfNeeded && (virtualFile == null || !virtualFile.isValid())) {
-      virtualFile = fileSystem.refreshAndFindFileByIoFile(file);
+      virtualFile = fileSystem.refreshAndFindFileByPath(filePath);
     }
     return virtualFile;
   }

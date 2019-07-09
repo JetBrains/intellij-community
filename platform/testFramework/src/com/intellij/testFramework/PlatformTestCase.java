@@ -31,8 +31,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
+import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.project.impl.TooManyProjectLeakedException;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
@@ -150,6 +152,14 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   public static void synchronizeTempDirVfs(@NotNull VirtualFile tempDir) {
     tempDir.getChildren();
     tempDir.refresh(false, true);
+  }
+
+  public static void synchronizeTempDirVfs(@NotNull Path tempDir) {
+    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(tempDir.toString()));
+    // null is ok, because Path can be only generated, but not created
+    if (virtualFile != null) {
+      synchronizeTempDirVfs(Objects.requireNonNull(virtualFile));
+    }
   }
 
   protected void initApplication() throws Exception {
@@ -278,14 +288,11 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   @NotNull
-  public static Project createProject(@NotNull File projectFile) {
-    return createProject(projectFile.toPath());
-  }
-
-  @NotNull
   public static Project createProject(@NotNull Path file) {
     try {
-      return Objects.requireNonNull(ProjectManagerEx.getInstanceEx().newProject(file, /* useDefaultProjectSettings = */ false, false));
+      ProjectManagerImpl projectManager = (ProjectManagerImpl)ProjectManager.getInstance();
+      // in tests it is caller responsibility to refresh VFS (because often not only the project file must be refreshed, but the whole dir - so, no need to refresh several times)
+      return Objects.requireNonNull(projectManager.newProject(file, null, /* useDefaultProjectSettings = */ false, /* isRefreshVfsNeeded = */ false));
     }
     catch (TooManyProjectLeakedException e) {
       if (ourReportedLeakedProjects) {

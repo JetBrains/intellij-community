@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.WritingAccessProvider;
 import com.intellij.testFramework.EditorTestUtil;
@@ -136,7 +137,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
       String moduleName;
       ModifiableModuleModel moduleModel = ModuleManager.getInstance(getProject()).getModifiableModel();
       try {
-        VirtualFile moduleDir = getProject().getBaseDir().createChildDirectory(this, "moduleWithoutContentRoot");
+        VirtualFile moduleDir = VfsUtil.createDirectoryIfMissing(getProject().getBasePath() + "/moduleWithoutContentRoot");
         moduleName = moduleModel.newModule(moduleDir.getPath() + "/moduleWithoutContentRoot.iml", EmptyModuleType.EMPTY_MODULE).getName();
         moduleModel.commit();
       }

@@ -34,7 +34,10 @@ import com.intellij.ui.AppIcon;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
 import java.awt.*;
@@ -87,7 +90,7 @@ public class ProjectUtil {
   }
 
   public static Project openOrImport(@NotNull Path path, Project projectToClose, boolean forceOpenInNewFrame) {
-    return openOrImport(FileUtil.toSystemIndependentName(path.toString()), projectToClose, forceOpenInNewFrame);
+    return openOrImport(path, new OpenProjectTask(forceOpenInNewFrame, projectToClose));
   }
 
   /**
@@ -99,24 +102,19 @@ public class ProjectUtil {
    * null otherwise
    */
   @Nullable
-  public static Project openOrImport(@NotNull @SystemIndependent String path, Project projectToClose, boolean forceOpenInNewFrame) {
-    return openOrImport(path, new OpenProjectTask(forceOpenInNewFrame, projectToClose));
+  public static Project openOrImport(@NotNull String path, Project projectToClose, boolean forceOpenInNewFrame) {
+    return openOrImport(Paths.get(path), new OpenProjectTask(forceOpenInNewFrame, projectToClose));
   }
 
   @Nullable
-  public static Project openOrImport(@NotNull Path path, @NotNull OpenProjectTask options) {
-    return openOrImport(FileUtil.toSystemIndependentName(path.toString()), options);
-  }
-
-  @Nullable
-  public static Project openOrImport(@NotNull @SystemIndependent String path, @NotNull OpenProjectTask options) {
-    Project existing = findAndFocusExistingProjectForPath(path);
+  public static Project openOrImport(@NotNull Path file, @NotNull OpenProjectTask options) {
+    Project existing = findAndFocusExistingProjectForPath(file);
     if (existing != null) {
       return existing;
     }
 
     NullableLazyValue<VirtualFile> lazyVirtualFile = NullableLazyValue.createValue(() -> {
-      VirtualFile result = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+      VirtualFile result = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(file.toString()));
       if (result != null) {
         result.refresh(false, false);
       }
@@ -136,7 +134,6 @@ public class ProjectUtil {
       }
     }
 
-    Path file = Paths.get(path);
     if (isValidProjectPath(file)) {
       return doOpenProject(file, options.getProjectToClose(), options.getForceOpenInNewFrame());
     }
@@ -196,7 +193,7 @@ public class ProjectUtil {
       }
     }
 
-    Project existing = findAndFocusExistingProjectForPath(path);
+    Project existing = findAndFocusExistingProjectForPath(file);
     if (existing != null) {
       return existing;
     }
@@ -284,10 +281,15 @@ public class ProjectUtil {
   }
 
   @Nullable
-  public static Project findAndFocusExistingProjectForPath(@NotNull String path) {
+  public static Project findAndFocusExistingProjectForPath(@NotNull Path file) {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    if (openProjects.length == 0) {
+      return null;
+    }
+
+    String path= FileUtil.toSystemIndependentName(file.toString());
     for (Project project : openProjects) {
-      if (!project.isDefault() && isSameProject(path, project)) {
+      if (isSameProject(path, project)) {
         focusProjectWindow(project, false);
         return project;
       }

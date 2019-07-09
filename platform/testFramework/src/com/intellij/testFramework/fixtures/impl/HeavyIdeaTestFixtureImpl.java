@@ -21,9 +21,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -45,6 +43,7 @@ import org.junit.Assert;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -55,7 +54,7 @@ import java.util.stream.Stream;
  * @author mike
  */
 @SuppressWarnings("TestOnlyProblems")
-class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixture {
+final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixture {
   private Project myProject;
   private final Set<Path> myFilesToDelete = new HashSet<>();
   private IdeaTestApplication myApplication;
@@ -126,6 +125,9 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
             .filter(Objects::nonNull)
             .collect(Collectors.toList());
         }
+        catch (NoSuchFileException ignore) {
+          errors = Collections.emptyList();
+        }
         CompoundRuntimeException.throwIfNotEmpty(errors);
      });
     }
@@ -152,9 +154,9 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
       .run();
   }
 
-  private void setUpProject() throws IOException {
-    Path tempDirectory = FileUtil.createTempDirectory(myName, "").toPath();
-    PlatformTestCase.synchronizeTempDirVfs(Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(tempDirectory.toString()))));
+  private void setUpProject() {
+    Path tempDirectory = TemporaryDirectory.generateTemporaryPath(myName);
+    PlatformTestCase.synchronizeTempDirVfs(tempDirectory);
     myFilesToDelete.add(tempDirectory);
     myProject = PlatformTestCase.createProject(generateProjectPath(tempDirectory));
 
