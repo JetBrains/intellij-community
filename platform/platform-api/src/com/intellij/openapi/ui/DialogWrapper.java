@@ -51,6 +51,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.awt.event.*;
+import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
 import java.util.stream.IntStream;
@@ -1838,9 +1839,16 @@ public abstract class DialogWrapper {
     protected abstract void doAction(ActionEvent e);
   }
 
+  private final PropertyChangeListener myRepaintOnNameChangeListener = evt -> {
+    if (Action.NAME.equals(evt.getPropertyName())) {
+      repaint();
+    }
+  };
+
   protected class OkAction extends DialogWrapperAction {
     protected OkAction() {
       super(CommonBundle.getOkButtonText());
+      addPropertyChangeListener(myRepaintOnNameChangeListener);
       putValue(DEFAULT_ACTION, Boolean.TRUE);
     }
 
@@ -1874,6 +1882,7 @@ public abstract class DialogWrapper {
   protected class CancelAction extends DialogWrapperAction {
     private CancelAction() {
       super(CommonBundle.getCancelButtonText());
+      addPropertyChangeListener(myRepaintOnNameChangeListener);
     }
 
     @Override
