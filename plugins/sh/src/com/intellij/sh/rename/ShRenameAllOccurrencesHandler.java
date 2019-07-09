@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public class ShRenameAllOccurrencesHandler extends EditorActionHandler {
+class ShRenameAllOccurrencesHandler extends EditorActionHandler {
   public static final ShRenameAllOccurrencesHandler INSTANCE = new ShRenameAllOccurrencesHandler();
   static final String MAX_SEGMENTS_PROP_NAME = "sh.max.inplace.rename.segments";
   static final Key<TextOccurrencesRenamer> RENAMER_KEY = Key.create("renamer");
