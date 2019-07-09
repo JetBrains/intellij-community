@@ -224,7 +224,8 @@ class FeatureUsageData {
       return this
     }
 
-    data[key] = value
+    val escapedKey = escapeFieldName(key)
+    data[escapedKey] = value
     return this
   }
 
