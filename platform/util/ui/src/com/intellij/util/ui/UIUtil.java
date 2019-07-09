@@ -1930,37 +1930,6 @@ public final class UIUtil extends StartupUiUtil {
   }
 
   /**
-   * Direct painting into component's graphics with XORMode is broken on retina-mode so we need to paint into an intermediate buffer first.
-   */
-  public static void paintWithXorOnRetina(@NotNull Dimension size,
-                                          @NotNull Graphics g,
-                                          boolean useRetinaCondition,
-                                          @NotNull Consumer<? super Graphics2D> paintRoutine) {
-    if (!useRetinaCondition || !JreHiDpiUtil.isJreHiDPI((Graphics2D)g) || Registry.is("ide.mac.retina.disableDrawingFix")) {
-      paintRoutine.consume((Graphics2D)g);
-    }
-    else {
-      Rectangle rect = g.getClipBounds();
-      if (rect == null) rect = new Rectangle(size);
-
-      //noinspection UndesirableClassUsage
-      Image image = new BufferedImage(rect.width * 2, rect.height * 2, BufferedImage.TYPE_INT_RGB);
-      Graphics2D imageGraphics = (Graphics2D)image.getGraphics();
-
-      imageGraphics.scale(2, 2);
-      imageGraphics.translate(-rect.x, -rect.y);
-      imageGraphics.setClip(rect.x, rect.y, rect.width, rect.height);
-
-      paintRoutine.consume(imageGraphics);
-      image.flush();
-      imageGraphics.dispose();
-
-      ((Graphics2D)g).scale(0.5, 0.5);
-      g.drawImage(image, rect.x * 2, rect.y * 2, null);
-    }
-  }
-
-  /**
    * Configures composite to use for drawing text with the given graphics container.
    * <p/>
    * The whole idea is that <a href="http://en.wikipedia.org/wiki/X_Rendering_Extension">XRender-based</a> pipeline doesn't support
