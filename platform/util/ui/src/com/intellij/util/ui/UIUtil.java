@@ -3954,4 +3954,11 @@ public final class UIUtil extends StartupUiUtil {
   public static Color getPanelBackgound() {
     return getPanelBackground();
   }
+
+  public static void doNotScrollToCaret(@NotNull JTextComponent textComponent) {
+    textComponent.setCaret(new DefaultCaret() {
+      @Override
+      protected void adjustVisibility(Rectangle nloc) {}
+    });
+  }
 }
