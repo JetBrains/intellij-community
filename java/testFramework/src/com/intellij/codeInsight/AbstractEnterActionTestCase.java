@@ -9,8 +9,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 
-import java.io.IOException;
-
 public abstract class AbstractEnterActionTestCase extends LightJavaCodeInsightTestCase {
   private static final String TEST_PATH = "/codeInsight/enterAction/";
 
@@ -24,7 +22,7 @@ public abstract class AbstractEnterActionTestCase extends LightJavaCodeInsightTe
     doTest("java");
   }
 
-  protected void doTextTest(@NonNls String ext, @NonNls String before, @NonNls String after) throws IOException {
+  protected void doTextTest(@NonNls String ext, @NonNls String before, @NonNls String after) {
     configureFromFileText("a." + ext, before);
     performAction();
     checkResultByText(null, after, false);

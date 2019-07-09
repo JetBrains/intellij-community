@@ -18,9 +18,11 @@ package com.intellij.java.psi.formatter.java;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AbstractEnterActionTestCase;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.testFramework.PlatformTestUtil;
 
 import java.io.IOException;
 
@@ -544,5 +546,14 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
       "    }\n" +
       "}"
     );
+  }
+
+  public void testEnterPerformanceAfterDeepTree() {
+    configureFromFileText("a.java", ("class Foo {\n" +
+                                     "  {\n" +
+                                     "    u." +
+                                     StringUtil.repeat("\n      a('b').c(new Some()).", 500)) + "<caret>\n" +
+                                    "      x(); } }");
+    PlatformTestUtil.startPerformanceTest("enter", 1500, this::performAction).assertTiming();
   }
 }
