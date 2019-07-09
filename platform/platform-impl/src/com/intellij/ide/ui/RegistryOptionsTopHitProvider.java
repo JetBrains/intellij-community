@@ -43,14 +43,16 @@ final class RegistryOptionsTopHitProvider implements OptionsTopHitProvider.Appli
       final List<OptionDescription> result = new ArrayList<>();
       for (RegistryValue value : Registry.getAll()) {
         if (value.isBoolean()) {
-          final String key = value.getKey();
+          String key = value.getKey();
           RegistryBooleanOptionDescriptor optionDescriptor = new RegistryBooleanOptionDescriptor(key, key);
           if (value.isChangedFromDefault()) {
             result.add(0, optionDescriptor);
-          } else {
+          }
+          else {
             result.add(optionDescriptor);
           }
-        } else {
+        }
+        else {
           result.add(new RegistryTextOptionDescriptor(value));
         }
       }
@@ -58,7 +60,8 @@ final class RegistryOptionsTopHitProvider implements OptionsTopHitProvider.Appli
         ExperimentalFeatureBooleanOptionDescriptor descriptor = new ExperimentalFeatureBooleanOptionDescriptor(feature.id, feature.id);
         if (Experiments.isChanged(feature.id)) {
           result.add(0, descriptor);
-        } else {
+        }
+        else {
           result.add(descriptor);
         }
       }
