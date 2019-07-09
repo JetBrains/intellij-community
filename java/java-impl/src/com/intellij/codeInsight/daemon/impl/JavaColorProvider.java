@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.lang.Language;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ElementColorProvider;
@@ -10,6 +11,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.uast.UastMetaLanguage;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
@@ -27,9 +29,14 @@ import java.util.List;
  */
 @SuppressWarnings("UseJBColor")
 public class JavaColorProvider implements ElementColorProvider {
+
+  UastMetaLanguage myUastMetaLanguage = Language.findInstance(UastMetaLanguage.class);
+
   @Override
   public Color getColorFrom(@NotNull PsiElement element) {
     if (element.getFirstChild() != null) return null;
+    if (element instanceof PsiWhiteSpace) return null;
+    if (!myUastMetaLanguage.matchesLanguage(element.getLanguage())) return null;
     PsiElement parent = element.getParent();
     Color color = getJavaColorFromExpression(parent);
     if (color == null) {
