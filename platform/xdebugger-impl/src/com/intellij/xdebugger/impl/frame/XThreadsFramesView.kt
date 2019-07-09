@@ -131,7 +131,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
             }
 
             if (event == SessionEvent.SETTINGS_CHANGED) {
-              //todo
+              myFramesManager.refresh()
             }
         }
     }
@@ -183,7 +183,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
         private var isProcessed = false
         private var isStarted = false
 
-        private var myCurrentIndex = -1
+        private var mySelectedValue: Any? = null
         private var myVisibleRectangle: Rectangle? = null
         private val myItems = mutableListOf<Any?>()
 
@@ -208,7 +208,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
             activeDisposable.onTermination {
                 isActive = false
                 myVisibleRectangle = myFramesList.visibleRect
-                myCurrentIndex = if (myFramesList.isSelectionEmpty) -1 else myFramesList.selectedIndex
+                mySelectedValue = if (myFramesList.isSelectionEmpty) null else myFramesList.selectedValue
             }
 
             updateView()
@@ -218,12 +218,12 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
             if (!isActive) return
 
             myFramesList.model.replaceAll(myItems)
-            if (myCurrentIndex >= 0 && myCurrentIndex < myFramesList.model.size) {
-                myFramesList.selectedIndex = myCurrentIndex
+            if (mySelectedValue != null) {
+                myFramesList.setSelectedValue(mySelectedValue, true)
             }
             else if (myFramesList.model.items.isNotEmpty()) {
-                myCurrentIndex = 0
                 myFramesList.selectedIndex = 0
+                mySelectedValue = myFramesList.selectedValue
             }
 
             val visibleRectangle = myVisibleRectangle
@@ -258,9 +258,8 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
                     isProcessed = true
                 }
 
-                if (toSelect != null) {
-                    val index = myItems.indexOf(toSelect)
-                    if (index >= 0) myCurrentIndex = index
+                if (toSelect != null && myItems.contains(toSelect)) {
+                    mySelectedValue = toSelect
                 }
 
                 updateView()
@@ -280,6 +279,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
     private class FramesManager(private val myFramesList: XDebuggerFramesList, private val disposable: Disposable) {
         private val myMap = mutableMapOf<StackInfo, FramesContainer>()
         private val myActiveStackDisposables = SequentialDisposables(disposable)
+        private var myActiveStack: XExecutionStack? = null
 
         private fun XExecutionStack.getContainer(): FramesContainer {
             return myMap.getOrPut(StackInfo.from(this)) {
@@ -289,11 +289,17 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
 
         fun setActive(stack: XExecutionStack) {
             val disposable = myActiveStackDisposables.next()
+            myActiveStack = stack
             stack.getContainer().setActive(disposable)
         }
 
         fun tryGetCurrentFrame(stack: XExecutionStack): XStackFrame? {
             return stack.getContainer().currentFrame
+        }
+
+        fun refresh() {
+            myMap.clear()
+            setActive(myActiveStack ?: return)
         }
     }
 
