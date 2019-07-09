@@ -283,11 +283,11 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
       if (inlay == null) {
         inlays.put(Configuration.CONTEXT_VAR_NAME,
                    inlayModel.addBlockElement(text.length() + variableNameLength, true, false, 0,
-                                              new FilterRenderer("complete pattern: " + labelText)));
+                                              new FilterRenderer("whole template: " + labelText)));
       }
       else {
         final FilterRenderer renderer = inlay.getRenderer();
-        renderer.setText("complete pattern: " + labelText);
+        renderer.setText("whole template: " + labelText);
         inlay.updateSize();
       }
     }

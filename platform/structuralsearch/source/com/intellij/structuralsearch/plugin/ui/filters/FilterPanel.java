@@ -223,7 +223,7 @@ public class FilterPanel implements FilterTable {
     });
 
     final String message = Configuration.CONTEXT_VAR_NAME.equals(varName)
-                           ? "No filters added for the complete match."
+                           ? "No filters added for the whole template."
                            : "No Filters added for $" + varName + "$.";
     final StatusText statusText = myFilterTable.getTable().getEmptyText();
     statusText.setText(message);
@@ -260,7 +260,9 @@ public class FilterPanel implements FilterTable {
     public SimpleColoredComponent getRenderer() {
       myLabel.clear();
       final String varName = myConstraint.getName();
-      myLabel.append(Configuration.CONTEXT_VAR_NAME.equals(varName) ? "Filters for the Complete Match:" : "Filters for $" + varName + "$:",
+      myLabel.append(Configuration.CONTEXT_VAR_NAME.equals(varName)
+                     ? "Filters for the whole template:"
+                     : "Filters for $" + varName + "$:",
                      SimpleTextAttributes.GRAYED_ATTRIBUTES);
       return myLabel;
     }
