@@ -73,11 +73,11 @@ object ScriptModelBuilder : KLogging() {
                 .find(if (path.endsWith('/')) path else "$path/")
             logger.debug("build. path to kotlinc: $kotlinCompilerPath")
 
-            val url = find(ScriptModelBuilder::class, "pipelines-config-dsl-scriptdefinition")
-            logger.debug("build. path to `pipelines-config-dsl-scriptdefinition` jar: $url")
+            val scriptDefFile = JarFinder.find("pipelines-config-dsl-scriptdefinition")
+            logger.debug("build. path to `pipelines-config-dsl-scriptdefinition` jar: $scriptDefFile")
 
             val targetJar = createTempDir().absolutePath + "/compiledJar.jar"
-            DslJarCompiler(logger).compile(DslSourceFileDelegatingFileProvider(dslFile.path), targetJar, kotlinCompilerPath, url.file)
+            DslJarCompiler(logger).compile(DslSourceFileDelegatingFileProvider(dslFile.path), targetJar, kotlinCompilerPath, scriptDefFile.absolutePath)
 
             val config = DslScriptExecutor().evaluateModel(targetJar, "", "", "")
             config.applyIds()

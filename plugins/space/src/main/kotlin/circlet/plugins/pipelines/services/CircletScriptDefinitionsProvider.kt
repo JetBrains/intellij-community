@@ -13,8 +13,7 @@ class CircletScriptDefinitionsProvider : ScriptDefinitionsProvider {
     }
 
     override fun getDefinitionsClassPath(): Iterable<File> {
-        val url = find(CircletScriptDefinitionsProvider::class, "pipelines-config-dsl-scriptdefinition")
-        val file = File(url.file)
+        val file = JarFinder.find("pipelines-config-dsl-scriptdefinition")
         if (!file.exists()) {
             throw Exception("File with ProjectScriptDefinition doesn't exist")
         }

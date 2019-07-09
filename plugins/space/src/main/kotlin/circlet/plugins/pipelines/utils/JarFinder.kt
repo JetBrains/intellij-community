@@ -1,27 +1,33 @@
 package circlet.plugins.pipelines.utils
 
-import com.intellij.ide.plugins.cl.*
-import java.net.*
-import kotlin.reflect.*
+import com.intellij.ide.plugins.*
+import java.io.*
 
-//todo check if it's legal
-fun find(clazz: KClass<*>, name: String): URL {
-    // todo fix this very very strange code
-    val loader = clazz.java.classLoader
-    when (loader) {
-        is PluginClassLoader -> { // then idea starts with plugin
-            return loader.urls.firstOrNull {
-                x -> x.file.contains("/$name")  }
-                ?: error("can't find $name jar")
-        }
 
-        is URLClassLoader -> { // then running tests
-            return loader.urLs.firstOrNull {
-                x -> x.file.contains("/$name")  }
-                ?: error("can't find $name jar")
+object JarFinder {
+    val pluginFiles: List<File> by lazy {
+        val plugins = PluginManager.getPlugins()
+        val pluginName = "Circlet Integration"
+        val currentPlugin = plugins.firstOrNull { x -> x.name == pluginName } ?: error("Can't find `$pluginName` plugin")
+        currentPlugin.path.getFiles()
+    }
+
+    fun find(name: String) : File {
+        val pluginFiles = pluginFiles
+        return pluginFiles.firstOrNull { x -> x.name.contains(name) } ?: error("Can't find jar $name")
+    }
+
+    private fun File.getFiles() : List<File> {
+        val files = this.listFiles()
+        val res = mutableListOf<File>()
+        files?.forEach {file ->
+            if (file.isDirectory) {
+                res.addAll(file.getFiles())
+            }
+            else {
+                res.add(file)
+            }
         }
-        else -> {
-            error("unknown classLoader $loader")
-        }
+        return res
     }
 }
