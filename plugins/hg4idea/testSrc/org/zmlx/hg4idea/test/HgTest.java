@@ -43,7 +43,6 @@ import static org.junit.Assert.assertTrue;
  * @deprecated Use {@link HgPlatformTest}.
  */
 public abstract class HgTest extends AbstractJunitVcsTestCase {
-
   public static final String HG_EXECUTABLE_PATH = "IDEA_TEST_HG_EXECUTABLE_PATH";
   public static final String HG_EXECUTABLE = "hg";
 
@@ -82,7 +81,8 @@ public abstract class HgTest extends AbstractJunitVcsTestCase {
 
         myVcs = HgVcs.getInstance(myProject);
         myVcs.getGlobalSettings().setHgExecutable(HgExecutor.getHgExecutable());
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
         e.printStackTrace();
       }
     });

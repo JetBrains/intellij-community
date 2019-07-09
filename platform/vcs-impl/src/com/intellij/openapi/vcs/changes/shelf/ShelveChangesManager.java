@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
@@ -69,7 +70,6 @@ import static com.intellij.openapi.vcs.changes.ChangeListUtil.getChangeListNameF
 import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChangeList;
 import static com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList.createShelvedChangesFromFilePatches;
 import static com.intellij.util.ObjectUtils.assertNotNull;
-import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.Objects.requireNonNull;
 
@@ -111,7 +111,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
   @Override
   public Element getState() {
     //provide new element if all State fields have their default values  - > to delete existing settings in xml,
-    return chooseNotNull(XmlSerializer.serialize(myState), EMPTY_ELEMENT);
+    return ObjectUtils.chooseNotNull(XmlSerializer.serialize(myState), EMPTY_ELEMENT);
   }
 
   @Override
@@ -128,10 +128,8 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
    */
   @NotNull
   public static String getDefaultShelfPath(@NotNull Project project) {
-    return VcsUtil
-      .getFilePath(chooseNotNull(ProjectKt.getProjectStoreDirectory(project.getBaseDir()), project.getBaseDir()),
-                   ProjectKt.isDirectoryBased(project) ? SHELVE_MANAGER_DIR_PATH : "." + SHELVE_MANAGER_DIR_PATH)
-      .getPath();
+    IProjectStore store = ProjectKt.getStateStore(project);
+    return store.getDirectoryStorePath(true) + "/" + (ProjectKt.isDirectoryBased(project) ? SHELVE_MANAGER_DIR_PATH : "." + SHELVE_MANAGER_DIR_PATH);
   }
 
   /**

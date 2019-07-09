@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.vcs;
 
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.openapi.project.Project;
@@ -15,10 +14,11 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
@@ -69,19 +69,17 @@ public abstract class AbstractVcsTestCase {
     EdtTestUtil.runInEdtAndWait(() -> myWorkingCopyDir.refresh(false, true));
   }
 
-  protected void initProject(final File clientRoot, String testName) throws Exception {
+  protected void initProject(@NotNull File clientRoot, String testName) throws Exception {
     final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(testName);
     myProjectFixture = testFixtureBuilder.getFixture();
     testFixtureBuilder.addModule(EmptyModuleFixtureBuilder.class).addContentRoot(clientRoot.toString());
     myProjectFixture.setUp();
     myProject = myProjectFixture.getProject();
+    PlatformTestUtil.getOrCreateProjectTestBaseDir(myProject);
 
     projectCreated();
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      myWorkingCopyDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(clientRoot);
-      assert myWorkingCopyDir != null;
-    });
+    myWorkingCopyDir = VfsUtil.createDirectories(clientRoot.getPath());
     ((ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject)).waitForInitialized();
   }
 
@@ -96,11 +94,11 @@ public abstract class AbstractVcsTestCase {
     Assert.assertEquals(1, vcsManager.getRootsUnderVcs(vcs).length);
   }
 
-  public VirtualFile createFileInCommand(final String name, @Nullable final String content) {
+  public VirtualFile createFileInCommand(@NotNull String name, @Nullable final String content) {
     return createFileInCommand(myWorkingCopyDir, name, content);
   }
 
-  public VirtualFile createFileInCommand(final VirtualFile parent, final String name, @Nullable final String content) {
+  public VirtualFile createFileInCommand(@NotNull VirtualFile parent, @NotNull String name, @Nullable final String content) {
     return VcsTestUtil.createFile(myProject, parent, name, content);
   }
 
@@ -157,7 +155,7 @@ public abstract class AbstractVcsTestCase {
     if (sorted) {
       Arrays.sort(lines);
     }
-    Assert.assertEquals(runResult.getStdout(), stdoutLines.length, lines.length); 
+    Assert.assertEquals(runResult.getStdout(), stdoutLines.length, lines.length);
     for(int i=0; i<stdoutLines.length; i++) {
       Assert.assertEquals(stdoutLines [i], compressWhitespace(lines [i]));
     }

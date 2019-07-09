@@ -979,8 +979,7 @@ public class PlatformTestUtil {
 
   /**
    * 1. Think twice before use - do you really need to use VFS.
-   * 2. Think again.
-   * 3. Be aware that this method doesn't refresh VFS as it should be done in tests (see {@link PlatformTestCase#synchronizeTempDirVfs}) (it is assumed that project is already created in a correct way).
+   * 2. Be aware that this method doesn't refresh VFS as it should be done in tests (see {@link PlatformTestCase#synchronizeTempDirVfs}) (it is assumed that project is already created in a correct way).
    */
   @NotNull
   public static VirtualFile getOrCreateProjectTestBaseDir(@NotNull Project project) {

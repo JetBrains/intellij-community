@@ -25,7 +25,6 @@ import java.io.File;
 import java.io.IOException;
 
 public class HgCopyTest extends HgSingleUserTest {
-
   @Test
   public void testCopyUnmodifiedFile() throws Exception {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
