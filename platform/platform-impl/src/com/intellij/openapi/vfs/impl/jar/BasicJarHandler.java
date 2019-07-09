@@ -51,7 +51,7 @@ public class BasicJarHandler extends ZipHandlerBase {
     myHandle = new ZipResourceHandle();
   }
  
-  private static final LinkedHashMap<BasicJarHandler, ScheduledFuture<?>> ourOpenFileLimitGuard;
+  private static final Map<BasicJarHandler, ScheduledFuture<?>> ourOpenFileLimitGuard;
   
   static {
     final int maxSize = 30;
@@ -143,14 +143,10 @@ public class BasicJarHandler extends ZipHandlerBase {
             long openedFor = System.nanoTime() - started;
             int opened = ourOpenCount.incrementAndGet();
             long openTime = ourOpenTime.addAndGet(openedFor);
-  
-            trace("Opened for " +
-                  (openedFor / 1000000) +
-                  "ms, times opened:" +
-                  opened +
-                  ", open time:" +
-                  (openTime / 1000000) +
-                  "ms, reference will be cached for " + cacheInvalidationTime() + "ms");
+
+            trace("Opened for " + TimeUnit.NANOSECONDS.toMillis(openedFor) + "ms, times opened:" + opened +
+                  ", open time:" + TimeUnit.NANOSECONDS.toMillis(openTime) + "ms" +
+                  ", reference will be cached for " + cacheInvalidationTime() + "ms");
           }
   
           myFile = file;
@@ -219,11 +215,12 @@ public class BasicJarHandler extends ZipHandlerBase {
           int closed = ourCloseCount.incrementAndGet();
           long totalCloseTime = ourCloseTime.addAndGet(closeTime);
 
-          trace("Disposed:" + getFile() + " " + (closeTime / 1000000) + "ms, times closed:" + closed +
-                ", closed time:" + (totalCloseTime / 1000000) + "ms");
+          trace("Disposed:" + getFile() + " " + TimeUnit.NANOSECONDS.toMillis(closeTime) + "ms, times closed:" + closed +
+                ", closed time:" + TimeUnit.NANOSECONDS.toMillis(totalCloseTime) + "ms");
         }
         myFile = null;
-      } finally {
+      }
+      finally {
         myLock.unlock();
       }
     }
