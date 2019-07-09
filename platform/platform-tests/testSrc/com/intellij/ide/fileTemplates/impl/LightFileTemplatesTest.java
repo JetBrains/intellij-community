@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.fileTemplates.impl;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplatesScheme;
@@ -239,7 +240,9 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
       fail();
     }
     catch (Throwable e) {
-      assertEquals("Can't find template Unknown from test", e.getMessage());
+      assertEquals("Can't find template Unknown", e.getMessage());
+      PluginException pluginException = ((PluginException)e.getCause());
+      assertEquals("test", pluginException.getPluginId().getIdString());
     }
   }
 
