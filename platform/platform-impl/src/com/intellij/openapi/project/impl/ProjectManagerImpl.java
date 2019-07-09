@@ -55,8 +55,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -184,7 +184,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
 
     Path projectFile = Paths.get(toCanonicalName(filePath));
-    filePath = FileUtilRt.toSystemIndependentName(projectFile.toString());
     if (Files.isRegularFile(projectFile)) {
       try {
         FileUtil.delete(projectFile);
@@ -193,15 +192,16 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       }
     }
     else {
-      File[] files = projectFile.resolve(Project.DIRECTORY_STORE_FOLDER).toFile().listFiles();
-      if (files != null) {
-        for (File file : files) {
+      try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(projectFile.resolve(Project.DIRECTORY_STORE_FOLDER))) {
+        for (Path file : directoryStream) {
           FileUtil.delete(file);
         }
       }
+      catch (IOException ignore) {
+      }
     }
 
-    ProjectImpl project = doCreateProject(projectName, filePath);
+    ProjectImpl project = doCreateProject(projectName, projectFile);
     try {
       initProject(projectFile, project, useDefaultProjectSettings ? getDefaultProject() : null, ProgressManager.getInstance().getProgressIndicator());
       if (LOG_PROJECT_LEAKAGE_IN_TESTS) {
@@ -307,7 +307,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @NotNull
-  protected ProjectImpl doCreateProject(@Nullable String projectName, @NotNull String filePath) {
+  protected ProjectImpl doCreateProject(@Nullable String projectName, @NotNull Path filePath) {
     Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.PROJECT_INSTANTIATION);
     ProjectImpl project = new ProjectImpl(filePath, projectName);
     activity.end();
@@ -325,7 +325,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   public Project loadProject(@NotNull String filePath, @Nullable String projectName) throws IOException {
     try {
       Path file = Paths.get(filePath).toAbsolutePath();
-      ProjectImpl project = doCreateProject(projectName, FileUtil.toSystemIndependentName(file.toString()));
+      ProjectImpl project = doCreateProject(projectName, file);
       initProject(file, project, null, ProgressManager.getInstance().getProgressIndicator());
       return project;
     }
@@ -544,7 +544,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       project = null;
     }
     else {
-      project = doCreateProject(null, FileUtil.toSystemIndependentName(file.toString()));
+      project = doCreateProject(null, file);
       //noinspection CodeBlock2Expr
       TransactionGuard.getInstance().submitTransactionAndWait(() -> {
         ProgressManager.getInstance().run(new Task.Modal(project, ProjectBundle.message("project.load.progress"), true) {
@@ -602,7 +602,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       return null;
     }
 
-    ProjectImpl project = doCreateProject(null, FileUtil.toSystemIndependentName(path.toString()));
+    ProjectImpl project = doCreateProject(null, path);
     try {
       if (!ApplicationManager.getApplication().isDispatchThread() && ProgressManager.getInstance().getProgressIndicator() != null) {
         initProject(path, project, null, ProgressManager.getInstance().getProgressIndicator());

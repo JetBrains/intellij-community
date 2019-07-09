@@ -47,6 +47,7 @@ import org.jetbrains.annotations.*;
 import org.picocontainer.MutablePicoContainer;
 
 import javax.swing.*;
+import java.nio.file.Path;
 import java.util.List;
 
 public class ProjectImpl extends PlatformComponentManagerImpl implements ProjectEx, ProjectStoreOwner {
@@ -73,11 +74,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     return ServiceManager.getService(ProjectStoreFactory.class).createStore(this);
   });
 
-  /**
-   * @param filePath System-independent path
-   */
-  protected ProjectImpl(@NotNull String filePath, @Nullable String projectName) {
-    super(ApplicationManager.getApplication(), "Project " + (projectName == null ? filePath : projectName));
+  protected ProjectImpl(@NotNull Path filePath, @Nullable String projectName) {
+    super(ApplicationManager.getApplication(), "Project " + (projectName == null ? filePath.toString() : projectName));
 
     putUserData(CREATION_TIME, System.nanoTime());
     creationTrace = ApplicationManager.getApplication().isUnitTestMode() ? DebugUtil.currentStackTrace() : null;
@@ -86,7 +84,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
     myName = projectName;
     // light project may be changed later during test, so we need to remember its initial state
-    myLight = ApplicationManager.getApplication().isUnitTestMode() && filePath.contains(LIGHT_PROJECT_NAME);
+    //noinspection TestOnlyProblems
+    myLight = ApplicationManager.getApplication().isUnitTestMode() && filePath.toString().contains(LIGHT_PROJECT_NAME);
   }
 
   static final String TEMPLATE_PROJECT_NAME = "Default (Template) Project";
