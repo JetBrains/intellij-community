@@ -49,4 +49,15 @@ public class TooltipLinkHandlerEP extends AbstractExtensionPointBean {
     }
     return null;
   }
+
+  @NotNull
+  public static String getDescriptionTitle(@NotNull String ref, @NotNull Editor editor) {
+    for (final TooltipLinkHandlerEP handlerEP : EP_NAME.getExtensionList()) {
+      if (ref.startsWith(handlerEP.prefix)) {
+        final String refSuffix = ref.substring(handlerEP.prefix.length());
+        return handlerEP.myHandler.getValue().getDescriptionTitle(refSuffix, editor);
+      }
+    }
+    return TooltipLinkHandler.INSPECTION_INFO;
+  }
 }
