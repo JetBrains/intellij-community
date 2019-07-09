@@ -41,7 +41,7 @@ public abstract class AbstractJoinListAction<L extends PsiElement, E extends Psi
     CodeStyleManager.getInstance(project).adjustLineIndent(context.myList.getContainingFile(), context.myList.getParent().getTextRange());
   }
 
-  private void deleteBreakIfPresent(Document document, PsiElement aBreak) {
+  private static void deleteBreakIfPresent(Document document, PsiElement aBreak) {
     if (aBreak != null) {
       TextRange range = aBreak.getTextRange();
       document.deleteString(range.getStartOffset(), range.getEndOffset());
@@ -65,6 +65,7 @@ public abstract class AbstractJoinListAction<L extends PsiElement, E extends Psi
     List<E> elements = getElements(list);
     if (elements == null) return null;
     if (elements.size() < minElementCount()) return null;
+    if (!canJoin(elements)) return null;
     WhitespacesInfo whitespacesInfo = collectBreakWhitespaces(elements);
     if (whitespacesInfo == null) return null;
     return new Context<>(whitespacesInfo, list);
@@ -80,6 +81,10 @@ public abstract class AbstractJoinListAction<L extends PsiElement, E extends Psi
       myBeforeFirstBreak = beforeFirstBreak;
       myAfterLastBreak = afterLastBreak;
     }
+  }
+
+  protected boolean canJoin(@NotNull List<E> elements) {
+    return true;
   }
 
   private WhitespacesInfo collectBreakWhitespaces(List<E> elements) {
