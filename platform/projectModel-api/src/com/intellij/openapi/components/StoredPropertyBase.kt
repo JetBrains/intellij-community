@@ -11,6 +11,9 @@ interface StoredProperty<T> {
 
   val jsonType: JsonSchemaType
 
+  fun getValue(thisRef: BaseState): T
+  fun setValue(thisRef: BaseState, value: T)
+
   // true if changed
   fun setValue(other: StoredProperty<T>): Boolean
 
@@ -32,6 +35,14 @@ abstract class StoredPropertyBase<T> : StoredProperty<T>, ReadWriteProperty<Base
     name = property.name
     return this
   }
+
+  fun provideDelegate(thisRef: Any, propertyName: String): StoredProperty<T> {
+    name = propertyName
+    return this
+  }
+
+  override operator fun getValue(thisRef: BaseState, property: KProperty<*>): T = getValue(thisRef)
+  override operator fun setValue(thisRef: BaseState, property: KProperty<*>, value: T) = setValue(thisRef, value)
 }
 
 enum class JsonSchemaType(val jsonName: String) {

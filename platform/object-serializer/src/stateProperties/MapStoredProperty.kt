@@ -6,7 +6,6 @@ import com.intellij.openapi.components.JsonSchemaType
 import com.intellij.openapi.components.StoredProperty
 import com.intellij.openapi.components.StoredPropertyBase
 import gnu.trove.THashMap
-import kotlin.reflect.KProperty
 
 class MapStoredProperty<K: Any, V>(value: MutableMap<K, V>?) : StoredPropertyBase<MutableMap<K, V>>() {
   private val value: MutableMap<K, V> = value ?: MyMap()
@@ -16,9 +15,9 @@ class MapStoredProperty<K: Any, V>(value: MutableMap<K, V>?) : StoredPropertyBas
 
   override fun isEqualToDefault() = value.isEmpty()
 
-  override operator fun getValue(thisRef: BaseState, property: KProperty<*>) = value
+  override fun getValue(thisRef: BaseState) = value
 
-  override fun setValue(thisRef: BaseState, property: KProperty<*>, @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE") newValue: MutableMap<K, V>) {
+  override fun setValue(thisRef: BaseState, @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE") newValue: MutableMap<K, V>) {
     if (doSetValue(value, newValue)) {
       thisRef.intIncrementModificationCount()
     }

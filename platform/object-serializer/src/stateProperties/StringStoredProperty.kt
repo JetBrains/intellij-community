@@ -2,7 +2,6 @@
 package com.intellij.serialization.stateProperties
 
 import com.intellij.openapi.components.*
-import kotlin.reflect.KProperty
 
 internal class NormalizedStringStoredProperty(private val defaultValue: String?) : StoredPropertyBase<String?>(), ScalarProperty {
   private var value = defaultValue
@@ -10,9 +9,9 @@ internal class NormalizedStringStoredProperty(private val defaultValue: String?)
   override val jsonType: JsonSchemaType
     get() = JsonSchemaType.STRING
 
-  override operator fun getValue(thisRef: BaseState, property: KProperty<*>) = value
+  override fun getValue(thisRef: BaseState) = value
 
-  override fun setValue(thisRef: BaseState, property: KProperty<*>, value: String?) {
+  override fun setValue(thisRef: BaseState, value: String?) {
     val newValue = if (value.isNullOrEmpty()) null else value
     if (this.value != newValue) {
       thisRef.intIncrementModificationCount()

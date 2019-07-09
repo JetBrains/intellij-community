@@ -3,7 +3,6 @@ package com.intellij.serialization.stateProperties
 
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.text.StringUtil
-import kotlin.reflect.KProperty
 
 internal class FloatStoredProperty(private val defaultValue: Float, private val valueNormalizer: ((value: Float) -> Float)?) : StoredPropertyBase<Float>(), ScalarProperty {
   private var value = defaultValue
@@ -11,9 +10,9 @@ internal class FloatStoredProperty(private val defaultValue: Float, private val 
   override val jsonType: JsonSchemaType
     get() = JsonSchemaType.NUMBER
 
-  override operator fun getValue(thisRef: BaseState, property: KProperty<*>) = value
+  override fun getValue(thisRef: BaseState) = value
 
-  override fun setValue(thisRef: BaseState, property: KProperty<*>, value: Float) {
+  override fun setValue(thisRef: BaseState, value: Float) {
     val newValue = valueNormalizer?.invoke(value) ?: value
     if (this.value != newValue) {
       thisRef.intIncrementModificationCount()
