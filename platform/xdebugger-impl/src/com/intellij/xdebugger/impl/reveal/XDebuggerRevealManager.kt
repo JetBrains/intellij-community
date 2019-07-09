@@ -18,7 +18,7 @@ open class XDebuggerRevealManager {
     companion object {
         fun getInstance(project: Project): XDebuggerRevealManager = (XDebuggerManager.getInstance(project) as XDebuggerManagerImpl).revealManager
 
-        const val DEFAULT_ICON_DELAY = 200L
+        private const val DEFAULT_ICON_DELAY = 300L
     }
 
     private val myListeners = mutableListOf<XDebuggerRevealListener>()
