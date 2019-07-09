@@ -97,12 +97,11 @@ class XDebuggerRevealAction : XDebuggerTreeActionBase() {
             val name = oldRoot.name ?: return
             session.debugProcess.evaluator?.evaluate(name, object : XEvaluationCallbackBase() {
                 override fun errorOccurred(errorMessage: String) {
-                    logger.warn("Failed to update '$name' presentation after 'Reveal': $errorMessage")
+                    logger.warn("Failed to update '$name' presentation after '$REVEAL_NAME': $errorMessage")
                 }
 
                 override fun evaluated(result: XValue) {
                     tree.setRoot(XValueNodeImpl(tree, null, oldRoot.name, result), true)
-                    tree.rebuildAndRestore(XDebuggerTreeState.saveState(tree))
                 }
 
             }, tree.sourcePosition)
