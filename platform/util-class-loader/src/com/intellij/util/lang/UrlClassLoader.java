@@ -244,11 +244,24 @@ public class UrlClassLoader extends ClassLoader {
                          builder.myLogJarAccess);
   }
 
+  /**
+   * replace {@link URL#protocol} field (with "file" or "jar" values) and {@link URL#host} field (with empty string) with corresponding interned strings
+   */
   public static URL internProtocol(@NotNull URL url) {
+    String protocol = url.getProtocol();
+    boolean interned = false;
+    if ("file".equals(protocol) || "jar".equals(protocol)) {
+      protocol = protocol.intern();
+      interned = true;
+    }
+    String host = url.getHost();
+    if ("".equals(host)) {
+      host = "";
+      interned = true;
+    }
     try {
-      final String protocol = url.getProtocol();
-      if ("file".equals(protocol) || "jar".equals(protocol)) {
-        return new URL(protocol.intern(), url.getHost(), url.getPort(), url.getFile());
+      if (interned) {
+        url = new URL(protocol, host, url.getPort(), url.getFile());
       }
       return url;
     }
