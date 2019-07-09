@@ -626,36 +626,41 @@ public class HighlightMethodUtil {
     final PsiSubstitutor substitutor = candidateInfo.getSubstitutor();
     final PsiParameter[] parameters = resolvedMethod.getParameterList().getParameters();
     if (expressions.length == parameters.length && parameters.length > 1) {
-      int idx = -1;
-      for (int i = 0; i < expressions.length; i++) {
-        PsiExpression expression = expressions[i];
-        if (!TypeConversionUtil.areTypesAssignmentCompatible(substitutor.substitute(parameters[i].getType()), expression)) {
-          if (idx != -1) {
-            idx = -1;
-            break;
-          }
-          else {
-            idx = i;
-          }
-        }
-      }
-
+      int idx = oneMismatchArgIdx(expressions, substitutor, parameters);
       if (idx > -1) {
         final PsiExpression wrongArg = expressions[idx];
         final PsiType argType = wrongArg.getType();
         if (argType != null) {
           elementToHighlight.set(wrongArg);
-          final String message = JavaErrorMessages
-            .message("incompatible.call.types", idx + 1, substitutor.substitute(parameters[idx].getType()).getCanonicalText(), argType.getCanonicalText());
-
-          return XmlStringUtil.wrapInHtml("<body>" + XmlStringUtil.escapeString(message) +
-                                          " <a href=\"#assignment/" + XmlStringUtil.escapeString(createMismatchedArgumentsHtmlTooltip(candidateInfo, list)) + "\"" +
-                                          (UIUtil.isUnderDarcula() ? " color=\"7AB4C9\" " : "") +
-                                          ">" + DaemonBundle.message("inspection.extended.description") + "</a></body>");
+          String moreLink =
+            " <a href=\"#assignment/" + XmlStringUtil.escapeString(createMismatchedArgumentsHtmlTooltip(candidateInfo, list)) + "\"" +
+            (UIUtil.isUnderDarcula() ? " color=\"7AB4C9\" " : "") +
+            ">" + DaemonBundle.message("inspection.extended.description") + "</a>";
+          return 
+            HighlightUtil.createIncompatibleTypesTooltip(substitutor.substitute(parameters[idx].getType()), argType,
+                                                         (lRawType, lTypeArguments, rRawType, rTypeArguments) -> 
+                                                          JavaErrorMessages.message("incompatible.call.types.tooltip", idx + 1, lRawType, lTypeArguments, rRawType, rTypeArguments, moreLink));
         }
       }
     }
     return null;
+  }
+
+  private static int oneMismatchArgIdx(PsiExpression[] expressions, PsiSubstitutor substitutor, PsiParameter[] parameters) {
+    int idx = -1;
+    for (int i = 0; i < expressions.length; i++) {
+      PsiExpression expression = expressions[i];
+      if (!TypeConversionUtil.areTypesAssignmentCompatible(substitutor.substitute(parameters[i].getType()), expression)) {
+        if (idx != -1) {
+          idx = -1;
+          break;
+        }
+        else {
+          idx = i;
+        }
+      }
+    }
+    return idx;
   }
 
   static boolean isDummyConstructorCall(@NotNull PsiMethodCallExpression methodCall,

@@ -2791,7 +2791,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
   @Nullable
   static HighlightInfo createIncompatibleTypeHighlightInfo(PsiType lType,
-                                                           PsiType rType,
+                                                           @Nullable PsiType rType,
                                                            @NotNull TextRange textRange,
                                                            int navigationShift) {
     return createIncompatibleTypeHighlightInfo(lType, rType, textRange, navigationShift, getReasonForIncompatibleTypes(rType));
@@ -2799,14 +2799,28 @@ public class HighlightUtil extends HighlightUtilBase {
 
   @Nullable
   static HighlightInfo createIncompatibleTypeHighlightInfo(PsiType lType,
-                                                           PsiType rType,
+                                                           @Nullable PsiType rType,
                                                            @NotNull TextRange textRange,
                                                            int navigationShift, 
                                                            String reason) {
+    lType = lType != null ? PsiUtil.convertAnonymousToBaseType(lType) : null;
+    rType = rType != null ? PsiUtil.convertAnonymousToBaseType(rType) : null;
+    String toolTip = createIncompatibleTypesTooltip(lType, rType,
+                                                    ((lRawType, lTypeArguments, rRawType, rTypeArguments) ->
+                                                      JavaErrorMessages.message("incompatible.types.html.tooltip", lRawType, lTypeArguments, rRawType, rTypeArguments, reason)));
+    String description = JavaErrorMessages.message(
+      "incompatible.types", JavaHighlightUtil.formatType(lType), JavaHighlightUtil.formatType(rType));
+    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).description(description).escapedToolTip(toolTip)
+      .navigationShift(navigationShift).create();
+  }
+  
+  interface IncompatibleTypesTooltipComposer {
+    String consume(String lRawType, String lTypeArguments, String rRawType, String rTypeArguments);
+  }
+
+  public static String createIncompatibleTypesTooltip(PsiType lType, PsiType rType, IncompatibleTypesTooltipComposer consumer) {
     Trinity<PsiType, PsiTypeParameter[], PsiSubstitutor> lTypeData = typeData(lType);
     Trinity<PsiType, PsiTypeParameter[], PsiSubstitutor> rTypeData = typeData(rType);
-    lType = lTypeData.first;
-    rType = rTypeData.first;
     PsiTypeParameter[] lTypeParams = lTypeData.second;
     PsiTypeParameter[] rTypeParams = rTypeData.second;
 
@@ -2829,16 +2843,10 @@ public class HighlightUtil extends HighlightUtilBase {
     PsiType lRawType = lType instanceof PsiClassType ? ((PsiClassType)lType).rawType() : lType;
     PsiType rRawType = rType instanceof PsiClassType ? ((PsiClassType)rType).rawType() : rType;
     boolean assignable = lRawType == null || rRawType == null || TypeConversionUtil.isAssignable(lRawType, rRawType);
-    String toolTip = JavaErrorMessages.message("incompatible.types.html.tooltip",
-                                               redIfNotMatch(lRawType, assignable),
-                                               requiredRow,
-                                               redIfNotMatch(rRawType, assignable),
-                                               foundRow,
-                                               reason);
-    String description = JavaErrorMessages.message(
-      "incompatible.types", JavaHighlightUtil.formatType(lType), JavaHighlightUtil.formatType(rType));
-    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).description(description).escapedToolTip(toolTip)
-      .navigationShift(navigationShift).create();
+    return consumer.consume(redIfNotMatch(lRawType, assignable), 
+                            requiredRow.toString(), 
+                            redIfNotMatch(rRawType, assignable), 
+                            foundRow.toString());
   }
 
   private static String getReasonForIncompatibleTypes(PsiType rType) {
@@ -2869,12 +2877,6 @@ public class HighlightUtil extends HighlightUtilBase {
       PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
       substitutor = resolveResult.getSubstitutor();
       PsiClass psiClass = resolveResult.getElement();
-      if (psiClass instanceof PsiAnonymousClass) {
-        type = ((PsiAnonymousClass)psiClass).getBaseClassType();
-        resolveResult = ((PsiClassType)type).resolveGenerics();
-        substitutor = resolveResult.getSubstitutor();
-        psiClass = resolveResult.getElement();
-      }
       parameters = psiClass == null ? PsiTypeParameter.EMPTY_ARRAY : psiClass.getTypeParameters();
     }
     return Trinity.create(type, parameters, substitutor);
