@@ -817,4 +817,13 @@ public class IconUtil {
     }
     return icon;
   }
+
+  /**
+   * Returns {@link ScaleContextSupport} which best represents this icon taking into account its compound structure,
+   * or null when not applicable.
+   */
+  @Nullable
+  public static ScaleContextSupport getScaleContextSupport(@Nullable Icon icon) {
+    return IconLoader.getScaleContextSupport(icon);
+  }
 }
