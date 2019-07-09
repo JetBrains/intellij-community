@@ -2148,9 +2148,11 @@
                      key="cloneable.class.in.secure.context.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.security.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.security.CloneableClassInSecureContextInspection"/>
+    <!--suppress PluginXmlCapitalization -->
     <localInspection groupPath="Java" language="JAVA" shortName="CustomClassloader" bundle="com.siyeh.InspectionGadgetsBundle" key="custom.classloader.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.security.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.security.CustomClassloaderInspection"/>
+    <!--suppress PluginXmlCapitalization -->
     <localInspection groupPath="Java" language="JAVA" shortName="CustomSecurityManager" bundle="com.siyeh.InspectionGadgetsBundle" key="custom.security.manager.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.security.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.security.CustomSecurityManagerInspection"/>
