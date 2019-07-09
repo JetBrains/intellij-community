@@ -297,7 +297,8 @@ public class Replacer {
           if (definition == null || definition.getScriptCodeConstraint().length() <= 2 /*empty quotes*/) {
             throw new MalformedPatternException(SSRBundle.message("replacement.variable.is.not.defined.message", replacementSegmentName));
           } else {
-            final String message = ScriptSupport.checkValidScript(StringUtil.unquoteString(definition.getScriptCodeConstraint()));
+            final String message = ScriptSupport.checkValidScript(StringUtil.unquoteString(definition.getScriptCodeConstraint()),
+                                                                  options.getMatchOptions());
             if (message != null) {
               throw new MalformedPatternException(SSRBundle.message("replacement.variable.is.not.valid", replacementSegmentName, message));
             }
