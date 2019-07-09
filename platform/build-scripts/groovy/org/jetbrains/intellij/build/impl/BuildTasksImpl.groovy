@@ -108,7 +108,14 @@ class BuildTasksImpl extends BuildTasks {
     String configPath = "$tempDir/config"
 
     def ideClasspath = new LinkedHashSet<String>()
-    modules.collectMany(ideClasspath) { buildContext.getModuleRuntimeClasspath(buildContext.findRequiredModule(it), false) }
+    buildContext.messages.debug("Collecting classpath to run application starter '${arguments.first()}:")
+    for (moduleName in modules) {
+      for (pathElement in buildContext.getModuleRuntimeClasspath(buildContext.findRequiredModule(moduleName), false)) {
+        if (ideClasspath.add(pathElement)) {
+          buildContext.messages.debug(" $pathElement from $moduleName")
+        }
+      }
+    }
 
     String classpathFile = "$tempDir/classpath.txt"
     new File(classpathFile).text = ideClasspath.join("\n")
