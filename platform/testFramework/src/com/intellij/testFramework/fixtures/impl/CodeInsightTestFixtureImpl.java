@@ -129,6 +129,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -842,9 +843,16 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       myEditorTestFixture.performEditorAction(IdeActions.ACTION_FIND_USAGES);
     });
     return EdtTestUtil.runInEdtAndGet(() -> {
+      long startMillis = System.currentTimeMillis();
       UsageView view;
+      boolean viewWasInitialized = false;
       while ((view = UsageViewManager.getInstance(getProject()).getSelectedUsageView()) == null || view.isSearchInProgress()) {
         IdeEventQueue.getInstance().flushQueue();
+        viewWasInitialized |= view != null;
+        if (!viewWasInitialized && System.currentTimeMillis() - startMillis > TimeUnit.SECONDS.toMillis(10)) {
+          fail("UsageView wasn't shown");
+          return Collections.emptyList();
+        }
       }
       return view.getUsages();
     });
