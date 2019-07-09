@@ -11,16 +11,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.sh.highlighting.ShTextOccurrencesUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.MissingResourceException;
 
 class ShRenameAllOccurrencesHandler extends EditorActionHandler {
   public static final ShRenameAllOccurrencesHandler INSTANCE = new ShRenameAllOccurrencesHandler();
-  static final String MAX_SEGMENTS_PROP_NAME = "sh.max.inplace.rename.segments";
   static final Key<TextOccurrencesRenamer> RENAMER_KEY = Key.create("renamer");
 
   private ShRenameAllOccurrencesHandler() {
@@ -61,7 +62,17 @@ class ShRenameAllOccurrencesHandler extends EditorActionHandler {
     }
   }
 
+  @NotNull
+  static RegistryValue getMaxInplaceRenameSegmentsRegistryValue() {
+    return Registry.get("inplace.rename.segments.limit");
+  }
+
   private static int getMaxInplaceRenameSegments() {
-    return StringUtil.parseInt(System.getProperty(MAX_SEGMENTS_PROP_NAME), 300);
+    try {
+      return getMaxInplaceRenameSegmentsRegistryValue().asInteger();
+    }
+    catch (MissingResourceException e) {
+      return -1;
+    }
   }
 }
