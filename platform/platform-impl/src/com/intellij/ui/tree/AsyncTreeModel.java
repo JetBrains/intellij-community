@@ -950,8 +950,8 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     try {
       super.treeStructureChanged(path, indices, children);
     }
-    catch (Exception exception) {
-      LOG.error("custom model: " + model, exception);
+    catch (Throwable throwable) {
+      LOG.error("custom model: " + model, throwable);
     }
   }
 
@@ -960,8 +960,8 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     try {
       super.treeNodesChanged(path, indices, children);
     }
-    catch (Exception exception) {
-      LOG.error("custom model: " + model, exception);
+    catch (Throwable throwable) {
+      LOG.error("custom model: " + model, throwable);
     }
   }
 
@@ -970,8 +970,8 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     try {
       super.treeNodesInserted(path, indices, children);
     }
-    catch (Exception exception) {
-      LOG.error("custom model: " + model, exception);
+    catch (Throwable throwable) {
+      LOG.error("custom model: " + model, throwable);
     }
   }
 
@@ -980,8 +980,8 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     try {
       super.treeNodesRemoved(path, indices, children);
     }
-    catch (Exception exception) {
-      LOG.error("custom model: " + model, exception);
+    catch (Throwable throwable) {
+      LOG.error("custom model: " + model, throwable);
     }
   }
 
