@@ -138,7 +138,7 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
     }
   }
 
-  override fun createSettings(): Settings = Settings(showInferred = true, showExternal = true)
+  override fun createSettings(): Settings = Settings()
 
   override val name: String
     get() = "Annotations"
@@ -184,7 +184,7 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
     val ourKey: SettingsKey<Settings> = SettingsKey("annotation.hints")
   }
 
-  data class Settings(var showInferred: Boolean = true, var showExternal: Boolean = true)
+  data class Settings(var showInferred: Boolean = false, var showExternal: Boolean = true)
 
 
   class ToggleSettingsAction(val text: String, val prop: KMutableProperty0<Boolean>, val settings: Settings) : AnAction() {
