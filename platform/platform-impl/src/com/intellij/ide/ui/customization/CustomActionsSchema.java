@@ -38,6 +38,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @State(name = "com.intellij.ide.ui.customization.CustomActionsSchema", storages = @Storage("customization.xml"))
 public final class CustomActionsSchema implements PersistentStateComponent<Element> {
@@ -49,6 +50,8 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
   @NonNls private static final String ATTRIBUTE_ID = "id";
   @NonNls private static final String ATTRIBUTE_ICON = "icon";
   @NonNls private static final String GROUP = "group";
+
+  private static final Map<String, String> ourAdditionalIdToName = new ConcurrentHashMap<>();
 
   private final Map<String, String> myIconCustomizations = new HashMap<>();
   private final Map<String, String> myIdToName = new LinkedHashMap<>();
@@ -73,11 +76,6 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     myIdToName.put(IdeActions.GROUP_NAVBAR_POPUP, "Navigation Bar");
     myIdToName.put("NavBarToolBar", "Navigation Bar Toolbar");
 
-    // todo is it safe to not check so early?
-    //if (TouchBarsManager.isTouchBarAvailable()) {
-    //  myIdToName.put(IdeActions.GROUP_TOUCHBAR, "Touch Bar");
-    //}
-
     List<Couple<String>> extList = new ArrayList<>();
     CustomizableActionGroupProvider.CustomizableActionGroupRegistrar registrar =
       (groupId, groupTitle) -> extList.add(Couple.of(groupId, groupTitle));
@@ -88,14 +86,15 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     for (Couple<String> couple : extList) {
       myIdToName.put(couple.first, couple.second);
     }
+
+    myIdToName.putAll(ourAdditionalIdToName);
   }
 
-  public void touchBarAvailable(boolean value) {
+  public static void enableTouchBar(boolean value) {
     if (value) {
-      myIdToName.put(IdeActions.GROUP_TOUCHBAR, "Touch Bar");
-    }
-    else {
-      myIdToName.remove(IdeActions.GROUP_TOUCHBAR);
+      ourAdditionalIdToName.put(IdeActions.GROUP_TOUCHBAR, "Touch Bar");
+    } else {
+      ourAdditionalIdToName.remove(IdeActions.GROUP_TOUCHBAR);
     }
   }
 
@@ -122,8 +121,6 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     myIdToActionGroup.clear();
     myActions.clear();
     myIconCustomizations.clear();
-    myIdToName.clear();
-    myIdToName.putAll(result.myIdToName);
 
     for (ActionUrl actionUrl : result.myActions) {
       ActionUrl url = new ActionUrl(new ArrayList<>(actionUrl.getGroupPath()), actionUrl.getComponent(),
