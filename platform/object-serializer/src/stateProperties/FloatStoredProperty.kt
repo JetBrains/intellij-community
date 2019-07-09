@@ -50,7 +50,7 @@ internal class FloatStoredProperty(private val defaultValue: Float, private val 
 private fun parseYamlFloat(_value: String): Float {
   var value = StringUtil.replace(_value, "_", "")
   var sign = +1
-  val first = value.get(0)
+  val first = value[0]
   if (first == '-') {
     sign = -1
     value = value.substring(1)

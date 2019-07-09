@@ -67,7 +67,7 @@ private class MyMap<K: Any, V> : THashMap<K, V>() {
     return oldValue
   }
 
-  // to detect remove from iterator
+  // to detect a remove from iterator
   override fun removeAt(index: Int) {
     super.removeAt(index)
     modificationCount++

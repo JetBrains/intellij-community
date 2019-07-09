@@ -7,11 +7,11 @@ import com.intellij.openapi.components.StoredProperty
 import com.intellij.openapi.components.StoredPropertyBase
 import com.intellij.util.SmartList
 
-// Technically, it is not possible to proxy write operations because collection/map can be mutated via iterator.
-// So, even if Kotlin can create delegator for us, still, to track mutations via iterator we have to reimplement collection/map.
+// Technically, it is not possible to proxy write operations because a collection can be mutated via iterator.
+// So, even if Kotlin could create a delegate for us, to track mutations via an iterator we have to re-implement collection/map.
 
 /**
- * AbstractCollectionBinding modifies collection directly, so, we cannot use null as default null and return empty list on get.
+ * `AbstractCollectionBinding` modifies collection directly, so we cannot use `null` as a default value and have to return an empty list.
  */
 open class CollectionStoredProperty<E : Any, C : MutableCollection<E>>(protected val value: C) : StoredPropertyBase<C>() {
   override val jsonType: JsonSchemaType
@@ -27,7 +27,7 @@ open class CollectionStoredProperty<E : Any, C : MutableCollection<E>>(protected
     }
   }
 
-  protected fun doSetValue(old: C, new: C): Boolean {
+  private fun doSetValue(old: C, new: C): Boolean {
     if (old == new) {
       return false
     }

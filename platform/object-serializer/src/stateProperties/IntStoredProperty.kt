@@ -50,7 +50,7 @@ internal class IntStoredProperty(private val defaultValue: Int, private val valu
 private fun parseYamlInt(_value: String): Int {
   var value = StringUtil.replace(_value, "_", "")
   var sign = +1
-  val first = value.get(0)
+  val first = value[0]
   if (first == '-') {
     sign = -1
     value = value.substring(1)
