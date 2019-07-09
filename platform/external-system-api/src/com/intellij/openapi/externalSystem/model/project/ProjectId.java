@@ -5,7 +5,9 @@ import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ProjectId implements ProjectCoordinate {
+import java.io.Serializable;
+
+public class ProjectId implements ProjectCoordinate, Serializable {
   @Nullable private final String groupId;
   @Nullable private final String artifactId;
   @Nullable private final String version;
