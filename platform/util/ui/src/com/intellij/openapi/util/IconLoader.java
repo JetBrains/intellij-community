@@ -7,10 +7,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.RetrievableIcon;
-import com.intellij.ui.icons.CopyableIcon;
-import com.intellij.ui.icons.DarkIconProvider;
-import com.intellij.ui.icons.ImageDescriptor;
-import com.intellij.ui.icons.MenuBarIconProvider;
+import com.intellij.ui.icons.*;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.scale.ScaleContextAware;
@@ -420,9 +417,10 @@ public final class IconLoader {
     if (icon instanceof CachedImageIcon) {
       icon = ((CachedImageIcon)icon).createWithFilter(filterSupplier);
     } else {
-      final float scale;
-      if (icon instanceof ScaleContextAware) {
-        scale = (float)((ScaleContextAware)icon).getScale(SYS_SCALE);
+      double scale;
+      ScaleContextSupport ctxSupport = getScaleContextSupport(icon);
+      if (ctxSupport != null) {
+        scale = ctxSupport.getScale(SYS_SCALE);
       }
       else {
         scale = StartupUiUtil.isJreHiDPI() ? JBUIScale.sysScale(ancestor) : 1f;
@@ -967,6 +965,24 @@ public final class IconLoader {
     if (origin instanceof RetrievableIcon)
       LOG.error("can't calculate origin icon (too deep in hierarchy), src: " + icon);
     return origin;
+  }
+
+  /**
+   * Returns {@link ScaleContextSupport} which best represents this icon taking into account its compound structure,
+   * or null when not applicable.
+   */
+  @Nullable
+  public static ScaleContextSupport getScaleContextSupport(@Nullable Icon icon) {
+    if (icon instanceof ScaleContextSupport) {
+      return (ScaleContextSupport)icon;
+    }
+    else if (icon instanceof RetrievableIcon) {
+      return getScaleContextSupport(((RetrievableIcon)icon).retrieveIcon());
+    }
+    else if (icon instanceof CompositeIcon) {
+      return getScaleContextSupport(((CompositeIcon)icon).getIcon(0));
+    }
+    return null;
   }
 
   private static class LabelHolder {
