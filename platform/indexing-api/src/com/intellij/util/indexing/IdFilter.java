@@ -24,10 +24,12 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.BitSet;
 
@@ -73,8 +75,19 @@ public abstract class IdFilter {
       public boolean containsFileId(int id) {
         return id >= 0 && idSet.get(id);
       }
+
+      @NotNull
+      @Override
+      public GlobalSearchScope getEffectiveFilteringScope() {
+        return includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
+      }
     };
   }
 
   public abstract boolean containsFileId(int id);
+
+  @Nullable
+  public GlobalSearchScope getEffectiveFilteringScope() {
+    return null;
+  }
 }
