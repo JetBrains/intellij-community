@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.intentions.style.inference.graph
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import com.intellij.util.containers.BidirectionalMap
@@ -17,9 +18,11 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 fun createGraphFromInferenceVariables(variables: Collection<InferenceVariable>,
                                       session: GroovyInferenceSession,
-                                      driver: InferenceDriver): InferenceUnitGraph {
+                                      driver: InferenceDriver,
+                                      initialVariables: Array<PsiTypeParameter>): InferenceUnitGraph {
   val variableMap = BidirectionalMap<InferenceUnit, InferenceVariable>()
   val builder = InferenceUnitGraphBuilder()
+  val excessParameters = (session.inferenceVariables.map { it.delegate } - initialVariables).map { it.name }.toSet()
   for (variable in variables) {
     val variableType = variable.parameter.type()
     val extendsTypes = variable.parameter.extendsList.referencedTypes
@@ -27,13 +30,20 @@ fun createGraphFromInferenceVariables(variables: Collection<InferenceVariable>,
       extendsTypes.size <= 1 -> extendsTypes.toList()
       else -> extendsTypes.filter { driver.appearedClassTypes[variableType.className]?.contains(it.resolve()) ?: false }
     }
-    val validType = when {
+    val filteredType = when {
       residualExtendsTypes.size > 1 -> PsiIntersectionType.createIntersection(residualExtendsTypes.toList())
       residualExtendsTypes.isEmpty() && variable.instantiation is PsiIntersectionType -> PsiType.getJavaLangObject(session.manager,
                                                                                                                    session.scope)
       // questionable conditions. I guess, we can allow LUB instead of Object if variable's inferred type is simple (not an intersection).
       else -> residualExtendsTypes.firstOrNull() ?: variable.instantiation!!.ensureWildcards(
         GroovyPsiElementFactory.getInstance(variable.project), variable.manager)
+    }
+    val validType = if (filteredType.canonicalText in excessParameters) {
+      PsiType.getJavaLangObject(session.manager,
+                                session.scope)
+    }
+    else {
+      filteredType
     }
     val core = InferenceUnit(variable.parameter, flexible = variableType in driver.flexibleTypes,
                              constant = variableType in driver.constantTypes)

@@ -36,6 +36,7 @@ class InferenceDriver(val method: GrMethod) {
                                                                 ?: elementFactory.createTypeParameterList()) as PsiTypeParameterList
   private val parameterIndex: MutableMap<GrParameter, PsiTypeParameter> = LinkedHashMap()
   private val varargParameters: MutableSet<GrParameter> = mutableSetOf()
+  val finalTypeParameterList: PsiTypeParameterList = elementFactory.createTypeParameterList()
 
   /**
    * Gathers expressions that will be assigned to parameters of [virtualMethod]
@@ -137,7 +138,6 @@ class InferenceDriver(val method: GrMethod) {
           parametrizedClosure.typeParameters.add(newTypeParameter)
         }
       }
-
   }
 
   private fun createNewTypeParameter(generator: NameGenerator? = null): PsiTypeParameter =
@@ -335,6 +335,14 @@ class InferenceDriver(val method: GrMethod) {
       }
     })
     appearedClassTypes.putAll(boundsCollector)
+    virtualMethod.block?.controlFlow
+      ?.filterIsInstance<ReadWriteVariableInstruction>()
+      ?.groupBy { it.element?.reference?.resolve() }
+      ?.forEach { (parameter, usages) ->
+        if (parameter is GrParameter && parameter in closureParameters.keys) {
+          collectDeepClosureDependencies(inferenceSession, closureParameters[parameter]!!, usages)
+        }
+      }
   }
 
   /**
@@ -368,7 +376,7 @@ class InferenceDriver(val method: GrMethod) {
           resultSubstitutor.substitute((param.type as PsiArrayType).componentType).createArrayType())
       }
     }
-    val residualTypeParameterList = buildResidualTypeParameterList(defaultTypeParameterList)
+    val residualTypeParameterList = buildResidualTypeParameterList(finalTypeParameterList)
     virtualMethod.typeParameterList?.replace(residualTypeParameterList)
     if (virtualMethod.typeParameters.isEmpty()) {
       virtualMethod.typeParameterList?.delete()
@@ -378,7 +386,6 @@ class InferenceDriver(val method: GrMethod) {
   private fun buildResidualTypeParameterList(typeParameterList: PsiTypeParameterList): PsiTypeParameterList {
     virtualMethod.typeParameterList!!.replace(typeParameterList)
     val necessaryTypeParameters = LinkedHashSet<PsiTypeParameter>()
-    necessaryTypeParameters.addAll(constantTypeParameters)
     val visitor = object : PsiTypeVisitor<PsiType>() {
 
       override fun visitClassType(classType: PsiClassType?): PsiType? {
@@ -406,8 +413,11 @@ class InferenceDriver(val method: GrMethod) {
     }
     virtualMethod.parameters.forEach { it.type.accept(visitor) }
     closureParameters.values.flatMap { it.types }.forEach { it.accept(visitor) }
+    val takenNames = necessaryTypeParameters.map { it.name }
+    val remainedConstantParameters = constantTypeParameters.filter { it.name !in takenNames }
+    //necessaryTypeParameters.addAll(remainedConstantParameters)
     return elementFactory.createMethodFromText(
-      "def <${necessaryTypeParameters.joinToString(", ") { it.text }}> void foo() {}").typeParameterList!!
+      "def <${(remainedConstantParameters + necessaryTypeParameters).joinToString(", ") { it.text }}> void foo() {}").typeParameterList!!
   }
 
 
@@ -422,7 +432,7 @@ class InferenceDriver(val method: GrMethod) {
       else -> emptyArray()
     }
     return elementFactory.createProperTypeParameter(name, mappedSupertypes).apply {
-      defaultTypeParameterList.add(this)
+      finalTypeParameterList.add(this)
     }
   }
 

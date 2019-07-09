@@ -58,7 +58,7 @@ fun determineDependencies(graph: InferenceUnitGraph): InferenceUnitGraph {
  * Handles cyclic dependencies.
  * If there is cyclic dependency among units, than all these units represent one type and can be merged.
  *
- * @return new condensed graph and mapping between nodes and their new parent
+ * @return new condensed graph
  */
 private fun condense(graph: InferenceUnitGraph): InferenceUnitGraph {
   val nodeMap = LinkedHashMap<InferenceUnitNode, InferenceGraphNode>()

@@ -50,11 +50,12 @@ class MethodParametersInferenceProcessor(method: GrMethod) {
 
   private fun setUpGraph(): InferenceUnitGraph {
     val inferenceSession = CollectingGroovyInferenceSession(driver.virtualMethod.typeParameters, PsiSubstitutor.EMPTY, driver.virtualMethod)
+    val initialVariables = driver.virtualMethod.typeParameters
     driver.collectInnerMethodCalls(inferenceSession)
     driver.constantTypes.forEach { getInferenceVariable(inferenceSession, it).instantiation = it }
     inferenceSession.run { repeatInferencePhases(); infer() }
     val inferenceVariables = driver.virtualMethod.typeParameters.map { getInferenceVariable(inferenceSession, it.type()) }
-    return createGraphFromInferenceVariables(inferenceVariables, inferenceSession, driver)
+    return createGraphFromInferenceVariables(inferenceVariables, inferenceSession, driver, initialVariables)
   }
 
   private fun inferTypeParameters(initialGraph: InferenceUnitGraph) {
@@ -79,14 +80,24 @@ class MethodParametersInferenceProcessor(method: GrMethod) {
   private fun getPreferableType(unit: InferenceUnitNode,
                                 resultSubstitutor: PsiSubstitutor, endpoints: MutableSet<InferenceUnitNode>): PsiType {
     val mayBeDirectlyInstantiated =
-      !unit.forbidInstantiation &&
-      when {
-        unit.core.flexible -> (unit.typeInstantiation !is PsiIntersectionType)
-        else -> unit.subtypes.size <= 1
-      }
+      unit.core.constant || (
+        !unit.forbidInstantiation &&
+        when {
+          unit.core.flexible -> (unit.typeInstantiation !is PsiIntersectionType)
+          else -> unit.subtypes.size <= 1
+        })
     when {
       mayBeDirectlyInstantiated -> {
         val instantiation = when {
+          unit.core.constant -> {
+            if (unit.core.initialTypeParameter.extendsListTypes.isEmpty()) {
+              driver.createBoundedTypeParameter(unit.type.name, resultSubstitutor, unit.typeInstantiation).type()
+            }
+            else {
+              driver.finalTypeParameterList.add(unit.core.initialTypeParameter)
+              return unit.core.initialTypeParameter.type()
+            }
+          }
           unit.core.flexible || unit.subtypes.isNotEmpty() || unit.direct -> unit.typeInstantiation
           unit.typeInstantiation == unit.type || unit.typeInstantiation.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ->
             PsiWildcardType.createUnbounded(driver.virtualMethod.manager)

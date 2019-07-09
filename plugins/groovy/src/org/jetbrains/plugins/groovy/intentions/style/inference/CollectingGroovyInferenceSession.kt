@@ -44,6 +44,7 @@ class CollectingGroovyInferenceSession(
     val nestedSession = CollectingGroovyInferenceSession(params, siteSubstitutor, context, proxyMethodMapping, this)
     nestedSession.propagateVariables(this)
     f(nestedSession)
+    nestedSessions[result] = nestedSession
     this.propagateVariables(nestedSession)
     nestedSession.inferenceVariables.forEach {
       mergeVariables(it, InferenceBound.LOWER)
@@ -76,7 +77,14 @@ class CollectingGroovyInferenceSession(
   private fun mergeVariables(variable: InferenceVariable, bound: InferenceBound) {
     variable.getBounds(bound).forEach {
       InferenceVariable.addBound(substituteWithInferenceVariables(variable.parameter.type()), it, bound, this)
+      InferenceVariable.addBound(it, substituteWithInferenceVariables(variable.parameter.type()), negate(bound), this)
     }
-
   }
+
+  private fun negate(bound: InferenceBound): InferenceBound =
+    when (bound) {
+      InferenceBound.EQ -> InferenceBound.EQ
+      InferenceBound.LOWER -> InferenceBound.UPPER
+      InferenceBound.UPPER -> InferenceBound.LOWER
+    }
 }

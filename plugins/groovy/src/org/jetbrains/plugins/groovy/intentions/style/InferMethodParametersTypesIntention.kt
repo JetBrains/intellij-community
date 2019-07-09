@@ -5,6 +5,8 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle
 import org.jetbrains.plugins.groovy.intentions.base.Intention
@@ -14,8 +16,10 @@ import org.jetbrains.plugins.groovy.intentions.style.inference.ParametrizedClosu
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier.DEF
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 
 
 /**
@@ -31,7 +35,16 @@ internal class InferMethodParametersTypesIntention : Intention() {
   override fun processIntention(element: PsiElement, project: Project, editor: Editor?) {
     val method: GrMethod = element as GrMethod
     if (!method.isConstructor) {
-      AddReturnTypeFix.applyFix(project, element)
+      val inferredType = method.inferredReturnType
+      val returnType = TypesUtil.unboxPrimitiveTypeWrapper(
+        if (inferredType == null || inferredType == PsiType.NULL) {
+          PsiType.getJavaLangObject(PsiManager.getInstance(project), method.resolveScope)
+        }
+        else {
+          inferredType
+        })
+      GrReferenceAdjuster.shortenAllReferencesIn(method.setReturnType(returnType))
+      method.modifierList.setModifierProperty(DEF, false)
     }
     val processor = MethodParametersInferenceProcessor(method)
     val virtualMethod = processor.runInferenceProcess()
