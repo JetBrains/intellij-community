@@ -191,6 +191,7 @@ public final class PluginClassLoader extends UrlClassLoader {
     "kotlin.Pair",
     "kotlin.Triple",
     "kotlin.jvm.internal.DefaultConstructorMarker",
+    "kotlin.jvm.internal.ClassBasedDeclarationContainer",
     "kotlin.properties.ReadWriteProperty",
     "kotlin.properties.ReadOnlyProperty"
   );
