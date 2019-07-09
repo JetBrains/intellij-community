@@ -29,8 +29,6 @@ import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogHighlighter;
 import com.intellij.vcs.log.VcsLogHighlighter.VcsCommitStyle;
 import com.intellij.vcs.log.VcsShortCommitDetails;
-import com.intellij.vcs.log.data.DataPack;
-import com.intellij.vcs.log.data.DataPackBase;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.graph.DefaultColorGenerator;
@@ -349,16 +347,14 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
     else if (index == DATE_COLUMN) {
       // all dates have nearly equal sizes
-      return getFontMetrics(getTableFont().deriveFont(Font.BOLD)).stringWidth(DateFormatUtil.formatDateTime(new Date())) +
+      String dateSample = DateFormatUtil.formatDateTime(new Date());
+      return getFontMetrics(getTableFont().deriveFont(Font.BOLD)).stringWidth(dateSample) +
              VcsLogUiUtil.getHorizontalTextPadding(myStringCellRenderer);
     }
     else if (index == HASH_COLUMN) {
-      if (getModel().getRowCount() <= 0) {
-        return column.getPreferredWidth();
-      }
       // all hashes have nearly equal sizes
-      String hash = getModel().getValueAt(0, HASH_COLUMN).toString();
-      return getFontMetrics(getTableFont().deriveFont(Font.BOLD)).stringWidth(hash) +
+      String hashSample = StringUtil.repeat("e", VcsLogUtil.SHORT_HASH_LENGTH);
+      return getFontMetrics(getTableFont().deriveFont(Font.BOLD)).stringWidth(hashSample) +
              VcsLogUiUtil.getHorizontalTextPadding(myStringCellRenderer);
     }
     LOG.error("Can only calculate author, hash or date columns width from data, yet given column " + index);
