@@ -443,20 +443,24 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
     }
 
     if (!myDirtyFiles.isEmpty()) {
+      if (isInDirtyFiles(path, vcsRoot)) return true;
+
       FilePath parent = path.getParentPath();
-      return isInDirtyFiles(path) || isInDirtyFiles(parent);
+      if (parent != null && isInDirtyFiles(parent, !pathIsRoot ? vcsRoot : null)) return true;
     }
 
     return false;
   }
 
-  private boolean isInDirtyFiles(final FilePath path) {
-    final VcsRoot rootObject = myVcsManager.getVcsRootObjectFor(path);
-    if (rootObject != null && myVcs.equals(rootObject.getVcs())) {
-      final THashSet<FilePath> files = myDirtyFiles.get(rootObject.getPath());
-      if (files != null && files.contains(path)) return true;
+  private boolean isInDirtyFiles(@NotNull FilePath path, @Nullable VirtualFile vcsRoot) {
+    if (vcsRoot == null) {
+      VcsRoot rootObject = myVcsManager.getVcsRootObjectFor(path);
+      if (rootObject == null || !myVcs.equals(rootObject.getVcs())) return false;
+      vcsRoot = rootObject.getPath();
     }
-    return false;
+
+    final THashSet<FilePath> files = myDirtyFiles.get(vcsRoot);
+    return files != null && files.contains(path);
   }
 
   @Override
