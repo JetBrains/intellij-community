@@ -27,6 +27,7 @@ import java.awt.event.MouseEvent
 import javax.swing.*
 import kotlin.jvm.internal.CallableReference
 import kotlin.reflect.KMutableProperty0
+import kotlin.reflect.KVisibility
 
 @DslMarker
 annotation class CellMarker
@@ -49,6 +50,15 @@ internal fun <T> createPropertyBinding(prop: KMutableProperty0<T>, propType: Cla
         val getter = receiverClass.getMethod(getterName)
         val setter = receiverClass.getMethod(setterName, propType)
         return PropertyBinding({ getter.invoke(receiver) as T }, { setter.invoke(receiver, it) })
+      }
+      catch (e: Exception) {
+        // ignore
+      }
+
+      try {
+        val field = receiverClass.getDeclaredField(name)
+        field.isAccessible = true
+        return PropertyBinding({ field.get(receiver) as T }, { field.set(receiver, it) })
       }
       catch (e: Exception) {
         // ignore
