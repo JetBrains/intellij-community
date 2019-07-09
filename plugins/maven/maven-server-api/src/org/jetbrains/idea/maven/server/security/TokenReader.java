@@ -65,7 +65,7 @@ public class TokenReader {
     @Override
     public void run() {
       try {
-        while (myScanner.hasNextLine() && isInterrupted()) {
+        while (myScanner.hasNextLine() && !isInterrupted()) {
           String line = myScanner.nextLine();
           if (line != null) {
             line = line.trim();
