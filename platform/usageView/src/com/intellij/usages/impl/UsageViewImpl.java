@@ -1189,7 +1189,7 @@ public class UsageViewImpl implements UsageViewEx {
     }
 
     for (UsageViewElementsListener listener : UsageViewElementsListener.EP_NAME.getExtensionList()) {
-      listener.beforeUsageAdded(usage);
+      listener.beforeUsageAdded(this, usage);
     }
 
     UsageNode child = myBuilder.appendOrGet(usage, isFilterDuplicateLines(), edtNodeInsertedUnderQueue);
