@@ -5,6 +5,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
@@ -19,9 +20,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.fileTypes.ex.*;
+import com.intellij.openapi.fileTypes.ex.ExternalizableFileType;
+import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
+import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.options.NonLazySchemeProcessor;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
@@ -314,6 +319,15 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
       private void register(@NotNull FileType fileType, @NotNull List<FileNameMatcher> fileNameMatchers) {
         instantiatePendingFileTypeByName(fileType.getName());
+        for (FileNameMatcher matcher : fileNameMatchers) {
+          FileTypeBean pendingTypeByMatcher = myPendingAssociations.findAssociatedFileType(matcher);
+          if (pendingTypeByMatcher != null) {
+            PluginId id = pendingTypeByMatcher.getPluginId();
+            if (id == null || id.getIdString().equals(PluginManagerCore.CORE_PLUGIN_ID)) {
+              instantiateFileTypeBean(pendingTypeByMatcher);
+            }
+          }
+        }
 
         final StandardFileType type = myStandardFileTypes.get(fileType.getName());
         if (type != null) {
