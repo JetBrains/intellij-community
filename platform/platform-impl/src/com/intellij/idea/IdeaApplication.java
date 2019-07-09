@@ -415,10 +415,7 @@ public final class IdeaApplication {
       if (SystemInfo.isMac) {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
           TouchBarsManager.onApplicationInitialized();
-          CustomActionsSchema customActionSchema = ServiceManager.getServiceIfCreated(CustomActionsSchema.class);
-          if (customActionSchema != null) {
-            customActionSchema.touchBarAvailable(TouchBarsManager.isTouchBarAvailable());
-          }
+          CustomActionsSchema.enableTouchBar(TouchBarsManager.isTouchBarAvailable());
         });
       }
 
