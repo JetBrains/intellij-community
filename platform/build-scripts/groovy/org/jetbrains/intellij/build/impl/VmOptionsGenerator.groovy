@@ -24,12 +24,17 @@ import org.jetbrains.intellij.build.ProductProperties
  */
 @CompileStatic
 class VmOptionsGenerator {
-  private static final String COMMON_VM_OPTIONS = "-XX:+UseG1GC -XX:SoftRefLRUPolicyMSPerMB=50 -ea " +
-                                          "-XX:CICompilerCount=2 " +
-                                          "-Dsun.io.useCanonPrefixCache=false -Djava.net.preferIPv4Stack=true " +
-                                          "-Djdk.http.auth.tunneling.disabledSchemes=\"\" " +
-                                          "-XX:+HeapDumpOnOutOfMemoryError -XX:-OmitStackTraceInFastThrow " +
-                                          "-Djdk.attach.allowAttachSelf"
+  static final List<String> COMMON_VM_OPTIONS =
+    [
+      '-XX:+UseG1GC', '-XX:SoftRefLRUPolicyMSPerMB=50',
+      '-ea',
+      '-XX:CICompilerCount=2',
+      '-Dsun.io.useCanonPrefixCache=false', '-Djava.net.preferIPv4Stack=true',
+      '-Djdk.http.auth.tunneling.disabledSchemes=""',
+      '-XX:+HeapDumpOnOutOfMemoryError',
+      '-XX:-OmitStackTraceInFastThrow',
+      '-Djdk.attach.allowAttachSelf',
+    ]
 
   static String computeVmOptions(JvmArchitecture arch, boolean isEAP, ProductProperties productProperties) {
     String options = vmOptionsForArch(arch, productProperties) + " " + computeCommonVmOptions(isEAP)
@@ -37,7 +42,7 @@ class VmOptionsGenerator {
   }
 
   static String computeCommonVmOptions(boolean isEAP) {
-    String options = COMMON_VM_OPTIONS
+    String options = COMMON_VM_OPTIONS.join(" ")
     if (isEAP) {
       //must be consistent with com.intellij.openapi.application.ConfigImportHelper.updateVMOptions
       options += " -XX:MaxJavaStackTraceDepth=10000"

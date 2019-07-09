@@ -273,16 +273,9 @@ class TestingTasksImpl extends TestingTasks {
 
     File snapshotsDir = createSnapshotsDirectory()
     String hprofSnapshotFilePath = new File(snapshotsDir, "intellij-tests-oom.hprof").absolutePath
-    List<String> jvmArgs = [
-      "-ea",
-      "-server",
-      "-XX:+HeapDumpOnOutOfMemoryError",
-      "-XX:HeapDumpPath=$hprofSnapshotFilePath".toString(),
-      "-XX:ReservedCodeCacheSize=300m",
-      "-XX:SoftRefLRUPolicyMSPerMB=50",
-      "-XX:+UseG1GC",
-      "-XX:CICompilerCount=2",
-      "-XX:-OmitStackTraceInFastThrow"
+    List<String> jvmArgs = VmOptionsGenerator.COMMON_VM_OPTIONS + [
+      '-XX:+HeapDumpOnOutOfMemoryError',
+      '-XX:HeapDumpPath=' + hprofSnapshotFilePath,
     ]
     jvmArgs.addAll(additionalJvmOptions)
     if (options.jvmMemoryOptions != null) {
