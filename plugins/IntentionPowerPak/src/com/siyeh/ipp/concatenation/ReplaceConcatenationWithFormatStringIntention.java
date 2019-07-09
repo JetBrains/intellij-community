@@ -26,6 +26,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class ReplaceConcatenationWithFormatStringIntention extends Intention {
@@ -118,9 +119,9 @@ public class ReplaceConcatenationWithFormatStringIntention extends Intention {
                                          CharSequence formatString,
                                          boolean insertNewline,
                                          StringBuilder newExpression) {
-    PsiExpression firstOperand = expression.getOperands()[0];
-    boolean textBlocks = firstOperand instanceof PsiLiteralExpressionImpl &&
-                         ((PsiLiteralExpressionImpl)firstOperand).getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL;
+    boolean textBlocks = Arrays.stream(expression.getOperands())
+      .anyMatch(operand -> operand instanceof PsiLiteralExpressionImpl &&
+                           ((PsiLiteralExpressionImpl)operand).getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL);
     newExpression.append(textBlocks ? "\"\"\"\n" : '\"');
     newExpression.append(formatString);
     if (insertNewline) {
