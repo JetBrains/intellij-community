@@ -377,7 +377,7 @@ public class JiraRepository extends BaseRepositoryImpl {
   }
 
   private boolean isRestApiSupported() {
-    return myApiVersion != null && myApiVersion.getType() != JiraRemoteApi.ApiType.LEGACY;
+    return myApiVersion == null || myApiVersion.getType() != JiraRemoteApi.ApiType.LEGACY;
   }
 
   public boolean isJqlSupported() {

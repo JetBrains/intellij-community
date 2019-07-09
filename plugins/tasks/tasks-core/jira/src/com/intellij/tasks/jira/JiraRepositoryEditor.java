@@ -53,27 +53,21 @@ public class JiraRepositoryEditor extends BaseRepositoryEditor<JiraRepository> {
     if (connectionSuccessful) {
       enableJqlSearchIfSupported();
     }
-    updateNote();
   }
 
   @Nullable
   @Override
   protected JComponent createCustomPanel() {
     mySearchQueryField = new LanguageTextField(JqlLanguage.INSTANCE, myProject, myRepository.getSearchQuery());
-    enableJqlSearchIfSupported();
     installListener(mySearchQueryField);
     mySearchLabel = new JBLabel("Search:", SwingConstants.RIGHT);
     myNoteLabel = new JBLabel();
     myNoteLabel.setComponentStyle(UIUtil.ComponentStyle.SMALL);
-    updateNote();
+    enableJqlSearchIfSupported();
     return FormBuilder.createFormBuilder()
       .addLabeledComponent(mySearchLabel, mySearchQueryField)
       .addComponentToRightColumn(myNoteLabel)
       .getPanel();
-  }
-
-  private void updateNote() {
-    myNoteLabel.setText("JQL search cannot be used in JIRA versions prior 4.2. Your version: " + myRepository.getPresentableVersion());
   }
 
   @Override
@@ -83,6 +77,14 @@ public class JiraRepositoryEditor extends BaseRepositoryEditor<JiraRepository> {
   }
 
   private void enableJqlSearchIfSupported() {
-    mySearchQueryField.setEnabled(myRepository.isJqlSupported());
+    if (myRepository.isJqlSupported()) {
+      mySearchQueryField.setEnabled(true);
+      myNoteLabel.setVisible(false);
+    }
+    else {
+      mySearchQueryField.setEnabled(false);
+      myNoteLabel.setText("JQL search cannot be used in JIRA versions prior 4.2. Your version: " + myRepository.getPresentableVersion());
+      myNoteLabel.setVisible(true);
+    }
   }
 }
