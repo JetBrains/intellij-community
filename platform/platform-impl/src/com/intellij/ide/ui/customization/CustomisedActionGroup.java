@@ -2,6 +2,7 @@
 package com.intellij.ide.ui.customization;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,8 @@ public class CustomisedActionGroup extends ActionGroup {
   @NotNull
   public AnAction[] getChildren(@Nullable final AnActionEvent e) {
     int currentStamp = CustomActionsSchema.getInstance().getModificationStamp();
-    if (mySchemeModificationStamp < currentStamp || myChildren == null || !(myGroup instanceof DefaultActionGroup)) {
+    if (mySchemeModificationStamp < currentStamp || ArrayUtil.isEmpty(myChildren) ||
+        myGroup instanceof DynamicActionGroup || !(myGroup instanceof DefaultActionGroup)) {
       myChildren = CustomizationUtil.getReordableChildren(myGroup, mySchema, myDefaultGroupName, myRootGroupName, e);
       mySchemeModificationStamp = currentStamp;
     }

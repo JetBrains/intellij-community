@@ -2,10 +2,7 @@
 package com.intellij.ide.ui.customization;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -25,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.ImageLoader;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBImageIcon;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -38,7 +36,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map.Entry;
 
 @State(name = "com.intellij.ide.ui.customization.CustomActionsSchema", storages = @Storage("customization.xml"))
 public final class CustomActionsSchema implements PersistentStateComponent<Element> {
@@ -50,8 +48,6 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
   @NonNls private static final String ATTRIBUTE_ID = "id";
   @NonNls private static final String ATTRIBUTE_ICON = "icon";
   @NonNls private static final String GROUP = "group";
-
-  private static final Map<String, String> ourAdditionalIdToName = new ConcurrentHashMap<>();
 
   private final Map<String, String> myIconCustomizations = new HashMap<>();
   private final Map<String, String> myIdToName = new LinkedHashMap<>();
@@ -76,6 +72,11 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     myIdToName.put(IdeActions.GROUP_NAVBAR_POPUP, "Navigation Bar");
     myIdToName.put("NavBarToolBar", "Navigation Bar Toolbar");
 
+    // todo is it safe to not check so early?
+    //if (TouchBarsManager.isTouchBarAvailable()) {
+    //  myIdToName.put(IdeActions.GROUP_TOUCHBAR, "Touch Bar");
+    //}
+
     List<Couple<String>> extList = new ArrayList<>();
     CustomizableActionGroupProvider.CustomizableActionGroupRegistrar registrar =
       (groupId, groupTitle) -> extList.add(Couple.of(groupId, groupTitle));
@@ -86,15 +87,14 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     for (Couple<String> couple : extList) {
       myIdToName.put(couple.first, couple.second);
     }
-
-    myIdToName.putAll(ourAdditionalIdToName);
   }
 
-  public static void enableTouchBar(boolean value) {
+  public void touchBarAvailable(boolean value) {
     if (value) {
-      ourAdditionalIdToName.put(IdeActions.GROUP_TOUCHBAR, "Touch Bar");
-    } else {
-      ourAdditionalIdToName.remove(IdeActions.GROUP_TOUCHBAR);
+      myIdToName.put(IdeActions.GROUP_TOUCHBAR, "Touch Bar");
+    }
+    else {
+      myIdToName.remove(IdeActions.GROUP_TOUCHBAR);
     }
   }
 
@@ -121,6 +121,8 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     myIdToActionGroup.clear();
     myActions.clear();
     myIconCustomizations.clear();
+    myIdToName.clear();
+    myIdToName.putAll(result.myIdToName);
 
     for (ActionUrl actionUrl : result.myActions) {
       ActionUrl url = new ActionUrl(new ArrayList<>(actionUrl.getGroupPath()), actionUrl.getComponent(),
@@ -217,6 +219,10 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
   }
 
   public static void setCustomizationSchemaForCurrentProjects() {
+    // increment myModificationStamp clear children cache in CustomisedActionGroup
+    // as result do it *before* update all toolbars, menu bars and popups
+    getInstance().incrementModificationStamp();
+
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(project);
       if (frame != null) {
@@ -228,8 +234,6 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     if (frame != null) {
       frame.updateView();
     }
-
-    getInstance().incrementModificationStamp();
   }
 
   public void incrementModificationStamp() {
@@ -275,6 +279,18 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     return null;
   }
 
+  public void fillCorrectedActionGroups(@NotNull DefaultMutableTreeNode root) {
+    ActionManager actionManager = ActionManager.getInstance();
+    List<String> path = ContainerUtil.newArrayList("root");
+
+    for (Entry<String, String> entry : myIdToName.entrySet()) {
+      ActionGroup actionGroup = (ActionGroup)actionManager.getAction(entry.getKey());
+      if (actionGroup != null) {
+        root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createCorrectedGroup(actionGroup, entry.getValue(), path, myActions)));
+      }
+    }
+  }
+
   public void fillActionGroups(DefaultMutableTreeNode root) {
     ActionManager actionManager = ActionManager.getInstance();
     for (String id : myIdToName.keySet()) {
@@ -293,9 +309,6 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     String text = group.getTemplatePresentation().getText();
     if (!StringUtil.isEmpty(text)) {
       for (ActionUrl url : myActions) {
-        if (url.getActionType() != ActionUrl.ADDED) {
-          continue;
-        }
         if (url.getGroupPath().contains(text) || url.getGroupPath().contains(defaultGroupName)) {
           return true;
         }

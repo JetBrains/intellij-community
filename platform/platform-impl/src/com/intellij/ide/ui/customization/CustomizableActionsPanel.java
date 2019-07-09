@@ -211,10 +211,7 @@ public class CustomizableActionsPanel {
   private void patchActionsTreeCorrespondingToSchema(DefaultMutableTreeNode root) {
     root.removeAllChildren();
     if (mySelectedSchema != null) {
-      mySelectedSchema.fillActionGroups(root);
-      for (final ActionUrl actionUrl : mySelectedSchema.getActions()) {
-        ActionUrl.changePathInActionsTree(myActionsTree, actionUrl);
-      }
+      mySelectedSchema.fillCorrectedActionGroups(root);
     }
     ((DefaultTreeModel)myActionsTree.getModel()).reload();
   }

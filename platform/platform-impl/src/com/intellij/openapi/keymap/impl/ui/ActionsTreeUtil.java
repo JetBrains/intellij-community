@@ -6,6 +6,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.actionMacro.ActionMacro;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.ui.customization.ActionUrl;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -254,6 +255,65 @@ public class ActionsTreeUtil {
       }
     }
     if (normalizeSeparators) group.normalizeSeparators();
+    return group;
+  }
+
+  @NotNull
+  public static Group createCorrectedGroup(@NotNull ActionGroup actionGroup,
+                                           @NotNull String groupName,
+                                           @NotNull List<String> path,
+                                           @NotNull List<ActionUrl> actionUrls) {
+    path.add(groupName);
+
+    ActionManager actionManager = ActionManager.getInstance();
+    Group group = new Group(groupName, actionManager.getId(actionGroup), null);
+    List<AnAction> children = ContainerUtil.newArrayList(getActions(actionGroup));
+
+    for (ActionUrl actionUrl : actionUrls) {
+      if (path.equals(actionUrl.getGroupPath())) {
+        AnAction componentAction = actionUrl.getComponentAction();
+        if (componentAction != null) {
+          if (actionUrl.getActionType() == ActionUrl.ADDED) {
+            if (children.size() > actionUrl.getAbsolutePosition()) {
+              children.add(actionUrl.getAbsolutePosition(), componentAction);
+            }
+            else {
+              children.add(componentAction);
+            }
+          }
+          else if (actionUrl.getActionType() == ActionUrl.DELETED && children.size() > actionUrl.getAbsolutePosition()) {
+            AnAction anAction = children.get(actionUrl.getAbsolutePosition());
+            if (anAction.getTemplatePresentation().getText() == null
+                ? (componentAction.getTemplatePresentation().getText() != null &&
+                   componentAction.getTemplatePresentation().getText().length() > 0)
+                : !anAction.getTemplatePresentation().getText().equals(componentAction.getTemplatePresentation().getText())) {
+              continue;
+            }
+            children.remove(actionUrl.getAbsolutePosition());
+          }
+        }
+      }
+    }
+
+    for (AnAction action : children) {
+      if (action instanceof ActionGroup) {
+        group.addGroup(createCorrectedGroup((ActionGroup)action, getName(action), path, actionUrls));
+      }
+      else if (action instanceof Separator) {
+        group.addSeparator();
+      }
+      else {
+        String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
+        if (id != null) {
+          if (!id.startsWith(TOOL_ACTION_PREFIX)) {
+            group.addActionId(id);
+          }
+        }
+      }
+    }
+
+    path.remove(path.size() - 1);
+
     return group;
   }
 
