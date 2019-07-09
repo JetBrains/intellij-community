@@ -1006,7 +1006,7 @@ class BuildContextImpl extends BuildContext {
     myFixture.addFileToProject('b.java', 'class Bar implements Foo { Foo f; }')
     assertEmpty(make())
 
-    CompilerConfiguration.getInstance(project).buildProcessVMOptions = "-D$JpsGroovycRunner.GROOVYC_IN_PROCESS=false"
+    CompilerConfiguration.getInstance(project).buildProcessVMOptions += " -D$JpsGroovycRunner.GROOVYC_IN_PROCESS=false"
     assertEmpty(rebuild())
   }
 
