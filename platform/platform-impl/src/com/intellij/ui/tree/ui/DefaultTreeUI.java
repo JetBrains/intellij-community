@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.BackgroundSupplier;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.MouseEventAdapter;
@@ -284,6 +285,18 @@ public final class DefaultTreeUI extends BasicTreeUI {
     TreePath path = getPathForRow(tree, row);
     if (path == null) return 0;
     return getPainter(tree).getRendererOffset(control, TreeUtil.getNodeDepth(tree, path), isLeaf(path.getLastPathComponent()));
+  }
+
+  @Override
+  protected void setRootVisible(boolean newValue) {
+    if (treeModel instanceof AsyncTreeModel) {
+      // this method must be called on EDT to be consistent with ATM,
+      // because it modifies a list of visible nodes in the layout cache
+      UIUtil.invokeLaterIfNeeded(() -> super.setRootVisible(newValue));
+    }
+    else {
+      super.setRootVisible(newValue);
+    }
   }
 
   @Override
