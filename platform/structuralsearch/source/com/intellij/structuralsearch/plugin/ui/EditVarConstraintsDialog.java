@@ -446,7 +446,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
   private boolean validateScript() {
     final EditorTextField field = customScriptCode.getChildComponent();
-    return showError(field, ScriptSupport.checkValidScript(field.getText()));
+    return showError(field, ScriptSupport.checkValidScript(field.getText(), myConfiguration.getMatchOptions()));
   }
 
   private boolean validateWithin() {

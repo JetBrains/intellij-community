@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.StructuralSearchScriptException;
 import com.intellij.structuralsearch.StructuralSearchUtil;
@@ -40,11 +41,11 @@ public class ScriptSupport {
   private final String myName;
   private final Collection<String> myVariableNames;
 
-  public ScriptSupport(Project project, String text, String name, Collection<String> variableNames) {
+  public ScriptSupport(Project project, String text, String name, Collection<String> variableNames, MatchOptions matchOptions) {
     myScriptLog = new ScriptLog(project);
     myName = name;
     myVariableNames = variableNames;
-    final GroovyShell shell = new GroovyShell();
+    final GroovyShell shell = createShell(matchOptions);
     try {
       final File scriptFile = new File(text);
       script = scriptFile.exists() ? shell.parse(scriptFile) : shell.parse(text, name + UUID + ".groovy");
@@ -53,6 +54,11 @@ public class ScriptSupport {
       Logger.getInstance(getClass().getName()).error(ex);
       throw new RuntimeException(ex);
     }
+  }
+
+  @NotNull
+  private static GroovyShell createShell(@NotNull MatchOptions options) {
+    return new GroovyShell(options.getDialect().getClass().getClassLoader());
   }
 
   private static Map<String, Object> buildVariableMap(@NotNull MatchResult result, @NotNull Map<String, Object> out) {
@@ -116,10 +122,10 @@ public class ScriptSupport {
     }
   }
 
-  public static String checkValidScript(String scriptText) {
+  public static String checkValidScript(@NotNull String scriptText, @NotNull MatchOptions matchOptions) {
     try {
       final File scriptFile = new File(scriptText);
-      final GroovyShell shell = new GroovyShell();
+      final GroovyShell shell = createShell(matchOptions);
       final Script script = scriptFile.exists() ? shell.parse(scriptFile) : shell.parse(scriptText);
       return null;
     }
