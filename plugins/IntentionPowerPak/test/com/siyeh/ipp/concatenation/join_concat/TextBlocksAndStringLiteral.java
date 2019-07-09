@@ -5,6 +5,6 @@ class TextBlocks {
                         second
                          third
                        """ + <caret>//c1
-                       " forth" );
+                       " \\forth\"" );
   }
 }

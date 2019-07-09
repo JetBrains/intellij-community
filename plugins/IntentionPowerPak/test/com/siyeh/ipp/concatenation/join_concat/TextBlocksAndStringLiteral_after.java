@@ -5,6 +5,6 @@ class TextBlocks {
                        first
                         second
                          third
-                        forth<caret>""");
+                        \\for<caret>th\"""");
   }
 }

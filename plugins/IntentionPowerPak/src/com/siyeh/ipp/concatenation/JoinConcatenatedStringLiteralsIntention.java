@@ -79,8 +79,15 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention {
         newExpression.append(rightText.replaceAll("\n", "\n" + indent));
       }
       else {
-        newExpression.append(rightText);
+        newExpression.append(StringUtil.escapeStringCharacters(rightText));
       }
+      newExpression.append("\"\"\"");
+    }
+    else if (right.getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL) {
+      String indent = StringUtil.repeat(" ", right.getTextBlockIndent());
+      newExpression.append("\"\"\"").append('\n').append(indent);
+      newExpression.append(StringUtil.escapeStringCharacters(leftText));
+      newExpression.append(rightText.replaceAll("\n", "\n" + indent));
       newExpression.append("\"\"\"");
     }
     else {
