@@ -3420,4 +3420,9 @@ public class StringUtil extends StringUtilRt {
     }
     return true;
   }
+
+  @Contract(value = "null -> null; !null->!null", pure = true)
+  public static String internEmptyString(String s) {
+    return s == null ? null : s.isEmpty() ? "" : s;
+  }
 }

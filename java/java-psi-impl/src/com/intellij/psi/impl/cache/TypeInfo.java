@@ -78,7 +78,7 @@ public class TypeInfo {
   public TypeInfo(String text, byte arrayCount, boolean ellipsis, @NotNull PsiAnnotationStub[] annotationStubs) {
     this.text = text == null ? null : internFrequentType(text);
     this.arrayCount = arrayCount;
-    this.isEllipsis = ellipsis;
+    isEllipsis = ellipsis;
     myAnnotationStubs = annotationStubs;
   }
 
@@ -266,6 +266,6 @@ public class TypeInfo {
   @NotNull
   public static String internFrequentType(@NotNull String type) {
     int frequentIndex = ourFrequentTypeIndex.get(type);
-    return frequentIndex == 0 ? type : ourIndexFrequentType[frequentIndex];
+    return frequentIndex == 0 ? StringUtil.internEmptyString(type) : ourIndexFrequentType[frequentIndex];
   }
 }
