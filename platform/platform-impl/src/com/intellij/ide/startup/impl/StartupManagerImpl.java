@@ -226,6 +226,7 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
     }
   }
 
+  // Runs in EDT
   public void runPostStartupActivities() {
     if (postStartupActivityPassed()) {
       return;
@@ -270,6 +271,7 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
           synchronized (this) {
             myPostStartupActivitiesPassed = true;
           }
+          myProject.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).postStartupActivitiesPassed(myProject);
         }
       }
     });
