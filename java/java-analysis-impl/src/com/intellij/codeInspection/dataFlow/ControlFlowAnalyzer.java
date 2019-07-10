@@ -1801,12 +1801,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   @Override public void visitNewExpression(PsiNewExpression expression) {
     startElement(expression);
 
-    PsiExpression qualifier = expression.getQualifier();
-    if (qualifier != null) {
-      qualifier.accept(this);
-      addInstruction(new PopInstruction());
-    }
-
     PsiType type = expression.getType();
     if (type instanceof PsiArrayType) {
       PsiArrayInitializerExpression arrayInitializer = expression.getArrayInitializer();
@@ -1850,7 +1844,21 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       initializeSmallArray((PsiArrayType)type, var, dimensions);
     }
     else {
-      pushUnknown(); // qualifier
+      PsiExpression qualifier = expression.getQualifier();
+      DfaValue qualifierValue = DfaUnknownValue.getInstance();
+      if (qualifier != null) {
+        qualifier.accept(this);
+      } else {
+        PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
+        if (aClass != null) {
+          PsiClass outerClass = aClass.getContainingClass();
+          if (outerClass != null && InheritanceUtil.hasEnclosingInstanceInScope(outerClass, expression, true, false)) {
+            qualifierValue = myFactory.getVarFactory().createThisValue(outerClass);
+          }
+        }
+        addInstruction(new PushInstruction(qualifierValue, null));
+      }
+
       PsiMethod constructor = pushConstructorArguments(expression);
       PsiAnonymousClass anonymousClass = expression.getAnonymousClass();
       if (anonymousClass != null) {
