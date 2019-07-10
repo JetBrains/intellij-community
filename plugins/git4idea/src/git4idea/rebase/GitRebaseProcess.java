@@ -687,7 +687,12 @@ public class GitRebaseProcess {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-      showConflictResolver(myCurrentRepository, true);
+      myProgressManager.run(new Task.Backgroundable(myProject, "Collecting Conflicts to Resolve...") {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          showConflictResolver(myCurrentRepository, true);
+        }
+      });
     }
   }
 
