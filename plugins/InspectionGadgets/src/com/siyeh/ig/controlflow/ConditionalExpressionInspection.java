@@ -310,7 +310,7 @@ public class ConditionalExpressionInspection extends BaseInspection {
     }
 
     private boolean isExpressionContext(PsiConditionalExpression expression) {
-      final PsiMember member = PsiTreeUtil.getParentOfType(expression, PsiMember.class);
+      final PsiMember member = PsiTreeUtil.getParentOfType(expression, PsiMember.class, true, PsiLambdaExpression.class);
       if (member instanceof PsiField) {
         return true;
       }
