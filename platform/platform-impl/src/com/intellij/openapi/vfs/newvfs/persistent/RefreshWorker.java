@@ -93,7 +93,7 @@ public class RefreshWorker {
 
     if (root.isDirty()) {
       if (myRefreshQueue.isEmpty()) {
-        myRefreshQueue.addLast(root);
+        queueDirectory(root);
       }
       try {
         processQueue(fs, persistence);
@@ -101,6 +101,15 @@ public class RefreshWorker {
       catch (RefreshCancelledException e) {
         LOG.trace("refresh cancelled");
       }
+    }
+  }
+
+  private void queueDirectory(NewVirtualFile root) {
+    if (root instanceof VirtualDirectoryImpl) {
+      myRefreshQueue.addLast(root);
+    }
+    else {
+      LOG.error("not a directory: " + root + " (" + root.getClass());
     }
   }
 
@@ -353,7 +362,7 @@ public class RefreshWorker {
       child.markClean();
     }
     else if (myIsRecursive) {
-      myRefreshQueue.addLast(child);
+      queueDirectory(child);
     }
   }
 
