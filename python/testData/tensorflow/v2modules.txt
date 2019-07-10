@@ -13,18 +13,14 @@ experimental
 feature_column
 graph_util
 image
-initializers
 io
 keras
 linalg
 lite
 lookup
-losses
 math
-metrics
 nest
 nn
-optimizers
 quantization
 queue
 ragged
@@ -38,7 +34,6 @@ strings
 summary
 sysconfig
 test
-tools
 tpu
 train
 version
