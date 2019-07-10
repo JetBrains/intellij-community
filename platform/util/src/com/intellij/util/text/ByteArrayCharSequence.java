@@ -32,7 +32,7 @@ public class ByteArrayCharSequence implements CharSequenceWithStringHash {
   private transient int hash;
   private final byte[] myChars;
 
-  private ByteArrayCharSequence(@NotNull byte[] chars) {
+  public ByteArrayCharSequence(@NotNull byte[] chars) {
     this(chars, 0, chars.length);
   }
   public ByteArrayCharSequence(@NotNull byte[] chars, int start, int end) {
