@@ -70,8 +70,12 @@ public class MessageBusImpl implements MessageBus {
     myConnectionDisposable = Disposer.newDisposable(myOwner);
     myParentBus = (MessageBusImpl)parentBus;
     myRootBus = myParentBus.myRootBus;
-    myOrder = myParentBus.onChildBusCreated(this);
+    synchronized (myParentBus.myChildBuses) {
+      myOrder = myParentBus.nextOrder();
+      myParentBus.myChildBuses.add(this);
+    }
     LOG.assertTrue(myParentBus.myChildBuses.contains(this));
+    myRootBus.clearSubscriberCache();
   }
 
   // root message bus constructor
@@ -100,36 +104,18 @@ public class MessageBusImpl implements MessageBus {
   }
 
   /**
-   * Notifies current bus that a child bus is created. Has two responsibilities:
-   * <ul>
-   * <li>stores given child bus in {@link #myChildBuses} collection</li>
-   * <li>
    * calculates {@link #myOrder} for the given child bus
-   * </li>
-   * </ul>
-   * <p/>
-   * Thread-safe.
-   *
-   * @param childBus newly created child bus
    */
   @NotNull
-  private int[] onChildBusCreated(@NotNull MessageBusImpl childBus) {
-    LOG.assertTrue(childBus.myParentBus == this);
+  private int[] nextOrder() {
+    MessageBusImpl lastChild = ContainerUtil.getLastItem(myChildBuses);
 
-    int[] childOrder;
-    synchronized (myChildBuses) {
-      MessageBusImpl lastChild = ContainerUtil.getLastItem(myChildBuses);
-      myChildBuses.add(childBus);
-
-      int lastChildIndex = lastChild == null ? 0 : ArrayUtil.getLastElement(lastChild.myOrder, 0);
-      if (lastChildIndex == Integer.MAX_VALUE) {
-        LOG.error("Too many child buses");
-      }
-      childOrder = ArrayUtil.append(myOrder, lastChildIndex + 1);
+    int lastChildIndex = lastChild == null ? 0 : ArrayUtil.getLastElement(lastChild.myOrder, 0);
+    if (lastChildIndex == Integer.MAX_VALUE) {
+      LOG.error("Too many child buses");
     }
 
-    myRootBus.clearSubscriberCache();
-    return childOrder;
+    return ArrayUtil.append(myOrder, lastChildIndex + 1);
   }
 
   private void onChildBusDisposed(@NotNull MessageBusImpl childBus) {
