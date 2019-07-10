@@ -70,7 +70,11 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   }
 
   @NotNull
-  private static JPanel createMainPanel(@NotNull final HintHint hintHint, @NotNull JComponent pane, @NotNull JEditorPane editorPane) {
+  private static JPanel createMainPanel(@NotNull final HintHint hintHint,
+                                        @NotNull JComponent pane,
+                                        @NotNull JEditorPane editorPane,
+                                        boolean newLayout,
+                                        boolean highlightActions) {
     JPanel grid = new JPanel(new GridBagLayout()) {
       @Override
       public AccessibleContext getAccessibleContext() {
@@ -89,7 +93,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       .weighty(1.0)
       .fillCell();
 
-    pane.setBorder(JBUI.Borders.empty(6, 8, 6, 12));
+    pane.setBorder(JBUI.Borders.empty(newLayout ? 10 : 6, newLayout ? 10 : 8, newLayout ? (highlightActions ? 10 : 4) : 6, 12));
     grid.add(pane, bag);
     grid.setBackground(hintHint.getTextBackground());
     grid.setBorder(JBUI.Borders.empty());
@@ -104,7 +108,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
                               final boolean alignToRight,
                               @NotNull final TooltipGroup group,
                               @NotNull final HintHint hintHint) {
-    LightweightHint hint = createHint(editor, p, alignToRight, group, hintHint, true, null);
+    LightweightHint hint = createHint(editor, p, alignToRight, group, hintHint, false, true, null);
     if (hint != null) {
       HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, p, HintManager.HIDE_BY_ANY_KEY |
                                                                         HintManager.HIDE_BY_TEXT_CHANGE |
@@ -119,6 +123,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
                                     final boolean alignToRight,
                                     @NotNull final TooltipGroup group,
                                     @NotNull final HintHint hintHint,
+                                    boolean newLayout,
                                     boolean highlightActions,
                                     @Nullable TooltipReloader tooltipReloader) {
     if (myText == null) return null;
@@ -153,13 +158,13 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     scrollPane.getViewport().setBackground(hintHint.getTextBackground());
     scrollPane.setViewportBorder(null);
 
-    editorPane.setBorder(JBUI.Borders.emptyBottom(2));
+    if (!newLayout) editorPane.setBorder(JBUI.Borders.emptyBottom(2));
     if (hintHint.isRequestFocus()) {
       editorPane.setFocusable(true);
     }
 
     ArrayList<AnAction> actions = new ArrayList<>();
-    JPanel grid = createMainPanel(hintHint, scrollPane, editorPane);
+    JPanel grid = createMainPanel(hintHint, scrollPane, editorPane, newLayout, highlightActions);
     if (ScreenReader.isActive()) {
       grid.setFocusTraversalPolicyProvider(true);
       grid.setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
@@ -244,7 +249,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       }
     });
 
-    fillPanel(editor, grid, hint, hintHint, actions, reloader, highlightActions);
+    fillPanel(editor, grid, hint, hintHint, actions, reloader, newLayout, highlightActions);
 
 
     grid.addMouseListener(new MouseAdapter() {
@@ -319,6 +324,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
                            @NotNull HintHint hintHint,
                            @NotNull ArrayList<AnAction> actions,
                            @NotNull TooltipReloader expandCallback,
+                           boolean newLayout,
                            boolean highlightActions) {
     hintHint.setComponentBorder(JBUI.Borders.empty());
     hintHint.setBorderInsets(JBUI.insets(0));
