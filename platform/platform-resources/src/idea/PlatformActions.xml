@@ -1120,7 +1120,7 @@
         <action internal="true" id="CleanupEventLogStatistics" class="com.intellij.internal.statistic.actions.CleanupEventLogAction"
                 text="Clean Up Event Log"/>
         <action internal="true" id="AddTestGroupToLocalWhitelistAction" class="com.intellij.internal.statistic.actions.AddTestGroupToLocalWhitelistAction"
-                text="Add Test Group to Local Whitestlist"/>
+                text="Add Test Group to Local Whitelist"/>
         <action internal="true" id="RecordStateCollectors"
                 class="com.intellij.internal.statistic.actions.RecordStateStatisticsEventLogAction"
                 text="Record State Collectors to Event Log"/>
