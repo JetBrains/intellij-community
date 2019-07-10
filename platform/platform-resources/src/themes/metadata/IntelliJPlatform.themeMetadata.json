@@ -687,6 +687,10 @@
       "key": "ToolWindow.HeaderTab.underlineHeight"
     },
     {
+      "key": "Tooltip.separatorColor",
+      "description": "Used for horizontal separators in editor tooltips (error/warning/documentation)"
+    },
+    {
       "key": "UiDesigner.Panel.background",
       "description": "Android plugin: panels around the preview area"
     },

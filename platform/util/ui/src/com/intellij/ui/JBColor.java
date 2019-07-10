@@ -53,6 +53,11 @@ public class JBColor extends Color {
   }
 
   @NotNull
+  public static JBColor namedColor(@NotNull String propertyName, int defaultValueRGB, int darkValueRGB) {
+    return namedColor(propertyName, new JBColor(defaultValueRGB, darkValueRGB));
+  }
+
+  @NotNull
   public static JBColor namedColor(@NotNull final String propertyName, @NotNull final Color defaultColor) {
     return new JBColor(() -> {
       Color color = notNull(UIManager.getColor(propertyName),

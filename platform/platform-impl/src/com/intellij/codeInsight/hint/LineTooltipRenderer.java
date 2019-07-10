@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.Html;
@@ -33,6 +34,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author cdr
@@ -140,7 +142,8 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     if (!editorComponent.isShowing()) return null;
     final JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
 
-    JEditorPane editorPane = IdeTooltipManager.initPane(new Html(dressedText).setKeepFont(true), hintHint, layeredPane);
+    String textToDisplay = newLayout ? colorizeSeparators(dressedText) : dressedText;
+    JEditorPane editorPane = IdeTooltipManager.initPane(new Html(textToDisplay).setKeepFont(true), hintHint, layeredPane);
     hintHint.setContentActive(isContentAction(dressedText));
     if (!hintHint.isAwtTooltip()) {
       correctLocation(editor, editorPane, p, alignToRight, expanded, myCurrentWidth);
@@ -291,6 +294,27 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     });
 
     return hint;
+  }
+
+  // Java text components don't support specifying color for 'hr' tag, so we need to replace it with something else,
+  // if we need a separator with custom color
+  @NotNull
+  private static String colorizeSeparators(@NotNull String html) {
+    String body = UIUtil.getHtmlBody(html);
+    List<String> parts = StringUtil.split(body, UIUtil.BORDER_LINE, true, false);
+    if (parts.size() <= 1) return html;
+    StringBuilder b = new StringBuilder();
+    for (String part : parts) {
+      boolean addBorder = b.length() > 0;
+      b.append("<div");
+      if (addBorder) {
+        b.append(" style='margin-top:6; padding-top:6; border-top: thin solid #");
+        b.append(ColorUtil.toHex(UIUtil.getTooltipSeparatorColor()));
+        b.append("'");
+      }
+      b.append("'>").append(part).append("</div>");
+    }
+    return XmlStringUtil.wrapInHtml(b.toString());
   }
 
   protected boolean isContentAction(String dressedText) {

@@ -3930,4 +3930,9 @@ public final class UIUtil extends StartupUiUtil {
       protected void adjustVisibility(Rectangle nloc) {}
     });
   }
+
+  @NotNull
+  public static Color getTooltipSeparatorColor() {
+    return JBColor.namedColor("Tooltip.separatorColor", 0xd1d1d1, 0x545658);
+  }
 }
