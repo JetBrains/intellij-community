@@ -39,7 +39,6 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.ui.scale.ScaleContext;
-import com.intellij.util.io.PathKt;
 import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
@@ -58,9 +57,7 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.lang.reflect.Field;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
@@ -639,13 +636,8 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     paint(image.getGraphics());
     try {
       Path selfieFile = getSelfieLocation(projectWorkspaceId);
-      try (OutputStream stream = PathKt.outputStream(selfieFile)) {
-        ImageIO.write(image, "png", stream);
-      }
-
-      Path lastSelfieLocation = getLastSelfieLocation();
-      Files.createDirectories(lastSelfieLocation.getParent());
-      Files.copy(selfieFile, lastSelfieLocation);
+      // must be file, because for Path no optimized impl (output stream must be not used, otherwise cache file will be created by JDK)
+      ImageIO.write(image, "png", selfieFile.toFile());
     }
     catch (IOException e) {
       LOG.debug(e);
@@ -655,11 +647,6 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
   @NotNull
   private static Path getSelfieLocation(@NotNull String projectWorkspaceId) {
     return PathManagerEx.getAppSystemDir().resolve("project-selfies").resolve(projectWorkspaceId + ".png");
-  }
-
-  @NotNull
-  private static Path getLastSelfieLocation() {
-    return PathManagerEx.getAppSystemDir().resolve("selfies/last_closed_project.png");
   }
 
   @Override

@@ -45,6 +45,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.io.EOFException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -481,7 +482,9 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
         frame.setProjectWorkspaceId(options.getProjectWorkspaceId());
       }
       catch (IOException e) {
-        LOG.warn(e);
+        if (!(e.getCause() instanceof EOFException)) {
+          LOG.warn(e);
+        }
       }
     }
 
