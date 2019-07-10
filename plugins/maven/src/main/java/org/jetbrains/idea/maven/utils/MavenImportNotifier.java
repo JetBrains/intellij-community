@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.utils;
 import com.intellij.notification.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -83,6 +84,7 @@ public class MavenImportNotifier extends MavenSimpleProjectComponent implements 
       myNotification.addAction(new NotificationAction(ProjectBundle.message("maven.project.importChanged")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+          FileDocumentManager.getInstance().saveAllDocuments();
           myMavenProjectsManager.scheduleImportAndResolve(false);
           notification.expire();
           myNotification = null;
