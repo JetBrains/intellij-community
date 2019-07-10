@@ -113,6 +113,31 @@ public class RefactoringChangeUtil {
     }
   }
 
+  /**
+   * Calculates class or interface where referenced member should be searched
+   * @param expression reference to the class member
+   * @return class based on the type of the qualifier expression, 
+   *         or containing class, if {@code expression} is not qualified                  
+   */
+  @Nullable
+  public static PsiClass getQualifierClass(@NotNull PsiReferenceExpression expression) {
+    PsiExpression qualifierExpression = expression.getQualifierExpression();
+    if (qualifierExpression != null) {
+      PsiType expressionType = qualifierExpression.getType();
+      if (expressionType instanceof PsiCapturedWildcardType) {
+        expressionType = ((PsiCapturedWildcardType)expressionType).getUpperBound();
+      }
+      PsiClass aClass = PsiUtil.resolveClassInType(expressionType);
+      if (aClass != null) return aClass;
+      if (qualifierExpression instanceof PsiReferenceExpression) {
+        PsiElement qResolved = ((PsiReferenceExpression)qualifierExpression).resolve();
+        return qResolved instanceof PsiClass ? (PsiClass)qResolved : null;
+      }
+      return null;
+    }
+    return getThisClass(expression);
+  }
+
   static <T extends PsiQualifiedExpression> T createQualifiedExpression(@NotNull PsiManager manager,
                                                                         PsiClass qualifierClass,
                                                                         @NotNull String qName) throws IncorrectOperationException {
