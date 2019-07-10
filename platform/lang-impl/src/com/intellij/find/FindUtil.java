@@ -75,7 +75,11 @@ public class FindUtil {
     if (editor != null) {
       String s = getSelectedText(editor);
       if (s != null && s.length() < 10000) {
-        FindModel.initStringToFind(findModel, s);
+        if (findModel.isRegularExpressions() && Registry.is("ide.find.escape.selected.text.for.regex")) {
+          findModel.setStringToFind(StringUtil.escapeToRegexp(s));
+        } else {
+          FindModel.initStringToFind(findModel, s);
+        }
       }
     }
   }
@@ -83,8 +87,10 @@ public class FindUtil {
   public static void configureFindModel(boolean replace, @Nullable Editor editor, FindModel model, boolean firstSearch) {
     String stringToFind = firstSearch ? "" : model.getStringToFind();
     String selectedText = getSelectedText(editor);
+    boolean isSelectionUsed = false;
     if (!StringUtil.isEmpty(selectedText)) {
       stringToFind = selectedText;
+      isSelectionUsed = true;
     }
     model.setReplaceState(replace);
     boolean multiline = stringToFind.contains("\n");
@@ -94,7 +100,11 @@ public class FindUtil {
       stringToFind = "";
       multiline = false;
     }
-    model.setStringToFind(stringToFind);
+    model.setStringToFind(isSelectionUsed
+                          && model.isRegularExpressions()
+                          && Registry.is("ide.find.escape.selected.text.for.regex")
+                          ? StringUtil.escapeToRegexp(stringToFind)
+                          : stringToFind);
     model.setMultiline(multiline);
     model.setGlobal(isGlobal);
     model.setPromptOnReplace(false);
