@@ -226,12 +226,16 @@ public class JiraRepository extends BaseRepositoryImpl {
       return deploymentType.getAsString().equals("Cloud");
     }
     // Legacy heuristics
-    final boolean atlassianSubDomain = hostEndsWith(serverInfo.get("baseUrl").getAsString(), ".atlassian.net");
+    final boolean atlassianSubDomain = isAtlassianNetSubDomain(serverInfo.get("baseUrl").getAsString());
     if (atlassianSubDomain) {
       return true;
     }
     // JIRA OnDemand versions contained "OD" abbreviation
     return serverInfo.get("version").getAsString().contains("OD") ;
+  }
+
+  private static boolean isAtlassianNetSubDomain(@NotNull String url) {
+    return hostEndsWith(url, ".atlassian.net");
   }
 
   private static boolean hostEndsWith(@NotNull String url, @NotNull String suffix) {
@@ -411,7 +415,7 @@ public class JiraRepository extends BaseRepositoryImpl {
     // reset remote API version, only if server URL was changed
     if (!getUrl().equals(oldUrl)) {
       myApiVersion = null;
-      myInCloud = false;
+      myInCloud = isAtlassianNetSubDomain(getUrl());
     }
   }
 
