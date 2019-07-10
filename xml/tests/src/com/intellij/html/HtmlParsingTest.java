@@ -88,4 +88,9 @@ public class HtmlParsingTest extends XmlParsingTest {
                "<link href=\"non-ie.css\" rel=\"stylesheet\">\n" +
                "<!--<![endif]-->");
   }
+
+  public void testScriptEmbeddingParsing() throws Exception {
+    doTestHtml("<script type=\"foo/bar\"><div></div></script>\n" +
+               "<script type=\"foo/bar\"><div> </div></script>");
+  }
 }
