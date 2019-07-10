@@ -51,6 +51,8 @@ class CircletIdeaGraphStorageTransaction(private val storage: CircletIdeaAutomat
             ExecutionStatus.PENDING,
             metaTask,
             metaTask.originalMeta,
+            "master",
+            "commit-hash",
             jobs
         )
 
