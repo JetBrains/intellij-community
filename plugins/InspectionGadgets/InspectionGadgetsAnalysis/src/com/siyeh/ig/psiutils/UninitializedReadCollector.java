@@ -18,13 +18,11 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.Supplier;
 
 public class UninitializedReadCollector {
 
@@ -75,7 +73,6 @@ public class UninitializedReadCollector {
     if (statement instanceof PsiBreakStatement ||
         statement instanceof PsiContinueStatement ||
         statement instanceof PsiAssertStatement ||
-        statement instanceof PsiYieldStatement ||
         statement instanceof PsiEmptyStatement) {
       return false;
     }
