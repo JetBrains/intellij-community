@@ -360,7 +360,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
 
     final CollectCustomTemplateCallback callback = new CollectCustomTemplateCallback(editor, file);
     ZenCodingGenerator generator = findApplicableDefaultGenerator(callback, false);
-    if (generator != null && generator.hasCompletionItem()) {
+    if (generator != null && generator.addToCompletion()) {
 
       final String templatePrefix = computeTemplateKeyWithoutContextChecking(callback);
 
