@@ -9,9 +9,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,7 +22,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.project.impl.ProjectOpeningTest.closeProject;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 /**
  * @author Konstantin Bulenkov
@@ -105,11 +106,11 @@ public class RecentProjectsTest extends PlatformTestCase {
   private static void checkRecents(String... recents) {
     List<String> recentProjects = Arrays.asList(recents);
     RecentProjectsManagerBase.State state = ((RecentProjectsManagerBase)RecentProjectsManager.getInstance()).getState();
-    List<String> projects = state.recentPaths.stream()
-      .map(s -> new File(s).getName().replace("idea_test_", ""))
+    List<String> projects = state.additionalInfo.keySet().stream()
+      .map(s -> PathUtil.getFileName(s).replace("idea_test_", ""))
       .filter(recentProjects::contains)
       .collect(Collectors.toList());
-    Assert.assertEquals(recentProjects, projects);
+    assertThat(ContainerUtil.reverse(projects)).isEqualTo(recentProjects);
   }
 
   private static void checkGroups(String... groups) {
@@ -117,7 +118,7 @@ public class RecentProjectsTest extends PlatformTestCase {
       .filter(a -> a instanceof ProjectGroupActionGroup)
       .map(a -> ((ProjectGroupActionGroup)a).getGroup().getName())
       .collect(Collectors.toList());
-    Assert.assertEquals(Arrays.asList(groups), recentGroups);
+    assertThat(recentGroups).containsExactly(groups);
   }
 
   @NotNull

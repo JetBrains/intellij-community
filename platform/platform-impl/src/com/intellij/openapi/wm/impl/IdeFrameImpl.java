@@ -18,13 +18,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.DumbAwareRunnable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
@@ -39,6 +39,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.ui.scale.ScaleContext;
+import com.intellij.util.io.PathKt;
 import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
@@ -57,7 +58,10 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.reflect.Field;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -86,8 +90,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
   private final LafManagerListener myLafListener;
   private final ComponentListener resizedListener;
 
-  private boolean ready;
-  private Image mySelfie;
+  private volatile Image selfie;
 
   public IdeFrameImpl() {
     super();
@@ -491,15 +494,10 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
       }
 
       installDefaultProjectStatusBarWidgets(myProject);
-
-      ProjectManager.getInstance().addProjectManagerListener(myProject, new ProjectManagerListener() {
-        @Override
-        public void projectClosingBeforeSave(@NotNull Project project) {
-          takeASelfie();
-        }
+      //noinspection CodeBlock2Expr
+      StartupManager.getInstance(myProject).registerPostStartupActivity((DumbAwareRunnable)() -> {
+        selfie = null;
       });
-
-      StartupManager.getInstance(myProject).registerPostStartupActivity((DumbAwareRunnable)() -> ready = true);
     }
     else {
       if (myRootPane != null) { //already disposed
@@ -617,52 +615,51 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     }
   }
 
+  public void setProjectWorkspaceId(@NotNull String value) throws IOException {
+    LOG.assertTrue(selfie == null);
+    selfie = ImageUtil.ensureHiDPI(ImageIO.read(getSelfieLocation(value).toFile()), ScaleContext.create(this));
+  }
+
   @Override
   public void paint(@NotNull Graphics g) {
     UISettings.setupAntialiasing(g);
-    if (shouldPaintSelfie()) {
-      try {
-        if (mySelfie == null) {
-          mySelfie = ImageUtil.ensureHiDPI(ImageIO.read(getSelfieLocation()), ScaleContext.create(this));
-        }
-      } catch (IOException ignored) {}
-      StartupUiUtil.drawImage(g, mySelfie, 0, 0, null);
+
+    Image selfie = this.selfie;
+    if (selfie != null) {
+      StartupUiUtil.drawImage(g, selfie, 0, 0, null);
       return;
-    } else {
-      mySelfie = null;
     }
+
     super.paint(g);
   }
 
-  private boolean shouldPaintSelfie() {
-    return !ready && Registry.is("ide.project.loading.show.last.state") &&
-           (myProject != null || ProjectManager.getInstance().getOpenProjects().length == 0);
-  }
-
-  public void takeASelfie() {
-    if (myProject == null || !Registry.is("ide.project.loading.show.last.state")) return;
+  public void takeASelfie(@NotNull String projectWorkspaceId) {
     BufferedImage image = UIUtil.createImage(this, getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
     UISettings.setupAntialiasing(image.getGraphics());
     paint(image.getGraphics());
     try {
-      File selfie = getSelfieLocation();
-      if (selfie.getParentFile().exists() || selfie.getParentFile().mkdirs()) {
-        ImageIO.write(image, "png", selfie);
-        FileUtil.copy(selfie, getLastSelfieLocation());
+      Path selfieFile = getSelfieLocation(projectWorkspaceId);
+      try (OutputStream stream = PathKt.outputStream(selfieFile)) {
+        ImageIO.write(image, "png", stream);
       }
-    } catch (IOException ignored) {}
+
+      Path lastSelfieLocation = getLastSelfieLocation();
+      Files.createDirectories(lastSelfieLocation.getParent());
+      Files.copy(selfieFile, lastSelfieLocation);
+    }
+    catch (IOException e) {
+      LOG.debug(e);
+    }
   }
 
   @NotNull
-  private File getSelfieLocation() {
-    return myProject != null ?
-           ProjectUtil.getProjectCachePath(myProject, "selfies", false, ".png").toFile() :
-           getLastSelfieLocation();
+  private static Path getSelfieLocation(@NotNull String projectWorkspaceId) {
+    return PathManagerEx.getAppSystemDir().resolve("project-selfies").resolve(projectWorkspaceId + ".png");
   }
 
   @NotNull
-  private static File getLastSelfieLocation() {
-    return new File(PathManager.getSystemPath(), "selfies/last_closed_project.png");
+  private static Path getLastSelfieLocation() {
+    return PathManagerEx.getAppSystemDir().resolve("selfies/last_closed_project.png");
   }
 
   @Override

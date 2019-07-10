@@ -23,9 +23,6 @@ public abstract class RecentProjectsManager {
 
   public abstract void updateLastProjectPath();
 
-  @SystemIndependent
-  public abstract String getLastProjectPath();
-
   public abstract void removePath(@Nullable @SystemIndependent String path);
 
   /**

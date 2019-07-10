@@ -5,6 +5,7 @@ import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.impl.DataManagerImpl;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker;
@@ -16,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -43,6 +45,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -100,6 +103,15 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   private final ComponentAdapter myFrameStateListener = new ComponentAdapter() {
     @Override
     public void componentMoved(@NotNull ComponentEvent e) {
+      update(e);
+    }
+
+    @Override
+    public void componentResized(ComponentEvent e) {
+      update(e);
+    }
+
+    private void update(@NotNull ComponentEvent e) {
       IdeFrameImpl frame = (IdeFrameImpl)e.getComponent();
       Project project = frame.getProject();
       if (project == null) {
@@ -454,15 +466,29 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
    * This method is called when there is some opened project (IDE will not open Welcome Frame, but project).
    *
    * {@link IdeFrameImpl#init()} must be called explicitly.
+   * @param frame
    */
   @NotNull
-  public IdeFrameImpl showFrame() {
+  @ApiStatus.Internal
+  public IdeFrameImpl showFrame(@NotNull OpenProjectTask options) {
     LOG.assertTrue(!myProjectToFrame.containsKey(null));
 
     IdeFrameImpl frame = new IdeFrameImpl();
     myProjectToFrame.put(null, frame);
 
-    FrameInfo frameInfo = defaultFrameInfoHelper.getInfo();
+    if (options.getProjectWorkspaceId() != null && Registry.is("ide.project.loading.show.last.state")) {
+      try {
+        frame.setProjectWorkspaceId(options.getProjectWorkspaceId());
+      }
+      catch (IOException e) {
+        LOG.warn(e);
+      }
+    }
+
+    FrameInfo frameInfo = options.getFrame();
+    if (frameInfo == null || frameInfo.getBounds() == null) {
+      frameInfo = defaultFrameInfoHelper.getInfo();
+    }
     if (frameInfo != null && frameInfo.getBounds() != null) {
       // set bounds even if maximized because on unmaximize we must restore previous frame bounds
       frame.setBounds(validateFrameBounds(FrameBoundsConverter.convertFromDeviceSpace(frameInfo.getBounds())));

@@ -5,6 +5,7 @@ import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,6 +20,7 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.startup.StartupManager;
@@ -33,6 +35,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
+import com.intellij.pom.Navigatable;
 import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.projectImport.ProjectOpenedCallback;
@@ -48,14 +51,11 @@ import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.Objects;
 
-/**
- * @author max
- */
-public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implements CommandLineProjectOpenProcessor {
+public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor implements CommandLineProjectOpenProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.platform.PlatformProjectOpenProcessor");
 
   public enum Option {
-    FORCE_NEW_FRAME, REOPEN, TEMP_PROJECT, DO_NOT_USE_DEFAULT_PROJECT
+    FORCE_NEW_FRAME, TEMP_PROJECT
   }
 
   public static PlatformProjectOpenProcessor getInstance() {
@@ -92,28 +92,22 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
   @Nullable
   @Override
   public Project doOpenProject(@NotNull VirtualFile virtualFile, @Nullable Project projectToClose, boolean forceOpenInNewFrame) {
-    EnumSet<Option> options = EnumSet.noneOf(Option.class);
-    if (forceOpenInNewFrame) {
-      options.add(Option.FORCE_NEW_FRAME);
-    }
+    OpenProjectTask options = new OpenProjectTask(forceOpenInNewFrame, projectToClose);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       // doesn't make sense to use default project in tests for heavy projects
-      options.add(Option.DO_NOT_USE_DEFAULT_PROJECT);
+      options.setUseDefaultProjectAsTemplate(false);
     }
-    return doOpenProject(virtualFile, projectToClose, -1, null, options);
+    return doOpenProject(Paths.get(virtualFile.getPath()), options, -1);
   }
 
   @Override
   @Nullable
   public Project openProjectAndFile(@NotNull VirtualFile file, int line, boolean tempProject) {
-    EnumSet<PlatformProjectOpenProcessor.Option> options = EnumSet.noneOf(PlatformProjectOpenProcessor.Option.class);
+    OpenProjectTask options = new OpenProjectTask(tempProject);
     if (tempProject) {
-      options.add(PlatformProjectOpenProcessor.Option.TEMP_PROJECT);
-      options.add(PlatformProjectOpenProcessor.Option.FORCE_NEW_FRAME);
+      options.setTempProject(true);
     }
-
-
-    return doOpenProject(file, null, line, null, options);
+    return doOpenProject(Paths.get(file.getPath()), options, line);
   }
 
   /** @deprecated use {@link #doOpenProject(VirtualFile, Project, int, ProjectOpenedCallback, EnumSet)} (to be removed in IDEA 2019) */
@@ -124,11 +118,10 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
                                       boolean forceOpenInNewFrame,
                                       int line,
                                       @Nullable ProjectOpenedCallback callback,
-                                      boolean isReopen) {
-    EnumSet<Option> options = EnumSet.noneOf(Option.class);
-    if (forceOpenInNewFrame) options.add(Option.FORCE_NEW_FRAME);
-    if (isReopen) options.add(Option.REOPEN);
-    return doOpenProject(virtualFile, projectToClose, line, callback, options);
+                                      @SuppressWarnings("unused") boolean isReopen) {
+    OpenProjectTask openProjectOptions = new OpenProjectTask(forceOpenInNewFrame, projectToClose);
+    openProjectOptions.setCallback(callback);
+    return doOpenProject(Paths.get(virtualFile.getPath()), openProjectOptions, line);
   }
 
   /**
@@ -141,23 +134,17 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
                                       int line,
                                       @Nullable ProjectOpenedCallback callback,
                                       @NotNull EnumSet<Option> options) {
-    return doOpenProject(Paths.get(virtualFile.getPath()), projectToClose, line, callback, options);
+    OpenProjectTask openProjectOptions = new OpenProjectTask(options.contains(Option.FORCE_NEW_FRAME), projectToClose);
+    openProjectOptions.setCallback(callback);
+    return doOpenProject(Paths.get(virtualFile.getPath()), openProjectOptions, line);
   }
 
   @Nullable
-  public static Project doOpenProject(@NotNull Path file,
-                                      @Nullable Project projectToClose,
-                                      int line,
-                                      @Nullable ProjectOpenedCallback callback,
-                                      @NotNull EnumSet<Option> options) {
-    boolean dummyProject = false;
+  public static Project doOpenProject(@NotNull Path file, @NotNull OpenProjectTask options, int line) {
     String dummyProjectName = null;
-    boolean forceOpenInNewFrame = options.contains(Option.FORCE_NEW_FRAME);
-    boolean tempProject = options.contains(Option.TEMP_PROJECT);
-
     Path baseDir = file;
     if (!Files.isDirectory(baseDir)) {
-      if (tempProject) {
+      if (options.isTempProject()) {
         baseDir = null;
       }
       else {
@@ -169,46 +156,60 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
 
       // no reasonable directory -> create new temp one or use parent
       if (baseDir == null) {
-        if (tempProject || Registry.is("ide.open.file.in.temp.project.dir")) {
+        if (options.isTempProject() || Registry.is("ide.open.file.in.temp.project.dir")) {
           try {
             dummyProjectName = file.getFileName().toString();
             baseDir = FileUtil.createTempDirectory(dummyProjectName, null, true).toPath();
-            dummyProject = true;
           }
           catch (IOException ex) {
             LOG.error(ex);
           }
         }
+
         if (baseDir == null) {
           baseDir = file.getParent();
         }
       }
     }
 
-    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    if (!forceOpenInNewFrame && openProjects.length > 0) {
-      if (projectToClose == null) {
-        projectToClose = ProjectUtil.getProjectToClose(openProjects);
-      }
+    if (!options.getForceOpenInNewFrame()) {
+      Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+      if (openProjects.length > 0) {
+        Project projectToClose = options.getProjectToClose();
+        if (projectToClose == null) {
+          projectToClose = ProjectUtil.getProjectToClose(openProjects);
+        }
 
-      if (checkExistingProjectOnOpen(projectToClose, callback, baseDir)) {
-        return null;
+        if (checkExistingProjectOnOpen(projectToClose, options.getCallback(), baseDir)) {
+          return null;
+        }
       }
     }
 
+    return openExistingDirectoryBasedProjectInANewFrame(file, baseDir, options, line, dummyProjectName);
+  }
+
+  /**
+   * "new frame" also means reusing of closed project frame (that's closed by {@link #doOpenProject}) for example.
+   */
+  @Nullable
+  @ApiStatus.Internal
+  public static Project openExistingDirectoryBasedProjectInANewFrame(@NotNull Path file,
+                                                                     @NotNull Path baseDir,
+                                                                     @NotNull OpenProjectTask options,
+                                                                     int line,
+                                                                     @Nullable String dummyProjectName) {
     Pair<Project, Module> result;
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      result = prepareAndOpenProject(file, options, baseDir, dummyProject, dummyProjectName);
+      result = prepareAndOpenProject(file, options, baseDir, dummyProjectName);
     }
     else {
-      IdeFrameImpl frame = showFrame();
+      IdeFrameImpl frame = showFrame(options);
       Ref<Pair<Project, Module>> refResult = Ref.create();
-      Path finalBaseDir = baseDir;
-      boolean finalDummyProject = dummyProject;
-      String finalDummyProjectName = dummyProjectName;
-      Runnable process = () -> refResult.set(prepareAndOpenProject(file, options, finalBaseDir, finalDummyProject, finalDummyProjectName));
+      Runnable process = () -> refResult.set(prepareAndOpenProject(file, options, baseDir, dummyProjectName));
       TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-        boolean progressCompleted = ProgressManager.getInstance().runProcessWithProgressSynchronously(process, "Loading Project...", true, null, frame.getComponent());
+        boolean progressCompleted = ProgressManager
+          .getInstance().runProcessWithProgressSynchronously(process, "Loading Project...", true, null, frame.getComponent());
         if (!progressCompleted) {
           refResult.set(null);
         }
@@ -221,19 +222,18 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
       return null;
     }
 
-    if (!Files.isDirectory(file)) {
+    if (file != baseDir && !Files.isDirectory(file)) {
       openFileFromCommandLine(result.first, file, line);
     }
 
-    if (callback != null) {
-      callback.projectOpened(result.first, result.second);
+    if (options.getCallback() != null) {
+      options.getCallback().projectOpened(result.first, result.second);
     }
-
     return result.first;
   }
 
   @NotNull
-  private static IdeFrameImpl showFrame() {
+  private static IdeFrameImpl showFrame(@NotNull OpenProjectTask options) {
     WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
     IdeFrameImpl freeRootFrame = windowManager.getRootFrame();
     if (freeRootFrame != null) {
@@ -241,7 +241,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     }
 
     Activity showFrameActivity = StartUpMeasurer.start("show frame");
-    IdeFrameImpl frame = windowManager.showFrame();
+    IdeFrameImpl frame = windowManager.showFrame(options);
     showFrameActivity.end();
     // runProcessWithProgressSynchronously still processes EDT events
     ApplicationManager.getApplication().invokeLater(() -> {
@@ -256,10 +256,9 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
 
   @Nullable
   private static Pair<Project, Module> prepareAndOpenProject(@NotNull Path file,
-                                                             @NotNull EnumSet<Option> options,
-                                                             Path baseDir,
-                                                             boolean dummyProject,
-                                                             String dummyProjectName) {
+                                                             @NotNull OpenProjectTask options,
+                                                             @NotNull Path baseDir,
+                                                             @Nullable String dummyProjectName) {
     boolean newProject = false;
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     Project project;
@@ -268,7 +267,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
       project = tryLoadProject(baseDir);
     }
     else {
-      project = projectManager.newProject(dummyProject ? dummyProjectName : baseDir.getFileName().toString(), baseDir.toString(), !options.contains(Option.DO_NOT_USE_DEFAULT_PROJECT), dummyProject);
+      project = ((ProjectManagerImpl)projectManager).newProject(baseDir, dummyProjectName == null ? baseDir.getFileName().toString() : dummyProjectName, !options.isUseDefaultProjectAsTemplate(), true);
       newProject = true;
     }
 
@@ -278,7 +277,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
 
     ProjectBaseDirectory.getInstance(project).setBaseDir(baseDir);
 
-    Module module = configureNewProject(project, baseDir, file, dummyProject, newProject);
+    Module module = configureNewProject(project, baseDir, file, dummyProjectName == null, newProject);
 
     if (newProject) {
       project.save();
@@ -394,14 +393,19 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     return false;
   }
 
-  private static void openFileFromCommandLine(Project project, Path file, int line) {
-    StartupManager.getInstance(project).registerPostStartupActivity(
-      (DumbAwareRunnable)() -> ApplicationManager.getApplication().invokeLater(() -> {
-        if (!project.isDisposed() && Files.exists(file)) {
-          VirtualFile virtualFile = getFileAndRefresh(file);
-          (line > 0 ? new OpenFileDescriptor(project, virtualFile, line - 1, 0) : PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, -1)).navigate(true);
-        }
-      }, ModalityState.NON_MODAL));
+  private static void openFileFromCommandLine(@NotNull Project project, @NotNull Path file, int line) {
+    //noinspection CodeBlock2Expr
+    StartupManager.getInstance(project).registerPostStartupActivity((DumbAwareRunnable)() -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
+          if (!project.isDisposed() && Files.exists(file)) {
+            VirtualFile virtualFile = getFileAndRefresh(file);
+            Navigatable navigatable = line > 0
+                                      ? new OpenFileDescriptor(project, virtualFile, line - 1, 0)
+                                      : PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, -1);
+            navigatable.navigate(true);
+          }
+        }, ModalityState.NON_MODAL);
+    });
   }
 
   @NotNull

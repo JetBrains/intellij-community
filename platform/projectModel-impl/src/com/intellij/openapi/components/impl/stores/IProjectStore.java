@@ -69,4 +69,7 @@ public interface IProjectStore extends IComponentStore {
   String getDirectoryStorePathOrBase();
 
   void setPath(@NotNull Path path, boolean isRefreshVfsNeeded, @Nullable Project template);
+
+  @Nullable
+  String getProjectWorkspaceId();
 }

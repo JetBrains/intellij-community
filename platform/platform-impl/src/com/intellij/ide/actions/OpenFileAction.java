@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -31,8 +32,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.List;
 
 public class OpenFileAction extends AnAction implements DumbAware {
@@ -83,8 +84,7 @@ public class OpenFileAction extends AnAction implements DumbAware {
       if (file.isDirectory()) {
         Project openedProject;
         if (ProjectAttachProcessor.canAttachToProject()) {
-          EnumSet<PlatformProjectOpenProcessor.Option> options = EnumSet.noneOf(PlatformProjectOpenProcessor.Option.class);
-          openedProject = PlatformProjectOpenProcessor.doOpenProject(file, project, -1, null, options);
+          openedProject = PlatformProjectOpenProcessor.doOpenProject(Paths.get(file.getPath()), new OpenProjectTask(false, project), -1);
         }
         else {
           openedProject = ProjectUtil.openOrImport(file.getPath(), project, false);
@@ -122,8 +122,9 @@ public class OpenFileAction extends AnAction implements DumbAware {
         openFile(file, project);
       }
       else {
-        PlatformProjectOpenProcessor.doOpenProject(file, null, -1, null,
-                                                   EnumSet.of(PlatformProjectOpenProcessor.Option.TEMP_PROJECT));
+        OpenProjectTask options = new OpenProjectTask();
+        options.setTempProject(true);
+        PlatformProjectOpenProcessor.doOpenProject(Paths.get(file.getPath()), options, -1);
       }
     }
   }

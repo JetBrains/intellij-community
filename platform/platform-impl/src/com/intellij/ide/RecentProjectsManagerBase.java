@@ -2,28 +2,37 @@
 package com.intellij.ide;
 
 import com.intellij.configurationStore.StorageUtilKt;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.FrameInfo;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.ProjectFrameBounds;
 import com.intellij.openapi.wm.impl.SystemDock;
 import com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectPanel;
 import com.intellij.platform.PlatformProjectOpenProcessor;
+import com.intellij.project.ProjectKt;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Property;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 
 import javax.swing.*;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -39,8 +47,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * Used directly by IntelliJ IDEA.
@@ -75,85 +81,36 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
   }
 
   public static final class State {
+    @SuppressWarnings({"MissingDeprecatedAnnotation", "DeprecatedIsStillUsed"})
+    @Deprecated
     public final List<String> recentPaths = new SmartList<>();
+
+    @Deprecated
     public final List<String> openPaths = new SmartList<>();
-    public final Map<String, String> names = new LinkedHashMap<>();
+
     public final List<ProjectGroup> groups = new SmartList<>();
-    public String lastPath;
     public String pid;
-    public final Map<String, RecentProjectMetaInfo> additionalInfo = new LinkedHashMap<>();
+    public final LinkedHashMap<String, RecentProjectMetaInfo> additionalInfo = new LinkedHashMap<>();
 
     public String lastProjectLocation;
 
     private void validateRecentProjects(@NotNull AtomicLong modCounter) {
-      while (recentPaths.remove(null)) {
-        modCounter.incrementAndGet();
+      int limit = Registry.intValue("ide.max.recent.projects");
+      if (additionalInfo.size() <= limit) {
+        return;
       }
 
-      Collection<String> displayNames = names.values();
-      while (displayNames.remove("")) {
-        modCounter.incrementAndGet();
-      }
-
-      while (recentPaths.size() > Registry.intValue("ide.max.recent.projects")) {
-        int index = recentPaths.size() - 1;
-        names.remove(recentPaths.get(index));
-        recentPaths.remove(index);
-        modCounter.incrementAndGet();
-      }
-    }
-
-    // TODO Should be removed later (required to convert the already saved system-dependent paths).
-    private void makePathsSystemIndependent() {
-      ApplicationInfo appInfo = ApplicationInfo.getInstance();
-      String version = appInfo.getMajorVersion() + "." + appInfo.getMinorVersion();
-      PathMacroManager pathMacroManager = PathMacroManager.getInstance(ApplicationManager.getApplication());
-      Function<String, String> convert = depPath -> {
-        String result = PathUtil.toSystemIndependentName(depPath);
-        if (!result.startsWith("$APP") && result.contains("2017.1")) {
-          String migrated = result.replace("2017.1", version);
-          // check for possible PathMacroUtil.APPLICATION_*
-          if (pathMacroManager.collapsePath(migrated).startsWith("$APP")) {
-            return migrated;
+      while (additionalInfo.size() > limit) {
+        Iterator<String> iterator = additionalInfo.keySet().iterator();
+        while (iterator.hasNext()) {
+          String path = iterator.next();
+          if (!additionalInfo.get(path).opened) {
+            iterator.remove();
+            break;
           }
         }
-        return result;
-      };
-      Consumer<List<String>> convertList = o -> {
-        for (ListIterator<String> it = o.listIterator(); it.hasNext(); ) {
-          it.set(convert.apply(it.next()));
-        }
-      };
-
-      convertList.accept(recentPaths);
-      convertList.accept(openPaths);
-
-      Map<String, String> namesCopy = new LinkedHashMap<>(names);
-      names.clear();
-      for (Map.Entry<String, String> entry : namesCopy.entrySet()) {
-        names.put(convert.apply(entry.getKey()), entry.getValue());
       }
-
-      for (ProjectGroup group : groups) {
-        List<String> paths = new ArrayList<>(group.getProjects());
-        convertList.accept(paths);
-        group.save(paths);
-      }
-
-      if (lastPath != null) {
-        lastPath = convert.apply(lastPath);
-      }
-
-      Map<String, RecentProjectMetaInfo> additionalInfoCopy = new LinkedHashMap<>(additionalInfo);
-      additionalInfo.clear();
-      for (Map.Entry<String, RecentProjectMetaInfo> entry : additionalInfoCopy.entrySet()) {
-        entry.getValue().binFolder = convert.apply(entry.getValue().binFolder);
-        additionalInfo.put(convert.apply(entry.getKey()), entry.getValue());
-      }
-
-      if (lastProjectLocation != null) {
-        lastProjectLocation = convert.apply(lastProjectLocation);
-      }
+      modCounter.incrementAndGet();
     }
   }
 
@@ -165,6 +122,9 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
   @Override
   public State getState() {
     synchronized (myStateLock) {
+      myState.recentPaths.clear();
+      myState.recentPaths.addAll(ContainerUtil.reverse(new ArrayList<>(myState.additionalInfo.keySet())));
+
       if (myState.pid == null) {
         //todo[kb] uncomment when we will fix JRE-251 The pid is needed for 3rd parties like Toolbox App to show the project is open now
         myState.pid = "";//OSProcessUtil.getApplicationPid();
@@ -182,36 +142,19 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
 
   @Override
   public void loadState(@NotNull final State state) {
-    state.makePathsSystemIndependent();
-    removeDuplicates(state);
-    if (state.lastPath != null) {
-      File lastFile = new File(PathUtil.toSystemDependentName(state.lastPath));
-      if (!lastFile.exists() ||
-          lastFile.isDirectory() && !new File(lastFile, Project.DIRECTORY_STORE_FOLDER).exists()) {
-        state.lastPath = null;
-      }
-    }
     synchronized (myStateLock) {
       myState = state;
       myState.pid = null;
-    }
-  }
 
-  private static void removeDuplicates(@NotNull State state) {
-    for (String path : new ArrayList<>(state.recentPaths)) {
-      if (path.endsWith("/")) {
-        state.recentPaths.remove(path);
-        state.additionalInfo.remove(path);
-        state.openPaths.remove(path);
-      }
-    }
-  }
-
-  private static void removePathFrom(@NotNull List<String> items, @NotNull String path) {
-    for (Iterator<String> iterator = items.iterator(); iterator.hasNext(); ) {
-      final String next = iterator.next();
-      if (SystemInfo.isFileSystemCaseSensitive ? path.equals(next) : path.equalsIgnoreCase(next)) {
-        iterator.remove();
+      List<String> openPaths = myState.openPaths;
+      if (!openPaths.isEmpty()) {
+        for (String path : openPaths) {
+          RecentProjectMetaInfo info = myState.additionalInfo.get(path);
+          if (info != null) {
+            info.opened = true;
+          }
+        }
+        openPaths.clear();
       }
     }
   }
@@ -223,8 +166,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     }
 
     synchronized (myStateLock) {
-      removePathFrom(myState.recentPaths, path);
-      myState.names.remove(path);
+      myState.additionalInfo.remove(path);
       for (ProjectGroup group : myState.groups) {
         group.removeProject(path);
       }
@@ -236,8 +178,9 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
 
   @Override
   public boolean hasPath(@SystemIndependent String path) {
-    final State state = getState();
-    return state != null && state.recentPaths.contains(path);
+    synchronized (myStateLock) {
+      return myState.additionalInfo.containsKey(path);
+    }
   }
 
   /**
@@ -265,55 +208,35 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
   }
 
   @Override
-  @SystemIndependent
-  public String getLastProjectPath() {
-    synchronized (myStateLock) {
-      return myState.lastPath;
-    }
-  }
-
-  @Override
   public final void updateLastProjectPath() {
-    final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     synchronized (myStateLock) {
-      List<String> openPaths = myState.openPaths;
-      openPaths.clear();
-      if (openProjects.length == 0) {
-        myState.lastPath = null;
+      for (RecentProjectMetaInfo info : myState.additionalInfo.values()) {
+        info.opened = false;
       }
-      else {
-        myState.lastPath = getProjectPath(openProjects[openProjects.length - 1]);
-        for (Project openProject : openProjects) {
-          String path = getProjectPath(openProject);
-          if (path != null) {
-            openPaths.add(path);
-            myState.names.put(path, getProjectDisplayName(openProject));
+
+      for (Project project : openProjects) {
+        String path = getProjectPath(project);
+        if (path != null) {
+          RecentProjectMetaInfo info = myState.additionalInfo.get(path);
+          if (info != null) {
+            info.opened = true;
+            info.projectOpenTimestamp = System.currentTimeMillis();
+            info.displayName = getProjectDisplayName(project);
           }
         }
       }
 
       myState.validateRecentProjects(myModCounter);
-      updateOpenProjectsTimestamps(openProjects);
     }
 
     // for simplicity, for now just increment and don't check is something really changed
     myModCounter.incrementAndGet();
   }
 
-  private void updateOpenProjectsTimestamps(@NotNull Project[] openProjects) {
-    Map<String, RecentProjectMetaInfo> additionalInfo = myState.additionalInfo;
-    for (Project project : openProjects) {
-      String path = getProjectPath(project);
-      RecentProjectMetaInfo info = path == null ? null : additionalInfo.get(path);
-      if (info != null) {
-        info.projectOpenTimestamp = System.currentTimeMillis();
-      }
-    }
-  }
-
-  @NotNull
+  @Nullable
   protected String getProjectDisplayName(@NotNull Project project) {
-    return "";
+    return null;
   }
 
   @Nullable
@@ -347,19 +270,16 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
   @Override
   @NotNull
   public AnAction[] getRecentProjectsActions(boolean forMainMenu, boolean useGroups) {
-    final Set<String> paths;
+    Set<String> paths;
     synchronized (myStateLock) {
       myState.validateRecentProjects(myModCounter);
-      paths = new LinkedHashSet<>(myState.recentPaths);
+      paths = new LinkedHashSet<>(ContainerUtil.reverse(new ArrayList<>(myState.additionalInfo.keySet())));
     }
 
     Set<String> openedPaths = new THashSet<>();
     for (Project openProject : ProjectManager.getInstance().getOpenProjects()) {
       ContainerUtil.addIfNotNull(openedPaths, getProjectPath(openProject));
     }
-
-    paths.remove(null);
-    //paths.removeAll(openedPaths);
 
     List<AnAction> actions = new SmartList<>();
     Set<String> duplicates = getDuplicateProjectNames(openedPaths, paths);
@@ -408,7 +328,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
       }
     }
 
-    for (final String path : paths) {
+    for (String path : paths) {
       actions.add(createOpenAction(path, duplicates));
     }
 
@@ -425,7 +345,8 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     String projectName = getProjectName(path);
     String displayName;
     synchronized (myStateLock) {
-      displayName = myState.names.get(path);
+      RecentProjectMetaInfo info = myState.additionalInfo.get(path);
+      displayName = info == null ? null : info.displayName;
     }
     if (StringUtil.isEmptyOrSpaces(displayName)) {
       displayName = duplicates.contains(projectName) ? FileUtil.toSystemDependentName(path) : projectName;
@@ -434,31 +355,38 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     // It's better don't to remove non-existent projects. Sometimes projects stored
     // on USB-sticks or flash-cards, and it will be nice to have them in the list
     // when USB device or SD-card is mounted
-    //if (new File(path).exists()) {
     return new ReopenProjectAction(path, projectName, displayName);
-    //}
-    //return null;
   }
 
   private void markPathRecent(@NotNull @SystemIndependent String path, @NotNull Project project) {
     synchronized (myStateLock) {
-      if (path.endsWith(File.separator)) {
-        path = path.substring(0, path.length() - File.separator.length());
-      }
-      myState.lastPath = path;
       ProjectGroup group = getProjectGroup(path);
       removePath(path);
 
-      myState.recentPaths.add(0, path);
       if (group != null) {
         List<String> projects = group.getProjects();
         projects.add(0, path);
         group.save(projects);
       }
-      myState.additionalInfo.remove(path);
 
-      String additionalMetadata = getRecentProjectMetadata(path, project);
-      myState.additionalInfo.put(path, RecentProjectMetaInfo.create(additionalMetadata));
+      // remove instead of get to re-order
+      RecentProjectMetaInfo info = myState.additionalInfo.remove(path);
+      if (info == null) {
+        info = new RecentProjectMetaInfo();
+      }
+      myState.additionalInfo.put(path, info);
+
+      ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
+      info.displayName = getProjectDisplayName(project);
+      info.projectWorkspaceId = ProjectKt.getStateStore(project).getProjectWorkspaceId();
+      info.frame = ProjectFrameBounds.getInstance(project).getState();
+      info.build = appInfo.getBuild().asString();
+      info.productionCode = appInfo.getBuild().getProductCode();
+      info.eap = appInfo.isEAP();
+      info.binFolder = FileUtilRt.toSystemIndependentName(PathManager.getBinPath());
+      info.projectOpenTimestamp = System.currentTimeMillis();
+      info.buildTimestamp = appInfo.getBuildDate().getTimeInMillis();
+      info.metadata = getRecentProjectMetadata(path, project);
     }
 
     myModCounter.incrementAndGet();
@@ -489,7 +417,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
   }
 
   @Nullable
-  public Project doOpenProject(@NotNull @SystemIndependent String projectPath, @Nullable Project projectToClose, boolean forceOpenInNewFrame) {
+  public Project doOpenProject(@NotNull @SystemIndependent String projectPath, @NotNull OpenProjectTask openProjectOptions) {
     Path projectFile = Paths.get(projectPath);
 
     Project existing = ProjectUtil.findAndFocusExistingProjectForPath(projectFile);
@@ -498,18 +426,14 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     }
 
     if (Files.isDirectory(projectFile.resolve(Project.DIRECTORY_STORE_FOLDER))) {
-      EnumSet<PlatformProjectOpenProcessor.Option> options = EnumSet.of(PlatformProjectOpenProcessor.Option.REOPEN);
-      if (forceOpenInNewFrame) {
-        options.add(PlatformProjectOpenProcessor.Option.FORCE_NEW_FRAME);
-      }
-      return PlatformProjectOpenProcessor.doOpenProject(projectFile, projectToClose, -1, null, options);
+      return PlatformProjectOpenProcessor.openExistingDirectoryBasedProjectInANewFrame(projectFile, projectFile, openProjectOptions, -1, null);
     }
     else {
       // If .idea is missing in the recent project's dir; this might mean, for instance, that 'git clean' was called.
       // Reopening such a project should be similar to opening the dir first time (and trying to import known project formats)
       // IDEA-144453 IDEA rejects opening recent project if there are no .idea subfolder
       // CPP-12106 Auto-load CMakeLists.txt on opening from Recent projects when .idea and cmake-build-debug were deleted
-      return ProjectUtil.openOrImport(projectFile, projectToClose, forceOpenInNewFrame);
+      return ProjectUtil.openOrImport(projectFile, openProjectOptions);
     }
   }
 
@@ -517,7 +441,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     private final RecentProjectsManagerBase manager = getInstanceEx();
 
     @Override
-    public void projectOpened(@NotNull final Project project) {
+    public void projectOpened(@NotNull Project project) {
       String path = manager.getProjectPath(project);
       if (path != null) {
         manager.markPathRecent(path, project);
@@ -540,7 +464,6 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
       }
 
       synchronized (manager.myStateLock) {
-        manager.myState.names.put(path, manager.getProjectDisplayName(project));
         manager.myNameCache.put(path, project.getName());
       }
     }
@@ -556,6 +479,17 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
         }
       }
       updateSystemDockMenu();
+    }
+
+    @Override
+    public void projectClosingBeforeSave(@NotNull Project project) {
+      JFrame frame = WindowManager.getInstance().getFrame(project);
+      if (frame instanceof IdeFrameImpl) {
+        String workspaceId = ProjectKt.getStateStore(project).getProjectWorkspaceId();
+        if (workspaceId != null && Registry.is("ide.project.loading.show.last.state")) {
+          ((IdeFrameImpl)frame).takeASelfie(workspaceId);
+        }
+      }
     }
   }
 
@@ -603,7 +537,18 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
 
   @Override
   public boolean willReopenProjectOnStart() {
-    return getLastProjectPath() != null && GeneralSettings.getInstance().isReopenLastProject();
+    if (!GeneralSettings.getInstance().isReopenLastProject()) {
+      return false;
+    }
+
+    synchronized (myStateLock) {
+      for (RecentProjectMetaInfo info : myState.additionalInfo.values()) {
+        if (info.opened) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @Override
@@ -616,21 +561,19 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
       return;
     }
 
-    Set<String> openPaths;
-    boolean forceNewFrame = true;
+    List<Map.Entry<String, RecentProjectMetaInfo>> openPaths;
     synchronized (myStateLock) {
-      openPaths = new LinkedHashSet<>(myState.openPaths);
-      if (openPaths.isEmpty()) {
-        openPaths = ContainerUtil.createMaybeSingletonSet(myState.lastPath);
-        forceNewFrame = false;
-      }
+      openPaths = ContainerUtil.reverse(ContainerUtil.findAll(myState.additionalInfo.entrySet(), it -> it.getValue().opened));
     }
 
     try {
       myBatchOpening = true;
-      for (String openPath : openPaths) {
+      for (Map.Entry<String, RecentProjectMetaInfo> it : openPaths) {
         // https://youtrack.jetbrains.com/issue/IDEA-166321
-        doOpenProject(openPath, null, forceNewFrame);
+        OpenProjectTask options = new OpenProjectTask(/* forceOpenInNewFrame = */ true);
+        options.setFrame(it.getValue().frame);
+        options.setProjectWorkspaceId(it.getValue().projectWorkspaceId);
+        doOpenProject(it.getKey(), options);
       }
     }
     finally {
@@ -688,6 +631,12 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
   }
 
   public final static class RecentProjectMetaInfo {
+    @Attribute
+    public String displayName;
+
+    @Attribute
+    public boolean opened;
+
     public String build;
     public String productionCode;
     public boolean eap;
@@ -696,16 +645,10 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     public long buildTimestamp;
     public String metadata;
 
-    public static RecentProjectMetaInfo create(String metadata) {
-      RecentProjectMetaInfo info = new RecentProjectMetaInfo();
-      info.build = ApplicationInfoEx.getInstanceEx().getBuild().asString();
-      info.productionCode = ApplicationInfoEx.getInstanceEx().getBuild().getProductCode();
-      info.eap = ApplicationInfoEx.getInstanceEx().isEAP();
-      info.binFolder = PathUtil.toSystemIndependentName(PathManager.getBinPath());
-      info.projectOpenTimestamp = System.currentTimeMillis();
-      info.buildTimestamp = ApplicationInfoEx.getInstanceEx().getBuildDate().getTimeInMillis();
-      info.metadata = metadata;
-      return info;
-    }
+    @Attribute
+    public String projectWorkspaceId;
+
+    @Property(surroundWithTag = false)
+    public FrameInfo frame;
   }
 }
