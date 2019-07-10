@@ -78,7 +78,7 @@ public final class IdeEventQueue extends EventQueue {
 
   private final static LinkedHashSet<Window> activatedWindows = new LinkedHashSet<>();
 
-  private static void cleanActivatedWindowSet() {
+  private static void updateActivatedWindowSet() {
     for (Iterator<Window> iter = activatedWindows.iterator(); iter.hasNext(); ) {
       Window window = iter.next();
       if (!window.isVisible()) {
@@ -89,7 +89,7 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   public Window nextWindowAfter (@NotNull Window w) {
-    cleanActivatedWindowSet();
+    updateActivatedWindowSet();
     assert activatedWindows.contains(w);
 
     Window[] windows = activatedWindows.toArray(new Window[0]);
@@ -108,7 +108,7 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   public Window nextWindowBefore (@NotNull Window w) {
-      cleanActivatedWindowSet();
+      updateActivatedWindowSet();
       assert activatedWindows.contains(w);
 
     Window[] windows = activatedWindows.toArray(new Window[0]);
@@ -408,7 +408,7 @@ public final class IdeEventQueue extends EventQueue {
 
     if (e.getID() == WindowEvent.WINDOW_ACTIVATED) {
       activatedWindows.add((Window)e.getSource());
-      cleanActivatedWindowSet();
+      updateActivatedWindowSet();
     }
 
     long startedAt = System.currentTimeMillis();
