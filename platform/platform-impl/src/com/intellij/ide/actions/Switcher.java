@@ -20,10 +20,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
-import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
-import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil;
-import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.fileEditor.impl.*;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -1362,7 +1359,9 @@ public class Switcher extends AnAction implements DumbAware {
       }
       SpeedSearchUtil.applySpeedSearchHighlighting(mySwitcherPanel, this, false, selected);
 
-      appendTimestamp(project, virtualFile);
+      if (((IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(project)).LAST_VISITED_TIMESTAMP_OPTION_FIELD) {
+        appendTimestamp(project, virtualFile);
+      }
     }
 
     private void appendTimestamp(@NotNull Project project, @NotNull VirtualFile file) {

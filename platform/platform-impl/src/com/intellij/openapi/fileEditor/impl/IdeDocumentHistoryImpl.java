@@ -68,6 +68,9 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   private static final int BACK_QUEUE_LIMIT = Registry.intValue("editor.navigation.history.stack.size");
   private static final int CHANGE_QUEUE_LIMIT = Registry.intValue("editor.navigation.history.stack.size");
 
+  public static String LAST_VISITED_TIMESTAMP_OPTION = "LAST_VISITED_TIMESTAMP_OPTION_FIELD";
+
+  public boolean LAST_VISITED_TIMESTAMP_OPTION_FIELD = true;
   private final Project myProject;
 
   private FileDocumentManager myFileDocumentManager;
