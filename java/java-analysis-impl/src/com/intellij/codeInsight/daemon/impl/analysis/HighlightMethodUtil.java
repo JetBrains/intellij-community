@@ -30,6 +30,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
@@ -714,15 +715,16 @@ public class HighlightMethodUtil {
 
       description = HighlightUtil.staticContextProblemDescription(element);
     }
+    else if (candidates.length == 0) {
+      PsiClass qualifierClass = RefactoringChangeUtil.getQualifierClass(referenceToMethod);
+      String qualifier = qualifierClass != null ? qualifierClass.getName() : null;
+
+      description = qualifier != null ? JavaErrorMessages.message("ambiguous.method.call.no.match", referenceToMethod.getReferenceName(), qualifier)
+                                      : JavaErrorMessages.message("cannot.resolve.method", referenceToMethod.getReferenceName() + buildArgTypesList(list));
+      highlightInfoType = HighlightInfoType.WRONG_REF;
+    }
     else {
-      String methodName = referenceToMethod.getReferenceName() + buildArgTypesList(list);
-      description = JavaErrorMessages.message("cannot.resolve.method", methodName);
-      if (candidates.length == 0) {
-        highlightInfoType = HighlightInfoType.WRONG_REF;
-      }
-      else {
-        return null;
-      }
+      return null;
     }
 
     String toolTip = XmlStringUtil.escapeString(description);

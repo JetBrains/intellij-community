@@ -1,7 +1,7 @@
 package p;
 abstract class B extends A {
   {
-    <error descr="Cannot resolve method 'filter(null)'">filter</error>(null);
+    <error descr="Cannot resolve method 'filter' in 'B'">filter</error>(null);
   }
 }
 
