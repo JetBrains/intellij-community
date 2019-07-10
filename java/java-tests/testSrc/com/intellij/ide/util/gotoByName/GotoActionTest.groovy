@@ -76,6 +76,15 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     assert actionMatches('refactor variable', extractMethod) == MatchMode.GROUP
   }
 
+  void "test no lowercase camel-hump action match"() {
+    def action = ActionManager.instance.getAction("InvalidateCaches")
+    assert actionMatches('invalid', action) == MatchMode.NAME
+    assert actionMatches('invalidate caches', action) == MatchMode.NAME
+    assert actionMatches('cache invalid', action) == MatchMode.NAME
+    assert actionMatches('rebuild of all caches', action) == MatchMode.DESCRIPTION
+    assert actionMatches('restart', action) == MatchMode.NONE
+  }
+
   void "test matched value comparator"() {
     def pattern = 'Text'
     def names = ['Text', 'Text completion', 'Completion Text', 'Add text', 'Retextovize mapping', 'Value', 'A', 'Z']

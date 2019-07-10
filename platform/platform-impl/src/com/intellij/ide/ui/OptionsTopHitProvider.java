@@ -25,10 +25,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.MinusculeMatcher;
-import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.codeStyle.WordPrefixMatcher;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -117,13 +117,12 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
                                        @Nullable Project project) {
     if (provider.getId().startsWith(id) || pattern.startsWith(" ")) {
       pattern = pattern.startsWith(" ") ? pattern.trim() : StringUtil.toLowerCase(pattern.substring(id.length()).trim());
-      MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
-      consumeTopHitsForApplicableProvider(provider, matcher, collector, project);
+      consumeTopHitsForApplicableProvider(provider, new WordPrefixMatcher(pattern), collector, project);
     }
   }
 
   private static void consumeTopHitsForApplicableProvider(@NotNull OptionsSearchTopHitProvider provider,
-                                                          @NotNull MinusculeMatcher matcher,
+                                                          @NotNull Matcher matcher,
                                                           @NotNull Consumer<Object> collector,
                                                           @Nullable Project project) {
     for (OptionDescription option : getCachedOptions(provider, project, null)) {
@@ -220,7 +219,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
     }
 
     public void consumeAllTopHits(@NotNull String pattern, @NotNull Consumer<Object> collector, @Nullable Project project) {
-      MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
+      Matcher matcher = new WordPrefixMatcher(pattern);
       for (OptionsSearchTopHitProvider.ProjectLevelProvider provider : PROJECT_LEVEL_EP.getExtensionList()) {
         consumeTopHitsForApplicableProvider(provider, matcher, collector, project);
       }
