@@ -56,20 +56,20 @@
     <pom.declarationSearcher implementation="com.intellij.lang.ant.dom.AntDomDeclarationSearcher"/>
     
     <!--Type Presentation-->
-    <typeName className="com.intellij.lang.ant.dom.AntDomMacroDef" name="macro definition"/>
-    <typeName className="com.intellij.lang.ant.dom.AntDomMacrodefElement" name="macrodef nested element"/>
-    <typeName className="com.intellij.lang.ant.dom.AntDomTypeDef" name="type definition"/>
-    <typeName className="com.intellij.lang.ant.dom.AntDomTaskdef" name="task definition"/>
-    <typeName className="com.intellij.lang.ant.dom.AntDomPresetDef" name="preset definition"/>
-    <typeName className="com.intellij.lang.ant.dom.AntDomScriptDef" name="script definition"/>
-    <typeName className="com.intellij.lang.ant.dom.AntDomProperty" name="property"/>
-    <typeName className="com.intellij.lang.ant.dom.AntDomDirSet" name="directory set"/>
-    <typeName className="com.intellij.lang.ant.dom.AntDomFileSet" name="file set"/>
-    <typeName className="com.intellij.lang.ant.dom.AntDomFileList" name="file list"/>
-    <typeName className="com.intellij.lang.ant.dom.AntDomPath" name="path"/>
-    <typeName className="com.intellij.lang.ant.dom.AntDomPathElement" name="pathelement"/>
-    <typeName className="com.intellij.lang.ant.dom.AntDomTarget" name="target"/>
-    <typeName className="com.intellij.lang.ant.dom.AntDomAntCallParam" name="antcall parameter"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomMacroDef" name="Macro Definition"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomMacrodefElement" name="Macrodef Nested Element"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomTypeDef" name="Type Definition"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomTaskdef" name="Task Definition"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomPresetDef" name="Preset Definition"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomScriptDef" name="Script Definition"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomProperty" name="Property"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomDirSet" name="Directory Set"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomFileSet" name="File Set"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomFileList" name="File List"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomPath" name="Path"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomPathElement" name="Pathelement"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomTarget" name="Target"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomAntCallParam" name="Antcall Parameter"/>
 
     <toolWindow anchor="right" icon="AllIcons.Toolwindows.ToolWindowAnt" id="Ant"
                 factoryClass="com.intellij.lang.ant.config.impl.AntToolWindowFactory"/>
