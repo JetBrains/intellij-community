@@ -735,6 +735,19 @@ idea.fatal.error.notification=disabled
   }
 
   @Override
+  void runTestBuild() {
+    checkProductProperties()
+    def patchedApplicationInfo = patchApplicationInfo()
+    def distributionJARsBuilder = compileModulesForDistribution(patchedApplicationInfo)
+    distributionJARsBuilder.buildJARs()
+    distributionJARsBuilder.buildInternalUtilities()
+    if (buildContext.productProperties.scrambleMainJar) {
+      scramble()
+    }
+    layoutShared()
+  }
+
+  @Override
   void buildUnpackedDistribution(String targetDirectory) {
     buildContext.paths.distAll = targetDirectory
     setupBundledMaven()

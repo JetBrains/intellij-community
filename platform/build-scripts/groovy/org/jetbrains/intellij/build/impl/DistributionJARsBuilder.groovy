@@ -318,17 +318,21 @@ class DistributionJARsBuilder {
                             tofile: "$buildContext.paths.artifacts/$artifactNamePrefix-third-party-libraries.json")
     }
 
-    if (productProperties.scrambleMainJar) {
+    buildInternalUtilities()
+
+    if (productProperties.buildSourcesArchive) {
+      def archiveName = "${productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}-sources.zip"
+      BuildTasks.create(buildContext).zipSourcesOfModules(usedModules, "$buildContext.paths.artifacts/$archiveName")
+    }
+  }
+
+  void buildInternalUtilities() {
+    if (buildContext.productProperties.scrambleMainJar) {
       createLayoutBuilder().layout("$buildContext.paths.buildOutputRoot/internal") {
         jar("internalUtilities.jar") {
           module("intellij.tools.internalUtilities")
         }
       }
-    }
-
-    if (productProperties.buildSourcesArchive) {
-      def archiveName = "${productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}-sources.zip"
-      BuildTasks.create(buildContext).zipSourcesOfModules(usedModules, "$buildContext.paths.artifacts/$archiveName")
     }
   }
 

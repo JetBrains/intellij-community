@@ -136,8 +136,10 @@ class CompilationContextImpl implements CompilationContext {
   }
 
   private static JpsModel loadProject(String projectHome, String jdkHome, String kotlinHome, BuildMessages messages, BuildOptions options, AntBuilder ant) {
-    //we need to add Kotlin JPS plugin to classpath before loading the project to ensure that Kotlin settings will be properly loaded
-    ensureKotlinJpsPluginIsAddedToClassPath(kotlinHome, ant, messages)
+    if (!options.useCompiledClassesFromProjectOutput) {
+      //we need to add Kotlin JPS plugin to classpath before loading the project to ensure that Kotlin settings will be properly loaded
+      ensureKotlinJpsPluginIsAddedToClassPath(kotlinHome, ant, messages)
+    }
 
     def model = JpsElementFactory.instance.createModel()
     def pathVariablesConfiguration = JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.global)
