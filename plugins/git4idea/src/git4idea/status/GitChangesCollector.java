@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitContentRevision;
 import git4idea.GitFormatException;
 import git4idea.GitRevisionNumber;
+import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandler;
@@ -178,7 +179,7 @@ class GitChangesCollector {
 
   // calls 'git status' and parses the output, feeding myChanges.
   private void collectChanges(Collection<? extends FilePath> dirtyPaths) throws VcsException {
-    GitLineHandler handler = statusHandler(dirtyPaths);
+    GitLineHandler handler = GitUtil.createHandlerWithPaths(dirtyPaths, () -> statusHandler());
     String output = myGit.runCommand(handler).getOutputOrThrow();
     parseOutput(output, handler);
   }
@@ -188,18 +189,10 @@ class GitChangesCollector {
     myUnversionedFiles.addAll(untrackedFilesHolder.retrieveUntrackedFiles());
   }
 
-  private GitLineHandler statusHandler(Collection<? extends FilePath> dirtyPaths) {
+  private GitLineHandler statusHandler() {
     GitLineHandler handler = new GitLineHandler(myProject, myVcsRoot, GitCommand.STATUS);
     final String[] params = {"--porcelain", "-z", "--untracked-files=no"};   // untracked files are stored separately
     handler.addParameters(params);
-    handler.endOptions();
-    handler.addRelativePaths(dirtyPaths);
-    if (handler.isLargeCommandLine()) {
-      // if there are too much files, just get all changes for the project
-      handler = new GitLineHandler(myProject, myVcsRoot, GitCommand.STATUS);
-      handler.addParameters(params);
-      handler.endOptions();
-    }
     handler.setSilent(true);
     return handler;
   }

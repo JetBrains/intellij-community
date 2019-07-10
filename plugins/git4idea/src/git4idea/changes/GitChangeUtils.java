@@ -457,38 +457,21 @@ public class GitChangeUtils {
                                       boolean reverse,
                                       boolean detectRenames)
     throws VcsException {
-    GitLineHandler handler = getDiffHandler(project, root, diffRange, dirtyPaths, reverse, detectRenames);
-    if (handler.isLargeCommandLine()) {
-      // if there are too much files, just get all changes for the project
-      handler = getDiffHandler(project, root, diffRange, null, reverse, detectRenames);
-    }
-    return Git.getInstance().runCommand(handler).getOutputOrThrow();
-  }
-
-
-  @NotNull
-  private static GitLineHandler getDiffHandler(@NotNull Project project,
-                                                 @NotNull VirtualFile root,
-                                                 @NotNull String diffRange,
-                                                 @Nullable Collection<? extends FilePath> dirtyPaths,
-                                                 boolean reverse,
-                                                 boolean detectRenames) {
-    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.DIFF);
-    if (reverse) {
-      handler.addParameters("-R");
-    }
-    handler.addParameters("--name-status", "--diff-filter=ADCMRUXT");
-    if (detectRenames) {
-      handler.addParameters("-M");
-    }
-    handler.addParameters(diffRange);
-    handler.setSilent(true);
-    handler.setStdoutSuppressed(true);
-    handler.endOptions();
-    if (dirtyPaths != null) {
-      handler.addRelativePaths(dirtyPaths);
-    }
-    return handler;
+    GitLineHandler h = GitUtil.createHandlerWithPaths(dirtyPaths, () -> {
+      GitLineHandler handler = new GitLineHandler(project, root, GitCommand.DIFF);
+      if (reverse) {
+        handler.addParameters("-R");
+      }
+      handler.addParameters("--name-status", "--diff-filter=ADCMRUXT");
+      if (detectRenames) {
+        handler.addParameters("-M");
+      }
+      handler.addParameters(diffRange);
+      handler.setSilent(true);
+      handler.setStdoutSuppressed(true);
+      return handler;
+    });
+    return Git.getInstance().runCommand(h).getOutputOrThrow();
   }
 
   /**
