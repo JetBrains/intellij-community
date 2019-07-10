@@ -65,15 +65,16 @@ public class AddGroupToLocalWhitelistDialog extends DialogWrapper {
     myGroupIdLabel.setLabelFor(myGroupIdTextField);
 
     myValidationRulesEditor = initEditor(project, myAddCustomRulePanel);
+    myAddCustomRuleCheckBox.setSelected(false);
     myAddCustomRuleCheckBox.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent event) {
         updateRulesOption();
       }
     });
-    myAddCustomRuleCheckBox.setSelected(false);
     updateRulesOption();
     setOKButtonText("&Add");
+    myMainPanel.setPreferredSize(new Dimension(500, 200));
     Disposer.register(project, getDisposable());
     setTitle("Add Test Group to Local Whitelist");
     init();
@@ -84,11 +85,10 @@ public class AddGroupToLocalWhitelistDialog extends DialogWrapper {
     myAddCustomRulePanel.setVisible(customRules);
   }
 
-
   @Override
   @NotNull
   protected String getDimensionServiceKey() {
-    return AddGroupToLocalWhitelistDialog.class.getCanonicalName();
+    return "#com.intellij.internal.statistic.actions.AddGroupToLocalWhitelistDialog";
   }
 
   @Nullable
