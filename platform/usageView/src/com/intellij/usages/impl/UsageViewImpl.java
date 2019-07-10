@@ -2002,7 +2002,6 @@ public class UsageViewImpl implements UsageViewEx {
     private void addButtonAction(int index, @NotNull Action action) {
       JButton button = new JButton(action);
       add(button, index);
-      button.setFocusable(false);
       DialogUtil.registerMnemonic(button);
 
       if (getBorder() == null) setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
