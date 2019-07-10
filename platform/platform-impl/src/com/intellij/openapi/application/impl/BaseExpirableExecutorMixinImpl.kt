@@ -13,20 +13,17 @@ internal abstract class BaseExpirableExecutorMixinImpl<E : BaseExpirableExecutor
   protected constructor(constraints: Array<ConstrainedExecution.ContextConstraint>,
                         cancellationConditions: Array<BooleanSupplier>,
                         expirableHandles: Set<Expiration>,
-                        private val executor: Executor = Executor { it.run() })
+                        private val executor: Executor)
   : ConstrainedExecution<E>,
     ExpirableConstrainedExecution<E>(constraints, cancellationConditions, expirableHandles) {
 
-  constructor (executor: Executor = Executor { it.run() }) : this(emptyArray(), emptyArray(), emptySet(), executor)
+  constructor (executor: Executor) : this(emptyArray(), emptyArray(), emptySet(), executor)
 
   override fun scheduleWithinConstraints(runnable: Runnable, condition: BooleanSupplier?) {
-    executor.execute(
-      kotlinx.coroutines.Runnable { super.scheduleWithinConstraints(runnable, condition) }
-    )
+    executor.execute(kotlinx.coroutines.Runnable {
+      super.scheduleWithinConstraints(runnable, condition)
+    })
   }
-
-  override fun dispatchLaterUnconstrained(runnable: Runnable) =
-    executor.execute(runnable)
 
   fun execute(command: Runnable): Unit = asExecutor().execute(command)
   fun submit(task: Runnable): CancellablePromise<*> = asExecutor().submit(task)

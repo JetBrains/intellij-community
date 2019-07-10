@@ -13,8 +13,13 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.concurrent.Executor
 import java.util.function.BooleanSupplier
+import kotlin.coroutines.ContinuationInterceptor
+import kotlin.coroutines.CoroutineContext
 
 /**
  * @author peter
@@ -40,7 +45,6 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
     }
   }
 
-  @Suppress("UNCHECKED_CAST")
   override fun cloneWith(constraints: Array<ContextConstraint>,
                          cancellationConditions: Array<BooleanSupplier>,
                          expirationSet: Set<Expiration>): AppUIExecutorImpl =
@@ -123,6 +127,25 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
     return withConstraint(InSmartMode(project), project)
   }
 }
+
+
+fun AppUIExecutor.inUndoTransparentAction(): AppUIExecutor =
+  (this as AppUIExecutorImpl).inUndoTransparentAction()
+fun AppUIExecutor.inWriteAction():AppUIExecutor =
+  (this as AppUIExecutorImpl).inWriteAction()
+
+fun AppUIExecutor.withConstraint(constraint: ContextConstraint): AppUIExecutor =
+  (this as AppUIExecutorImpl).withConstraint(constraint)
+fun AppUIExecutor.withConstraint(constraint: ContextConstraint, parentDisposable: Disposable): AppUIExecutor =
+  (this as AppUIExecutorImpl).withConstraint(constraint, parentDisposable)
+
+/**
+ * A [context][CoroutineContext] to be used with the standard [launch], [async], [withContext] coroutine builders.
+ * Contains: [ContinuationInterceptor].
+ */
+fun AppUIExecutor.coroutineDispatchingContext(): ContinuationInterceptor =
+  (this as AppUIExecutorImpl).asCoroutineDispatcher()
+
 
 internal class WithDocumentsCommitted(private val project: Project, private val modality: ModalityState) : ContextConstraint {
   override fun isCorrectContext(): Boolean =
