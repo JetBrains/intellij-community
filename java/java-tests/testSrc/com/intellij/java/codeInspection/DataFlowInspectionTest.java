@@ -662,4 +662,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testInferenceForNonStableParameters() { doTest(); }
   public void testNullableTernaryInConstructor() { doTest(); }
   public void testEqualityLongInteger() { doTest(); }
+  public void testFieldRewrittenInInner() { doTest(); }
 }
