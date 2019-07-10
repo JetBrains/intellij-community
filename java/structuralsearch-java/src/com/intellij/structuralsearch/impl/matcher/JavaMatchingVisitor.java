@@ -1666,14 +1666,13 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       final PsiElement result = other instanceof PsiAnonymousClass
                                 ? ((PsiAnonymousClass)other).getBaseClassReference().getReferenceNameElement()
                                 : identifier2;
-      assert result != null;
       if (handler.isSubtype() || handler.isStrictSubtype()) {
         if (myMatchingVisitor.setResult(checkMatchWithinHierarchy(identifier1, other, handler))) {
-          handler.addResult(result, context);
+          handler.addResult(result == null ? other : result, context);
         }
       }
       else if (myMatchingVisitor.setResult(handler.validate(matchElement, context))) {
-        handler.addResult(result, context);
+        handler.addResult(result == null ? other : result, context);
       }
     }
   }
