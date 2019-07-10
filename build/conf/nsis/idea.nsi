@@ -1053,13 +1053,6 @@ Function UpdateContextMenu
   ${LogText} ""
   ${LogText} "Update Context Menu"
 
-; add "Open with PRODUCT" action for files to Windows context menu
-  StrCpy $0 "SHCTX"
-  StrCpy $1 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}"
-  StrCpy $2 ""
-  StrCpy $3 "Edit with ${MUI_PRODUCT}"
-  call OMWriteRegStr
-
   StrCpy $0 "SHCTX"
   StrCpy $1 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}"
   StrCpy $2 "Icon"
@@ -1159,6 +1152,14 @@ command_exists:
   StrCpy $2 ""
   StrCpy $3 '"$productLauncher" "%1"'
   Call OMWriteRegStr
+
+  ; add "Edit with PRODUCT" action for files to Windows context menu
+  StrCpy $0 "SHCTX"
+  StrCpy $1 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}"
+  StrCpy $2 ""
+  StrCpy $3 "Edit with ${MUI_PRODUCT}"
+  call OMWriteRegStr
+
   pop $3
   pop $2
   pop $1
