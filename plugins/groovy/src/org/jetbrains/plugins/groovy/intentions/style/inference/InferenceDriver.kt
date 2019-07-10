@@ -4,7 +4,6 @@ package org.jetbrains.plugins.groovy.intentions.style.inference
 import com.intellij.psi.*
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
@@ -360,16 +359,13 @@ class InferenceDriver(val method: GrMethod) {
 
   fun acceptFinalSubstitutor(resultSubstitutor: PsiSubstitutor) {
     val targetParameters = parameterIndex.keys
-    if (targetParameters.any { isClosureType(it.type) }) {
-      ParametrizedClosure.ensureImports(elementFactory, virtualMethod.containingFile as GroovyFile)
-    }
     targetParameters.forEach { param ->
       param.setType(resultSubstitutor.substitute(param.type))
       when {
         isClosureType(param.type) -> {
           closureParameters[param]?.run {
             substituteTypes(resultSubstitutor)
-            renderTypes()
+            renderTypes(virtualMethod.parameterList)
           }
         }
         param.type is PsiArrayType -> param.setType(

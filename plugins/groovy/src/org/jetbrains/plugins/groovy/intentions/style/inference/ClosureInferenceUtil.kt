@@ -55,26 +55,27 @@ fun collectDeepClosureDependencies(session: GroovyInferenceSession, closureParam
     val outerMethod = call.element!!.parentOfType<GrMethod>()!!
     val innerMethod = nearestCall.resolveMethod()
     // We cannot use GroovyMethodResult#getSubstitutor because we need to leave type parameters of outerMethod among substitution variants
-    val substitutor = collectGenericSubstitutor(resolveResult, outerMethod )
-    val antigdk = when (innerMethod) {
+    val substitutor = collectGenericSubstitutor(resolveResult, outerMethod)
+    val gdkGuard = when (innerMethod) {
       is GrGdkMethod -> innerMethod.staticMethod
       else -> innerMethod
     }
-    val signatures = hint.inferExpectedSignatures(antigdk!!, substitutor, options)
+    val signatures = hint.inferExpectedSignatures(gdkGuard!!, substitutor, options)
     signatures.first().zip(closureParameter.typeParameters).forEach { (type, typeParameter) ->
       session.addConstraint(TypeConstraint(session.substituteWithInferenceVariables(typeParameter.type()), type, outerMethod))
     }
   }
 }
 
-private fun collectGenericSubstitutor(resolveResult : GroovyMethodResult, outerMethod: GrMethod) : PsiSubstitutor {
+private fun collectGenericSubstitutor(resolveResult: GroovyMethodResult, outerMethod: GrMethod): PsiSubstitutor {
   val outerParameters = outerMethod.typeParameters.map { it.type() }.toSet()
   val resolveSession = CollectingGroovyInferenceSession(outerMethod.typeParameters.filter {
     (it.extendsListTypes.run { isEmpty() || first() in outerParameters })
-  }.toTypedArray(), PsiSubstitutor.EMPTY, outerMethod)
+  }.toTypedArray(), PsiSubstitutor.EMPTY, outerMethod, mirrorBounds = true)
   resolveSession.addConstraint(MethodCallConstraint(null, resolveResult, outerMethod))
   for (typeParameter in outerMethod.typeParameters) {
-    resolveSession.getInferenceVariable(resolveSession.substituteWithInferenceVariables(typeParameter.type()))?.instantiation = typeParameter.type()
+    resolveSession.getInferenceVariable(
+      resolveSession.substituteWithInferenceVariables(typeParameter.type()))?.instantiation = typeParameter.type()
   }
   return resolveSession.inferSubst(resolveResult)
 }

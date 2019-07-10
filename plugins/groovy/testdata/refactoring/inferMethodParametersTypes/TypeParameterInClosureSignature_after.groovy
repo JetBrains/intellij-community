@@ -1,7 +1,7 @@
 import groovy.transform.stc.ClosureParams
-import groovy.transform.stc.FromString
+import groovy.transform.stc.SimpleType
 
-void foo(@ClosureParams(value = FromString, options = ["X"]) Closure<?> c) {
+void foo(@ClosureParams(value = SimpleType, options = ['X']) Closure<?> c) {
   c(new A())
   c(new B())
 }

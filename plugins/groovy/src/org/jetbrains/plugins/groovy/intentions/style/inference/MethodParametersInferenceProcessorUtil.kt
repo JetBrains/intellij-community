@@ -98,3 +98,12 @@ fun PsiSubstitutor.recursiveSubstitute(type: PsiType): PsiType {
     recursiveSubstitute(substituted)
   }
 }
+
+class UnreachableException : RuntimeException("This statement is unreachable")
+
+fun unreachable(): Nothing {
+  throw UnreachableException()
+}
+
+fun <T, U> cartesianProduct(leftRange: Iterable<T>, rightRange: Iterable<U>): List<Pair<T, U>> =
+  leftRange.flatMap { left -> rightRange.map { right -> Pair(left, right) } }

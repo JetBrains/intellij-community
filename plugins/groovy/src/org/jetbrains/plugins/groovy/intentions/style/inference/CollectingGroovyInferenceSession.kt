@@ -23,7 +23,8 @@ class CollectingGroovyInferenceSession(
   contextSubstitutor: PsiSubstitutor,
   context: PsiElement,
   private val proxyMethodMapping: Map<String, GrParameter> = emptyMap(),
-  private val parent: CollectingGroovyInferenceSession? = null
+  private val parent: CollectingGroovyInferenceSession? = null,
+  private val mirrorBounds: Boolean = false
 ) : GroovyInferenceSession(typeParams, contextSubstitutor, context, true, emptySet()) {
 
   override fun substituteWithInferenceVariables(type: PsiType?): PsiType {
@@ -77,7 +78,10 @@ class CollectingGroovyInferenceSession(
   private fun mergeVariables(variable: InferenceVariable, bound: InferenceBound) {
     variable.getBounds(bound).forEach {
       InferenceVariable.addBound(substituteWithInferenceVariables(variable.parameter.type()), it, bound, this)
-      InferenceVariable.addBound(it, substituteWithInferenceVariables(variable.parameter.type()), negate(bound), this)
+      if (mirrorBounds) {
+        // todo: try to remove this condition, it is very strange
+        InferenceVariable.addBound(substituteWithInferenceVariables(it), variable.type(), negate(bound), this)
+      }
     }
   }
 

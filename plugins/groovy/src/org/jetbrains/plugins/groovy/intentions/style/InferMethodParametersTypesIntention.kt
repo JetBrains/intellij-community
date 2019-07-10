@@ -12,11 +12,10 @@ import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle
 import org.jetbrains.plugins.groovy.intentions.base.Intention
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate
 import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParametersInferenceProcessor
-import org.jetbrains.plugins.groovy.intentions.style.inference.ParametrizedClosure
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier.DEF
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
@@ -59,21 +58,17 @@ internal class InferMethodParametersTypesIntention : Intention() {
     else {
       method.typeParameterList?.delete()
     }
-    var hasAnnotations = false
     method.parameters.zip(virtualMethod.parameters).forEach { (actual, inferred) ->
       actual.setType(inferred.type)
       if (actual.isVarArgs) {
         actual.ellipsisDots!!.delete()
       }
-      val annotations = inferred.annotations
       // todo: user-defined annotations may not coincide with @ClosureParams
-      annotations.forEach {
-        hasAnnotations = true
-        actual.modifierList.addAnnotation(it.text.substring(1))
+      inferred.annotations.forEach {
+        val anno = actual.modifierList.addAnnotation(it.text.substring(1))
+        GrReferenceAdjuster.shortenAllReferencesIn((anno as GrAnnotation).originalElement as GroovyPsiElement)
+        GrReferenceAdjuster.shortenReference(anno.findAttributeValue("value")?.reference as GrQualifiedReference<*>)
       }
-    }
-    if (hasAnnotations) {
-      ParametrizedClosure.ensureImports(GroovyPsiElementFactory.getInstance(method.project), method.containingFile as GroovyFile)
     }
     method.typeParameters.forEach { GrReferenceAdjuster.shortenAllReferencesIn(it.originalElement as GroovyPsiElement?) }
     if ((method.isConstructor && !method.hasTypeParameters()) || method.hasModifier(JvmModifier.STATIC)) {

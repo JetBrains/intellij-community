@@ -1,10 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
-import com.intellij.psi.PsiSubstitutor
-import com.intellij.psi.PsiType
-import com.intellij.psi.PsiTypeParameter
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import com.intellij.openapi.project.Project
+import com.intellij.psi.*
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 
@@ -13,25 +11,96 @@ class ParametrizedClosure(val parameter: GrParameter) {
   val typeParameters: MutableList<PsiTypeParameter> = ArrayList()
 
   companion object {
-    fun ensureImports(elementFactory: GroovyPsiElementFactory, file: GroovyFile) =
-      arrayOf(CLOSURE_PARAMS_FQ, FROM_STRING_FQ)
-        .map { elementFactory.createImportStatementFromText(it, false, false, null) }
-        .filter { it.importedName !in file.importStatements.map { importStatement -> importStatement.importedName } }
-        .forEach { file.addImport(it) }
-
     private const val CLOSURE_PARAMS = "ClosureParams"
     private const val FROM_STRING = "FromString"
-    private const val CLOSURE_PARAMS_FQ: String = "groovy.transform.stc.$CLOSURE_PARAMS"
-    private const val FROM_STRING_FQ = "groovy.transform.stc.$FROM_STRING"
+    private const val SIMPLE_TYPE = "SimpleType"
+    private const val ANNOTATION_PACKAGE = "groovy.transform.stc"
+    private const val CLOSURE_PARAMS_FQ = "$ANNOTATION_PACKAGE.$CLOSURE_PARAMS"
+    private const val FROM_STRING_FQ = "$ANNOTATION_PACKAGE.$FROM_STRING"
+    private const val SIMPLE_TYPE_FQ = "$ANNOTATION_PACKAGE.$SIMPLE_TYPE"
+    private fun typeHintFactory(parameterIndex: Int, genericIndex: Int) =
+      { parameterList: PsiParameterList, pattern: PsiType ->
+        val type = parameterList.parameters.getOrNull(parameterIndex)?.type.run {
+          if (genericIndex == -1) {
+            this
+          }
+          else {
+            (this as? PsiClassType)?.typeArguments()?.take(genericIndex)?.lastOrNull() as? PsiType
+          }
+        }
+        if (type == pattern) {
+          createSingleParameterAnnotation(parameterIndex, genericIndex, parameterList.project)
+        }
+        else {
+          null
+        }
+      }
+
+    private val typeHintChooser: List<(PsiParameterList, PsiType) -> PsiAnnotation?> = run {
+      cartesianProduct((0..2), (-1..2)).map { (paramIndex, genericIndex) -> typeHintFactory(paramIndex, genericIndex) }
+    }
+
+
+    private fun createSingleParameterAnnotation(parameterIndex: Int, genericIndex: Int, project: Project): PsiAnnotation {
+      return GroovyPsiElementFactory.getInstance(project).createAnnotationFromText(
+        "@$CLOSURE_PARAMS_FQ($ANNOTATION_PACKAGE.${evaluateParameterIndex(parameterIndex)}${evaluateGenericParameterIndex(genericIndex)})")
+    }
+
+    private fun evaluateParameterIndex(index: Int): String =
+      when (index) {
+        0 -> "First"
+        1 -> "Second"
+        2 -> "Third"
+        else -> unreachable()
+      } + "Param"
+
+
+    private fun evaluateGenericParameterIndex(genericIndex: Int): String {
+      return when (genericIndex) {
+        -1 -> ""
+        else -> "." + when (genericIndex) {
+          0 -> "First"
+          1 -> "Second"
+          2 -> "Third"
+          else -> unreachable()
+        } + "GenericType"
+      }
+    }
+
   }
 
   override fun toString(): String =
     "${typeParameters.joinToString(prefix = "<", postfix = ">") { it.text }} Closure ${types.joinToString(prefix = "(", postfix = ")")}"
 
 
-  fun renderTypes() {
-    parameter.modifierList.addAnnotation("$CLOSURE_PARAMS(value=$FROM_STRING, options=[\"${types.joinToString(",") { tryToExtractUnqualifiedName(it.canonicalText) }}\"])")
+  fun renderTypes(outerParameters: PsiParameterList) {
+    if (typeParameters.size == 1) {
+      val indexedAnnotation = typeHintChooser.mapNotNull { it(outerParameters, types.first()) }.firstOrNull()
+      val resultAnnotation = indexedAnnotation ?: run {
+        val signatureType = types.first()
+        if (signatureType is PsiClassType && signatureType.resolve() is PsiTypeParameter) {
+          null
+        }
+        else {
+          createSimpleType(signatureType)
+        }
+      }
+      if (resultAnnotation != null) {
+        parameter.modifierList.addAnnotation(resultAnnotation.text.substring(1))
+        return
+      }
+    }
+    parameter.modifierList.addAnnotation(
+      "$CLOSURE_PARAMS_FQ(value=$FROM_STRING_FQ, options=[\"${types.joinToString(",") {
+        // todo: remove this
+        tryToExtractUnqualifiedName(it.canonicalText)
+      }}\"])")
   }
+
+  private fun createSimpleType(type: PsiType): PsiAnnotation =
+    GroovyPsiElementFactory.getInstance(parameter.project).createAnnotationFromText(
+      "@$CLOSURE_PARAMS_FQ(value = $SIMPLE_TYPE_FQ, options = ['${type.canonicalText}'])")
+
 
   fun substituteTypes(resultSubstitutor: PsiSubstitutor) {
     val substitutedTypes = types.map { resultSubstitutor.substitute(it) }

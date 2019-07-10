@@ -99,7 +99,9 @@ class MethodParametersInferenceProcessor(method: GrMethod) {
             }
           }
           unit.core.flexible || unit.subtypes.isNotEmpty() || unit.direct -> unit.typeInstantiation
-          unit.typeInstantiation == unit.type || unit.typeInstantiation.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ->
+          unit.typeInstantiation == unit.type ||
+          unit.typeInstantiation == PsiType.NULL ||
+          unit.typeInstantiation.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ->
             PsiWildcardType.createUnbounded(driver.virtualMethod.manager)
           else -> PsiWildcardType.createExtends(driver.virtualMethod.manager, unit.typeInstantiation)
         }
