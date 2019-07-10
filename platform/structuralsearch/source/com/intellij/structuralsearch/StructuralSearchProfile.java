@@ -51,6 +51,7 @@ public abstract class StructuralSearchProfile {
   @NotNull
   public abstract CompiledPattern createCompiledPattern();
 
+  @NotNull
   public List<MatchPredicate> getCustomPredicates(MatchVariableConstraint constraint, String name, MatchOptions options) {
     return Collections.emptyList();
   }
@@ -66,9 +67,7 @@ public abstract class StructuralSearchProfile {
                                         @NotNull Project project,
                                         boolean physical) {
     final String strContext = getContext(text, language, contextId);
-    final int offset = strContext.indexOf(PATTERN_PLACEHOLDER);
 
-    final int patternLength = text.length();
     final String patternInContext = strContext.replace(PATTERN_PLACEHOLDER, text);
 
     final String name = "__dummy." + fileType.getDefaultExtension();
@@ -77,8 +76,7 @@ public abstract class StructuralSearchProfile {
       return PsiElement.EMPTY_ARRAY;
     }
 
-    final List<PsiElement> result = new SmartList<>();
-
+    final int offset = strContext.indexOf(PATTERN_PLACEHOLDER);
     PsiElement element = file.findElementAt(offset);
     if (element == null) {
       return PsiElement.EMPTY_ARRAY;
@@ -87,6 +85,7 @@ public abstract class StructuralSearchProfile {
     PsiElement topElement = element;
     element = element.getParent();
 
+    final int patternLength = text.length();
     while (element != null) {
       if (element.getTextRange().getStartOffset() == offset && element.getTextLength() <= patternLength) {
         topElement = element;
@@ -98,10 +97,11 @@ public abstract class StructuralSearchProfile {
       return topElement.getChildren();
     }
 
-    final int endOffset = offset + patternLength;
+    final List<PsiElement> result = new SmartList<>();
     result.add(topElement);
     topElement = topElement.getNextSibling();
 
+    final int endOffset = offset + patternLength;
     while (topElement != null && topElement.getTextRange().getEndOffset() <= endOffset) {
       result.add(topElement);
       topElement = topElement.getNextSibling();

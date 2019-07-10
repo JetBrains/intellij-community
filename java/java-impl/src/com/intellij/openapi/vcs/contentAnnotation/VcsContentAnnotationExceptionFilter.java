@@ -46,17 +46,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
+class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
   private final Project myProject;
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationExceptionFilter");
   private final VcsContentAnnotationSettings mySettings;
-  private final Map<VirtualFile,VcsRevisionNumber> myRevNumbersCache;
+  private final Map<VirtualFile,VcsRevisionNumber> myRevNumbersCache = new HashMap<>();
   private final ExceptionInfoCache myCache;
 
-  public VcsContentAnnotationExceptionFilter(@NotNull GlobalSearchScope scope) {
+  VcsContentAnnotationExceptionFilter(@NotNull GlobalSearchScope scope) {
     myProject = scope.getProject();
     mySettings = VcsContentAnnotationSettings.getInstance(myProject);
-    myRevNumbersCache = new HashMap<>();
     myCache = new ExceptionInfoCache(scope);
   }
 
@@ -110,7 +109,8 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
           recentChangeRevision = vcsContentAnnotation.fileRecentlyChanged(vf);
           if (recentChangeRevision == null) {
             myRevNumbersCache.put(vf, VcsRevisionNumber.NULL);
-          } else {
+          }
+          else {
             myRevNumbersCache.put(vf, recentChangeRevision);
           }
         }
@@ -176,23 +176,22 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
       myRecentlyChanged = new HashMap<>();
     }
 
-    public boolean isFileAlreadyIdentifiedAsChanged(final VirtualFile vf) {
+    boolean isFileAlreadyIdentifiedAsChanged(final VirtualFile vf) {
       return myRecentlyChanged.containsKey(vf);
     }
     
-    public boolean isRangeChangedLocally(final VirtualFile vf, final Document document, final TextRange range) {
+    boolean isRangeChangedLocally(@NotNull VirtualFile vf, @NotNull Document document, @NotNull TextRange range) {
       final UpToDateLineNumberProvider provider = getProvider(vf, document);
       return ReadAction.compute(() -> provider.isRangeChanged(range.getStartOffset(), range.getEndOffset()));
     }
     
-    public TextRange getCorrectedRange(final VirtualFile vf, final Document document, final TextRange range) {
+    TextRange getCorrectedRange(@NotNull VirtualFile vf, @NotNull Document document, @NotNull TextRange range) {
       final UpToDateLineNumberProvider provider = getProvider(vf, document);
-      if (provider == null) return range;
-      return ReadAction
-        .compute(() -> new TextRange(provider.getLineNumber(range.getStartOffset()), provider.getLineNumber(range.getEndOffset())));
+      return ReadAction.compute(() -> new TextRange(provider.getLineNumber(range.getStartOffset()), provider.getLineNumber(range.getEndOffset())));
     }
 
-    private UpToDateLineNumberProvider getProvider(VirtualFile vf, Document document) {
+    @NotNull
+    private UpToDateLineNumberProvider getProvider(@NotNull VirtualFile vf, @NotNull Document document) {
       UpToDateLineNumberProvider provider = myRecentlyChanged.get(vf);
       if (provider == null) {
         provider = new UpToDateLineNumberProviderImpl(document, myProject);
@@ -202,7 +201,7 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
     }
   }
 
-  private static Document getDocumentForFile(final ExceptionWorker worker) {
+  private static Document getDocumentForFile(@NotNull ExceptionWorker worker) {
     return ReadAction.compute(() -> {
       final Document document = FileDocumentManager.getInstance().getDocument(worker.getFile().getVirtualFile());
       if (document == null) {

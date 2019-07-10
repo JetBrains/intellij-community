@@ -203,7 +203,7 @@ public class PatternCompiler {
                                                        MatchOptions options,
                                                        CompiledPattern pattern,
                                                        CompileContext context,
-                                                       String[] applicablePrefixes,
+                                                       @NotNull String[] applicablePrefixes,
                                                        boolean checkForErrors) throws MalformedPatternException {
     if (applicablePrefixes.length == 0) {
       return Collections.emptyList();
@@ -300,7 +300,7 @@ public class PatternCompiler {
         continue;
       }
 
-      if (result == Boolean.FALSE || (result == null && alternativeVariant == null)) {
+      if (result == Boolean.FALSE || result == null && alternativeVariant == null) {
         final List<PsiElement> finalElements =
           compileByPrefixes(project, options, pattern, context, applicablePrefixes, substitutionPatterns, prefixSequence, index + 1, checkForErrors);
         if (finalElements != null) {
@@ -395,10 +395,11 @@ public class PatternCompiler {
   private static class ConstantPrefixProvider implements PrefixProvider {
     private final String myPrefix;
 
-    ConstantPrefixProvider(String prefix) {
+    ConstantPrefixProvider(@NotNull String prefix) {
       myPrefix = prefix;
     }
 
+    @NotNull
     @Override
     public String getPrefix(int varIndex) {
       return myPrefix;
@@ -408,7 +409,7 @@ public class PatternCompiler {
   private static class ArrayPrefixProvider implements PrefixProvider {
     private final String[] myPrefixes;
 
-    ArrayPrefixProvider(String[] prefixes) {
+    ArrayPrefixProvider(@NotNull String[] prefixes) {
       myPrefixes = prefixes;
     }
 
@@ -557,7 +558,8 @@ public class PatternCompiler {
       patternElements = MatcherImplUtil.createTreeFromText(buf.toString(), PatternTreeContext.Block, options.getFileType(),
                                                            options.getDialect(), options.getPatternContext(), project, false);
       if (patternElements.length == 0 && checkForErrors) throw new MalformedPatternException();
-    } catch (IncorrectOperationException e) {
+    }
+    catch (IncorrectOperationException e) {
       if (checkForErrors) throw new MalformedPatternException(e.getMessage());
       return Collections.emptyList();
     }
@@ -602,7 +604,7 @@ public class PatternCompiler {
     }
   }
 
-  private static void addPredicate(SubstitutionHandler handler, MatchPredicate predicate) {
-    handler.setPredicate((handler.getPredicate() == null) ? predicate : new AndPredicate(handler.getPredicate(), predicate));
+  private static void addPredicate(SubstitutionHandler handler, @NotNull MatchPredicate predicate) {
+    handler.setPredicate(handler.getPredicate() == null ? predicate : new AndPredicate(handler.getPredicate(), predicate));
   }
 }

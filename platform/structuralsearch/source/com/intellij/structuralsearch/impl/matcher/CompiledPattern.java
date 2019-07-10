@@ -38,10 +38,11 @@ public abstract class CompiledPattern {
   private PsiElement last;
   private MatchingHandler lastHandler;
 
+  @NotNull
   public abstract String[] getTypedVarPrefixes();
-  public abstract boolean isTypedVar(String str);
+  public abstract boolean isTypedVar(@NotNull String str);
 
-  public void setTargetNode(final PsiElement element) {
+  public void setTargetNode(PsiElement element) {
     targetNode = element;
   }
 
@@ -65,9 +66,9 @@ public abstract class CompiledPattern {
     return nodes;
   }
 
-  public void setNodes(List<? extends PsiElement> elements) {
-    this.nodes = new ArrayBackedNodeIterator(PsiUtilCore.toPsiElementArray(elements));
-    this.nodeCount = elements.size();
+  public void setNodes(@NotNull List<? extends PsiElement> elements) {
+    nodes = new ArrayBackedNodeIterator(PsiUtilCore.toPsiElementArray(elements));
+    nodeCount = elements.size();
   }
 
   @Contract("null -> false")
@@ -84,16 +85,17 @@ public abstract class CompiledPattern {
   }
 
   @NotNull
-  public String getTypedVarString(PsiElement element) {
+  public String getTypedVarString(@NotNull PsiElement element) {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
-    final String typedVarString = (profile == null) ? element.getText() : profile.getTypedVarString(element);
+    final String typedVarString = profile == null ? element.getText() : profile.getTypedVarString(element);
     return typedVarString.trim();
   }
 
-  public MatchingHandler getHandlerSimple(PsiElement node) {
+  public MatchingHandler getHandlerSimple(@NotNull PsiElement node) {
     return handlers.get(node);
   }
 
+  @NotNull
   public MatchingHandler getHandler(@NotNull PsiElement node) {
     if (node == last) {
       return lastHandler;
@@ -120,7 +122,8 @@ public abstract class CompiledPattern {
     handlers.put(node, handler);
   }
 
-  public SubstitutionHandler createSubstitutionHandler(String name, String compiledName, boolean target, int minOccurs, int maxOccurs,
+  @NotNull
+  public SubstitutionHandler createSubstitutionHandler(@NotNull String name, @NotNull String compiledName, boolean target, int minOccurs, int maxOccurs,
                                                        boolean greedy) {
     SubstitutionHandler handler = (SubstitutionHandler)handlers.get(compiledName);
     if (handler != null) return handler;
@@ -130,7 +133,8 @@ public abstract class CompiledPattern {
     return handler;
   }
 
-  protected SubstitutionHandler doCreateSubstitutionHandler(String name, boolean target, int minOccurs, int maxOccurs, boolean greedy) {
+  @NotNull
+  protected SubstitutionHandler doCreateSubstitutionHandler(@NotNull String name, boolean target, int minOccurs, int maxOccurs, boolean greedy) {
     return new SubstitutionHandler(name, target, minOccurs, maxOccurs, greedy);
   }
 
@@ -154,7 +158,7 @@ public abstract class CompiledPattern {
     }
   }
 
-  public boolean isToResetHandler(PsiElement element) {
+  public boolean isToResetHandler(@NotNull PsiElement element) {
     return true;
   }
 

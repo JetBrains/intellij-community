@@ -2,6 +2,7 @@
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.structuralsearch.impl.matcher.strategies.XmlMatchingStrategy;
+import org.jetbrains.annotations.NotNull;
 
 /**
 * @author Eugene.Kudelevsky
@@ -13,13 +14,14 @@ public class XmlCompiledPattern extends CompiledPattern {
     setStrategy(XmlMatchingStrategy.getInstance());
   }
 
+  @NotNull
   @Override
   public String[] getTypedVarPrefixes() {
     return new String[] {XML_TYPED_VAR_PREFIX};
   }
 
   @Override
-  public boolean isTypedVar(final String str) {
+  public boolean isTypedVar(@NotNull final String str) {
     return str.trim().startsWith(XML_TYPED_VAR_PREFIX);
   }
 }

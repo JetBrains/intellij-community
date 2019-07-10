@@ -100,7 +100,7 @@ public class ByteArrayCharSequence implements CharSequenceWithStringHash {
   }
 
   @Nullable
-  static byte[] toBytesIfPossible(CharSequence seq) {
+  static byte[] toBytesIfPossible(@NotNull CharSequence seq) {
     if (seq instanceof ByteArrayCharSequence) {
       return ((ByteArrayCharSequence)seq).getBytes();
     }

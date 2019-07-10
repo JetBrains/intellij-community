@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.util.containers.IntObjectLinkedMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -34,7 +35,8 @@ public class IntSLRUCache<Entry extends IntObjectLinkedMap.MapEntry> {
     myProbationalQueue = new IntObjectLinkedMap<>(probationalQueueSize);
   }
 
-  public Entry cacheEntry(final Entry entry) {
+  @NotNull
+  public Entry cacheEntry(@NotNull Entry entry) {
     Entry cached = myProtectedQueue.getEntry(entry.key);
     if (cached == null) {
       cached = myProbationalQueue.getEntry(entry.key);

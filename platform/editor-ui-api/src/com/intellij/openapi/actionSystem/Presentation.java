@@ -101,19 +101,19 @@ public final class Presentation implements Cloneable {
   public Presentation() {
   }
 
-  public Presentation(String text) {
+  public Presentation(@NotNull String text) {
     myTextWithMnemonic = TextWithMnemonic.fromPlainText(text);
   }
 
-  public void addPropertyChangeListener(PropertyChangeListener l) {
+  public void addPropertyChangeListener(@NotNull PropertyChangeListener l) {
     PropertyChangeSupport support = myChangeSupport;
     if (support == null) {
-      support = myChangeSupport = new PropertyChangeSupport(this);
+      myChangeSupport = support = new PropertyChangeSupport(this);
     }
     support.addPropertyChangeListener(l);
   }
 
-  public void removePropertyChangeListener(PropertyChangeListener l) {
+  public void removePropertyChangeListener(@NotNull PropertyChangeListener l) {
     PropertyChangeSupport support = myChangeSupport;
     if (support != null) {
       support.removePropertyChangeListener(l);

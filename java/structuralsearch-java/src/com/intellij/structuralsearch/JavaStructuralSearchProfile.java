@@ -257,6 +257,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     return new JavaCompiledPattern();
   }
 
+  @NotNull
   @Override
   public List<MatchPredicate> getCustomPredicates(MatchVariableConstraint constraint, String name, MatchOptions options) {
     final List<MatchPredicate> result = new SmartList<>();
