@@ -475,33 +475,33 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
   void "test no index stamp update when no change"() throws IOException {
     final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile()
-    def stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(IdIndex.NAME, project)
+    def stamp = FileBasedIndex.instance.getIndexModificationStamp(IdIndex.NAME, project)
     assertTrue(((VirtualFileSystemEntry)vFile).isFileIndexed())
 
     VfsUtil.saveText(vFile, "Foo class")
     assertTrue(!((VirtualFileSystemEntry)vFile).isFileIndexed())
-    assertTrue(stamp == ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(IdIndex.NAME, project))
+    assertTrue(stamp == FileBasedIndex.instance.getIndexModificationStamp(IdIndex.NAME, project))
     assertTrue(((VirtualFileSystemEntry)vFile).isFileIndexed())
 
     VfsUtil.saveText(vFile, "class Foo2 {}")
-    assertTrue(stamp != ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(IdIndex.NAME, project))
+    assertTrue(stamp != FileBasedIndex.instance.getIndexModificationStamp(IdIndex.NAME, project))
 
     final Document document = FileDocumentManager.getInstance().getDocument(vFile)
     document.setText("Foo2 class")
-    stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(IdIndex.NAME, project)
+    stamp = FileBasedIndex.instance.getIndexModificationStamp(IdIndex.NAME, project)
     document.setText("class Foo2")
-    assertTrue(stamp == ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(IdIndex.NAME, project))
+    assertTrue(stamp == FileBasedIndex.instance.getIndexModificationStamp(IdIndex.NAME, project))
 
     document.setText("Foo3 class")
     PsiDocumentManager.getInstance(project).commitAllDocuments()
-    assertTrue(stamp != ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(IdIndex.NAME, project))
+    assertTrue(stamp != FileBasedIndex.instance.getIndexModificationStamp(IdIndex.NAME, project))
 
     document.text = "class Foo { Runnable r = () -> {}; }"
     PsiDocumentManager.getInstance(project).commitAllDocuments()
-    stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(JavaFunctionalExpressionIndex.INDEX_ID, project)
+    stamp = FileBasedIndex.instance.getIndexModificationStamp(JavaFunctionalExpressionIndex.INDEX_ID, project)
     document.text = "class Foo { Runnable x = () -> { }; }"
     PsiDocumentManager.getInstance(project).commitAllDocuments()
-    assert stamp == ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(JavaFunctionalExpressionIndex.INDEX_ID, project)
+    assert stamp == FileBasedIndex.instance.getIndexModificationStamp(JavaFunctionalExpressionIndex.INDEX_ID, project)
   }
 
   void "test no index stamp update when no change 2"() throws IOException {
@@ -512,7 +512,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
                 }
             }
 """).virtualFile
-    def stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(JavaNullMethodArgumentIndex.INDEX_ID, project)
+    def stamp = FileBasedIndex.instance.getIndexModificationStamp(JavaNullMethodArgumentIndex.INDEX_ID, project)
     def data = new JavaNullMethodArgumentIndex.MethodCallData("staticMethod", 0)
     def files = FileBasedIndex.instance.getContainingFiles(JavaNullMethodArgumentIndex.INDEX_ID, data, GlobalSearchScope.projectScope(project))
     assertTrue(files.size() == 1)
@@ -527,7 +527,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 """)
     PsiDocumentManager.getInstance(project).commitAllDocuments()
 
-    assertTrue(stamp == ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(JavaNullMethodArgumentIndex.INDEX_ID, project))
+    assertTrue(stamp == (FileBasedIndex.instance).getIndexModificationStamp(JavaNullMethodArgumentIndex.INDEX_ID, project))
     files = FileBasedIndex.instance.getContainingFiles(JavaNullMethodArgumentIndex.INDEX_ID, data, GlobalSearchScope.projectScope(project))
     assertTrue(files.size() == 1)
     assertEquals(files[0], vFile)

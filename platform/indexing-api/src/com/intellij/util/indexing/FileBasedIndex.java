@@ -107,6 +107,8 @@ public abstract class FileBasedIndex {
     return processValues(indexId, dataKey, inFile, processor, filter);
   }
 
+  public abstract <K, V> long getIndexModificationStamp(@NotNull ID<K, V> indexId, @NotNull Project project);
+
   public abstract <K, V> boolean processFilesContainingAllKeys(@NotNull ID<K, V> indexId,
                                                                @NotNull Collection<? extends K> dataKeys,
                                                                @NotNull GlobalSearchScope filter,
