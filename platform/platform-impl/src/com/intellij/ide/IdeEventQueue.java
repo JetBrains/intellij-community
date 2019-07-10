@@ -426,11 +426,7 @@ public final class IdeEventQueue extends EventQueue {
       if (isSpecialSymbolMatchingShortcut(e)) return;
 
       if (e.getSource() instanceof TrayIcon) {
-        if (e instanceof ActionEvent) {
-          for (ActionListener listener : ((TrayIcon)e.getSource()).getActionListeners()) {
-            listener.actionPerformed((ActionEvent)e);
-          }
-        }
+        dispatchTrayIconEvent(e);
         return;
       }
 
@@ -448,13 +444,11 @@ public final class IdeEventQueue extends EventQueue {
 
       e = mapEvent(e);
       AWTEvent metaEvent = mapMetaState(e);
-      if (Registry.is("keymap.windows.as.meta") && metaEvent != null) {
+      if (metaEvent != null && Registry.is("keymap.windows.as.meta")) {
         e = metaEvent;
       }
       if (JAVA11_ON_MAC && e instanceof InputEvent) {
-        // disable AltGr on Mac because this key is not supported by macOS
-        if (e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT_GRAPH) ((KeyEvent)e).setKeyCode(KeyEvent.VK_ALT);
-        IdeKeyEventDispatcher.removeAltGraph((InputEvent)e);
+        disableAltGrUnsupportedOnMac(e);
       }
 
       boolean wasInputEvent = myIsInInputEvent;
@@ -492,37 +486,54 @@ public final class IdeEventQueue extends EventQueue {
       }
 
       if (isFocusEvent(e)) {
-        TouchBarsManager.onFocusEvent(e);
-
-        if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
-          FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list (execute on focus event): " + runnablesWaitingForFocusChangeState());
-        }
-        List<AWTEvent> events = new ArrayList<>();
-        while (!focusEventsList.isEmpty()) {
-          AWTEvent f = focusEventsList.poll();
-          events.add(f);
-          if (f.equals(e)) break;
-        }
-        events.stream()
-          .map(entry -> myRunnablesWaitingFocusChange.remove(entry))
-          .filter(lor -> lor != null)
-          .flatMap(listOfRunnables -> listOfRunnables.stream())
-          .filter(r -> r != null)
-          .filter(r -> !(r instanceof ExpirableRunnable && ((ExpirableRunnable)r).isExpired()))
-          .forEach(runnable -> {
-            try {
-              runnable.run();
-            }
-            catch (Exception ex) {
-              LOG.error(ex);
-            }
-          });
+        onFocusEvent(e);
       }
     } finally {
       if (performanceWatcher != null) {
         performanceWatcher.edtEventFinished();
       }
     }
+  }
+
+  private static void dispatchTrayIconEvent(@NotNull AWTEvent e) {
+    if (e instanceof ActionEvent) {
+      for (ActionListener listener : ((TrayIcon)e.getSource()).getActionListeners()) {
+        listener.actionPerformed((ActionEvent)e);
+      }
+    }
+  }
+
+  private static void disableAltGrUnsupportedOnMac(@NotNull AWTEvent e) {
+    if (e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT_GRAPH) ((KeyEvent)e).setKeyCode(KeyEvent.VK_ALT);
+    IdeKeyEventDispatcher.removeAltGraph((InputEvent)e);
+  }
+
+  private void onFocusEvent(@NotNull AWTEvent e) {
+    TouchBarsManager.onFocusEvent(e);
+
+    if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
+      FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list (execute on focus event): " + runnablesWaitingForFocusChangeState());
+    }
+    List<AWTEvent> events = new ArrayList<>();
+    while (!focusEventsList.isEmpty()) {
+      AWTEvent f = focusEventsList.poll();
+      events.add(f);
+      if (f.equals(e)) break;
+    }
+    events.stream()
+      .map(entry -> myRunnablesWaitingFocusChange.remove(entry))
+      .filter(lor -> lor != null)
+      .flatMap(listOfRunnables -> listOfRunnables.stream())
+      .filter(r -> r != null)
+      .filter(r -> !(r instanceof ExpirableRunnable && ((ExpirableRunnable)r).isExpired()))
+      .forEach(runnable -> {
+        try {
+          runnable.run();
+        }
+        catch (Exception ex) {
+          LOG.error(ex);
+        }
+      });
   }
 
   /**
@@ -737,51 +748,20 @@ public final class IdeEventQueue extends EventQueue {
       ActivityTracker.getInstance().inc();
     }
 
-    if (e instanceof MouseWheelEvent) {
-      final MenuElement[] selectedPath = MenuSelectionManager.defaultManager().getSelectedPath();
-      if (selectedPath.length > 0 && !(selectedPath[0] instanceof ComboPopup)) {
-        ((MouseWheelEvent)e).consume();
-        Component component = selectedPath[0].getComponent();
-        if (component instanceof JBPopupMenu) {
-          ((JBPopupMenu)component).processMouseWheelEvent((MouseWheelEvent)e);
-        }
-        return;
-      }
+    if (e instanceof MouseWheelEvent && processMouseWheelEvent((MouseWheelEvent)e)) {
+      return;
     }
 
-
-    // Process "idle" and "activity" listeners
     if (e instanceof KeyEvent || e instanceof MouseEvent) {
       ActivityTracker.getInstance().inc();
-
-      synchronized (myLock) {
-        myIdleRequestsAlarm.cancelAllRequests();
-        for (Runnable idleListener : myIdleListeners) {
-          final MyFireIdleRequest request = myListenerToRequest.get(idleListener);
-          if (request == null) {
-            LOG.error("There is no request for " + idleListener);
-          }
-          else {
-            myIdleRequestsAlarm.addRequest(request, request.getTimeout(), ModalityState.NON_MODAL);
-          }
-        }
-        if (KeyEvent.KEY_PRESSED == e.getID() ||
-            KeyEvent.KEY_TYPED == e.getID() ||
-            MouseEvent.MOUSE_PRESSED == e.getID() ||
-            MouseEvent.MOUSE_RELEASED == e.getID() ||
-            MouseEvent.MOUSE_CLICKED == e.getID()) {
-          myLastActiveTime = System.nanoTime();
-          for (Runnable activityListener : myActivityListeners) {
-            activityListener.run();
-          }
-        }
-      }
+      processIdleActivityListeners(e);
     }
 
     // We must ignore typed events that are dispatched between KEY_PRESSED and KEY_RELEASED.
     // Key event dispatcher resets its state on KEY_RELEASED event
     if (e.getID() == KeyEvent.KEY_TYPED &&
         myKeyEventDispatcher.isPressedWasProcessed()) {
+      assert e instanceof KeyEvent;
       ((KeyEvent)e).consume();
     }
 
@@ -812,38 +792,84 @@ public final class IdeEventQueue extends EventQueue {
     }
 
     if (e instanceof KeyEvent) {
-      if (
-        !SystemInfo.isJetBrainsJvm ||
-        (JavaVersion.current().compareTo(JavaVersion.compose(8, 0, 202, 1504, false)) < 0 &&
-         JavaVersion.current().compareTo(JavaVersion.compose(9, 0, 0, 0, false)) < 0) ||
-        JavaVersion.current().compareTo(JavaVersion.compose(11, 0, 0, 0, false)) > 0
-      ) {
-        if (myKeyEventDispatcher.dispatchKeyEvent((KeyEvent)e)) {
-          ((KeyEvent)e).consume();
-        }
-      }
-      defaultDispatchEvent(e);
+      dispatchKeyEvent(e);
     }
     else if (e instanceof MouseEvent) {
-      MouseEvent me = (MouseEvent)e;
-      if (me.getID() == MouseEvent.MOUSE_PRESSED && me.getModifiers() > 0 && me.getModifiersEx() == 0) {
-        // In case of these modifiers java.awt.Container#LightweightDispatcher.processMouseEvent() uses a recent 'active' component
-        // from inner WeakReference (see mouseEventTarget field) even if the component has been already removed from component hierarchy.
-        // So we have to reset this WeakReference with synthetic event just before processing of actual event
-        super.dispatchEvent(new MouseEvent(me.getComponent(), MouseEvent.MOUSE_MOVED, me.getWhen(), 0, me.getX(), me.getY(), 0, false, 0));
-      }
-      if (IdeMouseEventDispatcher.patchClickCount(me) && me.getID() == MouseEvent.MOUSE_CLICKED) {
-        final MouseEvent toDispatch =
-          new MouseEvent(me.getComponent(), me.getID(), System.currentTimeMillis(), me.getModifiers(), me.getX(), me.getY(), 1,
-                         me.isPopupTrigger(), me.getButton());
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(() -> dispatchEvent(toDispatch));
-      }
-      if (!myMouseEventDispatcher.dispatchMouseEvent(me)) {
-        defaultDispatchEvent(e);
-      }
+      dispatchMouseEvent(e);
     }
     else {
+      defaultDispatchEvent(e);
+    }
+  }
+
+  private static boolean processMouseWheelEvent(@NotNull MouseWheelEvent e) {
+    final MenuElement[] selectedPath = MenuSelectionManager.defaultManager().getSelectedPath();
+    if (selectedPath.length > 0 && !(selectedPath[0] instanceof ComboPopup)) {
+      e.consume();
+      Component component = selectedPath[0].getComponent();
+      if (component instanceof JBPopupMenu) {
+        ((JBPopupMenu)component).processMouseWheelEvent(e);
+      }
+      return true;
+    }
+    return false;
+  }
+
+  private void processIdleActivityListeners(@NotNull AWTEvent e) {
+    synchronized (myLock) {
+      myIdleRequestsAlarm.cancelAllRequests();
+      for (Runnable idleListener : myIdleListeners) {
+        final MyFireIdleRequest request = myListenerToRequest.get(idleListener);
+        if (request == null) {
+          LOG.error("There is no request for " + idleListener);
+        }
+        else {
+          myIdleRequestsAlarm.addRequest(request, request.getTimeout(), ModalityState.NON_MODAL);
+        }
+      }
+      if (KeyEvent.KEY_PRESSED == e.getID() ||
+          KeyEvent.KEY_TYPED == e.getID() ||
+          MouseEvent.MOUSE_PRESSED == e.getID() ||
+          MouseEvent.MOUSE_RELEASED == e.getID() ||
+          MouseEvent.MOUSE_CLICKED == e.getID()) {
+        myLastActiveTime = System.nanoTime();
+        for (Runnable activityListener : myActivityListeners) {
+          activityListener.run();
+        }
+      }
+    }
+  }
+
+  private void dispatchKeyEvent(@NotNull AWTEvent e) {
+    if (
+      !SystemInfo.isJetBrainsJvm ||
+      (JavaVersion.current().compareTo(JavaVersion.compose(8, 0, 202, 1504, false)) < 0 &&
+       JavaVersion.current().compareTo(JavaVersion.compose(9, 0, 0, 0, false)) < 0) ||
+      JavaVersion.current().compareTo(JavaVersion.compose(11, 0, 0, 0, false)) > 0
+    ) {
+      if (myKeyEventDispatcher.dispatchKeyEvent((KeyEvent)e)) {
+        ((KeyEvent)e).consume();
+      }
+    }
+    defaultDispatchEvent(e);
+  }
+
+  private void dispatchMouseEvent(@NotNull AWTEvent e) {
+    MouseEvent me = (MouseEvent)e;
+    if (me.getID() == MouseEvent.MOUSE_PRESSED && me.getModifiers() > 0 && me.getModifiersEx() == 0) {
+      // In case of these modifiers java.awt.Container#LightweightDispatcher.processMouseEvent() uses a recent 'active' component
+      // from inner WeakReference (see mouseEventTarget field) even if the component has been already removed from component hierarchy.
+      // So we have to reset this WeakReference with synthetic event just before processing of actual event
+      super.dispatchEvent(new MouseEvent(me.getComponent(), MouseEvent.MOUSE_MOVED, me.getWhen(), 0, me.getX(), me.getY(), 0, false, 0));
+    }
+    if (IdeMouseEventDispatcher.patchClickCount(me) && me.getID() == MouseEvent.MOUSE_CLICKED) {
+      final MouseEvent toDispatch =
+        new MouseEvent(me.getComponent(), me.getID(), System.currentTimeMillis(), me.getModifiers(), me.getX(), me.getY(), 1,
+                       me.isPopupTrigger(), me.getButton());
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(() -> dispatchEvent(toDispatch));
+    }
+    if (!myMouseEventDispatcher.dispatchMouseEvent(me)) {
       defaultDispatchEvent(e);
     }
   }
@@ -1547,7 +1573,7 @@ public final class IdeEventQueue extends EventQueue {
     r.run();
   }
 
-  private class MyLastShortcut {
+  private static class MyLastShortcut {
     public final long when;
     public final char keyChar;
 
