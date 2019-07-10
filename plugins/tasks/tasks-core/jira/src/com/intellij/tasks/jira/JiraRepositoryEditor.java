@@ -44,14 +44,14 @@ public class JiraRepositoryEditor extends BaseRepositoryEditor<JiraRepository> {
   public void apply() {
     myRepository.setSearchQuery(mySearchQueryField.getText());
     super.apply();
-    enableJqlSearchIfSupported();
+    adjustSettingsForServerProperties();
   }
 
   @Override
   protected void afterTestConnection(boolean connectionSuccessful) {
     super.afterTestConnection(connectionSuccessful);
     if (connectionSuccessful) {
-      enableJqlSearchIfSupported();
+      adjustSettingsForServerProperties();
     }
   }
 
@@ -63,7 +63,7 @@ public class JiraRepositoryEditor extends BaseRepositoryEditor<JiraRepository> {
     mySearchLabel = new JBLabel("Search:", SwingConstants.RIGHT);
     myNoteLabel = new JBLabel();
     myNoteLabel.setComponentStyle(UIUtil.ComponentStyle.SMALL);
-    enableJqlSearchIfSupported();
+    adjustSettingsForServerProperties();
     return FormBuilder.createFormBuilder()
       .addLabeledComponent(mySearchLabel, mySearchQueryField)
       .addComponentToRightColumn(myNoteLabel)
@@ -76,7 +76,7 @@ public class JiraRepositoryEditor extends BaseRepositoryEditor<JiraRepository> {
     mySearchLabel.setAnchor(anchor);
   }
 
-  private void enableJqlSearchIfSupported() {
+  private void adjustSettingsForServerProperties() {
     if (myRepository.isJqlSupported()) {
       mySearchQueryField.setEnabled(true);
       myNoteLabel.setVisible(false);
@@ -86,5 +86,7 @@ public class JiraRepositoryEditor extends BaseRepositoryEditor<JiraRepository> {
       myNoteLabel.setText("JQL search cannot be used in JIRA versions prior 4.2. Your version: " + myRepository.getPresentableVersion());
       myNoteLabel.setVisible(true);
     }
+
+    myPasswordLabel.setText(myRepository.isInCloud() ? "API Token:" : "Password:");
   }
 }
