@@ -278,12 +278,14 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
     myDependencySearchService.suggestPrefix(groupId, artifactId == null ? "" : artifactId, SearchParameters.DEFAULT, info -> {
       if (version == null) {
         result.set(true);
-      }
-      for (MavenDependencyCompletionItem item : info.getItems()) {
-        if (version.equals(item.getVersion())) {
-          result.set(true);
+      } else {
+        for (MavenDependencyCompletionItem item : info.getItems()) {
+          if (version.equals(item.getVersion())) {
+            result.set(true);
+          }
         }
       }
+
     }).onProcessed(v -> result.setIfNull(false));
     new WaitFor((int)SearchParameters.DEFAULT.getMillisToWait()) {
       @Override
