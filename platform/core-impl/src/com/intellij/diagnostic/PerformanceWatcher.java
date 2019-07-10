@@ -67,6 +67,8 @@ public class PerformanceWatcher implements Disposable {
   private final ScheduledExecutorService myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService("EDT Performance Checker", 1);
   private Future myCurrentEDTEventChecker;
 
+  private static final boolean PRECISE_MODE = shouldWatch() && Registry.is("performance.watcher.precise");
+
   public static PerformanceWatcher getInstance() {
     return ApplicationManager.getApplication().getComponent(PerformanceWatcher.class);
   }
@@ -173,7 +175,7 @@ public class PerformanceWatcher implements Disposable {
       diff -= getSamplingInterval();
     }
 
-    if (!Registry.is("performance.watcher.precise")) {
+    if (!PRECISE_MODE) {
       int edtRequests = myEdtRequestsQueued.get();
       if (edtRequests >= getMaxAttempts()) {
         edtFrozen(millis);
@@ -258,7 +260,7 @@ public class PerformanceWatcher implements Disposable {
   }
 
   public void edtEventStarted(long start) {
-    if (Registry.is("performance.watcher.precise")) {
+    if (PRECISE_MODE) {
       if (myCurrentEDTEventChecker != null) {
         myCurrentEDTEventChecker.cancel(false);
       }
