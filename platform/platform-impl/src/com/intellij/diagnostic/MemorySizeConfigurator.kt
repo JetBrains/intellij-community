@@ -30,6 +30,10 @@ class MemorySizeConfigurator : StartupActivity {
     val totalPhysicalMemory = osMxBean.totalPhysicalMemorySize shr 20
 
     val newXmx = MemorySizeConfiguratorService.getInstance().getSuggestedMemorySize(currentXmx, totalPhysicalMemory.toInt())
+
+    val currentXms = VMOptions.readOption(VMOptions.MemoryKind.MIN_HEAP, true)
+    if (newXmx < currentXms) return
+
     VMOptions.writeOption(VMOptions.MemoryKind.HEAP, newXmx)
     PropertiesComponent.getInstance().setValue("ide.memory.adjusted", true)
     LOG.info("Physical memory ${totalPhysicalMemory}M, -Xmx adjusted to ${newXmx}M")
