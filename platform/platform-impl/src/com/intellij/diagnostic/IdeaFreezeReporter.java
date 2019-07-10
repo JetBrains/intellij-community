@@ -58,7 +58,8 @@ public class IdeaFreezeReporter {
       }
 
       @Override
-      public void uiFreezeFinished(int lengthInSeconds) {
+      public void uiFreezeFinished(long durationMs) {
+        int lengthInSeconds = (int)(durationMs / 1000);
         if (!myFreezeRecording) {
           return;
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.diagnostic.hprof.action.HeapDumpSnapshotRunnable;
@@ -33,8 +33,8 @@ public class LowMemoryNotifier implements Disposable {
   public LowMemoryNotifier() {
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(IdePerformanceListener.TOPIC, new IdePerformanceListener() {
       @Override
-      public void uiFreezeFinished(int lengthInSeconds) {
-        LifecycleUsageTriggerCollector.onFreeze(lengthInSeconds);
+      public void uiFreezeFinished(long durationMs) {
+        LifecycleUsageTriggerCollector.onFreeze(durationMs);
       }
 
       @Override

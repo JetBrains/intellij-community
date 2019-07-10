@@ -70,11 +70,10 @@ public final class LifecycleUsageTriggerCollector {
     FUCounterUsageLogger.getInstance().logEvent(LIFECYCLE, "frame.deactivated", data);
   }
 
-  public static void onFreeze(int lengthInSeconds) {
-    final long ms = (long)lengthInSeconds * 1000;
+  public static void onFreeze(long durationMs) {
     final FeatureUsageData data = new FeatureUsageData().
-      addData("duration_ms", ms).
-      addData("duration_grouped", toLengthGroup(lengthInSeconds));
+      addData("duration_ms", durationMs).
+      addData("duration_grouped", toLengthGroup((int)(durationMs / 1000)));
     FUCounterUsageLogger.getInstance().logEvent(LIFECYCLE, "ide.freeze", data);
   }
 
