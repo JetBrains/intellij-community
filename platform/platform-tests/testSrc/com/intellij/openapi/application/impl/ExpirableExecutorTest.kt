@@ -41,11 +41,8 @@ class ExpirableExecutorTest : LightPlatformTestCase() {
       }
       Disposer.dispose(disposable)
       startSignal.release()
-      try {
-        job.join()
-        assertTrue(job.isCompleted && job.isCancelled)
-      }
-      catch (_: CancellationException) {}
+      job.join()
+      assertTrue(job.isCompleted && job.isCancelled)
     }
   }
 }
