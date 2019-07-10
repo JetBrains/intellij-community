@@ -343,7 +343,11 @@ public class MavenDomUtil {
       for (MavenResource resource : ContainerUtil.concat(mavenProject.getResources(), mavenProject.getTestResources())) {
         if (!resource.isFiltered()) continue;
 
-        VirtualFile resourceDir = LocalFileSystem.getInstance().findFileByPath(resource.getDirectory());
+        String resourceDirectory = resource.getDirectory();
+        if (resourceDirectory == null) {
+          return null;
+        }
+        VirtualFile resourceDir = LocalFileSystem.getInstance().findFileByPath(resourceDirectory);
         if (resourceDir == null) continue;
 
         if (set == null) {
