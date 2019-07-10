@@ -353,12 +353,9 @@ public class RefreshWorker {
     }
 
     if (!childAttributes.isDirectory()) {
-      long oltTS = persistence.getTimeStamp(child);
-      long newTS = childAttributes.lastModified;
-      long oldLength = persistence.getLastRecordedLength(child);
-      long newLength = childAttributes.length;
+      long oltTS = persistence.getTimeStamp(child), newTS = childAttributes.lastModified;
+      long oldLength = persistence.getLastRecordedLength(child), newLength = childAttributes.length;
       myHelper.checkContentChanged(child, oltTS, newTS, oldLength, newLength);
-
       child.markClean();
     }
     else if (myIsRecursive) {
@@ -370,12 +367,9 @@ public class RefreshWorker {
                                                  @Nullable NewVirtualFile parent,
                                                  @NotNull NewVirtualFile child,
                                                  @NotNull FileAttributes childAttributes) {
-    boolean currentIsDirectory = child.isDirectory();
-    boolean currentIsSymlink = child.is(VFileProperty.SYMLINK);
-    boolean currentIsSpecial = child.is(VFileProperty.SPECIAL);
-    boolean upToDateIsDirectory = childAttributes.isDirectory();
-    boolean upToDateIsSymlink = childAttributes.isSymLink();
-    boolean upToDateIsSpecial = childAttributes.isSpecial();
+    boolean currentIsDirectory = child.isDirectory(), upToDateIsDirectory = childAttributes.isDirectory();
+    boolean currentIsSymlink = child.is(VFileProperty.SYMLINK), upToDateIsSymlink = childAttributes.isSymLink();
+    boolean currentIsSpecial = child.is(VFileProperty.SPECIAL), upToDateIsSpecial = childAttributes.isSpecial();
 
     if (currentIsDirectory != upToDateIsDirectory || currentIsSymlink != upToDateIsSymlink || currentIsSpecial != upToDateIsSpecial) {
       myHelper.scheduleDeletion(child);
