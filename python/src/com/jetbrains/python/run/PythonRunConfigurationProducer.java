@@ -54,7 +54,7 @@ public final class PythonRunConfigurationProducer extends LazyRunConfigurationPr
       configuration.setUseModuleSdk(true);
       configuration.setModule(module);
     }
-    configuration.setName(configuration.suggestedName());
+    configuration.setGeneratedName();
     return true;
   }
 
