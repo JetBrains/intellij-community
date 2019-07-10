@@ -12,7 +12,6 @@ dtypes
 errors
 experimental
 feature_column
-flags
 gfile
 graph_util
 image
