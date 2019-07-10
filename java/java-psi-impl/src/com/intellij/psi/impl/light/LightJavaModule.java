@@ -252,7 +252,7 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
         if (claimed != null) return claimed;
       }
       catch (IOException e) {
-        Logger.getInstance(LightJavaModule.class).warn(e);
+        Logger.getInstance(LightJavaModule.class).warn(manifest.getPath(), e);
       }
     }
 
