@@ -75,7 +75,7 @@ class ListTest {
   }
 
   @Test
-  fun `parametrized type as item`() {
+  fun `parameterized type as item`() {
     class TestBean {
       @JvmField
       val list: MutableList<Set<String>> = SmartList()
@@ -88,7 +88,7 @@ class ListTest {
   }
 
   @Test
-  fun `parametrized array`() {
+  fun `parameterized array`() {
     class TestBean<T> {
       @JvmField
       var list: Array<T>? = null
