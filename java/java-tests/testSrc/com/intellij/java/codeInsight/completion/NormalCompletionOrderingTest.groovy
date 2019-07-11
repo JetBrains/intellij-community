@@ -387,8 +387,6 @@ interface TxANotAnno {}
     final LookupImpl lookup = invokeCompletion("/../smartTypeSorting/JComponentAddNew.java")
     assertPreferredItems(0, "FooBean3", "JComponent", "Component")
     incUseCount(lookup, 2) //Component
-    assertPreferredItems(1, "Component", "FooBean3", "JComponent")
-    incUseCount(lookup, 0) //Component
     assertPreferredItems(0, "Component", "FooBean3", "JComponent")
   }
 
@@ -873,6 +871,10 @@ class Foo {
 
   void testDispreferAlreadyCalledBuilderMethods() {
     checkPreferredItems 0, 'addInt', 'append', 'c', 'd', 'mayCallManyTimes', 'putLong'
+  }
+
+  void testSelectAbstractClassWithNoAbstractMethods() {
+    checkPreferredItems 0, 'AbstractListener', 'Listener'
   }
 
   void testPreferPrintln() {

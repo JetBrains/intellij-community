@@ -47,7 +47,8 @@ public class AbstractExpectedTypeSkipper extends CompletionPreselectSkipper {
   private static Result getSkippingStatus(final LookupElement item, final CompletionLocation location) {
     if (location.getCompletionType() != CompletionType.SMART && !hasEmptyPrefix(location)) return Result.ACCEPT;
 
-    final PsiExpression expression = PsiTreeUtil.getParentOfType(location.getCompletionParameters().getPosition(), PsiExpression.class);
+    CompletionParameters parameters = location.getCompletionParameters();
+    PsiExpression expression = PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiExpression.class);
     if (!(expression instanceof PsiNewExpression)) return Result.ACCEPT;
 
     final Object object = item.getObject();
@@ -88,7 +89,10 @@ public class AbstractExpectedTypeSkipper extends CompletionPreselectSkipper {
 
     if (toImplement > 0) return Result.ACCEPT;
 
-    if (psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) return Result.ABSTRACT;
+    if (psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      if (toImplement == 0 && parameters.getCompletionType() == CompletionType.BASIC) return Result.ACCEPT;
+      return Result.ABSTRACT;
+    }
     if (!isDefaultType && CommonClassNames.JAVA_LANG_STRING.equals(psiClass.getQualifiedName())) return Result.STRING;
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName())) return Result.NON_DEFAULT;
 
