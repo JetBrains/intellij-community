@@ -12,7 +12,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -21,6 +20,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 /**
  * @author peter
@@ -199,7 +200,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     PsiMethod sam = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
     if (sam == null || PsiType.VOID.equals(sam.getReturnType())) return;
     JavaResolveResult resolveResult = methodRef.advancedResolve(false);
-    PsiMethod method = ObjectUtils.tryCast(resolveResult.getElement(), PsiMethod.class);
+    PsiMethod method = tryCast(resolveResult.getElement(), PsiMethod.class);
     if (method == null || !JavaMethodContractUtil.isPure(method)) return;
     List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(method, null);
     PsiSubstitutor substitutor = resolveResult.getSubstitutor();
@@ -283,8 +284,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       beforeMethodCall(instruction.getExpression(), callArguments, runner, memState);
     }
 
-    Set<DfaMemoryState> finalStates = new LinkedHashSet<>();
-    finalStates.addAll(handleKnownMethods(instruction, runner, memState, callArguments));
+    Set<DfaMemoryState> finalStates = new LinkedHashSet<>(handleKnownMethods(instruction, runner, memState, callArguments));
 
     if (finalStates.isEmpty()) {
       Set<DfaCallState> currentStates = Collections.singleton(new DfaCallState(memState, callArguments));
@@ -673,7 +673,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       result = runner.getFactory().getBinOpFactory().create(dfaLeft, dfaRight, memState, isLong, opSign);
     }
     if (result == DfaUnknownValue.getInstance() && JavaTokenType.PLUS == opSign && TypeUtils.isJavaLangString(type)) {
-      result = runner.getFactory().createTypeValue(type, Nullability.NOT_NULL);
+      result = concatStrings(dfaLeft, dfaRight, memState, type, runner.getFactory());
     }
     pushExpressionResult(result, instruction, memState);
 
@@ -681,6 +681,39 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     instruction.setFalseReachable();
 
     return nextInstruction(instruction, runner, memState);
+  }
+
+  @NotNull
+  private static DfaValue concatStrings(DfaValue left,
+                                        DfaValue right,
+                                        DfaMemoryState memState,
+                                        PsiType stringType,
+                                        DfaValueFactory factory) {
+    DfaConstValue leftConst = memState.getConstantValue(left);
+    DfaConstValue rightConst = memState.getConstantValue(right);
+    if (leftConst != null && rightConst != null) {
+      String leftString = tryCast(leftConst.getValue(), String.class);
+      String rightString = tryCast(rightConst.getValue(), String.class);
+      if (leftString != null && rightString != null &&
+          leftString.length() + rightString.length() <= CustomMethodHandlers.MAX_STRING_CONSTANT_LENGTH_TO_TRACK) {
+        return factory.getConstFactory().createFromValue(leftString + rightString, stringType);
+      }
+    }
+    DfaValue leftLength = SpecialField.STRING_LENGTH.createValue(factory, left);
+    DfaValue rightLength = SpecialField.STRING_LENGTH.createValue(factory, right);
+    LongRangeSet leftRange = memState.getValueFact(leftLength, DfaFactType.RANGE);
+    LongRangeSet rightRange = memState.getValueFact(rightLength, DfaFactType.RANGE);
+    DfaFactMap map = DfaFactMap.EMPTY
+      .with(DfaFactType.TYPE_CONSTRAINT, factory.createDfaType(stringType).asConstraint())
+      .with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
+    if (leftRange != null && rightRange != null) {
+      LongRangeSet resultRange = leftRange.plus(rightRange, false).intersect(LongRangeSet.indexRange());
+      if (!resultRange.equals(LongRangeSet.indexRange())) {
+        map = map.with(DfaFactType.SPECIAL_FIELD_VALUE,
+                       SpecialField.STRING_LENGTH.withValue(factory.getFactValue(DfaFactType.RANGE, resultRange)));
+      }
+    }
+    return factory.getFactFactory().createValue(map);
   }
 
   @Nullable
@@ -772,7 +805,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     DfaValue condition = null;
     if (instruction.isClassObjectCheck()) {
       DfaConstValue constant = memState.getConstantValue(dfaRight);
-      PsiType type = constant == null ? null : ObjectUtils.tryCast(constant.getValue(), PsiType.class);
+      PsiType type = constant == null ? null : tryCast(constant.getValue(), PsiType.class);
       if (type == null || type instanceof PsiPrimitiveType) {
         // Unknown/primitive class: just execute contract "null -> false"
         DfaConstValue aNull = factory.getConstFactory().getNull();
