@@ -165,7 +165,7 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
           assert engineImplInternal.exists() : engineImplInternal.getAbsolutePath();
           parameters.getClassPath().addTail(engineImplInternal.getAbsolutePath());
         } else {
-          throw new CantRunException("Runtime classes not found");
+          throw new CantRunException("Runtime classes not found at " + rtClasspath.getAbsolutePath());
         }
       }
 
