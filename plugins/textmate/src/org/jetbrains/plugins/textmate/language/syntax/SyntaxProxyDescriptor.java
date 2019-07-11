@@ -2,7 +2,6 @@ package org.jetbrains.plugins.textmate.language.syntax;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.textmate.Constants;
 import org.jetbrains.plugins.textmate.plist.Plist;
 import org.jetbrains.plugins.textmate.regex.RegexFacade;
 
@@ -17,21 +16,11 @@ import java.util.Set;
  * <p/>
  * User: zolotov
  */
-class SyntaxProxyDescriptor implements SyntaxNodeDescriptor {
-  private final String proxyName;
-
+abstract class SyntaxProxyDescriptor implements SyntaxNodeDescriptor {
   private final SyntaxNodeDescriptor myParentNode;
-  private final SyntaxNodeDescriptor myRootNode;
-  private final TextMateSyntaxTable mySyntaxTable;
   private SyntaxNodeDescriptor myTargetNode;
 
-  SyntaxProxyDescriptor(@NotNull final Plist plist,
-                        @NotNull final SyntaxNodeDescriptor parentNode,
-                        @NotNull final SyntaxNodeDescriptor rootNode,
-                        @NotNull final TextMateSyntaxTable syntaxTable) {
-    myRootNode = rootNode;
-    mySyntaxTable = syntaxTable;
-    proxyName = plist.getPlistValue(Constants.INCLUDE_KEY, "").getString();
+  SyntaxProxyDescriptor(@NotNull final SyntaxNodeDescriptor parentNode) {
     myParentNode = parentNode;
   }
 
@@ -77,7 +66,7 @@ class SyntaxProxyDescriptor implements SyntaxNodeDescriptor {
     return getTargetNode().getScopeName();
   }
 
-  @Nullable
+  @NotNull
   @Override
   public SyntaxNodeDescriptor getParentNode() {
     return myParentNode;
@@ -101,23 +90,5 @@ class SyntaxProxyDescriptor implements SyntaxNodeDescriptor {
     return myTargetNode;
   }
 
-  private SyntaxNodeDescriptor computeTargetNode() {
-    if (proxyName.startsWith("#")) {
-      return myParentNode.findInRepository(proxyName.substring(1));
-    }
-    else if (Constants.INCLUDE_SELF_VALUE.equalsIgnoreCase(proxyName)) {
-      return myRootNode;
-    }
-    else if (Constants.INCLUDE_BASE_VALUE.equalsIgnoreCase(proxyName)) {
-      return myRootNode;
-    }
-    else {
-      return mySyntaxTable.getSyntax(proxyName);
-    }
-  }
-
-  @Override
-  public String toString() {
-    return "Proxy rule for '" + proxyName + "'";
-  }
+  protected abstract SyntaxNodeDescriptor computeTargetNode();
 }

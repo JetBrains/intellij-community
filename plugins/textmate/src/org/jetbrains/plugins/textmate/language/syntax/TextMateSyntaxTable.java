@@ -1,8 +1,10 @@
 package org.jetbrains.plugins.textmate.language.syntax;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.textmate.Constants;
 import org.jetbrains.plugins.textmate.plist.PListValue;
@@ -110,8 +112,15 @@ public class TextMateSyntaxTable {
   }
 
   private SyntaxNodeDescriptor loadProxyNode(@NotNull Plist plist, @NotNull SyntaxNodeDescriptor result) {
-    SyntaxNodeDescriptor rootNode = findRootNode(result);
-    return new SyntaxProxyDescriptor(plist, result, rootNode, this);
+    String include = plist.getPlistValue(Constants.INCLUDE_KEY, "").getString();
+    if (StringUtil.startsWithChar(include, '#')) {
+      // todo: convert to int
+      return new SyntaxRuleProxyDescriptor(include.substring(1), result);
+    }
+    else if (Constants.INCLUDE_SELF_VALUE.equalsIgnoreCase(include) || Constants.INCLUDE_BASE_VALUE.equalsIgnoreCase(include)) {
+      return new SyntaxRootProxyDescriptor(result);
+    }
+    return new SyntaxScopeProxyDescriptor(include, this, result);
   }
 
   private void loadPatterns(MutableSyntaxNodeDescriptor result, PListValue pListValue) {
@@ -124,6 +133,7 @@ public class TextMateSyntaxTable {
     for (Map.Entry<String, PListValue> repoEntry : pListValue.getPlist().entries()) {
       PListValue repoEntryValue = repoEntry.getValue();
       if (repoEntryValue != null) {
+        // todo: convert to int
         result.appendRepository(repoEntry.getKey(), loadNestedSyntax(repoEntryValue.getPlist(), result));
       }
     }
@@ -134,16 +144,5 @@ public class TextMateSyntaxTable {
       Plist injectionEntryValue = injectionEntry.getValue().getPlist();
       result.addInjection(new InjectionNodeDescriptor(injectionEntry.getKey(), loadRealNode(injectionEntryValue, result)));
     }
-  }
-
-  @NotNull
-  private static SyntaxNodeDescriptor findRootNode(@NotNull SyntaxNodeDescriptor result) {
-    SyntaxNodeDescriptor rootNode = result;
-    SyntaxNodeDescriptor parentNode = result;
-    while (parentNode != null) {
-      rootNode = parentNode;
-      parentNode = rootNode.getParentNode();
-    }
-    return rootNode;
   }
 }
