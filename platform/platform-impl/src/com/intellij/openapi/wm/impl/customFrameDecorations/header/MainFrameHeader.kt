@@ -5,7 +5,9 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
+import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -15,6 +17,7 @@ import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
 import java.awt.Frame
+import java.awt.Graphics
 import java.awt.Rectangle
 import java.util.*
 import javax.swing.JFrame
@@ -40,6 +43,19 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
       override fun getBorder(): Border? {
         return JBUI.Borders.empty()
       }
+
+      override fun paintBackground(g: Graphics?) {
+
+      }
+
+      override fun createActionMenu(enableMnemonics: Boolean, isDarkMenu: Boolean, action: ActionGroup?): ActionMenu {
+        val actionMenu = super.createActionMenu(enableMnemonics, isDarkMenu, action)
+        actionMenu.isOpaque = false
+
+        return actionMenu
+      }
+    }.apply {
+      isOpaque = false
     }
 
     mainMenuUpdater = UISettingsListener {

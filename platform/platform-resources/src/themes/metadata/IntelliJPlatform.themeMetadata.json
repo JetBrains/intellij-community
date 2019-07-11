@@ -615,6 +615,12 @@
       "key": "TitlePane.background"
     },
     {
+      "key": "TitlePane.Button.hoverBackground"
+    },
+    {
+      "key": "TitlePane.inactiveBackground"
+    },
+    {
       "key": "TitlePane.infoForeground"
     },
     {
