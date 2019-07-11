@@ -430,7 +430,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
       return existing;
     }
 
-    if (Files.isDirectory(projectFile.resolve(Project.DIRECTORY_STORE_FOLDER))) {
+    if (ProjectUtil.isValidProjectPath(projectFile)) {
       return PlatformProjectOpenProcessor.openExistingProject(projectFile, projectFile, openProjectOptions, null);
     }
     else {

@@ -134,10 +134,7 @@ public class ProjectUtil {
       }
     }
 
-    if (Files.isDirectory(file.resolve(Project.DIRECTORY_STORE_FOLDER))) {
-      return PlatformProjectOpenProcessor.openExistingProject(file, file, options, null);
-    }
-    else if (StringUtil.endsWith(file.toString(), ProjectFileType.DOT_DEFAULT_EXTENSION) && Files.isRegularFile(file)) {
+    if (isValidProjectPath(file)) {
       return PlatformProjectOpenProcessor.openExistingProject(file, file, options, null);
     }
 
@@ -401,5 +398,10 @@ public class ProjectUtil {
       }
     }
     return result;
+  }
+
+  public static boolean isValidProjectPath(@NotNull Path file) {
+    return Files.isDirectory(file.resolve(Project.DIRECTORY_STORE_FOLDER)) ||
+           (StringUtil.endsWith(file.toString(), ProjectFileType.DOT_DEFAULT_EXTENSION) && Files.isRegularFile(file));
   }
 }
