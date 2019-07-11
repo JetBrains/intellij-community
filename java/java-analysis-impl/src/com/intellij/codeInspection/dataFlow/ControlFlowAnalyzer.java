@@ -1852,7 +1852,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         qualifier.accept(this);
       } else {
         PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
-        if (aClass != null) {
+        if (aClass != null && !aClass.hasModifierProperty(PsiModifier.STATIC)) {
           PsiClass outerClass = aClass.getContainingClass();
           if (outerClass != null && InheritanceUtil.hasEnclosingInstanceInScope(outerClass, expression, true, false)) {
             qualifierValue = myFactory.getVarFactory().createThisValue(outerClass);
