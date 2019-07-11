@@ -84,6 +84,15 @@ public interface EditorCustomElementRenderer {
    */
   @Nullable
   default String getContextMenuGroupId(@NotNull Inlay inlay) {
+    //noinspection deprecation
+    return getContextMenuGroupId();
+  }
+
+  /**
+   * @deprecated Override/use {@link #getContextMenuGroupId(Inlay)} instead. This method will be removed.
+   */
+  @Deprecated
+  default String getContextMenuGroupId() {
     return null;
   }
 }
