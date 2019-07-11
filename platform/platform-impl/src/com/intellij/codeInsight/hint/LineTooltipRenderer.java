@@ -254,44 +254,45 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
 
     fillPanel(editor, grid, hint, hintHint, actions, reloader, newLayout, highlightActions);
 
+    if (!newLayout) {
+      grid.addMouseListener(new MouseAdapter() {
 
-    grid.addMouseListener(new MouseAdapter() {
+        // This listener makes hint transparent for mouse events. It means that hint is closed
+        // by MousePressed and this MousePressed goes into the underlying editor component.
+        @Override
+        public void mouseReleased(final MouseEvent e) {
+          if (!myActiveLink) {
+            MouseEvent newMouseEvent = SwingUtilities.convertMouseEvent(e.getComponent(), e, contentComponent);
+            hint.hide();
+            contentComponent.dispatchEvent(newMouseEvent);
+          }
+        }
+      });
 
-      // This listener makes hint transparent for mouse events. It means that hint is closed
-      // by MousePressed and this MousePressed goes into the underlying editor component.
-      @Override
-      public void mouseReleased(final MouseEvent e) {
-        if (!myActiveLink) {
-          MouseEvent newMouseEvent = SwingUtilities.convertMouseEvent(e.getComponent(), e, contentComponent);
+      ListenerUtil.addMouseListener(grid, new MouseAdapter() {
+
+        @Override
+        public void mouseExited(final MouseEvent e) {
+          if (expanded) return;
+
+          Container parentContainer = grid;
+          //ComponentWithMnemonics is top balloon component
+          while (!(parentContainer instanceof ComponentWithMnemonics)) {
+            Container candidate = parentContainer.getParent();
+            if (candidate == null) break;
+            parentContainer = candidate;
+          }
+
+          MouseEvent newMouseEvent = SwingUtilities.convertMouseEvent(e.getComponent(), e, parentContainer);
+
+          if (parentContainer.contains(newMouseEvent.getPoint())) {
+            return;
+          }
+
           hint.hide();
-          contentComponent.dispatchEvent(newMouseEvent);
         }
-      }
-    });
-
-    ListenerUtil.addMouseListener(grid, new MouseAdapter() {
-
-      @Override
-      public void mouseExited(final MouseEvent e) {
-        if (expanded) return;
-
-        Container parentContainer = grid;
-        //ComponentWithMnemonics is top balloon component
-        while (!(parentContainer instanceof ComponentWithMnemonics)) {
-          Container candidate = parentContainer.getParent();
-          if (candidate == null) break;
-          parentContainer = candidate;
-        }
-
-        MouseEvent newMouseEvent = SwingUtilities.convertMouseEvent(e.getComponent(), e, parentContainer);
-
-        if (parentContainer.contains(newMouseEvent.getPoint())) {
-          return;
-        }
-
-        hint.hide();
-      }
-    });
+      });
+    }
 
     return hint;
   }
