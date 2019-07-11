@@ -2376,4 +2376,13 @@ def foo(Object[] o) {}
 ''', GrMethod
     assert method.parameterList.parameters.first().type.equalsToText('java.util.List')
   }
+
+  void 'test IDEA-217978'() {
+    def method = resolveByText '''\
+def <T extends List<Integer>> void foo(T a) {
+  a.eve<caret>ry {true}
+}
+''', GrGdkMethod
+    assert method.staticMethod.name == "every"
+  }
 }
