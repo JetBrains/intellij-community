@@ -5,7 +5,6 @@ import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.SplashManager;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.MnemonicHelper;
@@ -83,7 +82,6 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
   private IdeRootPane myRootPane;
   private BalloonLayout myBalloonLayout;
   private IdeFrameDecorator myFrameDecorator;
-  private boolean myRestoreFullScreen;
   private final LafManagerListener myLafListener;
   private final ComponentListener resizedListener;
 
@@ -223,6 +221,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
       setIconImage(null);
     }
 
+    IdeMenuBar.installAppMenuIfNeeded(this);
     // in production (not from sources) makes sense only on Linux
     AppUIUtil.updateWindowIcon(this);
   }
@@ -472,16 +471,6 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
 
     myProject = project;
     if (project != null) {
-      if (WindowManager.getInstance().isFullScreenSupportedInCurrentOS()) {
-        myRestoreFullScreen = SHOULD_OPEN_IN_FULL_SCREEN.get(project) == Boolean.TRUE ||
-                              ProjectFrameBounds.getInstance(project).isInFullScreen();
-
-        if (!myRestoreFullScreen && PropertiesComponent.getInstance(project).getBoolean("FullScreen")) {
-          myRestoreFullScreen = true;
-          PropertiesComponent.getInstance(project).unsetValue("FullScreen");
-        }
-      }
-
       if (myRootPane != null) {
         myRootPane.installNorthComponents(project);
         StatusBar statusBar = myRootPane.getStatusBar();
@@ -496,31 +485,8 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
         selfie = null;
       });
     }
-    else {
-      if (myRootPane != null) { //already disposed
-        myRootPane.deinstallNorthComponents();
-      }
-    }
-
-    if (myRestoreFullScreen && isVisible()) {
-      toggleFullScreen(true);
-      myRestoreFullScreen = false;
-    }
-  }
-
-  @SuppressWarnings("SSBasedInspection")
-  @Override
-  public void setVisible(boolean b) {
-    super.setVisible(b);
-
-    if (b && myRestoreFullScreen) {
-      SwingUtilities.invokeLater(() -> {
-        toggleFullScreen(true);
-        if (SystemInfo.isMacOSLion) {
-          setBounds(ScreenUtil.getScreenRectangle(getLocationOnScreen()));
-        }
-        myRestoreFullScreen = false;
-      });
+    else if (myRootPane != null) { //already disposed
+      myRootPane.deinstallNorthComponents();
     }
   }
 

@@ -599,7 +599,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @Nullable
   public Project convertAndLoadProject(@NotNull Path path) {
     Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.PROJECT_CONVERSION);
-    final ConversionResult conversionResult = ConversionService.getInstance().convert(path);
+    ConversionResult conversionResult = ConversionService.getInstance().convert(path);
     activity.end();
     if (conversionResult.openingIsCanceled()) {
       return null;
@@ -607,13 +607,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
     ProjectImpl project = doCreateProject(null, path);
     try {
-      if (!ApplicationManager.getApplication().isDispatchThread() && ProgressManager.getInstance().getProgressIndicator() != null) {
-        initProject(path, project, /* isRefreshVfsNeeded = */ true, null, ProgressManager.getInstance().getProgressIndicator());
+      ProgressManager progressManager = ProgressManager.getInstance();
+      if (!ApplicationManager.getApplication().isDispatchThread() && progressManager.getProgressIndicator() != null) {
+        initProject(path, project, /* isRefreshVfsNeeded = */ true, null, progressManager.getProgressIndicator());
       }
       else {
         //noinspection CodeBlock2Expr
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-          initProject(path, project, /* isRefreshVfsNeeded = */ true, null, ProgressManager.getInstance().getProgressIndicator());
+        progressManager.runProcessWithProgressSynchronously(() -> {
+          initProject(path, project, /* isRefreshVfsNeeded = */ true, null, progressManager.getProgressIndicator());
         }, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
       }
     }

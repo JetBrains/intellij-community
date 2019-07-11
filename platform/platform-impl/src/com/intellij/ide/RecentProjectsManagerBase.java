@@ -22,10 +22,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.FrameInfo;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.openapi.wm.impl.ProjectFrameBounds;
-import com.intellij.openapi.wm.impl.SystemDock;
+import com.intellij.openapi.wm.impl.*;
 import com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectPanel;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.platform.PlatformProjectOpenProcessor;
@@ -119,8 +116,6 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
   private final Object myStateLock = new Object();
   private State myState = new State();
 
-  private boolean myBatchOpening;
-
   @Override
   public State getState() {
     synchronized (myStateLock) {
@@ -137,7 +132,9 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
 
   @Nullable
   public RecentProjectMetaInfo getProjectMetaInfo(@NotNull Path file) {
-    return myState.additionalInfo.get(FileUtil.toSystemIndependentName(file.toString()));
+    synchronized (myStateLock) {
+      return myState.additionalInfo.get(FileUtil.toSystemIndependentName(file.toString()));
+    }
   }
 
   @Override
@@ -472,7 +469,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     }
 
     @Override
-    public void projectClosed(@NotNull final Project project) {
+    public void projectClosed(@NotNull Project project) {
       Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
       if (openProjects.length > 0) {
         Project openProject = openProjects[openProjects.length - 1];
@@ -486,12 +483,31 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
 
     @Override
     public void projectClosingBeforeSave(@NotNull Project project) {
-      JFrame frame = WindowManager.getInstance().getFrame(project);
-      if (frame instanceof IdeFrameImpl) {
-        String workspaceId = ProjectKt.getStateStore(project).getProjectWorkspaceId();
-        if (workspaceId != null && Registry.is("ide.project.loading.show.last.state")) {
-          ((IdeFrameImpl)frame).takeASelfie(workspaceId);
+      WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
+      IdeFrameImpl frame = windowManager.getFrame(project);
+      if (frame == null) {
+        return;
+      }
+
+      String workspaceId = ProjectKt.getStateStore(project).getProjectWorkspaceId();
+
+      // ensure that last closed project frame bounds will be used as newly created project frame bounds (if will be no another focused opened project)
+      FrameInfoHelper frameInfoHelper = ProjectFrameBounds.getInstance(project).getFrameInfoHelper();
+      if (frameInfoHelper.isDirty()) {
+        String path = manager.getProjectPath(project);
+        frameInfoHelper.updateAndGetModificationCount(project, windowManager);
+        synchronized (manager.myStateLock) {
+          RecentProjectMetaInfo info = manager.myState.additionalInfo.get(path);
+          if (info != null) {
+            info.frame = frameInfoHelper.getInfo();
+            info.projectWorkspaceId = workspaceId;
+          }
         }
+        manager.myModCounter.incrementAndGet();
+      }
+
+      if (workspaceId != null && Registry.is("ide.project.loading.show.last.state")) {
+        frame.takeASelfie(workspaceId);
       }
     }
   }
@@ -562,22 +578,17 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
 
     List<Map.Entry<String, RecentProjectMetaInfo>> openPaths = getLastOpenedProjects();
     boolean someProjectWasOpened = false;
-    try {
-      myBatchOpening = true;
-      for (Map.Entry<String, RecentProjectMetaInfo> it : openPaths) {
-        // https://youtrack.jetbrains.com/issue/IDEA-166321
-        OpenProjectTask options = new OpenProjectTask(/* forceOpenInNewFrame = */ true);
-        options.setFrame(it.getValue().frame);
-        options.setProjectWorkspaceId(it.getValue().projectWorkspaceId);
-        options.setShowWelcomeScreenIfNoProjectOpened(false);
-        Project project = doOpenProject(it.getKey(), options);
-        if (!someProjectWasOpened) {
-          someProjectWasOpened = project != null;
-        }
+    for (Map.Entry<String, RecentProjectMetaInfo> it : openPaths) {
+      // https://youtrack.jetbrains.com/issue/IDEA-166321
+      OpenProjectTask options = new OpenProjectTask(/* forceOpenInNewFrame = */ true);
+      options.setFrame(it.getValue().frame);
+      options.setProjectWorkspaceId(it.getValue().projectWorkspaceId);
+      options.setShowWelcomeScreenIfNoProjectOpened(false);
+      options.setSendFrameBack(someProjectWasOpened);
+      Project project = doOpenProject(it.getKey(), options);
+      if (!someProjectWasOpened) {
+        someProjectWasOpened = project != null;
       }
-    }
-    finally {
-      myBatchOpening = false;
     }
 
     if (!someProjectWasOpened) {
@@ -592,10 +603,6 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
       openPaths = ContainerUtil.reverse(ContainerUtil.findAll(myState.additionalInfo.entrySet(), it -> it.getValue().opened));
     }
     return openPaths;
-  }
-
-  public boolean isBatchOpening() {
-    return myBatchOpening;
   }
 
   @Override

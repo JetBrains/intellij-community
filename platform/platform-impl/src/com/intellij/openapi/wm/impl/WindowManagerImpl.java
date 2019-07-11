@@ -3,7 +3,6 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.application.Application;
@@ -463,6 +462,16 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     return myProjectToFrame.get(null);
   }
 
+  public void assignFrame(@NotNull IdeFrameImpl frame, @NotNull Project project) {
+    LOG.assertTrue(!myProjectToFrame.containsKey(project));
+
+    frame.setProject(project);
+    myProjectToFrame.put(project, frame);
+
+    frame.addWindowListener(myActivationListener);
+    frame.addComponentListener(myFrameStateListener);
+  }
+
   /**
    * This method is called when there is some opened project (IDE will not open Welcome Frame, but project).
    *
@@ -474,8 +483,9 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     LOG.assertTrue(!myProjectToFrame.containsKey(null));
 
     IdeFrameImpl frame = new IdeFrameImpl();
-    myProjectToFrame.put(null, frame);
-
+    if (options.getSendFrameBack()) {
+      frame.setAutoRequestFocus(false);
+    }
     if (options.getProjectWorkspaceId() != null && Registry.is("ide.project.loading.show.last.state")) {
       try {
         frame.setProjectWorkspaceId(options.getProjectWorkspaceId());
@@ -499,9 +509,10 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     frame.setVisible(true);
     if (frameInfo != null) {
       frame.setExtendedState(frameInfo.getExtendedState());
+      if (isFullScreenSupportedInCurrentOS() && frameInfo.getFullScreen()) {
+        frame.toggleFullScreen(true);
+      }
     }
-    frame.addComponentListener(myFrameStateListener);
-    IdeMenuBar.installAppMenuIfNeeded(frame);
     return frame;
   }
 
@@ -519,10 +530,15 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   }
 
   @Override
+  @NotNull
   public final IdeFrameImpl allocateFrame(@NotNull Project project) {
-    LOG.assertTrue(!myProjectToFrame.containsKey(project));
+    IdeFrameImpl frame = myProjectToFrame.get(project);
+    if (frame != null) {
+      myEventDispatcher.getMulticaster().frameCreated(frame);
+      return frame;
+    }
 
-    IdeFrameImpl frame = myProjectToFrame.remove(null);
+    frame = myProjectToFrame.remove(null);
     boolean isNewFrame = frame == null;
     FrameInfo frameInfo = null;
     if (isNewFrame) {
@@ -560,17 +576,20 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
       if (frameInfo != null) {
         frame.setExtendedState(frameInfo.getExtendedState());
       }
+
+      if (isFullScreenSupportedInCurrentOS() &&
+          ((frameInfo != null && frameInfo.getFullScreen()) || IdeFrameImpl.SHOULD_OPEN_IN_FULL_SCREEN.get(project) == Boolean.TRUE)) {
+        frame.toggleFullScreen(true);
+      }
     }
 
     frame.addWindowListener(myActivationListener);
     if (isNewFrame) {
-      if (RecentProjectsManagerBase.getInstanceEx().isBatchOpening()) {
-        frame.toBack();
-      }
       frame.addComponentListener(myFrameStateListener);
+      IdeMenuBar.installAppMenuIfNeeded(frame);
     }
+
     myEventDispatcher.getMulticaster().frameCreated(frame);
-    IdeMenuBar.installAppMenuIfNeeded(frame);
 
     return frame;
   }

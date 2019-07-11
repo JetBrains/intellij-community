@@ -409,7 +409,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     }
 
     myFrame = WindowManagerEx.getInstanceEx().allocateFrame(myProject);
-    LOG.assertTrue(myFrame != null);
 
     myToolWindowsPane = new ToolWindowsPane(myFrame, this);
     Disposer.register(this, myToolWindowsPane);

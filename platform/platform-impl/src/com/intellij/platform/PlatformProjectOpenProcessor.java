@@ -1,23 +1,18 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform;
 
-import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.RecentProjectsManager;
-import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -35,9 +30,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.pom.Navigatable;
 import com.intellij.projectImport.ProjectAttachProcessor;
@@ -211,25 +203,32 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
       }
     }
 
-    Ref<Pair<Project, Module>> refResult = new Ref<>();
-    Runnable process = () -> refResult.set(prepareAndOpenProject(file, options, baseDir, dummyProjectName));
+    Ref<Pair<Project, Module>> refResult = new Ref<>(Pair.empty());
+    ProjectFrameAllocator frameAllocator = ApplicationManager.getApplication().isHeadlessEnvironment()
+                                           ? new ProjectFrameAllocator()
+                                           : new ProjectUiFrameAllocator(options);
+    Runnable task = () -> {
+      Pair<Project, Module> result = prepareProject(file, options, baseDir, dummyProjectName);
+      if (result == null) {
+        return;
+      }
 
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      process.run();
-    }
-    else {
-      IdeFrameImpl frame = showFrame(file, options);
-      TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-        boolean progressCompleted = ProgressManager.getInstance()
-          .runProcessWithProgressSynchronously(process, "Loading Project...", true, null, frame.getComponent());
-        if (!progressCompleted) {
-          refResult.set(null);
-        }
-      });
+      refResult.set(result);
+      Project project = result.first;
+      frameAllocator.projectCreated(project);
+      if (ProjectManagerEx.getInstanceEx().openProject(project)) {
+        frameAllocator.projectOpened(project);
+      }
+      else {
+        refResult.set(Pair.empty());
+      }
+    };
+
+    if (!frameAllocator.run(task, file)) {
+      refResult.set(Pair.empty());
     }
 
-    Pair<Project, Module> result = refResult.get();
-    Project project = result == null ? null : result.first;
+    Project project = refResult.get().first;
     if (project == null) {
       if (options.getShowWelcomeScreenIfNoProjectOpened()) {
         WelcomeFrame.showIfNoProjectOpened();
@@ -238,7 +237,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
     }
 
     if (options.getCallback() != null) {
-      Module module = result.second;
+      Module module = refResult.get().second;
       if (module == null) {
         module = ModuleManager.getInstance(project).getModules()[0];
       }
@@ -247,54 +246,32 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
     return project;
   }
 
-  @NotNull
-  private static IdeFrameImpl showFrame(@NotNull Path file, @NotNull OpenProjectTask options) {
-    WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
-    IdeFrameImpl freeRootFrame = windowManager.getRootFrame();
-    if (freeRootFrame != null) {
-      return freeRootFrame;
-    }
-
-    if (options.getFrame() == null || options.getFrame().getBounds() == null) {
-      RecentProjectsManager recentProjectManager = RecentProjectsManager.getInstance();
-      if (recentProjectManager instanceof RecentProjectsManagerBase) {
-        RecentProjectsManagerBase.RecentProjectMetaInfo info = ((RecentProjectsManagerBase)recentProjectManager).getProjectMetaInfo(file);
-        if (info != null) {
-          options = new OpenProjectTask(options.getForceOpenInNewFrame(), options.getProjectToClose());
-          options.setProjectWorkspaceId(info.projectWorkspaceId);
-          options.setFrame(info.frame);
-        }
-      }
-    }
-
-    Activity showFrameActivity = StartUpMeasurer.start("show frame");
-    IdeFrameImpl frame = windowManager.showFrame(options);
-    showFrameActivity.end();
-    // runProcessWithProgressSynchronously still processes EDT events
-    ApplicationManager.getApplication().invokeLater(() -> {
-      Activity activity = StartUpMeasurer.start("init frame");
-      if (frame.isDisplayable()) {
-        frame.init();
-      }
-      activity.end();
-    }, ModalityState.any());
-    return frame;
-  }
-
   @Nullable
-  private static Pair<Project, Module> prepareAndOpenProject(@NotNull Path file,
-                                                             @NotNull OpenProjectTask options,
-                                                             @NotNull Path baseDir,
-                                                             @Nullable String dummyProjectName) {
-    ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
+  private static Pair<Project, Module> prepareProject(@NotNull Path file,
+                                                      @NotNull OpenProjectTask options,
+                                                      @NotNull Path baseDir,
+                                                      @Nullable String dummyProjectName) {
+    ProjectManagerImpl projectManager = (ProjectManagerImpl)ProjectManagerEx.getInstanceEx();
     Project project;
     boolean isNewProject = options.isNewProject();
     if (isNewProject) {
       String projectName = dummyProjectName == null ? baseDir.getFileName().toString() : dummyProjectName;
-      project = ((ProjectManagerImpl)projectManager).newProject(baseDir, projectName, !options.isUseDefaultProjectAsTemplate(), /* isRefreshVfsNeeded = */ true);
+      project = projectManager.newProject(baseDir, projectName, !options.isUseDefaultProjectAsTemplate(), /* isRefreshVfsNeeded = */ true);
     }
     else {
-      project = tryLoadProject(baseDir);
+      try {
+        for (ProjectOpenProcessor processor : ProjectOpenProcessor.EXTENSION_POINT_NAME.getIterable()) {
+          processor.refreshProjectFiles(baseDir);
+        }
+        project = projectManager.convertAndLoadProject(baseDir);
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        LOG.error(e);
+        project = null;
+      }
     }
 
     if (project == null) {
@@ -308,21 +285,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
     if (isNewProject) {
       project.save();
     }
-    return projectManager.openProject(project) ? new Pair<>(project, module) : null;
-  }
-
-  @Nullable
-  private static Project tryLoadProject(@NotNull Path baseDir) {
-    try {
-      for (ProjectOpenProcessor processor : ProjectOpenProcessor.EXTENSION_POINT_NAME.getIterable()) {
-        processor.refreshProjectFiles(baseDir);
-      }
-      return ProjectManagerEx.getInstanceEx().convertAndLoadProject(baseDir);
-    }
-    catch (Exception e) {
-      LOG.error(e);
-      return null;
-    }
+    return new Pair<>(project, module);
   }
 
   private static Module configureNewProject(@NotNull Project project,

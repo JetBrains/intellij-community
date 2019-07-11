@@ -20,7 +20,7 @@ class ProjectFrameBounds(private val project: Project) : PersistentStateComponen
     fun getInstance(project: Project) = project.service<ProjectFrameBounds>()
   }
 
-  private val frameInfoHelper = FrameInfoHelper()
+  val frameInfoHelper = FrameInfoHelper()
 
   val isInFullScreen: Boolean
     get() = frameInfoHelper.info?.fullScreen ?: false
