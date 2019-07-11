@@ -78,7 +78,6 @@ public final class VcsOptionsTopHitProvider implements OptionsSearchTopHitProvid
 
     if (!project.isDefault()) {
       // process Version Control / Changelist Conflicts settings
-      options.add(tracker(project, "Changelists: Enable changelist conflict tracking", "TRACKING_ENABLED"));
       options.add(tracker(project, "Changelists: Show conflict resolving dialog", "SHOW_DIALOG"));
       options.add(tracker(project, "Changelists: Highlight files with conflicts", "HIGHLIGHT_CONFLICTS"));
       options.add(tracker(project, "Changelists: Highlight files from non-active changelists", "HIGHLIGHT_NON_ACTIVE_CHANGELIST"));
