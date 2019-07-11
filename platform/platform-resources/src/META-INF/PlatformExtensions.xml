@@ -533,7 +533,6 @@
     <search.projectOptionsTopHitProvider implementation="com.intellij.ide.ui.InspectionsTopHitProvider"/>
     <search.topHitProvider implementation="com.intellij.ide.ui.RegistryOptionsTopHitProvider"/>
     <search.topHitProvider implementation="com.intellij.ide.ui.PluginOptionsTopHitProvider"/>
-    <search.projectOptionsTopHitProvider implementation="com.intellij.openapi.fileEditor.impl.LastVisitedTimestampsTopHitProvider"/>
     <projectService serviceImplementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector"/>
     <backgroundPostStartupActivity implementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiserStartupActivity"/>
     <actionPromoter implementation="com.intellij.ui.ToolbarDecoratorActionPromoter"/>
@@ -675,5 +674,7 @@
     <applicationService serviceImplementation="com.intellij.diagnostic.MemorySizeConfiguratorService"/>
 
     <httpRequestHandler implementation="com.intellij.ide.FavIconHttpRequestHandler" order="last"/>
+    <registryKey key="show.last.visited.timestamps" defaultValue="true"
+                 description="Shows recent files or code locations last visited timestamps"/>
   </extensions>
 </idea-plugin>

@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -1359,7 +1360,7 @@ public class Switcher extends AnAction implements DumbAware {
       }
       SpeedSearchUtil.applySpeedSearchHighlighting(mySwitcherPanel, this, false, selected);
 
-      if (((IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(project)).LAST_VISITED_TIMESTAMP_OPTION_FIELD) {
+      if (Registry.is("show.last.visited.timestamps")) {
         appendTimestamp(project, virtualFile);
       }
     }
