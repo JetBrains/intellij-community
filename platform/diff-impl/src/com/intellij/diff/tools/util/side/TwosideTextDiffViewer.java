@@ -36,6 +36,8 @@ import com.intellij.diff.util.LineCol;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -153,7 +155,9 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
 
   @CalledInAwt
   protected void installEditorListeners() {
-    new TextDiffViewerUtil.EditorActionsPopup(createEditorPopupActions()).install(getEditors());
+    List<AnAction> popupActions = createEditorPopupActions();
+    new TextDiffViewerUtil.EditorActionsPopup(popupActions).install(getEditors());
+    ActionUtil.recursiveRegisterShortcutSet(new DefaultActionGroup(popupActions), myPanel, null);
 
     new TextDiffViewerUtil.EditorFontSizeSynchronizer(getEditors()).install(this);
 

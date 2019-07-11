@@ -75,10 +75,6 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     PartialLocalLineStatusTracker tracker = getPartialTracker();
     if (tracker != null) tracker.addListener(trackerListener, this);
 
-    DiffUtil.registerAction(new MoveSelectedChangesToAnotherChangelistAction(true), myPanel);
-    DiffUtil.registerAction(new ExcludeSelectedChangesFromCommitAction(true), myPanel);
-    DiffUtil.registerAction(new IncludeOnlySelectedChangesIntoCommitAction(true), myPanel);
-
     myAllowExcludeChangesFromCommit = Boolean.TRUE.equals(context.getUserData(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT));
   }
 
@@ -111,9 +107,9 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   protected List<AnAction> createEditorPopupActions() {
     List<AnAction> group = new ArrayList<>(super.createEditorPopupActions());
 
-    group.add(new MoveSelectedChangesToAnotherChangelistAction(false));
-    group.add(new ExcludeSelectedChangesFromCommitAction(false));
-    group.add(new IncludeOnlySelectedChangesIntoCommitAction(false));
+    group.add(new MoveSelectedChangesToAnotherChangelistAction());
+    group.add(new ExcludeSelectedChangesFromCommitAction());
+    group.add(new IncludeOnlySelectedChangesIntoCommitAction());
 
     return group;
   }
@@ -334,8 +330,8 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   }
 
   private class MoveSelectedChangesToAnotherChangelistAction extends MySelectedChangesActionBase {
-    MoveSelectedChangesToAnotherChangelistAction(boolean shortcut) {
-      super(false, shortcut);
+    MoveSelectedChangesToAnotherChangelistAction() {
+      super(false);
       copyShortcutFrom(ActionManager.getInstance().getAction("Vcs.MoveChangedLinesToChangelist"));
     }
 
@@ -370,8 +366,8 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   }
 
   private class ExcludeSelectedChangesFromCommitAction extends MySelectedChangesActionBase {
-    ExcludeSelectedChangesFromCommitAction(boolean shortcut) {
-      super(true, shortcut);
+    ExcludeSelectedChangesFromCommitAction() {
+      super(true);
       ActionUtil.copyFrom(this, "Vcs.Diff.ExcludeChangedLinesFromCommit");
     }
 
@@ -396,8 +392,8 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   }
 
   private class IncludeOnlySelectedChangesIntoCommitAction extends MySelectedChangesActionBase {
-    IncludeOnlySelectedChangesIntoCommitAction(boolean shortcut) {
-      super(true, shortcut);
+    IncludeOnlySelectedChangesIntoCommitAction() {
+      super(true);
       ActionUtil.copyFrom(this, "Vcs.Diff.IncludeOnlyChangedLinesIntoCommit");
     }
 
@@ -416,11 +412,9 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
 
   private abstract class MySelectedChangesActionBase extends DumbAwareAction {
     private final boolean myActiveChangelistOnly;
-    private final boolean myShortcut;
 
-    MySelectedChangesActionBase(boolean activeChangelistOnly, boolean shortcut) {
+    MySelectedChangesActionBase(boolean activeChangelistOnly) {
       myActiveChangelistOnly = activeChangelistOnly;
-      myShortcut = shortcut;
     }
 
     @Override
@@ -430,7 +424,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
         return;
       }
 
-      if (myShortcut) {
+      if (DiffUtil.isFromShortcut(e)) {
         e.getPresentation().setEnabledAndVisible(true);
         return;
       }

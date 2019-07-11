@@ -113,10 +113,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
     TextDiffViewerUtil.checkDifferentDocuments(myRequest);
 
-    DiffUtil.registerAction(new ReplaceSelectedChangesAction(Side.LEFT, true), myPanel);
-    DiffUtil.registerAction(new AppendSelectedChangesAction(Side.LEFT, true), myPanel);
-    DiffUtil.registerAction(new ReplaceSelectedChangesAction(Side.RIGHT, true), myPanel);
-    DiffUtil.registerAction(new AppendSelectedChangesAction(Side.RIGHT, true), myPanel);
+    DiffUtil.registerAction(new AppendSelectedChangesAction(Side.LEFT), myPanel);
+    DiffUtil.registerAction(new AppendSelectedChangesAction(Side.RIGHT), myPanel);
   }
 
   @Override
@@ -203,8 +201,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     List<AnAction> group = new ArrayList<>();
 
     if (isEditable(Side.RIGHT, false)) {
-      group.add(new ReplaceSelectedChangesAction(Side.LEFT, false));
-      group.add(new ReplaceSelectedChangesAction(Side.RIGHT, false));
+      group.add(new ReplaceSelectedChangesAction(Side.LEFT));
+      group.add(new ReplaceSelectedChangesAction(Side.RIGHT));
     }
 
     group.add(Separator.getInstance());
@@ -625,16 +623,14 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
   private abstract class ApplySelectedChangesActionBase extends AnAction implements DumbAware {
     @NotNull protected final Side myModifiedSide;
-    protected final boolean myShortcut;
 
-    ApplySelectedChangesActionBase(@NotNull Side modifiedSide, boolean shortcut) {
+    ApplySelectedChangesActionBase(@NotNull Side modifiedSide) {
       myModifiedSide = modifiedSide;
-      myShortcut = shortcut;
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      if (myShortcut) {
+      if (DiffUtil.isFromShortcut(e)) {
         // consume shortcut even if there are nothing to do - avoid calling some other action
         e.getPresentation().setEnabledAndVisible(true);
         return;
@@ -697,8 +693,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   }
 
   private class ReplaceSelectedChangesAction extends ApplySelectedChangesActionBase {
-    ReplaceSelectedChangesAction(@NotNull Side focusedSide, boolean shortcut) {
-      super(focusedSide.other(), shortcut);
+    ReplaceSelectedChangesAction(@NotNull Side focusedSide) {
+      super(focusedSide.other());
 
       setShortcutSet(ActionManager.getInstance().getAction(focusedSide.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide")).getShortcutSet());
       getTemplatePresentation().setText(focusedSide.select("Revert", "Accept"));
@@ -714,8 +710,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   }
 
   private class AppendSelectedChangesAction extends ApplySelectedChangesActionBase {
-    AppendSelectedChangesAction(@NotNull Side focusedSide, boolean shortcut) {
-      super(focusedSide.other(), shortcut);
+    AppendSelectedChangesAction(@NotNull Side focusedSide) {
+      super(focusedSide.other());
 
       setShortcutSet(ActionManager.getInstance().getAction(focusedSide.select("Diff.AppendLeftSide", "Diff.AppendRightSide")).getShortcutSet());
       getTemplatePresentation().setText("Append");

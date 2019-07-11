@@ -135,11 +135,6 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     myEditorSettingsAction = new SetEditorSettingsAction(getTextSettings(), editors);
     myEditorSettingsAction.applyDefaults();
 
-    if (!isReadOnly()) {
-      DiffUtil.registerAction(new ApplySelectedChangesAction(true), myPanel);
-      DiffUtil.registerAction(new IgnoreSelectedChangesAction(true), myPanel);
-    }
-
     ProxyUndoRedoAction.register(myProject, myResultEditor, myContentPanel);
   }
 
@@ -163,8 +158,8 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     List<AnAction> group = new ArrayList<>();
 
     if (!isReadOnly()) {
-      group.add(new ApplySelectedChangesAction(false));
-      group.add(new IgnoreSelectedChangesAction(false));
+      group.add(new ApplySelectedChangesAction());
+      group.add(new IgnoreSelectedChangesAction());
     }
 
     group.add(Separator.getInstance());
@@ -454,8 +449,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
   }
 
   private class ApplySelectedChangesAction extends ApplySelectedChangesActionBase {
-    private ApplySelectedChangesAction(boolean shortcut) {
-      super(shortcut);
+    private ApplySelectedChangesAction() {
       getTemplatePresentation().setText("Accept");
       getTemplatePresentation().setIcon(AllIcons.Actions.Checked);
       copyShortcutFrom(ActionManager.getInstance().getAction("Diff.ApplyRightSide"));
@@ -475,8 +469,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
   }
 
   private class IgnoreSelectedChangesAction extends ApplySelectedChangesActionBase {
-    private IgnoreSelectedChangesAction(boolean shortcut) {
-      super(shortcut);
+    private IgnoreSelectedChangesAction() {
       getTemplatePresentation().setText("Ignore");
       getTemplatePresentation().setIcon(AllIcons.Diff.Remove);
       setShortcutSet(new CompositeShortcutSet(ActionManager.getInstance().getAction("Diff.IgnoreRightSide").getShortcutSet(),
@@ -497,15 +490,9 @@ class ApplyPatchViewer implements DataProvider, Disposable {
   }
 
   private abstract class ApplySelectedChangesActionBase extends DumbAwareAction {
-    private final boolean myShortcut;
-
-    ApplySelectedChangesActionBase(boolean shortcut) {
-      myShortcut = shortcut;
-    }
-
     @Override
     public void update(@NotNull AnActionEvent e) {
-      if (myShortcut) {
+      if (DiffUtil.isFromShortcut(e)) {
         // consume shortcut even if there are nothing to do - avoid calling some other action
         e.getPresentation().setEnabledAndVisible(true);
         return;

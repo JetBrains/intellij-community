@@ -370,6 +370,11 @@ public class DiffUtil {
   // UI
   //
 
+  public static boolean isFromShortcut(@NotNull AnActionEvent e) {
+    String place = e.getPlace();
+    return ActionPlaces.KEYBOARD_SHORTCUT.equals(place) || ActionPlaces.MOUSE_SHORTCUT.equals(place);
+  }
+
   public static void registerAction(@NotNull AnAction action, @NotNull JComponent component) {
     action.registerCustomShortcutSet(action.getShortcutSet(), component);
   }

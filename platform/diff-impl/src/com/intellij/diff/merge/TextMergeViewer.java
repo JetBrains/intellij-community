@@ -223,11 +223,6 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         ar(HighlightPolicy.BY_LINE, HighlightPolicy.BY_WORD));
       myCurrentIgnorePolicy = myTextDiffProvider.getIgnorePolicy();
 
-      DiffUtil.registerAction(new ApplySelectedChangesAction(Side.LEFT, true), myPanel);
-      DiffUtil.registerAction(new ApplySelectedChangesAction(Side.RIGHT, true), myPanel);
-      DiffUtil.registerAction(new IgnoreSelectedChangesSideAction(Side.LEFT, true), myPanel);
-      DiffUtil.registerAction(new IgnoreSelectedChangesSideAction(Side.RIGHT, true), myPanel);
-      DiffUtil.registerAction(new ResolveSelectedConflictsAction(true), myPanel);
       DiffUtil.registerAction(new NavigateToChangeMarkerAction(false), myPanel);
       DiffUtil.registerAction(new NavigateToChangeMarkerAction(true), myPanel);
 
@@ -283,13 +278,13 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     protected List<AnAction> createEditorPopupActions() {
       List<AnAction> group = new ArrayList<>();
 
-      group.add(new ApplySelectedChangesAction(Side.LEFT, false));
-      group.add(new ApplySelectedChangesAction(Side.RIGHT, false));
+      group.add(new ApplySelectedChangesAction(Side.LEFT));
+      group.add(new ApplySelectedChangesAction(Side.RIGHT));
       group.add(new ResolveSelectedChangesAction(Side.LEFT));
       group.add(new ResolveSelectedChangesAction(Side.RIGHT));
-      group.add(new IgnoreSelectedChangesSideAction(Side.LEFT, false));
-      group.add(new IgnoreSelectedChangesSideAction(Side.RIGHT, false));
-      group.add(new ResolveSelectedConflictsAction(false));
+      group.add(new IgnoreSelectedChangesSideAction(Side.LEFT));
+      group.add(new IgnoreSelectedChangesSideAction(Side.RIGHT));
+      group.add(new ResolveSelectedConflictsAction());
       group.add(new IgnoreSelectedChangesAction());
 
       group.add(Separator.getInstance());
@@ -966,15 +961,9 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     }
 
     private abstract class ApplySelectedChangesActionBase extends AnAction implements DumbAware {
-      private final boolean myShortcut;
-
-      ApplySelectedChangesActionBase(boolean shortcut) {
-        myShortcut = shortcut;
-      }
-
       @Override
       public void update(@NotNull AnActionEvent e) {
-        if (myShortcut) {
+        if (DiffUtil.isFromShortcut(e)) {
           // consume shortcut even if there are nothing to do - avoid calling some other action
           e.getPresentation().setEnabledAndVisible(true);
           return;
@@ -1047,8 +1036,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     private class IgnoreSelectedChangesSideAction extends ApplySelectedChangesActionBase {
       @NotNull private final Side mySide;
 
-      IgnoreSelectedChangesSideAction(@NotNull Side side, boolean shortcut) {
-        super(shortcut);
+      IgnoreSelectedChangesSideAction(@NotNull Side side) {
         mySide = side;
         ActionUtil.copyFrom(this, mySide.select("Diff.IgnoreLeftSide", "Diff.IgnoreRightSide"));
       }
@@ -1078,7 +1066,6 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
     private class IgnoreSelectedChangesAction extends ApplySelectedChangesActionBase {
       IgnoreSelectedChangesAction() {
-        super(false);
         getTemplatePresentation().setIcon(AllIcons.Diff.Remove);
       }
 
@@ -1108,8 +1095,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     private class ApplySelectedChangesAction extends ApplySelectedChangesActionBase {
       @NotNull private final Side mySide;
 
-      ApplySelectedChangesAction(@NotNull Side side, boolean shortcut) {
-        super(shortcut);
+      ApplySelectedChangesAction(@NotNull Side side) {
         mySide = side;
         ActionUtil.copyFrom(this, mySide.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide"));
       }
@@ -1142,7 +1128,6 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       @NotNull private final Side mySide;
 
       ResolveSelectedChangesAction(@NotNull Side side) {
-        super(false);
         mySide = side;
       }
 
@@ -1171,8 +1156,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     }
 
     private class ResolveSelectedConflictsAction extends ApplySelectedChangesActionBase {
-      ResolveSelectedConflictsAction(boolean shortcut) {
-        super(shortcut);
+      ResolveSelectedConflictsAction() {
         ActionUtil.copyFrom(this, "Diff.ResolveConflict");
       }
 
