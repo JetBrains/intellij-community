@@ -123,6 +123,7 @@ iml_project(
         "//tools/adt/idea/jps-plugin:intellij.android.jps",
         "//tools/adt/idea/kotlin-integration:kotlin-integration-tests",
         "//tools/adt/idea/layout-inspector:intellij.android.layout-inspector",
+        "//tools/adt/idea/layout-inspector:intellij.android.layout-inspector.tests",
         "//tools/adt/idea/layout-ui:intellij.android.layout-ui",
         "//tools/adt/idea/layoutlib:intellij.android.layoutlib",
         "//tools/adt/idea/layoutlib:intellij.android.layoutlib-loader",
