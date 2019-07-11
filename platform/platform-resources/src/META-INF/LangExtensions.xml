@@ -376,6 +376,7 @@
     <!--  Inlay hints  -->
     <applicationService serviceImplementation="com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager"/>
     <postStartupActivity implementation="com.intellij.codeInsight.hints.presentation.PresentationMouseHandler"/>
+    <postStartupActivity implementation="com.intellij.codeInsight.hints.ParameterHintsSettingsMigration"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.hints.InlayHintsPassFactory"/>
 
     <projectConfigurable instance="com.intellij.codeInsight.hints.config.InlayHintsConfigurable"
