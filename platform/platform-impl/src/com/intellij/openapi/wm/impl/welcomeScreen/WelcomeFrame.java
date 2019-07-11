@@ -147,37 +147,40 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
       ApplicationManagerEx.getApplicationEx().exit(false, true);
     }
 
-    showNow(null);
+    Runnable show = prepareToShow();
+    if (show != null) {
+      show.run();
+    }
   }
 
-  public static void showNow(@Nullable Runnable beforeSetVisible) {
-    if (ourInstance != null) {
-      assert beforeSetVisible == null;
-      return;
-    }
+  @Nullable
+  public static Runnable prepareToShow() {
+    if (ourInstance != null) return null;
 
-    IdeFrame frame = null;
+    final IdeFrame frame = createWelcomeFrame();
+
+    return () -> {
+      if (ourInstance != null) return;
+
+      ((JFrame)frame).setVisible(true);
+
+      IdeMenuBar.installAppMenuIfNeeded((JFrame)frame);
+      ourInstance = frame;
+      if (SystemInfo.isMac) {
+        ourTouchbar = TouchBarsManager.showDialogWrapperButtons(frame.getComponent());
+      }
+    };
+  }
+
+  @NotNull
+  private static IdeFrame createWelcomeFrame() {
     for (WelcomeFrameProvider provider : EP.getIterable()) {
-      frame = provider.createFrame();
+      IdeFrame frame = provider.createFrame();
       if (frame != null) {
-        break;
+        return frame;
       }
     }
-
-    if (frame == null) {
-      frame = new WelcomeFrame();
-    }
-
-    if (beforeSetVisible != null) {
-      beforeSetVisible.run();
-    }
-
-    ((JFrame)frame).setVisible(true);
-    IdeMenuBar.installAppMenuIfNeeded((JFrame)frame);
-    ourInstance = frame;
-    if (SystemInfo.isMac) {
-      ourTouchbar = TouchBarsManager.showDialogWrapperButtons(frame.getComponent());
-    }
+    return new WelcomeFrame();
   }
 
   public static void showIfNoProjectOpened() {

@@ -9,6 +9,8 @@ import com.intellij.diagnostic.StartUpMeasurer.Phases
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.icons.AllIcons
 import com.intellij.ide.*
+import com.intellij.ide.customize.CustomizeIDEWizardDialog
+import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.MainRunner
@@ -62,6 +64,7 @@ import kotlin.system.exitProcess
 private val SAFE_JAVA_ENV_PARAMETERS = arrayOf(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY)
 private val LOG = Logger.getInstance("#com.intellij.idea.IdeaApplication")
 private var ourPerformProjectLoad = true
+private var ourWizardStepsProvider: CustomizeIDEWizardStepsProvider? = null
 
 private fun executeInitAppInEdt(rawArgs: Array<String>,
                                 initAppActivity: Activity,
@@ -271,6 +274,11 @@ object IdeaApplication {
   fun disableProjectLoad() {
     ourPerformProjectLoad = false
   }
+
+  @JvmStatic
+  fun setWizardStepsProvider(provider: CustomizeIDEWizardStepsProvider) {
+    ourWizardStepsProvider = provider
+  }
 }
 
 open class IdeStarter : ApplicationStarter {
@@ -343,10 +351,16 @@ open class IdeStarter : ApplicationStarter {
 
     LoadingPhase.setCurrentPhase(LoadingPhase.FRAME_SHOWN)
 
-    if (!willOpenProject || JetBrainsProtocolHandler.getCommand() != null) {
-      WelcomeFrame.showNow(SplashManager.getHideTask())
+    val shouldShowWelcomeFrame = !willOpenProject || JetBrainsProtocolHandler.getCommand() != null
+
+    val doShowWelcomeFrame = if (shouldShowWelcomeFrame) WelcomeFrame.prepareToShow() else null
+    val showWelcomeFrame: Runnable? = if (doShowWelcomeFrame == null) null
+    else Runnable {
+      SplashManager.hideNow()
+      doShowWelcomeFrame.run()
       lifecyclePublisher.welcomeScreenDisplayed()
     }
+    showWizardAndWelcomeFrame(showWelcomeFrame)
 
     frameInitActivity.end()
 
@@ -365,6 +379,21 @@ open class IdeStarter : ApplicationStarter {
     if (!app.isHeadlessEnvironment) {
       postOpenUiTasks(app)
     }
+  }
+
+  private fun showWizardAndWelcomeFrame(showWelcomeFrame: Runnable?) {
+    ourWizardStepsProvider?.let { wizardStepsProvider ->
+      val wizardDialog = object : CustomizeIDEWizardDialog(wizardStepsProvider, null, false, true) {
+        override fun doOKAction() {
+          super.doOKAction()
+          showWelcomeFrame?.run()
+        }
+      }
+      if (wizardDialog.showIfNeeded()) {
+        return
+      }
+    }
+    showWelcomeFrame?.run()
   }
 
   private fun postOpenUiTasks(app: Application) {

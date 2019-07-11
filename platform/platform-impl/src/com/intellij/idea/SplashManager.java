@@ -113,12 +113,23 @@ public final class SplashManager {
       return null;
     }
 
-    Ref<Splash> splash = new Ref<>(SPLASH_WINDOW);
+    Ref<Splash> splashRef = new Ref<>(SPLASH_WINDOW);
     SPLASH_WINDOW = null;
+
     return () -> {
-      splash.get().setVisible(false);
-      splash.get().dispose();
-      splash.set(null);
+      final Splash splash = splashRef.get();
+      if (splash != null) {
+        splashRef.set(null);
+        splash.setVisible(false);
+        splash.dispose();
+      }
     };
+  }
+
+  public static void hideNow() {
+    final Runnable hideTask = getHideTask();
+    if (hideTask != null) {
+      hideTask.run();
+    }
   }
 }

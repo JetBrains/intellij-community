@@ -42,16 +42,18 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
   private boolean myHideSkipButton;
 
   public CustomizeIDEWizardDialog(@NotNull CustomizeIDEWizardStepsProvider stepsProvider) {
-    this(stepsProvider, null);
+    this(stepsProvider, null, true, true);
   }
 
-  public CustomizeIDEWizardDialog(@NotNull CustomizeIDEWizardStepsProvider stepsProvider, @Nullable StartupUtil.AppStarter appStarter) {
+  public CustomizeIDEWizardDialog(@NotNull CustomizeIDEWizardStepsProvider stepsProvider, @Nullable StartupUtil.AppStarter appStarter,
+                                  boolean beforeSplash, boolean afterSplash) {
     super(null, true, true);
     setTitle("Customize " + ApplicationNamesInfo.getInstance().getFullProductName());
     getPeer().setAppIcons();
 
     myHideSkipButton = stepsProvider.hideSkipButton();
-    stepsProvider.initSteps(this, mySteps);
+    if (beforeSplash) stepsProvider.initSteps(this, mySteps);
+    if (afterSplash) stepsProvider.initStepsAfterSplash(this, mySteps);
 
     if (appStarter != null) {
       int newIndex = appStarter.customizeIdeWizardDialog(mySteps);
@@ -61,7 +63,8 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     }
 
     if (mySteps.isEmpty()) {
-      throw new IllegalArgumentException(stepsProvider + " provided no steps");
+      close(CANCEL_EXIT_CODE);
+      return;
     }
 
     mySkipButton.addActionListener(this);
@@ -78,7 +81,18 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
 
   @Override
   public final void show() {
+    if (mySteps.isEmpty()) {
+      throw new IllegalStateException("no steps provided");  // use showIfNeeded() instead
+    }
     SplashManager.executeWithHiddenSplash(getWindow(), () -> super.show());
+  }
+
+  public final boolean showIfNeeded() {
+    final boolean willBeShown = !mySteps.isEmpty() && !isDisposed();
+    if (willBeShown) {
+      show();
+    }
+    return willBeShown;
   }
 
   @Override

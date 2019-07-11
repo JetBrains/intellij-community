@@ -616,8 +616,10 @@ public class StartupUtil {
       return;
     }
 
+    IdeaApplication.setWizardStepsProvider(provider);
+
     appStarter.beforeStartupWizard();
-    new CustomizeIDEWizardDialog(provider, appStarter).show();
+    new CustomizeIDEWizardDialog(provider, appStarter, true, false).showIfNeeded();
 
     PluginManagerCore.invalidatePlugins();
     appStarter.startupWizardFinished();
