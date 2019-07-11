@@ -6,24 +6,24 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.language.syntax.SyntaxNodeDescriptor;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh;
 import org.jetbrains.plugins.textmate.regex.MatchData;
+import org.jetbrains.plugins.textmate.regex.StringWithId;
 
-import java.util.Arrays;
 import java.util.Objects;
 
 class TextMateLexerState implements LexerState {
   @NotNull public final SyntaxNodeDescriptor syntaxRule;
   @NotNull public final MatchData matchData;
   @NotNull public final TextMateWeigh.Priority priorityMatch;
-  @Nullable public final byte[] stringBytes;
+  @Nullable public final StringWithId string;
 
   TextMateLexerState(@NotNull SyntaxNodeDescriptor syntaxRule,
                      @NotNull MatchData matchData,
                      @NotNull TextMateWeigh.Priority priority,
-                     @Nullable byte[] lineBytes) {
+                     @Nullable StringWithId line) {
     this.syntaxRule = syntaxRule;
     this.matchData = matchData;
     this.priorityMatch = priority;
-    stringBytes = matchData.matched() ? lineBytes : null;
+    string = matchData.matched() ? line : null;
   }
 
   public static TextMateLexerState notMatched(@NotNull SyntaxNodeDescriptor syntaxRule) {
@@ -52,13 +52,11 @@ class TextMateLexerState implements LexerState {
     return syntaxRule.equals(state.syntaxRule) &&
            matchData.equals(state.matchData) &&
            priorityMatch == state.priorityMatch &&
-           Arrays.equals(stringBytes, state.stringBytes);
+           Objects.equals(string, state.string);
   }
 
   @Override
   public int hashCode() {
-    int result = Objects.hash(syntaxRule, matchData, priorityMatch);
-    result = 31 * result + Arrays.hashCode(stringBytes);
-    return result;
+    return Objects.hash(syntaxRule, matchData, priorityMatch, string);
   }
 }
