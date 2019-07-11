@@ -120,9 +120,9 @@ class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
       Map.Entry<String, T> singleEntry = map.entrySet().iterator().next();
       return Collections.singletonMap(singleEntry.getKey(), singleEntry.getValue());
     }
-    return new HashMap<String, T>(map.size()) {{
-      putAll(map);
-    }};
+    HashMap<String, T> result = new HashMap<>(map.size());
+    result.putAll(map);
+    return result;
   }
 
   @NotNull
