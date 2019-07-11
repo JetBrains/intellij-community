@@ -22,4 +22,9 @@ public class SyntaxRootProxyDescriptor extends SyntaxProxyDescriptor {
     }
     return rootNode;
   }
+  
+  @Override
+  public String toString() {
+    return "Proxy rule for root node";
+  }
 }

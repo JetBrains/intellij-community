@@ -56,8 +56,8 @@ abstract class SyntaxProxyDescriptor implements SyntaxNodeDescriptor {
 
   @NotNull
   @Override
-  public SyntaxNodeDescriptor findInRepository(String key) {
-    return getTargetNode().findInRepository(key);
+  public SyntaxNodeDescriptor findInRepository(int ruleId) {
+    return getTargetNode().findInRepository(ruleId);
   }
 
   @NotNull

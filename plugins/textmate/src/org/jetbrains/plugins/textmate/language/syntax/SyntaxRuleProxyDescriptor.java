@@ -8,22 +8,20 @@ import org.jetbrains.annotations.NotNull;
  * User: zolotov
  */
 public class SyntaxRuleProxyDescriptor extends SyntaxProxyDescriptor {
-  @NotNull 
-  private final String myRuleName;
+  private final int myRuleId;
 
-  SyntaxRuleProxyDescriptor(@NotNull String ruleName, @NotNull SyntaxNodeDescriptor parentNode) {
+  SyntaxRuleProxyDescriptor(int ruleId, @NotNull SyntaxNodeDescriptor parentNode) {
     super(parentNode);
-    myRuleName = ruleName;
+    myRuleId = ruleId;
   }
 
   @Override
   protected SyntaxNodeDescriptor computeTargetNode() {
-    return getParentNode().findInRepository(myRuleName);
+    return getParentNode().findInRepository(myRuleId);
   }
-  
-  
+
   @Override
   public String toString() {
-    return "Proxy rule for '" + myRuleName + "'";
+    return "Proxy rule for " + myRuleId;
   }
 }

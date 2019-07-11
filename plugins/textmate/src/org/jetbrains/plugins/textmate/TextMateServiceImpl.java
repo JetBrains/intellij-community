@@ -107,6 +107,7 @@ public class TextMateServiceImpl extends TextMateService {
         }
       }
     }
+    mySyntaxTable.compact();
     updateAssociations(matchers);
   }
 

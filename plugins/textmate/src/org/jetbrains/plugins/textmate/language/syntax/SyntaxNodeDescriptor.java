@@ -49,7 +49,7 @@ public interface SyntaxNodeDescriptor {
   List<InjectionNodeDescriptor> getInjections();
 
   @NotNull
-  SyntaxNodeDescriptor findInRepository(String key);
+  SyntaxNodeDescriptor findInRepository(int ruleId);
 
   /**
    * @return scope name if node is root for language or empty string otherwise

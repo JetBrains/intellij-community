@@ -21,4 +21,9 @@ public class SyntaxScopeProxyDescriptor extends SyntaxProxyDescriptor {
   protected SyntaxNodeDescriptor computeTargetNode() {
     return mySyntaxTable.getSyntax(myScope);
   }
+
+  @Override
+  public String toString() {
+    return "Proxy rule for '" + myScope + "' scope";
+  }
 }

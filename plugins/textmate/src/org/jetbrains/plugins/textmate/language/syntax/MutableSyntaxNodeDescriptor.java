@@ -38,7 +38,7 @@ public interface MutableSyntaxNodeDescriptor extends SyntaxNodeDescriptor {
 
   void setRegexAttribute(String key, RegexFacade value);
 
-  void appendRepository(String key, SyntaxNodeDescriptor descriptor);
+  void appendRepository(int ruleId, SyntaxNodeDescriptor descriptor);
 
   void setScopeName(@NotNull String scopeName);
 

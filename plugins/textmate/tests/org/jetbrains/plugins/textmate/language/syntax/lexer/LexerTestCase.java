@@ -84,6 +84,7 @@ abstract public class LexerTestCase extends UsefulTestCase {
         mySyntaxTable.loadSyntax(TestUtil.PLIST_READER.read(grammarFile));
       }
     }
+    mySyntaxTable.compact();
 
     for (String extension : TextMateServiceImpl.getExtensions(myFileName)) {
       myRootScope = myLanguageDescriptors.get(extension);

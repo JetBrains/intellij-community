@@ -28,6 +28,11 @@ import java.util.Map;
 public class TextMateSyntaxTable {
   private static final Logger LOG = Logger.getInstance(TextMateSyntaxTable.class);
   private final Map<String, SyntaxNodeDescriptor> rulesMap = new THashMap<>();
+  private final TObjectIntHashMap<String> ruleIds = new TObjectIntHashMap<>();
+
+  public void compact() {
+    ruleIds.clear();
+  }
 
   /**
    * Append table with new syntax rules in order to support new language.
@@ -114,8 +119,7 @@ public class TextMateSyntaxTable {
   private SyntaxNodeDescriptor loadProxyNode(@NotNull Plist plist, @NotNull SyntaxNodeDescriptor result) {
     String include = plist.getPlistValue(Constants.INCLUDE_KEY, "").getString();
     if (StringUtil.startsWithChar(include, '#')) {
-      // todo: convert to int
-      return new SyntaxRuleProxyDescriptor(include.substring(1), result);
+      return new SyntaxRuleProxyDescriptor(getRuleId(include.substring(1)), result);
     }
     else if (Constants.INCLUDE_SELF_VALUE.equalsIgnoreCase(include) || Constants.INCLUDE_BASE_VALUE.equalsIgnoreCase(include)) {
       return new SyntaxRootProxyDescriptor(result);
@@ -133,10 +137,19 @@ public class TextMateSyntaxTable {
     for (Map.Entry<String, PListValue> repoEntry : pListValue.getPlist().entries()) {
       PListValue repoEntryValue = repoEntry.getValue();
       if (repoEntryValue != null) {
-        // todo: convert to int
-        result.appendRepository(repoEntry.getKey(), loadNestedSyntax(repoEntryValue.getPlist(), result));
+        result.appendRepository(getRuleId(repoEntry.getKey()), loadNestedSyntax(repoEntryValue.getPlist(), result));
       }
     }
+  }
+
+  private int getRuleId(@NotNull String ruleName) {
+    int id = ruleIds.get(ruleName);
+    if (id > 0) {
+      return id;
+    }
+    int newId = ruleIds.size() + 1;
+    ruleIds.put(ruleName, newId);
+    return newId;
   }
 
   private void loadInjections(MutableSyntaxNodeDescriptor result, PListValue pListValue) {
