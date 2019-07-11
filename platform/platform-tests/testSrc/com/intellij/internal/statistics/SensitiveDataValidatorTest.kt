@@ -237,6 +237,18 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
   }
 
   @Test
+  fun test_validate_escaped_event_data() {
+    val validator = createTestSensitiveDataValidator(loadContent("test_validate_event_data.json"))
+    val elg = EventLogGroup("system.keys.group", 1)
+
+    assertEventDataAccepted(validator, elg, "ed.1", "AA")
+    assertEventDataAccepted(validator, elg, "ed 2", "REF_BB")
+    assertEventDataAccepted(validator, elg, "ed_1", "AA")
+    assertEventDataAccepted(validator, elg, "ed_2", "REF_BB")
+    assertEventDataUndefinedRule(validator, elg, "ed+2", "REF_BB")
+  }
+
+  @Test
   fun test_validate_custom_rule_with_local_enum() {
     val rule = TestLocalEnumCustomWhitelistRule()
 
@@ -263,7 +275,9 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
   }
 
   private fun assertEventDataAccepted(validator: TestSensitiveDataValidator, eventLogGroup: EventLogGroup, key: String, dataValue: String) {
-    TestCase.assertEquals(ValidationResultType.ACCEPTED, validator.validateEventData(eventLogGroup, key, dataValue))
+    val data = FeatureUsageData().addData(key, dataValue)
+    val (preparedKey, preparedValue) = data.build().entries.iterator().next()
+    TestCase.assertEquals(ValidationResultType.ACCEPTED, validator.validateEventData(eventLogGroup, preparedKey, preparedValue))
   }
 
   private fun assertEventDataUndefinedRule(validator: TestSensitiveDataValidator, eventLogGroup: EventLogGroup, key: String, dataValue: String) {
