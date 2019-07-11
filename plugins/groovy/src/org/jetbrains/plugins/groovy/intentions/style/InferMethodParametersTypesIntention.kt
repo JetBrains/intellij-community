@@ -63,11 +63,13 @@ internal class InferMethodParametersTypesIntention : Intention() {
       if (actual.isVarArgs) {
         actual.ellipsisDots!!.delete()
       }
-      // todo: user-defined annotations may not coincide with @ClosureParams
+      val currentAnnotations = actual.annotations.map { it.text }
       inferred.annotations.forEach {
-        val anno = actual.modifierList.addAnnotation(it.text.substring(1))
-        GrReferenceAdjuster.shortenAllReferencesIn((anno as GrAnnotation).originalElement as GroovyPsiElement)
-        GrReferenceAdjuster.shortenReference(anno.findAttributeValue("value")?.reference as GrQualifiedReference<*>)
+        if (it.text !in currentAnnotations) {
+          val anno = actual.modifierList.addAnnotation(it.text.substring(1))
+          GrReferenceAdjuster.shortenAllReferencesIn((anno as GrAnnotation).originalElement as GroovyPsiElement)
+          GrReferenceAdjuster.shortenReference(anno.findAttributeValue("value")?.reference as? GrQualifiedReference<*> ?: return)
+        }
       }
     }
     method.typeParameters.forEach { GrReferenceAdjuster.shortenAllReferencesIn(it.originalElement as GroovyPsiElement?) }
