@@ -135,15 +135,13 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     }
   }
 
-  @NotNull
-  protected final State getStateInner() {
-    synchronized (myStateLock) {
-      return myState;
-    }
+  @Nullable
+  public RecentProjectMetaInfo getProjectMetaInfo(@NotNull Path file) {
+    return myState.additionalInfo.get(FileUtil.toSystemIndependentName(file.toString()));
   }
 
   @Override
-  public void loadState(@NotNull final State state) {
+  public void loadState(@NotNull State state) {
     synchronized (myStateLock) {
       myState = state;
       myState.pid = null;

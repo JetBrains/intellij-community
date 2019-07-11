@@ -5,6 +5,8 @@ import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.PsiNavigationSupport;
@@ -216,7 +218,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
       process.run();
     }
     else {
-      IdeFrameImpl frame = showFrame(options);
+      IdeFrameImpl frame = showFrame(file, options);
       TransactionGuard.getInstance().submitTransactionAndWait(() -> {
         boolean progressCompleted = ProgressManager.getInstance()
           .runProcessWithProgressSynchronously(process, "Loading Project...", true, null, frame.getComponent());
@@ -246,11 +248,23 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
   }
 
   @NotNull
-  private static IdeFrameImpl showFrame(@NotNull OpenProjectTask options) {
+  private static IdeFrameImpl showFrame(@NotNull Path file, @NotNull OpenProjectTask options) {
     WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
     IdeFrameImpl freeRootFrame = windowManager.getRootFrame();
     if (freeRootFrame != null) {
       return freeRootFrame;
+    }
+
+    if (options.getFrame() == null || options.getFrame().getBounds() == null) {
+      RecentProjectsManager recentProjectManager = RecentProjectsManager.getInstance();
+      if (recentProjectManager instanceof RecentProjectsManagerBase) {
+        RecentProjectsManagerBase.RecentProjectMetaInfo info = ((RecentProjectsManagerBase)recentProjectManager).getProjectMetaInfo(file);
+        if (info != null) {
+          options = new OpenProjectTask(options.getForceOpenInNewFrame(), options.getProjectToClose());
+          options.setProjectWorkspaceId(info.projectWorkspaceId);
+          options.setFrame(info.frame);
+        }
+      }
     }
 
     Activity showFrameActivity = StartUpMeasurer.start("show frame");
