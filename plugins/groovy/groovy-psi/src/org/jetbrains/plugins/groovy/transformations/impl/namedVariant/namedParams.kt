@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("NamedParamsUtil")
 
 package org.jetbrains.plugins.groovy.transformations.impl.namedVariant
 
+import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.psi.*
 import com.intellij.psi.util.PropertyUtilBase
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
@@ -54,18 +55,18 @@ fun collectAllParamsFromNamedVariantMethod(method: GrMethod): List<Pair<String, 
 internal fun collectNamedParamsFromNamedVariantMethod(method: GrMethod): List<NamedParamData> {
   val result = mutableListOf<NamedParamData>()
   for (parameter in method.parameterList.parameters) {
-    val name = parameter.name
     val type = parameter.type
 
     val namedParamsAnn = PsiImplUtil.getAnnotation(parameter, GROOVY_TRANSFORM_NAMED_PARAM)
     if (namedParamsAnn != null) {
+      val name = AnnotationUtil.getDeclaredStringAttributeValue(namedParamsAnn, "value") ?: parameter.name
       result.add(NamedParamData(name, type, parameter))
       continue
     }
 
     PsiImplUtil.getAnnotation(parameter, GROOVY_TRANSFORM_NAMED_DELEGATE) ?: continue
     val parameterClass = (type as? PsiClassType)?.resolve() ?: continue
-    getProperties(parameterClass).forEach { propertyName, propertyType ->
+    getProperties(parameterClass).forEach { (propertyName, propertyType) ->
       result.add(NamedParamData(propertyName, propertyType, parameter))
     }
   }
