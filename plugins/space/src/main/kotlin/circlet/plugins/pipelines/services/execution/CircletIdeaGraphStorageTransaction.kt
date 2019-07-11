@@ -5,9 +5,10 @@ import circlet.pipelines.config.api.*
 import circlet.pipelines.engine.*
 import circlet.pipelines.engine.api.*
 import circlet.pipelines.engine.api.storage.*
+import circlet.pipelines.provider.api.*
 import libraries.klogging.*
 
-class CircletIdeaGraphStorageTransaction(private val storage: CircletIdeaAutomationGraphStorage) : GraphStorageTransaction {
+class CircletIdeaGraphStorageTransaction(private val storage: CircletIdeaAutomationGraphStorage) : ExecutionProviderTransaction {
 
     private val callback = AfterTransactionCallback()
 
@@ -88,5 +89,21 @@ class CircletIdeaGraphStorageTransaction(private val storage: CircletIdeaAutomat
         )
         storage.storedExecutions[jobExecId] = entity
         return entity
+    }
+
+    override fun findJobExecution(id: Long): AJobExecutionEntity<ProjectJob.Process<*, *>>? {
+        return storage.storedExecutions[id]
+    }
+
+    override fun findAuthClient(graphExecution: AGraphExecutionEntity): ServiceCredentials? {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun findSnapshotForJobExecution(jobExec: AJobExecutionEntity<*>): AVolumeSnapshotEntity? {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun saveVolume(graphExecution: AGraphExecutionEntity, volumeId: String, volumeName: String) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }

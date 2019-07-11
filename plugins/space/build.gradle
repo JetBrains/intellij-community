@@ -34,6 +34,7 @@ dependencies {
 
     compile project(':plugins:pipelines:pipelines-engine')
     compile project(':plugins:pipelines:pipelines-utils')
+    compile project(':plugins:pipelines:pipelines-provider')
 }
 
 test { finalizedBy jacocoTestReport }
