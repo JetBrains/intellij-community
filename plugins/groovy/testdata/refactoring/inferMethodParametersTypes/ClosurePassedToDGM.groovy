@@ -1,5 +1,5 @@
-def <F> boolean foo(Iterable<F> list, cl) {
-  list.every(cl)
+boolean foo(list, cl) {
+  list.every cl
 }
 
 foo([1]) {it % 2 == 0}

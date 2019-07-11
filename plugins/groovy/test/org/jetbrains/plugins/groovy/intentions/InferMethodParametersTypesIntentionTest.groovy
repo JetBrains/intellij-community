@@ -193,7 +193,7 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
-  void testTypeParameterInClosureSignature() {
+  void testInterfaceInClosureSignature() {
     doTest(true)
   }
 

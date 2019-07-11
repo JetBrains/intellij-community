@@ -36,7 +36,7 @@ fun collectDeepClosureDependencies(session: GroovyInferenceSession, closureParam
                                    usages: List<ReadWriteVariableInstruction>) {
   val parameter = closureParameter.parameter
   for (call in usages) {
-    val nearestCall = call.element!!.parentOfType<GrCall>()!!
+    val nearestCall = call.element!!.parentOfType<GrCall>() ?: continue
     if (nearestCall == call.element!!.parent && nearestCall.resolveMethod()?.containingClass?.qualifiedName == GroovyCommonClassNames.GROOVY_LANG_CLOSURE) {
       continue
     }

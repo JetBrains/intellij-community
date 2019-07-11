@@ -446,11 +446,11 @@ class InferenceDriver(val method: GrMethod) {
     val overridableMethod = candidateMethodsDomain
       .flatMap { it.findMethodsByName(method.name, true).asIterable() }
       .subtract(alreadyOverriddenMethods)
-      .firstOrNull { methodsMatch(it as GrMethod, method) }
+      .firstOrNull { methodsMatch(it, method) }
     if (overridableMethod != null) {
-      (overridableMethod as GrMethod).parameters
+      overridableMethod.parameters
         .zip(virtualMethod.parameters)
-        .forEach { (patternParameter, virtualParameter) -> virtualParameter.setType(patternParameter.type) }
+        .forEach { (patternParameter, virtualParameter) -> virtualParameter.setType(patternParameter.type as? PsiClassType) }
       return true
     }
     else {
@@ -458,7 +458,7 @@ class InferenceDriver(val method: GrMethod) {
     }
   }
 
-  private fun methodsMatch(pattern: GrMethod,
+  private fun methodsMatch(pattern: PsiMethod,
                            tested: GrMethod): Boolean {
     val parameterList = pattern.parameters.zip(tested.parameters)
     if (parameterList.size != pattern.parameterList.parametersCount || parameterList.size != tested.parameterList.parametersCount) {

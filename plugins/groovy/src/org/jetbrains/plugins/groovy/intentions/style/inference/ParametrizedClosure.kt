@@ -25,7 +25,7 @@ class ParametrizedClosure(val parameter: GrParameter) {
             this
           }
           else {
-            (this as? PsiClassType)?.typeArguments()?.take(genericIndex)?.lastOrNull() as? PsiType
+            (this as? PsiClassType)?.typeArguments()?.toList()?.elementAtOrNull(genericIndex) as? PsiType
           }
         }
         if (type == pattern) {

@@ -27,7 +27,7 @@ class CollectingGroovyInferenceSession(
   private val mirrorBounds: Boolean = false
 ) : GroovyInferenceSession(typeParams, contextSubstitutor, context, true, emptySet()) {
 
-  override fun substituteWithInferenceVariables(type: PsiType?): PsiType {
+  override fun substituteWithInferenceVariables(type: PsiType?): PsiType? {
     val result = super.substituteWithInferenceVariables(type)
     if ((result == type || result == null) && parent != null) {
       return parent.substituteWithInferenceVariables(result)
