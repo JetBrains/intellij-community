@@ -10,7 +10,7 @@ import javax.swing.*;
  * @author yole
  */
 public class QtUIFileType extends QtFileType implements FileType {
-  public static QtUIFileType INSTANCE = new QtUIFileType();
+  public static final QtUIFileType INSTANCE = new QtUIFileType();
 
   protected QtUIFileType() {
     super("Qt UI file", "Qt UI Designer form", "ui");
