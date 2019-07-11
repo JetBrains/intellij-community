@@ -118,11 +118,11 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
          null, chameleon);
   }
 
-  PsiBuilderImpl(@NotNull Project project,
-                 @NotNull ParserDefinition parserDefinition,
-                 @NotNull Lexer lexer,
-                 @NotNull LighterLazyParseableNode chameleon,
-                 @NotNull CharSequence text) {
+  public PsiBuilderImpl(@NotNull Project project,
+                        @NotNull ParserDefinition parserDefinition,
+                        @NotNull Lexer lexer,
+                        @NotNull LighterLazyParseableNode chameleon,
+                        @NotNull CharSequence text) {
     this(project, chameleon.getContainingFile(), parserDefinition, lexer,
          chameleon.getCharTable(), text, null, null, ((LazyParseableToken)chameleon).myParentStructure, chameleon);
   }
