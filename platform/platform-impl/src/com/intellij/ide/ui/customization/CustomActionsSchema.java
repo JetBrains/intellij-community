@@ -91,11 +91,23 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     myIdToName.putAll(ourAdditionalIdToName);
   }
 
-  public static void enableTouchBar(boolean value) {
-    if (value) {
-      ourAdditionalIdToName.put(IdeActions.GROUP_TOUCHBAR, "Touch Bar");
-    } else {
-      ourAdditionalIdToName.remove(IdeActions.GROUP_TOUCHBAR);
+  public static void addSettingsGroup(@NotNull String itemId, @NotNull String itemName) {
+    ourAdditionalIdToName.put(itemId, itemName);
+
+    // Need to sync new items with global instance (if it has been created)
+    CustomActionsSchema customActionSchema = ServiceManager.getServiceIfCreated(CustomActionsSchema.class);
+    if (customActionSchema != null) {
+      customActionSchema.myIdToName.put(itemId, itemName);
+    }
+  }
+
+  public static void removeSettingsGroup(@NotNull String itemId) {
+    ourAdditionalIdToName.remove(itemId);
+
+    // Need to sync new items with global instance (if it has been created)
+    CustomActionsSchema customActionSchema = ServiceManager.getServiceIfCreated(CustomActionsSchema.class);
+    if (customActionSchema != null) {
+        customActionSchema.myIdToName.remove(itemId);
     }
   }
 

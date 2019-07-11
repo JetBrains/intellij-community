@@ -15,6 +15,7 @@ import com.intellij.ide.plugins.MainRunner;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -414,7 +415,8 @@ public final class IdeaApplication {
       if (SystemInfo.isMac) {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
           TouchBarsManager.onApplicationInitialized();
-          CustomActionsSchema.enableTouchBar(TouchBarsManager.isTouchBarAvailable());
+          if (TouchBarsManager.isTouchBarAvailable())
+            CustomActionsSchema.addSettingsGroup(IdeActions.GROUP_TOUCHBAR, "Touch Bar");
         });
       }
 
