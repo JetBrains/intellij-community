@@ -56,7 +56,6 @@ import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
@@ -70,7 +69,6 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.*;
 
@@ -1361,19 +1359,7 @@ public class Switcher extends AnAction implements DumbAware {
       SpeedSearchUtil.applySpeedSearchHighlighting(mySwitcherPanel, this, false, selected);
 
       if (Registry.is("show.last.visited.timestamps")) {
-        appendTimestamp(project, virtualFile);
-      }
-    }
-
-    private void appendTimestamp(@NotNull Project project, @NotNull VirtualFile file) {
-      try {
-        Long timestamp = IdeDocumentHistory.getInstance(project).getRecentFilesTimestamps().get(file.getPath());
-        if (timestamp != null) {
-          append(" ").append(DateFormatUtil.formatPrettyDateTime(timestamp), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES);
-        }
-      }
-      catch (IOException e) {
-        LOG.info("Cannot get a timestamp from a persistent hash map", e);
+        IdeDocumentHistoryImpl.appendTimestamp(project, this, virtualFile);
       }
     }
   }

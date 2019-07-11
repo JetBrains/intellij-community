@@ -41,6 +41,8 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.ExternalChangeAction;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.EnumeratorLongDescriptor;
 import com.intellij.util.io.EnumeratorStringDescriptor;
@@ -48,6 +50,7 @@ import com.intellij.util.io.PersistentHashMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
+import com.intellij.util.text.DateFormatUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -207,6 +210,20 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     }
     catch (IOException e) {
       LOG.info("Cannot put a timestamp from a persistent hash map", e);
+    }
+  }
+
+  public static void appendTimestamp(@NotNull Project project,
+                                     @NotNull SimpleColoredComponent component,
+                                     @NotNull VirtualFile file) {
+    try {
+      Long timestamp = getInstance(project).getRecentFilesTimestamps().get(file.getPath());
+      if (timestamp != null) {
+        component.append(" ").append(DateFormatUtil.formatPrettyDateTime(timestamp), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES);
+      }
+    }
+    catch (IOException e) {
+      LOG.info("Cannot get a timestamp from a persistent hash map", e);
     }
   }
 
