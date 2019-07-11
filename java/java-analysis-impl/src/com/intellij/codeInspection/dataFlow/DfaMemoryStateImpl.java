@@ -1351,7 +1351,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @NotNull
   private DfaValue resolveVariableValue(DfaVariableValue var) {
-    DfaConstValue constValue = getConstantValue(var);
+    DfaConstValue constValue = getConstantValue(var, false);
     if (constValue != null) {
       return constValue;
     }
