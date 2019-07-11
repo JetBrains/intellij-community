@@ -216,6 +216,16 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
   }
 
   @TestOnly
+  public void setPath(String path) {
+    myNamePathComponent.setPath(path);
+  }
+
+  @TestOnly
+  public void setNameValue(String name) {
+    myNamePathComponent.setNameValue(name);
+  }
+
+  @TestOnly
   @Nullable
   public ModuleWizardStep getSettingsStep() {
     return mySettingsStep;

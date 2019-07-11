@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -43,6 +44,16 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
 
     createJdk();
     setModuleNameAndRoot("module", getProjectPath());
+  }
+
+  public void testModuleRecreation() throws Exception {
+    MavenId id = new MavenId("org.foo", "module", "1.0");
+
+    createNewModule(id);
+    assertModules(id.getArtifactId());
+    deleteModule(id.getArtifactId());
+    createNewModule(id);
+    assertModules(id.getArtifactId());
   }
 
   public void testCreatingBlank() throws Exception {
@@ -313,6 +324,20 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
 
     MavenDomProjectModel domProjectModel = MavenDomUtil.getMavenDomProjectModel(myProject, module.getFile());
     assertEquals("custompom.xml", domProjectModel.getMavenParent().getRelativePath().getRawText());
+  }
+
+  private void deleteModule(String name) {
+    ModuleManager moduleManger = ModuleManager.getInstance(myProject);
+    Module module = moduleManger.findModuleByName(name);
+    ModifiableModuleModel modifiableModuleModel = moduleManger.getModifiableModel();
+    WriteAction.runAndWait(() -> {
+      try {
+        modifiableModuleModel.disposeModule(module);
+      }
+      finally {
+        modifiableModuleModel.commit();
+      }
+    });
   }
 
   private void setModuleNameAndRoot(String name, String root) {
