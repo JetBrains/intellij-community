@@ -217,8 +217,10 @@ class FeatureUsageData {
   }
 
   private fun addDataInternal(key: String, value: Any): FeatureUsageData {
-    if (ApplicationManager.getApplication().isUnitTestMode || !platformDataKeys.contains(key)) data[key] = value
-
+    if (ApplicationManager.getApplication().isUnitTestMode || !platformDataKeys.contains(key)) {
+      val escapedKey = escapeFieldName(key)
+      data[escapedKey] = value
+    }
     return this
   }
 
