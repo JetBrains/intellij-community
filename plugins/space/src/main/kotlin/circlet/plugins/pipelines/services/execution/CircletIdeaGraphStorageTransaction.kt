@@ -31,10 +31,6 @@ class CircletIdeaGraphStorageTransaction(private val storage: CircletIdeaAutomat
         return CircletIdeaAGraphMetaEntity(metaTaskId, storage.task)
     }
 
-    override fun findJobExecution(id: Long): AJobExecutionEntity<ProjectJob.Process<*, *>>? {
-        return storage.storedExecutions[id]
-    }
-
     override fun createTaskExecution(
         metaTask: AGraphMetaEntity,
         taskStartContext: TaskStartContext,
@@ -75,10 +71,6 @@ class CircletIdeaGraphStorageTransaction(private val storage: CircletIdeaAutomat
         return graphExecutionEntity
     }
 
-    override fun createSshKey(graphExecution: AGraphExecutionEntity, fingerPrint: String) {
-        logger.debug { "createSshKey $fingerPrint" }
-    }
-
     private fun createAJobExecutionEntity(bootstrapJob: ProjectJob.Process.Container, graphExecution: AGraphExecutionEntity): AJobExecutionEntity<*> {
         val jobExecId = storage.idStorage.getOrCreateId(bootstrapJob.id)
         val entity = CircletIdeaAJobExecutionEntity(
@@ -89,17 +81,12 @@ class CircletIdeaGraphStorageTransaction(private val storage: CircletIdeaAutomat
             ExecutionStatus.SCHEDULED,
             graphExecution,
             bootstrapJob,
-            JobStartContext()
+            false,
+            null,
+            false,
+            null
         )
         storage.storedExecutions[jobExecId] = entity
         return entity
-    }
-
-    override fun findSnapshotForJobExecution(jobExec: AJobExecutionEntity<*>): AVolumeSnapshotEntity? {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun saveVolume(graphExecution: AGraphExecutionEntity, volumeId: String, volumeName: String) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }
