@@ -2543,7 +2543,7 @@ public class AllIcons {
     /** 80x80 */ public static final Icon PluginLogoDisabled_80 = load("/plugins/pluginLogoDisabled_80.png");
     /** 12x12 */ public static final Icon Rating = load("/plugins/rating.svg");
     /** 12x12 */ public static final Icon Updated = load("/plugins/updated.svg");
-
+    /** 16x16 */ public static final Icon Disabled = load("/plugins/disabled.svg");
   }
 
   public final static class Preferences {
