@@ -32,11 +32,12 @@ public class EncapsulateFieldAction extends BaseRefactoringIntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    if (element instanceof SyntheticElement) {
+    if (element instanceof SyntheticElement){
       return false;
     }
 
-    return getField(element) != null;
+    final PsiField field = getField(element);
+    return field != null && !field.hasModifierProperty(PsiModifier.FINAL) && !field.hasModifierProperty(PsiModifier.PRIVATE);
   }
 
   @Override
@@ -62,9 +63,16 @@ public class EncapsulateFieldAction extends BaseRefactoringIntentionAction {
       return null;
     }
     final PsiReferenceExpression ref = (PsiReferenceExpression)parent;
+    final PsiExpression qualifier = ref.getQualifierExpression();
+    if (qualifier == null || qualifier instanceof PsiThisExpression) {
+      return null;
+    }
 
     final PsiElement resolved = ref.resolve();
-    return resolved instanceof PsiField ? (PsiField)resolved : null;
+    if (!(resolved instanceof PsiField)) {
+      return null;
+    }
+    return (PsiField)resolved;
   }
 
   @Override
