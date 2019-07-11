@@ -672,8 +672,14 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       boolean isLong = PsiType.LONG.equals(type);
       result = runner.getFactory().getBinOpFactory().create(dfaLeft, dfaRight, memState, isLong, opSign);
     }
-    if (result == DfaUnknownValue.getInstance() && JavaTokenType.PLUS == opSign && TypeUtils.isJavaLangString(type)) {
-      result = concatStrings(dfaLeft, dfaRight, memState, type, runner.getFactory());
+    if (result == DfaUnknownValue.getInstance() && TypeUtils.isJavaLangString(type)) {
+      if (JavaTokenType.PLUS == opSign) {
+        result = concatStrings(dfaLeft, dfaRight, memState, type, runner.getFactory());
+      }
+      if (JavaTokenType.ASTERISK == opSign) {
+        // string concatenation in loop: see com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer.substituteBinaryOperation
+        result = runner.getFactory().createTypeValue(type, Nullability.NOT_NULL);
+      }
     }
     pushExpressionResult(result, instruction, memState);
 

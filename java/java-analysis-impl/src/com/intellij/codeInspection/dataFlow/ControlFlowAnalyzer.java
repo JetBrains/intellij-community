@@ -225,7 +225,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       lExpr.accept(this);
       addInstruction(new DupInstruction());
       rExpr.accept(this);
-      addInstruction(new BinopInstruction(JavaTokenType.PLUS, null, type));
+      addInstruction(new BinopInstruction(
+        isAcceptableContextForMathOperation(expression) ? JavaTokenType.PLUS : JavaTokenType.ASTERISK, null, type));
     }
     else {
       IElementType sign = TypeConversionUtil.convertEQtoOperation(op);
@@ -1422,7 +1423,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   @Nullable
   private IElementType substituteBinaryOperation(PsiExpression expression, IElementType op) {
     if (JavaTokenType.PLUS == op) {
-      if (TypeUtils.isJavaLangString(expression.getType()) || isAcceptableContextForMathOperation(expression)) return op;
+      if (isAcceptableContextForMathOperation(expression)) return op;
+      if (TypeUtils.isJavaLangString(expression.getType())) return JavaTokenType.ASTERISK;
       return null;
     }
     if ((JavaTokenType.MINUS == op || JavaTokenType.ASTERISK == op) && !isAcceptableContextForMathOperation(expression)) return null;
