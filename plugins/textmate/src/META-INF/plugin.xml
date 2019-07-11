@@ -16,7 +16,7 @@
   </application-components>
 
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey key="textmate.line.highlighting.limit" defaultValue="1024"
+    <registryKey key="textmate.line.highlighting.limit" defaultValue="20000"
                  description="The maximum length of the line to be highlighted by TextMate lexer."/>
     <registryKey description="Enables tmTheme emulation from current color scheme" key="textmate.theme.emulation" defaultValue="true"/>
 
