@@ -16,11 +16,12 @@
     },
     {
       "key": "CompletionPopup.background",
-      "deprecated": true
+      "deprecated": true,
+      "description": "Uses Documentation popup color from editor color scheme instead"
     },
     {
       "key": "CompletionPopup.infoForeground",
-      "description": "Gray info text after each completion suggestion (not the gray text on the right)",
+      "description": "Uses Label.infoForeground instead",
       "deprecated": true
     },
     {
@@ -49,10 +50,15 @@
       "key": "CompletionPopup.selectionBackground"
     },
     {
-      "key": "CompletionPopup.selectionForeground"
+      "key": "CompletionPopup.selectionForeground",
+      "deprecated": true
     },
     {
       "key": "CompletionPopup.selectionInactiveBackground"
+    },
+    {
+      "key": "CompletionPopup.selectionInfoForeground",
+      "deprecated": true
     },
     {
       "key": "Counter.background",
@@ -67,61 +73,92 @@
     },
     {
       "key": "DebuggerTabs.selectedBackground",
-      "description": "Background of the selected tab in the Debugger tool window. The foreground is EditorTabs.underlinedTabForeground."
+      "description": "Background of the selected tab in the Debugger tool window. The foreground is EditorTabs.underlinedTabForeground.",
+      "deprecated": true
     },
     {
-      "key": "DebuggerTabs.underlineHeight"
+      "key": "DebuggerTabs.underlineHeight",
+      "since": "2019.2"
     },
     {
-      "key": "DebuggerTabs.underlinedTabBackground"
+      "key": "DebuggerTabs.underlinedTabBackground",
+      "description": "Background for the selected tab",
+      "since": "2019.2"
     },
     {
-      "key": "Debugger.Variables.collectingDataForeground"
+      "key": "Debugger.Variables.collectingDataForeground",
+      "since": "2019.2"
     },
     {
-      "key": "Debugger.Variables.evaluatingExpressionForeground"
+      "key": "Debugger.Variables.evaluatingExpressionForeground",
+      "since": "2019.2"
     },
     {
-      "key": "Debugger.Variables.modifyingValueForeground"
+      "key": "Debugger.Variables.modifyingValueForeground",
+      "since": "2019.2"
     },
     {
-      "key": "Debugger.Variables.changedValueForeground"
+      "key": "Debugger.Variables.changedValueForeground",
+      "since": "2019.2"
     },
     {
-      "key": "Debugger.Variables.exceptionForeground"
+      "key": "Debugger.Variables.exceptionForeground",
+      "since": "2019.2"
     },
     {
-      "key": "Debugger.Variables.valueForeground"
+      "key": "Debugger.Variables.valueForeground",
+      "since": "2019.2"
     },
     {
-      "key": "Debugger.Variables.errorMessageForeground"
+      "key": "Debugger.Variables.errorMessageForeground",
+      "since": "2019.2"
     },
     {
-    "key": "DefaultTabs.background"
+      "key": "DefaultTabs.background",
+      "since": "2019.2",
+      "description": "Default tabs are applied to all tabs except TabbedPane and unless particular tab keys, e.g. EditorTabs, are set. This key is the background under all tabs."
     },
     {
-      "key": "DefaultTabs.borderColor"
+      "key": "DefaultTabs.borderColor",
+      "since": "2019.2"
     },
     {
-      "key": "DefaultTabs.hoverColor"
+      "key": "DefaultTabs.hoverColor",
+      "since": "2019.2",
+      "deprecated": true
     },
     {
-      "key": "DefaultTabs.hoverBackground"
+      "key": "DefaultTabs.hoverBackground",
+      "since": "2019.2",
+      "description": "Transparent background on hover over tabs, both regular and with file color."
     },
     {
-      "key": "DefaultTabs.inactiveMaskColor"
+      "key": "DefaultTabs.inactiveMaskColor",
+      "since": "2019.2",
+      "deprecated": true
     },
     {
-      "key": "DefaultTabs.inactiveUnderlineColor"
+      "key": "DefaultTabs.inactiveUnderlineColor",
+      "since": "2019.2",
+      "description": "Underline color when the tab is not in focus"
     },
     {
-      "key": "DefaultTabs.underlineColor"
+      "key": "DefaultTabs.underlineColor",
+      "since": "2019.2"
     },
     {
-      "key": "DefaultTabs.underlineHeight"
+      "key": "DefaultTabs.underlineHeight",
+      "since": "2019.2"
     },
     {
-      "key": "DefaultTabs.underlinedTabBackground"
+      "key": "DefaultTabs.underlinedTabBackground",
+      "since": "2019.2",
+      "description": "Background for the selected tab"
+    },
+    {
+      "key": "DefaultTabs.underlinedTabForeground",
+      "since": "2019.2",
+      "description": "Foreground for the selected tab"
     },
     {
       "key": "Editor.background",
@@ -134,29 +171,40 @@
       "key": "Editor.shortcutForeground"
     },
     {
-      "key": "EditorTabs.background"
+      "key": "EditorTabs.background",
+      "description": "Background under all tabs in the editor"
     },
     {
       "key": "EditorTabs.borderColor",
       "description": "The JBEditorTabs component"
     },
     {
-      "key": "EditorTabs.hoverColor"
+      "key": "EditorTabs.hoverColor",
+      "deprecated": true
     },
     {
-      "key": "EditorTabs.hoverBackground"
+      "key": "EditorTabs.hoverBackground",
+      "deprecated": true
+    },
+    {
+      "key": "EditorTabs.hoverMaskColor",
+      "since": "2019.2",
+      "description": "Transparent overlay on hover"
     },
     {
       "key": "EditorTabs.inactiveColoredFileBackground",
-      "description": "Masks inactive tabs to make them darker"
+      "description": "Masks inactive tabs with file color. Does not affect tabs without file color.",
+      "since": "2019.2"
     },
     {
-      "key": "EditorTabs.inactiveUnderlineColor"
+      "key": "EditorTabs.inactiveUnderlineColor",
+      "since": "2019.2"
     },
 
     {
       "key": "EditorTabs.selectedBackground",
-      "description": "Background for all tabs. Inactive tabs also use inactiveColoredFileBackground."
+      "description": "Background for all tabs in 2019.1",
+      "deprecated": true
     },
     {
       "key": "EditorTabs.underlinedTabForeground",
@@ -164,13 +212,14 @@
     },
     {
       "key": "EditorTabs.underlineColor",
-      "description": "The line under the selected tab. Dark themes only"
+      "description": "The line under the selected tab"
     },
     {
       "key": "EditorTabs.underlineHeight"
     },
     {
-      "key": "EditorTabs.underlinedTabBackground"
+      "key": "EditorTabs.underlinedTabBackground",
+      "description": "Background for the selected tab"
     },
     {
       "key": "FileColor.Blue",
@@ -311,10 +360,12 @@
       "description": "Light-colored links. Used in the Variables tab of the Debugger tool window. Can be seen when a tree line is long, does not fit into the tab's width, and its popup on hover goes beyond the right monitor side."
     },
     {
-      "key": "MemoryIndicator.usedBackground"
+      "key": "MemoryIndicator.usedBackground",
+      "since": "2019.2"
     },
     {
-      "key": "MemoryIndicator.allocatedBackground"
+      "key": "MemoryIndicator.allocatedBackground",
+      "since": "2019.2"
     },
     {
       "key": "NavBar.borderColor",
@@ -615,16 +666,20 @@
       "key": "TitlePane.background"
     },
     {
-      "key": "TitlePane.Button.hoverBackground"
+      "key": "TitlePane.Button.hoverBackground",
+      "since": "2019.3"
     },
     {
-      "key": "TitlePane.inactiveBackground"
+      "key": "TitlePane.inactiveBackground",
+      "since": "2019.3"
     },
     {
-      "key": "TitlePane.infoForeground"
+      "key": "TitlePane.infoForeground",
+      "since": "2019.2"
     },
     {
-      "key": "TitlePane.inactiveInfoForeground"
+      "key": "TitlePane.inactiveInfoForeground",
+      "since": "2019.2"
     },
     {
       "key": "ToggleButton.borderColor"
@@ -677,6 +732,10 @@
       "key": "ToolWindow.HeaderCloseButton.background"
     },
     {
+      "key": "ToolWindow.HeaderTab.inactiveUnderlineColor",
+      "since": "2019.2"
+    },
+    {
       "key": "ToolWindow.HeaderTab.selectedBackground"
     },
     {
@@ -690,11 +749,23 @@
       "key": "ToolWindow.HeaderTab.hoverInactiveBackground"
     },
     {
+      "key": "ToolWindow.HeaderTab.underlineColor"
+    },
+    {
       "key": "ToolWindow.HeaderTab.underlineHeight"
     },
     {
+      "key": "ToolWindow.HeaderTab.underlinedTabBackground",
+      "since": "2019.2"
+    },
+    {
+      "key": "ToolWindow.HeaderTab.underlinedTabInactiveBackground",
+      "since": "2019.2"
+    },
+    {
       "key": "Tooltip.separatorColor",
-      "description": "Used for horizontal separators in editor tooltips (error/warning/documentation)"
+      "description": "Used for horizontal separators in editor tooltips (error/warning/documentation)",
+      "since": "2019.3"
     },
     {
       "key": "UiDesigner.Panel.background",
