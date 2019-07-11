@@ -36,7 +36,7 @@ public interface Constants {
 
   String[] STRING_KEY_NAMES = new String[]{CONTENT_KEY, NAME_KEY, CONTENT_NAME_KEY, WHILE_KEY, END_KEY, SCOPE_NAME_KEY};
   String[] REGEX_KEY_NAMES = new String[]{/*"firstLineMatch", "foldingStartMarker",*/ MATCH_KEY, BEGIN_KEY};
-  String[] DICT_KEY_NAMES = new String[]{CAPTURES_KEY, BEGIN_CAPTURES_KEY, END_CAPTURES_KEY};
+  String[] CAPTURES_KEY_NAMES = new String[]{CAPTURES_KEY, BEGIN_CAPTURES_KEY, END_CAPTURES_KEY};
 
   // VALUES
   @NonNls String DEFAULT_SCOPE_NAME = "default";

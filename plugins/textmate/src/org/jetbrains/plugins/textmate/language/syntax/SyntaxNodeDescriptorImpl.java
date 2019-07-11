@@ -5,7 +5,6 @@ import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
-import org.jetbrains.plugins.textmate.plist.Plist;
 import org.jetbrains.plugins.textmate.regex.RegexFacade;
 
 import java.util.*;
@@ -16,7 +15,7 @@ class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
   private TIntObjectHashMap<SyntaxNodeDescriptor> myRepository = new TIntObjectHashMap<>();
   private Map<String, String> myStringAttributes = new HashMap<>();
   private Map<String, RegexFacade> myRegexAttributes = new HashMap<>();
-  private Map<String, Plist> myPlistAttributes = new HashMap<>();
+  private Map<String, TIntObjectHashMap<String>> myCaptures = new HashMap<>();
 
   private List<SyntaxNodeDescriptor> myChildren = new ArrayList<>();
   private List<InjectionNodeDescriptor> myInjections = new ArrayList<>();
@@ -40,14 +39,14 @@ class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
   }
 
   @Override
-  public void setPlistAttribute(String key, Plist value) {
-    myPlistAttributes.put(key, value);
+  public void setCaptures(@NotNull String key, @Nullable TIntObjectHashMap<String> captures) {
+    myCaptures.put(key, captures);
   }
 
   @Nullable
   @Override
-  public Plist getPlistAttribute(String key) {
-    return myPlistAttributes.get(key);
+  public TIntObjectHashMap<String> getCaptures(String key) {
+    return myCaptures.get(key);
   }
 
   @Override
@@ -86,7 +85,7 @@ class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
   public void compact() {
     myStringAttributes = compactMap(myStringAttributes);
     myRegexAttributes = compactMap(myRegexAttributes);
-    myPlistAttributes = compactMap(myPlistAttributes);
+    myCaptures = compactMap(myCaptures);
     myChildren = compactList(myChildren);
     myInjections = compactList(myInjections);
     myRepository = compactMap(myRepository);

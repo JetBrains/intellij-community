@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.textmate.language.syntax;
 
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.textmate.plist.Plist;
 import org.jetbrains.plugins.textmate.regex.RegexFacade;
 
 import java.util.HashSet;
@@ -32,8 +32,8 @@ abstract class SyntaxProxyDescriptor implements SyntaxNodeDescriptor {
 
   @Nullable
   @Override
-  public Plist getPlistAttribute(String key) {
-    return getTargetNode().getPlistAttribute(key);
+  public TIntObjectHashMap<String> getCaptures(String key) {
+    return getTargetNode().getCaptures(key);
   }
 
   @Nullable

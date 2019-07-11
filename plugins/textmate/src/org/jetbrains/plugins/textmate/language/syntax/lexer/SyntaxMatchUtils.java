@@ -8,6 +8,7 @@ import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
@@ -17,14 +18,14 @@ import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorC
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigher;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh;
-import org.jetbrains.plugins.textmate.plist.PListValue;
-import org.jetbrains.plugins.textmate.plist.Plist;
 import org.jetbrains.plugins.textmate.regex.MatchData;
 import org.jetbrains.plugins.textmate.regex.RegexFacade;
 import org.jetbrains.plugins.textmate.regex.StringWithId;
 
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -139,19 +140,13 @@ public final class SyntaxMatchUtils {
     return matchFirst(syntaxNodeDescriptor, string, byteOffset, priority, currentScope);
   }
 
-  public static List<CaptureMatchData> matchCaptures(@NotNull Plist captures, @NotNull MatchData matchData, @NotNull StringWithId string) {
+  public static List<CaptureMatchData> matchCaptures(@NotNull TIntObjectHashMap<String> captures, @NotNull MatchData matchData, @NotNull StringWithId string) {
     List<CaptureMatchData> result = new ArrayList<>();
-    for (Map.Entry<String, PListValue> capture : captures.entries()) {
-      try {
-        int index = Integer.parseInt(capture.getKey());
-        Plist captureDict = capture.getValue().getPlist();
-        String captureName = captureDict.getPlistValue(Constants.NAME_KEY, "").getString();
-        TextRange offset = index < matchData.count() ? matchData.charOffset(string.bytes, index) : TextRange.EMPTY_RANGE;
-        if (!captureName.isEmpty() && !offset.isEmpty()) {
-          result.add(new CaptureMatchData(offset, index, captureName));
-        }
-      }
-      catch (NumberFormatException ignore) {
+    for (int index : captures.keys()) {
+      String captureName = captures.get(index);
+      TextRange offset = index < matchData.count() ? matchData.charOffset(string.bytes, index) : TextRange.EMPTY_RANGE;
+      if (!captureName.isEmpty() && !offset.isEmpty()) {
+        result.add(new CaptureMatchData(offset, index, captureName));
       }
     }
     return result;

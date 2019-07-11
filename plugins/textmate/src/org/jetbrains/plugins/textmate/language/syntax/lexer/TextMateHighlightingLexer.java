@@ -13,12 +13,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
 import org.jetbrains.plugins.textmate.language.syntax.SyntaxNodeDescriptor;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh;
-import org.jetbrains.plugins.textmate.plist.Plist;
 import org.jetbrains.plugins.textmate.regex.MatchData;
 import org.jetbrains.plugins.textmate.regex.RegexUtil;
 import org.jetbrains.plugins.textmate.regex.StringWithId;
@@ -198,9 +198,9 @@ public class TextMateHighlightingLexer extends LexerBase implements DataStorageF
         myStates.pop();
         int startPosition = endPosition = endMatch.charOffset(string.bytes).getStartOffset();
         closeScopeSelector(startPosition + startLineOffset); // closing content scope
-        if (lastRule.getPlistAttribute(Constants.END_CAPTURES_KEY) == null
-            && lastRule.getPlistAttribute(Constants.CAPTURES_KEY) == null
-            && lastRule.getPlistAttribute(Constants.BEGIN_CAPTURES_KEY) == null
+        if (lastRule.getCaptures(Constants.END_CAPTURES_KEY) == null
+            && lastRule.getCaptures(Constants.CAPTURES_KEY) == null
+            && lastRule.getCaptures(Constants.BEGIN_CAPTURES_KEY) == null
             ||
             parseCaptures(Constants.END_CAPTURES_KEY, lastRule, endMatch, string, startLineOffset)
             ||
@@ -299,7 +299,7 @@ public class TextMateHighlightingLexer extends LexerBase implements DataStorageF
   }
 
   private boolean parseCaptures(String capturesKey, SyntaxNodeDescriptor rule, MatchData matchData, StringWithId string, int startLineOffset) {
-    Plist captures = rule.getPlistAttribute(capturesKey);
+    TIntObjectHashMap<String> captures = rule.getCaptures(capturesKey);
     if (captures != null) {
       List<CaptureMatchData> matches = SyntaxMatchUtils.matchCaptures(captures, matchData, string);
       Stack<CaptureMatchData> starts = new Stack<>(ContainerUtil.sorted(matches, CaptureMatchData.START_OFFSET_ORDERING));

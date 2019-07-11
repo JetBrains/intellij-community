@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.textmate.language.syntax;
 
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.textmate.plist.Plist;
 import org.jetbrains.plugins.textmate.regex.RegexFacade;
 
 import java.util.List;
@@ -18,7 +18,7 @@ import java.util.List;
  * Regex attributes - regex attributes of syntax node {@link org.jetbrains.plugins.textmate.Constants#REGEX_KEY_NAMES}
  * </li>
  * <li>
- * Dict attributes - plist attributes of syntax node {@link org.jetbrains.plugins.textmate.Constants#DICT_KEY_NAMES}
+ * Captures attributes - captures attributes of syntax node {@link org.jetbrains.plugins.textmate.Constants#CAPTURES_KEY_NAMES}
  * </li>
  * <li>
  * Repository - set of named syntax rules (nodes) which can be included from other places in the grammar.
@@ -37,7 +37,7 @@ public interface SyntaxNodeDescriptor {
   String getStringAttribute(String key);
 
   @Nullable
-  Plist getPlistAttribute(String key);
+  TIntObjectHashMap<String> getCaptures(String key);
 
   @Nullable
   RegexFacade getRegexAttribute(String key);

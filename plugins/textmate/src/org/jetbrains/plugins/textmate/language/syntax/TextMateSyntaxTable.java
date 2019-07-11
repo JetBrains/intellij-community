@@ -5,8 +5,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashMap;
+import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
 import org.jetbrains.plugins.textmate.plist.PListValue;
 import org.jetbrains.plugins.textmate.plist.Plist;
@@ -101,8 +103,8 @@ public class TextMateSyntaxTable {
             result.setStringAttribute(key, interner.intern(pListValue.getString()));
           }
         }
-        else if (ArrayUtil.contains(key, Constants.DICT_KEY_NAMES)) {
-          result.setPlistAttribute(key, pListValue.getPlist());
+        else if (ArrayUtil.contains(key, Constants.CAPTURES_KEY_NAMES)) {
+          result.setCaptures(key, loadCaptures(pListValue.getPlist()));
         }
         else if (Constants.REPOSITORY_KEY.equalsIgnoreCase(key)) {
           loadRepository(result, pListValue);
@@ -121,6 +123,26 @@ public class TextMateSyntaxTable {
       rulesMap.put(scopeName, result);
     }
     result.compact();
+    return result;
+  }
+
+  @Nullable
+  private TIntObjectHashMap<String> loadCaptures(Plist captures) {
+    TIntObjectHashMap<String> result = new TIntObjectHashMap<>();
+    for (Map.Entry<String, PListValue> capture : captures.entries()) {
+      try {
+        int index = Integer.parseInt(capture.getKey());
+        Plist captureDict = capture.getValue().getPlist();
+        String captureName = captureDict.getPlistValue(Constants.NAME_KEY, "").getString();
+        result.put(index, interner.intern(captureName));
+      }
+      catch (NumberFormatException ignore) {
+      }
+    }
+    if (result.isEmpty()) {
+      return null;
+    }
+    result.trimToSize();
     return result;
   }
 
