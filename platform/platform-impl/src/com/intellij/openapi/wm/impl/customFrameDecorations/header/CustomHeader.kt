@@ -173,6 +173,8 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         buttonPanes.isSelected = myActive
         buttonPanes.updateVisibility()
         customFrameTopBorder?.repaintBorder()
+
+        background = JBUI.CurrentTheme.CustomFrameDecorations.titlePaneBackground(myActive)
     }
 
     protected val myCloseAction: Action = CustomFrameAction("Close", AllIcons.Windows.CloseSmall) { close() }

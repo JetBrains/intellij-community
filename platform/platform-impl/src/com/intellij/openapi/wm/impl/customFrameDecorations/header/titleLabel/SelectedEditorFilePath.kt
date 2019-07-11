@@ -44,6 +44,8 @@ open class SelectedEditorFilePath {
       unInstallListeners()
     }
   }.apply {
+    isOpaque = false
+    
     add(projectTitle.component)
     add(classTitle.component, "growx")
     add(productTitle.component)

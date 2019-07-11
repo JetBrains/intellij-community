@@ -334,7 +334,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
       final boolean enableMnemonics = !UISettings.getInstance().getDisableMnemonics();
       final boolean isDarkMenu = SystemInfo.isMacSystemMenu && NSDefaults.isDarkMenuBar() || myGlobalMenuLinux != null;
       for (final AnAction action : myVisibleActions) {
-        add(new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory, enableMnemonics, isDarkMenu));
+        add(createActionMenu(enableMnemonics, isDarkMenu, (ActionGroup)action));
       }
 
       updateGlobalMenuRoots();
@@ -355,9 +355,18 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     }
   }
 
+  @NotNull
+  protected ActionMenu createActionMenu(boolean enableMnemonics, boolean isDarkMenu, ActionGroup action) {
+    return new ActionMenu(null, ActionPlaces.MAIN_MENU, action, myPresentationFactory, enableMnemonics, isDarkMenu);
+  }
+
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
+    paintBackground(g);
+  }
+
+  protected void paintBackground(Graphics g) {
     if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
       g.setColor(UIManager.getColor("MenuItem.background"));
       g.fillRect(0, 0, getWidth(), getHeight());

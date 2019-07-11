@@ -411,6 +411,28 @@ public class JBUI {
       }
 
       @NotNull
+      public static Color titlePaneButtonHoverBackground() {
+        return JBColor.namedColor("TitlePane.Button.hoverBackground",
+                           new JBColor(ColorUtil.withAlpha(Color.BLACK, .1),
+                                       ColorUtil.withAlpha(Color.WHITE, .1)));
+      }
+
+      @NotNull
+      public static Color titlePaneButtonPressBackground() {
+        return titlePaneButtonHoverBackground();
+      }
+
+      @NotNull
+      public static Color titlePaneInactiveBackground() {
+        return JBColor.namedColor("TitlePane.inactiveBackground", titlePaneBackground());
+      }
+
+      @NotNull
+      public static Color titlePaneBackground(boolean active) {
+        return active ? titlePaneBackground() : titlePaneInactiveBackground();
+      }
+
+      @NotNull
       public static Color titlePaneBackground() {
         return JBColor.namedColor("TitlePane.background", paneBackground());
       }

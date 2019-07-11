@@ -10,11 +10,12 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBUI.*
 import net.miginfocom.swing.MigLayout
-import java.awt.Color
-import java.awt.Dimension
+import java.awt.*
 import javax.accessibility.AccessibleContext
 import javax.swing.*
+import javax.swing.border.Border
 import javax.swing.plaf.ButtonUI
 import javax.swing.plaf.basic.BasicButtonUI
 
@@ -37,21 +38,38 @@ open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
 
   private val baseStyle = ComponentStyle.ComponentStyleBuilder<JComponent> {
     isOpaque = false
-    border = JBUI.Borders.empty()
+    border = Borders.empty()
   }.apply {
+    fun paintHover(g: Graphics, width: Int, height: Int, color: Color) {
+      g.color = color
+      g.fillRect(0, 0, width, height)
+    }
+
+    class MyBorder(val color: ()-> Color) : Border {
+      override fun getBorderInsets(c: Component?): Insets = JBUI.emptyInsets()
+
+      override fun isBorderOpaque(): Boolean = false
+
+      override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
+        paintHover(g, width, height, color())
+      }
+    }
+
+    val hoverBorder = MyBorder {CurrentTheme.CustomFrameDecorations.titlePaneButtonHoverBackground()}
+    val pressBorder = MyBorder {CurrentTheme.CustomFrameDecorations.titlePaneButtonPressBackground()}
+
     style(ComponentStyleState.HOVERED) {
-      isOpaque = true
-      background = JBColor(0xd1d1d1, 0x54585a)
+      this.border = hoverBorder
+
     }
     style(ComponentStyleState.PRESSED) {
-      isOpaque = true
-      background = JBColor(0xb5b5b5, 0x686e70)
+      this.border = pressBorder
     }
   }
 
   val closeStyleBuilder = ComponentStyle.ComponentStyleBuilder<JButton> {
     isOpaque = false
-    border = JBUI.Borders.empty()
+    border = Borders.empty()
     icon = closeIcon
   }.apply {
     style(ComponentStyleState.HOVERED) {
