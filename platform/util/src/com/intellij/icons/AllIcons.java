@@ -151,6 +151,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon StartMemoryProfile = load("/actions/startMemoryProfile.svg");
     /** 16x16 */ public static final Icon StepOut = load("/actions/stepOut.svg");
     /** 16x16 */ public static final Icon StepOutCodeBlock = load("/actions/stepOutCodeBlock.svg");
+    /** 16x16 */ public static final Icon StopRefresh = load("/actions/stopRefresh.svg");
     /** 16x16 */ public static final Icon Stub = load("/actions/stub.svg");
     /** 16x16 */ public static final Icon Suspend = load("/actions/suspend.svg");
     /** 16x16 */ public static final Icon SwapPanels = load("/actions/swapPanels.svg");
