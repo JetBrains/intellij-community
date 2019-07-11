@@ -2,6 +2,8 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -44,7 +46,8 @@ public class EncapsulateFieldAction extends BaseRefactoringIntentionAction {
       return;
     }
 
-    new EncapsulateFieldsHandler().invoke(project, new PsiElement[]{field}, null);
+    DataContext dataContext = DataManager.getInstance().getDataContext(editor.getComponent());
+    new EncapsulateFieldsHandler().invoke(project, new PsiElement[]{field}, dataContext);
   }
 
 
