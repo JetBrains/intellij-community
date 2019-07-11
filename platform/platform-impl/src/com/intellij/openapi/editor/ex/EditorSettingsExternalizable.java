@@ -654,10 +654,18 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     myOptions.BIDI_TEXT_DIRECTION = direction;
   }
 
+  /**
+   * @deprecated use com.intellij.codeInsight.hints.HintUtilsKt#setShowAllParameterHints(boolean) instead
+   */
+  @Deprecated
   public boolean isShowParameterNameHints() {
     return myOptions.SHOW_PARAMETER_NAME_HINTS;
   }
 
+  /**
+   * @deprecated use com.intellij.codeInsight.hints.HintUtilsKt#setShowParameterHintsForLanguage(boolean, com.intellij.lang.Language) instead
+   */
+  @Deprecated
   public void setShowParameterNameHints(boolean value) {
     myOptions.SHOW_PARAMETER_NAME_HINTS = value;
   }
