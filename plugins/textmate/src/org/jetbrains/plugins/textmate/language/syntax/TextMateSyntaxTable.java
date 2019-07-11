@@ -3,6 +3,7 @@ package org.jetbrains.plugins.textmate.language.syntax;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -29,9 +30,11 @@ public class TextMateSyntaxTable {
   private static final Logger LOG = Logger.getInstance(TextMateSyntaxTable.class);
   private final Map<String, SyntaxNodeDescriptor> rulesMap = new THashMap<>();
   private final TObjectIntHashMap<String> ruleIds = new TObjectIntHashMap<>();
+  private final StringInterner interner = new StringInterner();
 
   public void compact() {
     ruleIds.clear();
+    interner.clear();
   }
 
   /**
@@ -78,7 +81,7 @@ public class TextMateSyntaxTable {
     for (Map.Entry<String, PListValue> entry : plist.entries()) {
       PListValue pListValue = entry.getValue();
       if (pListValue != null) {
-        String key = entry.getKey();
+        String key = interner.intern(entry.getKey());
         if (ArrayUtil.contains(key, Constants.REGEX_KEY_NAMES)) {
           try {
             String pattern = pListValue.getString();
@@ -91,7 +94,12 @@ public class TextMateSyntaxTable {
           }
         }
         else if (ArrayUtil.contains(key, Constants.STRING_KEY_NAMES)) {
-          result.setStringAttribute(key, pListValue.getString());
+          if (key.equals(Constants.WHILE_KEY) || key.equals(Constants.END_KEY)) {
+            result.setStringAttribute(key, pListValue.getString());
+          }
+          else {
+            result.setStringAttribute(key, interner.intern(pListValue.getString()));
+          }
         }
         else if (ArrayUtil.contains(key, Constants.DICT_KEY_NAMES)) {
           result.setPlistAttribute(key, pListValue.getPlist());
