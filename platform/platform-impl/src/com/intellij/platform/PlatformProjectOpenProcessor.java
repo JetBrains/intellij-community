@@ -31,6 +31,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
@@ -169,25 +171,36 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
         if (baseDir == null) {
           baseDir = file.getParent();
         }
+
+        options = options.copy(options.getForceOpenInNewFrame(), options.getProjectToClose());
+        options.setNewProject(!Files.isDirectory(baseDir.resolve(Project.DIRECTORY_STORE_FOLDER)));
       }
     }
 
-    return openExistingDirectoryBasedProject(file, baseDir, options, line, dummyProjectName);
+    Project project = openExistingProject(file, baseDir, options, dummyProjectName);
+    if (project != null && file != baseDir && !Files.isDirectory(file)) {
+      openFileFromCommandLine(project, file, line);
+    }
+    return project;
   }
 
   @Nullable
   @ApiStatus.Internal
-  public static Project openExistingDirectoryBasedProject(@NotNull Path file,
-                                                          @NotNull Path baseDir,
-                                                          @NotNull OpenProjectTask options,
-                                                          int line,
-                                                          @Nullable String dummyProjectName) {
+  public static Project openExistingProject(@NotNull Path file,
+                                            @NotNull Path baseDir,
+                                            @NotNull OpenProjectTask options,
+                                            @Nullable String dummyProjectName) {
     if (!options.getForceOpenInNewFrame()) {
       Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
       if (openProjects.length > 0) {
         Project projectToClose = options.getProjectToClose();
         if (projectToClose == null) {
-          projectToClose = ProjectUtil.getProjectToClose(openProjects);
+          // if several projects are opened, ask to reuse not last opened project frame, but last focused (to avoid focus switching)
+          IdeFrame lastFocusedFrame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
+          projectToClose = lastFocusedFrame == null ? null : lastFocusedFrame.getProject();
+          if (projectToClose == null) {
+            projectToClose = openProjects[openProjects.length - 1];
+          }
         }
 
         if (checkExistingProjectOnOpen(projectToClose, options.getCallback(), baseDir)) {
@@ -196,37 +209,40 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
       }
     }
 
-    Pair<Project, Module> result;
+    Ref<Pair<Project, Module>> refResult = new Ref<>();
+    Runnable process = () -> refResult.set(prepareAndOpenProject(file, options, baseDir, dummyProjectName));
+
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      result = prepareAndOpenProject(file, options, baseDir, dummyProjectName);
+      process.run();
     }
     else {
       IdeFrameImpl frame = showFrame(options);
-      Ref<Pair<Project, Module>> refResult = Ref.create();
-      Runnable process = () -> refResult.set(prepareAndOpenProject(file, options, baseDir, dummyProjectName));
       TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-        boolean progressCompleted = ProgressManager
-          .getInstance().runProcessWithProgressSynchronously(process, "Loading Project...", true, null, frame.getComponent());
+        boolean progressCompleted = ProgressManager.getInstance()
+          .runProcessWithProgressSynchronously(process, "Loading Project...", true, null, frame.getComponent());
         if (!progressCompleted) {
           refResult.set(null);
         }
       });
-      result = refResult.get();
     }
 
-    if (result == null || result.first == null) {
-      WelcomeFrame.showIfNoProjectOpened();
+    Pair<Project, Module> result = refResult.get();
+    Project project = result == null ? null : result.first;
+    if (project == null) {
+      if (options.getShowWelcomeScreenIfNoProjectOpened()) {
+        WelcomeFrame.showIfNoProjectOpened();
+      }
       return null;
     }
 
-    if (file != baseDir && !Files.isDirectory(file)) {
-      openFileFromCommandLine(result.first, file, line);
-    }
-
     if (options.getCallback() != null) {
-      options.getCallback().projectOpened(result.first, result.second);
+      Module module = result.second;
+      if (module == null) {
+        module = ModuleManager.getInstance(project).getModules()[0];
+      }
+      options.getCallback().projectOpened(project, module);
     }
-    return result.first;
+    return project;
   }
 
   @NotNull
@@ -256,16 +272,15 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
                                                              @NotNull OpenProjectTask options,
                                                              @NotNull Path baseDir,
                                                              @Nullable String dummyProjectName) {
-    boolean newProject = false;
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     Project project;
-    Path dotIdeaDir = baseDir.resolve(Project.DIRECTORY_STORE_FOLDER);
-    if (Files.isDirectory(dotIdeaDir)) {
-      project = tryLoadProject(baseDir);
+    boolean isNewProject = options.isNewProject();
+    if (isNewProject) {
+      String projectName = dummyProjectName == null ? baseDir.getFileName().toString() : dummyProjectName;
+      project = ((ProjectManagerImpl)projectManager).newProject(baseDir, projectName, !options.isUseDefaultProjectAsTemplate(), /* isRefreshVfsNeeded = */ true);
     }
     else {
-      project = ((ProjectManagerImpl)projectManager).newProject(baseDir, dummyProjectName == null ? baseDir.getFileName().toString() : dummyProjectName, !options.isUseDefaultProjectAsTemplate(), true);
-      newProject = true;
+      project = tryLoadProject(baseDir);
     }
 
     if (project == null) {
@@ -274,9 +289,9 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
 
     ProjectBaseDirectory.getInstance(project).setBaseDir(baseDir);
 
-    Module module = configureNewProject(project, baseDir, file, dummyProjectName == null, newProject);
+    Module module = configureNewProject(project, baseDir, file, dummyProjectName == null, isNewProject);
 
-    if (newProject) {
+    if (isNewProject) {
       project.save();
     }
     return projectManager.openProject(project) ? new Pair<>(project, module) : null;
@@ -285,7 +300,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
   @Nullable
   private static Project tryLoadProject(@NotNull Path baseDir) {
     try {
-      for (ProjectOpenProcessor processor : ProjectOpenProcessor.EXTENSION_POINT_NAME.getExtensionList()) {
+      for (ProjectOpenProcessor processor : ProjectOpenProcessor.EXTENSION_POINT_NAME.getIterable()) {
         processor.refreshProjectFiles(baseDir);
       }
       return ProjectManagerEx.getInstanceEx().convertAndLoadProject(baseDir);
@@ -302,12 +317,9 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
                                             boolean dummyProject,
                                             boolean newProject) {
     boolean runConfigurators = newProject || ModuleManager.getInstance(project).getModules().length == 0;
-    final Ref<Module> module = new Ref<>();
+    Ref<Module> module = new Ref<>();
     if (runConfigurators) {
       ApplicationManager.getApplication().invokeAndWait(() -> module.set(runDirectoryProjectConfigurators(baseDir, project)));
-    }
-    else {
-      module.set(ModuleManager.getInstance(project).getModules()[0]);
     }
 
     if (runConfigurators && dummyProject) {

@@ -16,4 +16,8 @@ data class OpenProjectTask @JvmOverloads constructor(val forceOpenInNewFrame: Bo
 
   var frame: FrameInfo? = null
   var projectWorkspaceId: String? = null
+
+  var showWelcomeScreenIfNoProjectOpened = true
+
+  var isNewProject = false
 }

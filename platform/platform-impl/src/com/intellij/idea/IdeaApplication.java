@@ -399,7 +399,7 @@ public final class IdeaApplication {
         Project projectFromCommandLine = ourPerformProjectLoad ? loadProjectFromExternalCommandLine(commandLineArgs) : null;
         app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appStarting(projectFromCommandLine);
         if (projectFromCommandLine == null && !JetBrainsProtocolHandler.appStartedWithCommand()) {
-          RecentProjectsManager.getInstance().reopenLastProjectOnStart();
+          RecentProjectsManager.getInstance().reopenLastProjectsOnStart();
         }
 
         EventQueue.invokeLater(PluginManager::reportPluginError);

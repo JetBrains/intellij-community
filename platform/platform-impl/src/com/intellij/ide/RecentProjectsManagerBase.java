@@ -27,6 +27,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameBounds;
 import com.intellij.openapi.wm.impl.SystemDock;
 import com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectPanel;
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.*;
@@ -430,7 +431,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     }
 
     if (Files.isDirectory(projectFile.resolve(Project.DIRECTORY_STORE_FOLDER))) {
-      return PlatformProjectOpenProcessor.openExistingDirectoryBasedProject(projectFile, projectFile, openProjectOptions, -1, null);
+      return PlatformProjectOpenProcessor.openExistingProject(projectFile, projectFile, openProjectOptions, null);
     }
     else {
       // If .idea is missing in the recent project's dir; this might mean, for instance, that 'git clean' was called.
@@ -556,20 +557,13 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
   }
 
   @Override
-  public void reopenLastProjectOnStart() {
-    doReopenLastProject();
-  }
-
-  protected void doReopenLastProject() {
+  public void reopenLastProjectsOnStart() {
     if (!GeneralSettings.getInstance().isReopenLastProject()) {
       return;
     }
 
-    List<Map.Entry<String, RecentProjectMetaInfo>> openPaths;
-    synchronized (myStateLock) {
-      openPaths = ContainerUtil.reverse(ContainerUtil.findAll(myState.additionalInfo.entrySet(), it -> it.getValue().opened));
-    }
-
+    List<Map.Entry<String, RecentProjectMetaInfo>> openPaths = getLastOpenedProjects();
+    boolean someProjectWasOpened = false;
     try {
       myBatchOpening = true;
       for (Map.Entry<String, RecentProjectMetaInfo> it : openPaths) {
@@ -577,12 +571,29 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
         OpenProjectTask options = new OpenProjectTask(/* forceOpenInNewFrame = */ true);
         options.setFrame(it.getValue().frame);
         options.setProjectWorkspaceId(it.getValue().projectWorkspaceId);
-        doOpenProject(it.getKey(), options);
+        options.setShowWelcomeScreenIfNoProjectOpened(false);
+        Project project = doOpenProject(it.getKey(), options);
+        if (!someProjectWasOpened) {
+          someProjectWasOpened = project != null;
+        }
       }
     }
     finally {
       myBatchOpening = false;
     }
+
+    if (!someProjectWasOpened) {
+      WelcomeFrame.showIfNoProjectOpened();
+    }
+  }
+
+  @NotNull
+  protected final List<Map.Entry<String, RecentProjectMetaInfo>> getLastOpenedProjects() {
+    List<Map.Entry<String, RecentProjectMetaInfo>> openPaths;
+    synchronized (myStateLock) {
+      openPaths = ContainerUtil.reverse(ContainerUtil.findAll(myState.additionalInfo.entrySet(), it -> it.getValue().opened));
+    }
+    return openPaths;
   }
 
   public boolean isBatchOpening() {

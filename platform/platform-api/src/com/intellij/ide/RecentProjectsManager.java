@@ -53,5 +53,5 @@ public abstract class RecentProjectsManager {
 
   public abstract boolean willReopenProjectOnStart();
 
-  public abstract void reopenLastProjectOnStart();
+  public abstract void reopenLastProjectsOnStart();
 }
