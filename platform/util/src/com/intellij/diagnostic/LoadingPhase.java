@@ -24,6 +24,7 @@ public enum LoadingPhase {
 
   public static void setCurrentPhase(LoadingPhase phase) {
     myCurrentPhase = phase;
+    LOG.info("Reached " + phase + " loading phase");
   }
 
   public static final TObjectHashingStrategy<Throwable> THROWABLE_HASHING_STRATEGY = new TObjectHashingStrategy<Throwable>() {
