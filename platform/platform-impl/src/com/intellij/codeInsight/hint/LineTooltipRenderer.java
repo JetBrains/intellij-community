@@ -10,6 +10,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.ui.GridBag;
@@ -110,7 +112,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
                               final boolean alignToRight,
                               @NotNull final TooltipGroup group,
                               @NotNull final HintHint hintHint) {
-    LightweightHint hint = createHint(editor, p, alignToRight, group, hintHint, false, true, null);
+    LightweightHint hint = createHint(editor, p, alignToRight, group, hintHint, Registry.is("editor.new.mouse.hover.popups"), true, null);
     if (hint != null) {
       HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, p, HintManager.HIDE_BY_ANY_KEY |
                                                                         HintManager.HIDE_BY_TEXT_CHANGE |
@@ -268,31 +270,31 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
           }
         }
       });
-
-      ListenerUtil.addMouseListener(grid, new MouseAdapter() {
-
-        @Override
-        public void mouseExited(final MouseEvent e) {
-          if (expanded) return;
-
-          Container parentContainer = grid;
-          //ComponentWithMnemonics is top balloon component
-          while (!(parentContainer instanceof ComponentWithMnemonics)) {
-            Container candidate = parentContainer.getParent();
-            if (candidate == null) break;
-            parentContainer = candidate;
-          }
-
-          MouseEvent newMouseEvent = SwingUtilities.convertMouseEvent(e.getComponent(), e, parentContainer);
-
-          if (parentContainer.contains(newMouseEvent.getPoint())) {
-            return;
-          }
-
-          hint.hide();
-        }
-      });
     }
+
+    ListenerUtil.addMouseListener(grid, new MouseAdapter() {
+      @Override
+      public void mouseExited(final MouseEvent e) {
+        if (expanded || JBPopupFactory.getInstance().getParentBalloonFor(grid) == null) return;
+
+        Container parentContainer = grid;
+        //ComponentWithMnemonics is top balloon component
+        while (!(parentContainer instanceof ComponentWithMnemonics)) {
+          Container candidate = parentContainer.getParent();
+          if (candidate == null) break;
+          parentContainer = candidate;
+        }
+
+        MouseEvent newMouseEvent = SwingUtilities.convertMouseEvent(e.getComponent(), e, parentContainer);
+
+        if (parentContainer.contains(newMouseEvent.getPoint())) {
+          return;
+        }
+
+        hint.hide();
+      }
+    });
+
 
     return hint;
   }
