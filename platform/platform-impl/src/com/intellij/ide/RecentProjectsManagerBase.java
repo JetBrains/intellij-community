@@ -85,6 +85,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     @Deprecated
     public final List<String> recentPaths = new SmartList<>();
 
+    @SuppressWarnings({"MissingDeprecatedAnnotation", "DeprecatedIsStillUsed"})
     @Deprecated
     public final List<String> openPaths = new SmartList<>();
 
@@ -418,15 +419,18 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
 
   @Nullable
   public Project doOpenProject(@NotNull @SystemIndependent String projectPath, @NotNull OpenProjectTask openProjectOptions) {
-    Path projectFile = Paths.get(projectPath);
+    return doOpenProject(Paths.get(projectPath), openProjectOptions);
+  }
 
+  @Nullable
+  public Project doOpenProject(@NotNull Path projectFile, @NotNull OpenProjectTask openProjectOptions) {
     Project existing = ProjectUtil.findAndFocusExistingProjectForPath(projectFile);
     if (existing != null) {
       return existing;
     }
 
     if (Files.isDirectory(projectFile.resolve(Project.DIRECTORY_STORE_FOLDER))) {
-      return PlatformProjectOpenProcessor.openExistingDirectoryBasedProjectInANewFrame(projectFile, projectFile, openProjectOptions, -1, null);
+      return PlatformProjectOpenProcessor.openExistingDirectoryBasedProject(projectFile, projectFile, openProjectOptions, -1, null);
     }
     else {
       // If .idea is missing in the recent project's dir; this might mean, for instance, that 'git clean' was called.

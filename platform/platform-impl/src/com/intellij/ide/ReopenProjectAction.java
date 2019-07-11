@@ -17,7 +17,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 
 import java.awt.event.InputEvent;
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
 * @author yole
@@ -28,11 +30,11 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
   private final String myProjectName;
   private boolean myIsRemoved = false;
 
-  public ReopenProjectAction(@NotNull @SystemIndependent String projectPath, final String projectName, final String displayName) {
+  public ReopenProjectAction(@NotNull @SystemIndependent String projectPath, String projectName, String displayName) {
     myProjectPath = projectPath;
     myProjectName = projectName;
 
-    final Presentation presentation = getTemplatePresentation();
+    Presentation presentation = getTemplatePresentation();
     String text = projectPath.equals(displayName) ? FileUtil.getLocationRelativeToUserHome(projectPath) : displayName;
     presentation.setText(text, false);
     presentation.setDescription(PathUtil.toSystemDependentName(projectPath));
@@ -54,7 +56,8 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
                                         || e.getPlace() == ActionPlaces.WELCOME_SCREEN;
 
     Project project = e.getProject();
-    if (!new File(myProjectPath).exists()) {
+    Path file = Paths.get(myProjectPath);
+    if (!Files.exists(file)) {
       if (Messages.showDialog(project, "The path " + PathUtil.toSystemDependentName(myProjectPath) + " does not exist.\n" +
                                        "If it is on a removable or network drive, please make sure that the drive is connected.",
                                        "Reopen Project", new String[]{"OK", "&Remove From List"}, 0, Messages.getErrorIcon()) == 1) {
@@ -63,8 +66,9 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
       }
       return;
     }
+
     OpenProjectTask options = new OpenProjectTask(forceOpenInNewFrame, project);
-    RecentProjectsManagerBase.getInstanceEx().doOpenProject(myProjectPath, options);
+    RecentProjectsManagerBase.getInstanceEx().doOpenProject(file, options);
   }
 
   @SystemIndependent

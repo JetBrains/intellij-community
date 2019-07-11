@@ -172,6 +172,16 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
       }
     }
 
+    return openExistingDirectoryBasedProject(file, baseDir, options, line, dummyProjectName);
+  }
+
+  @Nullable
+  @ApiStatus.Internal
+  public static Project openExistingDirectoryBasedProject(@NotNull Path file,
+                                                          @NotNull Path baseDir,
+                                                          @NotNull OpenProjectTask options,
+                                                          int line,
+                                                          @Nullable String dummyProjectName) {
     if (!options.getForceOpenInNewFrame()) {
       Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
       if (openProjects.length > 0) {
@@ -186,19 +196,6 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
       }
     }
 
-    return openExistingDirectoryBasedProjectInANewFrame(file, baseDir, options, line, dummyProjectName);
-  }
-
-  /**
-   * "new frame" also means reusing of closed project frame (that's closed by {@link #doOpenProject}) for example.
-   */
-  @Nullable
-  @ApiStatus.Internal
-  public static Project openExistingDirectoryBasedProjectInANewFrame(@NotNull Path file,
-                                                                     @NotNull Path baseDir,
-                                                                     @NotNull OpenProjectTask options,
-                                                                     int line,
-                                                                     @Nullable String dummyProjectName) {
     Pair<Project, Module> result;
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       result = prepareAndOpenProject(file, options, baseDir, dummyProjectName);
