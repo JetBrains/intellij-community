@@ -61,7 +61,6 @@ class MPSProperties extends ProductProperties {
                 withoutProjectLibrary("Ant")
                 withoutProjectLibrary("Gradle")
                 excludeFromModule("intellij.java.resources", "componentSets/*")
-                excludeFromModule("intellij.java.resources", "ProductivityFeaturesRegistry.xml")
 //                excludeFromModule("community-resources", "idea")
 //                excludeFromModule("community-resources", "lafs")
 //                excludeFromModule("community-resources", "lafs")
@@ -73,7 +72,7 @@ class MPSProperties extends ProductProperties {
                 excludeFromModule("intellij.platform.resources", "idea/PlatformActions.xml")
                 excludeFromModule("intellij.platform.resources.en", "messages/FeatureStatisticsBundle.properties")
                 //Removing Idea Tips & Tricks
-                excludeFromModule("intellij.java.ide.resources", "META-INF/IdeTipsAndTricks.xml")
+                excludeFromModule("intellij.java.ide.resources", "ProductivityFeaturesRegistry.xml")
                 excludeFromModule("intellij.java.resources.en", "tips/*")
                 excludeFromModule("intellij.platform.resources.en", "tips/*")
                 excludeFromModule("intellij.platform.remoteServers.impl", "tips/*")
