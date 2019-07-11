@@ -103,7 +103,7 @@ class CircletIdeaGraphStorageTransaction(private val storage: CircletIdeaAutomat
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun saveVolume(graphExecution: AGraphExecutionEntity, volumeId: String, volumeName: String) {
+    override fun registerVolume(graphExecution: AGraphExecutionEntity, volumeId: String, volumeName: String) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }

@@ -15,5 +15,6 @@ class CircletIdeaAJobExecutionEntity(
     override val autoProvisionVolume: Boolean,
     override val baseVolumeName: String?,
     override val isSnapshotPoint: Boolean,
-    override val volumeSize: Int?
+    override val volumeSize: Int?,
+    override var workerId: String? = null
 ) : AContainerExecutionEntity
