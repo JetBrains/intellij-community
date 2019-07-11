@@ -2,6 +2,7 @@ package org.jetbrains.plugins.textmate.language.syntax;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.textmate.Constants;
 import org.jetbrains.plugins.textmate.plist.PListValue;
@@ -9,7 +10,6 @@ import org.jetbrains.plugins.textmate.plist.Plist;
 import org.jetbrains.plugins.textmate.regex.RegexFacade;
 import org.joni.exception.JOniException;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -25,7 +25,7 @@ import java.util.Map;
  */
 public class TextMateSyntaxTable {
   private static final Logger LOG = Logger.getInstance(TextMateSyntaxTable.class);
-  private final Map<String, SyntaxNodeDescriptor> rulesMap = new HashMap<>();
+  private final Map<String, SyntaxNodeDescriptor> rulesMap = new THashMap<>();
 
   /**
    * Append table with new syntax rules in order to support new language.
@@ -105,6 +105,7 @@ public class TextMateSyntaxTable {
       result.setScopeName(scopeName);
       rulesMap.put(scopeName, result);
     }
+    result.compact();
     return result;
   }
 

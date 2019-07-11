@@ -41,4 +41,6 @@ public interface MutableSyntaxNodeDescriptor extends SyntaxNodeDescriptor {
   void appendRepository(String key, SyntaxNodeDescriptor descriptor);
 
   void setScopeName(@NotNull String scopeName);
+
+  void compact();
 }

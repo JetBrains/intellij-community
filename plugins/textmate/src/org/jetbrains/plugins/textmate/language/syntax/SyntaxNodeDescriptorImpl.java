@@ -7,20 +7,19 @@ import org.jetbrains.plugins.textmate.Constants;
 import org.jetbrains.plugins.textmate.plist.Plist;
 import org.jetbrains.plugins.textmate.regex.RegexFacade;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
   private static final Logger LOG = Logger.getInstance(SyntaxNodeDescriptor.class);
 
-  private final Map<String, String> myStringAttributes = new HashMap<>();
-  private final Map<String, RegexFacade> myRegexAttributes = new HashMap<>();
-  private final Map<String, Plist> myPlistAttributes = new HashMap<>();
-  private final List<SyntaxNodeDescriptor> myChildren = new ArrayList<>();
-  private final List<InjectionNodeDescriptor> myInjections= new ArrayList<>();
-  private final Map<String, SyntaxNodeDescriptor> myRepository = new HashMap<>();
+  private Map<String, String> myStringAttributes = new HashMap<>();
+  private Map<String, RegexFacade> myRegexAttributes = new HashMap<>();
+  private Map<String, Plist> myPlistAttributes = new HashMap<>();
+  private Map<String, SyntaxNodeDescriptor> myRepository = new HashMap<>();
+
+  private List<SyntaxNodeDescriptor> myChildren = new ArrayList<>();
+  private List<InjectionNodeDescriptor> myInjections = new ArrayList<>();
+
   private final SyntaxNodeDescriptor myParentNode;
   private String myScopeName = null;
 
@@ -80,6 +79,42 @@ class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
   @Override
   public void setScopeName(@NotNull String scopeName) {
     myScopeName = scopeName;
+  }
+
+  @Override
+  public void compact() {
+    myStringAttributes = compactMap(myStringAttributes);
+    myRegexAttributes = compactMap(myRegexAttributes);
+    myPlistAttributes = compactMap(myPlistAttributes);
+    myRepository = compactMap(myRepository);
+    myChildren = compactList(myChildren);
+    myInjections = compactList(myInjections);
+  }
+
+  private static <T> List<T> compactList(List<T> list) {
+    if (list.isEmpty()) {
+      return Collections.emptyList();
+    }
+    if (list.size() == 1) {
+      return Collections.singletonList(list.get(0));
+    }
+    if (list instanceof ArrayList) {
+      ((ArrayList<T>)list).trimToSize();
+    }
+    return list;
+  }
+
+  private static <T> Map<String, T> compactMap(Map<String, T> map) {
+    if (map.isEmpty()) {
+      return Collections.emptyMap();
+    }
+    if (map.size() == 1) {
+      Map.Entry<String, T> singleEntry = map.entrySet().iterator().next();
+      return Collections.singletonMap(singleEntry.getKey(), singleEntry.getValue());
+    }
+    return new HashMap<String, T>(map.size()) {{
+      putAll(map);
+    }};
   }
 
   @NotNull

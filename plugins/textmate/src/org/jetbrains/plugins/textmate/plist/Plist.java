@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.SimpleDateFormat;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -13,7 +13,7 @@ import java.util.Set;
 import static java.util.Collections.unmodifiableMap;
 
 public class Plist {
-  public static final Plist EMPTY_PLIST = fromMap(new HashMap<>());
+  public static final Plist EMPTY_PLIST = new Plist(Collections.emptyMap());
 
   public static SimpleDateFormat dateFormatter() {
     return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
