@@ -25,19 +25,31 @@ public class RegexFacade {
   private byte[] myRegexBytes;
   private Regex myRegex = null;
 
+  private Object lastId = null;
+  private int lastOffset = Integer.MAX_VALUE;
+  private MatchData lastMatch = MatchData.NOT_MATCHED;
+
   private RegexFacade(@NotNull byte[] regexBytes) {
     myRegexBytes = regexBytes;
   }
 
-  public MatchData match(byte[] stringBytes) {
-    return match(stringBytes, 0);
+  public MatchData match(StringWithId string) {
+    return match(string, 0);
   }
 
-  public MatchData match(@NotNull byte[] stringBytes, int byteOffset) {
+  public MatchData match(@NotNull StringWithId string, int byteOffset) {
+    if (lastId == string.id && lastOffset <= byteOffset) {
+      if (!lastMatch.matched() || lastMatch.byteOffset().getStartOffset() >= byteOffset) {
+        return lastMatch;
+      }
+    }
     ProgressManager.checkCanceled();
-    final Matcher matcher = getRegex().matcher(stringBytes);
-    int matchIndex = matcher.search(byteOffset, stringBytes.length, Option.CAPTURE_GROUP);
-    return matchIndex > -1 ? MatchData.fromRegion(matcher.getEagerRegion()) : MatchData.NOT_MATCHED;
+    lastId = string.id;
+    lastOffset = byteOffset;
+    final Matcher matcher = getRegex().matcher(string.bytes);
+    int matchIndex = matcher.search(byteOffset, string.bytes.length, Option.CAPTURE_GROUP);
+    lastMatch = matchIndex > -1 ? MatchData.fromRegion(matcher.getEagerRegion()) : MatchData.NOT_MATCHED;
+    return lastMatch;
   }
 
   public Searcher searcher(byte[] stringBytes) {
