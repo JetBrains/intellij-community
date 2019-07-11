@@ -5,8 +5,6 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ProgressSlide;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ImageLoader;
@@ -55,7 +53,7 @@ public final class Splash extends Window {
     myWidth = myImage.getWidth(null);
     myHeight = myImage.getHeight(null);
     Dimension size = new Dimension(myWidth, myHeight);
-    if (UIUtil.SUPPRESS_FOCUS_STEALING && Registry.is("suppress.focus.stealing.auto.request.focus")) {
+    if (!"false".equals(System.getProperty("suppress.focus.stealing")) && !"false".equals(System.getProperty("suppress.focus.stealing.auto.request.focus")) && Boolean.getBoolean("suppress.focus.stealing.linux")) {
       setAutoRequestFocus(false);
     }
     setSize(size);
