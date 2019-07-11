@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem.model;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +43,7 @@ public class DataNode<T> implements UserDataHolderEx, Serializable {
   private DataNode<?> parent;
 
   @NotNull
-  private final List<DataNode<?>> children = new ArrayList<>();
+  private List<DataNode<?>> children = Collections.emptyList();
 
   @Nullable
   private transient List<DataNode<?>> childrenView;
@@ -70,7 +71,7 @@ public class DataNode<T> implements UserDataHolderEx, Serializable {
   @NotNull
   public <T> DataNode<T> createChild(@NotNull Key<T> key, @NotNull T data) {
     DataNode<T> result = new DataNode<>(key, data, this);
-    children.add(result);
+    doAddChild(result);
     return result;
   }
 
@@ -158,7 +159,21 @@ public class DataNode<T> implements UserDataHolderEx, Serializable {
 
   public void addChild(@NotNull DataNode<?> child) {
     child.parent = this;
-    children.add(child);
+    doAddChild(child);
+  }
+
+  private void doAddChild(@NotNull DataNode<?> child) {
+    if (children.isEmpty()) {
+      initChildren(new SmartList<>(child));
+    }
+    else {
+      children.add(child);
+    }
+  }
+
+  private void initChildren(List<DataNode<?>> children) {
+    this.children = children;
+    childrenView = null;
   }
 
   @NotNull
@@ -206,17 +221,18 @@ public class DataNode<T> implements UserDataHolderEx, Serializable {
   }
 
   public void clear(boolean removeFromGraph) {
-    if (removeFromGraph && parent != null) {
+    if (removeFromGraph && parent != null && !parent.children.isEmpty()) {
       for (Iterator<DataNode<?>> iterator = parent.children.iterator(); iterator.hasNext(); ) {
         DataNode<?> dataNode = iterator.next();
         if (System.identityHashCode(dataNode) == System.identityHashCode(this)) {
           iterator.remove();
+          if (parent.children.isEmpty()) parent.initChildren(Collections.emptyList());
           break;
         }
       }
     }
     parent = null;
-    children.clear();
+    initChildren(Collections.emptyList());
   }
 
   @NotNull
