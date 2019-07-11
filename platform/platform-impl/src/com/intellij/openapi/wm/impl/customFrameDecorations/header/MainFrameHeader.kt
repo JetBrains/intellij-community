@@ -50,7 +50,6 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
 
       override fun createActionMenu(enableMnemonics: Boolean, isDarkMenu: Boolean, action: ActionGroup?): ActionMenu {
         val actionMenu = super.createActionMenu(enableMnemonics, isDarkMenu, action)
-        actionMenu.isOpaque = false
 
         return actionMenu
       }
