@@ -47,13 +47,8 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    //Force move focus to IdeFrame
+    // force move focus to IdeFrame
     IdeEventQueue.getInstance().getPopupManager().closeAllPopups();
-
-    final int modifiers = e.getModifiers();
-    final boolean forceOpenInNewFrame = BitUtil.isSet(modifiers, InputEvent.CTRL_MASK)
-                                        || BitUtil.isSet(modifiers, InputEvent.SHIFT_MASK)
-                                        || e.getPlace() == ActionPlaces.WELCOME_SCREEN;
 
     Project project = e.getProject();
     Path file = Paths.get(myProjectPath);
@@ -67,8 +62,12 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
       return;
     }
 
-    OpenProjectTask options = new OpenProjectTask(forceOpenInNewFrame, project);
-    RecentProjectsManagerBase.getInstanceEx().doOpenProject(file, options);
+
+    int modifiers = e.getModifiers();
+    boolean forceOpenInNewFrame = BitUtil.isSet(modifiers, InputEvent.CTRL_MASK)
+                                  || BitUtil.isSet(modifiers, InputEvent.SHIFT_MASK)
+                                  || e.getPlace() == ActionPlaces.WELCOME_SCREEN;
+    RecentProjectsManagerBase.getInstanceEx().doOpenProject(file, new OpenProjectTask(forceOpenInNewFrame, project));
   }
 
   @SystemIndependent
