@@ -40,15 +40,18 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
    * no substitutor has returned anything.
    */
   @NotNull
-  public Language substituteLanguage(@NotNull Language lang, @NotNull VirtualFile file, @NotNull Project project) {
-    for (LanguageSubstitutor substitutor : forKey(lang)) {
-      Language language = substitutor.getLanguage(file, project);
-      if (language != null) {
-        processLanguageSubstitution(file, lang, language, project);
-        return language;
+  public Language substituteLanguage(@NotNull Language originalLang, @NotNull VirtualFile file, @NotNull Project project) {
+    for (LanguageSubstitutor substitutor : forKey(originalLang)) {
+      Language substitutedLang = substitutor.getLanguage(file, project);
+      if (substitutedLang != null) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("For " + originalLang + " and " + file + ", " + substitutor.getClass().getName() + " returned '" + substitutedLang + "' of " + substitutedLang.getClass());
+        }
+        processLanguageSubstitution(file, originalLang, substitutedLang, project);
+        return substitutedLang;
       }
     }
-    return lang;
+    return originalLang;
   }
 
   private static void processLanguageSubstitution(@NotNull final VirtualFile file,
