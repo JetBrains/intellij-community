@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbModeTask;
@@ -200,6 +201,8 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
   }
 
   private void runActivity(@NotNull AtomicBoolean uiFreezeWarned, @NotNull StartupActivity extension, @NotNull PluginDescriptor pluginDescriptor) {
+    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    if (indicator != null) indicator.pushState();
     long startTime = StartUpMeasurer.getCurrentTime();
     try {
       extension.runActivity(myProject);
@@ -213,16 +216,23 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
     catch (Throwable e) {
       LOG.error(e);
     }
+    finally {
+      if (indicator != null) indicator.popState();
+    }
 
     String pluginId = pluginDescriptor.getPluginId().getIdString();
     long duration = ParallelActivity.POST_STARTUP_ACTIVITY.record(startTime, extension.getClass(), null, pluginId);
     if (duration > EDT_WARN_THRESHOLD_IN_NANO) {
-      Application app = ApplicationManager.getApplication();
-      if (!app.isUnitTestMode() && app.isDispatchThread() && uiFreezeWarned.compareAndSet(false, true)) {
-        LOG.info(
-          "Some post-startup activities freeze UI for noticeable time. Please consider making them DumbAware to run them in background" +
-          " under modal progress, or just making them faster to speed up project opening.");
-      }
+      reportUiFreeze(uiFreezeWarned);
+    }
+  }
+
+  private static void reportUiFreeze(@NotNull AtomicBoolean uiFreezeWarned) {
+    Application app = ApplicationManager.getApplication();
+    if (!app.isUnitTestMode() && app.isDispatchThread() && uiFreezeWarned.compareAndSet(false, true)) {
+      LOG.info(
+        "Some post-startup activities freeze UI for noticeable time. Please consider making them DumbAware to run them in background" +
+        " under modal progress, or just making them faster to speed up project opening.");
     }
   }
 
