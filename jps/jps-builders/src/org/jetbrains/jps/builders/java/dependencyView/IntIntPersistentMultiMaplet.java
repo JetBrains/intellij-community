@@ -6,11 +6,11 @@ import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.io.PersistentHashMap;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
+import org.jetbrains.jps.incremental.storage.JpsPersistentHashMap;
 
 import java.io.*;
 
@@ -20,11 +20,11 @@ import java.io.*;
 public class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   private static final TIntHashSet NULL_COLLECTION = new TIntHashSet();
   private static final int CACHE_SIZE = 128;
-  private final PersistentHashMap<Integer, TIntHashSet> myMap;
+  private final JpsPersistentHashMap<Integer, TIntHashSet> myMap;
   private final SLRUCache<Integer, TIntHashSet> myCache;
 
   public IntIntPersistentMultiMaplet(final File file, final KeyDescriptor<Integer> keyExternalizer) throws IOException {
-    myMap = new PersistentHashMap<>(file, keyExternalizer, new IntSetExternalizer());
+    myMap = new JpsPersistentHashMap<>(file, keyExternalizer, new IntSetExternalizer());
     myCache = new SLRUCache<Integer, TIntHashSet>(CACHE_SIZE, CACHE_SIZE) {
       @NotNull
       @Override

@@ -69,7 +69,7 @@ public class OutputToTargetRegistry extends AbstractStateStorage<Integer, TIntHa
     final TIntHashSet set = new TIntHashSet();
     set.add(buildTargetId);
     for (String outputPath : outputPaths) {
-      appendDataWithoutCache(FileUtil.pathHashCode(relativePath(outputPath)), set);
+      appendData(FileUtil.pathHashCode(relativePath(outputPath)), set);
     }
   }
 

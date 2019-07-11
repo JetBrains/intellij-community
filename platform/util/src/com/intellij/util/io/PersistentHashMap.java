@@ -429,30 +429,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     }
   }
 
-  /**
-   * This method is used to append value directly into the chunk without saving to cache.
-   * It can be used in case of non changed appended data like in JSP. The main goal for now
-   * is to avoid binary data changes in saving during JPS builds because of flushing cache.
-   */
-  public final void appendDataWithoutCache(Key key, @NotNull Value value) throws IOException {
-    if (myIsReadOnly) throw new IncorrectOperationException();
-    synchronized (myEnumerator) {
-      try {
-        final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
-        AppendStream appenderStream = ourFlyweightAppenderStream.getValue();
-        appenderStream.setOut(bytes);
-        myValueExternalizer.save(appenderStream, value);
-        appenderStream.setOut(null);
-        appendDataWithoutCache(key, bytes);
-      }
-      catch (IOException ex) {
-        myEnumerator.markCorrupted();
-        throw ex;
-      }
-    }
-  }
-
-  private void appendDataWithoutCache(Key key, @NotNull final BufferExposingByteArrayOutputStream bytes) {
+  protected void appendDataWithoutCache(Key key, @NotNull final BufferExposingByteArrayOutputStream bytes) {
     myEnumerator.lockStorage();
     try {
       long previousRecord;
