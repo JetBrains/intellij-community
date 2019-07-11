@@ -53,6 +53,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
@@ -163,12 +164,19 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   }
 
   public void initRecentFilesTimestampMap(@NotNull Project project) {
+    File file = ProjectUtil.getProjectCachePath(project, "recentFilesTimeStamps.dat").toFile();
     try {
-      myRecentFilesTimestampsMap = new PersistentHashMap<>(ProjectUtil.getProjectCachePath(project, "recentFilesTimeStamps.dat").toFile(),
-                                                           EnumeratorStringDescriptor.INSTANCE, EnumeratorLongDescriptor.INSTANCE);
+      myRecentFilesTimestampsMap = new PersistentHashMap<>(file, EnumeratorStringDescriptor.INSTANCE, EnumeratorLongDescriptor.INSTANCE);
     }
     catch (IOException e) {
-      LOG.error("Cannot create persistent hash map for storing viewed files timestamps", e);
+      LOG.info("Cannot create persistent hash map for storing viewed files timestamps, let's try to clear cash", e);
+      PersistentHashMap.deleteFilesStartingWith(file);
+      try {
+        myRecentFilesTimestampsMap = new PersistentHashMap<>(file, EnumeratorStringDescriptor.INSTANCE, EnumeratorLongDescriptor.INSTANCE);
+      }
+      catch (IOException e1) {
+        LOG.error("Cannot create persistent hash map for storing viewed files timestamps even after deleting old files", e1);
+      }
     }
 
     Disposer.register(this, () -> {
