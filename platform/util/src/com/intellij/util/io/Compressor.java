@@ -8,10 +8,12 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.util.function.BiPredicate;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
@@ -130,9 +132,16 @@ public abstract class Compressor implements Closeable {
     }
   }
 
-  private Condition<? super String> myFilter = null;
+  private BiPredicate<String, Boolean> myFilter = null;
 
+  /** @deprecated use {@link #filter(BiPredicate)} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public Compressor filter(@Nullable Condition<? super String> filter) {
+    return filter(filter != null ? (entryName, isDirectory) -> filter.value(entryName) : null);
+  }
+
+  public Compressor filter(@Nullable BiPredicate<String, Boolean> filter) {
     myFilter = filter;
     return this;
   }
@@ -142,7 +151,7 @@ public abstract class Compressor implements Closeable {
   }
 
   private void addFile(String entryName, File file, boolean checkParents) throws IOException {
-    if (accepts(entryName, checkParents)) {
+    if (accepts(entryName, Boolean.FALSE, checkParents)) {
       try (InputStream source = new FileInputStream(file)) {
         writeFileEntry(entryName, source, file.length(), file.lastModified());
       }
@@ -155,7 +164,7 @@ public abstract class Compressor implements Closeable {
 
   public final void addFile(@NotNull String entryName, @NotNull byte[] content, long timestamp) throws IOException {
     entryName = entryName(entryName);
-    if (accepts(entryName, true)) {
+    if (accepts(entryName, Boolean.FALSE, true)) {
       writeFileEntry(entryName, new ByteArrayInputStream(content), content.length, timestamp(timestamp));
     }
   }
@@ -166,7 +175,7 @@ public abstract class Compressor implements Closeable {
 
   public final void addFile(@NotNull String entryName, @NotNull InputStream content, long timestamp) throws IOException {
     entryName = entryName(entryName);
-    if (accepts(entryName, true)) {
+    if (accepts(entryName, Boolean.FALSE, true)) {
       writeFileEntry(entryName, content, -1, timestamp(timestamp));
     }
   }
@@ -177,7 +186,7 @@ public abstract class Compressor implements Closeable {
 
   public final void addDirectory(@NotNull String entryName, long timestamp) throws IOException {
     entryName = entryName(entryName);
-    if (accepts(entryName, true)) {
+    if (accepts(entryName, Boolean.TRUE, true)) {
       writeDirectoryEntry(entryName, timestamp(timestamp));
     }
   }
@@ -188,7 +197,7 @@ public abstract class Compressor implements Closeable {
 
   public final void addDirectory(@NotNull String prefix, @NotNull File directory) throws IOException {
     prefix = entryName(prefix);
-    if (accepts(prefix, true)) {
+    if (accepts(prefix, Boolean.TRUE, true)) {
       addRecursively(prefix, directory);
     }
   }
@@ -206,22 +215,22 @@ public abstract class Compressor implements Closeable {
     return timestamp == -1 ? System.currentTimeMillis() : timestamp;
   }
 
-  private boolean accepts(String entryName, boolean checkParents) {
+  private boolean accepts(String entryName, Boolean isDirectory, boolean checkParents) {
     if (myFilter == null) return true;
     if (checkParents) {
       int p = -1;
       while ((p = entryName.indexOf('/', p + 1)) > 0) {
-        if (!myFilter.value(entryName.substring(0, p))) {
+        if (!myFilter.test(entryName.substring(0, p), Boolean.TRUE)) {
           return false;
         }
       }
     }
-    return myFilter.value(entryName);
+    return myFilter.test(entryName, isDirectory);
   }
 
   private void addRecursively(String prefix, File directory) throws IOException {
     if (!prefix.isEmpty()) {
-      if (!accepts(prefix, false)) {
+      if (!accepts(prefix, Boolean.TRUE, false)) {
         return;
       }
       else {
