@@ -248,7 +248,7 @@ public final class CommentFoldingUtil {
     final int nFirstCommentLine = document.getLineNumber(commentRange.getStartOffset());
 
     TextRange lineRange = getLineRange(document, nFirstCommentLine);
-    String line = getCommentLine(document, lineRange, commentPrefix, commentSuffix);
+    String line = getCommentLine(document, lineRange, commentRange, commentPrefix, commentSuffix);
 
     if (line.chars().anyMatch(c -> !StringUtil.isWhiteSpace((char)c))) return line;
 
@@ -257,7 +257,7 @@ public final class CommentFoldingUtil {
 
     lineRange = getLineRange(document, nSecondCommentLine);
     if (lineRange.getEndOffset() > commentRange.getEndOffset()) return "";
-    line = getCommentLine(document, lineRange, linePrefix, commentSuffix);
+    line = getCommentLine(document, lineRange, commentRange, linePrefix, commentSuffix);
 
     if (line.chars().anyMatch(c -> !StringUtil.isWhiteSpace((char)c))) return line;
 
@@ -275,12 +275,20 @@ public final class CommentFoldingUtil {
   @NotNull
   private static String getCommentLine(@NotNull Document document,
                                        @NotNull TextRange lineRange,
+                                       @NotNull TextRange commentRange,
                                        @NotNull String prefix,
                                        @NotNull String suffix) {
-    String line = document.getText(lineRange);
-    line = line.trim();
+    int startOffset = Math.max(lineRange.getStartOffset(), commentRange.getStartOffset());
+    int endOffset = Math.min(lineRange.getEndOffset(), commentRange.getEndOffset());
 
-    line = StringUtil.trimEnd(line, suffix);
-    return StringUtil.trimStart(line, prefix);
+    String commentPart = document.getText(new TextRange(startOffset, endOffset));
+
+    int suffixIdx = commentPart.indexOf(suffix);
+    if (suffixIdx != -1) commentPart = commentPart.substring(0, suffixIdx).trim();
+
+    int prefixIdx = commentPart.indexOf(prefix);
+    if (prefixIdx != -1) commentPart = commentPart.substring(prefixIdx + prefix.length());
+
+    return commentPart;
   }
 }

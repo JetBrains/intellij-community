@@ -23,6 +23,8 @@ class Test {
   void bar(char c) <fold text='{}'>{
   }</fold>
 
+  boolean b1 = true; <fold text='/** javadoc with code on the same line ...*/'>/** javadoc with code on the same line */</fold> boolean b2 = false; <fold text='/** second javadoc with code on the same line ...*/'>/** second javadoc with code on the same line */</fold>
+
   <fold text='/** first line ...*/'>/** first line
    * second line
    */</fold>
