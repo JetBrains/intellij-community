@@ -429,7 +429,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     File patchFile = getPatchFileInConfigDir(schemePatchDir);
     ProgressManager.checkCanceled();
     final List<FilePatch> patches =
-      IdeaTextPatchBuilder.buildPatch(myProject, textChanges, myProject.getBaseDir().getPresentableUrl(), false, honorExcludedFromCommit);
+      IdeaTextPatchBuilder.buildPatch(myProject, textChanges, myProject.getPresentableUrl(), false, honorExcludedFromCommit);
     ProgressManager.checkCanceled();
 
     CommitContext commitContext = new CommitContext();
