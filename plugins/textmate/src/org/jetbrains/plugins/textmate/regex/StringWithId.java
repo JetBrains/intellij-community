@@ -4,12 +4,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 public class StringWithId {
-  public final String string;
   public final byte[] bytes;
   public final Object id;
 
   public StringWithId(String string) {
-    this.string = string;
     bytes = string.getBytes(StandardCharsets.UTF_8);
     id = new Object();
   }
