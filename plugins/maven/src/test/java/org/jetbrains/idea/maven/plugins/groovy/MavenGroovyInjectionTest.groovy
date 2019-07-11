@@ -77,6 +77,55 @@ class MavenGroovyInjectionTest extends LightJavaCodeInsightFixtureTestCase {
     assert lookups.containsAll(["String", "StringBuffer", "StringBuilder"])
   }
 
+  void testCompletionWithGmavenPlusPlugin() {
+    myFixture.configureByText("pom.xml", """
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>simpleMaven</groupId>
+  <artifactId>simpleMaven</artifactId>
+  <version>1.0</version>
+
+  <packaging>jar</packaging>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.gmavenplus</groupId>
+        <artifactId>gmavenplus-plugin</artifactId>
+        <version>1.0</version>
+        <executions>
+          <execution>
+            <id>gmavenplus-plugin-execution</id>
+            <phase>package</phase>
+            <goals>
+              <goal>execute</goal>
+            </goals>
+            <configuration>
+              <scripts>
+                <script>
+                  Collect<caret>
+                </script>
+              </scripts>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>
+""")
+
+    myFixture.completeBasic()
+
+    def lookups = myFixture.lookupElementStrings
+    assert lookups.containsAll(["Collection", "Collections", "AbstractCollection"])
+  }
+
   void testCompletion2() {
     myFixture.configureByText("pom.xml", """
 <?xml version="1.0" encoding="UTF-8"?>
@@ -192,6 +241,55 @@ class MavenGroovyInjectionTest extends LightJavaCodeInsightFixtureTestCase {
 
     assert element instanceof GrVariable
     assert element.getDeclaredType().getPresentableText() == "MavenProject"
+  }
+
+  void testInjectionVariablesWithGmavenPlusPlugin() {
+    myFixture.configureByText("pom.xml", """
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>simpleMaven</groupId>
+  <artifactId>simpleMaven</artifactId>
+  <version>1.0</version>
+
+  <packaging>jar</packaging>
+
+  <build>
+    <plugins>
+            <plugin>
+                <groupId>org.codehaus.gmavenplus</groupId>
+                <artifactId>gmavenplus-plugin</artifactId>
+                <version>1.0</version>
+                <executions>
+                  <execution>
+                    <id>gmavenplus-plugin-execution</id>
+                    <phase>package</phase>
+                    <goals>
+                      <goal>execute</goal>
+                    </goals>
+                    <configuration>
+                      <scripts>
+                        <script>
+                          println session<caret>
+                        </script>
+                      </scripts>
+                    </configuration>
+                  </execution>
+                </executions>
+            </plugin>
+    </plugins>
+  </build>
+
+</project>
+""")
+
+    def element = myFixture.getElementAtCaret()
+
+    assert element instanceof GrVariable
+    assert element.getDeclaredType().getPresentableText() == "MavenSession"
   }
 
   void testHighlighting() {

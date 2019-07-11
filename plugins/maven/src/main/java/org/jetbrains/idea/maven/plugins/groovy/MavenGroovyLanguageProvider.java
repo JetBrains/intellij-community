@@ -32,6 +32,7 @@ public class MavenGroovyLanguageProvider extends MavenParamLanguageProvider {
   @Override
   public Language getLanguage(@NotNull XmlText xmlText, @NotNull MavenDomConfiguration configuration) {
     // Parameter 'source' of gmaven-plugin can be a peace of groovy code or file path or URL.
+    // Same applies to 'scripts.script' parameter of gmavenplus-plugin.
 
     String text = xmlText.getText();
 

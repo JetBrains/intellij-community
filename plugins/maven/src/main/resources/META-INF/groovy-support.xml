@@ -17,6 +17,10 @@
     <pluginDescriptor mavenId="org.codehaus.gmaven:groovy-maven-plugin">
       <param name="source" languageProvider="org.jetbrains.idea.maven.plugins.groovy.MavenGroovyLanguageProvider"/>
     </pluginDescriptor>
+
+    <pluginDescriptor mavenId="org.codehaus.gmavenplus:gmavenplus-plugin">
+      <param name="scripts/script" languageProvider="org.jetbrains.idea.maven.plugins.groovy.MavenGroovyLanguageProvider"/>
+    </pluginDescriptor>
   </extensions>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
