@@ -99,9 +99,7 @@ public class ImageInfoReader {
         return new Info(w, h, bpp, false);
       }
     }
-    catch (Throwable e) {
-      LOG.warn(inputName, e);
-    }
+    catch (Throwable ignore) {}
     return null;
   }
 
