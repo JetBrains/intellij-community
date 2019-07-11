@@ -5,7 +5,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
 
-    <fileTypeFactory implementation="com.jetbrains.rest.RestFileTypeFactory"/>
+    <fileType name="ReST" language="ReST" extensions="rst" implementationClass="com.jetbrains.rest.RestFileType" fieldName="INSTANCE"/>
     <lang.syntaxHighlighterFactory language="ReST"
                                    implementationClass="com.jetbrains.rest.RestHighlighterFactory"/>
     <lang.parserDefinition language="ReST" implementationClass="com.jetbrains.rest.parsing.RestParserDefinition"/>

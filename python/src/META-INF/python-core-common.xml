@@ -16,7 +16,13 @@
     <nameSuggestionProvider implementation="com.jetbrains.python.refactoring.PyNameSuggestionProvider"/>
     <methodNavigationOffsetProvider implementation="com.jetbrains.python.codeInsight.PyMethodNavigationOffsetProvider"/>
     <copyPastePreProcessor implementation="com.jetbrains.python.editor.PythonCopyPasteProcessor"/>
-    <fileTypeFactory implementation="com.jetbrains.python.PythonFileTypeFactory"/>
+    <fileType name="Python"
+              language="Python"
+              extensions="py;pyw;"
+              implementationClass="com.jetbrains.python.PythonFileType"
+              fieldName="INSTANCE"/>
+    <fileType name="Qt UI file" language="XML" extensions="ui" implementationClass="com.jetbrains.pyqt.QtUIFileType" fieldName="INSTANCE"/>
+    <fileType name="XML" language="XML" extensions="qrc"/>
     <fileTypeDetector implementation="com.jetbrains.python.PyFileTypeDetector"/>
     <editorHighlighterProvider filetype="Python" implementationClass="com.jetbrains.python.PyEditorHighlighterProvider"/>
     <lang.syntaxHighlighterFactory language="Python" implementationClass="com.jetbrains.python.highlighting.PySyntaxHighlighterFactory"/>
@@ -615,7 +621,11 @@
     <!-- typing -->
     <multiHostInjector implementation="com.jetbrains.python.codeInsight.typing.PyTypingAnnotationInjector"/>
     <lang.parserDefinition language="PythonStub" implementationClass="com.jetbrains.python.pyi.PyiParserDefinition"/>
-    <fileTypeFactory implementation="com.jetbrains.python.pyi.PyiFileTypeFactory"/>
+    <fileType name="PythonStub"
+              language="PythonStub"
+              extensions="pyi"
+              implementationClass="com.jetbrains.python.pyi.PyiFileType"
+              fieldName="INSTANCE"/>
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.pyi.PyiRelatedItemLineMarkerProvider"/>
 
     <lang.inspectionSuppressor language="Python" implementationClass="com.jetbrains.python.inspections.PyInspectionsSuppressor"/>
