@@ -9,7 +9,10 @@ import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListOwner;
+import com.intellij.openapi.vcs.changes.LocallyDeletedChange;
+import com.intellij.openapi.vcs.changes.LogicalLock;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -324,7 +327,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   }
 
   protected static int compareFilePaths(@NotNull FilePath path1, @NotNull FilePath path2) {
-    return HierarchicalFilePathComparator.NATURAL.compare(path1, path2);
+    return ChangesComparator.getFilePathComparator(true).compare(path1, path2);
   }
 
   public void setAttributes(@NotNull SimpleTextAttributes attributes) {
