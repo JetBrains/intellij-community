@@ -479,7 +479,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
 
   @NotNull
-  ChangesBrowserNode<?> getRoot() {
+  public ChangesBrowserNode<?> getRoot() {
     return (ChangesBrowserNode<?>)getModel().getRoot();
   }
 
