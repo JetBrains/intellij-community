@@ -8,6 +8,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public abstract class AbstractJavaChopListAction<L extends PsiElement, E extends PsiElement> extends AbstractChopListAction<L, E> {
@@ -28,5 +30,10 @@ public abstract class AbstractJavaChopListAction<L extends PsiElement, E extends
     PsiJavaToken token = tryCast(PsiTreeUtil.skipWhitespacesAndCommentsForward(element), PsiJavaToken.class);
     if (token != null && token.getTokenType() == JavaTokenType.COMMA) return token.getTextRange().getEndOffset();
     return element.getTextRange().getEndOffset();
+  }
+
+  @Override
+  protected boolean canChop(List<E> elements) {
+    return !JavaListUtils.containsEolComments(elements);
   }
 }

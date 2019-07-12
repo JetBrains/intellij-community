@@ -51,6 +51,10 @@ public abstract class AbstractChopListAction<L extends PsiElement, E extends Psi
     return element.getTextRange().getStartOffset();
   }
 
+  protected boolean canChop(List<E> elements) {
+    return true;
+  }
+
   private static class Context<L extends PsiElement, E extends PsiElement> {
     final @NotNull L list;
     final @NotNull List<E> elements;
@@ -68,7 +72,9 @@ public abstract class AbstractChopListAction<L extends PsiElement, E extends Psi
     List<E> elements = getElements(list);
     if (elements == null) return null;
     if (elements.size() < minElementCount()) return null;
+    if (!canChop(elements)) return null;
     if (!hasElementsNotOnSeparateLines(elements)) return null;
+    canChop(elements);
     return new Context<>(list, elements);
   }
 

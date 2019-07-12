@@ -6,6 +6,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 class JavaListUtils {
   private JavaListUtils() { }
 
@@ -20,13 +22,24 @@ class JavaListUtils {
   }
 
   @Nullable
-  static PsiElement  nextBreak(@NotNull PsiElement element) {
+  static PsiElement nextBreak(@NotNull PsiElement element) {
     PsiElement current = element.getNextSibling();
     while (current != null && isValidIntermediateElement(current)) {
       if (current instanceof PsiWhiteSpace && current.textContains('\n')) return current;
       current = current.getNextSibling();
     }
     return null;
+  }
+
+
+  static boolean containsEolComments(@NotNull List<? extends PsiElement> elements) {
+    PsiElement parent = elements.get(0).getParent();
+    for (PsiElement child : parent.getChildren()) {
+      if (child instanceof PsiComment && ((PsiComment)child).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean isValidIntermediateElement(@NotNull PsiElement element) {
