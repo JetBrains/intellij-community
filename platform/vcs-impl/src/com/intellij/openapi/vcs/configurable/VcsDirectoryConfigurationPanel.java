@@ -577,7 +577,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   }
 
   private JComponent createShowRecursivelyDirtyOption() {
-    myShowChangedRecursively = new JCheckBox("Show directories with changed descendants", myVcsConfiguration.SHOW_DIRTY_RECURSIVELY);
+    myShowChangedRecursively = new JCheckBox(VcsBundle.message("checkbox.show.dirty.recursively"), myVcsConfiguration.SHOW_DIRTY_RECURSIVELY);
     return myShowChangedRecursively;
   }
 

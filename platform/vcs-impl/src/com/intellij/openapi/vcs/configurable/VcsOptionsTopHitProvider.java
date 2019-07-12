@@ -47,32 +47,33 @@ public final class VcsOptionsTopHitProvider implements OptionsSearchTopHitProvid
     ArrayList<BooleanOptionDescription> options = new ArrayList<>();
 
     String id = "project.propVCSSupport.Mappings"; // process Version Control settings
-    options.add(option(vcs, id, "Limit history by " + vcs.MAXIMUM_HISTORY_ROWS + " rows", "LIMIT_HISTORY"));
-    options.add(option(vcs, id, "Show directories with changed descendants", "SHOW_DIRTY_RECURSIVELY"));
+    options.add(option(vcs, id, "Version Control: Limit history by " + vcs.MAXIMUM_HISTORY_ROWS + " rows", "LIMIT_HISTORY"));
+    options.add(option(vcs, id, "Version Control: " + VcsBundle.message("checkbox.show.dirty.recursively"), "SHOW_DIRTY_RECURSIVELY"));
+
     VcsContentAnnotationSettings vcsCA = VcsContentAnnotationSettings.getInstance(project);
     if (vcsCA != null) {
-      options.add(option(vcsCA, id, "Show changed in last " + vcsCA.getLimitDays() + " days", "isShow", "setShow"));
+      options.add(option(vcsCA, id, "Version Control: Show changed in last " + vcsCA.getLimitDays() + " days", "isShow", "setShow"));
     }
-    options.add(option(vcs, id, "Commit message right margin " + getBodyRightMargin(project) + " columns", "USE_COMMIT_MESSAGE_MARGIN"));
-    options.add(option(vcs, id, ApplicationBundle.message("checkbox.wrap.typing.on.right.margin"), "WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN"));
+    options.add(option(vcs, id, "Commit message: Show right margin at " + getBodyRightMargin(project) + " columns", "USE_COMMIT_MESSAGE_MARGIN"));
+    options.add(option(vcs, id, "Commit message: " + ApplicationBundle.message("checkbox.wrap.typing.on.right.margin"), "WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN"));
 
     id = "project.propVCSSupport.Confirmation"; // process Version Control / Confirmation settings
     ReadonlyStatusHandler vcsROSH = ReadonlyStatusHandler.getInstance(project);
     if (vcsROSH instanceof ReadonlyStatusHandlerImpl) {
-      options.add(option(((ReadonlyStatusHandlerImpl)vcsROSH).getState(), id, "Show \"Clear Read-only Status\" Dialog", "SHOW_DIALOG"));
+      options.add(option(((ReadonlyStatusHandlerImpl)vcsROSH).getState(), id, VcsBundle.message("checkbox.show.clear.read.only.status.dialog"), "SHOW_DIALOG"));
     }
-    options.add(option(vcs, id, "Confirmation: Suggest to move uncommitted changes to another changelist", "OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT"));
-    options.add(option(vcs, id, "Confirmation: Force non-empty checkin comments", "FORCE_NON_EMPTY_COMMENT"));
-    options.add(option(vcs, id, "Confirmation: Clear initial commit message", "CLEAR_INITIAL_COMMIT_MESSAGE"));
+    options.add(option(vcs, id, "Confirmation: " + VcsBundle.message("checkbox.changelist.move.offer"), "OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT"));
+    options.add(option(vcs, id, "Confirmation: " + VcsBundle.message("checkbox.force.non.empty.messages" ), "FORCE_NON_EMPTY_COMMENT"));
+    options.add(option(vcs, id, "Confirmation: " + VcsBundle.message("checkbox.clear.initial.commit.message" ), "CLEAR_INITIAL_COMMIT_MESSAGE"));
 
     id = ShelfProjectConfigurable.HELP_ID;
     options.add(option(vcs, id, VcsBundle.message("vcs.shelf.store.base.content"), "INCLUDE_TEXT_INTO_SHELF"));
 
     if (!project.isDefault()) {
       // process Version Control / Changelist Conflicts settings
-      options.add(tracker(project, "Changelists: Show conflict resolving dialog", "SHOW_DIALOG"));
-      options.add(tracker(project, "Changelists: Highlight files with conflicts", "HIGHLIGHT_CONFLICTS"));
-      options.add(tracker(project, "Changelists: Highlight files from non-active changelists", "HIGHLIGHT_NON_ACTIVE_CHANGELIST"));
+      options.add(tracker(project, "Changelists: " + VcsBundle.message("settings.show.conflict.resolve.dialog.checkbox"), "SHOW_DIALOG"));
+      options.add(tracker(project, "Changelists: " + VcsBundle.message("settings.highlight.files.with.conflicts.checkbox"), "HIGHLIGHT_CONFLICTS"));
+      options.add(tracker(project, "Changelists: " + VcsBundle.message("settings.highlight.files.from.non.active.changelist.checkbox"), "HIGHLIGHT_NON_ACTIVE_CHANGELIST"));
     }
     return Collections.unmodifiableCollection(options);
   }
