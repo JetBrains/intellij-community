@@ -126,7 +126,7 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
   public boolean collectElementsToInvert(PsiElement namedElement, PsiElement expression, Collection<PsiElement> elementsToInvert) {
     boolean toInvert = super.collectElementsToInvert(namedElement, expression, elementsToInvert);
     PsiElement parent = expression.getParent();
-    if (parent instanceof PsiAssignmentExpression && !(parent.getParent() instanceof PsiExpressionStatement)) {
+    if (parent instanceof PsiAssignmentExpression && !(parent.getParent() instanceof PsiExpressionStatement) || isOperatorAssignment(parent)) {
       elementsToInvert.add(parent);
     }
     return toInvert;
@@ -138,7 +138,7 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
       final PsiReferenceExpression refExpr = (PsiReferenceExpression)element;
       PsiElement parent = refExpr.getParent();
       if (parent instanceof PsiAssignmentExpression && refExpr.equals(((PsiAssignmentExpression)parent).getLExpression())) {
-        return ((PsiAssignmentExpression)parent).getRExpression();
+        return ((PsiAssignmentExpression)parent).getOperationTokenType() == JavaTokenType.EQ ? ((PsiAssignmentExpression)parent).getRExpression() : parent;
       }
       else {
         if (namedElement instanceof PsiParameter) { //filter usages in super method calls
@@ -190,11 +190,15 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
         callExpression.replace(negatedExpression);
       }
     }
-    else if (!(expression.getParent() instanceof PsiExpressionStatement)) {
+    else if (!(expression.getParent() instanceof PsiExpressionStatement) || isOperatorAssignment(expression)) {
       PsiExpression negatedExpression = JavaPsiFacade.getElementFactory(expression.getProject())
           .createExpressionFromText(BoolUtils.getNegatedExpressionText((PsiExpression)expression), expression);
       expression.replace(negatedExpression);
     }
+  }
+
+  private static boolean isOperatorAssignment(@NotNull PsiElement expression) {
+    return expression instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)expression).getOperationTokenType() != JavaTokenType.EQ;
   }
 
   @Override
