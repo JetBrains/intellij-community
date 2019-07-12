@@ -9,6 +9,8 @@ import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
 import com.intellij.psi.javadoc.PsiDocToken
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.uast.*
+import org.jetbrains.uast.analysis.UastAnalysisPlugin
+import org.jetbrains.uast.java.analysis.JavaUastAnalysisPlugin
 import org.jetbrains.uast.java.expressions.JavaUAnnotationCallExpression
 import org.jetbrains.uast.java.expressions.JavaUNamedExpression
 import org.jetbrains.uast.java.expressions.JavaUSynchronizedExpression
@@ -132,6 +134,10 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
         else -> null
       }
     }
+  }
+
+  override val analysisPlugin: UastAnalysisPlugin? by lazy {
+    UastAnalysisPlugin.byLanguage(JavaLanguage.INSTANCE)
   }
 }
 

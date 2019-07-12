@@ -4,6 +4,8 @@ package org.jetbrains.uast
 import com.intellij.lang.Language
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.*
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.uast.analysis.UastAnalysisPlugin
 
 interface UastLanguagePlugin {
   companion object {
@@ -105,6 +107,10 @@ interface UastLanguagePlugin {
   fun <T : UElement> convertToAlternatives(element: PsiElement, requiredTypes: Array<out Class<out T>>): Sequence<T> =
     sequenceOf(convertElementWithParent(element, requiredTypes)).filterNotNull()
 
+  @JvmDefault
+  val analysisPlugin: UastAnalysisPlugin?
+    @ApiStatus.Experimental
+    get() = null
 }
 
 inline fun <reified T : UElement> UastLanguagePlugin.convertOpt(element: PsiElement?, parent: UElement?): T? {
