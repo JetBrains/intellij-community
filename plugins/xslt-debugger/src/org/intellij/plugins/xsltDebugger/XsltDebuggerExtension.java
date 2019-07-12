@@ -57,6 +57,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -70,6 +71,7 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
   public static final Key<XsltChecker.LanguageLevel> VERSION = Key.create("VERSION");
   private static final Key<Integer> PORT = Key.create("PORT");
   private static final Key<Manifest> MANIFEST = Key.create("MANIFEST");
+  private static final Key<String> ACCESS_TOKEN = Key.create("access token");
 
   @NonNls
   private static final String SAXON_6_JAR = "saxon.jar";
@@ -87,7 +89,7 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
   public ProcessListener createProcessListener(Project project, UserDataHolder extensionData) {
     final Integer port = extensionData.getUserData(PORT);
     assert port != null;
-    return new DebugProcessListener(project, port);
+    return new DebugProcessListener(project, port, extensionData.getUserData(ACCESS_TOKEN));
   }
 
   @Override
@@ -129,6 +131,10 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
       LOG.info(e);
       throw new CantRunException("Unable to find a free network port");
     }
+
+    String token = UUID.randomUUID().toString();
+    parameters.getVMParametersList().defineProperty("xslt.debugger.token", token);
+    extensionData.putUserData(ACCESS_TOKEN, token);
 
     final char c = File.separatorChar;
 

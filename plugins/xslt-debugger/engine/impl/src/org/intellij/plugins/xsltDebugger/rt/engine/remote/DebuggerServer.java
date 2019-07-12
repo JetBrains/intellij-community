@@ -43,10 +43,12 @@ public class DebuggerServer extends PortableRemoteObject implements RemoteDebugg
   private final RemoteBreakpointManagerImpl myBreakpointManager;
   private final RemoteEventQueueImpl myEventQueue;
   private final int myPort;
+  private final String myAccessToken;
 
   private DebuggerServer(Transformer transformer, Source xml, Result out, int port)
     throws TransformerConfigurationException, RemoteException {
     myPort = port;
+    myAccessToken = System.getProperty("xslt.debugger.token");
     myDebugger = new LocalDebugger(transformer, xml, out) {
       @Override
       public void stop(boolean b) {
@@ -115,15 +117,15 @@ public class DebuggerServer extends PortableRemoteObject implements RemoteDebugg
   }
 
   public Frame getCurrentFrame() throws RemoteException {
-    return RemoteFrameImpl.create(myDebugger.getCurrentFrame());
+    return RemoteFrameImpl.create(myDebugger.getCurrentFrame(), myAccessToken);
   }
 
   public Frame getSourceFrame() throws RemoteException {
-    return RemoteFrameImpl.create(myDebugger.getSourceFrame());
+    return RemoteFrameImpl.create(myDebugger.getSourceFrame(), myAccessToken);
   }
 
-  public Value eval(String expr) throws RemoteException, Debugger.EvaluationException {
-    return getCurrentFrame().eval(expr);
+  public Value eval(String expr, String accessToken) throws RemoteException, Debugger.EvaluationException {
+    return getCurrentFrame().eval(expr, accessToken);
   }
 
   public List<Variable> getGlobalVariables() throws RemoteException {
