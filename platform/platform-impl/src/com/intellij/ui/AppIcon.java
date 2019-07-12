@@ -9,15 +9,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.IconUtil;
-import com.intellij.util.MethodInvocator;
 import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.ImageUtil.MultiResolutionImageWrapper;
+import com.intellij.util.ui.MultiResolutionImageProvider;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.platform.win32.WinDef;
 import org.apache.commons.imaging.common.BinaryOutputStream;
@@ -171,8 +169,8 @@ public abstract class AppIcon {
 
         if (appImage == null) return null;
 
-        if (MultiResolutionImageWrapper.isMultiResolutionImage(appImage)) {
-          List<Image> variants = MultiResolutionImageWrapper.wrap(appImage).getResolutionVariants();
+        if (MultiResolutionImageProvider.isMultiResolutionImage(appImage)) {
+          List<Image> variants = MultiResolutionImageProvider.getAccessor(appImage).getResolutionVariants();
           int width = appImage.getWidth(null);
           for (Image img : variants) {
               if (img.getWidth(null) > width) {

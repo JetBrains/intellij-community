@@ -11,6 +11,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ui.GeometryUtil;
+import com.intellij.util.ui.MultiResolutionImageProvider;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -555,6 +556,11 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
             Pair<Image, Point> pair = bean.isEmpty() ? null : source.createDraggedImage(action, dge.getDragOrigin(), bean);
             if (pair == null) {
               pair = Pair.create(EMPTY_IMAGE, new Point(0, 0));
+            }
+
+            if (MultiResolutionImageProvider.isMultiResolutionImageAvailable()) {
+              Image mrImage = MultiResolutionImageProvider.convertFromJBImage(pair.first);
+              if (mrImage != null) pair = new Pair<>(mrImage, pair.second);
             }
 
             if (!DragSource.isDragImageSupported()) {
