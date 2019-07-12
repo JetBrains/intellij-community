@@ -311,9 +311,9 @@ public class CommonDataflow {
       attachment.setIncluded(true);
       throw new RuntimeExceptionWithAttachments("Rejected execution!", attachment);
     }
-    catch (InterruptedException ignored) {
+    catch (InterruptedException ex) {
       // Should not happen
-      throw new AssertionError();
+      throw new AssertionError(ex);
     }
     return managedCompute.getResult();
   }
