@@ -3,17 +3,13 @@ package com.intellij.xdebugger.impl.reveal.actions
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.xdebugger.XDebuggerManager
-import com.intellij.xdebugger.frame.XValue
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.reveal.RevealMemberValue
 import com.intellij.xdebugger.impl.reveal.RevealParentValue
 import com.intellij.xdebugger.impl.reveal.XDebuggerRevealManager
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
-import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackBase
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import java.awt.event.MouseEvent
 
@@ -46,7 +42,6 @@ class XDebuggerRevealAction : XDebuggerTreeActionBase() {
             )
         }
 
-        private val logger = Logger.getInstance(XDebuggerRevealAction::class.java)
     }
 
     override fun update(e: AnActionEvent) {
@@ -73,7 +68,6 @@ class XDebuggerRevealAction : XDebuggerTreeActionBase() {
     override fun perform(node: XValueNodeImpl?, nodeName: String, e: AnActionEvent) {
         node ?: return
         val project = e.project ?: return
-        val session = XDebuggerManager.getInstance(project).currentSession ?: return
         val nodeValue = node.valueContainer as? RevealMemberValue ?: return
         if (!nodeValue.canBeRevealed()) {
             return
@@ -90,22 +84,7 @@ class XDebuggerRevealAction : XDebuggerTreeActionBase() {
             addPrioritizedItem(parentType, nodeName, project)
         }
 
-        session.rebuildViews()
-        val tree = node.tree
-        if (tree.isRootVisible) { //tree is inside evaluation popup
-            val oldRoot = tree.root as? XValueNodeImpl ?: return
-            val name = oldRoot.name ?: return
-            session.debugProcess.evaluator?.evaluate(name, object : XEvaluationCallbackBase() {
-                override fun errorOccurred(errorMessage: String) {
-                    logger.warn("Failed to update '$name' presentation after '$REVEAL_NAME': $errorMessage")
-                }
-
-                override fun evaluated(result: XValue) {
-                    tree.setRoot(XValueNodeImpl(tree, null, oldRoot.name, result), true)
-                }
-
-            }, tree.sourcePosition)
-        }
+        XDebuggerUtilImpl.rebuildTreeAndViews(node.tree)
     }
 
     private fun addPrioritizedItem(parentType: String, nodeName: String, project: Project) {
