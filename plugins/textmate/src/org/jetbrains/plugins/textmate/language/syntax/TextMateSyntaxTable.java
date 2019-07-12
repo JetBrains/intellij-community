@@ -13,7 +13,6 @@ import org.jetbrains.plugins.textmate.Constants;
 import org.jetbrains.plugins.textmate.plist.PListValue;
 import org.jetbrains.plugins.textmate.plist.Plist;
 import org.jetbrains.plugins.textmate.regex.RegexFacade;
-import org.joni.exception.JOniException;
 
 import java.util.Map;
 
@@ -31,12 +30,12 @@ import java.util.Map;
 public class TextMateSyntaxTable {
   private static final Logger LOG = Logger.getInstance(TextMateSyntaxTable.class);
   private final Map<String, SyntaxNodeDescriptor> rulesMap = new THashMap<>();
-  private final TObjectIntHashMap<String> ruleIds = new TObjectIntHashMap<>();
-  private final StringInterner interner = new StringInterner();
+  private TObjectIntHashMap<String> ruleIds;
+  private StringInterner interner;
 
   public void compact() {
-    ruleIds.clear();
-    interner.clear();
+    ruleIds = null;
+    interner = null;
   }
 
   /**
@@ -83,16 +82,11 @@ public class TextMateSyntaxTable {
     for (Map.Entry<String, PListValue> entry : plist.entries()) {
       PListValue pListValue = entry.getValue();
       if (pListValue != null) {
-        String key = interner.intern(entry.getKey());
+        String key = intern(entry.getKey());
         if (ArrayUtil.contains(key, Constants.REGEX_KEY_NAMES)) {
-          try {
-            String pattern = pListValue.getString();
-            if (pattern != null) {
-              result.setRegexAttribute(key, RegexFacade.regex(pattern));
-            }
-          }
-          catch (JOniException e) {
-            LOG.error("Cannot compile pattern '" + pListValue.getString() + "' for '" + key + "'", e);
+          String pattern = pListValue.getString();
+          if (pattern != null) {
+            result.setRegexAttribute(key, RegexFacade.regex(pattern));
           }
         }
         else if (ArrayUtil.contains(key, Constants.STRING_KEY_NAMES)) {
@@ -100,7 +94,7 @@ public class TextMateSyntaxTable {
             result.setStringAttribute(key, pListValue.getString());
           }
           else {
-            result.setStringAttribute(key, interner.intern(pListValue.getString()));
+            result.setStringAttribute(key, intern(pListValue.getString()));
           }
         }
         else if (ArrayUtil.contains(key, Constants.CAPTURES_KEY_NAMES)) {
@@ -126,6 +120,23 @@ public class TextMateSyntaxTable {
     return result;
   }
 
+  @NotNull
+  private String intern(String key) {
+    if (interner == null) {
+      interner = new StringInterner();
+      for (String name : Constants.STRING_KEY_NAMES) {
+        interner.intern(name);
+      }
+      for (String name : Constants.CAPTURES_KEY_NAMES) {
+        interner.intern(name);
+      }
+      for (String name : Constants.REGEX_KEY_NAMES) {
+        interner.intern(name);
+      }
+    }
+    return interner.intern(key);
+  }
+
   @Nullable
   private TIntObjectHashMap<String> loadCaptures(Plist captures) {
     TIntObjectHashMap<String> result = new TIntObjectHashMap<>();
@@ -134,7 +145,7 @@ public class TextMateSyntaxTable {
         int index = Integer.parseInt(capture.getKey());
         Plist captureDict = capture.getValue().getPlist();
         String captureName = captureDict.getPlistValue(Constants.NAME_KEY, "").getString();
-        result.put(index, interner.intern(captureName));
+        result.put(index, intern(captureName));
       }
       catch (NumberFormatException ignore) {
       }
@@ -173,6 +184,9 @@ public class TextMateSyntaxTable {
   }
 
   private int getRuleId(@NotNull String ruleName) {
+    if (ruleIds == null) {
+      ruleIds = new TObjectIntHashMap<>();
+    }
     int id = ruleIds.get(ruleName);
     if (id > 0) {
       return id;
