@@ -4,7 +4,9 @@ package com.intellij.openapi.externalSystem.model;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,9 +44,8 @@ public class DataNode<T> implements UserDataHolderEx, Serializable {
   @Nullable
   private DataNode<?> parent;
 
-  @NotNull
-  private List<DataNode<?>> children = Collections.emptyList();
-
+  @Nullable
+  private List<DataNode<?>> children;
   @Nullable
   private transient List<DataNode<?>> childrenView;
 
@@ -163,7 +164,7 @@ public class DataNode<T> implements UserDataHolderEx, Serializable {
   }
 
   private void doAddChild(@NotNull DataNode<?> child) {
-    if (children.isEmpty()) {
+    if (children == null) {
       initChildren(new SmartList<>(child));
     }
     else {
@@ -171,13 +172,15 @@ public class DataNode<T> implements UserDataHolderEx, Serializable {
     }
   }
 
-  private void initChildren(List<DataNode<?>> children) {
+  private void initChildren(@Nullable List<DataNode<?>> children) {
     this.children = children;
-    childrenView = null;
+    this.childrenView = null;
   }
 
   @NotNull
   public Collection<DataNode<?>> getChildren() {
+    if (children == null || children.isEmpty()) return Collections.emptyList();
+
     List<DataNode<?>> result = childrenView;
     if (result == null) {
       result = Collections.unmodifiableList(children);
@@ -200,7 +203,10 @@ public class DataNode<T> implements UserDataHolderEx, Serializable {
 
     DataNode node = (DataNode)o;
 
-    if (!children.equals(node.children)) return false;
+    if (!Objects.equals(ObjectUtils.notNull(children, Collections.emptyList()),
+                        ObjectUtils.notNull(node.children, Collections.emptyList()))) {
+      return false;
+    }
     if (!getData().equals(node.getData())) return false;
     if (!key.equals(node.key)) return false;
 
@@ -221,18 +227,18 @@ public class DataNode<T> implements UserDataHolderEx, Serializable {
   }
 
   public void clear(boolean removeFromGraph) {
-    if (removeFromGraph && parent != null && !parent.children.isEmpty()) {
+    if (removeFromGraph && parent != null && parent.children != null) {
       for (Iterator<DataNode<?>> iterator = parent.children.iterator(); iterator.hasNext(); ) {
         DataNode<?> dataNode = iterator.next();
         if (System.identityHashCode(dataNode) == System.identityHashCode(this)) {
           iterator.remove();
-          if (parent.children.isEmpty()) parent.initChildren(Collections.emptyList());
+          if (parent.children.isEmpty()) parent.initChildren(null);
           break;
         }
       }
     }
     parent = null;
-    initChildren(Collections.emptyList());
+    initChildren(null);
   }
 
   @NotNull
@@ -305,8 +311,8 @@ public class DataNode<T> implements UserDataHolderEx, Serializable {
   private static <T> DataNode<T> copy(@NotNull DataNode<T> dataNode, @Nullable DataNode<?> newParent) {
     DataNode<T> copy = nodeCopy(dataNode);
     copy.parent = newParent;
-    for (DataNode<?> child : dataNode.children) {
-      copy.addChild(copy(child, copy));
+    if (dataNode.children != null) {
+      copy.initChildren(ContainerUtil.map(dataNode.children, child -> copy(child, copy)));
     }
     return copy;
   }
@@ -318,7 +324,9 @@ public class DataNode<T> implements UserDataHolderEx, Serializable {
     while ((nodes = toProcess.pollFirst()) != null) {
       nodes.forEach(consumer);
       for (DataNode<?> node : nodes) {
-        toProcess.add(node.children);
+        if (node.children != null) {
+          toProcess.add(node.children);
+        }
       }
     }
   }
