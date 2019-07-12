@@ -7,6 +7,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.awt.RelativeRectangle;
@@ -558,7 +559,7 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
               pair = Pair.create(EMPTY_IMAGE, new Point(0, 0));
             }
 
-            if (MultiResolutionImageProvider.isMultiResolutionImageAvailable()) {
+            if (SystemInfo.isMac && MultiResolutionImageProvider.isMultiResolutionImageAvailable()) {
               Image mrImage = MultiResolutionImageProvider.convertFromJBImage(pair.first);
               if (mrImage != null) pair = new Pair<>(mrImage, pair.second);
             }
