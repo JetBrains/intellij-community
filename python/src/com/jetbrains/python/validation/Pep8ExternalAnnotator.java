@@ -137,6 +137,11 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
 
   private boolean myReportedMissingInterpreter;
 
+  @Override
+  public String getPairedBatchInspectionShortName() {
+    return PyPep8Inspection.INSPECTION_SHORT_NAME;
+  }
+
   @Nullable
   @Override
   public State collectInformation(@NotNull PsiFile file) {
