@@ -43,11 +43,17 @@ object MavenArtifactCoordinatesHelper {
     }
     val domModel = DomManager.getDomManager(context.project).getFileElement(context.file, MavenDomProjectModel::class.java)
                    ?: return withVersion(coords, "")
-    val groupId = coords?.groupId?.stringValue ?: return MavenId("", "", "")
-    val artifactId = coords.artifactId?.stringValue ?: return MavenId(groupId, "", "")
-    val managed = MavenDependencyCompletionUtil.findManagedDependency(domModel.rootElement, context.project, groupId,
-                                                                      artifactId)
-    return withVersion(coords, managed?.version?.stringValue ?: "")
+    val groupId = MavenDependencyCompletionUtil.removeDummy(coords?.groupId?.stringValue)
+    val artifactId = MavenDependencyCompletionUtil.removeDummy(coords?.artifactId?.stringValue)
+    if (artifactId.isNotEmpty() && groupId.isNotEmpty()) {
+      val managed = MavenDependencyCompletionUtil.findManagedDependency(domModel.rootElement, context.project, groupId,
+                                                                        artifactId)
+      return withVersion(coords, managed?.version?.stringValue ?: "")
+    }
+    else {
+      return MavenId(groupId, artifactId, "")
+    }
+
   }
 
   @JvmStatic
