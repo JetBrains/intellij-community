@@ -1,4 +1,4 @@
-def fo<caret>o(a) {
+fo<caret>o(def a) {
 
 }
 

@@ -60,6 +60,7 @@ internal class InferMethodParametersTypesIntention : Intention() {
     }
     method.parameters.zip(virtualMethod.parameters).forEach { (actual, inferred) ->
       actual.setType(inferred.type)
+      actual.modifierList.setModifierProperty("def", false)
       if (actual.isVarArgs) {
         actual.ellipsisDots!!.delete()
       }
