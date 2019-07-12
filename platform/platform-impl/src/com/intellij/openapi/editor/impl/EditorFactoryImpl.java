@@ -46,14 +46,6 @@ public class EditorFactoryImpl extends EditorFactory {
   private final EventDispatcher<EditorFactoryListener> myEditorFactoryEventDispatcher = EventDispatcher.create(EditorFactoryListener.class);
   private final List<Editor> myEditors = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  /**
-   * @deprecated left for API compatibility
-   */
-  @Deprecated
-  public EditorFactoryImpl(/* unused for API compatibility reasons */ @SuppressWarnings("unused") EditorActionManager editorActionManager) {
-    this();
-  }
-
   public EditorFactoryImpl() {
     MessageBusConnection busConnection = ApplicationManager.getApplication().getMessageBus().connect();
     busConnection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
