@@ -33,6 +33,15 @@ import static com.intellij.psi.JavaTokenType.*;
 public class BinopInstruction extends BranchingInstruction implements ExpressionPushingInstruction {
   private static final TokenSet ourSignificantOperations =
     TokenSet.create(EQEQ, NE, LT, GT, LE, GE, INSTANCEOF_KEYWORD, PLUS, MINUS, AND, OR, XOR, PERC, DIV, ASTERISK, GTGT, GTGTGT, LTLT);
+
+  /**
+   * A placeholder operation to model string concatenation inside loop:
+   * currently we cannot properly widen states and precise handling of concatenation
+   * inside loop (including length tracking) may lead to state divergence,
+   * so we use special operation for this case.
+   */
+  public static final IElementType STRING_CONCAT_IN_LOOP = ASTERISK;
+
   private final IElementType myOperationSign;
   private final @Nullable PsiType myResultType;
   private final int myLastOperand;

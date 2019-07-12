@@ -676,8 +676,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       if (JavaTokenType.PLUS == opSign) {
         result = concatStrings(dfaLeft, dfaRight, memState, type, runner.getFactory());
       }
-      if (JavaTokenType.ASTERISK == opSign) {
-        // string concatenation in loop: see com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer.substituteBinaryOperation
+      if (BinopInstruction.STRING_CONCAT_IN_LOOP == opSign) {
         result = runner.getFactory().createTypeValue(type, Nullability.NOT_NULL);
       }
     }
