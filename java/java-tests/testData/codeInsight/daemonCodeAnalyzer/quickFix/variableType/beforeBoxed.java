@@ -1,4 +1,4 @@
-// "Change parameter 'a' type to 'java.lang.Long[]'" "true"
+// "Change parameter 'a' type to 'Long[]'" "true"
 
 class Base {
   void m(long[] a) {

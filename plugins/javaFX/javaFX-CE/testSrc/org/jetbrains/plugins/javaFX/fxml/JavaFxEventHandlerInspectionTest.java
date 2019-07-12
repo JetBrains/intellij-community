@@ -73,7 +73,7 @@ public class JavaFxEventHandlerInspectionTest extends AbstractJavaFXTestCase {
   }
 
   public void testQuickfixFieldType() {
-    doQuickfixTest("Change field 'table' type to 'javafx.scene.control.TableView<java.util.Map<java.lang.String,java.lang.Double>>'");
+    doQuickfixTest("Change field 'table' type to 'TableView<Map<String, Double>>'");
   }
 
   public void testQuickfixNoFieldNested() {

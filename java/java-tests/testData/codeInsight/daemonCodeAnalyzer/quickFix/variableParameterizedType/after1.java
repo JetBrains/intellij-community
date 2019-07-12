@@ -1,4 +1,4 @@
-// "Change variable 'i' type to 'a.i.ii<java.lang.String>'" "true"
+// "Change variable 'i' type to 'a.i.ii<String>'" "true"
 class a
 {
   class i {

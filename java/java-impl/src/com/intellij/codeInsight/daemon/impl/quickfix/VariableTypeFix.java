@@ -59,7 +59,7 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
     return QuickFixBundle.message("fix.variable.type.text",
                                   UsageViewUtil.getType(getStartElement()),
                                   myName,
-                                  type == null || !type.isValid() ? "???" : type.getCanonicalText());
+                                  type == null || !type.isValid() ? "???" : type.getPresentableText());
   }
 
   @Override

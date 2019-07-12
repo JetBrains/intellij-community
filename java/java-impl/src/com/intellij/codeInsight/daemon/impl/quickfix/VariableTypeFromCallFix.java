@@ -38,7 +38,7 @@ public class VariableTypeFromCallFix implements IntentionAction {
     return QuickFixBundle.message("fix.variable.type.text",
                                   UsageViewUtil.getType(myVar),
                                   myVar.getName(),
-                                  myExpressionType.getCanonicalText());
+                                  myExpressionType.getPresentableText());
   }
 
   @Override

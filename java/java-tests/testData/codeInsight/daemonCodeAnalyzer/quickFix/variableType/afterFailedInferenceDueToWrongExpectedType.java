@@ -1,4 +1,4 @@
-// "Change variable 'foo' type to 'java.util.List<java.lang.String>'" "true"
+// "Change variable 'foo' type to 'List<String>'" "true"
 
 import java.util.Arrays;
 import java.util.List;

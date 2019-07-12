@@ -1,4 +1,4 @@
-// "Change variable 'list' type to 'List<java.lang.Integer>'" "true"
+// "Change variable 'list' type to 'List<Integer>'" "true"
 public class Test {
   void foo()  {
     List<String> list = new List<String>();

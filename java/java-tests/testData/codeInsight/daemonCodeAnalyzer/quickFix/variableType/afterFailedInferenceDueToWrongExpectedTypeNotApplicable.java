@@ -1,4 +1,4 @@
-// "Change variable 'foo' type to 'java.lang.String'" "true"
+// "Change variable 'foo' type to 'String'" "true"
 
 import java.util.List;
 import java.util.Set;

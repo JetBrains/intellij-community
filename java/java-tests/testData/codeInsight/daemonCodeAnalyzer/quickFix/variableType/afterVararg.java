@@ -1,4 +1,4 @@
-// "Change field 'foo' type to 'java.lang.String[]'" "true"
+// "Change field 'foo' type to 'String[]'" "true"
 
 class Base {
   private String[] foo;
