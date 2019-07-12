@@ -7,6 +7,9 @@ import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaFactMapValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
@@ -20,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.RejectedExecutionException;
 
 import static com.intellij.codeInspection.dataFlow.DfaUtil.hasImplicitImpureSuperCall;
 
@@ -279,34 +283,39 @@ public class CommonDataflow {
     ConcurrentHashMap<PsiElement, DataflowResult> fileMap =
       CachedValuesManager.getCachedValue(body.getContainingFile(), () ->
         CachedValueProvider.Result.create(new ConcurrentHashMap<>(), PsiModificationTracker.MODIFICATION_COUNT));
-    try {
-      class ManagedCompute implements ForkJoinPool.ManagedBlocker {
-        DataflowResult myResult;
+    class ManagedCompute implements ForkJoinPool.ManagedBlocker {
+      DataflowResult myResult;
 
-        @Override
-        public boolean block() {
-          myResult = fileMap.computeIfAbsent(body, CommonDataflow::runDFA);
-          return true;
-        }
-
-        @Override
-        public boolean isReleasable() {
-          myResult = fileMap.get(body);
-          return myResult != null;
-        }
-
-        DataflowResult getResult() {
-          return myResult == null || myResult.myResult != RunnerResult.OK ? null : myResult;
-        }
+      @Override
+      public boolean block() {
+        myResult = fileMap.computeIfAbsent(body, CommonDataflow::runDFA);
+        return true;
       }
-      ManagedCompute managedCompute = new ManagedCompute();
+
+      @Override
+      public boolean isReleasable() {
+        myResult = fileMap.get(body);
+        return myResult != null;
+      }
+
+      DataflowResult getResult() {
+        return myResult == null || myResult.myResult != RunnerResult.OK ? null : myResult;
+      }
+    }
+    ManagedCompute managedCompute = new ManagedCompute();
+    try {
       ForkJoinPool.managedBlock(managedCompute);
-      return managedCompute.getResult();
+    }
+    catch (RejectedExecutionException ex) {
+      Attachment attachment = new Attachment("dumps.txt", ThreadDumper.dumpThreadsToString());
+      attachment.setIncluded(true);
+      throw new RuntimeExceptionWithAttachments("Rejected execution!", attachment);
     }
     catch (InterruptedException ignored) {
       // Should not happen
       throw new AssertionError();
     }
+    return managedCompute.getResult();
   }
 
   /**
