@@ -11,7 +11,6 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.reference.SoftReference;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
@@ -40,7 +39,6 @@ public abstract class StructuralSearchProfile {
   public static final ExtensionPointName<StructuralSearchProfile> EP_NAME =
     ExtensionPointName.create("com.intellij.structuralsearch.profile");
   protected static final String PATTERN_PLACEHOLDER = "$$PATTERN_PLACEHOLDER$$";
-  protected SoftReference<Runnable> myProblemCallback;
 
   public abstract void compile(PsiElement[] elements, @NotNull GlobalCompilingVisitor globalVisitor);
 
@@ -178,10 +176,6 @@ public abstract class StructuralSearchProfile {
 
   public boolean highlightProblemsInEditor() {
     return false;
-  }
-
-  public void setProblemCallback(Runnable callback) {
-    myProblemCallback = new SoftReference<>(callback);
   }
 
   public boolean shouldShowProblem(HighlightInfo highlightInfo, PsiFile file, PatternContext context) {

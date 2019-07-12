@@ -112,6 +112,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
 
   public static final Key<StructuralSearchDialog> STRUCTURAL_SEARCH_DIALOG = Key.create("STRUCTURAL_SEARCH_DIALOG");
   public static final Key<String> STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID = Key.create("STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID");
+  public static final Key<Runnable> STRUCTURAL_SEARCH_ERROR_CALLBACK = Key.create("STRUCTURAL_SEARCH_ERROR_CALLBACK");
   private static final Key<Configuration> STRUCTURAL_SEARCH_PREVIOUS_CONFIGURATION = Key.create("STRUCTURAL_SEARCH_PREVIOUS_CONFIGURATION");
   public static final String USER_DEFINED = SSRBundle.message("new.template.defaultname");
 
@@ -212,9 +213,9 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
         }, myDisposable);
         editor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
         if (profile.highlightProblemsInEditor()) {
-          profile.setProblemCallback(() -> {
-            mySearchCriteriaEdit.putClientProperty("JComponent.outline", "error");
-            mySearchCriteriaEdit.repaint();
+          document.putUserData(STRUCTURAL_SEARCH_ERROR_CALLBACK, () -> {
+            putClientProperty("JComponent.outline", "error");
+            repaint();
             getOKAction().setEnabled(false);
             removeMatchHighlights();
           });
@@ -259,6 +260,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
       final boolean success = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
         try {
           final CompiledPattern compiledPattern = compilePattern();
+          checkReplacementPattern();
           final JRootPane component = getRootPane();
           if (component == null) {
             return;
@@ -761,22 +763,6 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     try {
       final CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions, true, !myEditConfigOnly);
       reportMessage(null, false, mySearchCriteriaEdit);
-      if (myReplace) {
-        try {
-          Replacer.checkReplacementPattern(project, myConfiguration.getReplaceOptions());
-        }
-        catch (UnsupportedPatternException ex) {
-          reportMessage(SSRBundle.message("unsupported.replacement.pattern.message", ex.getMessage()), true, myReplaceCriteriaEdit);
-          return null;
-        }
-        catch (MalformedPatternException ex) {
-          if (!ex.isErrorElement || !Registry.is("ssr.in.editor.problem.highlighting")) {
-            reportMessage(SSRBundle.message("malformed.replacement.pattern.message", ex.getMessage()), true, myReplaceCriteriaEdit);
-          }
-          return null;
-        }
-      }
-      reportMessage(null, false, myReplaceCriteriaEdit);
       return compiledPattern;
     }
     catch (MalformedPatternException e) {
@@ -798,6 +784,24 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
       removeMatchHighlights();
       reportMessage(e.getMessage(), false, myScopePanel);
       return null;
+    }
+  }
+
+  private void checkReplacementPattern() {
+    if (!myReplace) {
+      return;
+    }
+    try {
+      Replacer.checkReplacementPattern(getProject(), myConfiguration.getReplaceOptions());
+      reportMessage(null, false, myReplaceCriteriaEdit);
+    }
+    catch (UnsupportedPatternException ex) {
+      reportMessage(SSRBundle.message("unsupported.replacement.pattern.message", ex.getMessage()), true, myReplaceCriteriaEdit);
+    }
+    catch (MalformedPatternException ex) {
+      if (!ex.isErrorElement || !Registry.is("ssr.in.editor.problem.highlighting")) {
+        reportMessage(SSRBundle.message("malformed.replacement.pattern.message", ex.getMessage()), true, myReplaceCriteriaEdit);
+      }
     }
   }
 

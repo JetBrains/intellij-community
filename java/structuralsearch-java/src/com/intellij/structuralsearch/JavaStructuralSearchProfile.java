@@ -535,12 +535,6 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
         }
       }
     }
-    if (myProblemCallback != null) {
-      final Runnable callback = myProblemCallback.get();
-      if (callback != null) {
-        callback.run();
-      }
-    }
     return true;
   }
 
