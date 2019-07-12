@@ -121,7 +121,7 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
     }
   }
 
-  private static void addKeyCompletions(@NotNull CompletionParameters params,
+  private void addKeyCompletions(@NotNull CompletionParameters params,
                                         @NotNull YamlMetaTypeProvider metaTypeProvider,
                                         @NotNull YamlMetaTypeProvider.MetaTypeProxy meta,
                                         @NotNull CompletionResultSet result,
@@ -184,7 +184,7 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
            !parentField.hasRelationSpecificType(Field.Relation.OBJECT_CONTENTS);
   }
 
-  private static void registerBasicKeyCompletion(@NotNull YamlMetaClass metaClass,
+  protected void registerBasicKeyCompletion(@NotNull YamlMetaClass metaClass,
                                                  @NotNull Field toBeInserted,
                                                  @NotNull CompletionResultSet result,
                                                  @NotNull PsiElement insertedScalar,
