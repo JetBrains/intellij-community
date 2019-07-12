@@ -341,7 +341,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
       if (foregroundColor != null) {
         g.setColor(foregroundColor);
         g.setFont(getFont());
-        g.drawString(myText, r.x + 6, r.y + r.height - metrics.getDescent());
+        g.drawString(myText, r.x + 6, r.y + metrics.getAscent());
       }
     }
   }
