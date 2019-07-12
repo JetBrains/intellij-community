@@ -132,11 +132,19 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
                                                                final XDebugSession session,
                                                                Editor editor) {
     if (Registry.is("debugger.smart.step.inplace") && variants.stream().allMatch(v -> v.getHighlightRange() != null)) {
-      inplaceChoose(handler, variants, session, editor);
+      try {
+        inplaceChoose(handler, variants, session, editor);
+        return;
+      } catch (Exception e) {
+        // in case of any exception fallback to popup
+        LOG.error(e);
+        SmartStepData data = editor.getUserData(SMART_STEP_INPLACE_DATA);
+        if (data != null) {
+          data.clear();
+        }
+      }
     }
-    else {
-      showPopup(handler, variants, position, session, editor);
-    }
+    showPopup(handler, variants, position, session, editor);
   }
 
   private static <V extends XSmartStepIntoVariant> void showPopup(final XSmartStepIntoHandler<V> handler,
@@ -203,7 +211,6 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     HighlightManager highlightManager = HighlightManager.getInstance(session.getProject());
 
     SmartStepData<V> data = new SmartStepData<>(handler, variants, session, editor);
-    editor.putUserData(SMART_STEP_INPLACE_DATA, data);
 
     TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.SMART_STEP_INTO_TARGET);
     EditorHyperlinkSupport hyperlinkSupport = EditorHyperlinkSupport.get(editor);
@@ -221,6 +228,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
 
     data.myVariants.stream().filter(v -> v.myVariant == variants.get(0)).findFirst().ifPresent(data::select);
     LOG.assertTrue(data.myCurrentVariant != null);
+    editor.putUserData(SMART_STEP_INPLACE_DATA, data);
 
     session.updateExecutionPosition();
     IdeFocusManager.getGlobalInstance().requestFocus(editor.getContentComponent(), true);
