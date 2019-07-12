@@ -108,7 +108,7 @@ private class PySdkPopupFactory(val project: Project, val module: Module) {
     group.add(InterpreterSettingsAction())
     group.add(AddInterpreterAction())
 
-    val currentSdk = PythonSdkType.findPythonSdk(module)
+    val currentSdkName = PythonSdkType.findPythonSdk(module)?.name
     return JBPopupFactory.getInstance().createActionGroupPopup(
       "Project Interpreter",
       group,
@@ -117,7 +117,7 @@ private class PySdkPopupFactory(val project: Project, val module: Module) {
       false,
       null,
       -1,
-      Condition { it is SwitchToSdkAction && it.sdk == currentSdk },
+      Condition { it is SwitchToSdkAction && it.sdk.name == currentSdkName },
       null
     )
   }
