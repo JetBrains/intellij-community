@@ -380,7 +380,6 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     mySearchEditorPanel.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
     mySearchCriteriaEdit = createEditor();
     mySearchEditorPanel.setFirstComponent(mySearchCriteriaEdit);
-    mySearchEditorPanel.add(BorderLayout.CENTER, mySearchCriteriaEdit);
 
     final JPanel wrapper = new JPanel(new BorderLayout());
     final Color color = UIManager.getColor("Borders.ContrastBorderColor");
@@ -449,9 +448,16 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     myShortenFQN = new JCheckBox(SSRBundle.message("shorten.fully.qualified.names.checkbox"));
     myReformat = new JCheckBox(SSRBundle.message("reformat.checkbox"));
     myUseStaticImport = new JCheckBox(SSRBundle.message("use.static.import.checkbox"));
-    myReplaceCriteriaEdit = createEditor();
+
     myReplaceEditorPanel = new OnePixelSplitter(false, 1.0f);
+    myReplaceEditorPanel.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
+    myReplaceCriteriaEdit = createEditor();
     myReplaceEditorPanel.setFirstComponent(myReplaceCriteriaEdit);
+
+    final JPanel wrapper = new JPanel(new BorderLayout());
+    final Color color = UIManager.getColor("Borders.ContrastBorderColor");
+    wrapper.setBorder(IdeBorderFactory.createBorder(color));
+    wrapper.add(myReplaceEditorPanel, BorderLayout.CENTER);
 
     final JPanel replacePanel = new JPanel(null);
     final GroupLayout layout = new GroupLayout(replacePanel);
@@ -469,7 +475,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
             .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED, 15, 15)
             .addComponent(myUseStaticImport)
         )
-        .addComponent(myReplaceEditorPanel)
+        .addComponent(wrapper)
     );
     layout.setVerticalGroup(
       layout.createSequentialGroup().
@@ -480,7 +486,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
             .addComponent(myReformat)
             .addComponent(myUseStaticImport)
         )
-        .addComponent(myReplaceEditorPanel)
+        .addComponent(wrapper)
     );
 
     return replacePanel;
@@ -1180,7 +1186,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
 
     @Override
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-      EditorTextField editorTextField = ComponentUtil.getParentOfType((Class<? extends EditorTextField>)EditorTextField.class, c);
+      final EditorTextField editorTextField = ComponentUtil.getParentOfType((Class<? extends EditorTextField>)EditorTextField.class, c);
       if (editorTextField == null) {
         return;
       }
