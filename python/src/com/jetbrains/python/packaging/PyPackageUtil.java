@@ -521,11 +521,11 @@ public class PyPackageUtil {
    */
   public static void runOnChangeUnderInterpreterPaths(@NotNull Sdk sdk, @NotNull Runnable runnable) {
     final Application app = ApplicationManager.getApplication();
-    final VirtualFile[] roots = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
     VirtualFileManager.getInstance().addAsyncFileListener(new AsyncFileListener() {
       @Nullable
       @Override
       public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
+        final VirtualFile[] roots = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
         allEvents:
         for (VFileEvent event : events) {
           // In case of create event getFile() returns null as the file hasn't been created yet
