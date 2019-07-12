@@ -16,15 +16,14 @@
 package com.jetbrains.python.newProject.steps;
 
 import com.intellij.facet.ui.ValidationResult;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.newProject.PyNewProjectSettings;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import com.jetbrains.python.remote.PyProjectSynchronizer;
+import com.jetbrains.python.sdk.PySdkExtKt;
 import icons.PythonIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +67,7 @@ public class PythonBaseProjectGenerator extends PythonProjectGenerator<PyNewProj
                                @NotNull final Module module, @Nullable final PyProjectSynchronizer synchronizer) {
     // Super should be called according to its contract unless we sync project explicitly (we do not, so we call super)
     super.configureProject(project, baseDir, settings, module, synchronizer);
-    ApplicationManager.getApplication().runWriteAction(() -> ModuleRootModificationUtil.setModuleSdk(module, settings.getSdk()));
+    PySdkExtKt.setPythonSdk(module, settings.getSdk());
   }
 
   @NotNull

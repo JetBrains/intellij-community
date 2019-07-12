@@ -25,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.ComboBox;
@@ -295,9 +294,9 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   }
 
   protected void setSdk(final Sdk item) {
-    ApplicationManager.getApplication().runWriteAction(() -> ProjectRootManager.getInstance(myProject).setProjectSdk(item));
+    PySdkExtKt.setPythonSdk(myProject, item);
     if (myModule != null) {
-      ModuleRootModificationUtil.setModuleSdk(myModule, item);
+      PySdkExtKt.setPythonSdk(myModule, item);
       myProject.getMessageBus().syncPublisher(ACTIVE_PYTHON_SDK_TOPIC).activeSdkChanged(myModule, item);
     }
   }
