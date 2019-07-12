@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -74,6 +75,7 @@ public interface DocumentationProvider {
    * SECTIONS_END
    * </pre>
    * </p>
+   * To show different content on mouse hover in editor, {@link #generateHoverDoc(PsiElement, PsiElement)} should be implemented.
    *
    * @param element         the element for which the documentation is requested (for example, if the mouse is over
    *                        a method reference, this will be the method to which the reference is resolved).
@@ -84,6 +86,17 @@ public interface DocumentationProvider {
   @Nullable
   default String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     return null;
+  }
+
+  /**
+   * Same as {@link #generateDoc(PsiElement, PsiElement)}, but used for documentation showed on mouse hover in editor.
+   * <p>
+   * At the moment it's only invoked to get initial on-hover documentation. If user navigates any link in that documentation,
+   * {@link #generateDoc(PsiElement, PsiElement)} will be used to fetch corresponding content.
+   */
+  @Nullable
+  default String generateHoverDoc(@NotNull PsiElement element, @Nullable PsiElement originalElement) {
+    return generateDoc(element, originalElement);
   }
 
   @Nullable
