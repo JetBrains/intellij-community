@@ -16,6 +16,8 @@
 package com.intellij.ide.ui;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
+import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
 
@@ -23,6 +25,7 @@ import java.lang.reflect.Field;
  * @author Konstantin Bulenkov
  */
 public abstract class PublicFieldBasedOptionDescription extends BooleanOptionDescription {
+  private static final Logger LOG = Logger.getInstance(PublicFieldBasedOptionDescription.class);
   private final String myFieldName;
 
   public PublicFieldBasedOptionDescription(String option, String configurableId, String fieldName) {
@@ -30,6 +33,7 @@ public abstract class PublicFieldBasedOptionDescription extends BooleanOptionDes
     myFieldName = fieldName;
   }
 
+  @NotNull
   public abstract Object getInstance();
 
   protected void fireUpdated() {
@@ -37,22 +41,26 @@ public abstract class PublicFieldBasedOptionDescription extends BooleanOptionDes
 
   @Override
   public boolean isOptionEnabled() {
+    Object instance = getInstance();
     try {
-      final Field field = getInstance().getClass().getField(myFieldName);
-      return field.getBoolean(getInstance());
+      final Field field = instance.getClass().getField(myFieldName);
+      return field.getBoolean(instance);
     }
     catch (NoSuchFieldException | IllegalAccessException ignore) {
+      LOG.warn(String.format("Boolean field '%s' not found in %s", myFieldName, instance));
     }
     return false;
   }
 
   @Override
   public void setOptionState(boolean enabled) {
+    Object instance = getInstance();
     try {
-      final Field field = getInstance().getClass().getField(myFieldName);
-      field.setBoolean(getInstance(), enabled);
+      final Field field = instance.getClass().getField(myFieldName);
+      field.setBoolean(instance, enabled);
     }
     catch (NoSuchFieldException | IllegalAccessException ignore) {
+      LOG.warn(String.format("Boolean field '%s' not found in %s", myFieldName, instance));
     }
     fireUpdated();
   }
