@@ -10,11 +10,11 @@ public class AssertWithSideEffects {
     }
 
     void bar(int i) {
-        <warning descr="'assert' has side effects">assert</warning> i++ < 10;
+        <warning descr="'assert' has side effects: i++">assert</warning> i++ < 10;
     }
 
     void abc() {
-        <warning descr="'assert' has side effects">assert</warning> isSideEffect();
+        <warning descr="'assert' has side effects: call to 'isSideEffect()' mutates field 'sideEffect'">assert</warning> isSideEffect();
     }
 
     boolean isSideEffect() {
@@ -28,6 +28,6 @@ public class AssertWithSideEffects {
     }
 
     void jdbc(ResultSet rs) throws SQLException {
-      <warning descr="'assert' has side effects">assert</warning> rs.last();
+      <warning descr="'assert' has side effects: call to 'last()' mutates 'rs'">assert</warning> rs.last();
     }
 }
