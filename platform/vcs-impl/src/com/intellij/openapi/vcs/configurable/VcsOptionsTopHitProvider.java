@@ -65,14 +65,6 @@ public final class VcsOptionsTopHitProvider implements OptionsSearchTopHitProvid
     options.add(option(vcs, id, "Confirmation: Force non-empty checkin comments", "FORCE_NON_EMPTY_COMMENT"));
     options.add(option(vcs, id, "Confirmation: Clear initial commit message", "CLEAR_INITIAL_COMMIT_MESSAGE"));
 
-    id = "project.propVCSSupport.Background"; // process Version Control / Background settings
-    options.add(option(vcs, id, "Perform in background: update from VCS", "PERFORM_UPDATE_IN_BACKGROUND"));
-    options.add(option(vcs, id, "Perform in background: commit to VCS", "PERFORM_COMMIT_IN_BACKGROUND"));
-    options.add(option(vcs, id, "Perform in background: checkout from VCS", "PERFORM_CHECKOUT_IN_BACKGROUND"));
-    options.add(option(vcs, id, "Perform in background: Edit/Checkout", "PERFORM_EDIT_IN_BACKGROUND"));
-    options.add(option(vcs, id, "Perform in background: Add/Remove", "PERFORM_ADD_REMOVE_IN_BACKGROUND"));
-    options.add(option(vcs, id, "Perform in background: revert", "PERFORM_ROLLBACK_IN_BACKGROUND"));
-
     id = ShelfProjectConfigurable.HELP_ID;
     options.add(option(vcs, id, VcsBundle.message("vcs.shelf.store.base.content"), "INCLUDE_TEXT_INTO_SHELF"));
 
