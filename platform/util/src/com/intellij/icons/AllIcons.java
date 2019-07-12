@@ -2340,6 +2340,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon RunnableMark = load("/nodes/runnableMark.svg");
     /** 16x16 */ public static final Icon Rw_access = load("/nodes/rw-access.svg");
     /** 16x16 */ public static final Icon SecurityRole = load("/nodes/securityRole.svg");
+    /** 14x12 */ public static final Icon Services = load("/nodes/services.svg");
     /** 16x16 */ public static final Icon Servlet = load("/nodes/servlet.svg");
     /** 16x16 */ public static final Icon Shared = load("/nodes/shared.svg");
     /** 16x16 */ public static final Icon SortBySeverity = load("/nodes/sortBySeverity.svg");
