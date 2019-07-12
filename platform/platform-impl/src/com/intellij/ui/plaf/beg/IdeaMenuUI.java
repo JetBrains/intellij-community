@@ -3,6 +3,7 @@ package com.intellij.ui.plaf.beg;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
@@ -98,24 +99,11 @@ public class IdeaMenuUI extends BasicMenuUI{
       jMenu.getText() != null ? defaultTextIconGap : 0,
       defaultTextIconGap
     );
-    Color color2 = g.getColor();
+    Color mainColor = g.getColor();
     if (comp.isOpaque()){
-      g.setColor(jMenu.getBackground());
-      g.fillRect(0, 0, jMenu.getWidth(), jMenu.getHeight());
-      if (buttonmodel.isArmed() || buttonmodel.isSelected()){
-        if (UIUtil.isUnderAquaLookAndFeel()) {
-           myAquaSelectedBackgroundPainter.paintBorder(comp, g, 0, 0, jMenu.getWidth(), jMenu.getHeight());
-        } else {
-          g.setColor(selectionBackground);
-          if (allowedIcon != null && !(UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula())) {
-            g.fillRect(k, 0, jMenu.getWidth() - k, jMenu.getHeight());
-          }
-          else {
-            g.fillRect(0, 0, jMenu.getWidth(), jMenu.getHeight());
-          }
-        }
-      }
-      g.setColor(color2);
+      fillOpaque(g, comp, jMenu, buttonmodel, allowedIcon, mainColor);
+    } else {
+      fillOpaqueFalse(g, comp, jMenu, buttonmodel, allowedIcon, mainColor);
     }
     if (allowedIcon != null){
       if (buttonmodel.isArmed() || buttonmodel.isSelected()){
@@ -127,7 +115,7 @@ public class IdeaMenuUI extends BasicMenuUI{
       if (useCheckAndArrow()){
         allowedIcon.paintIcon(comp, g, ourCheckIconRect.x, ourCheckIconRect.y);
       }
-      g.setColor(color2);
+      g.setColor(mainColor);
       if (menuItem.isArmed()){
         drawIconBorder(g);
       }
@@ -193,8 +181,40 @@ public class IdeaMenuUI extends BasicMenuUI{
         }
       }
     }
-    g.setColor(color2);
+    g.setColor(mainColor);
     g.setFont(font);
+  }
+
+  protected void fillOpaque(Graphics g, JComponent comp, JMenu jMenu, ButtonModel buttonmodel, Icon allowedIcon, Color mainColor) {
+    g.setColor(jMenu.getBackground());
+    g.fillRect(0, 0, jMenu.getWidth(), jMenu.getHeight());
+    if (buttonmodel.isArmed() || buttonmodel.isSelected()){
+      paintHover(g, comp, jMenu, allowedIcon);
+    }
+    g.setColor(mainColor);
+  }
+
+  protected void fillOpaqueFalse(Graphics g, JComponent comp, JMenu jMenu, ButtonModel buttonmodel, Icon allowedIcon, Color mainColor) {
+    if(IdeFrameDecorator.isCustomDecorationActive()) {
+      if (buttonmodel.isArmed() || buttonmodel.isSelected()) {
+        paintHover(g, comp, jMenu, allowedIcon);
+      }
+      g.setColor(mainColor);
+    }
+  }
+
+  protected final void paintHover(Graphics g, JComponent comp, JMenu jMenu, Icon allowedIcon) {
+    if (UIUtil.isUnderAquaLookAndFeel()) {
+       myAquaSelectedBackgroundPainter.paintBorder(comp, g, 0, 0, jMenu.getWidth(), jMenu.getHeight());
+    } else {
+      g.setColor(selectionBackground);
+      if (allowedIcon != null && !(UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula())) {
+        g.fillRect(k, 0, jMenu.getWidth() - k, jMenu.getHeight());
+      }
+      else {
+        g.fillRect(0, 0, jMenu.getWidth(), jMenu.getHeight());
+      }
+    }
   }
 
   private boolean useCheckAndArrow() {
