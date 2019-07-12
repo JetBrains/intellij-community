@@ -6,6 +6,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,8 +32,11 @@ public class DataNode<T> implements UserDataHolderEx, Serializable {
   @SuppressWarnings("NullableProblems") @NotNull
   private Key<T> key;
 
-  @NotNull
-  private final transient UserDataHolderBase userData = new UserDataHolderBase();
+  @SuppressWarnings("FieldMayBeFinal")
+  @Nullable
+  private volatile transient UserDataHolderBase internalUserDataOrNull = null;
+  private static final AtomicFieldUpdater<DataNode, UserDataHolderBase> userDataUpdater
+    = AtomicFieldUpdater.forFieldOfType(DataNode.class, UserDataHolderBase.class);
 
   @Nullable
   private T data;
@@ -254,35 +258,37 @@ public class DataNode<T> implements UserDataHolderEx, Serializable {
   @Nullable
   @Override
   public <U> U getUserData(@NotNull com.intellij.openapi.util.Key<U> key) {
-    return userData.getUserData(key);
+    UserDataHolderBase holder = getUserDataHolder();
+    return holder == null ? null : holder.getUserData(key);
   }
 
   @Override
   public <U> void putUserData(@NotNull com.intellij.openapi.util.Key<U> key, U value) {
-    userData.putUserData(key, value);
+    getOrCreateUserDataHolder().putUserData(key, value);
   }
 
   public <U> void removeUserData(@NotNull com.intellij.openapi.util.Key<U> key) {
-    userData.putUserData(key, null);
+    getOrCreateUserDataHolder().putUserData(key, null);
   }
 
   @NotNull
   @Override
   public <D> D putUserDataIfAbsent(@NotNull com.intellij.openapi.util.Key<D> key, @NotNull D value) {
-    return userData.putUserDataIfAbsent(key, value);
+    return getOrCreateUserDataHolder().putUserDataIfAbsent(key, value);
   }
 
   @Override
   public <D> boolean replace(@NotNull com.intellij.openapi.util.Key<D> key, @Nullable D oldValue, @Nullable D newValue) {
-    return userData.replace(key, oldValue, newValue);
+    return getOrCreateUserDataHolder().replace(key, oldValue, newValue);
   }
 
   public <T> void putCopyableUserData(@NotNull com.intellij.openapi.util.Key<T> key, T value) {
-    userData.putCopyableUserData(key, value);
+    getOrCreateUserDataHolder().putCopyableUserData(key, value);
   }
 
   public <T> T getCopyableUserData(@NotNull com.intellij.openapi.util.Key<T> key) {
-    return userData.getCopyableUserData(key);
+    UserDataHolderBase holder = getUserDataHolder();
+    return holder == null ? null : holder.getCopyableUserData(key);
   }
 
   public boolean validateData() {
@@ -303,8 +309,24 @@ public class DataNode<T> implements UserDataHolderEx, Serializable {
     copy.data = dataNode.data;
     copy.ignored = dataNode.ignored;
     copy.ready = dataNode.ready;
-    dataNode.userData.copyCopyableDataTo(copy.userData);
+
+    UserDataHolderBase userData = dataNode.getUserDataHolder();
+    if (userData != null) userData.copyCopyableDataTo(copy.getOrCreateUserDataHolder());
     return copy;
+  }
+
+  @Nullable
+  private UserDataHolderBase getUserDataHolder() {
+    return internalUserDataOrNull;
+  }
+
+  @NotNull
+  private UserDataHolderBase getOrCreateUserDataHolder() {
+    if (internalUserDataOrNull == null) {
+      userDataUpdater.compareAndSet(this, null, new UserDataHolderBase());
+    }
+    //noinspection ConstantConditions
+    return internalUserDataOrNull;
   }
 
   @NotNull
