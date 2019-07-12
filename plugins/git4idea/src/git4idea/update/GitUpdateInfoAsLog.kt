@@ -71,9 +71,9 @@ class GitUpdateInfoAsLog(private val project: Project,
     if (!isPathFilterSet()) {
       // if no path filters is set, we don't need the log to show the notification
       // => schedule the log tab and return the data
-      val logUi = createLogTabInEdtAndWait(logManager)
+      val (logUi, factory) = createLogTabInEdtAndWait(logManager)
       return NotificationData(commitsAndFiles.updatedFilesCount, commitsAndFiles.receivedCommitsCount, null,
-                              getViewCommitsAction(logManager, logUi))
+                              getViewCommitsAction(logManager, logUi, factory))
     }
     else {
       return waitForLogRefreshAndCalculate(logManager, commitsAndFiles)
@@ -114,7 +114,9 @@ class GitUpdateInfoAsLog(private val project: Project,
     if (!notificationShown && areRangesInDataPack(log, dataPack)) {
       notificationShown = true
       log.dataManager?.removeDataPackChangeListener(listener)
-      createLogTab(logManager) { logUi -> MyVisiblePackChangeListener(logManager, logUi, commitsAndFiles, dataSupplier) }
+      createLogTab(logManager) { (logUi, factory) ->
+        MyVisiblePackChangeListener(logManager, logUi, factory, commitsAndFiles, dataSupplier)
+      }
     }
   }
 
@@ -131,34 +133,34 @@ class GitUpdateInfoAsLog(private val project: Project,
     return CommitsAndFiles(updatedFilesCount, updatedCommitsCount)
   }
 
-  private fun createLogTabInEdtAndWait(logManager: VcsLogManager): VcsLogUiImpl {
-    val logUi = Ref.create<VcsLogUiImpl>()
+  private fun createLogTabInEdtAndWait(logManager: VcsLogManager): LogUiAndFactory {
+    val logUi = Ref.create<LogUiAndFactory>()
     ApplicationManager.getApplication().invokeAndWait {
       logUi.set(createLogTab(logManager, null))
     }
     return logUi.get()
   }
 
-  private fun getViewCommitsAction(logManager: VcsLogManager, logUi: VcsLogUiImpl): Runnable {
+  private fun getViewCommitsAction(logManager: VcsLogManager, logUi: VcsLogUiImpl, logUiFactory: MyLogUiFactory): Runnable {
     return Runnable {
       val found = VcsLogContentUtil.selectLogUi(project, logUi)
       if (!found) {
-        createTab(logManager, logUi, select = true)
+        createLogUiAndTab(logManager, logUiFactory, select = true)
       }
     }
   }
 
-  private fun createLogTab(logManager: VcsLogManager, listenerGetter: ((VcsLogUiImpl) -> VisiblePackChangeListener)?): VcsLogUiImpl {
+  private fun createLogTab(logManager: VcsLogManager, listenerGetter: ((LogUiAndFactory) -> VisiblePackChangeListener)?): LogUiAndFactory {
     val rangeFilter = VcsLogFilterObject.fromRange(ranges.values.map {
       VcsLogRangeFilter.RefRange(it.start.asString(), it.end.asString())
     })
     val logUiFactory = MyLogUiFactory(logManager, rangeFilter, listenerGetter)
-    val logUi = logManager.createLogUi(logUiFactory, true)
-    createTab(logManager, logUi, select = false)
-    return logUi
+    val logUi = createLogUiAndTab(logManager, logUiFactory, select = false)
+    return LogUiAndFactory(logUi, logUiFactory)
   }
 
-  private fun createTab(logManager: VcsLogManager, logUi: VcsLogUiImpl, select: Boolean) {
+  private fun createLogUiAndTab(logManager: VcsLogManager, logUiFactory: MyLogUiFactory, select: Boolean): VcsLogUiImpl {
+    val logUi = logManager.createLogUi(logUiFactory, true)
     val panel = VcsLogPanel(logManager, logUi)
     val contentManager = ProjectLevelVcsManagerEx.getInstanceEx(project).contentManager!!
     ContentUtilEx.addTabbedContent(contentManager, panel, "Update Info", DateFormatUtil.formatDateTime(System.currentTimeMillis()),
@@ -166,11 +168,12 @@ class GitUpdateInfoAsLog(private val project: Project,
     if (select) {
       ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS).activate(null)
     }
+    return logUi
   }
 
   private inner class MyLogUiFactory(val logManager: VcsLogManager,
                                      val rangeFilter: VcsLogRangeFilter,
-                                     val listenerGetter: ((VcsLogUiImpl) -> VisiblePackChangeListener)?)
+                                     val listenerGetter: ((LogUiAndFactory) -> VisiblePackChangeListener)?)
     : VcsLogManager.VcsLogUiFactory<VcsLogUiImpl> {
     override fun createLogUi(project: Project, logData: VcsLogData): VcsLogUiImpl {
       val logId = "git-update-project-info-" + UUID.randomUUID()
@@ -185,7 +188,7 @@ class GitUpdateInfoAsLog(private val project: Project,
       val logUi = VcsLogUiImpl(logId, logData, logManager.colorManager, properties, refresher, null)
 
       if (listenerGetter != null) {
-        refresher.addVisiblePackChangeListener(listenerGetter.invoke(logUi))
+        refresher.addVisiblePackChangeListener(listenerGetter.invoke(LogUiAndFactory(logUi, this)))
       }
 
       return logUi
@@ -250,6 +253,7 @@ class GitUpdateInfoAsLog(private val project: Project,
 
   private inner class MyVisiblePackChangeListener(val logManager: VcsLogManager,
                                                   val logUi: VcsLogUiImpl,
+                                                  val logUiFactory: MyLogUiFactory,
                                                   val commitsAndFiles: CommitsAndFiles,
                                                   val dataSupplier: CompletableFuture<NotificationData>) : VisiblePackChangeListener {
 
@@ -262,10 +266,12 @@ class GitUpdateInfoAsLog(private val project: Project,
 
           visibleCommitCount = visiblePack.visibleGraph.visibleCommitCount
           val data = NotificationData(commitsAndFiles.updatedFilesCount, commitsAndFiles.receivedCommitsCount, visibleCommitCount,
-                                      getViewCommitsAction(logManager, logUi))
+                                      getViewCommitsAction(logManager, logUi, logUiFactory))
           dataSupplier.complete(data)
         }
       }
     }
   }
+
+  private data class LogUiAndFactory(val logUi: VcsLogUiImpl, val factory: MyLogUiFactory)
 }
