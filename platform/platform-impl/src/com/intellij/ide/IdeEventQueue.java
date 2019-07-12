@@ -406,17 +406,18 @@ public final class IdeEventQueue extends EventQueue {
 
   @Override
   public void dispatchEvent(@NotNull AWTEvent e) {
-
-    if (e.getID() == WindowEvent.WINDOW_ACTIVATED) {
-      activatedWindows.add((Window)e.getSource());
-      updateActivatedWindowSet();
-    }
-
+    // DO NOT ADD ANYTHING BEFORE performanceWatcher.edtEventStarted is called
     long startedAt = System.currentTimeMillis();
     PerformanceWatcher performanceWatcher = obtainPerformanceWatcher();
     try {
       if (performanceWatcher != null) {
         performanceWatcher.edtEventStarted(startedAt);
+      }
+      // Add code below if you need
+
+      if (e.getID() == WindowEvent.WINDOW_ACTIVATED) {
+        activatedWindows.add((Window)e.getSource());
+        updateActivatedWindowSet();
       }
 
       if (SystemProperties.getBooleanProperty("skip.typed.event", true) && skipTypedKeyEventsIfFocusReturnsToOwner(e)) {
