@@ -18,6 +18,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.stubs.*
+import com.intellij.util.indexing.FileBasedIndexExtension
 import com.intellij.util.indexing.FileContentImpl
 import com.intellij.util.io.PersistentHashMap
 import junit.framework.TestCase
@@ -66,7 +67,11 @@ open class StubsGenerator(private val stubsVersion: String, private val stubsSto
 }
 
 fun writeStubsVersionFile(stubsStorageFilePath: String, stubsVersion: String) {
-  FileUtil.writeToFile(File("$stubsStorageFilePath.version"), stubsVersion)
+  val stubSerializationVersion = FileBasedIndexExtension
+    .EXTENSION_POINT_NAME
+    .findExtension(StubUpdatingIndex::class.java)!!
+    .version
+  FileUtil.writeToFile(File("$stubsStorageFilePath.version"), "$stubSerializationVersion\n$stubsVersion")
 }
 
 fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String, projectPath: String, stubsVersion: String) {
