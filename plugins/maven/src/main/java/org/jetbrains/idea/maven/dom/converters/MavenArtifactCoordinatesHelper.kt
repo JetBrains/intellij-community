@@ -13,31 +13,50 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.dom.converters;
+package org.jetbrains.idea.maven.dom.converters
 
-import com.intellij.util.xml.ConvertContext;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.dom.model.MavenDomArtifactCoordinates;
-import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates;
-import org.jetbrains.idea.maven.model.MavenId;
+import com.intellij.util.xml.ConvertContext
+import com.intellij.util.xml.DomManager
+import org.jetbrains.idea.maven.dom.model.MavenDomArtifactCoordinates
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
+import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
+import org.jetbrains.idea.maven.model.MavenId
 
-public class MavenArtifactCoordinatesHelper {
-  public static MavenId getId(ConvertContext context) {
-    return getId(getCoordinates(context));
+object MavenArtifactCoordinatesHelper {
+  @JvmStatic
+  fun getId(context: ConvertContext): MavenId {
+    return getMavenId(getCoordinates(context), context)
   }
 
-  @Nullable
-  public static MavenDomShortArtifactCoordinates getCoordinates(ConvertContext context) {
-    return (MavenDomShortArtifactCoordinates)context.getInvocationElement().getParent();
+  @JvmStatic
+  fun getCoordinates(context: ConvertContext): MavenDomShortArtifactCoordinates? {
+    return context.invocationElement.parent as MavenDomShortArtifactCoordinates
   }
 
-  public static MavenId getId(MavenDomShortArtifactCoordinates coords) {
-    String version = "";
-    if (coords instanceof MavenDomArtifactCoordinates) {
-      version = ((MavenDomArtifactCoordinates)coords).getVersion().getStringValue();
+  @JvmStatic
+  fun getMavenId(coords: MavenDomShortArtifactCoordinates?, context: ConvertContext): MavenId {
+    if (coords is MavenDomArtifactCoordinates) {
+      val version = MavenDependencyCompletionUtil.removeDummy(coords.version.stringValue)
+      if (!version.isEmpty()) {
+        return withVersion(coords, version)
+      }
     }
-    return new MavenId(MavenDependencyCompletionUtil.removeDummy(coords.getGroupId().getStringValue()),
-                       MavenDependencyCompletionUtil.removeDummy(coords.getArtifactId().getStringValue()),
-                       MavenDependencyCompletionUtil.removeDummy(version));
+    val domModel = DomManager.getDomManager(context.project).getFileElement(context.file, MavenDomProjectModel::class.java)
+                   ?: return withVersion(coords, "")
+    val groupId = coords?.groupId?.stringValue ?: return MavenId("", "", "")
+    val artifactId = coords.artifactId?.stringValue ?: return MavenId(groupId, "", "")
+    val managed = MavenDependencyCompletionUtil.findManagedDependency(domModel.rootElement, context.project, groupId,
+                                                                      artifactId)
+    return withVersion(coords, managed?.version?.stringValue ?: "")
   }
+
+  @JvmStatic
+  fun withVersion(coords: MavenDomShortArtifactCoordinates?, version: String): MavenId {
+    if (coords == null) {
+      return MavenId("", "", "")
+    }
+    return MavenId(MavenDependencyCompletionUtil.removeDummy(coords.groupId.stringValue),
+                   MavenDependencyCompletionUtil.removeDummy(coords.artifactId.stringValue), version)
+  }
+
 }
