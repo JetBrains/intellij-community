@@ -143,15 +143,12 @@ public class DimensionService extends SimpleModificationTracker implements Persi
 
   @Nullable
   private static Dimension getProjectSize(@NonNls @NotNull String key, @Nullable Project project) {
-    if (project == null) return null;
-    WindowStateService windowStateService = WindowStateService.getInstance(project);
-    return windowStateService.getSize(key);
+    return project != null ? WindowStateService.getInstance(project).getSize(key) : null;
   }
+
   @Nullable
   private static Point getProjectLocation(@NonNls @NotNull String key, @Nullable Project project) {
-    if (project == null) return null;
-    WindowStateService windowStateService = WindowStateService.getInstance(project);
-    return windowStateService.getLocation(key);
+    return project != null ? WindowStateService.getInstance(project).getLocation(key) : null;
   }
 
   /**
