@@ -110,15 +110,31 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
       @SuppressWarnings("deprecation")
       List<String> openPaths = myState.getOpenPaths();
       if (!openPaths.isEmpty()) {
-        for (String path : openPaths) {
-          RecentProjectMetaInfo info = myState.getAdditionalInfo().get(path);
-          if (info != null) {
-            info.setOpened(true);
-          }
-        }
-        openPaths.clear();
+        migrateOpenPaths(openPaths);
       }
     }
+  }
+
+  // reorder according to openPaths order and mark as opened
+  private void migrateOpenPaths(@NotNull List<String> openPaths) {
+    Map<String, RecentProjectMetaInfo> oldInfoMap = new THashMap<>();
+    for (String path : openPaths) {
+      RecentProjectMetaInfo info = myState.getAdditionalInfo().remove(path);
+      if (info != null) {
+        oldInfoMap.put(path, info);
+      }
+    }
+
+    for (String path : ContainerUtil.reverse(openPaths)) {
+      RecentProjectMetaInfo info = oldInfoMap.get(path);
+      if (info == null) {
+        info = new RecentProjectMetaInfo();
+      }
+      info.setOpened(true);
+      myState.getAdditionalInfo().put(path, info);
+    }
+
+    openPaths.clear();
   }
 
   @Override
