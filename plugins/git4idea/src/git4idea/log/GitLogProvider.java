@@ -26,7 +26,6 @@ import com.intellij.vcs.log.util.StopWatch;
 import com.intellij.vcs.log.util.UserNameRegex;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBranchesCollection;
@@ -42,7 +41,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class GitLogProvider implements VcsLogProvider {
 
@@ -563,10 +561,9 @@ public class GitLogProvider implements VcsLogProvider {
 
   @Nullable
   @Override
-  public VirtualFile getVcsRoot(@NotNull Project project, @NotNull FilePath path) {
-    VirtualFile file = path.getVirtualFile();
-    if (file != null && file.isDirectory()) {
-      GitRepository repository = myRepositoryManager.getRepositoryForRoot(file);
+  public VirtualFile getVcsRoot(@NotNull Project project, @NotNull VirtualFile detectedRoot, @NotNull FilePath path) {
+    if (detectedRoot.equals(path.getVirtualFile())) {
+      GitRepository repository = myRepositoryManager.getRepositoryForRoot(detectedRoot);
       if (repository != null) {
         GitSubmodule submodule = GitSubmoduleKt.asSubmodule(repository);
         if (submodule != null) {
@@ -574,7 +571,7 @@ public class GitLogProvider implements VcsLogProvider {
         }
       }
     }
-    return VcsUtil.getVcsRootFor(project, path);
+    return detectedRoot;
   }
 
   @SuppressWarnings("unchecked")
