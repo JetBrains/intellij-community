@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -186,8 +185,8 @@ public interface VcsLogProvider {
    * Returns the VCS root which should be used by the file history instead of the root found by standard mechanism (through mappings).
    */
   @Nullable
-  default VirtualFile getVcsRoot(@NotNull Project project, @NotNull FilePath filePath) {
-    return VcsUtil.getVcsRootFor(project, filePath);
+  default VirtualFile getVcsRoot(@NotNull Project project, @NotNull VirtualFile detectedRoot, @NotNull FilePath filePath) {
+    return detectedRoot;
   }
 
   interface Requirements {
