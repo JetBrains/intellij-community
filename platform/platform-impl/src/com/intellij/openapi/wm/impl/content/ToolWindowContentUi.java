@@ -46,7 +46,11 @@ import java.util.Iterator;
 import java.util.List;
 
 public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyChangeListener, DataProvider {
-  public static final String POPUP_PLACE = "ToolwindowPopup";
+  /**
+   * @deprecated use {@link ActionPlaces#TOOLWINDOW_POPUP} instead
+   */
+  @Deprecated
+  public static final String POPUP_PLACE = ActionPlaces.TOOLWINDOW_POPUP;
   // when client property is put in toolwindow component, hides toolwindow label
   public static final String HIDE_ID_LABEL = "HideIdLabel";
 
@@ -524,7 +528,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       group.addAll(toolWindowGroup);
     }
 
-    final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(POPUP_PLACE, group);
+    final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, group);
     popupMenu.getComponent().show(comp, x, y);
   }
 

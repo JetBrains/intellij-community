@@ -16,7 +16,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.util.*
@@ -172,7 +171,7 @@ class FeatureUsageData {
   }
 
   private fun isCommonPlace(place: String): Boolean {
-    return ActionPlaces.isCommonPlace(place) || ToolWindowContentUi.POPUP_PLACE == place
+    return ActionPlaces.isCommonPlace(place) || ActionPlaces.TOOLWINDOW_POPUP == place
   }
 
   fun addExecutor(executor: Executor): FeatureUsageData {

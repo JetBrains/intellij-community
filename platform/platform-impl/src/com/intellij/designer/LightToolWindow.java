@@ -19,7 +19,6 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.AnchoredButton;
 import com.intellij.openapi.wm.impl.StripeButtonUI;
-import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.tabs.TabsUtil;
@@ -339,7 +338,7 @@ public class LightToolWindow extends JPanel {
   private void showGearPopup(Component component, int x, int y) {
     ActionPopupMenu popupMenu =
       ((ActionManagerImpl)ActionManager.getInstance())
-        .createActionPopupMenu(ToolWindowContentUi.POPUP_PLACE, createGearPopupGroup(), new MenuItemPresentationFactory());
+        .createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, createGearPopupGroup(), new MenuItemPresentationFactory());
     popupMenu.getComponent().show(component, x, y);
   }
 
