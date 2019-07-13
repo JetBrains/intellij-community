@@ -1,10 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl;
 
-import com.intellij.ide.ProjectGroup;
-import com.intellij.ide.ProjectGroupActionGroup;
-import com.intellij.ide.RecentProjectsManager;
-import com.intellij.ide.RecentProjectsManagerBase;
+import com.intellij.ide.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -82,10 +79,10 @@ public class RecentProjectsTest extends PlatformTestCase {
   }
 
   private static long getProjectOpenTimestamp(@SuppressWarnings("SameParameterValue") @NotNull String projectName) {
-    Map<String, RecentProjectsManagerBase.RecentProjectMetaInfo> additionalInfo = RecentProjectsManagerBase.getInstanceEx().getState().additionalInfo;
+    Map<String, RecentProjectMetaInfo> additionalInfo = RecentProjectsManagerBase.getInstanceEx().getState().getAdditionalInfo();
     for (String s : additionalInfo.keySet()) {
       if (s.endsWith(projectName)) {
-        return additionalInfo.get(s).projectOpenTimestamp;
+        return additionalInfo.get(s).getProjectOpenTimestamp();
       }
     }
     return -1;
@@ -105,8 +102,8 @@ public class RecentProjectsTest extends PlatformTestCase {
 
   private static void checkRecents(String... recents) {
     List<String> recentProjects = Arrays.asList(recents);
-    RecentProjectsManagerBase.State state = ((RecentProjectsManagerBase)RecentProjectsManager.getInstance()).getState();
-    List<String> projects = state.additionalInfo.keySet().stream()
+    RecentProjectManagerState state = ((RecentProjectsManagerBase)RecentProjectsManager.getInstance()).getState();
+    List<String> projects = state.getAdditionalInfo().keySet().stream()
       .map(s -> PathUtil.getFileName(s).replace("idea_test_", ""))
       .filter(recentProjects::contains)
       .collect(Collectors.toList());

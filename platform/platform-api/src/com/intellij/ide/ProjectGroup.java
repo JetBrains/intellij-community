@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,7 +13,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class ProjectGroup {
+public final class ProjectGroup {
   private @NotNull String myName = "";
   private String myProjectPaths = "";
   private boolean myExpanded = false;
@@ -59,12 +45,31 @@ public class ProjectGroup {
   }
 
   public void addProject(@SystemIndependent String path) {
-    final List<String> projects = getProjects();
+    List<String> projects = new ArrayList<>(StringUtil.split(myProjectPaths, File.pathSeparator));
     projects.add(path);
     save(projects);
   }
 
-  protected void save(List<String> projects) {
+  public boolean markProjectFirst(@SystemIndependent String path) {
+    if (!myProjectPaths.contains(path)) {
+      return false;
+    }
+
+    List<String> existing = StringUtil.split(myProjectPaths, File.pathSeparator);
+    int index = existing.indexOf(path);
+    if (index <= 0) {
+      return false;
+    }
+
+    List<String> projects = new ArrayList<>(existing.size());
+    projects.add(path);
+    projects.addAll(existing.subList(0, index));
+    projects.addAll(existing.subList(index + 1, existing.size()));
+    save(projects);
+    return true;
+  }
+
+  private void save(List<String> projects) {
     myProjectPaths = StringUtil.join(projects, File.pathSeparator);
   }
 
@@ -72,10 +77,14 @@ public class ProjectGroup {
     return new ArrayList<>(new HashSet<>(StringUtil.split(myProjectPaths, File.pathSeparator)));
   }
 
-  public void removeProject(@SystemIndependent String path) {
-    final List<String> projects = getProjects();
-    projects.remove(path);
+  public boolean removeProject(@SystemIndependent String path) {
+    List<String> projects = StringUtil.split(myProjectPaths, File.pathSeparator);
+    if (!projects.remove(path)) {
+      return false;
+    }
+
     save(projects);
+    return true;
   }
 
   public boolean isExpanded() {
