@@ -6,6 +6,7 @@ iml_module(
     srcs = ["src"],
     iml_files = ["intellij.statsCollector.completionRanker.iml"],
     test_srcs = ["test"],
+    test_tags = ["no_test_windows"],  # b/137421177
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [
