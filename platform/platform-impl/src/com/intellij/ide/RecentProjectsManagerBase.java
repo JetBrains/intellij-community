@@ -135,6 +135,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     }
 
     openPaths.clear();
+    myModCounter.incrementAndGet();
   }
 
   @Override
@@ -341,6 +342,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
         info = new RecentProjectMetaInfo();
       }
       myState.getAdditionalInfo().put(path, info);
+      myModCounter.incrementAndGet();
 
       ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
       info.setDisplayName(getProjectDisplayName(project));
@@ -460,8 +462,6 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
             info.setFrame(frameInfo);
           }
           info.setProjectWorkspaceId(workspaceId);
-
-          manager.myModCounter.incrementAndGet();
         }
       }
 
