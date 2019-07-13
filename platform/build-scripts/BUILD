@@ -73,20 +73,42 @@ iml_module(
     name = "intellij.platform.images.build",
     srcs = ["icons/src"],
     iml_files = ["icons/intellij.platform.images.build.iml"],
+    # do not sort: must match IML order
+    test_runtime_deps = [
+        "//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl",
+        "//tools/idea/images:intellij.platform.images",
+        "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
+        "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions",
+    ],
     test_srcs = ["icons/tests"],
     test_tags = ["manual"],  # fails after IDEA 181.2784.17 merge
     visibility = ["//visibility:public"],
-    runtime_deps = ["//tools/idea/.idea/libraries:commons-imaging"],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea/.idea/libraries:commons-imaging",
+        "//tools/idea/platform/usageView:intellij.platform.usageView",
+        "//tools/idea/RegExpSupport:intellij.regexp",
+        "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
+        "//tools/idea/xml/xml-structure-view-impl:intellij.xml.structureView.impl",
+        "//tools/idea/spellchecker:intellij.spellchecker",
+        "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
+        "//tools/idea/json:intellij.json",
+        "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
+        "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
+        "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
+    ],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/jps/model-api:intellij.platform.jps.model[module]",
         "//tools/idea/jps/model-impl:intellij.platform.jps.model.impl[module]",
         "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
+        "//tools/idea/platform/util:intellij.platform.util.ui[module]",
         "//tools/idea/platform/util:intellij.platform.util[module]",
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module]",
         "//tools/idea/.idea/libraries:http-client",
         "//tools/idea/platform/projectModel-impl:intellij.platform.projectModel.impl[module]",
+        "//tools/idea/platform/platform-impl:intellij.platform.ide.impl[module]",
     ],
 )
 

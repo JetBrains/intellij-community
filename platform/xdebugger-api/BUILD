@@ -7,5 +7,9 @@ iml_module(
     iml_files = ["intellij.platform.debugger.iml"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/platform/lang-api:intellij.platform.lang"],
-    deps = ["//tools/idea/platform/lang-api:intellij.platform.lang[module]"],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea/platform/lang-api:intellij.platform.lang[module]",
+        "//tools/idea/platform/util:intellij.platform.util.ui[module]",
+    ],
 )

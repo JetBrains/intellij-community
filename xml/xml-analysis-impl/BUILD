@@ -32,5 +32,6 @@ iml_module(
         "//tools/idea/platform/core-impl:intellij.platform.core.impl[module]",
         "//tools/idea/xml/xml-analysis-api:intellij.xml.analysis[module]",
         "//tools/idea/platform/projectModel-api:intellij.platform.projectModel[module]",
+        "//tools/idea/platform/util:intellij.platform.util.ui[module]",
     ],
 )

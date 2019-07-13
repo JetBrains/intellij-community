@@ -19,10 +19,10 @@ iml_module(
         "//tools/idea/platform/projectModel-api:intellij.platform.projectModel",
         "//tools/idea/platform/analysis-api:intellij.platform.analysis",
         "//tools/idea/platform/editor-ui-api:intellij.platform.editor",
-        "//tools/idea/.idea/libraries:rd-swing",
-        "//tools/idea/.idea/libraries:rd-core",
         "//tools/idea/platform/util-ex:intellij.platform.util.ex",
-        "//tools/idea/platform/util:intellij.platform.util.concurrency",
+        "//tools/idea/platform/util:intellij.platform.concurrency",
+        "//tools/idea/platform/util:intellij.platform.util.ui",
+        "//tools/idea/platform/core-ui:intellij.platform.core.ui",
     ],
     # do not sort: must match IML order
     runtime_deps = [
@@ -61,6 +61,8 @@ iml_module(
         "//tools/idea/.idea/libraries:rd-swing",
         "//tools/idea/.idea/libraries:rd-core",
         "//tools/idea/platform/util-ex:intellij.platform.util.ex[module]",
-        "//tools/idea/platform/util:intellij.platform.util.concurrency[module]",
+        "//tools/idea/platform/util:intellij.platform.concurrency[module]",
+        "//tools/idea/platform/util:intellij.platform.util.ui[module]",
+        "//tools/idea/platform/core-ui:intellij.platform.core.ui[module]",
     ],
 )

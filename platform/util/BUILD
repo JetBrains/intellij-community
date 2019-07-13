@@ -5,7 +5,10 @@ iml_module(
     name = "intellij.platform.util",
     srcs = ["src"],
     iml_files = ["intellij.platform.util.iml"],
-    javacopts = ["-XepAllErrorsAsWarnings"],
+    javacopts = [
+        "-Xep:ComplexBooleanConstant:WARN",
+        "-Xep:IdentityBinaryExpression:WARN",
+    ],
     resources = ["resources"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
@@ -17,7 +20,6 @@ iml_module(
     ],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/.idea/libraries:Mac",
         "//tools/idea/.idea/libraries:JDOM",
         "//tools/idea/.idea/libraries:Log4J",
         "//tools/idea/.idea/libraries:Trove4j",
@@ -26,13 +28,8 @@ iml_module(
         "//tools/idea/platform/util-class-loader:intellij.platform.util.classLoader[module]",
         "//tools/idea/.idea/libraries:jna",
         "//tools/idea/.idea/libraries:OroMatcher",
-        "//tools/idea/.idea/libraries:imgscalr",
-        "//tools/idea/.idea/libraries:xmlgraphics-commons",
-        "//tools/idea/.idea/libraries:batik",
         "//tools/idea/.idea/libraries:lz4-java",
-        "//tools/idea/.idea/libraries:xml-apis-ext",
         "//tools/idea/.idea/libraries:commons-compress",
-        "//tools/idea/.idea/libraries:Java_Compatibility",
         "//tools/analytics-library/tracker:analytics-tracker[module]",
         "//tools/idea/.idea/libraries:studio-analytics-proto",
         "//tools/idea/.idea/libraries:protobuf",
@@ -45,7 +42,7 @@ iml_module(
 iml_module(
     name = "intellij.platform.util.tests",
     iml_files = ["testSrc/intellij.platform.util.tests.iml"],
-    javacopts = ["-XepAllErrorsAsWarnings"],
+    javacopts = ["-Xep:ModifyingCollectionWithItself:WARN"],
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/xml/xml-structure-view-impl:intellij.xml.structureView.impl",
@@ -89,9 +86,9 @@ iml_module(
 
 # managed by go/iml_to_build
 iml_module(
-    name = "intellij.platform.util.concurrency",
+    name = "intellij.platform.concurrency",
     srcs = ["concurrency"],
-    iml_files = ["intellij.platform.util.concurrency.iml"],
+    iml_files = ["intellij.platform.concurrency.iml"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [
@@ -100,5 +97,25 @@ iml_module(
         "//tools/idea/platform/util:intellij.platform.util[module]",
         "//tools/idea/platform/util-ex:intellij.platform.util.ex[module]",
         "//tools/idea/platform/core-api:intellij.platform.core[module]",
+    ],
+)
+
+# managed by go/iml_to_build
+iml_module(
+    name = "intellij.platform.util.ui",
+    srcs = ["ui/src"],
+    iml_files = ["intellij.platform.util.ui.iml"],
+    javacopts = ["-Xep:ComplexBooleanConstant:WARN"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea/.idea/libraries:Mac",
+        "//tools/idea/platform/util:intellij.platform.util[module]",
+        "//tools/idea/.idea/libraries:batik-transcoder",
+        "//tools/idea/.idea/libraries:xmlgraphics-commons",
+        "//tools/idea/.idea/libraries:imgscalr",
+        "//tools/idea/.idea/libraries:jna",
+        "//tools/idea/.idea/libraries:xml-apis-ext",
+        "//tools/idea/.idea/libraries:Java_Compatibility",
     ],
 )

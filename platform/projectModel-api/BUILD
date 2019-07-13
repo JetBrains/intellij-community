@@ -17,7 +17,8 @@ iml_module(
         "//tools/idea/jps/model-api:intellij.platform.jps.model[module]",
         "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/.idea/libraries:JDOM",
-        "//tools/idea/platform/util:intellij.platform.util.concurrency[module]",
+        "//tools/idea/platform/util:intellij.platform.concurrency[module]",
         "//tools/idea/platform/util-ex:intellij.platform.util.ex[module]",
+        "//tools/idea/platform/util:intellij.platform.util.ui[module]",
     ],
 )

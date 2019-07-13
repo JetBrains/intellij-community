@@ -22,6 +22,7 @@ iml_module(
         "//tools/idea/platform/indexing-impl:intellij.platform.indexing.impl[module]",
         "//tools/idea/platform/projectModel-api:intellij.platform.projectModel[module]",
         "//tools/idea/platform/projectModel-impl:intellij.platform.projectModel.impl[module]",
+        "//tools/idea/platform/util:intellij.platform.util.ui[module]",
         "//tools/idea/platform/analysis-api:intellij.platform.analysis[module]",
     ],
 )

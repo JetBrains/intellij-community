@@ -48,5 +48,7 @@ iml_module(
         "//tools/idea/.idea/libraries:kotlin-reflect",
         "//tools/idea/platform/object-serializer:intellij.platform.objectSerializer[module]",
         "//tools/idea/platform/object-serializer:intellij.platform.objectSerializer.annotations[module]",
+        "//tools/idea/.idea/libraries:assertJ[test]",
+        "//tools/idea/.idea/libraries:mockito[test]",
     ],
 )

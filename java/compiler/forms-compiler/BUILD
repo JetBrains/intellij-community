@@ -14,7 +14,7 @@ iml_module(
         "//tools/idea/.idea/libraries:JDOM",
         "//tools/idea/platform/forms_rt:intellij.java.guiForms.rt[module]",
         "//tools/idea/.idea/libraries:ASM",
-        "//tools/idea/.idea/libraries:JUnit4[test]",
+        "//tools/idea/.idea/libraries:JUnit3[test]",
         "//tools/idea/.idea/libraries:jgoodies-forms",
         "//tools/idea/java/compiler/instrumentation-util:intellij.java.compiler.instrumentationUtil[module]",
     ],

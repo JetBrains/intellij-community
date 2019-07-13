@@ -17,6 +17,8 @@ iml_module(
         "//tools/idea/.idea/libraries:JDOM",
         "//tools/idea/.idea/libraries:jetbrains-annotations",
         "//tools/idea/platform/util-ex:intellij.platform.util.ex[module]",
-        "//tools/idea/platform/util:intellij.platform.util.concurrency[module]",
+        "//tools/idea/platform/util:intellij.platform.concurrency[module]",
+        "//tools/idea/platform/util:intellij.platform.util.ui[module]",
+        "//tools/idea/platform/core-ui:intellij.platform.core.ui[module]",
     ],
 )

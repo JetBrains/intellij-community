@@ -34,5 +34,6 @@ iml_module(
         "//tools/idea/platform/extensions:intellij.platform.extensions[module]",
         "//tools/idea/platform/util:intellij.platform.util[module]",
         "//tools/idea/platform/platform-resources:intellij.platform.resources[module]",
+        "//tools/idea/platform/util:intellij.platform.util.ui[module]",
     ],
 )

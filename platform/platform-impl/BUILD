@@ -25,6 +25,7 @@ iml_module(
         "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/.idea/libraries:StreamEx",
         "//tools/idea/.idea/libraries:kotlinx-coroutines-jdk8",
+        "//tools/idea/platform/util:intellij.platform.util.ui",
     ],
     # do not sort: must match IML order
     runtime_deps = [
@@ -58,7 +59,6 @@ iml_module(
         "//tools/idea/.idea/libraries:OroMatcher",
         "//tools/idea/.idea/libraries:CGLIB",
         "//tools/idea/platform/lvcs-api:intellij.platform.lvcs[module]",
-        "//tools/idea/.idea/libraries:JavaHelp",
         "//tools/idea/platform/lang-api:intellij.platform.lang[module]",
         "//tools/idea/.idea/libraries:jna",
         "//tools/idea/.idea/libraries:winp",
@@ -94,5 +94,6 @@ iml_module(
         "//tools/idea/.idea/libraries:Java_Compatibility",
         "//tools/idea/.idea/libraries:kotlin-reflect",
         "//tools/idea/.idea/libraries:jackson-databind",
+        "//tools/idea/platform/util:intellij.platform.util.ui[module]",
     ],
 )

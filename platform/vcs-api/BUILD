@@ -23,5 +23,6 @@ iml_module(
         "//tools/idea/.idea/libraries:JDOM",
         "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/platform/util:intellij.platform.util[module]",
+        "//tools/idea/platform/util:intellij.platform.util.ui[module]",
     ],
 )

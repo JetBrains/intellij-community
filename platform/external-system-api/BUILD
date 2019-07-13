@@ -47,5 +47,6 @@ iml_module(
         "//tools/idea/platform/object-serializer:intellij.platform.objectSerializer[module]",
         "//tools/idea/platform/object-serializer:intellij.platform.objectSerializer.annotations[module]",
         "//tools/idea/.idea/libraries:lz4-java",
+        "//tools/idea/platform/util:intellij.platform.util.ui[module]",
     ],
 )

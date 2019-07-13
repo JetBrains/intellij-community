@@ -146,15 +146,15 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/httpclient/4.5.7:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/httpclient/4.5.8:jar",
         "//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/httpcore/4.4.11:jar",
-        "//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/httpmime/4.5.7:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/httpmime/4.5.8:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/httpclient/4.5.7:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/httpclient/4.5.8:jar",
         "//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/httpcore/4.4.11:jar",
-        "//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/httpmime/4.5.7:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/httpmime/4.5.8:jar",
     ],
 )
 
@@ -394,10 +394,44 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "batik",
+    name = "batik-transcoder",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-all/1.11:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-all/1.11:jar"],
+    # do not sort: must match IML order
+    exports = [
+        "//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-anim/1.11:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-awt-util/1.11:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-bridge/1.11:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-constants/1.11:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-css/1.11:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-dom/1.11:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-ext/1.11:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-gvt/1.11:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-i18n/1.11:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-parser/1.11:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-svg-dom/1.11:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-svggen/1.11:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-transcoder/1.11:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-util/1.11:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-xml/1.11:jar",
+    ],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-anim/1.11:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-awt-util/1.11:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-bridge/1.11:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-constants/1.11:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-css/1.11:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-dom/1.11:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-ext/1.11:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-gvt/1.11:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-i18n/1.11:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-parser/1.11:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-svg-dom/1.11:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-svggen/1.11:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-transcoder/1.11:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-util/1.11:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-xml/1.11:jar",
+    ],
 )
 
 # managed by go/iml_to_build
@@ -466,25 +500,25 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-buffer/4.1.34.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-http/4.1.34.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-http2/4.1.34.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec/4.1.34.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-common/4.1.34.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-handler/4.1.34.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-resolver/4.1.34.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-transport/4.1.34.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-buffer/4.1.36.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-http/4.1.36.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-http2/4.1.36.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec/4.1.36.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-common/4.1.36.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-handler/4.1.36.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-resolver/4.1.36.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-transport/4.1.36.Final:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-buffer/4.1.34.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-http/4.1.34.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-http2/4.1.34.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec/4.1.34.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-common/4.1.34.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-handler/4.1.34.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-resolver/4.1.34.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-transport/4.1.34.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-buffer/4.1.36.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-http/4.1.36.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-http2/4.1.36.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec/4.1.36.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-common/4.1.36.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-handler/4.1.36.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-resolver/4.1.36.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-transport/4.1.36.Final:jar",
     ],
 )
 
@@ -494,13 +528,13 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-socks/4.1.34.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-handler-proxy/4.1.34.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-socks/4.1.36.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-handler-proxy/4.1.36.Final:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-socks/4.1.34.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-handler-proxy/4.1.34.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-socks/4.1.36.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-handler-proxy/4.1.36.Final:jar",
     ],
 )
 
@@ -604,8 +638,8 @@ java_library(
 java_library(
     name = "Jaxen",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/jaxen/jaxen/1.1.6:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/jaxen/jaxen/1.1.6:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/jaxen/jaxen/1.2.0:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/jaxen/jaxen/1.2.0:jar"],
 )
 
 # managed by go/iml_to_build
@@ -662,14 +696,6 @@ java_library(
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/commons-logging/commons-logging/1.2:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/commons-logging/commons-logging/1.2:jar"],
-)
-
-# managed by go/iml_to_build
-java_library(
-    name = "JavaHelp",
-    visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/javax/help/javahelp/2.0.02:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/javax/help/javahelp/2.0.02:jar"],
 )
 
 # managed by go/iml_to_build
@@ -1298,8 +1324,8 @@ java_library(
 java_library(
     name = "fluent-hc",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/fluent-hc/4.5.6:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/fluent-hc/4.5.6:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/fluent-hc/4.5.8:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/fluent-hc/4.5.8:jar"],
 )
 
 # managed by go/iml_to_build

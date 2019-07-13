@@ -7,5 +7,10 @@ iml_module(
     iml_files = ["intellij.java.psi.iml"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/platform/core-api:intellij.platform.core"],
-    deps = ["//tools/idea/platform/core-api:intellij.platform.core[module]"],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea/platform/core-api:intellij.platform.core[module]",
+        "//tools/idea/platform/util:intellij.platform.util.ui[module]",
+        "//tools/idea/platform/core-ui:intellij.platform.core.ui[module]",
+    ],
 )

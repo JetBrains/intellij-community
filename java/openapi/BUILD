@@ -64,5 +64,6 @@ iml_module(
         "//tools/idea/java/java-psi-api:intellij.java.psi[module]",
         "//tools/idea/java/java-indexing-api:intellij.java.indexing[module]",
         "//tools/idea/java/java-analysis-api:intellij.java.analysis[module]",
+        "//tools/idea/platform/util:intellij.platform.util.ui[module]",
     ],
 )

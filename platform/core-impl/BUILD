@@ -13,5 +13,7 @@ iml_module(
         "//tools/idea/.idea/libraries:picocontainer",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/.idea/libraries:JDOM",
+        "//tools/idea/platform/util:intellij.platform.util.ui[module]",
+        "//tools/idea/platform/core-ui:intellij.platform.core.ui[module]",
     ],
 )

@@ -48,5 +48,6 @@ iml_module(
         "//tools/idea/.idea/libraries:xml-resolver",
         "//tools/idea/.idea/libraries:gson",
         "//tools/idea/.idea/libraries:NanoXML",
+        "//tools/idea/platform/util:intellij.platform.util.ui[module]",
     ],
 )

@@ -22,5 +22,7 @@ iml_module(
         "//tools/idea/.idea/libraries:ASM",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/.idea/libraries:StreamEx",
+        "//tools/idea/platform/util:intellij.platform.util.ui[module]",
+        "//tools/idea/platform/core-ui:intellij.platform.core.ui[module]",
     ],
 )

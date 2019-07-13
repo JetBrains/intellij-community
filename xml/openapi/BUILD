@@ -19,5 +19,6 @@ iml_module(
         "//tools/idea/xml/xml-analysis-api:intellij.xml.analysis[module]",
         "//tools/idea/xml/xml-structure-view-api:intellij.xml.structureView[module]",
         "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
+        "//tools/idea/platform/util:intellij.platform.util.ui[module]",
     ],
 )

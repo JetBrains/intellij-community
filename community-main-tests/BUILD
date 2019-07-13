@@ -22,6 +22,7 @@ iml_module(
         "//tools/idea/plugins/editorconfig:intellij.editorconfig",
         "//tools/idea/plugins/changeReminder:intellij.vcs.changeReminder",
         "//tools/idea/plugins/sh:intellij.sh",
+        "//tools/idea/plugins/gradle-maven:intellij.gradle.java.maven",
     ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order

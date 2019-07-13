@@ -15,5 +15,6 @@ iml_module(
         "//tools/idea/platform/core-api:intellij.platform.core[module]",
         "//tools/idea/platform/projectModel-api:intellij.platform.projectModel[module]",
         "//tools/idea/platform/editor-ui-api:intellij.platform.editor[module]",
+        "//tools/idea/platform/util:intellij.platform.util.ui[module]",
     ],
 )

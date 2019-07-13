@@ -29,5 +29,6 @@ iml_module(
         "//tools/idea/xml/xml-psi-impl:intellij.xml.psi.impl[module]",
         "//tools/idea/platform/structure-view-impl:intellij.platform.structureView.impl[module]",
         "//tools/idea/platform/core-impl:intellij.platform.core.impl[module]",
+        "//tools/idea/platform/util:intellij.platform.util.ui[module]",
     ],
 )

@@ -32,5 +32,6 @@ iml_module(
         "//tools/idea/java/openapi:intellij.java[module]",
         "//tools/idea/platform/projectModel-impl:intellij.platform.projectModel.impl[module]",
         "//tools/idea/.idea/libraries:JDOM",
+        "//tools/idea/platform/util:intellij.platform.util.ui[module]",
     ],
 )

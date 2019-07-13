@@ -11,13 +11,13 @@ iml_module(
     exports = ["//tools/idea/plugins/gradle:intellij.gradle.common"],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
         "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
         "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
-        "//tools/idea/plugins/maven/error-prone-compiler:intellij.maven.errorProne.compiler",
     ],
     # do not sort: must match IML order
     deps = [
@@ -34,7 +34,6 @@ iml_module(
         "//tools/idea/java/execution/openapi:intellij.java.execution[module]",
         "//tools/idea/java/openapi:intellij.java[module]",
         "//tools/idea:intellij.java.impl[module]",
-        "//tools/idea/plugins/maven:intellij.maven[module]",
         "//tools/idea/.idea/libraries:swingx",
         "//tools/idea/platform/smRunner:intellij.platform.smRunner[module]",
         "//tools/idea/.idea/libraries:Kryo",
@@ -60,7 +59,6 @@ iml_module(
         "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
         "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
         "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
-        "//tools/idea/plugins/maven/error-prone-compiler:intellij.maven.errorProne.compiler",
     ],
     test_srcs = ["testSources"],
     test_tags = ["manual"],
