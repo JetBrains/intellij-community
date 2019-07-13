@@ -807,6 +807,12 @@ public class ShelvedChangesViewManager implements Disposable {
     protected boolean isFile() {
       return true;
     }
+
+    @Override
+    public int compareUserObjects(ShelvedWrapper o2) {
+      return compareFilePaths(VcsUtil.getFilePath(getUserObject().getRequestName()),
+                              VcsUtil.getFilePath(o2.getRequestName()));
+    }
   }
 
   private class MyContentUpdater extends Update {
