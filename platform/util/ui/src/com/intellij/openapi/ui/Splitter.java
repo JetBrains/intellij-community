@@ -1,12 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.FocusWatcher;
-import com.intellij.ui.ClickListener;
-import com.intellij.ui.UIBundle;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -551,68 +548,6 @@ public class Splitter extends JPanel implements Splittable {
       Icon glueIcon = isVerticalSplit ? SplitGlueV : SplitGlueH;
       add(new JLabel(glueIcon), new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
                                                        new Insets(0, 0, 0, 0), 0, 0));
-
-      if (myShowDividerControls && false) {
-        int glueFill = isVerticalSplit ? GridBagConstraints.VERTICAL : GridBagConstraints.HORIZONTAL;
-        int xMask = isVerticalSplit ? 1 : 0;
-        int yMask = isVerticalSplit ? 0 : 1;
-        int leftInsetArrow = 0;
-        int leftInsetIcon = 1;
-
-        JLabel splitDownLabel = new JLabel(isVerticalSplit ? AllIcons.General.ArrowDown : AllIcons.General.ArrowRight);
-        splitDownLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        splitDownLabel.setToolTipText(isVerticalSplit ? UIBundle.message("splitter.down.tooltip.text") : UIBundle
-          .message("splitter.right.tooltip.text"));
-        new ClickListener() {
-          @Override
-          public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-            setProportion(1.0f - getMinProportion(false));
-            return true;
-          }
-        }.installOn(splitDownLabel);
-
-        add(splitDownLabel, new GridBagConstraints(isVerticalSplit ? 1 : 0, isVerticalSplit ? 0 : 5, 1, 1, 0, 0, GridBagConstraints.CENTER,
-                                                   GridBagConstraints.NONE, new Insets(0, leftInsetArrow, 0, 0), 0, 0));
-        //
-        add(new JLabel(glueIcon),
-            new GridBagConstraints(2 * xMask, 2 * yMask, 1, 1, 0, 0, GridBagConstraints.CENTER, glueFill,
-                                   new Insets(0, leftInsetIcon, 0, 0), 0, 0));
-        JLabel splitCenterLabel =
-          new JLabel(isVerticalSplit ? AllIcons.General.ArrowSplitCenterV : AllIcons.General.ArrowSplitCenterH);
-        splitCenterLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        splitCenterLabel.setToolTipText(UIBundle.message("splitter.center.tooltip.text"));
-        new ClickListener() {
-          @Override
-          public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-            setProportion(.5f);
-            return true;
-          }
-        }.installOn(splitCenterLabel);
-
-        add(splitCenterLabel, new GridBagConstraints(3 * xMask, 3 * yMask, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
-                                                     new Insets(0, leftInsetArrow, 0, 0), 0, 0));
-        add(new JLabel(glueIcon),
-            new GridBagConstraints(4 * xMask, 4 * yMask, 1, 1, 0, 0, GridBagConstraints.CENTER, glueFill,
-                                   new Insets(0, leftInsetIcon, 0, 0), 0, 0));
-        //
-        JLabel splitUpLabel = new JLabel(isVerticalSplit ? AllIcons.General.ArrowUp : AllIcons.General.ArrowLeft);
-        splitUpLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        splitUpLabel.setToolTipText(isVerticalSplit ? UIBundle.message("splitter.up.tooltip.text") : UIBundle
-          .message("splitter.left.tooltip.text"));
-        new ClickListener() {
-          @Override
-          public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-            setProportion(getMinProportion(true));
-            return true;
-          }
-        }.installOn(splitUpLabel);
-
-        add(splitUpLabel, new GridBagConstraints(isVerticalSplit ? 5 : 0, isVerticalSplit ? 0 : 1, 1, 1, 0, 0, GridBagConstraints.CENTER,
-                                                 GridBagConstraints.NONE, new Insets(0, leftInsetArrow, 0, 0), 0, 0));
-        add(new JLabel(glueIcon), new GridBagConstraints(6 * xMask, 6 * yMask, 1, 1, 0, 0,
-                                                         isVerticalSplit ? GridBagConstraints.WEST : GridBagConstraints.SOUTH, glueFill,
-                                                         new Insets(0, leftInsetIcon, 0, 0), 0, 0));
-      }
 
       revalidate();
       repaint();
