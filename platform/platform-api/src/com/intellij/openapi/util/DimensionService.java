@@ -69,8 +69,11 @@ public class DimensionService extends SimpleModificationTracker implements Persi
 
   @Nullable
   public synchronized Point getLocation(@NotNull String key, Project project) {
+    Point point = getProjectLocation(key, project);
+    if (point != null) return point;
+
     Pair<String, Float> pair = keyPair(key, project);
-    Point point = myKey2Location.get(pair.first);
+    point = myKey2Location.get(pair.first);
     if (point != null) {
       point = (Point)point.clone();
       float scale = pair.second;
@@ -96,6 +99,10 @@ public class DimensionService extends SimpleModificationTracker implements Persi
 
   public synchronized void setLocation(@NotNull String key, Point point, Project project) {
     Pair<String, Float> pair = keyPair(key, project);
+    if (project != null) {
+      WindowStateService.getInstance(project).putLocation(key, point);
+      return;
+    }
     if (point != null) {
       point = (Point)point.clone();
       float scale = pair.second;
@@ -121,14 +128,30 @@ public class DimensionService extends SimpleModificationTracker implements Persi
 
   @Nullable
   public synchronized Dimension getSize(@NotNull @NonNls String key, Project project) {
+    Dimension size = getProjectSize(key, project);
+    if (size != null) return size;
+
     Pair<String, Float> pair = keyPair(key, project);
-    Dimension size = myKey2Size.get(pair.first);
+    size = myKey2Size.get(pair.first);
     if (size != null) {
       size = (Dimension)size.clone();
       float scale = pair.second;
       size.setSize(size.width / scale, size.height / scale);
     }
     return size;
+  }
+
+  @Nullable
+  private static Dimension getProjectSize(@NonNls @NotNull String key, @Nullable Project project) {
+    if (project == null) return null;
+    WindowStateService windowStateService = WindowStateService.getInstance(project);
+    return windowStateService.getSize(key);
+  }
+  @Nullable
+  private static Point getProjectLocation(@NonNls @NotNull String key, @Nullable Project project) {
+    if (project == null) return null;
+    WindowStateService windowStateService = WindowStateService.getInstance(project);
+    return windowStateService.getLocation(key);
   }
 
   /**
@@ -145,6 +168,9 @@ public class DimensionService extends SimpleModificationTracker implements Persi
 
   public synchronized void setSize(@NotNull @NonNls String key, Dimension size, Project project) {
     Pair<String, Float> pair = keyPair(key, project);
+    if (project != null) {
+      WindowStateService.getInstance(project).putSize(key, size);
+    }
     if (size != null) {
       size = (Dimension)size.clone();
       float scale = pair.second;
