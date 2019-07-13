@@ -278,7 +278,7 @@ public class VcsLogUtil {
     Map<VirtualFile, VcsLogProvider> providers = findLogProviders(singletonList(rootObject), project);
     if (providers.isEmpty()) return null;
     VcsLogProvider provider = notNull(getFirstItem(providers.values()));
-    return provider.getVcsRoot(project, path);
+    return provider.getVcsRoot(project, rootObject.getPath(), path);
   }
 
   @Nullable
