@@ -30,29 +30,39 @@ public class IdeaFreezeReporter {
     app.getMessageBus().connect().subscribe(IdePerformanceListener.TOPIC, new IdePerformanceListener() {
       final List<ThreadDump> myCurrentDumps = new ArrayList<>();
       List<StackTraceElement> myStacktraceCommonPart = null;
+      volatile boolean myFreezeRecording = false;
+
+      @Override
+      public void uiFreezeStarted() {
+        myFreezeRecording = Registry.is("performance.watcher.freeze.report") && !DebugAttachDetector.isAttached();
+      }
 
       @Override
       public void dumpedThreads(@NotNull File toFile, @NotNull ThreadDump dump) {
-        myCurrentDumps.add(dump);
-        StackTraceElement[] edtStack = dump.getEDTStackTrace();
-        if (edtStack != null) {
-          if (myStacktraceCommonPart == null) {
-            myStacktraceCommonPart = ContainerUtil.newArrayList(edtStack);
-          }
-          else {
-            myStacktraceCommonPart = PerformanceWatcher.getStacktraceCommonPart(myStacktraceCommonPart, edtStack);
+        if (myFreezeRecording) {
+          myCurrentDumps.add(dump);
+          StackTraceElement[] edtStack = dump.getEDTStackTrace();
+          if (edtStack != null) {
+            if (myStacktraceCommonPart == null) {
+              myStacktraceCommonPart = ContainerUtil.newArrayList(edtStack);
+            }
+            else {
+              myStacktraceCommonPart = PerformanceWatcher.getStacktraceCommonPart(myStacktraceCommonPart, edtStack);
+            }
           }
         }
       }
 
       @Override
       public void uiFreezeFinished(int lengthInSeconds) {
-        if (Registry.is("performance.watcher.freeze.report") &&
-            lengthInSeconds > FREEZE_THRESHOLD &&
+        if (!myFreezeRecording) {
+          return;
+        }
+        myFreezeRecording = false;
+        if (lengthInSeconds > FREEZE_THRESHOLD &&
             // check that we have at least half of the dumps required
             myCurrentDumps.size() >= Math.max(3, lengthInSeconds * 500 / Registry.intValue("performance.watcher.unresponsive.interval.ms")) &&
-            !ContainerUtil.isEmpty(myStacktraceCommonPart) &&
-            !DebugAttachDetector.isAttached()) {
+            !ContainerUtil.isEmpty(myStacktraceCommonPart)) {
           int size = Math.min(myCurrentDumps.size(), 20); // report up to 20 dumps
           int step = myCurrentDumps.size() / size;
           Attachment[] attachments = new Attachment[size];

@@ -12,8 +12,7 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
@@ -84,6 +83,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
   private final ActiveStack myActiveStack = new ActiveStack();
   private final SideStack mySideStack = new SideStack();
+  private AWTEventListener awtFocusListener;
 
   private ToolWindowsPane myToolWindowsPane;
   private IdeFrameImpl myFrame;
@@ -125,6 +125,27 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     if (project.isDefault()) {
       return;
     }
+
+    awtFocusListener = new AWTEventListener() {
+      @Override
+      public void eventDispatched(AWTEvent event) {
+        assert event instanceof FocusEvent;
+        FocusEvent focusEvent = (FocusEvent)event;
+        if (focusEvent.getID() == FocusEvent.FOCUS_GAINED) {
+          Component component = focusEvent.getComponent();
+          if (component != null) {
+            boolean editorIsGoingToGetFocus =
+              Arrays.stream(FileEditorManagerEx.getInstanceEx(project).getSplitters().getEditorsComposites()).
+                flatMap(c -> Arrays.stream(c.getEditors()))
+                .anyMatch(editor -> SwingUtilities.isDescendingFrom(component, editor.getComponent()));
+
+            if (editorIsGoingToGetFocus) {
+              myActiveStack.clear();
+            }
+          }
+        }
+      }
+    };
 
     MessageBusConnection busConnection = project.getMessageBus().connect(this);
     busConnection.subscribe(ToolWindowManagerListener.TOPIC, myDispatcher.getMulticaster());
@@ -195,6 +216,8 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       })
       .handleWindowed(toolWindowId -> {})
       .bind(myProject);
+
+    Toolkit.getDefaultToolkit().addAWTEventListener(awtFocusListener, AWTEvent.FOCUS_EVENT_MASK);
   }
 
   private static void focusDefaultElementInSelectedEditor() {
@@ -501,6 +524,8 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       return;
     }
 
+    Toolkit.getDefaultToolkit().removeAWTEventListener(awtFocusListener);
+
     // remove ToolWindowsPane
     ((IdeRootPane)myFrame.getRootPane()).setToolWindowsPane(null);
     WindowManagerEx.getInstanceEx().releaseFrame(myFrame);
@@ -799,9 +824,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     final WindowInfoImpl info = getRegisteredInfoOrLogError(id);
-    if (!info.isVisible()) {
-      return;
-    }
 
     List<FinalizableCommand> commandList = new ArrayList<>();
     final boolean wasActive = info.isActive();
@@ -816,8 +838,10 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
         myActiveStack.remove(each, true);
       }
 
-      while (!mySideStack.isEmpty(info.getAnchor())) {
-        mySideStack.pop(info.getAnchor());
+      if (isStackEnabled()) {
+        while (!mySideStack.isEmpty(info.getAnchor())) {
+          mySideStack.pop(info.getAnchor());
+        }
       }
 
       for (WindowInfoImpl eachInfo : myLayout.getInfos()) {
@@ -826,28 +850,30 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
         }
       }
     }
-    else if (isStackEnabled()) {
+    else {
       // first of all we have to find tool window that was located at the same side and was hidden
 
-      WindowInfoImpl info2 = null;
-      while (!mySideStack.isEmpty(info.getAnchor())) {
-        final WindowInfoImpl storedInfo = mySideStack.pop(info.getAnchor());
-        if (storedInfo.isSplit() != info.isSplit()) {
-          continue;
-        }
+      if (isStackEnabled()) {
+        WindowInfoImpl info2 = null;
+        while (!mySideStack.isEmpty(info.getAnchor())) {
+          final WindowInfoImpl storedInfo = mySideStack.pop(info.getAnchor());
+          if (storedInfo.isSplit() != info.isSplit()) {
+            continue;
+          }
 
-        final WindowInfoImpl currentInfo = getRegisteredInfoOrLogError(Objects.requireNonNull(storedInfo.getId()));
-        // SideStack contains copies of real WindowInfos. It means that
-        // these stored infos can be invalid. The following loop removes invalid WindowInfos.
-        if (storedInfo.getAnchor() == currentInfo.getAnchor() &&
-            storedInfo.getType() == currentInfo.getType() &&
-            storedInfo.isAutoHide() == currentInfo.isAutoHide()) {
-          info2 = storedInfo;
-          break;
+          final WindowInfoImpl currentInfo = getRegisteredInfoOrLogError(Objects.requireNonNull(storedInfo.getId()));
+          // SideStack contains copies of real WindowInfos. It means that
+          // these stored infos can be invalid. The following loop removes invalid WindowInfos.
+          if (storedInfo.getAnchor() == currentInfo.getAnchor() &&
+              storedInfo.getType() == currentInfo.getType() &&
+              storedInfo.isAutoHide() == currentInfo.isAutoHide()) {
+            info2 = storedInfo;
+            break;
+          }
         }
-      }
-      if (info2 != null) {
-        showToolWindowImpl(Objects.requireNonNull(info2.getId()), false, commandList);
+        if (info2 != null) {
+          showToolWindowImpl(Objects.requireNonNull(info2.getId()), false, commandList);
+        }
       }
 
       // If we hide currently active tool window then we should activate the previous
@@ -922,16 +948,19 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
           }
           appendApplyWindowInfoCmd(info, commandsList);
           // store WindowInfo into the SideStack
-          if (info.isDocked() && !info.isAutoHide()) {
-            mySideStack.push(info);
+          if (isStackEnabled()) {
+            if (info.isDocked() && !info.isAutoHide()) {
+              mySideStack.push(info);
+            }
           }
         }
       }
       appendAddDecoratorCmd(decorator, toBeShownInfo, dirtyMode, commandsList);
 
       // Remove tool window from the SideStack.
-
-      mySideStack.remove(id);
+      if (isStackEnabled()) {
+        mySideStack.remove(id);
+      }
     }
 
     if (!toBeShownInfo.isShowStripeButton()) {
@@ -1108,7 +1137,9 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     // Save recent appearance of tool window
     myLayout.unregister(id);
     myActiveStack.remove(id, true);
-    mySideStack.remove(id);
+    if (isStackEnabled()) {
+      mySideStack.remove(id);
+    }
     appendRemoveButtonCmd(id, info, commandsList);
     appendApplyWindowInfoCmd(info, commandsList);
 
@@ -1692,7 +1723,9 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
   @Override
   public void clearSideStack() {
-    mySideStack.clear();
+    if (isStackEnabled()) {
+      mySideStack.clear();
+    }
   }
 
   @Nullable
@@ -2197,6 +2230,10 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     public void visibleStripeButtonChanged(@NotNull InternalDecorator source, boolean visible) {
       setShowStripeButton(source.getToolWindow().getId(), visible);
     }
+  }
+
+  public boolean fallbackToEditor() {
+    return myActiveStack.isEmpty();
   }
 
   private void focusToolWindowByDefault(@Nullable String idToIgnore) {

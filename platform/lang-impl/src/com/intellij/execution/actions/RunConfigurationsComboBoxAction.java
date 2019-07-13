@@ -73,7 +73,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
                                          String actionPlace) {
     presentation.putClientProperty(BUTTON_MODE, null);
     if (project != null && target != null && settings != null) {
-      String name = Executor.shortenNameIfNeed(settings.getName());
+      String name = Executor.shortenNameIfNeeded(settings.getName());
       // Android Studio: b/119839260
       if (target != DefaultExecutionTarget.INSTANCE && !target.isExternallyManaged()) {
         name += " | " + target.getDisplayName();
@@ -241,7 +241,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
         disable(presentation);
       }
       else {
-        presentation.setText(ExecutionBundle.message("save.temporary.run.configuration.action.name", Executor.shortenNameIfNeed(settings.getName())));
+        presentation.setText(ExecutionBundle.message("save.temporary.run.configuration.action.name", Executor.shortenNameIfNeeded(settings.getName())));
         presentation.setDescription(presentation.getText());
         presentation.setEnabledAndVisible(true);
       }
@@ -302,7 +302,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     SelectConfigAction(final RunnerAndConfigurationSettings configuration, final Project project) {
       myConfiguration = configuration;
       myProject = project;
-      String name = Executor.shortenNameIfNeed(configuration.getName());
+      String name = Executor.shortenNameIfNeeded(configuration.getName());
       if (name.isEmpty()) {
         name = " ";
       }

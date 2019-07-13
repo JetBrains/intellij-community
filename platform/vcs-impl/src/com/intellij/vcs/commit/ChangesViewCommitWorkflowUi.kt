@@ -6,5 +6,11 @@ import com.intellij.openapi.actionSystem.DataContext
 interface ChangesViewCommitWorkflowUi : CommitWorkflowUi {
   var isDefaultCommitActionEnabled: Boolean
 
+  // TODO Looks better to create "interface ItemInclusionModel" to which ChangesTree will delegate
+  //  And just pass such model to CommitWorkflowUi instead of adding include-related methods to CommitWorkflowUi directly
+  fun isInclusionEmpty(): Boolean
+
+  fun clearInclusion()
+
   fun showCommitOptions(options: CommitOptions, isFromToolbar: Boolean, dataContext: DataContext)
 }

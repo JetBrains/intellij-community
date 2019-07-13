@@ -1332,6 +1332,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     myHolder.add(checkFeature(expression, Feature.METHOD_REFERENCES));
     final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (toReportFunctionalExpressionProblemOnParent(parent)) return;
+    PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
+    if (functionalInterfaceType != null && !PsiTypesUtil.allTypeParametersResolved(expression, functionalInterfaceType)) return;
 
     final JavaResolveResult result;
     final JavaResolveResult[] results;
@@ -1385,7 +1387,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
     }
 
-    PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
     if (functionalInterfaceType != null) {
       if (!myHolder.hasErrorResults()) {
         boolean isFunctional = LambdaUtil.isFunctionalType(functionalInterfaceType);

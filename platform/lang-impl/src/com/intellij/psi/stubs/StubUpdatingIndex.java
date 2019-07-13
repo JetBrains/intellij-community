@@ -34,7 +34,6 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.counters.IndexCounters;
 import com.intellij.util.indexing.impl.*;
@@ -104,16 +103,6 @@ public class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<Serial
     return INDEX_ID;
   }
 
-  @Override
-  public int getCacheSize() {
-    return 5; // no need to cache many serialized trees
-  }
-
-  @Override
-  public boolean keyIsUniqueForIndexedFile() {
-    return true;
-  }
-
   @NotNull
   @Override
   public SingleEntryIndexer<SerializedStubTree> getIndexer() {
@@ -150,7 +139,7 @@ public class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<Serial
             contentLength = -1;
           }
           else {
-            contentLength = ((FileContentImpl)inputData).getPsiFileForPsiDependentIndex().getTextLength();
+            contentLength = inputData.getPsiFile().getTextLength();
           }
           rememberIndexingStamp(file, contentLength);
 

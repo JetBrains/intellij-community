@@ -6,6 +6,7 @@ import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
+import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.internal.statistic.collectors.fus.project.ProjectFsStatsCollector;
@@ -181,7 +182,9 @@ public class StartupManagerImpl extends StartupManagerEx {
       LOG.error(e);
     }
 
-    long duration = ParallelActivity.POST_STARTUP_ACTIVITY.record(startTime, extension.getClass());
+    ClassLoader loader = extension.getClass().getClassLoader();
+    String pluginId = loader instanceof PluginClassLoader ? ((PluginClassLoader) loader).getPluginId().getIdString() : null;
+    long duration = ParallelActivity.POST_STARTUP_ACTIVITY.record(startTime, extension.getClass(), null, pluginId);
     if (duration > EDT_WARN_THRESHOLD_IN_NANO) {
       Application app = ApplicationManager.getApplication();
       if (!app.isUnitTestMode() && app.isDispatchThread() && uiFreezeWarned.compareAndSet(false, true)) {
@@ -398,7 +401,14 @@ public class StartupManagerImpl extends StartupManagerEx {
         break;
       }
 
+      long startTime = StartUpMeasurer.getCurrentTime();
+
+      ClassLoader loader = runnable.getClass().getClassLoader();
+      String pluginId = loader instanceof PluginClassLoader ? ((PluginClassLoader) loader).getPluginId().getIdString() : null;
+
       runActivity(runnable);
+
+      ParallelActivity.POST_STARTUP_ACTIVITY.record(startTime, runnable.getClass(), null, pluginId);
     }
     activity.end();
   }

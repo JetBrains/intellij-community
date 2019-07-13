@@ -6,10 +6,7 @@ import com.intellij.vcs.log.VcsLogBranchFilter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
 @ApiStatus.Internal
@@ -20,10 +17,10 @@ public class VcsLogBranchFilterImpl implements VcsLogBranchFilter {
   @NotNull private final List<String> myExcludedBranches;
   @NotNull private final List<Pattern> myExcludedPatterns;
 
-  protected VcsLogBranchFilterImpl(@NotNull List<String> branches,
-                                   @NotNull List<Pattern> patterns,
-                                   @NotNull List<String> excludedBranches,
-                                   @NotNull List<Pattern> excludedPatterns) {
+  public VcsLogBranchFilterImpl(@NotNull List<String> branches,
+                                @NotNull List<Pattern> patterns,
+                                @NotNull List<String> excludedBranches,
+                                @NotNull List<Pattern> excludedPatterns) {
     myBranches = branches;
     myPatterns = patterns;
     myExcludedBranches = excludedBranches;
@@ -97,5 +94,21 @@ public class VcsLogBranchFilterImpl implements VcsLogBranchFilter {
       if (regexp.matcher(name).matches()) return true;
     }
     return false;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    VcsLogBranchFilterImpl filter = (VcsLogBranchFilterImpl)o;
+    return myBranches.equals(filter.myBranches) &&
+           myPatterns.equals(filter.myPatterns) &&
+           myExcludedBranches.equals(filter.myExcludedBranches) &&
+           myExcludedPatterns.equals(filter.myExcludedPatterns);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myBranches, myPatterns, myExcludedBranches, myExcludedPatterns);
   }
 }

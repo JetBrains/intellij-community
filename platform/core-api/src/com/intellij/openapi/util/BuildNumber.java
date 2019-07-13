@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.application.PathManager;
@@ -223,7 +223,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
     return asString();
   }
 
-  // See http://www.jetbrains.net/confluence/display/IDEADEV/Build+Number+Ranges for historic build ranges
+  // http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html
   private static int getBaseLineForHistoricBuilds(int bn) {
     if (bn >= 10000) return 88; // Maia, 9x builds
     if (bn >= 9500) return 85;  // 8.1 builds

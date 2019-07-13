@@ -18,7 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.sh.psi.ShFile;
@@ -101,7 +101,7 @@ public class ShFailoverRunner extends ShRunner {
     }
 
     @NotNull
-    private ProcessHandler createProcessHandler(GeneralCommandLine commandLine) throws ExecutionException {
+    private static ProcessHandler createProcessHandler(GeneralCommandLine commandLine) throws ExecutionException {
       return new KillableProcessHandler(commandLine) {
         @NotNull
         @Override
@@ -138,7 +138,7 @@ public class ShFailoverRunner extends ShRunner {
       commandLine.setWorkDirectory(workingDir.getPath());
 
       String shellScriptFilePath = FileUtil.toSystemDependentName(myShellScriptFile.getPath());
-      if (VfsUtil.virtualToIoFile(myShellScriptFile).canExecute()) {
+      if (VfsUtilCore.virtualToIoFile(myShellScriptFile).canExecute()) {
         commandLine.setExePath(shellScriptFilePath);
       }
       else {

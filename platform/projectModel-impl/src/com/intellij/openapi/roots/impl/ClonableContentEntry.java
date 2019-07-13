@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  *  @author dsl
  */
-public interface ClonableContentEntry {
+interface ClonableContentEntry {
   @NotNull
   ContentEntry cloneEntry(@NotNull RootModelImpl rootModel);
 }

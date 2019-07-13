@@ -5,12 +5,15 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixBase;
 import com.intellij.codeInspection.NlsCapitalizationUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.lang.properties.ResourceBundleReference;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
 import com.intellij.lang.properties.references.PropertyReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
@@ -25,12 +28,14 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.dom.Action;
 import org.jetbrains.idea.devkit.dom.ActionOrGroup;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 public class PluginXmlCapitalizationInspection extends BasicDomElementsInspection<IdeaPlugin> {
 
@@ -49,8 +54,65 @@ public class PluginXmlCapitalizationInspection extends BasicDomElementsInspectio
   }
 
   private static void checkActionOrGroup(ActionOrGroup actionOrGroup, DomElementAnnotationHolder holder) {
-    checkCapitalization(holder, actionOrGroup.getText(), Nls.Capitalization.Title);
-    checkCapitalization(holder, actionOrGroup.getDescription(), Nls.Capitalization.Sentence);
+    checkActionOrGroupCapitalization(holder, actionOrGroup, ActionOrGroupText.TEXT);
+    checkActionOrGroupCapitalization(holder, actionOrGroup, ActionOrGroupText.DESCRIPTION);
+  }
+
+  enum ActionOrGroupText {
+
+    TEXT(ActionOrGroup::getText, Nls.Capitalization.Title, ".text", actionOrGroup -> {
+      if (!(actionOrGroup instanceof Action)) return false;
+      final PsiClass actionClass = ((Action)actionOrGroup).getClazz().getValue();
+      return actionClass == null || actionClass.getConstructors().length == 0;
+    }),
+
+    DESCRIPTION(ActionOrGroup::getDescription, Nls.Capitalization.Sentence, ".description", actionOrGroup -> false);
+
+    private final Function<ActionOrGroup, GenericDomValue> myGetter;
+    private final Nls.Capitalization myCapitalization;
+    private final String mySuffix;
+    private final Function<ActionOrGroup, Boolean> myRequired;
+
+    ActionOrGroupText(Function<ActionOrGroup, GenericDomValue> getter,
+                      Nls.Capitalization capitalization, String propertyKeySuffix,
+                      Function<ActionOrGroup, Boolean> required) {
+      myGetter = getter;
+      myCapitalization = capitalization;
+      mySuffix = propertyKeySuffix;
+      myRequired = required;
+    }
+  }
+
+  private static void checkActionOrGroupCapitalization(DomElementAnnotationHolder holder,
+                                                       ActionOrGroup actionOrGroup,
+                                                       ActionOrGroupText actionOrGroupText) {
+    final GenericDomValue genericDomValue = actionOrGroupText.myGetter.apply(actionOrGroup);
+    final Nls.Capitalization capitalization = actionOrGroupText.myCapitalization;
+    if (checkCapitalization(holder, genericDomValue, capitalization)) return;
+
+    final IdeaPlugin ideaPlugin = DomUtil.getParentOfType(actionOrGroup, IdeaPlugin.class, true);
+    if (ideaPlugin == null) return;
+
+    final XmlElement resourceBundleTag = ideaPlugin.getResourceBundle().getXmlElement();
+    if (resourceBundleTag == null) return;
+
+    final ResourceBundleReference bundleReference =
+      ContainerUtil.findInstance(resourceBundleTag.getReferences(), ResourceBundleReference.class);
+    if (bundleReference == null) return;
+
+    final PropertiesFileImpl bundleFile = ObjectUtils.tryCast(bundleReference.resolve(), PropertiesFileImpl.class);
+    if (bundleFile == null) return;
+
+    final String resourceKey = "action." + actionOrGroup.getId().getStringValue() + actionOrGroupText.mySuffix;
+    final Property property = ObjectUtils.tryCast(bundleFile.findPropertyByKey(resourceKey), Property.class);
+    if (property == null) {
+      if (actionOrGroupText.myRequired.apply(actionOrGroup)) {
+        holder.createProblem(actionOrGroup, "Missing resource bundle key '" + resourceKey + "'");
+      }
+    }
+    else {
+      highlightCapitalization(holder, actionOrGroup, property.getValue(), capitalization, property);
+    }
   }
 
   private static final Set<String> EXTENSION_KNOWN_NON_NLS_ATTRIBUTES = ContainerUtil.immutableSet(
@@ -130,17 +192,18 @@ public class PluginXmlCapitalizationInspection extends BasicDomElementsInspectio
     checkCapitalization(holder, genericDomValue, capitalization);
   }
 
-  private static void checkCapitalization(DomElementAnnotationHolder holder,
-                                          GenericDomValue genericDomValue,
-                                          Nls.Capitalization capitalization) {
-    if (!DomUtil.hasXml(genericDomValue)) return;
+  private static boolean checkCapitalization(DomElementAnnotationHolder holder,
+                                             GenericDomValue genericDomValue,
+                                             Nls.Capitalization capitalization) {
+    if (!DomUtil.hasXml(genericDomValue)) return false;
 
     final String stringValue = genericDomValue.getStringValue();
     highlightCapitalization(holder, genericDomValue, stringValue, capitalization, null);
+    return true;
   }
 
   private static void highlightCapitalization(DomElementAnnotationHolder holder,
-                                              GenericDomValue genericDomValue,
+                                              DomElement domElement,
                                               String value,
                                               Nls.Capitalization capitalization,
                                               @Nullable Property property) {
@@ -164,13 +227,14 @@ public class PluginXmlCapitalizationInspection extends BasicDomElementsInspectio
           property.setValue(NlsCapitalizationUtil.fixValue(value, capitalization));
         }
         else {
-          genericDomValue.setStringValue(NlsCapitalizationUtil.fixValue(value, capitalization));
+          assert domElement instanceof GenericDomValue : domElement;
+          ((GenericDomValue)domElement).setStringValue(NlsCapitalizationUtil.fixValue(value, capitalization));
         }
       }
     };
 
 
-    holder.createProblem(genericDomValue,
+    holder.createProblem(domElement,
                          "String '" + escapedValue + "' is not properly capitalized. " +
                          "It should have " + StringUtil.toLowerCase(capitalization.toString()) + " capitalization",
                          quickFix);

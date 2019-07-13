@@ -165,6 +165,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testPrimitiveInEnumConstructorCast() { doTest(1, "int"); }
   public void testNoStatementInForLoopCondition() { doTest(0, "synchronized", "if"); }
   public void testNoStatementInForLoopUpdate() { doTest(0, "synchronized", "if"); }
+  public void testSuggestModifiersAfterUnfinishedMethod() { doTest(1, "public"); }
   public void testPrivateInJava9Interface() { setLanguageLevel(LanguageLevel.JDK_1_9); doTest(); }
   public void testQualifiedNew() { doTest(1, "new"); }
 

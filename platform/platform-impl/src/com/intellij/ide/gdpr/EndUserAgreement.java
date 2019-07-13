@@ -26,11 +26,13 @@ public final class EndUserAgreement {
   private static final String PRIVACY_POLICY_DOCUMENT_NAME = "privacy";
   private static final String PRIVACY_POLICY_EAP_DOCUMENT_NAME = PRIVACY_POLICY_DOCUMENT_NAME + "Eap";
   private static final String EULA_DOCUMENT_NAME = "eua";
+  private static final String EULA_EAP_DOCUMENT_NAME = EULA_DOCUMENT_NAME + "Eap";
 
   private static final String PRIVACY_POLICY_CONTENT_FILE_NAME = "Cached";
 
   private static final String DEFAULT_DOC_NAME = EULA_DOCUMENT_NAME;
-  private static final String DEFAULT_DOC_EAP_NAME = DEFAULT_DOC_NAME + "Eap";
+  private static final String DEFAULT_DOC_EAP_NAME = EULA_EAP_DOCUMENT_NAME;
+
   private static final String ACTIVE_DOC_FILE_NAME = "documentName";
   private static final String ACTIVE_DOC_EAP_FILE_NAME = "documentName.eap";
 
@@ -174,16 +176,20 @@ public final class EndUserAgreement {
     }
     catch (IOException ignored) {
     }
-    //noinspection ConstantConditions
-    if (DEFAULT_DOC_NAME.equals(PRIVACY_POLICY_DOCUMENT_NAME)) {
-      return PRIVACY_POLICY_DOCUMENT_NAME;
-    }
     return isEAP()? DEFAULT_DOC_EAP_NAME : DEFAULT_DOC_NAME;
   }
 
   @NotNull
   private static String getAcceptedVersionKey(String docName) {
-    return PRIVACY_POLICY_DOCUMENT_NAME.equals(docName)? "JetBrains.privacy_policy.accepted_version" : "JetBrains.privacy_policy." + docName + "_accepted_version";
+    if (PRIVACY_POLICY_DOCUMENT_NAME.equals(docName)) {
+      return "JetBrains.privacy_policy.accepted_version";
+    }
+    String keyName = docName;
+    if (EULA_EAP_DOCUMENT_NAME.equals(docName)) {
+      // for commercial EAP releases accepted version attribute should be separate from the one Resharper uses (IDEA-212020)
+      keyName = "ij_" + keyName;
+    }
+    return "JetBrains.privacy_policy." + keyName + "_accepted_version";
   }
 
   public static final class Document {

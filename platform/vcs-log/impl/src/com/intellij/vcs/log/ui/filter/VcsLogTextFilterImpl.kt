@@ -7,8 +7,8 @@ import com.intellij.vcs.log.visible.filters.caseSensitiveText
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class VcsLogTextFilterImpl internal constructor(private val text: String,
-                                                private val isMatchCase: Boolean) : VcsLogDetailsFilter, VcsLogTextFilter {
+data class VcsLogTextFilterImpl internal constructor(private val text: String,
+                                                     private val isMatchCase: Boolean) : VcsLogDetailsFilter, VcsLogTextFilter {
   @Deprecated("Use VcsLogFilterObject.fromPattern instead")
   @Suppress("unused")
   // used in upsource

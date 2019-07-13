@@ -13,7 +13,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.impl.CustomScopesAggregator;
 import com.intellij.psi.search.scope.packageSet.*;
-import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.IconManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -37,7 +37,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   private static final Icon ourSharedScopeIcon = new IconLoader.LazyIcon() {
     @Override
     protected Icon compute() {
-      return new LayeredIcon(AllIcons.Ide.LocalScope, AllIcons.Nodes.Shared);
+      return IconManager.getInstance().createLayered(AllIcons.Ide.LocalScope, AllIcons.Nodes.Shared);
     }
   };
 

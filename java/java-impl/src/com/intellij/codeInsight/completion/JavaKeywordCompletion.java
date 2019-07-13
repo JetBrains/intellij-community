@@ -15,6 +15,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.filters.FilterPositionUtil;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -70,9 +71,11 @@ public class JavaKeywordCompletion {
     if (psiElement().withText(string().oneOf("{", "}", ";", ":", "else")).accepts(prev)) return true;
     if (prev.textMatches(")")) {
       PsiElement parent = prev.getParent();
-      return !(parent instanceof PsiExpressionList ||
-               parent instanceof PsiParameterList ||
-               parent instanceof PsiTypeCastExpression);
+      if (parent instanceof PsiParameterList) {
+        return PsiTreeUtil.getParentOfType(PsiTreeUtil.prevVisibleLeaf(element), PsiDocComment.class) != null;
+      }
+
+      return !(parent instanceof PsiExpressionList || parent instanceof PsiTypeCastExpression);
     }
 
     return false;

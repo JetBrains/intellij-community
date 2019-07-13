@@ -3,8 +3,9 @@ package com.intellij.ui.tabs
 
 import com.intellij.ui.tabs.newImpl.JBDefaultTabPainter
 import com.intellij.ui.tabs.newImpl.JBEditorTabPainter
+import com.intellij.ui.tabs.newImpl.ToolWindowTabPainter
 import com.intellij.ui.tabs.newImpl.themes.DebuggerTabTheme
-import com.intellij.ui.tabs.newImpl.themes.ToolWindowTabTheme
+import com.intellij.ui.tabs.newImpl.themes.TabTheme
 import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.Point
@@ -17,10 +18,12 @@ interface JBTabPainter {
     @JvmStatic
     val EDITOR = JBEditorTabPainter()
     @JvmStatic
-    val TOOL_WINDOW: JBTabPainter = JBDefaultTabPainter(ToolWindowTabTheme())
+    val TOOL_WINDOW: JBTabPainter = ToolWindowTabPainter()
     @JvmStatic
     val DEBUGGER: JBTabPainter = JBDefaultTabPainter(DebuggerTabTheme())
   }
+
+  fun getTabTheme(): TabTheme
 
   fun getBackgroundColor(): Color
 
@@ -38,6 +41,7 @@ interface JBTabPainter {
   fun paintSelectedTab(position: JBTabsPosition,
                                 g: Graphics2D,
                                 rect: Rectangle,
+                                borderThickness: Int,
                                 tabColor: Color?,
                                 active: Boolean,
                                 hovered: Boolean)

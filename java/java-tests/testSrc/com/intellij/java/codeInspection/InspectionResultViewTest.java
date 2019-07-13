@@ -92,7 +92,7 @@ public class InspectionResultViewTest extends LightJava9ModulesCodeInsightFixtur
     PlatformTestUtil.assertTreeEqual(view.getTree(), ("-InspectionViewTree\n" +
                                                              " -Groovy\n" +
                                                              "  -Data flow\n" +
-                                                             "   -Unused Assignment\n" +
+                                                             "   -Unused assignment\n" +
                                                              "    -light_idea_test_case_m2\n" +
                                                              "     -src_m2/xxx/yyy\n" +
                                                              "      -ZZZ.groovy\n" +

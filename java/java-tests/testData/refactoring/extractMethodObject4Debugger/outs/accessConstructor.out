@@ -5,7 +5,7 @@ static class Test {
             return newWithReflectionAccess1(50);
         }
 
-        public static WithReflectionAccess newWithReflectionAccess1(int value) {
+        public static Object newWithReflectionAccess1(int value) {
             try {
                 Class<?> klass = Class.forName("WithReflectionAccess");
                 java.lang.reflect.Constructor<?> member = null;
@@ -30,7 +30,7 @@ static class Test {
                     }
                 }
                 member.setAccessible(true);
-                return (WithReflectionAccess) member.newInstance(value);
+                return (Object) member.newInstance(value);
             } catch (ReflectiveOperationException e) {
                 throw new RuntimeException(e);
             }

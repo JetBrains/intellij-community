@@ -98,7 +98,7 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
 
   /**
    * Message bundle, e.g. {@code "messages.InspectionsBundle"}.
-   * If unspecified, plugin's {@code <resource-bundle>} is used.
+   * If unspecified, will use {@link #bundle}, then plugin's {@code <resource-bundle>} as fallback.
    *
    * @see #groupKey
    */

@@ -9,6 +9,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -49,6 +50,8 @@ public interface ExtensionPoint<T> {
 
   @NotNull
   List<T> getExtensionList();
+
+  void forEachExtension(Consumer<T> extensionConsumer);
 
   @NotNull
   Stream<T> extensions();

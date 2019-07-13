@@ -48,11 +48,11 @@ object VcsLogFilterObject {
 
   @JvmStatic
   fun fromBranch(branchName: String): VcsLogBranchFilter {
-    return object : VcsLogBranchFilterImpl(listOf(branchName), emptyList(), emptyList(), emptyList()) {}
+    return VcsLogBranchFilterImpl(listOf(branchName), emptyList(), emptyList(), emptyList())
   }
 
   @JvmStatic
-  fun fromRange(exclusiveRef: String, inclusiveRef: String) : VcsLogRangeFilter {
+  fun fromRange(exclusiveRef: String, inclusiveRef: String): VcsLogRangeFilter {
     return fromRange(listOf(RefRange(exclusiveRef, inclusiveRef)))
   }
 
@@ -105,7 +105,7 @@ object VcsLogFilterObject {
       }
     }
 
-    return object : VcsLogBranchFilterImpl(branchNames, patterns, excludedBranches, excludedPatterns) {}
+    return VcsLogBranchFilterImpl(branchNames, patterns, excludedBranches, excludedPatterns)
   }
 
   @JvmStatic

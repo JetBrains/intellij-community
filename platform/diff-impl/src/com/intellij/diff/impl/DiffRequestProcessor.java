@@ -976,10 +976,11 @@ public abstract class DiffRequestProcessor implements Disposable {
   }
 
   private class MyDiffContext extends DiffContextEx {
-    @NotNull private final UserDataHolder myContext;
+    @NotNull private final UserDataHolder myInitialContext;
+    @NotNull private final UserDataHolder myOwnContext = new UserDataHolderBase();
 
-    MyDiffContext(@NotNull UserDataHolder context) {
-      myContext = context;
+    MyDiffContext(@NotNull UserDataHolder initialContext) {
+      myInitialContext = initialContext;
     }
 
     @Override
@@ -1031,12 +1032,14 @@ public abstract class DiffRequestProcessor implements Disposable {
     @Nullable
     @Override
     public <T> T getUserData(@NotNull Key<T> key) {
-      return myContext.getUserData(key);
+      T data = myOwnContext.getUserData(key);
+      if (data != null) return data;
+      return myInitialContext.getUserData(key);
     }
 
     @Override
     public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-      myContext.putUserData(key, value);
+      myOwnContext.putUserData(key, value);
     }
   }
 

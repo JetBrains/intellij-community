@@ -11,7 +11,6 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.TransactionGuardImpl
-import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
@@ -100,7 +99,7 @@ suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSetti
     }
 
     val messagePostfix = "Please restart ${ApplicationNamesInfo.getInstance().fullProductName}</p>" +
-                         (if (ApplicationManagerEx.getApplicationEx().isInternal) "<p>" + StringUtil.getThrowableText(e) + "</p>" else "")
+                         (if (ApplicationManager.getApplication().isInternal) "<p>" + StringUtil.getThrowableText(e) + "</p>" else "")
 
     val pluginId = IdeErrorsDialog.findPluginId(e)
     val notification = if (pluginId == null) {

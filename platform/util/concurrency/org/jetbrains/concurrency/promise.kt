@@ -226,7 +226,7 @@ fun ActionCallback.toPromise(): Promise<Any?> {
   return promise
 }
 
-fun Promise<Any?>.toActionCallback(): ActionCallback {
+fun Promise<*>.toActionCallback(): ActionCallback {
   val result = ActionCallback()
   onSuccess { result.setDone() }
   onError { result.setRejected() }

@@ -87,13 +87,7 @@ public abstract class IdeFrameDecorator implements Disposable {
 
     @Override
     public boolean isInFullScreen() {
-      if (myFrame == null) return false;
-      if (UIUtil.isWindowClientPropertyTrue(myFrame, WindowManagerImpl.FULL_SCREEN)) return true;
-
-      // [tav] todo: should we keep this logic for backward compatible behaviour?
-      Rectangle frameBounds = myFrame.getBounds();
-      GraphicsDevice device = ScreenUtil.getScreenDevice(frameBounds);
-      return device != null && device.getDefaultConfiguration().getBounds().equals(frameBounds) && myFrame.isUndecorated();
+      return UIUtil.isWindowClientPropertyTrue(myFrame, WindowManagerImpl.FULL_SCREEN);
     }
 
     @Override

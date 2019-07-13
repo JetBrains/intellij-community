@@ -6,6 +6,7 @@ import com.intellij.ide.ui.ProductIcons;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,7 +14,8 @@ import javax.swing.*;
 
 public class ProductsIconsImpl implements ProductIcons {
   private final NotNullLazyValue<Icon> myProductIcon = NotNullLazyValue.createValue(
-    () -> IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getSmallIconUrl())
+    () -> IconLoader.getIcon(ObjectUtils.notNull(ApplicationInfoEx.getInstanceEx().getSmallApplicationSvgIconUrl(),
+                                                 ApplicationInfoEx.getInstanceEx().getSmallIconUrl()))
   );
   private final NotNullLazyValue<Icon> myProjectIcon = NotNullLazyValue.createValue(
     () -> PlatformUtils.isJetBrainsProduct()

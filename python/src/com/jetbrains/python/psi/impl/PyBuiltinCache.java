@@ -23,7 +23,7 @@ import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.impl.ModuleLibraryOrderEntryImpl;
+import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
@@ -123,7 +123,7 @@ public class PyBuiltinCache {
           if (orderEntry instanceof JdkOrderEntry) {
             sdk = ((JdkOrderEntry)orderEntry).getJdk();
           }
-          else if (orderEntry instanceof ModuleLibraryOrderEntryImpl) {
+          else if (OrderEntryUtil.isModuleLibraryOrderEntry(orderEntry)) {
             sdk = PythonSdkType.findPythonSdk(orderEntry.getOwnerModule());
           }
         }

@@ -35,7 +35,7 @@
     <fileBasedIndex implementation="com.intellij.util.xml.DomFileIndex"/>
 
     <filetype.stubBuilder filetype="XML" implementationClass="com.intellij.util.xml.stubs.builder.DomStubBuilder"/>
-    <stubElementTypeHolder class="com.intellij.util.xml.stubs.DomElementTypeHolder"/>
+    <stubElementTypeHolder class="com.intellij.util.xml.stubs.DomElementTypeHolder" externalIdPrefix="xml."/>
     <stubIndex implementation="com.intellij.util.xml.stubs.index.DomNamespaceKeyIndex"/>
     <stubIndex implementation="com.intellij.util.xml.stubs.index.DomElementClassIndex"/>
 

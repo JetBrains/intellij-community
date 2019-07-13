@@ -103,7 +103,7 @@ object FileResponses {
 
       val isPartialContent = !(range.start == 0L && range.end == fileLength)
       val response = DefaultHttpResponse(HttpVersion.HTTP_1_1, if (isPartialContent) HttpResponseStatus.PARTIAL_CONTENT else HttpResponseStatus.OK)
-      isKeepAlive = response.addKeepAliveIfNeed(request)
+      isKeepAlive = response.addKeepAliveIfNeeded(request)
       doPrepareResponse(response, file.fileName.toString(), lastModified, extraHeaders)
 
       if (isPartialContent) {

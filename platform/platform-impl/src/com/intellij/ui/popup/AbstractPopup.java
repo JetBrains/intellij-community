@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -14,7 +14,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.TransactionGuardImpl;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -709,7 +708,7 @@ public class AbstractPopup implements JBPopup {
 
       myPopup.hide(false);
 
-      if (ApplicationManagerEx.getApplicationEx() != null) {
+      if (ApplicationManager.getApplication() != null) {
         StackingPopupDispatcher.getInstance().onPopupHidden(this);
       }
 
@@ -758,7 +757,7 @@ public class AbstractPopup implements JBPopup {
 
   public void show(@NotNull Component owner, int aScreenX, int aScreenY, final boolean considerForcedXY) {
     if (UiInterceptors.tryIntercept(this)) return;
-    if (ApplicationManagerEx.getApplicationEx() != null && ApplicationManager.getApplication().isHeadlessEnvironment()) return;
+    if (ApplicationManager.getApplication() != null && ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     if (isDisposed()) {
       throw new IllegalStateException("Popup was already disposed. Recreate a new instance to show again");
     }
@@ -1212,7 +1211,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   private static WindowManagerEx getWndManager() {
-    return ApplicationManagerEx.getApplicationEx() != null ? WindowManagerEx.getInstanceEx() : null;
+    return ApplicationManager.getApplication() != null ? WindowManagerEx.getInstanceEx() : null;
   }
 
   @Override
@@ -1221,7 +1220,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   protected boolean beforeShow() {
-    if (ApplicationManagerEx.getApplicationEx() == null) return true;
+    if (ApplicationManager.getApplication() == null) return true;
     StackingPopupDispatcher.getInstance().onPopupShown(this, myInStack);
     return true;
   }

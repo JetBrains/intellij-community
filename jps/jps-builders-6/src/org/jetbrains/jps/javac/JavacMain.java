@@ -172,10 +172,10 @@ public class JavacMain {
         }
       };
 
-      final StandardJavaFileManager fm = wrapWithCallDispatcher(fileManager);
-      final JavaCompiler.CompilationTask task = tryUnwrapFileManager(compiler.getTask(
+      final StandardJavaFileManager fm = wrapWithCallDispatcher(StandardJavaFileManager.class, fileManager, fileManager.getStdManager());
+      final JavaCompiler.CompilationTask task = tryInstallClientCodeWrapperCallDispatcher(compiler.getTask(
         out, fm, diagnosticConsumer, _options, null, fileManager.getJavaFileObjectsFromFiles(sources)
-      ), fileManager);
+      ), fm);
       for (JavaCompilerToolExtension extension : JavaCompilerToolExtension.getExtensions()) {
         try {
           extension.beforeCompileTaskExecution(compilingTool, task, _options, diagnosticConsumer);
@@ -229,17 +229,20 @@ public class JavacMain {
   // Workaround for javac bug:
   // the internal ClientCodeWrapper class may not implement some interface-declared methods
   // which throw UnsupportedOperationException instead of delegating to our JpsFileManager instance
-  private static JavaCompiler.CompilationTask tryUnwrapFileManager(JavaCompiler.CompilationTask task, JavaFileManager manager) {
+  private static JavaCompiler.CompilationTask tryInstallClientCodeWrapperCallDispatcher(JavaCompiler.CompilationTask task, StandardJavaFileManager delegateTo) {
     try {
       final Class<? extends JavaCompiler.CompilationTask> taskClass = task.getClass();
       final Field contextField = findFieldOfType(taskClass, Class.forName("com.sun.tools.javac.util.Context", true, taskClass.getClassLoader()));
       if (contextField != null) {
         final Object contextObject = contextField.get(task);
         final Method getMethod = contextObject.getClass().getMethod("get", Class.class);
-        if (getMethod.invoke(contextObject, JavaFileManager.class) != null) {
+        final Object currentManager = getMethod.invoke(contextObject, JavaFileManager.class);
+        if (currentManager instanceof StandardJavaFileManager) {
           final Method putMethod = contextObject.getClass().getMethod("put", Class.class, Object.class);
           putMethod.invoke(contextObject, JavaFileManager.class, null);  // must clear previous value first
-          putMethod.invoke(contextObject, JavaFileManager.class, manager);
+          putMethod.invoke(contextObject, JavaFileManager.class, wrapWithCallDispatcher(
+            StandardJavaFileManager.class, (StandardJavaFileManager)currentManager, delegateTo
+          ));
         }
       }
     }
@@ -277,9 +280,9 @@ public class JavacMain {
   // methods added to newer versions of StandardJavaFileManager interfaces have default implementations that
   // do not delegate to corresponding methods of FileManager's base implementation
   // this proxy object makes sure the calls, not implemented in our file manager, are dispatched further to the base file manager implementation
-  private static StandardJavaFileManager wrapWithCallDispatcher(final JpsJavacFileManager fileManager) {
+  private static <T> T wrapWithCallDispatcher(final Class<T> ifaceClass, final T targetObject, final T delegateTo) {
     //return fileManager;
-    return (StandardJavaFileManager)Proxy.newProxyInstance(fileManager.getClass().getClassLoader(), new Class[]{StandardJavaFileManager.class}, new InvocationHandler() {
+    return ifaceClass.cast(Proxy.newProxyInstance(targetObject.getClass().getClassLoader(), new Class[]{ifaceClass}, new InvocationHandler() {
       private final Map<Method, Boolean> ourImplStatus = Collections.synchronizedMap(new HashMap<Method, Boolean>());
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -292,12 +295,12 @@ public class JavacMain {
         }
       }
 
-      private JavaFileManager getApiCallHandler(Method method) {
+      private T getApiCallHandler(Method method) {
         Boolean isImplemented = ourImplStatus.get(method);
         if (isImplemented == null) {
           try {
             // important: look for implemented methods in the actual class
-            fileManager.getClass().getDeclaredMethod(method.getName(), method.getParameterTypes());
+            targetObject.getClass().getDeclaredMethod(method.getName(), method.getParameterTypes());
             isImplemented = Boolean.TRUE;
           }
           catch (NoSuchMethodException e) {
@@ -305,10 +308,9 @@ public class JavacMain {
           }
           ourImplStatus.put(method, isImplemented);
         }
-        return isImplemented? fileManager : fileManager.getStdManager();
+        return isImplemented ? targetObject : delegateTo;
       }
-
-    });
+    }));
   }
 
   private static boolean isJavacBefore9(JavaCompilingTool compilingTool) {

@@ -1,0 +1,13 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+sourceSets {
+  main.java.srcDir "$tools/$project.name/src"
+}
+
+dependencies {
+  compile 'com.android.tools:annotations:26.3.0'
+  compile 'com.android.tools:common:26.3.0'
+  compile 'com.android.tools.ddms:ddmlib:26.3.0'
+
+  compile 'com.google.code.gson:gson:2.8.5'
+  compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+}

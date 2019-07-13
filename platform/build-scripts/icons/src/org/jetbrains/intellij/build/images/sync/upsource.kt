@@ -33,9 +33,16 @@ private fun <T> upsourceRetry(action: () -> T) = retry(action = action, secondsB
   it.message?.contains("Upsource is down for maintenance") == true
 })
 
+internal object UpsourceUser {
+  private fun String.systemProperty() = System.getProperty(this) ?: error("$this is undefined")
+  val name by lazy { "upsource.user.name".systemProperty() }
+  val password by lazy { "upsource.user.password".systemProperty() }
+  val email by lazy { "upsource.user.email".systemProperty() }
+}
+
 private fun HttpRequestBase.upsourceAuthAndLog(method: String, args: String) {
   log("Calling Upsource '$method' with '$args'")
-  basicAuth(System.getProperty("upsource.user.name"), System.getProperty("upsource.user.password"))
+  basicAuth(UpsourceUser.name, UpsourceUser.password)
 }
 
 internal sealed class Review(val id: String, val projectId: String?, val url: String)
@@ -107,7 +114,20 @@ private fun getBranchRevisions(projectId: String, branch: String, commits: Colle
 internal fun addReviewer(projectId: String, review: Review, email: String) {
   try {
     val userId = userId(email) ?: guessEmail(email).asSequence().map(::userId).filterNotNull().first()
-    upsourcePost("addParticipantToReview", """{
+    upsourcePost("addParticipantToReview", getParticipantInReviewRequestDTO(projectId, review, userId))
+  }
+  catch (e: Exception) {
+    log("Unable to add $email to ${review.id} review: ${e.message}")
+    if (email != DEFAULT_INVESTIGATOR) addReviewer(projectId, review, DEFAULT_INVESTIGATOR)
+  }
+}
+
+internal fun removeReviewer(projectId: String, review: Review, email: String) = callSafely(printStackTrace = true) {
+  val userId = userId(email) ?: guessEmail(email).asSequence().map(::userId).filterNotNull().first()
+  upsourcePost("removeParticipantFromReview", getParticipantInReviewRequestDTO(projectId, review, userId))
+}
+
+private fun getParticipantInReviewRequestDTO(projectId: String, review: Review, userId: String) = """{
       "reviewId" : {
         "projectId" : "$projectId",
         "reviewId" : "${review.id}"
@@ -116,20 +136,14 @@ internal fun addReviewer(projectId: String, review: Review, email: String) {
         "userId" : "$userId",
         "role" : 2
        }
-    }""")
-  }
-  catch (e: Exception) {
-    log("Unable to add $email to ${review.id} review: ${e.message}")
-    if (email != DEFAULT_INVESTIGATOR) addReviewer(projectId, review, DEFAULT_INVESTIGATOR)
-  }
-}
+    }"""
 
 private val HUB by lazy { System.getProperty("hub.url") }
 
 private fun userId(email: String): String? {
   log("Calling Hub 'users' with '$email'")
   val response = get("$HUB/api/rest/users?fields=id&top=1&query=email:$email+and+has:verifiedEmail") {
-    basicAuth(System.getProperty("upsource.user.name"), System.getProperty("upsource.user.password"))
+    basicAuth(UpsourceUser.name, UpsourceUser.password)
   }
   return extractOrNull(response, Regex(""""id":"([^,"]+)""""))
 }

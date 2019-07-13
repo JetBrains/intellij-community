@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
@@ -24,6 +25,7 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -39,6 +41,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.io.ByteArrayOutputStream;
@@ -535,6 +538,44 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     assertMarkersEqual(ContainerUtil.newArrayList(
       new ExpectedHighlighter(0, 6, ConsoleViewContentType.NORMAL_OUTPUT)  // Test1\n
     ), actualHighlighters);
+  }
+
+  public void testSubsequentFoldsAreCombined() {
+    PlatformTestUtil.registerExtension(Extensions.getRootArea(), ConsoleFolding.EP_NAME, new ConsoleFolding() {
+      @Override
+      public boolean shouldFoldLine(@NotNull Project project, @NotNull String line) {
+        return line.contains("FOO");
+      }
+
+      @Nullable
+      @Override
+      public String getPlaceholderText(@NotNull Project project, @NotNull List<String> lines) {
+        return "folded";
+      }
+    }, myConsole);
+
+    Editor editor = myConsole.getEditor();
+
+    myConsole.print("a BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT);
+    myConsole.print("a FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT);
+    myConsole.flushDeferredText();
+
+    assertOneElement(editor.getFoldingModel().getAllFoldRegions());
+
+    myConsole.print("a FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT);
+    myConsole.print("a BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT);
+    myConsole.flushDeferredText();
+
+    FoldRegion region = assertOneElement(editor.getFoldingModel().getAllFoldRegions());
+    assertEquals("folded", region.getPlaceholderText());
+    assertEquals(0, editor.getDocument().getLineNumber(region.getStartOffset()));
+    assertEquals(2, editor.getDocument().getLineNumber(region.getEndOffset()));
+
+    myConsole.print("a FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT);
+    myConsole.print("a BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT);
+    myConsole.flushDeferredText();
+
+    assertSize(2, editor.getFoldingModel().getAllFoldRegions());
   }
 
   @NotNull

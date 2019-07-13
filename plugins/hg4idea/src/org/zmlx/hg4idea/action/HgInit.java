@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcs;
@@ -76,8 +77,16 @@ public class HgInit extends DumbAwareAction {
     {
       if (!finalNeedToCreateRepo || createRepository(requireNonNull(myProject), selectedRoot)) {
         updateDirectoryMappings(finalMapRoot);
+        proposeUpdateHgignoreFile(finalMapRoot);
       }
     });
+  }
+
+  private void proposeUpdateHgignoreFile(VirtualFile finalMapRoot) {
+    HgVcs hgVcs = HgVcs.getInstance(myProject);
+    if (hgVcs != null) {
+      VcsImplUtil.proposeUpdateIgnoreFile(myProject, hgVcs, finalMapRoot);
+    }
   }
 
   // update vcs directory mappings if new repository was created inside the current project directory

@@ -21,5 +21,6 @@
     <orderEntry type="library" name="xml-resolver" level="project" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" name="NanoXML" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
   </component>
 </module>

@@ -118,7 +118,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, PyDocStrin
    * @param name      what to look for
    * @param inherited true: search in superclasses; false: only look for methods defined in this class
    * @param context   context to be used to resolve ancestors
-   * @return method with given name or null.
+   * @return method with given name or null, prefers implementation over same name overloads.
    */
   @Nullable
   PyFunction findMethodByName(@Nullable @NonNls final String name, boolean inherited, TypeEvalContext context);
@@ -142,7 +142,8 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, PyDocStrin
    *
    * @param inherited true: search in superclasses, too.
    * @param context   context to be used to resolve ancestors and check if this class is a new-style class
-   * @return a method that would be called first when an instance of this class is instantiated.
+   * @return a method that would be called first when an instance of this class is instantiated,
+   * prefers implementation over same name overloads.
    */
   @Nullable
   PyFunction findInitOrNew(boolean inherited, @Nullable TypeEvalContext context);

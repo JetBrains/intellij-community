@@ -343,6 +343,8 @@ public class PushController implements Disposable {
           myDialog.updateOkActions();
         }, ModalityState.stateForComponent(myDialog.getRootPane()));
       }
+      catch (ProcessCanceledException ignore) {
+      }
       catch (Exception e) {
         LOG.error(e);
       }

@@ -143,15 +143,10 @@ public class GitFileHistory {
     GitLogParser<GitLogFullRecord> parser = GitLogParser.createDefaultParser(myProject, GitLogParser.NameStatus.STATUS,
                                                                              HASH, COMMIT_TIME, PARENTS);
     h.setStdoutSuppressed(true);
-    h.addParameters("-M", "-m", "--name-status", parser.getPretty(), "--encoding=UTF-8", commit);
-    if (!GitVersionSpecialty.FOLLOW_IS_BUGGY_IN_THE_LOG.existsIn(myProject)) {
-      h.addParameters("--follow");
-      h.endOptions();
-      h.addRelativePaths(filePath);
-    }
-    else {
-      h.endOptions();
-    }
+    h.addParameters("-M", "-m", "--follow", "--name-status", parser.getPretty(), "--encoding=UTF-8", commit);
+    h.endOptions();
+    h.addRelativePaths(filePath);
+    
     String output = Git.getInstance().runCommand(h).getOutputOrThrow();
     List<GitLogFullRecord> records = parser.parse(output);
 

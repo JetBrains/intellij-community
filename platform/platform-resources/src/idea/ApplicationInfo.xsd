@@ -342,7 +342,9 @@
       <xs:annotation>
         <xs:documentation>
           Path to a 16x16 png file with the product icon.
+          <strong>Deprecated: use 'svg-small' attribute instead.</strong>
         </xs:documentation>
+        <xs:documentation>deprecated</xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute type="xs:string" name="size32">
@@ -350,6 +352,7 @@
         <xs:documentation>
           Path to a 32x32 png file with the product icon. <strong>Deprecated: use 'svg' attribute instead.</strong>
         </xs:documentation>
+        <xs:documentation>deprecated</xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute type="xs:string" name="size128" >
@@ -357,6 +360,7 @@
         <xs:documentation>
           Path to a 128x128 png file with the product icon. <strong>Deprecated: use 'svg' attribute instead.</strong>
         </xs:documentation>
+        <xs:documentation>deprecated</xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute type="xs:string" name="ico">
@@ -373,12 +377,28 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:attribute type="xs:string" name="svg-small">
+      <xs:annotation>
+        <xs:documentation>
+          Path to an svg file with a simplified version of the product icon which looks good when shown as 16x16 image. The file must be
+          located inside a JAR file in PRODUCT_HOME/lib directory.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
   <xs:complexType name="iconEapType">
     <xs:attribute type="xs:string" name="svg" use="required">
       <xs:annotation>
         <xs:documentation>
           Path inside a JAR file (in PRODUCT_HOME/lib directory) to an svg file which contains the product icon for EAP version of the product.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="svg-small">
+      <xs:annotation>
+        <xs:documentation>
+          Path to an svg file with a simplified version of the product icon for EAP versions looks good when shown as 16x16 image.
+          The file must be located inside a JAR file in PRODUCT_HOME/lib directory.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>

@@ -22,7 +22,6 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.ModuleOrderEntryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -293,7 +292,7 @@ public class MavenRootModelAdapter {
 
     e.setScope(scope);
     if (testJar) {
-      ((ModuleOrderEntryImpl)e).setProductionOnTestDependency(true);
+      e.setProductionOnTestDependency(true);
     }
 
     if (myOrderEntriesBeforeJdk.contains(moduleName)) {

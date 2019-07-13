@@ -1013,6 +1013,11 @@ public class ExternalSystemUtil {
                                          boolean isPreviewMode,
                                          @NotNull final ProgressExecutionMode progressExecutionMode) {
     AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(project, externalSystemId);
+    ExternalProjectSettings existingSettings = systemSettings.getLinkedProjectSettings(projectSettings.getExternalProjectPath());
+    if (existingSettings != null) {
+      return;
+    }
+
     //noinspection unchecked
     systemSettings.linkProject(projectSettings);
     ensureToolWindowInitialized(project, externalSystemId);

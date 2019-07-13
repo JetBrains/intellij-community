@@ -18,6 +18,6 @@ package com.intellij.util.containers;
 /**
  * @author max
  */
-public class StringInterner extends Interner<String> {
+public class StringInterner extends HashSetInterner<String> {
 
 }

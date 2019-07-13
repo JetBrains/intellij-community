@@ -23,6 +23,10 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class HeadlessLafManagerImpl extends LafManager {
+  public HeadlessLafManagerImpl() {
+    LafManagerImpl.fixOptionButton(UIManager.getLookAndFeelDefaults());
+  }
+
   @NotNull
   @Override
   public UIManager.LookAndFeelInfo[] getInstalledLookAndFeels() {

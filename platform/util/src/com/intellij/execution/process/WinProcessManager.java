@@ -1,6 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
+import com.intellij.execution.MachineType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -8,7 +9,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Kernel32;
+import com.sun.jna.platform.win32.WinBase;
+import com.sun.jna.platform.win32.WinDef;
 import com.sun.jna.platform.win32.WinNT;
+import com.sun.jna.ptr.IntByReference;
+import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
@@ -91,5 +96,34 @@ public class WinProcessManager {
     } catch(IllegalThreadStateException e) {
       return true;
     }
+  }
+
+  @NotNull
+  public static MachineType getProcessMachineType(int pid) {
+    final WinNT.HANDLE hProcess = Kernel32.INSTANCE.OpenProcess(WinNT.PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+    if (hProcess == WinBase.INVALID_HANDLE_VALUE) return MachineType.UNKNOWN;
+
+    final IntByReference isWow64Ref = new IntByReference(0);
+    try {
+      if (!Kernel32.INSTANCE.IsWow64Process(hProcess, isWow64Ref)) return MachineType.UNKNOWN;
+    }
+    catch (UnsatisfiedLinkError ignored) {
+    }
+    finally {
+      Kernel32.INSTANCE.CloseHandle(hProcess);
+    }
+    boolean isWow64 = (isWow64Ref.getValue() == 1);
+    return isWow64 ? MachineType.I386 : getOsArch();
+  }
+
+  @NotNull
+  private static MachineType getOsArch() {
+    final WinBase.SYSTEM_INFO systemInfo = new WinBase.SYSTEM_INFO();
+    Kernel32.INSTANCE.GetNativeSystemInfo(systemInfo);
+
+    final WinDef.WORD processorArchitecture = systemInfo.processorArchitecture.dwOemID.getLow();
+    if (processorArchitecture.intValue() == 0 /* PROCESSOR_ARCHITECTURE_INTEL */) return MachineType.I386;
+    if (processorArchitecture.intValue() == 9 /* PROCESSOR_ARCHITECTURE_AMD64 */) return MachineType.AMD64;
+    return MachineType.UNKNOWN;
   }
 }

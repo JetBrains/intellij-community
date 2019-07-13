@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.eventLog.validator.rules;
 
 import com.intellij.internal.statistic.eventLog.LogEventsKt;
+import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,13 +13,19 @@ import static com.intellij.internal.statistic.eventLog.LogEventsKt.copyEscaped;
 public class EventContext {
    public final String eventId;
    public final Map<String, Object>  eventData;
+   public PluginInfo pluginInfo;
 
   private EventContext(@NotNull String eventId, @NotNull Map<String, Object> eventData) {
     this.eventId = LogEventsKt.escape(eventId);
     this.eventData = ContainerUtil.unmodifiableOrEmptyMap(copyEscaped(eventData));
+    this.pluginInfo = null;
   }
 
   public static EventContext create(@NotNull  String eventId, @NotNull  Map<String, Object>  eventData) {
      return new EventContext(eventId, eventData);
+  }
+
+  public void setPluginInfo(@NotNull PluginInfo info) {
+    this.pluginInfo = info;
   }
 }

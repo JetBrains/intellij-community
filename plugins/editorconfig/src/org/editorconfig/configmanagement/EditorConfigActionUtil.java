@@ -29,10 +29,9 @@ public class EditorConfigActionUtil {
 
 
   public static AnAction[] createNavigationActions(@NotNull PsiFile file) {
-    List<AnAction> actions = new ArrayList<>();
     EditorConfigNavigationActionsFactory navigationActionsFactory =
       EditorConfigNavigationActionsFactory.getInstance(file.getVirtualFile());
-    actions.addAll(navigationActionsFactory.getNavigationActions(file.getProject()));
+    List<AnAction> actions = new ArrayList<>(navigationActionsFactory.getNavigationActions(file.getProject(), file.getVirtualFile()));
     return actions.toArray(AnAction.EMPTY_ARRAY);
   }
 

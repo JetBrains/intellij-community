@@ -37,15 +37,15 @@ public class FileTypeSelector extends ComboBox<FileTypeInfo> {
   }
 
   @Nullable
-  public FileType getSelectedFileType() {
-    FileTypeInfo info = (FileTypeInfo)super.getSelectedItem();
+  public LanguageFileType getSelectedFileType() {
+    final FileTypeInfo info = (FileTypeInfo)super.getSelectedItem();
     return info != null ? info.getFileType() : null;
   }
 
-  public void setSelectedItem(@NotNull FileType type, @Nullable Language dialect, @Nullable String context) {
-    DefaultComboBoxModel<FileTypeInfo> model = (DefaultComboBoxModel<FileTypeInfo>)getModel();
+  public void setSelectedItem(@NotNull LanguageFileType type, @Nullable Language dialect, @Nullable String context) {
+    final DefaultComboBoxModel<FileTypeInfo> model = (DefaultComboBoxModel<FileTypeInfo>)getModel();
     for (int i = 0; i < model.getSize(); i++) {
-      FileTypeInfo info = model.getElementAt(i);
+      final FileTypeInfo info = model.getElementAt(i);
       if (info.isEqualTo(type, dialect, context)) {
         setSelectedItem(info);
         return;
@@ -72,15 +72,15 @@ public class FileTypeSelector extends ComboBox<FileTypeInfo> {
 
   @NotNull
   private static DefaultComboBoxModel<FileTypeInfo> createModel() {
-    final List<FileType> types = new ArrayList<>();
-    for (FileType fileType : StructuralSearchUtil.getSuitableFileTypes()) {
+    final List<LanguageFileType> types = new ArrayList<>();
+    for (LanguageFileType fileType : StructuralSearchUtil.getSuitableFileTypes()) {
       if (StructuralSearchUtil.getProfileByFileType(fileType) != null) {
         types.add(fileType);
       }
     }
     Collections.sort(types, (o1, o2) -> o1.getDescription().compareToIgnoreCase(o2.getDescription()));
     final List<FileTypeInfo> infos = new ArrayList<>();
-    for (FileType fileType : types) {
+    for (LanguageFileType fileType : types) {
       final boolean duplicated = isDuplicated(fileType, types);
 
       final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
@@ -99,14 +99,12 @@ public class FileTypeSelector extends ComboBox<FileTypeInfo> {
 
       infos.add(new FileTypeInfo(fileType, null, null, true, duplicated));
 
-      if (fileType instanceof LanguageFileType) {
-        final Language language = ((LanguageFileType)fileType).getLanguage();
-        final Language[] languageDialects = LanguageUtil.getLanguageDialects(language);
-        Arrays.sort(languageDialects, Comparator.comparing(Language::getDisplayName));
-        for (Language dialect : languageDialects) {
-          if (profile.isMyLanguage(dialect)) {
-            infos.add(new FileTypeInfo(fileType, dialect, null, true, duplicated));
-          }
+      final Language language = fileType.getLanguage();
+      final Language[] languageDialects = LanguageUtil.getLanguageDialects(language);
+      Arrays.sort(languageDialects, Comparator.comparing(Language::getDisplayName));
+      for (Language dialect : languageDialects) {
+        if (profile.isMyLanguage(dialect)) {
+          infos.add(new FileTypeInfo(fileType, dialect, null, true, duplicated));
         }
       }
     }
@@ -114,14 +112,9 @@ public class FileTypeSelector extends ComboBox<FileTypeInfo> {
     return new MyComboBoxModel(infos);
   }
 
-  private static boolean isDuplicated(@NotNull FileType fileType, @NotNull List<? extends FileType> types) {
-    String description = fileType.getDescription();
-    for (FileType type : types) {
-      if (type != fileType && description.equals(type.getDescription())) {
-        return true;
-      }
-    }
-    return false;
+  private static boolean isDuplicated(@NotNull LanguageFileType fileType, @NotNull List<? extends FileType> types) {
+    final String description = fileType.getDescription();
+    return types.stream().anyMatch(type -> type != fileType && description.equals(type.getDescription()));
   }
 
   private static class MyComboBoxModel extends DefaultComboBoxModel<FileTypeInfo> {
@@ -133,6 +126,8 @@ public class FileTypeSelector extends ComboBox<FileTypeInfo> {
   private static class MyCellRenderer extends SimpleListCellRenderer<FileTypeInfo> {
     private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
     private static final Icon WIDE_EMPTY_ICON = JBUI.scale(EmptyIcon.create(32, 18));
+
+    MyCellRenderer() {}
 
     @Override
     public void customize(JList<? extends FileTypeInfo> list, FileTypeInfo value, int index, boolean selected, boolean hasFocus) {
@@ -151,9 +146,9 @@ public class FileTypeSelector extends ComboBox<FileTypeInfo> {
 
     @NotNull
     private static Icon getFileTypeIcon(FileTypeInfo info) {
-      LayeredIcon layeredIcon = new LayeredIcon(2);
+      final LayeredIcon layeredIcon = new LayeredIcon(2);
       layeredIcon.setIcon(EMPTY_ICON, 0);
-      Icon icon = info.getFileType().getIcon();
+      final Icon icon = info.getFileType().getIcon();
       if (icon != null) {
         layeredIcon.setIcon(icon, 1);
       }

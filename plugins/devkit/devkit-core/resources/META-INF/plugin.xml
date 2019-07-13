@@ -218,6 +218,7 @@
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.TestDataFilesReferencesContributor"/>
     <psi.referenceContributor language="XML" implementation="org.jetbrains.idea.devkit.references.ThemeEPPathReferenceContributor"/>
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.RegistryKeyIdReferenceContributor"/>
+    <psi.referenceContributor language="JSON" implementation="org.jetbrains.idea.devkit.references.ThemeJsonPsiReferenceContributor"/>
     <referencesSearch implementation="org.jetbrains.idea.devkit.references.IconsReferencesContributor"/>
     <unusedDeclarationFixProvider implementation="org.jetbrains.idea.devkit.inspections.quickfix.RegisterExtensionFixProvider"/>
 
@@ -378,10 +379,6 @@
     <action id="DumpCleanTestData" internal="true" class="org.jetbrains.idea.devkit.internal.DumpCleanHighlightingTestdataAction"
             text="Dump Highlighting-Markup-Free Data">
       <add-to-group group-id="Internal.Dump"/>
-    </action>
-
-    <action class="org.jetbrains.idea.devkit.actions.MigrateModuleNamesInSourcesAction" id="ReplaceModuleNamesInSources" internal="true">
-      <add-to-group group-id="FindMenuGroup" anchor="last"/>
     </action>
 
     <!-- Theme Toolbar -->

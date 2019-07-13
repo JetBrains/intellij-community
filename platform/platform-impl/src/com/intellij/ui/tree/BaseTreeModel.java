@@ -9,11 +9,6 @@ import java.util.List;
 
 public abstract class BaseTreeModel<T> extends AbstractTreeModel implements ChildrenProvider<T> {
   @Override
-  public void valueForPathChanged(TreePath path, Object value) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public boolean isLeaf(Object object) {
     return 0 == getChildCount(object);
   }

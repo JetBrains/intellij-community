@@ -7,6 +7,7 @@
 package com.intellij.execution.ui.layout.actions;
 
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
@@ -20,11 +21,23 @@ public class RestoreLayoutAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
-    getRunnerUi(e).restoreLayout();
+    RunnerContentUi ui = getRunnerUi(e);
+    if (ui != null) {
+      ui.restoreLayout();
+    }
   }
 
   @Override
   public void update(@NotNull final AnActionEvent e) {
-    e.getPresentation().setEnabled(getRunnerUi(e) != null);
+    RunnerContentUi runnerContentUi = getRunnerUi(e);
+    boolean enabled = false;
+    if (runnerContentUi != null) {
+      enabled = true;
+      if (ActionPlaces.DEBUGGER_TOOLBAR.equals(e.getPlace())) {
+        // In this case the action has to available in ActionPlaces.RUNNER_LAYOUT_BUTTON_TOOLBAR only
+        enabled = !runnerContentUi.isMinimizeActionEnabled();
+      }
+    }
+    e.getPresentation().setEnabledAndVisible(enabled);
   }
 }

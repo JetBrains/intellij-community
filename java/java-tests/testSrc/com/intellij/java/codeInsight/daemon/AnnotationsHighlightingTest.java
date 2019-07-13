@@ -32,6 +32,7 @@ public class AnnotationsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIncompatibleType3() { doTest(); }
   public void testIncompatibleType4() { doTest(); }
   public void testIncompatibleType5() { doTest(); }
+  public void testIncompatibleWithUnresolvedAttribute() { doTest(); }
   public void testMissingAttribute() { doTest(); }
   public void testDuplicateAnnotation() { setLanguageLevel(LanguageLevel.JDK_1_7); doTest(); }
   public void testNonConstantInitializer() { doTest(); }

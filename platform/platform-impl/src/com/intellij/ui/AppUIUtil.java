@@ -17,9 +17,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,6 +36,7 @@ import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.SwingHelper;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.AWTAccessor;
@@ -90,14 +89,14 @@ public class AppUIUtil {
 
       if (SystemInfo.isUnix) {
         @SuppressWarnings("deprecation") String fallback = appInfo.getBigIconUrl();
-        ContainerUtil.addIfNotNull(images, loadApplicationIcon(svgIconUrl, ctx, 128, fallback));
+        ContainerUtil.addIfNotNull(images, loadApplicationIconImage(svgIconUrl, ctx, 128, fallback));
       }
 
       @SuppressWarnings("deprecation") String fallback = appInfo.getIconUrl();
-      ContainerUtil.addIfNotNull(images, loadApplicationIcon(svgIconUrl, ctx, 32, fallback));
+      ContainerUtil.addIfNotNull(images, loadApplicationIconImage(svgIconUrl, ctx, 32, fallback));
 
       if (SystemInfo.isWindows) {
-        ContainerUtil.addIfNotNull(images, ImageLoader.loadFromResource(appInfo.getSmallIconUrl()));
+        ContainerUtil.addIfNotNull(images, loadSmallApplicationIconImage(ctx));
       }
 
       for (int i = 0; i < images.size(); i++) {
@@ -119,14 +118,22 @@ public class AppUIUtil {
     }
   }
 
-  @Nullable
-  public static Icon loadHiDPIApplicationIcon(@NotNull ScaleContext ctx, int size) {
-    Image image = loadApplicationIcon(ApplicationInfoImpl.getShadowInstance().getApplicationSvgIconUrl(), ctx, size, null);
-    return image != null ? new JBImageIcon(ImageUtil.ensureHiDPI(image, ctx)) : null;
+  @NotNull
+  private static Image loadSmallApplicationIconImage(@NotNull ScaleContext ctx) {
+    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+    @SuppressWarnings("deprecation") String fallbackSmallIconUrl = appInfo.getSmallIconUrl();
+    return loadApplicationIconImage(appInfo.getSmallApplicationSvgIconUrl(), ctx, 16, fallbackSmallIconUrl);
   }
 
+  @NotNull
+  public static Icon loadSmallApplicationIcon(@NotNull ScaleContext ctx) {
+    Image image = loadSmallApplicationIconImage(ctx);
+    return new JBImageIcon(ImageUtil.ensureHiDPI(image, ctx));
+  }
+
+  @Contract("_, _, _, !null -> !null")
   @Nullable
-  private static Image loadApplicationIcon(String svgPath, ScaleContext ctx, int size, String fallbackPath) {
+  private static Image loadApplicationIconImage(String svgPath, ScaleContext ctx, int size, String fallbackPath) {
     if (svgPath != null) {
       try (InputStream stream = AppUIUtil.class.getResourceAsStream(svgPath)) {
         return SVGLoader.load(null, stream, ctx, size, size);
@@ -307,11 +314,17 @@ public class AppUIUtil {
           log.warn(e);
         }
       }
-      showConsentsAgreementIfNeed(log);
+      showConsentsAgreementIfNeeded(log);
     }
   }
 
+  /** @deprecated use {@link #showUserAgreementAndConsentsIfNeeded(Logger)} instead */
+  @Deprecated
   public static boolean showConsentsAgreementIfNeed(@NotNull Logger log) {
+    return showConsentsAgreementIfNeeded(log);
+  }
+
+  public static boolean showConsentsAgreementIfNeeded(@NotNull Logger log) {
     final Pair<List<Consent>, Boolean> consentsToShow = ConsentOptions.getInstance().getConsents();
     final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
     if (consentsToShow.second) {
@@ -339,13 +352,6 @@ public class AppUIUtil {
    * @param isPrivacyPolicy  true if this document is a privacy policy
    */
   public static void showEndUserAgreementText(@NotNull String htmlText, final boolean isPrivacyPolicy) {
-    final String title = isPrivacyPolicy
-                         ? ApplicationInfoImpl.getShadowInstance().getShortCompanyName() + " Privacy Policy"
-                         : ApplicationNamesInfo.getInstance().getFullProductName() + " User Agreement";
-    showEndUserAgreementText(title, htmlText);
-  }
-
-  public static void showEndUserAgreementText(String title, @NotNull String htmlText) {
       DialogWrapper dialog = new DialogWrapper(true) {
 
       private JEditorPane myViewer;
@@ -393,8 +399,11 @@ public class AppUIUtil {
           JLabel label = new JLabel(AllIcons.General.BalloonInformation);
           label.setVerticalAlignment(SwingConstants.TOP);
           eapPanel.add(label, BorderLayout.WEST);
-          JEditorPane html = SwingHelper.createHtmlLabel("EAP builds report usage statistics by default per the <a href=\"https://www.jetbrains.com/company/privacy.html\">JetBrains Privacy Policy</a>." +
-                                                  "\nNo personal or sensitive data are sent. You may disable this in the settings.", null, null);
+          JEditorPane html = SwingHelper.createHtmlLabel(
+            "EAP builds report usage statistics by default per "+
+            (isPrivacyPolicy? "this Privacy Policy." : "the <a href=\"https://www.jetbrains.com/company/privacy.html\">JetBrains Privacy Policy</a>.") +
+            "\nNo personal or sensitive data are sent. You may disable this in the settings.", null, null
+          );
           eapPanel.add(html, BorderLayout.CENTER);
           bottomPanel.add(eapPanel, BorderLayout.NORTH);
         }
@@ -425,7 +434,7 @@ public class AppUIUtil {
       @Override
       public void doCancelAction() {
         super.doCancelAction();
-        ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+        Application application = ApplicationManager.getApplication();
         if (application == null) {
           System.exit(Main.PRIVACY_POLICY_REJECTION);
         }
@@ -435,7 +444,11 @@ public class AppUIUtil {
       }
     };
     dialog.setModal(true);
-    dialog.setTitle(title);
+    dialog.setTitle(
+      isPrivacyPolicy
+      ? ApplicationInfoImpl.getShadowInstance().getShortCompanyName() + " Privacy Policy"
+      : ApplicationNamesInfo.getInstance().getFullProductName() + " User Agreement"
+    );
     dialog.pack();
     dialog.show();
   }

@@ -400,6 +400,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     }
 
     addFoldsForFileHeader(descriptors, file, document);
+    addCommentsToFold(descriptors, root, document, processedComments);
   }
 
   private static void addFoldsForImports(@NotNull List<? super FoldingDescriptor> list, @NotNull PsiJavaFile file) {

@@ -55,7 +55,7 @@ public class AddMethodFix extends GroovyFix {
       String templName = JavaTemplateUtil.TEMPLATE_IMPLEMENTED_METHOD_BODY;
       final FileTemplate template = FileTemplateManager.getInstance(project).getCodeTemplate(templName);
 
-      Properties properties = new Properties();
+      Properties properties = FileTemplateManager.getInstance(project).getDefaultProperties();
 
       String returnType = generateTypeText(psiClass);
       properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnType);

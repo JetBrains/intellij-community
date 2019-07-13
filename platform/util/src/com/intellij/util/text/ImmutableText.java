@@ -65,7 +65,8 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
    */
   private static final int BLOCK_MASK = ~(BLOCK_SIZE - 1);
 
-  private final Node myNode;
+  // visible for tests
+  final Node myNode;
 
   private ImmutableText(Node node) {
     myNode = node;
@@ -317,7 +318,7 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
     return myNode.toString();
   }
 
-  private abstract static class Node implements CharSequence {
+  abstract static class Node implements CharSequence {
     abstract void getChars(int start, int end, @NotNull char[] dest, int destPos);
     abstract Node subNode(int start, int end);
     @NotNull
@@ -344,12 +345,14 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
     if (length <= BLOCK_SIZE) { // Merges to primitive.
       return createLeafNode(new MergingCharSequence(node1, node2));
     }
-    else { // Returns a composite.
-      Node head = node1;
-      Node tail = node2;
 
-      if ((head.length() << 1) < tail.length() && tail instanceof CompositeNode) {
-        // head too small, returns (head + tail/2) + (tail/2)
+    // Returns a composite.
+    Node head = node1;
+    Node tail = node2;
+
+    if (shouldRebalance(head, tail)) {
+      // head too small, returns (head + tail/2) + (tail/2)
+      do {
         if (((CompositeNode)tail).head.length() > ((CompositeNode)tail).tail.length()) {
           // Rotates to concatenate with smaller part.
           tail = ((CompositeNode)tail).rightRotation();
@@ -357,8 +360,11 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
         head = concatNodes(head, ((CompositeNode)tail).head);
         tail = ((CompositeNode)tail).tail;
       }
-      else if ((tail.length() << 1) < head.length() && head instanceof CompositeNode) {
-        // tail too small, returns (head/2) + (head/2 concat tail)
+      while (shouldRebalance(head, tail));
+    }
+    else if (shouldRebalance(tail, head)) {
+      // tail too small, returns (head/2) + (head/2 concat tail)
+      do {
         if (((CompositeNode)head).tail.length() > ((CompositeNode)head).head.length()) {
           // Rotates to concatenate with smaller part.
           head = ((CompositeNode)head).leftRotation();
@@ -366,8 +372,13 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
         tail = concatNodes(((CompositeNode)head).tail, tail);
         head = ((CompositeNode)head).head;
       }
-      return new CompositeNode(head, tail);
+      while (shouldRebalance(tail, head));
     }
+    return new CompositeNode(head, tail);
+  }
+
+  private static boolean shouldRebalance(Node shorter, Node longer) {
+    return (shorter.length() << 1) < longer.length() && longer instanceof CompositeNode;
   }
 
   private static class WideLeafNode extends LeafNode {
@@ -452,7 +463,7 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
     }
   }
 
-  private static class CompositeNode extends Node {
+  static class CompositeNode extends Node {
     final int count;
     final Node head;
     final Node tail;

@@ -3,7 +3,7 @@ LineBreakpoint created at EvaluationExceptionDetected.java:6
 Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 EvaluationExceptionDetected.java:6
 java.lang.RuntimeException: My exception message
-	at EvaluationExceptionDetected$GeneratedEvaluationClass.invoke(EvaluationExceptionDetected.java:!LINE_NUMBER!)
+	at !GENERATED_EVALUATION_CLASS!
 	at EvaluationExceptionDetected.main(EvaluationExceptionDetected.java:!LINE_NUMBER!)
 Evaluation failed
 Evaluation failed: java.lang.RuntimeException exception thrown: My exception message

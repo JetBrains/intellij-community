@@ -645,17 +645,22 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
       files.forEach(f -> IoTestUtil.updateFile(new File(f.getPath()), "+++"));
       ((NewVirtualFile)topDir).markDirtyRecursively();
 
-      RefreshWorker.setCancellingCondition(file -> file.getPath().endsWith(top.getName() + "/sub_2/file_2"));
-      topDir.refresh(false, true);
+      RefreshSession session = RefreshQueue.getInstance().createSession(false, true, null);
+      String stopAt = top.getName() + "/sub_2/file_2";
+      RefreshWorker.setTestListener(file -> {
+        if (file.getPath().endsWith(stopAt)) RefreshQueue.getInstance().cancelSession(session.getId());
+      });
+      session.addFile(topDir);
+      session.launch();
       assertThat(processed).hasSizeBetween(1, files.size() - 1);
 
-      RefreshWorker.setCancellingCondition(null);
+      RefreshWorker.setTestListener(null);
       topDir.refresh(false, true);
       assertThat(processed).isEqualTo(files);
     }
     finally {
       connection.disconnect();
-      RefreshWorker.setCancellingCondition(null);
+      RefreshWorker.setTestListener(null);
     }
   }
 

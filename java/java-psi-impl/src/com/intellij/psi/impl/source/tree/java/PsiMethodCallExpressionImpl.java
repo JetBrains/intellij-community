@@ -161,7 +161,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
                                                       MethodCandidateInfo.isOverloadCheck(parentArgList) &&
                                                       Arrays.stream(parentArgList.getExpressions())
                                                         .map(expression -> PsiUtil.skipParenthesizedExprDown(expression))
-                                                        .noneMatch(expression -> LambdaUtil.getFunctionalTypeMap().containsKey(expression));
+                                                        .noneMatch(expression -> expression != null && ThreadLocalTypes.hasBindingFor(expression));
 
       PsiType theOnly = null;
       for (int i = 0; i < results.length; i++) {

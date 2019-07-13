@@ -366,6 +366,10 @@ idea.fatal.error.notification=disabled
         if (buildContext.buildNumber == null) {
           buildContext.messages.warning("Toolbox LiteGen is not executed - it does not support SNAPSHOT build numbers")
         }
+        else if (buildContext.options.targetOS != BuildOptions.OS_ALL) {
+          buildContext.messages.
+            warning("Toolbox LiteGen is not executed - it doesn't support installers are being built only for specific OS")
+        }
         else {
           buildContext.executeStep("Building Toolbox Lite-Gen Links", BuildOptions.TOOLBOX_LITE_GEN_STEP) {
             String toolboxLiteGenVersion = System.getProperty("intellij.build.toolbox.litegen.version")

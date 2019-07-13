@@ -38,6 +38,11 @@ public abstract class SingleEntryFileBasedIndexExtension<V> extends FileBasedInd
     return true;
   }
 
+  @Override
+  public int getCacheSize() {
+    return 5;
+  }
+
   @NotNull
   @Override
   public abstract SingleEntryIndexer<V> getIndexer();

@@ -17,6 +17,8 @@ import java.util.List;
 public abstract class ToolWindowManagerEx extends ToolWindowManager {
   public abstract void initToolWindow(@NotNull ToolWindowEP bean);
 
+  public abstract boolean fallbackToEditor();
+
   public static ToolWindowManagerEx getInstanceEx(final Project project) {
     return (ToolWindowManagerEx)getInstance(project);
   }

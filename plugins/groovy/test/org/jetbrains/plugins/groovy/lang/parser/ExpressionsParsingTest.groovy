@@ -227,6 +227,18 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testnew$closureAfterArrayInitializer() { doTest() }
 
+  void testnew$newLine() { doTest() }
+
+  void testnew$newLine2() { doTest() }
+
+  void testnew$newLine3() { doTest() }
+
+  void testnew$newLine4() { doTest() }
+
+  void testnew$newLine5() { doTest() }
+
+  void testnew$newLine6() { doTest() }
+
 //  public void testnew$new1() throws Throwable { doTest(); }
   void testanonymous$anonymous() throws Throwable { doTest() }
 

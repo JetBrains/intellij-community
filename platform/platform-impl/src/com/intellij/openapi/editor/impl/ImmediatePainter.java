@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.ui.EditorTextField;
@@ -25,6 +26,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import sun.awt.image.SunVolatileImage;
 
 import javax.swing.*;
 import java.awt.*;
@@ -214,8 +216,7 @@ class ImmediatePainter {
       if (myImage == null) {
         myImage = component.createVolatileImage(size.width, size.height);
       }
-      else if (!isLargeEnough(myImage, size) ||
-               ((VolatileImage)myImage).validate(component.getGraphicsConfiguration()) == VolatileImage.IMAGE_INCOMPATIBLE) {
+      else if (!isLargeEnough(myImage, size) || !isImageValid((VolatileImage)myImage, component)) {
         myImage.flush();
         myImage = component.createVolatileImage(size.width, size.height);
       }
@@ -229,6 +230,15 @@ class ImmediatePainter {
       throw new IllegalArgumentException("Image size is undefined");
     }
     return width >= size.width && height >= size.height;
+  }
+
+  private static boolean isImageValid(VolatileImage image, Component component) {
+    GraphicsConfiguration componentConfig = component.getGraphicsConfiguration();
+    if (SystemInfo.isWindows && image instanceof SunVolatileImage) { // JBR-1540
+      GraphicsConfiguration imageConfig = ((SunVolatileImage)image).getGraphicsConfig();
+      if (imageConfig != null && componentConfig != null && imageConfig.getDevice() != componentConfig.getDevice()) return false;
+    }
+    return image.validate(componentConfig) != VolatileImage.IMAGE_INCOMPATIBLE;
   }
 
   private static void fillRect(final Graphics g, final Rectangle2D r, final Color color) {

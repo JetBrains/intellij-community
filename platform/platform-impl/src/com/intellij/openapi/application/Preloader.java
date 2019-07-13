@@ -30,12 +30,13 @@ final class Preloader implements ApplicationInitializedListener {
   private final ProgressIndicator myWrappingIndicator;
 
   Preloader() {
-    if (ApplicationManager.getApplication().isUnitTestMode() || !Registry.is("enable.activity.preloading")) {
+    Application app = ApplicationManager.getApplication();
+    if (app.isUnitTestMode() || app.isHeadlessEnvironment() || !Registry.is("enable.activity.preloading")) {
       throw ExtensionNotApplicableException.INSTANCE;
     }
 
     myIndicator = new ProgressIndicatorBase();
-    Disposer.register(ApplicationManager.getApplication(), () -> myIndicator.cancel());
+    Disposer.register(app, () -> myIndicator.cancel());
     myExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Preloader Pool");
     myWrappingIndicator = new AbstractProgressIndicatorBase() {
       @Override

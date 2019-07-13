@@ -6,11 +6,14 @@ import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomUtilsWhiteListRule;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.internal.statistic.utils.PluginInfo;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -202,7 +205,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
     @NotNull
     @Override
     protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
-      if ("third.party".equals(data)) return ValidationResultType.ACCEPTED;
+      if (isThirdPartyValue(data)) return ValidationResultType.ACCEPTED;
 
       final ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
       final FeatureDescriptor descriptor = registry.getFeatureDescriptor(data);
@@ -211,8 +214,11 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
       }
 
       final Class<? extends ProductivityFeaturesProvider> provider = descriptor.getProvider();
-      return provider == null || getPluginType(provider).isDevelopedByJetBrains() ?
-             ValidationResultType.ACCEPTED : ValidationResultType.REJECTED;
+      final PluginInfo info = provider == null ? PluginInfoDetectorKt.getPlatformPlugin() : PluginInfoDetectorKt.getPluginInfo(provider);
+      if (StringUtil.equals(data, context.eventId)) {
+        context.setPluginInfo(info);
+      }
+      return info.isDevelopedByJetBrains() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
     }
   }
 }

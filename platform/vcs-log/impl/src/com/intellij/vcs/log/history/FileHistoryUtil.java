@@ -65,8 +65,12 @@ public class FileHistoryUtil {
   }
 
   public static boolean affectsDirectory(@NotNull Change change, @NotNull FilePath directory) {
-    FilePath file = notNull(chooseNotNull(change.getAfterRevision(), change.getBeforeRevision())).getFile();
-    return VfsUtilCore.isAncestor(directory.getIOFile(), file.getIOFile(), false);
+    return affectsDirectory(directory, change.getAfterRevision()) || affectsDirectory(directory, change.getBeforeRevision());
+  }
+
+  private static boolean affectsDirectory(@NotNull FilePath directory, @Nullable ContentRevision revision) {
+    if (revision == null) return false;
+    return VfsUtilCore.isAncestor(directory.getIOFile(), revision.getFile().getIOFile(), false);
   }
 
   @Nullable

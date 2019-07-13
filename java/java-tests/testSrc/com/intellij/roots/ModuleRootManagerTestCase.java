@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.util.JpsPathUtil;
+import org.junit.Assume;
 
 import java.io.IOException;
 
@@ -141,5 +142,13 @@ public abstract class ModuleRootManagerTestCase extends ModuleTestCase {
 
   protected VirtualFile getAsmJar() {
     return IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("ASM");
+  }
+
+  protected boolean underTreeProjectModel() {
+    return myProject.getClass().getName() == "com.intellij.openapi.project.impl.LegacyBridgeProjectImpl";
+  }
+
+  protected void ignoreTestUnderTreeProjectModel() {
+    Assume.assumeFalse("Not applicable to treeProjectModel", underTreeProjectModel());
   }
 }

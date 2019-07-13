@@ -14,12 +14,12 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.DIALOG_TITLE
 import com.intellij.openapi.vcs.changes.ui.SessionDialog
-import com.intellij.vcs.commit.SingleChangeListCommitter.Companion.moveToFailedList
 import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vcs.impl.PartialChangesUtil.getPartialTracker
 import com.intellij.util.ui.UIUtil.removeMnemonic
+import com.intellij.vcs.commit.SingleChangeListCommitter.Companion.moveToFailedList
 
 private val LOG = logger<SingleChangeListCommitWorkflow>()
 
@@ -39,7 +39,7 @@ open class SingleChangeListCommitWorkflow(
   project: Project,
   val initiallyIncluded: Collection<*>,
   val initialChangeList: LocalChangeList? = null,
-  val executors: List<CommitExecutor> = emptyList(),
+  executors: List<CommitExecutor> = emptyList(),
   final override val isDefaultCommitEnabled: Boolean = executors.isEmpty(),
   val vcsToCommit: AbstractVcs<*>? = null,
   affectedVcses: Set<AbstractVcs<*>> = if (vcsToCommit != null) setOf(vcsToCommit) else emptySet(),
@@ -50,9 +50,11 @@ open class SingleChangeListCommitWorkflow(
 
   init {
     updateVcses(affectedVcses)
+    initCommitExecutors(executors)
   }
 
-  val isPartialCommitEnabled: Boolean = vcses.any { it.arePartialChangelistsSupported() } && (isDefaultCommitEnabled || executors.any { it.supportsPartialCommit() })
+  val isPartialCommitEnabled: Boolean =
+    vcses.any { it.arePartialChangelistsSupported() } && (isDefaultCommitEnabled || commitExecutors.any { it.supportsPartialCommit() })
 
   val commitMessagePolicy: SingleChangeListCommitMessagePolicy = SingleChangeListCommitMessagePolicy(project, initialCommitMessage)
 
@@ -84,7 +86,7 @@ open class SingleChangeListCommitWorkflow(
                                      session: CommitSession,
                                      changes: List<Change>,
                                      commitMessage: String): Boolean {
-    val sessionConfigurationUi = SessionDialog.createConfigurationUI(session, changes, commitMessage) ?: return true
+    val sessionConfigurationUi = session.getAdditionalConfigurationUI(changes, commitMessage) ?: return true
     val sessionDialog = SessionDialog(executor.getPresentableText(), project, session, changes, commitMessage, sessionConfigurationUi)
 
     if (sessionDialog.showAndGet()) return true

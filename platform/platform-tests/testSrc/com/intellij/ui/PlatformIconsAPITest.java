@@ -585,8 +585,6 @@ public class PlatformIconsAPITest extends TestCase {
     "/icon_128.png",
     "/icon_CE.png",
     "/icon_CE_128.png",
-    "/icon_CE_256.png",
-    "/icon_CE_512.png",
     "/icon_CE_64.png",
     "/icon_CEsmall.png",
     "/icon_small.png",

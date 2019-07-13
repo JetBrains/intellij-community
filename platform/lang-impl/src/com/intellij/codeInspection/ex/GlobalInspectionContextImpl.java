@@ -788,7 +788,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase {
     addProblemsToView(globalTools);
   }
 
-  public ActionCallback initializeViewIfNeed() {
+  public ActionCallback initializeViewIfNeeded() {
     if (myView != null) {
       return ActionCallback.DONE;
     }
@@ -1124,6 +1124,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase {
     if (myView == null && !ReadAction.compute(() -> InspectionResultsView.hasProblems(tools, this, new InspectionRVContentProviderImpl())).booleanValue()) {
       return;
     }
-    initializeViewIfNeed().doWhenDone(() -> myView.addTools(tools));
+    initializeViewIfNeeded().doWhenDone(() -> myView.addTools(tools));
   }
 }

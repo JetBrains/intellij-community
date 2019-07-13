@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.template.TemplateContextType;
@@ -8,7 +8,7 @@ import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -83,15 +83,15 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
   @Override
   public PsiElement[] createPatternTree(@NotNull String text,
                                         @NotNull PatternTreeContext context,
-                                        @NotNull FileType fileType,
-                                        @Nullable Language language,
-                                        String contextName, @Nullable String extension,
+                                        @NotNull LanguageFileType fileType,
+                                        @NotNull Language language,
+                                        String contextName,
                                         @NotNull Project project,
                                         boolean physical) {
-    final String ext = extension != null ? extension : fileType.getDefaultExtension();
-    String text1 = context == PatternTreeContext.File ? text : "<QQQ>" + text + "</QQQ>";
+    text = context == PatternTreeContext.File ? text : "<QQQ>" + text + "</QQQ>";
+    final String fileName = "dummy." + fileType.getDefaultExtension();
     final PsiFile fileFromText =
-      PsiFileFactory.getInstance(project).createFileFromText("dummy." + ext, fileType, text1, LocalTimeCounter.currentTime(), physical, true);
+      PsiFileFactory.getInstance(project).createFileFromText(fileName, fileType, text, LocalTimeCounter.currentTime(), physical, true);
 
     final XmlDocument document = HtmlUtil.getRealXmlDocument(((XmlFile)fileFromText).getDocument());
     if (context == PatternTreeContext.File) {
@@ -109,9 +109,9 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
 
   @NotNull
   @Override
-  public FileType detectFileType(@NotNull PsiElement context) {
-    PsiFile file = context instanceof PsiFile ? (PsiFile)context : context.getContainingFile();
-    Language contextLanguage = context instanceof PsiFile ? null : context.getLanguage();
+  public LanguageFileType detectFileType(@NotNull PsiElement context) {
+    final PsiFile file = context instanceof PsiFile ? (PsiFile)context : context.getContainingFile();
+    final Language contextLanguage = context instanceof PsiFile ? null : context.getLanguage();
     if (file.getLanguage() == StdLanguages.HTML || (file.getFileType() == StdFileTypes.JSP && contextLanguage == StdLanguages.HTML)) {
       return StdFileTypes.HTML;
     }
@@ -182,7 +182,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
                                                                              myReplaceOptions.getMatchOptions().getFileType(),
                                                                              myProject);
         if (replacements.length > 0) {
-          PsiElement replacement = ReplacerUtil.copySpacesAndCommentsBefore(elementToReplace, replacements, replacementToMake, elementParent);
+          final PsiElement replacement = ReplacerUtil.copySpacesAndCommentsBefore(elementToReplace, replacements, replacementToMake, elementParent);
 
           // preserve comments
           Replacer.handleComments(elementToReplace, replacement, info);

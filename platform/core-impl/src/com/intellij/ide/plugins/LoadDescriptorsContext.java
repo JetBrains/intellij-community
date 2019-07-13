@@ -6,6 +6,7 @@ import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSetInterner;
 import com.intellij.util.containers.Interner;
 import org.jdom.*;
 import org.jetbrains.annotations.NotNull;
@@ -89,7 +90,8 @@ final class LoadDescriptorsContext implements AutoCloseable {
 
     private static final Set<String> CLASS_NAMES = ContainerUtil.newIdentityTroveSet(CLASS_NAME_LIST);
 
-    private final Interner<String> stringInterner = new Interner<String>(ContainerUtil.concat(CLASS_NAME_LIST, IdeaPluginDescriptorImpl.SERVICE_QUALIFIED_ELEMENT_NAMES)) {
+    private final Interner<String>
+      stringInterner = new HashSetInterner<String>(ContainerUtil.concat(CLASS_NAME_LIST, IdeaPluginDescriptorImpl.SERVICE_QUALIFIED_ELEMENT_NAMES)) {
       @NotNull
       @Override
       public String intern(@NotNull String name) {

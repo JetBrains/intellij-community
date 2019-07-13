@@ -81,3 +81,16 @@ final class InheritTest {
         // default private constructor
     }
 }
+class Sample {
+    private interface I {
+        void start();
+    }
+
+    public static void main(String[] args) {
+        new I() {
+            @Override
+            public void start() {
+            }
+        };
+    }
+}

@@ -49,7 +49,7 @@ public class XIncludeStub extends ObjectStubBase<ElementStub> {
 
   @Override
   public ObjectStubSerializer getStubType() {
-    return ourSerializer;
+    return DomElementTypeHolder.XIncludeStub;
   }
 
   public void resolve(DomInvocationHandler parent, List<DomElement> included, XmlName xmlName) {
@@ -108,12 +108,12 @@ public class XIncludeStub extends ObjectStubBase<ElementStub> {
     return "href=" + myHref + " xpointer=" + myXpointer;
   }
 
-  final static ObjectStubSerializer ourSerializer = new ObjectStubSerializer<XIncludeStub, ElementStub>() {
+  static class XIncludeStubSerializer implements ObjectStubSerializer<XIncludeStub, ElementStub> {
 
     @NotNull
     @Override
     public String getExternalId() {
-      return "XIncludeStub";
+      return "xml.XIncludeStub";
     }
 
     @Override
@@ -137,5 +137,5 @@ public class XIncludeStub extends ObjectStubBase<ElementStub> {
     public String toString() {
       return "XInclide";
     }
-  };
+  }
 }

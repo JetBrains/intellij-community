@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.jvm;
 
 import com.intellij.lang.jvm.annotation.JvmAnnotationAttribute;
@@ -10,7 +10,7 @@ import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.find;
 
-public interface JvmAnnotation extends JvmElement {
+public interface JvmAnnotation {
 
   /**
    * Returns the fully qualified name of the annotation class.

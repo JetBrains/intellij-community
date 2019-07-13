@@ -19,7 +19,7 @@ import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
@@ -235,7 +235,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   }
 
   public static <T> T runInReadActionWithWriteActionPriorityWithRetries(@NotNull Computable<T> action) {
-    if (ApplicationManagerEx.getApplicationEx().holdsReadLock()) {
+    if (ApplicationManager.getApplication().isReadAccessAllowed()) {
       return action.compute();
     }
     Ref<T> res = Ref.create();

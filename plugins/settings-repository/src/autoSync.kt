@@ -6,8 +6,8 @@ import com.intellij.notification.Notification
 import com.intellij.notification.Notifications
 import com.intellij.notification.NotificationsAdapter
 import com.intellij.openapi.application.AppUIExecutor
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.components.stateStore
@@ -85,7 +85,7 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
       }
     }
 
-    val app = ApplicationManagerEx.getApplicationEx() as ApplicationImpl
+    val app = ApplicationManager.getApplication() as ApplicationImpl
 
     if (onAppExit) {
       sync(app, onAppExit)

@@ -3,9 +3,6 @@
 Reports any uses of parameterized classes where the type parameters are omitted.
 Such <i>raw</i> uses of parameterized types are valid in Java, but defeat the purpose of using
 type parameters, and may mask bugs. This inspection mirrors the <i>rawtypes</i> warning of javac.
-<p>
-This inspection only reports if the project or module is configured to use a
-language level of 5.0 or higher.
 <!-- tooltip end -->
 <p>
 Use the first checkbox below to ignore the construction of objects of parameterized types.
@@ -16,6 +13,6 @@ Use the third checkbox to ignore raw types in places where parameterized types w
   (for example in array creation expressions or when overriding a library method)
 <p>
 Use the fourth checkbox to ignore raw types used in the parameters of methods overriding super methods.
-<p>
+<p>This inspection only reports if the language level of the project or module is 5 or higher</p>
 </body>
 </html>

@@ -50,14 +50,15 @@ import java.util.*;
 
 import static com.intellij.openapi.util.text.StringUtil.escapeXmlEntities;
 import static com.intellij.openapi.vcs.VcsBundle.message;
-import static com.intellij.vcs.commit.SingleChangeListCommitWorkflow.getCommitHandlerFactories;
-import static com.intellij.vcs.commit.SingleChangeListCommitWorkflowKt.getPresentableText;
 import static com.intellij.ui.components.JBBox.createHorizontalBox;
 import static com.intellij.util.ArrayUtil.isEmpty;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.util.ui.JBUI.Borders.emptyLeft;
 import static com.intellij.util.ui.SwingHelper.buildHtml;
 import static com.intellij.util.ui.UIUtil.*;
+import static com.intellij.vcs.commit.AbstractCommitWorkflow.getCommitExecutors;
+import static com.intellij.vcs.commit.AbstractCommitWorkflow.getCommitHandlerFactories;
+import static com.intellij.vcs.commit.SingleChangeListCommitWorkflowKt.getPresentableText;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static java.util.Collections.emptyList;
@@ -127,7 +128,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
                                       @Nullable CommitExecutor executor,
                                       @Nullable String comment) {
     if (executor == null) {
-      return commitChanges(project, new ArrayList<>(changes), included, initialSelection, collectExecutors(project, changes), true, null,
+      return commitChanges(project, new ArrayList<>(changes), included, initialSelection, getCommitExecutors(project, changes), true, null,
                            comment, null, true);
     }
     else {
@@ -214,23 +215,13 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     return new SingleChangeListCommitWorkflowHandler(workflow, dialog).activate();
   }
 
-  @NotNull
-  public static List<CommitExecutor> collectExecutors(@NotNull Project project, @NotNull Collection<? extends Change> changes) {
-    List<CommitExecutor> result = new ArrayList<>();
-    for (AbstractVcs<?> vcs : ChangesUtil.getAffectedVcses(changes, project)) {
-      result.addAll(vcs.getCommitExecutors());
-    }
-    result.addAll(ChangeListManager.getInstance(project).getRegisteredExecutors());
-    return result;
-  }
-
   protected CommitChangeListDialog(@NotNull SingleChangeListCommitWorkflow workflow) {
     super(workflow.getProject(), true, (Registry.is("ide.perProjectModality")) ? IdeModalityType.PROJECT : IdeModalityType.IDE);
     myWorkflow = workflow;
     myProject = myWorkflow.getProject();
     Disposer.register(getDisposable(), this);
 
-    List<? extends CommitExecutor> executors = myWorkflow.getExecutors();
+    List<? extends CommitExecutor> executors = myWorkflow.getCommitExecutors();
     if (!isDefaultCommitEnabled() && ContainerUtil.isEmpty(executors)) {
       throw new IllegalArgumentException("nothing found to execute commit with");
     }
@@ -282,7 +273,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     addInclusionListener(() -> updateButtons(), this);
     getBrowser().getViewer().addSelectionListener(() -> changeDetails(getBrowser().getViewer().isModelUpdateInProgress()));
 
-    initCommitActions(myWorkflow.getExecutors());
+    initCommitActions(myWorkflow.getCommitExecutors());
 
     myCommitOptions.setBorder(emptyLeft(10));
 

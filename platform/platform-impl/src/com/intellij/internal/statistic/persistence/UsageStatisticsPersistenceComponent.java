@@ -13,7 +13,6 @@ import com.intellij.internal.statistic.configurable.SendPeriod;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
@@ -49,7 +48,7 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
   }
 
   public UsageStatisticsPersistenceComponent() {
-    if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+    if (ApplicationManager.getApplication().isInternal()) {
       isShowNotification = false;
     }
   }

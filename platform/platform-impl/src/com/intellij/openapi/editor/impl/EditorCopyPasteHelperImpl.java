@@ -109,7 +109,7 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
       final int[] index = {0};
       editor.getCaretModel().runForEachCaret(caret -> {
         String normalizedText = TextBlockTransferable.convertLineSeparators(editor, segments.next());
-        normalizedText = trimTextIfNeed(editor, normalizedText);
+        normalizedText = trimTextIfNeeded(editor, normalizedText);
         int caretOffset = caret.getOffset();
         ranges[index[0]++] = new TextRange(caretOffset, caretOffset + normalizedText.length());
         EditorModificationUtil.insertStringAtCaret(editor, normalizedText, false, true);
@@ -119,13 +119,13 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
     else {
       int caretOffset = editor.getCaretModel().getOffset();
       String normalizedText = TextBlockTransferable.convertLineSeparators(editor, text);
-      normalizedText = trimTextIfNeed(editor, normalizedText);
+      normalizedText = trimTextIfNeeded(editor, normalizedText);
       EditorModificationUtil.insertStringAtCaret(editor, normalizedText, false, true);
       return new TextRange[]{new TextRange(caretOffset, caretOffset + text.length())};
     }
   }
 
-  private static String trimTextIfNeed(Editor editor, String text) {
+  private static String trimTextIfNeeded(Editor editor, String text) {
     JComponent contentComponent = editor.getContentComponent();
     if (contentComponent instanceof JTextComponent) {
       Document document = ((JTextComponent)contentComponent).getDocument();

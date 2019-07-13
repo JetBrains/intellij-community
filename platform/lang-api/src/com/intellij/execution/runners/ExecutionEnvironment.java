@@ -198,7 +198,7 @@ public class ExecutionEnvironment extends UserDataHolderBase implements Disposab
   }
 
   void setDataContext(@NotNull DataContext dataContext) {
-    myDataContext = CachingDataContext.cacheIfNeed(dataContext);
+    myDataContext = CachingDataContext.cacheIfNeeded(dataContext);
   }
 
   @Nullable
@@ -211,7 +211,7 @@ public class ExecutionEnvironment extends UserDataHolderBase implements Disposab
     private final Map<String, Object> values = new HashMap<>();
 
     @NotNull
-    static CachingDataContext cacheIfNeed(@NotNull DataContext context) {
+    static CachingDataContext cacheIfNeeded(@NotNull DataContext context) {
       if (context instanceof CachingDataContext)
         return (CachingDataContext)context;
       return new CachingDataContext(context);

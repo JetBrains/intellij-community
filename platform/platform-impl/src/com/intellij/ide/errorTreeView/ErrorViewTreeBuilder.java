@@ -12,7 +12,7 @@ import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 
 /**
- * @author Eugene Zhuravlev
+ * @Deprecated after porting ErrorTreeView to AsyncTreeModel
  */
 public class ErrorViewTreeBuilder extends AbstractTreeBuilder{
   public ErrorViewTreeBuilder(JTree tree, DefaultTreeModel treeModel, AbstractTreeStructure treeStructure) {

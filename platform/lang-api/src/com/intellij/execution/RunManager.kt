@@ -182,22 +182,28 @@ abstract class RunManager {
    * name will be chosen unique for certain type otherwise name will be unique among all configurations
    * @return `true` if name was changed
    */
-  fun setUniqueNameIfNeed(settings: RunnerAndConfigurationSettings): Boolean {
+  fun setUniqueNameIfNeeded(settings: RunnerAndConfigurationSettings): Boolean {
     val oldName = settings.name
     settings.name = suggestUniqueName(StringUtil.notNullize(oldName, UNNAMED), settings.type)
     return oldName != settings.name
   }
 
+  @Deprecated("The method name is grammatically incorrect", replaceWith = ReplaceWith("this.setUniqueNameIfNeeded(settings)"))
+  fun setUniqueNameIfNeed(settings: RunnerAndConfigurationSettings): Boolean = setUniqueNameIfNeeded(settings)
+
   /**
    * Sets unique name if existing one is not 'unique' for corresponding configuration type
    * @return `true` if name was changed
    */
-  fun setUniqueNameIfNeed(configuration: RunConfiguration): Boolean {
+  fun setUniqueNameIfNeeded(configuration: RunConfiguration): Boolean {
     val oldName = configuration.name
     @Suppress("UsePropertyAccessSyntax")
     configuration.setName(suggestUniqueName(StringUtil.notNullize(oldName, UNNAMED), configuration.type))
     return oldName != configuration.name
   }
+
+  @Deprecated("The method name is grammatically incorrect", replaceWith = ReplaceWith("this.setUniqueNameIfNeeded(configuration)"))
+  fun setUniqueNameIfNeed(configuration: RunConfiguration): Boolean = setUniqueNameIfNeeded(configuration)
 
   @Deprecated("Use ConfigurationTypeUtil", ReplaceWith("ConfigurationTypeUtil.findConfigurationType(typeName)", "com.intellij.execution.configurations.ConfigurationTypeUtil"))
   fun getConfigurationType(typeName: String) = ConfigurationTypeUtil.findConfigurationType(typeName)

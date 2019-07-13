@@ -51,7 +51,6 @@ import com.intellij.util.CollectConsumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
-import com.intellij.util.ui.accessibility.AccessBridgeUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.Activatable;
@@ -141,20 +140,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
     myList.setFocusable(false);
     myList.setFixedCellWidth(50);
-    if (ScreenReader.isActive()) {
-      myList.getAccessibleContext().setAccessibleName("Code Completion");
-
-      // The list will eventually be hosted in a top level JDialog, sibling of the IDE frame
-      // containing the editor component. This can be confusing for certain screen readers, as they
-      // may think a new top-level window has gotten the focus when events are fired from the list
-      // as the selection changes. To prevent this, we override the default parent of the list
-      // to be the editor component. When events are fired by the list, screen readers will treat
-      // those as events coming from a child component of the text editor, as opposed to consider
-      // a new top level frame just got the focus. This is important to prevent screen readers
-      // from announcing the title of the top level frame when the list is shown (or hidden),
-      // as they usually do when a new top-level frame receives the focus.
-      AccessibleContextUtil.setParent(myList, myEditor.getContentComponent());
-    }
 
     // a new top level frame just got the focus. This is important to prevent screen readers
     // from announcing the title of the top level frame when the list is shown (or hidden),
@@ -1156,15 +1141,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
       try {
         super.hide();
-        if (ScreenReader.isActive()) {
-          // Dispatch a "focus gained" event so that screen readers that think the code completion
-          // list has the focus get notified that the editor component is the "new" focus owner.
-          //
-          // In particular, this is useful with the nvda screen reader, as it seems to ignore
-          // caret events coming from the text editor unless it thinks the editor has the focus.
-          // See https://github.com/nvaccess/nvda/issues/5989
-          AccessBridgeUtil.sendFocusGainedEvent(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner());
-        }
 
         Disposer.dispose(this);
 

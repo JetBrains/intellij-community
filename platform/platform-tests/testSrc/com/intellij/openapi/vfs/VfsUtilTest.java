@@ -8,7 +8,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -99,26 +98,22 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
 
   @Test
   public void testDirAttributeRefreshes() throws IOException {
-    File tempDir = myTempDir.newFolder();
-    VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir);
-    assertNotNull(vDir);
-    assertTrue(vDir.isDirectory());
-
-    File file = FileUtil.createTempFile(tempDir, "xxx", "yyy", true);
-    assertNotNull(file);
+    File file = myTempDir.newFile("test");
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     assertNotNull(vFile);
     assertFalse(vFile.isDirectory());
 
-    boolean deleted = file.delete();
-    assertTrue(deleted);
-    boolean created = file.mkdir();
-    assertTrue(created);
-    assertTrue(file.exists());
-
+    assertTrue(file.delete());
+    assertTrue(file.mkdir());
     VirtualFile vFile2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     assertNotNull(vFile2);
     assertTrue(vFile2.isDirectory());
+
+    assertTrue(file.delete());
+    assertTrue(file.createNewFile());
+    VirtualFile vFile3 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    assertNotNull(vFile3);
+    assertFalse(vFile3.isDirectory());
   }
 
   @Test

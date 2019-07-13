@@ -16,11 +16,13 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.roots.libraries.Library;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
  *  @author dsl
  */
+@ApiStatus.NonExtendable
 public interface LibraryOrderEntry extends LibraryOrSdkOrderEntry, ExportableOrderEntry {
   @Nullable
   Library getLibrary();

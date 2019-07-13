@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -183,21 +182,15 @@ public class MethodCandidateInfo extends CandidateInfo{
         .map(expression -> PsiUtil.skipParenthesizedExprDown(expression))
         .filter(expression -> expression != null && !(expression instanceof PsiFunctionalExpression))
         .toArray(PsiExpression[]::new);
-      Map<PsiElement, PsiType> expressionTypes = LambdaUtil.getFunctionalTypeMap();
-      try {
+      return ThreadLocalTypes.performWithTypes(expressionTypes -> {
         PsiMethod method = getElement();
         boolean varargs = isVarargs();
         for (PsiExpression context : expressions) {
-          expressionTypes.put(context,
-                              PsiTypesUtil.getTypeByMethod(context, argumentList, method, varargs, substitutor, false));
+          expressionTypes.forceType(context,
+                                    PsiTypesUtil.getTypeByMethod(context, argumentList, method, varargs, substitutor, false));
         }
         return computable.compute();
-      }
-      finally {
-        for (PsiExpression context : expressions) {
-          expressionTypes.remove(context);
-        }
-      }
+      });
     }
     else {
       return computable.compute();

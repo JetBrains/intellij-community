@@ -37,7 +37,7 @@ public class GitIgnoreLanguage extends IgnoreLanguage {
   public static final GitIgnoreLanguage INSTANCE = new GitIgnoreLanguage();
 
   private GitIgnoreLanguage() {
-    super("GitIgnore", "gitignore", AllIcons.Vcs.Ignore_file);
+    super("GitIgnore", "gitignore");
   }
 
   /**

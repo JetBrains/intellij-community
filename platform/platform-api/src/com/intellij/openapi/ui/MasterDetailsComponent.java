@@ -348,7 +348,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       }
     }
     if (!selected) {
-      TreeUtil.selectFirstNode(myTree);
+      TreeUtil.promiseSelectFirst(myTree);
     }
 
     //'updateSelectionFromTree' initializes 'details' components and it may take some time, so if the component isn't showing now
@@ -756,7 +756,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
         }
       }
       else {
-        TreeUtil.selectFirstNode(myTree);
+        TreeUtil.promiseSelectFirst(myTree);
       }
     }
   }

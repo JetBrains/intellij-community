@@ -96,7 +96,8 @@ class GitRewordOperation(private val repository: GitRepository,
       return false
     }
     handler.addParameters("--amend")
-    handler.addParameters("-F", messageFile.absolutePath)
+    handler.addParameters("-F")
+    handler.addAbsoluteFile(messageFile)
     handler.addParameters("--only") // without any files: to amend only the message
 
     val result = Git.getInstance().runCommand(handler)

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.FactDefinition;
@@ -13,6 +14,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -164,12 +166,9 @@ public class TrackingRunner extends StandardDataFlowRunner {
             Warning caused by CustomMethodHandler
             Warning caused by polyadic math
             Warning caused by unary minus
-            Warning caused by final field initializer
   TODO: 3. Check how it works with:
             Inliners (notably: Stream API)
             Boxed numbers
-  TODO: 4. Check for possible performance disasters (likely on some code patterns current algo might blow up)
-  TODO: 5. Problem when interesting state doesn't reach the current condition, need to do something with this    
    */
   @Nullable
   private CauseItem findProblemCause(PsiExpression expression, DfaProblemType type) {
@@ -622,12 +621,21 @@ public class TrackingRunner extends StandardDataFlowRunner {
           }
           if (leftValue == rightValue &&
               (leftValue instanceof DfaVariableValue || leftValue instanceof DfaConstValue)) {
-            return new CauseItem[]{new CauseItem("comparison arguments are the same", binOp.getOperationSign())};
+            List<CauseItem> constCauses = new ArrayList<>();
+            CauseItem leftCause = constantInitializerCause(leftValue, leftChange.getExpression());
+            CauseItem rightCause = constantInitializerCause(rightValue, rightChange.getExpression());
+            ContainerUtil.addAllNotNull(constCauses, leftCause, rightCause);
+            if (constCauses.isEmpty()) {
+              return new CauseItem[]{new CauseItem("comparison arguments are the same", binOp.getOperationSign())};
+            }
+            return constCauses.toArray(new CauseItem[0]);
           }
           if (leftValue != rightValue && relationType.isInequality() &&
               leftValue instanceof DfaConstValue && rightValue instanceof DfaConstValue) {
-            return new CauseItem[]{
-              new CauseItem("comparison arguments are different constants", binOp.getOperationSign())};
+            CauseItem causeItem = new CauseItem("comparison arguments are different constants", binOp.getOperationSign());
+            causeItem.addChildren(constantInitializerCause(leftValue, leftChange.getExpression()), 
+                                  constantInitializerCause(rightValue, rightChange.getExpression()));
+            return new CauseItem[]{causeItem};
           }
         }
       }
@@ -660,6 +668,21 @@ public class TrackingRunner extends StandardDataFlowRunner {
     return new CauseItem[0];
   }
 
+  private static CauseItem constantInitializerCause(DfaValue value, PsiExpression ref) {
+    if (!(value instanceof DfaConstValue)) return null;
+    if (ref instanceof PsiReferenceExpression) {
+      PsiElement target = ((PsiReferenceExpression)ref).resolve();
+      if (target instanceof PsiVariable && ((PsiVariable)target).hasModifierProperty(PsiModifier.FINAL)) {
+        PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(((PsiVariable)target).getInitializer());
+        if (initializer != null) {
+          return new CauseItem(getElementTitle(target) + " '" + ((PsiVariable)target).getName() + "' is initialized to " + 
+                               initializer.getText(), initializer.getContainingFile() == ref.getContainingFile() ? initializer : ref);
+        }
+      }
+    }
+    return null;
+  }
+
   @Nullable
   private CauseItem findTypeCause(MemoryStateChange operandHistory, PsiType type, boolean isInstance) {
     PsiExpression operand = Objects.requireNonNull(operandHistory.getExpression());
@@ -675,16 +698,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
           name = "method return";
         }
         else if (operand instanceof PsiReferenceExpression) {
-          PsiElement target = ((PsiReferenceExpression)operand).resolve();
-          if (target instanceof PsiField) {
-            name = "field";
-          }
-          else if (target instanceof PsiParameter) {
-            name = "parameter";
-          }
-          else if (target instanceof PsiVariable) {
-            name = "variable";
-          }
+          name = getElementTitle(((PsiReferenceExpression)operand).resolve());
         }
         if (dfaType == wanted) {
           explanation = "type is " + dfaType;
@@ -723,6 +737,19 @@ public class TrackingRunner extends StandardDataFlowRunner {
       explanation = prevExplanation;
     }
     return null;
+  }
+
+  private static String getElementTitle(PsiElement target) {
+    if (target instanceof PsiField) {
+      return "field";
+    }
+    if (target instanceof PsiParameter) {
+      return "parameter";
+    }
+    if (target instanceof PsiVariable) {
+      return "variable";
+    }
+    return "element";
   }
 
   @NotNull
@@ -1036,13 +1063,13 @@ public class TrackingRunner extends StandardDataFlowRunner {
     return null;
   }
 
-  private static CauseItem fromMemberNullability(DfaNullability nullability, PsiModifierListOwner owner,
-                                                 String memberName, PsiElement anchor) {
+  private CauseItem fromMemberNullability(DfaNullability nullability, PsiModifierListOwner owner,
+                                          String memberName, PsiElement anchor) {
     if (owner != null) {
       NullabilityAnnotationInfo info = NullableNotNullManager.getInstance(owner.getProject()).findEffectiveNullabilityInfo(owner);
+      String name = ((PsiNamedElement)owner).getName();
       if (info != null && DfaNullability.fromNullability(info.getNullability()) == nullability) {
         String message;
-        String name = ((PsiNamedElement)owner).getName();
         if (info.isInferred()) {
           if (owner instanceof PsiParameter &&
               anchor instanceof PsiReferenceExpression &&
@@ -1089,6 +1116,25 @@ public class TrackingRunner extends StandardDataFlowRunner {
           }
         }
         return new CauseItem(message, anchor);
+      }
+      if (owner instanceof PsiField && getFactory().canTrustFieldInitializer((PsiField)owner)) {
+        Pair<PsiExpression, Nullability> fieldNullability =
+          NullabilityUtil.getNullabilityFromFieldInitializers((PsiField)owner, Nullability.UNKNOWN);
+        if (fieldNullability.second == DfaNullability.toNullability(nullability)) {
+          PsiExpression initializer = fieldNullability.first; 
+          if (initializer != null) {
+            if (initializer.getContainingFile() == anchor.getContainingFile()) {
+              anchor = initializer;
+            }
+            return new CauseItem("field '" + name + "' is initialized to '" +
+                                 DfaNullability.fromNullability(fieldNullability.second).getPresentationName() + "' value", anchor);
+          }
+          if (owner.getContainingFile() == anchor.getContainingFile()) {
+            anchor = owner;
+          }
+          return new CauseItem("field '" + name + "' is known to be always initialized to '" +
+                               DfaNullability.fromNullability(fieldNullability.second).getPresentationName() + "' value", anchor);
+        }
       }
     }
     return null;

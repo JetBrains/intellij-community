@@ -2,7 +2,7 @@
 package com.intellij.sh.run;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -15,7 +15,7 @@ public class ShRunFileAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    PsiFile file = e.getData(PlatformDataKeys.PSI_FILE);
+    PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     if (!(file instanceof ShFile)) return;
 
     Project project = file.getProject();
@@ -37,6 +37,6 @@ public class ShRunFileAction extends DumbAwareAction {
   }
 
   private static boolean isEnabled(@NotNull AnActionEvent e) {
-    return e.getProject() != null && e.getData(PlatformDataKeys.PSI_FILE) instanceof ShFile;
+    return e.getProject() != null && e.getData(CommonDataKeys.PSI_FILE) instanceof ShFile;
   }
 }

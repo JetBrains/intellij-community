@@ -4,10 +4,12 @@ package com.intellij.execution.services;
 import com.intellij.execution.services.ServiceModel.ServiceViewItem;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
@@ -49,11 +51,38 @@ abstract class ServiceView extends JPanel implements Disposable {
 
   abstract void onViewUnselected();
 
-  static ServiceView createView(@NotNull Project project, @NotNull ServiceViewModel model, @NotNull ServiceViewState state) {
-    ServiceView serviceView = model instanceof ServiceViewModel.SingeServiceModel ?
-                              createSingleView(project, model) :
-                              createTreeView(project, model, state);
+  boolean isFlat() {
+    return myModel.isFlat();
+  }
+
+  void setFlat(boolean flat) {
+    myModel.setFlat(flat);
+  }
+
+  boolean isGroupByType() {
+    return myModel.isGroupByType();
+  }
+
+  void setGroupByType(boolean value) {
+    myModel.setGroupByType(value);
+  }
+
+  abstract List<Object> getChildrenSafe(@NotNull Object value);
+
+  protected void onNodeSelected(@NotNull ServiceViewDescriptor descriptor) {
+    descriptor.onNodeSelected();
+    Navigatable navigatable = descriptor.getNavigatable();
+    if (navigatable != null && ServiceViewSourceScrollHelper.isAutoScrollToSourceEnabled(myProject) && navigatable.canNavigate()) {
+        navigatable.navigate(false);
+    }
+  }
+
+  static ServiceView createView(@NotNull Project project, @NotNull ServiceViewModel viewModel, @NotNull ServiceViewState viewState) {
+    ServiceView serviceView = viewModel instanceof ServiceViewModel.SingeServiceModel ?
+                              createSingleView(project, viewModel) :
+                              createTreeView(project, viewModel, viewState);
     setDataProvider(serviceView);
+    setViewModelState(viewModel, viewState);
     return serviceView;
   }
 
@@ -73,6 +102,11 @@ abstract class ServiceView extends JPanel implements Disposable {
       if (PlatformDataKeys.SELECTED_ITEMS.is(dataId)) {
         return ContainerUtil.map2Array(serviceView.getSelectedItems(), ServiceViewItem::getValue);
       }
+      if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+        List<Navigatable> navigatables =
+          ContainerUtil.mapNotNull(serviceView.getSelectedItems(), item -> item.getViewDescriptor().getNavigatable());
+        return navigatables.toArray(new Navigatable[0]);
+      }
       List<ServiceViewItem> selectedItems = serviceView.getSelectedItems();
       ServiceViewItem selectedItem = ContainerUtil.getOnlyItem(selectedItems);
       ServiceViewDescriptor descriptor = selectedItem == null ? null : selectedItem.getViewDescriptor();
@@ -82,5 +116,10 @@ abstract class ServiceView extends JPanel implements Disposable {
       }
       return null;
     });
+  }
+
+  private static void setViewModelState(@NotNull ServiceViewModel viewModel, @NotNull ServiceViewState viewState) {
+    viewModel.setFlat(viewState.flat);
+    viewModel.setGroupByType(viewState.groupByType);
   }
 }

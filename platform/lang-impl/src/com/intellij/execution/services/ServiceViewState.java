@@ -20,6 +20,9 @@ final class ServiceViewState {
   @Tag("treeState")
   public Element treeStateElement;
 
+  public boolean flat = false;
+  public boolean groupByType = false;
+
   public String viewType = "";
   public List<ServiceState> roots = new ArrayList<>();
   public int parentView = -1;

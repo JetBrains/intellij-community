@@ -91,6 +91,7 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.vcs.log.util.VcsUserUtil.isSamePerson;
 import static git4idea.GitUtil.*;
+import static git4idea.checkin.GitCommitAndPushExecutorKt.isPushAfterCommit;
 import static git4idea.repo.GitSubmoduleKt.isSubmodule;
 import static java.util.Arrays.asList;
 import static one.util.streamex.StreamEx.of;
@@ -107,7 +108,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   private String myNextCommitAuthor = null; // The author for the next commit
   private boolean myNextCommitAmend; // If true, the next commit is amended
-  private Boolean myNextCommitIsPushed = null; // The push option of the next commit
   private Date myNextCommitAuthorDate;
   private boolean myNextCommitSignOff;
   private boolean myNextCommitSkipHook;
@@ -210,7 +210,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       exceptions.addAll(commitRepository(repository, toCommit, commitMessage));
     }
 
-    if (myNextCommitIsPushed != null && myNextCommitIsPushed.booleanValue() && exceptions.isEmpty()) {
+    if (isPushAfterCommit(commitContext) && exceptions.isEmpty()) {
       ModalityState modality = ModalityState.defaultModalityState();
       TransactionGuard.getInstance().assertWriteSafeContext(modality);
 
@@ -864,7 +864,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                                   @NotNull File messageFile) throws VcsException {
     GitLineHandler handler = new GitLineHandler(project, root, GitCommand.COMMIT);
     handler.setStdoutSuppressed(false);
-    handler.addParameters("-F", messageFile.getAbsolutePath());
+    handler.addParameters("-F");
+    handler.addAbsoluteFile(messageFile);
     if (myNextCommitAmend) {
       handler.addParameters("--amend");
     }
@@ -1004,7 +1005,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return rc;
   }
 
-  private void commit(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends FilePath> files, @NotNull File message)
+  private void commit(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends FilePath> files, @NotNull File messageFile)
     throws VcsException {
     boolean amend = myNextCommitAmend;
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
@@ -1022,7 +1023,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       if (myNextCommitSkipHook) {
         handler.addParameters("--no-verify");
       }
-      handler.addParameters("--only", "-F", message.getAbsolutePath());
+      handler.addParameters("--only");
+      handler.addParameters("-F");
+      handler.addAbsoluteFile(messageFile);
       if (myNextCommitAuthor != null) {
         handler.addParameters("--author=" + myNextCommitAuthor);
       }
@@ -1108,7 +1111,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   public void reset() {
     myNextCommitAmend = false;
     myNextCommitAuthor = null;
-    myNextCommitIsPushed = null;
     myNextCommitAuthorDate = null;
     myNextCommitSkipHook = false;
   }
@@ -1382,10 +1384,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         return !filteredMovements.isEmpty();
       });
     }
-  }
-
-  public void setNextCommitIsPushed(Boolean nextCommitIsPushed) {
-    myNextCommitIsPushed = nextCommitIsPushed;
   }
 
   public void setSkipHooksForNextCommit(boolean skipHooksForNextCommit) {

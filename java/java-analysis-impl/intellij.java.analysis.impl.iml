@@ -23,5 +23,6 @@
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="intellij.jvm.analysis.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
   </component>
 </module>

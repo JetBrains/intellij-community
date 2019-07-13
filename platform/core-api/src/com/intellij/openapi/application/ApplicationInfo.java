@@ -19,6 +19,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -55,6 +56,11 @@ public abstract class ApplicationInfo {
     return ObjectUtils.notNull(StringUtil.substringBefore(getMinorVersion(), "."), getMinorVersion());
   }
 
+  /**
+   * @deprecated This method always returns null.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
   @Nullable
   public abstract String getHelpURL();
 

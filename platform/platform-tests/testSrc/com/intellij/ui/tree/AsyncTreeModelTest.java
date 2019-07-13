@@ -871,11 +871,6 @@ public final class AsyncTreeModelTest {
     }
 
     @Override
-    public void valueForPathChanged(TreePath path, Object value) {
-      throw new IllegalStateException();
-    }
-
-    @Override
     public String toString() {
       return getClass().getName();
     }

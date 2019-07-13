@@ -3,6 +3,7 @@ package com.intellij.ui.mac.touchbar;
 
 import com.intellij.execution.ExecutionListener;
 import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -76,7 +77,10 @@ class ProjectData {
       public void stateChanged() {
         final ToolWindowManagerEx twm = ToolWindowManagerEx.getInstanceEx(myProject);
         final String activeId = twm.getActiveToolWindowId();
-        if (activeId != null && (activeId.equals(ToolWindowId.DEBUG) || activeId.equals(ToolWindowId.RUN_DASHBOARD))) {
+        if (activeId != null &&
+            (activeId.equals(ToolWindowId.DEBUG) ||
+             activeId.equals(ToolWindowId.RUN_DASHBOARD) ||
+             activeId.equals(ToolWindowId.SERVICES))) {
           // System.out.println("stateChanged, dbgSessionsCount=" + pd.getDbgSessions());
           if (getDbgSessions() <= 0)
             return;
@@ -167,7 +171,7 @@ class ProjectData {
       return null;
 
     final ToolWindow dtw = twm.getToolWindow(ToolWindowId.DEBUG);
-    final ToolWindow rtw = twm.getToolWindow(ToolWindowId.RUN_DASHBOARD);
+    final ToolWindow rtw = twm.getToolWindow(RunDashboardManager.getInstance(myProject).getToolWindowId());
 
     final Component compD = dtw != null ? dtw.getComponent() : null;
     final Component compR = rtw != null ? rtw.getComponent() : null;

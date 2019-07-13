@@ -31,6 +31,7 @@ import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
 import com.intellij.psi.impl.source.parsing.xml.HtmlBuilderDriver;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
 import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.xml.XmlTagImpl;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -136,7 +137,7 @@ public class HtmlUtil {
   public static boolean isSingleHtmlTag(@NotNull XmlTag tag, boolean lowerCase) {
     final XmlExtension extension = XmlExtension.getExtensionByElement(tag);
     final String name = tag.getName();
-    boolean result = EMPTY_TAGS_MAP.contains(lowerCase ? StringUtil.toLowerCase(name) : name);
+    boolean result = EMPTY_TAGS_MAP.contains(!lowerCase || (tag instanceof XmlTagImpl && ((XmlTagImpl)tag).isCaseSensitive()) ? name : StringUtil.toLowerCase(name));
     return result && (extension == null || !extension.isSingleTagException(tag));
   }
 

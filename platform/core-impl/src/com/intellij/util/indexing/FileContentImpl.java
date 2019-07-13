@@ -29,10 +29,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.LanguageSubstitutors;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.file.impl.FileManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -118,7 +117,7 @@ public class FileContentImpl extends UserDataHolderBase implements PsiDependentF
   public LighterAST getLighterAST() {
     LighterAST lighterAST = getUserData(IndexingDataKeys.LIGHTER_AST_NODE_KEY);
     if (lighterAST == null) {
-      FileASTNode node = getPsiFileForPsiDependentIndex().getNode();
+      FileASTNode node = getPsiFile().getNode();
       lighterAST = myLighterASTShouldBeThreadSafe ? new TreeBackedLighterAST(node) : node.getLighterAST();
       putUserData(IndexingDataKeys.LIGHTER_AST_NODE_KEY, lighterAST);
     }
@@ -252,6 +251,11 @@ public class FileContentImpl extends UserDataHolderBase implements PsiDependentF
     myHash = hash;
   }
 
+  /**
+   * @deprecated use {@link FileContent#getPsiFile()}
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   @NotNull
   public PsiFile getPsiFileForPsiDependentIndex() {
     PsiFile psi = null;
@@ -272,9 +276,5 @@ public class FileContentImpl extends UserDataHolderBase implements PsiDependentF
       psi = getFileFromText();
     }
     return psi;
-  }
-
-  public boolean isPhysicalContent() {
-    return myPhysicalContent;
   }
 }

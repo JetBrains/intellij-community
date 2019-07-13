@@ -22,6 +22,7 @@ import git4idea.commands.GitHttpAuthService;
 import git4idea.commands.GitHttpAuthenticator;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.Collection;
 
 public class GitHttpAuthTestService extends GitHttpAuthService {
@@ -32,6 +33,7 @@ public class GitHttpAuthTestService extends GitHttpAuthService {
   @Override
   public GitHttpAuthenticator createAuthenticator(@NotNull Project project,
                                                   @NotNull Collection<String> urls,
+                                                  @NotNull File workingDirectory,
                                                   @NotNull GitAuthenticationGate authenticationGate,
                                                   @NotNull GitAuthenticationMode authenticationMode) {
     return myAuthenticator;

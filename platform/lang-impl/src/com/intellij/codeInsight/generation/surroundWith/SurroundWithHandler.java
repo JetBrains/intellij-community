@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.SurroundWithLogger;
 import com.intellij.codeInsight.template.impl.SurroundWithTemplateHandler;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
@@ -251,7 +252,12 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
         return;
       }
 
+      Language language = Language.ANY;
+      if (myElements != null && myElements.length != 0) {
+        language = myElements[0].getLanguage();
+      }
       WriteCommandAction.runWriteCommandAction(myProject, () -> doSurround(myProject, myEditor, mySurrounder, myElements));
+      SurroundWithLogger.logSurrounder(mySurrounder, language, myProject);
     }
   }
 

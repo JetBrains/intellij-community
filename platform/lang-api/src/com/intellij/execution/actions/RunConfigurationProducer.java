@@ -205,7 +205,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
       // replace with existing configuration if any
       RunnerAndConfigurationSettings settings = findExistingConfiguration(context);
       if (settings == null) {
-        RunManager.getInstance(context.getProject()).setUniqueNameIfNeed(fromContext.getConfiguration());
+        RunManager.getInstance(context.getProject()).setUniqueNameIfNeeded(fromContext.getConfiguration());
       }
       else {
         fromContext.setConfigurationSettings(settings);

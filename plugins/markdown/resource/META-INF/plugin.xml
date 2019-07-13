@@ -31,6 +31,7 @@ Includes the following features:</p>
 
   <extensions defaultExtensionNs="com.intellij">
     <fileTypeFactory implementation="org.intellij.plugins.markdown.lang.MarkdownFileTypeFactory"/>
+    <lang.fileViewProviderFactory language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.MarkdownFileViewProviderFactory"/>
     <lang.parserDefinition language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.parser.MarkdownParserDefinition"/>
     <lang.ast.factory language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.psi.MarkdownASTFactory"/>
 

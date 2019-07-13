@@ -2,7 +2,7 @@
 package com.intellij.execution.executors
 
 import com.intellij.execution.Executor
-import com.intellij.execution.Executor.shortenNameIfNeed
+import com.intellij.execution.Executor.shortenNameIfNeeded
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -95,7 +95,7 @@ interface RunExecutorSettings {
    */
   @JvmDefault
   fun getStartActionText(configurationName: String): String {
-    val configName = if (StringUtil.isEmpty(configurationName)) "" else " '" + shortenNameIfNeed(configurationName) + "'"
+    val configName = if (StringUtil.isEmpty(configurationName)) "" else " '" + shortenNameIfNeeded(configurationName) + "'"
     return TextWithMnemonic.parse(startActionText).append(configName).toString()
   }
 

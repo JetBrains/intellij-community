@@ -18,9 +18,7 @@ import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -47,15 +45,24 @@ class ImmutableCollectionModelUtils {
     PsiMethod method = call.resolveMethod();
     if (method == null) return null;
     PsiClassType classType = ObjectUtils.tryCast(call.getType(), PsiClassType.class);
-    if (classType != null &&
-        Arrays.stream(classType.getParameters()).map(PsiUtil::resolveClassInClassTypeOnly).anyMatch(c -> c instanceof PsiTypeParameter)) {
-      return null;
-    }
-    if (method.isVarArgs() && !MethodCallUtils.isVarArgCall(call)) {
-      return new ImmutableCollectionModel(call, type, false, args, assignedVariable);
-    }
+    if (classType == null) return null;
+    PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(call.getProject()).getResolveHelper();
+    boolean hasNonResolvedTypeParams = Arrays.stream(classType.getParameters())
+      .map(PsiUtil::resolveClassInClassTypeOnly)
+      .anyMatch(aClass -> isNonResolvedTypeParameter(aClass, call, resolveHelper));
+    if (hasNonResolvedTypeParams) return null;
     if ("ofEntries".equals(method.getName()) && Arrays.stream(args).anyMatch(arg -> extractPutArgs(arg) == null)) return null;
-    return new ImmutableCollectionModel(call, type, true, args, assignedVariable);
+    return new ImmutableCollectionModel(call, type, method, assignedVariable);
+  }
+
+  @Contract("null, _, _ -> false")
+  private static boolean isNonResolvedTypeParameter(@Nullable PsiClass parameter,
+                                                    @NotNull PsiElement context,
+                                                    @NotNull PsiResolveHelper resolveHelper) {
+    if (!(parameter instanceof PsiTypeParameter)) return false;
+    PsiTypeParameter typeParameter = (PsiTypeParameter)parameter;
+    String name = typeParameter.getName();
+    return name == null || resolveHelper.resolveReferencedClass(name, context) != parameter;
   }
 
   static void replaceWithMutable(@NotNull ImmutableCollectionModel model, @Nullable Editor editor) {
@@ -76,8 +83,11 @@ class ImmutableCollectionModelUtils {
     PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(assignment.getLExpression());
     PsiReferenceExpression ref = ObjectUtils.tryCast(lhs, PsiReferenceExpression.class);
     if (ref == null) return null;
+    PsiExpression qualifier = ref.getQualifierExpression();
+    if (qualifier != null && SideEffectChecker.mayHaveSideEffects(qualifier)) return null;
     PsiVariable variable = ObjectUtils.tryCast(ref.resolve(), PsiVariable.class);
-    return variable == null ? null : ref.getText();
+    if (variable == null || variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.VOLATILE)) return null;
+    return ref.getText();
   }
 
   @Nullable
@@ -135,7 +145,12 @@ class ImmutableCollectionModelUtils {
 
     @Nullable
     static CollectionType create(@NotNull PsiMethodCallExpression call) {
-      return MAPPER.mapFirst(call);
+      CollectionType type = MAPPER.mapFirst(call);
+      if (type == null) return null;
+      PsiType expectedType = ExpectedTypeUtils.findExpectedType(call, false);
+      if (expectedType == null) return null;
+      PsiClassType newType = TypeUtils.getType(type.myMutableClass, call);
+      return expectedType.isAssignableFrom(newType) ? type : null;
     }
   }
 
@@ -283,13 +298,12 @@ class ImmutableCollectionModelUtils {
     @Contract(pure = true)
     ImmutableCollectionModel(@NotNull PsiMethodCallExpression call,
                              @NotNull CollectionType type,
-                             boolean isVarArgCall,
-                             @NotNull PsiExpression[] args,
+                             @NotNull PsiMethod method,
                              @Nullable String assignedVariable) {
       myCall = call;
       myType = type;
-      myIsVarArgCall = isVarArgCall;
-      myArgs = args;
+      myIsVarArgCall = !method.isVarArgs() || MethodCallUtils.isVarArgCall(call);
+      myArgs = call.getArgumentList().getExpressions();
       myAssignedVariable = assignedVariable;
     }
   }

@@ -16,6 +16,8 @@ import java.awt.Rectangle
 
 open class JBDefaultTabPainter(val theme : TabTheme = DefaultTabTheme()) : JBTabPainter {
 
+  override fun getTabTheme(): TabTheme = theme
+
   override fun getBackgroundColor(): Color = theme.background ?: theme.borderColor
 
   override fun fillBackground(g: Graphics2D, rect: Rectangle) {
@@ -27,9 +29,6 @@ open class JBDefaultTabPainter(val theme : TabTheme = DefaultTabTheme()) : JBTab
   override fun paintTab(position: JBTabsPosition, g: Graphics2D, rect: Rectangle, borderThickness: Int, tabColor: Color?, hovered: Boolean) {
     tabColor?.let {
       g.fill2DRect(rect, it)
-      theme.inactiveColoredFileBackground?.let { inactive ->
-        g.fill2DRect(rect, inactive)
-      }
     }
 
     if(hovered) {
@@ -38,15 +37,17 @@ open class JBDefaultTabPainter(val theme : TabTheme = DefaultTabTheme()) : JBTab
     }
   }
 
-  override fun paintSelectedTab(position: JBTabsPosition, g: Graphics2D, rect: Rectangle, tabColor: Color?, active: Boolean, hovered: Boolean) {
-    val color = tabColor ?: theme.underlinedTabBackground
+  override fun paintSelectedTab(position: JBTabsPosition, g: Graphics2D, rect: Rectangle, borderThickness: Int, tabColor: Color?, active: Boolean, hovered: Boolean) {
+    val color = (tabColor ?: if(active) theme.underlinedTabBackground else theme.underlinedTabInactiveBackground) ?: theme.background
 
     color?.let {
       g.fill2DRect(rect, it)
     }
 
     if(hovered) {
-      g.fill2DRect(rect, theme.hoverBackground)
+      (if (active) theme.hoverBackground else theme.hoverInactiveBackground)?.let{
+        g.fill2DRect(rect, it)
+      }
     }
 
     val underline = underlineRectangle(position, rect, theme.underlineHeight)

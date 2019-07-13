@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.template.JavaCodeContextType
 import com.intellij.codeInsight.template.Template
-import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.actions.SaveAsTemplateAction
 import com.intellij.codeInsight.template.impl.*
 import com.intellij.codeInsight.template.macro.*
@@ -17,7 +16,6 @@ import com.intellij.psi.PsiDocumentManager
 import groovy.transform.CompileStatic
 
 import static com.intellij.codeInsight.template.Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE
-
 /**
  * @author peter
  */
@@ -29,8 +27,7 @@ class JavaLiveTemplateTest extends LiveTemplateTestCase {
     myFixture.configureByText 'a.java', '''
 <caret>
 '''
-    final TemplateManager manager = TemplateManager.getInstance(getProject())
-    final Template template = manager.createTemplate("imp", "user", 'import $MODIFIER$ java.$NAME$;')
+    Template template = templateManager.createTemplate("imp", "user", 'import $MODIFIER$ java.$NAME$;')
     template.addVariable('NAME', new MacroCallNode(new CompleteMacro(true)), new EmptyNode(), true)
     template.addVariable('MODIFIER', new EmptyExpression(), true)
     startTemplate(template)
@@ -52,8 +49,7 @@ public class Main {
     }
 }
 '''
-    final TemplateManager manager = TemplateManager.getInstance(getProject())
-    final Template template = manager.createTemplate("for", "user", 'for ($ELEMENT_TYPE$ $VAR$ : $ITERABLE_TYPE$) {\n' +
+    Template template = templateManager.createTemplate("for", "user", 'for ($ELEMENT_TYPE$ $VAR$ : $ITERABLE_TYPE$) {\n' +
                                                                     '$END$;\n' +
                                                                     '}')
     template.addVariable('ITERABLE_TYPE', new MacroCallNode(new CompleteSmartMacro()), new EmptyNode(), true)
@@ -88,8 +84,7 @@ public class Main {
     }
 }
 '''
-    final TemplateManager manager = TemplateManager.getInstance(getProject())
-    final Template template = manager.createTemplate("for", "user", 'for ($ELEMENT_TYPE$ $VAR$ : $ITERABLE_TYPE$) {\n' +
+    Template template = templateManager.createTemplate("for", "user", 'for ($ELEMENT_TYPE$ $VAR$ : $ITERABLE_TYPE$) {\n' +
                                                                     '$END$;\n' +
                                                                     '}')
     template.addVariable('ITERABLE_TYPE', new MacroCallNode(new CompleteSmartMacro()), new EmptyNode(), true)
@@ -121,8 +116,7 @@ class Foo {
   { <caret> }
 }
 '''
-    final TemplateManager manager = TemplateManager.getInstance(getProject())
-    final Template template = manager.createTemplate("frm", "user", '$VAR$')
+    Template template = templateManager.createTemplate("frm", "user", '$VAR$')
     template.addVariable('VAR', new MacroCallNode(new ClassNameCompleteMacro()), new EmptyNode(), true)
     startTemplate(template)
     assert !state.finished
@@ -146,8 +140,7 @@ class Outer {
 }
 '''
 
-    TemplateManager manager = TemplateManager.getInstance(getProject())
-    Template template = manager.createTemplate("myCbDo", "user", 'MyUtils.doSomethingWithCallback($CB$)')
+    Template template = templateManager.createTemplate("myCbDo", "user", 'MyUtils.doSomethingWithCallback($CB$)')
 
     MacroCallNode call = new MacroCallNode(new VariableOfTypeMacro())
     call.addParameter(new ConstantNode("MyCallback"))
@@ -310,8 +303,7 @@ class Foo {
 }
 '''
 
-    final TemplateManager manager = TemplateManager.getInstance(getProject())
-    final Template template = manager.createTemplate("result", "user", '$T$ result;')
+    Template template = templateManager.createTemplate("result", "user", '$T$ result;')
     template.addVariable('T', new MacroCallNode(new MethodReturnTypeMacro()), new EmptyNode(), false)
     template.toReformat = true
 
@@ -364,8 +356,7 @@ class Foo {
   }
 }
 """
-    final TemplateManager manager = TemplateManager.getInstance(getProject())
-    final Template template = manager.createTemplate("xxx", "user", 'foo.Bar.someMethod($END$)')
+    Template template = templateManager.createTemplate("xxx", "user", 'foo.Bar.someMethod($END$)')
     template.setValue(USE_STATIC_IMPORT_IF_POSSIBLE, true)
 
     startTemplate(template)
@@ -395,8 +386,7 @@ class Foo {
   }
 }
 """
-    final TemplateManager manager = TemplateManager.getInstance(getProject())
-    final Template template = manager.createTemplate("xxx", "user", 'foo.Bar.someMethod($END$)')
+    Template template = templateManager.createTemplate("xxx", "user", 'foo.Bar.someMethod($END$)')
     template.setValue(USE_STATIC_IMPORT_IF_POSSIBLE, true)
 
     startTemplate(template)
@@ -419,8 +409,7 @@ class Foo {
   }
 }
 """
-    final TemplateManager manager = TemplateManager.getInstance(getProject())
-    final Template template = manager.createTemplate("xxx", "user", 'java.lang.Math.abs(java.lang.Math.PI);')
+    Template template = templateManager.createTemplate("xxx", "user", 'java.lang.Math.abs(java.lang.Math.PI);')
     template.setValue(USE_STATIC_IMPORT_IF_POSSIBLE, true)
 
     startTemplate(template)

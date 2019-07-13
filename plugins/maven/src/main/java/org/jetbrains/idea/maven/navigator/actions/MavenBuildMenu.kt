@@ -58,7 +58,7 @@ class MavenBuildMenu : DefaultActionGroup(), DumbAware {
     else DelegatingAction(action, executor)
 
     private fun reportUsage(e: AnActionEvent, executor: Executor) {
-      MavenActionsUsagesCollector.trigger(e.project, "RunBuildAction", e, executor.id)
+      MavenActionsUsagesCollector.trigger(e.project, "RunBuildAction", e, "executor" to executor.id)
     }
   }
 

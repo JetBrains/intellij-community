@@ -204,8 +204,8 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
 
   @Override
   public Object getRoot() {
-    if (disposed || !isValidThread()) return null;
-    promiseRootEntry();
+    if (disposed) return null;
+    onValidThread(this::promiseRootEntry);
     Node node = tree.root;
     return node == null ? null : node.object;
   }

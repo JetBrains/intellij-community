@@ -34,7 +34,7 @@ public class JavaBackwardReferenceIndexWriter extends CompilerReferenceWriter<Co
     super(index);
   }
 
-  public synchronized static void closeIfNeed(boolean clearIndex) {
+  public synchronized static void closeIfNeeded(boolean clearIndex) {
     if (ourInstance != null) {
       File dir = clearIndex ? ourInstance.myIndex.getIndicesDir() : null;
       try {
@@ -79,7 +79,7 @@ public class JavaBackwardReferenceIndexWriter extends CompilerReferenceWriter<Co
       if (CompilerReferenceIndex.exists(buildDir) || isRebuild) {
         ourInstance = new JavaBackwardReferenceIndexWriter(new JavaCompilerBackwardReferenceIndex(buildDir, false));
         ShutDownTracker.getInstance().registerShutdownTask(() -> {
-          closeIfNeed(false);
+          closeIfNeeded(false);
         });
       }
     } else {

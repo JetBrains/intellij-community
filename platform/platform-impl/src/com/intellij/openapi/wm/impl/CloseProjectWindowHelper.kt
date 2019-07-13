@@ -6,7 +6,6 @@ import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -55,6 +54,6 @@ open class CloseProjectWindowHelper {
   }
 
   protected open fun quitApp() {
-    ApplicationManagerEx.getApplicationEx().exit()
+    ApplicationManager.getApplication().exit()
   }
 }

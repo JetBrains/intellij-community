@@ -205,7 +205,7 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
   }
 
   public void selectFirstBreakpointItem() {
-    TreeUtil.selectPath(myTreeView, TreeUtil.getFirstLeafNodePath(myTreeView));
+    TreeUtil.promiseSelectFirstLeaf(myTreeView);
   }
 
   public void removeSelectedBreakpoints(Project project) {

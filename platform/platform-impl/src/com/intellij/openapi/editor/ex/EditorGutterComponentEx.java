@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.TextAnnotationGutterProvider;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import gnu.trove.TIntFunction;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -34,7 +35,7 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
   @Nullable
   public abstract FoldRegion findFoldingAnchorAt(int x, int y);
 
-  @Nullable
+  @NotNull
   public abstract List<GutterMark> getGutterRenderers(int line);
 
   public abstract int getWhitespaceSeparatorOffset();

@@ -53,12 +53,12 @@ import java.util.List;
 import java.util.*;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
+import static org.zmlx.hg4idea.provider.commit.HgCommitAndPushExecutorKt.isPushAfterCommit;
 import static org.zmlx.hg4idea.util.HgUtil.getRepositoryManager;
 
 public class HgCheckinEnvironment implements CheckinEnvironment {
 
   private final Project myProject;
-  private boolean myNextCommitIsPushed;
   private boolean myNextCommitAmend; // If true, the next commit is amended
   private boolean myShouldCommitSubrepos;
   private boolean myMqNewPatch;
@@ -77,7 +77,6 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   }
 
   private void reset() {
-    myNextCommitIsPushed = false;
     myShouldCommitSubrepos = false;
     myCloseBranch = false;
     myMqNewPatch = false;
@@ -156,7 +155,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     }
 
     // push if needed
-    if (myNextCommitIsPushed && exceptions.isEmpty()) {
+    if (isPushAfterCommit(commitContext) && exceptions.isEmpty()) {
       final List<HgRepository> preselectedRepositories = new ArrayList<>(repositoriesMap.keySet());
       GuiUtils.invokeLaterIfNeeded(() ->
                                      new VcsPushDialog(myProject, preselectedRepositories, HgUtil.getCurrentRepository(myProject)).show(),
@@ -268,10 +267,6 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     }
 
     hgFiles.add(new HgFile(repo.getRoot(), filePath));
-  }
-
-  public void setNextCommitIsPushed() {
-    myNextCommitIsPushed = true;
   }
 
   public void setMqNew() {

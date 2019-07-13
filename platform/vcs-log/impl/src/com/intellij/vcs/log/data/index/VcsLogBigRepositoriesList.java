@@ -1,18 +1,22 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data.index;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.EventListener;
 import java.util.SortedSet;
 
 @State(name = "Vcs.Log.Big.Repositories", storages = {@Storage(value = "vcs.log.big.repos.xml", roamingType = RoamingType.DISABLED)})
 public class VcsLogBigRepositoriesList implements PersistentStateComponent<VcsLogBigRepositoriesList.State> {
   @NotNull private final Object myLock = new Object();
+  @NotNull private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
   private State myState;
 
   public VcsLogBigRepositoriesList() {
@@ -37,15 +41,20 @@ public class VcsLogBigRepositoriesList implements PersistentStateComponent<VcsLo
   }
 
   public void addRepository(@NotNull VirtualFile root) {
+    boolean added;
     synchronized (myLock) {
-      myState.REPOSITORIES.add(root.getPath());
+      added = myState.REPOSITORIES.add(root.getPath());
     }
+    if (added) myDispatcher.getMulticaster().onRepositoriesListChanged();
   }
 
-  public void removeRepository(@NotNull VirtualFile root) {
+  public boolean removeRepository(@NotNull VirtualFile root) {
+    boolean removed;
     synchronized (myLock) {
-      myState.REPOSITORIES.remove(root.getPath());
+      removed = myState.REPOSITORIES.remove(root.getPath());
     }
+    if (removed) myDispatcher.getMulticaster().onRepositoriesListChanged();
+    return removed;
   }
 
   public boolean isBig(@NotNull VirtualFile root) {
@@ -58,6 +67,10 @@ public class VcsLogBigRepositoriesList implements PersistentStateComponent<VcsLo
     synchronized (myLock) {
       return myState.REPOSITORIES.size();
     }
+  }
+
+  public void addListener(@NotNull Listener listener, @NotNull Disposable disposable) {
+    myDispatcher.addListener(listener, disposable);
   }
 
   @NotNull
@@ -75,5 +88,9 @@ public class VcsLogBigRepositoriesList implements PersistentStateComponent<VcsLo
     public State(@NotNull State state) {
       REPOSITORIES = ContainerUtil.newTreeSet(state.REPOSITORIES);
     }
+  }
+
+  public interface Listener extends EventListener {
+    void onRepositoriesListChanged();
   }
 }

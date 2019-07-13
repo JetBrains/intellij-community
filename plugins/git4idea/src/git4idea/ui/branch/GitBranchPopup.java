@@ -108,15 +108,14 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
           preselectActionCondition, DIMENSION_SERVICE_KEY);
 
     final GitBranchIncomingOutgoingManager gitBranchIncomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(myProject);
-    if (GitVcsSettings.getInstance(myProject).shouldUpdateBranchInfo() && !gitBranchIncomingOutgoingManager.supportsIncomingOutgoing()) {
+    if (gitBranchIncomingOutgoingManager.shouldCheckIncoming() && !gitBranchIncomingOutgoingManager.supportsIncomingOutgoing()) {
       myPopup.addToolbarAction(
         createWarningAction("Update checks not supported. Git 2.9+ required",
                             e -> ShowSettingsUtil.getInstance().showSettingsDialog(myProject, GitVcs.NAME)), false);
     }
-    else if (GitVcsSettings.getInstance(myProject).shouldUpdateBranchInfo() &&
-             gitBranchIncomingOutgoingManager.hasAuthenticationProblems()) {
+    else if (gitBranchIncomingOutgoingManager.shouldCheckIncoming() && gitBranchIncomingOutgoingManager.hasAuthenticationProblems()) {
       myPopup.addToolbarAction(createWarningAction("Update checks failed. Click to retry", e -> {
-        gitBranchIncomingOutgoingManager.forceUpdateBranches(true);
+        gitBranchIncomingOutgoingManager.forceUpdateBranchesToPull();
         myPopup.cancel();
       }), false);
     }
@@ -184,10 +183,9 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
   protected LightActionGroup createRepositoriesActions() {
     LightActionGroup popupGroup = new LightActionGroup(false);
     popupGroup.addSeparator("Repositories");
-    List<ActionGroup> rootActions = DvcsUtil.sortRepositories(myRepositoryManager.getRepositories()).stream()
-      .map(
-        repo -> new RootAction<>(repo, new GitBranchPopupActions(repo.getProject(), repo).createActions(), getDisplayableBranchText(repo)))
-      .collect(toList());
+    List<ActionGroup> rootActions = map(DvcsUtil.sortRepositories(myRepositoryManager.getRepositories()),
+                                        repo -> new RootAction<>(repo, new GitBranchPopupActions(repo.getProject(), repo)
+                                          .createActions(), getDisplayableBranchText(repo)));
     wrapWithMoreActionIfNeeded(myProject, popupGroup, rootActions, rootActions.size() > MAX_NUM ? DEFAULT_NUM : MAX_NUM,
                                SHOW_ALL_REPOSITORIES);
     return popupGroup;

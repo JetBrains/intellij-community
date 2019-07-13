@@ -49,6 +49,8 @@
     <highlightErrorFilter implementation="com.intellij.sh.ShErrorFilter"/>
     <daemon.highlightInfoFilter implementation="com.intellij.sh.ShErrorFilter"/>
 
+    <statistics.counterUsagesCollector groupId="shell.script" version="1"/>
+
     <highlightUsagesHandlerFactory implementation="com.intellij.sh.highlighting.ShOccurrencesHighlightingFactory"/>
     <renameHandler implementation="com.intellij.sh.ShRenameHandler"/>
 
@@ -62,7 +64,21 @@
     </intentionAction>
   </extensions>
   <actions>
-    <action id="runShellFileAction" class="com.intellij.sh.run.ShRunFileAction" text="Run File"
+    <action id="runShellFileAction" class="com.intellij.sh.run.ShRunFileAction"
+            text="Run File"
             description="Run current shell file in the terminal" use-shortcut-of="RunClass"/>
+
+    <group id="ShGenerateGroup">
+      <action id="ShGenerateForLoop" class="com.intellij.sh.actions.ShGenerateForLoop"
+              text="For loop"
+              description="Creates for loop"/>
+      <action id="ShGenerateWhileLoop" class="com.intellij.sh.actions.ShGenerateWhileLoop"
+              text="While loop"
+              description="Creates while loop"/>
+      <action id="ShGenerateUntilLoop" class="com.intellij.sh.actions.ShGenerateUntilLoop"
+              text="Until loop"
+              description="Creates until loop"/>
+      <add-to-group group-id="GenerateGroup" anchor="first"/>
+    </group>
   </actions>
 </idea-plugin>

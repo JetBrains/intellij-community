@@ -164,7 +164,7 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
   override fun getPreferredFocusableComponent(): JComponent = commitMessage.editorField
 
   override fun getData(dataId: String) = getDataFromProviders(dataId) ?: commitMessage.getData(dataId)
-  private fun getDataFromProviders(dataId: String) = dataProviders.asSequence().mapNotNull { it.getData(dataId) }.firstOrNull()
+  fun getDataFromProviders(dataId: String) = dataProviders.asSequence().mapNotNull { it.getData(dataId) }.firstOrNull()
 
   override fun addDataProvider(provider: DataProvider) {
     dataProviders += provider
@@ -184,6 +184,8 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
   override fun getIncludedUnversionedFiles(): List<VirtualFile> =
     includedUnderTag(changesView, UNVERSIONED_FILES_TAG).userObjects(VirtualFile::class.java)
 
+  override fun isInclusionEmpty(): Boolean = changesView.isInclusionEmpty
+  override fun clearInclusion() = changesView.clearInclusion()
   override fun includeIntoCommit(items: Collection<*>) = changesView.includeChanges(items)
 
   override fun addInclusionListener(listener: InclusionListener, parent: Disposable) =

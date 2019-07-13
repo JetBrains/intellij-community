@@ -20,12 +20,13 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
@@ -34,7 +35,7 @@ import java.util.ArrayList;
 @ApiStatus.Experimental
 public class DarculaJBPopupComboPopup<T> implements ComboPopup,
                                                     ItemListener, MouseListener, MouseMotionListener, MouseWheelListener,
-                                                    PropertyChangeListener, Serializable {
+                                                    PropertyChangeListener, AncestorListener {
 
   public static final String CLIENT_PROP = "ComboBox.jbPopup";
 
@@ -48,6 +49,7 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
     myProxyList.setModel(comboBox.getModel());
     myComboBox.addPropertyChangeListener(this);
     myComboBox.addItemListener(this);
+    myComboBox.addAncestorListener(this);
   }
 
   @Override
@@ -195,6 +197,7 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
   public void uninstallingUI() {
     myComboBox.removePropertyChangeListener(this);
     myComboBox.removeItemListener(this);
+    myComboBox.removeAncestorListener(this);
   }
 
   @Override
@@ -265,6 +268,21 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
 
   @Override
   public void mouseWheelMoved(MouseWheelEvent e) {
+  }
+
+  @Override
+  public void ancestorAdded(AncestorEvent event) {
+
+  }
+
+  @Override
+  public void ancestorRemoved(AncestorEvent event) {
+
+  }
+
+  @Override
+  public void ancestorMoved(AncestorEvent event) {
+    hide();
   }
 
   private class MyDelegateRenderer implements ListCellRenderer {

@@ -82,7 +82,7 @@ internal class KeePassFileManagerTest : BaseKeePassFileManagerTest() {
   fun `require custom master password if need - not custom`() {
     val store = createStore()
     store.save(defaultEncryptionSpec)
-    TestKeePassFileManager(store, masterPasswordRequestAnswer = "bar42").setCustomMasterPasswordIfNeed(fsRule.fs.getPath("/someDefault"))
+    TestKeePassFileManager(store, masterPasswordRequestAnswer = "bar42").setCustomMasterPasswordIfNeeded(fsRule.fs.getPath("/someDefault"))
     assertThat(MasterKeyFileStorage(store.masterKeyFile).load()!!.toString(Charsets.UTF_8)).isEqualTo("bar42")
     assertThat(createTestStoreWithCustomMasterKey().get(testCredentialAttributes)!!.password!!.toString()).isEqualTo("p")
   }
@@ -90,7 +90,7 @@ internal class KeePassFileManagerTest : BaseKeePassFileManagerTest() {
   @Test
   fun `require custom master password if need - custom`() {
     val store = createTestStoreWithCustomMasterKey()
-    TestKeePassFileManager(store, masterPasswordRequestAnswer = "bar42").setCustomMasterPasswordIfNeed(fsRule.fs.getPath("/someDefault"))
+    TestKeePassFileManager(store, masterPasswordRequestAnswer = "bar42").setCustomMasterPasswordIfNeeded(fsRule.fs.getPath("/someDefault"))
     assertThat(MasterKeyFileStorage(store.masterKeyFile).load()!!.toString(Charsets.UTF_8)).isEqualTo("foo")
     assertThat(createTestStoreWithCustomMasterKey().get(testCredentialAttributes)!!.password!!.toString()).isEqualTo("p")
   }

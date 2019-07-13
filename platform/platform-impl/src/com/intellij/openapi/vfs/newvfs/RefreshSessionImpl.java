@@ -131,6 +131,9 @@ class RefreshSessionImpl extends RefreshSession {
           if (forceRefresh) {
             nvf.markDirty();
           }
+          else if (!nvf.isDirty()) {
+            continue;
+          }
 
           RefreshWorker worker = new RefreshWorker(nvf, myIsRecursive);
           myWorker = worker;

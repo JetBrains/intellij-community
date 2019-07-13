@@ -162,13 +162,6 @@ public enum GitVersionSpecialty {
     }
   },
 
-  FOLLOW_IS_BUGGY_IN_THE_LOG {
-    @Override
-    public boolean existsIn(@NotNull GitVersion version) {
-      return version.isOlderOrEqual(new GitVersion(1, 7, 2, 0));
-    }
-  },
-
   FULL_HISTORY_SIMPLIFY_MERGES_WORKS_CORRECTLY { // for some reason, even with "simplify-merges", it used to show a lot of merges in history
 
     @Override

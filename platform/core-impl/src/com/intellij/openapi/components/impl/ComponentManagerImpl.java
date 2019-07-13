@@ -8,6 +8,7 @@ import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpMeasurer.Level;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -15,7 +16,6 @@ import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.NamedComponent;
-import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
@@ -33,6 +33,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
+import com.intellij.util.messages.impl.MessageBusImpl;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.pico.DefaultPicoContainer;
 import gnu.trove.THashMap;
@@ -49,7 +50,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public abstract class ComponentManagerImpl extends UserDataHolderBase implements ComponentManagerEx, Disposable {
+public abstract class ComponentManagerImpl extends UserDataHolderBase implements ComponentManager, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentManager");
 
   private volatile MutablePicoContainer myPicoContainer;
@@ -346,6 +347,14 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     myPicoContainer = picoContainer;
 
     myMessageBus = MessageBusFactory.newMessageBus(name, myParentComponentManager == null ? null : myParentComponentManager.getMessageBus());
+    if (myMessageBus instanceof MessageBusImpl) {
+      ((MessageBusImpl) myMessageBus).setMessageDeliveryListener((handler, duration) -> {
+        ClassLoader loader = handler.getClass().getClassLoader();
+        if (loader instanceof PluginClassLoader) {
+          StartUpMeasurer.addPluginCost(((PluginClassLoader) loader).getPluginIdString(), "MessageBus", duration);
+        }
+      });
+    }
     picoContainer.registerComponentInstance(MessageBus.class, myMessageBus);
   }
 
@@ -536,7 +545,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     private Activity createMeasureActivity(@NotNull PicoContainer picoContainer) {
       Level level = DefaultPicoContainer.getActivityLevel(picoContainer);
       if (level == Level.APPLICATION || (level == Level.PROJECT && activityNamePrefix() != null)) {
-        return ParallelActivity.COMPONENT.start(getComponentImplementation().getName(), level);
+        return ParallelActivity.COMPONENT.start(getComponentImplementation().getName(), level, myPluginId != null ? myPluginId.getIdString() : null);
       }
       return null;
     }

@@ -63,6 +63,8 @@ class BuildOptions {
   static final String TOOLBOX_LITE_GEN_STEP = "toolbox_lite_gen"
   /** Generate files containing lists of used third-party libraries */
   static final String THIRD_PARTY_LIBRARIES_LIST_STEP = "third_party_libraries"
+  /** Build community distributives */
+  static final String COMMUNITY_DIST_STEP = "community_dist"
 
   /**
    * Android Studio: If 'true', the UI test framework plugin and UI test code will be bundled.

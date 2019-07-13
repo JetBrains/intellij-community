@@ -923,7 +923,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       composite.getSelectedEditor().selectNotify();
 
       // Transfer focus into editor
-      if (!ApplicationManagerEx.getApplicationEx().isUnitTestMode()) {
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
         if (focusEditor) {
           //myFirstIsActive = myTabbedContainer1.equals(tabbedContainer);
           window.setAsCurrentWindow(true);

@@ -70,4 +70,14 @@ public class PsiMethodReferenceType extends PsiType {
   public PsiMethodReferenceExpression getExpression() {
     return myReference;
   }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj == this || obj instanceof PsiMethodReferenceType && myReference.equals(((PsiMethodReferenceType)obj).myReference);
+  }
+
+  @Override
+  public int hashCode() {
+    return myReference.hashCode();
+  }
 }

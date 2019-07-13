@@ -1,0 +1,18 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
+sourceSets {
+  main.java.srcDir "$tools/deploy/deployer/src/main/java"
+}
+
+dependencies {
+  compile 'com.google.guava:guava:25.1-jre'
+  compile 'com.android.tools:annotations:26.3.0'
+  compile 'com.android.tools.ddms:ddmlib:26.3.0'
+  compile 'com.android.tools.apkparser:binary-resources:26.3.0'
+  compile 'com.google.protobuf:protobuf-java:3.5.1'
+
+  compile files(org.gradle.internal.jvm.Jvm.current().toolsJar)
+  compile files("$libs/libdeploy_java_proto.jar")
+  compile files("$libs/libjava_version.jar")
+  compile files("$libs/d8-master.jar")
+}

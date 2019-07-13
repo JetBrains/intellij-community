@@ -68,6 +68,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myBigIconUrl;
   private String mySvgIconUrl;
   private String mySvgEapIconUrl;
+  private String mySmallSvgIconUrl;
+  private String mySmallSvgEapIconUrl;
   private String myToolWindowIconUrl = "/toolwindows/toolWindowProject.png";
   private String myWelcomeScreenLogoUrl;
 
@@ -92,8 +94,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private boolean myEAP;
   private boolean myHasHelp = true;
   private boolean myHasContextHelp = true;
-  private @Nullable String myHelpFileName = "ideahelp.jar";
-  private @Nullable String myHelpRootName = "idea";
   private String myWebHelpUrl = "https://www.jetbrains.com/idea/webhelp/";
   private String[] myEssentialPluginsIds;
   private String myFUStatisticsSettingsUrl;
@@ -154,8 +154,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String XML_EXTENSION = ".xml";
   private static final String ATTRIBUTE_EAP = "eap";
   private static final String HELP_ELEMENT_NAME = "help";
-  private static final String ATTRIBUTE_HELP_FILE = "file";
-  private static final String ATTRIBUTE_HELP_ROOT = "root";
   private static final String ELEMENT_DOCUMENTATION = "documentation";
   private static final String ELEMENT_SUPPORT = "support";
   private static final String ELEMENT_YOUTRACK = "youtrack";
@@ -296,8 +294,7 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
   @Nullable
   @Override
   public String getHelpURL() {
-    String jarPath = getHelpJarPath();
-    return jarPath == null || myHelpRootName == null ? null: "jar:file:///" + jarPath + "!/" + myHelpRootName;
+    return null;
   }
 
   @Override
@@ -313,11 +310,6 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
   @Override
   public String getCompanyURL() {
     return IdeUrlTrackingParametersProvider.getInstance().augmentUrl(myCompanyUrl);
-  }
-
-  @Nullable
-  private String getHelpJarPath() {
-    return myHelpFileName == null ? null: PathManager.getHomePath() + File.separator + "help" + File.separator + myHelpFileName;
   }
 
   @Override
@@ -378,6 +370,7 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
     return myIconUrl;
   }
 
+  @NotNull
   @Override
   public String getSmallIconUrl() {
     return mySmallIconUrl;
@@ -393,6 +386,12 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
   @Nullable
   public String getApplicationSvgIconUrl() {
     return isEAP() && mySvgEapIconUrl != null ? mySvgEapIconUrl : mySvgIconUrl;
+  }
+
+  @Nullable
+  @Override
+  public String getSmallApplicationSvgIconUrl() {
+    return isEAP() && mySmallSvgEapIconUrl != null ? mySmallSvgEapIconUrl : mySmallSvgIconUrl;
   }
 
   @Nullable
@@ -763,17 +762,19 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
     Element iconElement = getChild(parentNode, ELEMENT_ICON);
     if (iconElement != null) {
       myIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE32);
-      mySmallIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE16);
+      mySmallIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE16, mySmallIconUrl);
       myBigIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE128, (String)null);
       final String toolWindowIcon = iconElement.getAttributeValue(ATTRIBUTE_SIZE12);
       if (toolWindowIcon != null) {
         myToolWindowIconUrl = toolWindowIcon;
       }
       mySvgIconUrl = iconElement.getAttributeValue("svg");
+      mySmallSvgIconUrl = iconElement.getAttributeValue("svg-small");
     }
     Element iconEap = getChild(parentNode, "icon-eap");
     if (iconEap != null) {
       mySvgEapIconUrl = iconEap.getAttributeValue("svg");
+      mySmallSvgEapIconUrl = iconElement.getAttributeValue("svg-small");
     }
 
     Element packageElement = getChild(parentNode, ELEMENT_PACKAGE);
@@ -798,8 +799,6 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
 
     Element helpElement = getChild(parentNode, HELP_ELEMENT_NAME);
     if (helpElement != null) {
-      myHelpFileName = helpElement.getAttributeValue(ATTRIBUTE_HELP_FILE);
-      myHelpRootName = helpElement.getAttributeValue(ATTRIBUTE_HELP_ROOT);
       final String webHelpUrl = helpElement.getAttributeValue(ATTRIBUTE_WEBHELP_URL);
       if (webHelpUrl != null) {
         myWebHelpUrl = webHelpUrl;

@@ -5,6 +5,8 @@ import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;
+import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.AppLifecycleListener;
@@ -57,6 +59,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
@@ -293,7 +296,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @NotNull
-  private static ProjectEx doCreateProject(@Nullable String projectName, @NotNull String filePath) {
+  protected ProjectEx doCreateProject(@Nullable String projectName, @NotNull String filePath) {
     return new ProjectImpl(FileUtilRt.toSystemIndependentName(filePath), projectName);
   }
 
@@ -385,8 +388,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       return false;
     }
 
-    Runnable process = () -> {
-      assertInTransaction();
+    AtomicBoolean success = new AtomicBoolean(true);
+
+    Runnable doLoad = () -> success.set(loadProjectUnderProgress(project, () -> {
+      beforeProjectOpened(project);
 
       TransactionGuard.getInstance().submitTransactionAndWait(() -> fireProjectOpened(project));
 
@@ -408,11 +413,25 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
           if (!(application.isHeadlessEnvironment() || application.isUnitTestMode())) {
             StorageUtilKt.checkUnknownMacros(project, true);
           }
+          StartUpMeasurer.stopPluginCostMeasurement();
         }
       }, ModalityState.NON_MODAL);
-    };
+      ApplicationManager.getApplication().invokeLater(
+        () -> LoadingPhase.compareAndSet(LoadingPhase.FRAME_SHOWN,
+                                         DumbService.isDumb(project)
+                                         ? LoadingPhase.PROJECT_OPENED
+                                         : LoadingPhase.INDEXING_FINISHED),
+        ModalityState.NON_MODAL);
+    }));
 
-    if (!loadProjectUnderProgress(project, process)) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      TransactionGuard.getInstance().submitTransactionAndWait(doLoad);
+    } else {
+      assertInTransaction();
+      doLoad.run();
+    }
+
+    if (!success.get()) {
       GuiUtils.invokeLaterIfNeeded(() -> {
         closeProject(project, false, false, false, true);
         WriteAction.run(() -> Disposer.dispose(project));
@@ -422,6 +441,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
 
     return true;
+  }
+
+  protected void beforeProjectOpened(Project project) {
   }
 
   private static void assertInTransaction() {
@@ -434,8 +456,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   private static boolean loadProjectUnderProgress(@NotNull Project project, @NotNull Runnable performLoading) {
-    assertInTransaction();
-
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (!ApplicationManager.getApplication().isDispatchThread() && indicator != null) {
       indicator.setText("Preparing workspace...");
@@ -645,6 +665,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       if (!projectImpl.isTemporarilyDisposed()) {
         projectImpl.setTemporarilyDisposed(true);
         removeFromOpened(project);
+        ((ProjectManagerImpl)ProjectManager.getInstance()).updateTheOnlyProjectField();
         return true;
       }
       projectImpl.setTemporarilyDisposed(false);
@@ -757,7 +778,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     LOG.assertTrue(removed);
   }
 
-  private void fireProjectOpened(@NotNull Project project) {
+  protected void fireProjectOpened(@NotNull Project project) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("projectOpened");
     }

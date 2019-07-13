@@ -110,8 +110,7 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
   @NotNull
   @Deprecated
   public ActionCallback refilter() {
-    //noinspection unchecked
-    return Promises.toActionCallback((Promise<Object>)refilter(null, true, false));
+    return Promises.toActionCallback(refilter(null, true, false));
   }
 
   @SuppressWarnings("UnusedReturnValue")

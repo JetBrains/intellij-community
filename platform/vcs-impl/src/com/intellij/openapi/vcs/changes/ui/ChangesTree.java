@@ -485,6 +485,19 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     repaint();
   }
 
+  public void clearInclusion() {
+    myIncludedChanges.clear();
+    notifyInclusionListener();
+    repaint();
+  }
+
+  public void retainInclusion(@NotNull Collection<?> changes) {
+    if (myIncludedChanges.retainAll(changes)) {
+      notifyInclusionListener();
+      repaint();
+    }
+  }
+
   public void includeChange(final Object change) {
     includeChanges(Collections.singleton(change));
   }
@@ -520,6 +533,10 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     else {
       excludeChanges(changes);
     }
+  }
+
+  public boolean isInclusionEmpty() {
+    return myIncludedChanges.isEmpty();
   }
 
   public boolean isIncluded(final Object change) {

@@ -1,12 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.ChangesUtil
-import com.intellij.openapi.vcs.changes.CommitExecutor
-import com.intellij.openapi.vcs.changes.CommitSession
+import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.vcs.log.VcsShortCommitDetails
 import git4idea.repo.GitRepository
@@ -46,7 +43,7 @@ abstract class GitAutoSquashCommitAction : GitCommitEditingAction() {
 
   class GitRebaseAfterCommitExecutor(val project: Project, val repository: GitRepository, val hash: String) : CommitExecutor {
     override fun getActionText(): String = "Commit and Rebase..."
-    override fun createCommitSession(): CommitSession = CommitSession.VCS_COMMIT
+    override fun createCommitSession(commitContext: CommitContext): CommitSession = CommitSession.VCS_COMMIT
     override fun supportsPartialCommit() = true
   }
 }

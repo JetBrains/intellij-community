@@ -128,7 +128,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myUpdateEnvironment = new GitUpdateEnvironment(myProject, gitProjectSettings);
     myCommittedChangeListProvider = new GitCommittedChangeListProvider(myProject);
     myOutgoingChangesProvider = new GitOutgoingChangesProvider(myProject);
-    myCommitAndPushExecutor = myCheckinEnvironment != null ? new GitCommitAndPushExecutor(myCheckinEnvironment) : null;
+    myCommitAndPushExecutor = myCheckinEnvironment != null ? new GitCommitAndPushExecutor() : null;
     myExecutableValidator = new GitExecutableValidator(myProject);
   }
 
@@ -269,9 +269,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
       myRepositoryForAnnotationsListener = new GitRepositoryForAnnotationsListener(myProject);
     }
     GitUserRegistry.getInstance(myProject).activate();
-    if (GitVcsSettings.getInstance(myProject).shouldUpdateBranchInfo()) {
-      GitBranchIncomingOutgoingManager.getInstance(myProject).startScheduling();
-    }
+    GitBranchIncomingOutgoingManager.getInstance(myProject).activate();
   }
 
   @Override

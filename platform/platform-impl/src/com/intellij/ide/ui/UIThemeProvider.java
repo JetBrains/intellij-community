@@ -29,7 +29,7 @@ public final class UIThemeProvider implements PluginAware {
       ClassLoader loader = myDescriptor != null ? myDescriptor.getPluginClassLoader() : getClass().getClassLoader();
       return UITheme.loadFromJson(loader.getResourceAsStream(path), id, loader);
     }
-    catch (IOException e) {
+    catch (Exception e) {
       Logger.getInstance(getClass()).warn("error loading UITheme '" + path + "', " +
                                           "pluginId=" + (myDescriptor != null ? myDescriptor.getPluginId().getIdString() : "(none)"), e);
       return null;

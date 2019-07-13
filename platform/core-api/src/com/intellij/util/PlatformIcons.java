@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ui.IconManager;
 
 import javax.swing.*;
 
@@ -19,7 +20,6 @@ public interface PlatformIcons {
 
   Icon CLASS_ICON = AllIcons.Nodes.Class;
   Icon EXCEPTION_CLASS_ICON = AllIcons.Nodes.ExceptionClass;
-  Icon NEW_EXCEPTION = AllIcons.Hierarchy.Supertypes;
   Icon ANONYMOUS_CLASS_ICON = AllIcons.Nodes.AnonymousClass;
   Icon ABSTRACT_CLASS_ICON = AllIcons.Nodes.AbstractClass;
   Icon ANNOTATION_TYPE_ICON = AllIcons.Nodes.Annotationtype;
@@ -55,11 +55,11 @@ public interface PlatformIcons {
   Icon JSP_ICON = AllIcons.FileTypes.Jsp;
   Icon SMALL_VCS_CONFIGURABLE = AllIcons.Actions.ShowAsTree;
   Icon GROUP_BY_PACKAGES = AllIcons.Actions.GroupByPackage;
-  Icon ADD_ICON = IconUtil.getAddIcon();
-  Icon DELETE_ICON = IconUtil.getRemoveIcon();
+  Icon ADD_ICON = AllIcons.General.Add;
+  Icon DELETE_ICON = AllIcons.General.Remove;
   Icon COPY_ICON = AllIcons.Actions.Copy;
-  Icon EDIT = IconUtil.getEditIcon();
-  Icon ANALYZE = IconUtil.getAnalyzeIcon();
+  Icon EDIT = AllIcons.Actions.Edit;
+  Icon ANALYZE = IconManager.getInstance().getAnalyzeIcon();
   Icon SELECT_ALL_ICON = AllIcons.Actions.Selectall;
   Icon UNSELECT_ALL_ICON = AllIcons.Actions.Unselectall;
   Icon PROPERTIES_ICON = AllIcons.Actions.Properties;
@@ -68,8 +68,8 @@ public interface PlatformIcons {
 
   Icon CHECK_ICON = AllIcons.Actions.Checked;
   Icon CHECK_ICON_SELECTED = AllIcons.Actions.Checked_selected;
-  Icon CHECK_ICON_SMALL = AllIcons.Actions.Checked_small;
-  Icon CHECK_ICON_SMALL_SELECTED = AllIcons.Actions.Checked_small_selected;
+  Icon CHECK_ICON_SMALL = AllIcons.Actions.Checked;
+  Icon CHECK_ICON_SMALL_SELECTED = AllIcons.Actions.Checked_selected;
 
   Icon OPEN_EDIT_DIALOG_ICON = AllIcons.Actions.ShowViewer;
   Icon FLATTEN_PACKAGES_ICON = AllIcons.ObjectBrowser.FlattenPackages;
@@ -79,7 +79,7 @@ public interface PlatformIcons {
   Icon CLOSED_MODULE_GROUP_ICON = AllIcons.Nodes.ModuleGroup;
 
   Icon FOLDER_ICON = AllIcons.Nodes.Folder;
-  Icon SOURCE_FOLDERS_ICON = AllIcons.Nodes.SourceFolder;
+  Icon SOURCE_FOLDERS_ICON = AllIcons.Nodes.Package;
   Icon TEST_SOURCE_FOLDER = AllIcons.Nodes.TestSourceFolder;
   Icon INVALID_ENTRY_ICON = AllIcons.Nodes.PpInvalid;
 

@@ -135,11 +135,13 @@ commands_list ::= pipeline_command (
                  )*
 
 pipeline_command ::=  '!'? pipeline
-                    | let_command
-                    | eval_command {recoverWhile=pipeline_recover}
+                    | '!'? eval_command
+                    | '!'? test_command
+                    | let_command {recoverWhile=pipeline_recover}
 
 let_command  ::= let expression
 eval_command ::= eval (EVAL_CONTENT|simple_command_element)+
+test_command ::= test simple_command_element+
 
 private pipeline_recover ::= !(case|if|while|until|select|'{'|function|'$'|'&&'|';'|';;'|'||'|'&'|'!'|'['|'[['|'('|')'|'|'|'|&'|'\n'|'(('|
                                var | word|EXPR_CONDITIONAL_LEFT|ARITH_SQUARE_LEFT | CLOSE_BACKQUOTE | do | done | '}')

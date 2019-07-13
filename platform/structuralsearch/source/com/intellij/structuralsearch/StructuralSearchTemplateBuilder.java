@@ -3,9 +3,11 @@ package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.template.*;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.codeInsight.template.TemplateBuilder;
+import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
@@ -68,7 +70,7 @@ public class StructuralSearchTemplateBuilder {
     myShift -= textOffset;
     matchOptions.setSearchPattern(text);
     PsiElement[] elements =
-      MatcherImplUtil.createTreeFromText(text, PatternTreeContext.Block, myPsiFile.getFileType(), myPsiFile.getProject());
+      MatcherImplUtil.createTreeFromText(text, PatternTreeContext.Block, (LanguageFileType)myPsiFile.getFileType(), myPsiFile.getProject());
     if (elements.length > 0) {
       PsiElement element = elements[0];
       myShift += element.getTextRange().getStartOffset();

@@ -97,7 +97,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     super(session.getProject(), "Debug", session.getSessionName(), GlobalSearchScope.allScope(session.getProject()));
 
     setSession(session, environment, icon);
-    myUi.getOptions().setMinimizeActionEnabled(false);
     myUi.addContent(createFramesContent(), 0, PlaceInGrid.left, false);
 
     if (Registry.is("debugger.new.threads.view")) {
@@ -110,7 +109,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     DefaultActionGroup focus = new DefaultActionGroup();
     focus.add(ActionManager.getInstance().getAction(XDebuggerActions.FOCUS_ON_BREAKPOINT));
-    myUi.getOptions().setAdditionalFocusActions(focus);
+    myUi.getOptions().setAdditionalFocusActions(focus).setMinimizeActionEnabled(true).setMoveToGridActionEnabled(true);
 
     myUi.addListener(new ContentManagerAdapter() {
       @Override
@@ -212,7 +211,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     XFramesView framesView = new XFramesView(myProject);
     registerView(DebuggerContentInfo.FRAME_CONTENT, framesView);
     Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, framesView.getMainPanel(),
-                                               XDebuggerBundle.message("debugger.session.tab.frames.title"), /*AllIcons.Debugger.Frame*/null, framesView.getDefaultFocusedComponent());
+                                               XDebuggerBundle.message("debugger.session.tab.frames.title"), null, framesView.getDefaultFocusedComponent());
     framesContent.setCloseable(false);
     return framesContent;
   }

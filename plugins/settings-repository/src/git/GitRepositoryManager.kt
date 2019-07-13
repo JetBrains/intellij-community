@@ -49,7 +49,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
 
   private var ignoreRules: IgnoreNode? = null
 
-  override fun createRepositoryIfNeed(): Boolean {
+  override fun createRepositoryIfNeeded(): Boolean {
     ignoreRules = null
 
     if (isRepositoryExists()) {

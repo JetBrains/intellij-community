@@ -158,7 +158,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     searchToolbarWrapper1.setHorizontalSizeReferent(replaceToolbarWrapper1);
 
     JLabel closeLabel = new JLabel(null, AllIcons.Actions.Close, SwingConstants.RIGHT);
-    closeLabel.setBorder(JBUI.Borders.empty(5));
+    closeLabel.setBorder(JBUI.Borders.empty(2 ));
     closeLabel.setVerticalAlignment(SwingConstants.TOP);
     closeLabel.addMouseListener(new MouseAdapter() {
       @Override
@@ -568,18 +568,14 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
 
   @NotNull
   private ActionToolbarImpl createToolbar(@NotNull ActionGroup group) {
-    return tweakToolbar((ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, group, true));
-  }
-
-  @NotNull
-  private ActionToolbarImpl tweakToolbar(@NotNull ActionToolbarImpl toolbar) {
+    ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance()
+      .createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, group, true);
+    toolbar.setBorder(JBUI.Borders.empty());
     toolbar.setTargetComponent(this);
     toolbar.setLayoutPolicy(ActionToolbar.AUTO_LAYOUT_POLICY);
-    toolbar.setBorder(null);
     Utils.setSmallerFontForChildren(toolbar);
     return toolbar;
   }
-
 
   public interface Listener extends EventListener {
     void searchFieldDocumentChanged();

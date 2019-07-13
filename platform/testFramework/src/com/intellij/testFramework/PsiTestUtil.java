@@ -15,9 +15,9 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ContentEntryImpl;
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
@@ -320,7 +320,7 @@ public class PsiTestUtil {
         }
       });
       WriteCommandAction.runWriteCommandAction(null, ()-> {
-        LibraryTable table = ProjectLibraryTable.getInstance(module.getProject());
+        LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(module.getProject());
         LibraryTable.ModifiableModel model = table.getModifiableModel();
         model.removeLibrary(library);
         model.commit();
@@ -361,7 +361,7 @@ public class PsiTestUtil {
                                            @NotNull List<? extends VirtualFile> classesRoots,
                                            @NotNull List<? extends VirtualFile> sourceRoots,
                                            @NotNull List<? extends VirtualFile> javaDocs) {
-    LibraryTable libraryTable = ProjectLibraryTable.getInstance(model.getProject());
+    LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(model.getProject());
     return WriteAction.computeAndWait(() -> {
       Library library = libraryTable.createLibrary(libName);
       Library.ModifiableModel libraryModel = library.getModifiableModel();

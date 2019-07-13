@@ -27,12 +27,6 @@ abstract class ConfigurationTypeBase protected constructor(private val id: Strin
                                                            private val displayName: String,
                                                            private val description: String? = null,
                                                            private val icon: NotNullLazyValue<Icon>?) : ConfigurationType {
-  companion object {
-    @JvmStatic
-    @Deprecated("Use LazyUtil.create", ReplaceWith("NotNullLazyValue.createValue(producer)", "com.intellij.openapi.util.NotNullLazyValue"))
-    fun lazyIcon(producer: () -> Icon): NotNullLazyValue<Icon> = NotNullLazyValue.createValue(producer)
-  }
-
   @Deprecated("")
   constructor(id: String, displayName: String, description: String?, icon: Lazy<Icon>)
     : this(id, displayName, description, NotNullLazyValue.createValue { icon.value })

@@ -24,7 +24,7 @@ public class ShLineIndentProvider implements LineIndentProvider {
   public String getLineIndent(@NotNull Project project, @NotNull Editor editor, @Nullable Language language, int offset) {
     if (offset > 0) {
       ShSemanticEditorPosition position = getPosition(editor, offset - 1);
-      if (position.isAt(ShTokenTypes.LINEFEED) || position.isAt(ShTokenTypes.WHITESPACE)) {
+      if (position.isAt(ShTypes.LINEFEED) || position.isAt(ShTokenTypes.WHITESPACE)) {
         moveAtEndOfPreviousLine(position);
         if (position.isAtAnyOf(ShTypes.DO, ShTypes.LEFT_CURLY, ShTypes.ELSE, ShTypes.THEN)) {
           return getIndentString(editor, position.getStartOffset(), true);
@@ -45,29 +45,29 @@ public class ShLineIndentProvider implements LineIndentProvider {
     return language instanceof ShLanguage;
   }
 
-  private boolean isInCasePattern(@NotNull Editor editor, ShSemanticEditorPosition position) {
+  private static boolean isInCasePattern(@NotNull Editor editor, ShSemanticEditorPosition position) {
     CharSequence docChars = editor.getDocument().getCharsSequence();
     int lineStart = CharArrayUtil.shiftBackwardUntil(docChars, position.getStartOffset(), "\n") + 1;
     if (lineStart >= 0) {
       ShSemanticEditorPosition possiblePatternPosition = getPosition(editor, lineStart);
       possiblePatternPosition.moveAfterOptionalMix(ShTokenTypes.WHITESPACE);
-      possiblePatternPosition.moveAfterOptionalMix(ShTokenTypes.WORD);
+      possiblePatternPosition.moveAfterOptionalMix(ShTypes.WORD);
       possiblePatternPosition.moveAfterOptionalMix(ShTokenTypes.WHITESPACE);
       return possiblePatternPosition.isAt(ShTypes.RIGHT_PAREN);
     }
     return false;
   }
 
-  private void moveAtEndOfPreviousLine(ShSemanticEditorPosition position) {
+  private static void moveAtEndOfPreviousLine(ShSemanticEditorPosition position) {
     position.moveBeforeOptionalMix(ShTokenTypes.WHITESPACE);
-    if (position.isAt(ShTokenTypes.LINEFEED)) {
+    if (position.isAt(ShTypes.LINEFEED)) {
       position.moveBefore();
       position.moveBeforeOptionalMix(ShTokenTypes.WHITESPACE);
     }
   }
 
   @NotNull
-  private String getIndentString(@NotNull Editor editor, int offset, boolean shouldExpand) {
+  private static String getIndentString(@NotNull Editor editor, int offset, boolean shouldExpand) {
     CodeStyleSettings settings = CodeStyle.getSettings(editor);
     CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(ShFileType.INSTANCE);
     CharSequence docChars = editor.getDocument().getCharsSequence();
@@ -96,7 +96,7 @@ public class ShLineIndentProvider implements LineIndentProvider {
     return baseIndent;
   }
 
-  private ShSemanticEditorPosition getPosition(@NotNull Editor editor, int offset) {
+  private static ShSemanticEditorPosition getPosition(@NotNull Editor editor, int offset) {
     return ShSemanticEditorPosition.createEditorPosition((EditorEx) editor, offset);
   }
 }

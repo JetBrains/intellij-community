@@ -166,6 +166,12 @@ public class GitLineHandler extends GitTextHandler {
     };
   }
 
+  public void overwriteConfig(String ... params) {
+    for (String param : params) {
+      myCommandLine.getParametersList().prependAll("-c", param);
+    }
+  }
+
   /**
    * Will not react to {@link com.intellij.util.io.BaseOutputReader.Options}
    * other than {@link com.intellij.util.io.BaseOutputReader.Options#policy()} because we do not negotiate with terrorists

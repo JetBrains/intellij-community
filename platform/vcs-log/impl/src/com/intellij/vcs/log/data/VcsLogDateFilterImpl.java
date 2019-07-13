@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
+import java.util.Objects;
 
 @ApiStatus.Internal
 public class VcsLogDateFilterImpl implements VcsLogDateFilter, VcsLogDetailsFilter {
@@ -68,5 +69,19 @@ public class VcsLogDateFilterImpl implements VcsLogDateFilter, VcsLogDetailsFilt
   public String toString() {
     return (myAfter != null ? "after " + myAfter + (myBefore != null ? " " : "") : "") +
            (myBefore != null ? "before " + myBefore : "");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    VcsLogDateFilterImpl filter = (VcsLogDateFilterImpl)o;
+    return Objects.equals(getAfter(), filter.getAfter()) &&
+           Objects.equals(getBefore(), filter.getBefore());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getAfter(), getBefore());
   }
 }
