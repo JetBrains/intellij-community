@@ -80,13 +80,17 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask) : ProjectFr
   }
 
   override fun projectCreated(project: Project) {
-    val frame = frame!!
-    (WindowManager.getInstance() as WindowManagerImpl).assignFrame(frame, project)
+    ApplicationManager.getApplication().invokeLater(
+      {
+        if (!project.isDisposed) {
+          (WindowManager.getInstance() as WindowManagerImpl).assignFrame(frame ?: return@invokeLater, project)
+        }
+      }, ModalityState.any())
   }
 
   override fun projectOpened(project: Project) {
     if (options.sendFrameBack) {
-      frame!!.isAutoRequestFocus = true
+      frame?.isAutoRequestFocus = true
     }
   }
 }
