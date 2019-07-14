@@ -61,7 +61,7 @@ public class MergeUtil {
 
     switch (result) {
       case CANCEL:
-        return "Abort";
+        return "Cancel";
       case LEFT:
         return "Accept Left";
       case RIGHT:
