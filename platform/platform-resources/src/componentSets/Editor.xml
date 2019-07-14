@@ -20,10 +20,4 @@
       <implementation-class>com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl</implementation-class>
     </component>
   </project-components>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceImplementation="com.intellij.openapi.actionSystem.ex.QuickListsManager"/>
-    <projectService serviceImplementation="com.intellij.openapi.fileEditor.impl.EditorHistoryManager"/>
-    <postStartupActivity implementation="com.intellij.openapi.fileEditor.impl.EditorHistoryManager$EditorHistoryManagerStartUpActivity"/>
-  </extensions>
 </idea-plugin>
