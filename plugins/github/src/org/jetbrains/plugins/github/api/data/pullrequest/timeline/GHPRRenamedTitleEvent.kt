@@ -4,8 +4,8 @@ package org.jetbrains.plugins.github.api.data.pullrequest.timeline
 import org.jetbrains.plugins.github.api.data.GHActor
 import java.util.*
 
-class GHPRRenamedTitleEvent(actor: GHActor?,
+class GHPRRenamedTitleEvent(override val actor: GHActor?,
+                            override val createdAt: Date,
                             val previousTitle: String,
-                            val currentTitle: String,
-                            createdAt: Date)
-  : GHPRTimelineEvent(actor, createdAt)
+                            val currentTitle: String)
+  : GHPRTimelineEvent.Simple

@@ -2,8 +2,11 @@
 package org.jetbrains.plugins.github.api.data.pullrequest.timeline
 
 import org.jetbrains.plugins.github.api.data.GHActor
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import java.util.*
 
-class GHPRClosedEvent(actor: GHActor?,
-                      createdAt: Date)
-  : GHPRTimelineEvent(actor, createdAt)
+class GHPRClosedEvent(override val actor: GHActor?,
+                      override val createdAt: Date)
+  : GHPRTimelineEvent.State {
+  override val newState = GHPullRequestState.CLOSED
+}

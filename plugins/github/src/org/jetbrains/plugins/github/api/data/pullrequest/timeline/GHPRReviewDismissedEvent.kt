@@ -5,11 +5,11 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.jetbrains.plugins.github.api.data.GHActor
 import java.util.*
 
-class GHPRReviewDismissedEvent(actor: GHActor?,
-                               createdAt: Date,
+class GHPRReviewDismissedEvent(override val actor: GHActor?,
+                               override val createdAt: Date,
                                val dismissalMessageHTML: String?,
                                @JsonProperty("review") review: ReviewAuthor?)
-  : GHPRTimelineEvent(actor, createdAt) {
+  : GHPRTimelineEvent.Complex {
 
   val reviewAuthor = review?.author
 

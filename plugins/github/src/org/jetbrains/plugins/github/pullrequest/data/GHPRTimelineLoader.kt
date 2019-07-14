@@ -3,28 +3,29 @@ package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.ui.CollectionListModel
 import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubFullPath
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineMergingModel
 
 class GHPRTimelineLoader(progressManager: ProgressManager,
                          requestExecutor: GithubApiRequestExecutor,
                          serverPath: GithubServerPath,
                          repoPath: GithubFullPath,
                          number: Long,
-                         listModel: CollectionListModel<GHPRTimelineItem>)
-  : GHListLoaderBase<GHPRTimelineItem>(progressManager, listModel) {
-
+                         private val listModel: GHPRTimelineMergingModel)
+  : GHListLoaderBase<GHPRTimelineItem>(progressManager) {
   private val loader = SimpleGHGQLPagesLoader(requestExecutor, { p ->
     GHGQLRequests.PullRequest.Timeline.items(serverPath, repoPath.user, repoPath.repository, number, p)
   })
+  override val hasLoadedItems: Boolean
+    get() = listModel.size != 0
 
   override fun handleResult(list: List<GHPRTimelineItem>) {
-    super.handleResult(list.filter { it !is GHPRTimelineItem.Unknown })
+    listModel.add(list.filter { it !is GHPRTimelineItem.Unknown })
   }
 
   override fun canLoadMore() = !loading && (loader.hasNext || error != null)
@@ -34,6 +35,8 @@ class GHPRTimelineLoader(progressManager: ProgressManager,
   override fun reset() {
     loader.reset()
     super.reset()
+    listModel.removeAll()
+
     loadMore()
   }
 }

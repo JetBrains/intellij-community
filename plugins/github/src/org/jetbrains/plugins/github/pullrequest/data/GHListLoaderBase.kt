@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Computable
-import com.intellij.ui.CollectionListModel
 import com.intellij.util.EventDispatcher
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
@@ -15,8 +14,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
 import kotlin.properties.Delegates
 
-abstract class GHListLoaderBase<T>(protected val progressManager: ProgressManager,
-                                   protected val listModel: CollectionListModel<T>)
+abstract class GHListLoaderBase<T>(protected val progressManager: ProgressManager)
   : GHListLoader, Disposable {
 
   private var lastFuture = CompletableFuture.completedFuture(emptyList<T>())
@@ -31,8 +29,6 @@ abstract class GHListLoaderBase<T>(protected val progressManager: ProgressManage
   override var error: Throwable? by Delegates.observable<Throwable?>(null) { _, _, _ ->
     errorChangeEventDispatcher.multicaster.eventOccurred()
   }
-  override val hasLoadedItems: Boolean
-    get() = listModel.size > 0
 
   override fun canLoadMore() = !loading && (error != null)
 
@@ -56,9 +52,7 @@ abstract class GHListLoaderBase<T>(protected val progressManager: ProgressManage
     }
   }
 
-  protected open fun handleResult(list: List<T>) {
-    listModel.add(list)
-  }
+  abstract fun handleResult(list: List<T>)
 
   private fun requestLoadMore(indicator: ProgressIndicator): CompletableFuture<List<T>> {
     lastFuture = lastFuture.thenApplyAsync {
@@ -78,7 +72,6 @@ abstract class GHListLoaderBase<T>(protected val progressManager: ProgressManage
     progressIndicator = NonReusableEmptyProgressIndicator()
     error = null
     loading = false
-    listModel.removeAll()
   }
 
   override fun addLoadingStateChangeListener(disposable: Disposable, listener: () -> Unit) =

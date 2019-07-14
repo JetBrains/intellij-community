@@ -31,13 +31,14 @@ internal class GHPRListLoaderImpl(progressManager: ProgressManager,
                                   private val requestExecutor: GithubApiRequestExecutor,
                                   private val serverPath: GithubServerPath,
                                   private val repoPath: GithubFullPath,
-                                  listModel: CollectionListModel<GHPullRequestShort>,
+                                  private val listModel: CollectionListModel<GHPullRequestShort>,
                                   private val searchQueryHolder: GithubPullRequestSearchQueryHolder)
-  : GHListLoaderBase<GHPullRequestShort>(progressManager, listModel), GHPRListLoader {
-
+  : GHListLoaderBase<GHPullRequestShort>(progressManager), GHPRListLoader {
   private val loader = SimpleGHGQLPagesLoader(requestExecutor, { p ->
     GHGQLRequests.PullRequest.search(serverPath, buildQuery(searchQueryHolder.query), p)
   })
+  override val hasLoadedItems: Boolean
+    get() = !listModel.isEmpty
 
   private val outdatedStateEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
@@ -79,7 +80,7 @@ internal class GHPRListLoaderImpl(progressManager: ProgressManager,
   override fun doLoadMore(indicator: ProgressIndicator): List<GHPullRequestShort>? = loader.loadNext(indicator)
 
   override fun handleResult(list: List<GHPullRequestShort>) {
-    super.handleResult(list)
+    listModel.add(list)
     sizeChecker.start()
   }
 

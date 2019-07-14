@@ -10,7 +10,6 @@ import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.ui.CollectionListModel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.ComponentWithEmptyText
@@ -21,6 +20,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRTimelineLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRHeaderPanel
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineComponent
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineMergingModel
 import org.jetbrains.plugins.github.ui.GHListLoaderPanel
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.handleOnEdt
@@ -51,7 +51,7 @@ internal class GHPRFileEditor(private val file: GHPRVirtualFile)
     val header = GHPRHeaderPanel(detailsModel)
     Disposer.register(this, header)
 
-    val timelineListModel = CollectionListModel<GHPRTimelineItem>()
+    val timelineListModel = GHPRTimelineMergingModel()
     val timeline = GHPRTimelineComponent(timelineListModel)
     val loadingIcon = AsyncProcessIcon("Loading").apply {
       isVisible = false

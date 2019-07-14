@@ -99,6 +99,9 @@ class GHPRTimelineComponent(private val model: ListModel<GHPRTimelineItem>)
         is GHPRHeadRefDeletedEvent -> """${item.actor?.login} deleted the branch ${item.headRefName}"""
         is GHPRHeadRefRestoredEvent -> """${item.actor?.login} restored the head branch"""
 
+        is GHPRTimelineMergedSimpleEvents -> """${item.actor?.login} performed multiple simple actions on ${item.createdAt}"""
+        is GHPRTimelineMergedStateEvents -> """${item.actor?.login} performed multiple actions changing state on ${item.createdAt}"""
+
         else -> item.javaClass.canonicalName
       }
       return JLabel(text)

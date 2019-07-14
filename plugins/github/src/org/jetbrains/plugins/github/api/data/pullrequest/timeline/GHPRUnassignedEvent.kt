@@ -5,7 +5,7 @@ import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHUser
 import java.util.*
 
-class GHPRUnassignedEvent(actor: GHActor?,
-                          createdAt: Date,
+class GHPRUnassignedEvent(override val actor: GHActor?,
+                          override val createdAt: Date,
                           val user: GHUser)
-  : GHPRTimelineEvent(actor, createdAt)
+  : GHPRTimelineEvent.Simple

@@ -2,6 +2,32 @@
 package org.jetbrains.plugins.github.api.data.pullrequest.timeline
 
 import org.jetbrains.plugins.github.api.data.GHActor
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import java.util.*
 
-abstract class GHPRTimelineEvent(val actor: GHActor?, val createdAt: Date) : GHPRTimelineItem
+interface GHPRTimelineEvent : GHPRTimelineItem {
+  val actor: GHActor?
+  val createdAt: Date
+
+  /**
+   * Simple events which can be merged together
+   */
+  interface Simple : GHPRTimelineEvent
+
+  /**
+   * Events about pull request state
+   */
+  interface State : GHPRTimelineEvent {
+    val newState: GHPullRequestState
+  }
+
+  /**
+   * More complex events which can NOT be merged together
+   */
+  interface Complex : GHPRTimelineEvent
+
+  /**
+   * Pull request head/base branch changes events
+   */
+  interface Branch : Complex
+}

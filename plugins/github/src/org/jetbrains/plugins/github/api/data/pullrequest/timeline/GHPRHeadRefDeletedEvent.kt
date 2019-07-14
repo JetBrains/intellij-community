@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.api.data.pullrequest.timeline
 import org.jetbrains.plugins.github.api.data.GHActor
 import java.util.*
 
-class GHPRHeadRefDeletedEvent(actor: GHActor?,
-                              createdAt: Date,
+class GHPRHeadRefDeletedEvent(override val actor: GHActor?,
+                              override val createdAt: Date,
                               val headRefName: String)
-  : GHPRTimelineEvent(actor, createdAt)
+  : GHPRTimelineEvent.Branch

@@ -6,9 +6,9 @@ import org.jetbrains.plugins.github.api.data.GHCommitHash
 import org.jetbrains.plugins.github.api.data.pullrequest.GHGitRefName
 import java.util.*
 
-class GHPRHeadRefForcePushedEvent(actor: GHActor?,
-                                  createdAt: Date,
+class GHPRHeadRefForcePushedEvent(override val actor: GHActor?,
+                                  override val createdAt: Date,
                                   val ref: GHGitRefName?,
                                   val beforeCommit: GHCommitHash,
                                   val afterCommit: GHCommitHash)
-  : GHPRTimelineEvent(actor, createdAt)
+  : GHPRTimelineEvent.Branch
