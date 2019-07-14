@@ -347,8 +347,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       }
 
       if (myContentModified) {
-        if (Messages.showYesNoDialog(myProject, "This operation will reset all applied changes. Are you sure you want to continue?",
-                                     "Restart Visual Merge", Messages.getQuestionIcon()) != Messages.YES) {
+        if (Messages.showYesNoDialog(myProject, "Changing highlighting requires the file merge restart. Discard unsaved changes and restart merge anyway?",
+                                     "Update Highlighting Settings", "Discard Changes and Restart Merge", "Continue Merge", Messages.getQuestionIcon()) != Messages.YES) {
           getTextSettings().setIgnorePolicy(myCurrentIgnorePolicy);
           return;
         }
