@@ -198,7 +198,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     }
 
     if (myTextDiffProvider.isHighlightingDisabled()) {
-      return apply(createCompareData(null, ranges.isEmpty()));
+      return apply(null, ranges.isEmpty());
     }
 
 
@@ -221,7 +221,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       changes.addAll(ContainerUtil.map(rangeFragments, fragment -> new MySimpleDiffChange(fragment, isExcluded, isSkipped, localRange.getChangelistId(), isExcludedFromCommit)));
     }
 
-    return apply(createCompareData(changes, isContentsEqual));
+    return apply(changes, isContentsEqual);
   }
 
   @Override

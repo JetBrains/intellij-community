@@ -194,11 +194,11 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
                                 StringUtil.equals(texts[0], texts[1]);
 
       if (lineFragments == null) {
-        return apply(createCompareData(null, isContentsEqual));
+        return apply(null, isContentsEqual);
       }
       else {
         List<SimpleDiffChange> changes = ContainerUtil.map(lineFragments, fragment -> new SimpleDiffChange(this, fragment));
-        return apply(createCompareData(changes, isContentsEqual));
+        return apply(changes, isContentsEqual);
       }
     }
     catch (DiffTooBigException e) {
@@ -214,28 +214,23 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   @NotNull
-  protected CompareData createCompareData(@Nullable List<SimpleDiffChange> changes,
-                                          boolean isContentsEqual) {
+  protected Runnable apply(@Nullable List<SimpleDiffChange> changes,
+                           boolean isContentsEqual) {
     List<SimpleDiffChange> nonSkipped = changes != null ? ContainerUtil.filter(changes, it -> !it.isSkipped()) : null;
     FoldingModelSupport.Data foldingState = myFoldingModel.createState(nonSkipped, getFoldingModelSettings());
-    return new CompareData(changes, isContentsEqual, foldingState);
-  }
 
-  @NotNull
-  protected Runnable apply(@NotNull CompareData data) {
     return () -> {
       myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
 
       clearDiffPresentation();
 
-      myIsContentsEqual = data.isContentsEqual();
-      if (data.isContentsEqual()) {
+      myIsContentsEqual = isContentsEqual;
+      if (isContentsEqual) {
         boolean equalCharsets = TextDiffViewerUtil.areEqualCharsets(getContents());
         boolean equalSeparators = TextDiffViewerUtil.areEqualLineSeparators(getContents());
         myPanel.addNotification(DiffNotifications.createEqualContents(equalCharsets, equalSeparators));
       }
 
-      List<SimpleDiffChange> changes = data.getChanges();
       if (changes != null) {
         for (int i = 0; i < changes.size(); i++) {
           SimpleDiffChange change = changes.get(i);
@@ -246,7 +241,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         myDiffChanges.addAll(changes);
       }
 
-      myFoldingModel.install(data.getFoldingState(), myRequest, getFoldingModelSettings());
+      myFoldingModel.install(foldingState, myRequest, getFoldingModelSettings());
 
       myInitialScrollHelper.onRediff();
 
@@ -786,34 +781,6 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       String message = DiffBundle.message("diff.count.differences.status.text", changesCount - excludedChanges);
       if (excludedChanges > 0) message += " " + DiffBundle.message("diff.inactive.count.differences.status.text", excludedChanges);
       return message;
-    }
-  }
-
-  private static class CompareData {
-    @Nullable private final List<SimpleDiffChange> myChanges;
-    private final boolean myIsContentsEqual;
-    @Nullable private final FoldingModelSupport.Data myFoldingState;
-
-    private CompareData(@Nullable List<SimpleDiffChange> changes,
-                        boolean isContentsEqual,
-                        @Nullable FoldingModelSupport.Data state) {
-      myChanges = changes;
-      myIsContentsEqual = isContentsEqual;
-      myFoldingState = state;
-    }
-
-    @Nullable
-    public List<SimpleDiffChange> getChanges() {
-      return myChanges;
-    }
-
-    public boolean isContentsEqual() {
-      return myIsContentsEqual;
-    }
-
-    @Nullable
-    public FoldingModelSupport.Data getFoldingState() {
-      return myFoldingState;
     }
   }
 
