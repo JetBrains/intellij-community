@@ -61,7 +61,7 @@ class UnifiedFragmentBuilderAutoTest : DiffTestCase() {
 
     val ignoreWhitespaces = policy !== ComparisonPolicy.DEFAULT
     val text = builder.text
-    val blocks = builder.blocks
+    val changes = builder.changes
     val convertor1 = builder.convertor1
     val convertor2 = builder.convertor2
     val changedLines = builder.changedLines
@@ -93,16 +93,16 @@ class UnifiedFragmentBuilderAutoTest : DiffTestCase() {
     }
 
     // changed fragments and changed blocks should have same content
-    assertEquals(blocks.size, fragments.size)
+    assertEquals(changes.size, fragments.size)
     for (i in fragments.indices) {
       val fragment = fragments[i]
-      val block = blocks[i]
+      val block = changes[i]
 
       val fragment1 = sequence1.subSequence(fragment.startOffset1, fragment.endOffset1)
       val fragment2 = sequence2.subSequence(fragment.startOffset2, fragment.endOffset2)
 
-      val block1 = DiffUtil.getLinesContent(document, block.range1.start, block.range1.end)
-      val block2 = DiffUtil.getLinesContent(document, block.range2.start, block.range2.end)
+      val block1 = DiffUtil.getLinesContent(document, block.deletedRange.start, block.deletedRange.end)
+      val block2 = DiffUtil.getLinesContent(document, block.insertedRange.start, block.insertedRange.end)
 
       assertEqualsCharSequences(fragment1, block1, ignoreWhitespaces, true)
       assertEqualsCharSequences(fragment2, block2, ignoreWhitespaces, true)

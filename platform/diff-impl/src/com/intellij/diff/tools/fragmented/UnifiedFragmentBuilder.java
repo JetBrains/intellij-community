@@ -32,7 +32,7 @@ class UnifiedFragmentBuilder {
   @NotNull private final Side myMasterSide;
 
   @NotNull private final StringBuilder myBuilder = new StringBuilder();
-  @NotNull private final List<ChangedBlock> myBlocks = new ArrayList<>();
+  @NotNull private final List<UnifiedDiffChange> myChanges = new ArrayList<>();
   @NotNull private final List<HighlightRange> myRanges = new ArrayList<>();
   @NotNull private final LineNumberConvertor.Builder myConvertor1 = new LineNumberConvertor.Builder();
   @NotNull private final LineNumberConvertor.Builder myConvertor2 = new LineNumberConvertor.Builder();
@@ -109,14 +109,7 @@ class UnifiedFragmentBuilder {
 
     linesAfter = totalLines;
 
-    int blockStartLine1 = linesBefore;
-    int blockEndLine1 = linesBetween;
-    int blockStartLine2 = linesBetween;
-    int blockEndLine2 = linesAfter;
-
-    myBlocks.add(new ChangedBlock(new LineRange(blockStartLine1, blockEndLine1),
-                                  new LineRange(blockStartLine2, blockEndLine2),
-                                  fragment));
+    myChanges.add(new UnifiedDiffChange(linesBefore, linesBetween, linesAfter, fragment));
 
     lastProcessedLine1 = endLine1;
     lastProcessedLine2 = endLine2;
@@ -190,8 +183,8 @@ class UnifiedFragmentBuilder {
   }
 
   @NotNull
-  public List<ChangedBlock> getBlocks() {
-    return myBlocks;
+  public List<UnifiedDiffChange> getChanges() {
+    return myChanges;
   }
 
   @NotNull
