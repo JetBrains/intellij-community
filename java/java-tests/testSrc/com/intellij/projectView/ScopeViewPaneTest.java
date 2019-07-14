@@ -204,6 +204,7 @@ public class ScopeViewPaneTest extends TestSourceBasedTestCase {
     Disposer.dispose(pane);
   }
 
+  @Bombed(user = "SAM", year = 2020, month = Calendar.JANUARY, day = 10)
   public void testInScope() {
     ScopeTreeViewPanel pane = null;
     try {
