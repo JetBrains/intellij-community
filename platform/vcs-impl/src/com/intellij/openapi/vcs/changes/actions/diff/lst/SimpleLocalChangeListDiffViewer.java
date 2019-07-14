@@ -5,6 +5,7 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.tools.simple.SimpleDiffChange;
+import com.intellij.diff.tools.simple.SimpleDiffChangeUi;
 import com.intellij.diff.tools.simple.SimpleDiffViewer;
 import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.util.DiffGutterRenderer;
@@ -114,6 +115,13 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     return group;
   }
 
+  @NotNull
+  @Override
+  protected SimpleDiffChangeUi createUi(@NotNull SimpleDiffChange change) {
+    if (change instanceof MySimpleDiffChange) return new MySimpleDiffChangeUi(this, (MySimpleDiffChange)change);
+    return super.createUi(change);
+  }
+
   @Override
   @NotNull
   protected Runnable performRediff(@NotNull final ProgressIndicator indicator) {
@@ -218,7 +226,10 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       boolean isSkipped = !isFromActiveChangelist;
       boolean isExcluded = !isFromActiveChangelist || (myAllowExcludeChangesFromCommit && isExcludedFromCommit);
 
-      changes.addAll(ContainerUtil.map(rangeFragments, fragment -> new MySimpleDiffChange(fragment, isExcluded, isSkipped, localRange.getChangelistId(), isExcludedFromCommit)));
+      for (LineFragment fragment : rangeFragments) {
+        changes.add(new MySimpleDiffChange(changes.size(), fragment, isExcluded, isSkipped,
+                                           localRange.getChangelistId(), isFromActiveChangelist, isExcludedFromCommit));
+      }
     }
 
     return apply(changes, isContentsEqual);
@@ -230,18 +241,41 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     myExcludeAllCheckboxPanel.refresh();
   }
 
-  private class MySimpleDiffChange extends SimpleDiffChange {
+  private static class MySimpleDiffChange extends SimpleDiffChange {
     @NotNull private final String myChangelistId;
+    private final boolean myIsFromActiveChangelist;
     private final boolean myIsExcludedFromCommit;
 
-    MySimpleDiffChange(@NotNull LineFragment fragment,
-                              boolean isExcluded,
-                              boolean isSkipped,
-                              @NotNull String changelistId,
-                              boolean isExcludedFromCommit) {
-      super(SimpleLocalChangeListDiffViewer.this, fragment, isExcluded, isSkipped);
+    MySimpleDiffChange(int index,
+                       @NotNull LineFragment fragment,
+                       boolean isExcluded,
+                       boolean isSkipped,
+                       @NotNull String changelistId,
+                       boolean isFromActiveChangelist,
+                       boolean isExcludedFromCommit) {
+      super(index, fragment, isExcluded, isSkipped);
       myChangelistId = changelistId;
+      myIsFromActiveChangelist = isFromActiveChangelist;
       myIsExcludedFromCommit = isExcludedFromCommit;
+    }
+
+    @NotNull
+    public String getChangelistId() {
+      return myChangelistId;
+    }
+
+    public boolean isFromActiveChangelist() {
+      return myIsFromActiveChangelist;
+    }
+
+    public boolean isExcludedFromCommit() {
+      return myIsExcludedFromCommit;
+    }
+  }
+
+  private static class MySimpleDiffChangeUi extends SimpleDiffChangeUi {
+    private MySimpleDiffChangeUi(@NotNull SimpleLocalChangeListDiffViewer viewer, @NotNull MySimpleDiffChange change) {
+      super(viewer, change);
     }
 
     @NotNull
@@ -249,18 +283,15 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       return (SimpleLocalChangeListDiffViewer)myViewer;
     }
 
-    public boolean isFromActiveChangelist() {
-      return myChangelistId.equals(getViewer().myChangelistId);
-    }
-
-    public boolean isExcludedFromCommit() {
-      return myIsExcludedFromCommit;
+    @NotNull
+    private MySimpleDiffChange getChange() {
+      return ((MySimpleDiffChange)myChange);
     }
 
     @Override
     protected void doInstallActionHighlighters() {
       super.doInstallActionHighlighters();
-      if (myAllowExcludeChangesFromCommit && isFromActiveChangelist()) {
+      if (getViewer().myAllowExcludeChangesFromCommit && getChange().isFromActiveChangelist()) {
         myOperations.add(new ExcludeGutterOperation());
       }
     }
@@ -272,20 +303,21 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
 
       @Override
       public GutterIconRenderer createRenderer() {
-        if (!isFromActiveChangelist()) return null;
+        if (!getChange().isFromActiveChangelist()) return null;
 
-        Icon icon = myIsExcludedFromCommit ? AllIcons.Diff.GutterCheckBox : AllIcons.Diff.GutterCheckBoxSelected;
+        final boolean isExcludedFromCommit = getChange().isExcludedFromCommit();
+        Icon icon = isExcludedFromCommit ? AllIcons.Diff.GutterCheckBox : AllIcons.Diff.GutterCheckBoxSelected;
         return new DiffGutterRenderer(icon, "Include into commit") {
           @Override
           protected void handleMouseClick() {
-            if (!isValid()) return;
+            if (!myChange.isValid()) return;
 
             PartialLocalLineStatusTracker tracker = getViewer().getPartialTracker();
             if (tracker == null) return;
-            LocalRange range = tracker.getRangeForLine(getStartLine(Side.RIGHT));
+            LocalRange range = tracker.getRangeForLine(myChange.getStartLine(Side.RIGHT));
             if (range == null) return;
 
-            tracker.setExcludedFromCommit(range, !myIsExcludedFromCommit);
+            tracker.setExcludedFromCommit(range, !isExcludedFromCommit);
 
             getViewer().rediff();
           }
