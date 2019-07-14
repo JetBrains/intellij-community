@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.projectView;
 
 import com.intellij.ide.projectView.*;
@@ -240,6 +240,7 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
   }
 
   private void assertTree(String expected) {
+    PlatformTestUtil.waitWhileBusy(myPane.getTree());
     TreePath path = PlatformTestUtil.waitForPromise(myPane.promisePathToElement(getContentDirectory()));
     PlatformTestUtil.waitWhileBusy(myPane.getTree());
     Object element = path.getLastPathComponent();

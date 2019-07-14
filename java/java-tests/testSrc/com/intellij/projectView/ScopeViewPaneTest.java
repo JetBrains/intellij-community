@@ -218,6 +218,7 @@ public class ScopeViewPaneTest extends TestSourceBasedTestCase {
 
       final ProjectViewImpl view = (ProjectViewImpl)ProjectView.getInstance(getProject());
       changeView(view, ProjectFilesScope.INSTANCE);
+      view.setFlattenPackages(ScopeViewPane.ID, true);
       view.setHideEmptyPackages(ScopeViewPane.ID, true);
 
       pane.refreshScope(namedScope);

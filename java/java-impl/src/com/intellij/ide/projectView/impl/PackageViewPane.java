@@ -34,6 +34,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -43,6 +44,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.*;
+
+import static com.intellij.openapi.module.ModuleGrouperKt.isQualifiedModuleNamesEnabled;
 
 public class PackageViewPane extends AbstractProjectViewPSIPane {
   @NonNls public static final String ID = "PackagesPane";
@@ -148,37 +151,8 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     return super.getSelectedDirectories();
   }
 
-  private final class ShowLibraryContentsAction extends ToggleAction {
-    private ShowLibraryContentsAction() {
-      super(IdeBundle.message("action.show.libraries.contents"), IdeBundle.message("action.show.hide.library.contents"),
-            AllIcons.ObjectBrowser.ShowLibraryContents);
-    }
-
-    @Override
-    public boolean isSelected(@NotNull AnActionEvent event) {
-      return ProjectView.getInstance(getProject()).isShowLibraryContents(getId());
-    }
-
-    @Override
-    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
-      final ProjectViewImpl projectView = (ProjectViewImpl)ProjectView.getInstance(getProject());
-      projectView.setShowLibraryContents(getId(), flag);
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-      final Presentation presentation = e.getPresentation();
-      final ProjectViewImpl projectView = (ProjectViewImpl)ProjectView.getInstance(getProject());
-      presentation.setVisible(projectView.getCurrentProjectViewPane() == PackageViewPane.this);
-    }
-  }
-
   @Override
   public void addToolbarActions(@NotNull DefaultActionGroup actionGroup) {
-    actionGroup.addAction(new ShowModulesAction(myProject, ID)).setAsSecondary(true);
-    actionGroup.addAction(createFlattenModulesAction(() -> true)).setAsSecondary(true);
-    actionGroup.addAction(new ShowLibraryContentsAction()).setAsSecondary(true);
     AnAction editScopesAction = ActionManager.getInstance().getAction("ScopeView.EditScopes");
     if (editScopesAction != null) actionGroup.addAction(editScopesAction).setAsSecondary(true);
   }
@@ -343,5 +317,20 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
   @Override
   protected BaseProjectTreeBuilder createBuilder(@NotNull DefaultTreeModel model) {
     return null;
+  }
+
+  @Override
+  public boolean supportsFlattenModules() {
+    return PlatformUtils.isIntelliJ() && isQualifiedModuleNamesEnabled(myProject) && ProjectView.getInstance(myProject).isShowModules(ID);
+  }
+
+  @Override
+  public boolean supportsShowLibraryContents() {
+    return true;
+  }
+
+  @Override
+  public boolean supportsShowModules() {
+    return PlatformUtils.isIntelliJ();
   }
 }
