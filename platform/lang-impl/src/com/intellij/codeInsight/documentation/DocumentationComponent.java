@@ -1850,16 +1850,48 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class MyBufferedImageView extends View {
 
-    private static final int DEFAULT_BORDER = 2;
+    private static final int DEFAULT_BORDER = 0;
     private final BufferedImage myBufferedImage;
     private final int width;
     private final int height;
+    private final int border;
+    private final float vAlign;
 
     MyBufferedImageView(Element elem, BufferedImage myBufferedImage) {
       super(elem);
       this.myBufferedImage = myBufferedImage;
-      this.width = getIntAttr(HTML.Attribute.WIDTH, myBufferedImage.getWidth());
-      this.height = getIntAttr(HTML.Attribute.HEIGHT, myBufferedImage.getHeight());
+      int width = getIntAttr(HTML.Attribute.WIDTH, -1);
+      int height = getIntAttr(HTML.Attribute.HEIGHT, -1);
+      if (width < 0 && height < 0) {
+        this.width = myBufferedImage.getWidth();
+        this.height = myBufferedImage.getHeight();
+      } else if (width < 0) {
+        this.width = height * getAspectRatio();
+        this.height = height;
+      } else if (height < 0) {
+        this.width = width;
+        this.height = width / getAspectRatio();
+      } else {
+        this.width = width;
+        this.height = height;
+      }
+      this.border = getIntAttr(HTML.Attribute.BORDER, DEFAULT_BORDER);
+      Object alignment = elem.getAttributes().getAttribute(HTML.Attribute.ALIGN);
+      float vAlign = 1.0f;
+      if (alignment != null) {
+        alignment = alignment.toString();
+        if ("top".equals(alignment)) {
+          vAlign = 0f;
+        }
+        else if ("middle".equals(alignment)) {
+          vAlign = .5f;
+        }
+      }
+      this.vAlign = vAlign;
+    }
+
+    private int getAspectRatio() {
+      return myBufferedImage.getWidth() / myBufferedImage.getHeight();
     }
 
     private int getIntAttr(HTML.Attribute name, int defaultValue) {
@@ -1887,9 +1919,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     public float getPreferredSpan(int axis) {
       switch (axis) {
         case View.X_AXIS:
-          return width + 2 * DEFAULT_BORDER;
+          return width + 2 * border;
         case View.Y_AXIS:
-          return height + 2 * DEFAULT_BORDER;
+          return height + 2 * border;
         default:
           throw new IllegalArgumentException("Invalid axis: " + axis);
       }
@@ -1903,7 +1935,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     @Override
     public void paint(Graphics g, Shape a) {
       Rectangle bounds = a.getBounds();
-      Rectangle dstBounds = new Rectangle(bounds.x + DEFAULT_BORDER, bounds.y + DEFAULT_BORDER, width, height);
+      Rectangle dstBounds = new Rectangle(bounds.x + border, bounds.y + border, width, height);
       UIUtil.drawImage(g, ImageUtil.ensureHiDPI(myBufferedImage, ScaleContext.create(myEditorPane)), dstBounds, null);
     }
 
@@ -1933,6 +1965,13 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       return getEndOffset();
     }
 
+    @Override
+    public float getAlignment(int axis) {
+      if (axis == View.Y_AXIS) {
+        return vAlign;
+      }
+      return super.getAlignment(axis);
+    }
   }
 
   private static class MyIconView extends View {
