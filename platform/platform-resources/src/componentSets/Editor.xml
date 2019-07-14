@@ -4,9 +4,6 @@
       <implementation-class>com.intellij.ide.actionMacro.ActionMacroManager</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.openapi.actionSystem.ex.QuickListsManager</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.openapi.editor.impl.VisibleEditorsTracker</implementation-class>
     </component>
     <component>
@@ -25,6 +22,7 @@
   </project-components>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.openapi.actionSystem.ex.QuickListsManager"/>
     <projectService serviceImplementation="com.intellij.openapi.fileEditor.impl.EditorHistoryManager"/>
     <postStartupActivity implementation="com.intellij.openapi.fileEditor.impl.EditorHistoryManager$EditorHistoryManagerStartUpActivity"/>
   </extensions>
