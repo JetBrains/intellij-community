@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.changes.actions.diff.lst;
 
 import com.intellij.diff.DiffContext;
-import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.tools.simple.SimpleDiffChange;
 import com.intellij.diff.tools.simple.SimpleDiffChangeUi;
@@ -10,7 +9,6 @@ import com.intellij.diff.tools.simple.SimpleDiffViewer;
 import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.util.DiffGutterRenderer;
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.diff.util.Range;
 import com.intellij.diff.util.Side;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
@@ -21,7 +19,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -49,8 +46,6 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.util.List;
 import java.util.*;
-
-import static com.intellij.util.ObjectUtils.notNull;
 
 public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   @NotNull private final LocalChangeListDiffRequest myLocalRequest;
@@ -122,117 +117,85 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     return super.createUi(change);
   }
 
-  @Override
   @NotNull
-  protected Runnable performRediff(@NotNull final ProgressIndicator indicator) {
-    LineStatusTracker tracker = myLocalRequest.getLineStatusTracker();
-    if (tracker instanceof SimpleLocalLineStatusTracker) {
-      // partial changes are disabled for file (ex: it is marked as "unmodified")
-      return super.performRediff(indicator);
-    }
-
-    PartialLocalLineStatusTracker partialTracker = ObjectUtils.tryCast(tracker, PartialLocalLineStatusTracker.class);
-    if (partialTracker == null || getContent2().getDocument() != tracker.getDocument()) {
-      return applyNotification(DiffNotifications.createError()); // DiffRequest is out of date
-    }
-
-    try {
-      indicator.checkCanceled();
-
-      TrackerData data = ReadAction.compute(() -> partialTracker.readLock(() -> {
-        boolean isReleased = partialTracker.isReleased();
-        boolean isOperational = partialTracker.isOperational();
-        List<String> affectedChangelistIds = partialTracker.getAffectedChangeListsIds();
-
-        if (!isOperational) {
-          return new TrackerData(isReleased, affectedChangelistIds, null);
-        }
-
-        List<LocalRange> ranges = partialTracker.getRanges();
-
-        CharSequence localText = getContent2().getDocument().getImmutableCharSequence();
-        CharSequence vcsText = getContent1().getDocument().getImmutableCharSequence();
-        CharSequence trackerVcsText = partialTracker.getVcsDocument().getImmutableCharSequence();
-
-        TrackerDiffData diffData = new TrackerDiffData(ranges, localText, vcsText, trackerVcsText);
-        return new TrackerData(isReleased, affectedChangelistIds, diffData);
-      }));
-
-
-      if (data.isReleased) {
-        return applyNotification(DiffNotifications.createError()); // DiffRequest is out of date
-      }
-
-      TrackerDiffData diffData = data.diffData;
-
-      if (diffData == null || diffData.ranges == null) {
-        if (data.affectedChangelist.size() == 1 &&
-            data.affectedChangelist.contains(myChangelistId)) {
-          // tracker is waiting for initialisation
-          // there are only one changelist, so it's safe to fallback to default logic
-          Runnable callback = super.performRediff(indicator);
-          return () -> {
-            callback.run();
-            getStatusPanel().setBusy(true);
-          };
-        }
-
-        scheduleRediff();
-        throw new ProcessCanceledException();
-      }
-
-      return performRediffUsingPartialTracker(diffData.ranges, diffData.localText, diffData.vcsText, diffData.trackerVcsText, indicator);
-    }
-    catch (DiffTooBigException e) {
-      return applyNotification(DiffNotifications.createDiffTooBig());
-    }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
-    catch (Throwable e) {
-      LOG.error(e);
-      return applyNotification(DiffNotifications.createError());
-    }
+  private Runnable superComputeDifferences(@NotNull ProgressIndicator indicator) {
+    return super.computeDifferences(indicator);
   }
 
+  @Override
   @NotNull
-  private Runnable performRediffUsingPartialTracker(@NotNull List<LocalRange> ranges,
-                                                    @NotNull CharSequence localText,
-                                                    @NotNull CharSequence vcsText,
-                                                    @NotNull CharSequence trackerVcsText,
-                                                    @NotNull ProgressIndicator indicator) {
-    if (!StringUtil.equals(trackerVcsText, vcsText)) {
-      return applyNotification(DiffNotifications.createError()); // DiffRequest is out of date
+  protected Runnable computeDifferences(@NotNull ProgressIndicator indicator) {
+    return LocalTrackerDiffUtil.computeDifferences(
+      myLocalRequest.getLineStatusTracker(),
+      getContent1().getDocument(),
+      getContent2().getDocument(),
+      myChangelistId,
+      myTextDiffProvider,
+      indicator,
+      new MyLocalTrackerDiffHandler(indicator)
+    );
+  }
+
+  private class MyLocalTrackerDiffHandler implements LocalTrackerDiffUtil.LocalTrackerDiffHandler {
+    @NotNull private final ProgressIndicator myIndicator;
+
+    private MyLocalTrackerDiffHandler(@NotNull ProgressIndicator indicator) {
+      myIndicator = indicator;
     }
 
-    if (myTextDiffProvider.isHighlightingDisabled()) {
-      return apply(null, ranges.isEmpty());
-    }
+    @NotNull
+    @Override
+    public Runnable done(boolean isContentsEqual,
+                         @NotNull List<? extends LineFragment> fragments,
+                         @NotNull List<LocalTrackerDiffUtil.LineFragmentData> fragmentsData) {
+      List<SimpleDiffChange> changes = new ArrayList<>();
 
+      for (int i = 0; i < fragments.size(); i++) {
+        LineFragment fragment = fragments.get(i);
+        LocalTrackerDiffUtil.LineFragmentData data = fragmentsData.get(i);
 
-    List<Range> linesRanges = ContainerUtil.map(ranges, range -> new Range(range.getVcsLine1(), range.getVcsLine2(), range.getLine1(), range.getLine2()));
+        boolean isExcludedFromCommit = data.isExcluded();
+        boolean isFromActiveChangelist = data.getChangelistId().equals(myChangelistId);
+        boolean isSkipped = !isFromActiveChangelist;
+        boolean isExcluded = !isFromActiveChangelist ||
+                             (myAllowExcludeChangesFromCommit && isExcludedFromCommit);
 
-    List<List<LineFragment>> newFragments = notNull(myTextDiffProvider.compare(vcsText, localText, linesRanges, indicator));
-
-    boolean isContentsEqual = ranges.isEmpty();
-    List<SimpleDiffChange> changes = new ArrayList<>();
-
-    for (int i = 0; i < ranges.size(); i++) {
-      LocalRange localRange = ranges.get(i);
-      List<LineFragment> rangeFragments = newFragments.get(i);
-
-      boolean isExcludedFromCommit = localRange.isExcludedFromCommit();
-      boolean isFromActiveChangelist = localRange.getChangelistId().equals(myChangelistId);
-      boolean isSkipped = !isFromActiveChangelist;
-      boolean isExcluded = !isFromActiveChangelist || (myAllowExcludeChangesFromCommit && isExcludedFromCommit);
-
-      for (LineFragment fragment : rangeFragments) {
         changes.add(new MySimpleDiffChange(changes.size(), fragment, isExcluded, isSkipped,
-                                           localRange.getChangelistId(), isFromActiveChangelist, isExcludedFromCommit));
+                                           data.getChangelistId(), isFromActiveChangelist,
+                                           isExcludedFromCommit));
       }
+
+      return apply(changes, isContentsEqual);
     }
 
-    return apply(changes, isContentsEqual);
+    @NotNull
+    @Override
+    public Runnable retryLater() {
+      scheduleRediff();
+      throw new ProcessCanceledException();
+    }
+
+    @NotNull
+    @Override
+    public Runnable fallback() {
+      return superComputeDifferences(myIndicator);
+    }
+
+    @NotNull
+    @Override
+    public Runnable fallbackWithProgress() {
+      Runnable callback = superComputeDifferences(myIndicator);
+      return () -> {
+        callback.run();
+        getStatusPanel().setBusy(true);
+      };
+    }
+
+    @NotNull
+    @Override
+    public Runnable error() {
+      return applyNotification(DiffNotifications.createError());
+    }
   }
 
   @Override
@@ -604,37 +567,6 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
         default:
           return null;
       }
-    }
-  }
-
-  private static class TrackerData {
-    private final boolean isReleased;
-    @NotNull public final List<String> affectedChangelist;
-    @Nullable public final TrackerDiffData diffData;
-
-    TrackerData(boolean isReleased,
-                       @NotNull List<String> affectedChangelist,
-                       @Nullable TrackerDiffData diffData) {
-      this.isReleased = isReleased;
-      this.affectedChangelist = affectedChangelist;
-      this.diffData = diffData;
-    }
-  }
-
-  private static class TrackerDiffData {
-    @Nullable public final List<LocalRange> ranges;
-    @NotNull public final CharSequence localText;
-    @NotNull public final CharSequence vcsText;
-    @NotNull public final CharSequence trackerVcsText;
-
-    TrackerDiffData(@Nullable List<LocalRange> ranges,
-                           @NotNull CharSequence localText,
-                           @NotNull CharSequence vcsText,
-                           @NotNull CharSequence trackerVcsText) {
-      this.ranges = ranges;
-      this.localText = localText;
-      this.vcsText = vcsText;
-      this.trackerVcsText = trackerVcsText;
     }
   }
 }

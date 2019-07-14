@@ -185,28 +185,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @NotNull
   protected Runnable performRediff(@NotNull final ProgressIndicator indicator) {
     try {
-      indicator.checkCanceled();
-
-      final Document document1 = getContent1().getDocument();
-      final Document document2 = getContent2().getDocument();
-
-      CharSequence[] texts = ReadAction.compute(() -> new CharSequence[]{document1.getImmutableCharSequence(), document2.getImmutableCharSequence()});
-
-      List<LineFragment> lineFragments = myTextDiffProvider.compare(texts[0], texts[1], indicator);
-
-      boolean isContentsEqual = (lineFragments == null || lineFragments.isEmpty()) &&
-                                StringUtil.equals(texts[0], texts[1]);
-
-      if (lineFragments == null) {
-        return apply(null, isContentsEqual);
-      }
-      else {
-        List<SimpleDiffChange> changes = new ArrayList<>();
-        for (LineFragment fragment : lineFragments) {
-          changes.add(new SimpleDiffChange(changes.size(), fragment));
-        }
-        return apply(changes, isContentsEqual);
-      }
+      return computeDifferences(indicator);
     }
     catch (DiffTooBigException e) {
       return applyNotification(DiffNotifications.createDiffTooBig());
@@ -217,6 +196,33 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     catch (Throwable e) {
       LOG.error(e);
       return applyNotification(DiffNotifications.createError());
+    }
+  }
+
+  @NotNull
+  protected Runnable computeDifferences(@NotNull ProgressIndicator indicator) {
+    indicator.checkCanceled();
+
+    final Document document1 = getContent1().getDocument();
+    final Document document2 = getContent2().getDocument();
+
+    CharSequence[] texts =
+      ReadAction.compute(() -> new CharSequence[]{document1.getImmutableCharSequence(), document2.getImmutableCharSequence()});
+
+    List<LineFragment> lineFragments = myTextDiffProvider.compare(texts[0], texts[1], indicator);
+
+    boolean isContentsEqual = (lineFragments == null || lineFragments.isEmpty()) &&
+                              StringUtil.equals(texts[0], texts[1]);
+
+    if (lineFragments == null) {
+      return apply(null, isContentsEqual);
+    }
+    else {
+      List<SimpleDiffChange> changes = new ArrayList<>();
+      for (LineFragment fragment : lineFragments) {
+        changes.add(new SimpleDiffChange(changes.size(), fragment));
+      }
+      return apply(changes, isContentsEqual);
     }
   }
 
