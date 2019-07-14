@@ -4,6 +4,7 @@ package com.intellij.openapi.actionSystem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NonNls;
@@ -25,7 +26,7 @@ public abstract class ActionManager {
    * Fetches the instance of ActionManager implementation.
    */
   public static ActionManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(ActionManager.class);
+    return ServiceManager.getService(ActionManager.class);
   }
 
   /**

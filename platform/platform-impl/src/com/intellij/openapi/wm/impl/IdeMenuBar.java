@@ -9,7 +9,6 @@ import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.actionSystem.impl.WeakTimerListener;
@@ -63,7 +62,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   private List<AnAction> myNewVisibleActions;
   private final MenuItemPresentationFactory myPresentationFactory;
   private final DataManager myDataManager;
-  private final ActionManagerEx myActionManager;
+  private final ActionManager myActionManager;
   private final Disposable myDisposable = Disposer.newDisposable();
   private boolean myDisabled;
 
@@ -77,7 +76,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
 
   private GlobalMenuLinux myGlobalMenuLinux;
 
-  public IdeMenuBar(ActionManagerEx actionManager, DataManager dataManager) {
+  public IdeMenuBar(ActionManager actionManager, DataManager dataManager) {
     myActionManager = actionManager;
     myTimerListener = new MyTimerListener();
     myVisibleActions = new ArrayList<>();

@@ -49,13 +49,8 @@ public class ModifierKeyDoubleClickHandler implements Disposable, BaseComponent 
     KEY_CODE_TO_MODIFIER_MAP.put(KeyEvent.VK_SHIFT, InputEvent.SHIFT_MASK);
   }
 
-  private final ActionManagerEx myActionManagerEx;
   private final ConcurrentMap<String, MyDispatcher> myDispatchers = ContainerUtil.newConcurrentMap();
   private boolean myIsRunningAction;
-
-  private ModifierKeyDoubleClickHandler(ActionManagerEx actionManagerEx) {
-    myActionManagerEx = actionManagerEx;
-  }
 
   @Override
   public void initComponent() {
@@ -239,16 +234,17 @@ public class ModifierKeyDoubleClickHandler implements Disposable, BaseComponent 
     private boolean run(KeyEvent event) {
       myIsRunningAction = true;
       try {
-        AnAction action = myActionManagerEx.getAction(myActionId);
+        ActionManagerEx ex = ActionManagerEx.getInstanceEx();
+        AnAction action = ex.getAction(myActionId);
         if (action == null) return false;
         DataContext context = DataManager.getInstance().getDataContext(IdeFocusManager.findInstance().getFocusOwner());
         AnActionEvent anActionEvent = AnActionEvent.createFromAnAction(action, event, ActionPlaces.KEYBOARD_SHORTCUT, context);
         action.update(anActionEvent);
         if (!anActionEvent.getPresentation().isEnabled()) return false;
 
-        myActionManagerEx.fireBeforeActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
+        ex.fireBeforeActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
         action.actionPerformed(anActionEvent);
-        myActionManagerEx.fireAfterActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
+        ex.fireAfterActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
         ActionsCollector.getInstance().record("DoubleShortcut", anActionEvent.getInputEvent(), action.getClass());
         return true;
       }

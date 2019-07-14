@@ -18,8 +18,9 @@ import com.intellij.openapi.project.Project
 import gnu.trove.THashSet
 import java.util.function.Function
 
-class QuickListsManager(private val myActionManager: ActionManager, schemeManagerFactory: SchemeManagerFactory) : BaseComponent {
+class QuickListsManager(schemeManagerFactory: SchemeManagerFactory) : BaseComponent {
   private val mySchemeManager: SchemeManager<QuickList>
+  private val myActionManager by lazy { ActionManager.getInstance() }
 
   init {
     mySchemeManager = schemeManagerFactory.create("quicklists",

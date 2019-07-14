@@ -56,7 +56,6 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
   private static final String RECORDED = "Recorded: ";
 
   private boolean myIsRecording;
-  private final ActionManagerEx myActionManager;
   private ActionMacro myLastMacro;
   private ActionMacro myRecordingMacro;
   private ArrayList<ActionMacro> myMacros = new ArrayList<>();
@@ -71,12 +70,11 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
 
   private String myLastTyping = "";
 
-  public ActionMacroManager(ActionManagerEx actionManager, @NotNull MessageBus messageBus) {
-    myActionManager = actionManager;
+  public ActionMacroManager(@NotNull MessageBus messageBus) {
     messageBus.connect(this).subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
       public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull final AnActionEvent event) {
-        String id = actionManager.getId(action);
+        String id = ActionManager.getInstance().getId(action);
         if (id == null) return;
         //noinspection HardCodedStringLiteral
         if ("StartStopMacroRecording".equals(id)) {
@@ -422,7 +420,7 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
 
       if (!registeredIds.contains(actionId)) {
         registeredIds.add(actionId);
-        myActionManager.registerAction(actionId, new InvokeMacroAction(macro));
+        ActionManager.getInstance().registerAction(actionId, new InvokeMacroAction(macro));
       }
     }
   }
@@ -430,9 +428,9 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
   public void unregisterActions() {
 
     // unregister Tool actions
-    String[] oldIds = myActionManager.getActionIds(ActionMacro.MACRO_ACTION_PREFIX);
+    String[] oldIds = ActionManager.getInstance().getActionIds(ActionMacro.MACRO_ACTION_PREFIX);
     for (final String oldId : oldIds) {
-      myActionManager.unregisterAction(oldId);
+      ActionManager.getInstance().unregisterAction(oldId);
     }
   }
 
