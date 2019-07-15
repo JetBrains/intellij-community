@@ -2,7 +2,6 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -185,27 +184,14 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
         if (src != null && src.startsWith("data:image") && src.contains("base64")) {
           String[] split = src.split(",");
           if (split.length == 2) {
-            ByteArrayInputStream bis = null;
-            try {
-              byte[] bytes = Base64.getDecoder().decode(split[1]);
-              bis = new ByteArrayInputStream(bytes);
+            try (ByteArrayInputStream bis = new ByteArrayInputStream(Base64.getDecoder().decode(split[1]))) {
               BufferedImage image = ImageIO.read(bis);
               if (image != null) {
                 return new MyBufferedImageView(elem, image);
               }
             }
             catch (IllegalArgumentException | IOException e) {
-              LOG.trace(e);
-            }
-            finally {
-              try {
-                if (bis != null) {
-                  bis.close();
-                }
-              }
-              catch (IOException e) {
-                LOG.trace(e);
-              }
+              LOG.debug(e);
             }
           }
         }
@@ -299,12 +285,11 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
       @Override
       public void paint(Graphics g, Shape a) {
         Rectangle bounds = a.getBounds();
-        Rectangle dstBounds = new Rectangle(bounds.x + border, bounds.y + border, width, height);
-        UIUtil.drawImage(g, ImageUtil.ensureHiDPI(myBufferedImage, ScaleContext.create(getContainer())), dstBounds, null);
+        g.drawImage(myBufferedImage, bounds.x + border, bounds.y + border, width, height, null);
       }
 
       @Override
-      public Shape modelToView(int pos, Shape a, Position.Bias b) throws BadLocationException {
+      public Shape modelToView(int pos, Shape a, Position.Bias b) {
         int p0 = getStartOffset();
         int p1 = getEndOffset();
         if ((pos >= p0) && (pos <= p1)) {
