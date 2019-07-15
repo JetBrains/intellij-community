@@ -8,7 +8,10 @@ import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlBundle;
 
 import java.util.List;
@@ -45,6 +48,33 @@ public class RealFetchTest extends BasePlatformTestCase {
     assertNotNull(intention);
     intention.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
     myFixture.testHighlighting();
+    ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().removeResource(url));
+  }
+
+  public void testNestedRelativePath() {
+    final String url = "https://community.rti.com/schema/6.0.0/rti_dds_profiles.xsd";
+    assertEquals(url, ExternalResourceManager.getInstance().getResourceLocation(url, getProject()));
+    myFixture.configureByText(XmlFileType.INSTANCE,
+                              "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n" +
+                              "<dds xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+                              "     xsi:noNamespaceSchemaLocation=\"https://community.rti.com/schema/6.0.0/rti_dd<caret>s_profiles.xsd\">\n" +
+                              "\n" +
+                              "  <types/>\n" +
+                              "  <domain_library name=\"xxx\"/>\n" +
+                              "  <domain_participant_library name=\"ffff\"/>\n" +
+                              "</dds>");
+    IntentionAction intention = myFixture.getAvailableIntention(XmlBundle.message("fetch.external.resource"));
+    assertNotNull(intention);
+    intention.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
+
+    myFixture.testHighlighting();
+
+    XmlFile file = (XmlFile)myFixture.getFile();
+    XmlAttributeDescriptor descriptor = file.getRootTag().getSubTags()[1].getAttribute("name").getDescriptor();
+    PsiFile containingFile = descriptor.getDeclaration().getContainingFile();
+    assertNotNull(containingFile.getParent());
+    assertEquals("definitions", containingFile.getParent().getName());
+
     ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().removeResource(url));
   }
 
