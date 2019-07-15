@@ -16,7 +16,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.util.LowMemoryWatcher.LowMemoryWatcherType.ONLY_AFTER_GC;
@@ -33,7 +35,7 @@ public class LowMemoryNotifier implements Disposable {
   public LowMemoryNotifier() {
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(IdePerformanceListener.TOPIC, new IdePerformanceListener() {
       @Override
-      public void uiFreezeFinished(long durationMs) {
+      public void uiFreezeFinished(long durationMs, @Nullable File reportDir) {
         LifecycleUsageTriggerCollector.onFreeze(durationMs);
       }
 

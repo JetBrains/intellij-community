@@ -207,8 +207,8 @@ public class PerformanceWatcher implements Disposable {
     return Registry.intValue("performance.watcher.sampling.interval.ms");
   }
 
-  private static int getDumpInterval() {
-    return Registry.intValue("performance.watcher.dump.interval.ms");
+  static int getDumpInterval() {
+    return getSamplingInterval() * getMaxAttempts();
   }
 
   private void edtFrozen(long currentMillis) {
@@ -225,8 +225,7 @@ public class PerformanceWatcher implements Disposable {
   private void edtFrozenPrecise(long start) {
     myFreezeStart = start;
     myPublisher.uiFreezeStarted();
-    myDumpTask = myExecutor.scheduleWithFixedDelay(this::dumpThreads, getDumpInterval(), getDumpInterval(), TimeUnit.MILLISECONDS);
-    dumpThreads();
+    myDumpTask = myExecutor.scheduleWithFixedDelay(this::dumpThreads, 0, getDumpInterval(), TimeUnit.MILLISECONDS);
   }
 
   @NotNull
@@ -250,11 +249,14 @@ public class PerformanceWatcher implements Disposable {
 
       int unresponsiveDuration = (int)(currentMillis - myFreezeStart) / 1000;
       File dir = new File(myLogDir, getFreezeFolderName(myFreezeStart));
+      File reportDir = null;
       if (dir.exists()) {
-        //noinspection ResultOfMethodCallIgnored
-        dir.renameTo(new File(myLogDir, dir.getName() + getFreezePlaceSuffix() + "-" + unresponsiveDuration + "sec"));
+        reportDir = new File(myLogDir, dir.getName() + getFreezePlaceSuffix() + "-" + unresponsiveDuration + "sec");
+        if (!dir.renameTo(reportDir)) {
+          reportDir = null;
+        }
       }
-      myPublisher.uiFreezeFinished(currentMillis - myFreezeStart);
+      myPublisher.uiFreezeFinished(currentMillis - myFreezeStart, reportDir);
       myFreezeStart = 0;
 
       myStacktraceCommonPart = null;
@@ -418,5 +420,9 @@ public class PerformanceWatcher implements Disposable {
   @NotNull
   public static Snapshot takeSnapshot() {
     return getInstance().new Snapshot();
+  }
+
+  ScheduledExecutorService getExecutor() {
+    return myExecutor;
   }
 }
