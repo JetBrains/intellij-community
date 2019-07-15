@@ -157,6 +157,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     NoSwingUnderWriteAction.watchForEvents(this);
   }
 
+  @ApiStatus.Internal
   public static void patchSystem() {
     LOG.info("CPU cores: " + Runtime.getRuntime().availableProcessors() +
              "; ForkJoinPool.commonPool: " + ForkJoinPool.commonPool() +
@@ -167,7 +168,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     IdeEventQueue.getInstance();
   }
 
-  // this method not in ApplicationImpl constructor because application starter can perform this activity in parallel to another task
+  // this method is not in ApplicationImpl constructor because application starter can perform this activity in parallel to another task
+  @ApiStatus.Internal
   public static void registerMessageBusListeners(@NotNull Application app, @NotNull List<? extends IdeaPluginDescriptor> pluginDescriptors, boolean isUnitTestMode) {
     Map<String, List<ListenerDescriptor>> map = ContainerUtil.newConcurrentMap();
     for (IdeaPluginDescriptor descriptor : pluginDescriptors) {
