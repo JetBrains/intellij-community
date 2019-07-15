@@ -132,14 +132,19 @@ public class PlatformTestUtil {
   /**
    * @see ExtensionPointImpl#maskAll(List, Disposable)
    */
-  public static <T> void maskExtensions(@NotNull ExtensionPointName<T> pointName, @NotNull List<T> newExtensions, @NotNull Disposable parentDisposable) {
+  public static <T> void maskExtensions(@NotNull ExtensionPointName<T> pointName,
+                                        @NotNull List<T> newExtensions,
+                                        @NotNull Disposable parentDisposable) {
     ((ExtensionPointImpl<T>)pointName.getPoint(null)).maskAll(newExtensions, parentDisposable);
   }
 
   /**
    * @see ExtensionPointImpl#maskAll(List, Disposable)
    */
-  public static <T> void maskExtensions(@NotNull ProjectExtensionPointName<T> pointName, @NotNull Project project, @NotNull List<T> newExtensions, @NotNull Disposable parentDisposable) {
+  public static <T> void maskExtensions(@NotNull ProjectExtensionPointName<T> pointName,
+                                        @NotNull Project project,
+                                        @NotNull List<T> newExtensions,
+                                        @NotNull Disposable parentDisposable) {
     ((ExtensionPointImpl<T>)pointName.getPoint(project)).maskAll(newExtensions, parentDisposable);
   }
 
@@ -285,7 +290,7 @@ public class PlatformTestUtil {
 
   private static void assertDispatchThreadWithoutWriteAccess(Application application) {
     if (application != null) {
-      assert !application.isWriteAccessAllowed() : "do not wait under the write action to avoid possible deadlock";
+      assert !application.isWriteAccessAllowed() : "do not wait under write action to avoid possible deadlock";
       assert application.isDispatchThread();
     }
     else {
@@ -294,6 +299,7 @@ public class PlatformTestUtil {
     }
   }
 
+  @SuppressWarnings("deprecation")
   private static boolean isBusy(JTree tree, TreeModel model) {
     UIUtil.dispatchAllInvocationEvents();
     if (model instanceof AsyncTreeModel) {
@@ -566,7 +572,7 @@ public class PlatformTestUtil {
   }
 
   /**
-   * example usage: {@code startPerformanceTest("calculating pi",100, testRunnable).assertTiming();}
+   * An example: {@code startPerformanceTest("calculating pi",100, testRunnable).assertTiming();}
    */
   @Contract(pure = true) // to warn about not calling .assertTiming() in the end
   public static PerformanceTestInfo startPerformanceTest(@NonNls @NotNull String what, int expectedMs, @NotNull ThrowableRunnable test) {
@@ -708,7 +714,7 @@ public class PlatformTestUtil {
         assertArrayEquals(fileExpected.getPath(), fileExpected.contentsToByteArray(), fileActual.contentsToByteArray());
       }
       else if (!StringUtil.equals(expected, actual)) {
-        throw new FileComparisonFailure("Text mismatch in file " + fileExpected.getName(), expected, actual, fileExpected.getPath());
+        throw new FileComparisonFailure("Text mismatch in the file " + fileExpected.getName(), expected, actual, fileExpected.getPath());
       }
     }
   }
@@ -906,7 +912,8 @@ public class PlatformTestUtil {
 
   public static void captureMemorySnapshot() {
     try {
-      Method snapshot = ReflectionUtil.getMethod(Class.forName("com.jetbrains.performancePlugin.profilers.YourKitProfilerHandler"), "captureMemorySnapshot");
+      @SuppressWarnings("SpellCheckingInspection") String className = "com.jetbrains.performancePlugin.profilers.YourKitProfilerHandler";
+      Method snapshot = ReflectionUtil.getMethod(Class.forName(className), "captureMemorySnapshot");
       if (snapshot != null) {
         Object path = snapshot.invoke(null);
         System.out.println("Memory snapshot captured to '" + path + "'");
@@ -977,9 +984,10 @@ public class PlatformTestUtil {
     " */\n", parentDisposable);
   }
 
-  /**
+  /*
    * 1. Think twice before use - do you really need to use VFS.
-   * 2. Be aware that this method doesn't refresh VFS as it should be done in tests (see {@link PlatformTestCase#synchronizeTempDirVfs}) (it is assumed that project is already created in a correct way).
+   * 2. Be aware the method doesn't refresh VFS as it should be done in tests (see {@link PlatformTestCase#synchronizeTempDirVfs})
+   *    (it is assumed that project is already created in a correct way).
    */
   @NotNull
   public static VirtualFile getOrCreateProjectTestBaseDir(@NotNull Project project) {
