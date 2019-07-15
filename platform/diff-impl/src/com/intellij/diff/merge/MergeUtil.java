@@ -144,7 +144,7 @@ public class MergeUtil {
       return Messages.showConfirmationDialog(component, message, title, "Yes", "No") == Messages.YES;
     }
 
-    return showConfirmDiscardChangesDialog(component,"Cancel Merge", true);
+    return showConfirmDiscardChangesDialog(component, "Cancel Merge", true);
   }
 
   public static boolean showConfirmDiscardChangesDialog(@NotNull JComponent parent,

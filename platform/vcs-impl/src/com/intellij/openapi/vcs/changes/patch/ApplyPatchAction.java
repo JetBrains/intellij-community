@@ -202,10 +202,19 @@ public class ApplyPatchAction extends DumbAwareAction {
       }
       request.putUserData(DiffUserDataKeysEx.MERGE_ACTION_CAPTIONS, result12 -> result12.equals(MergeResult.CANCEL) ? "Abort..." : null);
       request.putUserData(DiffUserDataKeysEx.MERGE_CANCEL_HANDLER, viewer -> {
-        int result1 = Messages.showYesNoCancelDialog(viewer.getComponent().getRootPane(),
-                                                     XmlStringUtil.wrapInHtml(
-                                                      "Would you like to <u>A</u>bort&Rollback applying patch action or <u>S</u>kip this file?"),
-                                                     "Close Merge", "_Abort", "_Skip", "Cancel", Messages.getQuestionIcon());
+        String message = XmlStringUtil.wrapInHtml("<u>A</u>bort&Rollback applying patch action or <u>S</u>kip this file?");
+        String title = "Abort Patch";
+        String yesText = "_Abort and Rollback";
+        String noText = "_Skip";
+        String cancelText = "Continue Resolve";
+        int result1 = 0;
+
+        if (Messages.canShowMacSheetPanel()) {
+          result1 = Messages.showYesNoCancelDialog(viewer.getComponent().getRootPane(), "", message, yesText, noText, cancelText, Messages.getQuestionIcon());
+        }
+        else {
+          result1 = Messages.showYesNoCancelDialog(viewer.getComponent().getRootPane(), message, title, yesText, noText, cancelText, Messages.getQuestionIcon());
+        }
 
         if (result1 == Messages.YES) {
           applyPatchStatusReference.set(ApplyPatchStatus.ABORT);
