@@ -696,8 +696,6 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     @Override
     protected void configureList() {
       super.configureList();
-      //list.setBackground(comboBox.isEditable() ? UIManager.getColor("TextField.background")
-      //                                         : UIManager.getColor("Label.background"));
       //noinspection unchecked
       list.setCellRenderer(new MyDelegateRenderer());
     }
@@ -713,11 +711,10 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
           listener.propertyChange(evt);
-          if ("renderer".equals(evt.getPropertyName()) ||
-              "editable".equals(evt.getPropertyName())) {
-            configureList();
-            if (isVisible()) {
-              hide();
+          if ("renderer".equals(evt.getPropertyName())) {
+            if (!(list.getCellRenderer() instanceof MyDelegateRenderer)) {
+              //noinspection unchecked
+              list.setCellRenderer(new MyDelegateRenderer());
             }
           }
         }
