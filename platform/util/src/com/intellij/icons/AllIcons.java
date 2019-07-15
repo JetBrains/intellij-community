@@ -2535,6 +2535,7 @@ public class AllIcons {
   }
 
   public final static class Plugins {
+    /** 16x16 */ public static final Icon Disabled = load("/plugins/disabled.svg");
     /** 12x12 */ public static final Icon Downloads = load("/plugins/downloads.svg");
     /** 15x15 */ public static final Icon ModifierInvalid = load("/plugins/modifierInvalid.svg");
     /** 14x14 */ public static final Icon ModifierJBLogo = load("/plugins/modifierJBLogo.svg");
@@ -2545,7 +2546,7 @@ public class AllIcons {
     /** 80x80 */ public static final Icon PluginLogoDisabled_80 = load("/plugins/pluginLogoDisabled_80.png");
     /** 12x12 */ public static final Icon Rating = load("/plugins/rating.svg");
     /** 12x12 */ public static final Icon Updated = load("/plugins/updated.svg");
-    /** 16x16 */ public static final Icon Disabled = load("/plugins/disabled.svg");
+
   }
 
   public final static class Preferences {
