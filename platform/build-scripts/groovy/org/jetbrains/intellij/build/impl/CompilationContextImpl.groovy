@@ -65,7 +65,7 @@ class CompilationContextImpl implements CompilationContext {
     def dependenciesProjectDir = new File(communityHome, 'build/dependencies')
     logFreeDiskSpace(messages, projectHome, "before downloading dependencies")
     def gradleJdk = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", null, "JDK_18_x64"))
-    GradleRunner gradle = new GradleRunner(dependenciesProjectDir, messages, gradleJdk)
+    GradleRunner gradle = new GradleRunner(dependenciesProjectDir, projectHome, messages, gradleJdk)
     if (!options.isInDevelopmentMode) {
       setupCompilationDependencies(gradle, options)
     }

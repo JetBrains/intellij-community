@@ -374,7 +374,7 @@ idea.fatal.error.notification=disabled
                 "-Pintellij.build.output=${buildContext.paths.buildOutputRoot}/toolbox-lite-gen",
               ]
 
-              buildContext.gradle.run('Run Toolbox LiteGen', liteGenArgs)
+              buildContext.gradle.runWithModularRuntime('Run Toolbox LiteGen', liteGenArgs)
             }
           }
         }
