@@ -6,8 +6,10 @@ import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Couple;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -153,7 +155,9 @@ public class CreateMissingSwitchBranchesFix extends BaseSwitchFix {
       if (isRuleBasedFormat) {
         return Collections.singletonList("case " + name + " -> " + value + ";");
       } else {
-        return Arrays.asList("case "+name+":", "break " + value + ";");
+        return Arrays.asList("case " + name + ":",
+                             (PsiUtil.getLanguageLevel(switchBlock) == LanguageLevel.JDK_13_PREVIEW ? "yield" : "break") +
+                             " " + value + ";");
       }
     } else {
       if (isRuleBasedFormat) {
