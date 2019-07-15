@@ -8,10 +8,10 @@ import org.jetbrains.annotations.NotNull;
  * User: zolotov
  */
 public class SyntaxScopeProxyDescriptor extends SyntaxProxyDescriptor {
-  @NotNull private final String myScope;
+  @NotNull private final CharSequence myScope;
   @NotNull private final TextMateSyntaxTable mySyntaxTable;
 
-  SyntaxScopeProxyDescriptor(@NotNull String scope, @NotNull TextMateSyntaxTable syntaxTable, @NotNull SyntaxNodeDescriptor parentNode) {
+  SyntaxScopeProxyDescriptor(@NotNull CharSequence scope, @NotNull TextMateSyntaxTable syntaxTable, @NotNull SyntaxNodeDescriptor parentNode) {
     super(parentNode);
     myScope = scope;
     mySyntaxTable = syntaxTable;

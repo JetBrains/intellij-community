@@ -2,7 +2,7 @@ package org.jetbrains.plugins.textmate.language.syntax;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.StringInterner;
+import com.intellij.util.containers.Interner;
 import gnu.trove.THashMap;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
@@ -22,31 +22,29 @@ import java.util.Map;
  * Table represents mapping from scopeNames to set of syntax rules {@link SyntaxNodeDescriptor}.
  * <p/>
  * In order to lexing some file with this rules you should retrieve syntax rule
- * by scope name of target language {@link this#getSyntax(String)}.
+ * by scope name of target language {@link this#getSyntax(CharSequence)}.
  * <p/>
  * Scope name of target language can be find in syntax files of TextMate bundles.
  */
 public class TextMateSyntaxTable {
   private static final Logger LOG = Logger.getInstance(TextMateSyntaxTable.class);
-  private final Map<String, SyntaxNodeDescriptor> rulesMap = new THashMap<>();
+  private final Map<CharSequence, SyntaxNodeDescriptor> rulesMap = new THashMap<>();
   private TObjectIntHashMap<String> ruleIds;
-  private StringInterner interner;
 
   public void compact() {
     ruleIds = null;
-    interner = null;
   }
 
   /**
    * Append table with new syntax rules in order to support new language.
    *
    * @param plist Plist represented syntax file (*.tmLanguage) of target language.
+   * @param interner
    * @return language scope root name
    */
   @NotNull
-  public String loadSyntax(Plist plist) {
-    final SyntaxNodeDescriptor rootSyntaxNode = loadRealNode(plist, null);
-    return rootSyntaxNode.getScopeName();
+  public CharSequence loadSyntax(Plist plist, @NotNull Interner<CharSequence> interner) {
+    return loadRealNode(plist, null, interner).getScopeName();
   }
 
   /**
@@ -58,7 +56,7 @@ public class TextMateSyntaxTable {
    * method returns {@link SyntaxNodeDescriptor#EMPTY_NODE}.
    */
   @NotNull
-  public SyntaxNodeDescriptor getSyntax(String scopeName) {
+  public SyntaxNodeDescriptor getSyntax(CharSequence scopeName) {
     SyntaxNodeDescriptor syntaxNodeDescriptor = rulesMap.get(scopeName);
     if (syntaxNodeDescriptor == null) {
       LOG.debug("Can't find syntax node for scope: '" + scopeName + "'");
@@ -71,17 +69,21 @@ public class TextMateSyntaxTable {
     rulesMap.clear();
   }
 
-  private SyntaxNodeDescriptor loadNestedSyntax(Plist plist, SyntaxNodeDescriptor parentNode) {
-    return plist.contains(Constants.INCLUDE_KEY) ? loadProxyNode(plist, parentNode) : loadRealNode(plist, parentNode);
+  private SyntaxNodeDescriptor loadNestedSyntax(@NotNull Plist plist,
+                                                @NotNull SyntaxNodeDescriptor parentNode,
+                                                @NotNull Interner<CharSequence> interner) {
+    return plist.contains(Constants.INCLUDE_KEY) ? loadProxyNode(plist, parentNode, interner) : loadRealNode(plist, parentNode, interner);
   }
 
   @NotNull
-  private SyntaxNodeDescriptor loadRealNode(Plist plist, SyntaxNodeDescriptor parentNode) {
+  private SyntaxNodeDescriptor loadRealNode(@NotNull Plist plist,
+                                            @Nullable SyntaxNodeDescriptor parentNode,
+                                            @NotNull Interner<CharSequence> interner) {
     MutableSyntaxNodeDescriptor result = new SyntaxNodeDescriptorImpl(parentNode);
     for (Map.Entry<String, PListValue> entry : plist.entries()) {
       PListValue pListValue = entry.getValue();
       if (pListValue != null) {
-        String key = intern(entry.getKey());
+        String key = entry.getKey();
         Constants.RegexKey regexKey = Constants.RegexKey.fromName(key);
         if (regexKey != null) {
           String pattern = pListValue.getString();
@@ -92,27 +94,27 @@ public class TextMateSyntaxTable {
         }
         Constants.StringKey stringKey = Constants.StringKey.fromName(key);
         if (stringKey != null) {
-          result.setStringAttribute(stringKey, intern(pListValue.getString()));
+          result.setStringAttribute(stringKey, interner.intern(pListValue.getString()));
           continue;
         }
         Constants.CaptureKey captureKey = Constants.CaptureKey.fromName(key);
         if (captureKey != null) {
-          result.setCaptures(captureKey, loadCaptures(pListValue.getPlist()));
+          result.setCaptures(captureKey, loadCaptures(pListValue.getPlist(), interner));
           continue;
         }
         if (Constants.REPOSITORY_KEY.equalsIgnoreCase(key)) {
-          loadRepository(result, pListValue);
+          loadRepository(result, pListValue, interner);
         }
         else if (Constants.PATTERNS_KEY.equalsIgnoreCase(key)) {
-          loadPatterns(result, pListValue);
+          loadPatterns(result, pListValue, interner);
         }
         else if (Constants.INJECTIONS_KEY.equalsIgnoreCase(key)) {
-          loadInjections(result, pListValue);
+          loadInjections(result, pListValue, interner);
         }
       }
     }
     if (plist.contains(Constants.StringKey.SCOPE_NAME.value)) {
-      final String scopeName = plist.getPlistValue(Constants.StringKey.SCOPE_NAME.value, Constants.DEFAULT_SCOPE_NAME).getString();
+      CharSequence scopeName = interner.intern(plist.getPlistValue(Constants.StringKey.SCOPE_NAME.value, Constants.DEFAULT_SCOPE_NAME).getString());
       result.setScopeName(scopeName);
       rulesMap.put(scopeName, result);
     }
@@ -120,23 +122,15 @@ public class TextMateSyntaxTable {
     return result;
   }
 
-  @NotNull
-  private String intern(String key) {
-    if (interner == null) {
-      interner = new StringInterner();
-    }
-    return interner.intern(key);
-  }
-
   @Nullable
-  private TIntObjectHashMap<String> loadCaptures(Plist captures) {
-    TIntObjectHashMap<String> result = new TIntObjectHashMap<>();
+  private static TIntObjectHashMap<CharSequence> loadCaptures(@NotNull Plist captures, @NotNull Interner<CharSequence> interner) {
+    TIntObjectHashMap<CharSequence> result = new TIntObjectHashMap<>();
     for (Map.Entry<String, PListValue> capture : captures.entries()) {
       try {
         int index = Integer.parseInt(capture.getKey());
         Plist captureDict = capture.getValue().getPlist();
         String captureName = captureDict.getPlistValue(Constants.NAME_KEY, "").getString();
-        result.put(index, intern(captureName));
+        result.put(index, interner.intern(captureName));
       }
       catch (NumberFormatException ignore) {
       }
@@ -148,7 +142,9 @@ public class TextMateSyntaxTable {
     return result;
   }
 
-  private SyntaxNodeDescriptor loadProxyNode(@NotNull Plist plist, @NotNull SyntaxNodeDescriptor result) {
+  private SyntaxNodeDescriptor loadProxyNode(@NotNull Plist plist,
+                                             @NotNull SyntaxNodeDescriptor result,
+                                             @NotNull Interner<CharSequence> interner) {
     String include = plist.getPlistValue(Constants.INCLUDE_KEY, "").getString();
     if (StringUtil.startsWithChar(include, '#')) {
       return new SyntaxRuleProxyDescriptor(getRuleId(include.substring(1)), result);
@@ -156,20 +152,24 @@ public class TextMateSyntaxTable {
     else if (Constants.INCLUDE_SELF_VALUE.equalsIgnoreCase(include) || Constants.INCLUDE_BASE_VALUE.equalsIgnoreCase(include)) {
       return new SyntaxRootProxyDescriptor(result);
     }
-    return new SyntaxScopeProxyDescriptor(include, this, result);
+    return new SyntaxScopeProxyDescriptor(interner.intern(include), this, result);
   }
 
-  private void loadPatterns(MutableSyntaxNodeDescriptor result, PListValue pListValue) {
+  private void loadPatterns(@NotNull MutableSyntaxNodeDescriptor result,
+                            @NotNull PListValue pListValue,
+                            @NotNull Interner<CharSequence> interner) {
     for (PListValue value : pListValue.getArray()) {
-      result.addChild(loadNestedSyntax(value.getPlist(), result));
+      result.addChild(loadNestedSyntax(value.getPlist(), result, interner));
     }
   }
 
-  private void loadRepository(MutableSyntaxNodeDescriptor result, PListValue pListValue) {
+  private void loadRepository(@NotNull MutableSyntaxNodeDescriptor result,
+                              @NotNull PListValue pListValue,
+                              @NotNull Interner<CharSequence> interner) {
     for (Map.Entry<String, PListValue> repoEntry : pListValue.getPlist().entries()) {
       PListValue repoEntryValue = repoEntry.getValue();
       if (repoEntryValue != null) {
-        result.appendRepository(getRuleId(repoEntry.getKey()), loadNestedSyntax(repoEntryValue.getPlist(), result));
+        result.appendRepository(getRuleId(repoEntry.getKey()), loadNestedSyntax(repoEntryValue.getPlist(), result, interner));
       }
     }
   }
@@ -187,10 +187,12 @@ public class TextMateSyntaxTable {
     return newId;
   }
 
-  private void loadInjections(MutableSyntaxNodeDescriptor result, PListValue pListValue) {
+  private void loadInjections(@NotNull MutableSyntaxNodeDescriptor result,
+                              @NotNull PListValue pListValue,
+                              @NotNull Interner<CharSequence> interner) {
     for (Map.Entry<String, PListValue> injectionEntry : pListValue.getPlist().entries()) {
       Plist injectionEntryValue = injectionEntry.getValue().getPlist();
-      result.addInjection(new InjectionNodeDescriptor(injectionEntry.getKey(), loadRealNode(injectionEntryValue, result)));
+      result.addInjection(new InjectionNodeDescriptor(injectionEntry.getKey(), loadRealNode(injectionEntryValue, result, interner)));
     }
   }
 }

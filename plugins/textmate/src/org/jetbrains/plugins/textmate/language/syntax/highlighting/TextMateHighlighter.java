@@ -44,10 +44,10 @@ public class TextMateHighlighter extends SyntaxHighlighterBase {
   public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
     if (!(tokenType instanceof TextMateElementType)) return PLAIN_SYNTAX_HIGHLIGHTER.getTokenHighlights(tokenType);
     final TextMateService service = TextMateService.getInstance();
-    final Map<String, TextMateCustomTextAttributes> customHighlightingColors = service.getCustomHighlightingColors();
+    final Map<CharSequence, TextMateCustomTextAttributes> customHighlightingColors = service.getCustomHighlightingColors();
     final TextMateTheme theme = service.getCurrentTheme();
     List<HighlightingRule> highlightingRules = ContainerUtil.newSmartList(new HighlightingRule(TextMateTheme.DEFAULT_ATTRIBUTES_NAME, TextMateWeigh.ZERO));
-    for (String currentRule : ContainerUtil.union(customHighlightingColors.keySet(), theme.getRules())) {
+    for (CharSequence currentRule : ContainerUtil.union(customHighlightingColors.keySet(), theme.getRules())) {
       final TextMateWeigh weigh = mySelectorWeigher.weigh(currentRule, tokenType.toString());
       if (weigh.weigh > 0) {
         highlightingRules.add(new HighlightingRule(currentRule, weigh));
@@ -79,10 +79,10 @@ public class TextMateHighlighter extends SyntaxHighlighterBase {
   }
 
   private static class HighlightingRule implements Comparable<HighlightingRule> {
-    public final String myName;
+    public final CharSequence myName;
     private final TextMateWeigh myWeigh;
 
-    private HighlightingRule(String name, TextMateWeigh weigh) {
+    private HighlightingRule(CharSequence name, TextMateWeigh weigh) {
       myName = name;
       myWeigh = weigh;
     }
@@ -94,7 +94,7 @@ public class TextMateHighlighter extends SyntaxHighlighterBase {
 
     @Override
     public String toString() {
-      return myName;
+      return myName.toString();
     }
   }
 }

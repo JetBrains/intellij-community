@@ -96,14 +96,14 @@ public abstract class TextMateService {
    *         Sorted by weigh matching {@link TextMateSelectorWeigher}
    */
   @NotNull
-  public abstract List<Preferences> getPreferencesForSelector(String selector);
+  public abstract List<Preferences> getPreferencesForSelector(CharSequence selector);
 
   /**
    * @return custom highlighting colors defined inside bundles (not in themes). 
    * Note that background color in text attributes is stored in raw format and isn't merged with default background.
    */
   @NotNull
-  public abstract Map<String, TextMateCustomTextAttributes> getCustomHighlightingColors();
+  public abstract Map<CharSequence, TextMateCustomTextAttributes> getCustomHighlightingColors();
 
   public abstract PlistReader getPlistReader();
   

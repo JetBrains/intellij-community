@@ -2,8 +2,10 @@ package org.jetbrains.plugins.textmate.language.syntax.highlighting;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.util.containers.Interner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.textmate.Constants;
+import org.jetbrains.plugins.textmate.editor.TextMateEditorUtils;
 import org.jetbrains.plugins.textmate.language.PreferencesReadUtil;
 import org.jetbrains.plugins.textmate.plist.PListValue;
 import org.jetbrains.plugins.textmate.plist.Plist;
@@ -23,23 +25,24 @@ public class TextMateTheme {
     new TextMateTheme("Unnamed", new HashMap<>(), TextAttributes.ERASE_MARKER);
 
   private final String name;
-  private final Map<String, TextAttributes> myTextAttributes;
+  private final Map<CharSequence, TextAttributes> myTextAttributes;
   @NotNull
   private final TextAttributes myDefaultAttributes;
 
-  protected TextMateTheme(String name, Map<String, TextAttributes> textAttributes, @NotNull TextAttributes defaultAttributes) {
+  protected TextMateTheme(String name, Map<CharSequence, TextAttributes> textAttributes, @NotNull TextAttributes defaultAttributes) {
     this.name = name;
-    myTextAttributes = textAttributes;
+    myTextAttributes = initWithDefaultColors(textAttributes);
     myDefaultAttributes = defaultAttributes;
-    initDefaultColors();
   }
 
-  private void initDefaultColors() {
-    for (String key : DEFAULT_COLORS_PROVIDER.getAllDefaultKeys()) {
-      if (!myTextAttributes.containsKey(key)) {
-        myTextAttributes.put(key, DEFAULT_COLORS_PROVIDER.getTextAttributes(key));
+  @NotNull
+  private static Map<CharSequence, TextAttributes> initWithDefaultColors(@NotNull Map<CharSequence, TextAttributes> attributes) {
+    for (CharSequence key : DEFAULT_COLORS_PROVIDER.getAllDefaultKeys()) {
+      if (!attributes.containsKey(key)) {
+        attributes.put(key, DEFAULT_COLORS_PROVIDER.getTextAttributes(key));
       }
     }
+    return TextMateEditorUtils.compactMap(attributes);
   }
 
   public Color getDefaultBackground() {
@@ -50,23 +53,23 @@ public class TextMateTheme {
     return name;
   }
 
-  public Set<String> getRules() {
+  public Set<CharSequence> getRules() {
     return myTextAttributes.keySet();
   }
 
-  public TextAttributesKey getTextAttributesKey(String highlightingRule) {
+  public TextAttributesKey getTextAttributesKey(CharSequence highlightingRule) {
     String key = getName() + "." + highlightingRule;
     return createTextAttributesKey(key, getTextAttributes(highlightingRule));
   }
 
-  private TextAttributes getTextAttributes(String highlightingRule) {
+  private TextAttributes getTextAttributes(CharSequence highlightingRule) {
     return myTextAttributes.getOrDefault(highlightingRule, myDefaultAttributes);
   }
 
   @NotNull
-  public static TextMateTheme load(Plist plist) {
+  public static TextMateTheme load(Plist plist, @NotNull Interner<CharSequence> interner) {
     String themeName = plist.getPlistValue(Constants.NAME_KEY, "Unnamed").getString();
-    Map<String, TextAttributes> attributes = new HashMap<>();
+    Map<CharSequence, TextAttributes> attributes = new HashMap<>();
     final PListValue settings = plist.getPlistValue(Constants.SETTINGS_KEY);
     if (settings == null) {
       return EMPTY_THEME;
@@ -82,10 +85,9 @@ public class TextMateTheme {
       else {
         final TextAttributes textAttributes = new TextAttributes();
         PreferencesReadUtil.fillTextAttributes(textAttributes, colorRuleSettings, defaultAttributes.getBackgroundColor());
-        attributes.put(scope, textAttributes);
+        attributes.put(interner.intern(scope), textAttributes);
       }
     }
-
     return new TextMateTheme(themeName, attributes, defaultAttributes);
   }
 }

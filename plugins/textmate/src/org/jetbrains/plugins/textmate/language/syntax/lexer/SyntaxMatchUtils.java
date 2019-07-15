@@ -142,12 +142,12 @@ public final class SyntaxMatchUtils {
     return matchFirst(syntaxNodeDescriptor, string, byteOffset, priority, currentScope);
   }
 
-  public static List<CaptureMatchData> matchCaptures(@NotNull TIntObjectHashMap<String> captures, @NotNull MatchData matchData, @NotNull StringWithId string) {
+  public static List<CaptureMatchData> matchCaptures(@NotNull TIntObjectHashMap<CharSequence> captures, @NotNull MatchData matchData, @NotNull StringWithId string) {
     List<CaptureMatchData> result = new ArrayList<>();
     for (int index : captures.keys()) {
-      String captureName = captures.get(index);
+      CharSequence captureName = captures.get(index);
       TextRange offset = index < matchData.count() ? matchData.charOffset(string.bytes, index) : TextRange.EMPTY_RANGE;
-      if (!captureName.isEmpty() && !offset.isEmpty()) {
+      if (captureName.length() > 0 && !offset.isEmpty()) {
         result.add(new CaptureMatchData(offset, index, captureName));
       }
     }
@@ -158,7 +158,7 @@ public final class SyntaxMatchUtils {
                                            @NotNull StringWithId string,
                                            int byteOffset,
                                            @NotNull TextMateLexerState lexerState) {
-    String stringRegex = lexerState.syntaxRule.getStringAttribute(keyName);
+    CharSequence stringRegex = lexerState.syntaxRule.getStringAttribute(keyName);
     return stringRegex != null ? regex(replaceGroupsWithMatchData(stringRegex, lexerState.string, lexerState.matchData)).match(string, byteOffset)
                                : MatchData.NOT_MATCHED;
   }
@@ -174,11 +174,11 @@ public final class SyntaxMatchUtils {
    * @param matchData     matched data with captured groups for replacement
    * @return patternString with replaced group-references
    */
-  public static String replaceGroupsWithMatchData(@NotNull String patternString,
+  public static String replaceGroupsWithMatchData(@NotNull CharSequence patternString,
                                                   @Nullable StringWithId string,
                                                   @NotNull MatchData matchData) {
     if (string == null || !matchData.matched()) {
-      return patternString;
+      return patternString.toString();
     }
     Matcher matcher = DIGIT_GROUP_REGEX.matcher(patternString);
     StringBuilder result = new StringBuilder();
@@ -194,13 +194,13 @@ public final class SyntaxMatchUtils {
       }
     }
     if (lastPosition < patternString.length()) {
-      result.append(patternString.substring(lastPosition));
+      result.append(patternString.subSequence(lastPosition, patternString.length()));
     }
     return result.toString();
   }
 
   @NotNull
-  public static String selectorsToScope(@NotNull List<String> selectors) {
+  public static String selectorsToScope(@NotNull List<CharSequence> selectors) {
     return MY_SCOPES_INTERNER.intern(MY_OPEN_TAGS_JOINER.join(selectors));
   }
 

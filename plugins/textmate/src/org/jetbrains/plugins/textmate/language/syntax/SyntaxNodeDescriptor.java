@@ -35,10 +35,10 @@ public interface SyntaxNodeDescriptor {
   SyntaxNodeDescriptor EMPTY_NODE = new SyntaxNodeDescriptorImpl(null);
 
   @Nullable
-  String getStringAttribute(@NotNull Constants.StringKey key);
+  CharSequence getStringAttribute(@NotNull Constants.StringKey key);
 
   @Nullable
-  TIntObjectHashMap<String> getCaptures(@NotNull Constants.CaptureKey key);
+  TIntObjectHashMap<CharSequence> getCaptures(@NotNull Constants.CaptureKey key);
 
   @Nullable
   RegexFacade getRegexAttribute(@NotNull Constants.RegexKey key);
@@ -56,7 +56,7 @@ public interface SyntaxNodeDescriptor {
    * @return scope name if node is root for language or empty string otherwise
    */
   @NotNull
-  String getScopeName();
+  CharSequence getScopeName();
 
   @Nullable
   SyntaxNodeDescriptor getParentNode();

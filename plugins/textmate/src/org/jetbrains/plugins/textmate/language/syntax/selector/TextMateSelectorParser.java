@@ -2,6 +2,7 @@ package org.jetbrains.plugins.textmate.language.syntax.selector;
 
 import com.google.common.base.Splitter;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
@@ -10,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.openapi.util.text.StringUtil.countChars;
 import static com.intellij.openapi.util.text.StringUtil.getOccurrenceCount;
 
 public class TextMateSelectorParser {
@@ -19,10 +21,10 @@ public class TextMateSelectorParser {
   private static final Splitter SELECTOR_SPLITTER = Splitter.on(' ').trimResults().omitEmptyStrings();
 
   private final List<TextMateSelectorToken> myTokens;
-  private final String myHighlightingSelector;
+  private final CharSequence myHighlightingSelector;
   private int myIndex = 0;
 
-  TextMateSelectorParser(String highlightingSelector) {
+  TextMateSelectorParser(CharSequence highlightingSelector) {
     myTokens = TextMateSelectorLexer.tokenize(highlightingSelector);
     myHighlightingSelector = highlightingSelector;
   }
@@ -139,7 +141,7 @@ public class TextMateSelectorParser {
   }
 
   interface Node {
-    TextMateWeigh weigh(@NotNull String scope);
+    TextMateWeigh weigh(@NotNull CharSequence scope);
   }
 
   private static class Selector implements Node {
@@ -150,9 +152,9 @@ public class TextMateSelectorParser {
     }
 
     @Override
-    public TextMateWeigh weigh(@NotNull String scope) {
-      if (scope.startsWith(selector)) {
-        return new TextMateWeigh(BASE_WEIGH - getOccurrenceCount(scope, '.') + getOccurrenceCount(selector, '.'),
+    public TextMateWeigh weigh(@NotNull CharSequence scope) {
+      if (StringUtil.startsWith(scope, selector)) {
+        return new TextMateWeigh(BASE_WEIGH - countChars(scope, '.') + getOccurrenceCount(selector, '.'),
                                  TextMateWeigh.Priority.NORMAL);
       }
       return TextMateWeigh.ZERO;
@@ -176,7 +178,7 @@ public class TextMateSelectorParser {
     }
 
     @Override
-    public TextMateWeigh weigh(@NotNull String scope) {
+    public TextMateWeigh weigh(@NotNull CharSequence scope) {
       for (Node exclusion : exclusions) {
         if (exclusion.weigh(scope).weigh > 0) {
           return TextMateWeigh.ZERO;
@@ -224,7 +226,7 @@ public class TextMateSelectorParser {
     }
 
     @Override
-    public TextMateWeigh weigh(@NotNull String scope) {
+    public TextMateWeigh weigh(@NotNull CharSequence scope) {
       TextMateWeigh result = TextMateWeigh.ZERO;
       for (Node child : children) {
         TextMateWeigh weigh = child.weigh(scope);
@@ -244,7 +246,7 @@ public class TextMateSelectorParser {
     }
 
     @Override
-    public TextMateWeigh weigh(@NotNull String scope) {
+    public TextMateWeigh weigh(@NotNull CharSequence scope) {
       for (Node child : children) {
         TextMateWeigh weigh = child.weigh(scope);
         if (weigh.weigh > 0) {

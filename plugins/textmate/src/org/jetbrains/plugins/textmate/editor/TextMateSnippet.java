@@ -6,12 +6,12 @@ import org.jetbrains.plugins.textmate.language.TextMateScopeSelectorOwner;
 public class TextMateSnippet implements TextMateScopeSelectorOwner {
   private final String myKey;
   private final String myContent;
-  private final String myScope;
+  private final CharSequence myScope;
   private final String myName;
   private final String myDescription;
   private final String mySettingsId;
 
-  public TextMateSnippet(@NotNull String key, @NotNull String content, @NotNull String scope, @NotNull String name, 
+  public TextMateSnippet(@NotNull String key, @NotNull String content, @NotNull CharSequence scope, @NotNull String name,
                          @NotNull String description, @NotNull String settingsId) {
     myKey = key;
     myContent = content;
@@ -33,7 +33,7 @@ public class TextMateSnippet implements TextMateScopeSelectorOwner {
 
   @NotNull
   @Override
-  public String getScopeSelector() {
+  public CharSequence getScopeSelector() {
     return myScope;
   }
 

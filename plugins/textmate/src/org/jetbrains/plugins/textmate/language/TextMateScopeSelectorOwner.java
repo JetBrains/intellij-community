@@ -4,5 +4,5 @@ import org.jetbrains.annotations.NotNull;
 
 public interface TextMateScopeSelectorOwner {
   @NotNull
-  String getScopeSelector();
+  CharSequence getScopeSelector();
 }

@@ -27,13 +27,13 @@ abstract class SyntaxProxyDescriptor implements SyntaxNodeDescriptor {
 
   @Nullable
   @Override
-  public String getStringAttribute(@NotNull Constants.StringKey key) {
+  public CharSequence getStringAttribute(@NotNull Constants.StringKey key) {
     return getTargetNode().getStringAttribute(key);
   }
 
   @Nullable
   @Override
-  public TIntObjectHashMap<String> getCaptures(@NotNull Constants.CaptureKey key) {
+  public TIntObjectHashMap<CharSequence> getCaptures(@NotNull Constants.CaptureKey key) {
     return getTargetNode().getCaptures(key);
   }
 
@@ -63,7 +63,7 @@ abstract class SyntaxProxyDescriptor implements SyntaxNodeDescriptor {
 
   @NotNull
   @Override
-  public String getScopeName() {
+  public CharSequence getScopeName() {
     return getTargetNode().getScopeName();
   }
 

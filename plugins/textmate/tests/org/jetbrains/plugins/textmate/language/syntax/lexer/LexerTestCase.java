@@ -9,6 +9,8 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Interner;
+import com.intellij.util.containers.PathInterner;
 import org.jetbrains.plugins.textmate.TestUtil;
 import org.jetbrains.plugins.textmate.TextMateServiceImpl;
 import org.jetbrains.plugins.textmate.bundles.Bundle;
@@ -32,8 +34,9 @@ abstract public class LexerTestCase extends UsefulTestCase {
   private static final String TEST_DATA_BASE_DIR =
     PlatformTestUtil.getCommunityPath() + "/plugins/textmate/testData/lexer";
 
-  private final Map<String, String> myLanguageDescriptors = new HashMap<>();
-  private String myRootScope;
+  private final Interner<CharSequence> myInterner = new PathInterner.PathEnumerator();
+  private final Map<String, CharSequence> myLanguageDescriptors = new HashMap<>();
+  private CharSequence myRootScope;
   private TextMateSyntaxTable mySyntaxTable;
 
   @Parameterized.Parameter()
@@ -63,11 +66,11 @@ abstract public class LexerTestCase extends UsefulTestCase {
   public void before() throws Exception {
     mySyntaxTable = new TextMateSyntaxTable();
 
-    String scope = null;
+    CharSequence scope = null;
     Bundle bundle = TestUtil.getBundle(getBundleName());
     for (File grammarFile : bundle.getGrammarFiles()) {
       Plist plist = TestUtil.PLIST_READER.read(grammarFile);
-      final String rootScope = mySyntaxTable.loadSyntax(plist);
+      final CharSequence rootScope = mySyntaxTable.loadSyntax(plist, myInterner);
       Collection<String> extensions = bundle.getExtensions(grammarFile, plist);
       for (String extension : extensions) {
         myLanguageDescriptors.put(extension, rootScope);
@@ -81,7 +84,7 @@ abstract public class LexerTestCase extends UsefulTestCase {
     final List<String> extraBundleNames = getExtraBundleNames();
     for (String bundleName : extraBundleNames) {
       for (File grammarFile : TestUtil.getBundle(bundleName).getGrammarFiles()) {
-        mySyntaxTable.loadSyntax(TestUtil.PLIST_READER.read(grammarFile));
+        mySyntaxTable.loadSyntax(TestUtil.PLIST_READER.read(grammarFile), myInterner);
       }
     }
     mySyntaxTable.compact();

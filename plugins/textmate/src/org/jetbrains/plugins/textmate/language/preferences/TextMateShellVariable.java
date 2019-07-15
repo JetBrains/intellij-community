@@ -4,11 +4,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.textmate.language.TextMateScopeSelectorOwner;
 
 public class TextMateShellVariable implements TextMateScopeSelectorOwner {
-  public final String scopeName;
+  public final CharSequence scopeName;
   public final String name;
   public final String value;
 
-  public TextMateShellVariable(@NotNull String scopeName, @NotNull String name, @NotNull String value) {
+  public TextMateShellVariable(@NotNull CharSequence scopeName, @NotNull String name, @NotNull String value) {
     this.scopeName = scopeName;
     this.name = name;
     this.value = value;
@@ -16,7 +16,7 @@ public class TextMateShellVariable implements TextMateScopeSelectorOwner {
 
   @NotNull
   @Override
-  public String getScopeSelector() {
+  public CharSequence getScopeSelector() {
     return scopeName;
   }
 }

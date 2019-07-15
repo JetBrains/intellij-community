@@ -14,7 +14,7 @@ import java.util.Set;
 
 public class TextMateEmulatedTheme extends TextMateTheme {
   public static final TextMateTheme THEME = new TextMateEmulatedTheme();
-  private static final Map<String, String> EXTENSIONS_MAPPING = new HashMap<>();
+  private static final Map<CharSequence, CharSequence> EXTENSIONS_MAPPING = new HashMap<>();
   static {
     // XmlHighlighterColors
     EXTENSIONS_MAPPING.put("entity.other.attribute-name.localname.xml", "XML_ATTRIBUTE_NAME");
@@ -158,7 +158,7 @@ public class TextMateEmulatedTheme extends TextMateTheme {
     EXTENSIONS_MAPPING.put("meta.implementation.objc", "PROTOCOL_REFERENCE");
     EXTENSIONS_MAPPING.put("variable.parameter.function.objc", "OC.PARAMETER");
   }
-  public static final Sets.SetView<String> RULES = Sets.union(DEFAULT_COLORS_PROVIDER.getAllDefaultKeys(), EXTENSIONS_MAPPING.keySet());
+  public static final Sets.SetView<CharSequence> RULES = Sets.union(DEFAULT_COLORS_PROVIDER.getAllDefaultKeys(), EXTENSIONS_MAPPING.keySet());
 
   protected TextMateEmulatedTheme() {
     super("IntelliJ", new HashMap<>(), new TextAttributes());
@@ -175,14 +175,14 @@ public class TextMateEmulatedTheme extends TextMateTheme {
   }
 
   @Override
-  public Set<String> getRules() {
+  public Set<CharSequence> getRules() {
     return RULES;
   }
 
   @Override
-  public TextAttributesKey getTextAttributesKey(String highlightingRule) {
-    String keyName = EXTENSIONS_MAPPING.get(highlightingRule);
-    TextAttributesKey extendedKey = keyName != null ? TextAttributesKey.find(keyName) : null;
+  public TextAttributesKey getTextAttributesKey(CharSequence highlightingRule) {
+    CharSequence keyName = EXTENSIONS_MAPPING.get(highlightingRule);
+    TextAttributesKey extendedKey = keyName != null ? TextAttributesKey.find(keyName.toString()) : null;
     return extendedKey == null ? DEFAULT_COLORS_PROVIDER.getTextAttributesKey(highlightingRule) : extendedKey;
   }
 }

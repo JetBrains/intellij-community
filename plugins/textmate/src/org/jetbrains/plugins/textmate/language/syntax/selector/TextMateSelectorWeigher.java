@@ -23,5 +23,5 @@ public interface TextMateSelectorWeigher {
    * @param scope scope selector of target element.
    * @return relative score (nonnegative int)
    */
-  TextMateWeigh weigh(@NotNull String scopeSelector, @NotNull String scope);
+  TextMateWeigh weigh(@NotNull CharSequence scopeSelector, @NotNull CharSequence scope);
 }

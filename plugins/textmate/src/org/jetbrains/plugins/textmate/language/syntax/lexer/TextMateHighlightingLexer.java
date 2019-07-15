@@ -32,14 +32,14 @@ public class TextMateHighlightingLexer extends LexerBase implements DataStorageF
   private static final Logger LOG = Logger.getInstance(TextMateHighlightingLexer.class);
   private final Stack<TextMateLexerState> myStates = new Stack<>();
   private final Queue<Token> currentLineTokens = new LinkedList<>();
-  private final String languageScopeName;
+  private final CharSequence languageScopeName;
   private final int myLineLimit;
 
   private CharSequence myBuffer;
   private int myEndOffset;
   private int myCurrentOffset;
   private Token myCurrentToken;
-  private final Stack<String> openedTags = new Stack<>();
+  private final Stack<CharSequence> openedTags = new Stack<>();
   private final TextMateLexerState myLanguageInitialState;
 
   /**
@@ -60,7 +60,7 @@ public class TextMateHighlightingLexer extends LexerBase implements DataStorageF
    */
   private int lastSuccessStateOccursCount;
 
-  public TextMateHighlightingLexer(String scopeName, SyntaxNodeDescriptor languageRootSyntaxNode) {
+  public TextMateHighlightingLexer(CharSequence scopeName, SyntaxNodeDescriptor languageRootSyntaxNode) {
     languageScopeName = scopeName;
     myLanguageInitialState = TextMateLexerState.notMatched(languageRootSyntaxNode);
     myLineLimit = Registry.get("textmate.line.highlighting.limit").asInteger();
@@ -266,14 +266,14 @@ public class TextMateHighlightingLexer extends LexerBase implements DataStorageF
     }
   }
 
-  private void openScopeSelector(@Nullable String name, int position) {
+  private void openScopeSelector(@Nullable CharSequence name, int position) {
     addToken(position);
     openedTags.push(name);
   }
 
   private void closeScopeSelector(int position) {
     if (!openedTags.isEmpty()) {
-      if (StringUtil.isNotEmpty(openedTags.peek())) {
+      if (!StringUtil.isEmpty(openedTags.peek())) {
         addToken(position);
       }
     }
@@ -299,7 +299,7 @@ public class TextMateHighlightingLexer extends LexerBase implements DataStorageF
   }
 
   private boolean parseCaptures(Constants.CaptureKey capturesKey, SyntaxNodeDescriptor rule, MatchData matchData, StringWithId string, int startLineOffset) {
-    TIntObjectHashMap<String> captures = rule.getCaptures(capturesKey);
+    TIntObjectHashMap<CharSequence> captures = rule.getCaptures(capturesKey);
     if (captures != null) {
       List<CaptureMatchData> matches = SyntaxMatchUtils.matchCaptures(captures, matchData, string);
       Stack<CaptureMatchData> starts = new Stack<>(ContainerUtil.sorted(matches, CaptureMatchData.START_OFFSET_ORDERING));

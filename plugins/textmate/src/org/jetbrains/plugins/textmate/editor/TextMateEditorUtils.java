@@ -14,14 +14,11 @@ import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
 import org.jetbrains.plugins.textmate.language.preferences.Preferences;
 import org.jetbrains.plugins.textmate.language.preferences.TextMateBracePair;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public final class TextMateEditorUtils {
   @Nullable
-  public static String getCurrentScopeSelector(@NotNull EditorEx editor) {
+  public static CharSequence getCurrentScopeSelector(@NotNull EditorEx editor) {
     final EditorHighlighter highlighter = editor.getHighlighter();
     SelectionModel selection = editor.getSelectionModel();
     final int offset = selection.hasSelection() ? selection.getSelectionStart() : editor.getCaretModel().getOffset();
@@ -67,7 +64,7 @@ public final class TextMateEditorUtils {
   }
 
   @Nullable
-  public static TextMateBracePair getSmartTypingPairForLeftChar(char c, @Nullable String currentSelector) {
+  public static TextMateBracePair getSmartTypingPairForLeftChar(char c, @Nullable CharSequence currentSelector) {
     Set<TextMateBracePair> pairs = getSmartTypingPairs(currentSelector);
     for (TextMateBracePair pair : pairs) {
       if (c == pair.leftChar) {
@@ -78,7 +75,7 @@ public final class TextMateEditorUtils {
   }
 
   @Nullable
-  public static TextMateBracePair getSmartTypingPairForRightChar(char c, @Nullable String currentSelector) {
+  public static TextMateBracePair getSmartTypingPairForRightChar(char c, @Nullable CharSequence currentSelector) {
     Set<TextMateBracePair> pairs = getSmartTypingPairs(currentSelector);
     for (TextMateBracePair pair : pairs) {
       if (c == pair.rightChar) {
@@ -114,7 +111,7 @@ public final class TextMateEditorUtils {
     return result;
   }
 
-  private static Set<TextMateBracePair> getSmartTypingPairs(@Nullable String currentSelector) {
+  private static Set<TextMateBracePair> getSmartTypingPairs(@Nullable CharSequence currentSelector) {
     if (currentSelector != null) {
       final List<Preferences> preferencesForSelector = TextMateService.getInstance().getPreferencesForSelector(currentSelector);
       for (Preferences preferences : preferencesForSelector) {
@@ -136,5 +133,22 @@ public final class TextMateEditorUtils {
   }
 
   private TextMateEditorUtils() {
+  }
+
+  @NotNull
+  public static <K, V> Map<K, V> compactMap(@NotNull Map<K, V> map) {
+    if (map.isEmpty()) {
+      return Collections.emptyMap();
+    }
+    if (map.size() == 1) {
+      Map.Entry<K, V> singleEntry = map.entrySet().iterator().next();
+      return Collections.singletonMap(singleEntry.getKey(), singleEntry.getValue());
+    }
+    if (!(map instanceof HashMap)) {
+      return map;
+    }
+    HashMap<K, V> result = new HashMap<>(map.size(), 1.0f);
+    result.putAll(map);
+    return result;
   }
 }

@@ -4,10 +4,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.textmate.language.syntax.SyntaxNodeDescriptor;
 
 public class TextMateLanguageDescriptor {
-  @NotNull private final String scopeName;
+  @NotNull private final CharSequence scopeName;
   @NotNull private final SyntaxNodeDescriptor rootSyntaxNode;
 
-  public TextMateLanguageDescriptor(@NotNull String name, @NotNull SyntaxNodeDescriptor node) {
+  public TextMateLanguageDescriptor(@NotNull CharSequence name, @NotNull SyntaxNodeDescriptor node) {
     scopeName = name;
     rootSyntaxNode = node;
   }
@@ -18,7 +18,7 @@ public class TextMateLanguageDescriptor {
   }
 
   @NotNull
-  public String getScopeName() {
+  public CharSequence getScopeName() {
     return scopeName;
   }
 }

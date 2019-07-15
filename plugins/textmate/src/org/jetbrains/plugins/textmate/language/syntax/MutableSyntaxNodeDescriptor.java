@@ -34,15 +34,15 @@ public interface MutableSyntaxNodeDescriptor extends SyntaxNodeDescriptor {
 
   void addInjection(@NotNull InjectionNodeDescriptor injection);
 
-  void setStringAttribute(@NotNull Constants.StringKey key, @Nullable String value);
+  void setStringAttribute(@NotNull Constants.StringKey key, @Nullable CharSequence value);
 
-  void setCaptures(@NotNull Constants.CaptureKey key, @Nullable TIntObjectHashMap<String> captures);
+  void setCaptures(@NotNull Constants.CaptureKey key, @Nullable TIntObjectHashMap<CharSequence> captures);
 
   void setRegexAttribute(@NotNull Constants.RegexKey key, @Nullable RegexFacade value);
 
   void appendRepository(int ruleId, SyntaxNodeDescriptor descriptor);
 
-  void setScopeName(@NotNull String scopeName);
+  void setScopeName(@NotNull CharSequence scopeName);
 
   void compact();
 }
