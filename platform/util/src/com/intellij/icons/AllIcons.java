@@ -188,43 +188,43 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Browser_externalJavaDoc = AllIcons.Actions.PreviousOccurence;
+    /** 16x16 */ public static final Icon Browser_externalJavaDoc = load("/actions/previousOccurence.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Checked */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Checked_small = AllIcons.Actions.Checked;
+    /** 12x12 */ public static final Icon Checked_small = load("/actions/checked.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Checked_selected */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Checked_small_selected = AllIcons.Actions.Checked_selected;
+    /** 12x12 */ public static final Icon Checked_small_selected = load("/actions/checked_selected.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Checked */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon CheckedBlack = AllIcons.Actions.Checked;
+    /** 12x12 */ public static final Icon CheckedBlack = load("/actions/checked.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Checked */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon CheckedGrey = AllIcons.Actions.Checked;
+    /** 12x12 */ public static final Icon CheckedGrey = load("/actions/checked.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.CloseHovered */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Clean = AllIcons.Actions.CloseHovered;
+    /** 16x16 */ public static final Icon Clean = load("/actions/closeHovered.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Close */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon CleanLight = AllIcons.Actions.Close;
+    /** 16x16 */ public static final Icon CleanLight = load("/actions/close.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -236,19 +236,19 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon CloseNew = AllIcons.Actions.Close;
+    /** 16x16 */ public static final Icon CloseNew = load("/actions/close.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.CloseHovered */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon CloseNewHovered = AllIcons.Actions.CloseHovered;
+    /** 16x16 */ public static final Icon CloseNewHovered = load("/actions/closeHovered.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.IntentionBulb */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon CreateFromUsage = AllIcons.Actions.IntentionBulb;
+    /** 16x16 */ public static final Icon CreateFromUsage = load("/actions/intentionBulb.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -260,31 +260,31 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Cross = AllIcons.Actions.Close;
+    /** 16x16 */ public static final Icon Cross = load("/actions/close.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Cancel */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Delete = AllIcons.Actions.Cancel;
+    /** 16x16 */ public static final Icon Delete = load("/actions/cancel.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Diff */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon DiffPreview = AllIcons.Actions.Diff;
+    /** 16x16 */ public static final Icon DiffPreview = load("/actions/diff.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Diff */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon DiffWithCurrent = AllIcons.Actions.Diff;
+    /** 16x16 */ public static final Icon DiffWithCurrent = load("/actions/diff.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Down = AllIcons.General.ArrowDown;
+    /** 16x16 */ public static final Icon Down = load("/general/arrowDown.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use J2EEIcons.ErDiagram */
     @SuppressWarnings("unused")
@@ -296,13 +296,13 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Exclude = AllIcons.General.Remove;
+    /** 16x16 */ public static final Icon Exclude = load("/general/remove.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Export */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Export = AllIcons.ToolbarDecorator.Export;
+    /** 16x16 */ public static final Icon Export = load("/toolbarDecorator/export.svg");
 
     @SuppressWarnings("unused")
     @Deprecated
@@ -312,13 +312,13 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Filter_small = AllIcons.General.Filter;
+    /** 16x16 */ public static final Icon Filter_small = load("/general/filter.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Find */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon FindPlain = AllIcons.Actions.Find;
+    /** 16x16 */ public static final Icon FindPlain = load("/actions/find.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -330,61 +330,61 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Get = AllIcons.Actions.Download;
+    /** 16x16 */ public static final Icon Get = load("/actions/download.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowLeft */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Left = AllIcons.General.ArrowLeft;
+    /** 16x16 */ public static final Icon Left = load("/general/arrowLeft.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Find */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Menu_find = AllIcons.Actions.Find;
+    /** 16x16 */ public static final Icon Menu_find = load("/actions/find.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Help */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Menu_help = AllIcons.Actions.Help;
+    /** 16x16 */ public static final Icon Menu_help = load("/actions/help.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Replace */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Menu_replace = AllIcons.Actions.Replace;
+    /** 16x16 */ public static final Icon Menu_replace = load("/actions/replace.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Minimize = AllIcons.General.HideToolWindow;
+    /** 16x16 */ public static final Icon Minimize = load("/general/hideToolWindow.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Module */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Module = AllIcons.Nodes.Module;
+    /** 16x16 */ public static final Icon Module = load("/nodes/Module.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Move_to_button */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Move_to_button_top = AllIcons.Actions.Move_to_button;
+    /** 12x12 */ public static final Icon Move_to_button_top = load("/actions/move-to-button.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.MoveTo2 */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon MoveToAnotherChangelist = AllIcons.Actions.MoveTo2;
+    /** 16x16 */ public static final Icon MoveToAnotherChangelist = load("/actions/MoveTo2.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.MoveTo2 */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon MoveToStandardPlace = AllIcons.Actions.MoveTo2;
+    /** 16x16 */ public static final Icon MoveToStandardPlace = load("/actions/MoveTo2.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -396,13 +396,13 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Nextfile = AllIcons.Actions.Forward;
+    /** 16x16 */ public static final Icon Nextfile = load("/actions/forward.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Back */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Prevfile = AllIcons.Actions.Back;
+    /** 16x16 */ public static final Icon Prevfile = load("/actions/back.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -420,31 +420,31 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Reset_to_default = AllIcons.Actions.Rollback;
+    /** 16x16 */ public static final Icon Reset_to_default = load("/actions/rollback.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Rollback */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Reset = AllIcons.Actions.Rollback;
+    /** 16x16 */ public static final Icon Reset = load("/actions/rollback.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Uninstall */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Reset_to_empty = AllIcons.Actions.Uninstall;
+    /** 16x16 */ public static final Icon Reset_to_empty = load("/actions/uninstall.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowRight */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Right = AllIcons.General.ArrowRight;
+    /** 16x16 */ public static final Icon Right = load("/general/arrowRight.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Preview */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon ShowChangesOnly = AllIcons.Actions.Preview;
+    /** 16x16 */ public static final Icon ShowChangesOnly = load("/actions/preview.svg");
 
     @SuppressWarnings("unused")
     @Deprecated
@@ -454,31 +454,31 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon SortAsc = AllIcons.Actions.MoveUp;
+    /** 16x16 */ public static final Icon SortAsc = load("/actions/moveUp.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.MoveDown */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon SortDesc = AllIcons.Actions.MoveDown;
+    /** 16x16 */ public static final Icon SortDesc = load("/actions/moveDown.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.SetDefault */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Submit1 = AllIcons.Actions.SetDefault;
+    /** 16x16 */ public static final Icon Submit1 = load("/actions/setDefault.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Refresh */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon SynchronizeFS = AllIcons.Actions.Refresh;
+    /** 16x16 */ public static final Icon SynchronizeFS = load("/actions/refresh.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowUp */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon UP = AllIcons.General.ArrowUp;
+    /** 16x16 */ public static final Icon UP = load("/general/arrowUp.svg");
 
   }
 
@@ -489,7 +489,7 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Gear = AllIcons.General.GearPlain;
+    /** 16x16 */ public static final Icon Gear = load("/general/gearPlain.svg");
 
   }
 
@@ -573,7 +573,7 @@ public class AllIcons {
       @SuppressWarnings("unused")
       @Deprecated
       @ScheduledForRemoval(inVersion = "2020.1")
-      public static final Icon ClassTracked = AllIcons.Debugger.Watch;
+      /** 16x16 */ public static final Icon ClassTracked = load("/debugger/watch.svg");
 
       /** @deprecated to be removed in IDEA 2020 */
       @SuppressWarnings("unused")
@@ -621,43 +621,43 @@ public class AllIcons {
       @SuppressWarnings("unused")
       @Deprecated
       @ScheduledForRemoval(inVersion = "2020.1")
-      public static final Icon EdtBusy = AllIcons.Actions.ProfileCPU;
+      /** 16x16 */ public static final Icon EdtBusy = load("/actions/profileCPU.svg");
 
       /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Lightning */
       @SuppressWarnings("unused")
       @Deprecated
       @ScheduledForRemoval(inVersion = "2020.1")
-      public static final Icon Exception = AllIcons.Actions.Lightning;
+      /** 16x16 */ public static final Icon Exception = load("/actions/lightning.svg");
 
       /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Menu_saveall */
       @SuppressWarnings("unused")
       @Deprecated
       @ScheduledForRemoval(inVersion = "2020.1")
-      public static final Icon IO = AllIcons.Actions.Menu_saveall;
+      /** 16x16 */ public static final Icon IO = load("/actions/menu-saveall.svg");
 
       /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.MuteBreakpoints */
       @SuppressWarnings("unused")
       @Deprecated
       @ScheduledForRemoval(inVersion = "2020.1")
-      public static final Icon Locked = AllIcons.Debugger.MuteBreakpoints;
+      /** 16x16 */ public static final Icon Locked = load("/debugger/muteBreakpoints.svg");
 
       /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Pause */
       @SuppressWarnings("unused")
       @Deprecated
       @ScheduledForRemoval(inVersion = "2020.1")
-      public static final Icon Paused = AllIcons.Actions.Pause;
+      /** 16x16 */ public static final Icon Paused = load("/actions/pause.svg");
 
       /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Resume */
       @SuppressWarnings("unused")
       @Deprecated
       @ScheduledForRemoval(inVersion = "2020.1")
-      public static final Icon Running = AllIcons.Actions.Resume;
+      /** 16x16 */ public static final Icon Running = load("/actions/resume.svg");
 
       /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Dump */
       @SuppressWarnings("unused")
       @Deprecated
       @ScheduledForRemoval(inVersion = "2020.1")
-      public static final Icon Threaddump = AllIcons.Actions.Dump;
+      /** 16x16 */ public static final Icon Threaddump = load("/actions/dump.svg");
 
     }
     /** 16x16 */ public static final Icon ThreadSuspended = load("/debugger/threadSuspended.svg");
@@ -683,151 +683,151 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Class_filter = AllIcons.General.Filter;
+    /** 16x16 */ public static final Icon Class_filter = load("/general/filter.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Console */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon CommandLine = AllIcons.Debugger.Console;
+    /** 16x16 */ public static final Icon CommandLine = load("/debugger/console.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Console */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Console_log = AllIcons.Debugger.Console;
+    /** 16x16 */ public static final Icon Console_log = load("/debugger/console.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_exception_breakpoint */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Db_dep_exception_breakpoint = AllIcons.Debugger.Db_exception_breakpoint;
+    /** 12x12 */ public static final Icon Db_dep_exception_breakpoint = load("/debugger/db_exception_breakpoint.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_exception_breakpoint */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Db_field_warning_breakpoint = AllIcons.Debugger.Db_exception_breakpoint;
+    public static final Icon Db_field_warning_breakpoint = load("/debugger/db_field_warning_breakpoint.png");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_invalid_breakpoint */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Db_invalid_field_breakpoint = AllIcons.Debugger.Db_invalid_breakpoint;
+    /** 12x12 */ public static final Icon Db_invalid_field_breakpoint = load("/debugger/db_invalid_breakpoint.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_invalid_breakpoint */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Db_invalid_method_breakpoint = AllIcons.Debugger.Db_invalid_breakpoint;
+    /** 12x12 */ public static final Icon Db_invalid_method_breakpoint = load("/debugger/db_invalid_breakpoint.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_exception_breakpoint */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Db_method_warning_breakpoint = AllIcons.Debugger.Db_exception_breakpoint;
+    public static final Icon Db_method_warning_breakpoint = load("/debugger/db_method_warning_breakpoint.png");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_exception_breakpoint */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Db_muted_dep_exception_breakpoint = AllIcons.Debugger.Db_exception_breakpoint;
+    /** 12x12 */ public static final Icon Db_muted_dep_exception_breakpoint = load("/debugger/db_exception_breakpoint.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_exception_breakpoint */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Db_muted_disabled_breakpoint_process = AllIcons.Debugger.Db_exception_breakpoint;
+    public static final Icon Db_muted_disabled_breakpoint_process = load("/debugger/db_muted_disabled_breakpoint_process.png");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_exception_breakpoint */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Db_muted_disabled_exception_breakpoint = AllIcons.Debugger.Db_exception_breakpoint;
+    /** 12x12 */ public static final Icon Db_muted_disabled_exception_breakpoint = load("/debugger/db_exception_breakpoint.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_exception_breakpoint */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Db_muted_exception_breakpoint = AllIcons.Debugger.Db_exception_breakpoint;
+    /** 12x12 */ public static final Icon Db_muted_exception_breakpoint = load("/debugger/db_exception_breakpoint.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_exception_breakpoint */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Db_muted_field_warning_breakpoint = AllIcons.Debugger.Db_exception_breakpoint;
+    public static final Icon Db_muted_field_warning_breakpoint = load("/debugger/db_muted_field_warning_breakpoint.png");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_invalid_breakpoint */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Db_muted_invalid_breakpoint = AllIcons.Debugger.Db_invalid_breakpoint;
+    /** 12x12 */ public static final Icon Db_muted_invalid_breakpoint = load("/debugger/db_invalid_breakpoint.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_invalid_breakpoint */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Db_muted_invalid_field_breakpoint = AllIcons.Debugger.Db_invalid_breakpoint;
+    /** 12x12 */ public static final Icon Db_muted_invalid_field_breakpoint = load("/debugger/db_invalid_breakpoint.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_invalid_breakpoint */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Db_muted_invalid_method_breakpoint = AllIcons.Debugger.Db_invalid_breakpoint;
+    /** 12x12 */ public static final Icon Db_muted_invalid_method_breakpoint = load("/debugger/db_invalid_breakpoint.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_exception_breakpoint */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Db_muted_method_warning_breakpoint = AllIcons.Debugger.Db_exception_breakpoint;
+    public static final Icon Db_muted_method_warning_breakpoint = load("/debugger/db_muted_method_warning_breakpoint.png");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_muted_breakpoint */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Db_muted_temporary_breakpoint = AllIcons.Debugger.Db_muted_breakpoint;
+    /** 12x12 */ public static final Icon Db_muted_temporary_breakpoint = load("/debugger/db_muted_breakpoint.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_muted_breakpoint */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Db_muted_verified_breakpoint = AllIcons.Debugger.Db_muted_breakpoint;
+    /** 12x12 */ public static final Icon Db_muted_verified_breakpoint = load("/debugger/db_muted_breakpoint.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_muted_field_breakpoint */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Db_muted_verified_field_breakpoint = AllIcons.Debugger.Db_muted_field_breakpoint;
+    /** 12x12 */ public static final Icon Db_muted_verified_field_breakpoint = load("/debugger/db_muted_field_breakpoint.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_muted_field_breakpoint */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Db_muted_verified_method_breakpoint = AllIcons.Debugger.Db_muted_field_breakpoint;
+    /** 12x12 */ public static final Icon Db_muted_verified_method_breakpoint = load("/debugger/db_muted_field_breakpoint.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_exception_breakpoint */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Db_muted_verified_warning_breakpoint = AllIcons.Debugger.Db_exception_breakpoint;
+    public static final Icon Db_muted_verified_warning_breakpoint = load("/debugger/db_muted_verified_warning_breakpoint.png");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_set_breakpoint */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Db_pending_breakpoint = AllIcons.Debugger.Db_set_breakpoint;
+    /** 12x12 */ public static final Icon Db_pending_breakpoint = load("/debugger/db_set_breakpoint.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_set_breakpoint */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Db_temporary_breakpoint = AllIcons.Debugger.Db_set_breakpoint;
+    /** 12x12 */ public static final Icon Db_temporary_breakpoint = load("/debugger/db_set_breakpoint.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_exception_breakpoint */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Db_verified_warning_breakpoint = AllIcons.Debugger.Db_exception_breakpoint;
+    public static final Icon Db_verified_warning_breakpoint = load("/debugger/db_verified_warning_breakpoint.png");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -845,25 +845,25 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon NewWatch = AllIcons.General.Add;
+    /** 16x16 */ public static final Icon NewWatch = load("/general/add.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Frame */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon StackFrame = AllIcons.Debugger.Frame;
+    /** 16x16 */ public static final Icon StackFrame = load("/debugger/frame.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Console */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon ToolConsole = AllIcons.Debugger.Console;
+    /** 16x16 */ public static final Icon ToolConsole = load("/debugger/console.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Watch */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Watches = AllIcons.Debugger.Watch;
+    /** 16x16 */ public static final Icon Watches = load("/debugger/watch.svg");
 
   }
 
@@ -897,13 +897,13 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon CurrentLine = AllIcons.Actions.Forward;
+    public static final Icon CurrentLine = load("/diff/currentLine.png");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Diff */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Diff = AllIcons.Actions.Diff;
+    public static final Icon Diff = load("/diff/Diff.png");
 
   }
 
@@ -1059,37 +1059,37 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon AddFavoritesList = AllIcons.General.Add;
+    /** 16x16 */ public static final Icon AddFavoritesList = load("/general/add.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon ArrowDown_white = AllIcons.General.ArrowDown;
+    /** 16x16 */ public static final Icon ArrowDown_white = load("/general/arrowDown.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Pin_tab */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon AutohideOff = AllIcons.General.Pin_tab;
+    /** 16x16 */ public static final Icon AutohideOff = load("/general/pin_tab.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Pin_tab */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon AutohideOffInactive = AllIcons.General.Pin_tab;
+    /** 16x16 */ public static final Icon AutohideOffInactive = load("/general/pin_tab.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Pin_tab */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon AutohideOffPressed = AllIcons.General.Pin_tab;
+    /** 16x16 */ public static final Icon AutohideOffPressed = load("/general/pin_tab.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Ide.Notification.Close */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon BalloonClose = AllIcons.Ide.Notification.Close;
+    /** 16x16 */ public static final Icon BalloonClose = load("/ide/notification/close.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -1101,73 +1101,73 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon CollapseAll = AllIcons.Actions.Collapseall;
+    /** 16x16 */ public static final Icon CollapseAll = load("/actions/collapseall.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Collapseall */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon CollapseAllHover = AllIcons.Actions.Collapseall;
+    /** 16x16 */ public static final Icon CollapseAllHover = load("/actions/collapseall.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Combo = AllIcons.General.ArrowDown;
+    /** 16x16 */ public static final Icon Combo = load("/general/arrowDown.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Combo2 = AllIcons.General.ArrowDown;
+    /** 16x16 */ public static final Icon Combo2 = load("/general/arrowDown.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Combo3 = AllIcons.General.ArrowDown;
+    /** 16x16 */ public static final Icon Combo3 = load("/general/arrowDown.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon ComboArrow = AllIcons.General.ArrowDown;
+    /** 16x16 */ public static final Icon ComboArrow = load("/general/arrowDown.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDownSmall */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon ComboArrowDown = AllIcons.General.ArrowDownSmall;
+    /** 9x5 */ public static final Icon ComboArrowDown = load("/general/arrowDownSmall.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowLeft */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon ComboArrowLeft = AllIcons.General.ArrowLeft;
+    /** 16x16 */ public static final Icon ComboArrowLeft = load("/general/arrowLeft.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowLeft */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon ComboArrowLeftPassive = AllIcons.General.ArrowLeft;
+    /** 16x16 */ public static final Icon ComboArrowLeftPassive = load("/general/arrowLeft.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowRight */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon ComboArrowRight = AllIcons.General.ArrowRight;
+    /** 16x16 */ public static final Icon ComboArrowRight = load("/general/arrowRight.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowRight */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon ComboArrowRightPassive = AllIcons.General.ArrowRight;
+    /** 16x16 */ public static final Icon ComboArrowRightPassive = load("/general/arrowRight.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon ComboBoxButtonArrow = AllIcons.General.ArrowDown;
+    /** 16x16 */ public static final Icon ComboBoxButtonArrow = load("/general/arrowDown.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -1185,25 +1185,25 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Configure = AllIcons.General.Settings;
+    /** 16x16 */ public static final Icon Configure = load("/general/settings.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Welcome.CreateNewProject */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon CreateNewProject = AllIcons.Welcome.CreateNewProject;
+    /** 16x16 */ public static final Icon CreateNewProject = load("/welcome/createNewProject.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Import */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon CreateNewProjectfromExistingFiles = AllIcons.ToolbarDecorator.Import;
+    /** 16x16 */ public static final Icon CreateNewProjectfromExistingFiles = load("/toolbarDecorator/import.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.StartDebugger */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Debug = AllIcons.Actions.StartDebugger;
+    /** 16x16 */ public static final Icon Debug = load("/actions/startDebugger.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -1221,13 +1221,13 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon EditColors = AllIcons.General.Settings;
+    /** 16x16 */ public static final Icon EditColors = load("/general/settings.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Edit */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon EditItemInSection = AllIcons.Actions.Edit;
+    /** 16x16 */ public static final Icon EditItemInSection = load("/actions/edit.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -1239,37 +1239,37 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon ExpandAll = AllIcons.Actions.Expandall;
+    /** 16x16 */ public static final Icon ExpandAll = load("/actions/expandall.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Expandall */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon ExpandAllHover = AllIcons.Actions.Expandall;
+    /** 16x16 */ public static final Icon ExpandAllHover = load("/actions/expandall.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Export */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon ExportSettings = AllIcons.ToolbarDecorator.Export;
+    /** 16x16 */ public static final Icon ExportSettings = load("/toolbarDecorator/export.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ExternalTools */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon ExternalToolsSmall = AllIcons.General.ExternalTools;
+    /** 16x16 */ public static final Icon ExternalToolsSmall = load("/general/externalTools.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.MoveTo2 */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Floating = AllIcons.Actions.MoveTo2;
+    /** 16x16 */ public static final Icon Floating = load("/actions/MoveTo2.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.GearPlain */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Gear = AllIcons.General.GearPlain;
+    /** 16x16 */ public static final Icon Gear = load("/general/gearPlain.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -1281,97 +1281,97 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon GetProjectfromVCS = AllIcons.Welcome.FromVCS;
+    /** 16x16 */ public static final Icon GetProjectfromVCS = load("/welcome/fromVCS.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ContextHelp */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Help = AllIcons.General.ContextHelp;
+    /** 16x16 */ public static final Icon Help = load("/general/contextHelp.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ContextHelp */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Help_small = AllIcons.General.ContextHelp;
+    /** 16x16 */ public static final Icon Help_small = load("/general/contextHelp.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon HideDown = AllIcons.General.HideToolWindow;
+    /** 16x16 */ public static final Icon HideDown = load("/general/hideToolWindow.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon HideDownHover = AllIcons.General.HideToolWindow;
+    /** 16x16 */ public static final Icon HideDownHover = load("/general/hideToolWindow.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon HideDownPart = AllIcons.General.HideToolWindow;
+    /** 16x16 */ public static final Icon HideDownPart = load("/general/hideToolWindow.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon HideDownPartHover = AllIcons.General.HideToolWindow;
+    /** 16x16 */ public static final Icon HideDownPartHover = load("/general/hideToolWindow.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon HideLeft = AllIcons.General.HideToolWindow;
+    /** 16x16 */ public static final Icon HideLeft = load("/general/hideToolWindow.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon HideLeftHover = AllIcons.General.HideToolWindow;
+    /** 16x16 */ public static final Icon HideLeftHover = load("/general/hideToolWindow.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon HideLeftPart = AllIcons.General.HideToolWindow;
+    /** 16x16 */ public static final Icon HideLeftPart = load("/general/hideToolWindow.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon HideLeftPartHover = AllIcons.General.HideToolWindow;
+    /** 16x16 */ public static final Icon HideLeftPartHover = load("/general/hideToolWindow.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon HideRight = AllIcons.General.HideToolWindow;
+    /** 16x16 */ public static final Icon HideRight = load("/general/hideToolWindow.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon HideRightHover = AllIcons.General.HideToolWindow;
+    /** 16x16 */ public static final Icon HideRightHover = load("/general/hideToolWindow.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon HideRightPart = AllIcons.General.HideToolWindow;
+    /** 16x16 */ public static final Icon HideRightPart = load("/general/hideToolWindow.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon HideRightPartHover = AllIcons.General.HideToolWindow;
+    /** 16x16 */ public static final Icon HideRightPartHover = load("/general/hideToolWindow.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon HideToolWindowInactive = AllIcons.General.HideToolWindow;
+    /** 16x16 */ public static final Icon HideToolWindowInactive = load("/general/hideToolWindow.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -1389,19 +1389,19 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon ImportProject = AllIcons.ToolbarDecorator.Import;
+    /** 16x16 */ public static final Icon ImportProject = load("/toolbarDecorator/import.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Import */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon ImportSettings = AllIcons.ToolbarDecorator.Import;
+    /** 16x16 */ public static final Icon ImportSettings = load("/toolbarDecorator/import.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Ide.HectorOff */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon InspectionsOff = AllIcons.Ide.HectorOff;
+    /** 16x16 */ public static final Icon InspectionsOff = load("/ide/hectorOff.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -1425,7 +1425,7 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon LocateHover = AllIcons.General.Locate;
+    /** 16x16 */ public static final Icon LocateHover = load("/general/locate.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -1455,7 +1455,7 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon MessageHistory = AllIcons.Vcs.History;
+    /** 16x16 */ public static final Icon MessageHistory = load("/vcs/history.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -1467,13 +1467,13 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon OpenProject = AllIcons.Actions.Menu_open;
+    /** 16x16 */ public static final Icon OpenProject = load("/actions/menu-open.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.CopyOfFolder */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon PackagesTab = AllIcons.Nodes.CopyOfFolder;
+    /** 16x16 */ public static final Icon PackagesTab = load("/nodes/copyOfFolder.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -1503,43 +1503,43 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon ProjectConfigurableBanner = AllIcons.General.ProjectConfigurable;
+    /** 9x9 */ public static final Icon ProjectConfigurableBanner = load("/general/projectConfigurable.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ProjectConfigurable */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon ProjectConfigurableSelected = AllIcons.General.ProjectConfigurable;
+    /** 9x9 */ public static final Icon ProjectConfigurableSelected = load("/general/projectConfigurable.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.GearPlain */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon ProjectSettings = AllIcons.General.GearPlain;
+    /** 16x16 */ public static final Icon ProjectSettings = load("/general/gearPlain.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Help */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon ReadHelp = AllIcons.Actions.Help;
+    /** 16x16 */ public static final Icon ReadHelp = load("/actions/help.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.ShowAsTree */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Recursive = AllIcons.Actions.ShowAsTree;
+    /** 16x16 */ public static final Icon Recursive = load("/actions/showAsTree.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.RunConfigurations.TestState.Run */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Run = AllIcons.RunConfigurations.TestState.Run;
+    /** 12x12 */ public static final Icon Run = load("/runConfigurations/testState/run.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.InspectionsTrafficOff */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon SafeMode = AllIcons.General.InspectionsTrafficOff;
+    /** 14x14 */ public static final Icon SafeMode = load("/general/inspectionsTrafficOff.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -1551,7 +1551,7 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon SecondaryGroup = AllIcons.General.GearPlain;
+    /** 16x16 */ public static final Icon SecondaryGroup = load("/general/gearPlain.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -1563,25 +1563,25 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon SmallConfigurableVcs = AllIcons.Actions.ShowAsTree;
+    /** 16x16 */ public static final Icon SmallConfigurableVcs = load("/actions/showAsTree.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowSplitCenterH */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon SplitCenterH = AllIcons.General.ArrowSplitCenterH;
+    /** 16x16 */ public static final Icon SplitCenterH = load("/general/arrowSplitCenterH.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowSplitCenterV */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon SplitCenterV = AllIcons.General.ArrowSplitCenterV;
+    /** 16x16 */ public static final Icon SplitCenterV = load("/general/arrowSplitCenterV.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon SplitDown = AllIcons.General.ArrowDown;
+    /** 16x16 */ public static final Icon SplitDown = load("/general/arrowDown.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -1599,19 +1599,19 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon SplitLeft = AllIcons.General.ArrowLeft;
+    /** 16x16 */ public static final Icon SplitLeft = load("/general/arrowLeft.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowRight */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon SplitRight = AllIcons.General.ArrowRight;
+    /** 16x16 */ public static final Icon SplitRight = load("/general/arrowRight.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowUp */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon SplitUp = AllIcons.General.ArrowUp;
+    /** 16x16 */ public static final Icon SplitUp = load("/general/arrowUp.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -1665,13 +1665,13 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon TemplateProjectSettings = AllIcons.General.Settings;
+    /** 16x16 */ public static final Icon TemplateProjectSettings = load("/general/settings.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ProjectStructure */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon TemplateProjectStructure = AllIcons.General.ProjectStructure;
+    /** 16x16 */ public static final Icon TemplateProjectStructure = load("/general/projectStructure.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -1701,19 +1701,19 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Export = AllIcons.ToolbarDecorator.Export;
+    /** 16x16 */ public static final Icon Export = load("/toolbarDecorator/export.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Print */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Print = AllIcons.General.Print;
+    /** 16x16 */ public static final Icon Print = load("/general/print.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Preview */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon PrintPreview = AllIcons.Actions.Preview;
+    /** 16x16 */ public static final Icon PrintPreview = load("/actions/preview.svg");
 
   }
 
@@ -1746,19 +1746,19 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Base = AllIcons.General.Modified;
+    /** 16x16 */ public static final Icon Base = load("/actions/forward.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Hierarchy.Subtypes */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Callee = AllIcons.Hierarchy.Subtypes;
+    /** 16x16 */ public static final Icon Callee = load("/hierarchy/subtypes.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Hierarchy.Supertypes */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Caller = AllIcons.Hierarchy.Supertypes;
+    /** 16x16 */ public static final Icon Caller = load("/hierarchy/supertypes.svg");
 
   }
 
@@ -1772,7 +1772,7 @@ public class AllIcons {
       @SuppressWarnings("unused")
       @Deprecated
       @ScheduledForRemoval(inVersion = "2020.1")
-      public static final Icon NextStepGrayed = AllIcons.Icons.Ide.NextStep;
+      /** 12x12 */ public static final Icon NextStepGrayed = load("/icons/ide/nextStep.svg");
 
       /** @deprecated to be removed in IDEA 2020 */
       @SuppressWarnings("unused")
@@ -1792,25 +1792,25 @@ public class AllIcons {
       @SuppressWarnings("unused")
       @Deprecated
       @ScheduledForRemoval(inVersion = "2020.1")
-      public static final Icon Bottom = AllIcons.General.ArrowUp;
+      /** 16x16 */ public static final Icon Bottom = load("/general/arrowUp.svg");
 
       /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowRight */
       @SuppressWarnings("unused")
       @Deprecated
       @ScheduledForRemoval(inVersion = "2020.1")
-      public static final Icon Left = AllIcons.General.ArrowRight;
+      /** 16x16 */ public static final Icon Left = load("/general/arrowRight.svg");
 
       /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowLeft */
       @SuppressWarnings("unused")
       @Deprecated
       @ScheduledForRemoval(inVersion = "2020.1")
-      public static final Icon Right = AllIcons.General.ArrowLeft;
+      /** 16x16 */ public static final Icon Right = load("/general/arrowLeft.svg");
 
       /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
       @SuppressWarnings("unused")
       @Deprecated
       @ScheduledForRemoval(inVersion = "2020.1")
-      public static final Icon Top = AllIcons.General.ArrowDown;
+      /** 16x16 */ public static final Icon Top = load("/general/arrowDown.svg");
 
     }
     /** 6x6 */ public static final Icon ErrorPoint = load("/ide/errorPoint.svg");
@@ -1834,7 +1834,7 @@ public class AllIcons {
       @SuppressWarnings("unused")
       @Deprecated
       @ScheduledForRemoval(inVersion = "2020.1")
-      public static final Icon Recording_stop = AllIcons.Actions.Suspend;
+      /** 16x16 */ public static final Icon Recording_stop = load("/actions/suspend.svg");
 
     }
     /** 5x15 */ public static final Icon NavBarSeparator = load("/ide/NavBarSeparator.svg");
@@ -1889,25 +1889,25 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon EmptyFatalError = AllIcons.Ide.FatalError_read;
+    /** 16x16 */ public static final Icon EmptyFatalError = load("/ide/fatalError-read.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Ide.FatalError */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Error = AllIcons.Ide.FatalError;
+    /** 16x16 */ public static final Icon Error = load("/ide/fatalError.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Error */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Error_notifications = AllIcons.General.Error;
+    /** 16x16 */ public static final Icon Error_notifications = load("/general/error.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Ide.HectorOff */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon HectorNo = AllIcons.Ide.HectorOff;
+    /** 16x16 */ public static final Icon HectorNo = load("/ide/hectorOff.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -1919,7 +1919,7 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Info_notifications = AllIcons.General.Information;
+    /** 16x16 */ public static final Icon Info_notifications = load("/general/information.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -1943,13 +1943,13 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Notifications = AllIcons.Ide.Notification.NoEvents;
+    /** 16x16 */ public static final Icon Notifications = load("/ide/notification/noEvents.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Warning */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Warning_notifications = AllIcons.General.Warning;
+    /** 16x16 */ public static final Icon Warning_notifications = load("/general/warning.svg");
 
   }
   /** 100x100 */ public static final Icon Idea_logo_welcome = load("/idea_logo_welcome.png");
@@ -2009,25 +2009,25 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Local = AllIcons.Nodes.Interface;
+    /** 16x16 */ public static final Icon Local = load("/nodes/interface.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Javaee.Home */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon LocalHome = AllIcons.Javaee.Home;
+    /** 16x16 */ public static final Icon LocalHome = load("/javaee/home.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Javaee.WebService */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon WebService2 = AllIcons.Javaee.WebService;
+    /** 16x16 */ public static final Icon WebService2 = load("/javaee/WebService.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Javaee.WebServiceClient */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon WebServiceClient2 = AllIcons.Javaee.WebServiceClient;
+    /** 16x16 */ public static final Icon WebServiceClient2 = load("/javaee/WebServiceClient.svg");
 
   }
 
@@ -2039,13 +2039,13 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Property_braces = AllIcons.Json.Object;
+    /** 16x16 */ public static final Icon Property_braces = load("/json/object.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Json.Array */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Property_brackets = AllIcons.Json.Array;
+    /** 16x16 */ public static final Icon Property_brackets = load("/json/array.svg");
 
   }
   /** 80x80 */ public static final Icon Logo_welcomeScreen = load("/Logo_welcomeScreen.png");
@@ -2109,7 +2109,7 @@ public class AllIcons {
       @SuppressWarnings("unused")
       @Deprecated
       @ScheduledForRemoval(inVersion = "2020.1")
-      public static final Icon UserDefined = AllIcons.General.User;
+      /** 16x16 */ public static final Icon UserDefined = load("/general/user.svg");
 
     }
     /** 16x16 */ public static final Icon UnloadedModule = load("/modules/unloadedModule.svg");
@@ -2119,73 +2119,73 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon AddContentEntry = AllIcons.General.Add;
+    /** 16x16 */ public static final Icon AddContentEntry = load("/general/add.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Close */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon DeleteContentFolder = AllIcons.Actions.Close;
+    /** 16x16 */ public static final Icon DeleteContentFolder = load("/actions/close.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.CloseHovered */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon DeleteContentFolderRollover = AllIcons.Actions.CloseHovered;
+    /** 16x16 */ public static final Icon DeleteContentFolderRollover = load("/actions/closeHovered.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Close */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon DeleteContentRoot = AllIcons.Actions.Close;
+    /** 16x16 */ public static final Icon DeleteContentRoot = load("/actions/close.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.CloseHovered */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon DeleteContentRootRollover = AllIcons.Actions.CloseHovered;
+    /** 16x16 */ public static final Icon DeleteContentRootRollover = load("/actions/closeHovered.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Edit */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Edit = AllIcons.Actions.Edit;
+    /** 16x16 */ public static final Icon Edit = load("/actions/edit.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.PpLib */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Library = AllIcons.Nodes.PpLib;
+    /** 16x16 */ public static final Icon Library = load("/nodes/ppLib.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Vcs.Merge */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Merge = AllIcons.Vcs.Merge;
+    /** 16x16 */ public static final Icon Merge = load("/vcs/merge.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.ModuleGroup */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon ModulesNode = AllIcons.Nodes.ModuleGroup;
+    /** 16x16 */ public static final Icon ModulesNode = load("/nodes/moduleGroup.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Inline_edit */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon SetPackagePrefix = AllIcons.General.Inline_edit;
+    /** 16x16 */ public static final Icon SetPackagePrefix = load("/general/inline_edit.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Inline_edit_hovered */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon SetPackagePrefixRollover = AllIcons.General.Inline_edit_hovered;
+    /** 16x16 */ public static final Icon SetPackagePrefixRollover = load("/general/inline_edit_hovered.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Package */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon SourceFolder = AllIcons.Nodes.Package;
+    /** 16x16 */ public static final Icon SourceFolder = load("/nodes/package.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -2197,13 +2197,13 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon TestSourceFolder = AllIcons.Nodes.TestSourceFolder;
+    /** 16x16 */ public static final Icon TestSourceFolder = load("/nodes/testSourceFolder.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.WebFolder */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon WebRoot = AllIcons.Nodes.WebFolder;
+    /** 16x16 */ public static final Icon WebRoot = load("/nodes/webFolder.svg");
 
   }
 
@@ -2282,13 +2282,13 @@ public class AllIcons {
       @SuppressWarnings("unused")
       @Deprecated
       @ScheduledForRemoval(inVersion = "2020.1")
-      public static final Icon GenericValue = AllIcons.Nodes.Parameter;
+      /** 16x16 */ public static final Icon GenericValue = load("/nodes/parameter.svg");
 
       /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.UpFolder */
       @SuppressWarnings("unused")
       @Deprecated
       @ScheduledForRemoval(inVersion = "2020.1")
-      public static final Icon NavigationCase = AllIcons.Nodes.UpFolder;
+      /** 16x16 */ public static final Icon NavigationCase = load("/nodes/upFolder.svg");
 
     }
     /** 16x16 */ public static final Icon Jsr45 = load("/nodes/jsr45.svg");
@@ -2372,13 +2372,13 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Advice = AllIcons.Nodes.Tag;
+    /** 16x16 */ public static final Icon Advice = load("/nodes/tag.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon CollapseNode = AllIcons.General.ArrowDown;
+    /** 16x16 */ public static final Icon CollapseNode = load("/general/arrowDown.svg");
 
     /** @deprecated to be removed in IDEA 2020 - see DatabaseIcons.View */
     @SuppressWarnings("unused")
@@ -2408,19 +2408,19 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon ExpandNode = AllIcons.General.ArrowRight;
+    /** 16x16 */ public static final Icon ExpandNode = load("/general/arrowRight.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Favorite */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon FavoriteOnHover = AllIcons.Nodes.Favorite;
+    /** 16x16 */ public static final Icon FavoriteOnHover = load("/nodes/favorite.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Module */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon JavaModuleRoot = AllIcons.Nodes.Module;
+    /** 16x16 */ public static final Icon JavaModuleRoot = load("/nodes/Module.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -2432,13 +2432,13 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon NewFolder = AllIcons.Nodes.Folder;
+    /** 16x16 */ public static final Icon NewFolder = load("/nodes/folder.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.TabPin */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon PinToolWindow = AllIcons.Nodes.TabPin;
+    /** 16x16 */ public static final Icon PinToolWindow = load("/nodes/tabPin.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -2456,7 +2456,7 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon PpFile = AllIcons.Nodes.Folder;
+    /** 16x16 */ public static final Icon PpFile = load("/nodes/folder.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -2468,19 +2468,19 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon SourceFolder = AllIcons.Nodes.Package;
+    /** 16x16 */ public static final Icon SourceFolder = load("/nodes/package.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Folder */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon TreeClosed = AllIcons.Nodes.Folder;
+    /** 16x16 */ public static final Icon TreeClosed = load("/nodes/folder.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon TreeCollapseNode = AllIcons.General.ArrowDown;
+    /** 16x16 */ public static final Icon TreeCollapseNode = load("/general/arrowDown.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -2492,13 +2492,13 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon TreeExpandNode = AllIcons.General.ArrowRight;
+    /** 16x16 */ public static final Icon TreeExpandNode = load("/general/arrowRight.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Folder */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon TreeOpen = AllIcons.Nodes.Folder;
+    /** 16x16 */ public static final Icon TreeOpen = load("/nodes/folder.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -2524,13 +2524,13 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon ShowEditorHighlighting = AllIcons.Actions.Edit;
+    /** 16x16 */ public static final Icon ShowEditorHighlighting = load("/actions/edit.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.GroupByModule */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon ShowModules = AllIcons.Actions.GroupByModule;
+    /** 16x16 */ public static final Icon ShowModules = load("/actions/GroupByModule.svg");
 
   }
 
@@ -2861,7 +2861,7 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Cvs = AllIcons.Nodes.Cvs_global;
+    /** 16x16 */ public static final Icon Cvs = load("/nodes/cvs_global.svg");
 
   }
 
@@ -2912,7 +2912,7 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon ConfigurationWarning = AllIcons.General.BalloonError;
+    /** 16x16 */ public static final Icon ConfigurationWarning = load("/general/balloonError.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -2942,7 +2942,7 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon SaveTempConfig = AllIcons.Actions.Menu_saveall;
+    /** 16x16 */ public static final Icon SaveTempConfig = load("/actions/menu-saveall.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -2966,67 +2966,67 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon TestInProgress1 = AllIcons.Process.Step_1;
+    /** 16x16 */ public static final Icon TestInProgress1 = load("/process/step_1.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Process.Step_2 */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon TestInProgress2 = AllIcons.Process.Step_2;
+    /** 16x16 */ public static final Icon TestInProgress2 = load("/process/step_2.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Process.Step_3 */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon TestInProgress3 = AllIcons.Process.Step_3;
+    /** 16x16 */ public static final Icon TestInProgress3 = load("/process/step_3.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Process.Step_4 */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon TestInProgress4 = AllIcons.Process.Step_4;
+    /** 16x16 */ public static final Icon TestInProgress4 = load("/process/step_4.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Process.Step_5 */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon TestInProgress5 = AllIcons.Process.Step_5;
+    /** 16x16 */ public static final Icon TestInProgress5 = load("/process/step_5.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Process.Step_6 */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon TestInProgress6 = AllIcons.Process.Step_6;
+    /** 16x16 */ public static final Icon TestInProgress6 = load("/process/step_6.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Process.Step_7 */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon TestInProgress7 = AllIcons.Process.Step_7;
+    /** 16x16 */ public static final Icon TestInProgress7 = load("/process/step_7.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Process.Step_8 */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon TestInProgress8 = AllIcons.Process.Step_8;
+    /** 16x16 */ public static final Icon TestInProgress8 = load("/process/step_8.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Jsf.Renderer */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon TrackTests = AllIcons.Nodes.Jsf.Renderer;
+    /** 16x16 */ public static final Icon TrackTests = load("/nodes/jsf/renderer.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Help */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Unknown = AllIcons.Actions.Help;
+    /** 16x16 */ public static final Icon Unknown = load("/actions/help.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.ListFiles */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Variables = AllIcons.Actions.ListFiles;
+    /** 16x16 */ public static final Icon Variables = load("/actions/listFiles.svg");
 
   }
 
@@ -3063,13 +3063,13 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Add = AllIcons.General.Add;
+    /** 16x16 */ public static final Icon Add = load("/general/add.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.AddFolder */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon AddPackage = AllIcons.ToolbarDecorator.AddFolder;
+    /** 16x16 */ public static final Icon AddPackage = load("/toolbarDecorator/addFolder.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -3081,25 +3081,25 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Edit = AllIcons.Actions.Edit;
+    /** 16x16 */ public static final Icon Edit = load("/actions/edit.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.MoveDown */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon MoveDown = AllIcons.Actions.MoveDown;
+    /** 16x16 */ public static final Icon MoveDown = load("/actions/moveDown.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.MoveUp */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon MoveUp = AllIcons.Actions.MoveUp;
+    /** 16x16 */ public static final Icon MoveUp = load("/actions/moveUp.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Remove */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Remove = AllIcons.General.Remove;
+    /** 16x16 */ public static final Icon Remove = load("/general/remove.svg");
 
   }
 
@@ -3174,7 +3174,7 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon MergeSourcesTree = AllIcons.Actions.ShowAsTree;
+    /** 16x16 */ public static final Icon MergeSourcesTree = load("/actions/showAsTree.svg");
 
   }
 
@@ -3199,19 +3199,19 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon CreateNewProjectfromExistingFiles = AllIcons.ToolbarDecorator.Import;
+    /** 16x16 */ public static final Icon CreateNewProjectfromExistingFiles = load("/toolbarDecorator/import.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Import */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon ImportProject = AllIcons.ToolbarDecorator.Import;
+    /** 16x16 */ public static final Icon ImportProject = load("/toolbarDecorator/import.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Menu_open */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon OpenProject = AllIcons.Actions.Menu_open;
+    /** 16x16 */ public static final Icon OpenProject = load("/actions/menu-open.svg");
 
   }
 
