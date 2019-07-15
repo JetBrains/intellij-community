@@ -15,6 +15,15 @@ open class DefaultPartTitle(open var prefix: String = " ", open var suffix: Stri
 
   protected var state = TitlePart.State.LONG
 
+  override var active: Boolean = true
+    set(value) {
+      field = value
+      if(!value) {
+        label.text = ""
+      }
+    }
+
+
   override var longText: String = ""
     set(value) {
       if (value == field) return
@@ -28,24 +37,25 @@ open class DefaultPartTitle(open var prefix: String = " ", open var suffix: Stri
     get() = label
 
   override fun hide() {
+    if(!active) return
+
     state = TitlePart.State.HIDE
     label.text = ""
   }
 
   override val isClipped: Boolean
-    get() = !(state == TitlePart.State.LONG || state == TitlePart.State.IGNORED)
-
-  override fun ignore() {
-    state = TitlePart.State.IGNORED
-    label.text = ""
-  }
+    get() = state != TitlePart.State.LONG || !active
 
   override fun showLong() {
+    if(!active) return
+
     label.text = if (longText.isEmpty()) "" else "$prefix$longText$suffix"
     state = TitlePart.State.LONG
   }
 
   override fun showShort() {
+    if(!active) return
+
     label.text = if (shortText.isEmpty()) "" else "$prefix$shortText$suffix"
     state = TitlePart.State.SHORT
   }
@@ -57,7 +67,7 @@ open class DefaultPartTitle(open var prefix: String = " ", open var suffix: Stri
   override val shortWidth: Int get() = shortTextWidth
 
   override val toolTipPart: String
-    get() = if (state == TitlePart.State.IGNORED || longText.isEmpty()) "" else "$prefix$longText$suffix"
+    get() = if (longText.isEmpty()) "" else "$prefix$longText$suffix"
 
   override fun setToolTip(value: String?) {
     label.toolTipText = value
@@ -65,8 +75,8 @@ open class DefaultPartTitle(open var prefix: String = " ", open var suffix: Stri
 
   override fun refresh() {
     val fm = label.getFontMetrics(label.font)
-    longTextWidth = if (longText.isEmpty()) 0 else SwingUtilities2.stringWidth(label, fm, "$prefix$longText$suffix")
-    shortTextWidth = if (shortText.isEmpty()) 0 else SwingUtilities2.stringWidth(label, fm, "$prefix$shortText$suffix")
+    longTextWidth = if (longText.isEmpty() || !active) 0 else SwingUtilities2.stringWidth(label, fm, "$prefix$longText$suffix")
+    shortTextWidth = if (shortText.isEmpty() || !active) 0 else SwingUtilities2.stringWidth(label, fm, "$prefix$shortText$suffix")
   }
 
   open class TitleLabel : JLabel() {

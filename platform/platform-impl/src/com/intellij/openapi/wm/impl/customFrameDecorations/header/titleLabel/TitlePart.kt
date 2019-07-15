@@ -12,6 +12,7 @@ interface TitlePart {
     IGNORED
   }
 
+  var active: Boolean
   val component: JComponent
 
 
@@ -23,7 +24,6 @@ interface TitlePart {
 
   fun refresh()
 
-  fun ignore()
   fun hide()
 
   fun showLong()
