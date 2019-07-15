@@ -39,7 +39,7 @@ abstract class SyntaxProxyDescriptor implements SyntaxNodeDescriptor {
 
   @Nullable
   @Override
-  public RegexFacade getRegexAttribute(String key) {
+  public RegexFacade getRegexAttribute(@NotNull Constants.RegexKey key) {
     return getTargetNode().getRegexAttribute(key);
   }
 

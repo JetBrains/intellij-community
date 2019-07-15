@@ -14,7 +14,7 @@ import org.jetbrains.plugins.textmate.regex.RegexFacade;
  * String attributes - string attributes of syntax node {@link Constants.StringKey}
  * </li>
  * <li>
- * Regex attributes - regex attributes of syntax node {@link Constants#REGEX_KEY_NAMES}
+ * Regex attributes - regex attributes of syntax node {@link Constants.RegexKey}
  * </li>
  * <li>
  * Captures attributes - captures attributes of syntax node {@link Constants.CaptureKey}
@@ -34,11 +34,11 @@ public interface MutableSyntaxNodeDescriptor extends SyntaxNodeDescriptor {
 
   void addInjection(@NotNull InjectionNodeDescriptor injection);
 
-  void setStringAttribute(@NotNull Constants.StringKey key, String value);
+  void setStringAttribute(@NotNull Constants.StringKey key, @Nullable String value);
 
   void setCaptures(@NotNull Constants.CaptureKey key, @Nullable TIntObjectHashMap<String> captures);
 
-  void setRegexAttribute(String key, RegexFacade value);
+  void setRegexAttribute(@NotNull Constants.RegexKey key, @Nullable RegexFacade value);
 
   void appendRepository(int ruleId, SyntaxNodeDescriptor descriptor);
 

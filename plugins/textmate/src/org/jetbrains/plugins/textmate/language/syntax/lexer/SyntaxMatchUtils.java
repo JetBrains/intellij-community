@@ -120,7 +120,7 @@ public final class SyntaxMatchUtils {
   }
 
   private static boolean hasBeginKey(@NotNull TextMateLexerState lexerState) {
-    return lexerState.syntaxRule.getRegexAttribute(Constants.BEGIN_KEY) != null;
+    return lexerState.syntaxRule.getRegexAttribute(Constants.RegexKey.BEGIN) != null;
   }
 
   private static TextMateLexerState matchFirstChild(@NotNull SyntaxNodeDescriptor syntaxNodeDescriptor,
@@ -128,11 +128,11 @@ public final class SyntaxMatchUtils {
                                                     int byteOffset,
                                                     @NotNull TextMateWeigh.Priority priority,
                                                     @NotNull String currentScope) {
-    RegexFacade matchRegex = syntaxNodeDescriptor.getRegexAttribute(Constants.MATCH_KEY);
+    RegexFacade matchRegex = syntaxNodeDescriptor.getRegexAttribute(Constants.RegexKey.MATCH);
     if (matchRegex != null) {
       return new TextMateLexerState(syntaxNodeDescriptor, matchRegex.match(string, byteOffset), priority, string);
     }
-    RegexFacade beginRegex = syntaxNodeDescriptor.getRegexAttribute(Constants.BEGIN_KEY);
+    RegexFacade beginRegex = syntaxNodeDescriptor.getRegexAttribute(Constants.RegexKey.BEGIN);
     if (beginRegex != null) {
       return new TextMateLexerState(syntaxNodeDescriptor, beginRegex.match(string, byteOffset), priority, string);
     }

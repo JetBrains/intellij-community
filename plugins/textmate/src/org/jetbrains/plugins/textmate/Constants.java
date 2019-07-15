@@ -20,8 +20,6 @@ public interface Constants {
   @NonNls String INJECTIONS_KEY = "injections";
   @NonNls String SCOPE_KEY = "scope";
   @NonNls String UUID_KEY = "uuid";
-  @NonNls String BEGIN_KEY = "begin";
-  @NonNls String MATCH_KEY = "match";
   @NonNls String FOREGROUND_KEY = "foreground";
   @NonNls String FONT_STYLE_KEY = "fontStyle";
   @NonNls String BACKGROUND_KEY = "background";
@@ -53,6 +51,27 @@ public interface Constants {
     }
   }
 
+  enum RegexKey {
+    MATCH("match"),
+    BEGIN("begin");
+
+    public final String value;
+
+    RegexKey(String name) {
+      value = name;
+    }
+
+    @Nullable
+    public static RegexKey fromName(@NotNull String name) {
+      for (RegexKey v : values()) {
+        if (v.value.equals(name)) {
+          return v;
+        }
+      }
+      return null;
+    }
+  }
+
   enum CaptureKey {
     CAPTURES("captures"),
     BEGIN_CAPTURES("beginCaptures"),
@@ -74,8 +93,6 @@ public interface Constants {
       return null;
     }
   }
-
-  String[] REGEX_KEY_NAMES = new String[]{/*"firstLineMatch", "foldingStartMarker",*/ MATCH_KEY, BEGIN_KEY};
 
   // VALUES
   @NonNls String DEFAULT_SCOPE_NAME = "default";

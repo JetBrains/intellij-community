@@ -16,7 +16,7 @@ import java.util.List;
  * String attributes - string attributes of syntax node {@link Constants.StringKey}
  * </li>
  * <li>
- * Regex attributes - regex attributes of syntax node {@link Constants#REGEX_KEY_NAMES}
+ * Regex attributes - regex attributes of syntax node {@link Constants.RegexKey}
  * </li>
  * <li>
  * Captures attributes - captures attributes of syntax node {@link Constants.CaptureKey}
@@ -41,7 +41,7 @@ public interface SyntaxNodeDescriptor {
   TIntObjectHashMap<String> getCaptures(@NotNull Constants.CaptureKey key);
 
   @Nullable
-  RegexFacade getRegexAttribute(String key);
+  RegexFacade getRegexAttribute(@NotNull Constants.RegexKey key);
 
   @NotNull
   List<SyntaxNodeDescriptor> getChildren();

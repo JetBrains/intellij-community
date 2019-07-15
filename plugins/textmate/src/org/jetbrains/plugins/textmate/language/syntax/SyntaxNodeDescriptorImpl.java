@@ -14,7 +14,7 @@ class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
 
   private TIntObjectHashMap<SyntaxNodeDescriptor> myRepository = new TIntObjectHashMap<>();
   private Map<Constants.StringKey, String> myStringAttributes = new EnumMap<>(Constants.StringKey.class);
-  private Map<String, RegexFacade> myRegexAttributes = new HashMap<>();
+  private Map<Constants.RegexKey, RegexFacade> myRegexAttributes = new EnumMap<>(Constants.RegexKey.class);
   private Map<Constants.CaptureKey, TIntObjectHashMap<String>> myCaptures = new EnumMap<>(Constants.CaptureKey.class);
 
   private List<SyntaxNodeDescriptor> myChildren = new ArrayList<>();
@@ -28,7 +28,7 @@ class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
   }
 
   @Override
-  public void setStringAttribute(@NotNull Constants.StringKey key, String value) {
+  public void setStringAttribute(@NotNull Constants.StringKey key, @Nullable String value) {
     myStringAttributes.put(key, value);
   }
 
@@ -50,13 +50,13 @@ class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
   }
 
   @Override
-  public void setRegexAttribute(String key, RegexFacade value) {
+  public void setRegexAttribute(@NotNull Constants.RegexKey key, @Nullable RegexFacade value) {
     myRegexAttributes.put(key, value);
   }
 
   @Nullable
   @Override
-  public RegexFacade getRegexAttribute(String key) {
+  public RegexFacade getRegexAttribute(@NotNull Constants.RegexKey key) {
     return myRegexAttributes.get(key);
   }
 

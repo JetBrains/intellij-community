@@ -2,7 +2,6 @@ package org.jetbrains.plugins.textmate.language.syntax;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashMap;
 import gnu.trove.TIntObjectHashMap;
@@ -83,10 +82,11 @@ public class TextMateSyntaxTable {
       PListValue pListValue = entry.getValue();
       if (pListValue != null) {
         String key = intern(entry.getKey());
-        if (ArrayUtil.contains(key, Constants.REGEX_KEY_NAMES)) {
+        Constants.RegexKey regexKey = Constants.RegexKey.fromName(key);
+        if (regexKey != null) {
           String pattern = pListValue.getString();
           if (pattern != null) {
-            result.setRegexAttribute(key, RegexFacade.regex(pattern));
+            result.setRegexAttribute(regexKey, RegexFacade.regex(pattern));
           }
           continue;
         }
@@ -124,15 +124,6 @@ public class TextMateSyntaxTable {
   private String intern(String key) {
     if (interner == null) {
       interner = new StringInterner();
-      for (Constants.StringKey stringKey : Constants.StringKey.values()) {
-        interner.intern(stringKey.value);
-      }
-      for (Constants.CaptureKey captureKey : Constants.CaptureKey.values()) {
-        interner.intern(captureKey.value);
-      }
-      for (String name : Constants.REGEX_KEY_NAMES) {
-        interner.intern(name);
-      }
     }
     return interner.intern(key);
   }
