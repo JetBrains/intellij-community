@@ -24,7 +24,7 @@ iml_module(
     ],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/java/openapi:intellij.java[module]",
+        "//tools/idea/xml/xml-psi-api:intellij.xml.psi[module]",
         "//tools/idea/platform/util:intellij.platform.util[module]",
         "//tools/idea/platform/icons:intellij.platform.icons[module]",
         "//tools/idea/platform/platform-api:intellij.platform.ide[module]",

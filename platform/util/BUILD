@@ -117,5 +117,6 @@ iml_module(
         "//tools/idea/.idea/libraries:jna",
         "//tools/idea/.idea/libraries:xml-apis-ext",
         "//tools/idea/.idea/libraries:Java_Compatibility",
+        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
     ],
 )

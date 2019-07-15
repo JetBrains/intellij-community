@@ -23,6 +23,7 @@ iml_module(
         "//tools/idea/platform/util:intellij.platform.concurrency",
         "//tools/idea/platform/util:intellij.platform.util.ui",
         "//tools/idea/platform/core-ui:intellij.platform.core.ui",
+        "//tools/idea/platform/platform-util-io:intellij.platform.ide.util.io",
     ],
     # do not sort: must match IML order
     runtime_deps = [
@@ -64,5 +65,6 @@ iml_module(
         "//tools/idea/platform/util:intellij.platform.concurrency[module]",
         "//tools/idea/platform/util:intellij.platform.util.ui[module]",
         "//tools/idea/platform/core-ui:intellij.platform.core.ui[module]",
+        "//tools/idea/platform/platform-util-io:intellij.platform.ide.util.io[module]",
     ],
 )

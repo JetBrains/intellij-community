@@ -95,5 +95,7 @@ iml_module(
         "//tools/idea/.idea/libraries:kotlin-reflect",
         "//tools/idea/.idea/libraries:jackson-databind",
         "//tools/idea/platform/util:intellij.platform.util.ui[module]",
+        "//tools/idea/platform/platform-util-io:intellij.platform.ide.util.io[module]",
+        "//tools/idea/platform/util:intellij.platform.util[module]",
     ],
 )

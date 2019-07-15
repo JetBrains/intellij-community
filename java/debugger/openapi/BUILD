@@ -23,6 +23,7 @@ iml_module(
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
+        "//tools/idea/java/ide-resources:intellij.java.ide.resources",
     ],
     # do not sort: must match IML order
     deps = [

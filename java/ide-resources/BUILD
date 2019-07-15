@@ -2,9 +2,9 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 # managed by go/iml_to_build
 iml_module(
-    name = "intellij.idea.community.resources",
-    iml_files = ["intellij.idea.community.resources.iml"],
-    resources = ["src"],
+    name = "intellij.java.ide.resources",
+    iml_files = ["intellij.java.ide.resources.iml"],
+    resources = ["resources"],
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl",
@@ -15,7 +15,6 @@ iml_module(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/java/ide-resources:intellij.java.ide.resources",
         "//tools/idea/platform/platform-resources:intellij.platform.resources",
         "//tools/idea/platform/usageView:intellij.platform.usageView",
         "//tools/idea/RegExpSupport:intellij.regexp",

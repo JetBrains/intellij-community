@@ -4,7 +4,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "intellij.jvm.analysis.kotlin.tests",
     iml_files = ["intellij.jvm.analysis.kotlin.tests.iml"],
-    test_runtime_deps = ["//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps"],
+    test_runtime_deps = ["//tools/idea:intellij.java.ui.tests"],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
@@ -16,9 +16,18 @@ iml_module(
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
+        "//tools/idea/java/ide-resources:intellij.java.ide.resources",
         "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
         "//tools/idea/java/execution/impl:intellij.java.execution.impl",
+        "//tools/idea/java/plugin:intellij.java.plugin",
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
+        "//tools/idea/java/manifest:intellij.java.manifest",
+        "//tools/idea/java/remote-servers/impl:intellij.java.remoteServers.impl",
+        "//tools/idea/plugins/ui-designer-core:intellij.uiDesigner",
+        "//tools/idea/java/structuralsearch-java:intellij.java.structuralSearch",
+        "//tools/idea/java/typeMigration:intellij.java.typeMigration",
+        "//tools/idea/plugins/IntelliLang:intellij.java.langInjection",
+        "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
     ],
     # do not sort: must match IML order
     deps = [
