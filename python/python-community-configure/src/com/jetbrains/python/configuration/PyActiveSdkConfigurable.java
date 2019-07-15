@@ -17,7 +17,6 @@ package com.jetbrains.python.configuration;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
@@ -31,6 +30,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.util.NullableConsumer;
@@ -56,6 +56,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static com.jetbrains.python.sdk.PySdkRenderingKt.groupModuleSdksByTypes;
@@ -63,6 +64,7 @@ import static com.jetbrains.python.sdk.PySdkRenderingKt.groupModuleSdksByTypes;
 public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
   public static final Topic<ActiveSdkListener> ACTIVE_PYTHON_SDK_TOPIC = new Topic<>("Active SDK changed", ActiveSdkListener.class);
+  private static final String SHOW_ALL = PyBundle.message("active.sdk.dialog.show.all.item");
 
   @NotNull private final Project myProject;
   @Nullable private final Module myModule;
@@ -72,96 +74,115 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   private NullableConsumer<Sdk> myAddSdkCallback;
   private boolean mySdkSettingsWereModified = false;
 
-  private JPanel myMainPanel;
-  private ComboBox<Object> mySdkCombo;
-  private PyInstalledPackagesPanel myPackagesPanel;
-  private JButton myDetailsButton;
-  private static final String SHOW_ALL = PyBundle.message("active.sdk.dialog.show.all.item");
+  @NotNull
+  private final JPanel myMainPanel;
+
+  @NotNull
+  private final ComboBox<Object> mySdkCombo;
+
+  @NotNull
+  private final PyInstalledPackagesPanel myPackagesPanel;
+
   private Set<Sdk> myInitialSdkSet;
 
-  private Disposable myDisposable = null;
+  @Nullable
+  private final Disposable myDisposable;
 
   public PyActiveSdkConfigurable(@NotNull Project project) {
-    myModule = null;
-    myProject = project;
-    layoutPanel();
-    initContent();
+    this(project, null);
   }
 
   public PyActiveSdkConfigurable(@NotNull Module module) {
+    this(module.getProject(), module);
+  }
+
+  private PyActiveSdkConfigurable(@NotNull Project project, @Nullable Module module) {
+    myProject = project;
     myModule = module;
-    myProject = module.getProject();
-    layoutPanel();
+
+    mySdkCombo = buildSdkComboBox(this::onShowAllSelected, this::onSdkSelected);
+
+    final PackagesNotificationPanel packagesNotificationPanel = new PackagesNotificationPanel();
+    myPackagesPanel = new PyInstalledPackagesPanel(myProject, packagesNotificationPanel);
+
+    final Pair<PyCustomSdkUiProvider, Disposable> customizer = buildCustomizer();
+    myDisposable = customizer == null ? null : customizer.second;
+
+    final JButton detailsButton = buildDetailsButton(mySdkCombo, this::onShowDetailsClicked);
+
+    myMainPanel = buildPanel(project, mySdkCombo, detailsButton, myPackagesPanel, packagesNotificationPanel, customizer);
+
     initContent();
   }
 
-  private void layoutPanel() {
-    final GridBagLayout layout = new GridBagLayout();
-    myMainPanel = new JPanel(layout);
-    final JLabel interpreterLabel = new JLabel(PyBundle.message("active.sdk.dialog.project.interpreter"));
-    final JLabel emptyLabel = new JLabel("  ");
-    mySdkCombo = new ComboBox<Object>() {
+  @NotNull
+  private static ComboBox<Object> buildSdkComboBox(@NotNull Runnable onShowAllSelected, @NotNull Runnable onSdkSelected) {
+    final ComboBox<Object> result = new ComboBox<Object>() {
       @Override
       public void setSelectedItem(Object item) {
         if (SHOW_ALL.equals(item)) {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            PythonSdkDetailsDialog allDialog = myModule == null
-                                                ? new PythonSdkDetailsDialog(myProject, myAddSdkCallback, getSettingsModifiedCallback())
-                                                : new PythonSdkDetailsDialog(myModule, myAddSdkCallback, getSettingsModifiedCallback());
-            allDialog.show();
-          });
-          return;
+          onShowAllSelected.run();
         }
-        if (!PySdkListCellRenderer.SEPARATOR.equals(item))
+        else if (!PySdkListCellRenderer.SEPARATOR.equals(item)) {
           super.setSelectedItem(item);
-      }
-      @Override
-      public void paint(Graphics g) {
-        try {
-          putClientProperty("JComboBox.isTableCellEditor", Boolean.FALSE);
-          super.paint(g);
-        } finally {
-          putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
         }
       }
     };
-    new ComboboxSpeedSearch(mySdkCombo);
-    mySdkCombo.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
 
-    final PackagesNotificationPanel notificationsArea = new PackagesNotificationPanel();
-    final JComponent notificationsComponent = notificationsArea.getComponent();
-    final Dimension preferredSize = mySdkCombo.getPreferredSize();
-    mySdkCombo.setPreferredSize(preferredSize);
-    notificationsArea.hide();
-    myDetailsButton = new FixedSizeButton();
-    myDetailsButton.setIcon(AllIcons.General.GearPlain);
-    //noinspection SuspiciousNameCombination
-    myDetailsButton.setPreferredSize(new Dimension(preferredSize.height, preferredSize.height));
+    result.addItemListener(
+      e -> {
+        if (e.getStateChange() == ItemEvent.SELECTED) onSdkSelected.run();
+      }
+    );
 
-    myPackagesPanel = new PyInstalledPackagesPanel(myProject, notificationsArea);
+    new ComboboxSpeedSearch(result);
+    return result;
+  }
+
+  @Nullable
+  private static Pair<PyCustomSdkUiProvider, Disposable> buildCustomizer() {
+    final PyCustomSdkUiProvider customUiProvider = PyCustomSdkUiProvider.getInstance();
+    return customUiProvider == null ? null : new Pair<>(customUiProvider, Disposer.newDisposable());
+  }
+
+  @NotNull
+  private static JButton buildDetailsButton(@NotNull ComboBox<?> sdkComboBox, @NotNull Consumer<JButton> onShowDetails) {
+    final FixedSizeButton result = new FixedSizeButton(sdkComboBox.getPreferredSize().height);
+    result.setIcon(AllIcons.General.GearPlain);
+    result.addActionListener(e -> onShowDetails.accept(result));
+    return result;
+  }
+
+  @NotNull
+  private static JPanel buildPanel(@NotNull Project project,
+                                   @NotNull ComboBox<?> sdkComboBox,
+                                   @NotNull JButton detailsButton,
+                                   @NotNull PyInstalledPackagesPanel installedPackagesPanel,
+                                   @NotNull PackagesNotificationPanel packagesNotificationPanel,
+                                   @Nullable Pair<PyCustomSdkUiProvider, Disposable> customizer) {
+    final JPanel result = new JPanel(new GridBagLayout());
+
     final GridBagConstraints c = new GridBagConstraints();
     c.fill = GridBagConstraints.HORIZONTAL;
     c.insets = JBUI.insets(2);
 
     c.gridx = 0;
     c.gridy = 0;
-    myMainPanel.add(interpreterLabel, c);
+    result.add(new JLabel(PyBundle.message("active.sdk.dialog.project.interpreter")), c);
 
     c.gridx = 1;
     c.gridy = 0;
     c.weightx = 0.1;
-    myMainPanel.add(mySdkCombo, c);
+    result.add(sdkComboBox, c);
 
     c.insets = JBUI.insets(2, 0, 2, 2);
     c.gridx = 2;
     c.gridy = 0;
     c.weightx = 0.0;
-    myMainPanel.add(myDetailsButton, c);
+    result.add(detailsButton, c);
 
-    final PyCustomSdkUiProvider customUiProvider = PyCustomSdkUiProvider.getInstance();
-    if (customUiProvider != null) {
-      myDisposable = Disposer.newDisposable();
-      customUiProvider.customizeActiveSdkPanel(myProject, mySdkCombo, myMainPanel, c, myDisposable);
+    if (customizer != null) {
+      customizer.first.customizeActiveSdkPanel(project, sdkComboBox, result, c, customizer.second);
     }
 
     c.insets = JBUI.insets(2, 2, 0, 2);
@@ -169,7 +190,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     c.gridy++;
     c.gridwidth = 3;
     c.weightx = 0.0;
-    myMainPanel.add(emptyLabel, c);
+    result.add(new JLabel("  "), c);
 
     c.gridx = 0;
     c.gridy++;
@@ -177,7 +198,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     c.gridwidth = 3;
     c.gridheight = GridBagConstraints.RELATIVE;
     c.fill = GridBagConstraints.BOTH;
-    myMainPanel.add(myPackagesPanel, c);
+    result.add(installedPackagesPanel, c);
 
     c.gridheight = GridBagConstraints.REMAINDER;
     c.gridx = 0;
@@ -187,7 +208,20 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     c.fill = GridBagConstraints.HORIZONTAL;
     c.anchor = GridBagConstraints.SOUTH;
 
-    myMainPanel.add(notificationsComponent, c);
+    result.add(packagesNotificationPanel.getComponent(), c);
+
+    return result;
+  }
+
+  private void onShowAllSelected() {
+    buildAllSdksDialog().show();
+  }
+
+  private void onSdkSelected() {
+    final Sdk sdk = getSelectedSdk();
+    final PyPackageManagers packageManagers = PyPackageManagers.getInstance();
+    myPackagesPanel.updatePackages(sdk != null ? packageManagers.getManagementService(myProject, sdk) : null);
+    myPackagesPanel.updateNotifications(sdk);
   }
 
   @NotNull
@@ -202,25 +236,19 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     myInitialSdkSet = myProjectSdksModel.getProjectSdks().keySet();
     myProjectSdksModel.addListener(mySdkModelListener);
 
-    mySdkCombo.addItemListener(e -> {
-      if (e.getStateChange() == ItemEvent.SELECTED) {
-        final Sdk selectedSdk = (Sdk)mySdkCombo.getSelectedItem();
-        final PyPackageManagers packageManagers = PyPackageManagers.getInstance();
-        myPackagesPanel.updatePackages(selectedSdk != null ? packageManagers.getManagementService(myProject, selectedSdk) : null);
-        myPackagesPanel.updateNotifications(selectedSdk);
-      }
-    });
     myAddSdkCallback = new SdkAddedCallback();
-    myDetailsButton.addActionListener(e -> showDetails());
   }
 
-  private void showDetails() {
-    final PythonSdkDetailsDialog allDialog = myModule == null
-                                              ? new PythonSdkDetailsDialog(myProject, myAddSdkCallback, getSettingsModifiedCallback())
-                                              : new PythonSdkDetailsDialog(myModule, myAddSdkCallback, getSettingsModifiedCallback());
+  private void onShowDetailsClicked(@NotNull JButton detailsButton) {
+    PythonSdkDetailsStep.show(myProject, myModule, myProjectSdksModel.getSdks(), buildAllSdksDialog(), myMainPanel,
+                              detailsButton.getLocationOnScreen(), myAddSdkCallback);
+  }
 
-    PythonSdkDetailsStep.show(myProject, myModule, myProjectSdksModel.getSdks(), allDialog, myMainPanel,
-                              myDetailsButton.getLocationOnScreen(), myAddSdkCallback);
+  @NotNull
+  private PythonSdkDetailsDialog buildAllSdksDialog() {
+    return myModule == null
+           ? new PythonSdkDetailsDialog(myProject, myAddSdkCallback, getSettingsModifiedCallback())
+           : new PythonSdkDetailsDialog(myModule, myAddSdkCallback, getSettingsModifiedCallback());
   }
 
   @Override
