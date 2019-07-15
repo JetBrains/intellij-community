@@ -1506,9 +1506,12 @@
     <localInspection groupPath="Java" language="JAVA" shortName="WrongPackageStatement" bundle="messages.InspectionsBundle" key="wrong.package.statement" groupKey="group.names.probable.bugs"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.codeInspection.wrongPackageStatement.WrongPackageStatementInspection" />
-    <localInspection groupPath="Java" language="JAVA" shortName="NullableProblems" bundle="messages.InspectionsBundle" key="inspection.nullable.problems.display.name"
-                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
+    <localInspection groupPath="Java,Probable bugs" language="JAVA" shortName="NullableProblems" bundle="messages.InspectionsBundle" key="inspection.nullable.problems.display.name"
+                     groupKey="group.names.nullability.problems" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.nullable.NullableStuffInspection" />
+    <localInspection groupPath="Java,Probable bugs" language="JAVA" shortName="NotNullFieldNotInitialized" bundle="messages.InspectionsBundle" key="inspection.notnull.field.not.initialized.display.name"
+                     groupKey="group.names.nullability.problems" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.nullable.NotNullFieldNotInitializedInspection" />
     <localInspection groupPath="Java" language="JAVA" shortName="ParameterCanBeLocal" key="inspection.parameter.can.be.local.display.name"
                      groupKey="group.names.class.structure" enabledByDefault="true" level="WARNING" bundle="messages.InspectionsBundle"
                      implementationClass="com.intellij.codeInspection.varScopeCanBeNarrowed.ParameterCanBeLocalInspection" />

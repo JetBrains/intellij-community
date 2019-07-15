@@ -3,7 +3,6 @@ package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.*;
@@ -50,7 +49,6 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   @Deprecated @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOT_ANNOTATED_PARAMETER_OVERRIDES_NOTNULL = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOT_ANNOTATED_GETTER = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean IGNORE_EXTERNAL_SUPER_NOTNULL;
-  @SuppressWarnings({"WeakerAccess"}) public boolean REQUIRE_NOTNULL_FIELDS_INITIALIZED = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED;
   @Deprecated @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOT_ANNOTATED_SETTER_PARAMETER = true;
   @Deprecated @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true; // remains for test
@@ -118,10 +116,6 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
           checkAccessors(field, annotated, project, manager, anno, annoToRemove, holder);
 
           checkConstructorParameters(field, annotated, manager, anno, annoToRemove, holder);
-        }
-
-        if (REQUIRE_NOTNULL_FIELDS_INITIALIZED && !annotated.isDeclaredNullable) {
-          checkNotNullFieldsInitialized(field, manager, holder);
         }
       }
 
@@ -283,7 +277,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       private void checkCollectionNullityOnAssignment(@NotNull PsiElement errorElement,
                                                       @Nullable PsiType expectedType,
                                                       @Nullable PsiType assignedType) {
-        if (isNullableNotNullCollectionConflict(errorElement, expectedType, assignedType, new HashSet<>())) {
+        if (isNullableNotNullCollectionConflict(expectedType, assignedType, new HashSet<>())) {
           holder.registerProblem(errorElement,
                                  "Assigning a collection of nullable elements into a collection of non-null elements",
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
@@ -291,8 +285,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         }
       }
 
-      private boolean isNullableNotNullCollectionConflict(PsiElement place,
-                                                          @Nullable PsiType expectedType,
+      private boolean isNullableNotNullCollectionConflict(@Nullable PsiType expectedType,
                                                           @Nullable PsiType assignedType,
                                                           @NotNull Set<? super Couple<PsiType>> visited) {
         if (!visited.add(Couple.of(expectedType, assignedType))) return false;
@@ -307,7 +300,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
           PsiType expectedArg = PsiUtil.substituteTypeParameter(expectedType, CommonClassNames.JAVA_UTIL_MAP, i, false);
           PsiType assignedArg = PsiUtil.substituteTypeParameter(assignedType, CommonClassNames.JAVA_UTIL_MAP, i, false);
           if (isNullityConflict(expectedArg, assignedArg) ||
-              expectedArg != null && assignedArg != null && isNullableNotNullCollectionConflict(place, expectedArg, assignedArg, visited)) {
+              expectedArg != null && assignedArg != null && isNullableNotNullCollectionConflict(expectedArg, assignedArg, visited)) {
             return true;
           }
         }
@@ -500,21 +493,6 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   private static void assertValidElement(PsiMethod setter, PsiParameter parameter, PsiIdentifier nameIdentifier1) {
     LOG.assertTrue(nameIdentifier1 != null && nameIdentifier1.isPhysical(), setter.getText());
     LOG.assertTrue(parameter.isPhysical(), setter.getText());
-  }
-
-  private static void checkNotNullFieldsInitialized(PsiField field, NullableNotNullManager manager, @NotNull ProblemsHolder holder) {
-    NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(field);
-    if (info == null ||
-        info.getNullability() != Nullability.NOT_NULL ||
-        HighlightControlFlowUtil.isFieldInitializedAfterObjectConstruction(field)) {
-      return;
-    }
-
-    boolean byDefault = info.isContainer();
-    PsiAnnotation annotation = info.getAnnotation();
-    PsiJavaCodeReferenceElement name = annotation.getNameReferenceElement();
-    holder.registerProblem(annotation.isPhysical() && !byDefault ? annotation : field.getNameIdentifier(),
-                           (byDefault && name != null ? "@" + name.getReferenceName() : "Not-null") + " fields must be initialized");
   }
 
   private void checkConstructorParameters(PsiField field,

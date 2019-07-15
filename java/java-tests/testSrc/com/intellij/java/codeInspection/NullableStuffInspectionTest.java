@@ -73,19 +73,6 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
   public void testNotNullFieldNullableParam() { doTest(); }
   public void testNotNullCustomException() { doTest(); }
 
-  public void testNotNullFieldNotInitialized() { doTest(); }
-  public void testNotNullFieldInitializedInLambda() { doTest(); }
-  public void testNotNullFieldNotInitializedInOneConstructor() { doTest(); }
-  public void testNotNullFieldNotInitializedSetting() {
-    myInspection.REQUIRE_NOTNULL_FIELDS_INITIALIZED = false;
-    doTest();
-  }
-
-  public void testNotNullByDefaultFieldNotInitialized() {
-    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
-    doTest();
-  }
-
   public void testNotNullAnnotationChecksInChildClassMethods() { doTest(); }
 
   public void testGetterSetterProblems() { doTest(); }
@@ -271,11 +258,6 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
   }
 
   public void testNullableTypeArgumentSOE() {
-    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
-    doTest();
-  }
-
-  public void testTypeUseNotNullField() {
     DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
   }

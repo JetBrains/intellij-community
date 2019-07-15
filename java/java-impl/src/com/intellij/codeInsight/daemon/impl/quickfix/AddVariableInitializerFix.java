@@ -2,12 +2,14 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.lookup.ExpressionLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.PsiElementResult;
+import com.intellij.codeInsight.template.TemplateBuilderFactory;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -17,7 +19,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -28,18 +29,18 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class AddVariableInitializerFix implements IntentionAction {
+public class AddVariableInitializerFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddReturnFix");
-  private final PsiVariable myVariable;
 
   public AddVariableInitializerFix(@NotNull PsiVariable variable) {
-    myVariable = variable;
+    super(variable);
   }
 
   @Override
   @NotNull
   public String getText() {
-    return CodeInsightBundle.message("quickfix.add.variable.text", myVariable.getName());
+    PsiVariable variable = ObjectUtils.tryCast(myStartElement.getElement(), PsiVariable.class);
+    return variable == null ? getFamilyName() : CodeInsightBundle.message("quickfix.add.variable.text", variable.getName());
   }
 
   @Override
@@ -49,29 +50,40 @@ public class AddVariableInitializerFix implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myVariable.isValid() &&
-           BaseIntentionAction.canModify(myVariable) &&
-           !myVariable.hasInitializer() &&
-           !(myVariable instanceof PsiParameter);
+  public boolean isAvailable(@NotNull Project project,
+                             @NotNull PsiFile file,
+                             @Nullable Editor editor,
+                             @NotNull PsiElement startElement,
+                             @NotNull PsiElement endElement) {
+    PsiVariable variable = ObjectUtils.tryCast(startElement, PsiVariable.class);
+    return variable != null && variable.isValid() &&
+           BaseIntentionAction.canModify(variable) &&
+           !variable.hasInitializer() &&
+           !(variable instanceof PsiParameter);
   }
 
   @NotNull
   @Override
   public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
-    return myVariable;
+    return file;
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final LookupElement[] suggestedInitializers = suggestInitializer(myVariable);
+  public void invoke(@NotNull Project project,
+                     @NotNull PsiFile file,
+                     @Nullable Editor editor,
+                     @NotNull PsiElement startElement,
+                     @NotNull PsiElement endElement) {
+    PsiVariable variable = ObjectUtils.tryCast(startElement, PsiVariable.class);
+    if (variable == null) return;
+    final LookupElement[] suggestedInitializers = suggestInitializer(variable);
     LOG.assertTrue(suggestedInitializers.length > 0);
     LOG.assertTrue(suggestedInitializers[0] instanceof ExpressionLookupItem);
     final PsiExpression initializer = (PsiExpression)suggestedInitializers[0].getObject();
-    myVariable.setInitializer(initializer);
+    variable.setInitializer(initializer);
     Document document = Objects.requireNonNull(PsiDocumentManager.getInstance(project).getDocument(file));
     PsiDocumentManager.getInstance(initializer.getProject()).doPostponedOperationsAndUnblockDocument(document);
-    runAssignmentTemplate(Collections.singletonList(myVariable.getInitializer()), suggestedInitializers, editor);
+    runAssignmentTemplate(Collections.singletonList(variable.getInitializer()), suggestedInitializers, editor);
   }
 
   static void runAssignmentTemplate(@NotNull final List<? extends PsiExpression> initializers,
@@ -81,6 +93,7 @@ public class AddVariableInitializerFix implements IntentionAction {
     LOG.assertTrue(!initializers.isEmpty());
     final PsiExpression initializer = ObjectUtils.notNull(ContainerUtil.getFirstItem(initializers));
     PsiElement context = initializers.size() == 1 ? initializer : PsiTreeUtil.findCommonParent(initializers);
+    if (context == null) return;
     final TemplateBuilderImpl builder = (TemplateBuilderImpl)TemplateBuilderFactory.getInstance().createTemplateBuilder(context);
     for (PsiExpression e : initializers) {
       builder.replaceElement(e, new ConstantNode(new PsiElementResult(suggestedInitializers[0].getPsiElement())).withLookupItems(suggestedInitializers));

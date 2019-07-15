@@ -219,7 +219,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     };
   }
 
-  private static List<PsiMethod> filterConstructorsIfFieldAlreadyAssigned(PsiMethod[] constructors, PsiField field) {
+  static List<PsiMethod> filterConstructorsIfFieldAlreadyAssigned(PsiMethod[] constructors, PsiField field) {
     final List<PsiMethod> result = new ArrayList<>(Arrays.asList(constructors));
     for (PsiReference reference : ReferencesSearch.search(field, new LocalSearchScope(constructors))) {
       final PsiElement element = reference.getElement();
@@ -296,10 +296,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     SuggestedNameInfo nameInfo = styleManager.suggestVariableName(VariableKind.PARAMETER, name, null, variable.getType());
     String newName = nameInfo.names[0];
     int n = 1;
-    while (true) {
-      if (isUnique(parameters, newName, usedNames)) {
-        break;
-      }
+    while (!isUnique(parameters, newName, usedNames)) {
       newName = n < nameInfo.names.length &&
                 !JavaCodeStyleSettings.getInstance(variable.getContainingFile()).PREFER_LONGER_NAMES
                 ? nameInfo.names[n++] : nameInfo.names[0] + n++;
@@ -327,8 +324,9 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     if (JavaHighlightUtil.getChainedConstructors(constructor).isEmpty()) {
       final SmartPointerManager manager = SmartPointerManager.getInstance(project);
       boolean created = false;
-      for (PsiField field : fields.keySet()) {
-        final String defaultParamName = fields.get(field);
+      for (Map.Entry<PsiField, String> entry : fields.entrySet()) {
+        PsiField field = entry.getKey();
+        final String defaultParamName = entry.getValue();
         PsiParameter parameter = findParamByName(defaultParamName, field.getType(), newParameters, parameterInfos);
         if (parameter == null) {
           continue;

@@ -345,8 +345,8 @@
                      key="use.0index.in.jdbc.resultset.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.ResultSetIndexZeroInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="ReturnOfNull" shortName="ReturnNull" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="return.of.null.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
+    <localInspection groupPath="Java,Probable bugs" language="JAVA" suppressId="ReturnOfNull" shortName="ReturnNull" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="return.of.null.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.nullability.problems"
                      enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.bugs.ReturnNullInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="StaticMethodReferencedViaSubclass" shortName="StaticCallOnSubclass"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="static.method.via.subclass.display.name"
