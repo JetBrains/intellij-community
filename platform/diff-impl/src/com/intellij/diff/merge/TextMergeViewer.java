@@ -309,20 +309,20 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       return new AbstractAction(caption) {
         @Override
         public void actionPerformed(ActionEvent e) {
-          if ((result == MergeResult.LEFT || result == MergeResult.RIGHT) && myContentModified &&
-              Messages.showYesNoDialog(myPanel.getRootPane(),
-                                       DiffBundle.message("merge.dialog.resolve.side.with.discard.message", result == MergeResult.LEFT ? 0 : 1),
-                                       DiffBundle.message("merge.dialog.resolve.side.with.discard.title"), Messages.getQuestionIcon()) != Messages.YES) {
+          if ((result == MergeResult.LEFT || result == MergeResult.RIGHT) &&
+              !MergeUtil.showConfirmDiscardChangesDialog(myPanel.getRootPane(),
+                                                         result == MergeResult.LEFT ? "Accept Left" : "Accept Right",
+                                                         myContentModified)) {
             return;
           }
-          if (result == MergeResult.RESOLVED) {
-            if ((getChangesCount() > 0 || getConflictsCount() > 0) &&
-                Messages.showYesNoDialog(myPanel.getRootPane(),
-                                         DiffBundle.message("merge.dialog.apply.partially.resolved.changes.confirmation.message", getChangesCount(), getConflictsCount()),
-                                         DiffBundle.message("apply.partially.resolved.merge.dialog.title"),
-                                         Messages.getQuestionIcon()) != Messages.YES) {
-              return;
-            }
+          if (result == MergeResult.RESOLVED &&
+              (getChangesCount() > 0 || getConflictsCount() > 0) &&
+              Messages.showConfirmationDialog(myPanel.getRootPane(),
+                                              DiffBundle.message("merge.dialog.apply.partially.resolved.changes.confirmation.message", getChangesCount(), getConflictsCount()),
+                                              DiffBundle.message("apply.partially.resolved.merge.dialog.title"),
+                                              "Apply Changes and Mark Resolved",
+                                              "Continue Merge") != Messages.YES) {
+            return;
           }
           if (result == MergeResult.CANCEL &&
               !MergeUtil.showExitWithoutApplyingChangesDialog(TextMergeViewer.this, myMergeRequest, myMergeContext, myContentModified)) {
@@ -347,8 +347,10 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       }
 
       if (myContentModified) {
-        if (Messages.showYesNoDialog(myProject, "Changing highlighting requires the file merge restart. Discard unsaved changes and restart merge anyway?",
-                                     "Update Highlighting Settings", "Discard Changes and Restart Merge", "Continue Merge", Messages.getQuestionIcon()) != Messages.YES) {
+        if (Messages.showYesNoDialog(myProject,
+                                     "Changing highlighting requires the file merge restart. Discard unsaved changes and restart merge anyway?",
+                                     "Update Highlighting Settings", "Discard Changes and Restart Merge", "Continue Merge",
+                                     Messages.getQuestionIcon()) != Messages.YES) {
           getTextSettings().setIgnorePolicy(myCurrentIgnorePolicy);
           return;
         }
