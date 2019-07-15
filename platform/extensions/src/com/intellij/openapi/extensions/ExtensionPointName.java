@@ -125,7 +125,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName {
   @NotNull
   @ApiStatus.Experimental
   public Iterable<T> getIterable(@Nullable AreaInstance areaInstance) {
-    return ((ExtensionPointImpl<T>)getPoint(areaInstance));
+    return (ExtensionPointImpl<T>)getPoint(areaInstance);
   }
 
   @NotNull
@@ -136,7 +136,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName {
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  public void processWithPluginDescriptor(@NotNull BiConsumer<T, PluginDescriptor> consumer) {
-    (((ExtensionPointImpl<T>)getPoint(null))).processWithPluginDescriptor(consumer);
+  public void processWithPluginDescriptor(@NotNull BiConsumer<? super T, ? super PluginDescriptor> consumer) {
+    ((ExtensionPointImpl<T>)getPoint(null)).processWithPluginDescriptor(consumer);
   }
 }

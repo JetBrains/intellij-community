@@ -20,6 +20,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -89,7 +90,6 @@ import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static org.junit.Assert.*;
 
 /**
@@ -133,7 +133,7 @@ public class PlatformTestUtil {
    * @see ExtensionPointImpl#maskAll(List, Disposable)
    */
   public static <T> void maskExtensions(@NotNull ExtensionPointName<T> pointName,
-                                        @NotNull List<T> newExtensions,
+                                        @NotNull List<? extends T> newExtensions,
                                         @NotNull Disposable parentDisposable) {
     ((ExtensionPointImpl<T>)pointName.getPoint(null)).maskAll(newExtensions, parentDisposable);
   }
@@ -143,7 +143,7 @@ public class PlatformTestUtil {
    */
   public static <T> void maskExtensions(@NotNull ProjectExtensionPointName<T> pointName,
                                         @NotNull Project project,
-                                        @NotNull List<T> newExtensions,
+                                        @NotNull List<? extends T> newExtensions,
                                         @NotNull Disposable parentDisposable) {
     ((ExtensionPointImpl<T>)pointName.getPoint(project)).maskAll(newExtensions, parentDisposable);
   }
@@ -285,7 +285,7 @@ public class PlatformTestUtil {
   }
 
   private static void assertDispatchThreadWithoutWriteAccess() {
-    assertDispatchThreadWithoutWriteAccess(getApplication());
+    assertDispatchThreadWithoutWriteAccess(ApplicationManager.getApplication());
   }
 
   private static void assertDispatchThreadWithoutWriteAccess(Application application) {
@@ -361,7 +361,7 @@ public class PlatformTestUtil {
   }
 
   public static void waitForAlarm(final int delay) {
-    @NotNull Application app = getApplication();
+    @NotNull Application app = ApplicationManager.getApplication();
     assertDispatchThreadWithoutWriteAccess();
 
     Disposable tempDisposable = Disposer.newDisposable();
@@ -604,7 +604,7 @@ public class PlatformTestUtil {
   public static void forceCloseProjectWithoutSaving(@NotNull Project project) {
     ProjectManagerEx.getInstanceEx().forceCloseProject(project, false /* do not dispose */);
     // explicitly dispose because `dispose` option for forceCloseProject doesn't work todo why?
-    getApplication().runWriteAction(() -> Disposer.dispose(project));
+    ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(project));
   }
 
   public static void saveProject(@NotNull Project project) {
@@ -749,7 +749,7 @@ public class PlatformTestUtil {
       assertNotNull(tempDirectory1.toString(), dirAfter);
       final VirtualFile dirBefore = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory2);
       assertNotNull(tempDirectory2.toString(), dirBefore);
-      getApplication().runWriteAction(() -> {
+      ApplicationManager.getApplication().runWriteAction(() -> {
         dirAfter.refresh(false, true);
         dirBefore.refresh(false, true);
       });
@@ -760,6 +760,7 @@ public class PlatformTestUtil {
     }
   }
 
+  @NotNull
   public static String getCommunityPath() {
     final String homePath = IdeaTestExecutionPolicy.getHomePathWithPolicy();
     if (new File(homePath, "community/.idea").isDirectory()) {
@@ -768,10 +769,13 @@ public class PlatformTestUtil {
     return homePath;
   }
 
+  @NotNull
   public static String getPlatformTestDataPath() {
     return getCommunityPath().replace(File.separatorChar, '/') + "/platform/platform-tests/testData/";
   }
 
+  @NotNull
+  @Contract(pure = true)
   public static Comparator<AbstractTreeNode> createComparator(final Queryable.PrintInfo printInfo) {
     return (o1, o2) -> {
       String displayText1 = o1.toTestString(printInfo);
@@ -889,7 +893,7 @@ public class PlatformTestUtil {
 
       UIUtil.dispatchAllInvocationEvents();
 
-      ApplicationImpl application = (ApplicationImpl)getApplication();
+      ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
       System.out.println(application.writeActionStatistics());
       System.out.println(ActionUtil.ActionPauses.STAT.statistics());
       System.out.println(((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).statistics());
