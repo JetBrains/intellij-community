@@ -292,7 +292,9 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   }
 
   public void processWithPluginDescriptor(@NotNull BiConsumer<? super T, ? super PluginDescriptor> consumer) {
-    assertBeforeProcessing();
+    synchronized (this) {
+      assertBeforeProcessing();
+    }
     CHECK_CANCELED.run();
 
     if (isInReadOnlyMode()) {
@@ -302,18 +304,21 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
       return;
     }
 
-    List<ExtensionComponentAdapter> adapters = myAdapters;
-    int size = adapters.size();
-    if (size == 0) {
-      return;
+    List<ExtensionComponentAdapter> adapters;
+    synchronized (this) {
+      adapters = myAdapters;
+      int size = adapters.size();
+      if (size == 0) {
+        return;
+      }
+
+      LoadingOrder.sort(adapters);
+      adapters = new ArrayList<>(adapters); // for safe iteration outside lock
+      LOG.assertTrue(myListeners.length == 0);
     }
 
-    LoadingOrder.sort(adapters);
-
-    LOG.assertTrue(myListeners.length == 0);
-
     for (ExtensionComponentAdapter adapter : adapters) {
-      T extension = processAdapter(adapter, null /* don't even pass it */, null, null, null);
+      T extension = processAdapter(adapter, null /* don't even pass it */, null, null, null, adapters);
       if (extension == null) {
         break;
       }
@@ -349,7 +354,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
       @Nullable
       public T next() {
         do {
-          T extension = processAdapter(adapters.get(currentIndex++), null /* don't even pass it */, null, null, null);
+          T extension = processAdapter(adapters.get(currentIndex++), null /* don't even pass it */, null, null, null, adapters);
           if (extension != null) {
             return extension;
           }
@@ -403,9 +408,9 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
 
       ExtensionPointListener<T>[] listeners = myListeners;
       int extensionIndex = 0;
-      //noinspection ForLoopReplaceableByForEach
+
       for (int i = 0; i < adapters.size(); i++) {
-        T extension = processAdapter(adapters.get(i), listeners, result, duplicates, extensionClass);
+        T extension = processAdapter(adapters.get(i), listeners, result, duplicates, extensionClass, adapters);
         if (extension != null) {
           result[extensionIndex++] = extension;
         }
@@ -429,7 +434,8 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
                            @Nullable ExtensionPointListener<T>[] listeners,
                            @Nullable T[] result,
                            @Nullable OpenTHashSet<T> duplicates,
-                           @Nullable Class<T> extensionClassForCheck) {
+                           @Nullable Class<T> extensionClassForCheck,
+                           List<? extends ExtensionComponentAdapter> adapters) {
     try {
       boolean isNotifyThatAdded = listeners != null && listeners.length != 0 && !adapter.isInstanceCreated();
       // do not call CHECK_CANCELED here in loop because it is called by createInstance()
@@ -445,7 +451,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
                   "  adapter:         " + adapter + ";\n" +
                   "  extension class: " + extensionClassForCheck + ";\n" +
                   "  result:          " + Arrays.asList(result) + ";\n" +
-                  "  adapters:        " + myAdapters
+                  "  adapters:        " + adapters
         );
       }
       else {
