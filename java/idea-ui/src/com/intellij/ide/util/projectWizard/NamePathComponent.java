@@ -141,18 +141,18 @@ public class NamePathComponent extends JPanel {
 
     File file = new File(projectDirectory);
     if (file.exists() && !file.canWrite()) {
-      throw new ConfigurationException(String.format("Directory '%s' is not seem to be writable. Please consider another location.", projectDirectory));
+      throw new ConfigurationException(IdeBundle.message("project.directory.is.not.writable", projectDirectory));
     }
     for (Project p : ProjectManager.getInstance().getOpenProjects()) {
       if (ProjectUtil.isSameProject(projectDirectory, p)) {
-        throw new ConfigurationException(String.format("Directory '%s' is already taken by the project '%s'. Please consider another location.", projectDirectory, p.getName()));
+        throw new ConfigurationException(IdeBundle.message("project.directory.is.already.taken", projectDirectory, p.getName()));
       }
     }
 
     boolean shouldContinue = true;
     String[] children = file.list();
     if (children == null) {
-      throw new ConfigurationException(String.format("File '%s' is not directory. Please consider another location.", projectDirectory));
+      throw new ConfigurationException(IdeBundle.message("project.directory.is.not.directory", projectDirectory));
     }
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       if (children.length > 0) {
