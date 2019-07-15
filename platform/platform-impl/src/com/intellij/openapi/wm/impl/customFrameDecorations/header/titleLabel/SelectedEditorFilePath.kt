@@ -58,6 +58,14 @@ open class SelectedEditorFilePath {
     add(superUserSuffix.component)
   }
 
+  init {
+    projectTitle.active = infoLevel > 0
+    classTitle.active = infoLevel > 1
+    productTitle.active = infoLevel > 2
+    productVersion.active = infoLevel > 3
+    superUserSuffix.active = infoLevel > 4
+  }
+
   open fun getView(): JComponent {
     return pane
   }
@@ -147,9 +155,8 @@ open class SelectedEditorFilePath {
   }
 
   protected fun updateProjectName() {
-    if (!SystemInfo.isMac && !SystemInfo.isGNOME) productTitle.longText = ApplicationNamesInfo.getInstance().fullProductName else productTitle.ignore()
-
-    if(java.lang.Boolean.getBoolean("ide.ui.version.in.title")) productVersion.longText = ApplicationInfo.getInstance().fullVersion else productVersion.ignore()
+    productTitle.longText = ApplicationNamesInfo.getInstance().fullProductName
+    productVersion.longText = if(java.lang.Boolean.getBoolean("ide.ui.version.in.title")) ApplicationInfo.getInstance().fullVersion else ""
 
     superUserSuffix.longText = IdeFrameImpl.getSuperUserSuffix() ?: ""
 
