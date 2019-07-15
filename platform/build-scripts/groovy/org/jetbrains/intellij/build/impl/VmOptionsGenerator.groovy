@@ -26,7 +26,7 @@ import org.jetbrains.intellij.build.ProductProperties
 class VmOptionsGenerator {
   static final List<String> COMMON_VM_OPTIONS =
     [
-      '-XX:+UseG1GC', '-XX:SoftRefLRUPolicyMSPerMB=50',
+      '-XX:+UseConcMarkSweepGC', '-XX:SoftRefLRUPolicyMSPerMB=50',
       '-ea',
       '-XX:CICompilerCount=2',
       '-Dsun.io.useCanonPrefixCache=false', '-Djava.net.preferIPv4Stack=true',
