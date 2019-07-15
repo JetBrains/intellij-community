@@ -21,7 +21,7 @@ deprecated: filter_small.png -> /general/filter.svg; to be removed in IDEA 2020 
 deprecated: findPlain.png -> /actions/find.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Find
 deprecated: findWhite.png; to be removed in IDEA 2020
 deprecated: get.png -> /actions/download.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Download
-deprecated: left.png -> /general/arrowLeft.png; to be removed in IDEA 2020 - use AllIcons.General.ArrowLeft
+deprecated: left.png -> /general/arrowLeft.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowLeft
 deprecated: menu-find.png -> /actions/find.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Find
 deprecated: menu-help.png -> /actions/help.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Help
 deprecated: menu-replace.png -> /actions/replace.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Replace

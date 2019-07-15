@@ -281,7 +281,7 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
               val replacement = replacementString?.substringAfter('@')?.trim()
               val replacementContextClass = StringUtil.nullize(replacementString?.substringBefore('@', "")?.trim())
 
-              val deprecatedData = DeprecationData(comment, replacement, replacementContextClass, replacementReference = computeReplacementReference(comment))
+              val deprecatedData = DeprecationData(comment, replacement, replacementContextClass, replacementReference = null)
               answer.deprecated.add(DeprecatedEntry(compilePattern(dir, root, pattern), deprecatedData))
 
               if (!pattern.contains('*') && !pattern.startsWith('/')) {
