@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.LineSeparator
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.diff.Diff
+import com.intellij.util.io.exists
 import org.jetbrains.jps.model.JpsSimpleElement
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootType
@@ -358,7 +359,7 @@ class IconsClassGenerator(private val projectHome: File, val modules: List<JpsMo
       assert(isIcon(imageFile)) { "Overriding icon should be valid: $iconName - $imageFile" }
     }
 
-    val size = if (imageFile.toFile().exists()) imageSize(imageFile) else null
+    val size = if (imageFile.exists()) imageSize(imageFile) else null
     val javaDoc = when {
       size != null -> "/** ${size.width}x${size.height} */ "
       !image.phantom -> error("Can't get icon size: $imageFile")

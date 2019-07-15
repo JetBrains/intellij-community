@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.io.FileUtil
@@ -48,7 +48,7 @@ internal class ImagePaths(val id: String,
       .firstOrNull()
 
   val presentablePath: Path
-    get() = file ?: files.first() ?: Paths.get("<unknown>")
+    get() = file ?: files.first()
 
   val used: Boolean get() = flags.used
   val deprecated: Boolean get() = flags.deprecation != null
@@ -279,9 +279,9 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
               val pattern = valueWithoutComment.substringBefore("->").trim()
               val replacementString = StringUtil.nullize(valueWithoutComment.substringAfter("->", "").trim())
               val replacement = replacementString?.substringAfter('@')?.trim()
-              val replacementContextClazz = StringUtil.nullize(replacementString?.substringBefore('@', "")?.trim())
+              val replacementContextClass = StringUtil.nullize(replacementString?.substringBefore('@', "")?.trim())
 
-              val deprecatedData = DeprecationData(comment, replacement, replacementContextClazz, replacementReference = computeReplacementReference(comment))
+              val deprecatedData = DeprecationData(comment, replacement, replacementContextClass, replacementReference = computeReplacementReference(comment))
               answer.deprecated.add(DeprecatedEntry(compilePattern(dir, root, pattern), deprecatedData))
 
               if (!pattern.contains('*') && !pattern.startsWith('/')) {
