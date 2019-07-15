@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -169,7 +168,9 @@ public class DataNode<T> implements UserDataHolderEx, Serializable {
 
   private void doAddChild(@NotNull DataNode<?> child) {
     if (children == null) {
-      initChildren(new SmartList<>(child));
+      ArrayList<DataNode<?>> newChildren = new ArrayList<>();
+      newChildren.add(child);
+      initChildren(newChildren);
     }
     else {
       children.add(child);
