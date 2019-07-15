@@ -32,7 +32,7 @@ public final class AntIcons {
   @SuppressWarnings("unused")
   @Deprecated
   @ScheduledForRemoval(inVersion = "2020.1")
-  public static final Icon AntInstallation = AntIcons.Build;
+  /** 16x16 */ public static final Icon AntInstallation = load("/icons/build.svg");
 
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Information */
   @SuppressWarnings("unused")
