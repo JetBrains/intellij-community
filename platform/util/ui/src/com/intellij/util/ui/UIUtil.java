@@ -3268,14 +3268,9 @@ public final class UIUtil extends StartupUiUtil {
     }
   }
 
-  public static void setAutoRequestFocus(@NotNull Window onWindow, final boolean set) {
+  public static void setAutoRequestFocus(@NotNull Window window, boolean value) {
     if (!SystemInfo.isMac) {
-      try {
-        onWindow.getClass().getMethod("setAutoRequestFocus", boolean.class).invoke(onWindow, set);
-      }
-      catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-        getLogger().debug(e);
-      }
+      window.setAutoRequestFocus(value);
     }
   }
 
