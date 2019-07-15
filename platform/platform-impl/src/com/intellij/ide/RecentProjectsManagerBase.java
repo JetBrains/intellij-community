@@ -420,7 +420,9 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
         return;
       }
 
-      manager.updateProjectInfo(project, (WindowManagerImpl)WindowManager.getInstance());
+      if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        manager.updateProjectInfo(project, (WindowManagerImpl)WindowManager.getInstance());
+      }
       manager.myNameCache.put(path, project.getName());
     }
 
