@@ -197,7 +197,7 @@ class GitUpdateInfoAsLog(private val project: Project,
 
   private class MyPropertiesForRange(val rangeFilter: VcsLogRangeFilter,
                                      val mainProperties: GitUpdateProjectInfoLogProperties) : MainVcsLogUiProperties by mainProperties {
-    private val filters: MutableMap<String, List<String>> = TreeMap()
+    private val filters = mutableMapOf<String, List<String>>()
     private var explicitlyRemovedPathsFilter = false
 
     override fun getFilterValues(filterName: String): List<String>? {
