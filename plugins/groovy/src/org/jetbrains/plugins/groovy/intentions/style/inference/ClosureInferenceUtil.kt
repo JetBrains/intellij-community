@@ -18,7 +18,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.*
 
 fun setUpClosuresSignature(inferenceSession: GroovyInferenceSession,
-                           closureParameter: ParametrizedClosure,
+                           closureParameter: ParameterizedClosure,
                            instructions: List<ReadWriteVariableInstruction>) {
   for (call in instructions) {
     val nearestCall = call.element?.parentOfType<GrCall>() ?: continue
@@ -32,7 +32,7 @@ fun setUpClosuresSignature(inferenceSession: GroovyInferenceSession,
   }
 }
 
-fun collectDeepClosureDependencies(session: GroovyInferenceSession, closureParameter: ParametrizedClosure,
+fun collectDeepClosureDependencies(session: GroovyInferenceSession, closureParameter: ParameterizedClosure,
                                    usages: List<ReadWriteVariableInstruction>) {
   val parameter = closureParameter.parameter
   for (call in usages) {

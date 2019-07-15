@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference.graph
 
-import com.intellij.psi.CommonClassNames
+import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeParameter
@@ -48,8 +48,7 @@ fun createGraphFromInferenceVariables(variables: Collection<InferenceVariable>,
     val core = InferenceUnit(variable.parameter, flexible = variableType in driver.flexibleTypes,
                              constant = variableType in driver.constantTypes)
     builder.setType(core, validType)
-    if (variableType in driver.forbiddingTypes && (variable.instantiation.equalsToText(
-        CommonClassNames.JAVA_LANG_OBJECT) || variable.instantiation is PsiIntersectionType)) {
+    if (variableType in driver.forbiddingTypes) {
       builder.forbidInstantiation(core)
     }
     variableMap[core] = variable
@@ -73,4 +72,8 @@ private fun deepConnect(session: GroovyInferenceSession,
       relationHandler(map.getKeysByValue(dependency)!!.first())
     }
   }
+}
+
+fun PsiType.isTypeParameter(): Boolean {
+  return this is PsiClassType && resolve() is PsiTypeParameter
 }

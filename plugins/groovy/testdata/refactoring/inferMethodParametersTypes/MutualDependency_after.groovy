@@ -1,4 +1,4 @@
-def <Y0 extends Comparable<U0>, U0 extends Comparable<Y0>> Object bar(Y0 a, U0 b) {
+def <T0 extends Comparable<V0>, V0 extends Comparable<T0>> Object bar(T0 a, V0 b) {
   a.compareTo(b)
   b.compareTo(a)
 }

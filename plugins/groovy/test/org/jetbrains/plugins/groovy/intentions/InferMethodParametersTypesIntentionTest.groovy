@@ -241,6 +241,10 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testVariance3() {
+    doTest(true)
+  }
+
   void testMutualDependency() {
     doTest(true)
   }

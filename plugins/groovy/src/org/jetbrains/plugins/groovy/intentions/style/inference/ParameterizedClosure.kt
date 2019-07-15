@@ -5,8 +5,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
-class ParametrizedClosure(val parameter: GrParameter) {
+class ParameterizedClosure(val parameter: GrParameter) {
   val types: MutableList<PsiType> = ArrayList()
   val typeParameters: MutableList<PsiTypeParameter> = ArrayList()
 
@@ -102,8 +103,20 @@ class ParametrizedClosure(val parameter: GrParameter) {
       "@$CLOSURE_PARAMS_FQ(value = $SIMPLE_TYPE_FQ, options = ['${type.canonicalText}'])")
 
 
-  fun substituteTypes(resultSubstitutor: PsiSubstitutor) {
-    val substitutedTypes = types.map { resultSubstitutor.substitute(it) }
+  fun substituteTypes(resultSubstitutor: PsiSubstitutor,
+                      gatheredTypeParameters: Map<PsiTypeParameter, List<PsiTypeParameter>>) {
+    val substitutedTypes = types.map {type ->
+      val reachedParameters = gatheredTypeParameters
+        .filter { gatheredTypes -> gatheredTypes.key.type() != type }
+        .flatMap { it.value.map(PsiTypeParameter::type)  }
+      if (reachedParameters.contains(type)) {
+        resultSubstitutor.substitute(type)
+      }
+      else {
+        ((resultSubstitutor.substitute(type) as PsiClassType).resolve() as PsiTypeParameter).extendsListTypes.firstOrNull()
+        ?: PsiType.getJavaLangObject(typeParameters.first().manager, typeParameters.first().resolveScope)
+      }
+    }
     types.clear()
     types.addAll(substitutedTypes)
   }

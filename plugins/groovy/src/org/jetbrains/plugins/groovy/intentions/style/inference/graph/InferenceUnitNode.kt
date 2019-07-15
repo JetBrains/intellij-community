@@ -13,7 +13,7 @@ class InferenceUnitNode internal constructor(val core: InferenceUnit,
                                              parents: Set<() -> InferenceUnitNode>,
                                              children: Set<() -> InferenceUnitNode>,
                                              val typeInstantiation: PsiType,
-                                             val forbidInstantiation: Boolean = false,
+                                             val forbiddenToInstantiate: Boolean = false,
                                              val direct: Boolean = false) {
 
   /**

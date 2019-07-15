@@ -31,7 +31,7 @@ class InferenceUnitGraphBuilder {
     if (unitNode.direct) {
       setDirect(unitNode.core)
     }
-    if (unitNode.forbidInstantiation) {
+    if (unitNode.forbiddenToInstantiate) {
       forbidInstantiation(unitNode.core)
     }
     setType(unitNode.core, unitNode.typeInstantiation)
@@ -74,7 +74,7 @@ class InferenceUnitGraphBuilder {
     for ((unit, index) in unitIndexMap) {
       inferenceNodes.add(InferenceUnitNode(unit, superTypesMap[index], subTypesMap[index],
                                            fixedInstantiations[unit] ?: PsiType.NULL,
-                                           forbidInstantiation = unit in fixedUnits,
+                                           forbiddenToInstantiate = unit in fixedUnits,
                                            direct = unit in directUnits))
     }
     return InferenceUnitGraph(inferenceNodes)

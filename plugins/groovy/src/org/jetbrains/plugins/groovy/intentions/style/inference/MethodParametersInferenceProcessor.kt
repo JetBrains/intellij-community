@@ -78,14 +78,16 @@ class MethodParametersInferenceProcessor(method: GrMethod) {
   }
 
   private fun getPreferableType(unit: InferenceUnitNode,
-                                resultSubstitutor: PsiSubstitutor, endpoints: MutableSet<InferenceUnitNode>): PsiType {
+                                resultSubstitutor: PsiSubstitutor,
+                                endpoints: MutableSet<InferenceUnitNode>): PsiType {
     val mayBeDirectlyInstantiated =
-      unit.core.constant || (
-        !unit.forbidInstantiation &&
-        when {
-          unit.core.flexible -> (unit.typeInstantiation !is PsiIntersectionType)
-          else -> unit.subtypes.size <= 1
-        })
+      unit.core.constant ||
+      unit.direct ||
+      (!unit.forbiddenToInstantiate
+       && when {
+         unit.core.flexible -> (unit.typeInstantiation !is PsiIntersectionType)
+         else -> true
+       })
     when {
       mayBeDirectlyInstantiated -> {
         val instantiation = when {
@@ -98,7 +100,7 @@ class MethodParametersInferenceProcessor(method: GrMethod) {
               return unit.core.initialTypeParameter.type()
             }
           }
-          unit.core.flexible || unit.subtypes.isNotEmpty() || unit.direct -> unit.typeInstantiation
+          unit.core.flexible || unit.direct -> unit.typeInstantiation
           unit.typeInstantiation == unit.type ||
           unit.typeInstantiation == PsiType.NULL ||
           unit.typeInstantiation.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ->

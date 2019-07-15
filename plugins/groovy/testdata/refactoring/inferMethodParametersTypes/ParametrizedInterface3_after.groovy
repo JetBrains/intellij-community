@@ -1,4 +1,4 @@
-def <T0 extends X> Object foo(List<? extends T0> a) {
+Object foo(List<? extends X> a) {
   a[0].f()
 }
 

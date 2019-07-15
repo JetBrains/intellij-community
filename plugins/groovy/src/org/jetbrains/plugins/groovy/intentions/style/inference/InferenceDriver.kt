@@ -30,7 +30,7 @@ class InferenceDriver(val method: GrMethod) {
   private val elementFactory: GroovyPsiElementFactory = GroovyPsiElementFactory.getInstance(method.project)
   private val nameGenerator = NameGenerator(method.typeParameters.mapNotNull { it.name })
   private val constantTypeParameters: MutableList<PsiTypeParameter> = ArrayList()
-  private val closureParameters: MutableMap<GrParameter, ParametrizedClosure> = LinkedHashMap()
+  private val closureParameters: MutableMap<GrParameter, ParameterizedClosure> = LinkedHashMap()
   private val defaultTypeParameterList: PsiTypeParameterList = (method.typeParameterList?.copy()
                                                                 ?: elementFactory.createTypeParameterList()) as PsiTypeParameterList
   private val parameterIndex: MutableMap<GrParameter, PsiTypeParameter> = LinkedHashMap()
@@ -65,11 +65,14 @@ class InferenceDriver(val method: GrMethod) {
   }
 
   val flexibleTypes: List<PsiType> by lazy {
-    virtualMethod.parameters.map { it.type } + closureParameters.values.flatMap { it.typeParameters }.map { it.type() }
+    virtualMethod.parameters.map { it.type }
   }
 
   val forbiddingTypes: List<PsiType> by lazy {
-    virtualMethod.parameters.mapNotNull { (it.type as? PsiArrayType)?.componentType } + contravariantTypes + virtualMethod.parameters.filter { it.isVarArgs }.map { it.type }
+    virtualMethod.parameters.mapNotNull { (it.type as? PsiArrayType)?.componentType } +
+    contravariantTypes.toList() +
+    virtualMethod.parameters.filter { it.isVarArgs }.map { it.type } +
+    closureParameters.flatMap { it.value.types }
   }
 
   /**
@@ -129,7 +132,7 @@ class InferenceDriver(val method: GrMethod) {
       .filter { (_, acceptedTypes) -> acceptedTypes.all { it is GrClosableBlock } && acceptedTypes.isNotEmpty() }
       .forEach { (parameter, calls) ->
         // todo: default-valued parameters
-        val parametrizedClosure = ParametrizedClosure(parameter)
+        val parametrizedClosure = ParameterizedClosure(parameter)
         closureParameters[parameter] = parametrizedClosure
         repeat((calls.first() as GrClosableBlock).allParameters.size) {
           val newTypeParameter = createNewTypeParameter(generator)
@@ -225,6 +228,7 @@ class InferenceDriver(val method: GrMethod) {
           return registerTypeParameter(typeParameterList)
         }
         else {
+          // we should not create new type parameter here because it may be a component of an intersection type
           return elementFactory.createType(classType.resolve() ?: return null, *mappedParameters)
         }
       }
@@ -359,12 +363,13 @@ class InferenceDriver(val method: GrMethod) {
 
   fun acceptFinalSubstitutor(resultSubstitutor: PsiSubstitutor) {
     val targetParameters = parameterIndex.keys
+    val gatheredTypeParameters = gatherTypeParameters(virtualMethod.typeParameterList!!, resultSubstitutor)
     targetParameters.forEach { param ->
       param.setType(resultSubstitutor.substitute(param.type))
       when {
         isClosureType(param.type) -> {
           closureParameters[param]?.run {
-            substituteTypes(resultSubstitutor)
+            substituteTypes(resultSubstitutor, gatheredTypeParameters)
             renderTypes(virtualMethod.parameterList)
           }
         }
@@ -378,6 +383,7 @@ class InferenceDriver(val method: GrMethod) {
       virtualMethod.typeParameterList?.delete()
     }
   }
+
 
   private fun buildResidualTypeParameterList(typeParameterList: PsiTypeParameterList): PsiTypeParameterList {
     virtualMethod.typeParameterList!!.replace(typeParameterList)
