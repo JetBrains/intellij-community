@@ -255,7 +255,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
     boolean isNewProject = options.isNewProject();
     if (isNewProject) {
       String projectName = dummyProjectName == null ? baseDir.getFileName().toString() : dummyProjectName;
-      project = projectManager.newProject(baseDir, projectName, !options.isUseDefaultProjectAsTemplate(), /* isRefreshVfsNeeded = */ true);
+      project = projectManager.newProject(baseDir, projectName, !options.getUseDefaultProjectAsTemplate(), /* isRefreshVfsNeeded = */ true);
     }
     else {
       try {
