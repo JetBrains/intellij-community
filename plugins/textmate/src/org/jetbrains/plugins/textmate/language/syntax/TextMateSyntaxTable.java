@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
 import org.jetbrains.plugins.textmate.plist.PListValue;
 import org.jetbrains.plugins.textmate.plist.Plist;
-import org.jetbrains.plugins.textmate.regex.RegexFacade;
 
 import java.util.Map;
 
@@ -84,17 +83,12 @@ public class TextMateSyntaxTable {
       PListValue pListValue = entry.getValue();
       if (pListValue != null) {
         String key = entry.getKey();
-        Constants.RegexKey regexKey = Constants.RegexKey.fromName(key);
-        if (regexKey != null) {
-          String pattern = pListValue.getString();
-          if (pattern != null) {
-            result.setRegexAttribute(regexKey, RegexFacade.regex(pattern));
-          }
-          continue;
-        }
         Constants.StringKey stringKey = Constants.StringKey.fromName(key);
         if (stringKey != null) {
-          result.setStringAttribute(stringKey, interner.intern(pListValue.getString()));
+          String stringValue = pListValue.getString();
+          if (stringValue != null) {
+            result.setStringAttribute(stringKey, interner.intern(stringValue));
+          }
           continue;
         }
         Constants.CaptureKey captureKey = Constants.CaptureKey.fromName(key);

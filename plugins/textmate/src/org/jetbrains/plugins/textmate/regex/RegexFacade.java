@@ -5,7 +5,6 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.util.ArrayUtilRt;
 import org.jcodings.specific.UTF8Encoding;
 import org.jetbrains.annotations.NotNull;
 import org.joni.Matcher;
@@ -22,15 +21,23 @@ public class RegexFacade {
   private static final Logger LOGGER = Logger.getInstance(RegexFacade.class);
 
   @NotNull
-  private byte[] myRegexBytes;
-  private Regex myRegex = null;
+  private final Regex myRegex;
 
   private Object lastId = null;
   private int lastOffset = Integer.MAX_VALUE;
   private MatchData lastMatch = MatchData.NOT_MATCHED;
 
-  private RegexFacade(@NotNull byte[] regexBytes) {
-    myRegexBytes = regexBytes;
+  private RegexFacade(@NotNull String regexString) {
+    byte[] bytes = regexString.getBytes(StandardCharsets.UTF_8);
+    Regex regex;
+    try {
+      regex = new Regex(bytes, 0, bytes.length, Option.CAPTURE_GROUP, UTF8Encoding.INSTANCE);
+    }
+    catch (JOniException e) {
+      LOGGER.info("Failed to parse textmate regex", e);
+      regex = FAILED_REGEX;
+    }
+    myRegex = regex;
   }
 
   public MatchData match(StringWithId string) {
@@ -46,33 +53,20 @@ public class RegexFacade {
     ProgressManager.checkCanceled();
     lastId = string.id;
     lastOffset = byteOffset;
-    final Matcher matcher = getRegex().matcher(string.bytes);
+    final Matcher matcher = myRegex.matcher(string.bytes);
     int matchIndex = matcher.search(byteOffset, string.bytes.length, Option.CAPTURE_GROUP);
     lastMatch = matchIndex > -1 ? MatchData.fromRegion(matcher.getEagerRegion()) : MatchData.NOT_MATCHED;
     return lastMatch;
   }
 
   public Searcher searcher(byte[] stringBytes) {
-    return new Searcher(stringBytes, getRegex().matcher(stringBytes, 0, stringBytes.length));
+    return new Searcher(stringBytes, myRegex.matcher(stringBytes, 0, stringBytes.length));
   }
 
-  @NotNull
-  private Regex getRegex() {
-    if (myRegex == null) {
-      try {
-        myRegex = new Regex(myRegexBytes, 0, myRegexBytes.length, Option.CAPTURE_GROUP, UTF8Encoding.INSTANCE);
-      }
-      catch (JOniException e) {
-        LOGGER.info("Failed to parse textmate regex", e);
-        myRegex = FAILED_REGEX;
-      }
-      myRegexBytes = ArrayUtilRt.EMPTY_BYTE_ARRAY;
-    }
-    return myRegex;
-  }
-
-  private static final LoadingCache<String, RegexFacade> REGEX_CACHE = CacheBuilder.newBuilder().maximumSize(2048).build(
-    CacheLoader.from((String regexString) -> new RegexFacade(Objects.requireNonNull(regexString).getBytes(StandardCharsets.UTF_8))));
+  private static final LoadingCache<String, RegexFacade> REGEX_CACHE = CacheBuilder.newBuilder()
+    .maximumSize(1024)
+    .softValues()
+    .build(CacheLoader.from(regexString -> new RegexFacade(Objects.requireNonNull(regexString))));
 
   @NotNull
   public static RegexFacade regex(@NotNull String regexString) {
@@ -80,7 +74,7 @@ public class RegexFacade {
       return REGEX_CACHE.get(regexString);
     }
     catch (ExecutionException e) {
-      return new RegexFacade(regexString.getBytes(StandardCharsets.UTF_8));
+      return new RegexFacade(regexString);
     }
   }
 }

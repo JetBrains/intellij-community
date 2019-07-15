@@ -6,7 +6,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
 import org.jetbrains.plugins.textmate.editor.TextMateEditorUtils;
-import org.jetbrains.plugins.textmate.regex.RegexFacade;
 
 import java.util.*;
 
@@ -15,7 +14,6 @@ class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
 
   private TIntObjectHashMap<SyntaxNodeDescriptor> myRepository = new TIntObjectHashMap<>();
   private Map<Constants.StringKey, CharSequence> myStringAttributes = new EnumMap<>(Constants.StringKey.class);
-  private Map<Constants.RegexKey, RegexFacade> myRegexAttributes = new EnumMap<>(Constants.RegexKey.class);
   private Map<Constants.CaptureKey, TIntObjectHashMap<CharSequence>> myCaptures = new EnumMap<>(Constants.CaptureKey.class);
 
   private List<SyntaxNodeDescriptor> myChildren = new ArrayList<>();
@@ -51,17 +49,6 @@ class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
   }
 
   @Override
-  public void setRegexAttribute(@NotNull Constants.RegexKey key, @Nullable RegexFacade value) {
-    myRegexAttributes.put(key, value);
-  }
-
-  @Nullable
-  @Override
-  public RegexFacade getRegexAttribute(@NotNull Constants.RegexKey key) {
-    return myRegexAttributes.get(key);
-  }
-
-  @Override
   public void addChild(SyntaxNodeDescriptor descriptor) {
     myChildren.add(descriptor);
   }
@@ -85,7 +72,6 @@ class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
   @Override
   public void compact() {
     myStringAttributes = TextMateEditorUtils.compactMap(myStringAttributes);
-    myRegexAttributes = TextMateEditorUtils.compactMap(myRegexAttributes);
     myCaptures = TextMateEditorUtils.compactMap(myCaptures);
     myChildren = compactList(myChildren);
     myInjections = compactList(myInjections);

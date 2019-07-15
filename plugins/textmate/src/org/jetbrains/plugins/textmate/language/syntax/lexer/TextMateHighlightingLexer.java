@@ -213,14 +213,14 @@ public class TextMateHighlightingLexer extends LexerBase implements DataStorageF
       else if (currentMatch.matched()) {
         int startPosition = currentMatch.charOffset(string.bytes).getStartOffset();
         endPosition = currentMatch.charOffset(string.bytes).getEndOffset();
-        if (currentRule.getRegexAttribute(Constants.RegexKey.BEGIN) != null) {
+        if (currentRule.getStringAttribute(Constants.StringKey.BEGIN) != null) {
           openScopeSelector(currentRule.getStringAttribute(Constants.StringKey.NAME), startPosition + startLineOffset);
           parseCaptures(Constants.CaptureKey.BEGIN_CAPTURES, currentRule, currentMatch, string, startLineOffset);
           parseCaptures(Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, startLineOffset);
           openScopeSelector(currentRule.getStringAttribute(Constants.StringKey.CONTENT_NAME), endPosition + startLineOffset);
           myStates.push(currentState);
         }
-        else if (currentRule.getRegexAttribute(Constants.RegexKey.MATCH) != null) {
+        else if (currentRule.getStringAttribute(Constants.StringKey.MATCH) != null) {
           openScopeSelector(currentRule.getStringAttribute(Constants.StringKey.NAME), startPosition + startLineOffset);
           parseCaptures(Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, startLineOffset);
           closeScopeSelector(endPosition + startLineOffset);

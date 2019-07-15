@@ -32,7 +32,9 @@ public interface Constants {
     CONTENT_NAME("contentName"),
     WHILE("while"),
     END("end"),
-    SCOPE_NAME("scopeName");
+    SCOPE_NAME("scopeName"),
+    MATCH("match"),
+    BEGIN("begin");
 
     public final String value;
 
@@ -43,27 +45,6 @@ public interface Constants {
     @Nullable
     public static StringKey fromName(@NotNull String name) {
       for (StringKey v : values()) {
-        if (v.value.equals(name)) {
-          return v;
-        }
-      }
-      return null;
-    }
-  }
-
-  enum RegexKey {
-    MATCH("match"),
-    BEGIN("begin");
-
-    public final String value;
-
-    RegexKey(String name) {
-      value = name;
-    }
-
-    @Nullable
-    public static RegexKey fromName(@NotNull String name) {
-      for (RegexKey v : values()) {
         if (v.value.equals(name)) {
           return v;
         }

@@ -4,7 +4,6 @@ import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
-import org.jetbrains.plugins.textmate.regex.RegexFacade;
 
 import java.util.HashSet;
 import java.util.List;
@@ -35,12 +34,6 @@ abstract class SyntaxProxyDescriptor implements SyntaxNodeDescriptor {
   @Override
   public TIntObjectHashMap<CharSequence> getCaptures(@NotNull Constants.CaptureKey key) {
     return getTargetNode().getCaptures(key);
-  }
-
-  @Nullable
-  @Override
-  public RegexFacade getRegexAttribute(@NotNull Constants.RegexKey key) {
-    return getTargetNode().getRegexAttribute(key);
   }
 
   @NotNull

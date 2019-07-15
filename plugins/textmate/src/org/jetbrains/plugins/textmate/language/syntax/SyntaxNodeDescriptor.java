@@ -4,7 +4,6 @@ import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
-import org.jetbrains.plugins.textmate.regex.RegexFacade;
 
 import java.util.List;
 
@@ -14,9 +13,6 @@ import java.util.List;
  * <ul>
  * <li>
  * String attributes - string attributes of syntax node {@link Constants.StringKey}
- * </li>
- * <li>
- * Regex attributes - regex attributes of syntax node {@link Constants.RegexKey}
  * </li>
  * <li>
  * Captures attributes - captures attributes of syntax node {@link Constants.CaptureKey}
@@ -39,9 +35,6 @@ public interface SyntaxNodeDescriptor {
 
   @Nullable
   TIntObjectHashMap<CharSequence> getCaptures(@NotNull Constants.CaptureKey key);
-
-  @Nullable
-  RegexFacade getRegexAttribute(@NotNull Constants.RegexKey key);
 
   @NotNull
   List<SyntaxNodeDescriptor> getChildren();

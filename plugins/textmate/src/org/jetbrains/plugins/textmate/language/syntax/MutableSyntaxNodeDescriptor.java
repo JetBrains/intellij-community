@@ -4,7 +4,6 @@ import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
-import org.jetbrains.plugins.textmate.regex.RegexFacade;
 
 /**
  * Syntax rule of languages from TextMate bundle.
@@ -12,9 +11,6 @@ import org.jetbrains.plugins.textmate.regex.RegexFacade;
  * <ul>
  * <li>
  * String attributes - string attributes of syntax node {@link Constants.StringKey}
- * </li>
- * <li>
- * Regex attributes - regex attributes of syntax node {@link Constants.RegexKey}
  * </li>
  * <li>
  * Captures attributes - captures attributes of syntax node {@link Constants.CaptureKey}
@@ -37,8 +33,6 @@ public interface MutableSyntaxNodeDescriptor extends SyntaxNodeDescriptor {
   void setStringAttribute(@NotNull Constants.StringKey key, @Nullable CharSequence value);
 
   void setCaptures(@NotNull Constants.CaptureKey key, @Nullable TIntObjectHashMap<CharSequence> captures);
-
-  void setRegexAttribute(@NotNull Constants.RegexKey key, @Nullable RegexFacade value);
 
   void appendRepository(int ruleId, SyntaxNodeDescriptor descriptor);
 

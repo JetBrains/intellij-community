@@ -20,7 +20,6 @@ import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorW
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh;
 import org.jetbrains.plugins.textmate.regex.MatchData;
-import org.jetbrains.plugins.textmate.regex.RegexFacade;
 import org.jetbrains.plugins.textmate.regex.StringWithId;
 
 import java.nio.charset.StandardCharsets;
@@ -120,7 +119,7 @@ public final class SyntaxMatchUtils {
   }
 
   private static boolean hasBeginKey(@NotNull TextMateLexerState lexerState) {
-    return lexerState.syntaxRule.getRegexAttribute(Constants.RegexKey.BEGIN) != null;
+    return lexerState.syntaxRule.getStringAttribute(Constants.StringKey.BEGIN) != null;
   }
 
   private static TextMateLexerState matchFirstChild(@NotNull SyntaxNodeDescriptor syntaxNodeDescriptor,
@@ -128,13 +127,13 @@ public final class SyntaxMatchUtils {
                                                     int byteOffset,
                                                     @NotNull TextMateWeigh.Priority priority,
                                                     @NotNull String currentScope) {
-    RegexFacade matchRegex = syntaxNodeDescriptor.getRegexAttribute(Constants.RegexKey.MATCH);
-    if (matchRegex != null) {
-      return new TextMateLexerState(syntaxNodeDescriptor, matchRegex.match(string, byteOffset), priority, string);
+    CharSequence match = syntaxNodeDescriptor.getStringAttribute(Constants.StringKey.MATCH);
+    if (match != null) {
+      return new TextMateLexerState(syntaxNodeDescriptor, regex(match.toString()).match(string, byteOffset), priority, string);
     }
-    RegexFacade beginRegex = syntaxNodeDescriptor.getRegexAttribute(Constants.RegexKey.BEGIN);
-    if (beginRegex != null) {
-      return new TextMateLexerState(syntaxNodeDescriptor, beginRegex.match(string, byteOffset), priority, string);
+    CharSequence begin = syntaxNodeDescriptor.getStringAttribute(Constants.StringKey.BEGIN);
+    if (begin != null) {
+      return new TextMateLexerState(syntaxNodeDescriptor, regex(begin.toString()).match(string, byteOffset), priority, string);
     }
     if (syntaxNodeDescriptor.getStringAttribute(Constants.StringKey.END) != null) {
       return TextMateLexerState.notMatched(syntaxNodeDescriptor);

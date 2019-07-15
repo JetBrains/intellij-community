@@ -74,7 +74,7 @@ public class TextMateServiceImpl extends TextMateService {
     FileUtil.toSystemIndependentName(FileUtil.join(PathManager.getCommunityHomePath(), "plugins", "textmate", "lib", "bundles"));
   @NonNls public static final String INSTALLED_BUNDLES_PATH = FileUtil.toSystemIndependentName(FileUtil.join(PathManager.getPluginsPath(), "textmate", "lib", "bundles"));
   private final Set<TextMateBundleListener> myListeners = new HashSet<>();
-  private final Interner<CharSequence> interner = new PathInterner.PathEnumerator();
+  private final Interner<CharSequence> myInterner = new PathInterner.PathEnumerator();
 
   @Override
   public void registerEnabledBundles(boolean loadBuiltin) {
@@ -234,7 +234,7 @@ public class TextMateServiceImpl extends TextMateService {
     }
     synchronized (myThemeHashMap) {
       try {
-        final TextMateTheme theme = TextMateTheme.load(myPlistReader.read(themeFile.getInputStream()), interner);
+        final TextMateTheme theme = TextMateTheme.load(myPlistReader.read(themeFile.getInputStream()), myInterner);
         if (theme != TextMateTheme.EMPTY_THEME) {
           myThemeHashMap.put(theme.getName(), theme);
           for (TextMateBundleListener listener : myListeners) {
@@ -342,7 +342,7 @@ public class TextMateServiceImpl extends TextMateService {
   private void registerSnippets(@NotNull Bundle bundle) {
     for (File snippetFile : bundle.getSnippetFiles()) {
       try {
-        TextMateSnippet snippet = PreferencesReadUtil.loadSnippet(snippetFile, myPlistReader.read(snippetFile), interner);
+        TextMateSnippet snippet = PreferencesReadUtil.loadSnippet(snippetFile, myPlistReader.read(snippetFile), myInterner);
         if (snippet != null) {
           mySnippetsRegistry.register(snippet);
         }
@@ -358,7 +358,7 @@ public class TextMateServiceImpl extends TextMateService {
       try {
         for (Pair<String, Plist> settingsPair : bundle.loadPreferenceFile(preferenceFile)) {
           if (settingsPair != null) {
-            CharSequence scopeName = interner.intern(settingsPair.first);
+            CharSequence scopeName = myInterner.intern(settingsPair.first);
             myPreferencesRegistry.fillFromPList(scopeName, settingsPair.second);
             myShellVariablesRegistry.fillVariablesFromPlist(scopeName, settingsPair.second);
             readCustomHighlightingColors(scopeName, settingsPair.second);
@@ -385,7 +385,7 @@ public class TextMateServiceImpl extends TextMateService {
     for (File grammarFile : bundle.getGrammarFiles()) {
       try {
         Plist plist = myPlistReader.read(grammarFile);
-        CharSequence rootScopeName = mySyntaxTable.loadSyntax(plist, interner);
+        CharSequence rootScopeName = mySyntaxTable.loadSyntax(plist, myInterner);
         Collection<String> extensions = bundle.getExtensions(grammarFile, plist);
         for (final String extension : extensions) {
           myExtensionsMapping.put(extension, rootScopeName);
