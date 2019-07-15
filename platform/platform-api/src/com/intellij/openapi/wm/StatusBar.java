@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,11 +20,9 @@ import java.awt.*;
  * Displays {@link Info#set(String, Project) status text} and
  * a number of {@link StandardWidgets builtin} and custom {@link StatusBarWidget widgets}.
  *
- * @author spleaner
- * @see WindowManager#getStatusBar(Project)
+ * @see StatusBarWidgetProvider
  */
 public interface StatusBar extends StatusBarInfo, Disposable {
-
   @SuppressWarnings({"AbstractClassNeverImplemented"})
   abstract class Info implements StatusBarInfo {
     public static final Topic<StatusBarInfo> TOPIC = Topic.create("IdeStatusBar.Text", StatusBarInfo.class);
@@ -54,7 +53,10 @@ public interface StatusBar extends StatusBarInfo, Disposable {
    * Adds the given widget on the right.
    *
    * @param widget Widget to add.
+   * @deprecated Use {@link StatusBarWidgetProvider}
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   void addWidget(@NotNull StatusBarWidget widget);
 
   /**
@@ -62,25 +64,46 @@ public interface StatusBar extends StatusBarInfo, Disposable {
    *
    * @param widget Widget to add.
    * @param anchor Anchor, see {@link Anchors}.
+   *
+   * @deprecated Use {@link StatusBarWidgetProvider}
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   void addWidget(@NotNull StatusBarWidget widget, @NotNull String anchor);
 
+
+  /**
+   * @deprecated Use {@link StatusBarWidgetProvider}
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   void addWidget(@NotNull StatusBarWidget widget, @NotNull Disposable parentDisposable);
 
+  /**
+   * @deprecated Use {@link StatusBarWidgetProvider}
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   void addWidget(@NotNull StatusBarWidget widget, @NotNull String anchor, @NotNull Disposable parentDisposable);
 
   /**
-   * @deprecated use {@link #addWidget(StatusBarWidget)} instead
+   * @deprecated Use {@link StatusBarWidgetProvider}
    */
   @Deprecated
   void addCustomIndicationComponent(@NotNull JComponent c);
 
   /**
-   * @deprecated use {@link #removeWidget(String)} instead
+   * @deprecated Use {@link StatusBarWidgetProvider}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   void removeCustomIndicationComponent(@NotNull JComponent c);
 
+  /**
+   * @deprecated Use {@link StatusBarWidgetProvider}
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   void removeWidget(@NotNull String id);
 
   void updateWidget(@NotNull String id);

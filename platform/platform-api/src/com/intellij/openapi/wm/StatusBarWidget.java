@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,6 +52,7 @@ public interface StatusBarWidget extends Disposable {
      */
     @NotNull
     @Deprecated
+    @ApiStatus.ScheduledForRemoval
     default String getMaxPossibleText() { return ""; }
 
     float getAlignment();
@@ -68,6 +70,7 @@ public interface StatusBarWidget extends Disposable {
      */
     @NotNull
     @Deprecated
+    @ApiStatus.ScheduledForRemoval
     default String getMaxValue() { return ""; }
   }
 
