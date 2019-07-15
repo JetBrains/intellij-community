@@ -15,7 +15,7 @@ class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
   private TIntObjectHashMap<SyntaxNodeDescriptor> myRepository = new TIntObjectHashMap<>();
   private Map<Constants.StringKey, String> myStringAttributes = new EnumMap<>(Constants.StringKey.class);
   private Map<String, RegexFacade> myRegexAttributes = new HashMap<>();
-  private Map<String, TIntObjectHashMap<String>> myCaptures = new HashMap<>();
+  private Map<Constants.CaptureKey, TIntObjectHashMap<String>> myCaptures = new EnumMap<>(Constants.CaptureKey.class);
 
   private List<SyntaxNodeDescriptor> myChildren = new ArrayList<>();
   private List<InjectionNodeDescriptor> myInjections = new ArrayList<>();
@@ -39,13 +39,13 @@ class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
   }
 
   @Override
-  public void setCaptures(@NotNull String key, @Nullable TIntObjectHashMap<String> captures) {
+  public void setCaptures(@NotNull Constants.CaptureKey key, @Nullable TIntObjectHashMap<String> captures) {
     myCaptures.put(key, captures);
   }
 
   @Nullable
   @Override
-  public TIntObjectHashMap<String> getCaptures(String key) {
+  public TIntObjectHashMap<String> getCaptures(@NotNull Constants.CaptureKey key) {
     return myCaptures.get(key);
   }
 

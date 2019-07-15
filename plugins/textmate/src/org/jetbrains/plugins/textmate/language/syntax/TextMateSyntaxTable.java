@@ -95,8 +95,9 @@ public class TextMateSyntaxTable {
           result.setStringAttribute(stringKey, intern(pListValue.getString()));
           continue;
         }
-        if (ArrayUtil.contains(key, Constants.CAPTURES_KEY_NAMES)) {
-          result.setCaptures(key, loadCaptures(pListValue.getPlist()));
+        Constants.CaptureKey captureKey = Constants.CaptureKey.fromName(key);
+        if (captureKey != null) {
+          result.setCaptures(captureKey, loadCaptures(pListValue.getPlist()));
           continue;
         }
         if (Constants.REPOSITORY_KEY.equalsIgnoreCase(key)) {
@@ -126,8 +127,8 @@ public class TextMateSyntaxTable {
       for (Constants.StringKey stringKey : Constants.StringKey.values()) {
         interner.intern(stringKey.value);
       }
-      for (String name : Constants.CAPTURES_KEY_NAMES) {
-        interner.intern(name);
+      for (Constants.CaptureKey captureKey : Constants.CaptureKey.values()) {
+        interner.intern(captureKey.value);
       }
       for (String name : Constants.REGEX_KEY_NAMES) {
         interner.intern(name);

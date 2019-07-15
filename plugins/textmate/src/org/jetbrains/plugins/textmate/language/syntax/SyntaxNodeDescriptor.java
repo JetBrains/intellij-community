@@ -19,7 +19,7 @@ import java.util.List;
  * Regex attributes - regex attributes of syntax node {@link Constants#REGEX_KEY_NAMES}
  * </li>
  * <li>
- * Captures attributes - captures attributes of syntax node {@link Constants#CAPTURES_KEY_NAMES}
+ * Captures attributes - captures attributes of syntax node {@link Constants.CaptureKey}
  * </li>
  * <li>
  * Repository - set of named syntax rules (nodes) which can be included from other places in the grammar.
@@ -38,7 +38,7 @@ public interface SyntaxNodeDescriptor {
   String getStringAttribute(@NotNull Constants.StringKey key);
 
   @Nullable
-  TIntObjectHashMap<String> getCaptures(String key);
+  TIntObjectHashMap<String> getCaptures(@NotNull Constants.CaptureKey key);
 
   @Nullable
   RegexFacade getRegexAttribute(String key);

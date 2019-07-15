@@ -21,9 +21,6 @@ public interface Constants {
   @NonNls String SCOPE_KEY = "scope";
   @NonNls String UUID_KEY = "uuid";
   @NonNls String BEGIN_KEY = "begin";
-  @NonNls String CAPTURES_KEY = "captures";
-  @NonNls String BEGIN_CAPTURES_KEY = "beginCaptures";
-  @NonNls String END_CAPTURES_KEY = "endCaptures";
   @NonNls String MATCH_KEY = "match";
   @NonNls String FOREGROUND_KEY = "foreground";
   @NonNls String FONT_STYLE_KEY = "fontStyle";
@@ -56,8 +53,29 @@ public interface Constants {
     }
   }
 
+  enum CaptureKey {
+    CAPTURES("captures"),
+    BEGIN_CAPTURES("beginCaptures"),
+    END_CAPTURES("endCaptures");
+
+    public final String value;
+
+    CaptureKey(String name) {
+      value = name;
+    }
+
+    @Nullable
+    public static CaptureKey fromName(@NotNull String name) {
+      for (CaptureKey v : values()) {
+        if (v.value.equals(name)) {
+          return v;
+        }
+      }
+      return null;
+    }
+  }
+
   String[] REGEX_KEY_NAMES = new String[]{/*"firstLineMatch", "foldingStartMarker",*/ MATCH_KEY, BEGIN_KEY};
-  String[] CAPTURES_KEY_NAMES = new String[]{CAPTURES_KEY, BEGIN_CAPTURES_KEY, END_CAPTURES_KEY};
 
   // VALUES
   @NonNls String DEFAULT_SCOPE_NAME = "default";

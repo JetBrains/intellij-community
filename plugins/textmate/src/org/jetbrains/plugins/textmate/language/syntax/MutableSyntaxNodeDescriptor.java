@@ -17,7 +17,7 @@ import org.jetbrains.plugins.textmate.regex.RegexFacade;
  * Regex attributes - regex attributes of syntax node {@link Constants#REGEX_KEY_NAMES}
  * </li>
  * <li>
- * Captures attributes - captures attributes of syntax node {@link Constants#CAPTURES_KEY_NAMES}
+ * Captures attributes - captures attributes of syntax node {@link Constants.CaptureKey}
  * </li>
  * <li>
  * Repository - set of named syntax rules (nodes) which can be included from other places in the grammar.
@@ -36,7 +36,7 @@ public interface MutableSyntaxNodeDescriptor extends SyntaxNodeDescriptor {
 
   void setStringAttribute(@NotNull Constants.StringKey key, String value);
 
-  void setCaptures(@NotNull String key, @Nullable TIntObjectHashMap<String> captures);
+  void setCaptures(@NotNull Constants.CaptureKey key, @Nullable TIntObjectHashMap<String> captures);
 
   void setRegexAttribute(String key, RegexFacade value);
 

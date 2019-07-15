@@ -33,7 +33,7 @@ abstract class SyntaxProxyDescriptor implements SyntaxNodeDescriptor {
 
   @Nullable
   @Override
-  public TIntObjectHashMap<String> getCaptures(String key) {
+  public TIntObjectHashMap<String> getCaptures(@NotNull Constants.CaptureKey key) {
     return getTargetNode().getCaptures(key);
   }
 

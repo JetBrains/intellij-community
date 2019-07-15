@@ -198,13 +198,13 @@ public class TextMateHighlightingLexer extends LexerBase implements DataStorageF
         myStates.pop();
         int startPosition = endPosition = endMatch.charOffset(string.bytes).getStartOffset();
         closeScopeSelector(startPosition + startLineOffset); // closing content scope
-        if (lastRule.getCaptures(Constants.END_CAPTURES_KEY) == null
-            && lastRule.getCaptures(Constants.CAPTURES_KEY) == null
-            && lastRule.getCaptures(Constants.BEGIN_CAPTURES_KEY) == null
+        if (lastRule.getCaptures(Constants.CaptureKey.END_CAPTURES) == null
+            && lastRule.getCaptures(Constants.CaptureKey.CAPTURES) == null
+            && lastRule.getCaptures(Constants.CaptureKey.BEGIN_CAPTURES) == null
             ||
-            parseCaptures(Constants.END_CAPTURES_KEY, lastRule, endMatch, string, startLineOffset)
+            parseCaptures(Constants.CaptureKey.END_CAPTURES, lastRule, endMatch, string, startLineOffset)
             ||
-            parseCaptures(Constants.CAPTURES_KEY, lastRule, endMatch, string, startLineOffset)) {
+            parseCaptures(Constants.CaptureKey.CAPTURES, lastRule, endMatch, string, startLineOffset)) {
           // move line position only if anything was captured or if there is nothing to capture at all
           endPosition = endMatch.charOffset(string.bytes).getEndOffset();
         }
@@ -215,14 +215,14 @@ public class TextMateHighlightingLexer extends LexerBase implements DataStorageF
         endPosition = currentMatch.charOffset(string.bytes).getEndOffset();
         if (currentRule.getRegexAttribute(Constants.BEGIN_KEY) != null) {
           openScopeSelector(currentRule.getStringAttribute(Constants.StringKey.NAME), startPosition + startLineOffset);
-          parseCaptures(Constants.BEGIN_CAPTURES_KEY, currentRule, currentMatch, string, startLineOffset);
-          parseCaptures(Constants.CAPTURES_KEY, currentRule, currentMatch, string, startLineOffset);
+          parseCaptures(Constants.CaptureKey.BEGIN_CAPTURES, currentRule, currentMatch, string, startLineOffset);
+          parseCaptures(Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, startLineOffset);
           openScopeSelector(currentRule.getStringAttribute(Constants.StringKey.CONTENT_NAME), endPosition + startLineOffset);
           myStates.push(currentState);
         }
         else if (currentRule.getRegexAttribute(Constants.MATCH_KEY) != null) {
           openScopeSelector(currentRule.getStringAttribute(Constants.StringKey.NAME), startPosition + startLineOffset);
-          parseCaptures(Constants.CAPTURES_KEY, currentRule, currentMatch, string, startLineOffset);
+          parseCaptures(Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, startLineOffset);
           closeScopeSelector(endPosition + startLineOffset);
         }
       }
@@ -298,7 +298,7 @@ public class TextMateHighlightingLexer extends LexerBase implements DataStorageF
     }
   }
 
-  private boolean parseCaptures(String capturesKey, SyntaxNodeDescriptor rule, MatchData matchData, StringWithId string, int startLineOffset) {
+  private boolean parseCaptures(Constants.CaptureKey capturesKey, SyntaxNodeDescriptor rule, MatchData matchData, StringWithId string, int startLineOffset) {
     TIntObjectHashMap<String> captures = rule.getCaptures(capturesKey);
     if (captures != null) {
       List<CaptureMatchData> matches = SyntaxMatchUtils.matchCaptures(captures, matchData, string);
