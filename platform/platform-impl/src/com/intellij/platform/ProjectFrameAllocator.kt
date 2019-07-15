@@ -35,7 +35,7 @@ internal open class ProjectFrameAllocator {
 
 internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : ProjectFrameAllocator() {
   // volatile not required because created in run (before executing run task)
-  private var frame: IdeFrameImpl? = null
+  private var ideFrame: IdeFrameImpl? = null
 
   override fun run(task: Runnable, file: Path): Boolean {
     var progressCompleted = false
@@ -66,7 +66,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : P
 
     val showFrameActivity = StartUpMeasurer.start("show frame")
     val frame = windowManager.showFrame(options)
-    this.frame = frame
+    ideFrame = frame
     showFrameActivity.end()
     // runProcessWithProgressSynchronously still processes EDT events
     invokeLaterWithAnyModality {
@@ -81,7 +81,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : P
 
   override fun projectLoaded(project: Project) {
     invokeLaterWithAnyModality(project) {
-      val frame = frame ?: return@invokeLaterWithAnyModality
+      val frame = ideFrame ?: return@invokeLaterWithAnyModality
       val windowManager = WindowManager.getInstance() as WindowManagerImpl
 
       if (options.frame?.bounds == null) {
@@ -98,7 +98,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : P
 
   override fun projectOpened(project: Project) {
     if (options.sendFrameBack) {
-      frame?.isAutoRequestFocus = true
+      ideFrame?.isAutoRequestFocus = true
     }
   }
 }
