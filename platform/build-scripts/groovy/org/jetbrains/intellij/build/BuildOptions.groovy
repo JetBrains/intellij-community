@@ -141,7 +141,8 @@ class BuildOptions {
   /**
    * Specifies Jetbrains JDK version to be used by build scripts, 8 by default.
    */
-  int jdkVersion = System.getProperty("intellij.build.jdk.version", "8").toInteger()
+  static final String JDK_VERSION_OPTION = "intellij.build.jdk.version"
+  int jdkVersion = System.getProperty(JDK_VERSION_OPTION, "8").toInteger()
 
   /**
    * Specifies an algorithm to build distribution checksums.
