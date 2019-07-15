@@ -34,6 +34,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.PathKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -113,13 +114,7 @@ public class ProjectUtil {
       return existing;
     }
 
-    NullableLazyValue<VirtualFile> lazyVirtualFile = NullableLazyValue.createValue(() -> {
-      VirtualFile result = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(file.toString()));
-      if (result != null) {
-        result.refresh(false, false);
-      }
-      return result;
-    });
+    NullableLazyValue<VirtualFile> lazyVirtualFile = NullableLazyValue.createValue(() -> getFileAndRefresh(file));
 
     for (ProjectOpenProcessor provider : ProjectOpenProcessor.EXTENSION_POINT_NAME.getIterable()) {
       if (provider.isStrongProjectInfoHolder()) {
@@ -175,6 +170,18 @@ public class ProjectUtil {
       }
     }, ModalityState.NON_MODAL);
     return project;
+  }
+
+  @Nullable
+  @ApiStatus.Internal
+  public static VirtualFile getFileAndRefresh(@NotNull Path file) {
+    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(file.toString()));
+    if (virtualFile == null || !virtualFile.isValid()) {
+      return null;
+    }
+
+    virtualFile.refresh(false, false);
+    return virtualFile;
   }
 
   @Nullable

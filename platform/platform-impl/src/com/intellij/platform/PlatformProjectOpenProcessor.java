@@ -25,7 +25,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -45,7 +44,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
-import java.util.Objects;
 
 public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor implements CommandLineProjectOpenProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.platform.PlatformProjectOpenProcessor");
@@ -357,7 +355,8 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
 
   public static Module runDirectoryProjectConfigurators(@NotNull Path baseDir, @NotNull Project project) {
     final Ref<Module> moduleRef = new Ref<>();
-    VirtualFile virtualFile = getFileAndRefresh(baseDir);
+    VirtualFile virtualFile = ProjectUtil.getFileAndRefresh(baseDir);
+    LOG.assertTrue(virtualFile != null);
     for (DirectoryProjectConfigurator configurator: DirectoryProjectConfigurator.EP_NAME.getIterable()) {
       try {
         configurator.configureProject(project, virtualFile, moduleRef);
@@ -382,22 +381,21 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
     //noinspection CodeBlock2Expr
     StartupManager.getInstance(project).registerPostStartupActivity((DumbAwareRunnable)() -> {
       ApplicationManager.getApplication().invokeLater(() -> {
-          if (!project.isDisposed() && Files.exists(file)) {
-            VirtualFile virtualFile = getFileAndRefresh(file);
-            Navigatable navigatable = line > 0
-                                      ? new OpenFileDescriptor(project, virtualFile, line - 1, 0)
-                                      : PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, -1);
-            navigatable.navigate(true);
-          }
-        }, ModalityState.NON_MODAL);
-    });
-  }
+        if (project.isDisposed() || !Files.exists(file)) {
+          return;
+        }
 
-  @NotNull
-  private static VirtualFile getFileAndRefresh(Path file) {
-    VirtualFile virtualFile = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(file.toString())));
-    virtualFile.refresh(false, false);
-    return virtualFile;
+        VirtualFile virtualFile = ProjectUtil.getFileAndRefresh(file);
+        if (virtualFile == null) {
+          return;
+        }
+
+        Navigatable navigatable = line > 0
+                                  ? new OpenFileDescriptor(project, virtualFile, line - 1, 0)
+                                  : PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, -1);
+        navigatable.navigate(true);
+      }, ModalityState.NON_MODAL);
+    });
   }
 
   @Nullable
