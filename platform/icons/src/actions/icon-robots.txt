@@ -18,7 +18,6 @@ deprecated: down.png -> /general/arrowDown.svg; to be removed in IDEA 2020 - use
 deprecated: erDiagram.png; to be removed in IDEA 2020 - use J2EEIcons.ErDiagram
 deprecated: exclude.png -> /general/remove.svg; to be removed in IDEA 2020 - use AllIcons.General.Remove
 deprecated: export.png -> /toolbarDecorator/export.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Export
-deprecated: fileStatus.png
 deprecated: filter_small.png -> /general/filter.svg; to be removed in IDEA 2020 - use AllIcons.General.Filter
 deprecated: findPlain.png -> /actions/find.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Find
 deprecated: findWhite.png; to be removed in IDEA 2020

@@ -304,10 +304,6 @@ public class AllIcons {
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon Export = AllIcons.ToolbarDecorator.Export;
 
-    @SuppressWarnings("unused")
-    @Deprecated
-    public static final Icon FileStatus = load("/actions/fileStatus.png");
-
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Filter */
     @SuppressWarnings("unused")
     @Deprecated
@@ -513,13 +509,6 @@ public class AllIcons {
   }
 
   public final static class Debugger {
-
-    public final static class Actions {
-      /** 16x16 */ public static final Icon Force_run_to_cursor = load("/debugger/actions/force_run_to_cursor.svg");
-      /** 16x16 */ public static final Icon Force_step_into = load("/debugger/actions/force_step_into.svg");
-      /** 16x16 */ public static final Icon Force_step_over = load("/debugger/actions/force_step_over.svg");
-
-    }
     /** 16x16 */ public static final Icon AddToWatch = load("/debugger/addToWatch.svg");
     /** 16x16 */ public static final Icon AttachToProcess = load("/debugger/attachToProcess.svg");
     /** 16x16 */ public static final Icon ClassLevelWatch = load("/debugger/classLevelWatch.svg");
@@ -565,29 +554,6 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Frame = load("/debugger/frame.svg");
     /** 16x16 */ public static final Icon KillProcess = load("/debugger/killProcess.svg");
     /** 12x12 */ public static final Icon LambdaBreakpoint = load("/debugger/LambdaBreakpoint.svg");
-
-    public final static class MemoryView {
-      /** 16x16 */ public static final Icon Active = load("/debugger/memoryView/active.svg");
-
-      /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Watch */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval(inVersion = "2020.1")
-      public static final Icon ClassTracked = AllIcons.Debugger.Watch;
-
-      /** @deprecated to be removed in IDEA 2020 */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval(inVersion = "2020.1")
-      public static final Icon ToolWindowDisabled = load("/debugger/memoryView/toolWindowDisabled.png");
-
-      /** @deprecated to be removed in IDEA 2020 */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval(inVersion = "2020.1")
-      public static final Icon ToolWindowEnabled = load("/debugger/memoryView/toolWindowEnabled.png");
-
-    }
     /** 12x12 */ public static final Icon MultipleBreakpoints = load("/debugger/MultipleBreakpoints.svg");
     /** 16x16 */ public static final Icon MuteBreakpoints = load("/debugger/muteBreakpoints.svg");
     /** 16x16 */ public static final Icon Overhead = load("/debugger/overhead.svg");

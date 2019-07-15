@@ -247,7 +247,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     final IconLoader.LazyIcon lazyIcon = new IconLoader.LazyIcon() {
       @Override
       protected Icon compute() {
-        //try to find icon in idea class path
+        // try to find icon in idea class path
         Icon icon = IconLoader.findIcon(iconPath, actionClass, true, false);
         if (icon == null) {
           icon = IconLoader.findIcon(iconPath, classLoader);

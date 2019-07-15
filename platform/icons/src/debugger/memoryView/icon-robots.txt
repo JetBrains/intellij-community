@@ -1,3 +1,0 @@
-deprecated: classTracked.png -> /debugger/watch.svg; to be removed in IDEA 2020 - use AllIcons.Debugger.Watch
-deprecated: toolWindowDisabled.png; to be removed in IDEA 2020
-deprecated: toolWindowEnabled.png; to be removed in IDEA 2020
