@@ -33,7 +33,7 @@ class VmOptionsGenerator {
       '-Djdk.http.auth.tunneling.disabledSchemes=""',
       '-XX:+HeapDumpOnOutOfMemoryError',
       '-XX:-OmitStackTraceInFastThrow',
-      '-Djdk.attach.allowAttachSelf',
+      '-Djdk.attach.allowAttachSelf=true',
     ]
 
   static String computeVmOptions(JvmArchitecture arch, boolean isEAP, ProductProperties productProperties) {
