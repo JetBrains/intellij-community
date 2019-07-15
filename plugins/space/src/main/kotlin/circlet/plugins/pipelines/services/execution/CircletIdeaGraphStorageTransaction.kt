@@ -106,4 +106,8 @@ class CircletIdeaGraphStorageTransaction(private val storage: CircletIdeaAutomat
     override fun registerVolume(graphExecution: AGraphExecutionEntity, volumeId: String, volumeName: String) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
+
+    override fun findNotFinishedJobs(): Iterable<AJobExecutionEntity<*>> {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
 }
