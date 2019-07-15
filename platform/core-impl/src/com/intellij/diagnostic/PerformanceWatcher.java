@@ -91,14 +91,13 @@ public class PerformanceWatcher implements Disposable {
     });
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      cleanOldFiles(myLogDir, 0);
-
       for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
         if ("Code Cache".equals(bean.getName())) {
           watchCodeCache(bean);
           break;
         }
       }
+      cleanOldFiles(myLogDir, 0);
     });
 
     myThread =
