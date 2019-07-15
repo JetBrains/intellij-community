@@ -18,7 +18,6 @@ import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
-import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitUntrackedFilesHolder;
 import git4idea.util.GitFileUtils;
@@ -40,7 +39,7 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
   @Override
   @NotNull
   public String getRollbackOperationName() {
-    return GitBundle.getString("revert.action.name");
+    return "&Rollback";
   }
 
   @Override
