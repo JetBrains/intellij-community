@@ -5,6 +5,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.ui.JBSwingUtilities;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,8 +30,7 @@ public class IJSwingUtilities extends JBSwingUtilities {
     Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
 
     // verify focusOwner is a descendant of c
-    for (Component temp = focusOwner; temp != null; temp = (temp instanceof Window) ? null : temp.getParent())
-    {
+    for (Component temp = focusOwner; temp != null; temp = (temp instanceof Window) ? null : temp.getParent()) {
       if (temp == c) {
         return focusOwner;
       }
@@ -45,11 +45,11 @@ public class IJSwingUtilities extends JBSwingUtilities {
    */
   public static boolean hasFocus2(Component component) {
     WindowManagerEx windowManager = WindowManagerEx.getInstanceEx();
-    Window activeWindow=null;
+    Window activeWindow = null;
     if (windowManager != null) {
       activeWindow = windowManager.getMostRecentFocusedWindow();
     }
-    if(activeWindow==null){
+    if (activeWindow == null) {
       return false;
     }
     Component focusedComponent = windowManager.getFocusedComponent(activeWindow);
@@ -60,57 +60,22 @@ public class IJSwingUtilities extends JBSwingUtilities {
     return SwingUtilities.isDescendingFrom(focusedComponent, component);
   }
 
-  /**
-   * This method is copied from {@code SwingUtilities}.
-   * Returns index of the first occurrence of {@code mnemonic}
-   * within string {@code text}. Matching algorithm is not
-   * case-sensitive.
-   *
-   * @param text The text to search through, may be null
-   * @param mnemonic The mnemonic to find the character for.
-   * @return index into the string if exists, otherwise -1
-   */
-  public static int findDisplayedMnemonicIndex(String text, int mnemonic) {
-    if (text == null || mnemonic == '\0') {
-      return -1;
-    }
-
-    char uc = Character.toUpperCase((char)mnemonic);
-    char lc = Character.toLowerCase((char)mnemonic);
-
-    int uci = text.indexOf(uc);
-    int lci = text.indexOf(lc);
-
-    if (uci == -1) {
-      return lci;
-    } else if(lci == -1) {
-      return uci;
-    } else {
-      return (lci < uci) ? lci : uci;
-    }
-  }
-
-  public static void adjustComponentsOnMac(@Nullable JComponent component) {
-    adjustComponentsOnMac(null, component);
-  }
-
-
   public static void adjustComponentsOnMac(@Nullable JLabel label, @Nullable JComponent component) {
     if (component == null) return;
     if (!UIUtil.isUnderAquaLookAndFeel()) return;
 
     if (component instanceof JComboBox) {
-      UIUtil.addInsets(component, new Insets(0,-2,0,0));
+      UIUtil.addInsets(component, JBUI.insetsLeft(-2));
       if (label != null) {
-        UIUtil.addInsets(label, new Insets(0,2,0,0));
+        UIUtil.addInsets(label, JBUI.insetsLeft(2));
       }
     }
     if (component instanceof JCheckBox) {
-      UIUtil.addInsets(component, new Insets(0,-5,0,0));
+      UIUtil.addInsets(component, JBUI.insetsLeft(-5));
     }
     if (component instanceof JTextField || component instanceof EditorTextField) {
       if (label != null) {
-        UIUtil.addInsets(label, new Insets(0,3,0,0));
+        UIUtil.addInsets(label, JBUI.insetsLeft(3));
       }
     }
   }
@@ -127,9 +92,9 @@ public class IJSwingUtilities extends JBSwingUtilities {
 
   /**
    * A copy of javax.swing.SwingUtilities#updateComponentTreeUI that invokes children updateUI() first
-
+   *
    * @param c component
-   * @see javax.swing.SwingUtilities#updateComponentTreeUI
+   * @see SwingUtilities#updateComponentTreeUI
    */
   public static void updateComponentTreeUI(@Nullable Component c) {
     if (c == null) return;
