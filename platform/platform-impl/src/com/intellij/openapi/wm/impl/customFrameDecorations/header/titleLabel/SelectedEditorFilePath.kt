@@ -32,6 +32,8 @@ open class SelectedEditorFilePath {
   private val productVersion = DefaultPartTitle(" ")
   private val superUserSuffix = DefaultPartTitle(" ")
 
+  private var infoLevel = 4
+
   protected val components = listOf(projectTitle, classTitle, productTitle, productVersion, superUserSuffix)
 
   private val pane = object : JPanel(MigLayout("ins 0, gap 0", "[min!][pref][pref][pref][pref]push")){
