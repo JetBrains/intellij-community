@@ -166,7 +166,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
           baseDir = file.getParent();
         }
 
-        options = options.copy(options.getForceOpenInNewFrame(), options.getProjectToClose());
+        options = options.copy(options.getForceOpenInNewFrame(), options.getProjectToClose(), options.getFrame(), options.getProjectWorkspaceId());
         options.setNewProject(!Files.isDirectory(baseDir.resolve(Project.DIRECTORY_STORE_FOLDER)));
       }
     }
@@ -207,24 +207,23 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
     ProjectFrameAllocator frameAllocator = ApplicationManager.getApplication().isHeadlessEnvironment()
                                            ? new ProjectFrameAllocator()
                                            : new ProjectUiFrameAllocator(options);
-    Runnable task = () -> {
+
+    if (!frameAllocator.run(() -> {
       Pair<Project, Module> result = prepareProject(file, options, baseDir, dummyProjectName);
       if (result == null) {
         return;
       }
 
       refResult.set(result);
-      Project project = result.first;
-      frameAllocator.projectCreated(project);
-      if (ProjectManagerEx.getInstanceEx().openProject(project)) {
-        frameAllocator.projectOpened(project);
+      Project project1 = result.first;
+      frameAllocator.projectLoaded(project1);
+      if (ProjectManagerEx.getInstanceEx().openProject(project1)) {
+        frameAllocator.projectOpened(project1);
       }
       else {
         refResult.set(Pair.empty());
       }
-    };
-
-    if (!frameAllocator.run(task, file)) {
+    }, file)) {
       refResult.set(Pair.empty());
     }
 

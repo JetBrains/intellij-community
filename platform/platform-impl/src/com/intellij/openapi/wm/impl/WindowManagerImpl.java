@@ -501,19 +501,23 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     if (frameInfo == null || frameInfo.getBounds() == null) {
       frameInfo = defaultFrameInfoHelper.getInfo();
     }
-    if (frameInfo != null && frameInfo.getBounds() != null) {
+    if (frameInfo != null) {
       // set bounds even if maximized because on unmaximize we must restore previous frame bounds
-      frame.setBounds(validateFrameBounds(FrameBoundsConverter.convertFromDeviceSpace(frameInfo.getBounds())));
+      setFrameBoundsFromDeviceSpace(frame, frameInfo);
     }
 
     frame.setVisible(true);
     if (frameInfo != null) {
-      frame.setExtendedState(frameInfo.getExtendedState());
-      if (isFullScreenSupportedInCurrentOS() && frameInfo.getFullScreen()) {
-        frame.toggleFullScreen(true);
-      }
+      setFrameExtendedState(frame, frameInfo);
     }
     return frame;
+  }
+
+  public void setFrameExtendedState(@NotNull IdeFrameImpl frame, @NotNull FrameInfo frameInfo) {
+    frame.setExtendedState(frameInfo.getExtendedState());
+    if (isFullScreenSupportedInCurrentOS() && frameInfo.getFullScreen()) {
+      frame.toggleFullScreen(true);
+    }
   }
 
   @NotNull
@@ -564,7 +568,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
           defaultFrameInfoHelper.copyFrom(frameInfo);
         }
 
-        frame.setBounds(validateFrameBounds(FrameBoundsConverter.convertFromDeviceSpace(frameInfo.getBounds())));
+        setFrameBoundsFromDeviceSpace(frame, frameInfo);
       }
     }
 
@@ -592,6 +596,13 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     myEventDispatcher.getMulticaster().frameCreated(frame);
 
     return frame;
+  }
+
+  public static void setFrameBoundsFromDeviceSpace(@NotNull IdeFrameImpl frame, @NotNull FrameInfo frameInfo) {
+    Rectangle bounds = frameInfo.getBounds();
+    if (bounds != null) {
+      frame.setBounds(validateFrameBounds(FrameBoundsConverter.convertFromDeviceSpace(bounds)));
+    }
   }
 
   private void proceedDialogDisposalQueue(@NotNull Project project) {

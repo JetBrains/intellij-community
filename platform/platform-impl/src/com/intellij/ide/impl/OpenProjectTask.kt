@@ -7,15 +7,14 @@ import com.intellij.projectImport.ProjectOpenedCallback
 
 // we cannot rewrite ProjectUtil in Kotlin (in this case such class will be not required) because not all like Kotlin
 data class OpenProjectTask @JvmOverloads constructor(val forceOpenInNewFrame: Boolean = false,
-                                                     val projectToClose: Project? = null) {
+                                                     val projectToClose: Project? = null,
+                                                     val frame: FrameInfo? = null,
+                                                     val projectWorkspaceId: String? = null) {
   var checkDirectoryForFileBasedProjects: Boolean = true
   var isTempProject: Boolean = true
   var isUseDefaultProjectAsTemplate: Boolean = true
 
   var callback: ProjectOpenedCallback? = null
-
-  var frame: FrameInfo? = null
-  var projectWorkspaceId: String? = null
 
   var showWelcomeScreenIfNoProjectOpened = true
   var sendFrameBack = false

@@ -420,9 +420,8 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
         return;
       }
 
-      synchronized (manager.myStateLock) {
-        manager.myNameCache.put(path, project.getName());
-      }
+      manager.updateProjectInfo(project, (WindowManagerImpl)WindowManager.getInstance());
+      manager.myNameCache.put(path, project.getName());
     }
 
     @Override
@@ -436,38 +435,6 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
         }
       }
       updateSystemDockMenu();
-    }
-
-    @Override
-    public void projectClosingBeforeSave(@NotNull Project project) {
-      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        return;
-      }
-
-      WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
-      IdeFrameImpl frame = windowManager.getFrame(project);
-      if (frame == null) {
-        return;
-      }
-
-      String workspaceId = ProjectKt.getStateStore(project).getProjectWorkspaceId();
-
-      // ensure that last closed project frame bounds will be used as newly created project frame bounds (if will be no another focused opened project)
-      FrameInfo frameInfo = ProjectFrameBounds.getInstance(project).getActualFrameInfoInDeviceSpace(frame, windowManager);
-      String path = manager.getProjectPath(project);
-      synchronized (manager.myStateLock) {
-        RecentProjectMetaInfo info = manager.myState.getAdditionalInfo().get(path);
-        if (info != null) {
-          if (info.getFrame() != frameInfo) {
-            info.setFrame(frameInfo);
-          }
-          info.setProjectWorkspaceId(workspaceId);
-        }
-      }
-
-      if (workspaceId != null && Registry.is("ide.project.loading.show.last.state")) {
-        frame.takeASelfie(workspaceId);
-      }
     }
   }
 
@@ -539,9 +506,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     boolean someProjectWasOpened = false;
     for (Map.Entry<String, RecentProjectMetaInfo> it : openPaths) {
       // https://youtrack.jetbrains.com/issue/IDEA-166321
-      OpenProjectTask options = new OpenProjectTask(/* forceOpenInNewFrame = */ true);
-      options.setFrame(it.getValue().getFrame());
-      options.setProjectWorkspaceId(it.getValue().getProjectWorkspaceId());
+      OpenProjectTask options = new OpenProjectTask(/* forceOpenInNewFrame = */ true, /* projectToClose = */ null, it.getValue().getFrame(), /* projectWorkspaceId = */ it.getValue().getProjectWorkspaceId());
       options.setShowWelcomeScreenIfNoProjectOpened(false);
       options.setSendFrameBack(someProjectWasOpened);
       Project project = doOpenProject(it.getKey(), options);
@@ -593,10 +558,49 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     }
   }
 
+  private void updateProjectInfo(@NotNull Project project, @NotNull WindowManagerImpl windowManager) {
+    IdeFrameImpl frame = windowManager.getFrame(project);
+    if (frame == null) {
+      return;
+    }
+
+    String workspaceId = ProjectKt.getStateStore(project).getProjectWorkspaceId();
+
+    // ensure that last closed project frame bounds will be used as newly created project frame bounds (if will be no another focused opened project)
+    FrameInfo frameInfo = ProjectFrameBounds.getInstance(project).getActualFrameInfoInDeviceSpace(frame, windowManager);
+    String path = getProjectPath(project);
+    synchronized (myStateLock) {
+      RecentProjectMetaInfo info = myState.getAdditionalInfo().get(path);
+      if (info != null) {
+        if (info.getFrame() != frameInfo) {
+          info.setFrame(frameInfo);
+        }
+        info.setProjectWorkspaceId(workspaceId);
+      }
+    }
+
+    if (workspaceId != null && Registry.is("ide.project.loading.show.last.state")) {
+      frame.takeASelfie(workspaceId);
+    }
+  }
+
   static final class MyAppLifecycleListener implements AppLifecycleListener {
     @Override
     public void projectOpenFailed() {
       getInstanceEx().updateLastProjectPath();
+    }
+
+    @Override
+    public void appClosing() {
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        return;
+      }
+
+      WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
+      RecentProjectsManagerBase manager = getInstanceEx();
+      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+        manager.updateProjectInfo(project, windowManager);
+      }
     }
 
     @Override
