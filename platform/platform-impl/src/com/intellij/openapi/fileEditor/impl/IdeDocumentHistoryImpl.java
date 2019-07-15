@@ -94,7 +94,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   private final Set<VirtualFile> myChangedFilesInCurrentCommand = new THashSet<>();
   private boolean myCurrentCommandHasMoves;
 
-  private PersistentHashMap<String, Long> myRecentFilesTimestampsMap;
+  private final PersistentHashMap<String, Long> myRecentFilesTimestampsMap;
 
   private RecentlyChangedFilesState myRecentlyChangedFiles = new RecentlyChangedFilesState();
 
@@ -158,41 +158,41 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
         }
       }
     };
-    //busConnection.subscribe(EditorEventListener.TOPIC, listener);
     EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
     multicaster.addDocumentListener(listener, this);
     multicaster.addCaretListener(listener, this);
 
-    initRecentFilesTimestampMap(project);
+    myRecentFilesTimestampsMap = initRecentFilesTimestampMap(project);
   }
 
-  public void initRecentFilesTimestampMap(@NotNull Project project) {
+  @NotNull
+  private PersistentHashMap<String, Long> initRecentFilesTimestampMap(@NotNull Project project) {
     File file = ProjectUtil.getProjectCachePath(project, "recentFilesTimeStamps.dat").toFile();
+    PersistentHashMap<String, Long> map;
     try {
-      myRecentFilesTimestampsMap = new PersistentHashMap<>(file, EnumeratorStringDescriptor.INSTANCE, EnumeratorLongDescriptor.INSTANCE);
+      map = new PersistentHashMap<>(file, EnumeratorStringDescriptor.INSTANCE, EnumeratorLongDescriptor.INSTANCE);
     }
     catch (IOException e) {
-      LOG.info("Cannot create persistent hash map for storing viewed files timestamps, let's try to clear cash", e);
+      LOG.info("Cannot create PersistentHashMap in "+file, e);
       PersistentHashMap.deleteFilesStartingWith(file);
       try {
-        myRecentFilesTimestampsMap = new PersistentHashMap<>(file, EnumeratorStringDescriptor.INSTANCE, EnumeratorLongDescriptor.INSTANCE);
+        map = new PersistentHashMap<>(file, EnumeratorStringDescriptor.INSTANCE, EnumeratorLongDescriptor.INSTANCE);
       }
       catch (IOException e1) {
-        LOG.error("Cannot create persistent hash map for storing viewed files timestamps even after deleting old files", e1);
+        LOG.error("Cannot create PersistentHashMap in " + file + " even after deleting old files", e1);
+        throw new RuntimeException(e);
       }
     }
-
+    PersistentHashMap<String, Long> finalMap = map;
     Disposer.register(this, () -> {
       try {
-        if (myRecentFilesTimestampsMap != null) {
-          myRecentFilesTimestampsMap.close();
-          myRecentFilesTimestampsMap = null;
-        }
+        finalMap.close();
       }
       catch (IOException e) {
         LOG.info("Cannot close persistent viewed files timestamps hash map", e);
       }
     });
+    return map;
   }
 
   @TestOnly
@@ -377,7 +377,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     return myRecentFilesTimestampsMap;
   }
 
-  public boolean isRecentlyChanged(@NotNull VirtualFile file) {
+  boolean isRecentlyChanged(@NotNull VirtualFile file) {
     return myRecentlyChangedFiles.CHANGED_PATHS.contains(file.getPath());
   }
 
