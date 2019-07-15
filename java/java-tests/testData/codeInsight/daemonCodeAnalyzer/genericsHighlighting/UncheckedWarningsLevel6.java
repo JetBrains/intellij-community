@@ -110,7 +110,7 @@ class Example {
     }
 
     public static void main(String[] args) {
-      List<Boolean> list = <warning descr="Unchecked assignment: 'java.util.ArrayList' to 'java.util.List<java.lang.Boolean>'">new ArrayList()</warning>;
+      List<Boolean> list = new <warning descr="Unchecked assignment: 'java.util.ArrayList' to 'java.util.List<java.lang.Boolean>'">ArrayList</warning>();
       System.out.println(list);
       assertThat(new ArrayList<Boolean>(), hasSize(0));
     }

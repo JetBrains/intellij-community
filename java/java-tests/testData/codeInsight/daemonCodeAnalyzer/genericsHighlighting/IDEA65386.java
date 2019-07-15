@@ -3,7 +3,7 @@ import java.util.List;
 class Test{
   static class Model<K>{
     Model( Model<? super K> model ){
-      this( <warning descr="Unchecked assignment: 'java.util.List' to 'java.util.List<Test.Model<K>>'">list( <warning descr="Unchecked assignment: 'java.util.ArrayList' to 'java.util.List<Test.Model<? super java.lang.Object>>'">(ArrayList)model.get()</warning> )</warning> );
+      this( <warning descr="Unchecked assignment: 'java.util.List' to 'java.util.List<Test.Model<K>>'">list</warning>( <warning descr="Unchecked assignment: 'java.util.ArrayList' to 'java.util.List<Test.Model<? super java.lang.Object>>'">(ArrayList)model.get()</warning> ) );
     }
     Model( List<Model<K>> list ){
       System.out.println(list);
@@ -17,7 +17,7 @@ class Test{
     }
   }
   public static void main(String[] args) {
-    Model model = <warning descr="Unchecked call to 'Model(List<Model<K>>)' as a member of raw type 'Test.Model'">new Model(new ArrayList())</warning>;
-    System.out.println(<warning descr="Unchecked call to 'Model(Model<? super K>)' as a member of raw type 'Test.Model'">new Model(model)</warning>);
+    Model model = new <warning descr="Unchecked call to 'Model(List<Model<K>>)' as a member of raw type 'Test.Model'">Model</warning>(new ArrayList());
+    System.out.println(new <warning descr="Unchecked call to 'Model(Model<? super K>)' as a member of raw type 'Test.Model'">Model</warning>(model));
   }
 }
