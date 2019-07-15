@@ -140,7 +140,6 @@ public interface IdeaPlugin extends DomElement {
 
   @NotNull
   @SubTagList("applicationListeners")
-  @Stubbed
   List<Listeners> getApplicationListeners();
 
   /**

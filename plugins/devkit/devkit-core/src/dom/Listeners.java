@@ -10,7 +10,6 @@ import java.util.List;
 public interface Listeners extends DomElement {
   @NotNull
   @SubTagList("listener")
-  @Stubbed
   List<Listener> getListeners();
 
   interface Listener extends DomElement {
