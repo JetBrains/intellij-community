@@ -1,4 +1,3 @@
-deprecated: addFacesSupport.png; to be removed in IDEA 2020
 deprecated: allLeft.png; to be removed in IDEA 2020
 deprecated: allRight.png; to be removed in IDEA 2020
 deprecated: browser-externalJavaDoc.png -> /actions/previousOccurence.svg; to be removed in IDEA 2020 - use AllIcons.Actions.PreviousOccurence
@@ -26,7 +25,6 @@ deprecated: left.png -> /general/arrowLeft.png; to be removed in IDEA 2020 - use
 deprecated: menu-find.png -> /actions/find.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Find
 deprecated: menu-help.png -> /actions/help.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Help
 deprecated: menu-replace.png -> /actions/replace.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Replace
-deprecated: minimize.png -> /general/hideToolWindow.svg; to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow
 deprecated: module.png -> /nodes/Module.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Module
 deprecated: move-to-button-top.png -> /actions/move-to-button.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Move_to_button
 deprecated: moveToAnotherChangelist.png -> /actions/MoveTo2.svg; to be removed in IDEA 2020 - use AllIcons.Actions.MoveTo2

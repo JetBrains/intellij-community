@@ -1,6 +1,5 @@
 deprecated: addFavoritesList.svg -> /general/add.svg; to be removed in IDEA 2020 - use AllIcons.General.Add
 deprecated: arrowDown_white.png -> /general/arrowDown.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowDown
-deprecated: autohideOff.png -> /general/pin_tab.svg; to be removed in IDEA 2020 - use AllIcons.General.Pin_tab
 deprecated: autohideOffInactive.png -> /general/pin_tab.svg; to be removed in IDEA 2020 - use AllIcons.General.Pin_tab
 deprecated: autohideOffPressed.png -> /general/pin_tab.svg; to be removed in IDEA 2020 - use AllIcons.General.Pin_tab
 deprecated: bullet.png; to be removed in IDEA 2020

@@ -170,12 +170,6 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon AddFacesSupport = load("/actions/addFacesSupport.png");
-
-    /** @deprecated to be removed in IDEA 2020 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon AllLeft = load("/actions/allLeft.png");
 
     /** @deprecated to be removed in IDEA 2020 */
@@ -351,12 +345,6 @@ public class AllIcons {
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon Menu_replace = AllIcons.Actions.Replace;
-
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Minimize = AllIcons.General.HideToolWindow;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Module */
     @SuppressWarnings("unused")
@@ -1026,12 +1014,6 @@ public class AllIcons {
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon ArrowDown_white = AllIcons.General.ArrowDown;
-
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Pin_tab */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon AutohideOff = AllIcons.General.Pin_tab;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Pin_tab */
     @SuppressWarnings("unused")
@@ -2358,12 +2340,6 @@ public class AllIcons {
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon DataView = load("/nodes/dataView.svg");
 
-    /** @deprecated to be removed in IDEA 2020 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon DisabledPointcut = load("/nodes/disabledPointcut.svg");
-
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowRight */
     @SuppressWarnings("unused")
     @Deprecated
@@ -2399,18 +2375,6 @@ public class AllIcons {
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon PinToolWindow = AllIcons.Nodes.TabPin;
-
-    /** @deprecated to be removed in IDEA 2020 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon PluginUpdate = load("/nodes/pluginUpdate.svg");
-
-    /** @deprecated to be removed in IDEA 2020 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Pointcut = load("/nodes/pointcut.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Folder */
     @SuppressWarnings("unused")
@@ -2485,12 +2449,6 @@ public class AllIcons {
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon ShowEditorHighlighting = AllIcons.Actions.Edit;
-
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.GroupByModule */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon ShowModules = AllIcons.Actions.GroupByModule;
 
   }
 
