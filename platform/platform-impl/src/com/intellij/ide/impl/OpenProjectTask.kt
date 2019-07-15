@@ -13,7 +13,7 @@ data class OpenProjectTask @JvmOverloads constructor(val forceOpenInNewFrame: Bo
    * Used only by [ProjectUtil.openOrImport].
    */
   var checkDirectoryForFileBasedProjects: Boolean = true
-  var isTempProject: Boolean = true
+  var isTempProject = false
   var useDefaultProjectAsTemplate: Boolean = true
 
   var callback: ProjectOpenedCallback? = null

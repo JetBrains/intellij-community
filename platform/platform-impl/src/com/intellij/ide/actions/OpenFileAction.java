@@ -34,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.Collections;
-import java.util.List;
 
 public class OpenFileAction extends AnAction implements DumbAware {
   @Override
@@ -58,7 +57,9 @@ public class OpenFileAction extends AnAction implements DumbAware {
           return;
         }
       }
-      doOpenFile(project, files);
+      for (VirtualFile file : files) {
+        doOpenFile(project, file);
+      }
     });
   }
 
@@ -79,53 +80,51 @@ public class OpenFileAction extends AnAction implements DumbAware {
     }
   }
 
-  private static void doOpenFile(@Nullable Project project, @NotNull List<? extends VirtualFile> result) {
-    for (VirtualFile file : result) {
-      if (file.isDirectory()) {
-        Project openedProject;
-        if (ProjectAttachProcessor.canAttachToProject()) {
-          openedProject = PlatformProjectOpenProcessor.doOpenProject(Paths.get(file.getPath()), new OpenProjectTask(false, project), -1);
-        }
-        else {
-          openedProject = ProjectUtil.openOrImport(file.getPath(), project, false);
-        }
-        FileChooserUtil.setLastOpenedFile(openedProject, file);
-        return;
-      }
-
-      // try to open as a project - unless the file is an .ipr of the current one
-      if ((project == null || !file.equals(project.getProjectFile())) && OpenProjectFileChooserDescriptor.isProjectFile(file)) {
-        int answer = file.getFileType() instanceof ProjectFileType
-                     ? Messages.YES
-                     : Messages.showYesNoCancelDialog(project,
-                                                IdeBundle.message("message.open.file.is.project", file.getName()),
-                                                IdeBundle.message("title.open.project"),
-                                                IdeBundle.message("message.open.file.is.project.open.as.project"),
-                                                IdeBundle.message("message.open.file.is.project.open.as.file"),
-                                                IdeBundle.message("button.cancel"),
-                                                Messages.getQuestionIcon());
-        if (answer == Messages.CANCEL)  return;
-
-        if (answer == Messages.YES) {
-          Project openedProject = ProjectUtil.openOrImport(file.getPath(), project, false);
-          if (openedProject != null) {
-            FileChooserUtil.setLastOpenedFile(openedProject, file);
-          }
-          return;
-        }
-      }
-
-      FileType type = FileTypeChooser.getKnownFileTypeOrAssociate(file, project);
-      if (type == null) return;
-
-      if (project != null) {
-        openFile(file, project);
+  private static void doOpenFile(@Nullable Project project, @NotNull VirtualFile file) {
+    if (file.isDirectory()) {
+      Project openedProject;
+      if (ProjectAttachProcessor.canAttachToProject()) {
+        openedProject = PlatformProjectOpenProcessor.doOpenProject(Paths.get(file.getPath()), new OpenProjectTask(false, project), -1);
       }
       else {
-        OpenProjectTask options = new OpenProjectTask();
-        options.setTempProject(true);
-        PlatformProjectOpenProcessor.doOpenProject(Paths.get(file.getPath()), options, -1);
+        openedProject = ProjectUtil.openOrImport(file.getPath(), project, false);
       }
+      FileChooserUtil.setLastOpenedFile(openedProject, file);
+      return;
+    }
+
+    // try to open as a project - unless the file is an .ipr of the current one
+    if ((project == null || !file.equals(project.getProjectFile())) && OpenProjectFileChooserDescriptor.isProjectFile(file)) {
+      int answer = file.getFileType() instanceof ProjectFileType
+                   ? Messages.YES
+                   : Messages.showYesNoCancelDialog(project,
+                                                    IdeBundle.message("message.open.file.is.project", file.getName()),
+                                                    IdeBundle.message("title.open.project"),
+                                                    IdeBundle.message("message.open.file.is.project.open.as.project"),
+                                                    IdeBundle.message("message.open.file.is.project.open.as.file"),
+                                                    IdeBundle.message("button.cancel"),
+                                                    Messages.getQuestionIcon());
+      if (answer == Messages.CANCEL) return;
+
+      if (answer == Messages.YES) {
+        Project openedProject = ProjectUtil.openOrImport(file.getPath(), project, false);
+        if (openedProject != null) {
+          FileChooserUtil.setLastOpenedFile(openedProject, file);
+        }
+        return;
+      }
+    }
+
+    FileType type = FileTypeChooser.getKnownFileTypeOrAssociate(file, project);
+    if (type == null) return;
+
+    if (project != null) {
+      openFile(file, project);
+    }
+    else {
+      OpenProjectTask options = new OpenProjectTask();
+      options.setTempProject(true);
+      PlatformProjectOpenProcessor.doOpenProject(Paths.get(file.getPath()), options, -1);
     }
   }
 

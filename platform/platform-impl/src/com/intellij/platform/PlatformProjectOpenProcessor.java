@@ -98,9 +98,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
   @Nullable
   public Project openProjectAndFile(@NotNull VirtualFile file, int line, boolean tempProject) {
     OpenProjectTask options = new OpenProjectTask(tempProject);
-    if (tempProject) {
-      options.setTempProject(true);
-    }
+    options.setTempProject(tempProject);
     return doOpenProject(Paths.get(file.getPath()), options, line);
   }
 
