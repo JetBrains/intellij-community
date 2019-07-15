@@ -10,10 +10,6 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.tools.ToolManager</implementation-class>
-    </component>
-
-    <component>
       <interface-class>com.intellij.psi.stubs.SerializationManager</interface-class>
       <implementation-class>com.intellij.psi.stubs.SerializationManagerImpl</implementation-class>
     </component>
