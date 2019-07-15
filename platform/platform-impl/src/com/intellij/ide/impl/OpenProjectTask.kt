@@ -8,12 +8,13 @@ import com.intellij.projectImport.ProjectOpenedCallback
 data class OpenProjectTask @JvmOverloads constructor(val forceOpenInNewFrame: Boolean = false,
                                                      val projectToClose: Project? = null,
                                                      val frame: FrameInfo? = null,
-                                                     val projectWorkspaceId: String? = null) {
+                                                     val projectWorkspaceId: String? = null,
+                                                     val isNewProject: Boolean = false) {
   /**
    * Used only by [ProjectUtil.openOrImport].
    */
   var checkDirectoryForFileBasedProjects: Boolean = true
-  var isTempProject = false
+
   var useDefaultProjectAsTemplate: Boolean = true
 
   var callback: ProjectOpenedCallback? = null
@@ -21,5 +22,6 @@ data class OpenProjectTask @JvmOverloads constructor(val forceOpenInNewFrame: Bo
   var showWelcomeScreenIfNoProjectOpened = true
   var sendFrameBack = false
 
-  var isNewProject = false
+  // for java clients only
+  fun withNewProject(value: Boolean) = copy(isNewProject = value)
 }

@@ -96,10 +96,16 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
 
   @Override
   @Nullable
-  public Project openProjectAndFile(@NotNull VirtualFile file, int line, boolean tempProject) {
-    OpenProjectTask options = new OpenProjectTask(tempProject);
-    options.setTempProject(tempProject);
-    return doOpenProject(Paths.get(file.getPath()), options, line);
+  public Project openProjectAndFile(@NotNull VirtualFile virtualFile, int line, boolean tempProject) {
+    // force open in a new frame if temp project
+    OpenProjectTask options = new OpenProjectTask(/* forceOpenInNewFrame = */ tempProject);
+    Path file = Paths.get(virtualFile.getPath());
+    if (tempProject) {
+      return createTempProjectAndOpenFile(file, options, -1);
+    }
+    else {
+      return doOpenProject(file, options, line);
+    }
   }
 
   /** @deprecated use {@link #doOpenProject(VirtualFile, Project, int, ProjectOpenedCallback, EnumSet)} (to be removed in IDEA 2019) */
@@ -128,46 +134,50 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
                                       @NotNull EnumSet<Option> options) {
     OpenProjectTask openProjectOptions = new OpenProjectTask(options.contains(Option.FORCE_NEW_FRAME), projectToClose);
     openProjectOptions.setCallback(callback);
-    return doOpenProject(Paths.get(virtualFile.getPath()), openProjectOptions, line);
+    return createTempProjectAndOpenFile(Paths.get(virtualFile.getPath()), openProjectOptions, line);
   }
 
   @Nullable
+  @ApiStatus.Internal
+  public static Project createTempProjectAndOpenFile(@NotNull Path file, @NotNull OpenProjectTask options, int line) {
+    String dummyProjectName = file.getFileName().toString();
+    Path baseDir;
+    try {
+      baseDir = FileUtil.createTempDirectory(dummyProjectName, null, true).toPath();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    Project project = openExistingProject(file, baseDir, options.withNewProject(true), dummyProjectName);
+    if (project != null) {
+      openFileFromCommandLine(project, file, line);
+    }
+    return project;
+  }
+
+  @Nullable
+  @ApiStatus.Internal
   public static Project doOpenProject(@NotNull Path file, @NotNull OpenProjectTask options, int line) {
-    String dummyProjectName = null;
     Path baseDir = file;
     if (!Files.isDirectory(baseDir)) {
-      if (options.isTempProject()) {
-        baseDir = null;
-      }
-      else {
-        baseDir = file.getParent();
-        while (baseDir != null && !Files.exists(baseDir)) {
-          baseDir = baseDir.getParent();
-        }
+      baseDir = file.getParent();
+      while (baseDir != null && !Files.exists(baseDir)) {
+        baseDir = baseDir.getParent();
       }
 
       // no reasonable directory -> create new temp one or use parent
       if (baseDir == null) {
-        if (options.isTempProject() || Registry.is("ide.open.file.in.temp.project.dir")) {
-          try {
-            dummyProjectName = file.getFileName().toString();
-            baseDir = FileUtil.createTempDirectory(dummyProjectName, null, true).toPath();
-          }
-          catch (IOException ex) {
-            LOG.error(ex);
-          }
+        if (Registry.is("ide.open.file.in.temp.project.dir")) {
+          return createTempProjectAndOpenFile(file, options, line);
         }
 
-        if (baseDir == null) {
-          baseDir = file.getParent();
-        }
-
-        options = options.copy(options.getForceOpenInNewFrame(), options.getProjectToClose(), options.getFrame(), options.getProjectWorkspaceId());
-        options.setNewProject(!Files.isDirectory(baseDir.resolve(Project.DIRECTORY_STORE_FOLDER)));
+        baseDir = file.getParent();
+        options = options.withNewProject(!Files.isDirectory(baseDir.resolve(Project.DIRECTORY_STORE_FOLDER)));
       }
     }
 
-    Project project = openExistingProject(file, baseDir, options, dummyProjectName);
+    Project project = openExistingProject(file, baseDir, options, null);
     if (project != null && file != baseDir && !Files.isDirectory(file)) {
       openFileFromCommandLine(project, file, line);
     }
