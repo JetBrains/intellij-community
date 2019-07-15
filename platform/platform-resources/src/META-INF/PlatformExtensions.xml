@@ -27,6 +27,9 @@
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl" key="jar" physical="true"/>
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.ex.temp.TempFileSystem" key="temp" physical="true"/>
 
+    <applicationService serviceInterface="com.intellij.execution.ExecutorRegistry"
+                        serviceImplementation="com.intellij.execution.ExecutorRegistryImpl"/>
+
     <applicationService serviceInterface="com.intellij.openapi.project.impl.ProjectStoreFactory"
                         serviceImplementation="com.intellij.configurationStore.PlatformProjectStoreFactory"/>
     <projectService serviceImplementation="com.intellij.configurationStore.ProjectIdManager"/>

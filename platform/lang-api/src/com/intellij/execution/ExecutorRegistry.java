@@ -3,6 +3,7 @@ package com.intellij.execution;
 
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class ExecutorRegistry {
   public static ExecutorRegistry getInstance() {
-    return ApplicationManager.getApplication().getComponent(ExecutorRegistry.class);
+    return ServiceManager.getService(ExecutorRegistry.class);
   }
 
   @NotNull
@@ -20,7 +21,7 @@ public abstract class ExecutorRegistry {
   public abstract Executor getExecutorById(final String executorId);
 
   /**
-   * Consider to use {@link #isStarting(com.intellij.execution.runners.ExecutionEnvironment)}
+   * Consider to use {@link #isStarting(ExecutionEnvironment)}
    */
   public abstract boolean isStarting(Project project, String executorId, String runnerId);
 
