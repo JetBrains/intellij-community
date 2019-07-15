@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.impl.FrameInfo
 import com.intellij.projectImport.ProjectOpenedCallback
 
-// we cannot rewrite ProjectUtil in Kotlin (in this case such class will be not required) because not all like Kotlin
 data class OpenProjectTask @JvmOverloads constructor(val forceOpenInNewFrame: Boolean = false,
                                                      val projectToClose: Project? = null,
                                                      val frame: FrameInfo? = null,
