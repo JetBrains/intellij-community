@@ -5,6 +5,7 @@ import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.FrameInfo
 import com.intellij.util.xmlb.annotations.Attribute
+import com.intellij.util.xmlb.annotations.MapAnnotation
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Property
 import java.util.concurrent.atomic.AtomicLong
@@ -43,7 +44,9 @@ class RecentProjectManagerState : BaseState() {
   @get:OptionTag
   val groups by list<ProjectGroup>()
   var pid by string()
+
   @get:OptionTag
+  @get:MapAnnotation(sortBeforeSave = false)
   val additionalInfo by linkedMap<String, RecentProjectMetaInfo>()
 
   var lastProjectLocation by string()
