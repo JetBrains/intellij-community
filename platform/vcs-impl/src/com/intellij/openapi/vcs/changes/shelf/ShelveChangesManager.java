@@ -129,7 +129,9 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
   @NotNull
   public static String getDefaultShelfPath(@NotNull Project project) {
     IProjectStore store = ProjectKt.getStateStore(project);
-    return store.getDirectoryStorePath(true) + "/" + (ProjectKt.isDirectoryBased(project) ? SHELVE_MANAGER_DIR_PATH : "." + SHELVE_MANAGER_DIR_PATH);
+    return store.getDirectoryStorePath(true) +
+           "/" +
+           (ProjectKt.isDirectoryBased(project) ? SHELVE_MANAGER_DIR_PATH : "." + SHELVE_MANAGER_DIR_PATH);
   }
 
   /**
@@ -176,7 +178,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
   }
 
   private void stopCleanScheduler() {
-    if(myCleaningFuture!=null){
+    if (myCleaningFuture != null) {
       myCleaningFuture.cancel(false);
       myCleaningFuture = null;
     }
@@ -323,7 +325,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
   private void migrateOldShelfInfo(@NotNull Element element, boolean recycled) throws InvalidDataException {
     for (Element changeSetElement : element.getChildren(recycled ? ELEMENT_RECYCLED_CHANGELIST : ELEMENT_CHANGELIST)) {
       ShelvedChangeList list = readOneShelvedChangeList(changeSetElement);
-      if(!list.isValid()) break;
+      if (!list.isValid()) break;
       File uniqueDir = generateUniqueSchemePatchDir(list.DESCRIPTION, false);
       list.setName(uniqueDir.getName());
       list.setRecycled(recycled);
@@ -429,7 +431,8 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     File patchFile = getPatchFileInConfigDir(schemePatchDir);
     ProgressManager.checkCanceled();
     final List<FilePatch> patches =
-      IdeaTextPatchBuilder.buildPatch(myProject, textChanges, myProject.getPresentableUrl(), false, honorExcludedFromCommit);
+      IdeaTextPatchBuilder
+        .buildPatch(myProject, textChanges, PathUtil.toSystemDependentName(myProject.getBasePath()), false, honorExcludedFromCommit);
     ProgressManager.checkCanceled();
 
     CommitContext commitContext = new CommitContext();
@@ -479,10 +482,12 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
 
   private boolean dvcsUsedInProject() {
     return Arrays.stream(ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss()).
-           anyMatch(vcs -> VcsType.distributed.equals(vcs.getType()));
+      anyMatch(vcs -> VcsType.distributed.equals(vcs.getType()));
   }
 
-  public ShelvedChangeList importFilePatches(final String fileName, final List<? extends FilePatch> patches, final List<PatchEP> patchTransitExtensions)
+  public ShelvedChangeList importFilePatches(final String fileName,
+                                             final List<? extends FilePatch> patches,
+                                             final List<PatchEP> patchTransitExtensions)
     throws IOException {
     try {
       File schemePatchDir = generateUniqueSchemePatchDir(fileName, true);
@@ -1248,7 +1253,8 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
   @NotNull
   static List<? extends FilePatch> loadPatchesWithoutContent(Project project,
                                                              final String patchPath,
-                                                             @Nullable CommitContext commitContext) throws IOException, PatchSyntaxException {
+                                                             @Nullable CommitContext commitContext)
+    throws IOException, PatchSyntaxException {
     return loadPatches(project, patchPath, commitContext, false);
   }
 
