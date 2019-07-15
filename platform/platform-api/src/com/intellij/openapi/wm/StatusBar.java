@@ -90,6 +90,7 @@ public interface StatusBar extends StatusBarInfo, Disposable {
    * @deprecated Use {@link StatusBarWidgetProvider}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   void addCustomIndicationComponent(@NotNull JComponent c);
 
   /**
@@ -127,7 +128,7 @@ public interface StatusBar extends StatusBarInfo, Disposable {
 
   void install(IdeFrame frame);
 
-  class Anchors {
+  final class Anchors {
     public static final String DEFAULT_ANCHOR = after(StandardWidgets.COLUMN_SELECTION_MODE_PANEL);
 
     public static String before(String widgetId) {
@@ -138,7 +139,7 @@ public interface StatusBar extends StatusBarInfo, Disposable {
     }
   }
 
-  class StandardWidgets {
+  final class StandardWidgets {
     public static final String ENCODING_PANEL = "Encoding";
     public static final String COLUMN_SELECTION_MODE_PANEL = "InsertOverwrite"; // Keep the old ID for backwards compatibility
     public static final String READONLY_ATTRIBUTE_PANEL = "ReadOnlyAttribute";
