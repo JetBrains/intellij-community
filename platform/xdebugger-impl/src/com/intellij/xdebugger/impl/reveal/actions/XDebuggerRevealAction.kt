@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.reveal.actions
 
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
@@ -11,6 +10,7 @@ import com.intellij.xdebugger.impl.reveal.XDebuggerRevealManager
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
+import icons.PlatformDebuggerImplIcons
 import java.awt.event.MouseEvent
 
 class XDebuggerRevealAction : XDebuggerTreeActionBase() {
@@ -60,7 +60,7 @@ class XDebuggerRevealAction : XDebuggerTreeActionBase() {
         }
         presentation.isVisible = true
         presentation.isEnabled = valueContainer.canBeRevealed()
-        presentation.icon = if (revealManager.isItemRevealed(node)) AllIcons.Debugger.Reveal.RevealOff else AllIcons.Debugger.Reveal.RevealOn
+        presentation.icon = if (revealManager.isItemRevealed(node)) PlatformDebuggerImplIcons.Reveal.RevealOff else PlatformDebuggerImplIcons.Reveal.RevealOn
         presentation.text = if (revealManager.isItemRevealed(node)) CONCEAL_NAME else REVEAL_NAME
 
     }

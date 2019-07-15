@@ -26,4 +26,10 @@ public final class PlatformDebuggerImplIcons {
     /** 16x16 */ public static final Icon Active = load("/icons/memoryView/active.svg");
 
   }
+
+  public final static class Reveal {
+    /** 16x16 */ public static final Icon RevealOff = load("/icons/reveal/revealOff.svg");
+    /** 16x16 */ public static final Icon RevealOn = load("/icons/reveal/revealOn.svg");
+
+  }
 }

@@ -561,12 +561,6 @@ public class AllIcons {
     /** 16x16 */ public static final Icon PromptInputHistory = load("/debugger/promptInputHistory.svg");
     /** 7x9 */ public static final Icon Question_badge = load("/debugger/question_badge.svg");
     /** 16x16 */ public static final Icon RestoreLayout = load("/debugger/restoreLayout.svg");
-
-    public final static class Reveal {
-      /** 16x16 */ public static final Icon RevealOff = load("/debugger/reveal/revealOff.svg");
-      /** 16x16 */ public static final Icon RevealOn = load("/debugger/reveal/revealOn.svg");
-
-    }
     /** 16x16 */ public static final Icon Selfreference = load("/debugger/selfreference.svg");
     /** 16x16 */ public static final Icon ShowCurrentFrame = load("/debugger/showCurrentFrame.svg");
     /** 16x16 */ public static final Icon SmartStepInto = load("/debugger/smartStepInto.svg");

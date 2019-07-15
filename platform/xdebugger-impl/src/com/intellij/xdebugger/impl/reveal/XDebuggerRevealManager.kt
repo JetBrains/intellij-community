@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.reveal
 
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -12,6 +11,7 @@ import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
+import icons.PlatformDebuggerImplIcons
 
 open class XDebuggerRevealManager {
 
@@ -60,7 +60,7 @@ open class XDebuggerRevealManager {
         myActiveNode = node
 
         myRevealIconAlarm.addRequest({
-            node.setPresentation(AllIcons.Debugger.Reveal.RevealOff, valuePresentation, hasChildren)
+            node.setPresentation(PlatformDebuggerImplIcons.Reveal.RevealOff, valuePresentation, hasChildren)
         }, DEFAULT_ICON_DELAY)
         myNodeHoverLifetime = changeIconLifetime
         Disposer.register(lifetimeHolder, changeIconLifetime)
