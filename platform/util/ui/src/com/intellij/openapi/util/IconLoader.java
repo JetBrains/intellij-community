@@ -160,9 +160,9 @@ public final class IconLoader {
   public static Icon getReflectiveIcon(@NotNull String path, ClassLoader classLoader) {
     try {
       @NonNls String packageName = path.startsWith("AllIcons.") ? "com.intellij.icons." : "icons.";
-      Class cur = Class.forName(packageName + path.substring(0, path.lastIndexOf('.')).replace('.', '$'), true, classLoader);
-      Field field = cur.getField(path.substring(path.lastIndexOf('.') + 1));
-
+      Class<?> aClass = Class.forName(packageName + path.substring(0, path.lastIndexOf('.')).replace('.', '$'), true, classLoader);
+      Field field = aClass.getField(path.substring(path.lastIndexOf('.') + 1));
+      field.setAccessible(true);
       return (Icon)field.get(null);
     }
     catch (Exception e) {
@@ -274,16 +274,17 @@ public final class IconLoader {
                                @Nullable Class clazz,
                                @NotNull ClassLoader classLoader,
                                HandleNotFound handleNotFound,
-                               boolean deferUrlResolve)
-  {
+                               boolean deferUrlResolve) {
     Pair<String, ClassLoader> patchedPath = ourTransform.get().patchPath(originalPath, classLoader);
     String path = patchedPath.first;
     if (patchedPath.second != null) {
       classLoader = patchedPath.second;
     }
+
     if (isReflectivePath(path)) {
       return getReflectiveIcon(path, classLoader);
     }
+
     Pair<String, Object> key = Pair.create(originalPath, classLoader);
     CachedImageIcon cachedIcon = ourIconsCache.get(key);
     if (cachedIcon == null) {
@@ -293,11 +294,12 @@ public final class IconLoader {
       }
       cachedIcon = ConcurrencyUtil.cacheOrGet(ourIconsCache, key, cachedIcon);
     }
-    ScaleContext ctx = ScaleContext.create();
-    if (!cachedIcon.getScaleContext().equals(ctx)) {
+
+    ScaleContext scaleContext = ScaleContext.create();
+    if (!cachedIcon.getScaleContext().equals(scaleContext)) {
       // honor scale context as the cache doesn't do that
       cachedIcon = cachedIcon.copy();
-      cachedIcon.updateScaleContext(ctx);
+      cachedIcon.updateScaleContext(scaleContext);
     }
     return cachedIcon;
   }
