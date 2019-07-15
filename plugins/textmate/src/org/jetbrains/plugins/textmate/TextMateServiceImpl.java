@@ -96,7 +96,7 @@ public class TextMateServiceImpl extends TextMateService {
       return;
     }
 
-    List<FileNameMatcher> matchers = new ArrayList<>();
+    Set<FileNameMatcher> matchers = new HashSet<>();
     if (loadBuiltin) {
       loadBuiltinBundles(settings);
     }
@@ -318,7 +318,7 @@ public class TextMateServiceImpl extends TextMateService {
     return null;
   }
 
-  private boolean registerBundle(@Nullable VirtualFile directory, @NotNull List<FileNameMatcher> matchers) {
+  private boolean registerBundle(@Nullable VirtualFile directory, @NotNull Collection<FileNameMatcher> matchers) {
     final Bundle bundle = createBundle(directory);
     if (bundle != null) {
       registerLanguageSupport(bundle, matchers);
@@ -380,8 +380,7 @@ public class TextMateServiceImpl extends TextMateService {
     }
   }
 
-  private void registerLanguageSupport(@NotNull Bundle bundle,
-                                       @NotNull List<FileNameMatcher> matchers) {
+  private void registerLanguageSupport(@NotNull Bundle bundle, @NotNull Collection<FileNameMatcher> matchers) {
     Set<String> newExtensions = new THashSet<>();
     for (File grammarFile : bundle.getGrammarFiles()) {
       try {
@@ -400,7 +399,7 @@ public class TextMateServiceImpl extends TextMateService {
     registerTextMateExtensions(newExtensions, matchers);
   }
 
-  private void updateAssociations(List<FileNameMatcher> matchers) {
+  private void updateAssociations(@NotNull Collection<FileNameMatcher> matchers) {
     TransactionGuard.getInstance().submitTransactionLater(ApplicationManager.getApplication(), () -> {
       Set<FileNameMatcher> associationsToDelete = new THashSet<>();
       final FileTypeManagerImpl fileTypeManager = (FileTypeManagerImpl)FileTypeManager.getInstance();
@@ -436,7 +435,7 @@ public class TextMateServiceImpl extends TextMateService {
     });
   }
 
-  private static void registerTextMateExtensions(@NotNull final Collection<String> extensions, List<FileNameMatcher> matchers) {
+  private static void registerTextMateExtensions(@NotNull final Collection<String> extensions, @NotNull Collection<FileNameMatcher> matchers) {
     FileTypeManagerImpl fileTypeManager = (FileTypeManagerImpl)FileTypeManager.getInstance();
     for (String extension : extensions) {
       FileType registeredType = fileTypeManager.getFileTypeByFileName(extension);
