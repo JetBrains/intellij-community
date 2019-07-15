@@ -90,14 +90,18 @@ public class PerformanceWatcher implements Disposable {
       }
     });
 
-    ApplicationManager.getApplication().executeOnPooledThread(() -> cleanOldFiles(myLogDir, 0));
+    Application application = ApplicationManager.getApplication();
 
-    for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
-      if ("Code Cache".equals(bean.getName())) {
-        watchCodeCache(bean);
-        break;
+    application.executeOnPooledThread(() -> cleanOldFiles(myLogDir, 0));
+
+    application.executeOnPooledThread(() -> {
+      for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
+        if ("Code Cache".equals(bean.getName())) {
+          watchCodeCache(bean);
+          break;
+        }
       }
-    }
+    });
 
     myThread =
       myExecutor.scheduleWithFixedDelay(this::samplePerformance, getSamplingInterval(), getSamplingInterval(), TimeUnit.MILLISECONDS);
@@ -139,7 +143,8 @@ public class PerformanceWatcher implements Disposable {
       File child = children[i];
       if (i < children.length - 100 || ageInDays(child) > 10) {
         FileUtil.delete(child);
-      } else if (level < 3) {
+      }
+      else if (level < 3) {
         cleanOldFiles(child, level + 1);
       }
     }
@@ -195,7 +200,7 @@ public class PerformanceWatcher implements Disposable {
     @SuppressWarnings("NonConstantStringShouldBeStringBuffer")
     String trace = headerMsg + thread + " (" + (thread.isAlive() ? "alive" : "dead") + ") " + thread.getState() + "\n--- its stacktrace:\n";
     for (final StackTraceElement stackTraceElement : stackTrace) {
-      trace += " at "+stackTraceElement +"\n";
+      trace += " at " + stackTraceElement + "\n";
     }
     trace += "---\n";
     return trace;
@@ -405,6 +410,7 @@ public class PerformanceWatcher implements Disposable {
 
     private Snapshot() {
     }
+
     public void logResponsivenessSinceCreation(@NotNull String activityName) {
       LOG.info(activityName + " took " + (System.currentTimeMillis() - myStartMillis) + "ms" +
                "; general responsiveness: " + myGeneralApdex.summarizePerformanceSince(myStartGeneralSnapshot) +
