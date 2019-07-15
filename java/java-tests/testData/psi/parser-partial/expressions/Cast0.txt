@@ -1,4 +1,4 @@
-PsiJavaFile:Cast.java
+PsiJavaFile:Cast0.java
   PsiTypeCastExpression:(Type)var
     PsiJavaToken:LPARENTH('(')
     PsiTypeElement:Type
