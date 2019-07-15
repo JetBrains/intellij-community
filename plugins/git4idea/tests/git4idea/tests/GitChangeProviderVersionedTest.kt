@@ -3,8 +3,7 @@ package git4idea.tests
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vcs.Executor.rm
-import com.intellij.openapi.vcs.Executor.touch
+import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.FileStatus.*
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -48,6 +47,47 @@ class GitChangeProviderVersionedTest : GitChangeProviderTest() {
     assertChanges {
       modified("a.txt")
     }
+  }
+
+  fun testStagedModification() {
+    edit(atxt, "new content")
+    repo.add(atxt.path)
+    assertProviderChanges(atxt, MODIFIED)
+
+    assertChanges {
+      modified("a.txt")
+    }
+  }
+
+  fun testStagedUnstagedModification() {
+    edit(atxt, "new content")
+    repo.add(atxt.path)
+    edit(atxt, "new contents and some extra")
+    assertProviderChanges(atxt, MODIFIED)
+
+    assertChanges {
+      modified("a.txt")
+    }
+  }
+
+  fun testRevertedStagedModification() {
+    val oldContent = VfsUtil.loadText(atxt)
+    edit(atxt, "new content")
+    repo.add(atxt.path)
+    edit(atxt, oldContent)
+    assertProviderChanges(atxt, null)
+
+    assertNoChanges()
+  }
+
+  fun testRevertedStagedAddition() {
+    val file = create(projectRoot, "new.txt")
+    repo.add(file.path)
+    cd(projectRoot)
+    rm("new.txt")
+    assertProviderChanges(atxt, null)
+
+    assertNoChanges()
   }
 
   fun testDeleteFile() {

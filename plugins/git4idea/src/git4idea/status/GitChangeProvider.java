@@ -33,7 +33,7 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
  */
 public class GitChangeProvider implements ChangeProvider {
 
-  private static final Logger LOG = Logger.getInstance("#GitStatus");
+  static final Logger LOG = Logger.getInstance("#GitStatus");
 
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;

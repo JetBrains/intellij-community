@@ -143,7 +143,7 @@ fun ChangeListManager.assertChanges(changes: ChangesBuilder.() -> Unit): List<Ch
     actualChanges.remove(found)
     allChanges.add(found!!)
   }
-  HeavyPlatformTestCase.assertTrue(actualChanges.isEmpty())
+  HeavyPlatformTestCase.assertEmpty(actualChanges)
   return allChanges
 }
 

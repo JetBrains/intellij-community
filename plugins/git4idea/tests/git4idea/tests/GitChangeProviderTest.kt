@@ -22,6 +22,7 @@ import git4idea.status.GitChangeProvider
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.addCommit
 import git4idea.test.createFileStructure
+import junit.framework.TestCase
 import org.junit.Assume
 import java.io.File
 
@@ -74,6 +75,7 @@ abstract class GitChangeProviderTest : GitSingleRepoTest() {
   }
 
   protected fun assertProviderChangesInPaths(paths: List<FilePath>, fileStatuses: List<FileStatus?>) {
+    TestCase.assertEquals(paths.size, fileStatuses.size)
     val result = getProviderChanges()
     for (i in paths.indices) {
       val fp = paths[i]
@@ -83,11 +85,11 @@ abstract class GitChangeProviderTest : GitSingleRepoTest() {
         continue
       }
       assertTrue("File [${tos(fp)}] didn't change. Changes: [${result.values.joinToString(",") { tos(it) }}]", result.containsKey(fp))
-      assertEquals("File statuses don't match for file [${tos(fp)}]", result[fp]!!.fileStatus, status)
+      assertEquals("File statuses don't match for file [${tos(fp)}]", status, result[fp]!!.fileStatus)
     }
   }
 
-  protected fun assertProviderChanges(virtualFile: VirtualFile, fileStatus: FileStatus) {
+  protected fun assertProviderChanges(virtualFile: VirtualFile, fileStatus: FileStatus?) {
     assertProviderChanges(listOf(virtualFile), listOf(fileStatus))
   }
 

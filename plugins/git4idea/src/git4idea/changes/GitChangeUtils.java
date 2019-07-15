@@ -87,6 +87,7 @@ public class GitChangeUtils {
                                    StringScanner s,
                                    Collection<? super Change> changes) throws VcsException {
     parseChanges(project, vcsRoot, s, (status, beforePath, afterPath) -> {
+      assert beforePath != null || afterPath != null;
       ContentRevision before = beforePath != null ? GitContentRevision.createRevision(beforePath, parentRevision, project) : null;
       ContentRevision after = afterPath != null ? GitContentRevision.createRevision(afterPath, thisRevision, project) : null;
       changes.add(new Change(before, after, status));
@@ -370,7 +371,7 @@ public class GitChangeUtils {
 
   @NotNull
   public static Collection<GitDiffChange> getStagedChanges(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
-    return getLocalChanges(project, root, "--cached", "-M");
+    return getLocalChanges(project, root, null, "--cached", "-M");
   }
 
   @NotNull
@@ -378,21 +379,40 @@ public class GitChangeUtils {
                                                              @NotNull VirtualFile root,
                                                              boolean detectMoves) throws VcsException {
     if (detectMoves) {
-      return getLocalChanges(project, root, "-M");
+      return getLocalChanges(project, root, null, "-M");
     }
     else {
-      return getLocalChanges(project, root, "--no-renames");
+      return getLocalChanges(project, root, null, "--no-renames");
+    }
+  }
+
+  @NotNull
+  public static Collection<GitDiffChange> getWorkingTreeChanges(@NotNull Project project,
+                                                                @NotNull VirtualFile root,
+                                                                @Nullable Collection<FilePath> paths,
+                                                                boolean detectMoves) throws VcsException {
+    if (detectMoves) {
+      return getLocalChanges(project, root, paths, "-M", "HEAD");
+    }
+    else {
+      return getLocalChanges(project, root, paths, "--no-renames", "HEAD");
     }
   }
 
   @NotNull
   private static Collection<GitDiffChange> getLocalChanges(@NotNull Project project,
                                                            @NotNull VirtualFile root,
+                                                           @Nullable Collection<FilePath> paths,
                                                            String... parameters) throws VcsException {
-    GitLineHandler diff = new GitLineHandler(project, root, GitCommand.DIFF);
-    diff.addParameters("--name-status");
-    diff.addParameters(parameters);
-    String output = Git.getInstance().runCommand(diff).getOutputOrThrow();
+    if (paths != null && paths.isEmpty()) return Collections.emptyList();
+
+    GitLineHandler handler = GitUtil.createHandlerWithPaths(paths, () -> {
+      GitLineHandler diff = new GitLineHandler(project, root, GitCommand.DIFF);
+      diff.addParameters("--name-status");
+      diff.addParameters(parameters);
+      return diff;
+    });
+    String output = Git.getInstance().runCommand(handler).getOutputOrThrow();
 
     StringScanner sc = new StringScanner(output);
     Collection<GitDiffChange> changes = new ArrayList<>();
