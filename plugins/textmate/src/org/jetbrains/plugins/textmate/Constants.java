@@ -2,6 +2,8 @@ package org.jetbrains.plugins.textmate;
 
 import com.google.common.collect.ImmutableSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.language.preferences.TextMateBracePair;
 
 import java.util.Collection;
@@ -10,9 +12,7 @@ public interface Constants {
   // KEYS
   @NonNls String NAME_KEY = "name";
   @NonNls String VALUE_KEY = "value";
-  @NonNls String CONTENT_KEY = "content";
   @NonNls String TAB_TRIGGER_KEY = "tabTrigger";
-  @NonNls String CONTENT_NAME_KEY = "contentName";
   @NonNls String FILE_TYPES_KEY = "fileTypes";
   @NonNls String INCLUDE_KEY = "include";
   @NonNls String REPOSITORY_KEY = "repository";
@@ -20,21 +20,42 @@ public interface Constants {
   @NonNls String INJECTIONS_KEY = "injections";
   @NonNls String SCOPE_KEY = "scope";
   @NonNls String UUID_KEY = "uuid";
-  @NonNls String SCOPE_NAME_KEY = "scopeName";
   @NonNls String BEGIN_KEY = "begin";
   @NonNls String CAPTURES_KEY = "captures";
   @NonNls String BEGIN_CAPTURES_KEY = "beginCaptures";
   @NonNls String END_CAPTURES_KEY = "endCaptures";
   @NonNls String MATCH_KEY = "match";
-  @NonNls String END_KEY = "end";
-  @NonNls String WHILE_KEY = "while";
   @NonNls String FOREGROUND_KEY = "foreground";
   @NonNls String FONT_STYLE_KEY = "fontStyle";
   @NonNls String BACKGROUND_KEY = "background";
   @NonNls String SHELL_VARIABLES_KEY = "shellVariables";
   @NonNls String DESCRIPTION_KEY = "description";
 
-  String[] STRING_KEY_NAMES = new String[]{CONTENT_KEY, NAME_KEY, CONTENT_NAME_KEY, WHILE_KEY, END_KEY, SCOPE_NAME_KEY};
+  enum StringKey {
+    CONTENT("content"),
+    NAME("name"),
+    CONTENT_NAME("contentName"),
+    WHILE("while"),
+    END("end"),
+    SCOPE_NAME("scopeName");
+
+    public final String value;
+
+    StringKey(String name) {
+      value = name;
+    }
+
+    @Nullable
+    public static StringKey fromName(@NotNull String name) {
+      for (StringKey v : values()) {
+        if (v.value.equals(name)) {
+          return v;
+        }
+      }
+      return null;
+    }
+  }
+
   String[] REGEX_KEY_NAMES = new String[]{/*"firstLineMatch", "foldingStartMarker",*/ MATCH_KEY, BEGIN_KEY};
   String[] CAPTURES_KEY_NAMES = new String[]{CAPTURES_KEY, BEGIN_CAPTURES_KEY, END_CAPTURES_KEY};
 

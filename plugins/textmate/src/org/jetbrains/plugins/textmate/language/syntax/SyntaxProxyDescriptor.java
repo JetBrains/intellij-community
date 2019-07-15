@@ -3,6 +3,7 @@ package org.jetbrains.plugins.textmate.language.syntax;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.textmate.Constants;
 import org.jetbrains.plugins.textmate.regex.RegexFacade;
 
 import java.util.HashSet;
@@ -26,7 +27,7 @@ abstract class SyntaxProxyDescriptor implements SyntaxNodeDescriptor {
 
   @Nullable
   @Override
-  public String getStringAttribute(String key) {
+  public String getStringAttribute(@NotNull Constants.StringKey key) {
     return getTargetNode().getStringAttribute(key);
   }
 

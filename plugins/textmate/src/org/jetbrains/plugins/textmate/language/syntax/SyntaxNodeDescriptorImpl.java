@@ -13,7 +13,7 @@ class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
   private static final Logger LOG = Logger.getInstance(SyntaxNodeDescriptor.class);
 
   private TIntObjectHashMap<SyntaxNodeDescriptor> myRepository = new TIntObjectHashMap<>();
-  private Map<String, String> myStringAttributes = new HashMap<>();
+  private Map<Constants.StringKey, String> myStringAttributes = new EnumMap<>(Constants.StringKey.class);
   private Map<String, RegexFacade> myRegexAttributes = new HashMap<>();
   private Map<String, TIntObjectHashMap<String>> myCaptures = new HashMap<>();
 
@@ -28,13 +28,13 @@ class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
   }
 
   @Override
-  public void setStringAttribute(String key, String value) {
+  public void setStringAttribute(@NotNull Constants.StringKey key, String value) {
     myStringAttributes.put(key, value);
   }
 
   @Nullable
   @Override
-  public String getStringAttribute(String key) {
+  public String getStringAttribute(@NotNull Constants.StringKey key) {
     return myStringAttributes.get(key);
   }
 
@@ -112,15 +112,18 @@ class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
     return list;
   }
 
-  private static <T> Map<String, T> compactMap(Map<String, T> map) {
+  private static <K, V> Map<K, V> compactMap(Map<K, V> map) {
     if (map.isEmpty()) {
       return Collections.emptyMap();
     }
     if (map.size() == 1) {
-      Map.Entry<String, T> singleEntry = map.entrySet().iterator().next();
+      Map.Entry<K, V> singleEntry = map.entrySet().iterator().next();
       return Collections.singletonMap(singleEntry.getKey(), singleEntry.getValue());
     }
-    HashMap<String, T> result = new HashMap<>(map.size(), 1.0f);
+    if (!(map instanceof HashMap)) {
+      return map;
+    }
+    HashMap<K, V> result = new HashMap<>(map.size(), 1.0f);
     result.putAll(map);
     return result;
   }
@@ -164,7 +167,7 @@ class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
 
   @Override
   public String toString() {
-    String name = myStringAttributes.get(Constants.NAME_KEY);
+    String name = myStringAttributes.get(Constants.StringKey.NAME);
     return name != null ? "Syntax rule: " + name : super.toString();
   }
 }

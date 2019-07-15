@@ -169,8 +169,8 @@ public class TextMateHighlightingLexer extends LexerBase implements DataStorageF
     final HashMultiset<List<TextMateLexerState>> localStates = HashMultiset.create();
     while (true) {
       final TextMateLexerState lexerState = myStates.peek();
-      if (lexerState.syntaxRule.getStringAttribute(Constants.WHILE_KEY) != null
-          && !SyntaxMatchUtils.matchStringRegex(Constants.WHILE_KEY, string, lineByteOffset, lexerState).matched()) {
+      if (lexerState.syntaxRule.getStringAttribute(Constants.StringKey.WHILE) != null
+          && !SyntaxMatchUtils.matchStringRegex(Constants.StringKey.WHILE, string, lineByteOffset, lexerState).matched()) {
         closeScopeSelector(linePosition + startLineOffset);
         closeScopeSelector(linePosition + startLineOffset);
         myStates.pop();
@@ -191,7 +191,7 @@ public class TextMateHighlightingLexer extends LexerBase implements DataStorageF
       MatchData currentMatch = currentState.matchData;
 
       int endPosition;
-      MatchData endMatch = SyntaxMatchUtils.matchStringRegex(Constants.END_KEY, string, lineByteOffset, lastState);
+      MatchData endMatch = SyntaxMatchUtils.matchStringRegex(Constants.StringKey.END, string, lineByteOffset, lastState);
       if (endMatch.matched() && (!currentMatch.matched() ||
                                  currentMatch.byteOffset().getStartOffset() >= endMatch.byteOffset().getStartOffset() ||
                                  lastState.equals(currentState))) {
@@ -214,14 +214,14 @@ public class TextMateHighlightingLexer extends LexerBase implements DataStorageF
         int startPosition = currentMatch.charOffset(string.bytes).getStartOffset();
         endPosition = currentMatch.charOffset(string.bytes).getEndOffset();
         if (currentRule.getRegexAttribute(Constants.BEGIN_KEY) != null) {
-          openScopeSelector(currentRule.getStringAttribute(Constants.NAME_KEY), startPosition + startLineOffset);
+          openScopeSelector(currentRule.getStringAttribute(Constants.StringKey.NAME), startPosition + startLineOffset);
           parseCaptures(Constants.BEGIN_CAPTURES_KEY, currentRule, currentMatch, string, startLineOffset);
           parseCaptures(Constants.CAPTURES_KEY, currentRule, currentMatch, string, startLineOffset);
-          openScopeSelector(currentRule.getStringAttribute(Constants.CONTENT_NAME_KEY), endPosition + startLineOffset);
+          openScopeSelector(currentRule.getStringAttribute(Constants.StringKey.CONTENT_NAME), endPosition + startLineOffset);
           myStates.push(currentState);
         }
         else if (currentRule.getRegexAttribute(Constants.MATCH_KEY) != null) {
-          openScopeSelector(currentRule.getStringAttribute(Constants.NAME_KEY), startPosition + startLineOffset);
+          openScopeSelector(currentRule.getStringAttribute(Constants.StringKey.NAME), startPosition + startLineOffset);
           parseCaptures(Constants.CAPTURES_KEY, currentRule, currentMatch, string, startLineOffset);
           closeScopeSelector(endPosition + startLineOffset);
         }

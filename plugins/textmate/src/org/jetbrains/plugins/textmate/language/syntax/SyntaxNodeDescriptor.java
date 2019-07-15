@@ -3,6 +3,7 @@ package org.jetbrains.plugins.textmate.language.syntax;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.textmate.Constants;
 import org.jetbrains.plugins.textmate.regex.RegexFacade;
 
 import java.util.List;
@@ -12,13 +13,13 @@ import java.util.List;
  * Consists of:
  * <ul>
  * <li>
- * String attributes - string attributes of syntax node {@link org.jetbrains.plugins.textmate.Constants#STRING_KEY_NAMES}
+ * String attributes - string attributes of syntax node {@link Constants.StringKey}
  * </li>
  * <li>
- * Regex attributes - regex attributes of syntax node {@link org.jetbrains.plugins.textmate.Constants#REGEX_KEY_NAMES}
+ * Regex attributes - regex attributes of syntax node {@link Constants#REGEX_KEY_NAMES}
  * </li>
  * <li>
- * Captures attributes - captures attributes of syntax node {@link org.jetbrains.plugins.textmate.Constants#CAPTURES_KEY_NAMES}
+ * Captures attributes - captures attributes of syntax node {@link Constants#CAPTURES_KEY_NAMES}
  * </li>
  * <li>
  * Repository - set of named syntax rules (nodes) which can be included from other places in the grammar.
@@ -34,7 +35,7 @@ public interface SyntaxNodeDescriptor {
   SyntaxNodeDescriptor EMPTY_NODE = new SyntaxNodeDescriptorImpl(null);
 
   @Nullable
-  String getStringAttribute(String key);
+  String getStringAttribute(@NotNull Constants.StringKey key);
 
   @Nullable
   TIntObjectHashMap<String> getCaptures(String key);

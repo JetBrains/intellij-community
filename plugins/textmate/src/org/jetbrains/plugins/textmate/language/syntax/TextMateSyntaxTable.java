@@ -88,14 +88,18 @@ public class TextMateSyntaxTable {
           if (pattern != null) {
             result.setRegexAttribute(key, RegexFacade.regex(pattern));
           }
+          continue;
         }
-        else if (ArrayUtil.contains(key, Constants.STRING_KEY_NAMES)) {
-          result.setStringAttribute(key, intern(pListValue.getString()));
+        Constants.StringKey stringKey = Constants.StringKey.fromName(key);
+        if (stringKey != null) {
+          result.setStringAttribute(stringKey, intern(pListValue.getString()));
+          continue;
         }
-        else if (ArrayUtil.contains(key, Constants.CAPTURES_KEY_NAMES)) {
+        if (ArrayUtil.contains(key, Constants.CAPTURES_KEY_NAMES)) {
           result.setCaptures(key, loadCaptures(pListValue.getPlist()));
+          continue;
         }
-        else if (Constants.REPOSITORY_KEY.equalsIgnoreCase(key)) {
+        if (Constants.REPOSITORY_KEY.equalsIgnoreCase(key)) {
           loadRepository(result, pListValue);
         }
         else if (Constants.PATTERNS_KEY.equalsIgnoreCase(key)) {
@@ -106,8 +110,8 @@ public class TextMateSyntaxTable {
         }
       }
     }
-    if (plist.contains(Constants.SCOPE_NAME_KEY)) {
-      final String scopeName = plist.getPlistValue(Constants.SCOPE_NAME_KEY, Constants.DEFAULT_SCOPE_NAME).getString();
+    if (plist.contains(Constants.StringKey.SCOPE_NAME.value)) {
+      final String scopeName = plist.getPlistValue(Constants.StringKey.SCOPE_NAME.value, Constants.DEFAULT_SCOPE_NAME).getString();
       result.setScopeName(scopeName);
       rulesMap.put(scopeName, result);
     }
@@ -119,8 +123,8 @@ public class TextMateSyntaxTable {
   private String intern(String key) {
     if (interner == null) {
       interner = new StringInterner();
-      for (String name : Constants.STRING_KEY_NAMES) {
-        interner.intern(name);
+      for (Constants.StringKey stringKey : Constants.StringKey.values()) {
+        interner.intern(stringKey.value);
       }
       for (String name : Constants.CAPTURES_KEY_NAMES) {
         interner.intern(name);

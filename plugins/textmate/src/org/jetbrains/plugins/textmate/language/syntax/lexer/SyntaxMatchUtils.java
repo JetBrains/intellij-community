@@ -136,7 +136,7 @@ public final class SyntaxMatchUtils {
     if (beginRegex != null) {
       return new TextMateLexerState(syntaxNodeDescriptor, beginRegex.match(string, byteOffset), priority, string);
     }
-    if (syntaxNodeDescriptor.getStringAttribute(Constants.END_KEY) != null) {
+    if (syntaxNodeDescriptor.getStringAttribute(Constants.StringKey.END) != null) {
       return TextMateLexerState.notMatched(syntaxNodeDescriptor);
     }
     return matchFirst(syntaxNodeDescriptor, string, byteOffset, priority, currentScope);
@@ -154,7 +154,7 @@ public final class SyntaxMatchUtils {
     return result;
   }
 
-  public static MatchData matchStringRegex(@NotNull String keyName,
+  public static MatchData matchStringRegex(@NotNull Constants.StringKey keyName,
                                            @NotNull StringWithId string,
                                            int byteOffset,
                                            @NotNull TextMateLexerState lexerState) {

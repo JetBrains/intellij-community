@@ -112,7 +112,7 @@ public final class PreferencesReadUtil {
   private static TextMateSnippet loadTextMateSnippet(@NotNull Plist plist, @NotNull String filePath) throws IOException {
     String name = plist.getPlistValue(Constants.NAME_KEY, "").getString();
     String key = plist.getPlistValue(Constants.TAB_TRIGGER_KEY, "").getString();
-    String content = plist.getPlistValue(Constants.CONTENT_KEY, "").getString();
+    String content = plist.getPlistValue(Constants.StringKey.CONTENT.value, "").getString();
     String scope = plist.getPlistValue(Constants.SCOPE_KEY, "").getString();
     String description = plist.getPlistValue(Constants.DESCRIPTION_KEY, "").getString();
     String uuid = plist.getPlistValue(Constants.UUID_KEY, "").getString();
