@@ -386,6 +386,31 @@ public class Messages {
   }
 
   /**
+   * Shows confirmation dialog with specified confirmation options. In MacSheet the {@param message} is shown in the title field, and title is not shown at all.
+   * @return {@link #YES} if user pressed button with {@param yesText} or {@link #NO} if user pressed button with {@param noText}.
+   */
+  public static int showConfirmationDialog(@NotNull JComponent parent,
+                                           @NotNull String message,
+                                           @NotNull String title,
+                                           @NotNull String yesText,
+                                           @NotNull String noText) {
+    try {
+      if (canShowMacSheetPanel()) {
+        return MacMessages.getInstance().showYesNoDialog(message, "", yesText, noText, SwingUtilities.getWindowAncestor(parent));
+      }
+    }
+    catch (MessageException ignored) {/*rollback the message and show a dialog*/}
+    catch (Exception reportThis) {
+      LOG.error(reportThis);
+    }
+
+    int result = showDialog(parent, message, title, new String[]{yesText, noText}, 0, getQuestionIcon()) == 0 ? YES : NO;
+    //noinspection ConstantConditions
+    LOG.assertTrue(result == YES || result == NO, result);
+    return result;
+  }
+
+  /**
    * @return {@link #YES} if user pressed "Yes" or {@link #NO} if user pressed "No" button.
    */
   @YesNoResult
