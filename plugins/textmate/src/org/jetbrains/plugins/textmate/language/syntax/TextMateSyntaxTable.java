@@ -90,12 +90,7 @@ public class TextMateSyntaxTable {
           }
         }
         else if (ArrayUtil.contains(key, Constants.STRING_KEY_NAMES)) {
-          if (key.equals(Constants.WHILE_KEY) || key.equals(Constants.END_KEY)) {
-            result.setStringAttribute(key, pListValue.getString());
-          }
-          else {
-            result.setStringAttribute(key, intern(pListValue.getString()));
-          }
+          result.setStringAttribute(key, intern(pListValue.getString()));
         }
         else if (ArrayUtil.contains(key, Constants.CAPTURES_KEY_NAMES)) {
           result.setCaptures(key, loadCaptures(pListValue.getPlist()));
