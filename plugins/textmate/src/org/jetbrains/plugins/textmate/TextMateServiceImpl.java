@@ -443,9 +443,11 @@ public class TextMateServiceImpl extends TextMateService {
         matchers.add(FileTypeManager.parseFromString(extension));
       }
 
-      registeredType = fileTypeManager.getFileTypeByExtension(extension);
-      if (isTypeShouldBeReplacedByTextMateType(registeredType)) {
-        matchers.add(new ExtensionFileNameMatcher(extension));
+      if (!StringUtil.startsWithChar(extension, '.') && !StringUtil.containsAnyChar(extension, "*?")) {
+        registeredType = fileTypeManager.getFileTypeByExtension(extension);
+        if (isTypeShouldBeReplacedByTextMateType(registeredType)) {
+          matchers.add(new ExtensionFileNameMatcher(extension));
+        }
       }
     }
   }
