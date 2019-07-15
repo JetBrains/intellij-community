@@ -10,7 +10,6 @@ import com.intellij.ui.RetrievableIcon;
 import com.intellij.ui.icons.*;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
-import com.intellij.ui.scale.ScaleContextAware;
 import com.intellij.ui.scale.ScaleContextSupport;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,7 +29,6 @@ import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
@@ -161,8 +159,8 @@ public final class IconLoader {
   @Nullable
   public static Icon getReflectiveIcon(@NotNull String path, ClassLoader classLoader) {
     try {
-      @NonNls String pckg = path.startsWith("AllIcons.") ? "com.intellij.icons." : "icons.";
-      Class cur = Class.forName(pckg + path.substring(0, path.lastIndexOf('.')).replace('.', '$'), true, classLoader);
+      @NonNls String packageName = path.startsWith("AllIcons.") ? "com.intellij.icons." : "icons.";
+      Class cur = Class.forName(packageName + path.substring(0, path.lastIndexOf('.')).replace('.', '$'), true, classLoader);
       Field field = cur.getField(path.substring(path.lastIndexOf('.') + 1));
 
       return (Icon)field.get(null);
@@ -241,8 +239,13 @@ public final class IconLoader {
       return false;
     }
 
-    List<String> paths = StringUtil.split(path, ".");
-    return paths.size() > 1 && paths.get(0).endsWith("Icons");
+    int dotIndex = path.indexOf('.');
+    if (dotIndex < 0) {
+      return false;
+    }
+
+    int suffixLength = "Icons".length();
+    return path.regionMatches(dotIndex - suffixLength, "Icons", 0, suffixLength);
   }
 
   @Nullable
