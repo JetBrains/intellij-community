@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.FrameTitleBuilder
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import net.miginfocom.swing.MigLayout
+import java.awt.Dimension
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
@@ -42,6 +43,10 @@ open class SelectedEditorFilePath {
     override fun removeNotify() {
       super.removeNotify()
       unInstallListeners()
+    }
+
+    override fun getMinimumSize(): Dimension {
+      return Dimension(projectTitle.shortWidth, super.getMinimumSize().height)
     }
   }.apply {
     isOpaque = false
@@ -265,7 +270,6 @@ open class SelectedEditorFilePath {
         classTitle.hide()
       }
     }
-
     components.forEach { it.setToolTip(if (!isClipped()) null else "${projectTitle.toolTipPart}${classTitle.toolTipPart}${productTitle.toolTipPart}${productVersion.toolTipPart}") }
 
   }

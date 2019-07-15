@@ -14,6 +14,7 @@ import net.miginfocom.swing.MigLayout
 import java.awt.Frame
 import java.awt.Rectangle
 import java.util.*
+import javax.swing.JComponent
 import javax.swing.JFrame
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
@@ -22,6 +23,7 @@ import javax.swing.event.ChangeListener
 class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
   private val mySelectedEditorFilePath: CustomDecorationPath
   private val myIdeMenu: IdeMenuBar
+  private val menuHolder: JComponent
   private var changeListener: ChangeListener
 
   private val mainMenuUpdater: UISettingsListener
@@ -29,7 +31,7 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
   private var disposable: Disposable? = null
 
   init {
-    layout = MigLayout("novisualpadding, fillx, ins 0, gap 0, top", "$H_GAP[pref!]$H_GAP[][pref!]")
+    layout = MigLayout("novisualpadding, fillx, ins 0, gap 0, top", "$H_GAP[pref!]$H_GAP[][grow][pref!]")
     add(productIcon)
 
     myIdeMenu = CustomHeaderMenuBar()
@@ -45,13 +47,12 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
 
     mySelectedEditorFilePath = CustomDecorationPath(frame)
 
-    val menuHolder = JPanel(MigLayout("fill, ins 0, novisualpadding, hidemode 2", "[pref!][]"))
-
+    menuHolder = JPanel(MigLayout("filly, ins 0, novisualpadding, hidemode 2", "[pref!]"))
     menuHolder.isOpaque = false
-    menuHolder.add(myIdeMenu, "wmin 0, w pref!, top, growy")
-    menuHolder.add(mySelectedEditorFilePath.getView(), "left, growx, wmin 0, gapafter $H_GAP, gapbottom 1")
+    menuHolder.add(myIdeMenu, "wmin 0, wmax pref, top, growy")
 
-    add(menuHolder, "wmin 0, grow")
+    add(menuHolder, "wmin 0, top, growy, pushx, gapafter $H_GAP")
+    add(mySelectedEditorFilePath.getView(), "left, growx, gapafter $H_GAP, gapbottom 1")
     add(buttonPanes.getView(), "top, wmin pref")
 
     setCustomFrameTopBorder({ myState != Frame.MAXIMIZED_VERT && myState != Frame.MAXIMIZED_BOTH }, {true})
@@ -94,7 +95,7 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
     val hitTestSpots = super.getHitTestSpots()
 
     if(myIdeMenu.isVisible) {
-      val menuRect = Rectangle(myIdeMenu.size)
+      val menuRect = Rectangle(menuHolder.size)
 
       val state = frame.extendedState
       if (state != Frame.MAXIMIZED_VERT && state != Frame.MAXIMIZED_BOTH) {
@@ -102,7 +103,7 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
         menuRect.y += topGap
         menuRect.height -= topGap
       }
-      hitTestSpots.add(RelativeRectangle(myIdeMenu, menuRect))
+      hitTestSpots.add(RelativeRectangle(menuHolder, menuRect))
     }
 
     hitTestSpots.addAll(mySelectedEditorFilePath.getListenerBounds())
