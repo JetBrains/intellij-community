@@ -146,6 +146,7 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
            actionText.matches("Replace '.+' with constant value '.+'") ||
            // TODO: Remove when IDEA-195235 is fixed
            actionText.matches("Suppress .+ in injection") ||
+           actionText.equals("Suppress with 'NON-NLS' comment") || // IDEA-218088
            super.shouldSkipIntention(actionText);
   }
 
