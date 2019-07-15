@@ -26,6 +26,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.WindowStateService;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -663,8 +664,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
         if (myDimensionServiceKey != null) {
           final Project projectGuess = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
-          location = DimensionService.getInstance().getLocation(myDimensionServiceKey, projectGuess);
-          Dimension size = DimensionService.getInstance().getSize(myDimensionServiceKey, projectGuess);
+          location = getWindowStateService(projectGuess).getLocation(myDimensionServiceKey);
+          if (location == null) location = DimensionService.getInstance().getLocation(myDimensionServiceKey, projectGuess);
+          Dimension size = getWindowStateService(projectGuess).getSize(myDimensionServiceKey);
+          if (size == null) size = DimensionService.getInstance().getSize(myDimensionServiceKey, projectGuess);
           if (size != null) {
             myInitialSize = new Dimension(size);
             _setSizeForLocation(myInitialSize.width, myInitialSize.height, location);
@@ -808,10 +811,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
           // Save location
           Point location = getLocation();
+          getWindowStateService(projectGuess).putLocation(myDimensionServiceKey, location);
           DimensionService.getInstance().setLocation(myDimensionServiceKey, location, projectGuess);
           // Save size
           Dimension size = getSize();
           if (!myInitialSize.equals(size)) {
+            getWindowStateService(projectGuess).putSize(myDimensionServiceKey, size);
             DimensionService.getInstance().setSize(myDimensionServiceKey, size, projectGuess);
           }
           myOpened = false;
@@ -965,6 +970,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         final DialogWrapper wrapper = myDialogWrapper.get();
         return wrapper != null && PlatformDataKeys.UI_DISPOSABLE.is(dataId) ? wrapper.getDisposable() : null;
       }
+    }
+
+    @NotNull
+    private static WindowStateService getWindowStateService(@Nullable Project project) {
+      return project == null ? WindowStateService.getInstance() : WindowStateService.getInstance(project);
     }
   }
 
