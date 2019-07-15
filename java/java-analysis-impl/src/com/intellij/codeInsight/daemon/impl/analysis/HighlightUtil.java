@@ -2832,7 +2832,10 @@ public class HighlightUtil extends HighlightUtilBase {
       PsiTypeParameter rTypeParameter = i >= rTypeParams.length ? null : rTypeParams[i];
       PsiType lSubstitutedType = lTypeParameter == null ? null : lTypeData.third.substitute(lTypeParameter);
       PsiType rSubstitutedType = rTypeParameter == null ? null : rTypeData.third.substitute(rTypeParameter);
-      boolean matches = Comparing.equal(lSubstitutedType, rSubstitutedType);
+      boolean matches = lSubstitutedType == rSubstitutedType || 
+                        lSubstitutedType != null && 
+                        rSubstitutedType != null && 
+                        TypeConversionUtil.typesAgree(lSubstitutedType, rSubstitutedType, true);
       String openBrace = i == 0 ? "&lt;" : "";
       String closeBrace = i == typeParamColumns - 1 ? "&gt;" : ",";
       requiredRow.append("<td>").append(lTypeParams.length == 0 ? "" : openBrace).append(redIfNotMatch(lSubstitutedType, matches))

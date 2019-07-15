@@ -16,6 +16,7 @@
 package com.intellij.java.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
@@ -26,6 +27,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 
 //javac option to dump bounds: -XDdumpInferenceGraphsTo=
 public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
@@ -1037,6 +1039,20 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   
   public void testIDEA194093 () {
     doTest();
+  }
+
+  public void testTooltipTypesAgree() {
+    doTest();
+    doHighlighting()
+      .stream()
+      .filter(info -> info.type == HighlightInfoType.ERROR)
+      .forEach(info -> Assert.assertEquals("<html><body>Incompatible types." +
+                                           "<table><tr><td>Required:</td>" +
+                                           "<td>Generic</td><td>&lt;? extends Number,</td><td><font color='red'><b>java.lang.Number</b></font>,</td><td>Integer&gt;</td></tr>" +
+                                           "<tr><td>Found:</td>" +
+                                           "<td>Generic</td><td>&lt;Integer,</td><td><font color='red'><b>java.lang.Integer</b></font>,</td><td>Integer&gt;</td></tr>" +
+                                           "</table></body></html>",
+                                           info.getToolTip()));
   }
 
   public void testBridgeMethodOverriding() { doTest(); }
