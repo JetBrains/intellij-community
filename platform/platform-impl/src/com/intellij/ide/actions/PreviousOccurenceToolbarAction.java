@@ -3,16 +3,16 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.OccurenceNavigator;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 
 public class PreviousOccurenceToolbarAction extends PreviousOccurenceAction {
   private final OccurenceNavigator myNavigator;
 
   public PreviousOccurenceToolbarAction(OccurenceNavigator navigator) {
     myNavigator = navigator;
-    copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_OCCURENCE));
+    ActionUtil.copyFrom(this, IdeActions.ACTION_PREVIOUS_OCCURENCE);
   }
 
   @Override

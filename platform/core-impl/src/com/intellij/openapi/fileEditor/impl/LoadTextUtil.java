@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.ByteArrayCharSequence;
@@ -165,7 +166,7 @@ public final class LoadTextUtil {
      * should be {@code this.name().contains(CharsetToolkit.UTF8)} for {@link #getOverriddenCharsetByBOM(byte[], Charset)} to work
      */
     SevenBitCharset(Charset baseCharset) {
-      super("IJ__7BIT_"+baseCharset.name(), ArrayUtil.EMPTY_STRING_ARRAY);
+      super("IJ__7BIT_"+baseCharset.name(), ArrayUtilRt.EMPTY_STRING_ARRAY);
       myBaseCharset = baseCharset;
     }
 
@@ -353,11 +354,11 @@ public final class LoadTextUtil {
     }
     Charset charsetFromBOM = CharsetToolkit.guessFromBOM(content);
     if (charsetFromBOM != null) {
-      byte[] bom = ObjectUtils.notNull(CharsetToolkit.getMandatoryBom(charsetFromBOM), ArrayUtil.EMPTY_BYTE_ARRAY);
+      byte[] bom = ObjectUtils.notNull(CharsetToolkit.getMandatoryBom(charsetFromBOM), ArrayUtilRt.EMPTY_BYTE_ARRAY);
       return Pair.createNonNull(charsetFromBOM, bom);
     }
 
-    return Pair.createNonNull(charset, ArrayUtil.EMPTY_BYTE_ARRAY);
+    return Pair.createNonNull(charset, ArrayUtilRt.EMPTY_BYTE_ARRAY);
   }
 
   public static void changeLineSeparators(@Nullable Project project,
@@ -642,7 +643,7 @@ public final class LoadTextUtil {
     }
     catch (Exception e) {
       // esoteric charsets can throw any kind of exception
-      charBuffer = CharBuffer.wrap(ArrayUtil.EMPTY_CHAR_ARRAY);
+      charBuffer = CharBuffer.wrap(ArrayUtilRt.EMPTY_CHAR_ARRAY);
     }
     return convertLineSeparatorsToSlashN(charBuffer);
   }

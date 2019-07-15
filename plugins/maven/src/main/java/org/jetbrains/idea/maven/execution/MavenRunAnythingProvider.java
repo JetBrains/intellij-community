@@ -157,6 +157,12 @@ public class MavenRunAnythingProvider extends RunAnythingProviderBase<String> {
 
   @Nullable
   @Override
+  public String getHelpGroupTitle() {
+    return "Maven";
+  }
+
+  @Nullable
+  @Override
   public Icon getIcon(@NotNull String value) {
     return OpenapiIcons.RepositoryLibraryLogo;
   }

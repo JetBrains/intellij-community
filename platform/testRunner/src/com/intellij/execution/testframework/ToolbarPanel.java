@@ -82,15 +82,15 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
       actionGroup.add(toggleModelAction);
     }
 
+    final AnAction[] importActions = properties.createImportActions();
+    if (importActions != null) {
+      actionGroup.addAll(importActions);
+    }
+
     final RunProfile configuration = properties.getConfiguration();
     if (configuration instanceof RunConfiguration) {
       myExportAction = ExportTestResultsAction.create(properties.getExecutor().getToolWindowId(), (RunConfiguration)configuration, parent);
       actionGroup.addAction(myExportAction);
-    }
-
-    final AnAction importAction = properties.createImportAction();
-    if (importAction != null) {
-      actionGroup.addAction(importAction);
     }
 
     final DefaultActionGroup secondaryGroup = new DefaultActionGroup();

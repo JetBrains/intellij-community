@@ -4,12 +4,13 @@ import * as am4core from "@amcharts/amcharts4/core"
 import {XYChartManager} from "@/charts/ChartManager"
 import {DataManager} from "@/state/DataManager"
 import {Item} from "@/state/data"
+import {ActivityChartDescriptor} from "@/charts/ActivityChartDescriptor"
 
 export class ActivityChartManager extends XYChartManager {
   private legendHitHandler: ((item: LegendItem, isActive: boolean) => void) | null = null
 
   // isUseYForName - if true, names are more readable, but not possible to see all components because layout from top to bottom (so, opposite from left to right some data can be out of current screen)
-  constructor(container: HTMLElement, private readonly sourceNames: Array<string>) {
+  constructor(container: HTMLElement, private readonly sourceNames: Array<string>, private readonly descriptor: ActivityChartDescriptor) {
     super(container, module.hot)
 
     this.configureNameAxis()
@@ -17,20 +18,24 @@ export class ActivityChartManager extends XYChartManager {
     this.configureSeries()
 
     if (sourceNames.length > 1) {
-      this.chart.legend = new am4charts.Legend()
-
-      // make colors more contrast because we have more than one series
-      this.chart.colors.step = 2
-
-      this.chart.legend.itemContainers.template.events.on("hit", event => {
-        const target = event!!.target!!
-        const legendItem = target!!.dataItem!!.dataContext as LegendItem
-        const legendHitHandler = this.legendHitHandler
-        if (legendHitHandler != null) {
-          legendHitHandler(legendItem, target.isActive)
-        }
-      })
+      this.createLegend()
     }
+  }
+
+  private createLegend() {
+    this.chart.legend = new am4charts.Legend()
+
+    // make colors more contrast because we have more than one series
+    this.chart.colors.step = 2
+
+    this.chart.legend.itemContainers.template.events.on("hit", event => {
+      const target = event!!.target!!
+      const legendItem = target!!.dataItem!!.dataContext as LegendItem
+      const legendHitHandler = this.legendHitHandler
+      if (legendHitHandler != null) {
+        legendHitHandler(legendItem, target.isActive)
+      }
+    })
   }
 
   private get nameAxis(): am4charts.CategoryAxis {
@@ -48,9 +53,11 @@ export class ActivityChartManager extends XYChartManager {
     nameAxisLabel.tooltipText = this.getTooltipText()
 
     // https://github.com/amcharts/amcharts4/issues/997
-    nameAxisLabel.rotation = -45
-    nameAxisLabel.verticalCenter = "middle"
-    nameAxisLabel.horizontalCenter = "right"
+    if (this.descriptor.rotatedLabels !== false) {
+      nameAxisLabel.rotation = -45
+      nameAxisLabel.verticalCenter = "middle"
+      nameAxisLabel.horizontalCenter = "right"
+    }
     nameAxis.renderer.minGridDistance = 1
     nameAxis.renderer.grid.template.location = 0
     nameAxis.renderer.grid.template.disabled = true
@@ -97,7 +104,48 @@ export class ActivityChartManager extends XYChartManager {
     let colorIndex = 0
     const legendData: Array<LegendItem> = []
     const applicableSources = new Set<string>()
-    for (const sourceName of this.sourceNames) {
+
+    let sourceNames = this.sourceNames
+
+    let getItemListBySourceName: (name: string) => Array<Item> | null | undefined = name => {
+      // @ts-ignore
+      return data.data[name]
+    }
+
+    let sourceNameToLegendName: (sourceName: string, itemCount: number) => string = this.sourceNameToLegendName.bind(this)
+
+    if (this.descriptor.groupByThread === true) {
+      if (sourceNames.length !== 1) {
+        throw Error("groupByThread is supported only for single source")
+      }
+
+      // @ts-ignore
+      const items = data.data[this.sourceNames[0]] as Array<Item>
+      if (items == null || items.length === 0) {
+        sourceNames = []
+      }
+      else {
+        const threadToItems = new Map<string, Array<Item>>()
+        for (const item of items) {
+          const thread = item.thread
+          let list = threadToItems.get(thread)
+          if (list == null) {
+            list = []
+            threadToItems.set(thread, list)
+          }
+          list.push(item)
+        }
+        sourceNames = Array.from(threadToItems.keys())
+        sourceNames.sort()
+        getItemListBySourceName = name => threadToItems.get(name)
+        sourceNameToLegendName = (sourceName, _itemCount) => sourceName
+        if (sourceNames.length > 1 && this.chart.legend == null) {
+          this.createLegend()
+        }
+      }
+    }
+
+    for (const sourceName of sourceNames) {
       // see XYChart.handleSeriesAdded method - fill and stroke are required to be set, and stroke is set to fill if not set otherwise (in our case fill and stroke are equals)
       // do not use XYChart.handleSeriesAdded because on add series it is already called, so, we need to reuse already generated color for first index
       const color = this.chart.colors.getIndex(colorIndex++)
@@ -109,13 +157,13 @@ export class ActivityChartManager extends XYChartManager {
       // generate color before - even if no data for this type of items, still color should be the same regardless of current data set
       // so, if currently no data for project, but there is data for modules, color for modules should use index 3 and not 2
       // @ts-ignore
-      const items = data.data[sourceName]
+      const items = getItemListBySourceName(sourceName)
       if (items == null || items.length === 0) {
         continue
       }
 
       const legendItem: LegendItem = {
-        name: this.sourceNameToLegendName(sourceName, items.length),
+        name: sourceNameToLegendName(sourceName, items.length),
         fill: color,
         sourceName,
       }
@@ -131,10 +179,10 @@ export class ActivityChartManager extends XYChartManager {
       this.chart.legend.data = legendData
       this.legendHitHandler = (legendItem, isActive) => {
         if (isActive) {
-          applicableSources.delete(legendItem.sourceName)
+          applicableSources.add(legendItem.sourceName)
         }
         else {
-          applicableSources.add(legendItem.sourceName)
+          applicableSources.delete(legendItem.sourceName)
         }
         // maybe there is a more effective way to hide data, but this one is reliable and simple
         this.chart.data = concatenatedData.filter(it => applicableSources.has(it.sourceName))

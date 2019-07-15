@@ -12,7 +12,8 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
@@ -129,6 +130,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     awtFocusListener = new AWTEventListener() {
       @Override
       public void eventDispatched(AWTEvent event) {
+        if (myProject.isDisposed()) return;
         assert event instanceof FocusEvent;
         FocusEvent focusEvent = (FocusEvent)event;
         if (focusEvent.getID() == FocusEvent.FOCUS_GAINED) {
@@ -325,7 +327,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
     Keymap keymap = Objects.requireNonNull(KeymapManager.getInstance()).getActiveKeymap();
     Shortcut[] baseShortcut = keymap.getShortcuts("ActivateProjectToolWindow");
-    int baseModifiers = SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.ALT_MASK;
+    int baseModifiers = SystemInfoRt.isMac ? InputEvent.META_MASK : InputEvent.ALT_MASK;
     for (Shortcut each : baseShortcut) {
       if (each instanceof KeyboardShortcut) {
         KeyStroke keyStroke = ((KeyboardShortcut)each).getFirstKeyStroke();
@@ -373,7 +375,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
   private void restartWaitingForSecondPressAlarm() {
     myWaiterForSecondPress.cancelAllRequests();
-    myWaiterForSecondPress.addRequest(mySecondPressRunnable, Registry.intValue("actionSystem.keyGestureDblClickTime"));
+    myWaiterForSecondPress.addRequest(mySecondPressRunnable, SystemProperties.getIntProperty("actionSystem.keyGestureDblClickTime", 650));
   }
 
   private boolean hasOpenEditorFiles() {

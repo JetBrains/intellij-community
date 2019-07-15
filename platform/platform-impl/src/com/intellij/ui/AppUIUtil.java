@@ -11,7 +11,9 @@ import com.intellij.ide.gdpr.ConsentOptions;
 import com.intellij.ide.gdpr.ConsentSettingsUi;
 import com.intellij.ide.gdpr.EndUserAgreement;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.ui.laf.LafManagerImpl;
 import com.intellij.idea.Main;
+import com.intellij.idea.SplashManager;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -64,7 +66,7 @@ import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
  */
 public class AppUIUtil {
   private static final String VENDOR_PREFIX = "jetbrains-";
-  private static final boolean DEBUG_MODE = PluginManagerCore.isRunningFromSources();
+  private static final boolean RUNNING_FROM_SOURCES = PluginManagerCore.isRunningFromSources();
   private static List<Image> ourIcons = null;
   private static boolean ourMacDocIconSet = false;
 
@@ -74,9 +76,8 @@ public class AppUIUtil {
   }
 
   public static void updateWindowIcon(@NotNull Window window) {
-    // todo[tav] 'jbre.win.app.icon.supported' is defined by JBRE, remove when OpenJDK supports it as well
-    if (SystemInfo.isWindows && Boolean.getBoolean("ide.native.launcher") && Boolean.getBoolean("jbre.win.app.icon.supported")) {
-      return;  // JDK will load icon from the exe resource
+    if (isWindowIconAlreadyExternallySet()) {
+      return;
     }
 
     List<Image> images = ourIcons;
@@ -87,7 +88,7 @@ public class AppUIUtil {
       String svgIconUrl = appInfo.getApplicationSvgIconUrl();
       ScaleContext ctx = ScaleContext.create(window);
 
-      if (SystemInfo.isUnix) {
+      if (SystemInfoRt.isUnix) {
         @SuppressWarnings("deprecation") String fallback = appInfo.getBigIconUrl();
         ContainerUtil.addIfNotNull(images, loadApplicationIconImage(svgIconUrl, ctx, 128, fallback));
       }
@@ -95,7 +96,7 @@ public class AppUIUtil {
       @SuppressWarnings("deprecation") String fallback = appInfo.getIconUrl();
       ContainerUtil.addIfNotNull(images, loadApplicationIconImage(svgIconUrl, ctx, 32, fallback));
 
-      if (SystemInfo.isWindows) {
+      if (SystemInfoRt.isWindows) {
         ContainerUtil.addIfNotNull(images, loadSmallApplicationIconImage(ctx));
       }
 
@@ -108,14 +109,23 @@ public class AppUIUtil {
     }
 
     if (!images.isEmpty()) {
-      if (!SystemInfo.isMac) {
+      if (!SystemInfoRt.isMac) {
         window.setIconImages(images);
       }
-      else if (DEBUG_MODE && !ourMacDocIconSet) {
+      else if (RUNNING_FROM_SOURCES && !ourMacDocIconSet) {
         MacAppIcon.setDockIcon(ImageUtil.toBufferedImage(images.get(0)));
         ourMacDocIconSet = true;
       }
     }
+  }
+
+  public static boolean isWindowIconAlreadyExternallySet() {
+    if (SystemInfoRt.isMac) {
+      return !RUNNING_FROM_SOURCES;
+    }
+
+    // todo[tav] 'jbre.win.app.icon.supported' is defined by JBRE, remove when OpenJDK supports it as well
+    return SystemInfoRt.isWindows && Boolean.getBoolean("ide.native.launcher") && Boolean.getBoolean("jbre.win.app.icon.supported");
   }
 
   @NotNull
@@ -180,7 +190,7 @@ public class AppUIUtil {
   }
 
   public static void updateFrameClass(@NotNull Toolkit toolkit) {
-    if (SystemInfo.isWindows || SystemInfo.isMac) {
+    if (SystemInfoRt.isWindows || SystemInfoRt.isMac) {
       return;
     }
 
@@ -202,7 +212,7 @@ public class AppUIUtil {
       .replace("intellij-idea", "idea").replace("android-studio", "studio")  // backward compatibility
       .replace("-community-edition", "-ce").replace("-ultimate-edition", "").replace("-professional-edition", "");
     String wmClass = name.startsWith(VENDOR_PREFIX) ? name : VENDOR_PREFIX + name;
-    if (DEBUG_MODE) wmClass += "-debug";
+    if (RUNNING_FROM_SOURCES) wmClass += "-debug";
     return wmClass;
   }
 
@@ -268,7 +278,7 @@ public class AppUIUtil {
   @Nullable
   public static String findIcon() {
     String iconsPath = PathManager.getBinPath();
-    String[] childFiles = ObjectUtils.notNull(new File(iconsPath).list(), ArrayUtil.EMPTY_STRING_ARRAY);
+    String[] childFiles = ObjectUtils.notNull(new File(iconsPath).list(), ArrayUtilRt.EMPTY_STRING_ARRAY);
 
     // 1. look for .svg icon
     for (String child : childFiles) {
@@ -307,7 +317,7 @@ public class AppUIUtil {
       if (!agreement.isAccepted()) {
         try {
           // todo: does not seem to request focus when shown
-          SwingUtilities.invokeAndWait(() -> showEndUserAgreementText(agreement.getText(), agreement.isPrivacyPolicy()));
+          EventQueue.invokeAndWait(() -> showEndUserAgreementText(agreement.getText(), agreement.isPrivacyPolicy()));
           EndUserAgreement.setAccepted(agreement);
         }
         catch (Exception e) {
@@ -352,8 +362,9 @@ public class AppUIUtil {
    * @param isPrivacyPolicy  true if this document is a privacy policy
    */
   public static void showEndUserAgreementText(@NotNull String htmlText, final boolean isPrivacyPolicy) {
-      DialogWrapper dialog = new DialogWrapper(true) {
+    LafManagerImpl.initIntelliJLafIfNeeded();
 
+    DialogWrapper dialog = new DialogWrapper(true) {
       private JEditorPane myViewer;
 
       @Override
@@ -402,7 +413,7 @@ public class AppUIUtil {
           JEditorPane html = SwingHelper.createHtmlLabel(
             "EAP builds report usage statistics by default per "+
             (isPrivacyPolicy? "this Privacy Policy." : "the <a href=\"https://www.jetbrains.com/company/privacy.html\">JetBrains Privacy Policy</a>.") +
-            "\nNo personal or sensitive data are sent. You may disable this in the settings.", null, null
+            "<br/>No personal or sensitive data are sent. You may disable this in the settings.", null, null
           );
           eapPanel.add(html, BorderLayout.CENTER);
           bottomPanel.add(eapPanel, BorderLayout.NORTH);
@@ -411,7 +422,7 @@ public class AppUIUtil {
         bottomPanel.add(JBUI.Borders.empty(24, 0, 16, 0).wrap(checkBox), BorderLayout.CENTER);
         centerPanel.add(JBUI.Borders.emptyTop(8).wrap(bottomPanel), BorderLayout.SOUTH);
         checkBox.addActionListener(e -> setOKActionEnabled(checkBox.isSelected()));
-        centerPanel.setPreferredSize(JBUI.size(500, 450));
+        centerPanel.setPreferredSize(JBUI.size(520, 450));
         return centerPanel;
       }
 
@@ -450,7 +461,8 @@ public class AppUIUtil {
       : ApplicationNamesInfo.getInstance().getFullProductName() + " User Agreement"
     );
     dialog.pack();
-    dialog.show();
+
+    SplashManager.executeWithHiddenSplash(dialog.getWindow(), () -> dialog.show());
   }
 
   public static boolean confirmConsentOptions(@NotNull List<Consent> consents) {

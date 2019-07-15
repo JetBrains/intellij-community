@@ -3,15 +3,10 @@ package com.intellij.serialization
 
 import com.amazon.ion.IonReader
 import com.amazon.ion.IonType
-import com.amazon.ion.system.IonBinaryWriterBuilder
 import com.amazon.ion.system.IonReaderBuilder
 import com.intellij.util.containers.ObjectIntHashMap
 import java.lang.reflect.Constructor
 import java.lang.reflect.Type
-
-private val structWriterBuilder by lazy {
-  IonBinaryWriterBuilder.standard().withStreamCopyOptimized(true).immutable()
-}
 
 private val structReaderBuilder by lazy {
   IonReaderBuilder.standard().immutable()
@@ -96,7 +91,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
 
     val out = context.allocateByteArrayOutputStream()
     // ionType is already checked - so, struct is expected
-    structWriterBuilder.build(out).use { it.writeValue(context.reader) }
+    binaryWriterBuilder.newWriter(out).use { it.writeValue(context.reader) }
 
     // we cannot read all field values before creating instance because some field value can reference to parent - our instance,
     // so, first, create instance, and only then read rest of fields

@@ -9,7 +9,7 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.tree.TreeUtil;
 import icons.JetgroovyIcons;
@@ -163,7 +163,8 @@ public class GrDynamicImplicitMethod extends GrLightMethodBuilder implements GrD
       }
 
       for (PsiClass aSuper : PsiUtil.iterateSupers(psiClass, true)) {
-        methodElement = DynamicManager.getInstance(getProject()).findConcreteDynamicMethod(aSuper.getQualifiedName(), getName(), ArrayUtil.toStringArray(parameterTypes));
+        methodElement = DynamicManager.getInstance(getProject()).findConcreteDynamicMethod(aSuper.getQualifiedName(), getName(),
+                                                                                           ArrayUtilRt.toStringArray(parameterTypes));
 
         if (methodElement != null) {
           trueClass = aSuper;

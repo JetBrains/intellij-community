@@ -24,6 +24,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoMan
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.JsonSchemaInfo;
@@ -271,7 +272,7 @@ public class JsonPointerReferenceProvider extends PsiReferenceProvider {
         }
       }
 
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+      return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
 
     private static Icon getIcon(JsonValue value) {

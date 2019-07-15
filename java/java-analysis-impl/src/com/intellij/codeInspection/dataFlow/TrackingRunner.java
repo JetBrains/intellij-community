@@ -28,6 +28,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -1147,7 +1148,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
     if (contracts.isEmpty()) return null;
     MethodContract contract = contracts.get(0);
     String contractType = JavaMethodContractUtil.hasExplicitContractAnnotation(method) ? "" :
-                          contract instanceof StandardMethodContract ? "inferred " :
+                          contracts.stream().allMatch(c -> c instanceof StandardMethodContract) ? "inferred " :
                           "hard-coded ";
     if (call instanceof PsiMethodCallExpression) {
       PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)call).getMethodExpression();
@@ -1162,16 +1163,46 @@ public class TrackingRunner extends StandardDataFlowRunner {
       if (nonIntersecting != null) {
         MethodContract onlyContract = ContainerUtil
           .getOnlyItem(ContainerUtil.filter(nonIntersecting, mc -> contractReturnValue.isSuperValueOf(mc.getReturnValue())));
-        return fromSingleContract(history, (PsiMethodCallExpression)call, method, prefix, onlyContract);
+        if (onlyContract != null) {
+          return fromSingleContract(history, (PsiMethodCallExpression)call, method, prefix, onlyContract);
+        }
+      }
+      for (MethodContract c : contracts) {
+        ThreeState applies = contractApplies((PsiMethodCallExpression)call, c);
+        if (applies == ThreeState.NO) {
+          continue;
+        }
+        if (applies == ThreeState.UNSURE) {
+          break;
+        }
+        if (applies == ThreeState.YES) {
+          if (contractReturnValue.isSuperValueOf(c.getReturnValue())) {
+            return fromSingleContract(history, (PsiMethodCallExpression)call, method, prefix, c);
+          }
+        }
       }
     }
     return null;
   }
 
-  @Nullable
-  private CauseItem fromSingleContract(MemoryStateChange history, PsiMethodCallExpression call,
-                                       PsiMethod method, String prefix, MethodContract contract) {
-    if (contract == null) return null;
+  @NotNull
+  private ThreeState contractApplies(@NotNull PsiMethodCallExpression call, @NotNull MethodContract contract) {
+    List<ContractValue> conditions = contract.getConditions();
+    for (ContractValue condition : conditions) {
+      DfaConstValue evaluated = ObjectUtils.tryCast(condition.fromCall(getFactory(), call), DfaConstValue.class);
+      if (evaluated != null) {
+        Object value = evaluated.getValue();
+        if (value instanceof Boolean) {
+          return ThreeState.fromBoolean((Boolean)value);
+        }
+      }
+    }
+    return ThreeState.UNSURE;
+  }
+
+  @NotNull
+  private CauseItem fromSingleContract(@NotNull MemoryStateChange history, @NotNull PsiMethodCallExpression call,
+                                       @NotNull PsiMethod method, @NotNull String prefix, @NotNull MethodContract contract) {
     List<ContractValue> conditions = contract.getConditions();
     String conditionsText = StringUtil.join(conditions, c -> c.getPresentationText(method), " and ");
     String returnValueText = contract.getReturnValue().isFail() ? "throws exception" : "returns '" + contract.getReturnValue() + "' value";

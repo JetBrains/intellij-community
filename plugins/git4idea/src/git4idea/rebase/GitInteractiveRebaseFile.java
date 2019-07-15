@@ -2,7 +2,7 @@
 package git4idea.rebase;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
@@ -82,7 +82,7 @@ class GitInteractiveRebaseFile {
 
   @NotNull
   private static String adjustFilePath(@NotNull String file) {
-    if (SystemInfo.isWindows && file.startsWith(CYGDRIVE_PREFIX)) {
+    if (SystemInfoRt.isWindows && file.startsWith(CYGDRIVE_PREFIX)) {
       final int prefixSize = CYGDRIVE_PREFIX.length();
       return file.substring(prefixSize, prefixSize + 1) + ":" + file.substring(prefixSize + 1);
     }

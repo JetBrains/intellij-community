@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.provider;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +9,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgContentRevision;
@@ -124,10 +110,10 @@ public class HgMergeProvider implements MergeProvider {
     if (baseRevisionNumber != null) {
       final HgContentRevision base = HgContentRevision.create(myProject, hgFile, baseRevisionNumber);
       //if file doesn't exist in ancestor revision the base revision should be empty
-      mergeData.ORIGINAL = base.getContent() != null ? base.getContentAsBytes() : ArrayUtil.EMPTY_BYTE_ARRAY;
+      mergeData.ORIGINAL = base.getContent() != null ? base.getContentAsBytes() : ArrayUtilRt.EMPTY_BYTE_ARRAY;
     }
     else { // no base revision means that the file was added simultaneously with different content in both repositories
-      mergeData.ORIGINAL = ArrayUtil.EMPTY_BYTE_ARRAY;
+      mergeData.ORIGINAL = ArrayUtilRt.EMPTY_BYTE_ARRAY;
     }
     final HgContentRevision server = HgContentRevision.create(myProject, hgFile, serverRevisionNumber);
     mergeData.LAST = server.getContentAsBytes();

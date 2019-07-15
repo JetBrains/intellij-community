@@ -20,7 +20,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.ReferenceSetBase;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
@@ -203,7 +203,7 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
     public Object[] getVariants() {
       ExtensionPoint extensionPoint = myExtension.getExtensionPoint();
       if (extensionPoint == null) {
-        return ArrayUtil.EMPTY_OBJECT_ARRAY;
+        return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
       }
 
       List<ExtensionCandidate> candidates = locateExtensionsByExtensionPoint(extensionPoint);

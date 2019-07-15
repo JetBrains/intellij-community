@@ -15,6 +15,7 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,7 +36,7 @@ import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-public class ApplicationInfoImpl extends ApplicationInfoEx {
+public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myCodeName;
   private String myMajorVersion;
   private String myMinorVersion;
@@ -50,8 +51,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myShortCompanyName;
   private String myCompanyUrl = "https://www.jetbrains.com/";
   private Color myProgressColor;
-  private Color myCopyrightForeground = JBColor.BLACK;
-  private Color myAboutForeground = JBColor.BLACK;
+  private Color myCopyrightForeground;
+  private Color myAboutForeground;
   private Color myAboutLinkColor;
   private Rectangle myAboutLogoRect;
   private String myProgressTailIconName;
@@ -108,7 +109,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String mySubscriptionTipsKey;
   private boolean mySubscriptionTipsAvailable;
   private String mySubscriptionAdditionalFormData;
-  private List<ProgressSlide> myProgressSlides = new ArrayList<>();
+  private final List<ProgressSlide> myProgressSlides = new ArrayList<>();
 
   private static final String IDEA_PATH = "/idea/";
   private static final String ELEMENT_VERSION = "version";
@@ -327,30 +328,36 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
     return myAboutImageUrl;
   }
 
+  @Override
   public Color getProgressColor() {
     return myProgressColor;
   }
 
   public Color getCopyrightForeground() {
-    return myCopyrightForeground;
+    return ObjectUtils.notNull(myCopyrightForeground, JBColor.BLACK);
   }
 
+  @Override
   public int getProgressHeight() {
     return myProgressHeight;
   }
 
+  @Override
   public int getProgressY() {
     return myProgressY;
   }
 
+  @Override
   public int getLicenseOffsetX() {
     return myLicenseOffsetX;
   }
 
+  @Override
   public int getLicenseOffsetY() {
     return myLicenseOffsetY;
   }
 
+  @Override
   @Nullable
   public Icon getProgressTailIcon() {
     if (myProgressTailIcon == null && myProgressTailIconName != null) {
@@ -525,7 +532,7 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
 
   @Override
   public Color getAboutForeground() {
-    return myAboutForeground;
+    return ObjectUtils.notNull(myAboutForeground, JBColor.BLACK);
   }
 
   @Nullable
@@ -888,7 +895,7 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
       String id = element.getTextTrim();
       return StringUtil.isNotEmpty(id) ? id : null;
     });
-    myEssentialPluginsIds = ArrayUtil.toStringArray(essentialPluginsIds);
+    myEssentialPluginsIds = ArrayUtilRt.toStringArray(essentialPluginsIds);
 
     Element statisticsElement = getChild(parentNode, ELEMENT_STATISTICS);
     if (statisticsElement != null) {

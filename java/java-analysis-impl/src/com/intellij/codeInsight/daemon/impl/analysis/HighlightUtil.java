@@ -49,7 +49,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.hash.HashSet;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import gnu.trove.THashMap;
@@ -1179,7 +1179,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
   @Nullable
   private static HighlightInfo checkUnderscores(@NotNull PsiElement expression, @NotNull String text, boolean isInt) {
-    String[] parts = ArrayUtil.EMPTY_STRING_ARRAY;
+    String[] parts = ArrayUtilRt.EMPTY_STRING_ARRAY;
 
     if (isInt) {
       int start = 0;
@@ -2751,7 +2751,7 @@ public class HighlightUtil extends HighlightUtilBase {
   @NotNull
   private static String redIfNotMatch(@Nullable PsiType type, boolean matches) {
     if (matches) return getFQName(type, false);
-    String color = UIUtil.isUnderDarcula() ? "FF6B68" : "red";
+    String color = StartupUiUtil.isUnderDarcula() ? "FF6B68" : "red";
     return "<font color='" + color +"'><b>" + getFQName(type, true) + "</b></font>";
   }
 
@@ -2876,8 +2876,8 @@ public class HighlightUtil extends HighlightUtilBase {
         if (moduleAccessProblem) {
           problem.second.forEach(fix -> QuickFixAction.registerQuickFixAction(info, fix));
         }
-        else if (result.isStaticsScopeCorrect() && resolved instanceof PsiMember) {
-          HighlightFixUtil.registerAccessQuickFixAction((PsiMember)resolved, ref, info, result.getCurrentFileResolveScope());
+        else if (result.isStaticsScopeCorrect() && resolved instanceof PsiJvmMember) {
+          HighlightFixUtil.registerAccessQuickFixAction((PsiJvmMember)resolved, ref, info, result.getCurrentFileResolveScope());
           if (ref instanceof PsiReferenceExpression) {
             QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createRenameWrongRefFix((PsiReferenceExpression)ref));
           }

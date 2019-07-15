@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
@@ -8,7 +6,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -39,14 +37,14 @@ public abstract class RootModelBase implements ModuleRootModel {
   @NotNull
   public String[] getContentRootUrls() {
     Collection<ContentEntry> content = getContent();
-    if (content.isEmpty()) return ArrayUtil.EMPTY_STRING_ARRAY;
+    if (content.isEmpty()) return ArrayUtilRt.EMPTY_STRING_ARRAY;
     List<String> result = new ArrayList<>(content.size());
 
     for (ContentEntry contentEntry : content) {
       result.add(contentEntry.getUrl());
     }
 
-    return ArrayUtil.toStringArray(result);
+    return ArrayUtilRt.toStringArray(result);
   }
 
   @Override
@@ -56,7 +54,7 @@ public abstract class RootModelBase implements ModuleRootModel {
     for (ContentEntry contentEntry : getContent()) {
       result.addAll(contentEntry.getExcludeFolderUrls());
     }
-    return ArrayUtil.toStringArray(result);
+    return ArrayUtilRt.toStringArray(result);
   }
 
   @Override
@@ -87,7 +85,7 @@ public abstract class RootModelBase implements ModuleRootModel {
         }
       }
     }
-    return ArrayUtil.toStringArray(result);
+    return ArrayUtilRt.toStringArray(result);
   }
 
   @Override
@@ -183,7 +181,7 @@ public abstract class RootModelBase implements ModuleRootModel {
   public String[] getDependencyModuleNames() {
     List<String> result = orderEntries().withoutSdk().withoutLibraries().withoutModuleSourceEntries()
       .process(new CollectDependentModules(), new ArrayList<>());
-    return ArrayUtil.toStringArray(result);
+    return ArrayUtilRt.toStringArray(result);
   }
 
   @Override

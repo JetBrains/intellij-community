@@ -17,7 +17,7 @@ package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,7 +89,7 @@ public final class InjectedLanguage {
         initLanguageCache();
       }
       final Set<String> keys = ourLanguageCache.keySet();
-      return ArrayUtil.toStringArray(keys);
+      return ArrayUtilRt.toStringArray(keys);
     }
   }
 

@@ -2,6 +2,7 @@
 package com.intellij.util.containers;
 
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -19,7 +20,7 @@ public class LimitedPool<T> {
 
   private final int myMaxCapacity;
   private final ObjectFactory<T> myFactory;
-  private Object[] myStorage = ArrayUtil.EMPTY_OBJECT_ARRAY;
+  private Object[] myStorage = ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   private int myIndex;
 
   public LimitedPool(int maxCapacity, @NotNull ObjectFactory<T> factory) {

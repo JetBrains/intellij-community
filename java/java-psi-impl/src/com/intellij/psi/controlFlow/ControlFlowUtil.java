@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.controlFlow;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -223,7 +223,7 @@ public class ControlFlowUtil {
     }
     return array;
   }
-                                 
+
   public static boolean isVariableUsed(@NotNull ControlFlow flow, int start, int end, @NotNull PsiVariable variable) {
     List<Instruction> instructions = flow.getInstructions();
     LOG.assertTrue(start >= 0, "flow start");
@@ -1235,7 +1235,7 @@ public class ControlFlowUtil {
   public static boolean isDominator(ControlFlow flow, int maybeDominator, int target) {
     class MyVisitor extends InstructionClientVisitor<Boolean> {
       final BitSet myReachedWithoutDominator = new BitSet();
-      
+
       @Override
       public void visitInstruction(Instruction instruction, int offset, int nextOffset) {
         super.visitInstruction(instruction, offset, nextOffset);
@@ -1262,11 +1262,11 @@ public class ControlFlowUtil {
   }
 
   /**
-   * Returns offsets starting from which the variable could be unassigned 
-   * 
+   * Returns offsets starting from which the variable could be unassigned
+   *
    * @param variable variable to check
    * @param flow control flow
-   * @return a boolean array which values correspond to control flow offset. 
+   * @return a boolean array which values correspond to control flow offset.
    * True value means that variable could be unassigned when execution starts from given offset.
    */
   public static boolean[] getVariablePossiblyUnassignedOffsets(@NotNull PsiVariable variable, @NotNull ControlFlow flow) {
@@ -2225,7 +2225,7 @@ public class ControlFlowUtil {
 
     @NotNull
     int[] getNextOffsets(int offset) {
-      return nextOffsets[offset] != null ? nextOffsets[offset] : ArrayUtil.EMPTY_INT_ARRAY;
+      return nextOffsets[offset] != null ? nextOffsets[offset] : ArrayUtilRt.EMPTY_INT_ARRAY;
     }
 
     int size() {

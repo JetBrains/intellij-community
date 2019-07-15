@@ -3,7 +3,7 @@ package com.intellij.ide;
 
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.PsiNavigationSupport;
-import com.intellij.idea.StartupUtil;
+import com.intellij.idea.SplashManager;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -21,7 +21,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.platform.CommandLineProjectOpenProcessor;
 import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectOpenProcessor;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -106,7 +106,7 @@ public class CommandLineProcessor {
       if (command.equals(starter.getCommandName())) {
         if (starter.canProcessExternalCommandLine()) {
           LOG.info("Processing command with " + starter);
-          starter.processExternalCommandLine(ArrayUtil.toStringArray(args), currentDirectory);
+          starter.processExternalCommandLine(ArrayUtilRt.toStringArray(args), currentDirectory);
         }
         else {
           String title = "Cannot execute command '" + command + "'";
@@ -129,7 +129,7 @@ public class CommandLineProcessor {
 
     for (int i = 0; i < args.size(); i++) {
       String arg = args.get(i);
-      if (arg.equals(StartupUtil.NO_SPLASH)) {
+      if (arg.equals(SplashManager.NO_SPLASH)) {
         continue;
       }
 

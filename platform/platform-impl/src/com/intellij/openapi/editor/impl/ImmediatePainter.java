@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,7 +15,7 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.ui.EditorTextField;
@@ -234,7 +234,7 @@ class ImmediatePainter {
 
   private static boolean isImageValid(VolatileImage image, Component component) {
     GraphicsConfiguration componentConfig = component.getGraphicsConfiguration();
-    if (SystemInfo.isWindows && image instanceof SunVolatileImage) { // JBR-1540
+    if (SystemInfoRt.isWindows && image instanceof SunVolatileImage) { // JBR-1540
       GraphicsConfiguration imageConfig = ((SunVolatileImage)image).getGraphicsConfig();
       if (imageConfig != null && componentConfig != null && imageConfig.getDevice() != componentConfig.getDevice()) return false;
     }

@@ -18,9 +18,15 @@ class Test {
     int j = i;
   }</fold>
 
-  <fold text='/**...*/'>/**ill-formed javadoc
+  <fold text='/**ill-formed javadoc ...*/'>/**ill-formed javadoc
    */</fold>
   void bar(char c) <fold text='{}'>{
+  }</fold>
+
+  <fold text='/** first line ...*/'>/** first line
+   * second line
+   */</fold>
+  void illFormedJavaDocMultilines() <fold text='{}'>{
   }</fold>
 
   <fold text='/**...*/'>/**

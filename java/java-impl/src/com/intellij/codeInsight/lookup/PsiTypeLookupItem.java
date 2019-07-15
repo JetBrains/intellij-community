@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.*;
@@ -14,7 +14,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -223,9 +223,9 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
         if (name != null) {
           PsiClass resolved = JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper().resolveReferencedClass(name, context);
           String[] allStrings;
-          if (!psiClass.getManager().areElementsEquivalent(resolved, psiClass) && !PsiUtil.isInnerClass(psiClass)) {
+          if (!psiClass.getManager().areElementsEquivalent(resolved, psiClass)) {
             // inner class name should be shown qualified if its not accessible by single name
-            allStrings = ArrayUtil.toStringArray(JavaCompletionUtil.getAllLookupStrings(psiClass));
+            allStrings = ArrayUtilRt.toStringArray(JavaCompletionUtil.getAllLookupStrings(psiClass));
           } else {
             allStrings = new String[]{name};
           }

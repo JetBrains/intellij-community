@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging.ui;
 
 import com.google.common.collect.Lists;
@@ -6,7 +6,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CatchingConsumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -53,7 +53,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
                          "</head><body style=\"font-family: Arial,serif; font-size: %dpt; margin: %dpx %dpx;\">",
                          fontSize, m1, m1, fontSize, m2, m2);
   }
-  
+
   @NonNls private static final String TEXT_SUFFIX = "</body></html>";
 
   @NotNull private final Project myProject;
@@ -340,7 +340,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
       }
     }
 
-    if (SystemInfo.isLinux && (containsInOutput(e, "pyconfig.h") || containsInOutput(e, "Python.h"))) {
+    if (SystemInfoRt.isLinux && (containsInOutput(e, "pyconfig.h") || containsInOutput(e, "Python.h"))) {
       return "Make sure that you have installed Python development packages for your operating system.";
     }
 

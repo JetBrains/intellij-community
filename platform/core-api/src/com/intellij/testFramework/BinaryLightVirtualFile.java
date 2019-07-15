@@ -4,7 +4,7 @@ package com.intellij.testFramework;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,10 +17,10 @@ import java.io.OutputStream;
  * In-memory implementation of {@link VirtualFile}.
  */
 public class BinaryLightVirtualFile extends LightVirtualFileBase {
-  private byte[] myContent = ArrayUtil.EMPTY_BYTE_ARRAY;
+  private byte[] myContent = ArrayUtilRt.EMPTY_BYTE_ARRAY;
 
   public BinaryLightVirtualFile(String name) {
-    this(name, ArrayUtil.EMPTY_BYTE_ARRAY);
+    this(name, ArrayUtilRt.EMPTY_BYTE_ARRAY);
   }
 
   public BinaryLightVirtualFile(String name, @NotNull byte[] content) {

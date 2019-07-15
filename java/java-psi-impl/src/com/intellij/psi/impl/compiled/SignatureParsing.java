@@ -4,7 +4,7 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.containers.ContainerUtil;
@@ -70,7 +70,7 @@ public class SignatureParsing {
       bounds.add(bound);
     }
 
-    return pair(parameterName, ArrayUtil.toStringArray(bounds));
+    return pair(parameterName, ArrayUtilRt.toStringArray(bounds));
   }
 
   @Nullable

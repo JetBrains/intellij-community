@@ -8,7 +8,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
@@ -163,7 +163,7 @@ public class VcsFileUtil {
   }
 
   public static String getRelativeFilePath(String file, @NotNull final VirtualFile baseDir) {
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       file = file.replace('\\', '/');
     }
     final String basePath = baseDir.getPath();

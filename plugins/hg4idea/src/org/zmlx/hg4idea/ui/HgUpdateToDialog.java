@@ -24,7 +24,7 @@ public class HgUpdateToDialog extends HgCommonDialogWithChoices {
 
   public HgUpdateToDialog(Project project, @NotNull Collection<HgRepository> repos, @Nullable HgRepository selectedRepo) {
     super(project, repos, selectedRepo);
-    myBranchesBorderPanel.setBorder(IdeBorderFactory.createTitledBorder("Switch to", true));
+    myBranchesBorderPanel.setBorder(IdeBorderFactory.createTitledBorder("Switch to"));
     hgRepositorySelectorComponent.setTitle("Select repository to switch");
     setTitle("Switch Working Directory");
     cleanCbx.setVisible(true);

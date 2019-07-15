@@ -28,8 +28,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.Patches.JDK_BUG_ID_8147994;
 import static java.awt.event.MouseEvent.*;
@@ -98,7 +98,7 @@ public final class IdeMouseEventDispatcher {
     }
 
     // search in main keymap
-    KeymapManager keymapManager = KeymapManagerImpl.ourKeymapManagerInitialized ? KeymapManager.getInstance() : null;
+    KeymapManager keymapManager = KeymapManagerImpl.isKeymapManagerInitialized() ? KeymapManager.getInstance() : null;
     if (keymapManager != null) {
       Keymap keymap = keymapManager.getActiveKeymap();
       ActionManager actionManager = ActionManager.getInstance();
@@ -237,7 +237,7 @@ public final class IdeMouseEventDispatcher {
     if (ignore) return false;
 
     // avoid "cyclic component initialization error" in case of dialogs shown because of component initialization failure
-    if (!KeymapManagerImpl.ourKeymapManagerInitialized) {
+    if (!KeymapManagerImpl.isKeymapManagerInitialized()) {
       return false;
     }
 

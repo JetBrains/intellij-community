@@ -265,7 +265,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
                                                                           moreCommitsRequests.isEmpty()));
 
       Pair<VisiblePack, CommitCountStage> pair =
-        myVcsLogFilterer.filter(dataPack, state.getSortType(), state.getFilters(),
+        myVcsLogFilterer.filter(dataPack, state.getVisiblePack(), state.getSortType(), state.getFilters(),
                                 state.getCommitCount());
 
       VcsLogProgress.updateCurrentKey(new VisiblePackProgressKey(myLogId, false));

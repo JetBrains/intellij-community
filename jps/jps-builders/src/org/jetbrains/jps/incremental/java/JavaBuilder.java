@@ -690,7 +690,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
           @NotNull
           @Override
           public Future<?> executeTask(@NotNull Runnable task) {
-            return SharedThreadPool.getInstance().executeOnPooledThread(task);
+            return SharedThreadPool.getInstance().submit(task);
           }
         };
       }

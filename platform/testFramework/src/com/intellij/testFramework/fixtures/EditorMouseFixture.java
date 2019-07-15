@@ -1,11 +1,9 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import org.intellij.lang.annotations.MagicConstant;
 import org.junit.Assert;
 
@@ -105,7 +103,7 @@ public class EditorMouseFixture {
     Point p = getPoint(visualLine, visualColumn);
     return moveToXY(p.x, p.y);
   }
-  
+
   public EditorMouseFixture dragTo(int visualLine, int visualColumn) {
     Point p = getPoint(visualLine, visualColumn);
     return dragToXY(p.x, p.y);
@@ -151,7 +149,7 @@ public class EditorMouseFixture {
   }
 
   public EditorMouseFixture ctrl() {
-    myModifiers |= SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK;
+    myModifiers |= SystemInfoRt.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK;
     return this;
   }
 

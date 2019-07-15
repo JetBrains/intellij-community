@@ -97,9 +97,11 @@ public class IssueNavigationConfiguration extends SimpleModificationTracker
           }
         }
       }
-      Matcher m = URLUtil.URL_PATTERN.matcher(text);
-      while (m.find()) {
-        addMatch(result, new TextRange(m.start(), m.end()), m.group());
+      TextRange match;
+      int lastOffset = 0;
+      while ((match = URLUtil.findUrl(text, lastOffset, text.length())) != null) {
+        addMatch(result, match, match.subSequence(text).toString());
+        lastOffset = match.getEndOffset();
       }
     }
     catch (ProcessCanceledException e) {

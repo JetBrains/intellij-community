@@ -17,7 +17,7 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -138,7 +138,7 @@ public class JavaVarTypeUtil {
       PsiClassType[] extendsListTypes = parameter.getExtendsListTypes();
       if (extendsListTypes.length == 0) return true;
       PsiType bi = PsiIntersectionType.createIntersection(extendsListTypes);
-      return PsiPolyExpressionUtil.mentionsTypeParameters(bi, ContainerUtil.newHashSet(aClass.getTypeParameters())) ||
+      return PsiTypesUtil.mentionsTypeParameters(bi, ContainerUtil.newHashSet(aClass.getTypeParameters())) ||
              !U.isAssignableFrom(bi);
     }
   }

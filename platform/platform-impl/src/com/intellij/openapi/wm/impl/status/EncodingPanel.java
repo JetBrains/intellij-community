@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -48,7 +48,9 @@ public class EncodingPanel extends EditorBasedStatusBarPopup {
   @Nullable
   @Override
   protected ListPopup createPopup(DataContext context) {
-    return new ChangeFileEncodingAction().createPopup(context);
+    ChangeFileEncodingAction action = new ChangeFileEncodingAction();
+    action.getTemplatePresentation().setText("File Encoding");
+    return action.createPopup(context);
   }
 
   @Override

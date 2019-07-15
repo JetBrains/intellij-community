@@ -17,6 +17,8 @@ interface StatisticsEventLogWriter {
   fun getFiles(): List<File>
 
   fun cleanup()
+
+  fun rollOver()
 }
 
 class StatisticsEventLogFileWriter(private val recorderId: String, private val maxFileSize: String) : StatisticsEventLogWriter {
@@ -64,5 +66,9 @@ class StatisticsEventLogFileWriter(private val recorderId: String, private val m
 
   override fun cleanup() {
     fileAppender?.cleanUp()
+  }
+
+  override fun rollOver() {
+    fileAppender?.rollOver()
   }
 }

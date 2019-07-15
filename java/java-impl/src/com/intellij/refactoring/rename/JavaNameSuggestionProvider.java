@@ -10,7 +10,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.NameUtilCore;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +44,7 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
         }
       }
     }
-    final String[] strings = info != null ? info.names : ArrayUtil.EMPTY_STRING_ARRAY;
+    final String[] strings = info != null ? info.names : ArrayUtilRt.EMPTY_STRING_ARRAY;
     final ArrayList<String> list = new ArrayList<>(Arrays.asList(strings));
     final String[] properlyCased = suggestProperlyCasedName(element);
     if (properlyCased != null) {
@@ -100,7 +100,7 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
       result.add(suggestProperlyCasedName(prefix, NameUtilCore.splitNameIntoWords(name)));
     }
     result.add(suggestProperlyCasedName(prefix, NameUtilCore.splitNameIntoWords(StringUtil.toLowerCase(name))));
-    return ArrayUtil.toStringArray(result);
+    return ArrayUtilRt.toStringArray(result);
   }
 
   private static String suggestProperlyCasedName(String prefix, String[] words) {

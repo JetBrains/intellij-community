@@ -523,7 +523,7 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     private JPanel createScopePanel(String[] modifiers, Options options) {
       JPanel panel = new JPanel(new BorderLayout());
       panel.setBorder(BorderFactory.createCompoundBorder(
-        IdeBorderFactory.createTitledBorder(InspectionsBundle.message("inspection.scope.for.title"), true),
+        IdeBorderFactory.createTitledBorder(InspectionsBundle.message("inspection.scope.for.title")),
         BorderFactory.createEmptyBorder(0, 3, 3, 3)));
 
       @SuppressWarnings("UseOfObsoleteCollectionType") Hashtable<Integer, JComponent> sliderLabels = new Hashtable<>();
@@ -562,7 +562,7 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     private JPanel createTagsPanel(String[] tags, Options options) {
       JPanel panel = new JPanel(new GridBagLayout());
       panel.setBorder(BorderFactory.createCompoundBorder(
-        IdeBorderFactory.createTitledBorder(InspectionsBundle.message("inspection.javadoc.required.tags.option.title"), true),
+        IdeBorderFactory.createTitledBorder(InspectionsBundle.message("inspection.javadoc.required.tags.option.title")),
         BorderFactory.createEmptyBorder(0, 3, 3, 3)));
 
       GridBagConstraints gc = new GridBagConstraints();

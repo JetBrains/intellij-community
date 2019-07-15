@@ -146,9 +146,8 @@ public class Switcher extends AnAction implements DumbAware {
       boolean sameShortcut = Comparing.equal(switcher.myTitle, title);
       if (sameShortcut) {
         if (switcher.isCheckboxMode() &&
-            (!ToggleCheckBoxAction.isEnabled() ||
-             e.getInputEvent() instanceof KeyEvent &&
-             KeymapUtil.isEventForAction(((KeyEvent)e.getInputEvent()), TOGGLE_CHECK_BOX_ACTION_ID))) {
+            e.getInputEvent() instanceof KeyEvent &&
+            KeymapUtil.isEventForAction((KeyEvent)e.getInputEvent(), TOGGLE_CHECK_BOX_ACTION_ID)) {
           switcher.toggleShowEditedFiles();
         }
         else {
@@ -1065,7 +1064,7 @@ public class Switcher extends AnAction implements DumbAware {
                 UISettingsState settings = UISettings.getInstance().getState();
                 boolean oldValue = settings.getReuseNotModifiedTabs();
                 settings.setReuseNotModifiedTabs(false);
-                manager.openFile(file, true, true);
+                manager.openFile(file, true, UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE);
                 if (oldValue) {
                   CommandProcessor.getInstance().executeCommand(project, () -> settings.setReuseNotModifiedTabs(true), "", null);
                 }

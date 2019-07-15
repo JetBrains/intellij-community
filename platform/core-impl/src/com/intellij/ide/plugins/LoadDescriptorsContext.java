@@ -18,15 +18,13 @@ import java.util.concurrent.ExecutorService;
 final class LoadDescriptorsContext implements AutoCloseable {
   @NotNull
   private final ExecutorService myExecutorService;
-  private final PluginLoadProgressManager myPluginLoadProgressManager;
 
   private final Collection<Interner<String>> myInterners;
 
   // synchronization will ruin parallel loading, so, string pool is local per thread
   private final ThreadLocal<SafeJdomFactory> myThreadLocalXmlFactory;
 
-  LoadDescriptorsContext(@Nullable PluginLoadProgressManager pluginLoadProgressManager, boolean isParallel) {
-    myPluginLoadProgressManager = pluginLoadProgressManager;
+  LoadDescriptorsContext(boolean isParallel) {
     int maxThreads = isParallel ? (Runtime.getRuntime().availableProcessors() - 1) : 1;
     if (maxThreads > 1) {
       myExecutorService = AppExecutorUtil.createBoundedApplicationPoolExecutor("PluginManager Loader", maxThreads);
@@ -47,11 +45,6 @@ final class LoadDescriptorsContext implements AutoCloseable {
   @NotNull
   ExecutorService getExecutorService() {
     return myExecutorService;
-  }
-
-  @Nullable
-  PluginLoadProgressManager getPluginLoadProgressManager() {
-    return myPluginLoadProgressManager;
   }
 
   @Nullable

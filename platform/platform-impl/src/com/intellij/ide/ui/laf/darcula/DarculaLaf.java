@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula;
 
 import com.intellij.ide.IdeEventQueue;
@@ -14,8 +14,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TableActions;
 import com.intellij.util.Alarm;
-import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,10 +35,7 @@ import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -57,7 +54,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
 
   protected BasicLookAndFeel createBaseLookAndFeel() {
     try {
-      if (SystemInfo.isMac) {
+      if (SystemInfoRt.isMac) {
         final String name = UIManager.getSystemLookAndFeelClassName();
         return (BasicLookAndFeel)Class.forName(name).newInstance();
       }
@@ -103,7 +100,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     try {
       final UIDefaults metalDefaults = new MetalLookAndFeel().getDefaults();
       final UIDefaults defaults = base.getDefaults();
-      if (SystemInfo.isLinux) {
+      if (SystemInfoRt.isLinux) {
         if (!Registry.is("darcula.use.native.fonts.on.linux")) {
           Font font = findFont("DejaVu Sans");
           if (font != null) {
@@ -133,7 +130,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
       defaults.remove("Spinner.arrowButtonBorder");
       defaults.put("Spinner.arrowButtonSize", JBUI.size(16, 5).asUIResource());
       MetalLookAndFeel.setCurrentTheme(createMetalTheme());
-      if (SystemInfo.isLinux && JBUI.isUsrHiDPI()) {
+      if (SystemInfoRt.isLinux && JBUI.isUsrHiDPI()) {
         applySystemFonts(defaults);
       }
       defaults.put("EditorPane.font", defaults.getFont("TextField.font"));
@@ -147,7 +144,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
 
   private static void applySystemFonts(UIDefaults defaults) {
     try {
-      String fqn = UIUtil.getSystemLookAndFeelClassName();
+      String fqn = StartupUiUtil.getSystemLookAndFeelClassName();
       Object systemLookAndFeel = Class.forName(fqn).newInstance();
       final Method superMethod = BasicLookAndFeel.class.getDeclaredMethod("getDefaults");
       superMethod.setAccessible(true);
@@ -204,7 +201,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
 
   @Nullable
   protected String getSystemPrefix() {
-    String osSuffix = SystemInfo.isMac ? "mac" : SystemInfo.isWindows ? "windows" : "linux";
+    String osSuffix = SystemInfoRt.isMac ? "mac" : SystemInfoRt.isWindows ? "windows" : "linux";
     return getPrefix() + "_" + osSuffix;
   }
 

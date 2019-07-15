@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -31,8 +32,8 @@ public class EventLogTestWhitelistPersistence {
     addNewGroup(recorderId, newGroup);
   }
 
-  public static void addTestGroup(@NotNull String recorderId, @NotNull String groupId, @NotNull Set<String> eventData) throws IOException {
-    final WLGroup group = createTestGroup(groupId, eventData);
+  public static void addTestGroup(@NotNull String recorderId, @NotNull String groupId) throws IOException {
+    final WLGroup group = createTestGroup(groupId, Collections.emptySet());
     addNewGroup(recorderId, group);
   }
 

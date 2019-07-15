@@ -256,6 +256,8 @@ public abstract class FindManager {
    */
   public abstract boolean findNextUsageInEditor(@NotNull FileEditor editor);
 
+  public abstract boolean findNextUsageInEditor(@NotNull Editor editor);
+
   /**
    * Performs a "Find Previous" operation after "Find Usages in File" or
    * "Highlight Usages in File".
@@ -265,6 +267,8 @@ public abstract class FindManager {
    *         false if an error occurred during the operation.
    */
   public abstract boolean findPreviousUsageInEditor(@NotNull FileEditor editor);
+
+  public abstract boolean findPreviousUsageInEditor(@NotNull Editor editor);
 
   @MagicConstant(valuesFromClass = FindManager.PromptResult.class)
   public @interface PromptResultValue {}

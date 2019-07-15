@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.replaceConstructorWithFactory;
 
 import com.intellij.ide.util.TreeClassChooser;
@@ -14,7 +14,7 @@ import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.JavaReferenceEditorUtil;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 
@@ -132,7 +132,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
         parent = parent.getParent();
       }
 
-      myTargetClassNameCombo = new JComboBox(ArrayUtil.toStringArray(list));
+      myTargetClassNameCombo = new JComboBox(ArrayUtilRt.toStringArray(list));
       JLabel label = new JLabel(RefactoringBundle.message("replace.constructor.with.factory.target.fq.name"));
       label.setLabelFor(myTargetClassNameCombo.getEditor().getEditorComponent());
       targetClassPanel.add(label, BorderLayout.NORTH);

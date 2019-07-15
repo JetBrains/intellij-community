@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.newvfs.events;
 
+import com.intellij.openapi.vfs.SavingRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +36,13 @@ public abstract class VFileEvent {
 
   public boolean isFromRefresh() {
     return myIsFromRefresh;
+  }
+
+  /**
+   * Returns {@code true} if the VFS change described by the event is the save of a document.
+   */
+  public boolean isFromSave() {
+    return myRequestor instanceof SavingRequestor;
   }
 
   public Object getRequestor() {

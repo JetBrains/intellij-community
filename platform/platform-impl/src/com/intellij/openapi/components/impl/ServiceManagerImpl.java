@@ -68,7 +68,7 @@ public final class ServiceManagerImpl implements Disposable {
 
   @ApiStatus.Internal
   public static void processAllDescriptors(@NotNull Consumer<? super ServiceDescriptor> consumer, @NotNull ComponentManager componentManager) {
-    for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins(null)) {
+    for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins()) {
       IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)plugin;
       List<ServiceDescriptor> serviceDescriptors;
       if (componentManager instanceof Application) {
@@ -87,7 +87,7 @@ public final class ServiceManagerImpl implements Disposable {
 
   @ApiStatus.Internal
   public static void processProjectDescriptors(@NotNull BiConsumer<? super ServiceDescriptor, ? super PluginDescriptor> consumer) {
-    for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins(null)) {
+    for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins()) {
       for (ServiceDescriptor serviceDescriptor : ((IdeaPluginDescriptorImpl)plugin).getProjectServices()) {
         consumer.accept(serviceDescriptor, plugin);
       }

@@ -20,7 +20,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -48,12 +48,12 @@ public class AddNamespaceDialog extends DialogWrapper {
         myIcon.setText(null);
         myIcon.setIcon(Messages.getQuestionIcon());
 
-        myURI.setModel(new DefaultComboBoxModel(ArrayUtil.toStringArray(uriList)));
+      myURI.setModel(new DefaultComboBoxModel(ArrayUtilRt.toStringArray(uriList)));
         myURI.setSelectedItem("");
         myURI.setEditable(mode == Mode.EDITABLE || mode == Mode.URI_EDITABLE);
         addUpdateListener(myURI);
 
-        myPrefix.setModel(new DefaultComboBoxModel(ArrayUtil.toStringArray(unresolvedPrefixes)));
+      myPrefix.setModel(new DefaultComboBoxModel(ArrayUtilRt.toStringArray(unresolvedPrefixes)));
         myPrefix.setEditable(mode == Mode.EDITABLE || mode == Mode.PREFIX_EDITABLE);
         if (unresolvedPrefixes.size() == 1) {
             myPrefix.setSelectedItem(unresolvedPrefixes.iterator().next());

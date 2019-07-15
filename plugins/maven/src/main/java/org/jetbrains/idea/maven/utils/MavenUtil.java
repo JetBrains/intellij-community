@@ -36,7 +36,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -538,7 +538,7 @@ public class MavenUtil {
       }
     }
 
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       File home = fromBrew();
       if (home != null) {
         return home;
@@ -548,7 +548,7 @@ public class MavenUtil {
         return home;
       }
     }
-    else if (SystemInfo.isLinux) {
+    else if (SystemInfoRt.isLinux) {
       File home = new File("/usr/share/maven");
       if (isValidMavenHome(home)) {
         return home;

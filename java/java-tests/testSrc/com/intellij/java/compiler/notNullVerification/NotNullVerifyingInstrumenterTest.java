@@ -7,12 +7,13 @@ import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.compiler.instrumentation.InstrumenterClassWriter;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
@@ -416,7 +417,7 @@ public abstract class NotNullVerifyingInstrumenterTest {
     File classesDir = tempDir.newFolder("output");
     List<String> args = ContainerUtil.newArrayList("-cp", annotation.classes.getPath());
     if (withDebugInfo) args.add("-g");
-    IdeaTestUtil.compileFile(testFile, classesDir, ArrayUtil.toStringArray(args));
+    IdeaTestUtil.compileFile(testFile, classesDir, ArrayUtilRt.toStringArray(args));
 
     File[] files = classesDir.listFiles();
     assertNotNull(files);
@@ -429,7 +430,7 @@ public abstract class NotNullVerifyingInstrumenterTest {
       int flags = InstrumenterClassWriter.getAsmClassWriterFlags(InstrumenterClassWriter.getClassFileVersion(reader));
       ClassWriter writer = new ClassWriter(reader, flags);
       modified |= NotNullVerifyingInstrumenter.processClassFile(reader, writer, notNullAnnotations);
-      String className = FileUtil.getNameWithoutExtension(file.getName());
+      String className = FileUtilRt.getNameWithoutExtension(file.getName());
       Class aClass = classLoader.doDefineClass(className, writer.toByteArray());
       if (className.equals(testName)) {
         mainClass = aClass;

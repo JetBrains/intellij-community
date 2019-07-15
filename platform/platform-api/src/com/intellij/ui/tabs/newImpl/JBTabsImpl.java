@@ -32,7 +32,6 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.LazyUiDisposable;
 import com.jetbrains.rd.util.lifetime.Lifetime;
-import com.jetbrains.rd.util.reactive.PropertyCombinatorsKt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,9 +49,8 @@ import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
 
-import static com.intellij.openapi.rd.RdIdeaKt.childAtMouse;
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
-import static com.jetbrains.rdclient.util.idea.DisposableExKt.createLifetime;
+import static com.intellij.openapi.rd.DisposableExKt.createLifetime;
 
 public class JBTabsImpl extends JComponent
   implements JBTabsEx, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation, Queryable,
@@ -266,7 +264,7 @@ public class JBTabsImpl extends JComponent
       int units = event.getUnitsToScroll();
 
       // Workaround for 'shaking' scrolling with touchpad when some events have units with opposite (wrong) sign
-      if (SystemInfo.isMac && event.getModifiers() == InputEvent.SHIFT_MASK) return;
+      if (SystemInfoRt.isMac && event.getModifiers() == InputEvent.SHIFT_MASK) return;
 
       if (units == 0) return;
       if (mySingleRowLayout.myLastSingRowLayout != null) {
@@ -396,7 +394,7 @@ public class JBTabsImpl extends JComponent
       entry.getKey().revalidate();
     }
     boolean oldHideTabsIfNeeded = mySingleRowLayout instanceof ScrollableSingleRowLayout;
-    boolean newHideTabsIfNeeded = UISettings.getInstance().getHideTabsIfNeed();
+    boolean newHideTabsIfNeeded = UISettings.getInstance().getHideTabsIfNeeded();
     if (oldHideTabsIfNeeded != newHideTabsIfNeeded) {
       updateRowLayout();
     }
@@ -853,6 +851,7 @@ public class JBTabsImpl extends JComponent
 
     info.getChangeSupport().addPropertyChangeListener(this);
     final TabLabel label = createTabLabel(info);
+    Disposer.register(this, label);
     myInfo2Label.put(info, label);
     myInfo2Page.put(info, new AccessibleTabPage(info));
 
@@ -2014,6 +2013,11 @@ public class JBTabsImpl extends JComponent
     }
     else {
       queueForRemove(tabComponent);
+    }
+
+    TabLabel tabLabel = myInfo2Label.get(info);
+    if (tabLabel != null) {
+      Disposer.dispose(tabLabel);
     }
 
     myVisibleInfos.remove(info);

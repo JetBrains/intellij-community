@@ -617,7 +617,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
       }
     };
 
-    HTMLEditorKit kit = new UIUtil.JBHtmlEditorKit() {
+    HTMLEditorKit kit = new JBHtmlEditorKit() {
       final HTMLFactory factory = new HTMLFactory() {
         @Override
         public View create(Element elem) {

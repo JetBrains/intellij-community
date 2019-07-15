@@ -21,6 +21,6 @@ public class JBImageIcon extends ImageIcon {
   public synchronized void paintIcon(final Component c, final Graphics g, final int x, final int y) {
     final ImageObserver observer = getImageObserver();
 
-    UIUtil.drawImage(g, getImage(), x, y, observer == null ? c : observer);
+    StartupUiUtil.drawImage(g, getImage(), x, y, observer == null ? c : observer);
   }
 }

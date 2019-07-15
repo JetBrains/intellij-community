@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.table;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ExpirableRunnable;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
@@ -63,6 +63,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private int myMaxItemsForSizeCalculation = Integer.MAX_VALUE;
 
   private TableCell rollOverCell;
+
+  private final Color disabledForeground = JBColor.namedColor("Table.disabledForeground", JBColor.gray);
 
   public JBTable() {
     this(new DefaultTableModel());
@@ -403,14 +405,21 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   @Override
   public void paint(@NotNull Graphics g) {
-    if (!isEnabled()) {
-      g = new Grayer((Graphics2D)g, getBackground());
-    }
     super.paint(g);
     if (myBusyIcon != null) {
       myBusyIcon.updateLocation(this);
     }
   }
+
+  @Override
+  public Color getForeground() {
+    return isEnabled() ? super.getForeground() : disabledForeground;
+  }
+
+  //@Override
+  //public Color getSelectionBackground() {
+  //  return isEnabled() ? super.getSelectionBackground() : UIUtil.getTableSelectionBackground(false);
+  //}
 
   public void setPaintBusy(boolean paintBusy) {
     if (myBusy == paintBusy) return;
@@ -573,7 +582,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   protected void processMouseEvent(MouseEvent e) {
     MouseEvent e2 = e;
 
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       e2 = MacUIUtil.fixMacContextMenuIssue(e);
     }
 
@@ -809,6 +818,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   }
 
   protected class JBTableHeader extends JTableHeader {
+
+    private final Color disabledForeground = JBColor.namedColor("TableHeader.disabledForeground", JBColor.gray);
+
     public JBTableHeader() {
       super(JBTable.this.columnModel);
       JBTable.this.addPropertyChangeListener(new PropertyChangeListener() {
@@ -822,14 +834,28 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
 
     @Override
+    protected TableCellRenderer createDefaultRenderer() {
+      TableCellRenderer renderer = super.createDefaultRenderer();
+      if (renderer instanceof JComponent) {
+        JComponent c = (JComponent)renderer;
+        Dimension size = c.getPreferredSize();
+        JBValue.UIInteger height = new JBValue.UIInteger("TableHeader.height", 25);
+        c.setPreferredSize(new Dimension(size.width, height.get()));
+      }
+      return renderer;
+    }
+
+    @Override
     public void paint(@NotNull Graphics g) {
       if (myEnableAntialiasing) {
         GraphicsUtil.setupAntialiasing(g);
       }
-      if (!JBTable.this.isEnabled()) {
-        g = new Grayer((Graphics2D)g, getBackground());
-      }
       super.paint(g);
+    }
+
+    @Override
+    public Color getForeground() {
+      return JBTable.this.isEnabled() ? super.getForeground() : disabledForeground;
     }
 
     @Override

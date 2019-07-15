@@ -27,7 +27,11 @@ class FunctionalExpressionConstraint(private val expression: GrFunctionalExpress
       constraints.add(TypeConstraint(parameters[0], returnType, expression))
     }
     else {
-      val samReturnType = callSamReturnType() ?: return true
+      val samReturnType = callSamReturnType()
+      if (samReturnType == null) {
+        constraints.add(TypeConstraint(leftType, TypesUtil.createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, expression), expression))
+        return true
+      }
       if (returnType == null || returnType == PsiType.VOID) {
         return true
       }

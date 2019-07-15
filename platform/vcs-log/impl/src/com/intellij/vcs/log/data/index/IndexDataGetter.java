@@ -184,9 +184,9 @@ public class IndexDataGetter {
     return executeAndCatch(() -> {
       TIntHashSet result = new TIntHashSet();
       for (FilePath path : paths) {
-        Set<Integer> commits = createFileHistoryData(path).getCommits();
+        Set<Integer> commits = createFileHistoryData(path).build().getCommits();
         if (commits.isEmpty() && !path.isDirectory()) {
-          commits = createFileHistoryData(VcsUtil.getFilePath(path.getPath(), true)).getCommits();
+          commits = createFileHistoryData(VcsUtil.getFilePath(path.getPath(), true)).build().getCommits();
         }
         TroveUtil.addAll(result, commits);
       }
@@ -269,7 +269,7 @@ public class IndexDataGetter {
   @SuppressWarnings("unused")
   @NotNull
   public Set<FilePath> getKnownNames(@NotNull FilePath path) {
-    return executeAndCatch(() -> createFileHistoryData(path).getFiles(), Collections.emptySet());
+    return executeAndCatch(() -> createFileHistoryData(path).build().getFiles(), Collections.emptySet());
   }
 
   @NotNull

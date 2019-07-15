@@ -88,13 +88,11 @@ class SameNamesJoiner implements TreeStructureProvider {
     return false;
   }
 
-  private class Joined{
-    private final String myName;
+  private static class Joined{
     private final PsiFile myFile;
 
     Joined(PsiFile file) {
       myFile = file;
-      myName = file.getName();
     }
 
     public String toString() {
@@ -112,7 +110,7 @@ class SameNamesJoiner implements TreeStructureProvider {
     }
   }
 
-  private class JoinedNode extends ProjectViewNode<Joined>{
+  private static class JoinedNode extends ProjectViewNode<Joined>{
     Collection<AbstractTreeNode> myChildren;
 
     @Override

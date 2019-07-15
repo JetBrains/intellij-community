@@ -13,4 +13,9 @@ public class YamlJsonEnabler implements JsonSchemaEnabler {
     FileType type = file.getFileType();
     return type instanceof LanguageFileType && ((LanguageFileType)type).getLanguage() instanceof YAMLLanguage;
   }
+
+  @Override
+  public boolean canBeSchemaFile(VirtualFile file) {
+    return isEnabledForFile(file);
+  }
 }

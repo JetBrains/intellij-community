@@ -367,7 +367,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     if (clickable != null) {
       class ToolbarClicksCollectorListener extends MouseAdapter {
         @Override
-        public void mouseClicked(MouseEvent e) {ToolbarClicksCollector.record(action, myPlace);}
+        public void mouseClicked(MouseEvent e) {ToolbarClicksCollector.record(action, myPlace, e, getDataContext());}
       }
       if (Arrays.stream(clickable.getMouseListeners()).noneMatch(ml -> ml instanceof ToolbarClicksCollectorListener)) {
         clickable.addMouseListener(new ToolbarClicksCollectorListener());

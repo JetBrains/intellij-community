@@ -56,7 +56,6 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
-import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent;
@@ -2389,15 +2388,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void updateEditorCursor() {
-    if (IdeGlassPaneImpl.hasPreProcessedCursor(myEditorComponent)) return;
-
     Cursor customCursor = getCustomCursor();
     if (customCursor == null && myCursorSetExternally && myEditorComponent.isCursorSet()) {
       Cursor cursor = myEditorComponent.getCursor();
       if (cursor != Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR) &&
           cursor != Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR) &&
           cursor != EMPTY_CURSOR &&
-          (!SystemInfo.isMac || cursor != MacUIUtil.getInvertedTextCursor())) {
+          (!SystemInfoRt.isMac || cursor != MacUIUtil.getInvertedTextCursor())) {
         // someone else has set cursor, don't touch it
         return;
       }
@@ -3645,7 +3642,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private void replaceInputMethodText(@NotNull InputMethodEvent e) {
-      if (myNeedToSelectPreviousChar && SystemInfo.isMac &&
+      if (myNeedToSelectPreviousChar && SystemInfoRt.isMac &&
           (Registry.is("ide.mac.pressAndHold.brute.workaround") || Registry.is("ide.mac.pressAndHold.workaround") &&
                                                                    (hasRelevantCommittedText(e) || e.getCaret() == null))) {
         // This is required to support input of accented characters using press-and-hold method (http://support.apple.com/kb/PH11264).
@@ -4833,7 +4830,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public Insets getBorderInsets(Component c) {
       Container splitters = SwingUtilities.getAncestorOfClass(EditorsSplitters.class, c);
-      boolean thereIsSomethingAbove = !SystemInfo.isMac || UISettings.getInstance().getShowMainToolbar() || UISettings.getInstance().getShowNavigationBar() ||
+      boolean thereIsSomethingAbove = !SystemInfoRt.isMac || UISettings.getInstance().getShowMainToolbar() || UISettings.getInstance().getShowNavigationBar() ||
                                       toolWindowIsNotEmpty();
       //noinspection ConstantConditions
       Component header = myHeaderPanel == null ? null : ArrayUtil.getFirstElement(myHeaderPanel.getComponents());

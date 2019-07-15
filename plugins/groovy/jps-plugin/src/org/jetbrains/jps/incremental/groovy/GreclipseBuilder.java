@@ -7,7 +7,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -255,7 +255,7 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
       Method compileMethod = mainClass.getMethod("compile", String[].class);
 
       Object main = constructor.newInstance(new PrintWriter(out), new PrintWriter(err), outputs);
-      return (Boolean)compileMethod.invoke(main, new Object[]{ArrayUtil.toStringArray(args)});
+      return (Boolean)compileMethod.invoke(main, new Object[]{ArrayUtilRt.toStringArray(args)});
     }
     catch (Exception e) {
       context.processMessage(CompilerMessage.createInternalBuilderError(getPresentableName(), e));

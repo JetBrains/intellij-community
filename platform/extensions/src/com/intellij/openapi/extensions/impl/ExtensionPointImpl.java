@@ -249,8 +249,9 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   }
 
   @Override
-  public void forEachExtension(Consumer<T> extensionConsumer) {
-    for (T t : getExtensionList()) {
+  public void forEachExtensionSafe(Consumer<T> extensionConsumer) {
+    for (T t : this) {
+      if (t == null) break;
       try {
         extensionConsumer.accept(t);
       }

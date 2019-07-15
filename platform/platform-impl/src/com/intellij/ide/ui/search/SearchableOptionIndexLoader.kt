@@ -3,7 +3,9 @@ package com.intellij.ide.ui.search
 
 import com.intellij.openapi.util.Couple
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ResourceUtil
+import com.intellij.util.containers.MultiMap
 import gnu.trove.THashMap
 import gnu.trove.THashSet
 import java.net.URL
@@ -12,6 +14,8 @@ internal class SearchableOptionIndexLoader(val registrar: SearchableOptionsRegis
   // option => array of packed OptionDescriptor
   @Suppress("CanBePrimaryConstructorProperty")
   val storage: MutableMap<CharSequence, LongArray> = storage
+
+  val optionsTopHit: MultiMap<String, String> = MultiMap.create()
 
   val highlightOptionToSynonym: MutableMap<Couple<String>, MutableSet<String>> = THashMap()
 
@@ -27,6 +31,10 @@ internal class SearchableOptionIndexLoader(val registrar: SearchableOptionsRegis
           val hit = optionElement.getAttributeValue("hit")
           putOptionWithHelpId(option, id, groupName, hit, path)
         }
+        for (optionElement in configurable.getChildren("option_top_hit")) {
+          val option = optionElement.getAttributeValue("name") ?: continue
+          optionsTopHit.putValue(id, StringUtil.unescapeStringCharacters(option))
+        }
       }
     }
 
@@ -34,7 +42,7 @@ internal class SearchableOptionIndexLoader(val registrar: SearchableOptionsRegis
   }
 
   private fun loadSynonyms() {
-    val root = JDOMUtil.load(ResourceUtil.getResource(SearchableOptionsRegistrar::class.java, "/search/", "synonyms.xml"))
+    val root = JDOMUtil.load(ResourceUtil.getResourceAsStream(SearchableOptionsRegistrar::class.java, "/search/", "synonyms.xml"))
     for (configurable in root.getChildren("configurable")) {
       val id = configurable.getAttributeValue("id") ?: continue
       val groupName = configurable.getAttributeValue("configurable_name")

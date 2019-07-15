@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.merge;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -27,7 +27,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.vcs.ViewUpdateInfoNotification;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitRevisionNumber;
@@ -298,7 +298,7 @@ public class GitMergeUtil {
           VirtualFile file = path.getVirtualFile();
           if (file == null || !file.isValid()) {
             LOG.debug("File not found: " + path);
-            return ArrayUtil.EMPTY_BYTE_ARRAY;
+            return ArrayUtilRt.EMPTY_BYTE_ARRAY;
           }
 
           return file.contentsToByteArray();
@@ -306,7 +306,7 @@ public class GitMergeUtil {
       }
       catch (IOException e) {
         LOG.error(e);
-        return ArrayUtil.EMPTY_BYTE_ARRAY;
+        return ArrayUtilRt.EMPTY_BYTE_ARRAY;
       }
     }
   }
@@ -326,7 +326,7 @@ public class GitMergeUtil {
           || m.contains("is in the index, but not at stage ")
           || m.contains("bad revision")
           || m.startsWith("fatal: Not a valid object name")) {
-        return ArrayUtil.EMPTY_BYTE_ARRAY;
+        return ArrayUtilRt.EMPTY_BYTE_ARRAY;
       }
       else {
         throw e;

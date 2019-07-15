@@ -6,6 +6,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +37,12 @@ public class VcsLogBigRepositoriesList implements PersistentStateComponent<VcsLo
   @Override
   public void loadState(@NotNull State state) {
     synchronized (myLock) {
-      myState = new State(state);
+      if (state.DIFF_RENAME_LIMIT_ONE) {
+        myState = new State(state);
+      } else {
+        myState = new State();
+        myState.DIFF_RENAME_LIMIT_ONE = true;
+      }
     }
   }
 
@@ -81,6 +87,8 @@ public class VcsLogBigRepositoriesList implements PersistentStateComponent<VcsLo
   public static class State {
     @XCollection(elementName = "repository", valueAttributeName = "path")
     public SortedSet<String> REPOSITORIES = ContainerUtil.newTreeSet();
+    @Attribute("diff-rename-limit-one")
+    public boolean DIFF_RENAME_LIMIT_ONE = false;
 
     public State() {
     }

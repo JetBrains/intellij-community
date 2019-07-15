@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.ui.*;
 
 import javax.swing.*;
@@ -140,7 +140,7 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
       }
       else {
         g.setColor(b.isEnabled() ? b.getForeground() : getDisabledTextColor());
-        final int mnemonicIndex = SystemInfo.isMac && !UIManager.getBoolean("Button.showMnemonics") ? -1 : b.getDisplayedMnemonicIndex();
+        final int mnemonicIndex = SystemInfoRt.isMac && !UIManager.getBoolean("Button.showMnemonics") ? -1 : b.getDisplayedMnemonicIndex();
         UIUtilities.drawStringUnderlineCharAt(c, g, text,
                                               mnemonicIndex,
                                               textRect.x,

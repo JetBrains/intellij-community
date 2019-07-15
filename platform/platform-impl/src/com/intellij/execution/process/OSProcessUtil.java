@@ -2,7 +2,6 @@
 
 package com.intellij.execution.process;
 
-import com.intellij.execution.MachineType;
 import com.intellij.execution.process.impl.ProcessListUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -136,7 +135,7 @@ public class OSProcessUtil {
     return new WinProcess(pid);
   }
 
-  private static String getCurrentProcessId() {
+  public static int getCurrentProcessId() {
     int pid;
 
     if (SystemInfo.isWindows) {
@@ -146,28 +145,15 @@ public class OSProcessUtil {
       pid = UnixProcessManager.getCurrentProcessId();
     }
 
-    return String.valueOf(pid);
+    return pid;
   }
 
   public static String getApplicationPid() {
     if (ourPid == null) {
-      ourPid = getCurrentProcessId();
+      ourPid = String.valueOf(getCurrentProcessId());
     }
 
     return ourPid;
-  }
-
-  @NotNull
-  public static MachineType getProcessMachineType(int pid) {
-    if (SystemInfo.isWindows) {
-      return WinProcessManager.getProcessMachineType(pid);
-    }
-    if (SystemInfo.isLinux) {
-      return UnixProcessManager.getProcessMachineType(pid);
-    }
-    else {
-      throw new IllegalStateException("getProcessMachineType() is not implemented for macOS processes");
-    }
   }
 
   /** @deprecated trivial; use {@link #getProcessList()} directly (to be removed in IDEA 2019) */

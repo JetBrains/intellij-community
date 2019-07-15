@@ -165,7 +165,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       }
       manager.queueActionPerformedEvent(myAction, dataContext, event);
       if (event.getInputEvent() instanceof MouseEvent) {
-        ToolbarClicksCollector.record(myAction, myPlace);
+        ToolbarClicksCollector.record(myAction, myPlace, e, dataContext);
       }
       ActionToolbar toolbar = getActionToolbar();
       if (toolbar != null) {

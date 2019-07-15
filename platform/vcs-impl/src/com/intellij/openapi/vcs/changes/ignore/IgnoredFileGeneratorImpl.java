@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes.ignore;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.NotificationAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,6 +37,7 @@ import java.util.Set;
 
 import static com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.ASKED_MANAGE_IGNORE_FILES_PROPERTY;
 import static com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.MANAGE_IGNORE_FILES_PROPERTY;
+import static java.lang.System.lineSeparator;
 
 public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
 
@@ -76,7 +78,7 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
       File ignoreFile = getIgnoreFile(ignoreFileRoot, ignoreFileName);
 
       if (notify && needAskToManageIgnoreFiles(myProject)) {
-        notifyVcsIgnoreFileManage(myProject, () -> writeToFile(ignoreFileRoot, ignoreFile, ignoreFileContent, true));
+        notifyVcsIgnoreFileManage(myProject, ignoredFileContentProvider, () -> writeToFile(ignoreFileRoot, ignoreFile, ignoreFileContent, true));
       }
       else {
         writeToFile(ignoreFileRoot, ignoreFile, ignoreFileContent, false);
@@ -89,7 +91,7 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
     String projectCharsetName = EncodingProjectManager.getInstance(myProject).getDefaultCharsetName();
     try {
       if (append) {
-        FileUtil.writeToFile(ignoreFile, ignoreFileContent.getBytes(projectCharsetName), true);
+        FileUtil.writeToFile(ignoreFile, (lineSeparator() + ignoreFileContent).getBytes(projectCharsetName), true);
       }
       else {
         //create ignore file with VFS to prevent externally added files detection
@@ -118,6 +120,7 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
   }
 
   private static void notifyVcsIgnoreFileManage(@NotNull Project project,
+                                                @NotNull IgnoredFileContentProvider ignoredFileContentProvider,
                                                 @NotNull Runnable writeToIgnoreFile) {
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(project);
     VcsApplicationSettings applicationSettings = VcsApplicationSettings.getInstance();
@@ -125,7 +128,8 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
     VcsNotifier.getInstance(project).notifyMinorInfo(
       true,
       "",
-      VcsBundle.message("ignored.file.manage.message"),
+      VcsBundle.message("ignored.file.manage.message",
+                        ApplicationNamesInfo.getInstance().getFullProductName(), ignoredFileContentProvider.getFileName()),
       NotificationAction.create(VcsBundle.message("ignored.file.manage.this.project"), (event, notification) -> {
         writeToIgnoreFile.run();
         propertiesComponent.setValue(MANAGE_IGNORE_FILES_PROPERTY, true);

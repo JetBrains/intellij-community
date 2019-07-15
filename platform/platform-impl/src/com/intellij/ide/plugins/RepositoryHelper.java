@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.containers.ContainerUtil;
@@ -241,7 +242,7 @@ public class RepositoryHelper {
       }
       if (node.getName() == null) {
         String url = node.getDownloadUrl();
-        node.setName(FileUtil.getNameWithoutExtension(url.substring(url.lastIndexOf('/') + 1)));
+        node.setName(FileUtilRt.getNameWithoutExtension(url.substring(url.lastIndexOf('/') + 1)));
       }
 
       IdeaPluginDescriptor previous = result.get(pluginId);

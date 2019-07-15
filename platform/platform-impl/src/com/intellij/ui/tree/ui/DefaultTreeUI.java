@@ -3,6 +3,7 @@ package com.intellij.ui.tree.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.tree.TreeNodeBackgroundSupplier;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
@@ -13,20 +14,19 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.beans.PropertyChangeListener;
-import java.lang.reflect.Method;
-import java.util.Collection;
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.AbstractLayoutCache;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
+import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.beans.PropertyChangeListener;
+import java.lang.reflect.Method;
+import java.util.Collection;
 
-import static com.intellij.openapi.util.SystemInfo.isMac;
 import static com.intellij.openapi.util.registry.Registry.is;
 import static com.intellij.ui.components.JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS;
 import static com.intellij.util.ReflectionUtil.getMethod;
@@ -189,7 +189,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
             JScrollBar vsb = pane.getVerticalScrollBar();
             if (vsb != null && vsb.isVisible() && !vsb.isOpaque()) {
               Boolean property = UIUtil.getClientProperty(vsb, IGNORE_SCROLLBAR_IN_INSETS);
-              if (isMac ? Boolean.FALSE.equals(property) : !Boolean.TRUE.equals(property)) {
+              if (SystemInfoRt.isMac ? Boolean.FALSE.equals(property) : !Boolean.TRUE.equals(property)) {
                 vsbWidth = vsb.getWidth(); // to calculate a right margin of a renderer component
               }
             }

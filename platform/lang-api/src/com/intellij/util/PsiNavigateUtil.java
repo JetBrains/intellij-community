@@ -26,6 +26,10 @@ import org.jetbrains.annotations.Nullable;
 
 public class PsiNavigateUtil {
   public static void navigate(@Nullable final PsiElement psiElement) {
+    navigate(psiElement, true);
+  }
+
+  public static void navigate(@Nullable final PsiElement psiElement, boolean requestFocus) {
     if (psiElement != null && psiElement.isValid()) {
       final PsiElement navigationElement = psiElement.getNavigationElement();
       final int offset = navigationElement instanceof PsiFile ? -1 : navigationElement.getTextOffset();
@@ -41,7 +45,7 @@ public class PsiNavigateUtil {
       else {
         return;
       }
-      navigatable.navigate(true);
+      navigatable.navigate(requestFocus);
     }
   }
 }

@@ -11,7 +11,7 @@ import com.intellij.openapi.ui.BrowseFolderRunnable;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
@@ -79,7 +79,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
     for (Sdk jdk : allJDKs) {
       String homePath = jdk.getHomePath();
 
-      if (!SystemInfo.isMac) {
+      if (!SystemInfoRt.isMac) {
         final File jre = new File(jdk.getHomePath(), "jre");
         if (jre.isDirectory()) {
           homePath = jre.getPath();

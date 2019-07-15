@@ -1,0 +1,19 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+dependencies {
+  compile "com.android.tools.build:builder-model:3.3.0"
+  compile "com.android.tools.build:builder-test-api:3.3.0"
+  compile "com.android.tools:common:26.3.0"
+  compile "com.android.tools:sdklib:26.3.0"
+  compile 'com.android.tools:annotations:26.3.0'
+  compile 'com.android.tools.ddms:ddmlib:26.3.0'
+
+  compile 'com.google.guava:guava:25.1-jre'
+  compile "net.sf.kxml:kxml2:2.3.0"
+  compile "org.bouncycastle:bcpkix-jdk15on:1.61"
+  compile "javax.inject:javax.inject:1"
+  compile files(org.gradle.internal.jvm.Jvm.current().toolsJar)
+  compile files("$libs/aia-manifest-proto-1.0-jarjar.jar")
+
+  compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+  compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+}

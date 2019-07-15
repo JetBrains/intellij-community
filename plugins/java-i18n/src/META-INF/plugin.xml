@@ -2,6 +2,7 @@
   <id>com.intellij.java-i18n</id>
   <name>Java Internationalization</name>
   <depends>com.intellij.properties</depends>
+  <depends>com.intellij.modules.java</depends>
   <depends>com.intellij.modules.platform</depends>
   <description>
     Provides code inspections and corresponding quick fixes for internationalization in Java source code.

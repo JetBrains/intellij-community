@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.editor;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,7 +12,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,7 +37,7 @@ public final class UIFormEditorProvider implements FileEditorProvider, DumbAware
   @NotNull
   public FileEditorState readState(@NotNull Element element, @NotNull final Project project, @NotNull final VirtualFile file){
     //TODO[anton,vova] implement
-    return new MyEditorState(-1, ArrayUtil.EMPTY_STRING_ARRAY);
+    return new MyEditorState(-1, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   @Override

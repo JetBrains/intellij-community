@@ -577,6 +577,21 @@ def usage() {
 '''
   }
 
+  void testTypeSubstitutionWithClosureArg() {
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+
+def <T> T foo(T t) {
+    return t
+}
+
+@CompileStatic
+def m() {
+    foo( {print 'aa'}).call()
+}
+'''
+  }
+
   void 'test assign empty list literal to Set'() {
     testHighlighting 'Set<String> x = []'
   }

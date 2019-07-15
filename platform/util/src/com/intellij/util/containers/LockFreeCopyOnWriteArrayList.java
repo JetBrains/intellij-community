@@ -24,10 +24,10 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
   @NotNull private volatile Object[] array;
 
   LockFreeCopyOnWriteArrayList() {
-    array = ArrayUtil.EMPTY_OBJECT_ARRAY;
+    array = ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
   LockFreeCopyOnWriteArrayList(@NotNull Collection<? extends E> c) {
-    array = c.isEmpty() ? ArrayUtil.EMPTY_OBJECT_ARRAY : c.toArray();
+    array = c.isEmpty() ? ArrayUtilRt.EMPTY_OBJECT_ARRAY : c.toArray();
   }
 
   @NotNull
@@ -72,7 +72,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
    * @return index of element, or -1 if absent
    */
   private static int indexOf(Object o, @NotNull Object[] elements, int index, int fence) {
-    return ArrayUtil.indexOf(elements, o, index, fence);
+    return ArrayUtilRt.indexOf(elements, o, index, fence);
   }
 
   /**

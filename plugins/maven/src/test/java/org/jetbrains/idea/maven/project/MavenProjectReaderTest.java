@@ -3,13 +3,13 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.maven.MavenTestCase;
@@ -1189,7 +1189,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   public void testActivatingProfilesByOS() {
-    String os = SystemInfo.isWindows ? "windows" : SystemInfo.isMac ? "mac" : "unix";
+    String os = SystemInfoRt.isWindows ? "windows" : SystemInfoRt.isMac ? "mac" : "unix";
 
     createProjectPom("<profiles>" +
                      "  <profile>" +
@@ -1596,7 +1596,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
   private void assertActiveProfiles(List<String> explicitProfiles, String... expected) {
     MavenProjectReaderResult result =
-      readProject(myProjectPom, new NullProjectLocator(), ArrayUtil.toStringArray(explicitProfiles));
+      readProject(myProjectPom, new NullProjectLocator(), ArrayUtilRt.toStringArray(explicitProfiles));
     assertUnorderedElementsAreEqual(result.activatedProfiles.getEnabledProfiles(), expected);
   }
 

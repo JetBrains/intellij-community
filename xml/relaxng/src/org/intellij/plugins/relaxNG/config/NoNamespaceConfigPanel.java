@@ -28,7 +28,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
@@ -120,12 +120,12 @@ class NoNamespaceConfigPanel extends HectorComponentPanel {
 
   private String getMapping() {
     final String s = mySchemaFile.getText().trim();
-    return s.length() > 0 ? VfsUtil.pathToUrl(s.replace(File.separatorChar, '/')) : null;
+    return s.length() > 0 ? VfsUtilCore.pathToUrl(s.replace(File.separatorChar, '/')) : null;
   }
 
   @Override
   public void reset() {
-    mySchemaFile.setText(myMapping != null ? VfsUtil.urlToPath(myMapping).replace('/', File.separatorChar) : "");
+    mySchemaFile.setText(myMapping != null ? VfsUtilCore.urlToPath(myMapping).replace('/', File.separatorChar) : "");
   }
 
   @Override

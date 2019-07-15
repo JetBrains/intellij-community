@@ -232,7 +232,7 @@ public abstract class Invoker implements Disposable {
   private ProgressIndicatorBase indicator(@NotNull AsyncPromise<?> promise) {
     ProgressIndicatorBase indicator = indicators.get(promise);
     if (indicator == null) {
-      indicator = new ProgressIndicatorBase(true);
+      indicator = new ProgressIndicatorBase(true, false);
       ProgressIndicatorBase old = indicators.put(promise, indicator);
       if (old != null) LOG.error("the same task is running in parallel");
       promise.onProcessed(done -> indicators.remove(promise).cancel());

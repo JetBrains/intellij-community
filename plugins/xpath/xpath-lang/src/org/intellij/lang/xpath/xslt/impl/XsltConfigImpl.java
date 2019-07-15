@@ -55,28 +55,6 @@ class XsltConfigImpl extends XsltConfig implements PersistentStateComponent<Xslt
   }
 
   @Override
-  public void initializeComponent() {
-    final Language xmlLang = StdFileTypes.XML.getLanguage();
-
-    //            intentionManager.addAction(new DeleteUnusedParameterFix());
-    //            intentionManager.addAction(new DeleteUnusedVariableFix());
-
-    final XsltFormattingModelBuilder builder = new XsltFormattingModelBuilder(LanguageFormatting.INSTANCE.forLanguage(xmlLang));
-    LanguageFormatting.INSTANCE.addExplicitExtension(xmlLang, builder);
-
-    try {
-      // TODO: put this into com.intellij.refactoring.actions.IntroduceParameterAction, just like IntroduceVariableAction
-      final AnAction introduceParameter = ActionManager.getInstance().getAction("IntroduceParameter");
-      if (introduceParameter != null) {
-        introduceParameter.setInjectedContext(true);
-      }
-    }
-    catch (Exception e) {
-      Logger.getInstance(XsltConfigImpl.class.getName()).error(e);
-    }
-  }
-
-  @Override
   public boolean isShowLinkedFiles() {
     return SHOW_LINKED_FILES;
   }
@@ -86,8 +64,8 @@ class XsltConfigImpl extends XsltConfig implements PersistentStateComponent<Xslt
 
     private final XsltConfigImpl myConfig;
 
-    public UIImpl(XsltConfigImpl config) {
-      myConfig = config;
+    public UIImpl() {
+      myConfig = (XsltConfigImpl)XsltConfig.getInstance();
       setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
       myShowLinkedFiles = new JCheckBox("Show Associated Files in Project View");

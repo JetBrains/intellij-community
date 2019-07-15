@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.net.ssl;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -8,6 +9,7 @@ import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -15,7 +17,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JTree;
+import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.security.cert.X509Certificate;
@@ -149,12 +151,12 @@ public class CertificateTreeBuilder extends AbstractTreeBuilder {
     @Override
     public Object[] getChildElements(@NotNull Object element) {
       if (element == RootDescriptor.ROOT) {
-        return ArrayUtil.toStringArray(myCertificates.keySet());
+        return ArrayUtilRt.toStringArray(myCertificates.keySet());
       }
       else if (element instanceof String) {
         return ArrayUtil.toObjectArray(myCertificates.get((String)element));
       }
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+      return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
 
     @Nullable

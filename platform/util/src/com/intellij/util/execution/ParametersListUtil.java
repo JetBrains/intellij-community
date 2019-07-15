@@ -2,7 +2,7 @@
 package com.intellij.util.execution;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +65,7 @@ public class ParametersListUtil {
   @NotNull
   public static String[] parseToArray(@NotNull final String string) {
     final List<String> params = parse(string);
-    return ArrayUtil.toStringArray(params);
+    return ArrayUtilRt.toStringArray(params);
   }
 
   /**

@@ -1,13 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
+import com.intellij.diagnostic.DialogAppender;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.CharSequenceReader;
-import org.apache.log4j.LogManager;
+import org.apache.log4j.*;
+import org.apache.log4j.varia.LevelRangeFilter;
 import org.apache.log4j.xml.DOMConfigurator;
 import org.jdom.Document;
 import org.jdom.JDOMException;
@@ -44,10 +46,20 @@ public class LoggerFactory implements Logger.Factory {
     return new IdeaLogger(org.apache.log4j.Logger.getLogger(name));
   }
 
-  private static void init() throws IOException, JDOMException {
+  private static void init() throws Exception {
     System.setProperty("log4j.defaultInitOverride", "true");
 
-    String text = FileUtilRt.loadFile(PathManager.getLogFile());
+    File xmlFile = PathManager.getLogFile();
+    if (xmlFile != null) {
+      loadFromXmlFile(xmlFile);
+    }
+    else {
+      configureProgrammatically();
+    }
+  }
+
+  private static void loadFromXmlFile(File xmlFile) throws Exception {
+    String text = FileUtilRt.loadFile(xmlFile);
     text = StringUtil.replace(text, SYSTEM_MACRO, StringUtil.replace(PathManager.getSystemPath(), "\\", "\\\\"));
     text = StringUtil.replace(text, APPLICATION_MACRO, StringUtil.replace(PathManager.getHomePath(), "\\", "\\\\"));
     text = StringUtil.replace(text, LOG_DIR_MACRO, StringUtil.replace(PathManager.getLogPath(), "\\", "\\\\"));
@@ -79,5 +91,32 @@ public class LoggerFactory implements Logger.Factory {
       }
     }, null, null).output(document).getDocumentElement();
     new DOMConfigurator().doConfigure(element, LogManager.getLoggerRepository());
+  }
+
+  private static void configureProgrammatically() throws IOException {
+    org.apache.log4j.Logger root = LogManager.getRootLogger();
+    root.removeAllAppenders();
+    root.setLevel(Level.INFO);
+
+    PatternLayout layout = new PatternLayout("%d [%7r] %6p - %30.30c - %m \n");
+
+    RollingFileAppender ideaLog = new RollingFileAppender(layout, PathManager.getLogPath() + "/" + "idea.log", true);
+    ideaLog.setEncoding("UTF-8");
+    ideaLog.setMaxBackupIndex(12);
+    ideaLog.setMaximumFileSize(10_000_000);
+    root.addAppender(ideaLog);
+
+    ConsoleAppender consoleWarn = new ConsoleAppender(layout, ConsoleAppender.SYSTEM_ERR);
+    LevelRangeFilter warnFilter = new LevelRangeFilter();
+    warnFilter.setLevelMin(Level.WARN);
+    consoleWarn.addFilter(warnFilter);
+    root.addAppender(consoleWarn);
+
+    DialogAppender appender = new DialogAppender();
+    LevelRangeFilter filter = new LevelRangeFilter();
+    filter.setLevelMin(Level.INFO);
+    appender.addFilter(filter);
+
+    root.addAppender(appender);
   }
 }

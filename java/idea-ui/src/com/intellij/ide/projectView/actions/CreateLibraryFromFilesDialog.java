@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.actions;
 
 import com.intellij.application.options.ModulesComboBox;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -97,10 +97,10 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
       Module module = null;
       final VirtualFile local = JarFileSystem.getInstance().getVirtualFileForJar(root.getFile());
       if (local != null) {
-        module = ModuleUtil.findModuleForFile(local, myProject);
+        module = ModuleUtilCore.findModuleForFile(local, myProject);
       }
       if (module == null) {
-        module = ModuleUtil.findModuleForFile(root.getFile(), myProject);
+        module = ModuleUtilCore.findModuleForFile(root.getFile(), myProject);
       }
       if (module != null) {
         return module;

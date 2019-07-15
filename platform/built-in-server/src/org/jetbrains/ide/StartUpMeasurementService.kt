@@ -42,5 +42,5 @@ internal class StartUpMeasurementService : RestService() {
 
 private fun isTrustedHostName(request: HttpRequest): Boolean {
   val hostName = request.hostName ?: return false
-  return hostName == "ij-perf.develar.org" || NetUtils.isLocalhost(hostName)
+  return hostName == "ij-perf.jetbrains.com" || hostName == "ij-perf.develar.org" || NetUtils.isLocalhost(hostName)
 }

@@ -28,6 +28,7 @@ import com.intellij.coverage.actions.ShowCoveringTestsAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -97,7 +98,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
   }
 
   /**
-   * To be removed in 2019.1. Use {@link CoverageLineMarkerRenderer#CoverageLineMarkerRenderer(int, java.lang.String, java.util.TreeMap, boolean, com.intellij.util.Function, com.intellij.util.Function, com.intellij.coverage.CoverageSuitesBundle, boolean)}
+   * To be removed in 2019.1. Use {@link CoverageLineMarkerRenderer#CoverageLineMarkerRenderer(int, String, TreeMap, boolean, Function, Function, CoverageSuitesBundle, boolean)}
    */
   @Deprecated
   protected CoverageLineMarkerRenderer(final TextAttributesKey key,
@@ -320,7 +321,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
 
     GotoPreviousCoveredLineAction(final Editor editor, final int lineNumber) {
       super(editor, lineNumber);
-      copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_OCCURENCE));
+      ActionUtil.copyFrom(this, IdeActions.ACTION_PREVIOUS_OCCURENCE);
       getTemplatePresentation().setText("Previous Coverage Mark");
     }
 
@@ -442,7 +443,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     private final int myLineNumber;
 
     private EditCoverageColorsAction(Editor editor, int lineNumber) {
-      super("Edit coverage colors", "Edit coverage colors", AllIcons.General.EditColors);
+      super("Edit Coverage Colors", "Edit coverage colors", AllIcons.General.Settings);
       myEditor = editor;
       myLineNumber = lineNumber;
     }

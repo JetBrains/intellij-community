@@ -36,11 +36,10 @@ public class AntToolwindowRegistrar implements ProjectComponent {
 
   @Override
   public void projectOpened() {
-    final KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
     final String prefix = AntConfiguration.getActionIdPrefix(myProject);
     final ActionManager actionManager = ActionManager.getInstance();
 
-    for (Keymap keymap : keymapManager.getAllKeymaps()) {
+    for (Keymap keymap : KeymapManagerEx.getInstanceEx().getAllKeymaps()) {
       for (String id : keymap.getActionIdList()) {
         if (id.startsWith(prefix) && actionManager.getAction(id) == null) {
           actionManager.registerAction(id, new TargetActionStub(id, myProject));

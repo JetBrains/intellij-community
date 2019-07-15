@@ -112,12 +112,12 @@ public class TabHeaderComponent extends JComponent {
           createActionGroupPopup(null, actions, e.getDataContext(), true, null, Integer.MAX_VALUE);
 
         HelpTooltip.setMasterPopup(e.getInputEvent().getComponent(), actionGroupPopup);
-        actionGroupPopup.show(new RelativePoint(toolbarComponent, getPopupPoint()));
+        actionGroupPopup.show(new RelativePoint(toolbarComponent.getComponent(0), getPopupPoint()));
       }
 
       private Point getPopupPoint() {
         int dH = UIUtil.isUnderWin10LookAndFeel() ? JBUI.scale(1) : 0;
-        return new Point(JBUI.scale(2), toolbarComponent.getHeight() - dH);
+        return new Point(JBUI.scale(2), toolbarComponent.getComponent(0).getHeight() - dH);
       }
     });
     toolbarComponent.setBorder(JBUI.Borders.empty());

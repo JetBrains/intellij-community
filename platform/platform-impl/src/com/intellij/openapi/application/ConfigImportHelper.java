@@ -6,9 +6,11 @@ import com.intellij.ide.actions.ImportSettingsFilenameFilter;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.idea.Main;
+import com.intellij.idea.SplashManager;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -46,11 +48,7 @@ import static com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY;
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.openapi.util.text.StringUtil.startsWithIgnoreCase;
 
-/**
- * @author max
- * @noinspection SSBasedInspection
- */
-public class ConfigImportHelper {
+public final class ConfigImportHelper {
   private static final String FIRST_SESSION_KEY = "intellij.first.ide.session";
   private static final String CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY = "intellij.config.imported.in.current.session";
 
@@ -75,11 +73,16 @@ public class ConfigImportHelper {
     ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(guessedOldConfigDirs, f -> findConfigDirectoryByPath(f));
     dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
     AppUIUtil.updateWindowIcon(dialog);
-    dialog.setVisible(true);
 
-    Pair<Path, Path> result = dialog.getSelectedFile();
-    if (result != null) {
-      doImport(result.first, newConfigDir, result.second, log);
+    Ref<Pair<Path, Path>> result = new Ref<>();
+    SplashManager.executeWithHiddenSplash(dialog, () -> {
+      dialog.setVisible(true);
+      result.set(dialog.getSelectedFile());
+      dialog.dispose();
+    });
+
+    if (!result.isNull()) {
+      doImport(result.get().first, newConfigDir, result.get().second, log);
       if (settings != null) {
         settings.importFinished(newConfigDir);
       }

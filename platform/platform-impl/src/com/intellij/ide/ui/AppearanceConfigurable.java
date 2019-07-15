@@ -18,7 +18,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.FontComboBox;
@@ -131,7 +131,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
   private void updateDarkWindowHeaderVisibility() {
     Object item = myComponent.myLafComboBox.getSelectedItem();
     boolean isDarkLaf = item instanceof UIManager.LookAndFeelInfo && ((UIManager.LookAndFeelInfo)item).getClassName().endsWith("DarculaLaf");
-    myComponent.myDarkWindowHeaders.setVisible(SystemInfo.isMac && isDarkLaf);
+    myComponent.myDarkWindowHeaders.setVisible(SystemInfoRt.isMac && isDarkLaf);
   }
 
   @Override

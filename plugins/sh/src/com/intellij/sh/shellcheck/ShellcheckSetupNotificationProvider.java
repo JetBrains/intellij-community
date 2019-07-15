@@ -2,6 +2,9 @@
 package com.intellij.sh.shellcheck;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -28,17 +31,23 @@ public class ShellcheckSetupNotificationProvider extends EditorNotifications.Pro
 
   @Nullable
   @Override
-  public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
+  public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file,
+                                                         @NotNull FileEditor fileEditor,
+                                                         @NotNull Project project) {
     if (file.getFileType() instanceof ShFileType && !isValidPath(ShSettings.getShellcheckPath())) {
       EditorNotificationPanel panel = new EditorNotificationPanel();
       panel.setText("Would you like to install shellcheck to verify your shell scripts?");
-      panel.createActionLabel("Install", () -> ShShellcheckUtil.download(null, () -> {
+      panel.createActionLabel("Install", () -> ShShellcheckUtil.download(null,
+      () -> {
         EditorNotifications.getInstance(project).updateAllNotifications();
         PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
         if (psiFile != null) {
           DaemonCodeAnalyzer.getInstance(project).restart(psiFile);
         }
-      }));
+        Notifications.Bus.notify(new Notification("Shell Script", "", "Shellcheck has been successfully installed",
+                                                  NotificationType.INFORMATION));
+      }, () -> Notifications.Bus.notify(new Notification("Shell Script", "", "Can't download sh shellcheck. Please install it manually",
+                                                         NotificationType.ERROR))));
       panel.createActionLabel("No, thanks", () -> {
         ShSettings.setShellcheckPath(ShSettings.I_DO_MIND);
         EditorNotifications.getInstance(project).updateAllNotifications();

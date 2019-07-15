@@ -4,7 +4,6 @@ package com.intellij.diagnostic;
 import com.intellij.errorreport.error.InternalEAPException;
 import com.intellij.errorreport.error.NoSuchEAPUserException;
 import com.intellij.errorreport.error.UpdateAvailableException;
-import com.intellij.idea.IdeaLogger;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -14,10 +13,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
-import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.security.CompositeX509TrustManager;
@@ -59,7 +55,7 @@ class ITNProxy {
     Map<String, String> template = new LinkedHashMap<>();
 
     template.put("protocol.version", "1.1");
-    template.put("os.name", SystemInfo.OS_NAME);
+    template.put("os.name", SystemInfoRt.OS_NAME);
     template.put("java.version", SystemInfo.JAVA_VERSION);
     template.put("java.vm.vendor", SystemInfo.JAVA_VENDOR);
 
@@ -81,7 +77,6 @@ class ITNProxy {
     template.put("app.version.minor", appInfo.getMinorVersion());
     template.put("app.build.date", format(appInfo.getBuildDate()));
     template.put("app.build.date.release", format(appInfo.getMajorReleaseBuildDate()));
-    template.put("app.compilation.timestamp", IdeaLogger.getOurCompilationTimestamp());
     template.put("app.product.code", build.getProductCode());
     template.put("app.build.number", buildNumberWithAllDetails);
 

@@ -6,7 +6,7 @@ import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
@@ -116,7 +116,7 @@ public class GppReferenceContributor extends PsiReferenceContributor {
     @Override
     @NotNull
     public Object[] getVariants() {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY; //todo
+      return ArrayUtilRt.EMPTY_OBJECT_ARRAY; //todo
     }
   }
 }

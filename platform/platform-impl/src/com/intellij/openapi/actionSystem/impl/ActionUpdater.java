@@ -202,6 +202,9 @@ class ActionUpdater {
   }
 
   private List<AnAction> doExpandActionGroup(ActionGroup group, boolean hideDisabled, UpdateStrategy strategy) {
+    if (group instanceof ActionGroupStub) {
+      throw new IllegalStateException("Trying to expand non-unstubbed group");
+    }
     ProgressManager.checkCanceled();
     Presentation presentation = update(group, strategy);
     if (presentation == null || !presentation.isVisible()) { // don't process invisible groups

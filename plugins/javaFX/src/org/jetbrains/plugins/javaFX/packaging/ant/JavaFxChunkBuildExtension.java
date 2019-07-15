@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.packaging.ant;
 
 import com.intellij.compiler.ant.*;
@@ -23,13 +9,14 @@ import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.elements.ArchivePackagingElement;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +45,7 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
   @NotNull
   @Override
   public String[] getTargets(ModuleChunk chunk) {
-    return ArrayUtil.EMPTY_STRING_ARRAY;
+    return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
   @Override
@@ -91,7 +78,7 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
 
   protected List<? extends Generator> computeChildrenGenerators(PackagingElementResolvingContext resolvingContext,
                                                                   final AntCopyInstructionCreator copyInstructionCreator,
-                                                                  final ArtifactAntGenerationContext generationContext, 
+                                                                  final ArtifactAntGenerationContext generationContext,
                                                                   ArtifactType artifactType,
                                                                   List<PackagingElement<?>> children) {
       final List<Generator> generators = new ArrayList<>();
@@ -100,7 +87,7 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
       }
       return generators;
     }
-  
+
   @Override
   public void generateTasksForArtifact(Artifact artifact,
                                        boolean preprocessing,
@@ -122,13 +109,13 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
       }
     }
 
-    final String artifactName = FileUtil.getNameWithoutExtension(artifactFileName);
+    final String artifactName = FileUtilRt.getNameWithoutExtension(artifactFileName);
 
     final String tempDirPath = BuildProperties.propertyRef(
       context.createNewTempFileProperty("artifact.temp.output." + artifactName, artifactFileName));
 
     final PackagingElementResolvingContext resolvingContext = ArtifactManager.getInstance(context.getProject()).getResolvingContext();
-    for (Generator childGenerator : computeChildrenGenerators(resolvingContext, 
+    for (Generator childGenerator : computeChildrenGenerators(resolvingContext,
                                                               new DirectoryAntCopyInstructionCreator(tempDirPath),
                                                          context, artifact.getArtifactType(), children)) {
       generator.add(childGenerator);
@@ -171,15 +158,15 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
 
       final String keypass = selfSigning ? "keypass" : new String(Base64.getDecoder().decode(properties.getKeypass()), StandardCharsets.UTF_8);
       generator.add(new Property(artifactBasedProperty(ARTIFACTKEYPASS_SIGN_PROPERTY, artifactName), keypass));
-      
+
       final Pair[] keysDescriptions = createKeysDescriptions(artifactName);
       if (selfSigning) {
-        generator.add(new Tag("genkey", 
+        generator.add(new Tag("genkey",
                               ArrayUtil.prepend(Couple.of("dname", BuildProperties
                                                   .propertyRef(artifactBasedProperty(ARTIFACT_VENDOR_SIGN_PROPERTY, artifactName))),
                                                 keysDescriptions)));
       }
-      
+
       final Tag signjar = new Tag("signjar", keysDescriptions);
       final Tag fileset = new Tag("fileset", Couple.of("dir", tempDirDeployPath));
       fileset.add(new Tag("include", Couple.of("name", "*.jar")));

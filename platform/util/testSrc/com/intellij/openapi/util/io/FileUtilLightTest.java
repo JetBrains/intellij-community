@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
+import com.intellij.openapi.util.PropertiesUtil;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -68,7 +70,7 @@ public class FileUtilLightTest {
     assertEquals("c:/", FileUtil.toCanonicalPath("c:\\a\\..\\..", WINDOWS_SEPARATOR));
     assertEquals("c:/b", FileUtil.toCanonicalPath("c:\\a\\..\\..\\b", WINDOWS_SEPARATOR));
 
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       assertEquals("//", FileUtil.toCanonicalPath("\\\\\\", WINDOWS_SEPARATOR));
       assertEquals("//host/", FileUtil.toCanonicalPath("\\\\\\host", WINDOWS_SEPARATOR));
       assertEquals("//host/", FileUtil.toCanonicalPath("\\\\\\host\\\\", WINDOWS_SEPARATOR));
@@ -93,7 +95,7 @@ public class FileUtilLightTest {
     assertFalse(FileUtil.isAncestor("/a/b/c", "/a/b/cde", true));
     assertFalse(FileUtil.isAncestor("/a/b/c", "/a/b/cde", false));
 
-    assertEquals(SystemInfo.isWindows, FileUtil.isAncestor("c:\\", "C:/a/b/c", true));
+    assertEquals(SystemInfoRt.isWindows, FileUtil.isAncestor("c:\\", "C:/a/b/c", true));
     assertEquals(!SystemInfo.isFileSystemCaseSensitive, FileUtil.isAncestor("/a/b/c", "/a/B/c/d", true));
   }
 
@@ -138,7 +140,7 @@ public class FileUtilLightTest {
   @Test
   public void testLoadProperties() throws IOException {
     String data = "key2=value2\nkey1=value1\nkey3=value3";
-    Map<String, String> map = FileUtil.loadProperties(new StringReader(data));
+    Map<String, String> map = PropertiesUtil.loadProperties(new StringReader(data));
     assertEquals(ContainerUtil.newArrayList("key2", "key1", "key3"), new ArrayList<>(map.keySet()));
   }
 
@@ -157,7 +159,7 @@ public class FileUtilLightTest {
   @Test
   public void testNormalize() {
     assertEquals("/a/b/.././c/", FileUtil.normalize("/a//b//..///./c//"));
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       assertEquals("//a/b/.././c/", FileUtil.normalize("\\\\\\a\\\\//b//..///./c//"));
     }
     else {
@@ -168,7 +170,7 @@ public class FileUtilLightTest {
   @Test
   public void testRelativeToUserHome() {
     assertEquals(SystemProperties.getUserHome(), FileUtil.getLocationRelativeToUserHome(SystemProperties.getUserHome(), false));
-    String expected = SystemInfo.isWindows ? "~\\relative" : "~/relative";
+    String expected = SystemInfoRt.isWindows ? "~\\relative" : "~/relative";
     assertEquals(expected, FileUtil.getLocationRelativeToUserHome(SystemProperties.getUserHome() + "/relative", false));
   }
 

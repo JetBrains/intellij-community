@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser.impl;
 
 import com.intellij.openapi.Disposable;
@@ -11,6 +11,7 @@ import com.intellij.openapi.fileChooser.ex.FileTextFieldImpl;
 import com.intellij.openapi.fileChooser.ex.LocalFsFinder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.MacFileSaverDialog;
 import com.intellij.ui.mac.MacPathChooserDialog;
@@ -73,12 +74,12 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
   }
 
   private static boolean useNativeWinChooser () {
-    return SystemInfo.isWindows &&
+    return SystemInfoRt.isWindows &&
            Registry.is("ide.win.file.chooser.native");
   }
 
   private static boolean useNativeMacChooser(final FileChooserDescriptor descriptor) {
-    return SystemInfo.isMac &&
+    return SystemInfoRt.isMac &&
            !descriptor.isForcedToUseIdeaFileChooser() &&
            SystemProperties.getBooleanProperty("native.mac.file.chooser.enabled", true) &&
            Registry.is("ide.mac.file.chooser.native") &&
@@ -115,14 +116,14 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
   @NotNull
   @Override
   public FileSaverDialog createSaveFileDialog(@NotNull FileSaverDescriptor descriptor, @Nullable Project project) {
-    return SystemInfo.isMac && Registry.is("ide.mac.native.save.dialog")
+    return SystemInfoRt.isMac && Registry.is("ide.mac.native.save.dialog")
            ? new MacFileSaverDialog(descriptor, project) : new FileSaverDialogImpl(descriptor, project);
   }
 
   @NotNull
   @Override
   public FileSaverDialog createSaveFileDialog(@NotNull FileSaverDescriptor descriptor, @NotNull Component parent) {
-    return SystemInfo.isMac && Registry.is("ide.mac.native.save.dialog")
+    return SystemInfoRt.isMac && Registry.is("ide.mac.native.save.dialog")
            ? new MacFileSaverDialog (descriptor, parent) : new FileSaverDialogImpl(descriptor, parent);
   }
 }

@@ -1,11 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.psi.PsiVariable;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
@@ -61,7 +61,7 @@ public class SideEffectWarningDialog extends DialogWrapper {
       AbstractAction makeStmtAction = new AbstractAction() {
         {
           UIUtil.setActionNameAndMnemonic(QuickFixBundle.message("side.effect.action.transform"), this);
-          if (SystemInfo.isMac) {
+          if (SystemInfoRt.isMac) {
             putValue(FOCUSED_ACTION, this);
           }
         }

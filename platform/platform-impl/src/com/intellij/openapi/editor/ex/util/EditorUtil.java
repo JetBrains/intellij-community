@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.diagnostic.AttachmentFactory;
@@ -634,7 +634,7 @@ public final class EditorUtil {
 
   public static boolean isChangeFontSize(@NotNull MouseWheelEvent e) {
     if (e.getWheelRotation() == 0) return false;
-    return SystemInfo.isMac
+    return SystemInfoRt.isMac
            ? !e.isControlDown() && e.isMetaDown() && !e.isAltDown() && !e.isShiftDown()
            : e.isControlDown() && !e.isMetaDown() && !e.isAltDown() && !e.isShiftDown();
   }
@@ -688,7 +688,7 @@ public final class EditorUtil {
   /**
    * Setting selection using {@link SelectionModel#setSelection(int, int)} or {@link Caret#setSelection(int, int)} methods can result
    * in resulting selection range to be larger than requested (in case requested range intersects with collapsed fold regions).
-   * This method will make sure interfering collapsed regions are expanded first, so that resulting selection range is exactly as 
+   * This method will make sure interfering collapsed regions are expanded first, so that resulting selection range is exactly as
    * requested.
    */
   public static void setSelectionExpandingFoldedRegionsIfNeeded(@NotNull Editor editor, int startOffset, int endOffset) {

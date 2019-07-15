@@ -4,6 +4,7 @@ package com.intellij.util.ui;
 import com.intellij.openapi.util.IconLoader.CachedImageIcon;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.ui.*;
@@ -56,7 +57,7 @@ public class IconScaleTest extends BareTestFixtureTestCase {
     // 1) JRE-HiDPI
     //
     overrideJreHiDPIEnabled(true);
-    if (SystemInfo.IS_AT_LEAST_JAVA9 || !SystemInfo.isLinux) {
+    if (SystemInfo.IS_AT_LEAST_JAVA9 || !SystemInfoRt.isLinux) {
       for (double s : SCALES) test(1, s);
     }
 

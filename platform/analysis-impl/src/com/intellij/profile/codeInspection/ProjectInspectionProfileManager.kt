@@ -6,10 +6,7 @@ import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.configurationStore.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.BaseState
-import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.DumbAware
@@ -103,7 +100,7 @@ class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProf
       override fun projectClosed(project: Project) {
         val cleanupInspectionProfilesRunnable = {
           cleanupSchemes(project)
-          (InspectionProfileManager.getInstance() as BaseInspectionProfileManager).cleanupSchemes(project)
+          (ServiceManager.getServiceIfCreated(InspectionProfileManager::class.java) as BaseInspectionProfileManager?)?.cleanupSchemes(project)
           this@ProjectInspectionProfileManager.project.messageBus.syncPublisher(ProfileChangeAdapter.TOPIC).profilesShutdown()
           Unit
         }

@@ -18,7 +18,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,7 +31,6 @@ import com.intellij.ui.AppIcon;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -183,21 +181,14 @@ public class ProjectUtil {
       }
     }
 
-    ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
-    Project project = null;
     try {
-      project = projectManager.loadAndOpenProject(path);
+      return ProjectManager.getInstance().loadAndOpenProject(path);
     }
-    catch (IOException e) {
+    catch (Exception e) {
       Messages.showMessageDialog(IdeBundle.message("error.cannot.load.project", e.getMessage()),
                                  IdeBundle.message("title.cannot.load.project"), Messages.getErrorIcon());
     }
-    catch (JDOMException | InvalidDataException e) {
-      LOG.info(e);
-      Messages.showMessageDialog(IdeBundle.message("error.project.file.is.corrupted"), IdeBundle.message("title.cannot.load.project"),
-                                 Messages.getErrorIcon());
-    }
-    return project;
+    return null;
   }
 
   public static boolean confirmLoadingFromRemotePath(@NotNull String path,

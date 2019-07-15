@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.application.ApplicationListener;
@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Functions;
 import com.intellij.util.ObjectUtils;
@@ -175,8 +175,13 @@ public class VfsData {
     segment.myObjectArray.set(offset, data);
   }
 
+  @NotNull
   CharSequence getNameByFileId(int id) {
-    return FileNameCache.getVFileName(assertNotNull(getSegment(id, false)).getNameId(id));
+    return FileNameCache.getVFileName(getNameId(id));
+  }
+
+  int getNameId(int id) {
+    return assertNotNull(getSegment(id, false)).getNameId(id);
   }
 
   boolean isFileValid(int id) {
@@ -285,7 +290,7 @@ public class VfsData {
      * @see VirtualDirectoryImpl#findIndex(int[], CharSequence, boolean)
      */
     @NotNull
-    volatile int[] myChildrenIds = ArrayUtil.EMPTY_INT_ARRAY; // guarded by this
+    volatile int[] myChildrenIds = ArrayUtilRt.EMPTY_INT_ARRAY; // guarded by this
 
     // assigned under lock(this) only; accessed/modified map contents under lock(myAdoptedNames)
     private volatile Set<CharSequence> myAdoptedNames;

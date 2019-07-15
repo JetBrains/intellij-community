@@ -90,10 +90,10 @@ public class LiteralAsArgToStringEqualsInspection extends BaseInspection {
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
       final PsiExpression strippedQualifier = ParenthesesUtils.stripParentheses(qualifier);
       final PsiExpression strippedArgument = ParenthesesUtils.stripParentheses(argument);
-      if (qualifier == null || strippedQualifier == null) {
+      if (strippedArgument == null || qualifier == null || strippedQualifier == null) {
         return;
       }
-      CommentTracker tracker = new CommentTracker();
+      final CommentTracker tracker = new CommentTracker();
       tracker.grabComments(qualifier);
       tracker.markUnchanged(strippedQualifier);
       tracker.grabComments(argument);

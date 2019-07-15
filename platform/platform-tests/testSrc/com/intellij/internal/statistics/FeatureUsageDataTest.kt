@@ -283,24 +283,25 @@ class FeatureUsageDataTest {
 
   @Test
   fun `test merge null group with null event data`() {
-    val merged = FUStateUsagesLogger.mergeWithEventData(null, null, 1)
+    val merged = FUStateUsagesLogger.mergeWithEventData(null, null)
     Assert.assertNull(merged)
   }
 
   @Test
-  fun `test merge null group with null event data with not default value`() {
-    val merged = FUStateUsagesLogger.mergeWithEventData(null, null, 10)
+  fun `test merge null group with count event data`() {
+    val data = FeatureUsageData().addCount(10)
+    val merged = FUStateUsagesLogger.mergeWithEventData(null, data)
     Assert.assertNotNull(merged)
 
     val build = merged!!.build()
     Assert.assertTrue(build.size == 1)
-    Assert.assertTrue(build["value"] == 10)
+    Assert.assertTrue(build["count"] == 10)
   }
 
   @Test
   fun `test merge group with null event data`() {
     val group = FeatureUsageData().addData("first", "value-1")
-    val merged = FUStateUsagesLogger.mergeWithEventData(group, null, 1)
+    val merged = FUStateUsagesLogger.mergeWithEventData(group, null)
     Assert.assertNotNull(merged)
 
     val build = merged!!.build()
@@ -309,21 +310,21 @@ class FeatureUsageDataTest {
   }
 
   @Test
-  fun `test merge group with null event data with not default value`() {
-    val group = FeatureUsageData().addData("first", "value-1")
-    val merged = FUStateUsagesLogger.mergeWithEventData(group, null, 10)
+  fun `test merge count group with null event data`() {
+    val group = FeatureUsageData().addData("first", "value-1").addCount(10)
+    val merged = FUStateUsagesLogger.mergeWithEventData(group, null)
     Assert.assertNotNull(merged)
 
     val build = merged!!.build()
     Assert.assertTrue(build.size == 2)
     Assert.assertTrue(build["first"] == "value-1")
-    Assert.assertTrue(build["value"] == 10)
+    Assert.assertTrue(build["count"] == 10)
   }
 
   @Test
   fun `test merge null group with event data`() {
     val event = FeatureUsageData().addData("first", 99)
-    val merged = FUStateUsagesLogger.mergeWithEventData(null, event, 1)
+    val merged = FUStateUsagesLogger.mergeWithEventData(null, event)
     Assert.assertNotNull(merged)
 
     val build = merged!!.build()
@@ -334,7 +335,7 @@ class FeatureUsageDataTest {
   @Test
   fun `test merge null group with default named event data`() {
     val event = FeatureUsageData().addData("data_5", 99)
-    val merged = FUStateUsagesLogger.mergeWithEventData(null, event, 1)
+    val merged = FUStateUsagesLogger.mergeWithEventData(null, event)
     Assert.assertNotNull(merged)
 
     val build = merged!!.build()
@@ -343,34 +344,34 @@ class FeatureUsageDataTest {
   }
 
   @Test
-  fun `test merge null group with event data with not default value`() {
-    val event = FeatureUsageData().addData("first", true)
-    val merged = FUStateUsagesLogger.mergeWithEventData(null, event, 10)
+  fun `test merge null group with event data with count`() {
+    val event = FeatureUsageData().addData("first", true).addCount(10)
+    val merged = FUStateUsagesLogger.mergeWithEventData(null, event)
     Assert.assertNotNull(merged)
 
     val build = merged!!.build()
     Assert.assertTrue(build.size == 2)
     Assert.assertTrue(build["first"] == true)
-    Assert.assertTrue(build["value"] == 10)
+    Assert.assertTrue(build["count"] == 10)
   }
 
   @Test
-  fun `test merge null group with default named event data with not default value`() {
-    val event = FeatureUsageData().addData("data_9", true)
-    val merged = FUStateUsagesLogger.mergeWithEventData(null, event, 10)
+  fun `test merge null group with default named event data with count`() {
+    val event = FeatureUsageData().addData("data_9", true).addCount(7)
+    val merged = FUStateUsagesLogger.mergeWithEventData(null, event)
     Assert.assertNotNull(merged)
 
     val build = merged!!.build()
     Assert.assertTrue(build.size == 2)
     Assert.assertTrue(build["event_data_9"] == true)
-    Assert.assertTrue(build["value"] == 10)
+    Assert.assertTrue(build["count"] == 7)
   }
 
   @Test
   fun `test merge group with event data`() {
     val group = FeatureUsageData().addData("first", "value-1")
     val event = FeatureUsageData().addData("second", "value-2").addData("data_99", "default-value")
-    val merged = FUStateUsagesLogger.mergeWithEventData(group, event, 1)
+    val merged = FUStateUsagesLogger.mergeWithEventData(group, event)
 
     val build = merged!!.build()
     Assert.assertTrue(build.size == 3)
@@ -381,23 +382,23 @@ class FeatureUsageDataTest {
 
   @Test
   fun `test merge group with event data with not default value`() {
-    val group = FeatureUsageData().addData("first", "value-1")
+    val group = FeatureUsageData().addData("first", "value-1").addCount(10)
     val event = FeatureUsageData().addData("second", "value-2").addData("data_99", "default-value")
-    val merged = FUStateUsagesLogger.mergeWithEventData(group, event, 10)
+    val merged = FUStateUsagesLogger.mergeWithEventData(group, event)
 
     val build = merged!!.build()
     Assert.assertTrue(build.size == 4)
     Assert.assertTrue(build["first"] == "value-1")
     Assert.assertTrue(build["second"] == "value-2")
     Assert.assertTrue(build["event_data_99"] == "default-value")
-    Assert.assertTrue(build["value"] == 10)
+    Assert.assertTrue(build["count"] == 10)
   }
 
   @Test
   fun `test merge group with group default event data fields`() {
     val group = FeatureUsageData().addPlace("EditorToolbar")
     val event = FeatureUsageData().addData("second", "value-2")
-    val merged = FUStateUsagesLogger.mergeWithEventData(group, event, 1)
+    val merged = FUStateUsagesLogger.mergeWithEventData(group, event)
 
     val build = merged!!.build()
     Assert.assertTrue(build.size == 2)
@@ -409,7 +410,7 @@ class FeatureUsageDataTest {
   fun `test merge group with event default event data fields`() {
     val group = FeatureUsageData().addData("first", "value-1")
     val event = FeatureUsageData().addPlace("EditorToolbar")
-    val merged = FUStateUsagesLogger.mergeWithEventData(group, event, 1)
+    val merged = FUStateUsagesLogger.mergeWithEventData(group, event)
 
     val build = merged!!.build()
     Assert.assertTrue(build.size == 2)

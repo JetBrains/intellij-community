@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.messages;
 
 import com.intellij.openapi.application.ModalityState;
@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.mac.foundation.MacUtil;
@@ -92,7 +92,7 @@ public class MessageDialog extends DialogWrapper {
     myDefaultOptionIndex = defaultOptionIndex;
     myFocusedOptionIndex = focusedOptionIndex;
     myIcon = icon;
-    if (!SystemInfo.isMac) {
+    if (!SystemInfoRt.isMac) {
       setButtonsAlignment(SwingConstants.CENTER);
     }
     setDoNotAskOption(doNotAskOption);

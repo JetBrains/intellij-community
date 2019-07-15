@@ -18,6 +18,7 @@ import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.loader.NativeLibraryLoader;
@@ -701,7 +702,7 @@ Android Studio: b/67589184 */
 
   private static GlobalMenuLib _loadLibrary() {
     if (true) return null;  // TODO(b/118514141): fix UI tests in Bazel and delete this line
-    if (!SystemInfo.isLinux ||
+    if (!SystemInfoRt.isLinux ||
         Registry.is("linux.native.menu.force.disable") ||
         !Experiments.isFeatureEnabled("linux.native.menu") ||
         !JnaLoader.isLoaded() ||

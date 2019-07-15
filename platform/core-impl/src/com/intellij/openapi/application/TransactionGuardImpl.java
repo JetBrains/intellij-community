@@ -379,10 +379,8 @@ public class TransactionGuardImpl extends TransactionGuard {
     }
     if (processId instanceof Runnable) {
       ClassLoader loader = processId.getClass().getClassLoader();
-      if (loader instanceof PluginClassLoader) {
-        String pluginId = ((PluginClassLoader) loader).getPluginIdString();
-        StartUpMeasurer.addPluginCost(pluginId, "invokeLater", TimeUnit.MILLISECONDS.toNanos(time));
-      }
+      String pluginId = loader instanceof PluginClassLoader ? ((PluginClassLoader) loader).getPluginIdString() : "com.intellij";
+      StartUpMeasurer.addPluginCost(pluginId, "invokeLater", TimeUnit.MILLISECONDS.toNanos(time));
     }
     LOG.warn(time + "ms to process " + processId);
   }

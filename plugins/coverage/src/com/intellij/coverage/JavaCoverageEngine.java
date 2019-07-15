@@ -136,7 +136,7 @@ public class JavaCoverageEngine extends CoverageEngine {
         final int line = in.readInt();
         if (Comparing.strEqual(className, classFQName)) {
           if (lineNumber == line) {
-            tests.add(FileUtil.getNameWithoutExtension(traceFile));
+            tests.add(FileUtilRt.getNameWithoutExtension(traceFile.getName()));
             return;
           }
         }
@@ -162,7 +162,7 @@ public class JavaCoverageEngine extends CoverageEngine {
 
   private static File getTracesDirectory(CoverageSuite coverageSuite) {
     final String filePath = coverageSuite.getCoverageDataFileName();
-    final String dirName = FileUtil.getNameWithoutExtension(new File(filePath).getName());
+    final String dirName = FileUtilRt.getNameWithoutExtension(new File(filePath).getName());
 
     final File parentDir = new File(filePath).getParentFile();
     return new File(parentDir, dirName);
@@ -372,7 +372,7 @@ public class JavaCoverageEngine extends CoverageEngine {
   @NotNull
   public String getQualifiedName(@NotNull final File outputFile, @NotNull final PsiFile sourceFile) {
     final String packageFQName = getPackageName(sourceFile);
-    return StringUtil.getQualifiedName(packageFQName, FileUtil.getNameWithoutExtension(outputFile));
+    return StringUtil.getQualifiedName(packageFQName, FileUtilRt.getNameWithoutExtension(outputFile.getName()));
   }
 
   @NotNull
@@ -436,7 +436,7 @@ public class JavaCoverageEngine extends CoverageEngine {
       final String className = ReadAction.compute(() -> psiClass.getName());
       for (File child : children) {
         if (FileUtilRt.extensionEquals(child.getName(), StdFileTypes.CLASS.getDefaultExtension())) {
-          final String childName = FileUtil.getNameWithoutExtension(child);
+          final String childName = FileUtilRt.getNameWithoutExtension(child.getName());
           if (childName.equals(className) ||  //class or inner
               childName.startsWith(className) && childName.charAt(className.length()) == '$') {
             classFiles.add(child);

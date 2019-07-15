@@ -66,7 +66,7 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<PsiFile, Sh
   @Override
   public ShellcheckResponse doAnnotate(@NotNull PsiFile file) {
     String shellcheckExecutable = ShSettings.getShellcheckPath();
-    if (!ShShellcheckUtil.isValidPath(shellcheckExecutable)) return null;
+    if (!ShShellcheckUtil.isExecutionValidPath(shellcheckExecutable)) return null;
 
     String fileContent = file.getText();
     try {

@@ -17,7 +17,7 @@
 package org.intellij.plugins.xsltDebugger.impl;
 
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.intellij.lang.xpath.context.*;
 import org.intellij.lang.xpath.psi.XPathElement;
 import org.intellij.lang.xpath.xslt.context.XsltContextProvider;
@@ -71,7 +71,7 @@ public class EvalContextProvider extends ContextProvider {
         for (Debugger.Variable myVariable : myVariables) {
           vars.add(myVariable.getName());
         }
-        return ArrayUtil.toStringArray(vars);
+        return ArrayUtilRt.toStringArray(vars);
       }
     };
   }

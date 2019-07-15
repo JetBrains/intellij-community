@@ -5,7 +5,7 @@ import com.intellij.ide.Bootstrap;
 import com.intellij.internal.statistic.analytics.StudioCrashDetection;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -14,10 +14,11 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Properties;
 
-public class Main {
+public final class Main {
   public static final int NO_GRAPHICS = 1;
   public static final int RESTART_FAILED = 2;
   public static final int STARTUP_EXCEPTION = 3;
@@ -34,7 +35,7 @@ public class Main {
 
   private static final String AWT_HEADLESS = "java.awt.headless";
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
-  private static final String[] NO_ARGS = ArrayUtil.EMPTY_STRING_ARRAY;
+  private static final String[] NO_ARGS = ArrayUtilRt.EMPTY_STRING_ARRAY;
   private static final List<String> HEADLESS_COMMANDS = Arrays.asList(
     "ant", "duplocate", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions");
   private static final List<String> GUI_COMMANDS = Arrays.asList("diff", "merge");
@@ -46,6 +47,8 @@ public class Main {
   private Main() { }
 
   public static void main(String[] args) {
+    LinkedHashMap<String, Long> startupTimings = new LinkedHashMap<>();
+    startupTimings.put("startup begin", System.nanoTime());
     if (args.length == 1 && "%f".equals(args[0])) {
       args = NO_ARGS;
     }
@@ -66,7 +69,7 @@ public class Main {
     }
 
     try {
-      Bootstrap.main(args, Main.class.getName() + "Impl", "start");
+      Bootstrap.main(args, Main.class.getName() + "Impl", "start", startupTimings);
     }
     catch (Throwable t) {
       showMessage("Start Failed", t);
@@ -84,8 +87,8 @@ public class Main {
 
   public static void setFlags(@NotNull String[] args) {
     isHeadless = isHeadless(args);
-    isCommandLine = isCommandLine(args);
-    if (isHeadless()) {
+    isCommandLine = isHeadless || (args.length > 0 && GUI_COMMANDS.contains(args[0]));
+    if (isHeadless) {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
     }
   }
@@ -101,10 +104,6 @@ public class Main {
 
     String firstArg = args[0];
     return HEADLESS_COMMANDS.contains(firstArg) || firstArg.length() < 20 && firstArg.endsWith("inspect");
-  }
-
-  private static boolean isCommandLine(String[] args) {
-    return isHeadless(args) || args.length > 0 && GUI_COMMANDS.contains(args[0]);
   }
 
   private static boolean checkGraphics() {

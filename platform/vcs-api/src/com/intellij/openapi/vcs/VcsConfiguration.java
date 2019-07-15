@@ -73,6 +73,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean SHELVE_DETAILS_PREVIEW_SHOWN = false;
   public boolean VCS_LOG_DETAILS_PREVIEW_SHOWN = false;
   public boolean RELOAD_CONTEXT = true;
+  public boolean MARK_IGNORED_AS_EXCLUDED = false;
 
   @XCollection(elementName = "path", propertyElementName = "ignored-roots")
   public List<String> IGNORED_UNREGISTERED_ROOTS = new ArrayList<>();

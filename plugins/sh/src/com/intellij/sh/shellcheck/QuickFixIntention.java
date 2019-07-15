@@ -14,7 +14,7 @@ import java.util.Comparator;
 import java.util.stream.Stream;
 
 public class QuickFixIntention implements IntentionAction {
-  private static final String FEATURE_ACTION_ID = "QuickFixaUsed";
+  private static final String FEATURE_ACTION_ID = "QuickFixUsed";
   private final ShShellcheckExternalAnnotator.Fix fix;
   private final long timestamp;
   private final String message;

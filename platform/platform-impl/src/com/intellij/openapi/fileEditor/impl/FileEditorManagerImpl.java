@@ -12,7 +12,6 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -99,7 +98,7 @@ import java.util.concurrent.atomic.AtomicInteger;
   name = "FileEditorManager",
   storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
 )
-public class FileEditorManagerImpl extends FileEditorManagerEx implements PersistentStateComponent<Element> {
+public class FileEditorManagerImpl extends FileEditorManagerEx implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl");
   private static final Key<Boolean> DUMB_AWARE = Key.create("DUMB_AWARE");
 
@@ -182,6 +181,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     });
   }
 
+  @Override
+  public void dispose() {
+  }
+
   private void dumbModeFinished(Project project) {
     VirtualFile[] files = getOpenFiles();
     for (VirtualFile file : files) {
@@ -210,7 +213,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
     myContentFactory = new DockableEditorContainerFactory(myProject, this, myDockManager);
     myDockManager.register(DockableEditorContainerFactory.TYPE, myContentFactory);
-    Disposer.register(myProject, myContentFactory);
+    Disposer.register(this, myContentFactory);
   }
 
   public static boolean isDumbAware(@NotNull FileEditor editor) {
@@ -303,7 +306,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
           panel.setOpaque(false);
           panel.setBorder(new MyBorder());
           mySplitters = new EditorsSplitters(this, myDockManager, true);
-          Disposer.register(myProject, mySplitters);
+          Disposer.register(this, mySplitters);
           panel.add(mySplitters, BorderLayout.CENTER);
           myPanels = panel;
         }
@@ -1864,7 +1867,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
     private void replaceEditors(Map<EditorWithProviderComposite, Pair<VirtualFile, Integer>> replacements) {
       if (replacements.isEmpty()) return;
-      
+
       for (EditorWindow eachWindow : getWindows()) {
         EditorWithProviderComposite selected = eachWindow.getSelectedEditor();
         EditorWithProviderComposite[] editors = eachWindow.getEditors();

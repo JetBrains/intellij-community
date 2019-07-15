@@ -15,10 +15,10 @@
  */
 package org.intellij.plugins.xsltDebugger.ui.actions;
 
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.ide.CopyPasteManager;
 import org.intellij.plugins.xsltDebugger.rt.engine.OutputEventQueue;
 import org.intellij.plugins.xsltDebugger.ui.GeneratedStructureModel;
@@ -32,11 +32,8 @@ public class CopyValueAction extends AnAction {
   public static final DataKey<DefaultMutableTreeNode> SELECTED_NODE = DataKey.create("SELECTED_NODE");
 
   public CopyValueAction(JComponent component) {
-    final AnAction action = ActionManager.getInstance().getAction("$Copy");
-    if (action != null) {
-      copyFrom(action);
-      registerCustomShortcutSet(getShortcutSet(), component);
-    }
+    ActionUtil.copyFrom(this, "$Copy");
+    registerCustomShortcutSet(getShortcutSet(), component);
   }
 
   @Override

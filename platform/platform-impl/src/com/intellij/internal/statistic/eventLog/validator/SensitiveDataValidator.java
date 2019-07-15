@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupRules;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,6 +16,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -66,6 +68,9 @@ public class SensitiveDataValidator {
 
   public Map<String, Object> guaranteeCorrectEventData(@NotNull EventLogGroup group, @NotNull EventContext context) {
     WhiteListGroupRules whiteListRule = eventsValidators.get(group.getId());
+    if (isTestModeEnabled(whiteListRule)) {
+      return context.eventData;
+    }
 
     Map<String, Object> validatedData =
       ContainerUtil.newConcurrentMap(); // TODO: don't create validatedData map if all keys are accepted (just return context.eventData)
@@ -81,6 +86,11 @@ public class SensitiveDataValidator {
       addPluginInfoTo(context.pluginInfo, validatedData);
     }
     return validatedData;
+  }
+
+  private static boolean isTestModeEnabled(@Nullable WhiteListGroupRules rule) {
+    return TestModeValidationRule.isTestModeEnabled() && rule != null &&
+           Arrays.stream(rule.getEventIdRules()).anyMatch( r -> r instanceof TestModeValidationRule);
   }
 
   public SensitiveDataValidator update() {

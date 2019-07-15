@@ -3,7 +3,7 @@ package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +18,7 @@ public class ClipboardUtil {
       return supplier.get();
     }
     catch (IllegalStateException e) {
-      if (SystemInfo.isWindows) {
+      if (SystemInfoRt.isWindows) {
         LOG.debug("Clipboard is busy");
       }
       else {

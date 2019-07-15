@@ -15,7 +15,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionDescription;
 import com.intellij.openapi.vcs.history.VcsRevisionDescriptionImpl;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.vcs.log.TimedVcsCommit;
 import com.intellij.vcs.log.VcsCommitMetadata;
@@ -167,7 +167,7 @@ public class GitHistoryUtils {
     parameters.add(GitLogUtil.getNoWalkParameter(vcs));
     parameters.addAll(hashes);
 
-    return ArrayUtil.toStringArray(parameters);
+    return ArrayUtilRt.toStringArray(parameters);
   }
 
   /**

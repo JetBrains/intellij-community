@@ -22,7 +22,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
@@ -195,7 +195,7 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
   }
 
   void apply() {
-    CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = ArrayUtil.toStringArray(getExcludedPackages(ExclusionScope.IDE));
+    CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = ArrayUtilRt.toStringArray(getExcludedPackages(ExclusionScope.IDE));
     JavaProjectCodeInsightSettings.getSettings(myProject).excludedNames = getExcludedPackages(ExclusionScope.Project);
   }
 

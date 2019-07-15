@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.collectors.fus.ui.persistence.ShortcutsCo
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomUtilsWhiteListRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
@@ -177,7 +177,7 @@ public class ToolWindowCollector implements PersistentStateComponent<ToolWindowC
     }
   }
 
-  public static class ToolWindowUtilValidator extends CustomUtilsWhiteListRule {
+  public static class ToolWindowUtilValidator extends CustomWhiteListRule {
 
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {

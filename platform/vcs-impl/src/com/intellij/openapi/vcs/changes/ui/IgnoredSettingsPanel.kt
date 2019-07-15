@@ -6,8 +6,10 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle.message
+import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.ASKED_MANAGE_IGNORE_FILES_PROPERTY
 import com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.MANAGE_IGNORE_FILES_PROPERTY
 import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsPanel.ManageIgnoredOption.*
@@ -19,6 +21,7 @@ internal class IgnoredSettingsPanel(private val project: Project) : BoundConfigu
                                                                                       "project.propVCSSupport.Ignored.Files"), SearchableConfigurable {
   internal var selectedManageIgnoreOption = getIgnoredOption()
   internal var settings = VcsApplicationSettings.getInstance()
+  internal var projectSettings = VcsConfiguration.getInstance(project)
 
   override fun apply() {
     val modified = isModified
@@ -52,8 +55,8 @@ internal class IgnoredSettingsPanel(private val project: Project) : BoundConfigu
           checkBox(message("ignored.file.excluded.to.ignored.label"), settings::MARK_EXCLUDED_AS_IGNORED)
         }
         row {
-          checkBox(message("ignored.file.ignored.to.excluded.label"), settings::MARK_IGNORED_AS_EXCLUDED)
-        }
+          checkBox(message("ignored.file.ignored.to.excluded.label"), projectSettings::MARK_IGNORED_AS_EXCLUDED)
+        }.visible = Registry.`is`("vcs.propose.add.ignored.directories.to.exclude", true)
       }
     }
 

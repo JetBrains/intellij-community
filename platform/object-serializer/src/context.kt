@@ -46,7 +46,7 @@ data class ReadErrors(
       logger.warn(unknownFields.joinToString("\n"))
     }
     if (fields.isNotEmpty()) {
-      logger.warn(unknownFields.joinToString("\n"))
+      logger.warn(fields.joinToString("\n"))
     }
   }
 }

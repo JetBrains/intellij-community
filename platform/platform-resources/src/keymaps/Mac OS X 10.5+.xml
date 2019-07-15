@@ -176,6 +176,7 @@
     <keyboard-shortcut first-keystroke="meta shift LEFT"/>
   </action>
   <action id="ContextHelp">
+    <keyboard-shortcut first-keystroke="meta shift F1"/>
   </action>
   <action id="ActivateMessagesToolWindow">
     <keyboard-shortcut first-keystroke="meta 0"/>

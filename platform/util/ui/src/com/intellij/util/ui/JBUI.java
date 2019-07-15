@@ -3,9 +3,8 @@ package com.intellij.util.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
@@ -13,7 +12,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.LazyInitializer.MutableNotNullValue;
 import com.intellij.util.LazyInitializer.NullableValue;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBUIScale.DerivedScaleType;
 import com.intellij.util.ui.JBUIScale.Scale;
@@ -65,7 +63,7 @@ public class JBUI {
       if (!SystemProperties.getBooleanProperty("hidpi", true)) {
         return 1f;
       }
-      if (UIUtil.isJreHiDPIEnabled()) {
+      if (StartupUiUtil.isJreHiDPIEnabled()) {
         GraphicsDevice gd = null;
         try {
           gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
@@ -77,8 +75,8 @@ public class JBUI {
       }
 
       // in production initSystemFontData must be already called, probably only in a test mode will be not yet initialized
-      UIUtil.initSystemFontData(getLogger());
-      Pair<String, Integer> fdata = UIUtil.getSystemFontData();
+      StartupUiUtil.initSystemFontData(getLogger());
+      Pair<String, Integer> fdata = StartupUiUtil.getSystemFontData();
 
       int size = fdata == null ? Fonts.label().getSize() : fdata.getSecond();
       return getFontScale(size);
@@ -86,7 +84,7 @@ public class JBUI {
 
     @Override
     protected void onInitialized(@NotNull Float scale) {
-      getLogger().info("System scale factor: " + scale + " (" + (UIUtil.isJreHiDPIEnabled() ? "JRE" : "IDE") + "-managed HiDPI)");
+      getLogger().info("System scale factor: " + scale + " (" + (StartupUiUtil.isJreHiDPIEnabled() ? "JRE" : "IDE") + "-managed HiDPI)");
     }
 
     @TestOnly
@@ -115,22 +113,24 @@ public class JBUI {
           getLogger().error("ide.ui.scale system property is not a float value: " + prop);
         }
       }
-      else if (Registry.is("ide.ui.scale.override")) {
-        return (float)Registry.get("ide.ui.scale").asDouble();
+      else if (Boolean.getBoolean("ide.ui.scale.override")) {
+        return 1f;
       }
       return null;
     }
 
     @Override
     protected void onInitialized(@Nullable Float scale) {
-      if (isNotNull()) setUserScaleFactor(ObjectUtils.notNull(scale));
+      if (isNotNull()) {
+        setUserScaleFactor(scale);
+      }
     }
   };
 
   /**
    * The user scale factor, see {@link ScaleType#USR_SCALE}.
    */
-  private static float userScaleFactor = setUserScaleFactor(UIUtil.isJreHiDPIEnabled() ? 1f : SYSTEM_SCALE_FACTOR.get());
+  private static float userScaleFactor = setUserScaleFactor(StartupUiUtil.isJreHiDPIEnabled() ? 1f : SYSTEM_SCALE_FACTOR.get());
 
   /**
    * Adds property change listener. Supported properties:
@@ -159,9 +159,9 @@ public class JBUI {
    * In the IDE-managed HiDPI mode defaults to {@link #sysScale()}
    */
     public static float sysScale(@Nullable GraphicsConfiguration gc) {
-    if (UIUtil.isJreHiDPIEnabled() && gc != null) {
+    if (StartupUiUtil.isJreHiDPIEnabled() && gc != null) {
       if (gc.getDevice().getType() == GraphicsDevice.TYPE_RASTER_SCREEN) {
-        if (SystemInfo.isMac && UIUtil.isJreHiDPI_earlierVersion()) {
+        if (SystemInfoRt.isMac && StartupUiUtil.isJreHiDPI_earlierVersion()) {
           return UIUtil.DetectRetinaKit.isOracleMacRetinaDevice(gc.getDevice()) ? 2f : 1f;
         }
         return (float)gc.getDefaultTransform().getScaleX();
@@ -176,7 +176,7 @@ public class JBUI {
    * In the IDE-managed HiDPI mode defaults to {@link #sysScale()}
    */
   public static float sysScale(@Nullable Graphics2D g) {
-    if (UIUtil.isJreHiDPIEnabled() && g != null) {
+    if (StartupUiUtil.isJreHiDPIEnabled() && g != null) {
       GraphicsConfiguration gc = g.getDeviceConfiguration();
       if (gc == null ||
           gc.getDevice().getType() == GraphicsDevice.TYPE_IMAGE_BUFFER ||
@@ -212,7 +212,7 @@ public class JBUI {
    * Returns the pixel scale factor, corresponding to the default monitor device.
    */
   public static float pixScale() {
-    return UIUtil.isJreHiDPIEnabled() ? sysScale() * scale(1f) : scale(1f);
+    return StartupUiUtil.isJreHiDPIEnabled() ? sysScale() * scale(1f) : scale(1f);
   }
 
   /**
@@ -227,7 +227,7 @@ public class JBUI {
    * In the IDE-managed HiDPI mode defaults to {@link #pixScale()}
    */
   public static float pixScale(@Nullable GraphicsConfiguration gc) {
-    return UIUtil.isJreHiDPIEnabled() ? sysScale(gc) * scale(1f) : scale(1f);
+    return StartupUiUtil.isJreHiDPIEnabled() ? sysScale(gc) * scale(1f) : scale(1f);
   }
 
   /**
@@ -235,7 +235,7 @@ public class JBUI {
    * In the IDE-managed HiDPI mode defaults to {@link #pixScale()}
    */
   public static float pixScale(@Nullable Graphics2D g) {
-    return UIUtil.isJreHiDPIEnabled() ? sysScale(g) * scale(1f) : scale(1f);
+    return StartupUiUtil.isJreHiDPIEnabled() ? sysScale(g) * scale(1f) : scale(1f);
   }
 
   /**
@@ -289,10 +289,12 @@ public class JBUI {
 
     // Downgrading user scale below 1.0 may be uncomfortable (tiny icons),
     // whereas some users prefer font size slightly below normal which is ok.
-    if (!Disposer.isDebugMode() && scale < 1 && sysScale() >= 1) scale = 1;
+    if (scale < 1 && sysScale() >= 1) {
+      scale = 1;
+    }
 
     // Ignore the correction when UIUtil.DEF_SYSTEM_FONT_SIZE is overridden, see UIUtil.initSystemFontData.
-    if (SystemInfo.isLinux && scale == 1.25f && UIUtil.DEF_SYSTEM_FONT_SIZE == 12) {
+    if (SystemInfoRt.isLinux && scale == 1.25f && StartupUiUtil.DEF_SYSTEM_FONT_SIZE == 12) {
       //Default UI font size for Unity and Gnome is 15. Scaling factor 1.25f works badly on Linux
       scale = 1f;
     }
@@ -328,7 +330,7 @@ public class JBUI {
    * @return the scale factor of {@code fontSize} relative to the standard font size (currently 12pt)
    */
   public static float getFontScale(float fontSize) {
-    return fontSize / UIUtil.DEF_SYSTEM_FONT_SIZE;
+    return fontSize / StartupUiUtil.DEF_SYSTEM_FONT_SIZE;
   }
 
   @NotNull
@@ -510,7 +512,7 @@ public class JBUI {
 
     @NotNull
     public static JBFont toolbarFont() {
-      return SystemInfo.isMac ? smallFont() : label();
+      return SystemInfoRt.isMac ? smallFont() : label();
     }
 
     @NotNull
@@ -699,7 +701,7 @@ public class JBUI {
       }
 
       public static Color underlinedTabBackground() {
-        return namedColorOrNull("DefaultTabs.underlinedTabBackground");
+        return UIManager.getColor("DefaultTabs.underlinedTabBackground");
       }
 
       @NotNull
@@ -719,6 +721,10 @@ public class JBUI {
       public static int underlineHeight() {
         return getInt("DebuggerTabs.underlineHeight", scale(2));
       }
+
+      public static Color underlinedTabBackground() {
+        return UIManager.getColor("DebuggerTabs.underlinedTabBackground");
+      }
     }
 
     public static class EditorTabs {
@@ -737,7 +743,7 @@ public class JBUI {
       }
 
       public static Color underlinedTabBackground() {
-        return namedColorOrNull("EditorTabs.underlinedTabBackground");
+        return UIManager.getColor("EditorTabs.underlinedTabBackground");
       }
 
       @NotNull
@@ -801,7 +807,7 @@ public class JBUI {
       }
 
       public static Color underlinedTabBackground() {
-        return namedColorOrNull("ToolWindow.HeaderTab.underlinedTabBackground");
+        return UIManager.getColor("ToolWindow.HeaderTab.underlinedTabBackground");
       }
 
       public static Color hoverInactiveBackground() {
@@ -809,12 +815,12 @@ public class JBUI {
       }
 
       public static Color underlinedTabInactiveBackground() {
-        return namedColorOrNull("ToolWindow.HeaderTab.underlinedTabInactiveBackground");
+        return UIManager.getColor("ToolWindow.HeaderTab.underlinedTabInactiveBackground");
       }
 
       @NotNull
       public static Color underlinedTabInactiveForeground() {
-        return JBColor.namedColor("ToolWindow.HeaderTab.underlinedTabInactiveForeground", ToolWindow.underlinedTabForeground());
+        return JBColor.namedColor("ToolWindow.HeaderTab.underlinedTabInactiveForeground", underlinedTabForeground());
       }
 
 
@@ -1004,8 +1010,8 @@ public class JBUI {
 
       @NotNull
       public static Color defaultButtonColor() {
-        return UIUtil.isUnderDarcula() ? JBColor.namedColor("Button.default.focusColor",
-                                           JBColor.namedColor("Focus.defaultButtonBorderColor", 0x97c3f3)) : focusColor();
+        return StartupUiUtil.isUnderDarcula() ? JBColor.namedColor("Button.default.focusColor",
+                                    JBColor.namedColor("Focus.defaultButtonBorderColor", 0x97c3f3)) : focusColor();
       }
 
       @NotNull
@@ -1209,23 +1215,11 @@ public class JBUI {
         );
       }
 
-      @NotNull
       public static int fieldsSeparatorWidth() {
-        return getInt("NewClass.separatorWidth", JBUI.scale(10));
+        return getInt("NewClass.separatorWidth", scale(10));
       }
     }
   }
-
-  public static Color namedColorOrNull(@NotNull final String propertyName) {
-    Color color = UIManager.getColor(propertyName);
-    if (color == null) return null;
-
-    if (UIManager.get(propertyName) == null) {
-      UIManager.put(propertyName, color);
-    }
-    return color;
-  }
-
 
   public static int getInt(@NotNull String propertyName, int defaultValue) {
     Object value = UIManager.get(propertyName);

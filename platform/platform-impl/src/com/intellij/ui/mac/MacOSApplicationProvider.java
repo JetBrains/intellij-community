@@ -16,7 +16,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
@@ -31,16 +31,13 @@ import java.io.File;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author max
- */
-public class MacOSApplicationProvider {
+public final class MacOSApplicationProvider {
   private static final Logger LOG = Logger.getInstance(MacOSApplicationProvider.class);
 
   private MacOSApplicationProvider() { }
 
   public static void initApplication() {
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       try {
         Worker.initMacApplication();
       }
@@ -75,7 +72,7 @@ public class MacOSApplicationProvider {
         if (list.isEmpty()) return;
         submit("OpenFile", () -> {
           if (ProjectUtil.tryOpenFileList(project, list, "MacMenu")) {
-            IdeaApplication.getInstance().disableProjectLoad();
+            IdeaApplication.disableProjectLoad();
           }
         });
       });

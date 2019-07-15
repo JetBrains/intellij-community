@@ -12,7 +12,7 @@ import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.ui.components.JBRadioButton;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -284,7 +284,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
       list.add(var.getName());
     }
     ContainerUtil.addAll(list, suggestNames());
-    myNameField = new NameSuggestionsField(ArrayUtil.toStringArray(list), myContext.getProject(), GroovyFileType.GROOVY_FILE_TYPE);
+    myNameField = new NameSuggestionsField(ArrayUtilRt.toStringArray(list), myContext.getProject(), GroovyFileType.GROOVY_FILE_TYPE);
 
     if (expression != null) {
       myTypeComboBox = GrTypeComboBox.createTypeComboBoxFromExpression(expression);

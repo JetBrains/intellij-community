@@ -14,7 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.*;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -98,7 +98,7 @@ public class ReturnNullInspection extends BaseInspection {
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(elt.getProject());
     return new DelegatingFix(new AnnotateMethodFix(
       manager.getDefaultNullable(),
-      ArrayUtil.toStringArray(manager.getNotNulls())));
+      ArrayUtilRt.toStringArray(manager.getNotNulls())));
   }
 
   @Override
@@ -165,7 +165,7 @@ public class ReturnNullInspection extends BaseInspection {
         method = (PsiMethod)element;
         returnType = method.getReturnType();
         lambda = false;
-      } 
+      }
       else if (element instanceof PsiLambdaExpression) {
         final PsiType functionalInterfaceType = ((PsiLambdaExpression)element).getFunctionalInterfaceType();
         method = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);

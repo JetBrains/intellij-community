@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.propertyInspector.editors;
 
@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +38,7 @@ public class ListEditorDialog extends DialogWrapper {
 
   public String[] getValue() {
     final String text = myLinesTextArea.getText();
-    if (text.length() == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
+    if (text.length() == 0) return ArrayUtilRt.EMPTY_STRING_ARRAY;
     return text.split("\n");
   }
 

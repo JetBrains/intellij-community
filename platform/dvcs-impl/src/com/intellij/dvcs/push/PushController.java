@@ -55,6 +55,7 @@ public class PushController implements Disposable {
   @NotNull private final List<PushSupport<Repository, PushSource, PushTarget>> myPushSupports;
   @NotNull private final PushLog myPushLog;
   @NotNull private final VcsPushDialog myDialog;
+  @NotNull private final ModalityState myModalityState;
   @Nullable private final Repository myCurrentlyOpenedRepository;
   private final List<PrePushHandler> myHandlers = new ArrayList<>();
   private final boolean mySingleRepoProject;
@@ -74,6 +75,7 @@ public class PushController implements Disposable {
     myPushSupports = getAffectedSupports();
     mySingleRepoProject = isSingleRepoProject();
     myDialog = dialog;
+    myModalityState = ModalityState.stateForComponent(myDialog.getRootPane());
     CheckedTreeNode rootNode = new CheckedTreeNode(null);
     createTreeModel(rootNode);
     myPushLog = new PushLog(myProject, rootNode, isSyncStrategiesAllowed());
@@ -341,7 +343,7 @@ public class PushController implements Disposable {
             node.setChecked(false);
           }
           myDialog.updateOkActions();
-        }, ModalityState.stateForComponent(myDialog.getRootPane()));
+        }, myModalityState);
       }
       catch (ProcessCanceledException ignore) {
       }

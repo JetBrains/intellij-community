@@ -43,4 +43,7 @@ public abstract class SearchableOptionsRegistrar{
   public abstract Set<String> getProcessedWordsWithoutStemming(@NotNull String text);
 
   public abstract Set<String> getProcessedWords(@NotNull String text);
+
+  @NotNull
+  public abstract Collection<String> getOptionsTopHit(@NotNull String configurableId);
 }

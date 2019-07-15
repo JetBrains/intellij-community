@@ -2,7 +2,7 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -23,7 +23,7 @@ public class NameUtilCore {
     for (String word : underlineDelimited) {
       addAllWords(word, result);
     }
-    return ArrayUtil.toStringArray(result);
+    return ArrayUtilRt.toStringArray(result);
   }
 
   private static void addAllWords(@NotNull String text, @NotNull List<? super String> result) {
@@ -126,6 +126,6 @@ public class NameUtilCore {
         array.add(word);
       }
     }
-    return ArrayUtil.toStringArray(array);
+    return ArrayUtilRt.toStringArray(array);
   }
 }

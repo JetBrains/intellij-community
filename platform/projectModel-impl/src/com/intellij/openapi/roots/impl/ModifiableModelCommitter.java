@@ -7,7 +7,7 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.roots.*;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
@@ -114,7 +114,7 @@ public class ModifiableModelCommitter {
           }
         }, new ArrayList<>());
 
-        String[] names = ArrayUtil.toStringArray(namesList);
+        String[] names = ArrayUtilRt.toStringArray(namesList);
         List<RootModelImpl> result = new ArrayList<>();
         for (String name : names) {
           RootModelImpl depRootModel = nameToModel.get(name);

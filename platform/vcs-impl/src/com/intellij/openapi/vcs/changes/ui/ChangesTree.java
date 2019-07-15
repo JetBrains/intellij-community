@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ThreeStateCheckBox;
@@ -53,8 +54,6 @@ import java.util.*;
 
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.DIRECTORY_GROUPING;
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.MODULE_GROUPING;
-import static com.intellij.util.ArrayUtil.EMPTY_STRING_ARRAY;
-import static com.intellij.util.ArrayUtil.toStringArray;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.ar;
 import static com.intellij.util.containers.ContainerUtil.set;
@@ -232,7 +231,8 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     PropertiesComponent properties = PropertiesComponent.getInstance(myProject);
 
     if (properties.isValueSet(FLATTEN_OPTION_KEY)) {
-      properties.setValues(GROUPING_KEYS, properties.isTrueValue(FLATTEN_OPTION_KEY) ? EMPTY_STRING_ARRAY : DEFAULT_GROUPING_KEYS);
+      properties.setValues(GROUPING_KEYS, properties.isTrueValue(FLATTEN_OPTION_KEY) ? ArrayUtilRt.EMPTY_STRING_ARRAY
+                                                                                     : DEFAULT_GROUPING_KEYS);
       properties.unsetValue(FLATTEN_OPTION_KEY);
     }
   }
@@ -305,7 +305,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   private void changeGrouping() {
-    PropertiesComponent.getInstance(myProject).setValues(GROUPING_KEYS, toStringArray(getGroupingSupport().getGroupingKeys()));
+    PropertiesComponent.getInstance(myProject).setValues(GROUPING_KEYS, ArrayUtilRt.toStringArray(getGroupingSupport().getGroupingKeys()));
 
     List<Object> oldSelection = getSelectedUserObjects();
     rebuildTree();

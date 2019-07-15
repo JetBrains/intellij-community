@@ -62,7 +62,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
 
     updateIconAndNotify();
 
-    setOpaque(false);
+    setOpaque(true);
   }
 
   @Override

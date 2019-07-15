@@ -6,8 +6,8 @@ import com.intellij.Patches;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.FixedFuture;
 import com.intellij.util.containers.ContainerUtil;
@@ -352,7 +352,7 @@ public class FileUtil extends FileUtilRt {
   private static File renameToTempFileOrDelete(@NotNull File file) {
     String tempDir = getTempDirectory();
     boolean isSameDrive = true;
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       String tempDirDrive = tempDir.substring(0, 2);
       String fileDrive = file.getAbsolutePath().substring(0, 2);
       isSameDrive = tempDirDrive.equalsIgnoreCase(fileDrive);
@@ -447,7 +447,7 @@ public class FileUtil extends FileUtilRt {
       }
     }
 
-    if (SystemInfo.isUnix && fromFile.canExecute()) {
+    if (SystemInfoRt.isUnix && fromFile.canExecute()) {
       FileSystemUtil.clonePermissionsToExecute(fromFile.getPath(), toFile.getPath());
     }
   }
@@ -511,7 +511,7 @@ public class FileUtil extends FileUtilRt {
    * @throws IOException in case of any IO troubles
    */
   public static void copyDirContent(@NotNull File fromDir, @NotNull File toDir) throws IOException {
-    File[] children = ObjectUtils.notNull(fromDir.listFiles(), ArrayUtil.EMPTY_FILE_ARRAY);
+    File[] children = ObjectUtils.notNull(fromDir.listFiles(), ArrayUtilRt.EMPTY_FILE_ARRAY);
     for (File child : children) {
       copyFileOrDir(child, new File(toDir, child.getName()));
     }
@@ -551,7 +551,7 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static String getNameWithoutExtension(@NotNull File file) {
-    return getNameWithoutExtension(file.getName());
+    return FileUtilRt.getNameWithoutExtension(file.getName());
   }
 
   @NotNull
@@ -680,7 +680,7 @@ public class FileUtil extends FileUtilRt {
   public static String normalize(@NotNull String path) {
     int start = 0;
     boolean separator = false;
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       if (path.startsWith("//")) {
         start = 2;
         separator = true;
@@ -714,7 +714,7 @@ public class FileUtil extends FileUtilRt {
     final StringBuilder result = new StringBuilder(path.length());
     result.append(path, 0, prefixEnd);
     int start = prefixEnd;
-    if (start==0 && SystemInfo.isWindows && (path.startsWith("//") || path.startsWith("\\\\"))) {
+    if (start==0 && SystemInfoRt.isWindows && (path.startsWith("//") || path.startsWith("\\\\"))) {
       start = 2;
       result.append("//");
       separator = true;
@@ -827,7 +827,7 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static String resolveShortWindowsName(@NotNull String path) throws IOException {
-    return SystemInfo.isWindows && containsWindowsShortName(path) ? new File(path).getCanonicalPath() : path;
+    return SystemInfoRt.isWindows && containsWindowsShortName(path) ? new File(path).getCanonicalPath() : path;
   }
 
   public static boolean containsWindowsShortName(@NotNull String path) {
@@ -1088,13 +1088,15 @@ public class FileUtil extends FileUtilRt {
     }
   }
 
-  @NotNull
-  public static JBTreeTraverser<File> fileTraverser(@Nullable File root) {
-    return FILE_TRAVERSER.withRoot(root);
+  private static class Lazy {
+    private static final JBTreeTraverser<File> FILE_TRAVERSER = JBTreeTraverser.from(
+      (Function<File, Iterable<File>>)file -> file == null ? Collections.emptySet() : JBIterable.of(file.listFiles()));
   }
 
-  private static final JBTreeTraverser<File> FILE_TRAVERSER = JBTreeTraverser.from(
-    (Function<File, Iterable<File>>)file -> file == null ? Collections.emptySet() : JBIterable.of(file.listFiles()));
+  @NotNull
+  public static JBTreeTraverser<File> fileTraverser(@Nullable File root) {
+    return Lazy.FILE_TRAVERSER.withRoot(root);
+  }
 
   public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<? super File> processor) {
     return fileTraverser(root).bfsTraversal().processEach(processor);
@@ -1235,7 +1237,7 @@ public class FileUtil extends FileUtilRt {
   public static String getLocationRelativeToUserHome(@Nullable String path, boolean unixOnly) {
     if (path == null) return null;
 
-    if (SystemInfo.isUnix || !unixOnly) {
+    if (SystemInfoRt.isUnix || !unixOnly) {
       File projectDir = new File(path);
       File userHomeDir = new File(SystemProperties.getUserHome());
       if (isAncestor(userHomeDir, projectDir, true)) {
@@ -1256,7 +1258,7 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static File[] notNullize(@Nullable File[] files) {
-    return notNullize(files, ArrayUtil.EMPTY_FILE_ARRAY);
+    return notNullize(files, ArrayUtilRt.EMPTY_FILE_ARRAY);
   }
 
   @NotNull
@@ -1444,20 +1446,6 @@ public class FileUtil extends FileUtilRt {
     return list;
   }
 
-  public static boolean isJarOrZip(@NotNull File file) {
-    return isJarOrZip(file, true);
-  }
-
-  public static boolean isJarOrZip(@NotNull File file, boolean isCheckIsDirectory) {
-    if (isCheckIsDirectory && file.isDirectory()) {
-      return false;
-    }
-
-    // do not use getName to avoid extra String creation (File.getName() calls substring)
-    final String path = file.getPath();
-    return StringUtilRt.endsWithIgnoreCase(path, ".jar") || StringUtilRt.endsWithIgnoreCase(path, ".zip");
-  }
-
   public static boolean visitFiles(@NotNull File root, @NotNull Processor<? super File> processor) {
     if (!processor.process(root)) {
       return false;
@@ -1473,25 +1461,6 @@ public class FileUtil extends FileUtilRt {
     }
 
     return true;
-  }
-
-  /**
-   * Like {@link Properties#load(Reader)}, but preserves the order of key/value pairs.
-   */
-  @NotNull
-  public static Map<String, String> loadProperties(@NotNull Reader reader) throws IOException {
-    final Map<String, String> map = new LinkedHashMap<>();
-
-    new Properties() {
-      @Override
-      public synchronized Object put(Object key, Object value) {
-        map.put(String.valueOf(key), String.valueOf(value));
-        //noinspection UseOfPropertiesAsHashtable
-        return super.put(key, value);
-      }
-    }.load(reader);
-
-    return map;
   }
 
   public static boolean isRootPath(@NotNull String path) {

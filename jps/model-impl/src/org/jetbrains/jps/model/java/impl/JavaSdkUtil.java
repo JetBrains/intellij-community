@@ -1,12 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.java.impl;
 
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +27,7 @@ public class JavaSdkUtil {
   @NotNull
   public static List<File> getJdkClassesRoots(@NotNull File home, boolean isJre) {
     File[] jarDirs;
-    if (SystemInfo.isMac && !home.getName().startsWith("mockJDK")) {
+    if (SystemInfoRt.isMac && !home.getName().startsWith("mockJDK")) {
       File openJdkRtJar = new File(home, "jre/lib/rt.jar");
       if (openJdkRtJar.isFile()) {
         File libDir = new File(home, "lib");
@@ -45,7 +45,7 @@ public class JavaSdkUtil {
       }
     }
     else if (new File(home, "lib/jrt-fs.jar").exists()) {
-      jarDirs = ArrayUtil.EMPTY_FILE_ARRAY;
+      jarDirs = ArrayUtilRt.EMPTY_FILE_ARRAY;
     }
     else {
       File libDir = new File(home, isJre ? "lib" : "jre/lib");
@@ -108,7 +108,7 @@ public class JavaSdkUtil {
   }
 
   private static File[] listFiles(File dir, FileFilter filter) {
-    return notNull(dir.listFiles(filter), ArrayUtil.EMPTY_FILE_ARRAY);
+    return notNull(dir.listFiles(filter), ArrayUtilRt.EMPTY_FILE_ARRAY);
   }
 
   @Nullable

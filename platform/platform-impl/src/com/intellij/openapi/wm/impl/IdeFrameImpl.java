@@ -19,8 +19,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
@@ -35,17 +37,19 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.io.SuperUserStatus;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleContext;
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Set;
@@ -74,6 +78,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   private boolean myRestoreFullScreen;
   private final LafManagerListener myLafListener;
   private final ComponentListener resizedListener;
+
+  private boolean ready;
+  private Image mySelfie;
 
   public IdeFrameImpl(ActionManagerEx actionManager, DataManager dataManager) {
     super();
@@ -142,7 +149,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
     // to show window thumbnail under Macs
     // http://lists.apple.com/archives/java-dev/2009/Dec/msg00240.html
-    if (SystemInfo.isMac) setIconImage(null);
+    if (SystemInfoRt.isMac) setIconImage(null);
 
     MouseGestureManager.getInstance().add(this);
 
@@ -202,23 +209,18 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
             }
           }
         }
-      } else if (focusOwner != null && !Windows.ToolWindowProvider.isInToolWindow(focusOwner)) {
-
+      }
+      else if (focusOwner != null && !Windows.ToolWindowProvider.isInToolWindow(focusOwner)) {
         String toolWindowId = toolWindowManagerEx.getLastActiveToolWindowId();
         ToolWindow toolWindow = toolWindowManagerEx.getToolWindow(toolWindowId);
-        if (toolWindow != null) {
-          Content content = toolWindow.getContentManager().getContent(0);
-          if (content != null) {
-            JComponent component = content.getPreferredFocusableComponent();
-            if (component != null) {
-              LOG.warn("The content (" +
-                       content.getDisplayName() +
-                       ") does not have a default focused component." +
-                       "This may cause focus issues");
-            }
-            return component == null ? getComponentToRequestFocus(toolWindow)  : component;
-
+        Content content = toolWindow == null ? null : toolWindow.getContentManager().getContent(0);
+        if (content != null) {
+          JComponent component = content.getPreferredFocusableComponent();
+          if (component == null) {
+            LOG.warn("Set preferredFocusableComponent in '" + content.getDisplayName() + "' content in " +
+                     toolWindowId + " tool window to avoid focus-related problems.");
           }
+          return component == null ? getComponentToRequestFocus(toolWindow)  : component;
         }
       }
     }
@@ -261,7 +263,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   @NotNull
   @Override
   public Insets getInsets() {
-    return SystemInfo.isMac && isInFullScreen() ? JBUI.emptyInsets() : super.getInsets();
+    return SystemInfoRt.isMac && isInFullScreen() ? JBUI.emptyInsets() : super.getInsets();
   }
 
   @Override
@@ -358,7 +360,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   }
 
   public static @Nullable String getSuperUserSuffix() {
-    return !SuperUserStatus.isSuperUser() ? null : SystemInfo.isWindows ? "(Administrator)" : "(ROOT)";
+    return !SuperUserStatus.isSuperUser() ? null : SystemInfoRt.isWindows ? "(Administrator)" : "(ROOT)";
   }
 
   public static void updateTitle(@NotNull JFrame frame, @Nullable String title, @Nullable String fileTitle, @Nullable File currentFile) {
@@ -379,7 +381,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
       if (Boolean.getBoolean("ide.ui.version.in.title")) {
         builder.append(ApplicationNamesInfo.getInstance().getFullProductName() + ' ' + ApplicationInfo.getInstance().getFullVersion());
       }
-      else if (!SystemInfo.isMac && !SystemInfo.isGNOME || builder.isEmpty()) {
+      else if (!SystemInfoRt.isMac && !SystemInfo.isGNOME || builder.isEmpty()) {
         builder.append(ApplicationNamesInfo.getInstance().getFullProductName());
       }
       builder.append(getSuperUserSuffix(), " ");
@@ -467,6 +469,15 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
       }
 
       installDefaultProjectStatusBarWidgets(myProject);
+
+      ProjectManager.getInstance().addProjectManagerListener(myProject, new ProjectManagerListener() {
+        @Override
+        public void projectClosingBeforeSave(@NotNull Project project) {
+          takeASelfie();
+        }
+      });
+
+      StartupManager.getInstance(myProject).registerPostStartupActivity((DumbAwareRunnable)() -> ready = true);
     }
     else {
       if (myRootPane != null) { //already disposed
@@ -509,7 +520,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   private void installDefaultProjectStatusBarWidgets(@NotNull final Project project) {
     final StatusBar statusBar = getStatusBar();
     addWidget(statusBar, new PositionPanel(project), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
-    addWidget(statusBar, new IdeNotificationArea(), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
+    addWidget(statusBar, new IdeNotificationArea(project), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
     addWidget(statusBar, new EncodingPanel(project), StatusBar.Anchors.after(StatusBar.StandardWidgets.POSITION_PANEL));
     addWidget(statusBar, new LineSeparatorPanel(project), StatusBar.Anchors.before(StatusBar.StandardWidgets.ENCODING_PANEL));
     addWidget(statusBar, new ColumnSelectionModePanel(project), StatusBar.Anchors.after(StatusBar.StandardWidgets.ENCODING_PANEL));
@@ -541,7 +552,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
   @Override
   public void dispose() {
-    if (SystemInfo.isMac && isInFullScreen()) {
+    if (SystemInfoRt.isMac && isInFullScreen()) {
       ((MacMainFrameDecorator)myFrameDecorator).toggleFullScreenNow();
     }
     if (isTemporaryDisposed()) {
@@ -587,7 +598,49 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   @Override
   public void paint(@NotNull Graphics g) {
     UISettings.setupAntialiasing(g);
+    if (shouldPaintSelfie()) {
+      try {
+        if (mySelfie == null) {
+          mySelfie = ImageUtil.ensureHiDPI(ImageIO.read(getSelfieLocation()), JBUIScale.ScaleContext.create(this));
+        }
+      } catch (IOException ignored) {}
+      StartupUiUtil.drawImage(g, mySelfie, 0, 0, null);
+      return;
+    } else {
+      mySelfie = null;
+    }
     super.paint(g);
+  }
+
+  private boolean shouldPaintSelfie() {
+    return !ready && Registry.is("ide.project.loading.show.last.state") &&
+           (myProject != null || ProjectManager.getInstance().getOpenProjects().length == 0);
+  }
+
+  public void takeASelfie() {
+    if (myProject == null || !Registry.is("ide.project.loading.show.last.state")) return;
+    BufferedImage image = UIUtil.createImage(this, getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+    UISettings.setupAntialiasing(image.getGraphics());
+    paint(image.getGraphics());
+    try {
+      File selfie = getSelfieLocation();
+      if (selfie.getParentFile().exists() || selfie.getParentFile().mkdirs()) {
+        ImageIO.write(image, "png", selfie);
+        FileUtil.copy(selfie, getLastSelfieLocation());
+      }
+    } catch (IOException ignored) {}
+  }
+
+  @NotNull
+  private File getSelfieLocation() {
+    return myProject != null ?
+           ProjectUtil.getProjectCachePath(myProject, "selfies", false, ".png").toFile() :
+           getLastSelfieLocation();
+  }
+
+  @NotNull
+  private static File getLastSelfieLocation() {
+    return new File(PathManager.getSystemPath(), "selfies/last_closed_project.png");
   }
 
   @Override
@@ -624,7 +677,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   }
 
   private boolean temporaryFixForIdea156004(final boolean state) {
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       try {
         Field modalBlockerField = Window.class.getDeclaredField("modalBlocker");
         modalBlockerField.setAccessible(true);

@@ -1,9 +1,10 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,7 +115,7 @@ public class MavenDependencyReferenceProvider extends PsiReferenceProvider imple
     @NotNull
     @Override
     public Object[] getVariants() {
-      if (StringUtil.isEmptyOrSpaces(myGroupId)) return ArrayUtil.EMPTY_OBJECT_ARRAY;
+      if (StringUtil.isEmptyOrSpaces(myGroupId)) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
 
       MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(getElement().getProject());
       return manager.getArtifactIds(myGroupId).toArray();
@@ -142,7 +143,7 @@ public class MavenDependencyReferenceProvider extends PsiReferenceProvider imple
     @Override
     public Object[] getVariants() {
       if (StringUtil.isEmptyOrSpaces(myGroupId) || StringUtil.isEmptyOrSpaces(myArtifactId)) {
-        return ArrayUtil.EMPTY_OBJECT_ARRAY;
+        return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
       }
 
       MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(getElement().getProject());

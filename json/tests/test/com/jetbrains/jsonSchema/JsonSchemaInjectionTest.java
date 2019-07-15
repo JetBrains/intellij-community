@@ -58,4 +58,32 @@ public class JsonSchemaInjectionTest extends JsonSchemaHighlightingTestBase {
                 "  \"X\": \"<a<caret>></a>\"\n" +
                 "}", false);
   }
+
+  public void testOneOfSchema() throws Exception {
+    @Language("JSON") String schema = "{\n" +
+                                      "  \"additionalProperties\": {\n" +
+                                      "    \"oneOf\": [\n" +
+                                      "      {\n" +
+                                      "        \"type\": \"string\",\n" +
+                                      "        \"x-intellij-language-injection\": \"XML\"\n" +
+                                      "      },\n" +
+                                      "      {\n" +
+                                      "        \"type\": \"array\",\n" +
+                                      "        \"items\": {\n" +
+                                      "          \"type\": \"string\",\n" +
+                                      "          \"x-intellij-language-injection\": \"XML\"\n" +
+                                      "        }\n" +
+                                      "      }\n" +
+                                      "    ]\n" +
+                                      "  }\n" +
+                                      "}";
+    doTest(schema, "{\n" +
+                "  \"foo\": \"<caret><a/>\",\n" +
+                "  \"bar\": [\"<a/>\"]\n" +
+                "}", true);
+    doTest(schema, "{\n" +
+                "  \"foo\": \"<a/>\",\n" +
+                "  \"bar\": [\"<caret><a/>\"]\n" +
+                "}", true);
+  }
 }

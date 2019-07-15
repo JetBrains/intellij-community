@@ -12,7 +12,7 @@ import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -63,7 +63,7 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
   @Override
   public String[] getGroups() {
     myTemplates.drop();
-    return ArrayUtil.toStringArray(myTemplates.getValue().keySet());
+    return ArrayUtilRt.toStringArray(myTemplates.getValue().keySet());
   }
 
   @NotNull

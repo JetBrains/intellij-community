@@ -13,6 +13,7 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -178,7 +179,7 @@ public final class CommentFoldingUtil {
 
     if (prefix == null || suffix == null || linePrefix == null) return null;
 
-    final String header = getCommentHeader(document, suffix, linePrefix, commentRange);
+    final String header = getCommentHeader(document, suffix, prefix, linePrefix, commentRange);
 
     return getCommentPlaceholder(prefix, suffix, header, replacement);
   }
@@ -229,7 +230,9 @@ public final class CommentFoldingUtil {
   }
 
   /**
-   * Get second line from comment excluding comment suffix and comment line prefix.
+   * Get first non-blank line from comment.
+   * If line with comment prefix contains text then it will be used as header, otherwise second line will be used.
+   * If both lines are blank or comment contains only one line then empty string is returned.
    *
    * @param document      document with comment
    * @param commentSuffix doc comment suffix
@@ -239,24 +242,45 @@ public final class CommentFoldingUtil {
   @NotNull
   public static String getCommentHeader(@NotNull Document document,
                                         @NotNull String commentSuffix,
+                                        @NotNull String commentPrefix,
                                         @NotNull String linePrefix,
                                         @NotNull TextRange commentRange) {
     final int nFirstCommentLine = document.getLineNumber(commentRange.getStartOffset());
-    final int nSecondCommentLine = nFirstCommentLine + 1;
 
+    TextRange lineRange = getLineRange(document, nFirstCommentLine);
+    String line = getCommentLine(document, lineRange, commentPrefix, commentSuffix);
+
+    if (line.chars().anyMatch(c -> !StringUtil.isWhiteSpace((char)c))) return line;
+
+    final int nSecondCommentLine = nFirstCommentLine + 1;
     if (nSecondCommentLine >= document.getLineCount()) return "";
 
-    final int endOffset = document.getLineEndOffset(nSecondCommentLine);
-    if (endOffset > commentRange.getEndOffset()) return "";
+    lineRange = getLineRange(document, nSecondCommentLine);
+    if (lineRange.getEndOffset() > commentRange.getEndOffset()) return "";
+    line = getCommentLine(document, lineRange, linePrefix, commentSuffix);
 
-    final int startOffset = document.getLineStartOffset(nSecondCommentLine);
+    if (line.chars().anyMatch(c -> !StringUtil.isWhiteSpace((char)c))) return line;
 
-    String line = document.getText(new TextRange(startOffset, endOffset));
+    return "";
+  }
+
+  @NotNull
+  @Contract("_, _ -> new")
+  private static TextRange getLineRange(@NotNull Document document, int nLine) {
+    int startOffset = document.getLineStartOffset(nLine);
+    int endOffset = document.getLineEndOffset(nLine);
+    return new TextRange(startOffset, endOffset);
+  }
+
+  @NotNull
+  private static String getCommentLine(@NotNull Document document,
+                                       @NotNull TextRange lineRange,
+                                       @NotNull String prefix,
+                                       @NotNull String suffix) {
+    String line = document.getText(lineRange);
     line = line.trim();
 
-    line = StringUtil.trimEnd(line, commentSuffix);
-    line = StringUtil.trimStart(line, linePrefix);
-
-    return line;
+    line = StringUtil.trimEnd(line, suffix);
+    return StringUtil.trimStart(line, prefix);
   }
 }

@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
@@ -259,15 +260,13 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator == null) indicator = new EmptyProgressIndicator();
 
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
-    }
-
     indicator.pushState();
+    ((CoreProgressManager)ProgressManager.getInstance()).suppressPrioritizing();
     try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing task")) {
       task.performInDumbMode(indicator);
     }
     finally {
+      ((CoreProgressManager)ProgressManager.getInstance()).restorePrioritizing();
       indicator.popState();
       Disposer.dispose(task);
     }

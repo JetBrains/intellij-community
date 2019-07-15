@@ -11,7 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,7 +109,7 @@ public class ExtractUtil {
     }
     else if (mustAdd.size() == outputVars.length && outputVars.length == 1) {
       return new GrVariableDeclaration[]{
-        factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, callExpression, outputVars[0].getType(), outputVars[0].getName())
+        factory.createVariableDeclaration(ArrayUtilRt.EMPTY_STRING_ARRAY, callExpression, outputVars[0].getType(), outputVars[0].getName())
       };
     }
     else if (varsAreEqual(mustAdd, outputVars)) {
@@ -171,7 +171,7 @@ public class ExtractUtil {
 
     if (distinctDeclaration) {
       for (VariableInfo info : varInfos) {
-        result.add(factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, "", info.getType(), info.getName()));
+        result.add(factory.createVariableDeclaration(ArrayUtilRt.EMPTY_STRING_ARRAY, "", info.getType(), info.getName()));
       }
     }
     else {
@@ -179,7 +179,7 @@ public class ExtractUtil {
       for (int i = 0, mustAddLength = varInfos.size(); i < mustAddLength; i++) {
         names[i] = varInfos.get(i).getName();
       }
-      result.add(factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, initializer, varInfos.get(0).getType(), names));
+      result.add(factory.createVariableDeclaration(ArrayUtilRt.EMPTY_STRING_ARRAY, initializer, varInfos.get(0).getType(), names));
     }
     return result;
   }
@@ -424,7 +424,7 @@ public class ExtractUtil {
         i++;
       }
     }
-    return ArrayUtil.toStringArray(params);
+    return ArrayUtilRt.toStringArray(params);
   }
 
   @NotNull

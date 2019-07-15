@@ -23,7 +23,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import org.intellij.plugins.intelliLang.Configuration;
-import org.intellij.plugins.intelliLang.pattern.PatternValidator;
 import org.intellij.plugins.intelliLang.util.AnnotateFix;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
@@ -37,23 +36,6 @@ import java.util.Set;
 
 public class LanguageMismatch extends LocalInspectionTool {
   public boolean CHECK_NON_ANNOTATED_REFERENCES = true;
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  @Override
-  @NotNull
-  public String getGroupDisplayName() {
-    return PatternValidator.LANGUAGE_INJECTION;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return "Language Mismatch";
-  }
 
   @Override
   @Nullable
@@ -156,10 +138,4 @@ public class LanguageMismatch extends LocalInspectionTool {
     }
   }
 
-  @Override
-  @NotNull
-  @NonNls
-  public String getShortName() {
-    return "LanguageMismatch";
-  }
 }

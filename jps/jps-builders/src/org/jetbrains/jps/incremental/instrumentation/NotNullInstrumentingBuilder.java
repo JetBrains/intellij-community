@@ -5,7 +5,7 @@ import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +67,7 @@ public class NotNullInstrumentingBuilder extends BaseInstrumentingBuilder{
     try {
       final ProjectDescriptor pd = context.getProjectDescriptor();
       final List<String> notNulls = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(pd.getProject()).getNotNullAnnotations();
-      if (NotNullVerifyingInstrumenter.processClassFile((FailSafeClassReader)reader, writer, ArrayUtil.toStringArray(notNulls))) {
+      if (NotNullVerifyingInstrumenter.processClassFile((FailSafeClassReader)reader, writer, ArrayUtilRt.toStringArray(notNulls))) {
         return new BinaryContent(writer.toByteArray());
       }
     }

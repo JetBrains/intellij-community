@@ -20,6 +20,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+/**
+ * A listener for VFS events, invoked inside write-action. For a non-blocking alternative,
+ * see {@link com.intellij.openapi.vfs.AsyncFileListener}.
+ */
 public interface BulkFileListener {
   /**
    * @deprecated obsolete, implement {@link BulkFileListener} directly (to be removed in IDEA 2019)

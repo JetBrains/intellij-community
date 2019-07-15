@@ -89,6 +89,13 @@ class FeatureUsageData {
     return this
   }
 
+  fun addLanguage(id: String?): FeatureUsageData {
+    id?.let {
+      addLanguage(Language.findLanguageByID(id))
+    }
+    return this
+  }
+
   fun addLanguage(language: Language?): FeatureUsageData {
     return addLanguageInternal("lang", language)
   }
@@ -152,6 +159,21 @@ class FeatureUsageData {
     return ActionPlaces.isCommonPlace(place) || ToolWindowContentUi.POPUP_PLACE == place
   }
 
+  fun addValue(value: Any): FeatureUsageData {
+    if (value is String || value is Boolean || value is Int || value is Long || value is Float || value is Double) {
+      return addDataInternal("value", value)
+    }
+    return addData("value", value.toString())
+  }
+
+  fun addEnabled(enabled: Boolean): FeatureUsageData {
+    return addData("enabled", enabled)
+  }
+
+  fun addCount(count: Int): FeatureUsageData {
+    return addData("count", count)
+  }
+
   fun addData(key: String, value: Boolean): FeatureUsageData {
     return addDataInternal(key, value)
   }
@@ -161,6 +183,14 @@ class FeatureUsageData {
   }
 
   fun addData(key: String, value: Long): FeatureUsageData {
+    return addDataInternal(key, value)
+  }
+
+  fun addData(key: String, value: Float): FeatureUsageData {
+    return addDataInternal(key, value)
+  }
+
+  fun addData(key: String, value: Double): FeatureUsageData {
     return addDataInternal(key, value)
   }
 
@@ -210,6 +240,10 @@ class FeatureUsageData {
 
   override fun hashCode(): Int {
     return data.hashCode()
+  }
+
+  override fun toString(): String {
+    return data.toString()
   }
 }
 

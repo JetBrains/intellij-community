@@ -120,7 +120,8 @@ public class ThreeStateCheckBox extends JCheckBox {
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
-    if (UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderDefaultMacTheme() || UIUtil.isUnderWin10LookAndFeel() || UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
+    if (UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderDefaultMacTheme() || UIUtil.isUnderWin10LookAndFeel() ||
+        StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
       return;
     }
 
@@ -129,7 +130,7 @@ public class ThreeStateCheckBox extends JCheckBox {
       if (icon == null) {
         icon = UIManager.getIcon("CheckBox.icon");
       }
-      if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
+      if (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
         icon = JBUI.scale(EmptyIcon.create(20, 18));
       }
       if (icon != null) {

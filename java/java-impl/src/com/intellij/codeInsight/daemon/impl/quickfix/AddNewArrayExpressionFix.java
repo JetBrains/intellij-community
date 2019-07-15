@@ -33,16 +33,17 @@ import org.jetbrains.annotations.NotNull;
  */
 public class AddNewArrayExpressionFix implements IntentionAction {
   private final PsiArrayInitializerExpression myInitializer;
+  private final PsiType myType;
 
   public AddNewArrayExpressionFix(@NotNull PsiArrayInitializerExpression initializer) {
     myInitializer = initializer;
+    myType = getType();
   }
 
   @Override
   @NotNull
   public String getText() {
-    PsiType type = getType();
-    return QuickFixBundle.message("add.new.array.text", type.getPresentableText());
+    return QuickFixBundle.message("add.new.array.text", myType.getPresentableText());
   }
 
   @Override
@@ -54,7 +55,7 @@ public class AddNewArrayExpressionFix implements IntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!myInitializer.isValid() || !BaseIntentionAction.canModify(myInitializer)) return false;
-    return getType() != null;
+    return myType != null;
   }
 
   @NotNull
@@ -66,9 +67,8 @@ public class AddNewArrayExpressionFix implements IntentionAction {
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiManager manager = file.getManager();
-    PsiType type = getType();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
-    @NonNls String text = "new " + type.getCanonicalText() + "[]{}";
+    @NonNls String text = "new " + myType.getCanonicalText() + "[]{}";
     PsiNewExpression newExpr = (PsiNewExpression) factory.createExpressionFromText(text, null);
     newExpr.getArrayInitializer().replace(myInitializer);
     newExpr = (PsiNewExpression) CodeStyleManager.getInstance(manager.getProject()).reformat(newExpr);

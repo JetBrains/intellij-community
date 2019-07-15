@@ -165,11 +165,13 @@ public abstract class UsefulTestCase extends TestCase {
       myTempDir = FileUtil.createTempDirectory(TEMP_DIR_MARKER + testName, "", false).getPath();
       FileUtil.resetCanonicalTempPathCache(myTempDir);
     }
+
     boolean isStressTest = isStressTest();
     ApplicationInfoImpl.setInStressTest(isStressTest);
     if (isPerformanceTest()) {
       Timings.getStatistics();
     }
+
     // turn off Disposer debugging for performance tests
     Disposer.setDebugMode(!isStressTest);
   }

@@ -17,9 +17,6 @@ public interface IconManager {
   }
 
   @NotNull
-  Icon getIcon(@NotNull String path);
-
-  @NotNull
   Icon getIcon(@NotNull String path, @NotNull Class aClass);
 
   @NotNull
@@ -50,6 +47,8 @@ public interface IconManager {
 
   @NotNull
   Icon createLayeredIcon(@NotNull Iconable instance, Icon icon, int flags);
+
+  void registerIconLayer(int flagMask, @NotNull Icon icon);
 }
 
 class Holder {
@@ -70,12 +69,6 @@ class Holder {
 final class DummyIconManager implements IconManager {
   @NotNull
   @Override
-  public Icon getIcon(@NotNull String path) {
-    return DummyIcon.INSTANCE;
-  }
-
-  @NotNull
-  @Override
   public Icon getIcon(@NotNull String path, @NotNull Class aClass) {
     return DummyIcon.INSTANCE;
   }
@@ -90,6 +83,10 @@ final class DummyIconManager implements IconManager {
   @Override
   public Icon createLayeredIcon(@NotNull Iconable instance, Icon icon, int flags) {
     return DummyIcon.INSTANCE;
+  }
+
+  @Override
+  public void registerIconLayer(int flagMask, @NotNull Icon icon) {
   }
 
   @NotNull

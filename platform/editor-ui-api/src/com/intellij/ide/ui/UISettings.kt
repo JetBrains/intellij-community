@@ -190,8 +190,12 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       state.sortLookupElementsLexicographically = value
     }
 
+  @Deprecated("The property name is grammatically incorrect", replaceWith = ReplaceWith("this.hideTabsIfNeeded"))
   val hideTabsIfNeed: Boolean
-    get() = state.hideTabsIfNeed
+    get() = hideTabsIfNeeded
+
+  val hideTabsIfNeeded: Boolean
+    get() = state.hideTabsIfNeeded
 
   var hideKnownExtensionInTabs: Boolean
     get() = state.hideKnownExtensionInTabs

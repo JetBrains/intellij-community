@@ -35,7 +35,7 @@ import com.intellij.unscramble.AnalyzeStacktraceUtil;
 import com.intellij.unscramble.ThreadDumpConsoleFactory;
 import com.intellij.unscramble.ThreadDumpParser;
 import com.intellij.unscramble.ThreadState;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.DateFormatUtil;
@@ -235,7 +235,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
           if (!JavaDebuggerAttachUtil.getAttachedPids(project).contains(pid)) {
             vm = JavaDebuggerAttachUtil.attachVirtualMachine(pid);
             InputStream inputStream = (InputStream)vm.getClass().getMethod("remoteDataDump", Object[].class)
-              .invoke(vm, new Object[]{ArrayUtil.EMPTY_OBJECT_ARRAY});
+              .invoke(vm, new Object[]{ArrayUtilRt.EMPTY_OBJECT_ARRAY});
             String text = StreamUtil.readText(inputStream, StandardCharsets.UTF_8);
             List<ThreadState> threads = ThreadDumpParser.parse(text);
             DebuggerUtilsEx.addThreadDump(project, threads, runnerContentUi.getRunnerLayoutUi(), mySearchScope);

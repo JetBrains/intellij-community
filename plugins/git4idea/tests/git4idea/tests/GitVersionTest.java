@@ -1,21 +1,7 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.tests;
 
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import git4idea.config.GitVersion;
 import org.junit.Assert;
 import org.junit.Test;
@@ -54,13 +40,13 @@ public class GitVersionTest {
    */
   @Test
   public void testParse() throws Exception {
-    if (SystemInfo.isUnix) {
+    if (SystemInfoRt.isUnix) {
       for (TestGitVersion test : commonTests) {
         GitVersion version = GitVersion.parse(test.output);
         assertEqualVersions(version, test, Type.UNIX);
       }
     }
-    else if (SystemInfo.isWindows) {
+    else if (SystemInfoRt.isWindows) {
       for (TestGitVersion test : commonTests) {
         GitVersion version = GitVersion.parse(test.output);
         assertEqualVersions(version, test, Type.CYGWIN);
@@ -82,7 +68,7 @@ public class GitVersionTest {
     assertFalse(v1.equals(v2));
     assertFalse(v1.equals(v3));
     Assert.assertTrue(v2.equals(v3));
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       assertFalse(v1.equals(v4));
       assertFalse(v2.equals(v4));
       assertFalse(v3.equals(v4));

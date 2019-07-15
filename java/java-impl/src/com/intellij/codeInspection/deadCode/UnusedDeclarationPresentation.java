@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -19,7 +19,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -38,6 +38,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -302,7 +303,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   class CommentOutBin extends QuickFixAction {
     CommentOutBin(@NotNull InspectionToolWrapper toolWrapper) {
-      super(COMMENT_OUT_QUICK_FIX, null, KeyStroke.getKeyStroke(KeyEvent.VK_SLASH, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK),
+      super(COMMENT_OUT_QUICK_FIX, null, KeyStroke.getKeyStroke(KeyEvent.VK_SLASH, SystemInfoRt.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK),
             toolWrapper);
     }
 
@@ -654,7 +655,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     css.addRule("p.problem-description-group {text-indent: " + JBUI.scale(9) + "px;font-weight:bold;}");
     css.addRule("div.problem-description {margin-left: " + JBUI.scale(9) + "px;}");
     css.addRule("ul {margin-left:" + JBUI.scale(10) + "px;text-indent: 0}");
-    css.addRule("code {font-family:" + UIUtil.getLabelFont().getFamily()  +  "}");
+    css.addRule("code {font-family:" + StartupUiUtil.getLabelFont().getFamily() + "}");
     final StringBuffer buf = new StringBuffer();
     getComposer().compose(buf, entity, false);
     final String text = buf.toString();

@@ -94,4 +94,6 @@ class ToolWindowTabTheme : DefaultTabTheme() {
 class DebuggerTabTheme : DefaultTabTheme() {
   override val underlineHeight: Int
     get() = JBUI.CurrentTheme.DebuggerTabs.underlineHeight()
+  override val underlinedTabBackground: Color?
+    get() = JBUI.CurrentTheme.DebuggerTabs.underlinedTabBackground()
 }

@@ -12,7 +12,7 @@
  */
 package org.netbeans.lib.cvsclient.command;
 
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.JavaCvsSrcBundle;
 
@@ -40,7 +40,7 @@ public final class Watch {
                                                    new String[]{"tedit", "tunedit", "tcommit"}); // NOI18N
 
         public static final Watch NONE = new Watch(JavaCvsSrcBundle.message("watch.name.none"), "", // NOI18N
-                                                   ArrayUtil.EMPTY_STRING_ARRAY);
+                                                   ArrayUtilRt.EMPTY_STRING_ARRAY);
 
         // Static =================================================================
 

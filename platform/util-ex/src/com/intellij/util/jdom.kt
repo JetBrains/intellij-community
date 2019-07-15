@@ -104,7 +104,7 @@ private fun getSpecialSaxBuilder(): SAXBuilder {
         }
       }
     }
-    saxBuilder.entityResolver = EntityResolver { _, _ -> InputSource(CharArrayReader(ArrayUtil.EMPTY_CHAR_ARRAY)) }
+    saxBuilder.entityResolver = EntityResolver { _, _ -> InputSource(CharArrayReader(ArrayUtilRt.EMPTY_CHAR_ARRAY)) }
     cachedSpecialSaxBuilder.set(SoftReference(saxBuilder))
   }
   return saxBuilder

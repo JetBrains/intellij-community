@@ -595,7 +595,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     String shelvedPath = null;
     if (afterFile != null) {
       String shelvedFileName = afterFile.getName();
-      String name = FileUtil.getNameWithoutExtension(shelvedFileName);
+      String name = FileUtilRt.getNameWithoutExtension(shelvedFileName);
       String extension = FileUtilRt.getExtension(shelvedFileName);
       File shelvedFile = FileUtil.findSequentNonexistentFile(schemePatchDir, name, extension);
       FileUtil.copy(afterRevision.getFile().getIOFile(), shelvedFile);

@@ -24,42 +24,52 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Constructor;
+import java.util.function.Function;
 
 public class PyElementType extends IElementType {
-  protected Class<? extends PsiElement> myPsiElementClass;
-  private static final Class[] PARAMETER_TYPES = new Class[]{ASTNode.class};
-  private Constructor<? extends PsiElement> myConstructor;
+  @NotNull private final Function<? super ASTNode, ? extends PsiElement> myPsiCreator;
 
-  private String mySpecialMethodName;
+  private final String mySpecialMethodName;
 
   public PyElementType(@NotNull @NonNls String debugName) {
     super(debugName, PythonFileType.INSTANCE.getLanguage());
+    myPsiCreator = node -> { throw new IllegalStateException("Cannot create an element for " + node.getElementType() + " without element class");};
+    mySpecialMethodName = null;
   }
 
+  /**
+   * @deprecated use {@link #PyElementType(String, Function)} instead
+   */
+  @Deprecated
   public PyElementType(@NotNull @NonNls String debugName, @NotNull Class<? extends PsiElement> psiElementClass) {
-    this(debugName);
-    myPsiElementClass = psiElementClass;
+    super(debugName, PythonFileType.INSTANCE.getLanguage());
+    myPsiCreator = node -> {
+      try {
+        Constructor<? extends PsiElement> constructor = psiElementClass.getConstructor(ASTNode.class);
+        return constructor.newInstance(node);
+      }
+      catch (Exception e) {
+        throw new IllegalStateException("No necessary constructor for " + node.getElementType(), e);
+      }
+    };
+    mySpecialMethodName = null;
+  }
+
+  public PyElementType(@NotNull @NonNls String debugName, @NotNull Function<? super ASTNode, ? extends PsiElement> creator) {
+    super(debugName, PythonFileType.INSTANCE.getLanguage());
+    myPsiCreator = creator;
+    mySpecialMethodName = null;
   }
 
   public PyElementType(@NotNull @NonNls String debugName, @NotNull @NonNls String specialMethodName) {
-    this(debugName);
+    super(debugName, PythonFileType.INSTANCE.getLanguage());
+    myPsiCreator = node -> { throw new IllegalStateException("Cannot create an element for " + node.getElementType() + " without element class");};
     mySpecialMethodName = specialMethodName;
   }
 
   @NotNull
   public PsiElement createElement(@NotNull ASTNode node) {
-    if (myPsiElementClass == null) {
-      throw new IllegalStateException("Cannot create an element for " + node.getElementType() + " without element class");
-    }
-    try {
-      if (myConstructor == null) {
-        myConstructor = myPsiElementClass.getConstructor(PARAMETER_TYPES);
-      }
-      return myConstructor.newInstance(node);
-    }
-    catch (Exception e) {
-      throw new IllegalStateException("No necessary constructor for " + node.getElementType(), e);
-    }
+    return myPsiCreator.apply(node);
   }
 
   /**

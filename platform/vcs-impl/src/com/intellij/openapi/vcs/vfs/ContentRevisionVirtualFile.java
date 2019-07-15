@@ -5,7 +5,7 @@ package com.intellij.openapi.vcs.vfs;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
 import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,7 +50,7 @@ public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
   @NotNull
   public byte[] contentsToByteArray() {
     if (myContentLoadFailed) {
-      return ArrayUtil.EMPTY_BYTE_ARRAY;
+      return ArrayUtilRt.EMPTY_BYTE_ARRAY;
     }
     if (myContent == null) {
       loadContent();
@@ -82,7 +82,7 @@ public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
     catch (VcsException e) {
       synchronized (LOCK) {
         myContentLoadFailed = true;
-        myContent = ArrayUtil.EMPTY_BYTE_ARRAY;
+        myContent = ArrayUtilRt.EMPTY_BYTE_ARRAY;
         setRevision("0");
       }
       showLoadingContentFailedMessage(e);

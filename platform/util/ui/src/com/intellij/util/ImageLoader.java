@@ -3,19 +3,21 @@ package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUIScale.ScaleContext;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.apache.xmlgraphics.java2d.Dimension2DDouble;
 import org.imgscalr.Scalr;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +30,10 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
 import static com.intellij.util.ImageLoader.ImageDesc.Type.IMG;
@@ -37,10 +42,18 @@ import static com.intellij.util.ui.JBUIScale.DerivedScaleType.EFF_USR_SCALE;
 import static com.intellij.util.ui.JBUIScale.DerivedScaleType.PIX_SCALE;
 import static com.intellij.util.ui.JBUIScale.ScaleType.OBJ_SCALE;
 
-public class ImageLoader implements Serializable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.ImageLoader");
+public final class ImageLoader implements Serializable {
+  public static final int ALLOW_FLOAT_SCALING = 0x01;
+  public static final byte USE_CACHE = 0x02;
+  public static final int DARK = 0x04;
+  public static final int FIND_SVG = 0x08;
 
-  public static final long CACHED_IMAGE_MAX_SIZE = (long)(Registry.doubleValue("ide.cached.image.max.size") * 1024 * 1024);
+  @NotNull
+  private static Logger getLogger() {
+    return Logger.getInstance("#com.intellij.util.ImageLoader");
+  }
+
+  public static final long CACHED_IMAGE_MAX_SIZE = (long)(SystemProperties.getFloatProperty("ide.cached.image.max.size", 1.5f) * 1024 * 1024);
   private static final ConcurrentMap<String, Pair<Image, Dimension2D>> ourCache = ContainerUtil.createConcurrentSoftValueMap();
 
   public static void clearCache() {
@@ -58,12 +71,10 @@ public class ImageLoader implements Serializable {
     Image load(@Nullable LoadFunction delegate, @NotNull ImageDesc.Type type) throws IOException;
   }
 
-  public static class ImageDesc {
+  public static final class ImageDesc {
     public enum Type {IMG, SVG}
 
     final @NotNull String path;
-    final @Nullable Class cls; // resource class if present
-    final @Nullable InputStream inputStream;
     final double scale; // initial scale factor
     final @NotNull Type type;
     final boolean original; // path is not altered
@@ -71,55 +82,64 @@ public class ImageLoader implements Serializable {
     // Otherwise it's the size of the original image divided by the image's scale (defined by the extension @2x).
     final @NotNull Dimension2D origUsrSize;
 
-    public ImageDesc(@NotNull String path, @Nullable Class cls, double scale, @NotNull Type type) {
-      this(path, cls, scale, type, false);
+    public ImageDesc(@NotNull String path, double scale, @NotNull Type type) {
+      this(path, scale, type, false);
     }
 
-    public ImageDesc(@NotNull String path, @Nullable Class cls, double scale, @NotNull Type type, boolean original) {
-      this(path, cls, null, scale, type, original);
+    public ImageDesc(double scale) {
+      this("", scale, IMG, false);
     }
 
-    public ImageDesc(@NotNull InputStream inputStream, double scale) {
-      this("", null, inputStream, scale, IMG, false);
-    }
-
-    private ImageDesc(@NotNull String path, @Nullable Class cls, @Nullable InputStream inputStream, double scale, @NotNull Type type, boolean original) {
+    private ImageDesc(@NotNull String path, double scale, @NotNull Type type, boolean original) {
       this.path = path;
-      this.cls = cls;
       this.scale = scale;
       this.type = type;
       this.original = original;
       this.origUsrSize = new Dimension2DDouble(0, 0);
-      this.inputStream = inputStream;
     }
 
     @Nullable
     public Image load(boolean useCache) throws IOException {
-      String cacheKey = null;
-      URL url = null;
-      InputStream stream = inputStream;
+      return load(useCache, null);
+    }
 
-      // Either {inputStream} or {path} should be defined
-      if (stream == null) {
-        if (StringUtil.isEmpty(path)) {
-          LOG.warn("empty image path", new Throwable());
+    @Nullable
+    public Image load(boolean useCache, @Nullable Class<?> resourceClass) throws IOException {
+      if (StringUtil.isEmpty(path)) {
+        getLogger().warn("empty image path", new Throwable());
+        return null;
+      }
+
+      InputStream stream = null;
+
+      boolean isFromFile = path.startsWith("file:");
+      if (!isFromFile && resourceClass != null) {
+        //noinspection IOResourceOpenedButNotSafelyClosed
+        stream = resourceClass.getResourceAsStream(path);
+        if (stream == null) {
           return null;
         }
-        if (cls != null) {
-          //noinspection IOResourceOpenedButNotSafelyClosed
-          stream = cls.getResourceAsStream(path);
-          if (stream == null) return null;
-        }
-        if (stream == null) {
-          if (useCache) {
-            cacheKey = path + (type == SVG ? "_@" + scale + "x" : "");
-            Pair<Image, Dimension2D> pair = ourCache.get(cacheKey);
-            if (pair != null) {
-              origUsrSize.setSize(pair.second);
-              return pair.first;
-            }
+      }
+
+      String cacheKey = null;
+      URL url = null;
+      if (stream == null) {
+        if (useCache) {
+          cacheKey = path + (type == SVG ? "_@" + scale + "x" : "");
+          Pair<Image, Dimension2D> pair = ourCache.get(cacheKey);
+          if (pair != null) {
+            origUsrSize.setSize(pair.second);
+            return pair.first;
           }
-          url = new URL(path);
+        }
+
+        url = new URL(path);
+        if (isFromFile && !SystemInfoRt.isWindows) {
+          byte[] bytes = Files.readAllBytes(Paths.get(url.getPath()));
+          //noinspection IOResourceOpenedButNotSafelyClosed
+          stream = new BufferExposingByteArrayInputStream(bytes);
+        }
+        else {
           URLConnection connection = url.openConnection();
           if (connection instanceof HttpURLConnection) {
             if (!original) return null;
@@ -128,17 +148,21 @@ public class ImageLoader implements Serializable {
           stream = connection.getInputStream();
         }
       }
+
+      return loadFromStream(stream, url, cacheKey);
+    }
+
+    @Nullable
+    public Image loadFromStream(@NotNull InputStream stream, @Nullable URL url, @Nullable String cacheKey) throws IOException {
       Image image = loadImpl(url, stream);
-      if (image != null && cacheKey != null &&
-          4L * image.getWidth(null) * image.getHeight(null) <= CACHED_IMAGE_MAX_SIZE)
-      {
+      if (image != null && cacheKey != null && 4L * image.getWidth(null) * image.getHeight(null) <= CACHED_IMAGE_MAX_SIZE) {
         ourCache.put(cacheKey, Pair.create(image, origUsrSize));
       }
       return image;
     }
 
     @Nullable
-    private Image loadImpl(final URL url, final InputStream stream) throws IOException {
+    private Image loadImpl(@Nullable URL url, @NotNull InputStream stream) throws IOException {
       LoadFunction f = new LoadFunction() {
         @Override
         public Image load(@Nullable LoadFunction delegate, @NotNull Type type) throws IOException {
@@ -161,31 +185,29 @@ public class ImageLoader implements Serializable {
     @Nullable
     private Image loadImpl(@NotNull InputStream stream) {
       try {
-        BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream();
-        try {
-          byte[] buffer = new byte[1024];
-          while (true) {
-            final int n = stream.read(buffer);
-            if (n < 0) break;
-            outputStream.write(buffer, 0, n);
+        Image image;
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        if (stream instanceof BufferExposingByteArrayInputStream) {
+          BufferExposingByteArrayInputStream byteInput = (BufferExposingByteArrayInputStream)stream;
+          image = toolkit.createImage(byteInput.getInternalBuffer(), 0, byteInput.available());
+        }
+        else {
+          BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream();
+          try {
+            FileUtilRt.copy(stream, outputStream);
           }
+          finally {
+            stream.close();
+          }
+          image = toolkit.createImage(outputStream.getInternalBuffer(), 0, outputStream.size());
         }
-        finally {
-          stream.close();
-        }
-
-        Image image = Toolkit.getDefaultToolkit().createImage(outputStream.getInternalBuffer(), 0, outputStream.size());
 
         waitForImage(image);
-
-        if (image != null) {
-          origUsrSize.setSize(image.getWidth(null) / scale, image.getHeight(null) / scale);
-        }
-
+        origUsrSize.setSize(image.getWidth(null) / scale, image.getHeight(null) / scale);
         return image;
       }
       catch (Exception ex) {
-        LOG.error(ex);
+        getLogger().error(ex);
       }
       return null;
     }
@@ -196,51 +218,56 @@ public class ImageLoader implements Serializable {
     }
   }
 
-  private static class ImageDescList extends ArrayList<ImageDesc> {
-    private ImageDescList() {}
+  private static final class ImageDescriptorListBuilder {
+    private final List<ImageDesc> list = new SmartList<>();
+    final String name;
+    final String ext;
+    final boolean svg;
+    final double scale;
 
-    static class Builder {
-      final ImageDescList list = new ImageDescList();
-      final String name;
-      final String ext;
-      final Class cls;
-      final boolean svg;
-      final double scale;
+    ImageDescriptorListBuilder(String name, String ext, boolean svg, double scale) {
+      this.name = name;
+      this.ext = ext;
+      this.svg = svg;
+      this.scale = scale;
+    }
 
-      Builder(String name, String ext, Class cls, boolean svg, double scale) {
-        this.name = name;
-        this.ext = ext;
-        this.cls = cls;
-        this.svg = svg;
-        this.scale = scale;
+    void add(boolean retina, boolean dark) {
+      if (svg) {
+        add(retina, dark, SVG);
       }
+      add(retina, dark, IMG);
+    }
 
-      void add(boolean retina, boolean dark) {
-        if (svg) add(retina, dark, SVG);
-        add(retina, dark, IMG);
+    void add(boolean retina, boolean dark, ImageDesc.Type type) {
+      String _ext = SVG == type ? "svg" : ext;
+      double _scale = SVG == type ? scale : retina ? 2 : 1;
+
+      list.add(new ImageDesc(name + (dark ? "_dark" : "") + (retina ? "@2x" : "") + "." + _ext, _scale, type));
+      if (retina && dark) {
+        list.add(new ImageDesc(name + "@2x_dark" + "." + _ext, _scale, type));
       }
-
-      void add(boolean retina, boolean dark, ImageDesc.Type type) {
-        String _ext = SVG == type ? "svg" : ext;
-        double _scale = SVG == type ? scale : retina ? 2 : 1;
-
-        list.add(new ImageDesc(name + (dark ? "_dark" : "") + (retina ? "@2x" : "") + "." + _ext, cls, _scale, type));
-        if (retina && dark) {
-          list.add(new ImageDesc(name + "@2x_dark" + "." + _ext, cls, _scale, type));
-        }
-        if (retina) {
-          // a fallback to 1x icon
-          list.add(new ImageDesc(name + (dark ? "_dark" : "") + "." + _ext, cls, SVG == type ? scale : 1, type));
-        }
+      if (retina) {
+        // a fallback to 1x icon
+        list.add(new ImageDesc(name + (dark ? "_dark" : "") + "." + _ext, SVG == type ? scale : 1, type));
       }
+    }
 
-      void add(ImageDesc.Type type) {
-        list.add(new ImageDesc(name + "." + ext, cls, 1.0, type, true));
-      }
+    void add(ImageDesc.Type type) {
+      list.add(new ImageDesc(name + "." + ext, 1.0, type, true));
+    }
 
-      ImageDescList build() {
-        return list;
-      }
+    @NotNull
+    List<ImageDesc> build() {
+      return list;
+    }
+  }
+
+  private static final class ImageDescriptorList {
+    private final List<ImageDesc> list;
+
+    private ImageDescriptorList(@NotNull List<ImageDesc> list) {
+      this.list = list;
     }
 
     @Nullable
@@ -250,17 +277,20 @@ public class ImageLoader implements Serializable {
 
     @Nullable
     public Image load(@NotNull ImageConverterChain converters) {
-      return load(converters, true);
+      return load(converters, true, null);
     }
 
     @Nullable
-    public Image load(@NotNull ImageConverterChain converters, boolean useCache) {
-      for (ImageDesc desc : this) {
+    public Image load(@NotNull ImageConverterChain converters, boolean useCache, @Nullable Class<?> resourceClass) {
+      for (ImageDesc descriptor : list) {
         try {
-          Image image = desc.load(useCache);
-          if (image == null) continue;
-          LOG.debug("Loaded image: " + desc);
-          return converters.convert(image, desc);
+          Image image = descriptor.load(useCache, resourceClass);
+          if (image == null) {
+            continue;
+          }
+
+          getLogger().debug("Loaded image: " + descriptor);
+          return converters.convert(image, descriptor);
         }
         catch (IOException ignore) {
         }
@@ -268,41 +298,37 @@ public class ImageLoader implements Serializable {
       return null;
     }
 
-    public static ImageDescList create(@NotNull String path,
-                                       @Nullable Class cls,
-                                       boolean dark,
-                                       boolean allowFloatScaling,
-                                       ScaleContext ctx)
-    {
+    @NotNull
+    public static ImageDescriptorList create(@NotNull String path, @MagicConstant(flags = {ALLOW_FLOAT_SCALING, DARK, FIND_SVG}) int flags, @NotNull ScaleContext scaleContext) {
       // Prefer retina images for HiDPI scale, because downscaling
       // retina images provides a better result than up-scaling non-retina images.
-      boolean retina = JBUI.isHiDPI(ctx.getScale(PIX_SCALE));
+      double pixScale = scaleContext.getScale(PIX_SCALE);
+      boolean retina = JBUI.isHiDPI(pixScale);
 
-      Builder list = new Builder(FileUtil.getNameWithoutExtension(path),
-                                 FileUtilRt.getExtension(path),
-                                 cls,
-                                 true,
-                                 adjustScaleFactor(allowFloatScaling, ctx.getScale(PIX_SCALE)));
+      ImageDescriptorListBuilder builder = new ImageDescriptorListBuilder(FileUtilRt.getNameWithoutExtension(path),
+                                                                          FileUtilRt.getExtension(path),
+                                                                          BitUtil.isSet(flags, FIND_SVG),
+                                                                          adjustScaleFactor(BitUtil.isSet(flags, ALLOW_FLOAT_SCALING), pixScale));
 
-      if (path.contains("://") && !path.startsWith("file:")) {
-        list.add(StringUtil.endsWithIgnoreCase(StringUtil.substringBeforeLast(path, "?"), ".svg") ? SVG : IMG);
+      boolean isDark = BitUtil.isSet(flags, DARK);
+      if (!path.startsWith("file:") && path.contains("://")) {
+        builder.add(StringUtilRt.endsWithIgnoreCase(StringUtil.substringBeforeLast(path, "?"), ".svg") ? SVG : IMG);
       }
-      else if (retina && dark) {
-        list.add(true, true);
-        list.add(true, false); // fallback to non-dark
+      else if (retina && isDark) {
+        builder.add(true, true);
+        builder.add(true, false); // fallback to non-dark
       }
-      else if (dark) {
-        list.add(false, true);
-        list.add(false, false); // fallback to non-dark
+      else if (isDark) {
+        builder.add(false, true);
+        builder.add(false, false); // fallback to non-dark
       }
       else if (retina) {
-        list.add(true, false);
+        builder.add(true, false);
       }
       else {
-        list.add(false, false);
+        builder.add(false, false);
       }
-
-      return list.build();
+      return new ImageDescriptorList(builder.build());
     }
   }
 
@@ -310,14 +336,14 @@ public class ImageLoader implements Serializable {
     Image convert(@Nullable Image source, ImageDesc desc);
   }
 
-  private static class ImageConverterChain extends ArrayList<ImageConverter> {
+  private static final class ImageConverterChain extends ArrayList<ImageConverter> {
     private ImageConverterChain() {}
 
     public static ImageConverterChain create() {
       return new ImageConverterChain();
     }
 
-    ImageConverterChain withFilter(final ImageFilter[] filters) {
+    ImageConverterChain withFilter(@Nullable ImageFilter[] filters) {
       if (filters == null) return this;
       ImageConverterChain chain = this;
       for (ImageFilter filter : filters) {
@@ -375,7 +401,7 @@ public class ImageLoader implements Serializable {
       mediatracker.waitForID(1, 5000);
     }
     catch (InterruptedException ex) {
-      LOG.info(ex);
+      getLogger().info(ex);
     }
     return !mediatracker.isErrorID(1);
   }
@@ -391,11 +417,21 @@ public class ImageLoader implements Serializable {
   }
 
   /**
-   * @see #loadFromUrl(URL, boolean, boolean, boolean, ImageFilter[], ScaleContext)
+   * @see #loadFromUrl(URL, Class, int, ImageFilter[], ScaleContext)
    */
   @Nullable
   public static Image loadFromUrl(@NotNull URL url, final boolean allowFloatScaling, boolean useCache, ImageFilter[] filters, final ScaleContext ctx) {
-    return loadFromUrl(url, allowFloatScaling, useCache, UIUtil.isUnderDarcula(), filters, ctx);
+    int flags = FIND_SVG;
+    if (allowFloatScaling) {
+      flags |= ALLOW_FLOAT_SCALING;
+    }
+    if (useCache) {
+      flags |= USE_CACHE;
+    }
+    if (StartupUiUtil.isUnderDarcula()) {
+      flags |= DARK;
+    }
+    return loadFromUrl(url, null, flags, filters, ctx);
   }
 
   /**
@@ -403,26 +439,34 @@ public class ImageLoader implements Serializable {
    * Then wraps the image with {@link JBHiDPIScaledImage} if necessary.
    */
   @Nullable
-  public static Image loadFromUrl(@NotNull URL url, final boolean allowFloatScaling, boolean useCache, boolean dark, ImageFilter[] filters, final ScaleContext ctx) {
+  public static Image loadFromUrl(@NotNull URL url, @Nullable Class aClass, @MagicConstant(flags = {ALLOW_FLOAT_SCALING, USE_CACHE, DARK, FIND_SVG}) int flags, @Nullable ImageFilter[] filters, ScaleContext scaleContext) {
+    return loadFromUrl(url.toString(), aClass, flags, filters, scaleContext);
+  }
+
+  /**
+   * Loads an image of available resolution (1x, 2x, ...) and scales to address the provided scale context.
+   * Then wraps the image with {@link JBHiDPIScaledImage} if necessary.
+   */
+  @Nullable
+  public static Image loadFromUrl(@NotNull String path, @Nullable Class aClass, @MagicConstant(flags = {ALLOW_FLOAT_SCALING, USE_CACHE, DARK, FIND_SVG}) int flags, @Nullable ImageFilter[] filters, ScaleContext scaleContext) {
     // We can't check all 3rd party plugins and convince the authors to add @2x icons.
     // In IDE-managed HiDPI mode with scale > 1.0 we scale images manually.
-
-    return ImageDescList.create(url.toString(), null, dark, allowFloatScaling, ctx).load(
-      ImageConverterChain.create().
-        withFilter(filters).
-        with(new ImageConverter() {
-              @Override
-              public Image convert(Image source, ImageDesc desc) {
-                if (source != null && desc.type != SVG) {
-                  double scale = adjustScaleFactor(allowFloatScaling, ctx.getScale(PIX_SCALE));
-                  if (desc.scale > 1) scale /= desc.scale; // compensate the image original scale
-                  source = scaleImage(source, scale);
-                }
-                return source;
-              }
-        }).
-        withHiDPI(ctx),
-      useCache);
+    return ImageDescriptorList.create(path, flags, scaleContext).load(
+      ImageConverterChain.create()
+        .withFilter(filters)
+        .with(new ImageConverter() {
+          @Override
+          public Image convert(Image source, ImageDesc desc) {
+            if (source != null && desc.type != SVG) {
+              double scale = adjustScaleFactor(BitUtil.isSet(flags, ALLOW_FLOAT_SCALING), scaleContext.getScale(PIX_SCALE));
+              if (desc.scale > 1) scale /= desc.scale; // compensate the image original scale
+              source = scaleImage(source, scale);
+            }
+            return source;
+          }
+        })
+        .withHiDPI(scaleContext),
+      BitUtil.isSet(flags, USE_CACHE), aClass);
   }
 
   private static double adjustScaleFactor(boolean allowFloatScaling, double scale) {
@@ -480,9 +524,13 @@ public class ImageLoader implements Serializable {
 
   @Nullable
   public static Image loadFromResource(@NonNls @NotNull String path, @NotNull Class aClass) {
-    ScaleContext ctx = ScaleContext.create();
-    return ImageDescList.create(path, aClass, UIUtil.isUnderDarcula(), true, ctx).
-      load(ImageConverterChain.create().withHiDPI(ctx));
+    ScaleContext scaleContext = ScaleContext.create();
+    int flags = FIND_SVG | ALLOW_FLOAT_SCALING;
+    if (StartupUiUtil.isUnderDarcula()) {
+      flags |= DARK;
+    }
+    return ImageDescriptorList.create(path, flags, scaleContext)
+      .load(ImageConverterChain.create().withHiDPI(scaleContext), true, aClass);
   }
 
   public static Image loadFromBytes(@NotNull final byte[] bytes) {
@@ -507,14 +555,17 @@ public class ImageLoader implements Serializable {
   /**
    * The scale context describes the image the stream presents.
    */
-  public static Image loadFromStream(@NotNull final InputStream inputStream, final ScaleContext ctx, ImageFilter filter) {
+  public static Image loadFromStream(@NotNull InputStream inputStream, @NotNull ScaleContext ctx, ImageFilter filter) {
     try {
-      ImageDesc desc = new ImageDesc(inputStream, ctx.getScale(PIX_SCALE));
-      Image image = desc.load(false);
-      return ImageConverterChain.create().withFilter(filter).withHiDPI(ctx).convert(image, desc);
+      ImageDesc desc = new ImageDesc(ctx.getScale(PIX_SCALE));
+      Image image = desc.loadFromStream(inputStream, null, null);
+      return ImageConverterChain.create()
+        .withFilter(filter)
+        .withHiDPI(ctx)
+        .convert(image, desc);
     }
     catch (IOException ex) {
-      LOG.error(ex);
+      getLogger().error(ex);
     }
     return null;
   }
@@ -528,7 +579,7 @@ public class ImageLoader implements Serializable {
     final int h = icon.getHeight(null);
 
     if (w <= 0 || h <= 0) {
-      LOG.error("negative image size: w=" + w + ", h=" + h + ", path=" + f.getPath());
+      getLogger().error("negative image size: w=" + w + ", h=" + h + ", path=" + f.getPath());
       return null;
     }
 
@@ -543,7 +594,7 @@ public class ImageLoader implements Serializable {
   private static @Nullable Image _loadImageFromFile(@NotNull File f) throws IOException {
     final ScaleContext ctx = ScaleContext.create();
     final double scale = ctx.getScale(PIX_SCALE); // probably, need implement naming conventions: filename ends with @2x => HiDPI (scale=2)
-    final ImageDesc desc = new ImageDesc(f.toURI().toURL().toString(), null,  scale, StringUtil.endsWithIgnoreCase(f.getPath(), ".svg") ? SVG : IMG);
+    ImageDesc desc = new ImageDesc(f.toURI().toURL().toString(), scale, StringUtilRt.endsWithIgnoreCase(f.getPath(), ".svg") ? SVG : IMG);
     return ImageUtil.ensureHiDPI(desc.load(true), ctx);
   }
 }

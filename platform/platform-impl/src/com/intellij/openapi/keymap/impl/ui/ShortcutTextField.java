@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons.General;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.ui.components.fields.ExtendableTextField;
@@ -67,7 +67,8 @@ public final class ShortcutTextField extends ExtendableTextField {
       // RIGHT_PRESSED can be skipped, it depends on WM
       if (
         e.getID() == KeyEvent.KEY_PRESSED
-        || (e.getID() == KeyEvent.KEY_RELEASED && SystemInfo.isLinux && (e.isAltDown() || e.isAltGraphDown()) && myLastPressedKeyCode != keyCode) // press-event was skipped
+        || (e.getID() == KeyEvent.KEY_RELEASED &&
+            SystemInfoRt.isLinux && (e.isAltDown() || e.isAltGraphDown()) && myLastPressedKeyCode != keyCode) // press-event was skipped
       ) {
         setKeyStroke(KeyStrokeAdapter.getDefaultKeyStroke(e));
       }

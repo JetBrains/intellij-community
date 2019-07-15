@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -172,7 +159,7 @@ public class FileUtilHeavyTest {
     File targetDir = IoTestUtil.createTestDir(myTempDirectory, "failed_delete");
     File file = IoTestUtil.createTestFile(targetDir, "file");
 
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       try (RandomAccessFile rw = new RandomAccessFile(file, "rw"); FileLock ignored = rw.getChannel().tryLock()) {
         assertFalse(FileUtil.delete(file));
       }
@@ -239,7 +226,7 @@ public class FileUtilHeavyTest {
 
   @Test
   public void testJunctionDeletion() {
-    assumeTrue("windows only", SystemInfo.isWindows);
+    assumeTrue("windows only", SystemInfoRt.isWindows);
 
     File targetDir = IoTestUtil.createTestDir(myTempDirectory, "jct_del_test_1");
     IoTestUtil.createTestFile(targetDir, "file");
@@ -296,7 +283,7 @@ public class FileUtilHeavyTest {
     // the rules seems to be different when ../ goes over recursive link:
     // * on Windows ../ goes to link's parent
     // * on Unix ../ goes to target's parent
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       assertEquals(root + "/dir1", FileUtil.toCanonicalPath(root + "/dir1/dir1_link/../", true));
       assertEquals(root + "/dir1/dir2", FileUtil.toCanonicalPath(root + "/dir1/dir1_link/../dir2", true));
       assertEquals(root + "/dir1/dir2", FileUtil.toCanonicalPath(root + "/dir1/dir1_link/../../dir1/dir2", true));

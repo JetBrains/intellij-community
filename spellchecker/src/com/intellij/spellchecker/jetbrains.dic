@@ -81,6 +81,7 @@ calc
 callee
 callouts
 camelcase
+cancellability
 cancelable
 cancellable
 capath
@@ -462,6 +463,7 @@ mongodb
 monoid
 monoidal
 monoids
+monorepo
 monospaced
 msql
 mssql

@@ -43,7 +43,7 @@ public class EntryTest extends LocalHistoryTestCase {
     assertTrue(e.pathEquals("PATH"));
   }
 
-  private class MyEntry extends Entry {
+  private static class MyEntry extends Entry {
     MyEntry() {
       super((String)null);
     }

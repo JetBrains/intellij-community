@@ -7,9 +7,9 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.ID;
-import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.util.loader.NativeLibraryLoader;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
@@ -20,8 +20,9 @@ import sun.awt.image.WritableRasterNative;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.*;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.*;
 
 public class NST {
   private static final Logger LOG = Logger.getInstance(NST.class);
@@ -29,7 +30,7 @@ public class NST {
   private static NSTLibrary ourNSTLibrary = null; // NOTE: JNA is stateless (doesn't have any limitations of multi-threaded use)
 
   private static final String MIN_OS_VERSION = "10.12.2";
-  static boolean isSupportedOS() { return SystemInfo.isMac && SystemInfo.isOsVersionAtLeast(MIN_OS_VERSION); }
+  static boolean isSupportedOS() { return SystemInfoRt.isMac && SystemInfo.isOsVersionAtLeast(MIN_OS_VERSION); }
 
   static {
     try {
@@ -79,9 +80,6 @@ public class NST {
         final String appId = Utils.getAppId();
         if (appId == null || appId.isEmpty()) {
           LOG.debug("can't obtain application id from NSBundle");
-        } else if (NSDefaults.isShowFnKeysEnabled(appId)) {
-          LOG.info("nst library was loaded, but user enabled fn-keys in touchbar");
-          ourNSTLibrary = null;
         }
       }
     } catch (Throwable e) {

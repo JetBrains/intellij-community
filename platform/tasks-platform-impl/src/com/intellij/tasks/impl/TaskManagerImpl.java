@@ -28,7 +28,7 @@ import com.intellij.serialization.SerializationException;
 import com.intellij.tasks.*;
 import com.intellij.tasks.context.WorkingContextManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -977,7 +977,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     String name = constructDefaultBranchName(task);
     if (task.isIssue()) return name.replace(' ', '-');
     List<String> words = StringUtil.getWordsIn(name);
-    String[] strings = ArrayUtil.toStringArray(words);
+    String[] strings = ArrayUtilRt.toStringArray(words);
     return StringUtil.join(strings, 0, Math.min(2, strings.length), "-");
   }
 

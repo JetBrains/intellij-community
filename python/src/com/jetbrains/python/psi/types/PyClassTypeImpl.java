@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -7,7 +7,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -494,7 +494,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @Override
   @NotNull
   public Object[] getCompletionVariants(String prefix, PsiElement location, @NotNull ProcessingContext context) {
-    if (isRecursive(context)) return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    if (isRecursive(context)) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     final Set<String> visited = visitedNames(context);
 
     final PsiFile origin = location != null ? CompletionUtil.getOriginalOrSelf(location).getContainingFile() : null;

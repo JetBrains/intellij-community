@@ -19,7 +19,7 @@ public class CleanupEventLogAction extends AnAction {
       return;
     }
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Send Feature Usage Event Log", false) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Removing Feature Usage Event Log", false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         FeatureUsageLogger.INSTANCE.cleanup();

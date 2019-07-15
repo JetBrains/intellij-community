@@ -23,6 +23,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import org.intellij.lang.regexp.RegExpLanguageHosts;
@@ -184,6 +185,6 @@ public class RegExpPropertyImpl extends RegExpElementImpl implements RegExpPrope
                 }
             }
         }
-      UNICODE_BLOCKS = ArrayUtil.toStringArray(unicodeBlocks);
+      UNICODE_BLOCKS = ArrayUtilRt.toStringArray(unicodeBlocks);
     }
 }

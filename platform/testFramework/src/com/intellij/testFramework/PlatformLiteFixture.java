@@ -10,6 +10,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
 import org.jetbrains.annotations.NotNull;
@@ -94,4 +95,8 @@ public abstract class PlatformLiteFixture extends UsefulTestCase {
     return registerComponentInstance((MutablePicoContainer)container.getPicoContainer(), key, implementation);
   }
 
+  protected <T> void registerApplicationService(Class<T> aClass, T object) {
+    getApplication().registerService(aClass, object);
+    Disposer.register(getTestRootDisposable(), () -> getApplication().getPicoContainer().unregisterComponent(aClass.getName()));
+  }
 }

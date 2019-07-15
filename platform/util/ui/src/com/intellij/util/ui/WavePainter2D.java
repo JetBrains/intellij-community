@@ -66,7 +66,7 @@ public class WavePainter2D extends WavePainter {
       g2d.setClip(waveClip);
       xStart -= xStart % 4;
       g2d.translate(xStart, y - 3);
-      UIUtil.drawImage(g2d, myImage, 0, 0, null);
+      StartupUiUtil.drawImage(g2d, myImage, 0, 0, null);
     } finally {
       g2d.dispose();
     }

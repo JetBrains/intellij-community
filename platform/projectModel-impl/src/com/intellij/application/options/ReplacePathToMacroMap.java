@@ -6,7 +6,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import gnu.trove.TObjectIntHashMap;
@@ -39,7 +39,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
         protocols.add(bean.protocol);
       }
     }
-    PROTOCOLS = ArrayUtil.toStringArray(protocols);
+    PROTOCOLS = ArrayUtilRt.toStringArray(protocols);
   }
 
   public ReplacePathToMacroMap() {

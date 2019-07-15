@@ -29,8 +29,8 @@ import com.intellij.util.ResourceUtil;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBHtmlEditorKit;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBUIScale;
 import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.UIUtil;
 import com.twelvemonkeys.imageio.stream.ByteArrayImageInputStream;
@@ -64,7 +64,6 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static com.intellij.util.ui.UIUtil.drawImage;
@@ -120,14 +119,14 @@ public class TipUIUtil {
         ClassLoader tipLoader = pluginDescriptor == null ? TipUIUtil.class.getClassLoader() :
                                 ObjectUtils.notNull(pluginDescriptor.getPluginClassLoader(), TipUIUtil.class.getClassLoader());
 
-        URL url = ResourceUtil.getResource(tipLoader, "/tips/", tip.fileName);
-        if (url == null) {
+        InputStream tipStream = ResourceUtil.getResourceAsStream(tipLoader, "/tips/", tip.fileName);
+        if (tipStream == null) {
           return getCantReadText(tip);
         }
-        text.append(ResourceUtil.loadText(url));
+        text.append(ResourceUtil.loadText(tipStream));
         updateImages(text, tipLoader, "", component);
-        URL cssResource = ResourceUtil.getResource(tipLoader, "/tips/", isUnderDarcula() ? "css/tips_darcula.css" : "css/tips.css");
-        cssText = cssResource != null ? new String(readBytes(cssResource), StandardCharsets.UTF_8) : "";
+        InputStream cssResourceStream = ResourceUtil.getResourceAsStream(tipLoader, "/tips/", isUnderDarcula() ? "css/tips_darcula.css" : "css/tips.css");
+        cssText = cssResourceStream != null ? ResourceUtil.loadText(cssResourceStream) : "";
       }
 
       updateShortcuts(text);
@@ -346,7 +345,7 @@ public class TipUIUtil {
         }
       );
       URL resource = ResourceUtil.getResource(TipUIUtil.class, "/tips/css/", isUnderDarcula() ? "tips_darcula.css" : "tips.css");
-      HTMLEditorKit kit = new UIUtil.JBHtmlEditorKit(false) {
+      HTMLEditorKit kit = new JBHtmlEditorKit(false) {
         private final ViewFactory myFactory = createViewFactory();
         //SVG support
         private ViewFactory createViewFactory() {

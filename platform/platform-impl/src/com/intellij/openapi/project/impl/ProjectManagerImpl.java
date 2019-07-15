@@ -5,13 +5,12 @@ import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;
-import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.diagnostic.LoadingPhase;
-import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.diagnostic.*;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.notification.Notification;
@@ -39,6 +38,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.ZipHandler;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
@@ -50,10 +50,7 @@ import com.intellij.util.containers.UnsafeWeakList;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -271,14 +268,17 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return (int)myProjects.keySet().stream().filter(project -> project.isDisposed() && !((ProjectImpl)project).isTemporarilyDisposed()).count();
   }
 
-  static void initProject(@NotNull ProjectEx project, @Nullable Project template) {
+  private static void initProject(@NotNull ProjectEx project, @Nullable Project template) {
+    LOG.assertTrue(!project.isDefault());
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (indicator != null && !project.isDefault()) {
+    if (indicator != null) {
       indicator.setIndeterminate(false);
       indicator.setText(ProjectBundle.message("loading.components.for", project.getName()));
     }
 
+    Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.PROJECT_BEFORE_LOADED);
     ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(project);
+    activity.end();
 
     boolean succeed = false;
     try {
@@ -289,7 +289,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       succeed = true;
     }
     finally {
-      if (!succeed && !project.isDefault()) {
+      if (!succeed) {
         TransactionGuard.submitTransaction(project, () -> WriteAction.run(() -> Disposer.dispose(project)));
       }
     }
@@ -297,7 +297,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   @NotNull
   protected ProjectEx doCreateProject(@Nullable String projectName, @NotNull String filePath) {
-    return new ProjectImpl(FileUtilRt.toSystemIndependentName(filePath), projectName);
+    Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.PROJECT_INSTANTIATION);
+    ProjectImpl project = new ProjectImpl(FileUtilRt.toSystemIndependentName(filePath), projectName);
+    activity.end();
+    return project;
   }
 
   @Override
@@ -509,7 +512,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @Override
-  public Project loadAndOpenProject(@NotNull final String originalFilePath) throws IOException {
+  public Project loadAndOpenProject(@NotNull final String originalFilePath) {
     final String filePath = toCanonicalName(originalFilePath);
     final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(filePath);
     final ConversionResult conversionResult = virtualFile == null ? null : ConversionService.getInstance().convert(virtualFile);
@@ -519,20 +522,24 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
     else {
       project = doCreateProject(null, filePath);
-      ProgressManager.getInstance()
-        .run(new Task.WithResult<Project, IOException>(project, ProjectBundle.message("project.load.progress"), true) {
+      TransactionGuard.getInstance().submitTransactionAndWait(() -> ProgressManager.getInstance().run(new Task.Modal(project, ProjectBundle.message("project.load.progress"), true) {
         @Override
-        protected Project compute(@NotNull ProgressIndicator indicator) throws IOException {
-          if (!loadProjectWithProgress(project)) {
-            return null;
+        public void run(@NotNull ProgressIndicator indicator) {
+          try {
+            if (!loadProjectWithProgress(project)) {
+              return;
+            }
+          }
+          catch (IOException e) {
+            LOG.error(e);
+            return;
           }
           if (conversionResult != null && !conversionResult.conversionNotNeeded()) {
             StartupManager.getInstance(project).registerPostStartupActivity(() -> conversionResult.postStartupActivity(project));
           }
           openProject(project);
-          return project;
         }
-      });
+      }));
     }
 
     if (project == null) {
@@ -559,7 +566,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @Override
   @Nullable
   public Project convertAndLoadProject(@NotNull VirtualFile path) throws IOException {
+    Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.PROJECT_CONVERSION);
     final ConversionResult conversionResult = ConversionService.getInstance().convert(path);
+    activity.end();
     if (conversionResult.openingIsCanceled()) {
       return null;
     }
@@ -778,12 +787,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     LOG.assertTrue(removed);
   }
 
-  protected void fireProjectOpened(@NotNull Project project) {
+  private void fireProjectOpened(@NotNull Project project) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("projectOpened");
     }
 
     LifecycleUsageTriggerCollector.onProjectOpened(project);
+    Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.PROJECT_OPENED_CALLBACKS);
     myBusPublisher.projectOpened(project);
     // https://jetbrains.slack.com/archives/C5E8K7FL4/p1495015043685628
     // projectOpened in the project components is called _after_ message bus event projectOpened for ages
@@ -792,9 +802,17 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     // (and, so, should be called after project initialization)
     if (project instanceof ComponentManagerImpl) {
       for (ProjectComponent component : ((ComponentManagerImpl)project).getComponentInstancesOfType(ProjectComponent.class)) {
-        StartupManagerImpl.runActivity(() -> component.projectOpened());
+        StartupManagerImpl.runActivity(() -> {
+          ClassLoader loader = component.getClass().getClassLoader();
+          String pluginId = loader instanceof PluginClassLoader ? ((PluginClassLoader) loader).getPluginIdString() : null;
+          Activity componentActivity =
+            ParallelActivity.PROJECT_OPEN_HANDLER.start(component.getClass().getName(), StartUpMeasurer.Level.PROJECT, pluginId);
+          component.projectOpened();
+          componentActivity.end();
+        });
       }
     }
+    activity.end();
 
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     ProjectImpl.ourClassesAreLoaded = true;
@@ -928,5 +946,16 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @NotNull
   public String[] getAllExcludedUrls() {
     return myExcludeRootsCache.getExcludedUrls();
+  }
+
+  @NotNull
+  @Override
+  public String[] getAllProjectUrls() {
+    synchronized (lock) {
+      return ContainerUtil.mapNotNull(myOpenProjects, project -> {
+        String basePath = project.getBasePath();
+        return basePath == null ? null : VfsUtilCore.pathToUrl(basePath);
+      }, ArrayUtil.EMPTY_STRING_ARRAY);
+    }
   }
 }

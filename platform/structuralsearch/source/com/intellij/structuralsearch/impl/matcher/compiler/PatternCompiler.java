@@ -52,7 +52,8 @@ public class PatternCompiler {
   private static boolean ourLastCompileSuccessful = true;
   private static String ourLastSearchPlan;
 
-  public static CompiledPattern compilePattern(Project project, MatchOptions options, boolean checkForErrors)
+  public static CompiledPattern compilePattern(Project project, MatchOptions options,
+                                               boolean checkForErrors, boolean optimizeScope)
     throws MalformedPatternException, NoMatchFoundException {
     if (!checkForErrors) {
       synchronized (LOCK) {
@@ -68,12 +69,13 @@ public class PatternCompiler {
       }
     }
     return !ApplicationManager.getApplication().isDispatchThread()
-           ? ReadAction.compute(() -> doCompilePattern(project, options, checkForErrors))
-           : doCompilePattern(project, options, checkForErrors);
+           ? ReadAction.compute(() -> doCompilePattern(project, options, checkForErrors, optimizeScope))
+           : doCompilePattern(project, options, checkForErrors, optimizeScope);
   }
 
   @NotNull
-  private static CompiledPattern doCompilePattern(Project project, MatchOptions options, boolean checkForErrors)
+  private static CompiledPattern doCompilePattern(Project project, MatchOptions options,
+                                                  boolean checkForErrors, boolean optimizeScope)
     throws MalformedPatternException, NoMatchFoundException {
 
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getFileType());
@@ -107,7 +109,9 @@ public class PatternCompiler {
       if (checkForErrors) {
         profile.checkSearchPattern(pattern);
       }
-      optimizeScope(options, checkForErrors, context, result);
+      if (optimizeScope) {
+        optimizeScope(options, checkForErrors, context, result);
+      }
       return result;
     } finally {
       context.clear();

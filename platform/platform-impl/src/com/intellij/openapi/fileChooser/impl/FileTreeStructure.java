@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.fileChooser.impl;
 
@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,7 +66,7 @@ public class FileTreeStructure extends AbstractTreeStructure {
   @Override
   public Object[] getChildElements(@NotNull Object nodeElement) {
     if (!(nodeElement instanceof FileElement)) {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+      return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
 
     FileElement element = (FileElement)nodeElement;
@@ -75,7 +76,7 @@ public class FileTreeStructure extends AbstractTreeStructure {
       if (element == myRootElement) {
         return myRootElement.getChildren();
       }
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+      return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
 
     VirtualFile[] children = null;
@@ -94,7 +95,7 @@ public class FileTreeStructure extends AbstractTreeStructure {
     }
 
     if (children == null) {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+      return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
 
     Set<FileElement> childrenSet = new HashSet<>();

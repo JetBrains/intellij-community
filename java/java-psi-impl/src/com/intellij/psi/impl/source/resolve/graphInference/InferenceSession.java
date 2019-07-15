@@ -315,7 +315,9 @@ public class InferenceSession {
           if (myErrorMessages != null) {
             currentMethod.setApplicabilityError(StringUtil.join(myErrorMessages, "\n"));
           }
-          currentMethod.setErased(myErased);
+          if (myErased) {
+            currentMethod.setErased();
+          }
         }
         myTempTypes = null;
       }

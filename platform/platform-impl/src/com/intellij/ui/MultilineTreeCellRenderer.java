@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
@@ -42,7 +42,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
   private boolean myHasFocus;
 
   private Icon myIcon;
-  private String[] myLines = ArrayUtil.EMPTY_STRING_ARRAY;
+  private String[] myLines = ArrayUtilRt.EMPTY_STRING_ARRAY;
   private String myPrefix;
   private int myTextLength;
   private int myPrefixWidth;

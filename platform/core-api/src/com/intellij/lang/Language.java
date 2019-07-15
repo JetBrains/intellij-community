@@ -7,7 +7,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +50,7 @@ public abstract class Language extends UserDataHolderBase {
   };
 
   protected Language(@NotNull String ID) {
-    this(ID, ArrayUtil.EMPTY_STRING_ARRAY);
+    this(ID, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   protected Language(@NotNull String ID, @NotNull String... mimeTypes) {
@@ -68,7 +68,7 @@ public abstract class Language extends UserDataHolderBase {
     }
     myBaseLanguage = baseLanguage;
     myID = ID;
-    myMimeTypes = mimeTypes.length == 0 ? ArrayUtil.EMPTY_STRING_ARRAY : mimeTypes;
+    myMimeTypes = mimeTypes.length == 0 ? ArrayUtilRt.EMPTY_STRING_ARRAY : mimeTypes;
 
     Class<? extends Language> langClass = getClass();
     Language prev = ourRegisteredLanguages.put(langClass, this);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.introduce.constant;
 
 import com.intellij.ide.util.*;
@@ -25,7 +25,7 @@ import com.intellij.refactoring.ui.JavaVisibilityPanel;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.ui.RecentsManager;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -269,7 +269,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
       ContainerUtil.addAll(names, suggestNames());
     }
 
-    myNameField = new NameSuggestionsField(ArrayUtil.toStringArray(names), myContext.getProject(), GroovyFileType.GROOVY_FILE_TYPE);
+    myNameField = new NameSuggestionsField(ArrayUtilRt.toStringArray(names), myContext.getProject(), GroovyFileType.GROOVY_FILE_TYPE);
 
     GrTypeComboBox.registerUpDownHint(myNameField, myTypeCombo);
   }

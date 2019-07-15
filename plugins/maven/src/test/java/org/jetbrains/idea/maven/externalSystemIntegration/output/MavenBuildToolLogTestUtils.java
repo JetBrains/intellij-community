@@ -10,7 +10,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
@@ -46,13 +46,13 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
 
   @NotNull
   protected static String[] fromFile(String resource) throws IOException {
-    try (InputStream stream = ResourceUtil.getResource(MavenBuildToolLogTestUtils.class, "", resource).openStream();
+    try (InputStream stream = ResourceUtil.getResourceAsStream(MavenBuildToolLogTestUtils.class, "", resource);
          Scanner scanner = new Scanner(stream)) {
       List<String> result = new ArrayList<>();
       while (scanner.hasNextLine()) {
         result.add(scanner.nextLine());
       }
-      return ArrayUtil.toStringArray(result);
+      return ArrayUtilRt.toStringArray(result);
     }
   }
 

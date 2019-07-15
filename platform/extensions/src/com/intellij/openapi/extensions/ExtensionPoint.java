@@ -51,7 +51,10 @@ public interface ExtensionPoint<T> {
   @NotNull
   List<T> getExtensionList();
 
-  void forEachExtension(Consumer<T> extensionConsumer);
+  /**
+   * Invokes the given lambda for each extension registered in this extension point. Logs exceptions thrown by the lambda.
+   */
+  void forEachExtensionSafe(Consumer<T> extensionConsumer);
 
   @NotNull
   Stream<T> extensions();

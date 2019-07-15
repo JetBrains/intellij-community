@@ -29,7 +29,6 @@ import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,10 +37,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static com.intellij.openapi.command.WriteCommandAction.writeCommandAction;
 
@@ -49,13 +45,9 @@ public class AddGroupToLocalWhitelistDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(AddGroupToLocalWhitelistDialog.class);
   private JPanel myMainPanel;
   private JTextField myGroupIdTextField;
-  private JTextField myEventDataTextField;
-  private JBLabel myEventDataTipLabel;
-  private JBLabel myEventDataLabel;
   private JBLabel myGroupIdLabel;
   private ComboBox<String> myRecorderComboBox;
   private JBLabel myRecorderLabel;
-  private JPanel myAcceptAllPanel;
   private JPanel myAddCustomRulePanel;
   private JCheckBox myAddCustomRuleCheckBox;
 
@@ -71,8 +63,6 @@ public class AddGroupToLocalWhitelistDialog extends DialogWrapper {
     myProject = project;
     myRecorderLabel.setLabelFor(myRecorderComboBox);
     myGroupIdLabel.setLabelFor(myGroupIdTextField);
-    myEventDataLabel.setLabelFor(myEventDataTextField);
-    UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myEventDataTipLabel);
 
     myValidationRulesEditor = initEditor(project, myAddCustomRulePanel);
     myAddCustomRuleCheckBox.addChangeListener(new ChangeListener() {
@@ -91,7 +81,6 @@ public class AddGroupToLocalWhitelistDialog extends DialogWrapper {
 
   private void updateRulesOption() {
     final boolean customRules = myAddCustomRuleCheckBox.isSelected();
-    myAcceptAllPanel.setVisible(!customRules);
     myAddCustomRulePanel.setVisible(customRules);
   }
 
@@ -125,16 +114,6 @@ public class AddGroupToLocalWhitelistDialog extends DialogWrapper {
   @Nullable
   public String getGroupId() {
     return StringUtil.nullize(myGroupIdTextField.getText());
-  }
-
-  @NotNull
-  public Set<String> getEventData() {
-    final String text = myEventDataTextField.getText().trim();
-    return StringUtil.isEmpty(text) ? Collections.emptySet() :
-           StringUtil.split(text, ";").stream().
-             map(field -> field.trim()).
-             filter(field -> !field.isEmpty()).
-             collect(Collectors.toSet());
   }
 
   @Nullable

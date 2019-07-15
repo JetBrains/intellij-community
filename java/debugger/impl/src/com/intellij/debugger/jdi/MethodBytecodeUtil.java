@@ -5,7 +5,7 @@ import com.intellij.Patches;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -107,7 +107,7 @@ public class MethodBytecodeUtil {
   @NotNull
   private static Attribute createAttribute(String name, ThrowableConsumer<? super DataOutputStream, ? extends IOException> generator) throws IOException {
     try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); DataOutputStream dos = new DataOutputStream(bos)) {
-      writeClassHeader(dos, 0, ArrayUtil.EMPTY_BYTE_ARRAY);
+      writeClassHeader(dos, 0, ArrayUtilRt.EMPTY_BYTE_ARRAY);
       // we generate and put attribute right after the constant pool
       int start = dos.size();
       generator.consume(dos);

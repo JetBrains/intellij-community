@@ -20,7 +20,6 @@ import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -69,7 +68,7 @@ public class VcsImplUtil {
 
   @Nullable
   public static IgnoredFileContentProvider findIgnoredFileContentProvider(@NotNull Project project,
-                                                                           AbstractVcs vcs) {
+                                                                          @NotNull AbstractVcs vcs) {
     IgnoredFileContentProvider ignoreContentProvider = IgnoredFileContentProvider.IGNORE_FILE_CONTENT_PROVIDER.extensions(project)
       .filter((provider) -> provider.getSupportedVcs().equals(vcs.getKeyInstanceMethod()))
       .findFirst()

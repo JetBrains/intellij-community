@@ -28,15 +28,15 @@
   <extensions defaultExtensionNs="com.intellij">
     <intentionAction>
       <className>org.intellij.plugins.intelliLang.inject.InjectLanguageAction</className>
-      <category>Language Injection</category>
+      <category>Language injection</category>
     </intentionAction>
     <intentionAction>
       <className>org.intellij.plugins.intelliLang.inject.UnInjectLanguageAction</className>
-      <category>Language Injection</category>
+      <category>Language injection</category>
     </intentionAction>
     <intentionAction>
       <className>org.intellij.plugins.intelliLang.inject.EditInjectionSettingsAction</className>
-      <category>Language Injection</category>
+      <category>Language injection</category>
     </intentionAction>
 
     <highlightErrorFilter implementation="org.intellij.plugins.intelliLang.inject.FrankensteinErrorFilter"/>
@@ -59,7 +59,7 @@
     <referenceInjector implementation="org.intellij.plugins.intelliLang.references.FileReferenceInjector"/>
     <localInspection implementationClass="org.intellij.plugins.intelliLang.references.InjectedReferencesInspection"
                      enabledByDefault="true" level="ERROR"
-                     displayName="Injected References" groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name"/>
+                     displayName="Injected references" groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name"/>
   </extensions>
 
 </idea-plugin>

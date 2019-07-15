@@ -3,7 +3,7 @@ package com.intellij.openapi.util.registry;
 
 import org.jetbrains.annotations.NotNull;
 
-class RegistryKeyDescriptor {
+final class RegistryKeyDescriptor {
   @NotNull private final String myName;
   @NotNull private final String myDefaultValue;
   @NotNull private final String myDescription;

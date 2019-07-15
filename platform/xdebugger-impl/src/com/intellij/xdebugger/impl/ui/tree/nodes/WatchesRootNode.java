@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XExpression;
@@ -179,7 +180,7 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
       messageNode = new WatchNodeImpl(myTree, this, XExpressionImpl.EMPTY_EXPRESSION, null);
       myChildren.add(targetIndex, messageNode);
       fireNodeInserted(targetIndex);
-      getTree().setSelectionRows(ArrayUtil.EMPTY_INT_ARRAY);
+      getTree().setSelectionRows(ArrayUtilRt.EMPTY_INT_ARRAY);
     }
     else {
       messageNode = node;

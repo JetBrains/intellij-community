@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.service.JpsServiceManager;
 
-import java.util.concurrent.Future;
+import java.util.concurrent.ExecutorService;
 
 /**
  * @author nik
@@ -26,10 +26,10 @@ public abstract class JdkVersionDetector {
     return info != null ? info.getVersion() : null;
   }
 
-  /** @deprecated use {@link #detectJdkVersionInfo(String, ActionRunner)} (to be removed in IDEA 2019) */
+  /** @deprecated use {@link #detectJdkVersionInfo(String, ExecutorService)} (to be removed in IDEA 2019) */
   @Deprecated
   @Nullable
-  public String detectJdkVersion(@NotNull String homePath, @NotNull ActionRunner runner) {
+  public String detectJdkVersion(@NotNull String homePath, @NotNull ExecutorService runner) {
     JdkVersionInfo info = detectJdkVersionInfo(homePath, runner);
     return info != null ? info.getVersion() : null;
   }
@@ -38,12 +38,7 @@ public abstract class JdkVersionDetector {
   public abstract JdkVersionInfo detectJdkVersionInfo(@NotNull String homePath);
 
   @Nullable
-  public abstract JdkVersionInfo detectJdkVersionInfo(@NotNull String homePath, @NotNull ActionRunner actionRunner);
-
-  //todo[nik] replace with a service with different implementations for IDE process and for JPS process (need to exclude intellij.platform.jps.build module from IDEA classpath)
-  public interface ActionRunner {
-    Future<?> run(Runnable runnable);
-  }
+  public abstract JdkVersionInfo detectJdkVersionInfo(@NotNull String homePath, @NotNull ExecutorService actionRunner);
 
   public static final class JdkVersionInfo {
     public final JavaVersion version;

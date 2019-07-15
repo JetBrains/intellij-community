@@ -7,3 +7,5 @@ deprecated: noNotifications13.png; to be removed in IDEA 2020
 deprecated: notifications.png -> /ide/notification/noEvents.svg; to be removed in IDEA 2020 - use AllIcons.Ide.Notification.NoEvents
 deprecated: warning_notifications.png -> /general/warning.svg; to be removed in IDEA 2020 - use AllIcons.General.Warning
 deprecated: incomingChangesOff.png; to be removed in IDEA 2020
+deprecated: lookupAlphanumeric.svg; to be removed in IDEA 2020
+deprecated: lookupRelevance.svg; to be removed in IDEA 2020

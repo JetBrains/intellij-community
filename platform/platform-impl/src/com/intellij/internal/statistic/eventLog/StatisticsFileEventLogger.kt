@@ -76,6 +76,10 @@ open class StatisticsFileEventLogger(private val recorderId: String,
     writer.cleanup()
   }
 
+  override fun rollOver() {
+    writer.rollOver()
+  }
+
   override fun dispose() {
     dispose(writer)
   }

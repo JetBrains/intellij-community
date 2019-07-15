@@ -32,7 +32,7 @@
     <blockingMethodChecker implementation="com.intellij.codeInspection.blockingCallsDetection.ThrowsTypeBlockingMethodChecker"/>
   </extensions>
   <actions>
-    <action id="DumpUastLog" internal="true" class="com.intellij.analysis.internal.DumpUastTreeAction" text="Dump UAST tree">
+    <action id="DumpUastLog" internal="true" class="com.intellij.analysis.internal.DumpUastTreeAction" text="Dump UAST Tree">
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
   </actions>

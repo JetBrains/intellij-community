@@ -1010,6 +1010,7 @@ public class EditorPainter implements TextDrawingCallback {
                                 int startVisualLine,
                                 int endVisualLine) {
     if (!myEditor.getInlayModel().hasBlockElements()) return;
+    int startX = myView.getInsets().left;
     int lineCount = myEditor.getVisibleLineCount();
     TextAttributes lineEndAttributes = startVisualLine == 0 ? TextAttributes.ERASE_MARKER : null;
     Iterator<Caret> carets = myEditor.getCaretModel().getAllCarets()
@@ -1034,8 +1035,8 @@ public class EditorPainter implements TextDrawingCallback {
         for (Inlay inlay : inlaysAbove) {
           int height = inlay.getHeightInPixels();
           int newY = curY - height;
-          paintBackground(g, lineEndAttributes.getBackgroundColor(), clip.x, newY, clip.width, height);
-          inlay.getRenderer().paint(inlay, g, new Rectangle(0, newY, inlay.getWidthInPixels(), height), lineEndAttributes);
+          paintBackground(g, lineEndAttributes.getBackgroundColor(), startX, newY, clip.x + clip.width - startX, height);
+          inlay.getRenderer().paint(inlay, g, new Rectangle(startX, newY, inlay.getWidthInPixels(), height), lineEndAttributes);
           curY = newY;
         }
       }
@@ -1047,8 +1048,8 @@ public class EditorPainter implements TextDrawingCallback {
         lineEndAttributes = getBetweenLinesAttributes(visualLine + 1, lineStartOffset, caretIterator);
         for (Inlay inlay : inlaysBelow) {
           int height = inlay.getHeightInPixels();
-          paintBackground(g, lineEndAttributes.getBackgroundColor(), clip.x, curY, clip.width, height);
-          inlay.getRenderer().paint(inlay, g, new Rectangle(0, curY, inlay.getWidthInPixels(), height), lineEndAttributes);
+          paintBackground(g, lineEndAttributes.getBackgroundColor(), startX, curY, clip.x + clip.width - startX, height);
+          inlay.getRenderer().paint(inlay, g, new Rectangle(startX, curY, inlay.getWidthInPixels(), height), lineEndAttributes);
           curY += height;
         }
       }

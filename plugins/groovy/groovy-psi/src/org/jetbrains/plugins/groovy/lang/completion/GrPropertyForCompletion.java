@@ -7,7 +7,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.light.LightFieldBuilder;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
@@ -33,7 +33,7 @@ public class GrPropertyForCompletion extends LightFieldBuilder {
     if (method.hasModifierProperty(PsiModifier.STATIC)) modifiers.add(PsiModifier.STATIC);
 
     setContainingClass(method.getContainingClass());
-    setModifiers(ArrayUtil.toStringArray(modifiers));
+    setModifiers(ArrayUtilRt.toStringArray(modifiers));
     setBaseIcon(JetgroovyIcons.Groovy.Property);
   }
 

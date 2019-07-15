@@ -5,7 +5,7 @@ import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.mac.growl.Growl;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -36,8 +36,8 @@ class GrowlNotifications implements SystemNotificationsImpl.Notifier {
   }
 
   private void register() {
-    myGrowl.setAllowedNotifications(ArrayUtil.toStringArray(myNotifications));
-    myGrowl.setDefaultNotifications(ArrayUtil.toStringArray(myNotifications));
+    myGrowl.setAllowedNotifications(ArrayUtilRt.toStringArray(myNotifications));
+    myGrowl.setDefaultNotifications(ArrayUtilRt.toStringArray(myNotifications));
     myGrowl.register();
   }
 

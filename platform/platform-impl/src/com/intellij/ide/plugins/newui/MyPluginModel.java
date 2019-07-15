@@ -673,12 +673,12 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     else {
       String deps = StringUtil.join(requiredPlugins, id -> {
         IdeaPluginDescriptor plugin = findPlugin(id);
-        return plugin != null ? plugin.getName() : id.getIdString();
+        return StringUtil.wrapWithDoubleQuote(plugin != null ? plugin.getName() : id.getIdString());
       }, ", ");
 
       int size = requiredPlugins.size();
       message = IdeBundle.message("new.plugin.manager.incompatible.deps.tooltip", size, deps);
-      enableAction.set(IdeBundle.message("new.plugin.manager.incompatible.deps.action", size == 1 ? deps : "required", size));
+      enableAction.set(IdeBundle.message("new.plugin.manager.incompatible.deps.action", size));
     }
 
     return message;

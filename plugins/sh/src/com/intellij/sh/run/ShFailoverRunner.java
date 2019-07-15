@@ -15,7 +15,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -129,7 +129,7 @@ public class ShFailoverRunner extends ShRunner {
     @NotNull
     private GeneralCommandLine createCommandLine(@NotNull VirtualFile workingDir) throws ExecutionException {
       PtyCommandLine commandLine = new PtyCommandLine();
-      if (!SystemInfo.isWindows) {
+      if (!SystemInfoRt.isWindows) {
         commandLine.getEnvironment().put("TERM", "xterm-256color");
       }
       commandLine.withConsoleMode(false);

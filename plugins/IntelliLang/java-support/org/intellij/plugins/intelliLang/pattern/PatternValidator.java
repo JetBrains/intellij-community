@@ -36,7 +36,6 @@ import org.intellij.plugins.intelliLang.util.AnnotateFix;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.intellij.plugins.intelliLang.util.SubstitutedExpressionEvaluationHelper;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,27 +53,8 @@ import java.util.regex.PatternSyntaxException;
  */
 public class PatternValidator extends LocalInspectionTool {
   private static final Key<CachedValue<Pattern>> COMPLIED_PATTERN = Key.create("COMPILED_PATTERN");
-  public static final String PATTERN_VALIDATION = "Pattern Validation";
-  public static final String LANGUAGE_INJECTION = "Language Injection";
 
   public boolean CHECK_NON_CONSTANT_VALUES = true;
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  @Override
-  @NotNull
-  public String getGroupDisplayName() {
-    return PATTERN_VALIDATION;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return "Validate Annotated Patterns";
-  }
 
   @Override
   @Nullable
@@ -89,13 +69,6 @@ public class PatternValidator extends LocalInspectionTool {
       }
     });
     return JBUI.Panels.simplePanel().addToTop(jCheckBox);
-  }
-
-  @Override
-  @NotNull
-  @NonNls
-  public String getShortName() {
-    return "PatternValidation";
   }
 
   @Override

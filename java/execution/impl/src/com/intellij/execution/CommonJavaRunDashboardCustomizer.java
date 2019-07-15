@@ -8,12 +8,11 @@ import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.dashboard.RunDashboardCustomizer;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.PsiNavigateUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.awt.event.MouseEvent;
 
 public class CommonJavaRunDashboardCustomizer extends RunDashboardCustomizer {
   @Override
@@ -26,12 +25,27 @@ public class CommonJavaRunDashboardCustomizer extends RunDashboardCustomizer {
   }
 
   @Override
-  public boolean handleDoubleClick(@NotNull MouseEvent event, @NotNull RunDashboardRunConfigurationNode node) {
+  @Nullable
+  public Navigatable getNavigatable(@NotNull RunDashboardRunConfigurationNode node) {
     PsiClass mainClass = findMainClass(node.getConfigurationSettings().getConfiguration());
-    if (mainClass == null || !mainClass.isValid()) return false;
+    if (mainClass == null || !mainClass.isValid()) return null;
 
-    PsiNavigateUtil.navigate(mainClass);
-    return true;
+    return new Navigatable() {
+      @Override
+      public void navigate(boolean requestFocus) {
+        PsiNavigateUtil.navigate(mainClass, requestFocus);
+      }
+
+      @Override
+      public boolean canNavigate() {
+        return true;
+      }
+
+      @Override
+      public boolean canNavigateToSource() {
+        return true;
+      }
+    };
   }
 
   @Nullable

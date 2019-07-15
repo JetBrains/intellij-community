@@ -6,10 +6,10 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
@@ -42,7 +43,6 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ComponentWithMnemonics;
 import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.Alarm;
@@ -79,7 +79,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
   @NonNls
   private static final String GET_CACHED_STROKE_METHOD_NAME = "getCachedStroke";
   private static final Logger LOG = Logger.getInstance(IdeKeyEventDispatcher.class);
-  private static final boolean JAVA11_ON_WINDOWS = SystemInfo.isWindows && SystemInfo.isJavaVersionAtLeast(11, 0, 0);
+  private static final boolean JAVA11_ON_WINDOWS = SystemInfoRt.isWindows && SystemInfo.isJavaVersionAtLeast(11, 0, 0);
 
   private KeyStroke myFirstKeyStroke;
   /**
@@ -438,7 +438,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return true;
     }
 
-    if (SystemInfo.isMac && InputEvent.ALT_DOWN_MASK == e.getModifiersEx() && Registry.is("ide.mac.alt.mnemonic.without.ctrl")) {
+    if (SystemInfoRt.isMac && InputEvent.ALT_DOWN_MASK == e.getModifiersEx() && Registry.is("ide.mac.alt.mnemonic.without.ctrl")) {
       // the myIgnoreNextKeyTypedEvent changes event processing to support Alt-based mnemonics on Mac only
       if ((KeyEvent.KEY_TYPED == e.getID() && !IdeEventQueue.getInstance().isInputMethodEnabled()) ||
           hasMnemonicInWindow(focusOwner, e)) {
@@ -454,7 +454,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     // workaround for IDEA-177327
-    if (isCandidateForAltGr && SystemInfo.isWindows && Registry.is("actionSystem.fix.alt.gr")) {
+    if (isCandidateForAltGr && SystemInfoRt.isWindows && Registry.is("actionSystem.fix.alt.gr")) {
       myFirstKeyStroke = keyStroke;
       setState(KeyState.STATE_WAIT_FOR_POSSIBLE_ALT_GR);
       return true;
@@ -539,31 +539,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
   private static boolean hasMnemonic(@Nullable Container container, int keyCode) {
     Component component = UIUtil.uiTraverser(container)
       .traverse()
-      .find(c -> hasMnemonic(c, keyCode));
+      .find(c -> MnemonicHelper.hasMnemonic(c, keyCode));
     return component != null;
-  }
-
-  private static boolean hasMnemonic(@Nullable Component component, int keyCode) {
-    if (component instanceof AbstractButton) {
-      AbstractButton button = (AbstractButton)component;
-      if (button instanceof JBOptionButton) {
-        if (((JBOptionButton)button).isOkToProcessDefaultMnemonics() ||
-            button.getMnemonic() == keyCode) {
-          return true;
-        }
-      }
-      else {
-        if (button.getMnemonic() == keyCode) return true;
-      }
-    }
-    if (component instanceof JLabel) {
-      JLabel label = (JLabel)component;
-      if (label.getDisplayedMnemonic() == keyCode) return true;
-    }
-    if (component instanceof ActionButtonWithText) {
-      if (((ActionButtonWithText)component).getMnemonic() == keyCode) return true;
-    }
-    return false;
   }
 
   private static boolean hasMnemonicInBalloons(Container container, int code) {

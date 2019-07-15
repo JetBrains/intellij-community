@@ -230,12 +230,6 @@ public class XsltDocumentationProvider implements DocumentationProvider {
         return null;
     }
 
-    @Override
-    @Nullable
-    public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
-        return null;
-    }
-
     static class DocElement extends LightElement implements PsiNamedElement {
         private final PsiElement myElement;
         private final String myCategory;

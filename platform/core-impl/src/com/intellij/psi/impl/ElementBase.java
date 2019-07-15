@@ -19,7 +19,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.ui.CoreIconManager;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
@@ -106,7 +105,8 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   protected Icon computeBaseIcon(@Iconable.IconFlags int flags) {
-    Icon baseIcon = isVisibilitySupported() ? getAdjustedBaseIcon(getBaseIcon(), flags) : getBaseIcon();
+    Icon baseIcon = isVisibilitySupported() && Registry.is("ide.completion.show.visibility.icon")
+                    ? getAdjustedBaseIcon(getBaseIcon(), flags) : getBaseIcon();
 
     // to prevent blinking, base icon should be created with the layers
     if (this instanceof PsiElement) {
@@ -156,11 +156,8 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   @NotNull
-  public static RowIcon buildRowIcon(final Icon baseIcon, Icon visibilityIcon) {
-    RowIcon icon = new RowIcon(2);
-    icon.setIcon(baseIcon, 0);
-    icon.setIcon(visibilityIcon, 1);
-    return icon;
+  public static RowIcon buildRowIcon(Icon baseIcon, Icon visibilityIcon) {
+    return new RowIcon(baseIcon, visibilityIcon);
   }
 
   public static Icon iconWithVisibilityIfNeeded(@Iconable.IconFlags int flags, Icon baseIcon, Icon visibility) {
@@ -235,7 +232,8 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     return flags;
   }
 
+  @Deprecated
   public static void registerIconLayer(int flagMask, @NotNull Icon icon) {
-    ((CoreIconManager)IconManager.getInstance()).registerIconLayer(flagMask, icon);
+    IconManager.getInstance().registerIconLayer(flagMask, icon);
   }
 }

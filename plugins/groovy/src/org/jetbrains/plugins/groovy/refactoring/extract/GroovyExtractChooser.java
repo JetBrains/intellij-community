@@ -83,7 +83,7 @@ public class GroovyExtractChooser {
 
     final StringPartInfo stringPart = StringPartInfo.findStringPart(file, start, end);
     if (stringPart != null) {
-      return new InitialInfo(new VariableInfo[0], new VariableInfo[0], PsiElement.EMPTY_ARRAY, GrStatement.EMPTY_ARRAY, new ArrayList<>(), stringPart, project, null);
+      return new InitialInfo(VariableInfo.EMPTY_ARRAY, VariableInfo.EMPTY_ARRAY, PsiElement.EMPTY_ARRAY, GrStatement.EMPTY_ARRAY, new ArrayList<>(), stringPart, project, null);
     }
 
     final SelectionModel selectionModel = editor.getSelectionModel();

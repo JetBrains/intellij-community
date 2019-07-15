@@ -25,27 +25,28 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.Arrays;
 
+@SuppressWarnings("NewClassNamingConvention")
 class JUnit5ConditionsTest {
   @Test
   void disabledConditions() {
     String[] disabledClasses = {DisabledClass.class.getName(), MetaDisabledClass.class.getName()};
     Arrays.stream(disabledClasses)
       .flatMap(klass -> Arrays.stream(new String[]{klass, klass + ",test1"}))
-      .forEach(member -> Assertions.assertTrue(JUnit5TestRunnerUtil.getDisabledConditionValue(member) != null, member));
+      .forEach(member -> Assertions.assertNotNull(JUnit5TestRunnerUtil.getDisabledConditionValue(member), member));
 
     String withDisabledMethodName = WithDisabledMethod.class.getName();
     Assertions.assertAll(() -> Assertions.assertNull(JUnit5TestRunnerUtil.getDisabledConditionValue(withDisabledMethodName), withDisabledMethodName),
                          () -> Assertions.assertNotNull(JUnit5TestRunnerUtil.getDisabledConditionValue(withDisabledMethodName + ",test1"), withDisabledMethodName));
   }
 
-  class WithDisabledMethod {
+  static class WithDisabledMethod {
     @Disabled
     @Test
     void test1() {}
   }
 
   @Disabled
-  class DisabledClass {
+  static class DisabledClass {
     @Test
     void test1() {}
   }
@@ -56,7 +57,7 @@ class JUnit5ConditionsTest {
   @interface MetaDisabled {}
 
   @MetaDisabled
-  class MetaDisabledClass {
+  static class MetaDisabledClass {
     @Test
     void test1() {}
   }

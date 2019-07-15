@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -23,5 +24,17 @@ public interface Printer {
     }
     new AnsiEscapeDecoder().escapeText(text, processOutputType, (text1, attributes) ->
       print(text1, ConsoleViewContentType.getConsoleViewType(attributes)));
+  }
+
+  default void printExpectedActualHeader(String expected, String actual) {
+    printExpectedActualHeader(this, expected, actual);
+  }
+
+  static void printExpectedActualHeader(Printer printer, String expected, String actual) {
+    printer.print("\n", ConsoleViewContentType.ERROR_OUTPUT);
+    printer.print(ExecutionBundle.message("diff.content.expected.for.file.title"), ConsoleViewContentType.SYSTEM_OUTPUT);
+    printer.print(expected + "\n", ConsoleViewContentType.ERROR_OUTPUT);
+    printer.print(ExecutionBundle.message("junit.actual.text.label"), ConsoleViewContentType.SYSTEM_OUTPUT);
+    printer.print(actual, ConsoleViewContentType.ERROR_OUTPUT);
   }
 }

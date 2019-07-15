@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.DeleteOldDirectoriesHelper;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
@@ -30,9 +29,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
-import com.intellij.util.*;
+import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.PlatformUtils;
+import com.intellij.util.SmartList;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
@@ -57,6 +59,7 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Consumer;
 
 import static java.nio.file.attribute.PosixFilePermission.*;
 
@@ -64,7 +67,6 @@ import static java.nio.file.attribute.PosixFilePermission.*;
  * @author yole
  */
 public class StartupUtil {
-  public static final String NO_SPLASH = "nosplash";
   public static final String FORCE_PLUGIN_UPDATES = "idea.force.plugin.updates";
   public static final String IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app";
 
@@ -125,6 +127,9 @@ public class StartupUtil {
 
   static void prepareAndStart(@NotNull String[] args, @NotNull AppStarter appStarter)
     throws InvocationTargetException, InterruptedException, ExecutionException {
+    //noinspection SpellCheckingInspection
+    System.setProperty("sun.awt.noerasebackground", "true");
+
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
     checkHiDPISettings();
 
@@ -132,17 +137,14 @@ public class StartupUtil {
     // because we don't want to complicate logging. It is ok, because lockDirsAndConfigureLogger is not so heavy-weight as UI tasks.
     System.setProperty("idea.ui.util.static.init.enabled", "false");
     CompletableFuture<Void> initLafTask = CompletableFuture.runAsync(() -> {
-      // see note about UIUtil static init - it is required even if headless
+      // see note about StartupUiUtil static init - it is required even if headless
       try {
-        UIUtil.initDefaultLaF();
-
+        StartupUiUtil.initDefaultLaF();
         if (!Main.isHeadless()) {
-          Activity activity = ParallelActivity.PREPARE_APP_INIT.start("init Batik cursors");
-          SVGLoader.prepareBatikInAwt();
-          activity.end();
+          SplashManager.show(args);
         }
       }
-      catch (IllegalAccessException | InstantiationException | UnsupportedLookAndFeelException | ClassNotFoundException e) {
+      catch (Exception e) {
         throw new CompletionException(e);
       }
     }, runnable -> {
@@ -162,7 +164,7 @@ public class StartupUtil {
     Logger log = lockDirsAndConfigureLogger(args);
 
     boolean isParallelExecution = SystemProperties.getBooleanProperty("idea.prepare.app.start.parallel", true);
-    List<Future<?>> futures = new ArrayList<>();
+    List<Future<?>> futures = new SmartList<>();
     ExecutorService executorService = isParallelExecution ? AppExecutorUtil.getAppExecutorService() : new SameThreadExecutorService();
     futures.add(executorService.submit(() -> {
       Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.SETUP_SYSTEM_LIBS);
@@ -180,33 +182,36 @@ public class StartupUtil {
     }
 
     if (isParallelExecution) {
-      executorService.submit(() -> loadSystemLibraries(log));  /* no need to wait */
+      // no need to wait
+      executorService.submit(() -> loadSystemLibraries(log));
 
       Activity activity = StartUpMeasurer.start(Phases.WAIT_TASKS);
-      for (Future<?> future : futures) future.get();
+      for (Future<?> future : futures) {
+        future.get();
+      }
       activity.end();
       futures.clear();
     }
 
-    if (newConfigFolder) {
-      appStarter.beforeImportConfigs();
-      Path newConfigDir = Paths.get(PathManager.getConfigPath());
-      EventQueue.invokeAndWait(() -> {
-        PluginManager.installExceptionHandler();
-        ConfigImportHelper.importConfigsTo(newConfigDir, log);
+    if (!Main.isHeadless()) {
+      if (newConfigFolder) {
+        appStarter.beforeImportConfigs();
+        Path newConfigDir = Paths.get(PathManager.getConfigPath());
+        EventQueue.invokeAndWait(() -> {
+          PluginManager.installExceptionHandler();
+          ConfigImportHelper.importConfigsTo(newConfigDir, log);
       // Android Studio: added by Change I0540b71d / commit 2898bd9
       DeleteOldDirectoriesHelper.run();
-      });
-      appStarter.importFinished(newConfigDir);
-    }
+        });
+        appStarter.importFinished(newConfigDir);
+      }
 
-    if (!Main.isHeadless()) {
       AppUIUtil.showUserAgreementAndConsentsIfNeeded(log);
-    }
 
-    if (newConfigFolder && !ConfigImportHelper.isConfigImported()) {
-      // exception handler is already set by ConfigImportHelper
-      EventQueue.invokeAndWait(() -> runStartupWizard(appStarter));
+      if (newConfigFolder && !ConfigImportHelper.isConfigImported()) {
+        // exception handler is already set by ConfigImportHelper
+        EventQueue.invokeAndWait(() -> runStartupWizard(appStarter));
+      }
     }
 
     appStarter.start();
@@ -262,7 +267,7 @@ public class StartupUtil {
 
         // UIUtil.initDefaultLaF must be called before this call
         Activity activity = ParallelActivity.PREPARE_APP_INIT.start("init system font data");
-        UIUtil.initSystemFontData(log);
+        StartupUiUtil.initSystemFontData(log);
         activity.end();
       }
       catch (Exception e) {
@@ -271,13 +276,15 @@ public class StartupUtil {
 
       // updateWindowIcon must be after UIUtil.initSystemFontData because uses computed system font data for scale context
       if (!Main.isHeadless()) {
-        // no need to wait - doesn't affect other functionality
-        executorService.execute(() -> {
-          Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.UPDATE_WINDOW_ICON);
-          // most of the time consumed to load SVG - so, can be done in parallel
-          AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
-          activity.end();
-        });
+        if (!PluginManagerCore.isRunningFromSources() && !AppUIUtil.isWindowIconAlreadyExternallySet()) {
+          // no need to wait - doesn't affect other functionality
+          executorService.execute(() -> {
+            Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.UPDATE_WINDOW_ICON);
+            // most of the time consumed to load SVG - so, can be done in parallel
+            AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
+            activity.end();
+          });
+        }
 
         if (System.getProperty("com.jetbrains.suppressWindowRaise") == null) {
           System.setProperty("com.jetbrains.suppressWindowRaise", "true");
@@ -422,7 +429,7 @@ public class StartupUtil {
     }
     catch (Exception e) {
       String title = "Invalid " + kind + " Directory";
-      String advice = SystemInfo.isMac && PathManager.getSystemPath().contains(MAGIC_MAC_PATH)
+      String advice = SystemInfoRt.isMac && PathManager.getSystemPath().contains(MAGIC_MAC_PATH)
                       ? "The application seems to be trans-located by macOS and cannot be used in this state.\n" +
                         "Please use Finder to move it to another location."
                       : "If you have modified the '" + property + "' property, please make sure it is correct,\n" +
@@ -502,7 +509,7 @@ public class StartupUtil {
       System.setProperty("jna.nosys", "true");  // prefer bundled JNA dispatcher lib
     }
 
-    if (SystemInfo.isWindows && System.getProperty("winp.folder.preferred") == null) {
+    if (SystemInfoRt.isWindows && System.getProperty("winp.folder.preferred") == null) {
       System.setProperty("winp.folder.preferred", ideTempPath);
     }
 
@@ -526,10 +533,13 @@ public class StartupUtil {
   }
 
   private static void startLogging(@NotNull Logger log) {
+    log.info("------------------------------------------------------ IDE STARTED ------------------------------------------------------");
+    AppExecutorUtil.getAppExecutorService().submit(() -> startLoggingAsync(log));
+  }
+
+  private static void startLoggingAsync(@NotNull Logger log) {
     ShutDownTracker.getInstance().registerShutdownTask(() ->
         log.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------"));
-
-    log.info("------------------------------------------------------ IDE STARTED ------------------------------------------------------");
 
     ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
     ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
@@ -575,24 +585,28 @@ public class StartupUtil {
   }
 
   private static void runStartupWizard(@NotNull AppStarter appStarter) {
-    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-
-    String stepsProviderName = appInfo.getCustomizeIDEWizardStepsProvider();
-    if (stepsProviderName != null) {
-      CustomizeIDEWizardStepsProvider provider;
-      try {
-        Class<?> providerClass = Class.forName(stepsProviderName);
-        provider = (CustomizeIDEWizardStepsProvider)providerClass.newInstance();
-      }
-      catch (Throwable e) {
-        Main.showMessage("Configuration Wizard Failed", e);
-        return;
-      }
-
-      appStarter.beforeStartupWizard();
-      new CustomizeIDEWizardDialog(provider, appStarter).show();
-      PluginManagerCore.invalidatePlugins();
-      appStarter.startupWizardFinished();
+    String stepsProviderName = ApplicationInfoImpl.getShadowInstance().getCustomizeIDEWizardStepsProvider();
+    if (stepsProviderName == null) {
+      return;
     }
+
+    CustomizeIDEWizardStepsProvider provider;
+    try {
+      Class<?> providerClass = Class.forName(stepsProviderName);
+      provider = (CustomizeIDEWizardStepsProvider)providerClass.newInstance();
+    }
+    catch (Throwable e) {
+      Main.showMessage("Configuration Wizard Failed", e);
+      return;
+    }
+
+    appStarter.beforeStartupWizard();
+    CustomizeIDEWizardDialog dialog = new CustomizeIDEWizardDialog(provider, appStarter);
+    SplashManager.executeWithHiddenSplash(dialog.getWindow(), () -> {
+      dialog.show();
+    });
+
+    PluginManagerCore.invalidatePlugins();
+    appStarter.startupWizardFinished();
   }
 }

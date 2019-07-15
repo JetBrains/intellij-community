@@ -13,7 +13,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
@@ -1023,7 +1023,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @NotNull
   @Override
   public GrField createField(@NotNull @NonNls String name, @NotNull PsiType type) throws IncorrectOperationException {
-    final GrVariableDeclaration fieldDeclaration = createFieldDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, name, null, type);
+    final GrVariableDeclaration fieldDeclaration = createFieldDeclaration(ArrayUtilRt.EMPTY_STRING_ARRAY, name, null, type);
     return (GrField)fieldDeclaration.getVariables()[0];
   }
 

@@ -521,56 +521,12 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
         }
         return null;
       }
-      final PsiParameter[] parameters = method.getParameterList().getParameters();
-      for (final PsiParameter parameter : parameters) {
-        final PsiType parameterType = parameter.getType();
-        if (parameterType.accept(new PsiTypeVisitor<Boolean>() {
-          @Override
-          public Boolean visitPrimitiveType(PsiPrimitiveType primitiveType) {
-            return Boolean.FALSE;
-          }
-
-          @Override
-          public Boolean visitArrayType(PsiArrayType arrayType) {
-            return arrayType.getComponentType().accept(this);
-          }
-
-          @Override
-          public Boolean visitClassType(PsiClassType classType) {
-            PsiClassType.ClassResolveResult result = classType.resolveGenerics();
-            PsiClass psiClass = result.getElement();
-            if (psiClass instanceof PsiTypeParameter) {
-              if (((PsiTypeParameter)psiClass).getOwner() == method) return Boolean.FALSE;
-              return substitutor.substitute((PsiTypeParameter)psiClass) == null ? Boolean.TRUE : Boolean.FALSE;
-            }
-            if (psiClass != null) {
-              PsiSubstitutor typeSubstitutor = result.getSubstitutor();
-              for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(psiClass)) {
-                PsiType psiType = typeSubstitutor.substitute(parameter);
-                if (psiType != null && psiType.accept(this).booleanValue()) return Boolean.TRUE;
-              }
-            }
-            return Boolean.FALSE;
-          }
-
-          @Override
-          public Boolean visitWildcardType(PsiWildcardType wildcardType) {
-            PsiType bound = wildcardType.getBound();
-            if (bound != null) return bound.accept(this);
-            return Boolean.TRUE;
-          }
-
-          @Override
-          public Boolean visitEllipsisType(PsiEllipsisType ellipsisType) {
-            return ellipsisType.getComponentType().accept(this);
-          }
-        }).booleanValue()) {
-          final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(method.getProject());
-          PsiType type = elementFactory.createType(method.getContainingClass(), substitutor);
-          return JavaErrorMessages.message("generics.unchecked.call.to.member.of.raw.type",
-                                                         JavaHighlightUtil.formatMethod(method),
-                                                         JavaHighlightUtil.formatType(type));
-        }
+      if (PsiTypesUtil.isUncheckedCall(resolveResult)) {
+        final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(method.getProject());
+        PsiType type = elementFactory.createType(method.getContainingClass(), substitutor);
+        return JavaErrorMessages.message("generics.unchecked.call.to.member.of.raw.type",
+                                         JavaHighlightUtil.formatMethod(method),
+                                         JavaHighlightUtil.formatType(type));
       }
       return null;
     }

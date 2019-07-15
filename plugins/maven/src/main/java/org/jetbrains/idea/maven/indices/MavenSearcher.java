@@ -24,31 +24,8 @@ import java.util.*;
 public abstract class MavenSearcher<RESULT_TYPE extends MavenArtifactSearchResult> {
 
   public List<RESULT_TYPE> search(Project project, String pattern, int maxResult) {
-    return sort(searchImpl(project, pattern, maxResult));
+    return searchImpl(project, pattern, maxResult);
   }
 
   protected abstract List<RESULT_TYPE> searchImpl(Project project, String pattern, int maxResult);
-
-  private List<RESULT_TYPE> sort(List<RESULT_TYPE> result) {
-    for (RESULT_TYPE each : result) {
-      if (each.getSearchResults().size() > 1) {
-        TreeMap<MavenVersionComparable, MavenDependencyCompletionItem> tree = new TreeMap<>(Collections.reverseOrder());
-
-        for (MavenDependencyCompletionItem artifactInfo : each.getSearchResults()) {
-          tree.put(new MavenVersionComparable(artifactInfo.getVersion()), artifactInfo);
-        }
-        each.setResults(new ArrayList<>(tree.values()));
-      }
-    }
-    Collections.sort(result, Comparator.comparing(this::makeSortKey));
-    return result;
-  }
-
-  protected String makeSortKey(RESULT_TYPE result) {
-    return makeKey(result.getSearchResults().get(0));
-  }
-
-  protected String makeKey(MavenDependencyCompletionItem result) {
-    return result.getGroupId() + ":" + result.getArtifactId();
-  }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.util.projectWizard;
 
@@ -28,6 +14,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.SwingWorker;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
@@ -46,7 +33,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
   @NonNls private static final String PROGRESS_PANEL = "progress_panel";
   @NonNls private static final String RESULTS_PANEL = "results_panel";
   private JPanel myPanel;
-  
+
   private JLabel myTitleLabel;
   private JLabel myProgressLabel;
   private JLabel myProgressLabel2;
@@ -70,11 +57,11 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
   }
 
   protected abstract JComponent createResultsPanel();
-  
+
   protected abstract String getProgressText();
-  
+
   protected abstract boolean shouldRunProgress();
-  
+
   protected abstract Result calculate();
 
   protected abstract void onFinished(Result result, boolean canceled);
@@ -82,7 +69,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
   private JPanel createProgressPanel() {
     final JPanel progressPanel = new JPanel(new GridBagLayout());
     myTitleLabel = new JLabel();
-    myTitleLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
+    myTitleLabel.setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD));
     progressPanel.add(myTitleLabel, new GridBagConstraints(0, RELATIVE, 2, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBUI.insets(8, 10, 5, 10), 0, 0));
 
     myProgressLabel = new JLabel();
@@ -119,8 +106,8 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
   private synchronized boolean isProgressRunning() {
     return myProgressIndicator != null && myProgressIndicator.isRunning();
   }
-  
-  
+
+
   @Override
   public void updateStep() {
     if (shouldRunProgress()) {

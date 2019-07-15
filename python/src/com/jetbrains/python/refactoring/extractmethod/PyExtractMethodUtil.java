@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.extractmethod;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -26,7 +26,7 @@ import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.AbstractVariableData;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -635,7 +635,7 @@ public class PyExtractMethodUtil {
     };
 
     final AbstractExtractMethodDialog<?> dialog = new AbstractExtractMethodDialog<Object>(project, "method_name", fragment,
-                                                                                          ArrayUtil.EMPTY_OBJECT_ARRAY, validator,
+                                                                                          ArrayUtilRt.EMPTY_OBJECT_ARRAY, validator,
                                                                                           decorator, PythonFileType.INSTANCE) {
       @Override
       protected String getHelpId() {

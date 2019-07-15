@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.roots.*;
@@ -8,7 +8,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +52,7 @@ public class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
   @Override
   public String[] getJavadocUrls() {
     final VirtualFilePointerContainer container = myOrderRootPointerContainers.get(JavadocOrderRootType.getInstance());
-    return container != null ? container.getUrls() : ArrayUtil.EMPTY_STRING_ARRAY;
+    return container != null ? container.getUrls() : ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
   @NotNull
@@ -66,7 +66,7 @@ public class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
   @Override
   public String[] getExternalAnnotationsUrls() {
     final VirtualFilePointerContainer container = myOrderRootPointerContainers.get(AnnotationOrderRootType.getInstance());
-    return container != null ? container.getUrls() : ArrayUtil.EMPTY_STRING_ARRAY;
+    return container != null ? container.getUrls() : ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
   @Override

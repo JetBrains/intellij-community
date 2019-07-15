@@ -320,9 +320,7 @@ class TestFeatureUsageEventWriter : StatisticsEventLogWriter {
     logged.add(message)
   }
 
-  override fun getFiles(): List<File> {
-    return emptyList()
-  }
-
+  override fun getFiles(): List<File> = emptyList()
   override fun cleanup() = Unit
+  override fun rollOver() = Unit
 }

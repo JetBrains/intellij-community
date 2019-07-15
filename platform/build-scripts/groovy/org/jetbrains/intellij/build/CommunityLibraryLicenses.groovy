@@ -22,6 +22,8 @@ class CommunityLibraryLicenses {
 
     new LibraryLicense(name: "Amazon Ion Java", libraryName: "ion", license: "Apache 2.0", url: "https://github.com/amzn/ion-java"),
 
+    new LibraryLicense(name: "Android Aia Manifest Proto", libraryName: "aia-manifest-proto-1.0-jarjar.jar", license: "Apache 2.0",
+                       url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Analytics", attachedTo: "intellij.android.core", license: "Apache 2.0",
                        url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Analytics Crash", libraryName: "com.android.tools.analytics-library:crash",
@@ -298,7 +300,7 @@ class CommunityLibraryLicenses {
                        url: "http://www.jcip.net", licenseUrl: "http://creativecommons.org/licenses/by/2.5"),
     new LibraryLicense(name: "JDOM", version: "1.1 (with patches by JetBrains)", license: "modified Apache", url: "http://www.jdom.org/",
                        licenseUrl: "http://www.jdom.org/docs/faq.html#a0030"),
-    new LibraryLicense(name: "JediTerm", libraryName: "jediterm-pty", version: "2.15", license: "LGPL 3",
+    new LibraryLicense(name: "JediTerm", libraryName: "jediterm-pty", version: "2.16", license: "LGPL 3",
                        url: "https://github.com/JetBrains/jediterm",
                        licenseUrl: "https://github.com/JetBrains/jediterm/blob/master/LICENSE-LGPLv3.txt"),
     new LibraryLicense(name: "JetBrains Annotations", libraryName: "jetbrains-annotations", version: "17.0.0", license: "Apache 2.0",
@@ -447,8 +449,8 @@ class CommunityLibraryLicenses {
                        url: "http://pockets.readthedocs.org/"),
     new LibraryLicense(name: "protobuf", version: "3.5.1", license: "New BSD", url: "http://code.google.com/p/protobuf/",
                        licenseUrl: "https://github.com/google/protobuf/blob/master/LICENSE"),
-    new LibraryLicense(name: "Proxy Vole", libraryName: "proxy-vole", version: "1.0.5", license: "Apache 2.0",
-                       url: "https://github.com/MarkusBernhardt/proxy-vole",
+    new LibraryLicense(name: "Proxy Vole", libraryName: "proxy-vole", version: "1.0.5-jb.2", license: "Apache 2.0",
+                       url: "https://github.com/JetBrains/intellij-deps-proxy-vole",
                        licenseUrl: "https://github.com/MarkusBernhardt/proxy-vole/blob/master/LICENSE.md"),
     new LibraryLicense(name: "pty4j", libraryName: "pty4j", version: "0.9.3", license: "Eclipse Public License v1.0",
                        url: "https://github.com/JetBrains/pty4j"),

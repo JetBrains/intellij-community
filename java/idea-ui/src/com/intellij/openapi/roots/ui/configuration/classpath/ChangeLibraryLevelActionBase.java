@@ -106,7 +106,7 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
         final File targetDir = new File(FileUtil.toSystemDependentName(targetDirPath));
         for (final File from : filesToProcess) {
           indicator.checkCanceled();
-          final File to = FileUtil.findSequentNonexistentFile(targetDir, FileUtil.getNameWithoutExtension(from),
+          final File to = FileUtil.findSequentNonexistentFile(targetDir, FileUtilRt.getNameWithoutExtension(from.getName()),
                                                               FileUtilRt.getExtension(from.getName()));
           try {
             if (from.isDirectory()) {

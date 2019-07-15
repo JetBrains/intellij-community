@@ -13,8 +13,7 @@ import java.awt.image.ImageObserver;
  * @author Anton Makeev
  * @author Konstantin Bulenkov
  */
-public class RetinaImage { // [tav] todo: create HiDPIImage class
-
+public final class RetinaImage { // [tav] todo: create HiDPIImage class
   /**
    * Creates a Retina-aware wrapper over a raw image.
    * The raw image should be provided in scale of the Retina default scale factor (2x).
@@ -81,11 +80,5 @@ public class RetinaImage { // [tav] todo: create HiDPIImage class
   @NotNull
   public static BufferedImage create(ScaleContext ctx, double width, double height, int type, @NotNull RoundingMode rm) {
     return new JBHiDPIScaledImage(ctx, width, height, type, rm);
-  }
-
-  /** @deprecated Apple JRE is no longer supported (to be removed in IDEA 2019) */
-  @Deprecated
-  public static boolean isAppleHiDPIScaledImage(@SuppressWarnings("unused") Image image) {
-    return false;
   }
 }

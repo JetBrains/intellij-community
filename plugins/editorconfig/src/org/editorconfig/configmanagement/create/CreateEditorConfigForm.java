@@ -3,9 +3,14 @@ package org.editorconfig.configmanagement.create;
 
 import com.intellij.lang.Language;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.ui.ContextHelpLabel;
+import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.SwingHelper;
 import org.editorconfig.language.messages.EditorConfigBundle;
 
 import javax.swing.*;
@@ -17,27 +22,39 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class CreateEditorConfigForm {
-  private JPanel     myTopPanel;
-  private JBCheckBox myStandardPropertiesCb;
-  private JBCheckBox myIntelliJPropertiesCb;
-  private JBCheckBox myRootCb;
-  private JPanel     myPropertiesPanel;
-  private JPanel     myLanguagesPanel;
-  private JBCheckBox myCommentProperties;
+  private JPanel           myTopPanel;
+  private JBCheckBox       myStandardPropertiesCb;
+  private JBCheckBox       myIntelliJPropertiesCb;
+  private JBCheckBox       myRootCb;
+  private JPanel           myPropertiesPanel;
+  private JPanel           myLanguagesPanel;
+  private JBCheckBox       myCommentProperties;
+  private JBLabel          myAddPropertiesForLabel;
+  @SuppressWarnings("unused")
+  private HyperlinkLabel   myAboutEditorConfigLink;
+  @SuppressWarnings("unused")
+  private ContextHelpLabel myContextHelpLabel;
 
   private final List<LanguageCheckBoxRec> myLanguageCheckBoxes;
 
   private final static int MAX_LANGUAGES_ROWS = 10;
 
   public CreateEditorConfigForm() {
-    myPropertiesPanel.setBorder(IdeBorderFactory.createTitledBorder(EditorConfigBundle.message("export.properties.title"), true));
-    myLanguagesPanel.setBorder(IdeBorderFactory.createTitledBorder(EditorConfigBundle.message("export.languages.title"), true));
+    myPropertiesPanel.setBorder(IdeBorderFactory.createTitledBorder(EditorConfigBundle.message("export.properties.title")));
     myLanguagesPanel.setLayout(new BoxLayout(myLanguagesPanel, BoxLayout.X_AXIS));
     myLanguageCheckBoxes = creteLanguageCheckBoxes(myLanguagesPanel);
     setLanguagePanelEnabled(false);
     myCommentProperties.setEnabled(false);
+    adjustVerticalSize(myCommentProperties, 2);
+    adjustVerticalSize(myAddPropertiesForLabel, 1.5f);
     myIntelliJPropertiesCb.addActionListener(new LanguagePanelEnabler());
     myStandardPropertiesCb.addActionListener(new LanguagePanelEnabler());
+  }
+
+  private static void adjustVerticalSize(JComponent component, float factor) {
+    final Dimension originalDim = component.getMinimumSize();
+    final Dimension newDim = new Dimension(originalDim.width, Math.round(originalDim.height * factor));
+    component.setMinimumSize(newDim);
   }
 
   private class LanguagePanelEnabler implements ActionListener {
@@ -59,6 +76,7 @@ public class CreateEditorConfigForm {
         if (currPanel == null) {
           currPanel = createLanguageColumnPanel();
           languagesPanel.add(currPanel);
+          languagesPanel.add(Box.createRigidArea(new JBDimension(30, 1)));
           rowCount = 0;
         }
         String langName = ObjectUtils.notNull(provider.getLanguageName(), language.getDisplayName());
@@ -86,6 +104,13 @@ public class CreateEditorConfigForm {
     colPanel.setLayout(new BoxLayout(colPanel, BoxLayout.Y_AXIS));
     colPanel.setAlignmentY(Component.TOP_ALIGNMENT);
     return colPanel;
+  }
+
+  private void createUIComponents() {
+    myAboutEditorConfigLink = SwingHelper.createWebHyperlink(
+      EditorConfigBundle.message("export.editor.config.about"),
+      "http://www.editorconfig.org");
+    myContextHelpLabel = ContextHelpLabel.create("", EditorConfigBundle.message("export.editor.config.root.help"));
   }
 
   public JPanel getTopPanel() {

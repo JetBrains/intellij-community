@@ -2390,6 +2390,35 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "}";
     String pattern8 = "String '_x;";
     assertEquals("avoid IncorrectOperationException", 0, findMatchesCount(source3, pattern8));
+
+    String source4 = "class Main2 {\n" +
+                     "    public static void main(String[] args) {\n" +
+                     "        //need to match this\n" +
+                     "        JSTestUtils.testES6(\"myProject\", () -> {\n" +
+                     "            doTest1();\n" +
+                     "            doTest2();\n" +
+                     "        });\n" +
+                     "    }\n" +
+                     "\n" +
+                     "    private static void doTest1() {\n" +
+                     "    }\n" +
+                     "\n" +
+                     "    private static void doTest2() {\n" +
+                     "    }\n" +
+                     "\n" +
+                     "    static class JSTestUtils {\n" +
+                     "        private JSTestUtils() {\n" +
+                     "        }\n" +
+                     "\n" +
+                     "        static void testES6(Object project, Runnable runnable) {\n" +
+                     "            runnable.run();\n" +
+                     "        }\n" +
+                     "    }\n" +
+                     "}";
+    String pattern9 = "JSTestUtils.testES6('_expression, () -> {\n" +
+                      "    '_statements*;\n" +
+                      "})";
+    assertEquals("match lambda body correctly", 1, findMatchesCount(source4, pattern9));
   }
 
   public void testFindDefaultMethods() {
@@ -2585,6 +2614,10 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String pattern3 = "'_st;" +
                       "// tokamak";
     assertEquals("find statement followed by comment", 1, findMatchesCount(source3, pattern3));
+
+    String source4 = "/*";
+    String pattern4 = "//'_comment:[regex( .* )]";
+    assertEquals("no error on broken code", 1, findMatchesCount(source4, pattern4));
   }
 
   public void testCaseInsensitive() {

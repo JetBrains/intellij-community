@@ -1,0 +1,15 @@
+
+import java.util.Set;
+
+class Temp {
+  public Object foo(Set<String> bar) {
+    if (bar.size() < 2) {
+// Inline this
+        bar.size(); // or online this
+        return null;
+    }
+
+    return bar;
+  }
+
+}

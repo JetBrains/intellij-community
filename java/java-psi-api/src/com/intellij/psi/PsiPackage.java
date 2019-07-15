@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmPackage;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a Java package.
  */
-public interface PsiPackage extends PsiCheckedRenameElement, NavigationItem, PsiModifierListOwner,
+public interface PsiPackage extends PsiCheckedRenameElement, NavigationItem, PsiJvmModifiersOwner,
                                     PsiDirectoryContainer, PsiQualifiedNamedElement, JvmPackage {
 
   String PACKAGE_INFO_CLASS = "package-info";

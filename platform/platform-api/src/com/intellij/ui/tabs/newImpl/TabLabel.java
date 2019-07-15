@@ -3,6 +3,7 @@ package com.intellij.ui.tabs.newImpl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -27,7 +28,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 
-public class TabLabel extends JPanel implements Accessible {
+public class TabLabel extends JPanel implements Accessible, Disposable {
   // If this System property is set to true 'close' button would be shown on the left of text (it's on the right by default)
   protected final SimpleColoredComponent myLabel;
 
@@ -148,6 +149,10 @@ public class TabLabel extends JPanel implements Accessible {
     }
   }
 
+  @Override
+  public void dispose() {
+  }
+
   private void setHovered(boolean value) {
     if (myTabs.isHoveredTab(this) == value) return;
     if (value) {
@@ -196,7 +201,7 @@ public class TabLabel extends JPanel implements Accessible {
     label.setOpaque(false);
     label.setBorder(null);
     label.setIconTextGap(
-      tabs.isEditorTabs() ? (!UISettings.getShadowInstance().getHideTabsIfNeed() ? 4 : 2) + 1 : new JLabel().getIconTextGap());
+      tabs.isEditorTabs() ? (!UISettings.getShadowInstance().getHideTabsIfNeeded() ? 4 : 2) + 1 : new JLabel().getIconTextGap());
     label.setIconOpaque(false);
     label.setIpad(JBUI.emptyInsets());
 
@@ -253,18 +258,6 @@ public class TabLabel extends JPanel implements Accessible {
 
   private void doPaint(final Graphics g) {
     super.paint(g);
-  }
-
-  @Override
-  public Dimension getPreferredSize() {
-    Dimension size = super.getPreferredSize();
-
-    if (myActionPanel != null && !myActionPanel.isVisible()) {
-      final Dimension actionPanelSize = myActionPanel.getPreferredSize();
-      size.width += actionPanelSize.width;
-    }
-
-    return size;
   }
 
   private void handlePopup(final MouseEvent e) {

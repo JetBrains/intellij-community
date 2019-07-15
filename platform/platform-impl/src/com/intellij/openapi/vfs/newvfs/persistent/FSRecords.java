@@ -20,8 +20,8 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.IntArrayList;
-import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
+import com.intellij.util.io.*;
 import com.intellij.util.io.storage.*;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.Contract;
@@ -712,7 +712,7 @@ public class FSRecords {
       }
 
       try (DataInputStream input = readAttribute(ROOT_RECORD_ID, ourChildrenAttr)) {
-        if (input == null) return ArrayUtil.EMPTY_INT_ARRAY;
+        if (input == null) return ArrayUtilRt.EMPTY_INT_ARRAY;
         final int count = DataInputOutputUtil.readINT(input);
         int[] result = ArrayUtil.newIntArray(count);
         int prevId = 0;
@@ -774,8 +774,8 @@ public class FSRecords {
 
       int root = getNames().tryEnumerate(rootUrl);
 
-      int[] names = ArrayUtil.EMPTY_INT_ARRAY;
-      int[] ids = ArrayUtil.EMPTY_INT_ARRAY;
+      int[] names = ArrayUtilRt.EMPTY_INT_ARRAY;
+      int[] ids = ArrayUtilRt.EMPTY_INT_ARRAY;
       try (final DataInputStream input = readAttribute(ROOT_RECORD_ID, ourChildrenAttr)) {
         if (input != null) {
           final int count = DataInputOutputUtil.readINT(input);
@@ -877,7 +877,7 @@ public class FSRecords {
   static int[] list(int id) {
     return readAndHandleErrors(() -> {
       try (final DataInputStream input = readAttribute(id, ourChildrenAttr)) {
-        if (input == null) return ArrayUtil.EMPTY_INT_ARRAY;
+        if (input == null) return ArrayUtilRt.EMPTY_INT_ARRAY;
         final int count = DataInputOutputUtil.readINT(input);
         final int[] result = ArrayUtil.newIntArray(count);
         int prevId = id;

@@ -28,7 +28,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.openapi.vcs.changes.ignore.psi.IgnoreFile;
 import com.intellij.psi.FileViewProvider;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +49,7 @@ public class IgnoreLanguage extends Language {
   }
 
   protected IgnoreLanguage(@NotNull String name, @NotNull String extension) {
-    super(INSTANCE, name, ArrayUtil.EMPTY_STRING_ARRAY);
+    super(INSTANCE, name, ArrayUtilRt.EMPTY_STRING_ARRAY);
     myExtension = extension;
   }
 
