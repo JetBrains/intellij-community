@@ -106,7 +106,7 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
     }
   }
 
-  protected int getStubVersion(BuildContext context) {
+  protected List<Integer> getStubVersion(BuildContext context) {
     CompilationTasks.create(context).compileModules(["intellij.python.tools"])
     List<String> buildClasspath = context.getModuleRuntimeClasspath(context.findModule("intellij.python.tools"), false)
 
@@ -120,7 +120,8 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
         }
       }
     }
-    return context.ant.project.properties.stubsVersion as int
+    List<String> stubsVersion = (context.ant.project.properties.stubsVersion as String).split('\n')
+    return [stubsVersion[0].toInteger(), stubsVersion[1].toInteger()]
   }
 
   protected void generateUniversalStubs(BuildContext context, File from, File to) {
@@ -173,15 +174,21 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
         context.ant.unzip(src: stubsArchive.absolutePath, dest: "${temporaryIndexFolder.absolutePath}")
 
         try {
-          String stubsVersionPath = new FileNameFinder()
-            .getFileNames("${temporaryIndexFolder.absolutePath}/Python", "sdk-stubs.version").
-            first()
-          int stubsFromArchiveVersion = new File(stubsVersionPath).readLines()[0].toInteger()
-          context.messages.info("Stubs version $stubsFromArchiveVersion")
-          int stubVersion = getStubVersion(context)
-          context.messages.info("But should be $stubVersion")
+          List<String> stubsVersions = new File("${temporaryIndexFolder.absolutePath}/Python/sdk-stubs.version").readLines()
+          Integer firstVersionFromStubs = stubsVersions[0].toInteger()
+          Integer secondVersionFromStubs = stubsVersions[1].toInteger()
 
-          forceGenerate = stubsFromArchiveVersion != stubVersion
+          context.messages.info("Stubs serialization version from prebuilt stubs - $firstVersionFromStubs")
+          context.messages.info("Stub updating index version from prebuilt stubs - $secondVersionFromStubs")
+
+          List<Integer> versionsFromSources = getStubVersion(context)
+          Integer firstVersionFromSources = versionsFromSources[0]
+          Integer secondVersionFromSources = versionsFromSources[1]
+
+          context.messages.info("Stubs serialization version from sources - $firstVersionFromSources")
+          context.messages.info("Stub updating index version from prebuilt stubs - $secondVersionFromSources")
+
+          forceGenerate = firstVersionFromStubs != firstVersionFromSources || secondVersionFromStubs != secondVersionFromSources
         }
         catch (ignored) {
           forceGenerate = true
