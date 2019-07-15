@@ -119,7 +119,7 @@ private class PySdkPopupFactory(val project: Project, val module: Module) {
       -1,
       Condition { it is SwitchToSdkAction && it.sdk.name == currentSdkName },
       null
-    )
+    ).apply { setHandleAutoSelectionBeforeShow(true) }
   }
 
   private fun shortenNameInPopup(sdk: Sdk) = name(sdk).trimMiddle(100)
