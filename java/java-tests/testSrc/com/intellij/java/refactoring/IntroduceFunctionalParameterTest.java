@@ -94,8 +94,8 @@ public class IntroduceFunctionalParameterTest extends LightRefactoringTestCase  
     boolean enabled = true;
     try {
       configureByFile("/refactoring/introduceFunctionalParameter/before" + getTestName(false) + ".java");
-      enabled = myEditor.getSettings().isVariableInplaceRenameEnabled();
-      myEditor.getSettings().setVariableInplaceRenameEnabled(false);
+      enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
+      getEditor().getSettings().setVariableInplaceRenameEnabled(false);
       final SelectionModel selectionModel = getEditor().getSelectionModel();
       if (selectionModel.hasSelection()) {
         PsiElement[] elements = ExtractMethodHandler.getElements(getProject(), getEditor(), getFile());
@@ -112,7 +112,7 @@ public class IntroduceFunctionalParameterTest extends LightRefactoringTestCase  
       }
       assertEquals(conflict, e.getMessage());
     } finally {
-      myEditor.getSettings().setVariableInplaceRenameEnabled(enabled);
+      getEditor().getSettings().setVariableInplaceRenameEnabled(enabled);
     }
   }
 

@@ -19,6 +19,7 @@ import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.editor.Document;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -72,35 +73,35 @@ public abstract class AbstractIndentAutoDetectionTest extends LightPlatformCodeI
       setIndentOptions(defaultIndentOptions);
     }
 
-    CommonCodeStyleSettings.IndentOptions options = detectIndentOptions();
+    CommonCodeStyleSettings.IndentOptions options = detectIndentOptions(getFile());
     Assert.assertTrue("Tab usage not detected", options.USE_TAB_CHARACTER);
   }
 
-  private static void doTestIndentSize(@Nullable CommonCodeStyleSettings.IndentOptions defaultIndentOptions, int expectedIndent) {
+  private void doTestIndentSize(@Nullable CommonCodeStyleSettings.IndentOptions defaultIndentOptions, int expectedIndent) {
     if (defaultIndentOptions != null) {
       setIndentOptions(defaultIndentOptions);
     }
 
-    CommonCodeStyleSettings.IndentOptions options = detectIndentOptions();
+    CommonCodeStyleSettings.IndentOptions options = detectIndentOptions(getFile());
     Assert.assertFalse("Tab usage detected: ", options.USE_TAB_CHARACTER);
     Assert.assertEquals("Indent mismatch", expectedIndent, options.INDENT_SIZE);
   }
 
-  private static void setIndentOptions(@NotNull CommonCodeStyleSettings.IndentOptions defaultIndentOptions) {
+  private void setIndentOptions(@NotNull CommonCodeStyleSettings.IndentOptions defaultIndentOptions) {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
-    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(myFile.getFileType());
+    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(getFile().getFileType());
     indentOptions.copyFrom(defaultIndentOptions);
   }
   
   @NotNull
   private IndentUsageInfo getMaxUsedIndentInfo() {
     configureByFile(getFileNameWithExtension());
-    Document document = getDocument(myFile);
+    Document document = getDocument(getFile());
 
-    FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(myFile);
+    FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(getFile());
     Assert.assertNotNull(builder);
     
-    FormattingModel model = builder.createModel(myFile, CodeStyleSettingsManager.getSettings(getProject()));
+    FormattingModel model = builder.createModel(getFile(), CodeStyleSettingsManager.getSettings(getProject()));
     List<LineIndentInfo> lines = new FormatterBasedLineIndentInfoBuilder(document, model.getRootBlock(), null).build();
     
     IndentUsageStatistics statistics = new IndentUsageStatisticsImpl(lines);
@@ -108,8 +109,8 @@ public abstract class AbstractIndentAutoDetectionTest extends LightPlatformCodeI
   }
 
   @NotNull
-  public static CommonCodeStyleSettings.IndentOptions detectIndentOptions() {
-    IndentOptionsDetector detector = new IndentOptionsDetectorImpl(myFile);
+  public static CommonCodeStyleSettings.IndentOptions detectIndentOptions(PsiFile file) {
+    IndentOptionsDetector detector = new IndentOptionsDetectorImpl(file);
     return detector.getIndentOptions();
   }
 }

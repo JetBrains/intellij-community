@@ -194,7 +194,7 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
     doTestAllParameterTypes();
   }
 
-  private static void doTestAllParameterTypes() {
+  private void doTestAllParameterTypes() {
     final Collection<PsiParameter> parameterLists = PsiTreeUtil.findChildrenOfType(getFile(), PsiParameter.class);
     for (PsiParameter parameter : parameterLists) {
       if (parameter.getTypeElement() != null) continue;
@@ -204,7 +204,7 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
     }
   }
 
-  private static void dropCaches() {
+  private void dropCaches() {
     getPsiManager().dropResolveCaches();
   }
 

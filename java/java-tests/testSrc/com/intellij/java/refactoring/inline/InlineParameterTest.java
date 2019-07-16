@@ -332,10 +332,10 @@ public class InlineParameterTest extends LightRefactoringTestCase {
     checkResultByFile(null, fileName + ".after", true);
   }
 
-  private static void performAction() {
-    final PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil
+  private void performAction() {
+    final PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil
                                                                                .REFERENCED_ELEMENT_ACCEPTED |
-                                                                             TargetElementUtil.ELEMENT_NAME_ACCEPTED);
-    new InlineParameterHandler().inlineElement(getProject(), myEditor, element);
+                                                                                TargetElementUtil.ELEMENT_NAME_ACCEPTED);
+    new InlineParameterHandler().inlineElement(getProject(), getEditor(), element);
   }
 }

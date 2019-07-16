@@ -764,7 +764,7 @@ public class XmlSchemaTest extends LightJavaCodeInsightTestCase {
     assertNull(attribute);
   }
 
-  private static XmlNSDescriptor createDescriptor(@NonNls String dtdText) {
+  private XmlNSDescriptor createDescriptor(@NonNls String dtdText) {
     PsiFile dtdFile = createFile("test.xml", dtdText);
 
     return new XmlNSDescriptorImpl((XmlFile)dtdFile);

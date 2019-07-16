@@ -15,7 +15,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 
 import java.io.File;
@@ -37,7 +36,7 @@ public class JavaFormatterPerformanceTest extends JavaFormatterTestCase {
   public void testPerformance1() throws Exception {
     File testFile = new File(PathManagerEx.getTestDataPath(), BASE_PATH + "/performance.java");
     String text = StringUtil.convertLineSeparators(FileUtil.loadFile(testFile, StandardCharsets.UTF_8));
-    PsiFile file = LightPlatformTestCase.createFile(testFile.getName(), text);
+    PsiFile file = createFile(testFile.getName(), text);
     astTraverser(SourceTreeToPsiMap.psiElementToTree(file)).forEach(node -> {});
 
     CodeStyleSettings settings = new CodeStyleSettings();

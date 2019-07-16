@@ -36,7 +36,7 @@ public class JavaCodeUtilTest extends LightJavaCodeInsightTestCase {
                           "        ArrayList \n" + //note whitespace after
                           "    }\n" +
                           "}");
-    PsiClass aClass = ((PsiJavaFile)myFile).getClasses()[0];
+    PsiClass aClass = ((PsiJavaFile)getFile()).getClasses()[0];
     PsiCodeBlock body = aClass.getMethods()[0].getBody();
     PsiReferenceExpression expression = (PsiReferenceExpression)((PsiExpressionStatementImpl)body.getStatements()[0]).getExpression();
 
@@ -53,6 +53,6 @@ public class JavaCodeUtilTest extends LightJavaCodeInsightTestCase {
                  "    void foo(){\n" +
                  "        ArrayList \n" +
                  "    }\n" +
-                 "}", myFile.getText());
+                 "}", getFile().getText());
   }
 }

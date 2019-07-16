@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class XmlModificationsTest extends LightPlatformTestCase {
   @NotNull
-  private static XmlTag createTag(String s) {
+  private XmlTag createTag(String s) {
     return XmlElementFactory.getInstance(getProject()).createTagFromText(s);
   }
 

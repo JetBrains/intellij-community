@@ -42,7 +42,7 @@ public class GotoDeclarationTest extends LightJavaCodeInsightTestCase {
   public void testBreakLabel() {  doTest(); }
   public void testAnonymous() {  doTest(); }
 
-  private static void performAction() {
+  private void performAction() {
     PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
     assertEquals(getFile(), element.getContainingFile());
     getEditor().getCaretModel().moveToOffset(element.getTextOffset());

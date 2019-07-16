@@ -36,7 +36,6 @@ import com.intellij.testFramework.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
@@ -207,13 +206,12 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   }
 
   @NotNull
-  static ConsoleViewImpl createConsole() {
-    return createConsole(false);
+  ConsoleViewImpl createConsole() {
+    return createConsole(false, getProject());
   }
 
   @NotNull
-  private static ConsoleViewImpl createConsole(boolean usePredefinedMessageFilter) {
-    Project project = getProject();
+  static ConsoleViewImpl createConsole(boolean usePredefinedMessageFilter, Project project) {
     ConsoleViewImpl console = new ConsoleViewImpl(project,
                                                   GlobalSearchScope.allScope(project),
                                                   false,
@@ -276,7 +274,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     uiSettings.setOverrideConsoleCycleBufferSize(true);
     uiSettings.setConsoleCycleBufferSizeKb(capacityKB);
     // create new to reflect changed buffer size
-    ConsoleViewImpl console = createConsole(true);
+    ConsoleViewImpl console = createConsole(true, getProject());
     try {
       runnable.consume(console);
     }
@@ -381,7 +379,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     assertEquals("xxxx", editor.getDocument().getText());
   }
 
-  private static void backspace(ConsoleViewImpl consoleView) {
+  private void backspace(ConsoleViewImpl consoleView) {
     Editor editor = consoleView.getEditor();
     Set<Shortcut> backShortcuts = new THashSet<>(Arrays.asList(ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_BACKSPACE).getShortcutSet().getShortcuts()));
     List<AnAction> actions = ActionUtil.getActions(consoleView.getEditor().getContentComponent());

@@ -144,7 +144,7 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "</table>");
   }
 
-  private static void doTest(@Language(value = "JAVA", prefix = "@SuppressWarnings(\"all\")class X{", suffix = "}") String method,
+  private void doTest(@Language(value = "JAVA", prefix = "@SuppressWarnings(\"all\")class X{", suffix = "}") String method,
                              @Language("HTML") String expectedHint,
                              @Language("HTML") String expectedAdvancedHint) {
     EditorInfo info = new EditorInfo("class X{" + method + "}");

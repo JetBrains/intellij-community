@@ -29,7 +29,7 @@ import com.intellij.testFramework.TestDataPath;
 public class InvertBooleanTest extends LightRefactoringParameterizedTestCase {
   @Override
   protected void perform() {
-    PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
+    PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiNamedElement);
 
     final PsiNamedElement namedElement = (PsiNamedElement)element;

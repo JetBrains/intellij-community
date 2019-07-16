@@ -591,7 +591,7 @@ public class TreeIncrementalUpdateTest extends DomTestCase {
 
   */
 
-  private static TypeChooser createClassChooser() {
+  private TypeChooser createClassChooser() {
     return new TypeChooser() {
       @Override
       public Type chooseType(final XmlTag tag) {

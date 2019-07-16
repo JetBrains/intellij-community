@@ -143,7 +143,7 @@ public class JavaExternalDocumentationTest extends LightPlatformTestCase {
     return jarFile;
   }
 
-  private static String getDocumentationText(String sourceEditorText) {
+  private String getDocumentationText(String sourceEditorText) {
     return getDocumentationText(getProject(), sourceEditorText);
   }
 

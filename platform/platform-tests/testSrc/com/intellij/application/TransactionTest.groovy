@@ -95,7 +95,7 @@ class TransactionTest extends LightPlatformTestCase {
     assert log == ['1', '2', '3']
   }
 
-  private static void assertWritingProhibited() {
+  private void assertWritingProhibited() {
     boolean writeActionFailed = false
     def disposable = Disposer.newDisposable('assertWritingProhibited')
     LoggedErrorProcessor.instance.disableStderrDumping(disposable)
@@ -113,7 +113,7 @@ class TransactionTest extends LightPlatformTestCase {
     }
   }
 
-  private static makeRootsChange() {
+  private makeRootsChange() {
     ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.instance, false, true)
   }
 

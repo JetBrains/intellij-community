@@ -32,15 +32,15 @@ public class FoldingExceptionTest extends LightJavaCodeInsightTestCase {
 
   private void doTest(String fileName) {
     configureByFile("/codeInsight/folding/" + fileName);
-    EditorTestUtil.configureSoftWraps(myEditor, 120);
+    EditorTestUtil.configureSoftWraps(getEditor(), 120);
     runFoldingPass();
     deleteLine();
     runFoldingPass();
     // we just verify here that the operation completes normally - it was known to fail previously
   }
 
-  private static void runFoldingPass() {
-    PsiDocumentManager.getInstance(ourProject).commitAllDocuments();
-    CodeInsightTestFixtureImpl.instantiateAndRun(myFile, myEditor, new int[]{Pass.UPDATE_ALL, Pass.LOCAL_INSPECTIONS}, false);
+  private void runFoldingPass() {
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    CodeInsightTestFixtureImpl.instantiateAndRun(getFile(), getEditor(), new int[]{Pass.UPDATE_ALL, Pass.LOCAL_INSPECTIONS}, false);
   }
 }

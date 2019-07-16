@@ -244,7 +244,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     }
   }
 
-  private static void invokeEditorAction(String actionId) {
+  private void invokeEditorAction(String actionId) {
     EditorActionManager.getInstance().getActionHandler(actionId)
       .execute(getEditor(), getEditor().getCaretModel().getCurrentCaret(), new MapDataContext());
   }

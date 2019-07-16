@@ -73,7 +73,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
     List<Bookmark> bookmarksBefore = getManager().getValidBookmarks();
     assertEquals(1, bookmarksBefore.size());
 
-    WriteCommandAction.writeCommandAction(getProject()).run(() -> myEditor.getDocument().setText(text));
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> getEditor().getDocument().setText(text));
 
     List<Bookmark> bookmarksAfter = getManager().getValidBookmarks();
     assertEquals(1, bookmarksAfter.size());
@@ -100,8 +100,8 @@ public class BookmarkManagerTest extends AbstractEditorTest {
     init(text, TestFileType.TEXT);
 
     addBookmark(2);
-    Document document = myEditor.getDocument();
-    myEditor.getSelectionModel().setSelection(document.getLineStartOffset(2) - 1, document.getLineEndOffset(2));
+    Document document = getEditor().getDocument();
+    getEditor().getSelectionModel().setSelection(document.getLineStartOffset(2) - 1, document.getLineEndOffset(2));
     delete();
     assertTrue(getManager().getValidBookmarks().isEmpty());
   }
@@ -122,8 +122,8 @@ public class BookmarkManagerTest extends AbstractEditorTest {
     List<Bookmark> bookmarksBefore = getManager().getValidBookmarks();
     assertEquals(2, bookmarksBefore.size());
 
-    myEditor.getCaretModel().setCaretsAndSelections(
-      Collections.singletonList(new CaretState(myEditor.visualToLogicalPosition(new VisualPosition(3, 0)), null, null)));
+    getEditor().getCaretModel().setCaretsAndSelections(
+      Collections.singletonList(new CaretState(getEditor().visualToLogicalPosition(new VisualPosition(3, 0)), null, null)));
     backspace();
 
     List<Bookmark> bookmarksAfter = getManager().getValidBookmarks();
@@ -148,8 +148,9 @@ public class BookmarkManagerTest extends AbstractEditorTest {
     List<Bookmark> bookmarksBefore = getManager().getValidBookmarks();
     assertEquals(2, bookmarksBefore.size());
 
-    myEditor.getCaretModel().setCaretsAndSelections(
-      Collections.singletonList(new CaretState(myEditor.visualToLogicalPosition(new VisualPosition(2, myEditor.getDocument().getLineEndOffset(2)+1)), null, null)));
+    getEditor().getCaretModel().setCaretsAndSelections(
+      Collections.singletonList(new CaretState(
+        getEditor().visualToLogicalPosition(new VisualPosition(2, getEditor().getDocument().getLineEndOffset(2) + 1)), null, null)));
     delete();
 
     List<Bookmark> bookmarksAfter = getManager().getValidBookmarks();
@@ -158,9 +159,9 @@ public class BookmarkManagerTest extends AbstractEditorTest {
       checkBookmarkNavigation(bookmark);
     }
     init(text, TestFileType.TEXT);
-    myEditor.getCaretModel().setCaretsAndSelections(
+    getEditor().getCaretModel().setCaretsAndSelections(
       Collections.singletonList(
-        new CaretState(myEditor.visualToLogicalPosition(new VisualPosition(2, myEditor.getDocument().getLineEndOffset(2))), null, null)));
+        new CaretState(getEditor().visualToLogicalPosition(new VisualPosition(2, getEditor().getDocument().getLineEndOffset(2))), null, null)));
     delete();
   }
   
@@ -175,7 +176,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
     init(text, TestFileType.TEXT);
     addBookmark(2);
 
-    WriteCommandAction.writeCommandAction(getProject()).run(() -> myEditor.getDocument().setText("111\n222" + text + "333"));
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> getEditor().getDocument().setText("111\n222" + text + "333"));
 
     List<Bookmark> bookmarks = getManager().getValidBookmarks();
     assertEquals(1, bookmarks.size());
@@ -190,26 +191,26 @@ public class BookmarkManagerTest extends AbstractEditorTest {
       "public class Test {\n" +
       "}";
 
-    myVFile = WriteAction.compute(() -> {
+    setVFile(WriteAction.compute(() -> {
       VirtualFile file = getSourceRoot().createChildData(null, getTestName(false) + ".txt");
       VfsUtil.saveText(file, text);
       return file;
-    });
+    }));
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
-    Bookmark bookmark = getManager().addTextBookmark(myVFile, 1, "xxx");
+    Bookmark bookmark = getManager().addTextBookmark(getVFile(), 1, "xxx");
     assertNotNull(bookmark);
-    LeakHunter.checkLeak(getManager(), Document.class, doc -> myVFile.equals(FileDocumentManager.getInstance().getFile(doc)));
+    LeakHunter.checkLeak(getManager(), Document.class, doc -> getVFile().equals(FileDocumentManager.getInstance().getFile(doc)));
 
-    Document document = FileDocumentManager.getInstance().getDocument(myVFile);
+    Document document = FileDocumentManager.getInstance().getDocument(getVFile());
     assertNotNull(document);
     PsiDocumentManager.getInstance(getProject()).getPsiFile(document); // create psi so that PsiChangeHandler won't leak
 
-    WriteCommandAction.runWriteCommandAction(ourProject, () -> document.insertString(0, "line 0\n"));
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, "line 0\n"));
 
     assertEquals(2, bookmark.getLine());
 
-    myEditor = createEditor(myVFile);
+    setEditor(createEditor(getVFile()));
     checkBookmarkNavigation(bookmark);
   }
   
@@ -219,19 +220,19 @@ public class BookmarkManagerTest extends AbstractEditorTest {
     return bookmark;
   }
   
-  private static BookmarkManager getManager() {
+  private BookmarkManager getManager() {
     return BookmarkManager.getInstance(getProject());
   }
 
   @Override
   public Object getData(@NotNull String dataId) {
     if (dataId.equals(OpenFileDescriptor.NAVIGATE_IN_EDITOR.getName())) {
-      return myEditor;
+      return getEditor();
     }
     return super.getData(dataId);
   }
 
-  private static void checkBookmarkNavigation(Bookmark bookmark) {
+  private void checkBookmarkNavigation(Bookmark bookmark) {
     int line = bookmark.getLine();
     int anotherLine = line;
     if (line > 0) {
@@ -240,7 +241,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
     else {
       anotherLine++;
     }
-    CaretModel caretModel = myEditor.getCaretModel();
+    CaretModel caretModel = getEditor().getCaretModel();
     caretModel.moveToLogicalPosition(new LogicalPosition(anotherLine, 0));
     bookmark.navigate(true);
     assertEquals(line, caretModel.getLogicalPosition().line);
