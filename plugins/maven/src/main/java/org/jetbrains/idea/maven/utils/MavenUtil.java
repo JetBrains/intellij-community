@@ -1049,8 +1049,8 @@ public class MavenUtil {
            fileName.equals(MavenConstants.SUPER_POM_XML);
   }
 
-  public static boolean isPotentialPomFile(String path) {
-    return ArrayUtil.contains(FileUtilRt.getExtension(path), MavenConstants.POM_EXTENSIONS);
+  public static boolean isPotentialPomFile(String nameOrPath) {
+    return ArrayUtil.contains(FileUtilRt.getExtension(nameOrPath), MavenConstants.POM_EXTENSIONS);
   }
 
   public static boolean isPomFile(@Nullable VirtualFile file) {
@@ -1060,8 +1060,9 @@ public class MavenUtil {
   public static boolean isPomFile(@Nullable Project project, @Nullable VirtualFile file) {
     if (file == null) return false;
 
-    if (isPomFileName(file.getName())) return true;
-    if (!isPotentialPomFile(file.getPath())) return false;
+    String name = file.getName();
+    if (isPomFileName(name)) return true;
+    if (!isPotentialPomFile(name)) return false;
 
     return isPomFileIgnoringName(project, file);
   }
