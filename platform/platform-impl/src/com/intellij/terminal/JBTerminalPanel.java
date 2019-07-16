@@ -54,6 +54,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     "ActivateTODOToolWindow",
     "ActivateStructureToolWindow",
     "ActivateHierarchyToolWindow",
+    "ActivateServicesToolWindow",
     "ActivateVersionControlToolWindow",
     "HideAllWindows",
 
