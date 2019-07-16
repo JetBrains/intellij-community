@@ -82,7 +82,7 @@ public class CapturingProcessRunner {
       timeoutInMilliseconds = Integer.MAX_VALUE;
     }
 
-    final int WAIT_INTERVAL = 100;
+    final int WAIT_INTERVAL = 10;
     int waitingTime = 0;
     boolean setExitCode = true;
 
