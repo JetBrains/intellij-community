@@ -1,9 +1,6 @@
 package org.jetbrains.plugins.textmate.configuration;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -14,7 +11,7 @@ import org.jetbrains.plugins.textmate.TextMateService;
 
 import java.util.*;
 
-@State(name = "TextMateSettings", storages = @Storage("textmate_os.xml"))
+@State(name = "TextMateSettings", storages = @Storage(value = "textmate_os.xml", roamingType = RoamingType.DISABLED))
 public class TextMateSettings implements PersistentStateComponent<TextMateSettings.TextMateSettingsState> {
   @NonNls public static final String DEFAULT_THEME_NAME = "Mac Classic";
 
