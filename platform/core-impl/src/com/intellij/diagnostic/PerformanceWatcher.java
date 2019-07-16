@@ -161,7 +161,7 @@ public class PerformanceWatcher implements Disposable {
 
   private static boolean shouldWatch() {
     return !ApplicationManager.getApplication().isHeadlessEnvironment() &&
-           Registry.intValue("performance.watcher.unresponsive.interval.ms") != 0 &&
+           getUnresponsiveInterval() != 0 &&
            getMaxAttempts() != 0;
   }
 
@@ -211,8 +211,16 @@ public class PerformanceWatcher implements Disposable {
     return getSamplingInterval() * getMaxAttempts();
   }
 
+  static int getUnresponsiveInterval() {
+    return Registry.intValue("performance.watcher.unresponsive.interval.ms");
+  }
+
+  static int getMaxDumpDuration() {
+    return Registry.intValue("performance.watcher.dump.duration.s") * 1000;
+  }
+
   private void edtFrozen(long currentMillis) {
-    if (currentMillis - myLastDumpTime >= Registry.intValue("performance.watcher.unresponsive.interval.ms")) {
+    if (currentMillis - myLastDumpTime >= getUnresponsiveInterval()) {
       myLastDumpTime = currentMillis;
       if (myFreezeStart == 0) {
         myFreezeStart = myLastEdtAlive;
@@ -274,7 +282,7 @@ public class PerformanceWatcher implements Disposable {
         myCurrentEDTEventChecker.cancel(false);
       }
       myCurrentEDTEventChecker = myExecutor
-        .schedule(() -> edtFrozenPrecise(start), Registry.intValue("performance.watcher.unresponsive.interval.ms"), TimeUnit.MILLISECONDS);
+        .schedule(() -> edtFrozenPrecise(start), getUnresponsiveInterval(), TimeUnit.MILLISECONDS);
     }
   }
 
@@ -303,6 +311,9 @@ public class PerformanceWatcher implements Disposable {
 
   private void dumpThreads() {
     dumpThreads(getFreezeFolderName(myFreezeStart) + "/", false);
+    if (System.currentTimeMillis() - myFreezeStart > getMaxDumpDuration()) {
+      stopDumping();
+    }
   }
 
   @Nullable
