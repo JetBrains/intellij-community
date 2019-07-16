@@ -17,17 +17,19 @@ class StatisticsRecorderBundledWhiteListProvider {
   private static final String WHITE_LIST_JSON = 'white-list.json'
 
   static File downloadWhiteList(BuildContext context) {
-    def dir = new File(context.paths.temp, 'whitelists')
-    def recorderId = context.proprietaryBuildTools.featureUsageStatisticsProperties.recorderId
-    def list = new File(dir, "resources/event-log-whitelist/$recorderId/$WHITE_LIST_JSON")
-    if (!list.parentFile.mkdirs() || !list.createNewFile()) {
-      throw new IOException("Unable to create $list")
+    context.messages.block("Downloading a default version of feature usage statistics") {
+      def dir = new File(context.paths.temp, 'whitelists')
+      def recorderId = context.proprietaryBuildTools.featureUsageStatisticsProperties.recorderId
+      def list = new File(dir, "resources/event-log-whitelist/$recorderId/$WHITE_LIST_JSON")
+      if (!list.parentFile.mkdirs() || !list.createNewFile()) {
+        context.messages.error("Unable to create $list")
+      }
+      download(whiteListServiceUri(context).with {
+        def name = context.applicationInfo.productCode + '.json'
+        it.endsWith('/') ? "$it$name" : "$it/$name"
+      }, list)
+      return dir
     }
-    download(whiteListServiceUri(context).with {
-      def name = context.applicationInfo.productCode + '.json'
-      it.endsWith('/') ? "$it$name" : "$it/$name"
-    }, list)
-    return dir
   }
 
   private static void download(String uri, File file) {
