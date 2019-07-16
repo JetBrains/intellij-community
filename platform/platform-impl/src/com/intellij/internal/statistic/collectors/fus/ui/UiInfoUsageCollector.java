@@ -50,8 +50,8 @@ public class UiInfoUsageCollector extends ApplicationUsagesCollector {
     set.add(new UsageDescriptor("recent.files", 1, new FeatureUsageData().addData("grouped", recentPeriod(recent()))));
 
     UISettings ui = UISettings.getInstance();
-    add(set, "Show Editor Tabs In Single Row", ui.getScrollTabLayoutInEditor() ? 1 : 0);
-    add(set, "Hide Editor Tabs If Needed", ui.getScrollTabLayoutInEditor() && ui.getHideTabsIfNeeded() ? 1 : 0);
+    add(set, "Show.Editor.Tabs.In.Single.Row", ui.getScrollTabLayoutInEditor() ? 1 : 0);
+    add(set, "Hide.Editor.Tabs.If.Needed", ui.getScrollTabLayoutInEditor() && ui.getHideTabsIfNeeded() ? 1 : 0);
     add(set, "Block.cursor", EditorSettingsExternalizable.getInstance().isBlockCursor() ? 1 : 0);
     add(set, "Line.Numbers", EditorSettingsExternalizable.getInstance().isLineNumbersShown() ? 1 : 0);
     add(set, "Gutter.Icons", EditorSettingsExternalizable.getInstance().areGutterIconsShown() ? 1 : 0);
