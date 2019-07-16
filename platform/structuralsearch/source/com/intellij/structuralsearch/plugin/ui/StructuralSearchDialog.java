@@ -189,7 +189,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     myUseLastConfiguration = useLastConfiguration;
   }
 
-  private EditorTextField createEditor() {
+  private EditorTextField createEditor(boolean replace) {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
     assert profile != null;
     final Document document = UIUtil.createDocument(getProject(), myFileType, myDialect, myPatternContext, "", profile);
@@ -210,7 +210,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
           if (isFilterPanelVisible()) {
             myConfiguration.setCurrentVariableName(variableName);
           }
-        }, myDisposable);
+        }, myDisposable, replace);
         editor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
         if (profile.highlightProblemsInEditor()) {
           document.putUserData(STRUCTURAL_SEARCH_ERROR_CALLBACK, () -> {
@@ -378,7 +378,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
   protected JComponent createCenterPanel() {
     mySearchEditorPanel = new OnePixelSplitter(false, 1.0f);
     mySearchEditorPanel.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
-    mySearchCriteriaEdit = createEditor();
+    mySearchCriteriaEdit = createEditor(false);
     mySearchEditorPanel.setFirstComponent(mySearchCriteriaEdit);
 
     final JPanel wrapper = new JPanel(new BorderLayout());
@@ -451,7 +451,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
 
     myReplaceEditorPanel = new OnePixelSplitter(false, 1.0f);
     myReplaceEditorPanel.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
-    myReplaceCriteriaEdit = createEditor();
+    myReplaceCriteriaEdit = createEditor(true);
     myReplaceEditorPanel.setFirstComponent(myReplaceCriteriaEdit);
 
     final JPanel wrapper = new JPanel(new BorderLayout());

@@ -43,12 +43,14 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
   private long modificationTimeStamp;
   private final List<String> variables = new SmartList<>();
   private final Editor editor;
+  private final boolean myCanBeReplace;
   @Nullable private final Consumer<? super String> myCurrentVariableCallback;
   public static final Key<Configuration> CURRENT_CONFIGURATION_KEY = Key.create("SS.CurrentConfiguration");
   private final Map<String, Inlay<FilterRenderer>> inlays = new HashMap<>();
 
-  private SubstitutionShortInfoHandler(@NotNull Editor _editor, @Nullable Consumer<? super String> currentVariableCallback) {
+  private SubstitutionShortInfoHandler(@NotNull Editor _editor, boolean canBeReplace, @Nullable Consumer<? super String> currentVariableCallback) {
     editor = _editor;
+    myCanBeReplace = canBeReplace;
     myCurrentVariableCallback = currentVariableCallback;
   }
 
@@ -91,7 +93,8 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
       filterText =  appendLinkText(filterText, variableName);
     }
     final boolean replacementVariable =
-      variable instanceof ReplacementVariableDefinition || variable == null && configuration instanceof ReplaceConfiguration;
+      variable instanceof ReplacementVariableDefinition ||
+      myCanBeReplace && variable == null && configuration instanceof ReplaceConfiguration;
     final String currentVariableName = replacementVariable
                                        ? variableName + ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX
                                        : variableName;
@@ -236,7 +239,11 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
   }
 
   static void install(Editor editor, @Nullable Consumer<? super String> currentVariableCallback, Disposable disposable) {
-    final SubstitutionShortInfoHandler handler = new SubstitutionShortInfoHandler(editor, currentVariableCallback);
+    install(editor, currentVariableCallback, disposable, false);
+  }
+
+  static void install(Editor editor, @Nullable Consumer<? super String> currentVariableCallback, Disposable disposable, boolean replace) {
+    final SubstitutionShortInfoHandler handler = new SubstitutionShortInfoHandler(editor, replace, currentVariableCallback);
     editor.addEditorMouseMotionListener(handler, disposable);
     editor.getDocument().addDocumentListener(handler, disposable);
     editor.getCaretModel().addCaretListener(handler, disposable);
