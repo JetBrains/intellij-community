@@ -20,14 +20,12 @@ public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMa
   private static final Collection NULL_COLLECTION = Collections.emptySet();
   private static final int CACHE_SIZE = 128;
   private final JpsPersistentHashMap<K, Collection<V>> myMap;
-  //private final DataExternalizer<V> myValueExternalizer;
   private final SLRUCache<K, Collection> myCache;
 
   public ObjectObjectPersistentMultiMaplet(final File file,
                                         final KeyDescriptor<K> keyExternalizer,
                                         final DataExternalizer<V> valueExternalizer,
                                         final CollectionFactory<V> collectionFactory) throws IOException {
-    //myValueExternalizer = valueExternalizer;
     myMap = new JpsPersistentHashMap<>(file, keyExternalizer,
                                      new CollectionDataExternalizer<>(valueExternalizer, collectionFactory));
     myCache = new SLRUCache<K, Collection>(CACHE_SIZE, CACHE_SIZE, keyExternalizer) {

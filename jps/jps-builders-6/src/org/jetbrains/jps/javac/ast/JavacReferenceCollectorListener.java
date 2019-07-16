@@ -2,7 +2,6 @@
 package org.jetbrains.jps.javac.ast;
 
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.OrderedSet;
 import com.sun.source.tree.*;
 import com.sun.source.util.*;
 import gnu.trove.THashSet;
@@ -26,7 +25,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 final class JavacReferenceCollectorListener implements TaskListener {
   private final static TObjectIntHashMap<JavacRef> EMPTY_T_OBJ_INT_MAP = new TObjectIntHashMap<JavacRef>(0);
@@ -162,7 +160,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
   }
 
   private void scanImports(CompilationUnitTree compilationUnit,
-                           Set<JavacRef> elements,
+                           TObjectIntHashMap<JavacRef> elements,
                            ReferenceCollector incompletelyProcessedFile) {
     for (ImportTree anImport : compilationUnit.getImports()) {
       final MemberSelectTree id = (MemberSelectTree)anImport.getQualifiedIdentifier();
@@ -178,7 +176,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
             // member import
             for (Element memberElement : myElementUtility.getAllMembers((TypeElement)ownerElement)) {
               if (memberElement.getSimpleName() == name) {
-                elements.add(JavacRef.JavacElementRefBase.fromElement(memberElement, null, myNameTableCache, importProps));
+                incrementOrAdd(elements, JavacRef.JavacElementRefBase.fromElement(memberElement, null, myNameTableCache, importProps));
               }
             }
           }
@@ -191,11 +189,11 @@ final class JavacReferenceCollectorListener implements TaskListener {
     }
   }
 
-  private void collectClassImports(Element baseImport, Set<JavacRef> collector, final JavacRef.ImportProperties importProps) {
+  private void collectClassImports(Element baseImport, TObjectIntHashMap<JavacRef> collector, final JavacRef.ImportProperties importProps) {
     for (Element element = baseImport;
          element != null && element.getKind() != ElementKind.PACKAGE;
          element = element.getEnclosingElement()) {
-      collector.add(JavacRef.JavacElementRefBase.fromElement(element, null, myNameTableCache, importProps));
+      incrementOrAdd(collector, JavacRef.JavacElementRefBase.fromElement(element, null, myNameTableCache, importProps));
     }
   }
 
@@ -210,7 +208,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
       myRemainDeclarations = remainDeclarations;
       myFileData = new JavacFileData(filePath,
                                      createReferenceHolder(),
-                                     myDivideImportRefs ? createReferenceHolder() : new OrderedSet<JavacRef>(),
+                                     myDivideImportRefs ? createReferenceHolder() : EMPTY_T_OBJ_INT_MAP,
                                      new ArrayList<JavacTypeCast>(),
                                      createDefinitionHolder(),
                                      new THashSet<JavacRef>());
@@ -218,7 +216,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
     }
 
     void sinkReference(@Nullable JavacRef.JavacElementRefBase ref) {
-      myFileData.getRefs().add(ref);
+      incrementOrAdd(myFileData.getRefs(), ref);
     }
 
     void sinkDeclaration(JavacDef def) {
@@ -280,8 +278,8 @@ final class JavacReferenceCollectorListener implements TaskListener {
     }
   }
 
-  private static Set<JavacRef> createReferenceHolder() {
-    return new OrderedSet<JavacRef>();
+  private static TObjectIntHashMap<JavacRef> createReferenceHolder() {
+    return new TObjectIntHashMap<JavacRef>();
   }
 
   private static List<JavacDef> createDefinitionHolder() {
@@ -318,6 +316,12 @@ final class JavacReferenceCollectorListener implements TaskListener {
 
     private TypeMirror getType(Tree tree) {
       return myTreeUtil.getTypeMirror(new TreePath(myUnitPath, tree));
+    }
+  }
+
+  private static void incrementOrAdd(TObjectIntHashMap<JavacRef> map, JavacRef key) {
+    if (!map.adjustValue(key, 1)) {
+      map.put(key, 1);
     }
   }
 
