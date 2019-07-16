@@ -134,7 +134,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
                                       @NotNull EnumSet<Option> options) {
     OpenProjectTask openProjectOptions = new OpenProjectTask(options.contains(Option.FORCE_NEW_FRAME), projectToClose);
     openProjectOptions.setCallback(callback);
-    return createTempProjectAndOpenFile(Paths.get(virtualFile.getPath()), openProjectOptions, line);
+    return doOpenProject(Paths.get(virtualFile.getPath()), openProjectOptions, line);
   }
 
   @Nullable

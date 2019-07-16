@@ -3,10 +3,12 @@ package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
@@ -20,6 +22,15 @@ public abstract class RecentProjectsManager {
   public abstract String getLastProjectCreationLocation();
 
   public abstract void setLastProjectCreationLocation(@Nullable @SystemIndependent String lastProjectLocation);
+
+  public void setLastProjectCreationLocation(@Nullable Path value) {
+    if (value == null) {
+      setLastProjectCreationLocation((String)null);
+    }
+    else {
+      setLastProjectCreationLocation(PathUtil.toSystemIndependentName(value.toString()));
+    }
+  }
 
   public abstract void updateLastProjectPath();
 

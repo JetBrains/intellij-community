@@ -56,6 +56,7 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -84,7 +85,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
 
   @NotNull
   public static IdeFrameFixture find(@NotNull final Robot robot,
-                                     @Nullable final File projectPath,
+                                     @Nullable final Path projectPath,
                                      @Nullable final String projectName,
                                      @NotNull final Timeout timeout) {
     final GenericTypeMatcher<IdeFrameImpl> matcher = new GenericTypeMatcher<IdeFrameImpl>(IdeFrameImpl.class) {
@@ -93,7 +94,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
         Project project = frame.getProject();
         if (projectPath == null && project != null) return true;
         if (project != null &&
-            PathManager.getAbsolutePath(projectPath.getPath()).equals(PathManager.getAbsolutePath(project.getBasePath()))) {
+            PathManager.getAbsolutePath(projectPath.toString()).equals(PathManager.getAbsolutePath(project.getBasePath()))) {
           return projectName == null || projectName.equals(project.getName());
         }
         return false;
@@ -101,7 +102,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
     };
 
     try {
-      pause(new Condition("IdeFrame " + (projectPath != null ? quote(projectPath.getPath()) : "") + " to show up") {
+      pause(new Condition("IdeFrame " + (projectPath != null ? quote(projectPath.toString()) : "") + " to show up") {
         @Override
         public boolean test() {
           Collection<IdeFrameImpl> frames = robot.finder().findAll(matcher);
@@ -117,7 +118,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
     }
   }
 
-  public static IdeFrameFixture find(@NotNull final Robot robot, @Nullable final File projectPath, @Nullable final String projectName) {
+  public static IdeFrameFixture find(@NotNull final Robot robot, @Nullable final Path projectPath, @Nullable final String projectName) {
     return find(robot, projectPath, projectName, Timeouts.INSTANCE.getDefaultTimeout());
   }
 
