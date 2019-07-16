@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -245,16 +246,25 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
       })
       .setNamerForFiltering(AccessModifier::toString)
       .setItemChosenCallback(t -> {
-        updater.undoChange(false);
-        PsiDocumentManager.getInstance(project).commitDocument(document);
-        updater.setModifier(t);
-        // do not commit document now: checkForConflicts should have original content
-        // while the editor should display the updated content to prevent flicker
-        PsiMember m = memberPointer.getElement();
-        if (m == null) return;
-        PsiModifierList modifierList = m.getModifierList();
-        if (modifierList == null) return;
-        final MultiMap<PsiElement, String> conflicts = checkForConflicts(m, t);
+        if (editor instanceof EditorImpl) {
+          ((EditorImpl)editor).startDumb();
+        }
+        MultiMap<PsiElement, String> conflicts;
+        PsiModifierList modifierList;
+        try {
+          updater.undoChange(false);
+          PsiDocumentManager.getInstance(project).commitDocument(document);
+          PsiMember m = memberPointer.getElement();
+          if (m == null) return;
+          modifierList = m.getModifierList();
+          if (modifierList == null) return;
+          conflicts = checkForConflicts(m, t);
+        }
+        finally {
+          if (editor instanceof EditorImpl) {
+            ((EditorImpl)editor).stopDumbLater();
+          }
+        }
         if (conflicts == null) {
           //canceled by user
           FinishMarkAction.finish(project, editor, markAction);
