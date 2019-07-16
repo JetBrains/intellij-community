@@ -1,3 +1,3 @@
 public class Test {
-  <caret>protected <TT> void foo() {}
+  protected <T<caret>T> void foo() {}
 }
