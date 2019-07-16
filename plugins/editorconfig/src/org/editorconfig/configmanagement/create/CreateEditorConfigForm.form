@@ -53,7 +53,7 @@
           </grid>
           <component id="fd53d" class="com.intellij.ui.components.JBLabel">
             <constraints>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="messages/EditorConfigBundle" key="export.properties.standard"/>
@@ -80,7 +80,7 @@
               <verticalTextPosition value="1"/>
             </properties>
           </component>
-          <component id="d2b24" class="com.intellij.ui.components.JBLabel">
+          <component id="d2b24" class="com.intellij.ui.components.JBLabel" binding="myIntelliJPropertiesLabel">
             <constraints>
               <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>

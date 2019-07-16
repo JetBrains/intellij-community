@@ -5,6 +5,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -40,6 +41,7 @@ public class CreateEditorConfigForm {
   private JLabel           myAboutEditorConfigLink;
   @SuppressWarnings("unused")
   private ContextHelpLabel myContextHelpLabel;
+  private JBLabel myIntelliJPropertiesLabel;
 
   private final List<LanguageCheckBoxRec> myLanguageCheckBoxes;
   private final Project                   myProject;
@@ -57,6 +59,8 @@ public class CreateEditorConfigForm {
     adjustVerticalSize(myAddPropertiesForLabel, 1.5f);
     myIntelliJPropertiesCb.addActionListener(new LanguagePanelEnabler());
     myStandardPropertiesCb.addActionListener(new LanguagePanelEnabler());
+    myIntelliJPropertiesLabel.setText(
+      EditorConfigBundle.message("export.properties.intellij", ApplicationNamesInfo.getInstance().getFullProductName()));
   }
 
   private static void adjustVerticalSize(JComponent component, float factor) {
