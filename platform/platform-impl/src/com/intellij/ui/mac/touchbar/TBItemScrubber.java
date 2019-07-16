@@ -36,7 +36,7 @@ class TBItemScrubber extends TBItem implements NSTLibrary.ScrubberDelegate {
 
       final int chunkSize = 25;
       final int newItemsCount = Math.min(chunkSize, myItems.size() - myNativeItemsCount);
-      NST.appendScrubberItems(myNativePeer, myItems, myNativeItemsCount, newItemsCount);
+      NST.updateScrubberItems(myNativePeer, myItems, myNativeItemsCount, newItemsCount);
       myNativeItemsCount += newItemsCount;
       return newItemsCount;
     };

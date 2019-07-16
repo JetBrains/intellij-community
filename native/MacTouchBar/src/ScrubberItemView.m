@@ -106,6 +106,8 @@ const int g_marginBorders = 10;
 
 - (void)setImgAndText:(NSImage *)img text:(NSString *)txt {
     _imageView.image = img;
+    if (txt == nil)
+      txt = @"";
     _textField.stringValue = txt;
     [_textField sizeToFit];
 

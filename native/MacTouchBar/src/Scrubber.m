@@ -101,36 +101,55 @@ static const int g_interItemSpacings = 5;
 
 @end
 
-static void _fillCache(NSMutableArray * cache, NSMutableArray * visibleItems, void* items, int byteCount) {
+static void _fillCache(NSMutableArray * cache, NSMutableArray * visibleItems, void* items, int byteCount, int fromIndex) {
     if (cache == NULL || visibleItems == NULL || items == NULL || byteCount <= 0)
         return;
     const int prevCacheSize = cache.count;
-    const int prevVisibleSize = visibleItems.count;
     const char * p = items;
-    const int itemsCount = *((int*)p);
-    p += 4;
-    nstrace(@"items count = %d, bytes = %d", itemsCount, byteCount);
+    const int itemsCount = *((short*)p);
+    p += 2;
+    nstrace(@"================  items count = %d, bytes = %d, from index = %d ================", itemsCount, byteCount, fromIndex);
     for (int c = 0; c < itemsCount; ++c) {
-        ScrubberItem * si = [[[ScrubberItem alloc] init] autorelease];
-        const int txtLen = *((int*)p);
-        p += 4;
-        si.text = txtLen == 0 ? [NSString stringWithUTF8String:""] : [NSString stringWithUTF8String:p];
-        p += txtLen + 1;
-        //NSLog(@"\t len=%d, txt=%@, offset=%d", txtLen, si.text, p - (char*)items);
+        const int txtLen = *((short*)p);
+        p += 2;
+        NSString * txt = txtLen == 0 ? nil : [NSString stringWithUTF8String:p];
+        if (txtLen > 0)
+          p += txtLen + 1;
+        //NSLog(@"\t len=%d, txt=%@, offset=%d", txtLen, txt, p - (char*)items);
 
-        const int w = *((int*)p);
-        p += 4;
-        const int h = *((int*)p);
-        p += 4;
+        const int w = *((short*)p);
+        p += 2;
+        const int h = *((short*)p);
+        p += 2;
         //NSLog(@"\t w=%d, h=%d", w, h);
 
-        si.img = w <= 0 || h <= 0 ? nil : createImgFrom4ByteRGBA((const unsigned char *)p, w, h);
-        si.index = c + prevCacheSize;
-        si.positionInsideScrubber = c + prevVisibleSize;
-        si.visible = true;
-        si.enabled = true;
-        [cache addObject:si];
-        [visibleItems addObject:si];
+        int cacheIndex = fromIndex + c;
+
+        NSImage * img = w <= 0 || h <= 0 ? nil : createImgFrom4ByteRGBA((const unsigned char *)p, w, h);
+
+        if (cacheIndex >= cache.count) {
+          // Add new cache-item
+          nstrace(@"\t add new item, cacheIndex=%d", cacheIndex);
+          ScrubberItem * si = [[[ScrubberItem alloc] init] autorelease];
+          si.index = cacheIndex;
+          si.visible = true;
+          si.enabled = true;
+          si.text = txt;
+          si.img = img;
+          if (img != nil || txt != nil) {
+            si.positionInsideScrubber = visibleItems.count;
+            [visibleItems addObject:si];
+          } else {
+            si.positionInsideScrubber = -1;
+          }
+          [cache addObject:si];
+        } else {
+          // Just update image and text
+          nstrace(@"\t update item at index %d", cacheIndex);
+          ScrubberItem * si = [cache objectAtIndex:cacheIndex];
+          si.text = txt;
+          si.img = img;
+        }
 
         p += w*h*4;
         //NSLog(@"\t offset=%d", p - (char*)items);
@@ -148,7 +167,7 @@ id createScrubber(const char* uid, int itemWidth, executeScrubberItem delegate, 
     scrubberItem.delegate = delegate;
     scrubberItem.updateCache = updater;
 
-    _fillCache(scrubberItem.itemsCache, scrubberItem.visibleItems, packedItems, byteCount);
+    _fillCache(scrubberItem.itemsCache, scrubberItem.visibleItems, packedItems, byteCount, 0);
 
     NSScrubber *scrubber = [[[NSScrubber alloc] initWithFrame:NSMakeRect(0, 0, itemWidth, g_heightOfTouchBar)] autorelease];
 
@@ -174,18 +193,14 @@ id createScrubber(const char* uid, int itemWidth, executeScrubberItem delegate, 
     return scrubberItem;
 }
 
+void _recalculatePositions(id scrubObj);
+
 // NOTE: called from AppKit (when show last cached item and need update cache with new items)
-void appendScrubberItems(id scrubObj, void* packedItems, int byteCount) {
+void updateScrubberItems(id scrubObj, void* packedItems, int byteCount, int fromIndex) {
     NSScrubberContainer *container = scrubObj;
-    nstrace(@"scrubber [%@]: called appendScrubberItems", container.identifier);
-
-    const int visibleItemsCountPrev = container.visibleItems.count;
-    _fillCache(container.itemsCache, container.visibleItems, packedItems, byteCount);
-
-    dispatch_async(dispatch_get_main_queue(), ^{
-        NSIndexSet *indexSet = [NSIndexSet indexSetWithIndexesInRange:NSMakeRange(visibleItemsCountPrev, container.visibleItems.count - visibleItemsCountPrev)];
-        [container.view insertItemsAtIndexes:indexSet];
-    });
+    nstrace(@"scrubber [%@]: called updateScrubberItems", container.identifier);
+    _fillCache(container.itemsCache, container.visibleItems, packedItems, byteCount, fromIndex);
+    _recalculatePositions(scrubObj);
 }
 
 // NOTE: called from EDT (when update UI)
@@ -228,7 +243,7 @@ void showScrubberItems(id scrubObj, void* itemIndices, int count, bool show, boo
     NSScrubberContainer * container = scrubObj;
     NSScrubber *scrubber = container.view;
 
-    int *indices = NULL;
+    int * indices = NULL;
     if (itemIndices != NULL && count > 0) {
         const int sizeInBytes = sizeof(int)*count;
         indices = malloc(sizeInBytes);
@@ -257,46 +272,66 @@ void showScrubberItems(id scrubObj, void* itemIndices, int count, bool show, boo
             }
         }
 
-        // 2. recalculate positions
-        NSMutableIndexSet *visibleIndexSet = [[[NSMutableIndexSet alloc] init] autorelease];
-        NSMutableIndexSet *hiddenIndexSet = [[[NSMutableIndexSet alloc] init] autorelease];
-        NSMutableArray *newVisibleItems = [[[NSMutableArray alloc] initWithCapacity:10/*empiric average popup items count*/] autorelease];
-        int position = 0;
-        for (int c = 0; c < container.itemsCache.count; ++c) {
-            const ScrubberItem * si = [container.itemsCache objectAtIndex:c];
-            if (si == nil)
-                continue;
-            if (si.visible) {
-                if (si.positionInsideScrubber < 0) {
-                    // item is visible now => insert into scrubber
-                    [visibleIndexSet addIndex:position];
-                }
-                si.positionInsideScrubber = position++;
-                [newVisibleItems addObject:si];
-            } else {
-                if (si.positionInsideScrubber >= 0) {
-                    // item is hidden now => remove from scrubber
-                    [hiddenIndexSet addIndex:si.positionInsideScrubber];
-                    si.positionInsideScrubber = -1;
-                }
-            }
-        }
-
-        if ([hiddenIndexSet count] > 0 || [visibleIndexSet count] > 0) {
-            [scrubber performSequentialBatchUpdates:^{
-              if ([hiddenIndexSet count] > 0) {
-                [scrubber removeItemsAtIndexes:hiddenIndexSet];
-              }
-              if ([visibleIndexSet count] > 0) {
-                [scrubber insertItemsAtIndexes:visibleIndexSet];
-              }
-              container.visibleItems = newVisibleItems;
-            }];
-
-            [scrubber reloadData];
-        }
+        // 2. recalc positions
+        _recalculatePositions(scrubObj);
 
         if (indices != NULL)
             free(indices);
     });
+}
+
+void _recalculatePositions(id scrubObj) {
+    NSScrubberContainer * container = scrubObj;
+    NSScrubber *scrubber = container.view;
+
+    NSMutableIndexSet *visibleIndexSet = [[[NSMutableIndexSet alloc] init] autorelease];
+    NSMutableIndexSet *hiddenIndexSet = [[[NSMutableIndexSet alloc] init] autorelease];
+    NSMutableArray *newVisibleItems = [[[NSMutableArray alloc] initWithCapacity:10/*empiric average popup items count*/] autorelease];
+    int position = 0;
+    int prevPosition = -1;
+    bool insertContinuousChunk = true;
+    for (int c = 0; c < container.itemsCache.count; ++c) {
+        const ScrubberItem * si = [container.itemsCache objectAtIndex:c];
+        if (si == nil)
+            continue;
+        if (si.visible && (si.img != nil || si.text != nil)) { // item is visible and has been loaded
+            if (si.positionInsideScrubber < 0) {
+                // item is visible now => insert into scrubber
+                [visibleIndexSet addIndex:position];
+                if (prevPosition >= 0 && position != prevPosition + 1)
+                    insertContinuousChunk = false;
+                prevPosition = position;
+            }
+            si.positionInsideScrubber = position++;
+            [newVisibleItems addObject:si];
+        } else {
+            if (si.positionInsideScrubber >= 0) {
+                // item is hidden now => remove from scrubber
+                [hiddenIndexSet addIndex:si.positionInsideScrubber];
+                si.positionInsideScrubber = -1;
+            }
+        }
+    }
+
+    if ([hiddenIndexSet count] > 0 || [visibleIndexSet count] > 0) {
+        if ([hiddenIndexSet count] == 0) {
+            const int prevVisibleCount = container.visibleItems.count;
+            container.visibleItems = newVisibleItems;
+            [scrubber insertItemsAtIndexes:visibleIndexSet];
+
+            if (!insertContinuousChunk || [visibleIndexSet lastIndex] <= prevVisibleCount) { // empiric rule: can omit 'reloadData' if items were just appended (otherwise it will crash with strange stacktrace)
+                [scrubber reloadData];
+            }
+        } else {
+            [scrubber performSequentialBatchUpdates:^{
+                [scrubber removeItemsAtIndexes:hiddenIndexSet];
+                if ([visibleIndexSet count] > 0) {
+                    [scrubber insertItemsAtIndexes:visibleIndexSet];
+                }
+                container.visibleItems = newVisibleItems;
+            }];
+
+            [scrubber reloadData]; // empiric rule: need to call reload if some items were removed (otherwise it will crash with strange stacktrace)
+        }
+    }
 }

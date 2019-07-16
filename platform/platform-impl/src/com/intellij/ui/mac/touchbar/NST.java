@@ -145,8 +145,8 @@ public class NST {
     return ourNSTLibrary.createPopover(uid, itemWidth, text, raster4ByteRGBA, w, h, tbObjExpand, tbObjTapAndHold); // called from AppKit, uses per-event autorelease-pool
   }
 
-  public static ID createScrubber(String uid, int itemWidth, NSTLibrary.ScrubberDelegate delegate, NSTLibrary.ScrubberCacheUpdater updater, List<? extends TBItemScrubber.ItemData> items, int itemsCount) {
-    final Memory mem = _packItems(items, 0, itemsCount);
+  public static ID createScrubber(String uid, int itemWidth, NSTLibrary.ScrubberDelegate delegate, NSTLibrary.ScrubberCacheUpdater updater, List<? extends TBItemScrubber.ItemData> items, int visibleItems) {
+    final Memory mem = _packItems(items, 0, items.size(), visibleItems);
     final ID scrubberNativePeer = ourNSTLibrary.createScrubber(uid, itemWidth, delegate, updater, mem, mem == null ? 0 : (int)mem.size()); // called from AppKit, uses per-event autorelease-pool
     return scrubberNativePeer;
   }
@@ -206,9 +206,9 @@ public class NST {
     return mem;
   }
 
-  static void appendScrubberItems(ID scrubObj, List<? extends TBItemScrubber.ItemData> items, int fromIndex, int itemsCount) {
-    final Memory mem = _packItems(items, fromIndex, itemsCount);
-    ourNSTLibrary.appendScrubberItems(scrubObj, mem, mem == null ? 0 : (int)mem.size()); // called from AppKit, uses per-event autorelease-pool
+  static void updateScrubberItems(ID scrubObj, List<? extends TBItemScrubber.ItemData> items, int fromIndex, int itemsCount) {
+    final Memory mem = _packItems(items, fromIndex, itemsCount, itemsCount);
+    ourNSTLibrary.updateScrubberItems(scrubObj, mem, mem == null ? 0 : (int)mem.size(), fromIndex); // called from AppKit, uses per-event autorelease-pool
   }
   public static void enableScrubberItems(ID scrubObj, Collection<Integer> indices, boolean enabled) {
     if (indices == null || indices.isEmpty())
@@ -221,7 +221,7 @@ public class NST {
     ourNSTLibrary.showScrubberItems(scrubObj, mem, indices == null ? 0 : indices.size(), show, inverseOthers);
   }
 
-  private static @Nullable Memory _packItems(List<? extends TBItemScrubber.ItemData> items, int fromIndex, int itemsCount) {
+  private static @Nullable Memory _packItems(List<? extends TBItemScrubber.ItemData> items, int fromIndex, int itemsCount, int visibleItems) {
     if (items == null || itemsCount <= 0)
       return null;
     if (fromIndex < 0) {
@@ -234,26 +234,37 @@ public class NST {
     }
 
     // 1. calculate size
-    int byteCount = 4;
+    int byteCount = 2;
     for (int c = 0; c < itemsCount; ++c) {
+      if (c >= visibleItems) {
+        byteCount += 6;
+        continue;
+      }
       TBItemScrubber.ItemData id = items.get(fromIndex + c);
-      byteCount += 4 + (id.getTextBytes() != null ? id.getTextBytes().length + 1 : 0);
+      byteCount += 2 + (id.getTextBytes() != null ? id.getTextBytes().length + 1 : 0);
 
       if (id.myIcon != null) {
         final int w = Math.round(id.myIcon.getIconWidth()*id.fMulX);
         final int h = Math.round(id.myIcon.getIconHeight()*id.fMulX);
         final int sizeInBytes = w * h * 4;
-        final int totalSize = sizeInBytes + 8;
+        final int totalSize = sizeInBytes + 4;
         byteCount += totalSize;
       } else
         byteCount += 4;
     }
 
     // 2. write items
-    final Memory result = new Memory(byteCount + 200);
-    result.setInt(0, itemsCount);
-    int offset = 4;
+    final Memory result = new Memory(byteCount);
+    result.setShort(0, (short)itemsCount);
+    int offset = 2;
     for (int c = 0; c < itemsCount; ++c) {
+      if (c >= visibleItems) {
+        result.setShort(offset, (short)0);
+        result.setShort(offset + 2, (short)0);
+        result.setShort(offset + 4, (short)0);
+        offset += 6;
+        continue;
+      }
       TBItemScrubber.ItemData id = items.get(fromIndex + c);
       offset = _fill(id, result, offset);
     }
@@ -262,24 +273,25 @@ public class NST {
   }
 
   private static int _fill(@NotNull TBItemScrubber.ItemData from, @NotNull Memory out, int offset) {
-    if (from.getTextBytes() != null) {
-      out.setInt(offset, from.getTextBytes().length);
-      offset += 4;
-      out.write(offset, from.getTextBytes(), 0, from.getTextBytes().length);
-      offset += from.getTextBytes().length;
+    final byte[] txtBytes = from.getTextBytes();
+    if (txtBytes != null && txtBytes.length > 0) {
+      out.setShort(offset, (short)txtBytes.length);
+      offset += 2;
+      out.write(offset, txtBytes, 0, txtBytes.length);
+      offset += txtBytes.length;
       out.setByte(offset, (byte)0);
       offset += 1;
     } else {
-      out.setInt(offset, 0);
-      offset += 4;
+      out.setShort(offset, (short)0);
+      offset += 2;
     }
 
     if (from.myIcon != null) {
       offset += _writeIconRaster(from.myIcon, from.fMulX, out, offset);
     } else {
-      out.setInt(offset, 0);
-      out.setInt(offset +4, 0);
-      offset += 8;
+      out.setShort(offset, (short)0);
+      out.setShort(offset + 2, (short)0);
+      offset += 4;
     }
 
     return offset;
@@ -328,16 +340,16 @@ public class NST {
     final int h = Math.round(icon.getIconHeight()*scale);
 
     final int rasterSizeInBytes = w * h * 4;
-    final int totalSize = rasterSizeInBytes + 8;
+    final int totalSize = rasterSizeInBytes + 4;
     if (memory.size() - offset < totalSize) {
       LOG.error("insufficient size of allocated memory: avail " + (memory.size() - offset) + ", needs " + totalSize);
       return 0;
     }
 
-    memory.setInt(offset, w);
-    offset += 4;
-    memory.setInt(offset, h);
-    offset += 4;
+    memory.setShort(offset, (short)w);
+    offset += 2;
+    memory.setShort(offset, (short)h);
+    offset += 2;
 
     _drawIconIntoMemory(icon, scale, memory, offset);
 
