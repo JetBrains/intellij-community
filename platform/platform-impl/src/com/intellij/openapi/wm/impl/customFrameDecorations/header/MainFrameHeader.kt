@@ -45,7 +45,7 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
       updateCustomDecorationHitTestSpots()
     }
 
-    mySelectedEditorFilePath = CustomDecorationPath(frame)
+    mySelectedEditorFilePath = CustomDecorationPath(frame) {updateCustomDecorationHitTestSpots()}
 
     menuHolder = JPanel(MigLayout("filly, ins 0, novisualpadding, hidemode 2", "[pref!]"))
     menuHolder.isOpaque = false

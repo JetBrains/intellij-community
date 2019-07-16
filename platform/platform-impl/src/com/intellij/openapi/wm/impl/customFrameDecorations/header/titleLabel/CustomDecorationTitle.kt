@@ -14,7 +14,7 @@ import javax.swing.JFrame
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-class CustomDecorationTitle(val frame: JFrame) {
+class CustomDecorationTitle(val frame: JFrame, private val onBoundsChanged: () -> Unit) {
   private var mySelectedEditorFilePath: CustomDecorationPath? = null
   private var active = false
 
@@ -68,7 +68,7 @@ class CustomDecorationTitle(val frame: JFrame) {
   }
 
   private fun createCustomDecoration(it: Project) {
-    val title = CustomDecorationPath(frame)
+    val title = CustomDecorationPath(frame, onBoundsChanged)
     title.setProject(it)
 
     pane.remove(titleLabel)

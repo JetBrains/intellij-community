@@ -112,7 +112,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
 
         myComponentListener = object : ComponentAdapter() {
             override fun componentResized(e: ComponentEvent?) {
-                updateCustomDecorationHitTestSpots()
+                SwingUtilities.invokeLater{updateCustomDecorationHitTestSpots()}
             }
         }
 
