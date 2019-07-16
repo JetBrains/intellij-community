@@ -353,10 +353,10 @@ public class InlineLocalTest extends LightJavaCodeInsightTestCase {
   private void doTest(final boolean inlineDef, LanguageLevel languageLevel) {
     String fileName = prepareTest(languageLevel);
     if (!inlineDef) {
-      performInline(getProject(), myEditor);
+      performInline(getProject(), getEditor());
     }
     else {
-      performDefInline(getProject(), myEditor);
+      performDefInline(getProject(), getEditor());
     }
     checkResultByFile(fileName + ".after");
   }

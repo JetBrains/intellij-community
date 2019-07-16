@@ -643,7 +643,7 @@ public class Test
 
   private def doTest(Map args) {
     configureFromFileText("${getTestName(false)}.java", (String)args.initial)
-    myEditor.settings.virtualSpace = false
+    editor.settings.virtualSpace = false
     executeAction(FixDocCommentAction.ACTION_ID)
     checkResultByText((String)args.expected)
   }

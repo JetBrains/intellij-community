@@ -529,7 +529,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
   }
 
   @NotNull
-  private static HtmlCodeStyleSettings getHtmlSettings() {
+  private HtmlCodeStyleSettings getHtmlSettings() {
     return CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(HtmlCodeStyleSettings.class);
   }
 }

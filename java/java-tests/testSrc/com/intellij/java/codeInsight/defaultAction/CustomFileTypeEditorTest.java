@@ -48,13 +48,13 @@ public class CustomFileTypeEditorTest extends LightJavaCodeInsightTestCase {
     checkResultByFile(BASE_PATH + test + "." + ext);
   }
 
-  private static void performStartBlockAction() {
+  private void performStartBlockAction() {
     EditorActionHandler actionHandler = new CodeBlockStartAction().getHandler();
 
     actionHandler.execute(getEditor(), getCurrentEditorDataContext());
   }
 
-  private static void performEndBlockAction() {
+  private void performEndBlockAction() {
     EditorActionHandler actionHandler = new CodeBlockEndAction().getHandler();
 
     actionHandler.execute(getEditor(), getCurrentEditorDataContext());

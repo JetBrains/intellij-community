@@ -143,7 +143,7 @@ public class XmlInsightTest extends LightPlatformTestCase {
     assertTrue(attributes[1].isRequired());
   }
 
-  private static XmlFile createFile(String text) {
+  private XmlFile createFile(String text) {
     return (XmlFile)createFile("test.xml", text);
   }
 

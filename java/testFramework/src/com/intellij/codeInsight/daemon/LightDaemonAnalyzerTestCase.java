@@ -123,7 +123,8 @@ public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTe
       public HighlightTestInfo doTest() {
         String path = assertOneElement(filePaths);
         configureByFile(path);
-        ExpectedHighlightingData data = new JavaExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, myFile);
+        ExpectedHighlightingData data = new JavaExpectedHighlightingData(getEditor().getDocument(), checkWarnings, checkWeakWarnings, checkInfos,
+                                                                         getFile());
         if (checkSymbolNames) data.checkSymbolNames();
 
         checkHighlighting(data, composeLocalPath(path));

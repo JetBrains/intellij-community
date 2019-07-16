@@ -616,7 +616,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
     safeWrite(() -> {
       log.add("write started");
-      app.executeSuspendingWriteAction(ourProject, "", () -> {
+      app.executeSuspendingWriteAction(getProject(), "", () -> {
         app.invokeAndWait(() ->
           futures.add(app.executeOnPooledThread(() -> ReadAction.run(() -> log.add("foreign read")))));
 
@@ -650,7 +650,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       public void run() throws RuntimeException {
         Class<? extends ThrowableRunnable<RuntimeException>> actionClass = getClass();
         assertTrue(app.hasWriteAction(actionClass));
-        app.executeSuspendingWriteAction(ourProject, "", () -> ReadAction.run(() -> {
+        app.executeSuspendingWriteAction(getProject(), "", () -> ReadAction.run(() -> {
           assertTrue(app.hasWriteAction(actionClass));
           waitForFuture(app.executeOnPooledThread(() -> ReadAction.run(() -> assertTrue(app.hasWriteAction(actionClass)))));
         }));
@@ -670,7 +670,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       try {
         Semaphore started = new Semaphore();
         started.down();
-        app.executeSuspendingWriteAction(ourProject, "", () -> {
+        app.executeSuspendingWriteAction(getProject(), "", () -> {
           future.set(app.executeOnPooledThread(() -> {
             started.up();
             TimeoutUtil.sleep(1000);
@@ -688,11 +688,11 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
   public void testPooledThreadsStartedAfterQuickSuspendedWriteActionDontGetReadPrivileges() throws Throwable {
     for (int i = 0; i < 1000; i++) {
-      safeWrite(ApplicationImplTest::checkPooledThreadsDontGetWrongPrivileges);
+      safeWrite(this::checkPooledThreadsDontGetWrongPrivileges);
     }
   }
 
-  private static void checkPooledThreadsDontGetWrongPrivileges() {
+  private void checkPooledThreadsDontGetWrongPrivileges() {
     ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
     Ref<Future> future = Ref.create();
 
@@ -702,7 +702,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     Semaphore mayFinish = new Semaphore();
     mayFinish.down();
     try {
-      app.executeSuspendingWriteAction(ourProject, "", () ->
+      app.executeSuspendingWriteAction(getProject(), "", () ->
         future.set(app.executeOnPooledThread(
           () -> assertTrue(mayFinish.waitFor(5_000)))));
     }
@@ -716,7 +716,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       Disposer.dispose(disableStderrDumping);
     }
 
-    app.executeSuspendingWriteAction(ourProject, "", () -> {});
+    app.executeSuspendingWriteAction(getProject(), "", () -> {});
     mayFinish.up();
     waitForFuture(future.get());
   }

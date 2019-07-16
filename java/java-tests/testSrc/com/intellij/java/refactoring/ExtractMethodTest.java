@@ -1458,7 +1458,7 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
-  private static boolean performAction(boolean doRefactor, boolean replaceAllDuplicates) throws Exception {
+  private boolean performAction(boolean doRefactor, boolean replaceAllDuplicates) throws Exception {
     return performExtractMethod(doRefactor, replaceAllDuplicates, getEditor(), getFile(), getProject());
   }
 

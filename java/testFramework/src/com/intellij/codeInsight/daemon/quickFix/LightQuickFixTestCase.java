@@ -13,8 +13,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
-import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -80,7 +78,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   protected void beforeActionStarted(final String testName, final String contents) {
   }
 
-  public static void doAction(@NotNull ActionHint actionHint,
+  public void doAction(@NotNull ActionHint actionHint,
                               @NotNull String testFullPath,
                               @NotNull String testName,
                               @NotNull QuickFixTestCase quickFix) throws Exception {
@@ -108,7 +106,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     }
   }
 
-  private static String getTestInfo(@NotNull String testFullPath, @NotNull QuickFixTestCase quickFix) {
+  private String getTestInfo(@NotNull String testFullPath, @NotNull QuickFixTestCase quickFix) {
     String infos = StreamEx.of(quickFix.doHighlighting())
       .filter(info -> info.getSeverity() != HighlightInfoType.SYMBOL_TYPE_SEVERITY)
       .map(info -> {
@@ -143,7 +141,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     invoke(action);
   }
 
-  protected static void invoke(@NotNull IntentionAction action) throws IncorrectOperationException {
+  protected void invoke(@NotNull IntentionAction action) throws IncorrectOperationException {
     CodeInsightTestFixtureImpl.invokeIntention(action, getFile(), getEditor(), action.getText());
   }
 
@@ -270,7 +268,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
 
       @Override
       public void invoke(@NotNull IntentionAction action) {
-        LightQuickFixTestCase.invoke(action);
+        LightQuickFixTestCase.this.invoke(action);
       }
 
       @NotNull
@@ -287,22 +285,22 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
 
       @Override
       public void configureFromFileText(@NotNull String name, @NotNull String contents) {
-        LightPlatformCodeInsightTestCase.configureFromFileText(name, contents, true);
+        LightQuickFixTestCase.this.configureFromFileText(name, contents, true);
       }
 
       @Override
       public PsiFile getFile() {
-        return LightPlatformCodeInsightTestCase.getFile();
+        return LightQuickFixTestCase.this.getFile();
       }
 
       @Override
       public Project getProject() {
-        return LightPlatformTestCase.getProject();
+        return LightQuickFixTestCase.this.getProject();
       }
 
       @Override
       public void bringRealEditorBack() {
-        LightPlatformCodeInsightTestCase.bringRealEditorBack();
+        LightQuickFixTestCase.this.bringRealEditorBack();
       }
     };
   }

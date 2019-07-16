@@ -57,8 +57,8 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
 
 
   private void perform(String targetClassName) {
-    int offset = myEditor.getCaretModel().getOffset();
-    PsiElement element = myFile.findElementAt(offset);
+    int offset = getEditor().getCaretModel().getOffset();
+    PsiElement element = getFile().findElementAt(offset);
     PsiMethod constructor = null;
     PsiClass aClass = null;
     while (true) {

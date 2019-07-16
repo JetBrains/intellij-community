@@ -79,10 +79,10 @@ public class PsiBuilderTest extends LightIdeaTestCase {
     assertEquals(JavaTokenType.PACKAGE_KEYWORD, leaf.getElementType());
   }
 
-  private static PsiBuilderImpl createBuilder(final String text) {
+  private PsiBuilderImpl createBuilder(final String text) {
     return createBuilder(text,null);
   }
-  private static PsiBuilderImpl createBuilder(final String text, ASTNode originalTree) {
+  private PsiBuilderImpl createBuilder(final String text, ASTNode originalTree) {
     final Language lang = StdFileTypes.JAVA.getLanguage();
     final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
     assertNotNull(parserDefinition);

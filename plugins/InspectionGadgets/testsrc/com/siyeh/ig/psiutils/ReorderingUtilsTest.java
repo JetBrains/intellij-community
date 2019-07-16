@@ -96,8 +96,8 @@ public class ReorderingUtilsTest extends LightJavaCodeInsightTestCase {
     return LightJavaCodeInsightFixtureTestCase.JAVA_9_ANNOTATED;
   }
 
-  private static void checkCanBeReordered(@Language(value = "JAVA", prefix = PREFIX, suffix = SUFFIX) String expressionText,
-                                          ThreeState expectedResult) {
+  private void checkCanBeReordered(@Language(value = "JAVA", prefix = PREFIX, suffix = SUFFIX) String expressionText,
+                                   ThreeState expectedResult) {
     String file = PREFIX + expressionText + SUFFIX;
     PsiJavaFile javaFile = (PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("X.java", JavaFileType.INSTANCE, file);
     PsiCodeBlock body = javaFile.getClasses()[0].getMethods()[0].getBody();

@@ -66,15 +66,15 @@ public class XmlPerformanceTest extends LightQuickFixTestCase {
   private void doIndentTest(int time) {
     configureByFile(getBasePath() + getTestName(false)+".xml");
     doHighlighting();
-    myEditor.getSelectionModel().setSelection(0,myEditor.getDocument().getTextLength());
+    getEditor().getSelectionModel().setSelection(0, getEditor().getDocument().getTextLength());
 
     PlatformTestUtil.startPerformanceTest("indent/unindent "+time, time, () -> {
-      EditorActionManager.getInstance().getActionHandler("EditorIndentSelection").execute(myEditor, DataManager.getInstance().getDataContext());
+      EditorActionManager.getInstance().getActionHandler("EditorIndentSelection").execute(getEditor(), DataManager.getInstance().getDataContext());
 
-      EditorActionManager.getInstance().getActionHandler("EditorUnindentSelection").execute(myEditor, DataManager.getInstance().getDataContext());
+      EditorActionManager.getInstance().getActionHandler("EditorUnindentSelection").execute(getEditor(), DataManager.getInstance().getDataContext());
     }).useLegacyScaling().assertTiming();
-    final int startOffset = myEditor.getCaretModel().getOffset();
-    myEditor.getSelectionModel().setSelection(startOffset,startOffset);
+    final int startOffset = getEditor().getCaretModel().getOffset();
+    getEditor().getSelectionModel().setSelection(startOffset, startOffset);
     checkResultByFile(getBasePath() + getTestName(false)+".xml");
   }
 }

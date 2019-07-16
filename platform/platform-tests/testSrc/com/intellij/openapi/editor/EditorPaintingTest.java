@@ -65,7 +65,7 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   
   public void testPrefixWithEmptyText() throws Exception {
     initText("");
-    ((EditorEx)myEditor).setPrefixTextAndAttributes(">", new TextAttributes(Color.blue, Color.gray, null, null, Font.PLAIN));
+    ((EditorEx)getEditor()).setPrefixTextAndAttributes(">", new TextAttributes(Color.blue, Color.gray, null, null, Font.PLAIN));
     checkResult();
   }
   
@@ -78,7 +78,7 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   public void testFoldedRegionShownOnlyWithBorder() throws Exception {
     initText("abc");
     addCollapsedFoldRegion(0, 3, "...");
-    myEditor.getColorsScheme().setAttributes(
+    getEditor().getColorsScheme().setAttributes(
       EditorColors.FOLDED_TEXT_ATTRIBUTES,
       new TextAttributes(null, null, Color.blue, EffectType.BOXED, Font.PLAIN)
     );
@@ -94,14 +94,14 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
 
   public void testInlayAtEmptyLine() throws Exception {
     initText("\n");
-    myEditor.getInlayModel().addInlineElement(0, new MyInlayRenderer());
+    getEditor().getInlayModel().addInlineElement(0, new MyInlayRenderer());
     checkResult();
   }
 
   public void testMultilineBorderWithInlays() throws Exception {
     initText("abc\ndef");
-    myEditor.getInlayModel().addInlineElement(1, new MyInlayRenderer());
-    myEditor.getInlayModel().addInlineElement(6, new MyInlayRenderer());
+    getEditor().getInlayModel().addInlineElement(1, new MyInlayRenderer());
+    getEditor().getInlayModel().addInlineElement(6, new MyInlayRenderer());
     addBorderHighlighter(0, 7, 0, Color.red);
     checkResult();
   }
@@ -121,17 +121,17 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     addRangeHighlighter(5, 9, 0, new TextAttributes(null, null, null, null, Font.BOLD));
     checkResult(); // initial text layout cache population
 
-    myEditor.getDocument().addDocumentListener(new DocumentListener() {
+    getEditor().getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent event) {
         // force population of text layout cache on document update
         // this can be done by editor implementation in real life,
         // but we're doing it manually here to cover more potential cases
-        myEditor.visualPositionToXY(new VisualPosition(0, 10));
+        getEditor().visualPositionToXY(new VisualPosition(0, 10));
       }
     });
 
-    WriteCommandAction.runWriteCommandAction(ourProject, () -> ((DocumentEx)myEditor.getDocument()).moveText(5, 10, 0));
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> ((DocumentEx)getEditor().getDocument()).moveText(5, 10, 0));
     checkResult();
   }
 
@@ -161,8 +161,8 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
 
   public void testBlockInlaysWithSelection() throws Exception {
     initText("line 1\nline 2\n");
-    addBlockInlay(myEditor.getDocument().getLineStartOffset(0));
-    addBlockInlay(myEditor.getDocument().getLineStartOffset(1));
+    addBlockInlay(getEditor().getDocument().getLineStartOffset(0));
+    addBlockInlay(getEditor().getDocument().getLineStartOffset(1));
     executeAction(IdeActions.ACTION_EDITOR_TEXT_END);
     executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
     checkResult();

@@ -120,7 +120,7 @@ public class ExceptionCheckingTest extends LightJavaCodeInsightTestCase {
   }
 
 
-  private static PsiMethodCallExpression createCall(@NonNls final String body) {
+  private PsiMethodCallExpression createCall(@NonNls final String body) {
     final PsiFile file = createFile("test.java", "class Test { " + body +
       "void throwsIOException() throws java.io.IOException {}" +
       "void throwsRuntimeException() throws RuntimeException {}" +
@@ -131,7 +131,7 @@ public class ExceptionCheckingTest extends LightJavaCodeInsightTestCase {
     return methodCall;
   }
 
-  private static PsiNewExpression createNewExpression(@NonNls final String body) {
+  private PsiNewExpression createNewExpression(@NonNls final String body) {
     final PsiFile file = createFile("test.java", "class Test { " + body +
       "class ClassIOException { ClassIOException() throws java.io.IOException {} }" +
       "class ClassError { ClassError() throws Error {} }" +

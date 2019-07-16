@@ -42,7 +42,7 @@ public class I18nizeTest extends LightJavaCodeInsightTestCase {
   private void doTest(@NonNls String ext) {
     configureByFile(getBasePath() + "/before"+getTestName(false)+"."+ext);
     I18nizeAction action = new I18nizeAction();
-    DataContext dataContext = DataManager.getInstance().getDataContext(myEditor.getComponent());
+    DataContext dataContext = DataManager.getInstance().getDataContext(getEditor().getComponent());
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "place", dataContext);
     action.update(event);
     @NonNls String afterFile = getBasePath() + "/after" + getTestName(false) + "." + ext;

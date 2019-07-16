@@ -30,7 +30,7 @@ public class CtrlMouseHandlerTest extends AbstractEditorTest {
 
   // input parameters should have the following form:
   // firstHighlighterStartOffset, firstHighlighterEndOffset, secondHighlighterStartOffset, secondHighlighterEndOffset, ...
-  private static void assertHighlighted(int... offsets) {
+  private void assertHighlighted(int... offsets) {
     assert offsets.length % 2 == 0;
     int highlighterCount = offsets.length / 2;
     waitForHighlighting();
@@ -42,16 +42,16 @@ public class CtrlMouseHandlerTest extends AbstractEditorTest {
     }
   }
 
-  private static List<RangeHighlighter> getCurrentHighlighters() {
+  private List<RangeHighlighter> getCurrentHighlighters() {
     TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR);
-    return Stream.of(myEditor.getMarkupModel().getAllHighlighters())
+    return Stream.of(getEditor().getMarkupModel().getAllHighlighters())
       .filter(h -> attributes.equals(h.getTextAttributes()))
       .sorted(RangeMarker.BY_START_OFFSET)
       .collect(Collectors.toList());
   }
 
-  private static void waitForHighlighting() {
-    CtrlMouseHandler handler = ourProject.getComponent(CtrlMouseHandler.class);
+  private void waitForHighlighting() {
+    CtrlMouseHandler handler = getProject().getComponent(CtrlMouseHandler.class);
     TestTimeOut t = TestTimeOut.setTimeout(1, TimeUnit.MINUTES);
     while (handler.isCalculationInProgress()) {
       if (t.timedOut()) throw new RuntimeException("Timed out waiting for CtrlMouseHandler");

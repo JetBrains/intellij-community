@@ -135,7 +135,7 @@ public class HtmlDocumentationTest extends LightPlatformCodeInsightTestCase {
            Collections.singletonList("https://developer.mozilla.org/docs/Web/HTML/Element/script"));
   }
 
-  private static void doTest(String text, String doc, List<String> url) {
+  private void doTest(String text, String doc, List<String> url) {
     configureFromFileText("test.html", text);
     PsiElement originalElement = getFile().findElementAt(getEditor().getCaretModel().getOffset());
     PsiElement element = DocumentationManager.getInstance(getProject()).findTargetElement(getEditor(), getFile());

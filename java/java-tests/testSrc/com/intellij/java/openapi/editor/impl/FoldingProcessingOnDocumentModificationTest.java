@@ -42,7 +42,7 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
       "}";
     init(text, TestFileType.JAVA);
 
-    CaretModel caretModel = myEditor.getCaretModel();
+    CaretModel caretModel = getEditor().getCaretModel();
     int caretOffset = caretModel.getOffset();
     
     assertEquals(caretOffset, caretModel.getOffset());
@@ -53,7 +53,7 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
     updateFoldRegions();
 
     assertEquals(caretOffset + 1, caretModel.getOffset());
-    assertEquals(1, myEditor.getFoldingModel().getAllFoldRegions().length);
+    assertEquals(1, getEditor().getFoldingModel().getAllFoldRegions().length);
     FoldRegion foldRegion = getFoldRegion(0);
     assertFalse(foldRegion.isExpanded());
   }
@@ -69,7 +69,7 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
     buildInitialFoldRegions();
     executeAction(IdeActions.ACTION_COLLAPSE_ALL_REGIONS);
     runFoldingPass(true);
-    assertEquals(1, myEditor.getFoldingModel().getAllFoldRegions().length);
+    assertEquals(1, getEditor().getFoldingModel().getAllFoldRegions().length);
   }
   
   public void testSurvivingBrokenPsi() {
@@ -81,12 +81,12 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
     executeAction(IdeActions.ACTION_COLLAPSE_ALL_REGIONS);
     checkFoldingState("[FoldRegion +(25:33), placeholder='{}']");
 
-    WriteCommandAction.writeCommandAction(getProject()).run(() -> myEditor.getDocument().insertString(0, "/*"));
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> getEditor().getDocument().insertString(0, "/*"));
 
     checkFoldingState("[FoldRegion -(0:37), placeholder='/.../', FoldRegion +(27:35), placeholder='{}']");
 
     WriteCommandAction.runWriteCommandAction(getProject(),
-                                             () -> myEditor.getDocument().deleteString(0, 2));
+                                             () -> getEditor().getDocument().deleteString(0, 2));
 
     checkFoldingState("[FoldRegion +(25:33), placeholder='{}']");
   }
@@ -100,7 +100,7 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
     executeAction(IdeActions.ACTION_COLLAPSE_ALL_REGIONS);
     checkFoldingState("[FoldRegion +(25:33), placeholder='{}']");
 
-    WriteCommandAction.writeCommandAction(getProject()).run(() -> myEditor.getDocument().insertString(0, "/*"));
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> getEditor().getDocument().insertString(0, "/*"));
 
     checkFoldingState("[FoldRegion -(0:37), placeholder='/.../', FoldRegion +(27:35), placeholder='{}']");
 
@@ -126,26 +126,26 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
     runFoldingPass();
   }
 
-  private static void checkFoldingState(String expectedState) {
-    PsiDocumentManager.getInstance(ourProject).commitDocument(myEditor.getDocument());
+  private void checkFoldingState(String expectedState) {
+    PsiDocumentManager.getInstance(getProject()).commitDocument(getEditor().getDocument());
     runFoldingPass();
-    assertEquals(expectedState, Arrays.toString(myEditor.getFoldingModel().getAllFoldRegions()));
+    assertEquals(expectedState, Arrays.toString(getEditor().getFoldingModel().getAllFoldRegions()));
   }
   
-  private static void buildInitialFoldRegions() {
-    CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(myEditor);
+  private void buildInitialFoldRegions() {
+    CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(getEditor());
   }
   
-  private static void updateFoldRegions() {
-    CodeFoldingManager.getInstance(getProject()).updateFoldRegions(myEditor);
+  private void updateFoldRegions() {
+    CodeFoldingManager.getInstance(getProject()).updateFoldRegions(getEditor());
   }
   
-  private static void runFoldingPass() {
+  private void runFoldingPass() {
     runFoldingPass(false);
   }
   
-  private static void runFoldingPass(boolean firstTime) {
-    Runnable runnable = CodeFoldingManager.getInstance(getProject()).updateFoldRegionsAsync(myEditor, firstTime);
+  private void runFoldingPass(boolean firstTime) {
+    Runnable runnable = CodeFoldingManager.getInstance(getProject()).updateFoldRegionsAsync(getEditor(), firstTime);
     assertNotNull(runnable);
     runnable.run();
   }

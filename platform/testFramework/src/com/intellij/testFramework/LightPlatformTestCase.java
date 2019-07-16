@@ -118,7 +118,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   private static IdeaTestApplication ourApplication;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  protected static Project ourProject;
+  private static Project ourProject;
   private static Module ourModule;
   private static PsiManager ourPsiManager;
   private static boolean ourAssertionsInTestDetected;
@@ -139,14 +139,14 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   /**
    * @return Project to be used in tests for example for project components retrieval.
    */
-  protected static Project getProject() {
+  protected Project getProject() {
     return ourProject;
   }
 
   /**
    * @return Module to be used in tests for example for module components retrieval.
    */
-  protected static Module getModule() {
+  protected Module getModule() {
     return ourModule;
   }
 
@@ -154,9 +154,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
    * Shortcut to PsiManager.getInstance(getProject())
    */
   @NotNull
-  protected static PsiManager getPsiManager() {
+  protected PsiManager getPsiManager() {
     if (ourPsiManager == null) {
-      ourPsiManager = PsiManager.getInstance(ourProject);
+      ourPsiManager = PsiManager.getInstance(getProject());
     }
     return ourPsiManager;
   }
@@ -217,7 +217,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ((PersistentFSImpl)PersistentFS.getInstance()).cleanPersistedContents();
   }
 
-  private static void initProject(@NotNull final LightProjectDescriptor descriptor) throws Exception {
+  private static void initProject(@NotNull final LightProjectDescriptor descriptor) throws IOException {
     ourProjectDescriptor = descriptor;
 
     if (ourProject != null) {
@@ -231,7 +231,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     new Throwable(projectFile.getPath()).printStackTrace(new PrintStream(buffer));
 
-    ourProject = PlatformTestCase.createProject(projectFile, LIGHT_PROJECT_MARK + buffer);
+    setProject(PlatformTestCase.createProject(projectFile, LIGHT_PROJECT_MARK + buffer));
     ourPathToKeep = projectFile.getPath();
     ourPsiManager = null;
 
@@ -317,19 +317,20 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
 
     ProjectManagerEx projectManagerEx = ProjectManagerEx.getInstanceEx();
+    Project project = ourProject;
     try {
-      projectManagerEx.openTestProject(ourProject);
+      projectManagerEx.openTestProject(project);
     }
     catch (Throwable e) {
-      ourProject = null;
+      setProject(null);
       throw e;
     }
     if (reusedProject) {
       // clear all caches, reindex
-      WriteAction.run(()-> ProjectRootManagerEx.getInstanceEx(getProject()).makeRootsChange(EmptyRunnable.getInstance(), false, true));
+      WriteAction.run(() -> ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(), false, true));
     }
 
-    MessageBusConnection connection = ourProject.getMessageBus().connect(parentDisposable);
+    MessageBusConnection connection = project.getMessageBus().connect(parentDisposable);
     connection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
       @Override
       public void moduleAdded(@NotNull Project project, @NotNull Module module) {
@@ -337,24 +338,24 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       }
     });
 
-    clearUncommittedDocuments(getProject());
+    clearUncommittedDocuments(project);
 
-    InspectionsKt.configureInspections(localInspectionTools, getProject(), parentDisposable);
+    InspectionsKt.configureInspections(localInspectionTools, project, parentDisposable);
 
-    assertFalse(getPsiManager().isDisposed());
+    assertFalse(PsiManager.getInstance(project).isDisposed());
     Boolean passed = null;
     try {
-      passed = StartupManagerEx.getInstanceEx(getProject()).startupActivityPassed();
+      passed = StartupManagerEx.getInstanceEx(project).startupActivityPassed();
     }
     catch (Exception ignored) {
 
     }
-    assertTrue("open: " + getProject().isOpen() +
-               "; disposed:" + getProject().isDisposed() +
+    assertTrue("open: " + project.isOpen() +
+               "; disposed:" + project.isDisposed() +
                "; startup passed:" + passed +
-               "; all open projects: " + Arrays.asList(ProjectManager.getInstance().getOpenProjects()), getProject().isInitialized());
+               "; all open projects: " + Arrays.asList(ProjectManager.getInstance().getOpenProjects()), project.isInitialized());
 
-    CodeStyle.setTemporarySettings(getProject(), new CodeStyleSettings());
+    CodeStyle.setTemporarySettings(project, new CodeStyleSettings());
 
     final FileDocumentManager manager = FileDocumentManager.getInstance();
     if (manager instanceof FileDocumentManagerImpl) {
@@ -367,7 +368,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     UIUtil.dispatchAllInvocationEvents(); // startup activities
 
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
-    return Pair.createNonNull(getProject(), getModule());
+    return Pair.createNonNull(project, ourModule);
   }
 
   protected void enableInspectionTools(@NotNull InspectionProfileEntry... tools) {
@@ -579,7 +580,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         try {
           Application application = ApplicationManager.getApplication();
           if (application instanceof ApplicationEx) {
-            PlatformTestCase.cleanupApplicationCaches(ourProject);
+            PlatformTestCase.cleanupApplicationCaches(getProject());
           }
           resetAllFields();
         }
@@ -618,7 +619,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   @Override
   public Object getData(@NotNull String dataId) {
-    return ourProject == null || ourProject.isDisposed() ? null : new TestDataProvider(ourProject).getData(dataId);
+    return getProject() == null || getProject().isDisposed() ? null : new TestDataProvider(getProject()).getData(dataId);
   }
 
   protected Sdk getProjectJDK() {
@@ -641,14 +642,14 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
    *
    */
   @NotNull
-  protected static PsiFile createFile(@NonNls @NotNull String fileName, @NonNls @NotNull String text) throws IncorrectOperationException {
+  protected PsiFile createFile(@NonNls @NotNull String fileName, @NonNls @NotNull String text) throws IncorrectOperationException {
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
     return PsiFileFactory.getInstance(getProject())
       .createFileFromText(fileName, fileType, text, LocalTimeCounter.currentTime(), true, false);
   }
 
   @NotNull
-  protected static PsiFile createLightFile(@NonNls @NotNull String fileName, @NotNull String text) throws IncorrectOperationException {
+  protected PsiFile createLightFile(@NonNls @NotNull String fileName, @NotNull String text) throws IncorrectOperationException {
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
     return PsiFileFactory.getInstance(getProject())
       .createFileFromText(fileName, fileType, text, LocalTimeCounter.currentTime(), false, false);
@@ -672,46 +673,47 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   @NotNull
-  protected static CodeStyleSettings getCurrentCodeStyleSettings() {
+  protected CodeStyleSettings getCurrentCodeStyleSettings() {
     return CodeStyle.getSettings(getProject());
   }
 
   @NotNull
-  protected static CommonCodeStyleSettings getLanguageSettings(@NotNull Language language) {
+  protected CommonCodeStyleSettings getLanguageSettings(@NotNull Language language) {
     return getCurrentCodeStyleSettings().getCommonSettings(language);
   }
 
   @NotNull
-  protected static <T extends CustomCodeStyleSettings> T getCustomSettings(@NotNull Class<T> settingsClass) {
+  protected <T extends CustomCodeStyleSettings> T getCustomSettings(@NotNull Class<T> settingsClass) {
     return getCurrentCodeStyleSettings().getCustomSettings(settingsClass);
   }
 
-  protected static void commitDocument(@NotNull Document document) {
+  protected void commitDocument(@NotNull Document document) {
     PsiDocumentManager.getInstance(getProject()).commitDocument(document);
   }
 
-  protected static void commitAllDocuments() {
+  protected void commitAllDocuments() {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
   }
 
-  protected static Document getDocument(@NotNull PsiFile file) {
+  protected Document getDocument(@NotNull PsiFile file) {
     return PsiDocumentManager.getInstance(getProject()).getDocument(file);
   }
 
   @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
   public static synchronized void closeAndDeleteProject() {
-    if (ourProject == null) {
+    Project project = ourProject;
+    if (project == null) {
       return;
     }
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       throw new IllegalStateException("Must not call closeAndDeleteProject from under write action");
     }
 
-    if (!ourProject.isDisposed()) {
-      assertEquals(ourProject, ourModule.getProject());
+    if (!project.isDisposed()) {
+      assertEquals(project, ourModule.getProject());
 
       @SuppressWarnings("ConstantConditions")
-      File ioFile = new File(ourProject.getProjectFilePath());
+      File ioFile = new File(project.getProjectFilePath());
       if (ioFile.exists()) {
         File dir = ioFile.getParentFile();
         if (dir.getName().startsWith(UsefulTestCase.TEMP_DIR_MARKER)) {
@@ -723,8 +725,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       }
     }
 
-    assertTrue(ProjectManagerEx.getInstanceEx().forceCloseProject(ourProject, true));
-    assertTrue(ourProject.isDisposed());
+    assertTrue(ProjectManagerEx.getInstanceEx().forceCloseProject(project, true));
+    assertTrue(project.isDisposed());
 
     // project may be disposed but empty folder may still be there
     if (ourPathToKeep != null) {
@@ -736,7 +738,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       }
     }
 
-    ourProject = null;
+    setProject(null);
     assertTrue(ourModule.isDisposed());
     ourModule = null;
     if (ourPsiManager != null) {
@@ -744,6 +746,10 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       ourPsiManager = null;
     }
     ourPathToKeep = null;
+  }
+
+  protected static void setProject(Project project) {
+    ourProject = project;
   }
 
   private static class SimpleLightProjectDescriptor extends LightProjectDescriptor {
