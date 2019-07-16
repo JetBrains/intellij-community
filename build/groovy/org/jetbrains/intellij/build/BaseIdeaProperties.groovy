@@ -47,7 +47,6 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "intellij.android.smali",
     "intellij.sh",
     "intellij.vcs.changeReminder",
-    "intellij.markdown"
     /* Disabled in Android Studio
     "intellij.ant",
     "intellij.java.byteCodeViewer",
@@ -55,6 +54,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "intellij.eclipse",
     "intellij.gradle.java.maven",
     "intellij.javaFX.community",
+    "intellij.markdown"
     "intellij.maven",
     "intellij.java.guiForms.designer",
     "intellij.statsCollector",
