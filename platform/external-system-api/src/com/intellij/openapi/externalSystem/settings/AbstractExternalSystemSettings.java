@@ -71,9 +71,27 @@ public abstract class AbstractExternalSystemSettings<
    * <p/>
    * That's why this method allows to wrap given 'generic listener' into external system-specific one.
    *
+   * @param subscription is a disposable to unsubscribe from external system settings events
    * @param listener  target generic listener to wrap to external system-specific implementation
    */
+  public void subscribe(@NotNull Disposable subscription, @NotNull ExternalSystemSettingsListener<PS> listener) {
+    subscribe(listener);
+  }
+
+  /**
+   * @deprecated use {@link AbstractExternalSystemSettings#subscribe(Disposable, ExternalSystemSettingsListener)} instead
+   */
+  @Deprecated
   public abstract void subscribe(@NotNull ExternalSystemSettingsListener<PS> listener);
+
+  /**
+   * Generic subscribe implementation
+   *
+   * @see AbstractExternalSystemSettings#subscribe(Disposable, ExternalSystemSettingsListener)
+   */
+  protected void doSubscribe(@NotNull Disposable subscription, @NotNull L listener) {
+    getProject().getMessageBus().connect(subscription).subscribe(getChangesTopic(), listener);
+  }
 
   public void copyFrom(@NotNull SS settings) {
     for (PS projectSettings : settings.getLinkedProjectsSettings()) {
