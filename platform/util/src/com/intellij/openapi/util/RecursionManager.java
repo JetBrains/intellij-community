@@ -287,7 +287,9 @@ public class RecursionManager {
 
       Integer value = progressMap.remove(realKey);
       depth--;
-      preventions.remove(realKey);
+      if (!preventions.isEmpty()) {
+        preventions.remove(realKey);
+      }
 
       if (depth == 0) {
         intermediateCache.clear();
