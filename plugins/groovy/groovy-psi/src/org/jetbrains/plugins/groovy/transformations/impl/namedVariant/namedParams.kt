@@ -9,9 +9,9 @@ import com.intellij.psi.util.PropertyUtilBase
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.getArrayValue
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils
@@ -25,7 +25,7 @@ const val GROOVY_TRANSFORM_NAMED_PARAMS = "groovy.transform.NamedParams"
 const val GROOVY_TRANSFORM_NAMED_DELEGATE = "groovy.transform.NamedDelegate"
 
 
-fun collectNamedParams(mapParameter: PsiParameter): List<Pair<String, PsiType>> {
+fun collectNamedParams(mapParameter: PsiParameter): List<NamedParamData> {
   if (!mapParameter.type.equalsToText(CommonClassNames.JAVA_UTIL_MAP)) return emptyList()
 
   val annotations = mapParameter
@@ -34,25 +34,26 @@ fun collectNamedParams(mapParameter: PsiParameter): List<Pair<String, PsiType>> 
     ?.getArrayValue { it as? GrAnnotation }
 
   if (annotations != null) {
-    return annotations.mapNotNull(::constructNamedParameter)
+    return annotations.mapNotNull { constructNamedParameter(it, mapParameter) }
   }
 
-  return mapParameter.annotations.mapNotNull(::constructNamedParameter)
+  return mapParameter.annotations.mapNotNull{ constructNamedParameter(it, mapParameter) }
 }
 
-private fun constructNamedParameter(annotation: PsiAnnotation): Pair<String, PsiType>? {
+private fun constructNamedParameter(annotation: PsiAnnotation, owner: PsiParameter): NamedParamData? {
   if(annotation.qualifiedName != GROOVY_TRANSFORM_NAMED_PARAM) return null
   val attributeLiteral = annotation.findAttributeValue("value")
   val name = (attributeLiteral as? GrLiteral)?.value as? String ?: return null
   val classValue = annotation.findAttributeValue("type") as? GrExpression ?: return null
   val type = ResolveUtil.getClassReferenceFromExpression(classValue) ?: return null
-  return name to type
+  val required = GrAnnotationUtil.inferBooleanAttribute(annotation, "required") ?: false
+  return NamedParamData(name, type, owner, annotation, required)
 }
 
 /**
  * The order of the parameters is preserved as it is in the code
  */
-fun collectAllParamsFromNamedVariantMethod(method: GrMethod): List<Pair<String, GrParameter>> {
+fun collectAllParamsFromNamedVariantMethod(method: GrMethod): List<Pair<String, PsiParameter>> {
   val namedParams = collectNamedParamsFromNamedVariantMethod(method).groupBy { it.origin }
   return method.parameterList.parameters.flatMap { parameter ->
     namedParams[parameter]?.let {
@@ -72,14 +73,15 @@ internal fun collectNamedParamsFromNamedVariantMethod(method: GrMethod): List<Na
     val namedParamsAnn = PsiImplUtil.getAnnotation(parameter, GROOVY_TRANSFORM_NAMED_PARAM)
     if (namedParamsAnn != null) {
       val name = AnnotationUtil.getDeclaredStringAttributeValue(namedParamsAnn, "value") ?: parameter.name
-      result.add(NamedParamData(name, type, parameter))
+      val required = GrAnnotationUtil.inferBooleanAttribute(namedParamsAnn, "required") ?: false
+      result.add(NamedParamData(name, type, parameter, namedParamsAnn, required))
       continue
     }
 
-    PsiImplUtil.getAnnotation(parameter, GROOVY_TRANSFORM_NAMED_DELEGATE) ?: continue
+    val psiAnnotation = PsiImplUtil.getAnnotation(parameter, GROOVY_TRANSFORM_NAMED_DELEGATE) ?: continue
     val parameterClass = (type as? PsiClassType)?.resolve() ?: continue
     getProperties(parameterClass).forEach { (propertyName, propertyType) ->
-      result.add(NamedParamData(propertyName, propertyType, parameter))
+      result.add(NamedParamData(propertyName, propertyType, parameter, psiAnnotation))
     }
   }
   return result
