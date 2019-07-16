@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor;
@@ -92,6 +91,6 @@ public class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   @Override
   public boolean isEnabledByDefault() {
-    return DaemonCodeAnalyzerSettings.getInstance().isShowSmallIconsInGutter();
+    return true;
   }
 }

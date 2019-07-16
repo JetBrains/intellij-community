@@ -8,7 +8,6 @@ import com.intellij.util.xmlb.annotations.Transient;
 public class DaemonCodeAnalyzerSettings {
   private boolean myNextErrorActionGoesToErrorsFirst = true;
   private int myAutoReparseDelay = 300;
-  private boolean myShowSmallIconsInGutter = true;
   private int myErrorStripeMarkMinHeight = 2;
 
   private boolean mySuppressWarnings = true;
@@ -34,15 +33,6 @@ public class DaemonCodeAnalyzerSettings {
 
   public void setAutoReparseDelay(int value) {
     myAutoReparseDelay = value;
-  }
-
-  @OptionTag("SHOW_SMALL_ICONS_IN_GUTTER")
-  public boolean isShowSmallIconsInGutter() {
-    return myShowSmallIconsInGutter;
-  }
-
-  public void setShowSmallIconsInGutter(boolean value) {
-    myShowSmallIconsInGutter = value;
   }
 
   @OptionTag("ERROR_STRIPE_MARK_MIN_HEIGHT")
