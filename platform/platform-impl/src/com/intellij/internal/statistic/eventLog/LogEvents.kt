@@ -167,15 +167,3 @@ fun escapeFieldName(str: String): String {
   return escape(str).replace('.', '_')
 }
 
-fun copyEscaped(from: MutableMap<String, Any>): MutableMap<String, Any> {
-  if (from.isEmpty()) {
-    return Collections.emptyMap()
-  }
-
-  val data: MutableMap<String, Any> = HashMap()
-  for (datum in from) {
-    val escapedValue = if (datum.value is String) escape(datum.value as String) else datum.value
-    data[escapeFieldName(datum.key)] = escapedValue
-  }
-  return data
-}
