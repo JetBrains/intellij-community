@@ -66,12 +66,27 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   public static final Topic<ActiveSdkListener> ACTIVE_PYTHON_SDK_TOPIC = new Topic<>("Active SDK changed", ActiveSdkListener.class);
   private static final String SHOW_ALL = PyBundle.message("active.sdk.dialog.show.all.item");
 
-  @NotNull private final Project myProject;
-  @Nullable private final Module myModule;
-  private final MySdkModelListener mySdkModelListener = new MySdkModelListener();
-  private PyConfigurableInterpreterList myInterpreterList;
-  private ProjectSdksModel myProjectSdksModel;
-  private NullableConsumer<Sdk> myAddSdkCallback;
+  @NotNull
+  private final Project myProject;
+
+  @Nullable
+  private final Module myModule;
+
+  @NotNull
+  private final MySdkModelListener mySdkModelListener;
+
+  @NotNull
+  private final PyConfigurableInterpreterList myInterpreterList;
+
+  @NotNull
+  private final ProjectSdksModel myProjectSdksModel;
+
+  @NotNull
+  private final NullableConsumer<Sdk> myAddSdkCallback;
+
+  @NotNull
+  private final Runnable mySdkSettingsModifiedCallback;
+
   private boolean mySdkSettingsWereModified = false;
 
   @NotNull
@@ -83,7 +98,8 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   @NotNull
   private final PyInstalledPackagesPanel myPackagesPanel;
 
-  private Set<Sdk> myInitialSdkSet;
+  @NotNull
+  private final Set<Sdk> myInitialSdkSet;
 
   @Nullable
   private final Disposable myDisposable;
@@ -112,7 +128,14 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
     myMainPanel = buildPanel(project, mySdkCombo, detailsButton, myPackagesPanel, packagesNotificationPanel, customizer);
 
-    initContent();
+    mySdkModelListener = new MySdkModelListener();
+    myInterpreterList = PyConfigurableInterpreterList.getInstance(myProject);
+    myProjectSdksModel = myInterpreterList.getModel();
+    myInitialSdkSet = myProjectSdksModel.getProjectSdks().keySet();
+    myProjectSdksModel.addListener(mySdkModelListener);
+
+    myAddSdkCallback = new SdkAddedCallback();
+    mySdkSettingsModifiedCallback = () -> mySdkSettingsWereModified = true;
   }
 
   @NotNull
@@ -224,21 +247,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     myPackagesPanel.updateNotifications(sdk);
   }
 
-  @NotNull
-  private Runnable getSettingsModifiedCallback() {
-    return () -> mySdkSettingsWereModified = true;
-  }
-
-  private void initContent() {
-    myInterpreterList = PyConfigurableInterpreterList.getInstance(myProject);
-
-    myProjectSdksModel = myInterpreterList.getModel();
-    myInitialSdkSet = myProjectSdksModel.getProjectSdks().keySet();
-    myProjectSdksModel.addListener(mySdkModelListener);
-
-    myAddSdkCallback = new SdkAddedCallback();
-  }
-
   private void onShowDetailsClicked(@NotNull JButton detailsButton) {
     PythonSdkDetailsStep.show(myProject, myModule, myProjectSdksModel.getSdks(), buildAllSdksDialog(), myMainPanel,
                               detailsButton.getLocationOnScreen(), myAddSdkCallback);
@@ -247,8 +255,8 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   @NotNull
   private PythonSdkDetailsDialog buildAllSdksDialog() {
     return myModule == null
-           ? new PythonSdkDetailsDialog(myProject, myAddSdkCallback, getSettingsModifiedCallback())
-           : new PythonSdkDetailsDialog(myModule, myAddSdkCallback, getSettingsModifiedCallback());
+           ? new PythonSdkDetailsDialog(myProject, myAddSdkCallback, mySdkSettingsModifiedCallback)
+           : new PythonSdkDetailsDialog(myModule, myAddSdkCallback, mySdkSettingsModifiedCallback);
   }
 
   @Override
