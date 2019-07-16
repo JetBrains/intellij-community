@@ -6,7 +6,7 @@ import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.MethodInvocator;
 import org.imgscalr.Scalr;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -154,7 +154,9 @@ public class MultiResolutionImageProvider {
    * default to the provided image's single resolution variant.
    */
   @Nullable
-  public static Image convertFromJBImage(Image jbImage) {
+  public static Image convertFromJBImage(@Nullable Image jbImage) {
+    if (jbImage == null) return null;
+
     if (!checkSize(jbImage)) {
       //noinspection CallToPrintStackTrace
       new IllegalArgumentException("the image has illegal size 0x0").printStackTrace();
@@ -166,8 +168,10 @@ public class MultiResolutionImageProvider {
    * Returns an accessor to the provided {@code MultiResolutionImage}.
    * If the provided image is not {@code MultiResolutionImage} the resolution variants methods will default to the provided image.
    */
-  @NotNull
-  public static Accessor getAccessor(@NotNull Image mrImage) {
+  @Contract("null -> null; !null -> !null")
+  public static Accessor getAccessor(@Nullable Image mrImage) {
+    if (mrImage == null) return null;
+
     if (!checkSize(mrImage)) {
       //noinspection CallToPrintStackTrace
       new IllegalArgumentException("the image has illegal size 0x0").printStackTrace();

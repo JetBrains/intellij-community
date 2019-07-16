@@ -14,10 +14,7 @@ import com.intellij.ui.scale.ScaleContextSupport;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FixedHashMap;
-import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.JBImageIcon;
-import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -652,7 +649,12 @@ public final class IconLoader {
 
     @Override
     public Icon getMenuBarIcon(boolean isDark) {
-      Image img = loadFromUrl(ScaleContext.createIdentity(), isDark);
+      boolean useMRI = MultiResolutionImageProvider.isMultiResolutionImageAvailable() && SystemInfo.isMac;
+      ScaleContext ctx = useMRI ? ScaleContext.create() : ScaleContext.createIdentity();
+      Image img = loadFromUrl(ctx, isDark);
+      if (useMRI) {
+        img = MultiResolutionImageProvider.convertFromJBImage(img);
+      }
       if (img != null) {
         return new ImageIcon(img);
       }
