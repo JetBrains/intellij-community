@@ -31,7 +31,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import org.intellij.plugins.relaxNG.ApplicationLoader;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
-import org.intellij.plugins.relaxNG.validation.ValidateAction;
+import org.intellij.plugins.relaxNG.validation.RngValidateHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -103,7 +103,7 @@ public class ConvertSchemaAction extends AnAction {
         return;
       }
 
-      ValidateAction.saveFiles(files);
+      RngValidateHandler.saveFiles(files);
 
       final ConvertSchemaSettings settings = dialog.getSettings();
       final IdeaErrorHandler errorHandler = new IdeaErrorHandler(project);

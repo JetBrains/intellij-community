@@ -1,25 +1,7 @@
-/*
- * Copyright 2007 Sascha Weinreuter
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.relaxNG.validation;
 
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -35,6 +17,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.actions.validate.ValidateXmlHandler;
 import com.thaiopensource.util.PropertyMapBuilder;
 import com.thaiopensource.util.UriOrFile;
 import com.thaiopensource.validate.SchemaReader;
@@ -45,7 +28,7 @@ import com.thaiopensource.validate.rng.CompactSchemaReader;
 import com.thaiopensource.validate.rng.RngProperty;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.model.descriptors.RngElementDescriptor;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -55,64 +38,52 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.concurrent.Future;
 
-public class ValidateAction extends AnAction {
+public class RngValidateHandler implements ValidateXmlHandler {
   private static final String CONTENT_NAME = "Validate RELAX NG";
   private static final Key<NewErrorTreeViewPanel> KEY = Key.create("VALIDATING");
-  private static final Key<Boolean> IN_PROGRESS_KEY = Key.create("VALIDATION IN PROGRESS");
-
-  private final AnAction myOrigAction;
-
-  public ValidateAction(AnAction origAction) {
-    myOrigAction = origAction;
-    copyFrom(origAction);
-    setEnabledInModalContext(origAction.isEnabledInModalContext());
-  }
 
   @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    if (!actionPerformedImpl(e)) {
-      myOrigAction.actionPerformed(e);
-    }
-  }
-
-  @Override
-  public final void update(@NotNull AnActionEvent e) {
-    myOrigAction.update(e);
-
-    final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    if (file != null) {
-      if (file.getUserData(IN_PROGRESS_KEY) == Boolean.TRUE) {
-        e.getPresentation().setEnabled(false);
-      }
-    }
-  }
-
-  private boolean actionPerformedImpl(@NotNull AnActionEvent e) {
-    final PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
-    if (file == null) {
-      return false;
-    }
-    final Project project = e.getData(CommonDataKeys.PROJECT);
-    if (project == null) {
-      return false;
-    }
-
-    final RngElementDescriptor descriptor = getRootDescriptor(file);
-    if (descriptor == null) return false;
-
-    final PsiElement element = descriptor.getDeclaration();
-    final XmlFile xmlFile = PsiTreeUtil.getParentOfType(element, XmlFile.class);
-    if (xmlFile == null) return false;
+  public void doValidate(XmlFile file) {
+    final XmlFile schema = getRngSchema(file);
+    if (schema == null) return;
 
     final VirtualFile instanceFile = file.getVirtualFile();
-    final VirtualFile schemaFile = xmlFile.getVirtualFile();
+    final VirtualFile schemaFile = schema.getVirtualFile();
     if (instanceFile == null || schemaFile == null) {
-      return true;
+      return;
     }
 
-    doRun(project, instanceFile, schemaFile);
+    doRun(file.getProject(), instanceFile, schemaFile);
+  }
 
-    return true;
+  @Override
+  public boolean isAvailable(XmlFile file) {
+    return getRngSchema(file) != null;
+  }
+
+  @Nullable
+  private static XmlFile getRngSchema(XmlFile file) {
+    final RngElementDescriptor descriptor = getRootDescriptor(file);
+    if (descriptor == null) return null;
+
+    final PsiElement element = descriptor.getDeclaration();
+    final XmlFile schema = PsiTreeUtil.getParentOfType(element, XmlFile.class);
+    if (schema == null) return null;
+    return schema;
+  }
+
+  private static RngElementDescriptor getRootDescriptor(PsiFile file) {
+    try {
+      if (file instanceof XmlFile) {
+        final XmlElementDescriptor descriptor = ((XmlFile)file).getDocument().getRootTag().getDescriptor();
+        if (descriptor instanceof RngElementDescriptor) {
+          return (RngElementDescriptor)descriptor;
+        }
+      }
+    } catch (NullPointerException e1) {
+      // OK
+    }
+    return null;
   }
 
   private static void doRun(final Project project, final VirtualFile instanceFile, final VirtualFile schemaFile) {
@@ -126,12 +97,7 @@ public class ValidateAction extends AnAction {
       () -> ApplicationManager.getApplication().runReadAction(() -> {
         final MessageViewHelper.ErrorHandler eh = helper.new ErrorHandler();
 
-        instanceFile.putUserData(IN_PROGRESS_KEY, Boolean.TRUE);
-        try {
-          doValidation(instanceFile, schemaFile, eh);
-        } finally {
-          instanceFile.putUserData(IN_PROGRESS_KEY, null);
-        }
+        doValidation(instanceFile, schemaFile, eh);
 
         SwingUtilities.invokeLater(
           () -> {
@@ -162,8 +128,8 @@ public class ValidateAction extends AnAction {
 
   private static void doValidation(VirtualFile instanceFile, VirtualFile schemaFile, org.xml.sax.ErrorHandler eh) {
     final SchemaReader sr = FileTypeRegistry.getInstance().isFileOfType(schemaFile, RncFileType.getInstance()) ?
-            CompactSchemaReader.getInstance() :
-            new AutoSchemaReader();
+                            CompactSchemaReader.getInstance() :
+                            new AutoSchemaReader();
 
     final PropertyMapBuilder properties = new PropertyMapBuilder();
     ValidateProperty.ERROR_HANDLER.put(properties, eh);
@@ -193,47 +159,8 @@ public class ValidateAction extends AnAction {
       }
     } catch (SAXException | MalformedURLException e1) {
       // huh?
-      Logger.getInstance(ValidateAction.class.getName()).error(e1);
+      Logger.getInstance(RngValidateHandler.class.getName()).error(e1);
     }
-  }
-
-  private static RngElementDescriptor getRootDescriptor(PsiFile file) {
-    try {
-      if (file instanceof XmlFile) {
-        final XmlElementDescriptor descriptor = ((XmlFile)file).getDocument().getRootTag().getDescriptor();
-        if (descriptor instanceof RngElementDescriptor) {
-          return (RngElementDescriptor)descriptor;
-        }
-      }
-    } catch (NullPointerException e1) {
-      // OK
-    }
-    return null;
-  }
-
-  @Override
-  public boolean displayTextInToolbar() {
-    return myOrigAction.displayTextInToolbar();
-  }
-
-  @Override
-  public void setDefaultIcon(boolean b) {
-    myOrigAction.setDefaultIcon(b);
-  }
-
-  @Override
-  public boolean isDefaultIcon() {
-    return myOrigAction.isDefaultIcon();
-  }
-
-  @Override
-  public void setInjectedContext(boolean worksInInjected) {
-    myOrigAction.setInjectedContext(worksInInjected);
-  }
-
-  @Override
-  public boolean isInInjectedContext() {
-    return myOrigAction.isInInjectedContext();
   }
 
   public static void saveFiles(VirtualFile... files) {

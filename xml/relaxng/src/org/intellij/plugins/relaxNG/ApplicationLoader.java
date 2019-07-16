@@ -18,13 +18,12 @@ package org.intellij.plugins.relaxNG;
 import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.javaee.ResourceRegistrar;
 import com.intellij.javaee.StandardResourceProvider;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.AndFilter;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.NamespaceFilter;
+import com.intellij.psi.meta.MetaDataContributor;
 import com.intellij.psi.meta.MetaDataRegistrar;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
@@ -35,39 +34,29 @@ import org.intellij.plugins.relaxNG.compact.psi.impl.RncDocument;
 import org.intellij.plugins.relaxNG.inspections.RngDomInspection;
 import org.intellij.plugins.relaxNG.inspections.UnusedDefineInspection;
 import org.intellij.plugins.relaxNG.model.descriptors.RngNsDescriptor;
-import org.intellij.plugins.relaxNG.validation.ValidateAction;
 import org.intellij.plugins.relaxNG.xml.dom.RngDefine;
 import org.intellij.plugins.relaxNG.xml.dom.impl.RngDefineMetaData;
 
-public class ApplicationLoader implements ApplicationInitializedListener {
-  private static final String VALIDATE_XML = "ValidateXml";
+public class ApplicationLoader implements MetaDataContributor, ApplicationInitializedListener {
   public static final String RNG_NAMESPACE = "http://relaxng.org/ns/structure/1.0";
 
   @Override
   public void componentsInitialized() {
-    registerMetaData();
-
-    installValidateXmlAction();
+    contributeMetaData(MetaDataRegistrar.getInstance());
   }
 
-  private static void installValidateXmlAction() {
-    final ActionManager mgr = ActionManager.getInstance();
-    final AnAction validateAction = mgr.getAction(VALIDATE_XML);
-    mgr.replaceAction(VALIDATE_XML, new ValidateAction(validateAction));
-  }
-
-  private static void registerMetaData() {
-    final MetaDataRegistrar registrar = MetaDataRegistrar.getInstance();
+  @Override
+  public void contributeMetaData(MetaDataRegistrar registrar) {
     registrar.registerMetaData(
-            new AndFilter(
-                    new NamespaceFilter(RNG_NAMESPACE),
-                    new ClassFilter(XmlDocument.class)
-            ),
-            RngNsDescriptor.class);
+      new AndFilter(
+        new NamespaceFilter(RNG_NAMESPACE),
+        new ClassFilter(XmlDocument.class)
+      ),
+      RngNsDescriptor.class);
 
     registrar.registerMetaData(
-            new ClassFilter(RncDocument.class),
-            RngNsDescriptor.class);
+      new ClassFilter(RncDocument.class),
+      RngNsDescriptor.class);
 
     registrar.registerMetaData(new ElementFilter() {
       @Override

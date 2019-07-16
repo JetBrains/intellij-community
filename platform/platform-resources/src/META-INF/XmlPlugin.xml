@@ -105,6 +105,8 @@
     <extensionPoint name="html.scriptDocumentationProvider" interface="com.intellij.lang.documentation.DocumentationProvider"/>
 
     <extensionPoint name="webSmartKeysConfigurable" beanClass="com.intellij.application.options.editor.WebSmartKeysConfigurableEP"/>
+
+    <extensionPoint name="xml.validateHandler" interface="com.intellij.xml.actions.validate.ValidateXmlHandler"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

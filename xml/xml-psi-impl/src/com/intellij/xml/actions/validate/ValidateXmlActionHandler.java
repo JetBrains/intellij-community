@@ -40,7 +40,7 @@ import java.util.Map;
 /**
  * @author Mike
  */
-public class ValidateXmlActionHandler {
+public class ValidateXmlActionHandler implements ValidateXmlHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.actions.validate.ValidateXmlAction");
 
   private static final String SCHEMA_FULL_CHECKING_FEATURE_ID = "http://apache.org/xml/features/validation/schema-full-checking";
@@ -105,6 +105,12 @@ public class ValidateXmlActionHandler {
     return msg;
   }
 
+  @Override
+  public boolean isAvailable(XmlFile file) {
+    return true;
+  }
+
+  @Override
   public void doValidate(XmlFile file) {
     myProject = file.getProject();
     myFile = file;
