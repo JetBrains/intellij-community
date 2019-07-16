@@ -97,7 +97,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       .weighty(1.0)
       .fillCell();
 
-    pane.setBorder(JBUI.Borders.empty(newLayout ? 10 : 6, newLayout ? 10 : 8, newLayout ? (highlightActions ? 10 : 4) : 6, 12));
+    pane.setBorder(JBUI.Borders.empty(newLayout ? 10 : 6, newLayout ? 10 : 8, newLayout ? (highlightActions ? 10 : 3) : 6, 12));
     grid.add(pane, bag);
     grid.setBackground(hintHint.getTextBackground());
     grid.setBorder(JBUI.Borders.empty());
