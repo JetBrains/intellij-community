@@ -2619,6 +2619,12 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
+  @Contract(value = " -> new", pure = true)
+  public static <K,V> ConcurrentMap<K,V> createConcurrentSoftKeySoftValueMap() {
+    return createConcurrentSoftKeySoftValueMap(100, 0.75f, Runtime.getRuntime().availableProcessors(), canonicalStrategy());
+  }
+
+  @NotNull
   @Contract(value = "_,_,_,_ -> new", pure = true)
   public static <K,V> ConcurrentMap<K,V> createConcurrentSoftKeySoftValueMap(int initialCapacity,
                                                                              float loadFactor,
