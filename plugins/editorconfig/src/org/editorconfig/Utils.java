@@ -139,7 +139,7 @@ public class Utils {
   @NotNull
   private static String getTrailingSpacesLine() {
     final Boolean trimTrailingSpaces = getTrimTrailingSpaces();
-    return trimTrailingSpaces != null ? StandardEditorConfigProperties.TRIM_TRAILING_WHITESPACE + "=" + trimTrailingSpaces : "";
+    return trimTrailingSpaces != null ? StandardEditorConfigProperties.TRIM_TRAILING_WHITESPACE + "=" + trimTrailingSpaces + "\n" : "";
   }
 
   @Nullable
@@ -171,7 +171,7 @@ public class Utils {
   @NotNull
   public static String getEncodingLine(@NotNull Project project) {
     String encoding = getEncoding(project);
-    return encoding != null ? EncodingManager.charsetKey + "=" + encoding : "";
+    return encoding != null ? EncodingManager.charsetKey + "=" + encoding + "\n" : "";
   }
 
   @Nullable
