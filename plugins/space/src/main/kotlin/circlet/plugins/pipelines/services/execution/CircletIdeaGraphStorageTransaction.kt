@@ -23,6 +23,10 @@ class CircletIdeaGraphStorageTransaction(private val storage: CircletIdeaAutomat
         callback.afterTransaction(body)
     }
 
+    override fun andThen(body: () -> Unit) {
+        executeAfterTransaction { body() }
+    }
+
     override fun getAllNotFinishedJobs(graphExecution: AGraphExecutionEntity): Iterable<AJobExecutionEntity<ProjectJob.Process<*, *>>> {
         TODO("getAllNotFinishedJobs not implemented")
     }
@@ -108,6 +112,14 @@ class CircletIdeaGraphStorageTransaction(private val storage: CircletIdeaAutomat
     }
 
     override fun findNotFinishedJobs(): Iterable<AJobExecutionEntity<*>> {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun getLastKnownDockerContainerStates(): List<Pair<String, WorkerStatus>> {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun saveDockerContainerState(workerId: String, status: WorkerStatus) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }

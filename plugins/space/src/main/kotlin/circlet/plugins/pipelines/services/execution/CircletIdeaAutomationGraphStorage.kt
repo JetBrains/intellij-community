@@ -7,11 +7,11 @@ class CircletIdeaAutomationGraphStorage(internal val task: ProjectTask) : Automa
     internal val idStorage = TaskLongIdStorage()
     internal val storedExecutions = mutableMapOf<Long, AJobExecutionEntity<*>>()
 
-    val singletonTx = CircletIdeaGraphStorageTransaction(this)
-
     override suspend fun <T> invoke(body: (GraphStorageTransaction) -> T): T {
-        val res = body(singletonTx)
-        singletonTx.executeAfterTransactionHooks()
+        val tx = CircletIdeaGraphStorageTransaction(this)
+        val res = body(tx)
+        tx.executeAfterTransactionHooks()
         return res
     }
+
 }
