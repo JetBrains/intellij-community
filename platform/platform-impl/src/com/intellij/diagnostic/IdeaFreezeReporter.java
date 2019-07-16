@@ -44,6 +44,9 @@ public class IdeaFreezeReporter {
       @Override
       public void uiFreezeStarted() {
         if (Registry.is("freeze.reporter.enabled") && !DebugAttachDetector.isAttached()) {
+          if (myDumpTask != null) {
+            myDumpTask.cancel();
+          }
           myDumpTask = new DumpTask();
         }
       }
@@ -91,6 +94,7 @@ public class IdeaFreezeReporter {
             }
           }
         }
+        myDumpTask = null;
         myCurrentDumps.clear();
         myStacktraceCommonPart = null;
       }
