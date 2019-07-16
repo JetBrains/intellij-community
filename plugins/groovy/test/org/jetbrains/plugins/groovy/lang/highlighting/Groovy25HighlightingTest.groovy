@@ -29,6 +29,12 @@ class Groovy25HighlightingTest extends LightGroovyTestCase implements Highlighti
     highlightingTest()
   }
 
+  void 'test named params required'() { highlightingTest() }
+
+  void 'test several absent required named params'() { highlightingTest() }
+
+  void 'test required named param in named variant'() { highlightingTest() }
+
   void 'test named delegate without properties'() { highlightingTest() }
 
   void 'test immutable fields'() { highlightingTest() }

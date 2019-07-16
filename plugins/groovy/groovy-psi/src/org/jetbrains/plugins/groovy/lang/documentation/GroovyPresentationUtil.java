@@ -9,19 +9,16 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.util.ArrayUtilRt;
-import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.transformations.impl.namedVariant.NamedParamData;
 import org.jetbrains.plugins.groovy.transformations.impl.namedVariant.NamedParamsUtil;
 
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author ven
@@ -105,8 +102,8 @@ public class GroovyPresentationUtil {
   }
 
   private static boolean presentNamedParameters(@NotNull StringBuilder buffer, @NotNull GrParameter parameter) {
-    List<Pair<String, PsiType>> pairs = NamedParamsUtil.collectNamedParams(parameter);
-    StringUtil.join(pairs, pair -> pair.getFirst() + ": " + pair.getSecond().getPresentableText(), ", ", buffer);
+    List<NamedParamData> pairs = NamedParamsUtil.collectNamedParams(parameter);
+    StringUtil.join(pairs, namedParam -> namedParam.getName() + ": " + namedParam.getType().getPresentableText(), ", ", buffer);
     return !pairs.isEmpty();
   }
 
