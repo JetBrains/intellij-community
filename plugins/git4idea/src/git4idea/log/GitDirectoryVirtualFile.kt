@@ -26,14 +26,15 @@ class GitDirectoryVirtualFile(
 
   private val cachedChildren by lazy {
     val gitRevisionNumber = GitRevisionNumber(commit.id.asString())
-    val remotePath = if (path.isEmpty()) "." else path + "/"
+    // Use RemoteFilePath to properly pass trailing slash to git executable
+    val dirPath = RemoteFilePath(if (path.isEmpty()) "." else path + "/", true)
 
-    val tree = GitIndexUtil.listTree(repo, listOf(RemoteFilePath(remotePath, true)), gitRevisionNumber)
+    val tree = GitIndexUtil.listTree(repo, listOf(dirPath), gitRevisionNumber)
     val result = tree.map {
       when(it) {
         is GitIndexUtil.StagedDirectory -> GitDirectoryVirtualFile(repo, this, it.path.name, commit)
         else -> VcsVirtualFile(this, it.path.name,
-                               GitFileRevision(repo.project, repo.root, RemoteFilePath(it.path.path, false), gitRevisionNumber),
+                               GitFileRevision(repo.project, repo.root, it.path, gitRevisionNumber),
                                VcsFileSystem.getInstance())
 
       }
