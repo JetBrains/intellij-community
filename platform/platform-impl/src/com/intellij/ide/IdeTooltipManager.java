@@ -12,6 +12,7 @@ import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
+import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -239,8 +240,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
           if (text == null || text.trim().isEmpty()) return false;
 
           Rectangle visibleRect = c.getParent() instanceof JViewport ? ((JViewport)c.getParent()).getViewRect() :
-                                  c.getClass().getName().equals("y.view.Graph2DCanvas") ? c.getBounds() :
-                                  c.getVisibleRect();
+                                  IdeMouseEventDispatcher.isDiagramViewComponent(c) ? c.getBounds() : c.getVisibleRect();
           if (!visibleRect.contains(getPoint())) return false;
 
           JLayeredPane layeredPane = ComponentUtil.getParentOfType((Class<? extends JLayeredPane>)JLayeredPane.class, (Component)c);
