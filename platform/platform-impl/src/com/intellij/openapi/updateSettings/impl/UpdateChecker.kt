@@ -211,6 +211,11 @@ object UpdateChecker {
             }
           }
         }
+        if (incompatiblePlugins != null && buildNumber != null) {
+          updateable.values.filterTo(incompatiblePlugins) {
+            it.isEnabled && !PluginManagerCore.isCompatible(it, buildNumber)
+          }
+        }
       }
       catch (e: IOException) {
         LOG.debug(e)
