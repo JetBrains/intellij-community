@@ -79,6 +79,7 @@ class GithubRequestQueryingTest : GithubTest() {
     for (i in 1..RETRIES) {
       try {
         action()
+        exception = null
         break
       }
       catch (e: Exception) {
