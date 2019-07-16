@@ -146,10 +146,10 @@ class Foo {
   
   private List<String> getNameSuggestions(String text) {
     configure text
-    def oldPreselectSetting = myEditor.settings.preselectRename
+    def oldPreselectSetting = editor.settings.preselectRename
     try {
       TemplateManagerImpl.setTemplateTesting(getTestRootDisposable())
-      final PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.getInstance().getAllAccepted())
+      final PsiElement element = TargetElementUtil.findTargetElement(editor, TargetElementUtil.getInstance().getAllAccepted())
 
       assertNotNull(element)
 
@@ -163,7 +163,7 @@ class Foo {
       return lookup.items.collect { it.lookupString }
     }
     finally {
-      myEditor.settings.preselectRename = oldPreselectSetting
+      editor.settings.preselectRename = oldPreselectSetting
 
       TemplateState state = TemplateManagerImpl.getTemplateState(editor)
 

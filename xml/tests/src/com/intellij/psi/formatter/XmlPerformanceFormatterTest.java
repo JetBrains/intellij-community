@@ -163,7 +163,7 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
       .assertTiming();
   }
   
-  private static ThrowableRunnable createAdjustLineIndentInRangeRunnable(final @NotNull PsiFile file) {
+  private ThrowableRunnable createAdjustLineIndentInRangeRunnable(final @NotNull PsiFile file) {
     return () -> {
       final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
       assertNotNull(document);

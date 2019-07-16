@@ -214,16 +214,16 @@ public class ImmediatePainterTest extends AbstractEditorTest {
   protected void init(String text) {
     init(text, TestFileType.TEXT);
 
-    myEditor.getSettings().setAdditionalLinesCount(0);
-    myEditor.getSettings().setAdditionalColumnsCount(3);
+    getEditor().getSettings().setAdditionalLinesCount(0);
+    getEditor().getSettings().setAdditionalColumnsCount(3);
 
-    myEditor.getSettings().setCaretRowShown(false);
+    getEditor().getSettings().setCaretRowShown(false);
   }
 
   private void assertRenderedCorrectly(int offset, char c) throws IOException {
-    myEditor.getCaretModel().getPrimaryCaret().moveToOffset(offset);
+    getEditor().getCaretModel().getPrimaryCaret().moveToOffset(offset);
 
-    JComponent editorComponent = myEditor.getContentComponent();
+    JComponent editorComponent = getEditor().getContentComponent();
     Dimension size = editorComponent.getPreferredSize();
     editorComponent.setSize(size);
 
@@ -234,13 +234,13 @@ public class ImmediatePainterTest extends AbstractEditorTest {
 
     BufferedImage immediateImage;
 
-    DataContext dataContext = ((EditorImpl)myEditor).getDataContext();
+    DataContext dataContext = ((EditorImpl)getEditor()).getDataContext();
 
     try {
       editorComponent.paint(graphics);
-      ((EditorImpl)myEditor).processKeyTypedImmediately(c, graphics, dataContext);
+      ((EditorImpl)getEditor()).processKeyTypedImmediately(c, graphics, dataContext);
       immediateImage = copy(image);
-      ((EditorImpl)myEditor).processKeyTypedNormally(c, dataContext);
+      ((EditorImpl)getEditor()).processKeyTypedNormally(c, dataContext);
       editorComponent.paint(graphics);
     }
     finally {
@@ -291,20 +291,20 @@ public class ImmediatePainterTest extends AbstractEditorTest {
                                     expectedImageFile.getAbsolutePath(), actualImageFile.getAbsolutePath());
   }
 
-  private static RangeHighlighter addLineHighlighter(int startOffset, int endOffset, int layer, TextAttributes attributes) {
-    return myEditor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer, attributes, HighlighterTargetArea.LINES_IN_RANGE);
+  private RangeHighlighter addLineHighlighter(int startOffset, int endOffset, int layer, TextAttributes attributes) {
+    return getEditor().getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer, attributes, HighlighterTargetArea.LINES_IN_RANGE);
   }
 
-  private static RangeHighlighter addRangeHighlighter(int startOffset, int endOffset, int layer, TextAttributes attributes) {
-    return myEditor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer, attributes, HighlighterTargetArea.EXACT_RANGE);
+  private RangeHighlighter addRangeHighlighter(int startOffset, int endOffset, int layer, TextAttributes attributes) {
+    return getEditor().getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer, attributes, HighlighterTargetArea.EXACT_RANGE);
   }
 
-  private static void setCaretRowVisible(boolean visible) {
-    myEditor.getSettings().setCaretRowShown(visible);
+  private void setCaretRowVisible(boolean visible) {
+    getEditor().getSettings().setCaretRowShown(visible);
   }
 
-  private static void setLineCursorWidth(int width) {
-    myEditor.getSettings().setLineCursorWidth(width);
+  private void setLineCursorWidth(int width) {
+    getEditor().getSettings().setLineCursorWidth(width);
   }
 
   private static void setCaretColor(Color color) {
@@ -332,8 +332,8 @@ public class ImmediatePainterTest extends AbstractEditorTest {
     ImmediatePainter.DOUBLE_BUFFERING.setValue(enabled);
   }
 
-  private static void setBlockCursor(boolean blockCursor) {
-    myEditor.getSettings().setBlockCursor(blockCursor);
+  private void setBlockCursor(boolean blockCursor) {
+    getEditor().getSettings().setBlockCursor(blockCursor);
   }
 
   @NotNull

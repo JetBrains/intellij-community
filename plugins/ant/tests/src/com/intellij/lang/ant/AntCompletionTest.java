@@ -26,7 +26,7 @@ public class AntCompletionTest extends LightJavaCodeInsightTestCase {
   @Override
   protected void configureByFile(@NotNull @TestDataFile @NonNls String relativePath) {
     super.configureByFile(relativePath);
-    AntSupport.markFileAsAntFile(myVFile, myFile.getProject(), true);
+    AntSupport.markFileAsAntFile(getVFile(), getFile().getProject(), true);
   }
 
   public void testSimpleProperty() {
@@ -175,25 +175,25 @@ public class AntCompletionTest extends LightJavaCodeInsightTestCase {
     checkResultByFile(testName + "-out.xml");
   }
 
-  private static void select() {
+  private void select() {
     select(Lookup.NORMAL_SELECT_CHAR, getSelected());
   }
 
-  private static void performNormalCompletion() {
+  private void performNormalCompletion() {
     new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(getProject(), getEditor());
   }
 
-  private static void select(char completionChar, LookupElement item) {
+  private void select(char completionChar, LookupElement item) {
     ((LookupManagerImpl)LookupManager.getInstance(getProject())).forceSelection(completionChar, item);
   }
 
-  private static LookupElement getSelected() {
+  private LookupElement getSelected() {
     final Lookup lookup = LookupManager.getInstance(getProject()).getActiveLookup();
     return lookup.getCurrentItem();
   }
 
   @NotNull
-  private static LookupElement[] getItems() {
+  private LookupElement[] getItems() {
     final List<LookupElement> list = LookupManager.getInstance(getProject()).getActiveLookup().getItems();
     return list.toArray(LookupElement.EMPTY_ARRAY);
   }

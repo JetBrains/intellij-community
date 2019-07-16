@@ -36,6 +36,6 @@ public class KillRegionActionTest extends AbstractRegionToKillRingTest {
       assertEquals(parseResult.first, contents);
     }
 
-    assertEquals(parseResult.second, myEditor.getDocument().getText());
+    assertEquals(parseResult.second, getEditor().getDocument().getText());
   }
 }

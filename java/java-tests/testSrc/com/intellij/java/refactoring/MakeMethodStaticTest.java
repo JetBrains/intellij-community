@@ -194,7 +194,7 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
 
   public void testInnerStaticClassUsed() {
     configureByFile("/refactoring/makeMethodStatic/beforeInnerStaticClassUsed.java");
-    PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
+    PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiMethod);
     assertFalse(MakeStaticUtil.isParameterNeeded((PsiMethod)element));
   }
@@ -249,12 +249,12 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
   }
 
 
-  private static void perform(boolean addClassParameter) {
+  private void perform(boolean addClassParameter) {
     perform(addClassParameter, false);
   }
 
-  private static void perform(boolean addClassParameter, boolean delegate) {
-    PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
+  private void perform(boolean addClassParameter, boolean delegate) {
+    PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiMethod);
     PsiMethod method = (PsiMethod) element;
 
@@ -264,12 +264,12 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
             new Settings(true, addClassParameter ? "anObject" : null, null, delegate)).run();
   }
 
-  private static void performWithFields() {
+  private void performWithFields() {
     performWithFields(false);
   }
 
-  private static void performWithFields(boolean delegate) {
-    PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
+  private void performWithFields(boolean delegate) {
+    PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiMethod);
     PsiMethod method = (PsiMethod) element;
     final ArrayList<VariableData> parametersForFields = new ArrayList<>();

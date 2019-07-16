@@ -494,11 +494,11 @@ public class HtmlParseTest extends LightIdeaTestCase {
     assertResult("Performance.txt", result.get());
   }
 
-  private static String getTreeTextByFile(@NonNls String filename) throws Exception {
+  private String getTreeTextByFile(@NonNls String filename) throws Exception {
     return getTreeTextByText(loadFile(filename));
   }
 
-  private static String getTreeTextByText(@NonNls String text) throws IncorrectOperationException {
+  private String getTreeTextByText(@NonNls String text) throws IncorrectOperationException {
     PsiFile fileFromText = PsiFileFactory.getInstance(getProject()).createFileFromText("test.html", HtmlFileType.INSTANCE, text);
     assertEquals("trees should be equals",text,fileFromText.getText());
     return DebugUtil.psiTreeToString(fileFromText, false).trim();

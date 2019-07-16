@@ -19,7 +19,7 @@ public class EditorActionTest extends AbstractEditorTest {
     init("<caret>text",
          TestFileType.TEXT);
 
-    final EditorSettings editorSettings = myEditor.getSettings();
+    final EditorSettings editorSettings = getEditor().getSettings();
     final boolean old = editorSettings.isCaretInsideTabs();
     try {
       editorSettings.setCaretInsideTabs(true);
@@ -36,7 +36,7 @@ public class EditorActionTest extends AbstractEditorTest {
          TestFileType.TEXT);
     setEditorVisibleSize(100, 100);
 
-    final EditorSettings editorSettings = myEditor.getSettings();
+    final EditorSettings editorSettings = getEditor().getSettings();
     final boolean old = editorSettings.isCaretInsideTabs();
     try {
       editorSettings.setCaretInsideTabs(true);
@@ -51,7 +51,7 @@ public class EditorActionTest extends AbstractEditorTest {
 
   public void testDuplicateFirstLineWhenSoftWrapsAreOn() {
     init("long long t<caret>ext", TestFileType.TEXT);
-    EditorTestUtil.configureSoftWraps(myEditor, 10);
+    EditorTestUtil.configureSoftWraps(getEditor(), 10);
 
     executeAction("EditorDuplicate");
     checkResultByText("long long text\n" +
@@ -118,14 +118,14 @@ public class EditorActionTest extends AbstractEditorTest {
     executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
     executeAction(IdeActions.ACTION_EDITOR_BACKSPACE);
     checkResultByText("te<caret>t");
-    assertFalse(((EditorEx)myEditor).isStickySelection());
+    assertFalse(((EditorEx)getEditor()).isStickySelection());
   }
 
   public void testMoveRightAtFoldedLineEnd() {
     init("line1<caret>\nline2\nline3", TestFileType.TEXT);
     addCollapsedFoldRegion(5, 7, "...");
     executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
-    assertEquals(new VisualPosition(0, 6), myEditor.getCaretModel().getVisualPosition());
+    assertEquals(new VisualPosition(0, 6), getEditor().getCaretModel().getVisualPosition());
   }
 
   public void testEnterOnLastLineInOverwriteMode() {
@@ -137,7 +137,7 @@ public class EditorActionTest extends AbstractEditorTest {
 
   public void testPasteInOneLineMode() {
     init("", TestFileType.TEXT);
-    ((EditorEx)myEditor).setOneLineMode(true);
+    ((EditorEx)getEditor()).setOneLineMode(true);
     CopyPasteManager.getInstance().setContents(new StringSelection("a\rb"));
     executeAction(IdeActions.ACTION_EDITOR_PASTE);
     checkResultByText("a b<caret>");
@@ -190,7 +190,7 @@ public class EditorActionTest extends AbstractEditorTest {
   
   public void testSwapSelectionBoundariesWithStickySelection() {
     initText("a<selection>b<caret></selection>c");
-    ((EditorEx)myEditor).setStickySelection(true);
+    ((EditorEx)getEditor()).setStickySelection(true);
     executeAction(IdeActions.ACTION_EDITOR_SWAP_SELECTION_BOUNDARIES);
     left();
     checkResultByText("<selection><caret>ab</selection>c");
@@ -211,7 +211,7 @@ public class EditorActionTest extends AbstractEditorTest {
   public void testSmartHomeAfterFoldedRegion() {
     initText(" text with [multiline\nfold region]<caret>");
     foldOccurrences("(?s)\\[.*\\]", "...");
-    myEditor.getSettings().setSmartHome(true);
+    getEditor().getSettings().setSmartHome(true);
     home();
     checkResultByText(" <caret>text with [multiline\nfold region]");
   }

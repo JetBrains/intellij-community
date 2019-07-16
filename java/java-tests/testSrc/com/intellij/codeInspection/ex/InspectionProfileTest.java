@@ -93,7 +93,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   @NotNull
-  private static InspectionProfileImpl importProfile(Element toImportElement) {
+  private InspectionProfileImpl importProfile(Element toImportElement) {
     InspectionProfileImpl profile =
       InspectionProfileSchemesPanel.importInspectionProfile(toImportElement, getApplicationProfileManager(), getProject());
     return Objects.requireNonNull(profile);

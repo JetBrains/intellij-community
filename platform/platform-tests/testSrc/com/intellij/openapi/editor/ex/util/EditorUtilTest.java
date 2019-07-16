@@ -22,7 +22,7 @@ public class EditorUtilTest extends LightPlatformCodeInsightTestCase {
   public void testGetNotFoldedLineStartEndOffsets() {
     configureFromFileText(getTestName(false) + ".txt",
                           "aaa\nbbb\nccc\nddd");
-    EditorTestUtil.addFoldRegion(myEditor, 4, 8, "...", true);
+    EditorTestUtil.addFoldRegion(getEditor(), 4, 8, "...", true);
 
     assertVisualLineRange(2, 0, 3);
     assertVisualLineRange(4, 4, 11);
@@ -32,8 +32,8 @@ public class EditorUtilTest extends LightPlatformCodeInsightTestCase {
     assertVisualLineRange(13, 12, 15);
   }
 
-  private static void assertVisualLineRange(int offset, int lineStartOffset, int lineEndOffset) {
-    assertEquals(lineStartOffset, EditorUtil.getNotFoldedLineStartOffset(myEditor, offset));
-    assertEquals(lineEndOffset, EditorUtil.getNotFoldedLineEndOffset(myEditor, offset));
+  private void assertVisualLineRange(int offset, int lineStartOffset, int lineEndOffset) {
+    assertEquals(lineStartOffset, EditorUtil.getNotFoldedLineStartOffset(getEditor(), offset));
+    assertEquals(lineEndOffset, EditorUtil.getNotFoldedLineEndOffset(getEditor(), offset));
   }
 }

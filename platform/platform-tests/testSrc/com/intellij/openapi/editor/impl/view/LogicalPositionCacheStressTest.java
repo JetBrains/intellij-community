@@ -30,11 +30,6 @@ public class LogicalPositionCacheStressTest extends AbstractEditorTest {
   private static final int ITERATIONS = 10000;
   private static final Long SEED_OVERRIDE = null; // set non-null value to run with a specific seed
 
-  private static final List<? extends Action> ourActions = Arrays.asList(new AddText(),
-                                                                         new RemoveText(),
-                                                                         new ReplaceText(),
-                                                                         new MoveText());
-
   private final Random myRandom = new Random() {{
     //noinspection ConstantConditions
     setSeed(mySeed = SEED_OVERRIDE == null ? nextLong() : SEED_OVERRIDE);
@@ -42,13 +37,17 @@ public class LogicalPositionCacheStressTest extends AbstractEditorTest {
   private long mySeed;
 
   public void testRandomActions() {
+    List<? extends Action> actions = Arrays.asList(new AddText(),
+                                                     new RemoveText(),
+                                                     new ReplaceText(),
+                                                     new MoveText());
     LOG.debug("Seed is " + mySeed);
     int i = 0;
     try {
       initText("");
       for (i = 1; i <= ITERATIONS; i++) {
-        doRandomAction();
-        checkConsistency(myEditor);
+        doRandomAction(actions);
+        checkConsistency(getEditor());
       }
     }
     catch (Throwable t) {
@@ -58,8 +57,11 @@ public class LogicalPositionCacheStressTest extends AbstractEditorTest {
     }
   }
 
-  private void doRandomAction() {
-    ourActions.get(myRandom.nextInt(ourActions.size())).perform(myEditor, myRandom);
+  private void doRandomAction(List<? extends Action> actions) {
+    actions.get(myRandom.nextInt(Arrays.asList(new AddText(),
+                                               new RemoveText(),
+                                               new ReplaceText(),
+                                               new MoveText()).size())).perform(getEditor(), myRandom);
   }
 
   private static void checkConsistency(Editor editor) {
@@ -88,7 +90,7 @@ public class LogicalPositionCacheStressTest extends AbstractEditorTest {
     void perform(Editor editor, Random random);
   }
   
-  private static class AddText implements Action {
+  private class AddText implements Action {
     @Override
     public void perform(Editor editor, Random random) {
       Document document = editor.getDocument();
@@ -98,7 +100,7 @@ public class LogicalPositionCacheStressTest extends AbstractEditorTest {
     }
   }
 
-  private static class RemoveText implements Action {
+  private class RemoveText implements Action {
     @Override
     public void perform(Editor editor, Random random) {
       Document document = editor.getDocument();
@@ -110,7 +112,7 @@ public class LogicalPositionCacheStressTest extends AbstractEditorTest {
     }
   }
 
-  private static class ReplaceText implements Action {
+  private class ReplaceText implements Action {
     @Override
     public void perform(Editor editor, Random random) {
       Document document = editor.getDocument();
@@ -123,7 +125,7 @@ public class LogicalPositionCacheStressTest extends AbstractEditorTest {
     }
   }
 
-  private static class MoveText implements Action {
+  private class MoveText implements Action {
     @Override
     public void perform(Editor editor, Random random) {
       Document document = editor.getDocument();

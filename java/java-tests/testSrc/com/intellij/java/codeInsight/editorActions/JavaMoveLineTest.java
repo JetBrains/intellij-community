@@ -31,11 +31,11 @@ public class JavaMoveLineTest extends LightJavaCodeInsightTestCase {
 
   public void testMoveThroughFolding() {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
-    CodeFoldingManager.getInstance(ourProject).buildInitialFoldings(myEditor);
-    FoldRegion lambdaStart = myEditor.getFoldingModel().getFoldRegion(140, 227);
+    CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(getEditor());
+    FoldRegion lambdaStart = getEditor().getFoldingModel().getFoldRegion(140, 227);
     assertNotNull(lambdaStart);
     assertFalse(lambdaStart.isExpanded());
-    FoldRegion lambdaEnd = myEditor.getFoldingModel().getFoldRegion(248, 272);
+    FoldRegion lambdaEnd = getEditor().getFoldingModel().getFoldRegion(248, 272);
     assertNotNull(lambdaEnd);
     assertFalse(lambdaEnd.isExpanded());
 

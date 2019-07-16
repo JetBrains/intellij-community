@@ -36,14 +36,14 @@ public class ReplaceWithOfNullableFixTest extends LightQuickFixParameterizedTest
   @Override
   protected void beforeActionStarted(String testName, String contents) {
     if (testName.contains("Guava")) {
-      ReplaceFromOfNullableFixTest.addGuavaOptional(getTestRootDisposable());
+      ReplaceFromOfNullableFixTest.addGuavaOptional(getProject());
     }
     super.beforeActionStarted(testName, contents);
   }
 
   @Override
   protected void afterActionCompleted(String testName, String contents) {
-    ReplaceFromOfNullableFixTest.cleanupGuava();
+    ReplaceFromOfNullableFixTest.cleanupGuava(getProject());
     super.afterActionCompleted(testName, contents);
   }
 }

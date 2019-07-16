@@ -70,7 +70,7 @@ public abstract class DomTestCase extends LightIdeaTestCase {
     return (DomManagerImpl)DomManager.getDomManager(getProject());
   }
 
-  protected static XmlFile createXmlFile(@NonNls final String text) throws IncorrectOperationException {
+  protected XmlFile createXmlFile(@NonNls final String text) throws IncorrectOperationException {
     return (XmlFile)createLightFile("a.xml", text);
   }
 
@@ -106,7 +106,7 @@ public abstract class DomTestCase extends LightIdeaTestCase {
     return getDomManager().getTypeChooserManager();
   }
 
-  protected static void incModCount() {
+  protected void incModCount() {
     getPsiManager().dropPsiCaches();
   }
 

@@ -94,7 +94,7 @@ public class DomModelMergingTest extends DomTestCase {
 
   public void testFileMerging() {
     XmlFile mergedFile = myMerger.mergeModels(XmlFile.class, createXmlFile(""), createXmlFile(""));
-    assertNull(DomManager.getDomManager(ourProject).getFileElement(mergedFile));
+    assertNull(DomManager.getDomManager(getProject()).getFileElement(mergedFile));
   }
 
 }

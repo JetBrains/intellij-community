@@ -27,7 +27,7 @@ public class EditorMultiCaretActionTest extends LightPlatformCodeInsightTestCase
   public void testAction() {
     EdtTestUtil.runInEdtAndWait(() -> {
       configureByFile(getBeforeFileName());
-      EditorTestUtil.setEditorVisibleSize(myEditor, 120, 20); // some actions require visible area to be defined, like EditorPageUp
+      EditorTestUtil.setEditorVisibleSize(getEditor(), 120, 20); // some actions require visible area to be defined, like EditorPageUp
       executeAction(getActionName());
       checkResultByFile(getAfterFileName());
     });

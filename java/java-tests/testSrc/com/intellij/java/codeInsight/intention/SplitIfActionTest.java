@@ -98,7 +98,7 @@ public class SplitIfActionTest extends LightJavaCodeInsightTestCase {
   }
 
 
-  private static void perform() {
+  private void perform() {
     SplitIfAction action = new SplitIfAction();
     assertTrue(action.isAvailable(getProject(), getEditor(), getFile()));
     ApplicationManager.getApplication().runWriteAction(() -> action.invoke(getProject(), getEditor(), getFile()));

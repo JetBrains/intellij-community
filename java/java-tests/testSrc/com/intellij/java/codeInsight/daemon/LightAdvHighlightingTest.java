@@ -318,8 +318,8 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testUnusedInspectionNonPrivateMembersReferencedFromText() {
     doTest(true);
     WriteCommandAction.runWriteCommandAction(null, () -> {
-      PsiDirectory directory = myFile.getParent();
-      assertNotNull(myFile.toString(), directory);
+      PsiDirectory directory = getFile().getParent();
+      assertNotNull(getFile().toString(), directory);
       PsiFile txt = directory.createFile("x.txt");
       VirtualFile vFile = txt.getVirtualFile();
       assertNotNull(txt.toString(), vFile);
@@ -437,21 +437,21 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
       ((EditorEx)getEditor()).getScrollPane().getViewport().setSize(new Dimension(1000,1000)); // whole file fit onscreen
       doHighlighting();
       List<HighlightInfo> fileLevel =
-        ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(ourProject)).getFileLevelHighlights(getProject(), getFile());
+        ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).getFileLevelHighlights(getProject(), getFile());
       HighlightInfo info = assertOneElement(fileLevel);
       assertEquals("top level", info.getDescription());
 
       type("\n\n");
       doHighlighting();
       fileLevel =
-        ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(ourProject)).getFileLevelHighlights(getProject(), getFile());
+        ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).getFileLevelHighlights(getProject(), getFile());
       info = assertOneElement(fileLevel);
       assertEquals("top level", info.getDescription());
 
       type("//xxx"); //disable top level annotation
       List<HighlightInfo> warnings = doHighlighting(HighlightSeverity.WARNING);
       assertEmpty(warnings);
-      fileLevel = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(ourProject)).getFileLevelHighlights(getProject(), getFile());
+      fileLevel = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).getFileLevelHighlights(getProject(), getFile());
       assertEmpty(fileLevel);
     }
     finally {

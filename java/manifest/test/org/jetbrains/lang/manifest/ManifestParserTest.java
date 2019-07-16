@@ -18,7 +18,6 @@ package org.jetbrains.lang.manifest;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.testFramework.LightIdeaTestCase;
-import com.intellij.testFramework.LightPlatformTestCase;
 
 /**
  * @author Robert F. Beeger (robert@beeger.net)
@@ -391,8 +390,8 @@ public class ManifestParserTest extends LightIdeaTestCase {
            "        ManifestToken:NEWLINE_TOKEN('\\n')\n");
   }
 
-  private static void doTest(String source, String expected) {
-    PsiFile file = LightPlatformTestCase.createLightFile("MANIFEST.MF", source);
+  private void doTest(String source, String expected) {
+    PsiFile file = createLightFile("MANIFEST.MF", source);
     assertEquals(expected, DebugUtil.psiToString(file, true));
   }
 }

@@ -22,7 +22,7 @@ class PopupUtilTest : AbstractEditorTest() {
         @Test fun tes<caret>t() {}
       }
     """.trimIndent(), TestFileType.TEXT)
-    val editor = myEditor as EditorEx
+    val editor = editor as EditorEx
     editor.scrollPane.viewport.apply {
       viewPosition = Point(0, 0)
       extentSize = Dimension(500, 1000)

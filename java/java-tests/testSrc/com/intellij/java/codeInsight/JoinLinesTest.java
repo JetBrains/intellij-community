@@ -283,7 +283,7 @@ public class JoinLinesTest extends LightJavaCodeInsightTestCase {
     checkResultByFile(path + getTestName(false) + "_after" + ext);
   }
 
-  private static void performAction() {
+  private void performAction() {
     EditorActionManager actionManager = EditorActionManager.getInstance();
     EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_JOIN_LINES);
 
@@ -291,7 +291,7 @@ public class JoinLinesTest extends LightJavaCodeInsightTestCase {
   }
 
   @NotNull
-  private static CommonCodeStyleSettings getJavaSettings() {
+  private CommonCodeStyleSettings getJavaSettings() {
     return CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
   }
 }
