@@ -151,12 +151,6 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     return super.getSelectedDirectories();
   }
 
-  @Override
-  public void addToolbarActions(@NotNull DefaultActionGroup actionGroup) {
-    AnAction editScopesAction = ActionManager.getInstance().getAction("ScopeView.EditScopes");
-    if (editScopesAction != null) actionGroup.addAction(editScopesAction).setAsSecondary(true);
-  }
-
   @NotNull
   @Override
   protected AbstractTreeUpdater createTreeUpdater(@NotNull AbstractTreeBuilder treeBuilder) {
