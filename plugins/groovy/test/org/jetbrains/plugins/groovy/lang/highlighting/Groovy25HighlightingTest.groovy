@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.testFramework.LightProjectDescriptor
@@ -106,5 +106,24 @@ def usage(CopyWith cw) {
     assert ref
     def resolved = ref.resolve()
     assert resolved instanceof GrField
+  }
+
+  void 'test IDEA-218376'() {
+    highlightingTest '''
+import groovy.transform.CompileStatic
+import groovy.transform.NamedParam
+
+@CompileStatic
+void namedParams(@NamedParam(value = 'last', type = Integer) Map args, int i) {
+  print args.last
+}
+
+@CompileStatic
+def m() {
+    namedParams(1, last: <error descr="Type of argument 'last' can not be 'String'">"1"</error>)
+}
+
+m()
+'''
   }
 }
