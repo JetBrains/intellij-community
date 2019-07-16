@@ -148,7 +148,7 @@ public final class AppUIUtil {
   public static Icon loadApplicationIconImage(@NotNull ScaleContext ctx, int size) {
     String url = ApplicationInfoImpl.getShadowInstance().getApplicationSvgIconUrl();
     Image image = loadApplicationIconImage(url, ctx, size, null);
-    return image != null ? new JBImageIcon(ImageUtil.ensureHiDPI(image, ctx)) : null;
+    return image != null ? new JBImageIcon(image) : null;
   }
 
   /**
