@@ -16,9 +16,9 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.*
 
-fun setUpClosuresSignature(inferenceSession: GroovyInferenceSession,
-                           closureParameter: ParameterizedClosure,
-                           instructions: List<ReadWriteVariableInstruction>) {
+fun collectClosureParametersConstraints(inferenceSession: GroovyInferenceSession,
+                                        closureParameter: ParameterizedClosure,
+                                        instructions: List<ReadWriteVariableInstruction>) {
   for (call in instructions) {
     val nearestCall = call.element?.parentOfType<GrCall>() ?: continue
     if (nearestCall == call.element?.parent && nearestCall.resolveMethod()?.containingClass?.qualifiedName == GroovyCommonClassNames.GROOVY_LANG_CLOSURE) {

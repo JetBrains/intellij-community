@@ -13,7 +13,7 @@ import org.jetbrains.plugins.groovy.intentions.style.inference.isTypeParameter
  */
 data class InferenceUnitGraph(val units: List<InferenceUnitNode>) {
   /**
-   * @return [units], sorted in topological order by [InferenceUnitNode.typeInstantiation]. Takes into consideration class parameters.
+   * @return [units], sorted in topological order by [InferenceUnitNode.typeInstantiation]. Takes class parameters into consideration.
    */
   fun resolveOrder(): List<InferenceUnitNode> {
     val visited = mutableSetOf<InferenceUnitNode>()

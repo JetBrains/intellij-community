@@ -7,18 +7,21 @@ import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import com.intellij.util.containers.BidirectionalMap
-import org.jetbrains.plugins.groovy.intentions.style.inference.InferenceDriver
+import org.jetbrains.plugins.groovy.intentions.style.inference.TypeUsageMetaInfo
 import org.jetbrains.plugins.groovy.intentions.style.inference.ensureWildcards
 import org.jetbrains.plugins.groovy.intentions.style.inference.flattenIntersections
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 
 fun createGraphFromInferenceVariables(variables: Collection<InferenceVariable>,
                                       session: GroovyInferenceSession,
-                                      driver: InferenceDriver,
-                                      initialVariables: Array<PsiTypeParameter>): InferenceUnitGraph {
+                                      virtualMethod: GrMethod,
+                                      initialVariables: Array<PsiTypeParameter>,
+                                      storage: TypeUsageMetaInfo,
+                                      constantParameters: List<PsiTypeParameter>): InferenceUnitGraph {
   val variableMap = BidirectionalMap<InferenceUnit, InferenceVariable>()
   val builder = InferenceUnitGraphBuilder()
   val excessParameters = (session.inferenceVariables.map { it.delegate } - initialVariables).map { it.name }.toSet()
@@ -27,7 +30,7 @@ fun createGraphFromInferenceVariables(variables: Collection<InferenceVariable>,
     val extendsTypes = variable.parameter.extendsList.referencedTypes
     val residualExtendsTypes = when {
       extendsTypes.size <= 1 -> extendsTypes.toList()
-      else -> extendsTypes.filter { driver.appearedClassTypes[variableType.className]?.contains(it.resolve()) ?: false }
+      else -> extendsTypes.filter { storage.requiredClassTypes[variableType.className]?.contains(it.resolve()) ?: false }
     }
     val filteredType = when {
       residualExtendsTypes.size > 1 -> PsiIntersectionType.createIntersection(residualExtendsTypes.toList())
@@ -44,10 +47,10 @@ fun createGraphFromInferenceVariables(variables: Collection<InferenceVariable>,
     else {
       filteredType
     }
-    val core = InferenceUnit(variable.parameter, flexible = variableType in driver.flexibleTypes,
-                             constant = variableType in driver.constantTypes)
+    val core = InferenceUnit(variable.parameter, flexible = variableType in virtualMethod.parameters.map { it.type },
+                             constant = variableType in constantParameters.map { it.type() })
     builder.setType(core, validType)
-    if (variableType in driver.forbiddingTypes) {
+    if (variableType in storage.contravariantTypes) {
       builder.forbidInstantiation(core)
     }
     variableMap[core] = variable
@@ -72,4 +75,3 @@ private fun deepConnect(session: GroovyInferenceSession,
     }
   }
 }
-

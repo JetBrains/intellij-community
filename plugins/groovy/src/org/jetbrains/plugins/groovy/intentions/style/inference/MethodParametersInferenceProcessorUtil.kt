@@ -7,6 +7,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrd
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
 
@@ -149,4 +150,48 @@ fun PsiType.isTypeParameter(): Boolean {
 
 fun PsiType.typeParameter(): PsiTypeParameter? {
   return (this as? PsiClassType)?.resolve() as? PsiTypeParameter
+}
+
+fun findOverridableMethod(method: GrMethod): PsiMethod? {
+  val clazz = method.containingClass ?: return null
+  val candidateMethodsDomain = if (method.annotations.any { it.qualifiedName == CommonClassNames.JAVA_LANG_OVERRIDE }) {
+    clazz.supers
+  }
+  else {
+    clazz.interfaces
+  }
+  val alreadyOverriddenMethods = (clazz.supers + clazz)
+    .flatMap { it.findMethodsByName(method.name, true).asIterable() }
+    .flatMap { it.findSuperMethods().asIterable() }
+  return candidateMethodsDomain
+    .flatMap { it.findMethodsByName(method.name, true).asIterable() }
+    .subtract(alreadyOverriddenMethods)
+    .firstOrNull { methodsAgree(it, method) }
+}
+
+private fun methodsAgree(pattern: PsiMethod,
+                         tested: GrMethod): Boolean {
+  if (tested.parameterList.parametersCount != pattern.parameterList.parametersCount) {
+    return false
+  }
+  val parameterList = pattern.parameters.zip(tested.parameters)
+  return parameterList.all { (patternParameter, testedParameter) ->
+    testedParameter.typeElement == null || testedParameter.type == patternParameter.type
+  }
+}
+
+fun createVirtualMethod(method: GrMethod): GrMethod {
+  val elementFactory = GroovyPsiElementFactory.getInstance(method.project)
+  return if (method.isConstructor) {
+    elementFactory.createConstructorFromText(method.name, method.text, method)
+  }
+  else {
+    elementFactory.createMethodFromText(method.text, method)
+  }
+}
+
+fun copySignatureFrom(method: PsiMethod, virtualMethod: GrMethod) {
+  virtualMethod.parameters.zip(method.parameters).forEach { (virtualParameter, actualParameter) ->
+    virtualParameter.setType(actualParameter.type as? PsiClassType)
+  }
 }
