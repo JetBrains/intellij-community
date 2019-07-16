@@ -423,7 +423,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       ourThreadExecutorsService.submit(() -> createLocatorFile());
 
       Activity activity = StartUpMeasurer.start(Phases.APP_INITIALIZED_CALLBACK);
-      for (ApplicationInitializedListener listener : ((ExtensionsAreaImpl)Extensions.getArea(null)).<ApplicationInitializedListener>getExtensionPoint("com.intellij.applicationInitializedListener")) {
+      for (ApplicationInitializedListener listener : ((ExtensionsAreaImpl)Extensions.getRootArea()).<ApplicationInitializedListener>getExtensionPoint("com.intellij.applicationInitializedListener")) {
         if (listener == null) {
           break;
         }

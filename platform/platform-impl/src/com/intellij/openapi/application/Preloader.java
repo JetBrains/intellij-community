@@ -61,7 +61,7 @@ final class Preloader implements ApplicationInitializedListener {
   @Override
   public void componentsInitialized() {
     ProgressManager progressManager = ProgressManager.getInstance();
-    for (final PreloadingActivity activity : PreloadingActivity.EP_NAME.getExtensionList()) {
+    for (PreloadingActivity activity : PreloadingActivity.EP_NAME.getIterable()) {
       myExecutor.execute(() -> {
         if (myIndicator.isCanceled()) return;
 
