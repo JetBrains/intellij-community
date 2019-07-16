@@ -2,6 +2,7 @@
 package com.intellij.idea;
 
 import com.intellij.util.PlatformUtils;
+import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings({"UnusedDeclaration"})
 public class MainImpl {
@@ -10,7 +11,7 @@ public class MainImpl {
   /**
    * Called from PluginManager via reflection.
    */
-  protected static void start(final String[] args) throws Exception {
+  protected static void start(@NotNull String[] args) throws Exception {
     System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, PlatformUtils.getPlatformPrefix(PlatformUtils.IDEA_CE_PREFIX));
 
     StartupUtil.prepareAndStart(args, () -> IdeaApplication.initApplication(args));

@@ -10,19 +10,16 @@ import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Transient
 import org.jetbrains.annotations.Nls
 
-/**
- * @author yole
- */
+private val EP_NAME = ExtensionPointName<RegistryKeyBean>("com.intellij.registryKey")
+
+// Since the XML parser removes all the '\n' chars joining indented lines together,
+// we can't really tell whether multiple whitespaces actually refer to indentation spaces or just regular ones.
+private val CONSECUTIVE_SPACES_REGEX = """\s{2,}""".toRegex()
+
+private fun String.unescapeString() = StringUtil.unescapeStringCharacters(replace(CONSECUTIVE_SPACES_REGEX, " "))
+
 class RegistryKeyBean : PluginAware {
-  private companion object {
-    val EP_NAME = ExtensionPointName<RegistryKeyBean>("com.intellij.registryKey")
-
-    // Since the XML parser removes all the '\n' chars joining indented lines together,
-    // we can't really tell whether multiple whitespaces actually refer to indentation spaces or just regular ones.
-    val CONSECUTIVE_SPACES_REGEX = """\s{2,}""".toRegex()
-
-    fun String.unescapeString() = StringUtil.unescapeStringCharacters(replace(CONSECUTIVE_SPACES_REGEX, " "))
-
+  companion object {
     @JvmStatic
     fun addKeysFromPlugins() {
       Registry.addKeys(EP_NAME.iterable.map { extension ->

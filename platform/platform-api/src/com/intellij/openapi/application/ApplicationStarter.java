@@ -37,7 +37,7 @@ public interface ApplicationStarter {
    *
    * @param args program arguments (including the selector)
    */
-  void main(String[] args);
+  void main(@NotNull String[] args);
 
   /**
    * Applications that are incapable of working in a headless mode should override the method and return {@code false}.
