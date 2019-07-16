@@ -225,6 +225,7 @@ public class PerformanceWatcher implements Disposable {
   private void edtFrozenPrecise(long start) {
     myFreezeStart = start;
     myPublisher.uiFreezeStarted();
+    stopDumping();
     myDumpTask = myExecutor.scheduleWithFixedDelay(this::dumpThreads, 0, getDumpInterval(), TimeUnit.MILLISECONDS);
   }
 
@@ -241,12 +242,16 @@ public class PerformanceWatcher implements Disposable {
     return new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date(timeMs));
   }
 
-  private void edtResponds(long currentMillis) {
-    if (myFreezeStart != 0) {
-      if (myDumpTask != null) {
-        myDumpTask.cancel(false);
-      }
+  private void stopDumping() {
+    if (myDumpTask != null) {
+      myDumpTask.cancel(false);
+    }
+  }
 
+  private void edtResponds(long currentMillis) {
+    stopDumping();
+
+    if (myFreezeStart != 0) {
       int unresponsiveDuration = (int)(currentMillis - myFreezeStart) / 1000;
       File dir = new File(myLogDir, getFreezeFolderName(myFreezeStart));
       File reportDir = null;
