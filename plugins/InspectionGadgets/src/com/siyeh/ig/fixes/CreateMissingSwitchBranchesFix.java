@@ -155,9 +155,7 @@ public class CreateMissingSwitchBranchesFix extends BaseSwitchFix {
       if (isRuleBasedFormat) {
         return Collections.singletonList("case " + name + " -> " + value + ";");
       } else {
-        return Arrays.asList("case " + name + ":",
-                             (PsiUtil.getLanguageLevel(switchBlock) == LanguageLevel.JDK_13_PREVIEW ? "yield" : "break") +
-                             " " + value + ";");
+        return Arrays.asList("case " + name + ":", "yield " + value + ";");
       }
     } else {
       if (isRuleBasedFormat) {
