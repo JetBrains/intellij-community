@@ -17,6 +17,7 @@ import java.util.Set;
 @ApiStatus.Experimental
 public class ServiceViewActionUtils {
   public static final DataKey<Set<ServiceViewContributor>> CONTRIBUTORS_KEY = DataKey.create("serviceViewContributors");
+  public static final DataKey<ServiceViewOptions> OPTIONS_KEY = DataKey.create("ServiceViewTreeOptions");
 
   private ServiceViewActionUtils() {
   }
