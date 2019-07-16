@@ -5,10 +5,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiParameter
 import com.intellij.psi.PsiType
 
-data class NamedParamData(
+class NamedParamData(
   val name: String,
   val type: PsiType?,
   val origin: PsiParameter,
-  val navigation: PsiElement,
+  val navigationElement: PsiElement,
   val required: Boolean = false
 )

@@ -22,7 +22,7 @@ class GroovyNamedVariantArgumentProvider : GroovyNamedArgumentProvider() {
 
     collectNamedParams(mapParameter).forEach {
       val type = it.type
-      result[it.name] = if (type != null) TypeCondition(type, it.navigation) else NamedArgumentDescriptorImpl(it.navigation)
+      result[it.name] = if (type != null) TypeCondition(type, it.navigationElement) else NamedArgumentDescriptorImpl(it.navigationElement)
     }
   }
 }

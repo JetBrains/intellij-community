@@ -11,5 +11,5 @@ void namedParams(int i, @NamedParam(value = 'param', required = true) Integer n)
 
 @CompileStatic
 def m() {
-  <error descr="Missing required 'param' named parameter">namedParams(1, a :1)</error>
+  <error descr="Missing required named parameter 'param'">namedParams(1, a :1)</error>
 }
