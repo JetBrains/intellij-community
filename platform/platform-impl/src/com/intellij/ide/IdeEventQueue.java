@@ -56,6 +56,7 @@ import java.awt.event.*;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Queue;
@@ -107,6 +108,8 @@ public final class IdeEventQueue extends EventQueue {
   private boolean myIsInInputEvent;
   @NotNull
   private AWTEvent myCurrentEvent = new InvocationEvent(this, EmptyRunnable.getInstance());
+  @Nullable
+  private AWTEvent myCurrentSequencedEvent = null;
   private volatile long myLastActiveTime = System.nanoTime();
   private long myLastEventTime = System.currentTimeMillis();
   private WindowManagerEx myWindowManager;
@@ -360,13 +363,14 @@ public final class IdeEventQueue extends EventQueue {
 
   @Override
   public void dispatchEvent(@NotNull AWTEvent e) {
-    // DO NOT ADD ANYTHING BEFORE performanceWatcher.edtEventStarted is called
+    // DO NOT ADD ANYTHING BEFORE hackSequenceEvent is called
     long startedAt = System.currentTimeMillis();
     PerformanceWatcher performanceWatcher = obtainPerformanceWatcher();
     try {
       if (performanceWatcher != null) {
         performanceWatcher.edtEventStarted(startedAt);
       }
+      fixNestedSequenceEvent(e);
       // Add code below if you need
 
       if (e.getID() == WindowEvent.WINDOW_ACTIVATED) {
@@ -430,6 +434,10 @@ public final class IdeEventQueue extends EventQueue {
         myIsInInputEvent = wasInputEvent;
         myCurrentEvent = oldEvent;
 
+        if (myCurrentSequencedEvent == e) {
+          myCurrentSequencedEvent = null;
+        }
+
         for (EventDispatcher each : myPostProcessors) {
           each.dispatch(e);
         }
@@ -448,6 +456,18 @@ public final class IdeEventQueue extends EventQueue {
       if (performanceWatcher != null) {
         performanceWatcher.edtEventFinished();
       }
+    }
+  }
+
+  // Fixes IDEA-218430: nested sequence events cause deadlock
+  private void fixNestedSequenceEvent(@NotNull AWTEvent e) {
+    if (e.getClass() == SequencedEventNestedFieldHolder.SEQUENCED_EVENT_CLASS) {
+      if (myCurrentSequencedEvent != null) {
+        AWTEvent sequenceEventToDispose = myCurrentSequencedEvent;
+        myCurrentSequencedEvent = null; // Set to null BEFORE dispose b/c `dispose` can dispatch events internally
+        SequencedEventNestedFieldHolder.invokeDispose(sequenceEventToDispose);
+      }
+      myCurrentSequencedEvent = e;
     }
   }
 
@@ -1198,12 +1218,23 @@ public final class IdeEventQueue extends EventQueue {
 
   private static class SequencedEventNestedFieldHolder {
     private static final Field NESTED_FIELD;
+    private static final Method DISPOSE_METHOD;
     private static final Class<?> SEQUENCED_EVENT_CLASS;
+
+    private static void invokeDispose(AWTEvent event) {
+      try {
+        DISPOSE_METHOD.invoke(event);
+      }
+      catch (IllegalAccessException | InvocationTargetException e) {
+        throw new RuntimeException(e);
+      }
+    }
 
     static {
       try {
         SEQUENCED_EVENT_CLASS = Class.forName("java.awt.SequencedEvent");
         NESTED_FIELD = ReflectionUtil.getDeclaredField(SEQUENCED_EVENT_CLASS, "nested");
+        DISPOSE_METHOD = ReflectionUtil.getDeclaredMethod(SEQUENCED_EVENT_CLASS, "dispose");
         if (NESTED_FIELD == null) throw new RuntimeException();
       }
       catch (ClassNotFoundException e) {
