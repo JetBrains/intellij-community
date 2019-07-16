@@ -172,11 +172,15 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @ApiStatus.Internal
   public static void registerMessageBusListeners(@NotNull Application app, @NotNull List<? extends IdeaPluginDescriptor> pluginDescriptors, boolean isUnitTestMode) {
     Map<String, List<ListenerDescriptor>> map = ContainerUtil.newConcurrentMap();
+    boolean isHeadlessMode = app.isHeadlessEnvironment();
     for (IdeaPluginDescriptor descriptor : pluginDescriptors) {
       List<ListenerDescriptor> listeners = ((IdeaPluginDescriptorImpl)descriptor).getListeners();
       if (!listeners.isEmpty()) {
         for (ListenerDescriptor listener : listeners) {
           if (isUnitTestMode && !listener.activeInTestMode) {
+            continue;
+          }
+          if (isHeadlessMode && !listener.activeInHeadlessMode) {
             continue;
           }
 

@@ -23,5 +23,8 @@ public interface Listeners extends DomElement {
 
     @Attribute("activeInTestMode")
     GenericAttributeValue<Boolean> isActiveInTestMode();
+
+    @Attribute("activeInHeadlessMode")
+    GenericAttributeValue<Boolean> isActiveInHeadlessMode();
   }
 }

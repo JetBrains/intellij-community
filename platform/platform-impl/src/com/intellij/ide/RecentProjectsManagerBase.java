@@ -31,6 +31,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -394,7 +395,8 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     }
   }
 
-  static final class MyProjectListener implements ProjectManagerListener {
+  @ApiStatus.Internal
+  public static final class MyProjectListener implements ProjectManagerListener {
     private final RecentProjectsManagerBase manager = getInstanceEx();
 
     @Override
@@ -586,7 +588,8 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     }
   }
 
-  static final class MyAppLifecycleListener implements AppLifecycleListener {
+  @ApiStatus.Internal
+  public static final class MyAppLifecycleListener implements AppLifecycleListener {
     @Override
     public void projectOpenFailed() {
       getInstanceEx().updateLastProjectPath();

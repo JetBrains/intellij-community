@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Queue;
 
-public class MessageBusConnectionImpl implements MessageBusConnection {
+public final class MessageBusConnectionImpl implements MessageBusConnection {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.messages.impl.MessageBusConnectionImpl");
 
   private final MessageBusImpl myBus;
@@ -25,7 +25,7 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
   private final ThreadLocal<Queue<Message>> myPendingMessages = MessageBusImpl.createThreadLocalQueue();
 
   private MessageHandler myDefaultHandler;
-  private volatile SmartFMap<Topic, Object> mySubscriptions = SmartFMap.emptyMap();
+  private volatile SmartFMap<Topic<?>, Object> mySubscriptions = SmartFMap.emptyMap();
 
   public MessageBusConnectionImpl(@NotNull MessageBusImpl bus) {
     myBus = bus;
@@ -139,5 +139,9 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
   @NotNull
   MessageBusImpl getBus() {
     return myBus;
+  }
+
+  public boolean isSubscribed(@NotNull Topic<?> topic) {
+    return mySubscriptions.containsKey(topic);
   }
 }

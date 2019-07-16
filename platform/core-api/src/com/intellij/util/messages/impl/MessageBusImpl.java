@@ -147,21 +147,21 @@ public class MessageBusImpl implements MessageBus {
 
   @Override
   @NotNull
-  public MessageBusConnection connect() {
+  public MessageBusConnectionImpl connect() {
     return connect(myConnectionDisposable);
   }
 
   @Override
   @NotNull
-  public MessageBusConnection connect(@NotNull Disposable parentDisposable) {
+  public MessageBusConnectionImpl connect(@NotNull Disposable parentDisposable) {
     checkNotDisposed();
-    final MessageBusConnection connection = new MessageBusConnectionImpl(this);
+    MessageBusConnectionImpl connection = new MessageBusConnectionImpl(this);
     Disposer.register(parentDisposable, connection);
     return connection;
   }
 
   @NotNull
-  protected MessageBusConnection createConnectionForLazyListeners() {
+  protected MessageBusConnection createConnectionForLazyListeners(@NotNull Topic<?> topic) {
     return connect();
   }
 
@@ -196,12 +196,12 @@ public class MessageBusImpl implements MessageBus {
 
       List<ListenerDescriptor> listenerDescriptors = myTopicClassToListenerClass.remove(listenerClass.getName());
       if (listenerDescriptors != null) {
-        MessageBusConnection connection = createConnectionForLazyListeners();
         for (ListenerDescriptor listenerDescriptor : listenerDescriptors) {
           ClassLoader classLoader = listenerDescriptor.pluginDescriptor.getPluginClassLoader();
           try {
             @SuppressWarnings("unchecked")
             L listener = (L)ReflectionUtil.newInstance(Class.forName(listenerDescriptor.listenerClassName, true, classLoader), false);
+            MessageBusConnection connection = createConnectionForLazyListeners(topic);
             connection.subscribe(topic, listener);
           }
           catch (ClassNotFoundException e) {
@@ -521,14 +521,31 @@ public class MessageBusImpl implements MessageBus {
      */
     private final ThreadLocal<SortedMap<MessageBusImpl, Integer>> myWaitingBuses = new ThreadLocal<>();
 
-    private final MessageBusConnection myLazyConnection = connect();
+    private final List<MessageBusConnectionImpl> myConnectionPool = ContainerUtil.createLockFreeCopyOnWriteList();
 
     volatile boolean myClearedSubscribersCache;
 
     @NotNull
     @Override
-    protected MessageBusConnection createConnectionForLazyListeners() {
-      return myLazyConnection;
+    protected MessageBusConnection createConnectionForLazyListeners(@NotNull Topic<?> topic) {
+      // createConnectionForLazyListeners is never called concurrently for the same topic,
+      // see explanation in syncPublisher
+      for (MessageBusConnectionImpl connection : myConnectionPool) {
+        if (!connection.isSubscribed(topic)) {
+          return connection;
+        }
+      }
+
+      MessageBusConnectionImpl connection = connect();
+      myConnectionPool.add(connection);
+      return connection;
+    }
+
+    @Override
+    public void dispose() {
+      super.dispose();
+
+      myConnectionPool.clear();
     }
 
     @Override

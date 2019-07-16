@@ -59,7 +59,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private static final String PROJECT_SERVICE = "com.intellij.projectService";
   private static final String MODULE_SERVICE = "com.intellij.moduleService";
 
-  @SuppressWarnings("SSBasedInspection")
   public static final List<String> SERVICE_QUALIFIED_ELEMENT_NAMES = Arrays.asList(APPLICATION_SERVICE, PROJECT_SERVICE, MODULE_SERVICE);
 
   private final File myPath;
@@ -379,10 +378,15 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
         LOG.error("applicationListener descriptor is not correct: " + JDOMUtil.writeElement(child));
       }
       else {
-        String activeInTestMode = child.getAttributeValue("activeInTestMode");
-        descriptors.add(new ListenerDescriptor(listenerClassName, topicClassName, activeInTestMode == null || Boolean.parseBoolean(activeInTestMode), this));
+        descriptors.add(new ListenerDescriptor(listenerClassName, topicClassName,
+                                               getBoolean("activeInTestMode", child), getBoolean("activeInHeadlessMode", child), this));
       }
     }
+  }
+
+  private static boolean getBoolean(@NotNull String name, @NotNull Element child) {
+    String value = child.getAttributeValue(name);
+    return value == null || Boolean.parseBoolean(value);
   }
 
   @NotNull

@@ -1,144 +1,165 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.project.impl;
+package com.intellij.openapi.project.impl
 
-import com.intellij.ide.*;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.util.PathUtil;
-import com.intellij.util.containers.ContainerUtil;
-import org.jdom.JDOMException;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ide.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.project.impl.ProjectOpeningTest.closeProject
+import com.intellij.openapi.util.Disposer
+import com.intellij.testFramework.*
+import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.util.PathUtil
+import com.intellij.util.containers.ContainerUtil
+import org.jdom.JDOMException
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.ExternalResource
+import java.io.IOException
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+@RunsInEdt
+class RecentProjectsTest {
+  companion object {
+    @ClassRule
+    @JvmField
+    val appRule = ApplicationRule()
 
-import static com.intellij.openapi.project.impl.ProjectOpeningTest.closeProject;
-import static com.intellij.testFramework.assertions.Assertions.assertThat;
-
-/**
- * @author Konstantin Bulenkov
- */
-public class RecentProjectsTest extends PlatformTestCase {
-  public void testMostRecentOnTop() throws Exception {
-    String p1 = createAndOpenProject("p1");
-    String p2 = createAndOpenProject("p2");
-    String p3 = createAndOpenProject("p3");
-
-    checkRecents("p3", "p2", "p1");
-
-    doReopenCloseAndCheck(p2, "p2", "p3", "p1");
-    doReopenCloseAndCheck(p1, "p1", "p2", "p3");
-    doReopenCloseAndCheck(p3, "p3", "p1", "p2");
+    @ClassRule
+    @JvmField
+    val edtRule = EdtRule()
   }
 
-  public void testGroupsOrder() throws Exception {
-    String p1 = createAndOpenProject("p1");
-    String p2 = createAndOpenProject("p2");
-    String p3 = createAndOpenProject("p3");
-    String p4 = createAndOpenProject("p4");
+  @Rule
+  @JvmField
+  val busConnection = object : ExternalResource() {
+    private val disposable = Disposer.newDisposable()
 
-    RecentProjectsManager manager = RecentProjectsManager.getInstance();
-    ProjectGroup g1 = new ProjectGroup("g1");
-    ProjectGroup g2 = new ProjectGroup("g2");
-    manager.addGroup(g1);
-    manager.addGroup(g2);
+    override fun before() {
+      val connection = ApplicationManager.getApplication().messageBus.connect()
+      connection.subscribe(ProjectManager.TOPIC, RecentProjectsManagerBase.MyProjectListener())
+      connection.subscribe(AppLifecycleListener.TOPIC, RecentProjectsManagerBase.MyAppLifecycleListener())
+    }
 
-    g1.addProject(p1);
-    g1.addProject(p2);
-    g2.addProject(p3);
-
-    checkGroups("g2", "g1");
-
-    doReopenCloseAndCheckGroups(p4, "g2", "g1");
-    doReopenCloseAndCheckGroups(p1, "g1", "g2");
-    doReopenCloseAndCheckGroups(p3, "g2", "g1");
+    override fun after() {
+      Disposer.dispose(disposable)
+    }
   }
 
-  public void testTimestampForOpenProjectUpdatesWhenGetStateCalled() throws Exception {
-    Project project = null;
+  @Rule
+  @JvmField
+  val tempDir = TemporaryDirectory()
+
+  @Test
+  fun testMostRecentOnTop() {
+    val p1 = createAndOpenProject("p1")
+    val p2 = createAndOpenProject("p2")
+    val p3 = createAndOpenProject("p3")
+
+    checkRecents("p3", "p2", "p1")
+
+    doReopenCloseAndCheck(p2, "p2", "p3", "p1")
+    doReopenCloseAndCheck(p1, "p1", "p2", "p3")
+    doReopenCloseAndCheck(p3, "p3", "p1", "p2")
+  }
+
+  @Test
+  fun testGroupsOrder() {
+    val p1 = createAndOpenProject("p1")
+    val p2 = createAndOpenProject("p2")
+    val p3 = createAndOpenProject("p3")
+    val p4 = createAndOpenProject("p4")
+
+    val manager = RecentProjectsManager.getInstance()
+    val g1 = ProjectGroup("g1")
+    val g2 = ProjectGroup("g2")
+    manager.addGroup(g1)
+    manager.addGroup(g2)
+
+    g1.addProject(p1)
+    g1.addProject(p2)
+    g2.addProject(p3)
+
+    checkGroups(listOf("g2", "g1"))
+
+    doReopenCloseAndCheckGroups(p4, listOf("g2", "g1"))
+    doReopenCloseAndCheckGroups(p1, listOf("g1", "g2"))
+    doReopenCloseAndCheckGroups(p3, listOf("g2", "g1"))
+  }
+
+  @Test
+  fun testTimestampForOpenProjectUpdatesWhenGetStateCalled() {
+    var project: Project? = null
     try {
-      File path = createTempDir("z1");
-      ProjectManagerEx manager = ProjectManagerEx.getInstanceEx();
-      project = manager.createProject(null, path.getPath());
-      closeProject(project);
-      project = manager.loadAndOpenProject(path);
-      long timestamp = getProjectOpenTimestamp("z1");
-      RecentProjectsManagerBase.getInstanceEx().updateLastProjectPath();
+      val path = tempDir.newPath("z1")
+      project = PlatformTestCase.createProject(path)
+      closeProject(project)
+      project = ProjectManagerEx.getInstanceEx().loadAndOpenProject(path)
+      val timestamp = getProjectOpenTimestamp("z1")
+      RecentProjectsManagerBase.getInstanceEx().updateLastProjectPath()
       // "Timestamp for opened project has not been updated"
-      assertThat(getProjectOpenTimestamp("z1")).isGreaterThan(timestamp);
+      assertThat(getProjectOpenTimestamp("z1")).isGreaterThan(timestamp)
     }
     finally {
-      closeProject(project);
+      closeProject(project)
     }
   }
 
-  private static long getProjectOpenTimestamp(@SuppressWarnings("SameParameterValue") @NotNull String projectName) {
-    Map<String, RecentProjectMetaInfo> additionalInfo = RecentProjectsManagerBase.getInstanceEx().getState().getAdditionalInfo();
-    for (String s : additionalInfo.keySet()) {
+  private fun getProjectOpenTimestamp(projectName: String): Long {
+    val additionalInfo = RecentProjectsManagerBase.getInstanceEx().state!!.additionalInfo
+    for (s in additionalInfo.keys) {
       if (s.endsWith(projectName)) {
-        return additionalInfo.get(s).getProjectOpenTimestamp();
+        return additionalInfo.get(s)!!.projectOpenTimestamp
       }
     }
-    return -1;
+    return -1
   }
 
-  private static void doReopenCloseAndCheck(String projectPath, String... results) throws IOException, JDOMException {
-    Project project = ProjectManager.getInstance().loadAndOpenProject(projectPath);
-    closeProject(project);
-    checkRecents(results);
+  @Throws(IOException::class, JDOMException::class)
+  private fun doReopenCloseAndCheck(projectPath: String, vararg results: String) {
+    val project = ProjectManager.getInstance().loadAndOpenProject(projectPath)
+    closeProject(project)
+    checkRecents(*results)
   }
 
-  private static void doReopenCloseAndCheckGroups(String projectPath, String... results) throws IOException, JDOMException {
-    Project project = ProjectManager.getInstance().loadAndOpenProject(projectPath);
-    closeProject(project);
-    checkGroups(results);
+  @Throws(IOException::class, JDOMException::class)
+  private fun doReopenCloseAndCheckGroups(projectPath: String, results: List<String>) {
+    val project = ProjectManager.getInstance().loadAndOpenProject(projectPath)
+    closeProject(project)
+    checkGroups(results)
   }
 
-  private static void checkRecents(String... recents) {
-    List<String> recentProjects = Arrays.asList(recents);
-    RecentProjectManagerState state = ((RecentProjectsManagerBase)RecentProjectsManager.getInstance()).getState();
-    List<String> projects = state.getAdditionalInfo().keySet().stream()
-      .map(s -> PathUtil.getFileName(s).replace("idea_test_", ""))
-      .filter(recentProjects::contains)
-      .collect(Collectors.toList());
-    assertThat(ContainerUtil.reverse(projects)).isEqualTo(recentProjects);
+  private fun checkRecents(vararg recents: String) {
+    val recentProjects = listOf(*recents)
+    val state = (RecentProjectsManager.getInstance() as RecentProjectsManagerBase).state
+    val projects = state!!.additionalInfo.keys.asSequence()
+      .map { s -> PathUtil.getFileName(s).substringAfterLast("_") }
+      .filter { recentProjects.contains(it) }
+      .toList()
+    assertThat(ContainerUtil.reverse(projects)).isEqualTo(recentProjects)
   }
 
-  private static void checkGroups(String... groups) {
-    List<String> recentGroups = Arrays.stream((RecentProjectsManager.getInstance()).getRecentProjectsActions(false, true))
-      .filter(a -> a instanceof ProjectGroupActionGroup)
-      .map(a -> ((ProjectGroupActionGroup)a).getGroup().getName())
-      .collect(Collectors.toList());
-    assertThat(recentGroups).containsExactly(groups);
+  private fun checkGroups(groups: List<String>) {
+    val recentGroups = RecentProjectsManager.getInstance().getRecentProjectsActions(false, true).asSequence()
+      .filter { a -> a is ProjectGroupActionGroup }
+      .map { a -> (a as ProjectGroupActionGroup).group.name }
+      .toList()
+    assertThat(recentGroups).isEqualTo(groups)
   }
 
-  @NotNull
-  private String createAndOpenProject(@NotNull String name) throws IOException, JDOMException {
-    Project project = null;
+  private fun createAndOpenProject(name: String): String {
+    var project: Project? = null
     try {
-      File path = createTempDir(name);
-      ProjectManagerEx manager = ProjectManagerEx.getInstanceEx();
-      project = manager.createProject(null, path.getPath());
-      project.save();
-      closeProject(project);
-      project = manager.loadAndOpenProject(path);
-      return project.getBasePath();
+      val path = tempDir.newPath(name)
+      project = PlatformTestCase.createProject(path)
+      PlatformTestUtil.saveProject(project)
+      closeProject(project)
+      project = ProjectManagerEx.getInstanceEx().loadAndOpenProject(path)
+      return project!!.basePath!!
     }
     finally {
-      closeProject(project);
+      closeProject(project)
     }
-  }
-
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    //this is a service. Initializes lazily
-    RecentProjectsManager.getInstance();
   }
 }
