@@ -18,10 +18,9 @@ class ProjectTitlePane : ShrinkingTitlePart {
 
   private val projectTitle = ProjectTitle()
   var parsed = false
-  override var active: Boolean = true
+  override var active: Boolean
+    get() = projectTitle.active
     set(value) {
-      field = value
-      unparsed.active = value
       projectTitle.active = value
     }
 
@@ -93,24 +92,18 @@ class ProjectTitlePane : ShrinkingTitlePart {
 
 
   override fun hide() {
-    if(!active) return
-
     state = TitlePart.State.HIDE
     unparsed.hide()
     projectTitle.hide()
   }
 
   override fun showLong() {
-    if(!active) return
-
     state = TitlePart.State.LONG
     unparsed.showLong()
     projectTitle.showLong()
   }
 
   override fun showShort() {
-    if(!active) return
-
     state = TitlePart.State.SHORT
     unparsed.showShort()
     projectTitle.showShort()
@@ -151,12 +144,9 @@ class ProjectTitle : ShrinkingTitlePart {
   private var longTextWidth: Int = 0
 
   private var state = TitlePart.State.LONG
-  override var active: Boolean = true
+  override var active: Boolean
+    get() = description.active
     set(value) {
-      field = value
-      if(!value) {
-        label.text = ""
-      }
       description.active = value
     }
 
@@ -208,34 +198,26 @@ class ProjectTitle : ShrinkingTitlePart {
     get() = if (state == TitlePart.State.IGNORED || project.isEmpty()) "" else project
 
   override fun hide() {
-    if(!active) return
-
     state = TitlePart.State.HIDE
     label.text = ""
   }
 
   override val isClipped: Boolean
-    get() = state != TitlePart.State.LONG || !active
+    get() = state != TitlePart.State.LONG || !description.active
 
   override fun showLong() {
-    if(!active) return
-
     label.text = project
     description.showLong()
     state = TitlePart.State.LONG
   }
 
   override fun showShort() {
-    if(!active) return
-
     label.text = project
     description.hide()
     state = TitlePart.State.SHORT
   }
 
   override fun shrink(maxWidth: Int): Int {
-    if(!active) return 0
-
     return when {
       maxWidth > longWidth -> {
         label.text = project
@@ -258,8 +240,8 @@ class ProjectTitle : ShrinkingTitlePart {
     description.refresh()
     val fm = label.getFontMetrics(label.font)
 
-    projectTextWidth = if (project.isEmpty() || !active) 0 else SwingUtilities2.stringWidth(label, fm, project)
-    longTextWidth = if(!active) 0 else projectTextWidth + description.longWidth
+    projectTextWidth = if (project.isEmpty()) 0 else SwingUtilities2.stringWidth(label, fm, project)
+    longTextWidth = projectTextWidth + description.longWidth
   }
 }
 

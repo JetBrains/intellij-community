@@ -8,7 +8,7 @@ import java.util.*
 import javax.swing.JFrame
 
 class DefaultFrameHeader(frame: JFrame) : FrameHeader(frame){
-  private val customDecorationTitle: CustomDecorationTitle = CustomDecorationTitle(frame)
+  private val customDecorationTitle: CustomDecorationTitle = CustomDecorationTitle(frame) {updateCustomDecorationHitTestSpots()}
 
   init {
     layout = MigLayout("novisualpadding, ins 0, fillx, gap 0, hmin $MIN_HEIGHT", "$H_GAP[min!]$H_GAP[][pref!]")
