@@ -51,6 +51,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       "$home/../studio/google/cloud/tools/google-login-plugin/lib/licenses",
       "$home/../studio/google/services/lib/licenses",
       "$home/../vendor/google/firebase/lib/licenses",
+      "$home/../../prebuilts/studio/layoutlib/licenses",
     )
 
     productLayout.productApiModules = JAVA_IDE_API_MODULES
@@ -93,6 +94,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
                                            "google-cloud-tools-core-as",
                                            "google-samples",
                                            "google-services",
+                                           "intellij.android.layoutlib",
                                            "intellij.android.smali",
                                            "test-recorder",
                                            "url-assistant",
@@ -101,7 +103,8 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
       JavaPluginLayout.javaPlugin(false),
       androidPluginInStudio([:]),
-      CommunityRepositoryModules.groovyPlugin([])
+      CommunityRepositoryModules.groovyPlugin([]),
+      layoutlibPlugin(),
     ]
     if (buildOptions.includeUiTests) {
       modulesToCompileTests += ["intellij.android.guiTests", "intellij.android.guiTestFramework", "intellij.android.testFramework"]
@@ -183,9 +186,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withModule("db-compiler", "data-binding.jar")
       withModule("android.sdktools.sdklib", "sdklib.jar")
       withModule("android.sdktools.sdk-common", "sdk-common.jar")
-      withModule("android.sdktools.layoutlib-api", "layoutlib-api.jar")
       withModule("intellij.android.layoutlib-loader", "layoutlib-loader.jar")
-      withModuleLibrary("layoutlib", "intellij.android.layoutlib", "")
       withModule("android.sdktools.manifest-merger", "manifest-merger.jar")
       withModule("android.sdktools.chunkio", "pixelprobe.jar")
       withModule("android.sdktools.pixelprobe", "pixelprobe.jar")
@@ -210,7 +211,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withModule("intellij.android.jps", "jps/android-jps-plugin.jar", null)
 
       withProjectLibrary("freemarker") //todo[nik] move to module libraries
-      withProjectLibrary("kxml2") //todo[nik] move to module libraries
 
       withResourceFromModule("intellij.android.core", "lib/asm-5.0.3.jar", "lib")
       withResourceFromModule("intellij.android.core", "lib/asm-analysis-5.0.3.jar", "lib")
@@ -226,6 +226,12 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       additionalModulesToJars.entrySet().each {
         withModule(it.key, it.value)
       }
+    }
+  }
+
+  static PluginLayout layoutlibPlugin () {
+    plugin("intellij.android.layoutlib") {
+      withModule("android.sdktools.layoutlib-api")
     }
   }
 
