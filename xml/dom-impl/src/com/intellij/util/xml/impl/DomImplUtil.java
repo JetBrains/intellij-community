@@ -158,7 +158,7 @@ public class DomImplUtil {
     return ContainerUtil.findAll(tags, childTag -> {
       ProgressManager.checkCanceled();
       try {
-        return isNameSuitable(name, childTag.getLocalName(), childTag.getName(), childTag.getNamespace(), file);
+        return isNameSuitable(name, childTag, file);
       }
       catch (PsiInvalidElementAccessException e) {
         if (!childTag.isValid()) {
@@ -186,14 +186,10 @@ public class DomImplUtil {
   }
 
   private static boolean isNameSuitable(final EvaluatedXmlName evaluatedXmlName, final XmlTag tag, final XmlFile file) {
-    return isNameSuitable(evaluatedXmlName, tag.getLocalName(), tag.getName(), tag.getNamespace(), file);
-  }
-
-  public static boolean isNameSuitable(final EvaluatedXmlName evaluatedXmlName, final String localName, final String qName, final String namespace,
-                                       final XmlFile file) {
-    final String localName1 = evaluatedXmlName.getXmlName().getLocalName();
-    return (localName1.equals(localName) || localName1.equals(qName)) && evaluatedXmlName.isNamespaceAllowed(namespace, file,
-                                                                                                             !localName1.equals(qName));
+    String evaluatedLocalName = evaluatedXmlName.getXmlName().getLocalName();
+    boolean qNameMatch = evaluatedLocalName.equals(tag.getName());
+    return (qNameMatch || evaluatedLocalName.equals(tag.getLocalName())) &&
+           evaluatedXmlName.isNamespaceAllowed(tag.getNamespace(), file, !qNameMatch);
   }
 
   @Nullable

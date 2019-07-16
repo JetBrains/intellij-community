@@ -363,12 +363,9 @@ public final class DomManagerImpl extends DomManager {
   @Override
   @Nullable
   public AbstractDomChildrenDescription findChildrenDescription(@NotNull final XmlTag tag, @NotNull final DomElement parent) {
-    return findChildrenDescription(tag, getDomInvocationHandler(parent));
-  }
-
-  static AbstractDomChildrenDescription findChildrenDescription(final XmlTag tag, final DomInvocationHandler parent) {
-    final DomGenericInfoEx info = parent.getGenericInfo();
-    return info.findChildrenDescription(parent, tag.getLocalName(), tag.getNamespace(), false, tag.getName());
+    DomInvocationHandler parentHandler = getDomInvocationHandler(parent);
+    assert parentHandler != null;
+    return parentHandler.getGenericInfo().findChildrenDescription(parentHandler, tag);
   }
 
   public final boolean isDomFile(@Nullable PsiFile file) {
