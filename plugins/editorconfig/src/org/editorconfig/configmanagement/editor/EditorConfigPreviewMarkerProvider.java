@@ -106,11 +106,13 @@ public class EditorConfigPreviewMarkerProvider extends LineMarkerProviderDescrip
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      VirtualFile previewFile =
-        choosePreviewFile(myHeader.getProject(), getRootDir(myHeader), getPattern(myHeader.getText()));
-      if (previewFile != null) {
-        VirtualFile editorConfigFile = myHeader.getContainingFile().getVirtualFile();
-        openPreview(myHeader.getProject(), editorConfigFile, previewFile);
+      if (myHeader.isValid()) {
+        VirtualFile previewFile =
+          choosePreviewFile(myHeader.getProject(), getRootDir(myHeader), getPattern(myHeader.getText()));
+        if (previewFile != null) {
+          VirtualFile editorConfigFile = myHeader.getContainingFile().getVirtualFile();
+          openPreview(myHeader.getProject(), editorConfigFile, previewFile);
+        }
       }
     }
   }
