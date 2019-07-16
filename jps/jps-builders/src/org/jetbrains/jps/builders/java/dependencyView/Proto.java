@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java.dependencyView;
 
-import com.intellij.util.containers.OrderedSet;
 import com.intellij.util.io.DataInputOutputUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.org.objectweb.asm.Opcodes;
@@ -35,7 +35,7 @@ class Proto implements RW.Savable, Streamable {
       access = DataInputOutputUtil.readINT(in);
       signature = DataInputOutputUtil.readINT(in);
       name = DataInputOutputUtil.readINT(in);
-      annotations = RW.read(TypeRepr.classTypeExternalizer(context), new OrderedSet<>(), in);
+      annotations = RW.read(TypeRepr.classTypeExternalizer(context), new THashSet<>(), in);
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);

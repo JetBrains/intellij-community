@@ -328,7 +328,7 @@ class ClassfileAnalyzer {
     private RetentionPolicy myRetentionPolicy = null;
 
     private final Map<TypeRepr.ClassType, TIntHashSet> myAnnotationArguments = new THashMap<>();
-    private final Map<TypeRepr.ClassType, Set<ElemType>> myAnnotationTargets = new LinkedHashMap<>();
+    private final Map<TypeRepr.ClassType, Set<ElemType>> myAnnotationTargets = new THashMap<>();
     private final Set<TypeRepr.ClassType> myAnnotations = new THashSet<>();
 
     private final Set<ModuleRequiresRepr> myModuleRequires = new THashSet<>();

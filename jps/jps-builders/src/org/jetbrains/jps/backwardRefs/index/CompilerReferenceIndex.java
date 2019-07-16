@@ -80,6 +80,7 @@ public class CompilerReferenceIndex<Input> {
         public int enumerate(String path) throws IOException {
           String rel = relativizer.toRelative(path);
           String s = SystemInfo.isFileSystemCaseSensitive ? rel : StringUtil.toLowerCase(rel); // todo: lowercase kills $PROJECT_DIR$
+          LOG.debug(s);
           return super.enumerate(s);
         }
       };
