@@ -34,6 +34,9 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.NullableConsumer;
@@ -691,18 +694,21 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @Nullable
   public MavenProject findProject(@NotNull Module module) {
-    VirtualFile f = findPomFile(module, new MavenModelsProvider() {
-      @Override
-      public Module[] getModules() {
-        throw new UnsupportedOperationException();
-      }
+    return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
+      VirtualFile f = findPomFile(module, new MavenModelsProvider() {
+        @Override
+        public Module[] getModules() {
+          throw new UnsupportedOperationException();
+        }
 
-      @Override
-      public VirtualFile[] getContentRoots(Module module) {
-        return ModuleRootManager.getInstance(module).getContentRoots();
-      }
+        @Override
+        public VirtualFile[] getContentRoots(Module module) {
+          return ModuleRootManager.getInstance(module).getContentRoots();
+        }
+      });
+      MavenProject result = f == null ? null : findProject(f);
+      return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
     });
-    return f == null ? null : findProject(f);
   }
 
   @Nullable
