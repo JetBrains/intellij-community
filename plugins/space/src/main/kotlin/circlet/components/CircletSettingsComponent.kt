@@ -26,23 +26,3 @@ class CircletServerSettingsComponent : PersistentStateComponent<CircletServerSet
     }
 
 }
-
-@State(
-    name = "CircletAutomationConfigurable",
-    storages = [Storage(value = "CircletAutomation.xml", roamingType = RoamingType.DEFAULT)]
-)
-class CircletAutomationSettingsComponent : PersistentStateComponent<CircletAutomationSettings> {
-
-    private val settings = mutableProperty(CircletAutomationSettings())
-
-    override fun getState() = settings.value
-
-    override fun loadState(state: CircletAutomationSettings) {
-        settings.value = state
-    }
-
-    fun applySettings(state: CircletAutomationSettings) {
-        settings.value = state
-    }
-
-}

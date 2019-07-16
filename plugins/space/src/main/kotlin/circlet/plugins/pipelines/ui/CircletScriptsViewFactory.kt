@@ -18,6 +18,7 @@ import com.intellij.ui.*
 import com.intellij.ui.components.labels.*
 import com.intellij.ui.treeStructure.*
 import com.intellij.util.ui.tree.*
+import libraries.klogging.*
 import runtime.async.*
 import runtime.reactive.*
 import java.awt.*
@@ -26,9 +27,10 @@ import javax.swing.BoxLayout
 import javax.swing.tree.*
 
 
-class CircletScriptsViewFactory {
+class CircletScriptsViewFactory : KLogging() {
     fun createView(lifetime: Lifetime, project: Project, viewModel: ScriptWindowViewModel) : JComponent {
 
+        logger.debug("createView. begin")
         val layout = CardLayout()
         val panel = JPanel(layout)
         val treeCompName = "tree"
@@ -37,7 +39,8 @@ class CircletScriptsViewFactory {
         panel.add(treeView, treeCompName)
         panel.add(createViewForMissedDsl(project), missedDslCompName)
         var shouldBuild = true
-        viewModel.script.forEach(lifetime) {script ->
+        viewModel.script.forEach(lifetime) { script ->
+            logger.debug("createView. view viewModel. $script")
             if (script == null) {
                 layout.show(panel, missedDslCompName)
                 shouldBuild = true
@@ -50,6 +53,7 @@ class CircletScriptsViewFactory {
                 shouldBuild = false
             }
         }
+        logger.debug("createView. end")
         return panel
     }
 

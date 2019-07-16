@@ -41,8 +41,6 @@ class CircletConfigurable : SearchableConfigurable {
     }
 
     private val panel = JPanel()
-    private val automationSettingsComponent = application.getComponent<CircletAutomationSettingsComponent>()
-    private val automationSettings: MutableProperty<CircletAutomationSettings>
 
     init {
         panel.layout = BorderLayout()
@@ -57,8 +55,6 @@ class CircletConfigurable : SearchableConfigurable {
         }
 
 
-        automationSettings = mutableProperty(automationSettingsComponent.state)
-        panel.add(createAutomationView(automationSettings), BorderLayout.PAGE_START)
         val connectionPanel = JPanel(FlowLayout())
 
         state.forEach(uiLifetime) { st ->
@@ -69,26 +65,6 @@ class CircletConfigurable : SearchableConfigurable {
         }
 
         panel.add(connectionPanel)
-    }
-
-    private fun createAutomationView(settings: MutableProperty<CircletAutomationSettings>): JComponent {
-
-        val automationSettings = settings.value
-        val panel = JPanel()
-        panel.layout = BorderLayout()
-        panel.add(JLabel("Kotlin compiler folder"), BorderLayout.LINE_START)
-        val kotlincFolderValueField = JTextField().apply {
-            val textField = this
-            textField.document.addDocumentListener(object : DocumentAdapter() {
-                override fun textChanged(e: DocumentEvent) {
-                    settings.value = CircletAutomationSettings(textField.text)
-                }
-            })
-        }
-        kotlincFolderValueField.text = automationSettings.kotlincFolderPath
-        panel.add(kotlincFolderValueField)
-
-        return panel
     }
 
     private fun createView(st: LoginState): JComponent {
@@ -166,7 +142,7 @@ class CircletConfigurable : SearchableConfigurable {
     }
 
     override fun isModified(): Boolean {
-        return automationSettingsComponent.state != automationSettings.value
+        return false
     }
 
     override fun getId(): String = "circlet.settings.connection"
@@ -174,7 +150,6 @@ class CircletConfigurable : SearchableConfigurable {
     override fun getDisplayName(): String = CircletBundle.message("connection-configurable.display-name")
 
     override fun apply() {
-        automationSettingsComponent.applySettings(automationSettings.value)
     }
 
     override fun reset() {
@@ -186,10 +161,6 @@ class CircletConfigurable : SearchableConfigurable {
         uiLifetime.terminate()
     }
 }
-
-data class CircletAutomationSettings(
-    var kotlincFolderPath: String = ""
-)
 
 data class CircletServerSettings(
     var enabled: Boolean = false,

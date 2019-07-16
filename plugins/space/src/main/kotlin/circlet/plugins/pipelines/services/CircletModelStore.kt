@@ -7,8 +7,9 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
+import libraries.klogging.*
 
-class CircletModelStore(val project: Project): LifetimedComponent by SimpleLifetimedComponent() {
+class CircletModelStore(val project: Project): LifetimedComponent by SimpleLifetimedComponent(), KLogging() {
     val viewModel = ScriptWindowViewModel(lifetime, project)
     init {
         val listener = ServiceManager.getService(project, CircletAutomationListener::class.java)
@@ -18,6 +19,7 @@ class CircletModelStore(val project: Project): LifetimedComponent by SimpleLifet
             ApplicationManager.getApplication().runReadAction {
                 if (!project.isDisposed) {
                     val dslFileExists = checkIsDslFileExists()
+                    logger.debug("refresh. dslFileExists=$dslFileExists")
                     viewModel.script.value = if (dslFileExists) createEmptyScriptViewModel(viewModel.scriptLifetimes.next()) else null
                 }
             }
@@ -56,13 +58,6 @@ class CircletModelStore(val project: Project): LifetimedComponent by SimpleLifet
     }
 
     private fun checkIsDslFileExists() : Boolean {
-        val basePath = project.basePath
-        if (basePath != null) {
-            val baseDirFile = LocalFileSystem.getInstance().findFileByPath(basePath)
-            if (baseDirFile!= null) {
-                return DslFileFinder.find(baseDirFile) != null
-            }
-        }
-        return false
+        return DslFileFinder.find(project) != null
     }
 }

@@ -33,7 +33,7 @@
         <projectService serviceImplementation="circlet.plugins.pipelines.services.CircletModelStore" />
         <projectService serviceImplementation="circlet.plugins.pipelines.services.CircletAutomationListener" />
         <projectService serviceImplementation="circlet.plugins.pipelines.services.SyncDslViewManager"/>
-        <projectService serviceImplementation="circlet.plugins.pipelines.services.run.CircletTaskRunner"/>
+        <projectService serviceImplementation="circlet.plugins.pipelines.services.execution.CircletTaskRunner"/>
         <runLineMarkerContributor
             language="kotlin"
             id="circletScriptRunLineMarkerProvider"
@@ -62,9 +62,6 @@
         </component>
         <component>
             <implementation-class>circlet.components.CircletServerSettingsComponent</implementation-class>
-        </component>
-        <component>
-            <implementation-class>circlet.components.CircletAutomationSettingsComponent</implementation-class>
         </component>
     </application-components>
 
