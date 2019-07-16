@@ -13,7 +13,6 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ServiceManager;
@@ -1473,15 +1472,9 @@ public final class IdeEventQueue extends EventQueue {
   private final List<String> actionsShowingPopupsList = new ArrayList<>();
   private long lastTypeaheadTimestamp = -1;
 
-  @Nullable
-  public static KeymapManager getKeymapManager() {
-    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-    return app != null && app.isLoaded() ? KeymapManager.getInstance() : null;
-  }
-
   @NotNull
   private Set<Shortcut> getShortcutsShowingPopups () {
-    KeymapManager keymapManager = getKeymapManager();
+    KeymapManager keymapManager = KeymapManager.getInstance();
     if (keymapManager != null) {
       Keymap keymap = keymapManager.getActiveKeymap();
       if (!keymap.equals(lastActiveKeymap.get())) {

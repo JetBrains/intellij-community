@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui
 
+import com.intellij.diagnostic.LoadingPhase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
@@ -415,7 +416,7 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
     val instanceOrNull: UISettings?
       get() {
         var result = _instance
-        if (result == null && ApplicationManager.getApplication() != null) {
+        if (result == null && LoadingPhase.isComplete(LoadingPhase.CONFIGURATION_STORE_INITIALIZED)) {
           result = ServiceManager.getService(UISettings::class.java)
           _instance = result
         }

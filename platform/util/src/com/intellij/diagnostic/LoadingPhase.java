@@ -3,31 +3,38 @@ package com.intellij.diagnostic;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.util.SystemProperties;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @ApiStatus.Internal
 public enum LoadingPhase {
   BOOTSTRAP,
   SPLASH,
+  CONFIGURATION_STORE_INITIALIZED,
   FRAME_SHOWN,
   PROJECT_OPENED,
   INDEXING_FINISHED;
 
-  private final static Logger LOG = Logger.getInstance(LoadingPhase.class);
-  private final static boolean KEEP_IN_MIND_LOADING_PHASE = SystemProperties.getBooleanProperty("idea.keep.in.mind.loading.phase", false);
-
-  public static void setCurrentPhase(LoadingPhase phase) {
-    myCurrentPhase = phase;
-    LOG.info("Reached " + phase + " loading phase");
+  @NotNull
+  private static Logger getLogger() {
+    return Logger.getInstance(LoadingPhase.class);
   }
 
-  public static final TObjectHashingStrategy<Throwable> THROWABLE_HASHING_STRATEGY = new TObjectHashingStrategy<Throwable>() {
+  private final static boolean KEEP_IN_MIND_LOADING_PHASE = Boolean.parseBoolean("idea.keep.in.mind.loading.phase");
+
+  public static void setCurrentPhase(@NotNull LoadingPhase phase) {
+    currentPhase.set(phase);
+    logPhaseSet(phase);
+  }
+
+  private final static Set<Throwable> stackTraces = new THashSet<>(new TObjectHashingStrategy<Throwable>() {
     @Override
     public int computeHashCode(Throwable throwable) {
       return getCollect(throwable).hashCode();
@@ -46,35 +53,39 @@ public enum LoadingPhase {
       if (o1 == null || o2 == null) return false;
       return Comparing.equal(getCollect(o1), getCollect(o2));
     }
-  };
+  });
 
-  private final static THashSet<Throwable> myStackTraces = new THashSet<>(THROWABLE_HASHING_STRATEGY);
+  private final static AtomicReference<LoadingPhase> currentPhase = new AtomicReference<>(BOOTSTRAP);
 
-  private volatile static LoadingPhase myCurrentPhase = BOOTSTRAP;
-
-  public synchronized static void compareAndSet(LoadingPhase expect, LoadingPhase phase) {
-    if (myCurrentPhase == expect) {
-      setCurrentPhase(phase);
+  public static void compareAndSet(@NotNull LoadingPhase expect, @NotNull LoadingPhase phase) {
+    if (currentPhase.compareAndSet(expect, phase)) {
+      logPhaseSet(phase);
     }
   }
 
-  public static void assertAtLeast(LoadingPhase phase) {
-    if (!KEEP_IN_MIND_LOADING_PHASE) return;
+  private static void logPhaseSet(@NotNull LoadingPhase phase) {
+    getLogger().info("Reached " + phase + " loading phase");
+  }
 
-    LoadingPhase currentPhase = myCurrentPhase;
+  public static void assertAtLeast(@NotNull LoadingPhase phase) {
+    if (!KEEP_IN_MIND_LOADING_PHASE) {
+      return;
+    }
 
-    if (currentPhase.compareTo(phase) < 0) {
-      if (isKnownViolator()) return;
-      Throwable t = new Throwable();
+    LoadingPhase currentPhase = LoadingPhase.currentPhase.get();
+    if (currentPhase.ordinal() >= phase.ordinal() || isKnownViolator()) {
+      return;
+    }
 
-      synchronized (myStackTraces) {
-        if (!myStackTraces.add(t)) return;
-
-        LOG.warn("Should be called at least at phase " + phase + ", the current phase is: " + currentPhase + "\n" +
-                 "Current violators count: " + myStackTraces.size() + "\n\n",
-                 t
-        );
+    Throwable t = new Throwable();
+    synchronized (stackTraces) {
+      if (!stackTraces.add(t)) {
+        return;
       }
+
+      getLogger().warn("Should be called at least at phase " + phase + ", the current phase is: " + currentPhase + "\n" +
+                       "Current violators count: " + stackTraces.size() + "\n\n",
+                       t);
     }
   }
 
@@ -88,6 +99,10 @@ public enum LoadingPhase {
   }
 
   public static boolean isStartupComplete() {
-    return myCurrentPhase == INDEXING_FINISHED;
+    return isComplete(INDEXING_FINISHED);
+  }
+
+  public static boolean isComplete(@NotNull LoadingPhase phase) {
+    return currentPhase.get().ordinal() >= phase.ordinal();
   }
 }

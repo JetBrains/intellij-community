@@ -408,6 +408,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
       // we set it after beforeApplicationLoaded call, because app store can depends on stream provider state
       ServiceKt.getStateStore(this).setPath(effectiveConfigPath);
+      LoadingPhase.setCurrentPhase(LoadingPhase.CONFIGURATION_STORE_INITIALIZED);
 
       ApplicationLoadListener.EP_NAME.forEachExtensionSafe(listener -> listener.beforeComponentsCreated());
       componentRegisteredActivity.end();

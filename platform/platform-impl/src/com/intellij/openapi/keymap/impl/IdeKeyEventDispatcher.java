@@ -712,7 +712,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     // search in main keymap
-    KeymapManager keymapManager = IdeEventQueue.getKeymapManager();
+    KeymapManager keymapManager = KeymapManager.getInstance();
     Keymap keymap = keymapManager == null ? null : keymapManager.getActiveKeymap();
     String[] actionIds = keymap == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : keymap.getActionIds(sc);
     ActionManager actionManager = ActionManager.getInstance();
@@ -932,7 +932,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return false;
     }
 
-    KeymapManager manager = IdeEventQueue.getKeymapManager();
+    KeymapManager manager = KeymapManager.getInstance();
     if (manager == null) {
       return false;
     }
