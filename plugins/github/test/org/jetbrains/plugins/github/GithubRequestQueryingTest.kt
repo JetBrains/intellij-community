@@ -10,6 +10,8 @@ import org.jetbrains.plugins.github.test.GithubTest
 
 class GithubRequestQueryingTest : GithubTest() {
 
+  private val RETRIES = 2
+
   private lateinit var orgRepo: GithubRepo
   private lateinit var mainRepos: Set<GithubRepo>
   private lateinit var secondaryRepos: Set<GithubRepo>
@@ -34,35 +36,55 @@ class GithubRequestQueryingTest : GithubTest() {
 
   @Throws(Throwable::class)
   fun testLinkPagination() {
-    val result = GithubApiPagesLoader
-      .loadAll(mainAccount.executor, EmptyProgressIndicator(),
-               GithubApiRequests.CurrentUser.Repos.pages(mainAccount.account.server, false,
-                                                         GithubRequestPagination(
-                                                           pageSize = 2)))
+    retry {
+      val result = GithubApiPagesLoader
+        .loadAll(mainAccount.executor, EmptyProgressIndicator(),
+                 GithubApiRequests.CurrentUser.Repos.pages(mainAccount.account.server, false,
+                                                           GithubRequestPagination(pageSize = 2)))
 
-    assertContainsElements(result, mainRepos)
-    assertDoesntContain(result, secondaryRepos)
+      assertContainsElements(result, mainRepos)
+      assertDoesntContain(result, secondaryRepos)
+    }
   }
 
   @Throws(Throwable::class)
   fun testOwnRepos() {
-    val result = GithubApiPagesLoader
-      .loadAll(mainAccount.executor, EmptyProgressIndicator(),
-               GithubApiRequests.CurrentUser.Repos.pages(mainAccount.account.server, false))
+    retry {
+      val result = GithubApiPagesLoader
+        .loadAll(mainAccount.executor, EmptyProgressIndicator(),
+                 GithubApiRequests.CurrentUser.Repos.pages(mainAccount.account.server, false))
 
-    assertContainsElements(result, mainRepos)
-    assertDoesntContain(result, orgRepo)
-    assertDoesntContain(result, secondaryRepos)
+      assertContainsElements(result, mainRepos)
+      assertDoesntContain(result, orgRepo)
+      assertDoesntContain(result, secondaryRepos)
+
+    }
   }
 
   @Throws(Throwable::class)
   fun testAllRepos() {
-    val result = GithubApiPagesLoader
-      .loadAll(mainAccount.executor, EmptyProgressIndicator(),
-               GithubApiRequests.CurrentUser.Repos.pages(mainAccount.account.server))
+    retry {
+      val result = GithubApiPagesLoader
+        .loadAll(mainAccount.executor, EmptyProgressIndicator(),
+                 GithubApiRequests.CurrentUser.Repos.pages(mainAccount.account.server))
 
-    assertContainsElements(result, mainRepos)
-    assertContainsElements(result, orgRepo)
-    assertDoesntContain(result, secondaryRepos)
+      assertContainsElements(result, mainRepos)
+      assertContainsElements(result, orgRepo)
+      assertDoesntContain(result, secondaryRepos)
+    }
+  }
+
+  private fun retry(action: () -> Unit) {
+    var exception: Exception? = null
+    for (i in 1..RETRIES) {
+      try {
+        action()
+        break
+      }
+      catch (e: Exception) {
+        exception = e
+      }
+    }
+    exception?.let { throw it }
   }
 }
