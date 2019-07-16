@@ -172,6 +172,13 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (arrayElementValue != DfaUnknownValue.getInstance()) {
       result = arrayElementValue;
     }
+    if (!(result instanceof DfaVariableValue) && array instanceof DfaVariableValue) {
+      for (DfaVariableValue value : ((DfaVariableValue)array).getDependentVariables().toArray(new DfaVariableValue[0])) {
+        if (value.getQualifier() == array) {
+          dropLocality(value, memState);
+        }
+      }
+    }
     pushExpressionResult(result, instruction, memState);
     return nextInstruction(instruction, runner, memState);
   }
