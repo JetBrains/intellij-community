@@ -92,7 +92,7 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
       info.isExcluded(myContentRoot.getParent());
       fail("DirectoryInfo#isExcluded must fail because its argument is not under DirectoryInfo's root");
     }
-    catch (AssertionError ignored) {
+    catch (IllegalArgumentException expected) {
     }
   }
 
