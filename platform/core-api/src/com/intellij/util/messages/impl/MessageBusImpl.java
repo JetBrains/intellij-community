@@ -57,7 +57,7 @@ public class MessageBusImpl implements MessageBus {
   private static final Object NA = new Object();
   private MessageBusImpl myParentBus;
 
-  RootBus myRootBus;
+  private final RootBus myRootBus;
 
   //is used for debugging purposes
   private final String myOwner;
@@ -83,6 +83,7 @@ public class MessageBusImpl implements MessageBus {
     myOwner = owner + " of " + owner.getClass();
     myConnectionDisposable = Disposer.newDisposable(myOwner);
     myOrder = ArrayUtil.EMPTY_INT_ARRAY;
+    myRootBus = (RootBus)this;
   }
 
   @ApiStatus.Internal
@@ -119,10 +120,7 @@ public class MessageBusImpl implements MessageBus {
   }
 
   private void onChildBusDisposed(@NotNull MessageBusImpl childBus) {
-    boolean removed;
-    synchronized (myChildBuses) {
-      removed = myChildBuses.remove(childBus);
-    }
+    boolean removed = myChildBuses.remove(childBus);
     Map<MessageBusImpl, Integer> map = myRootBus.myWaitingBuses.get();
     if (map != null) map.remove(childBus);
     myRootBus.clearSubscriberCache();
@@ -161,7 +159,7 @@ public class MessageBusImpl implements MessageBus {
   }
 
   @NotNull
-  protected MessageBusConnection createConnectionForLazyListeners(@NotNull Topic<?> topic) {
+  MessageBusConnection createConnectionForLazyListeners(@NotNull Topic<?> topic) {
     return connect();
   }
 
@@ -250,8 +248,6 @@ public class MessageBusImpl implements MessageBus {
     else {
       myRootBus.myWaitingBuses.remove();
     }
-
-    myRootBus = null;
   }
 
   @Override
@@ -321,10 +317,7 @@ public class MessageBusImpl implements MessageBus {
       topicSubscribers = new SmartList<>();
       calcSubscribers(topic, topicSubscribers);
       mySubscriberCache.put(topic, topicSubscribers);
-
-      if (myRootBus.myClearedSubscribersCache) {
-        myRootBus.myClearedSubscribersCache = false;
-      }
+      myRootBus.myClearedSubscribersCache = false;
     }
     return topicSubscribers;
   }
@@ -511,7 +504,7 @@ public class MessageBusImpl implements MessageBus {
     listener.messageDelivered(message.getTopic(), method.getName(), handler, System.nanoTime() - startTime);
   }
 
-  public static final class RootBus extends MessageBusImpl {
+  static final class RootBus extends MessageBusImpl {
     /**
      * Holds the counts of pending messages for all message buses in the hierarchy
      * This field is null for non-root buses
@@ -523,11 +516,11 @@ public class MessageBusImpl implements MessageBus {
 
     private final List<MessageBusConnectionImpl> myConnectionPool = ContainerUtil.createLockFreeCopyOnWriteList();
 
-    volatile boolean myClearedSubscribersCache;
+    private volatile boolean myClearedSubscribersCache;
 
     @NotNull
     @Override
-    protected MessageBusConnection createConnectionForLazyListeners(@NotNull Topic<?> topic) {
+    MessageBusConnection createConnectionForLazyListeners(@NotNull Topic<?> topic) {
       // createConnectionForLazyListeners is never called concurrently for the same topic,
       // see explanation in syncPublisher
       for (MessageBusConnectionImpl connection : myConnectionPool) {
@@ -555,9 +548,8 @@ public class MessageBusImpl implements MessageBus {
       myClearedSubscribersCache = true;
     }
 
-    public RootBus(@NotNull Object owner) {
+    RootBus(@NotNull Object owner) {
       super(owner);
-      myRootBus = this;
     }
   }
 }

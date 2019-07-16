@@ -23,17 +23,17 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.messages.impl.MessageBusImpl;
-import junit.framework.TestCase;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class MessageBusTest extends TestCase {
+public class MessageBusTest extends LightPlatformTestCase {
   private MessageBus myBus;
   private List<String> myLog;
 
@@ -100,6 +100,9 @@ public class MessageBusTest extends TestCase {
   protected void tearDown() throws Exception {
     try {
       Disposer.dispose(myParentDisposable);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       myBus = null;

@@ -30,6 +30,8 @@
     <applicationService serviceInterface="com.intellij.execution.ExecutorRegistry"
                         serviceImplementation="com.intellij.execution.ExecutorRegistryImpl"/>
 
+    <applicationService serviceInterface="com.intellij.util.messages.MessageBusFactory"
+                        serviceImplementation="com.intellij.util.messages.impl.MessageBusFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.project.impl.ProjectStoreFactory"
                         serviceImplementation="com.intellij.configurationStore.PlatformProjectStoreFactory"/>
     <projectService serviceImplementation="com.intellij.configurationStore.ProjectIdManager"/>

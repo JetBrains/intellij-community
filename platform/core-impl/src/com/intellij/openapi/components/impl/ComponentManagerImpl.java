@@ -32,8 +32,8 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.MessageBusFactory;
 import com.intellij.util.messages.Topic;
+import com.intellij.util.messages.impl.MessageBusFactoryImpl;
 import com.intellij.util.messages.impl.MessageBusImpl;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.pico.DefaultPicoContainer;
@@ -329,7 +329,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     MutablePicoContainer picoContainer = createPicoContainer();
     myPicoContainer = picoContainer;
 
-    myMessageBus = MessageBusFactory.newMessageBus(name, myParentComponentManager == null ? null : myParentComponentManager.getMessageBus());
+    // ServiceManager is not ready yet, instantiate directly instead of MessageBusFactory.getInstance()
+    myMessageBus = myParentComponentManager == null ? new MessageBusFactoryImpl().createMessageBus(name) : new MessageBusImpl(name, myParentComponentManager.getMessageBus());
     if (myMessageBus instanceof MessageBusImpl) {
       ((MessageBusImpl) myMessageBus).setMessageDeliveryListener((topic, messageName, handler, duration) -> logMessageBusDelivery(topic, messageName, handler, duration));
     }

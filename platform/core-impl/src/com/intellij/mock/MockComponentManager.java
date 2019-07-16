@@ -26,7 +26,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.MessageBusFactory;
+import com.intellij.util.messages.impl.MessageBusFactoryImpl;
 import com.intellij.util.pico.DefaultPicoContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +39,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class MockComponentManager extends UserDataHolderBase implements ComponentManager {
-  private final MessageBus myMessageBus = MessageBusFactory.newMessageBus(this);
+  private final MessageBus myMessageBus = new MessageBusFactoryImpl().createMessageBus(this);
   private final MutablePicoContainer myPicoContainer;
 
   private final Map<Class, Object> myComponents = new HashMap<>();
