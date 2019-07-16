@@ -14,7 +14,7 @@ import javax.swing.*;
  * Elements before spacer are aligned to the left, right text and right icon are aligned to the right.
  */
 @Experimental
-public interface TargetPresentation {
+public interface TargetPopupPresentation {
 
   @Nullable
   default Icon getIcon() {
