@@ -240,7 +240,6 @@ class CommunityRepositoryModules {
       withModule("intellij.android.smali")
     },
     plugin("intellij.statsCollector") {
-      bundlingRestrictions.includeInEapOnly = true
       withModule("intellij.statsCollector.features", "features.jar")
       withModule("intellij.statsCollector.logEvents")
       withModule("intellij.statsCollector.completionRanker")
