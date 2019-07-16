@@ -145,13 +145,13 @@ public class MessageBusImpl implements MessageBus {
 
   @Override
   @NotNull
-  public MessageBusConnectionImpl connect() {
+  public MessageBusConnection connect() {
     return connect(myConnectionDisposable);
   }
 
   @Override
   @NotNull
-  public MessageBusConnectionImpl connect(@NotNull Disposable parentDisposable) {
+  public MessageBusConnection connect(@NotNull Disposable parentDisposable) {
     checkNotDisposed();
     MessageBusConnectionImpl connection = new MessageBusConnectionImpl(this);
     Disposer.register(parentDisposable, connection);
@@ -529,7 +529,7 @@ public class MessageBusImpl implements MessageBus {
         }
       }
 
-      MessageBusConnectionImpl connection = connect();
+      MessageBusConnectionImpl connection = (MessageBusConnectionImpl)connect();
       myConnectionPool.add(connection);
       return connection;
     }
