@@ -72,8 +72,10 @@ public class HashStorage extends AbstractStateStorage<String, HashPerTarget[]> i
   public Hash lastModified(File file) throws IOException {
     // todo: check file size ad ready with buffered reader
     byte[] bytes = Files.readAllBytes(file.toPath());
-    byte[] digest = md.digest(bytes);
-    return Hash.fromBytes(digest);
+    synchronized (md) {
+      byte[] digest = md.digest(bytes);
+      return Hash.fromBytes(digest);
+    }
   }
 
   @Override
