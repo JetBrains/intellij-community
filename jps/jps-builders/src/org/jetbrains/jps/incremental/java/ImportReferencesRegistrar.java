@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.java;
 
-import com.intellij.util.containers.OrderedSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
@@ -38,8 +37,8 @@ public class ImportReferencesRegistrar implements JavacFileReferencesRegistrar {
     if (refs.isEmpty() || defs.isEmpty()) {
       return;
     }
-    final Set<String> classImports = new OrderedSet<>();
-    final Set<String> staticImports = new OrderedSet<>();
+    final Set<String> classImports = new HashSet<>();
+    final Set<String> staticImports = new HashSet<>();
     for (Object key : refs.keys()) {
       final JavacRef ref = (JavacRef)key;
       if (ref instanceof JavacRef.JavacClass) {
