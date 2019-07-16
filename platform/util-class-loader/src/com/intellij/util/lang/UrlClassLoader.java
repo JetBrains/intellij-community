@@ -51,12 +51,12 @@ public class UrlClassLoader extends ClassLoader {
     }
   }
 
-  protected static void markParallelCapable(Class<? extends UrlClassLoader> loaderClass) {
+  protected static void markParallelCapable(@NotNull Class<? extends UrlClassLoader> loaderClass) {
     assert ourParallelCapableLoaders != null;
     ourParallelCapableLoaders.add(loaderClass);
   }
 
-  static boolean isUrlNeedsProtectionDomain(URL url) {
+  private static boolean isUrlNeedsProtectionDomain(@NotNull URL url) {
     String basename = PathUtilRt.getFileName(url.getPath());
     if (basename.endsWith(".jar") && (basename.startsWith("bcprov-") || basename.startsWith("bcpkix-"))) {
       // JARs of bouncycastle needs protection domain
@@ -71,10 +71,11 @@ public class UrlClassLoader extends ClassLoader {
    * @see java.lang.instrument.Instrumentation#appendToSystemClassLoaderSearch
    */
   @SuppressWarnings("unused")
-  void appendToClassPathForInstrumentation(String jar) {
+  void appendToClassPathForInstrumentation(@NotNull String jar) {
     try {
       addURL(new File(jar).toURI().toURL());
-    } catch(MalformedURLException ignore) {}
+    }
+    catch(MalformedURLException ignore) {}
   }
 
   private static final boolean ourClassPathIndexEnabled = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
@@ -88,18 +89,20 @@ public class UrlClassLoader extends ClassLoader {
    * See com.intellij.TestAll#getClassRoots()
    */
   @SuppressWarnings("unused")
+  @NotNull
   public List<URL> getBaseUrls() {
     return myClassPath.getBaseUrls();
   }
 
   @SuppressWarnings("unused")  // called via reflection
+  @NotNull
   public Collection<String> getJarAccessLog() {
     return myClassPath.getJarAccessLog();
   }
 
   public static final class Builder {
-    private List<URL> myURLs = ContainerUtilRt.emptyList();
-    private Set<URL> myURLsWithProtectionDomain = new HashSet<URL>();
+    private List<? extends URL> myURLs = ContainerUtilRt.emptyList();
+    private Set<? extends URL> myURLsWithProtectionDomain = new HashSet<URL>();
     private ClassLoader myParent;
     private boolean myLockJars;
     private boolean myUseCache;
@@ -115,18 +118,23 @@ public class UrlClassLoader extends ClassLoader {
 
     Builder() { }
 
-    public Builder urls(@NotNull List<URL> urls) { myURLs = urls; return this; }
+    @NotNull
+    public Builder urls(@NotNull List<? extends URL> urls) { myURLs = urls; return this; }
+    @NotNull
     public Builder urls(@NotNull URL... urls) { myURLs = Arrays.asList(urls); return this; }
+    @NotNull
     public Builder parent(ClassLoader parent) { myParent = parent; return this; }
 
     /**
      * @param urls List of URLs that are signed by Sun/Oracle and their signatures must be verified.
      */
-    public Builder urlsWithProtectionDomain(@NotNull Set<URL> urls) { myURLsWithProtectionDomain = urls; return this; }
+    @NotNull
+    Builder urlsWithProtectionDomain(@NotNull Set<? extends URL> urls) { myURLsWithProtectionDomain = urls; return this; }
 
     /**
      * @see #urlsWithProtectionDomain(Set)
      */
+    @NotNull
     public Builder urlsWithProtectionDomain(@NotNull URL... urls) { return urlsWithProtectionDomain(ContainerUtilRt.newHashSet(urls)); }
 
     /**
@@ -134,13 +142,17 @@ public class UrlClassLoader extends ClassLoader {
      * from libraries. Caveat: for Windows opened handle will lock the file preventing its modification.
      * Thus, the option is recommended when jars are not modified or process that uses this option is transient.
      */
+    @NotNull
     public Builder allowLock() { myLockJars = true; return this; }
+    @NotNull
     public Builder allowLock(boolean lockJars) { myLockJars = lockJars; return this; }
 
     /**
      * Build backward index of packages / class or resource names that allows avoiding IO during classloading.
      */
+    @NotNull
     public Builder useCache() { myUseCache = true; return this; }
+    @NotNull
     public Builder useCache(boolean useCache) { myUseCache = useCache; return this; }
 
     /**
@@ -152,11 +164,13 @@ public class UrlClassLoader extends ClassLoader {
      * logical error since code is prepared for that and disk access is performed upon class / resource loading.
      * See also Builder#usePersistentClasspathIndexForLocalClassDirectories.
      */
+    @NotNull
     public Builder usePersistentClasspathIndexForLocalClassDirectories() {
       myUsePersistentClasspathIndex = ourClassPathIndexEnabled;
       return this;
     }
 
+    @NotNull
     public Builder logJarAccess(boolean logJarAccess) { myLogJarAccess = logJarAccess; return this; }
 
     /**
@@ -169,6 +183,7 @@ public class UrlClassLoader extends ClassLoader {
      *
      * @see #createCachePool()
      */
+    @NotNull
     public Builder useCache(@NotNull CachePool pool, @NotNull CachingCondition condition) {
       myUseCache = true;
       myCachePool = (CachePoolImpl)pool;
@@ -176,9 +191,13 @@ public class UrlClassLoader extends ClassLoader {
       return this;
     }
 
+    @NotNull
     public Builder allowUnescaped() { myAcceptUnescaped = true; return this; }
+    @NotNull
     public Builder noPreload() { myPreload = false; return this; }
+    @NotNull
     public Builder allowBootstrapResources() { myAllowBootstrapResources = true; return this; }
+    @NotNull
     public Builder setLogErrorOnMissingJar(boolean log) { myErrorOnMissingJar = log; return this; }
 
     /**
@@ -186,8 +205,10 @@ public class UrlClassLoader extends ClassLoader {
      * Important: this option will result in much smaller initial overhead but for bulk classloading (like complete IDE start) it is less
      * efficient (in number of disk / native code accesses / CPU spent) than combination of useCache / usePersistentClasspathIndexForLocalClassDirectories.
      */
+    @NotNull
     public Builder useLazyClassloadingCaches(boolean pleaseBeLazy) { myLazyClassloadingCaches = pleaseBeLazy; return this; }
 
+    @NotNull
     public Builder autoAssignUrlsWithProtectionDomain() {
       Set<URL> result = new HashSet<URL>();
       for (URL url : myURLs) {
@@ -279,6 +300,7 @@ public class UrlClassLoader extends ClassLoader {
     myURLs.add(url);
   }
 
+  @NotNull
   public List<URL> getUrls() {
     return Collections.unmodifiableList(myURLs);
   }
@@ -311,7 +333,7 @@ public class UrlClassLoader extends ClassLoader {
     }
   }
 
-  private Class defineClass(String name, Resource res) throws IOException {
+  private Class defineClass(@NotNull String name, @NotNull Resource res) throws IOException {
     int i = name.lastIndexOf('.');
     if (i != -1) {
       String pkgName = name.substring(0, i);
@@ -339,9 +361,7 @@ public class UrlClassLoader extends ClassLoader {
     if (protectionDomain != null) {
       return _defineClass(name, b, protectionDomain);
     }
-    else {
-      return _defineClass(name, b);
-    }
+    return _defineClass(name, b);
   }
 
   protected Class _defineClass(final String name, final byte[] b) {

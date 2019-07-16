@@ -19,37 +19,40 @@ class MemoryResource extends Resource {
   private final byte[] myContent;
   private final Map<Resource.Attribute, String> myAttributes;
 
-  private MemoryResource(URL url, byte[] content, Map<Resource.Attribute, String> attributes) {
+  private MemoryResource(@NotNull URL url, @NotNull byte[] content, @Nullable Map<Resource.Attribute, String> attributes) {
     myUrl = url;
     myContent = content;
     myAttributes = attributes;
   }
 
+  @NotNull
   @Override
   public URL getURL() {
     return myUrl;
   }
 
+  @NotNull
   @Override
   public InputStream getInputStream() throws IOException {
     return new UnsyncByteArrayInputStream(myContent);
   }
 
+  @NotNull
   @Override
-  public byte[] getBytes() throws IOException {
+  public byte[] getBytes() {
     return myContent;
   }
 
   @Override
-  public String getValue(Attribute key) {
+  public String getValue(@NotNull Attribute key) {
     return myAttributes != null ? myAttributes.get(key) : null;
   }
 
   @NotNull
-  static MemoryResource load(URL baseUrl,
-                                    @NotNull ZipFile zipFile,
-                                    @NotNull ZipEntry entry,
-                                    @Nullable Map<Attribute, String> attributes) throws IOException {
+  static MemoryResource load(@NotNull URL baseUrl,
+                             @NotNull ZipFile zipFile,
+                             @NotNull ZipEntry entry,
+                             @Nullable Map<Attribute, String> attributes) throws IOException {
     String name = entry.getName();
     URL url = new URL(baseUrl, name);
 

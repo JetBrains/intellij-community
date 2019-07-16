@@ -20,26 +20,28 @@ class SecureJarLoader extends JarLoader {
   @Nullable private ProtectionDomain myProtectionDomain;
   private final Object myProtectionDomainMonitor = new Object();
 
-  SecureJarLoader(URL url, int index, ClassPath configuration) throws IOException {
+  SecureJarLoader(@NotNull URL url, int index, @NotNull ClassPath configuration) throws IOException {
     super(url, index, configuration);
   }
 
+  @NotNull
   @Override
-  protected Resource instantiateResource(URL url, ZipEntry entry) throws IOException {
+  protected Resource instantiateResource(@NotNull URL url, @NotNull ZipEntry entry) throws IOException {
     return new MySecureResource(url, (JarEntry)entry);
   }
 
   @NotNull
   @Override
-  protected ZipFile createZipFile(String path) throws IOException {
+  protected ZipFile createZipFile(@NotNull String path) throws IOException {
     return new JarFile(path);
   }
 
   private class MySecureResource extends JarLoader.MyResource {
-    MySecureResource(URL url, JarEntry entry) throws IOException {
+    MySecureResource(@NotNull URL url, @NotNull JarEntry entry) throws IOException {
       super(url, entry);
     }
 
+    @NotNull
     @Override
     public byte[] getBytes() throws IOException {
       JarFile file = (JarFile)getZipFile();

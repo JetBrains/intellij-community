@@ -17,6 +17,7 @@ package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -42,7 +43,7 @@ public class ClassPath {
   private final AtomicInteger myLastLoaderProcessed = new AtomicInteger();
   private final Map<URL, Loader> myLoadersMap = new HashMap<URL, Loader>();
   private final ClasspathCache myCache = new ClasspathCache();
-  private final Set<URL> myURLsWithProtectionDomain;
+  private final Set<? extends URL> myURLsWithProtectionDomain;
 
   final boolean myCanLockJars; // true implies that the .jar file will not be modified in the lifetime of the JarLoader
   private final boolean myCanUseCache;
@@ -56,7 +57,7 @@ public class ClassPath {
   private final boolean myLogJarAccess;
   private final LinkedHashSet<String> myJarAccessLog = new LinkedHashSet<String>();
 
-  public ClassPath(List<URL> urls,
+  public ClassPath(List<? extends URL> urls,
                    boolean canLockJars,
                    boolean canUseCache,
                    boolean acceptUnescapedUrls,
@@ -66,7 +67,8 @@ public class ClassPath {
                    @Nullable UrlClassLoader.CachingCondition cachingCondition,
                    boolean logErrorOnMissingJar,
                    boolean lazyClassloadingCaches,
-                   Set<URL> urlsWithProtectionDomain, boolean logJarAccess) {
+                   @NotNull Set<? extends URL> urlsWithProtectionDomain,
+                   boolean logJarAccess) {
     myLazyClassloadingCaches = lazyClassloadingCaches;
     myCanLockJars = canLockJars;
     myCanUseCache = canUseCache && !myLazyClassloadingCaches;
@@ -89,7 +91,7 @@ public class ClassPath {
     push(Collections.singletonList(url));
   }
 
-  private void push(List<URL> urls) {
+  private void push(List<? extends URL> urls) {
     if (!urls.isEmpty()) {
       synchronized (myUrls) {
         for (int i = urls.size() - 1; i >= 0; i--) {
@@ -101,7 +103,7 @@ public class ClassPath {
   }
 
   @Nullable
-  public Resource getResource(String s) {
+  public Resource getResource(@NotNull String s) {
     final long started = startTiming();
     try {
       String shortName = ClasspathCache.transformName(s);
@@ -179,6 +181,7 @@ public class ClassPath {
     return myLoaders.get(i);
   }
 
+  @NotNull
   public List<URL> getBaseUrls() {
     List<URL> result = new ArrayList<URL>();
     for (Loader loader : myLoaders) {
@@ -187,11 +190,12 @@ public class ClassPath {
     return result;
   }
 
+  @NotNull
   public Collection<String> getJarAccessLog() {
     return myJarAccessLog;
   }
 
-  private void initLoaders(final URL url, int index) throws IOException {
+  private void initLoaders(@NotNull URL url, int index) throws IOException {
     String path;
 
     if (myAcceptUnescapedUrls) {
@@ -216,7 +220,7 @@ public class ClassPath {
     }
   }
 
-  private Loader createLoader(URL url, int index, File file, boolean processRecursively) throws IOException {
+  private Loader createLoader(@NotNull URL url, int index, @NotNull File file, boolean processRecursively) throws IOException {
     if (file.isDirectory()) {
       return new FileLoader(url, index, this);
     }
@@ -252,7 +256,7 @@ public class ClassPath {
     return null;
   }
 
-  private void initLoader(URL url, Loader loader) throws IOException {
+  private void initLoader(@NotNull URL url, @NotNull Loader loader) throws IOException {
     if (myCanUseCache) {
       ClasspathCache.LoaderData data = myCachePool == null ? null : myCachePool.getCachedData(url);
       if (data == null) {
@@ -277,11 +281,11 @@ public class ClassPath {
     myLastLoaderProcessed.incrementAndGet(); // volatile write
   }
 
-  Attributes getManifestData(URL url) {
+  Attributes getManifestData(@NotNull URL url) {
     return myCanUseCache && myCachePool != null ? myCachePool.getManifestData(url) : null;
   }
 
-  void cacheManifestData(URL url, Attributes manifestAttributes) {
+  void cacheManifestData(@NotNull URL url, @NotNull Attributes manifestAttributes) {
     if (myCanUseCache && myCachePool != null && myCachingCondition != null && myCachingCondition.shouldCacheData(url)) {
       myCachePool.cacheManifestData(url, manifestAttributes);
     }
@@ -290,11 +294,12 @@ public class ClassPath {
   private class MyEnumeration implements Enumeration<URL> {
     private int myIndex;
     private Resource myRes;
+    @NotNull
     private final String myName;
     private final String myShortName;
     private final List<Loader> myLoaders;
 
-    MyEnumeration(String name) {
+    MyEnumeration(@NotNull String name) {
       myName = name;
       myShortName = ClasspathCache.transformName(name);
       List<Loader> loaders = null;
@@ -305,7 +310,8 @@ public class ClassPath {
 
         if (name.endsWith("/")) {
           myCache.iterateLoaders(name.substring(0, name.length() - 1), ourLoaderCollector, loadersSet, this, myShortName);
-        } else {
+        }
+        else {
           myCache.iterateLoaders(name + "/", ourLoaderCollector, loadersSet, this, myShortName);
         }
 
@@ -367,7 +373,7 @@ public class ClassPath {
 
   private static class ResourceStringLoaderIterator extends ClasspathCache.LoaderIterator<Resource, String, ClassPath> {
     @Override
-    Resource process(Loader loader, String s, ClassPath classPath, String shortName) {
+    Resource process(@NotNull Loader loader, @NotNull String s, @NotNull ClassPath classPath, @NotNull String shortName) {
       if (!loader.containsName(s, shortName)) return null;
       Resource resource = loader.getResource(s);
       if (resource != null) {
@@ -391,7 +397,7 @@ public class ClassPath {
 
   private static class LoaderCollector extends ClasspathCache.LoaderIterator<Object, Collection<Loader>, Object> {
     @Override
-    Object process(Loader loader, Collection<Loader> parameter, Object parameter2, String shortName) {
+    Object process(@NotNull Loader loader, @NotNull Collection<Loader> parameter, @NotNull Object parameter2, @NotNull String shortName) {
       parameter.add(loader);
       return null;
     }

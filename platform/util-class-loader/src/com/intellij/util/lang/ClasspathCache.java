@@ -8,6 +8,7 @@ import com.intellij.util.BloomFilterBase;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TLongHashSet;
 import gnu.trove.TLongProcedure;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
@@ -33,37 +34,41 @@ public class ClasspathCache {
 
     @Deprecated
     LoaderData() {
-      this(new int[0], new int[0], null);
+      this(new int[0], new int[0], new NameFilter(10000, PROBABILITY));
     }
-    
-    LoaderData(int[] resourcePackageHashes, int[] classPackageHashes, NameFilter nameFilter) {
+
+    LoaderData(@NotNull int[] resourcePackageHashes, @NotNull int[] classPackageHashes, @NotNull NameFilter nameFilter) {
       myResourcePackageHashes = resourcePackageHashes;
       myClassPackageHashes = classPackageHashes;
       myNameFilter = nameFilter;
     }
 
-    LoaderData(DataInput dataInput) throws IOException {
+    LoaderData(@NotNull DataInput dataInput) throws IOException {
       this(readIntList(dataInput), readIntList(dataInput), new ClasspathCache.NameFilter(dataInput));
     }
 
-    private static int[] readIntList(DataInput reader) throws IOException {
+    @NotNull
+    private static int[] readIntList(@NotNull DataInput reader) throws IOException {
       int numberOfElements = DataInputOutputUtilRt.readINT(reader);
       int[] ints = new int[numberOfElements];
-      for(int i = 0; i < numberOfElements; ++i) ints[i] = (DataInputOutputUtilRt.readINT(reader));
+      for (int i = 0; i < numberOfElements; ++i) {
+        ints[i] = DataInputOutputUtilRt.readINT(reader);
+      }
       return ints;
     }
 
-    void save(DataOutput dataOutput) throws IOException {
+    void save(@NotNull DataOutput dataOutput) throws IOException {
       writeIntArray(dataOutput, myResourcePackageHashes);
       writeIntArray(dataOutput, myClassPackageHashes);
       myNameFilter.save(dataOutput);
     }
 
-    private static void writeIntArray(DataOutput writer, int[] hashes) throws IOException {
+    private static void writeIntArray(@NotNull DataOutput writer, @NotNull int[] hashes) throws IOException {
       DataInputOutputUtilRt.writeINT(writer, hashes.length);
       for(int hash: hashes) DataInputOutputUtilRt.writeINT(writer, hash);
     }
 
+    @NotNull
     NameFilter getNameFilter() {
       return myNameFilter;
     }
@@ -76,19 +81,20 @@ public class ClasspathCache {
 
     LoaderDataBuilder() {}
 
-    void addPossiblyDuplicateNameEntry(String name) {
+    void addPossiblyDuplicateNameEntry(@NotNull String name) {
       name = transformName(name);
       myUsedNameFingerprints.add(NameFilter.toNameFingerprint(name));
     }
 
-    void addResourcePackageFromName(String path) {
+    void addResourcePackageFromName(@NotNull String path) {
       myResourcePackageHashes.add(getPackageNameHash(path));
     }
 
-    void addClassPackageFromName(String path) {
+    void addClassPackageFromName(@NotNull String path) {
       myClassPackageHashes.add(getPackageNameHash(path));
     }
 
+    @NotNull
     LoaderData build() {
       int uniques = myUsedNameFingerprints.size(); 
       if (uniques > 20000) {
@@ -109,7 +115,7 @@ public class ClasspathCache {
 
   private final ReadWriteLock myLock = new ReentrantReadWriteLock();
 
-  public void applyLoaderData(LoaderData loaderData, final Loader loader) {
+  void applyLoaderData(@NotNull LoaderData loaderData, @NotNull Loader loader) {
     myLock.writeLock().lock();
     try {
       for(int resourcePackageHash:loaderData.myResourcePackageHashes) {
@@ -126,24 +132,23 @@ public class ClasspathCache {
     }
   }
 
-  abstract static class LoaderIterator <ResultType, ParameterType, ParameterType2> {
+  abstract static class LoaderIterator <R, T1, T2> {
     @Nullable
-    abstract ResultType process(Loader loader, ParameterType parameter, ParameterType2 parameter2, String shortName);
+    abstract R process(@NotNull Loader loader, @NotNull T1 parameter, @NotNull T2 parameter2, @NotNull String shortName);
   }
 
-  @Nullable <ResultType, ParameterType, ParameterType2> ResultType iterateLoaders(
-    String resourcePath,
-    LoaderIterator<ResultType, ParameterType, ParameterType2> iterator,
-    ParameterType parameter,
-    ParameterType2 parameter2, 
-    String shortName) {
-    Object o;
-    
+  @Nullable
+  <R, T1, T2> R iterateLoaders(@NotNull String resourcePath,
+                               @NotNull LoaderIterator<R, T1, T2> iterator,
+                               @NotNull T1 parameter,
+                               @NotNull T2 parameter2,
+                               @NotNull String shortName) {
     myLock.readLock().lock();
+    Object o;
     try {
       IntObjectHashMap map = resourcePath.endsWith(UrlClassLoader.CLASS_EXTENSION) ?
-                                      myClassPackagesCache : myResourcePackagesCache;
-      
+                             myClassPackagesCache : myResourcePackagesCache;
+
       o = map.get(getPackageNameHash(resourcePath));
     }
     finally {
@@ -153,14 +158,14 @@ public class ClasspathCache {
     if (o == null) return null;
     if (o instanceof Loader) return iterator.process((Loader)o, parameter, parameter2, shortName);
     Loader[] loaders = (Loader[])o;
-    for(Loader l:loaders) {
-      ResultType result = iterator.process(l, parameter, parameter2, shortName);
+    for (Loader l : loaders) {
+      R result = iterator.process(l, parameter, parameter2, shortName);
       if (result != null) return result;
     }
     return null;
   }
 
-  static int getPackageNameHash(String resourcePath) {
+  static int getPackageNameHash(@NotNull String resourcePath) {
     final int idx = resourcePath.lastIndexOf('/');
     int h = 0;
     for (int off = 0; off < idx; off++) {
@@ -168,16 +173,19 @@ public class ClasspathCache {
     }
     return h;
   }
-  
-  private static void addResourceEntry(int hash, IntObjectHashMap map, Loader loader) {
+
+  private static void addResourceEntry(int hash, @NotNull IntObjectHashMap map, @NotNull Loader loader) {
     Object o = map.get(hash);
-    if (o == null) map.put(hash, loader);
+    if (o == null) {
+      map.put(hash, loader);
+    }
     else if (o instanceof Loader) {
       if (ClassPath.ourLogTiming) assert loader != o;
-      map.put(hash, new Loader [] {(Loader)o, loader});
-    } else {
+      map.put(hash, new Loader[]{(Loader)o, loader});
+    }
+    else {
       Loader[] loadersArray = (Loader[])o;
-      if (ClassPath.ourLogTiming)  assert ArrayUtilRt.find(loadersArray, loader) == -1;
+      if (ClassPath.ourLogTiming) assert ArrayUtilRt.find(loadersArray, loader) == -1;
       Loader[] newArray = new Loader[loadersArray.length + 1];
       System.arraycopy(loadersArray, 0, newArray, 0, loadersArray.length);
       newArray[loadersArray.length] = loader;
@@ -185,14 +193,17 @@ public class ClasspathCache {
     }
   }
 
-  static String transformName(String name) {
+  @NotNull
+  static String transformName(@NotNull String name) {
     int nameEnd = !name.isEmpty() && name.charAt(name.length() - 1) == '/' ? name.length() - 1 : name.length();
     name = name.substring(name.lastIndexOf('/', nameEnd-1) + 1, nameEnd);
 
     if (name.endsWith(UrlClassLoader.CLASS_EXTENSION)) {
       String name1 = name;
       int $ = name1.indexOf('$');
-      if ($ != -1) name1 = name1.substring(0, $);
+      if ($ != -1) {
+        name1 = name1.substring(0, $);
+      }
       else {
         int index = name1.lastIndexOf('.');
         if (index >= 0) name1 = name1.substring(0, index);
@@ -205,11 +216,11 @@ public class ClasspathCache {
   static class NameFilter extends BloomFilterBase {
     private static final int SEED = 31;
     
-    protected NameFilter(int _maxElementCount, double probability) {
+    NameFilter(int _maxElementCount, double probability) {
       super(_maxElementCount, probability);
     }
 
-    protected NameFilter(DataInput input) throws IOException {
+    NameFilter(@NotNull DataInput input) throws IOException {
       super(input);
     }
 
@@ -219,18 +230,18 @@ public class ClasspathCache {
       addIt(hash, hash2);
     }
     
-    boolean maybeContains(String name) {
+    boolean maybeContains(@NotNull String name) {
       int hash = name.hashCode();
       int hash2 = StringHash.murmur(name, SEED);
       return maybeContains(hash, hash2);
     }
 
     @Override
-    protected void save(DataOutput output) throws IOException {
+    protected void save(@NotNull DataOutput output) throws IOException {
       super.save(output);
     }
 
-    private static long toNameFingerprint(String name) {
+    private static long toNameFingerprint(@NotNull String name) {
       int hash = name.hashCode();
       int hash2 = StringHash.murmur(name, SEED);
       return ((long)hash << 32) | (hash2 & 0xFFFFFFFFL);
