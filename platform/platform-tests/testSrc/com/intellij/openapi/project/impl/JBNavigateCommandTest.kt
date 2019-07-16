@@ -46,6 +46,10 @@ class JBNavigateCommandTest {
   @Rule
   val testName = TestName()
 
+  @Rule
+  @JvmField
+  val busConnection = RecentProjectManagerListenerRule()
+
   fun getTestDataPath(): String {
     return "${PlatformTestUtil.getPlatformTestDataPath()}/commands/navigate/"
   }

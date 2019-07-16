@@ -33,19 +33,7 @@ class RecentProjectsTest {
 
   @Rule
   @JvmField
-  val busConnection = object : ExternalResource() {
-    private val disposable = Disposer.newDisposable()
-
-    override fun before() {
-      val connection = ApplicationManager.getApplication().messageBus.connect()
-      connection.subscribe(ProjectManager.TOPIC, RecentProjectsManagerBase.MyProjectListener())
-      connection.subscribe(AppLifecycleListener.TOPIC, RecentProjectsManagerBase.MyAppLifecycleListener())
-    }
-
-    override fun after() {
-      Disposer.dispose(disposable)
-    }
-  }
+  val busConnection = RecentProjectManagerListenerRule()
 
   @Rule
   @JvmField
@@ -161,5 +149,19 @@ class RecentProjectsTest {
     finally {
       closeProject(project)
     }
+  }
+}
+
+class RecentProjectManagerListenerRule : ExternalResource() {
+  private val disposable = Disposer.newDisposable()
+
+  override fun before() {
+    val connection = ApplicationManager.getApplication().messageBus.connect()
+    connection.subscribe(ProjectManager.TOPIC, RecentProjectsManagerBase.MyProjectListener())
+    connection.subscribe(AppLifecycleListener.TOPIC, RecentProjectsManagerBase.MyAppLifecycleListener())
+  }
+
+  override fun after() {
+    Disposer.dispose(disposable)
   }
 }
