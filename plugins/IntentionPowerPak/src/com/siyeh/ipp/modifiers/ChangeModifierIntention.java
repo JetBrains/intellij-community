@@ -56,7 +56,6 @@ import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.IntentionPowerPackBundle;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,7 +64,6 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Stream;
 
 public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
   private static final List<AccessModifier> ALL_MODIFIERS = ContainerUtil.immutableList(AccessModifier.values());
@@ -238,9 +236,9 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
         public void onClosed(@NotNull LightweightWindowEvent event) {
           highlighter.dispose();
           model.moveToOffset(cursorMarker.getStartOffset());
+          FinishMarkAction.finish(project, editor, markAction);
           if (!event.isOk()) {
-            FinishMarkAction.finish(project, editor, markAction);
-            updater.undoChange(true);
+            updater.undoChange();
           }
         }
       })
@@ -252,7 +250,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
         MultiMap<PsiElement, String> conflicts;
         PsiModifierList modifierList;
         try {
-          updater.undoChange(false);
+          updater.undoChange();
           PsiDocumentManager.getInstance(project).commitDocument(document);
           PsiMember m = memberPointer.getElement();
           if (m == null) return;
@@ -266,21 +264,12 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
           }
         }
         if (conflicts == null) {
-          //canceled by user
-          FinishMarkAction.finish(project, editor, markAction);
-          updater.undoChange(true);
           return;
         }
         if (!conflicts.isEmpty()) {
-          FinishMarkAction.finish(project, editor, markAction);
-          updater.undoChange(true);
-          PsiDocumentManager.getInstance(project).commitDocument(document);
           processWithConflicts(modifierList, t, conflicts);
         } else {
-          updater.undoChange(false);
-          PsiDocumentManager.getInstance(project).commitDocument(document);
           changeModifier(modifierList, t, false);
-          FinishMarkAction.finish(project, editor, markAction);
         }
       })
       .createPopup();
@@ -308,12 +297,12 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
       myMarker.setGreedyToLeft(true);
     }
 
-    void undoChange(boolean viaUndoManager) {
+    void undoChange() {
       Project project = myFile.getProject();
       FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
       FileEditor fileEditor = fileEditorManager.getSelectedEditor(myFile.getVirtualFile());
       UndoManager manager = UndoManager.getInstance(project);
-      if (viaUndoManager && manager.isUndoAvailable(fileEditor)) {
+      if (manager.isUndoAvailable(fileEditor)) {
         manager.undo(fileEditor);
       }
       else {
