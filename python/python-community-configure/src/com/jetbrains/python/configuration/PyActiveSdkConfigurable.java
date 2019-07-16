@@ -31,7 +31,6 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxSpeedSearch;
@@ -237,9 +236,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
   @NotNull
   private PythonSdkDetailsDialog buildAllSdksDialog() {
-    return myModule == null
-           ? new PythonSdkDetailsDialog(myProject, this::setSelectedSdk, EmptyRunnable.INSTANCE)
-           : new PythonSdkDetailsDialog(myModule, this::setSelectedSdk, EmptyRunnable.INSTANCE);
+    return new PythonSdkDetailsDialog(myProject, myModule, this::setSelectedSdk);
   }
 
   @Override

@@ -58,26 +58,37 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   private JPanel myMainPanel;
   private JList<Object> mySdkList;
   private boolean mySdkListChanged = false;
-  private final PyConfigurableInterpreterList myInterpreterList;
-  private final ProjectSdksModel myProjectSdksModel;
 
   private final Map<Sdk, SdkModificator> myModificators = FactoryMap.create(sdk -> sdk.getSdkModificator());
   private final Set<SdkModificator> myModifiedModificators = new HashSet<>();
+
+  @NotNull
   private final Project myProject;
 
-  private boolean myHideOtherProjectVirtualenvs = false;
+  @Nullable
   private final Module myModule;
-  private final Runnable mySdkSettingsWereModified;
-  private final NullableConsumer<? super Sdk> myShowMoreCallback;
+
+  @NotNull
+  private final NullableConsumer<? super Sdk> mySelectedSdkCallback;
+
+  @NotNull
+  private final PyConfigurableInterpreterList myInterpreterList;
+
+  @NotNull
+  private final ProjectSdksModel myProjectSdksModel;
+
+  private boolean myHideOtherProjectVirtualenvs = false;
+
   private SdkModel.Listener myListener;
 
-  public PythonSdkDetailsDialog(Project project, NullableConsumer<? super Sdk> showMoreCallback, Runnable sdkSettingsWereModified) {
-    super(project, true);
-    myModule = null;
-    mySdkSettingsWereModified = sdkSettingsWereModified;
+  public PythonSdkDetailsDialog(@NotNull Project project,
+                                @Nullable Module module,
+                                @NotNull NullableConsumer<? super Sdk> selectedSdkCallback) {
+    super(project);
     setTitle(PyBundle.message("sdk.details.dialog.title"));
-    myShowMoreCallback = showMoreCallback;
     myProject = project;
+    myModule = module;
+    mySelectedSdkCallback = selectedSdkCallback;
     myInterpreterList = PyConfigurableInterpreterList.getInstance(myProject);
     myProjectSdksModel = myInterpreterList.getModel();
     init();
@@ -88,20 +99,6 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   protected void dispose() {
     myProjectSdksModel.removeListener(myListener);
     super.dispose();
-  }
-
-  public PythonSdkDetailsDialog(Module module, NullableConsumer<? super Sdk> showMoreCallback, Runnable sdkSettingsWereModified) {
-    super(module.getProject());
-    myModule = module;
-    mySdkSettingsWereModified = sdkSettingsWereModified;
-
-    setTitle(PyBundle.message("sdk.details.dialog.title"));
-    myShowMoreCallback = showMoreCallback;
-    myProject = module.getProject();
-    myInterpreterList = PyConfigurableInterpreterList.getInstance(myProject);
-    myProjectSdksModel = myInterpreterList.getModel();
-    init();
-    updateOkButton();
   }
 
   @Nullable
@@ -187,9 +184,6 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   }
 
   public void apply() {
-    if (!myModifiedModificators.isEmpty()) {
-      mySdkSettingsWereModified.run();
-    }
     for (SdkModificator modificator : myModifiedModificators) {
       /* This should always be true barring bug elsewhere, log error on else? */
       if (modificator.isWritable()) {
@@ -200,7 +194,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     myModifiedModificators.clear();
     mySdkListChanged = false;
     final Sdk sdk = getSelectedSdk();
-    myShowMoreCallback.consume(sdk);
+    mySelectedSdkCallback.consume(sdk);
     if (sdk != null) {
       PyPackageManagers.getInstance().clearCache(sdk);
     }
@@ -327,7 +321,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     if (isAssociated && myModule != null) {
       additionalData.associateWithModule(myModule);
     }
-    else if (isAssociated && myProject != null) {
+    else if (isAssociated) {
       additionalData.setAssociatedModulePath(myProject.getBasePath());
     }
     else {
