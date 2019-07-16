@@ -13,5 +13,5 @@ void namedParams(@NamedParams([
 
 @CompileStatic
 def m() {
-  <error descr="Missing required 'first' named parameter">namedParams(1, last: 1)</error>
+  <error descr="Missing required named parameter 'first'">namedParams(1, last: 1)</error>
 }

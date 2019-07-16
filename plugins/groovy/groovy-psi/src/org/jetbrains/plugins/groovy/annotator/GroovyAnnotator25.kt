@@ -23,11 +23,10 @@ class GroovyAnnotator25(private val holder: AnnotationHolder) : GroovyElementVis
   override fun visitMethod(method: GrMethod) {
     collectAllParamsFromNamedVariantMethod(method).groupBy { it.first }.filter { it.value.size > 1 }.forEach { (name, parameters) ->
       val parametersList = parameters.joinToString { "'${it.second.name}'" }
-      parameters.drop(1).map { (_, parameter) -> parameter }.forEach {
-        val nameIdentifier = it.nameIdentifier
-        if (nameIdentifier != null) {
-          holder.createErrorAnnotation(nameIdentifier, GroovyBundle.message("duplicating.named.parameter", name, parametersList))
-        }
+      val duplicatingParameters = parameters.drop(1).map { (_, parameter) -> parameter }
+      for (parameter in duplicatingParameters) {
+        val nameIdentifier = parameter.nameIdentifier ?: continue
+        holder.createErrorAnnotation(nameIdentifier, GroovyBundle.message("duplicating.named.parameter", name, parametersList))
       }
     }
     super.visitMethod(method)
@@ -52,6 +51,7 @@ class GroovyAnnotator25(private val holder: AnnotationHolder) : GroovyElementVis
   }
 
   private fun checkRequiredNamedArguments(callExpression: GrCallExpression) {
+    if (!PsiUtil.isCompileStatic(callExpression)) return
     val namedArguments = callExpression.namedArguments.mapNotNull { it.labelName }.toSet()
     if (namedArguments.isEmpty()) return
 
@@ -59,13 +59,13 @@ class GroovyAnnotator25(private val holder: AnnotationHolder) : GroovyElementVis
     val method = resolveResult.element as? PsiMethod ?: return
 
     val parameters = method.parameterList.parameters
-    val mapParameter = (if (parameters.isNotEmpty()) parameters[0] else null) ?: return
+    val mapParameter = parameters.firstOrNull() ?: return
 
     val requiredNamedParams = collectNamedParams(mapParameter).filter { it.required }
 
-    requiredNamedParams.forEach {
-      if (!namedArguments.contains(it.name) && PsiUtil.isCompileStatic(callExpression)) {
-        val message = GroovyBundle.message("missing.required.named.parameter", it.name)
+    for (namedParam in requiredNamedParams) {
+      if (!namedArguments.contains(namedParam.name)) {
+        val message = GroovyBundle.message("missing.required.named.parameter", namedParam.name)
         holder.createErrorAnnotation(callExpression, message)
       }
     }
