@@ -9,7 +9,6 @@ import com.intellij.openapi.util.NullableFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.XmlElementFactory;
@@ -603,18 +602,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     final XmlTag tag = getXmlTag();
     final int index = info.second;
     if (tag != null) {
-      if (!tag.isValid()) {
-        throw new PsiInvalidElementAccessException(tag);
-      }
-      final XmlTag[] subTags = tag.getSubTags();
-      for (int i = 0, subTagsLength = subTags.length; i < subTagsLength; i++) {
-        XmlTag xmlTag = subTags[i];
-        if (!xmlTag.isValid()) {
-          throw new PsiInvalidElementAccessException(xmlTag,
-                                                     "invalid children of valid tag: " + tag.getText() + "; subtag=" + xmlTag + "; index=" + i);
-        }
-      }
-      final List<XmlTag> tags = DomImplUtil.findSubTags(subTags, evaluatedXmlName, getFile());
+      List<XmlTag> tags = DomImplUtil.findSubTags(tag.getSubTags(), evaluatedXmlName, getFile());
       if (tags.size() > index) {
         final XmlTag child = tags.get(index);
         final IndexedElementInvocationHandler semElement = myManager.getSemService().getSemElement(DomManagerImpl.DOM_INDEXED_HANDLER_KEY, child);
