@@ -64,7 +64,7 @@ public enum LoadingPhase {
     LoadingPhase currentPhase = myCurrentPhase;
 
     if (currentPhase.compareTo(phase) < 0) {
-      if (isKnowViolator()) return;
+      if (isKnownViolator()) return;
       Throwable t = new Throwable();
 
       synchronized (myStackTraces) {
@@ -78,14 +78,12 @@ public enum LoadingPhase {
     }
   }
 
-  private static boolean isKnowViolator() {
+  private static boolean isKnownViolator() {
     return Arrays.stream(Thread.currentThread().getStackTrace())
       .anyMatch(element -> {
         String className = element.getClassName();
-        if ("com.intellij.openapi.application.Preloader".equals(className)) return true;
-        if (className.contains("com.intellij.util.indexing.IndexInfrastructure")) return true;
-
-        return false;
+        return className.equals("com.intellij.openapi.application.Preloader") ||
+               className.contains("com.intellij.util.indexing.IndexInfrastructure");
       });
   }
 
