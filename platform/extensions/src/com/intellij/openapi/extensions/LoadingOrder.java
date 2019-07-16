@@ -70,10 +70,12 @@ public class LoadingOrder {
     myLast = last;
   }
 
+  @Override
   public String toString() {
     return myName;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (!(o instanceof LoadingOrder)) return false;
@@ -88,6 +90,7 @@ public class LoadingOrder {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result = myFirst ? 1 : 0;
     result = 31 * result + (myLast ? 1 : 0);
