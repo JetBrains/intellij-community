@@ -19,7 +19,8 @@ class GrUReferenceExpression(
   override val psi: PsiElement = sourcePsi
   override val javaPsi: PsiElement? = null
 
-  override val resolvedName: String? = (resolve() as? PsiNamedElement)?.name
+  override val resolvedName: String?
+    get() = (resolve() as? PsiNamedElement)?.name
 
   override val uastParent: UElement? by lazy(parentProvider)
 
