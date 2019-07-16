@@ -73,7 +73,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     }
 
     protected open fun getFrameIcon(ctx: ScaleContext): Icon {
-        return AppUIUtil.loadSmallApplicationIcon(ctx, iconSize)
+        return AppUIUtil.loadSmallApplicationIcon(iconSize)
     }
 
     protected val productIcon: JComponent by lazy {

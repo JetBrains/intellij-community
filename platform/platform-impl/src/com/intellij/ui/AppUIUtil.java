@@ -125,6 +125,7 @@ public final class AppUIUtil {
     return SystemInfo.isWindows && Boolean.getBoolean("ide.native.launcher") && Boolean.getBoolean("jbre.win.app.icon.supported");
   }
 
+  @SuppressWarnings("SameParameterValue")
   @NotNull
   private static Image loadSmallApplicationIconImage(@NotNull ScaleContext ctx, int size) {
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
@@ -133,22 +134,30 @@ public final class AppUIUtil {
   }
 
   @NotNull
-  public static Icon loadSmallApplicationIcon(@NotNull ScaleContext ctx) {
-    Image image = loadSmallApplicationIconImage(ctx, 16);
-    return new JBImageIcon(image);
+  public static Icon loadSmallApplicationIcon() {
+    return loadSmallApplicationIcon(16);
   }
 
   @NotNull
-  public static Icon loadSmallApplicationIcon(@NotNull ScaleContext ctx, int size) {
-    Image image = loadSmallApplicationIconImage(ctx, size);
-    return new JBImageIcon(image);
+  public static Icon loadSmallApplicationIcon(int size) {
+    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+    String smallIconUrl = appInfo.getSmallApplicationSvgIconUrl();
+
+    Icon icon = loadApplicationIcon(smallIconUrl, size);
+    if (icon != null) return icon;
+
+    @SuppressWarnings("deprecation") String fallbackSmallIconUrl = appInfo.getSmallIconUrl();
+    Image image = ImageLoader.loadFromResource(fallbackSmallIconUrl);
+    //noinspection ConstantConditions
+    icon = new JBImageIcon(image);
+    scaleIconToSize(icon, size);
+    return icon;
   }
 
 
-  public static Icon loadApplicationIconImage(@NotNull ScaleContext ctx, int size) {
+  public static Icon loadApplicationIcon(int size) {
     String url = ApplicationInfoImpl.getShadowInstance().getApplicationSvgIconUrl();
-    Image image = loadApplicationIconImage(url, ctx, size, null);
-    return image != null ? new JBImageIcon(image) : null;
+    return loadApplicationIcon(url, size);
   }
 
   /**
@@ -157,15 +166,9 @@ public final class AppUIUtil {
   @Contract("_, _, _, !null -> !null")
   @Nullable
   private static Image loadApplicationIconImage(String svgPath, ScaleContext ctx, int size, String fallbackPath) {
-    if (svgPath != null) {
-      Icon icon = IconLoader.findIcon(svgPath);
-      if (icon != null) {
-        int width = icon.getIconWidth();
-        float scale = size / (float)width;
-        icon = IconUtil.scale(icon, null, scale); // performs vector scaling of a wrapped svg icon source
-        return IconUtil.toImage(icon, ctx);
-      }
-      getLogger().info("Cannot load SVG application icon from " + svgPath);
+    Icon icon = loadApplicationIcon(svgPath, size);
+    if (icon != null) {
+      return IconUtil.toImage(icon, ctx);
     }
 
     if (fallbackPath != null) {
@@ -173,6 +176,29 @@ public final class AppUIUtil {
     }
 
     return null;
+  }
+
+  @Nullable
+  private static Icon loadApplicationIcon(String svgPath, int size) {
+    if (svgPath == null) return null;
+
+    Icon icon = IconLoader.findIcon(svgPath);
+    if (icon == null) {
+      getLogger().info("Cannot load SVG application icon from " + svgPath);
+      return null;
+    }
+
+    return scaleIconToSize(icon, size);
+  }
+
+  @NotNull
+  private static Icon scaleIconToSize(Icon icon, int size) {
+    int width = icon.getIconWidth();
+    if (width == size) return icon;
+
+    float scale = size / (float)width;
+    icon = IconUtil.scale(icon, null, scale);
+    return icon;
   }
 
   public static void invokeLaterIfProjectAlive(@NotNull Project project, @NotNull Runnable runnable) {
