@@ -18,7 +18,7 @@ class InferenceUnitGraphBuilder {
   fun addRelation(left: InferenceUnit, right: InferenceUnit): InferenceUnitGraphBuilder {
     register(left)
     register(right)
-    relations.add(Pair(left, right))
+    relations.add(left to right)
     return this
   }
 

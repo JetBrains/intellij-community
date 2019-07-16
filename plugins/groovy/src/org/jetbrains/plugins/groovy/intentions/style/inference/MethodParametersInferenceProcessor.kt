@@ -1,9 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiWildcardType
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitGraph
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode
+import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode.Companion.InstantiationHint
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.createGraphFromInferenceVariables
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.determineDependencies
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
@@ -14,112 +16,81 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 /**
  * Allows to infer method parameters types regarding method calls and inner dependencies between types.
  */
-class MethodParametersInferenceProcessor(method: GrMethod) {
-  private val driver: InferenceDriver = InferenceDriver(method)
 
-  /**
-   * Performs full substitution for non-typed parameters of [InferenceDriver.virtualMethod]
-   * Inference is performed in 3 phases:
-   * 1. Creating a type parameter for each of existing non-typed parameters
-   * 2. Inferring new parameters signature cause of possible generic types. Creating new type parameters.
-   * 3. Inferring dependencies between new type parameters and instantiating them.
-   */
-  fun runInferenceProcess(): GrMethod {
-    if (!driver.treatedAsOverriddenMethod()) {
-      driver.setUpNewTypeParameters()
-      val signatureSubstitutor = setUpParametersSignature()
-      if (driver.method.isConstructor) {
-        driver.acceptFinalSubstitutor(signatureSubstitutor)
-      }
-      else {
-        driver.parametrizeMethod(signatureSubstitutor)
-        val graph = setUpGraph()
-        inferTypeParameters(graph)
-      }
+/**
+ * Performs full substitution for non-typed parameters of [InferenceDriver.virtualMethod]
+ * Inference is performed in 3 phases:
+ * 1. Creating a type parameter for each of existing non-typed parameters
+ * 2. Inferring new parameters signature cause of possible generic types. Creating new type parameters.
+ * 3. Inferring dependencies between new type parameters and instantiating them.
+ */
+fun runInferenceProcess(method: GrMethod): GrMethod {
+  val driver = InferenceDriver(method)
+  if (!driver.treatedAsOverriddenMethod()) {
+    driver.setUpNewTypeParameters()
+    val signatureSubstitutor = setUpParametersSignature(driver)
+    if (driver.method.isConstructor) {
+      driver.acceptFinalSubstitutor(signatureSubstitutor)
     }
-    return driver.virtualMethod
-  }
-
-  private fun setUpParametersSignature(): PsiSubstitutor {
-    val inferenceSession = CollectingGroovyInferenceSession(driver.virtualMethod.typeParameters, PsiSubstitutor.EMPTY, driver.virtualMethod,
-                                                            driver.virtualParametersMapping)
-    driver.collectOuterCalls(inferenceSession)
-    return inferenceSession.inferSubst()
-  }
-
-
-  private fun setUpGraph(): InferenceUnitGraph {
-    val inferenceSession = CollectingGroovyInferenceSession(driver.virtualMethod.typeParameters, PsiSubstitutor.EMPTY, driver.virtualMethod)
-    val initialVariables = driver.virtualMethod.typeParameters
-    driver.collectInnerMethodCalls(inferenceSession)
-    driver.constantTypes.forEach { getInferenceVariable(inferenceSession, it).instantiation = it }
-    inferenceSession.run { repeatInferencePhases(); infer() }
-    val inferenceVariables = driver.virtualMethod.typeParameters.map { getInferenceVariable(inferenceSession, it.type()) }
-    return createGraphFromInferenceVariables(inferenceVariables, inferenceSession, driver, initialVariables)
-  }
-
-  private fun inferTypeParameters(initialGraph: InferenceUnitGraph) {
-    val inferredGraph = determineDependencies(initialGraph)
-    var resultSubstitutor = PsiSubstitutor.EMPTY
-    val endpoints = mutableSetOf<InferenceUnitNode>()
-    for (unit in inferredGraph.resolveOrder()) {
-      val preferableType = getPreferableType(unit, resultSubstitutor, endpoints)
-      if (unit !in endpoints) {
-        resultSubstitutor = resultSubstitutor.put(unit.core.initialTypeParameter, preferableType)
-      }
-    }
-    val endpointTypes = endpoints.map {
-      val completelySubstitutedType = resultSubstitutor.recursiveSubstitute(it.typeInstantiation)
-      driver.createBoundedTypeParameter(it.type.name, resultSubstitutor, completelySubstitutedType).type()
-    }
-    val endpointSubstitutor = PsiSubstitutor.EMPTY.putAll(endpoints.map { it.core.initialTypeParameter }.toTypedArray(),
-                                                          endpointTypes.toTypedArray())
-    driver.acceptFinalSubstitutor(resultSubstitutor.putAll(endpointSubstitutor))
-  }
-
-  private fun getPreferableType(unit: InferenceUnitNode,
-                                resultSubstitutor: PsiSubstitutor,
-                                endpoints: MutableSet<InferenceUnitNode>): PsiType {
-    val mayBeDirectlyInstantiated =
-      unit.core.constant ||
-      unit.direct ||
-      (!unit.forbiddenToInstantiate
-       && when {
-         unit.core.flexible -> (unit.typeInstantiation !is PsiIntersectionType)
-         else -> true
-       })
-    when {
-      mayBeDirectlyInstantiated -> {
-        val instantiation = when {
-          unit.core.constant -> {
-            if (unit.core.initialTypeParameter.extendsListTypes.isEmpty()) {
-              driver.createBoundedTypeParameter(unit.type.name, resultSubstitutor, unit.typeInstantiation).type()
-            }
-            else {
-              driver.finalTypeParameterList.add(unit.core.initialTypeParameter)
-              return unit.core.initialTypeParameter.type()
-            }
-          }
-          unit.core.flexible || unit.direct -> unit.typeInstantiation
-          unit.typeInstantiation == unit.type ||
-          unit.typeInstantiation == PsiType.NULL ||
-          unit.typeInstantiation.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ->
-            PsiWildcardType.createUnbounded(driver.virtualMethod.manager)
-          else -> PsiWildcardType.createExtends(driver.virtualMethod.manager, unit.typeInstantiation)
-        }
-        return resultSubstitutor.substitute(instantiation)
-      }
-      else -> {
-        val advice = unit.parent?.type ?: unit.typeInstantiation
-        if (advice == unit.typeInstantiation) {
-          endpoints.add(unit)
-          return unit.type
-        }
-        else {
-          val newTypeParameter = driver.createBoundedTypeParameter(unit.type.name, resultSubstitutor, advice)
-          return newTypeParameter.type()
-        }
-      }
+    else {
+      driver.parametrizeMethod(signatureSubstitutor)
+      val graph = setUpGraph(driver)
+      inferTypeParameters(graph, driver)
     }
   }
+  return driver.virtualMethod
+}
+
+private fun setUpParametersSignature(driver: InferenceDriver): PsiSubstitutor {
+  val inferenceSession = CollectingGroovyInferenceSession(driver.virtualMethod.typeParameters, PsiSubstitutor.EMPTY, driver.virtualMethod,
+                                                          driver.virtualParametersMapping)
+  driver.collectOuterCalls(inferenceSession)
+  return inferenceSession.inferSubst()
+}
+
+
+private fun setUpGraph(driver: InferenceDriver): InferenceUnitGraph {
+  val inferenceSession = CollectingGroovyInferenceSession(driver.virtualMethod.typeParameters, PsiSubstitutor.EMPTY, driver.virtualMethod)
+  val initialVariables = driver.virtualMethod.typeParameters
+  driver.collectInnerMethodCalls(inferenceSession)
+  driver.constantTypes.forEach { getInferenceVariable(inferenceSession, it).instantiation = it }
+  inferenceSession.run { repeatInferencePhases(); infer() }
+  val inferenceVariables = driver.virtualMethod.typeParameters.map { getInferenceVariable(inferenceSession, it.type()) }
+  return createGraphFromInferenceVariables(inferenceVariables, inferenceSession, driver, initialVariables)
+}
+
+private fun inferTypeParameters(initialGraph: InferenceUnitGraph,
+                                driver: InferenceDriver) {
+  val inferredGraph = determineDependencies(initialGraph)
+  var resultSubstitutor = PsiSubstitutor.EMPTY
+  val endpoints = mutableSetOf<InferenceUnitNode>()
+  for (unit in inferredGraph.resolveOrder()) {
+    val (instantiation, hint) = unit.smartTypeInstantiation()
+    val transformedType = when (hint) {
+      InstantiationHint.NEW_TYPE_PARAMETER -> driver.createBoundedTypeParameter(unit.type.name, resultSubstitutor,
+                                                                                resultSubstitutor.substitute(instantiation)).type()
+      InstantiationHint.REIFIED_AS_PROPER_TYPE -> resultSubstitutor.substitute(instantiation)
+      InstantiationHint.ENDPOINT_TYPE_PARAMETER -> {
+        endpoints.add(unit)
+        instantiation
+      }
+      InstantiationHint.REIFIED_AS_TYPE_PARAMETER -> {
+        driver.finalTypeParameterList.add(unit.core.initialTypeParameter)
+        instantiation
+      }
+      InstantiationHint.BOUNDED_WILDCARD -> resultSubstitutor.substitute(
+        PsiWildcardType.createExtends(driver.virtualMethod.manager, instantiation))
+      InstantiationHint.UNBOUNDED_WILDCARD -> resultSubstitutor.substitute(PsiWildcardType.createUnbounded(driver.virtualMethod.manager))
+    }
+    if (hint != InstantiationHint.ENDPOINT_TYPE_PARAMETER) {
+      resultSubstitutor = resultSubstitutor.put(unit.core.initialTypeParameter, transformedType)
+    }
+  }
+  val endpointTypes = endpoints.map {
+    val completelySubstitutedType = resultSubstitutor.recursiveSubstitute(it.typeInstantiation)
+    driver.createBoundedTypeParameter(it.type.name, resultSubstitutor, completelySubstitutedType).type()
+  }
+  val endpointSubstitutor = PsiSubstitutor.EMPTY.putAll(endpoints.map { it.core.initialTypeParameter }.toTypedArray(),
+                                                        endpointTypes.toTypedArray())
+  driver.acceptFinalSubstitutor(resultSubstitutor.putAll(endpointSubstitutor))
 }

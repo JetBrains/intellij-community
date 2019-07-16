@@ -92,10 +92,7 @@ class ParameterizedClosure(val parameter: GrParameter) {
       }
     }
     parameter.modifierList.addAnnotation(
-      "$CLOSURE_PARAMS_FQ(value=$FROM_STRING_FQ, options=[\"${types.joinToString(",") {
-        // todo: remove this
-        tryToExtractUnqualifiedName(it.canonicalText)
-      }}\"])")
+      """$CLOSURE_PARAMS_FQ(value=$FROM_STRING_FQ, options=["${types.joinToString(",") { it.canonicalText }}"])""")
   }
 
   private fun createSimpleType(type: PsiType): PsiAnnotation =
@@ -104,17 +101,17 @@ class ParameterizedClosure(val parameter: GrParameter) {
 
 
   fun substituteTypes(resultSubstitutor: PsiSubstitutor,
-                      gatheredTypeParameters: Map<PsiTypeParameter, List<PsiTypeParameter>>) {
-    val substitutedTypes = types.map {type ->
-      val reachedParameters = gatheredTypeParameters
-        .filter { gatheredTypes -> gatheredTypes.key.type() != type }
-        .flatMap { it.value.map(PsiTypeParameter::type)  }
-      if (reachedParameters.contains(type)) {
-        resultSubstitutor.substitute(type)
+                      typeParametersDependencies: Map<PsiTypeParameter, List<PsiTypeParameter>>) {
+    val javaLangObject = PsiType.getJavaLangObject(typeParameters.first().manager, typeParameters.first().resolveScope)
+    val substitutedTypes = types.map { parameterType ->
+      val dependencies = typeParametersDependencies
+        .filter { it.key.type() != parameterType }
+        .flatMap { it.value.map(PsiTypeParameter::type) }.toSet()
+      if (dependencies.contains(parameterType)) {
+        resultSubstitutor.substitute(parameterType)
       }
       else {
-        ((resultSubstitutor.substitute(type) as PsiClassType).resolve() as PsiTypeParameter).extendsListTypes.firstOrNull()
-        ?: PsiType.getJavaLangObject(typeParameters.first().manager, typeParameters.first().resolveScope)
+        resultSubstitutor.substitute(parameterType).typeParameter()?.extendsListTypes?.firstOrNull() ?: javaLangObject
       }
     }
     types.clear()

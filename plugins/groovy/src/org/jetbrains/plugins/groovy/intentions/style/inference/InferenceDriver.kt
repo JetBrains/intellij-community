@@ -78,7 +78,7 @@ class InferenceDriver(val method: GrMethod) {
   /**
    * Substitutes all non-typed parameters of the [virtualMethod] with generic types
    */
-  fun setUpNewTypeParameters() {
+  fun setUpNewTypeParameters()  {
     if (!virtualMethod.hasTypeParameters()) {
       virtualMethod.addAfter(elementFactory.createTypeParameterList(), virtualMethod.firstChild)
     }
@@ -363,7 +363,7 @@ class InferenceDriver(val method: GrMethod) {
 
   fun acceptFinalSubstitutor(resultSubstitutor: PsiSubstitutor) {
     val targetParameters = parameterIndex.keys
-    val gatheredTypeParameters = gatherTypeParameters(virtualMethod.typeParameterList!!, resultSubstitutor)
+    val gatheredTypeParameters = collectDependencies(virtualMethod.typeParameterList!!, resultSubstitutor)
     targetParameters.forEach { param ->
       param.setType(resultSubstitutor.substitute(param.type))
       when {

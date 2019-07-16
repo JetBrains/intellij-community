@@ -6,6 +6,7 @@ import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiType
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrder
 import org.jetbrains.plugins.groovy.intentions.style.inference.InferenceGraphNode
+import org.jetbrains.plugins.groovy.intentions.style.inference.isTypeParameter
 
 /**
  * Represents graph which is used for determining [InferenceUnitNode] dependencies.
@@ -75,16 +76,14 @@ private fun condense(graph: InferenceUnitGraph): InferenceUnitGraph {
   val components = InferenceVariablesOrder.initNodes(nodeMap.values).map { it.value!! }
   val builder = InferenceUnitGraphBuilder()
   for (component in components) {
-    val representative = component.minBy { it.toString() }!!
-    var isForbidden = false
+    val representative = component.minBy(InferenceUnitNode::toString)!!
     component.forEach {
       representativeMap[it.core] = representative.core
-      isForbidden = isForbidden || it.forbiddenToInstantiate
       if (it != representative) {
         builder.setType(it.core, representative.core.type).setDirect(it.core)
       }
     }
-    if (isForbidden) {
+    if (component.any(InferenceUnitNode::forbiddenToInstantiate)) {
       builder.forbidInstantiation(representative.core)
     }
   }
@@ -100,12 +99,13 @@ private fun condense(graph: InferenceUnitGraph): InferenceUnitGraph {
 fun getRepresentative(anchor: InferenceUnitNode,
                       target: InferenceUnitNode,
                       representativeMap: Map<InferenceUnit, InferenceUnit>): InferenceUnit? {
-  val representative = representativeMap.getValue(target.core)
-  if (representative == representativeMap.getValue(anchor.core)) {
-    return null
-  }
-  else {
-    return representative
+  return representativeMap.getValue(target.core).run {
+    if (this == representativeMap.getValue(anchor.core)) {
+      null
+    }
+    else {
+      this
+    }
   }
 }
 
@@ -164,9 +164,9 @@ private fun setTreeStructure(order: InferenceUnitGraph): InferenceUnitGraph {
   }
   val builder = InferenceUnitGraphBuilder()
   for (unit in order.units) {
-    (parentMap[unit])?.run { builder.addRelation(this.core, unit.core) }
+    builder.register(unit)
+    parentMap[unit]?.run { builder.addRelation(this.core, unit.core) }
   }
-  order.units.forEach { builder.register(it) }
   return builder.build()
 }
 
@@ -175,10 +175,11 @@ private fun setTreeStructure(order: InferenceUnitGraph): InferenceUnitGraph {
  */
 private fun collectParents(unit: InferenceUnitNode?,
                            parentMap: Map<InferenceUnitNode, InferenceUnitNode>): MutableSet<InferenceUnitNode> {
-  unit ?: return mutableSetOf()
-  val branch = collectParents(parentMap[unit], parentMap)
-  branch.add(unit)
-  return branch
+  return if (unit == null) {
+    mutableSetOf()
+  } else {
+    collectParents(parentMap[unit], parentMap).apply { add(unit) }
+  }
 }
 
 /**
@@ -200,17 +201,17 @@ private tailrec fun merge(anchorUnit: InferenceUnitNode,
 
 
 /**
- * Tree branches may be shortened, if some node has only one child or has one parent and one child
+ * Tree branches may be shortened for nodes representing covariant types
  */
 private fun collapseTreeEdges(unitGraph: InferenceUnitGraph): InferenceUnitGraph {
   val internalNodeMap = LinkedHashMap<InferenceUnitNode, InternalNode>()
   val collapsedNodesMap = mutableMapOf<InferenceUnit, InferenceUnit>()
   val propagatedTypes = unitGraph.units.filter { !it.direct }.mapNotNull {
-    if (!(it.typeInstantiation.isTypeParameter() || it.typeInstantiation == PsiType.NULL)) {
-      Pair(it.core, it.typeInstantiation)
+    if (it.typeInstantiation.isTypeParameter() || it.typeInstantiation == PsiType.NULL) {
+      null
     }
     else {
-      null
+      it.core to it.typeInstantiation
     }
   }.toMap().toMutableMap()
   unitGraph.units.forEach { internalNodeMap[it] = InternalNode(it) }
@@ -233,7 +234,7 @@ private fun collapseTreeEdges(unitGraph: InferenceUnitGraph): InferenceUnitGraph
     }
   }
   val builder = InferenceUnitGraphBuilder()
-  internalNodeMap.values.filter { !it.removed }.forEach { node ->
+  internalNodeMap.values.filter { it.core() !in collapsedNodesMap.keys }.forEach { node ->
     builder.register(node.unitNode)
     if (node.parent != null) {
       builder.addRelation(internalNodeMap[node.parent!!]!!.unitNode.core, node.unitNode.core)
@@ -250,7 +251,6 @@ private fun propagateConnections(removed: InternalNode,
                                  replacing: InternalNode,
                                  propagatedTypes: MutableMap<InferenceUnit, PsiType>,
                                  collapsedNodesMap: MutableMap<InferenceUnit, InferenceUnit>) {
-  removed.removed = true
   val removedCore = removed.core()
   if (propagatedTypes[removedCore] != null) {
     propagatedTypes[replacing.core()] = propagatedTypes[removedCore]!!
@@ -262,7 +262,6 @@ private fun propagateConnections(removed: InternalNode,
 
 data class InternalNode(val unitNode: InferenceUnitNode) {
   var parent = unitNode.parent
-  var removed = false
-  val children = LinkedHashSet<InternalNode>()
+  val children = mutableSetOf<InternalNode>()
   fun core(): InferenceUnit = unitNode.core
 }

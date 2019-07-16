@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference.graph
 
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
@@ -16,6 +18,17 @@ class InferenceUnitNode internal constructor(val core: InferenceUnit,
                                              val forbiddenToInstantiate: Boolean = false,
                                              val direct: Boolean = false) {
 
+  companion object {
+    enum class InstantiationHint{
+      REIFIED_AS_TYPE_PARAMETER,
+      REIFIED_AS_PROPER_TYPE,
+      ENDPOINT_TYPE_PARAMETER,
+      NEW_TYPE_PARAMETER,
+      BOUNDED_WILDCARD,
+      UNBOUNDED_WILDCARD
+    }
+  }
+
   /**
    * direct supertypes of [InferenceUnit.initialTypeParameter]
    */
@@ -27,6 +40,38 @@ class InferenceUnitNode internal constructor(val core: InferenceUnit,
   val subtypes: Set<InferenceUnitNode> by lazy { children.map { it() }.toSet() }
 
   val type = core.type
+
+  fun smartTypeInstantiation(): Pair<PsiType, InstantiationHint> {
+
+    if (core.constant) {
+      return if (core.initialTypeParameter.extendsListTypes.isEmpty()) {
+        typeInstantiation to InstantiationHint.NEW_TYPE_PARAMETER
+      }
+      else {
+        type to InstantiationHint.REIFIED_AS_TYPE_PARAMETER
+      }
+    }
+
+    if ((core.flexible && typeInstantiation is PsiIntersectionType) || forbiddenToInstantiate) {
+      val advice = parent?.type ?: typeInstantiation
+      return if (advice == typeInstantiation) {
+        type to InstantiationHint.ENDPOINT_TYPE_PARAMETER
+      }
+      else {
+        advice to InstantiationHint.NEW_TYPE_PARAMETER
+      }
+    }
+
+    if ((core.flexible && typeInstantiation !is PsiIntersectionType) || direct) {
+      return typeInstantiation to InstantiationHint.REIFIED_AS_PROPER_TYPE
+    }
+
+    return when {
+      typeInstantiation == type || typeInstantiation == PsiType.NULL || typeInstantiation.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ->
+        PsiType.NULL to InstantiationHint.UNBOUNDED_WILDCARD
+      else -> typeInstantiation to InstantiationHint.BOUNDED_WILDCARD
+    }
+  }
 
   /**
    * Direct dependency on other unit.

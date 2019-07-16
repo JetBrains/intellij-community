@@ -5,7 +5,6 @@ import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.psi.PsiLiteral
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
@@ -80,13 +79,3 @@ private fun collectGenericSubstitutor(resolveResult: GroovyMethodResult, outerMe
   return resolveSession.inferSubst(resolveResult)
 }
 
-
-fun tryToExtractUnqualifiedName(className: String): String {
-  val location = GroovyFileBase.IMPLICITLY_IMPORTED_PACKAGES.firstOrNull { className.startsWith(it) }
-  return when {
-    location != null -> className.substringAfter("$location.")
-    (className in GroovyFileBase.IMPLICITLY_IMPORTED_CLASSES) -> className.substringAfterLast(".")
-    else -> className
-  }
-
-}

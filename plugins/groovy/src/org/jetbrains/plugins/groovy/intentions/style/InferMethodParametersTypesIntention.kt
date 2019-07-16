@@ -11,7 +11,7 @@ import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle
 import org.jetbrains.plugins.groovy.intentions.base.Intention
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate
-import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParametersInferenceProcessor
+import org.jetbrains.plugins.groovy.intentions.style.inference.runInferenceProcess
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier.DEF
@@ -45,8 +45,7 @@ internal class InferMethodParametersTypesIntention : Intention() {
       GrReferenceAdjuster.shortenAllReferencesIn(method.setReturnType(returnType))
       method.modifierList.setModifierProperty(DEF, false)
     }
-    val processor = MethodParametersInferenceProcessor(method)
-    val virtualMethod = processor.runInferenceProcess()
+    val virtualMethod = runInferenceProcess(method)
     if (virtualMethod.hasTypeParameters()) {
       if (method.hasTypeParameters()) {
         method.typeParameterList!!.replace(virtualMethod.typeParameterList!!)
