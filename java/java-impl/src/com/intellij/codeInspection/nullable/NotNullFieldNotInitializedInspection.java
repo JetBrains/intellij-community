@@ -45,7 +45,7 @@ public class NotNullFieldNotInitializedInspection extends AbstractBaseJavaLocalI
           return;
         }
 
-        boolean implicitWrite = UnusedSymbolUtil.isImplicitWrite(field);
+        boolean implicitWrite = (IGNORE_IMPLICITLY_WRITTEN_FIELDS || isOnTheFly) && UnusedSymbolUtil.isImplicitWrite(field);
         if (IGNORE_IMPLICITLY_WRITTEN_FIELDS && implicitWrite) {
           return;
         }
@@ -58,7 +58,7 @@ public class NotNullFieldNotInitializedInspection extends AbstractBaseJavaLocalI
         String message = (byDefault && name != null ? "@" + name.getReferenceName() : "Not-null") + " fields must be initialized";
 
         List<LocalQuickFix> fixes = new ArrayList<>();
-        if (implicitWrite && isOnTheFly) {
+        if (implicitWrite) {
           fixes.add(new SetInspectionOptionFix(NotNullFieldNotInitializedInspection.this,
                                                IGNORE_IMPLICITLY_WRITTEN_FIELDS_NAME,
                                                InspectionsBundle.message("inspection.notnull.field.not.initialized.option"), true));
