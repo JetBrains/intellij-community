@@ -178,6 +178,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         }
       }
     });
+    Disposer.register(myProject, this);
   }
 
   @Override
