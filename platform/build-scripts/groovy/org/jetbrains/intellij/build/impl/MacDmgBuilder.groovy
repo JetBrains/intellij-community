@@ -20,7 +20,7 @@ class MacDmgBuilder {
   private final MacHostProperties macHostProperties
   private final String remoteDir
   private final MacDistributionCustomizer customizer
-  private static final def ENV_FOR_MAC_BUILDER = ['APPL_USER', 'APPL_PASSWORD', 'ARTIFACTORY_API_KEY', 'ARTIFACTORY_URL']
+  private static final def ENV_FOR_MAC_BUILDER = ['APPL_USER', 'APPL_PASSWORD', 'ARTIFACTORY_URL']
 
   private MacDmgBuilder(BuildContext buildContext, MacDistributionCustomizer customizer, String remoteDir, MacHostProperties macHostProperties) {
     this.customizer = customizer
