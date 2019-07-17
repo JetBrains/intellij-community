@@ -51,6 +51,8 @@
     <extensionPoint qualifiedName="org.jetbrains.uast.uastLanguagePlugin" interface="org.jetbrains.uast.UastLanguagePlugin"/>
     <extensionPoint qualifiedName="org.jetbrains.uast.analysis.uastAnalysisPlugin"
                     interface="org.jetbrains.uast.analysis.UastAnalysisPlugin"/>
+    <extensionPoint qualifiedName="org.jetbrains.uast.generate.uastCodeGenerationPlugin"
+                    interface="org.jetbrains.uast.generate.UastCodeGenerationPlugin"/>
     <extensionPoint qualifiedName="com.intellij.jvm.declarationSearcher" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.lang.jvm.source.JvmDeclarationSearcher"/>
     </extensionPoint>
@@ -126,10 +128,8 @@
 
   <extensions defaultExtensionNs="org.jetbrains.uast">
     <uastLanguagePlugin implementation="org.jetbrains.uast.java.JavaUastLanguagePlugin"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="org.jetbrains.uast.analysis">
-    <uastAnalysisPlugin implementation="org.jetbrains.uast.java.analysis.JavaUastAnalysisPlugin"/>
+    <analysis.uastAnalysisPlugin implementation="org.jetbrains.uast.java.analysis.JavaUastAnalysisPlugin"/>
+    <generate.uastCodeGenerationPlugin implementation="org.jetbrains.uast.java.generate.JavaUastCodeGenerationPlugin"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.jvm">
