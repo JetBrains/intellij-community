@@ -58,7 +58,7 @@ public class HgPushTest extends HgCollaborativeTest {
     myChangeListManager.checkFilesAreInList(true, vf);
     myChangeListManager.commitFiles(vf);
 
-    new HgPushCommand(myProject, myRepo.getDir(), myParentRepo.getDir().getUrl()).executeInCurrentThread();
+    new HgPushCommand(myProject, myRepo.getDir(), myParentRepo.getDir().getPath()).executeInCurrentThread();
 
     updateParentRepo();
     assertNotNull(myParentRepo.getDir().findChild(AFILE));
