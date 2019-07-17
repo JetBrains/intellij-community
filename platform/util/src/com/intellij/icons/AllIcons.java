@@ -2173,6 +2173,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Cvs_global = load("/nodes/cvs_global.svg");
     /** 16x16 */ public static final Icon Cvs_roots = load("/nodes/cvs_roots.svg");
     /** 16x16 */ public static final Icon DataColumn = load("/nodes/dataColumn.svg");
+    /** 16x16 */ public static final Icon DataSchema = load("/nodes/dataSchema.svg");
     /** 16x16 */ public static final Icon DataTables = load("/nodes/DataTables.svg");
     /** 16x16 */ public static final Icon Deploy = load("/nodes/deploy.svg");
     /** 16x16 */ public static final Icon Desktop = load("/nodes/desktop.svg");
@@ -2200,9 +2201,11 @@ public class AllIcons {
     /** 16x16 */ public static final Icon FinalMark = load("/nodes/finalMark.svg");
     /** 16x16 */ public static final Icon Folder = load("/nodes/folder.svg");
     /** 16x16 */ public static final Icon Function = load("/nodes/function.svg");
+    /** 16x16 */ public static final Icon Gvariable = load("/nodes/gvariable.svg");
     /** 16x16 */ public static final Icon HomeFolder = load("/nodes/homeFolder.svg");
     /** 16x16 */ public static final Icon IdeaModule = load("/nodes/ideaModule.svg");
     /** 16x16 */ public static final Icon IdeaProject = load("/nodes/ideaProject.svg");
+    /** 16x16 */ public static final Icon Include = load("/nodes/include.svg");
     /** 16x16 */ public static final Icon InspectionResults = load("/nodes/inspectionResults.svg");
     /** 16x16 */ public static final Icon Interface = load("/nodes/interface.svg");
     /** 16x16 */ public static final Icon J2eeParameter = load("/nodes/j2eeParameter.svg");
@@ -2321,12 +2324,6 @@ public class AllIcons {
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     /** 16x16 */ public static final Icon CollapseNode = load("/general/arrowDown.svg");
-
-    /** @deprecated to be removed in IDEA 2020 - see DatabaseIcons.View */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon DataSchema = load("/nodes/dataSchema.svg");
 
     /** @deprecated to be removed in IDEA 2020 - see DatabaseIcons.DatabaseGroup */
     @SuppressWarnings("unused")
