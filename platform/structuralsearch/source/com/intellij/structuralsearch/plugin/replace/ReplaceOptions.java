@@ -5,7 +5,6 @@ import com.intellij.codeInsight.template.impl.TemplateImplUtil;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.ReplacementVariableDefinition;
-import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
@@ -98,14 +97,9 @@ public class ReplaceOptions implements JDOMExternalizable {
   }
 
   public void removeUnusedVariables() {
-    final Set<String> nameSet = getUsedVariableNames();
-    for (final Iterator<String> iterator = variableDefs.keySet().iterator(); iterator.hasNext(); ) {
-      final String key = iterator.next();
-      if (!nameSet.contains(key + ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX)) {
-        iterator.remove();
-      }
-    }
+    variableDefs.keySet().removeIf(key -> !getUsedVariableNames().contains(key));
   }
+
   @Override
   public void readExternal(Element element) {
     matchOptions.readExternal(element);
