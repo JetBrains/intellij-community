@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.NamedScriptableDefinition;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptLog;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
@@ -67,9 +68,20 @@ public class ScriptFilter extends FilterAction {
           }
         };
         final String[] variableNames = {Configuration.CONTEXT_VAR_NAME, ScriptLog.SCRIPT_LOG_VAR_NAME};
-        myHelpLabel = ContextHelpLabel.create(
-          "<p>Use GroovyScript IntelliJ API to filter the search results." +
-          "<p>Available variables: " + String.join(", ", variableNames));
+
+        final String variableText = "<p>Available variables: " + String.join(", ", variableNames);
+        if (myConstraint instanceof MatchVariableConstraint) {
+          myHelpLabel = ContextHelpLabel.create(
+            "<p>Use the GroovyScript IntelliJ API to filter the search results. " +
+            "When the specified script returns <code>false</code>, the found element will not be in the search results. " +
+            "Non-boolean script results will be converted to boolean." + variableText);
+        }
+        else {
+          myHelpLabel = ContextHelpLabel.create(
+            "<p>Use the GroovyScript Intellij API to create a custom replacement, for advanced renaming, rewriting or refactoring. " +
+            "When replacing, the variable in the replace template will be replaced with the String result of the specified script. " +
+            variableText);
+        }
 
         final GroupLayout layout = new GroupLayout(this);
         setLayout(layout);
