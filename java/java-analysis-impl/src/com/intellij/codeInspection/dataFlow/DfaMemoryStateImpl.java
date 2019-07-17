@@ -738,7 +738,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     LongRangeSet leftRange = getValueFact(left, DfaFactType.RANGE);
     LongRangeSet rightRange = getValueFact(right, DfaFactType.RANGE);
     if (leftRange == null || rightRange == null) return true;
-    LongRangeSet result = Objects.requireNonNull(leftRange.binOpFromToken(binOp.getTokenType(), rightRange, isLong));
+    LongRangeSet result = getBinOpRange(binOp);
+    assert result != null;
     if (!result.intersects(appliedRange)) return false;
     LongRangeSet leftConstraint = LongRangeSet.all();
     LongRangeSet rightConstraint = LongRangeSet.all();
@@ -940,6 +941,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
             if (!applyRelation(sum.getLeft(), sum.getRight(), true)) return false;
           }
         }
+      }
+      if (op == DfaBinOpValue.BinOp.PLUS && RelationType.EQ == type && resultRange != null &&
+          !resultRange.intersects(LongRangeSet.all().mul(LongRangeSet.point(2), true))) {
+        // a+b == odd => a != b
+        if (!applyRelation(sum.getLeft(), sum.getRight(), true)) return false;
       }
       if (right instanceof DfaVariableValue) {
         // a+b (rel) c && a == c => b (rel) 0
@@ -1335,6 +1341,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
           return result.intersect(LongRangeSet.range(isLong ? Long.MIN_VALUE : Integer.MIN_VALUE, -1));
         }
       }
+    }
+    if (binOp.getOperation() == DfaBinOpValue.BinOp.PLUS && areEqual(binOp.getLeft(), binOp.getRight())) {
+      return LongRangeSet.point(2).mul(left, isLong);
     }
     return result;
   }
