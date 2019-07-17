@@ -17,6 +17,8 @@ package org.jetbrains.idea.devkit.dom.index;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
@@ -98,7 +100,12 @@ public class IdeaPluginRegistrationIndex extends FileBasedIndexExtension<String,
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return new DefaultFileTypeSpecificInputFilter(StdFileTypes.XML);
+    return new DefaultFileTypeSpecificInputFilter(StdFileTypes.XML) {
+      @Override
+      public boolean acceptInput(@NotNull VirtualFile file) {
+        return file.isInLocalFileSystem();
+      }
+    };
   }
 
   @Override
