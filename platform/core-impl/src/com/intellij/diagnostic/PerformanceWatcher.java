@@ -63,7 +63,12 @@ public class PerformanceWatcher implements Disposable {
   private long myLastEdtAlive = System.currentTimeMillis();
 
   public static PerformanceWatcher getInstance() {
-    return ApplicationManager.getApplication().getComponent(PerformanceWatcher.class);
+    if (LoadingPhase.isComplete(LoadingPhase.CONFIGURATION_STORE_INITIALIZED)) {
+      return ApplicationManager.getApplication().getComponent(PerformanceWatcher.class);
+    }
+    else {
+      return null;
+    }
   }
 
   public PerformanceWatcher() {
