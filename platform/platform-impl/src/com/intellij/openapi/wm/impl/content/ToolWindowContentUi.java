@@ -29,6 +29,7 @@ import com.intellij.util.ContentUtilEx;
 import com.intellij.util.containers.EmptyIterator;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Predicate;
+import com.intellij.util.ui.LocationOnDragTracker;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -352,7 +353,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       final Ref<Point> myPressPoint = Ref.create();
       final Ref<Integer> myInitialHeight = Ref.create(0);
       final Ref<Boolean> myIsLastComponent = Ref.create();
-
+      final Ref<LocationOnDragTracker> myDragTracker = Ref.create();
 
       private Component getActualSplitter() {
         if (!allowResize || !ui.isResizeable()) return null;
@@ -394,6 +395,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
         myIsLastComponent.set(null);
         myInitialHeight.set(null);
         myPressPoint.set(null);
+        myDragTracker.set(null);
       }
 
       @Override
@@ -403,6 +405,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
           if (!UIUtil.isCloseClick(e)) {
             myLastPoint.set(info != null ? info.getLocation() : e.getLocationOnScreen());
             myPressPoint.set(myLastPoint.get());
+            myDragTracker.set(LocationOnDragTracker.startDrag(e));
             if (allowResize && ui.isResizeable()) {
               arm(c.getComponentAt(e.getPoint()) == c && ui.isResizeable(e.getPoint()) ? c : null);
             }
@@ -435,21 +438,18 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
       @Override
       public void mouseDragged(MouseEvent e) {
-        if (myLastPoint.isNull() || myPressPoint.isNull()) return;
+        if (myLastPoint.isNull() || myPressPoint.isNull() || myDragTracker.isNull()) return;
 
         PointerInfo info = MouseInfo.getPointerInfo();
         if (info == null) return;
-        final Point newPoint = info.getLocation();
-        Point p = myLastPoint.get();
+        Point newMouseLocation = info.getLocation();
 
-        final Window window = SwingUtilities.windowForComponent(c);
-        if (!(window instanceof IdeFrame)) {
-          final Point windowLocation = window.getLocationOnScreen();
-          windowLocation.translate(newPoint.x - p.x, newPoint.y - p.y);
-          window.setLocation(windowLocation);
+        Point newLocation = myDragTracker.get().updateLocationOnDrag();
+        if (newLocation != null) {
+          Window window = SwingUtilities.windowForComponent(c);
+          window.setLocation(newLocation);
         }
-
-        myLastPoint.set(newPoint);
+        myLastPoint.set(newMouseLocation);
         Component component = getActualSplitter();
         if (component instanceof ThreeComponentsSplitter) {
           ThreeComponentsSplitter splitter = (ThreeComponentsSplitter)component;
