@@ -31,6 +31,7 @@ import com.intellij.ui.AppIcon.MacAppIcon;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
+import com.intellij.ui.scale.ScaleContextSupport;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
@@ -134,16 +135,16 @@ public final class AppUIUtil {
   }
 
   @NotNull
-  public static Icon loadSmallApplicationIcon() {
-    return loadSmallApplicationIcon(16);
+  public static Icon loadSmallApplicationIcon(@NotNull ScaleContext ctx) {
+    return loadSmallApplicationIcon(ctx, 16);
   }
 
   @NotNull
-  public static Icon loadSmallApplicationIcon(int size) {
+  public static Icon loadSmallApplicationIcon(@NotNull ScaleContext ctx, int size) {
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     String smallIconUrl = appInfo.getSmallApplicationSvgIconUrl();
 
-    Icon icon = loadApplicationIcon(smallIconUrl, size);
+    Icon icon = loadApplicationIcon(smallIconUrl, ctx, size);
     if (icon != null) return icon;
 
     @SuppressWarnings("deprecation") String fallbackSmallIconUrl = appInfo.getSmallIconUrl();
@@ -154,10 +155,10 @@ public final class AppUIUtil {
     return icon;
   }
 
-
-  public static Icon loadApplicationIcon(int size) {
+  @Nullable
+  public static Icon loadApplicationIcon(@NotNull ScaleContext ctx, int size) {
     String url = ApplicationInfoImpl.getShadowInstance().getApplicationSvgIconUrl();
-    return loadApplicationIcon(url, size);
+    return loadApplicationIcon(url, ctx, size);
   }
 
   /**
@@ -166,7 +167,7 @@ public final class AppUIUtil {
   @Contract("_, _, _, !null -> !null")
   @Nullable
   private static Image loadApplicationIconImage(String svgPath, ScaleContext ctx, int size, String fallbackPath) {
-    Icon icon = loadApplicationIcon(svgPath, size);
+    Icon icon = loadApplicationIcon(svgPath, ctx, size);
     if (icon != null) {
       return IconUtil.toImage(icon, ctx);
     }
@@ -179,7 +180,7 @@ public final class AppUIUtil {
   }
 
   @Nullable
-  private static Icon loadApplicationIcon(String svgPath, int size) {
+  private static Icon loadApplicationIcon(String svgPath, ScaleContext ctx, int size) {
     if (svgPath == null) return null;
 
     Icon icon = IconLoader.findIcon(svgPath);
@@ -187,7 +188,9 @@ public final class AppUIUtil {
       getLogger().info("Cannot load SVG application icon from " + svgPath);
       return null;
     }
-
+    if (icon instanceof ScaleContextSupport) {
+      ((ScaleContextSupport)icon).updateScaleContext(ctx);
+    }
     return scaleIconToSize(icon, size);
   }
 

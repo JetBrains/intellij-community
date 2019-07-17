@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.UIUtil;
@@ -29,7 +30,7 @@ final class SystemTrayNotifications implements SystemNotificationsImpl.Notifier 
 
   @NotNull
   private static Image createImage() {
-    Icon icon = AppUIUtil.loadSmallApplicationIcon();
+    Icon icon = AppUIUtil.loadSmallApplicationIcon(ScaleContext.create());
     return ImageUtil.toBufferedImage(IconUtil.toImage(icon));
   }
 
