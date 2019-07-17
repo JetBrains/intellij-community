@@ -71,7 +71,14 @@ public abstract class XmlIndex<V> extends FileBasedIndexExtension<String, V> {
     return new DefaultFileTypeSpecificInputFilter(XmlFileType.INSTANCE) {
       @Override
       public boolean acceptInput(@NotNull final VirtualFile file) {
-        return FileTypeRegistry.getInstance().isFileOfType(file, XmlFileType.INSTANCE) && "xsd".equals(file.getExtension());
+        if (!"xsd".equals(file.getExtension())) {
+          return false;
+        }
+        if (file.isInLocalFileSystem()) {
+          return true;
+        }
+        VirtualFile parent = file.getParent();
+        return parent != null && parent.getName().equals("standardSchemas");
       }
     };
   }
