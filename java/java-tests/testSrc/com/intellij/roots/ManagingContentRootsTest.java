@@ -92,7 +92,7 @@ public class ManagingContentRootsTest extends JavaProjectTestCase {
       ModifiableRootModel m = getRootManager().getModifiableModel();
       ContentEntry e = findContentEntry(dir.getUrl(), m);
 
-      assertSame(m, ((ContentEntryImpl)e).getRootModel());
+      assertSame(m, e.getRootModel());
       m.dispose();
     });
   }
