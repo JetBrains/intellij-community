@@ -63,6 +63,9 @@ import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement
 import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
+
+import java.util.concurrent.ConcurrentHashMap
+
 /**
  * @author nik
  */
@@ -217,6 +220,7 @@ class JpsCompilationRunner {
       context.messages.error("Compilation failed")
     }
     else if (!compilationData.statisticsReported) {
+      messageHandler.printPerModuleCompilationStatistics()
       context.messages.reportStatisticValue("Compilation time, ms", String.valueOf(System.currentTimeMillis() - compilationStart))
       compilationData.statisticsReported = true
     }
@@ -241,6 +245,8 @@ class JpsCompilationRunner {
 
   private class AntMessageHandler implements MessageHandler {
     private MultiMap<String, String> errorMessagesByCompiler = MultiMap.createLinked()
+    private Map<String, Long> compilationTimeForTarget = new ConcurrentHashMap<>()
+    private Map<String, Long> compilationStartTimeForTarget = new ConcurrentHashMap<>()
     private float progress = -1.0
 
     @Override
@@ -295,12 +301,31 @@ class JpsCompilationRunner {
               reportProgress(buildTargets, msg.messageText)
             }
           }
-          else if (msg instanceof BuildingTargetProgressMessage && ((BuildingTargetProgressMessage)msg).eventType == BuildingTargetProgressMessage.Event.STARTED) {
+          else if (msg instanceof BuildingTargetProgressMessage) {
             def targets = ((BuildingTargetProgressMessage)msg).targets
-            reportProgress(targets, "")
+            def target = targets.first()
+            def targetId = "$target.id${targets.size() > 1 ? " and ${targets.size()} more" : ""} ($target.targetType.typeId)".toString()
+            if (((BuildingTargetProgressMessage)msg).eventType == BuildingTargetProgressMessage.Event.STARTED) {
+              reportProgress(targets, "")
+              compilationStartTimeForTarget.put(targetId, System.currentTimeMillis())
+            }
+            else {
+              def startTime = compilationStartTimeForTarget.remove(targetId)
+              compilationTimeForTarget.put(targetId, System.currentTimeMillis() - startTime)
+            }
           }
           break
       }
+    }
+
+    void printPerModuleCompilationStatistics() {
+      if (compilationTimeForTarget.isEmpty()) return
+      def buildMessages = context.messages
+      buildMessages.info("Compilation time per target:")
+      buildMessages.info(" average: ${String.format("%.2f", (compilationTimeForTarget.values().sum() as double) / compilationTimeForTarget.size())}ms")
+      def topTargets = compilationTimeForTarget.entrySet().toSorted { it.value }.reverse().take(10)
+      buildMessages.info(" top ${topTargets.size()} targets by compilation time:")
+      topTargets.each { entry -> buildMessages.info("  $entry.key: ${entry.value}ms") }
     }
 
     @CompileDynamic
