@@ -113,7 +113,6 @@
     <tipAndTrick file="TagNameCompletion.html"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighlightingPassFactory"/>
 
-    <fileTypeFactory implementation="com.intellij.xml.XmlFileTypeFactory"/>
     <fileType name="HTML" implementationClass="com.intellij.ide.highlighter.HtmlFileType" fieldName="INSTANCE" language="HTML" extensions="html;htm;sht;shtm;shtml"/>
     <fileType name="XHTML" implementationClass="com.intellij.ide.highlighter.XHtmlFileType" fieldName="INSTANCE" language="XHTML" extensions="xhtml"/>
     <fileType name="DTD" implementationClass="com.intellij.ide.highlighter.DTDFileType" fieldName="INSTANCE" language="DTD" extensions="dtd;ent;mod;elt"/>
@@ -306,6 +305,7 @@
 
     <!-- XML -->
     <quoteHandler fileType="XML" className="com.intellij.codeInsight.editorActions.XmlQuoteHandler"/>
+    <lang.quoteHandler language="XML" implementationClass="com.intellij.codeInsight.editorActions.XmlQuoteHandler"/>
     <quoteHandler fileType="HTML" className="com.intellij.codeInsight.editorActions.HtmlQuoteHandler"/>
     <quoteHandler fileType="XHTML" className="com.intellij.codeInsight.editorActions.HtmlQuoteHandler"/>
     <selectionDequotingFilter implementation="com.intellij.codeInsight.editorActions.XmlDequotingFilter"/>
