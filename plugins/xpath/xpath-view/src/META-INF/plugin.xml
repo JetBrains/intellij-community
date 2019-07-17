@@ -68,7 +68,7 @@
     <lang.commenter language="XPath2" implementationClass="org.intellij.lang.xpath.XPath2Language$XPath2Commenter" />
 
     <codeInsight.parameterInfo language="XPath" implementationClass="org.intellij.lang.xpath.XPathParameterInfoHandler" />
-    <fileTypeFactory implementation="org.intellij.lang.xpath.XPathSupportLoader" />
+<!--    <fileTypeFactory implementation="org.intellij.lang.xpath.XPathSupportLoader" />-->
 
     <localInspection language="XPath" shortName="CheckNodeTest" displayName="Check Node Test" groupName="XPath" enabledByDefault="true" level="WARNING"
                      implementationClass="org.intellij.lang.xpath.validation.inspections.CheckNodeTest"/>

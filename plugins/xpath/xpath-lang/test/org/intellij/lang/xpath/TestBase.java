@@ -28,7 +28,6 @@ public abstract class TestBase extends UsefulTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-
     final IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
     final IdeaProjectTestFixture fixture = factory.createLightFixtureBuilder().getFixture();
     myFixture = factory.createCodeInsightFixture(fixture);
@@ -36,6 +35,8 @@ public abstract class TestBase extends UsefulTestCase {
     myFixture.setTestDataPath(getTestDataPath());
 
     myFixture.setUp();
+
+    XPathSupportLoader.createFileTypes();
   }
 
   private String getTestDataPath() {

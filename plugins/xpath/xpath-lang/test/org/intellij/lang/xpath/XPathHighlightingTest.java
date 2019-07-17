@@ -22,7 +22,6 @@ public class XPathHighlightingTest extends TestBase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-      new XPathSupportLoader();
       //noinspection unchecked
       myFixture.enableInspections(CheckNodeTest.class,
                                   ImplicitTypeConversion.class,
