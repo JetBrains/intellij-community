@@ -1213,11 +1213,10 @@ public class ControlFlowUtil {
   private static PsiReferenceExpression findReferenceTo(@NotNull PsiElement element, @NotNull PsiVariable variable) {
     if (element instanceof PsiReferenceExpression
         && ExpressionUtil.isEffectivelyUnqualified((PsiReferenceExpression)element)
-        && ((PsiReferenceExpression)element).resolve() == variable) {
+        && ((PsiReferenceExpression)element).isReferenceTo(variable)) {
       return (PsiReferenceExpression)element;
     }
-    final PsiElement[] children = element.getChildren();
-    for (PsiElement child : children) {
+    for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       final PsiReferenceExpression reference = findReferenceTo(child, variable);
       if (reference != null) return reference;
     }
