@@ -905,10 +905,7 @@ public class ImportHelper{
     while (!stack.isEmpty()) {
       final PsiElement child = stack.removeFirst();
       if (child instanceof PsiImportList) {
-        for (PsiElement element : child.getChildren()) {
-          if (element == null) {
-            continue;
-          }
+        for(PsiElement element = child.getFirstChild(); element != null; element = element.getNextSibling()) {
           ASTNode node = element.getNode();
           if (node == null) {
             continue;

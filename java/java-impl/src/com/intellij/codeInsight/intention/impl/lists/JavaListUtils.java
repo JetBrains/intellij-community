@@ -34,7 +34,7 @@ class JavaListUtils {
 
   static boolean containsEolComments(@NotNull List<? extends PsiElement> elements) {
     PsiElement parent = elements.get(0).getParent();
-    for (PsiElement child : parent.getChildren()) {
+    for(PsiElement child = parent.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof PsiComment && ((PsiComment)child).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
         return true;
       }

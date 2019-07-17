@@ -230,7 +230,7 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
           gParent.addBefore(JavaPsiFacade.getElementFactory(element.getProject()).createStatementFromText(ct.text(body), anchor), anchor);
         }
         else {
-          for (PsiElement child : body.getChildren()) {
+          for (PsiElement child = body.getFirstChild(); child != null; child = child.getNextSibling()) {
             if (child != statement && !(child instanceof PsiJavaToken)) {
               gParent.addBefore(ct.markUnchanged(child), anchor);
             }

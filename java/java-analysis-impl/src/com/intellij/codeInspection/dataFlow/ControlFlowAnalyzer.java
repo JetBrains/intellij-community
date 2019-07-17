@@ -71,7 +71,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void buildClassInitializerFlow(PsiClass psiClass, boolean isStatic) {
-    for (PsiElement element : psiClass.getChildren()) {
+    for (PsiElement element = psiClass.getFirstChild(); element != null; element = element.getNextSibling()) {
       if (element instanceof PsiField &&
           !((PsiField)element).hasInitializer() &&
           ((PsiField)element).hasModifierProperty(PsiModifier.STATIC) == isStatic) {
@@ -83,7 +83,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new EscapeInstruction(Collections.singleton(getFactory().getVarFactory().createThisValue(psiClass))));
       addInstruction(new FlushFieldsInstruction());
     }
-    for (PsiElement element : psiClass.getChildren()) {
+    for (PsiElement element = psiClass.getFirstChild(); element != null; element = element.getNextSibling()) {
       if (((element instanceof PsiField && ((PsiField)element).hasInitializer()) || element instanceof PsiClassInitializer) &&
           ((PsiMember)element).hasModifierProperty(PsiModifier.STATIC) == isStatic) {
         element.accept(this);

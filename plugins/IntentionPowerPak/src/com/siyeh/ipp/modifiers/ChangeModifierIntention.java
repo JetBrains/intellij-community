@@ -346,7 +346,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
 
   @Nullable
   private static PsiKeyword getAnchorKeyword(PsiModifierList modifierList) {
-    for (PsiElement child : modifierList.getChildren()) {
+    for (PsiElement child = modifierList.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (ALL_MODIFIERS.contains(AccessModifier.fromKeyword(ObjectUtils.tryCast(child, PsiKeyword.class)))) {
         return (PsiKeyword)child;
       }

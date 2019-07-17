@@ -306,8 +306,11 @@ public class HighlightNamesUtil {
     TextRange textRange = element.getTextRange();
     if (textRange == null) return 0;
     PsiAnnotation lastAnnotation = null;
-    for (PsiElement child : element.getChildren()) {
-      if (child instanceof PsiAnnotation) lastAnnotation = (PsiAnnotation)child;
+    for (PsiElement child = element.getLastChild(); child != null; child = child.getPrevSibling()) {
+      if (child instanceof PsiAnnotation) {
+        lastAnnotation = (PsiAnnotation)child;
+        break;
+      }
     }
     if (lastAnnotation == null) {
       return textRange.getStartOffset();

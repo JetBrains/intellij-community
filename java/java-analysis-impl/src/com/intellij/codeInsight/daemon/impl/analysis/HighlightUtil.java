@@ -948,7 +948,7 @@ public class HighlightUtil extends HighlightUtilBase {
    * @return true if the supplied modifier list contains incompatible modifiers
    */
   public static boolean isIllegalModifierCombination(@NotNull PsiModifierList modifierList) {
-    for (PsiElement child : modifierList.getChildren()) {
+    for (PsiElement child = modifierList.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof PsiKeyword && getIncompatibleModifier(child.getText(), modifierList) != null) {
         return true;
       }
@@ -1204,7 +1204,7 @@ public class HighlightUtil extends HighlightUtilBase {
     }
     else if (type == JavaTokenType.STRING_LITERAL) {
       if (value == null) {
-        for (PsiElement element : expression.getChildren()) {
+        for (PsiElement element = expression.getFirstChild(); element != null; element = element.getNextSibling()) {
           if (element instanceof OuterLanguageElement) {
             return null;
           }

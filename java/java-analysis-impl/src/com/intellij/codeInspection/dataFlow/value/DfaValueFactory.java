@@ -300,7 +300,7 @@ public class DfaValueFactory {
     ClassInitializationInfo(@NotNull PsiClass psiClass) {
       // Indirect instantiation via other class is still possible, but hopefully unlikely
       boolean canInstantiateItself = false;
-      for (PsiElement child : psiClass.getChildren()) {
+      for (PsiElement child = psiClass.getFirstChild(); child != null; child = child.getNextSibling()) {
         if (child instanceof PsiMember && ((PsiMember)child).hasModifierProperty(PsiModifier.STATIC) &&
             SyntaxTraverser.psiTraverser(child).filter(PsiNewExpression.class)
               .filterMap(PsiNewExpression::getClassReference)

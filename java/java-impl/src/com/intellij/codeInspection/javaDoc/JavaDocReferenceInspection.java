@@ -259,7 +259,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
 
       @Override
       public void visitElement(PsiElement element) {
-        for (PsiElement child : element.getChildren()) {
+        for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
           child.accept(this);
         }
       }

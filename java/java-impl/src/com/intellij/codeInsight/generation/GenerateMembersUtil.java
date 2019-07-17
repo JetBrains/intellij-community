@@ -233,7 +233,7 @@ public class GenerateMembersUtil {
         final PsiClass psiClass = (PsiClass)element;
         if (psiClass.isEnum()) {
           PsiElement lastChild = null;
-          for (PsiElement child : psiClass.getChildren()) {
+          for (PsiElement child = psiClass.getFirstChild(); child != null; child = child.getNextSibling()) {
             if (child instanceof PsiJavaToken && ";".equals(child.getText())) {
               lastChild = child;
               break;

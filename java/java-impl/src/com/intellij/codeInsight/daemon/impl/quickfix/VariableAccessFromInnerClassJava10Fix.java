@@ -179,11 +179,11 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
       PsiElement rBrace = anonymousClass.getRBrace();
       if (lBrace == null || rBrace == null) return;
       StringBuilder expressionText = new StringBuilder();
-      for (PsiElement child : newExpression.getChildren()) {
+      for (PsiElement child = newExpression.getFirstChild(); child != null; child = child.getNextSibling()) {
         if (child == anonymousClass) break;
         expressionText.append(child.getText());
       }
-      for (PsiElement child : anonymousClass.getChildren()) {
+      for (PsiElement child = anonymousClass.getFirstChild(); child != null; child = child.getNextSibling()) {
         if (!myIsBefore && child == rBrace) expressionText.append(variableText);
         expressionText.append(child.getText());
         if (myIsBefore && child == lBrace) expressionText.append(variableText);

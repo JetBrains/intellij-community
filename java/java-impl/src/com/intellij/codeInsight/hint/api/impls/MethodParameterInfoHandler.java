@@ -208,7 +208,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           return false;
         }
         else {
-          for (PsiElement element : owner.getChildren()) {
+          for (PsiElement element = owner.getFirstChild(); element != null; element = element.getNextSibling()) {
             if (element instanceof PsiErrorElement) return false;
           }
           PsiElement parent = owner.getParent();
