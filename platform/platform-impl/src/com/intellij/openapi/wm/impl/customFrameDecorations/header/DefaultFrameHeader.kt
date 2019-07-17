@@ -3,8 +3,12 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.CustomDecorationTitle
 import com.intellij.ui.awt.RelativeRectangle
+import com.intellij.ui.scale.ScaleContext
+import com.intellij.util.ui.ImageUtil
+import com.intellij.util.ui.JBImageIcon
 import net.miginfocom.swing.MigLayout
 import java.util.*
+import javax.swing.Icon
 import javax.swing.JFrame
 
 class DefaultFrameHeader(frame: JFrame) : FrameHeader(frame){
@@ -31,5 +35,10 @@ class DefaultFrameHeader(frame: JFrame) : FrameHeader(frame){
     hitTestSpots.addAll(customDecorationTitle.getListenerBounds())
 
     return hitTestSpots
+  }
+
+  override fun getFrameIcon(ctx: ScaleContext): Icon {
+    val image = ImageUtil.ensureHiDPI(frame.iconImage, ctx) ?: return super.getFrameIcon(ctx)
+    return JBImageIcon(ImageUtil.scaleImage(image, iconSize, iconSize))
   }
 }
