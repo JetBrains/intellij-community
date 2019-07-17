@@ -2,10 +2,10 @@
 package com.intellij.openapi.application;
 
 import com.google.common.base.MoreObjects;
+import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
@@ -250,11 +250,7 @@ public class TransactionGuardImpl extends TransactionGuard {
   }
 
   private static boolean areAssertionsEnabled() {
-    Application app = ApplicationManager.getApplication();
-    if (app instanceof ApplicationEx && !((ApplicationEx)app).isLoaded()) {
-      return false;
-    }
-    return Registry.is("ide.require.transaction.for.model.changes", false);
+    return LoadingPhase.COMPONENT_LOADED.isComplete() && Registry.is("ide.require.transaction.for.model.changes", false);
   }
 
   @Override

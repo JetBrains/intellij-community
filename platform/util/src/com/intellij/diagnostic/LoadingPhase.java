@@ -18,6 +18,7 @@ public enum LoadingPhase {
   BOOTSTRAP,
   SPLASH,
   CONFIGURATION_STORE_INITIALIZED,
+  COMPONENT_LOADED,
   FRAME_SHOWN,
   PROJECT_OPENED,
   INDEXING_FINISHED;
@@ -30,7 +31,10 @@ public enum LoadingPhase {
   private final static boolean SKIP_LOADING_PHASE = Boolean.parseBoolean("idea.skip.loading.phase");
 
   public static void setCurrentPhase(@NotNull LoadingPhase phase) {
-    currentPhase.set(phase);
+    LoadingPhase old = currentPhase.getAndSet(phase);
+    if (old.ordinal() > phase.ordinal()) {
+      getLogger().error("New phase " + phase + " cannot be earlier then old " + old);
+    }
     logPhaseSet(phase);
   }
 
@@ -64,7 +68,9 @@ public enum LoadingPhase {
   }
 
   private static void logPhaseSet(@NotNull LoadingPhase phase) {
-    getLogger().info("Reached " + phase + " loading phase");
+    if (phase.ordinal() >= CONFIGURATION_STORE_INITIALIZED.ordinal()) {
+      getLogger().info("Reached " + phase + " loading phase");
+    }
   }
 
   public static void assertAtLeast(@NotNull LoadingPhase phase) {
@@ -84,10 +90,10 @@ public enum LoadingPhase {
   }
 
   public static boolean isStartupComplete() {
-    return isComplete(INDEXING_FINISHED);
+    return INDEXING_FINISHED.isComplete();
   }
 
-  public static boolean isComplete(@NotNull LoadingPhase phase) {
-    return currentPhase.get().ordinal() >= phase.ordinal();
+  public boolean isComplete() {
+    return currentPhase.get().ordinal() >= ordinal();
   }
 }

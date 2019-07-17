@@ -32,11 +32,6 @@ public class MockApplicationEx extends MockApplication implements ApplicationEx 
   }
 
   @Override
-  public boolean isLoaded() {
-    return true;
-  }
-
-  @Override
   public void exit(boolean force, boolean exitConfirmed) {
   }
 

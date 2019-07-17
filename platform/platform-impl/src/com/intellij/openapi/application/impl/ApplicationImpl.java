@@ -103,7 +103,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private static final int ourDumpThreadsOnLongWriteActionWaiting = Integer.getInteger("dump.threads.on.long.write.action.waiting", 0);
 
   private final ExecutorService ourThreadExecutorsService = AppExecutorUtil.getAppExecutorService();
-  private boolean myLoaded;
   private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
   public ApplicationImpl(boolean isInternal,
@@ -445,7 +444,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     finally {
       token.finish();
     }
-    myLoaded = true;
+
+    LoadingPhase.setCurrentPhase(LoadingPhase.COMPONENT_LOADED);
   }
 
   @Override
@@ -464,11 +464,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     catch (IOException e) {
       LOG.warn("can't store a location in '" + locatorFile + "'", e);
     }
-  }
-
-  @Override
-  public boolean isLoaded() {
-    return myLoaded;
   }
 
   @Override

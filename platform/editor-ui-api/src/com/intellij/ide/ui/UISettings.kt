@@ -416,7 +416,7 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
     val instanceOrNull: UISettings?
       get() {
         var result = _instance
-        if (result == null && LoadingPhase.isComplete(LoadingPhase.CONFIGURATION_STORE_INITIALIZED)) {
+        if (result == null && LoadingPhase.CONFIGURATION_STORE_INITIALIZED.isComplete) {
           result = ServiceManager.getService(UISettings::class.java)
           _instance = result
         }

@@ -6,6 +6,7 @@ import com.intellij.configurationStore.BundledSchemeEP;
 import com.intellij.configurationStore.LazySchemeProcessor;
 import com.intellij.configurationStore.SchemeDataHolder;
 import com.intellij.configurationStore.SchemeExtensionProvider;
+import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UITheme;
@@ -14,9 +15,7 @@ import com.intellij.ide.ui.laf.UIThemeBasedLookAndFeelInfo;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -376,8 +375,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
 
   @Override
   public void setGlobalScheme(@Nullable EditorColorsScheme scheme) {
-    Application application = ApplicationManager.getApplication();
-    boolean notify = (application instanceof ApplicationImpl && ((ApplicationImpl)application).isLoaded());
+    boolean notify = LoadingPhase.COMPONENT_LOADED.isComplete();
     mySchemeManager.setCurrent(scheme == null ? getDefaultScheme() : scheme, notify);
   }
 

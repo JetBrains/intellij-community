@@ -69,7 +69,7 @@ public class PerformanceWatcher implements Disposable {
   private static final boolean PRECISE_MODE = shouldWatch() && Registry.is("performance.watcher.precise");
 
   public static PerformanceWatcher getInstance() {
-    if (LoadingPhase.isComplete(LoadingPhase.CONFIGURATION_STORE_INITIALIZED)) {
+    if (LoadingPhase.CONFIGURATION_STORE_INITIALIZED.isComplete()) {
       return ApplicationManager.getApplication().getComponent(PerformanceWatcher.class);
     }
     else {
@@ -199,12 +199,13 @@ public class PerformanceWatcher implements Disposable {
   @NotNull
   public static String printStacktrace(@NotNull String headerMsg, @NotNull Thread thread, @NotNull StackTraceElement[] stackTrace) {
     @SuppressWarnings("NonConstantStringShouldBeStringBuffer")
-    String trace = headerMsg + thread + " (" + (thread.isAlive() ? "alive" : "dead") + ") " + thread.getState() + "\n--- its stacktrace:\n";
+    StringBuilder trace = new StringBuilder(
+      headerMsg + thread + " (" + (thread.isAlive() ? "alive" : "dead") + ") " + thread.getState() + "\n--- its stacktrace:\n");
     for (final StackTraceElement stackTraceElement : stackTrace) {
-      trace += " at " + stackTraceElement + "\n";
+      trace.append(" at ").append(stackTraceElement).append("\n");
     }
-    trace += "---\n";
-    return trace;
+    trace.append("---\n");
+    return trace.toString();
   }
 
   private static int getSamplingInterval() {

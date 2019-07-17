@@ -3,6 +3,7 @@ package com.intellij.notification.impl;
 
 import com.intellij.application.Topics;
 import com.intellij.codeInsight.hint.TooltipController;
+import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.FrameStateListener;
@@ -16,7 +17,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -145,12 +145,10 @@ public class NotificationsManagerImpl extends NotificationsManager {
   }
 
   private static void showNotification(@NotNull final Notification notification, @Nullable final Project project) {
-    Application application = ApplicationManager.getApplication();
-    if (application instanceof ApplicationEx && !((ApplicationEx)application).isLoaded()) {
-      application.invokeLater(() -> showNotification(notification, project), ModalityState.current());
+    if (!LoadingPhase.COMPONENT_LOADED.isComplete()) {
+      ApplicationManager.getApplication().invokeLater(() -> showNotification(notification, project), ModalityState.current());
       return;
     }
-
 
     String groupId = notification.getGroupId();
     final NotificationSettings settings = NotificationsConfigurationImpl.getSettings(groupId);

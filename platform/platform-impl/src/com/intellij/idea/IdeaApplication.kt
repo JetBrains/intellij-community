@@ -207,7 +207,6 @@ private fun addActivateAndWindowsCliListeners(app: ApplicationImpl) {
 }
 
 private fun createAppStarter(args: Array<String>, pluginsLoaded: Future<*>): ApplicationStarter {
-  LOG.assertTrue(!ApplicationManagerEx.isAppLoaded())
   LoadingPhase.setCurrentPhase(LoadingPhase.SPLASH)
   StartupUtil.patchSystem(LOG)
 

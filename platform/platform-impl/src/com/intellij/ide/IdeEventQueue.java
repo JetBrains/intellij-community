@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.actions.MaximizeActiveDialogAction;
 import com.intellij.ide.dnd.DnDManager;
@@ -13,7 +14,6 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
@@ -389,11 +389,11 @@ public final class IdeEventQueue extends EventQueue {
       return true;
     }
 
-    boolean loaded = ApplicationManagerEx.isAppLoaded();
-    if (loaded) {
+    if (LoadingPhase.COMPONENT_LOADED.isComplete()) {
       ourAppIsLoaded = true;
+      return true;
     }
-    return loaded;
+    return ourAppIsLoaded;
   }
 
   //Use for GuiTests to stop IdeEventQueue when application is disposed already
@@ -645,7 +645,8 @@ public final class IdeEventQueue extends EventQueue {
   @Nullable
   static AccessToken startActivity(@NotNull AWTEvent e) {
     if (ourTransactionGuard == null && appIsLoaded()) {
-      if (ApplicationManager.getApplication() != null && !ApplicationManager.getApplication().isDisposed()) {
+      Application app = ApplicationManager.getApplication();
+      if (app != null && !app.isDisposed()) {
         ourTransactionGuard = (TransactionGuardImpl)TransactionGuard.getInstance();
       }
     }

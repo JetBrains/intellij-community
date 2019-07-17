@@ -6,7 +6,6 @@ import com.intellij.ide.ClassUtilCore;
 import com.intellij.ide.WindowsCommandLineListener;
 import com.intellij.idea.Main;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -66,59 +65,61 @@ public final class MainRunner {
   }
 
   public static void processException(@NotNull Throwable t) {
-    if (!ApplicationManagerEx.isAppLoaded()) {
-      PluginManagerCore.EssentialPluginMissingException
-        pluginMissingException = findCause(t, PluginManagerCore.EssentialPluginMissingException.class);
-      if (pluginMissingException != null && pluginMissingException.pluginIds != null) {
-        Main.showMessage("Corrupted Installation",
-                         "Missing essential " + (pluginMissingException.pluginIds.size() == 1 ? "plugin" : "plugins") + ":\n\n" +
-                         pluginMissingException.pluginIds.stream().sorted().collect(Collectors.joining("\n  ", "  ", "\n\n")) +
-                         "Please reinstall " + getProductNameSafe() + " from scratch.", true);
-        System.exit(Main.INSTALLATION_CORRUPTED);
+    if (LoadingPhase.COMPONENT_LOADED.isComplete()) {
+      if (!(t instanceof ProcessCanceledException)) {
+        PluginManagerCore.getLogger().error(t);
+      }
+      return;
+    }
+
+    PluginManagerCore.EssentialPluginMissingException
+      pluginMissingException = findCause(t, PluginManagerCore.EssentialPluginMissingException.class);
+    if (pluginMissingException != null && pluginMissingException.pluginIds != null) {
+      Main.showMessage("Corrupted Installation",
+                       "Missing essential " + (pluginMissingException.pluginIds.size() == 1 ? "plugin" : "plugins") + ":\n\n" +
+                       pluginMissingException.pluginIds.stream().sorted().collect(Collectors.joining("\n  ", "  ", "\n\n")) +
+                       "Please reinstall " + getProductNameSafe() + " from scratch.", true);
+      System.exit(Main.INSTALLATION_CORRUPTED);
+    }
+
+    StartupAbortedException startupException = findCause(t, StartupAbortedException.class);
+    if (startupException == null) startupException = new StartupAbortedException(t);
+    PluginException pluginException = findCause(t, PluginException.class);
+    PluginId pluginId = pluginException != null ? pluginException.getPluginId() : null;
+
+    if (Logger.isInitialized() && !(t instanceof ProcessCanceledException)) {
+      try {
+        PluginManagerCore.getLogger().error(t);
+      }
+      catch (Throwable ignore) {
       }
 
-      StartupAbortedException startupException = findCause(t, StartupAbortedException.class);
-      if (startupException == null) startupException = new StartupAbortedException(t);
-      PluginException pluginException = findCause(t, PluginException.class);
-      PluginId pluginId = pluginException != null ? pluginException.getPluginId() : null;
-
-      if (Logger.isInitialized() && !(t instanceof ProcessCanceledException)) {
-        try {
-          PluginManagerCore.getLogger().error(t);
-        }
-        catch (Throwable ignore) {
-        }
-
-        // workaround for SOE on parsing PAC file (JRE-247)
-        if (t instanceof StackOverflowError && "Nashorn AST Serializer".equals(Thread.currentThread().getName())) {
-          return;
-        }
-      }
-
-      ImplementationConflictException conflictException = findCause(t, ImplementationConflictException.class);
-      if (conflictException != null) {
-        PluginConflictReporter.INSTANCE.reportConflictByClasses(conflictException.getConflictingClasses());
-      }
-
-      if (pluginId != null && !ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(pluginId.getIdString())) {
-        PluginManagerCore.disablePlugin(pluginId.getIdString());
-
-        StringWriter message = new StringWriter();
-        message.append("Plugin '").append(pluginId.getIdString()).append("' failed to initialize and will be disabled. ");
-        message.append(" Please restart ").append(getProductNameSafe()).append('.');
-        message.append("\n\n");
-        pluginException.getCause().printStackTrace(new PrintWriter(message));
-
-        Main.showMessage("Plugin Error", message.toString(), false);
-        System.exit(Main.PLUGIN_ERROR);
-      }
-      else {
-        Main.showMessage("Start Failed", t);
-        System.exit(startupException.exitCode());
+      // workaround for SOE on parsing PAC file (JRE-247)
+      if (t instanceof StackOverflowError && "Nashorn AST Serializer".equals(Thread.currentThread().getName())) {
+        return;
       }
     }
-    else if (!(t instanceof ProcessCanceledException)) {
-      PluginManagerCore.getLogger().error(t);
+
+    ImplementationConflictException conflictException = findCause(t, ImplementationConflictException.class);
+    if (conflictException != null) {
+      PluginConflictReporter.INSTANCE.reportConflictByClasses(conflictException.getConflictingClasses());
+    }
+
+    if (pluginId != null && !ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(pluginId.getIdString())) {
+      PluginManagerCore.disablePlugin(pluginId.getIdString());
+
+      StringWriter message = new StringWriter();
+      message.append("Plugin '").append(pluginId.getIdString()).append("' failed to initialize and will be disabled. ");
+      message.append(" Please restart ").append(getProductNameSafe()).append('.');
+      message.append("\n\n");
+      pluginException.getCause().printStackTrace(new PrintWriter(message));
+
+      Main.showMessage("Plugin Error", message.toString(), false);
+      System.exit(Main.PLUGIN_ERROR);
+    }
+    else {
+      Main.showMessage("Start Failed", t);
+      System.exit(startupException.exitCode());
     }
   }
 

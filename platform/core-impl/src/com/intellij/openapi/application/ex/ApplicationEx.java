@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.ex;
 
+import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -28,7 +29,14 @@ public interface ApplicationEx extends Application {
     load(null);
   }
 
-  boolean isLoaded();
+  /**
+   * @deprecated Use {@code LoadingPhase.COMPONENT_LOADED.isComplete()}.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  default boolean isLoaded() {
+    return LoadingPhase.COMPONENT_LOADED.isComplete();
+  }
 
   @NotNull
   String getName();
