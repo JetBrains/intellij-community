@@ -78,7 +78,7 @@ public enum LoadingPhase {
     if (SKIP_LOADING_PHASE) return;
 
     LoadingPhase currentPhase = LoadingPhase.currentPhase.get();
-    if (currentPhase.ordinal() >= phase.ordinal()) return;
+    if (currentPhase.ordinal() >= phase.ordinal() || isKnownViolator()) return;
 
     Throwable t = new Throwable();
     synchronized (stackTraces) {
@@ -88,6 +88,14 @@ public enum LoadingPhase {
                        "Current violators count: " + stackTraces.size() + "\n\n",
                        t);
     }
+  }
+
+  private static boolean isKnownViolator() {
+    return Arrays.stream(Thread.currentThread().getStackTrace())
+      .anyMatch(element -> {
+        String className = element.getClassName();
+        return className.contains("com.intellij.util.indexing.IndexInfrastructure");
+      });
   }
 
   public static boolean isStartupComplete() {
