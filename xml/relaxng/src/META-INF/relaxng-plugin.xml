@@ -51,7 +51,7 @@
     <localInspection shortName="UnusedDefine" displayName="Unused Define" groupName="RELAX NG" enabledByDefault="false" level="WARNING"
                      implementationClass="org.intellij.plugins.relaxNG.inspections.UnusedDefineInspection"/>
     <xml.validateHandler implementation="org.intellij.plugins.relaxNG.validation.RngValidateHandler"/>
-    <applicationInitializedListener implementation="org.intellij.plugins.relaxNG.ApplicationLoader"/>
+    <metaDataContributor implementation="org.intellij.plugins.relaxNG.ApplicationLoader" order="first"/>
   </extensions>
 
   <project-components>
