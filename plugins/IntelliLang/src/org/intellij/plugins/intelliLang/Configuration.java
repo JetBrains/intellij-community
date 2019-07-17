@@ -111,8 +111,8 @@ public class Configuration extends SimpleModificationTracker implements Persiste
 
     private final Configuration myParentConfiguration;
 
-    Prj(final Configuration configuration) {
-      myParentConfiguration = configuration;
+    Prj() {
+      myParentConfiguration = Configuration.getInstance();
     }
 
     @Override
