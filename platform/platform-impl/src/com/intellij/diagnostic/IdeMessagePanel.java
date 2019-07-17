@@ -73,7 +73,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
   }
 
   @Override
-  public WidgetPresentation getPresentation(@NotNull PlatformType type) {
+  public WidgetPresentation getPresentation() {
     return null;
   }
 

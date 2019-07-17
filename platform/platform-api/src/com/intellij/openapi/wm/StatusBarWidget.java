@@ -3,6 +3,7 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
@@ -18,6 +19,11 @@ import java.awt.event.MouseEvent;
  * @see StatusBar#addWidget(StatusBarWidget)
  */
 public interface StatusBarWidget extends Disposable {
+  /**
+   * @deprecated do not use it
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
   enum PlatformType {
     DEFAULT, MAC
   }
@@ -26,7 +32,19 @@ public interface StatusBarWidget extends Disposable {
   String ID();
 
   @Nullable
-  WidgetPresentation getPresentation(@NotNull PlatformType type);
+  default WidgetPresentation getPresentation() {
+    return getPresentation(SystemInfo.isMac ? PlatformType.MAC : PlatformType.DEFAULT);
+  }
+
+  /**
+   * @deprecated use this{@link #getPresentation()} instead
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
+  @Nullable
+  default WidgetPresentation getPresentation(@NotNull PlatformType type) {
+    return null;
+  }
 
   void install(@NotNull final StatusBar statusBar);
 

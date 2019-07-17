@@ -40,7 +40,7 @@ public class ColumnSelectionModePanel extends EditorBasedWidget implements Statu
   }
 
   @Override
-  public WidgetPresentation getPresentation(@NotNull PlatformType type) {
+  public WidgetPresentation getPresentation() {
     return null;
   }
 

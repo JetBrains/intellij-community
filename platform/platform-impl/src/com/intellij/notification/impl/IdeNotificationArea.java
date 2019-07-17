@@ -71,7 +71,7 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
   }
 
   @Override
-  public WidgetPresentation getPresentation(@NotNull PlatformType type) {
+  public WidgetPresentation getPresentation() {
     return null;
   }
 

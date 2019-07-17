@@ -81,7 +81,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   }
 
   @Override
-  public WidgetPresentation getPresentation(@NotNull PlatformType type) {
+  public WidgetPresentation getPresentation() {
     return this;
   }
 

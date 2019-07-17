@@ -67,7 +67,7 @@ public class PositionPanel extends EditorBasedWidget
   }
 
   @Override
-  public WidgetPresentation getPresentation(@NotNull final PlatformType type) {
+  public WidgetPresentation getPresentation() {
     return this;
   }
 

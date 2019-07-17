@@ -211,7 +211,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
 
       @Override
       @Nullable
-      public WidgetPresentation getPresentation(@NotNull PlatformType type) {
+      public WidgetPresentation getPresentation() {
         return null;
       }
 
@@ -461,8 +461,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
       }
       return component;
     }
-    final StatusBarWidget.WidgetPresentation presentation =
-      widget.getPresentation(SystemInfo.isMac ? StatusBarWidget.PlatformType.MAC : StatusBarWidget.PlatformType.DEFAULT);
+    StatusBarWidget.WidgetPresentation presentation = widget.getPresentation();
     assert presentation != null : "Presentation should not be null!";
 
     JComponent wrapper;

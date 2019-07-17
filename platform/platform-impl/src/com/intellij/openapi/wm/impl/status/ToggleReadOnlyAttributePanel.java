@@ -59,7 +59,7 @@ public class ToggleReadOnlyAttributePanel implements StatusBarWidget.Multiframe,
   }
 
   @Override
-  public WidgetPresentation getPresentation(@NotNull PlatformType type) {
+  public WidgetPresentation getPresentation() {
     return this;
   }
 

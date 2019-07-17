@@ -247,7 +247,7 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
     }
 
     @Override
-    public WidgetPresentation getPresentation(@NotNull PlatformType type) {
+    public WidgetPresentation getPresentation() {
       return myPresentation;
     }
 
