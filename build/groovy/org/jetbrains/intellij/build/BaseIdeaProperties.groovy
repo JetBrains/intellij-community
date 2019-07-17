@@ -39,7 +39,6 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.maven.model",
     "intellij.gradle",
     "intellij.gradle.java",
-    "intellij.gradle.java.maven",
     "intellij.vcs.git",
     "intellij.vcs.svn",
     "intellij.vcs.hg",
@@ -62,6 +61,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.java.byteCodeViewer",
     "intellij.devkit",
     "intellij.eclipse",
+    "intellij.gradle.java.maven",
     "intellij.grazie",
     "intellij.javaFX.community",
     "intellij.markdown"

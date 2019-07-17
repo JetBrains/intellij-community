@@ -405,6 +405,13 @@ public final class PluginDescriptorLoader {
     for (Future<IdeaPluginDescriptorImpl> task : tasks) {
       IdeaPluginDescriptorImpl descriptor = task.get();
       if (descriptor != null) {
+        // Android Studio: we do not bundle the Maven plugin, and its presence on the classpath prevents the Kotlin plugin from loading.
+        if (PlatformUtils.isAndroidStudio()) {
+          String id = descriptor.getPluginId().getIdString();
+          if (id.equals("org.jetbrains.idea.maven") || id.equals("org.jetbrains.plugins.gradle.maven")) {
+            continue;
+          }
+        }
         if (!PluginManagerCore.usePluginClassLoader) descriptor.setUseCoreClassLoader();
         result.add(descriptor,  /* overrideUseIfCompatible = */ false);
       }
