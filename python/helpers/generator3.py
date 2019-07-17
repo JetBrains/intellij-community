@@ -70,8 +70,9 @@ def redo_module(module_name, module_file_name, doing_builtins, cache_dir, sdk_di
         action("flushing")
         r.flush()
         delete_failed_version_stamp(cache_dir, module_name)
-        # Incrementally copy whatever we managed to successfully generate so far
-        copy_skeletons(cache_dir, sdk_dir, get_module_origin(module_file_name, module_name))
+        if sdk_dir:
+            # Incrementally copy whatever we managed to successfully generate so far
+            copy_skeletons(cache_dir, sdk_dir, get_module_origin(module_file_name, module_name))
     else:
         report("Failed to find imported module in sys.modules " + module_name)
 
@@ -651,6 +652,14 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
 
 
 def get_module_origin(mod_path, mod_qname):
+    if mod_qname in sys.builtin_module_names:
+        return OriginType.BUILTIN
+
+    # Unless it's a builtin module all bundled skeletons should have
+    # file system independent "(pre-generated)" marker in their header
+    if is_pregeneration_mode():
+        return OriginType.PREGENERATED
+
     if not mod_path:
         return None
 
