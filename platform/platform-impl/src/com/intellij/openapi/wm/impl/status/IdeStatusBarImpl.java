@@ -60,7 +60,6 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   private final List<String> myCustomComponentIds = new ArrayList<>();
 
   private final Set<IdeStatusBarImpl> myChildren = new HashSet<>();
-  //private ToolWindowsWidget myToolWindowWidget;
 
   private static class WidgetBean {
     JComponent component;
@@ -232,29 +231,6 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
 
     myCustomComponentIds.add(customId);
   }
-
-  //@Override
-  //protected void processMouseMotionEvent(MouseEvent e) {
-  //  final Point point = e.getPoint();
-  //  if (myToolWindowWidget != null) {
-  //    if(point.x < 42 && 0 <= point.y && point.y <= getHeight()) {
-  //      myToolWindowWidget.mouseEntered();
-  //    } else {
-  //      myToolWindowWidget.mouseExited();
-  //    }
-  //  }
-  //  super.processMouseMotionEvent(e);
-  //}
-
-  //@Override
-  //protected void processMouseEvent(MouseEvent e) {
-  //  if (e.getID() == MouseEvent.MOUSE_EXITED && myToolWindowWidget != null) {
-  //    if (!new Rectangle(0,0,22, getHeight()).contains(e.getPoint())) {
-  //      myToolWindowWidget.mouseExited();
-  //    }
-  //  }
-  //  super.processMouseEvent(e);
-  //}
 
   @Override
   public void removeCustomIndicationComponent(@NotNull final JComponent c) {
