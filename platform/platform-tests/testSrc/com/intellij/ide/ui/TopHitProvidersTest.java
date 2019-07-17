@@ -44,9 +44,9 @@ public class TopHitProvidersTest extends LightPlatformTestCase {
             BooleanOptionDescription booleanOption = (BooleanOptionDescription)option;
             boolean enabled = booleanOption.isOptionEnabled();
             booleanOption.setOptionState(!enabled);
-            if (enabled == booleanOption.isOptionEnabled()) errors.add("Can't set " + booleanOption.getOption());
+            if (enabled == booleanOption.isOptionEnabled()) errors.add("Can't set " + toString(booleanOption));
             booleanOption.setOptionState(enabled); //restore
-            if (enabled != booleanOption.isOptionEnabled()) errors.add("Can't restore " + booleanOption.getOption());
+            if (enabled != booleanOption.isOptionEnabled()) errors.add("Can't restore " + toString(booleanOption));
           }
           catch (Throwable e) {
             e.printStackTrace();
@@ -76,5 +76,10 @@ public class TopHitProvidersTest extends LightPlatformTestCase {
       return ((OptionsTopHitProvider)provider).getOptions(getProject());
     }
     return Collections.emptyList();
+  }
+
+  @NotNull
+  private static String toString(@NotNull BooleanOptionDescription booleanOption) {
+    return String.format("'%s'; id: %s; %s", booleanOption.getOption(), booleanOption.getConfigurableId(), booleanOption.getClass());
   }
 }
