@@ -190,7 +190,9 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
 
           forceGenerate = firstVersionFromStubs != firstVersionFromSources || secondVersionFromStubs != secondVersionFromSources
         }
-        catch (ignored) {
+        catch (Exception e) {
+          context.messages.warning("Force generating stubs inplace")
+          context.messages.warning(e.message)
           forceGenerate = true
         }
       }
