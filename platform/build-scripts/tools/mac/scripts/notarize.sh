@@ -22,7 +22,7 @@ function log() {
 function publish-log() {
   id=$1
   file=$2
-  curl -H "X-JFrog-Art-Api: $ARTIFACTORY_API_KEY" -T "$file" "$ARTIFACTORY_URL/$id"
+  curl -T "$file" "$ARTIFACTORY_URL/$id" || true
 }
 
 #immediately exit script with an error if a command fails
