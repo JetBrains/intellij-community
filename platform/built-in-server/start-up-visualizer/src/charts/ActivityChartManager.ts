@@ -58,6 +58,17 @@ export class ActivityChartManager extends XYChartManager {
       nameAxisLabel.verticalCenter = "middle"
       nameAxisLabel.horizontalCenter = "right"
     }
+
+    if (this.descriptor.id !== "components") {
+      nameAxis.renderer.labels.template.adapter.add("fill", (value, target) => {
+        const dataItem = target.dataItem
+        if (dataItem != null && dataItem.dataContext != null && (dataItem.dataContext as any).thread === "edt") {
+          return am4core.color("rgb(255, 160, 122)")
+        }
+        return value
+      })
+    }
+
     nameAxis.renderer.minGridDistance = 1
     nameAxis.renderer.grid.template.location = 0
     nameAxis.renderer.grid.template.disabled = true
