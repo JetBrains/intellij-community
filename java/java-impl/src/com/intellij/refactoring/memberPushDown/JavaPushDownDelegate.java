@@ -360,8 +360,11 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
       PsiElement element = reference.getElement();
       if (element instanceof PsiReferenceExpression) {
         PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
-        new InlineMethodProcessor(element.getProject(), superMethod, referenceExpression, null, true)
-          .inlineMethodCall(referenceExpression);
+        if (superMethod.getBody() != null) {
+          // No super method body: either native method or compilation error
+          new InlineMethodProcessor(element.getProject(), superMethod, referenceExpression, null, true)
+            .inlineMethodCall(referenceExpression);
+        }
       }
     }
   }
