@@ -27,7 +27,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public class IdeaFreezeReporter {
-  private final ThreadMXBean myThreadMXBean = ManagementFactory.getThreadMXBean();
   private static final int FREEZE_THRESHOLD = ApplicationManager.getApplication().isInternal() ? 5 : 25; // seconds
 
   public IdeaFreezeReporter() {
@@ -283,11 +282,12 @@ public class IdeaFreezeReporter {
     }
   }
 
-  private class DumpTask {
+  private static class DumpTask {
     private final int myDumpInterval;
     private final int myMaxDumps;
     private final ScheduledFuture<?> myFuture;
     private final List<ThreadInfo[]> myThreadInfos = new ArrayList<>();
+    private final static ThreadMXBean THREAD_MX_BEAN = ManagementFactory.getThreadMXBean();
 
     private DumpTask() {
       myDumpInterval = Registry.intValue("freeze.reporter.dump.interval.ms");
@@ -297,7 +297,7 @@ public class IdeaFreezeReporter {
     }
 
     void dumpThreads() {
-      ThreadInfo[] infos = ThreadDumper.getThreadInfos(myThreadMXBean, false);
+      ThreadInfo[] infos = ThreadDumper.getThreadInfos(THREAD_MX_BEAN, false);
       myThreadInfos.add(infos);
       if (myThreadInfos.size() >= myMaxDumps) {
         cancel();

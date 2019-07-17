@@ -48,7 +48,6 @@ public class PerformanceWatcher implements Disposable {
   private static final String THREAD_DUMPS_PREFIX = "threadDumps-";
   private ScheduledFuture<?> myThread;
   private ScheduledFuture<?> myDumpTask;
-  private final ThreadMXBean myThreadMXBean = ManagementFactory.getThreadMXBean();
   private final File myLogDir = new File(PathManager.getLogPath());
   private List<StackTraceElement> myStacktraceCommonPart;
   private final IdePerformanceListener myPublisher =
@@ -343,7 +342,7 @@ public class PerformanceWatcher implements Disposable {
 
     checkMemoryUsage(file);
 
-    ThreadDump threadDump = ThreadDumper.getThreadDumpInfo(myThreadMXBean);
+    ThreadDump threadDump = ThreadDumper.getThreadDumpInfo(ManagementFactory.getThreadMXBean());
     try {
       FileUtil.writeToFile(file, threadDump.getRawDump());
       StackTraceElement[] edtStack = threadDump.getEDTStackTrace();
