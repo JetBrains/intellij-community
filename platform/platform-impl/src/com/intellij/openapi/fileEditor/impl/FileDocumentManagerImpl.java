@@ -634,6 +634,9 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Asyn
       @Override
       public void afterVfsChange() {
         for (VFileEvent event : events) {
+          VirtualFile file = event.getFile();
+          if (file != null && !file.isValid()) continue;
+
           if (event instanceof VFileContentChangeEvent) {
             contentsChanged((VFileContentChangeEvent)event);
           }
