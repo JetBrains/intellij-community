@@ -118,12 +118,4 @@ class CircletIdeaGraphStorageTransaction(private val storage: CircletIdeaAutomat
     override fun findNotFinishedJobsWithWorkerId(limit: Int): Sequence<AJobExecutionEntity<*>> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
-
-    override fun getLastKnownDockerContainerStates(): List<Pair<String, WorkerStatus>> {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun saveDockerContainerState(workerId: String, status: WorkerStatus) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
 }
