@@ -112,7 +112,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
 
         myComponentListener = object : ComponentAdapter() {
             override fun componentResized(e: ComponentEvent?) {
-                SwingUtilities.invokeLater{updateCustomDecorationHitTestSpots()}
+               SwingUtilities.invokeLater{updateCustomDecorationHitTestSpots()}
             }
         }
 
@@ -131,13 +131,17 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
       updateCustomDecorationHitTestSpots()
     }
 
+    private var added = false
+
     override fun addNotify() {
         super.addNotify()
+        added = true
         installListeners()
         updateCustomDecorationHitTestSpots()
     }
 
     override fun removeNotify() {
+        added = false
         super.removeNotify()
         uninstallListeners()
     }
@@ -157,6 +161,8 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     }
 
     protected fun updateCustomDecorationHitTestSpots() {
+        if(!added) return
+
         val toList = getHitTestSpots().map {it.getRectangleOn(window)}.toList()
         JdkEx.setCustomDecorationHitTestSpots(window, toList)
     }
