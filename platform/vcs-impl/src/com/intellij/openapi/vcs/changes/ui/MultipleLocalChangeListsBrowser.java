@@ -99,7 +99,6 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     myInclusionModel = new PartialCommitInclusionModel(myProject);
     Disposer.register(this, myInclusionModel);
     getViewer().setInclusionModel(myInclusionModel);
-    Disposer.register(myInclusionModel, () -> getViewer().setInclusionModel(null));
 
     ChangeListManager.getInstance(myProject).addChangeListListener(new MyChangeListListener(), this);
     init();
