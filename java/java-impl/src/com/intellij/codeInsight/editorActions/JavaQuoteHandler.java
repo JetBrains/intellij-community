@@ -61,6 +61,7 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
     return closingQuote;
   }
 
+  @NotNull
   @Override
   @SuppressWarnings("SpellCheckingInspection")
   public TokenSet getConcatenatableStringTokenTypes() {
