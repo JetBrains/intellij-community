@@ -22,6 +22,7 @@ import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.builders.storage.StorageProvider;
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.incremental.storage.CompositeStorageOwner;
 import org.jetbrains.jps.incremental.storage.StorageOwner;
 
@@ -45,7 +46,7 @@ public class BuildTargetStorages extends CompositeStorageOwner {
   }
 
   @NotNull 
-  public <S extends StorageOwner> S getOrCreateStorage(@NotNull final StorageProvider<S> provider) throws IOException {
+  public <S extends StorageOwner> S getOrCreateStorage(@NotNull final StorageProvider<S> provider, PathRelativizerService relativizer) throws IOException {
     NotNullLazyValue<? extends StorageOwner> lazyValue = myStorages.get(provider);
     if (lazyValue == null) {
       AtomicNotNullLazyValue<S> newValue = new AtomicNotNullLazyValue<S>() {
@@ -53,7 +54,7 @@ public class BuildTargetStorages extends CompositeStorageOwner {
         @Override
         protected S compute() {
           try {
-            return provider.createStorage(myPaths.getTargetDataRoot(myTarget));
+            return provider.createStorage(myPaths.getTargetDataRoot(myTarget), relativizer);
           }
           catch (IOException e) {
             throw new BuildDataCorruptedException(e);

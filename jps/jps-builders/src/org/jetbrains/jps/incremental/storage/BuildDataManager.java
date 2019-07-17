@@ -148,7 +148,7 @@ public class BuildDataManager implements StorageOwner {
   @NotNull
   public <S extends StorageOwner> S getStorage(@NotNull BuildTarget<?> target, @NotNull StorageProvider<S> provider) throws IOException {
     final BuildTargetStorages storages = fetchValue(myTargetStorages, target, TARGET_STORAGES_VALUE_FACTORY);
-    return storages.getOrCreateStorage(provider);
+    return storages.getOrCreateStorage(provider, myRelativizer);
   }
 
   public OneToManyPathsMapping getSourceToFormMap() {
