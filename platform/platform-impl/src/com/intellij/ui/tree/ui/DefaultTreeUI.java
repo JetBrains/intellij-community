@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree.ui;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ColoredItem;
 import com.intellij.openapi.util.Key;
@@ -28,6 +29,7 @@ import java.awt.event.MouseListener;
 import java.lang.reflect.Method;
 import java.util.Collection;
 
+import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.util.registry.Registry.is;
 import static com.intellij.ui.components.JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS;
 import static com.intellij.util.ReflectionUtil.getMethod;
@@ -35,15 +37,21 @@ import static com.intellij.util.containers.ContainerUtil.createWeakSet;
 import static com.intellij.util.ui.tree.WideSelectionTreeUI.TREE_TABLE_TREE_KEY;
 
 public final class DefaultTreeUI extends BasicTreeUI {
-  public static final Key<Control.Painter> CONTROL_PAINTER = Key.create("tree control painter");
   public static final Key<Boolean> SHRINK_LONG_RENDERER = Key.create("resize renderer component if it exceed a visible area");
   private static final Logger LOG = Logger.getInstance(DefaultTreeUI.class);
   private static final Collection<Class<?>> SUSPICIOUS = createWeakSet();
 
   @NotNull
   private static Control.Painter getPainter(@NotNull JTree tree) {
-    Control.Painter painter = UIUtil.getClientProperty(tree, CONTROL_PAINTER);
+    Control.Painter painter = UIUtil.getClientProperty(tree, Control.Painter.KEY);
     if (painter != null) return painter;
+    // painter is not specified for the given tree
+    Application application = getApplication();
+    if (application != null) {
+      painter = application.getUserData(Control.Painter.KEY);
+      if (painter != null) return painter;
+      // painter is not specified for the whole application
+    }
     if (is("ide.tree.painter.classic.compact")) return Control.Painter.COMPACT;
     if (is("ide.tree.painter.compact.default")) return CompactPainter.DEFAULT;
     return Control.Painter.DEFAULT;
