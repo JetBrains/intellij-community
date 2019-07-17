@@ -20,11 +20,13 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ui.EmptyIcon;
+import icons.DvcsImplIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public abstract class BranchActionGroup extends ActionGroup implements DumbAware {
+public abstract class BranchActionGroup extends ActionGroup implements DumbAware, CustomIconProvider {
 
   private boolean myIsFavorite;
   private LayeredIcon myIcon;
@@ -70,4 +72,13 @@ public abstract class BranchActionGroup extends ActionGroup implements DumbAware
   public boolean hasIncomingCommits() {return false;}
 
   public boolean hasOutgoingCommits() {return false;}
+
+  @Nullable
+  @Override
+  public Icon getRightIcon() {
+    if (hasIncomingCommits()) {
+      return hasOutgoingCommits() ? DvcsImplIcons.IncomingOutgoing : DvcsImplIcons.Incoming;
+    }
+    return hasOutgoingCommits() ? DvcsImplIcons.Outgoing : null;
+  }
 }
