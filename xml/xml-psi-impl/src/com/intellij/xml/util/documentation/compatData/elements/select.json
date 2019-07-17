@@ -16,9 +16,6 @@
             "edge": {
               "version_added": true
             },
-            "edge_mobile": {
-              "version_added": true
-            },
             "firefox": {
               "version_added": "1",
               "notes": "Historically, Firefox has allowed keyboard and mouse events to bubble up from the <code>&lt;option&gt;</code> element to the parent <code>&lt;select&gt;</code> element, although this behavior is inconsistent across many browsers. For better Web compatibility (and for technical reasons), when Firefox is in multi-process mode the <code>&lt;select&gt;</code> element is displayed as a drop-down list. The behavior is unchanged if the <code>&lt;select&gt;</code> is presented inline and it has either the multiple attribute defined or a size attribute set to more than 1. Rather than watching <code>&lt;option&gt;</code> elements for events, you should watch for change events on <code>&lt;select&gt;</code>. See <a href='https://bugzil.la/1090602'>bug 1090602</a> for details."
@@ -73,9 +70,6 @@
               "edge": {
                 "version_added": true
               },
-              "edge_mobile": {
-                "version_added": true
-              },
               "firefox": {
                 "version_added": "1"
               },
@@ -121,9 +115,6 @@
                 "version_added": true
               },
               "edge": {
-                "version_added": true
-              },
-              "edge_mobile": {
                 "version_added": true
               },
               "firefox": {
@@ -173,9 +164,6 @@
               "edge": {
                 "version_added": true
               },
-              "edge_mobile": {
-                "version_added": true
-              },
               "firefox": {
                 "version_added": "1"
               },
@@ -221,9 +209,6 @@
                 "version_added": true
               },
               "edge": {
-                "version_added": true
-              },
-              "edge_mobile": {
                 "version_added": true
               },
               "firefox": {
@@ -273,9 +258,6 @@
               "edge": {
                 "version_added": true
               },
-              "edge_mobile": {
-                "version_added": true
-              },
               "firefox": {
                 "version_added": "1"
               },
@@ -323,9 +305,6 @@
               "edge": {
                 "version_added": true
               },
-              "edge_mobile": {
-                "version_added": true
-              },
               "firefox": {
                 "version_added": "4"
               },
@@ -371,9 +350,6 @@
                 "version_added": true
               },
               "edge": {
-                "version_added": true
-              },
-              "edge_mobile": {
                 "version_added": true
               },
               "firefox": {

@@ -14,9 +14,6 @@
             "edge": {
               "version_added": true
             },
-            "edge_mobile": {
-              "version_added": true
-            },
             "firefox": {
               "version_added": "3.5",
               "notes": "Until Firefox 15, Firefox picked the first source element that has a type matching the MIME-type of a supported media format; see <a href='https://bugzil.la/449363'>bug 449363</a> for details."
@@ -65,9 +62,6 @@
               "edge": {
                 "version_added": true
               },
-              "edge_mobile": {
-                "version_added": true
-              },
               "firefox": {
                 "version_added": "15"
               },
@@ -113,9 +107,6 @@
                 "version_added": true
               },
               "edge": {
-                "version_added": true
-              },
-              "edge_mobile": {
                 "version_added": true
               },
               "firefox": [
@@ -201,9 +192,6 @@
               "edge": {
                 "version_added": true
               },
-              "edge_mobile": {
-                "version_added": true
-              },
               "firefox": {
                 "version_added": "3.5"
               },
@@ -249,9 +237,6 @@
                 "version_added": true
               },
               "edge": {
-                "version_added": true
-              },
-              "edge_mobile": {
                 "version_added": true
               },
               "firefox": [
@@ -335,9 +320,6 @@
                 "version_added": true
               },
               "edge": {
-                "version_added": true
-              },
-              "edge_mobile": {
                 "version_added": true
               },
               "firefox": {

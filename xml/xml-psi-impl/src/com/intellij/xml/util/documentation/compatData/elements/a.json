@@ -14,9 +14,6 @@
             "edge": {
               "version_added": true
             },
-            "edge_mobile": {
-              "version_added": true
-            },
             "firefox": {
               "version_added": true,
               "notes": "Starting with Firefox 41, &lt;a&gt; without <code>href</code> attribute is no longer classified as interactive content: clicking it inside &lt;label&gt; will activate labelled content (<a href='https://bugzil.la/1167816'>bug 1167816</a>)."
@@ -65,9 +62,6 @@
               "edge": {
                 "version_added": true
               },
-              "edge_mobile": {
-                "version_added": true
-              },
               "firefox": {
                 "version_added": true
               },
@@ -113,9 +107,6 @@
                 "version_added": false
               },
               "edge": {
-                "version_added": false
-              },
-              "edge_mobile": {
                 "version_added": false
               },
               "firefox": {
@@ -181,9 +172,6 @@
                   ]
                 }
               ],
-              "edge_mobile": {
-                "version_added": true
-              },
               "firefox": {
                 "version_added": "20"
               },
@@ -233,9 +221,6 @@
               "edge": {
                 "version_added": true
               },
-              "edge_mobile": {
-                "version_added": true
-              },
               "firefox": {
                 "version_added": true
               },
@@ -281,9 +266,6 @@
                   "version_added": true
                 },
                 "edge": {
-                  "version_added": true
-                },
-                "edge_mobile": {
                   "version_added": true
                 },
                 "firefox": {
@@ -334,9 +316,6 @@
               "edge": {
                 "version_added": true
               },
-              "edge_mobile": {
-                "version_added": true
-              },
               "firefox": {
                 "version_added": true
               },
@@ -384,9 +363,6 @@
               "edge": {
                 "version_added": true
               },
-              "edge_mobile": {
-                "version_added": true
-              },
               "firefox": {
                 "version_added": true
               },
@@ -432,9 +408,6 @@
                 "version_added": true
               },
               "edge": {
-                "version_added": false
-              },
-              "edge_mobile": {
                 "version_added": false
               },
               "firefox": {
@@ -498,9 +471,6 @@
               "edge": {
                 "version_added": false
               },
-              "edge_mobile": {
-                "version_added": false
-              },
               "firefox": {
                 "version_added": "50"
               },
@@ -546,9 +516,6 @@
                 "version_added": true
               },
               "edge": {
-                "version_added": true
-              },
-              "edge_mobile": {
                 "version_added": true
               },
               "firefox": {
@@ -598,9 +565,6 @@
               "edge": {
                 "version_added": true
               },
-              "edge_mobile": {
-                "version_added": true
-              },
               "firefox": {
                 "version_added": true
               },
@@ -646,9 +610,6 @@
                 "version_added": false
               },
               "edge": {
-                "version_added": false
-              },
-              "edge_mobile": {
                 "version_added": false
               },
               "firefox": {
@@ -702,9 +663,6 @@
               "edge": {
                 "version_added": true
               },
-              "edge_mobile": {
-                "version_added": true
-              },
               "firefox": {
                 "version_added": true
               },
@@ -750,9 +708,6 @@
                 "version_added": true
               },
               "edge": {
-                "version_added": true
-              },
-              "edge_mobile": {
                 "version_added": true
               },
               "firefox": {

@@ -14,9 +14,6 @@
             "edge": {
               "version_added": false
             },
-            "edge_mobile": {
-              "version_added": null
-            },
             "firefox": {
               "version_added": false
             },
@@ -59,9 +56,6 @@
               },
               "edge": {
                 "version_added": false
-              },
-              "edge_mobile": {
-                "version_added": null
               },
               "firefox": {
                 "version_added": false
@@ -107,9 +101,6 @@
               "edge": {
                 "version_added": false
               },
-              "edge_mobile": {
-                "version_added": null
-              },
               "firefox": {
                 "version_added": false
               },
@@ -153,9 +144,6 @@
               },
               "edge": {
                 "version_added": false
-              },
-              "edge_mobile": {
-                "version_added": null
               },
               "firefox": {
                 "version_added": false

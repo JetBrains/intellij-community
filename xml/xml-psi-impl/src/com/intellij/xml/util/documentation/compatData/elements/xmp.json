@@ -14,9 +14,6 @@
             "edge": {
               "version_added": true
             },
-            "edge_mobile": {
-              "version_added": true
-            },
             "firefox": {
               "version_added": true,
               "notes": "Before Firefox 4, this element implemented the <code>HTMLSpanElement</code> interface instead of the standard <code>HTMLElement</code> interface."

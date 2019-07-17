@@ -16,9 +16,6 @@
               "edge": {
                 "version_added": null
               },
-              "edge_mobile": {
-                "version_added": null
-              },
               "firefox": {
                 "version_added": "1",
                 "notes": "You can set as well as get the value of <code>HTMLInputElement.files</code> in all modern browsers; this was most recently added to Firefox, in version 57 (see <a href='https://bugzil.la/1384030'>bug 1384030</a>)."

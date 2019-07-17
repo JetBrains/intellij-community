@@ -14,9 +14,6 @@
             "edge": {
               "version_added": "12"
             },
-            "edge_mobile": {
-              "version_added": "12"
-            },
             "firefox": {
               "version_added": "4",
               "notes": "For years, Firefox has suffered from a bug whereby it doesn't completely follow the <code>use</code> cascading rules (see <a href='https://bugzil.la/265894'>bug 265894</a>). A fix is <a href='https://stackoverflow.com/questions/27866893/svg-fill-not-being-applied-in-firefox/27872310#27872310'>documented by Amelia Bellamy-Royds on StackOverflow</a>. The good news is that this is finally fixed as of Firefox 56."
@@ -61,9 +58,6 @@
                 "version_added": true
               },
               "edge": {
-                "version_added": true
-              },
-              "edge_mobile": {
                 "version_added": true
               },
               "firefox": {
@@ -111,9 +105,6 @@
               "edge": {
                 "version_added": "13"
               },
-              "edge_mobile": {
-                "version_added": "13"
-              },
               "firefox": {
                 "version_added": "4"
               },
@@ -156,9 +147,6 @@
                 "version_added": true
               },
               "edge": {
-                "version_added": true
-              },
-              "edge_mobile": {
                 "version_added": true
               },
               "firefox": {
@@ -205,9 +193,6 @@
               "edge": {
                 "version_added": true
               },
-              "edge_mobile": {
-                "version_added": true
-              },
               "firefox": {
                 "version_added": true
               },
@@ -252,9 +237,6 @@
               "edge": {
                 "version_added": true
               },
-              "edge_mobile": {
-                "version_added": true
-              },
               "firefox": {
                 "version_added": true
               },
@@ -297,9 +279,6 @@
                 "version_added": true
               },
               "edge": {
-                "version_added": true
-              },
-              "edge_mobile": {
                 "version_added": true
               },
               "firefox": {
@@ -347,9 +326,6 @@
               "edge": {
                 "version_added": true
               },
-              "edge_mobile": {
-                "version_added": true
-              },
               "firefox": {
                 "version_added": true
               },
@@ -392,9 +368,6 @@
                 "version_added": true
               },
               "edge": {
-                "version_added": true
-              },
-              "edge_mobile": {
                 "version_added": true
               },
               "firefox": {

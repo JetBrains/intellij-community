@@ -15,10 +15,6 @@
               "version_added": true,
               "notes": "Partially supported, see <a href='https://developer.microsoft.com/microsoft-edge/platform/issues/12382004/'>bug 12382004</a>."
             },
-            "edge_mobile": {
-              "version_added": true,
-              "notes": "Partially supported, see <a href='https://developer.microsoft.com/microsoft-edge/platform/issues/12382004/'>bug 12382004</a>."
-            },
             "firefox": {
               "version_added": "4"
             },
@@ -61,10 +57,6 @@
                 "version_added": true
               },
               "edge": {
-                "version_added": true,
-                "notes": "Partially supported, see <a href='https://developer.microsoft.com/microsoft-edge/platform/issues/12382004/'>bug 12382004</a>."
-              },
-              "edge_mobile": {
                 "version_added": true,
                 "notes": "Partially supported, see <a href='https://developer.microsoft.com/microsoft-edge/platform/issues/12382004/'>bug 12382004</a>."
               },
@@ -113,9 +105,6 @@
               "edge": {
                 "version_added": null
               },
-              "edge_mobile": {
-                "version_added": null
-              },
               "firefox": {
                 "version_added": null
               },
@@ -158,10 +147,6 @@
                 "version_added": true
               },
               "edge": {
-                "version_added": true,
-                "notes": "Partially supported, see <a href='https://developer.microsoft.com/microsoft-edge/platform/issues/12382004/'>bug 12382004</a>."
-              },
-              "edge_mobile": {
                 "version_added": true,
                 "notes": "Partially supported, see <a href='https://developer.microsoft.com/microsoft-edge/platform/issues/12382004/'>bug 12382004</a>."
               },
@@ -210,9 +195,6 @@
               "edge": {
                 "version_added": null
               },
-              "edge_mobile": {
-                "version_added": null
-              },
               "firefox": {
                 "version_added": null
               },
@@ -255,9 +237,6 @@
                 "version_added": null
               },
               "edge": {
-                "version_added": null
-              },
-              "edge_mobile": {
                 "version_added": null
               },
               "firefox": {

@@ -15,10 +15,6 @@
               "version_added": false,
               "notes": "<a href='https://developer.microsoft.com/microsoft-edge/platform/status/detailssummary?filter=f3f0000bf&search=details'>In development</a>."
             },
-            "edge_mobile": {
-              "version_added": false,
-              "notes": "<a href='https://developer.microsoft.com/microsoft-edge/platform/status/detailssummary?filter=f3f0000bf&search=details'>In development</a>."
-            },
             "firefox": {
               "version_added": "49"
             },
@@ -66,9 +62,6 @@
                 "notes": "Chrome currently doesn't use <code>display: list-item</code> on the <code>&lt;summary&gt;</code> element, so <code>display: block</code> will not automatically hide the disclosure widget. Instead, use the non-standard pseudo-element <code>::-webit-details-marker</code> to change the disclosure widget in Chrome. See <a href='https://crbug.com/590014'>Chrome bug 590014</a> for details."
               },
               "edge": {
-                "version_added": false
-              },
-              "edge_mobile": {
                 "version_added": false
               },
               "firefox": {

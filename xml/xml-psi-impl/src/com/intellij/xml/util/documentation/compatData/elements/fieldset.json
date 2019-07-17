@@ -17,10 +17,6 @@
               "version_added": true,
               "notes": "Does not support <code>flexbox</code> and <code>grid</code> layouts within this element. See <a href='https://developer.microsoft.com/microsoft-edge/platform/issues/4511145/'>bug 4511145</a>."
             },
-            "edge_mobile": {
-              "version_added": true,
-              "notes": "Does not support <code>flexbox</code> and <code>grid</code> layouts within this element. See <a href='https://developer.microsoft.com/microsoft-edge/platform/issues/4511145/'>bug 4511145</a>."
-            },
             "firefox": {
               "version_added": true
             },
@@ -73,9 +69,6 @@
                 "version_added": true,
                 "notes": "Does not work with nested fieldsets. For example: <code>&lt;fieldset disabled&gt;&lt;fieldset&gt;&lt;!--Still enabled--&gt;&lt;/fieldset&gt;&lt;/fieldset&gt;</code>"
               },
-              "edge_mobile": {
-                "version_added": null
-              },
               "firefox": {
                 "version_added": true
               },
@@ -124,9 +117,6 @@
               "edge": {
                 "version_added": true
               },
-              "edge_mobile": {
-                "version_added": true
-              },
               "firefox": {
                 "version_added": true
               },
@@ -172,9 +162,6 @@
                 "version_added": true
               },
               "edge": {
-                "version_added": true
-              },
-              "edge_mobile": {
                 "version_added": true
               },
               "firefox": {

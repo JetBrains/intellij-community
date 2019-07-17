@@ -14,9 +14,6 @@
             "edge": {
               "version_added": false
             },
-            "edge_mobile": {
-              "version_added": false
-            },
             "firefox": {
               "version_added": false,
               "notes": "Up to Firefox 22, even if not supporting this element, Firefox was associating it with <code>HTMLSpanElement</code>. This was fixed then and now the associated element is an <code>HTMLUnknownElement</code> as required by the specification."

@@ -23,10 +23,11 @@ namespace local = ""
 				|	rtc.elem
 				)+
 				|	(	rp.elem
-					,	(	rt.elem
-						|	rtc.elem
+					,	(	(	rt.elem
+							|	rtc.elem
+							),
+							rp.elem
 						)+
-					,	rp.elem
 					)
 			)
 		)+
