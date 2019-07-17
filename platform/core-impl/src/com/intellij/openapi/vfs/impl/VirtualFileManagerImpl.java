@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -103,6 +104,10 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
       LOG.error(protocol + ": " + systems);
     }
     return systems.get(0);
+  }
+
+  public List<VirtualFileSystem> getPhysicalFileSystems() {
+    return Arrays.asList(myPhysicalFileSystems);
   }
 
   @Override
