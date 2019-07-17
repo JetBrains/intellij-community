@@ -22,6 +22,7 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -33,19 +34,29 @@ import java.util.stream.Stream;
  */
 public class TopHitProvidersTest extends LightPlatformTestCase {
   public void testUiSettings() {
+    List<String> errors = new ArrayList<>();
+
     List<OptionsSearchTopHitProvider> providers = getProviders();
     for (OptionsSearchTopHitProvider provider : providers) {
       for (OptionDescription option : getOptions(provider)) {
         if (option instanceof BooleanOptionDescription) {
-          BooleanOptionDescription booleanOption = (BooleanOptionDescription)option;
-          boolean enabled = booleanOption.isOptionEnabled();
-          booleanOption.setOptionState(!enabled);
-          assert enabled != booleanOption.isOptionEnabled() : "Can't set " + booleanOption.getOption();
-          booleanOption.setOptionState(enabled); //restore
-          assert enabled == booleanOption.isOptionEnabled() : "Can't restore " + booleanOption.getOption();
+          try {
+            BooleanOptionDescription booleanOption = (BooleanOptionDescription)option;
+            boolean enabled = booleanOption.isOptionEnabled();
+            booleanOption.setOptionState(!enabled);
+            if (enabled == booleanOption.isOptionEnabled()) errors.add("Can't set " + booleanOption.getOption());
+            booleanOption.setOptionState(enabled); //restore
+            if (enabled != booleanOption.isOptionEnabled()) errors.add("Can't restore " + booleanOption.getOption());
+          }
+          catch (Throwable e) {
+            e.printStackTrace();
+            errors.add(e.getMessage());
+          }
         }
       }
     }
+
+    assertEmpty(errors);
   }
 
   private static List<OptionsSearchTopHitProvider> getProviders() {

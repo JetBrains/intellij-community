@@ -16,6 +16,8 @@
 package com.intellij.ide.ui;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
+import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -24,6 +26,8 @@ import java.lang.reflect.Method;
  * @author Sergey.Malenkov
  */
 public abstract class PublicMethodBasedOptionDescription extends BooleanOptionDescription {
+  private static final Logger LOG = Logger.getInstance(PublicMethodBasedOptionDescription.class);
+
   private final String myGetterName;
   private final String mySetterName;
 
@@ -33,6 +37,7 @@ public abstract class PublicMethodBasedOptionDescription extends BooleanOptionDe
     mySetterName = setterName;
   }
 
+  @NotNull
   public abstract Object getInstance();
 
   protected void fireUpdated() {
@@ -40,23 +45,27 @@ public abstract class PublicMethodBasedOptionDescription extends BooleanOptionDe
 
   @Override
   public boolean isOptionEnabled() {
+    Object instance = getInstance();
     try {
-      Method method = getInstance().getClass().getMethod(myGetterName);
-      Object object = method.invoke(getInstance());
+      Method method = instance.getClass().getMethod(myGetterName);
+      Object object = method.invoke(instance);
       return (object instanceof Boolean) && (Boolean)object;
     }
     catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException ignore) {
+      LOG.error(String.format("Method '%s' not found in %s", myGetterName, instance));
     }
     return false;
   }
 
   @Override
   public void setOptionState(boolean enabled) {
+    Object instance = getInstance();
     try {
-      Method method = getInstance().getClass().getMethod(mySetterName, boolean.class);
-      method.invoke(getInstance(), Boolean.valueOf(enabled));
+      Method method = instance.getClass().getMethod(mySetterName, boolean.class);
+      method.invoke(instance, Boolean.valueOf(enabled));
     }
     catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException ignore) {
+      LOG.error(String.format("Method '%s' not found in %s", mySetterName, instance));
     }
     fireUpdated();
   }
