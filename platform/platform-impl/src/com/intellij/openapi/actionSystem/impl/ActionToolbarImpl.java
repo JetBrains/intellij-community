@@ -1332,7 +1332,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     myUpdater.updateActions(false, false);
   }
 
-  abstract static class PopupToolbar extends ActionToolbarImpl implements AnActionListener, Disposable {
+  abstract static class PopupToolbar extends ActionToolbarImpl implements AnActionListener, DataProvider, Disposable {
     private final JComponent myParent;
 
     PopupToolbar(@NotNull String place,
@@ -1344,6 +1344,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, this);
       myParent = parent;
       setBorder(myParent.getBorder());
+    }
+
+    @Nullable
+    @Override
+    public Object getData(@NotNull String dataId) {
+      return getDataContext().getData(dataId);
     }
 
     @Override
