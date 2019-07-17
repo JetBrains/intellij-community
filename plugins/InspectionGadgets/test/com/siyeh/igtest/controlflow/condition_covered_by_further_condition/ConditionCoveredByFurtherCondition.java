@@ -149,5 +149,12 @@ public class ConditionCoveredByFurtherCondition {
     void testIncompleteLambda2(Object x) {
         if (x != null && () -> x instanceof<error descr="')' expected"><error descr="Type expected"> </error></error>
     }
+
+    class A {int value;}
+    class AA extends A {}
+
+    public boolean testDerefInBetween(A x) {
+        return x != null && x.value > 0 && x instanceof AA;
+    }
 }
 enum X {A, B, C}

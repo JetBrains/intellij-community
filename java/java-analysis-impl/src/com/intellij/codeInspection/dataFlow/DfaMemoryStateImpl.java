@@ -1342,8 +1342,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Override
   public <T> void forceVariableFact(@NotNull DfaVariableValue var, @NotNull DfaFactType<T> factType, @Nullable T value) {
     DfaVariableState state = getVariableState(var);
-    if (factType.equals(DfaFactType.NULLABILITY) && value == DfaNullability.NOT_NULL && isNull(var)) {
-      removeEquivalenceForVariableAndWrappers(var);
+    if (factType.equals(DfaFactType.NULLABILITY)) {
+      if (value == DfaNullability.NOT_NULL && isNull(var) ||
+          value == DfaNullability.NULLABLE && isNotNull(var)) {
+        removeEquivalenceForVariableAndWrappers(var);
+      }
     }
     setVariableState(var, state.withFact(factType, value));
     updateEqClassesByState(var);
