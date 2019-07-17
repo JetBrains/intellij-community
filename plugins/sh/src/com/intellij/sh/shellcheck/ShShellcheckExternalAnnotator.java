@@ -70,11 +70,12 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<PsiFile, Sh
     if (!ShShellcheckUtil.isExecutionValidPath(shellcheckExecutable)) return null;
 
     String fileContent = ReadAction.compute(() -> file.getText());
+    List<String> executionParams = ReadAction.compute(() -> getShellcheckExecutionParams(file));
     try {
       GeneralCommandLine commandLine = new GeneralCommandLine()
           .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
           .withExePath(shellcheckExecutable)
-          .withParameters(getShellcheckExecutionParams(file));
+          .withParameters(executionParams);
       long timestamp = file.getModificationStamp();
       Process process = commandLine.createProcess();
       writeFileContentToStdin(process, fileContent, commandLine.getCharset());
