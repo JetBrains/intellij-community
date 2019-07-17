@@ -140,21 +140,21 @@ class AppUIExecutorTest : LightPlatformTestCase() {
   }
 
   private fun createDocument(): Document {
-    val file = PsiFileFactory.getInstance(getProject()).createFileFromText("a.txt", PlainTextFileType.INSTANCE, "")
+    val file = PsiFileFactory.getInstance(project).createFileFromText("a.txt", PlainTextFileType.INSTANCE, "")
     return file.viewProvider.document!!
   }
 
   fun `test withDocumentsCommitted`() {
     val executor = AppUIExecutor.onUiThread(ModalityState.NON_MODAL)
       .inWriteAction()
-      .withDocumentsCommitted(getProject())
+      .withDocumentsCommitted(project)
 
     val transactionExecutor = AppUIExecutor.onUiThread(ModalityState.NON_MODAL)
-      .inTransaction(getProject())
+      .inTransaction(project)
       .inWriteAction()
 
     GlobalScope.async(SwingDispatcher) {
-      val pdm = PsiDocumentManager.getInstance(getProject())
+      val pdm = PsiDocumentManager.getInstance(project)
       val commitChannel = Channel<Unit>()
       val job = launch(executor.coroutineDispatchingContext()) {
         commitChannel.receive()
