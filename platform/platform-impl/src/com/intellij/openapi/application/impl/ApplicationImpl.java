@@ -170,9 +170,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   // this method is not in ApplicationImpl constructor because application starter can perform this activity in parallel to another task
   @ApiStatus.Internal
-  public static void registerMessageBusListeners(@NotNull Application app, @NotNull List<? extends IdeaPluginDescriptor> pluginDescriptors, boolean isUnitTestMode) {
+  public void registerMessageBusListeners(@NotNull List<? extends IdeaPluginDescriptor> pluginDescriptors, boolean isUnitTestMode) {
     Map<String, List<ListenerDescriptor>> map = ContainerUtil.newConcurrentMap();
-    boolean isHeadlessMode = app.isHeadlessEnvironment();
+    boolean isHeadlessMode = isHeadlessEnvironment();
     for (IdeaPluginDescriptor descriptor : pluginDescriptors) {
       List<ListenerDescriptor> listeners = ((IdeaPluginDescriptorImpl)descriptor).getListeners();
       if (!listeners.isEmpty()) {
@@ -193,7 +193,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         }
       }
     }
-    ((MessageBusImpl)app.getMessageBus()).setLazyListeners(map);
+
+    ((MessageBusImpl)getMessageBus()).setLazyListeners(map);
   }
 
   /**

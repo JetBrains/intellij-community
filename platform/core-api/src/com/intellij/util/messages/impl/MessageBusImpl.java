@@ -63,7 +63,7 @@ public class MessageBusImpl implements MessageBus {
   private final String myOwner;
   private boolean myDisposed;
   private final Disposable myConnectionDisposable;
-  private MessageDeliveryListener myListener;
+  private MessageDeliveryListener myMessageDeliveryListener;
 
   public MessageBusImpl(@NotNull Object owner, @NotNull MessageBus parentBus) {
     myOwner = owner + " of " + owner.getClass();
@@ -485,15 +485,15 @@ public class MessageBusImpl implements MessageBus {
 
   @ApiStatus.Internal
   public void setMessageDeliveryListener(@Nullable MessageDeliveryListener listener) {
-    if (myListener != null && listener != null) {
-      throw new IllegalStateException("Already set: "+myListener);
+    if (myMessageDeliveryListener != null && listener != null) {
+      throw new IllegalStateException("Already set: " + myMessageDeliveryListener);
     }
-    myListener = listener;
+    myMessageDeliveryListener = listener;
   }
 
-  void invokeListener(Message message, Object handler) throws IllegalAccessException, InvocationTargetException {
+  void invokeListener(@NotNull Message message, Object handler) throws IllegalAccessException, InvocationTargetException {
     Method method = message.getListenerMethod();
-    MessageDeliveryListener listener = myListener;
+    MessageDeliveryListener listener = myMessageDeliveryListener;
     if (listener == null) {
       method.invoke(handler, message.getArgs());
       return;

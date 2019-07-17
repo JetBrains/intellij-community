@@ -44,7 +44,7 @@ import java.util.function.Consumer;
 public final class ServiceManagerImpl implements Disposable {
   private static final Logger LOG = Logger.getInstance(ServiceManagerImpl.class);
 
-  static void registerServices(@NotNull List<ServiceDescriptor> services,
+  static void registerServices(@NotNull List<? extends ServiceDescriptor> services,
                                @NotNull IdeaPluginDescriptor pluginDescriptor,
                                @NotNull ComponentManager componentManager) {
     MutablePicoContainer picoContainer = (MutablePicoContainer)componentManager.getPicoContainer();

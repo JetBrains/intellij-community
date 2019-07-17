@@ -150,7 +150,7 @@ private fun registerRegistryAndMessageBusAndComponent(pluginDescriptorsFuture: C
         }
 
         ParallelActivity.PREPARE_APP_INIT.run("add message bus listeners") {
-          ApplicationImpl.registerMessageBusListeners(app, pluginDescriptors, false)
+          app.registerMessageBusListeners(pluginDescriptors, false)
         }
       }, AppExecutorUtil.getAppExecutorService())
 

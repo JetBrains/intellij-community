@@ -141,7 +141,7 @@ class MessageBusConnectionImpl implements MessageBusConnection {
     return myBus;
   }
 
-  public boolean isSubscribed(@NotNull Topic<?> topic) {
+  boolean isSubscribed(@NotNull Topic<?> topic) {
     return mySubscriptions.containsKey(topic);
   }
 }
