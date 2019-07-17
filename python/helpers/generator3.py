@@ -36,6 +36,11 @@ def is_standalone_mode():
     return ENV_STANDALONE_MODE_FLAG in os.environ
 
 
+@cached
+def is_pregeneration_mode():
+    return ENV_PREGENERATION_MODE_FLAG in os.environ
+
+
 _helpers_dir = os.path.dirname(os.path.abspath(__file__))
 
 
