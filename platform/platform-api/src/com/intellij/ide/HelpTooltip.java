@@ -129,7 +129,7 @@ public class HelpTooltip {
   private boolean isMultiline;
   private int myDismissDelay;
 
-  private MouseAdapter myMouseListener;
+  protected MouseAdapter myMouseListener;
 
   /**
    * Location of the HelpTooltip relatively to the owner component.
@@ -243,9 +243,21 @@ public class HelpTooltip {
    * @param component is the owner component for the tooltip.
    */
   public void installOn(@NotNull JComponent component) {
-    myDismissDelay = Registry.intValue(isMultiline ? "ide.helptooltip.full.dismissDelay" : "ide.helptooltip.regular.dismissDelay");
+    getDismissDelay();
     neverHide = neverHide || UIUtil.isHelpButton(component);
 
+    createMouseListeners();
+    initPopupBuilder();
+
+    component.putClientProperty(TOOLTIP_PROPERTY, this);
+    installMouseListeners(component);
+  }
+
+  protected final void getDismissDelay() {
+    myDismissDelay = Registry.intValue(isMultiline ? "ide.helptooltip.full.dismissDelay" : "ide.helptooltip.regular.dismissDelay");
+  }
+
+  protected final void createMouseListeners() {
     myMouseListener = new MouseAdapter() {
       @Override public void mouseEntered(MouseEvent e) {
         if (myPopup != null && !myPopup.isDisposed()){
@@ -264,11 +276,6 @@ public class HelpTooltip {
         }
       }
     };
-
-    initPopupBuilder();
-
-    component.putClientProperty(TOOLTIP_PROPERTY, this);
-    installMouseListeners(component);
   }
 
   private void initPopupBuilder() {
@@ -276,6 +283,12 @@ public class HelpTooltip {
     myPopupSize = tipPanel.getPreferredSize();
     myPopupBuilder = JBPopupFactory.getInstance().
         createComponentPopupBuilder(tipPanel, null).setBorderColor(BORDER_COLOR).setShowShadow(true);
+  }
+
+  protected void initPopupBuilder(@NotNull HelpTooltip instance) {
+    instance.initPopupBuilder();
+    myPopupSize = instance.myPopupSize;
+    myPopupBuilder = instance.myPopupBuilder;
   }
 
   private JPanel createTipPanel() {
@@ -427,7 +440,7 @@ public class HelpTooltip {
     popupAlarm.addRequest(() -> hidePopup(force), delay);
   }
 
-  private void hidePopup(boolean force) {
+  protected void hidePopup(boolean force) {
     popupAlarm.cancelAllRequests();
     if (myPopup != null && myPopup.isVisible() && (!isOverPopup || force)) {
       myPopup.cancel();

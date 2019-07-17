@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -54,6 +55,10 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
 
   public static final Color GRAPHITE_COLOR = new Color(100, 100, 100, 230);
   private RegistryValue myIsEnabled;
+  private RegistryValue myHelpTooltip;
+
+  private HelpTooltipManager myHelpTooltipManager;
+  private boolean myHideHelpTooltip;
 
   private Component myCurrentComponent;
   private Component myQueuedComponent;
@@ -86,16 +91,21 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
   @Override
   public void initComponent() {
     myIsEnabled = Registry.get("ide.tooltip.callout");
-    myIsEnabled.addListener(new RegistryValueListener.Adapter() {
+    myHelpTooltip = Registry.get("ide.helptooltip.enabled");
+
+    RegistryValueListener.Adapter listener = new RegistryValueListener.Adapter() {
       @Override
       public void afterValueChanged(@NotNull RegistryValue value) {
         processEnabled();
       }
-    }, ApplicationManager.getApplication());
+    };
+    Application application = ApplicationManager.getApplication();
+    myIsEnabled.addListener(listener, application);
+    myHelpTooltip.addListener(listener, application);
 
     Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
 
-    ApplicationManager.getApplication().getMessageBus().connect(ApplicationManager.getApplication()).subscribe(AnActionListener.TOPIC, new AnActionListener() {
+    application.getMessageBus().connect(application).subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
       public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
         hideCurrent(null, action, event);
@@ -228,6 +238,13 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
   private void queueShow(final JComponent c, final MouseEvent me, final boolean toCenter, int shift, int posChangeX, int posChangeY) {
     IdeTooltip tooltip = getCustomTooltip(c);
     if (tooltip == null) {
+      if (myHelpTooltipManager != null) {
+        myCurrentComponent = c;
+        myHideHelpTooltip = true;
+        myHelpTooltipManager.showTooltip(c, me);
+        return;
+      }
+
       String aText = String.valueOf(c.getToolTipText(me));
       tooltip = new IdeTooltip(c, me.getPoint(), null, /*new Object()*/c, aText) {
         @Override
@@ -464,6 +481,11 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
   }
 
   private boolean hideCurrent(@Nullable MouseEvent me, @Nullable IdeTooltip tooltipToShow, @Nullable AnAction action, @Nullable AnActionEvent event, final boolean animationEnabled) {
+    if (myHelpTooltipManager != null && myHideHelpTooltip) {
+      hideCurrentNow(false);
+      return true;
+    }
+
     if (myCurrentTooltip != null && me != null && myCurrentTooltip.isInside(new RelativePoint(me))) {
       if (me.getButton() == MouseEvent.NOBUTTON || myCurrentTipUi == null || myCurrentTipUi.isBlockClicks()) {
         return false;
@@ -514,6 +536,10 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
   }
 
   public void hideCurrentNow(boolean animationEnabled) {
+    if (myHelpTooltipManager != null) {
+      myHelpTooltipManager.hideTooltip();
+    }
+
     if (myCurrentTipUi != null) {
       myCurrentTipUi.setAnimationEnabled(animationEnabled);
       myCurrentTipUi.hide();
@@ -522,6 +548,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
       myAlarm.addRequest(() -> myShowDelay = true, Registry.intValue("ide.tooltip.reshowDelay"));
     }
 
+    myHideHelpTooltip = false;
     myShowRequest = null;
     myCurrentTooltip = null;
     myCurrentTipUi = null;
@@ -537,9 +564,19 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
   private void processEnabled() {
     if (myIsEnabled.asBoolean()) {
       ToolTipManager.sharedInstance().setEnabled(false);
+      if (myHelpTooltip.asBoolean()) {
+        if (myHelpTooltipManager == null) {
+          myHelpTooltipManager = new HelpTooltipManager();
+        }
+        return;
+      }
     }
     else {
       ToolTipManager.sharedInstance().setEnabled(true);
+    }
+    if (myHelpTooltipManager != null) {
+      myHelpTooltipManager.hideTooltip();
+      myHelpTooltipManager = null;
     }
   }
 
