@@ -23,6 +23,10 @@ class CircletIdeaGraphStorageTransaction(private val storage: CircletIdeaAutomat
         callback.afterTransaction(body)
     }
 
+    override fun andThen(body: () -> Unit) {
+        executeAfterTransaction { body() }
+    }
+
     override fun getAllNotFinishedJobs(graphExecution: AGraphExecutionEntity): Iterable<AJobExecutionEntity<ProjectJob.Process<*, *>>> {
         TODO("getAllNotFinishedJobs not implemented")
     }
@@ -91,8 +95,12 @@ class CircletIdeaGraphStorageTransaction(private val storage: CircletIdeaAutomat
         return entity
     }
 
-    override fun findJobExecution(id: Long): AJobExecutionEntity<ProjectJob.Process<*, *>>? {
+    override fun findJobExecution(id: Long, forUpdate: Boolean): AJobExecutionEntity<ProjectJob.Process<*, *>>? {
         return storage.storedExecutions[id]
+    }
+
+    override fun findJobExecutions(ids: List<Long>, forUpdate: Boolean): Sequence<AJobExecutionEntity<ProjectJob.Process<*, *>>> {
+        return storage.storedExecutions.filterKeys { it in ids }.map { it.value }.asSequence()
     }
 
     override fun findAuthClient(graphExecution: AGraphExecutionEntity): ServiceCredentials? {
@@ -104,6 +112,10 @@ class CircletIdeaGraphStorageTransaction(private val storage: CircletIdeaAutomat
     }
 
     override fun registerVolume(graphExecution: AGraphExecutionEntity, volumeId: String, volumeName: String) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun findNotFinishedJobsWithWorkerId(limit: Int): Sequence<AJobExecutionEntity<*>> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }

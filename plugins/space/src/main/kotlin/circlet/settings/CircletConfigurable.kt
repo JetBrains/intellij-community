@@ -10,6 +10,7 @@ import com.intellij.openapi.options.*
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.wm.*
 import com.intellij.ui.*
+import libraries.common.*
 import libraries.klogging.*
 import runtime.*
 import runtime.async.*
@@ -176,7 +177,7 @@ class LoginDialogWrapper : DialogWrapper(true) {
     init {
         init()
         myOKAction.putValue(NAME, "Connect")
-        title = "Circlet"
+        title = ProductName
     }
 
     override fun createCenterPanel(): JComponent? {
