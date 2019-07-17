@@ -1,8 +1,6 @@
 from pycharm_generator_utils.util_methods import *
 from pycharm_generator_utils.util_methods import get_relative_path_by_qname
 
-is_pregenerated = os.getenv("IS_PREGENERATED_SKELETONS", None)
-
 
 class emptylistdict(dict):
     """defaultdict not available before 2.5; simplest reimplementation using [] as default"""
@@ -799,7 +797,8 @@ class ModuleRedeclarator(object):
         out(0, "# module ", p_name, mod_name) # line 2
 
         origin_type = OriginType.FILE
-        if is_pregenerated is not None:
+        import generator3
+        if generator3.is_pregeneration_mode():
             origin = origin_type = OriginType.PREGENERATED
         elif self.mod_filename:
             origin = self.mod_filename
