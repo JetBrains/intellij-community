@@ -8,12 +8,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
-import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
 import sun.tools.attach.HotSpotVirtualMachine;
 
 import java.io.File;
-import java.io.IOException;
 
 // NOTE: compile with --add-exports jdk.attach/sun.tools.attach=ALL-UNNAMED in module-aware jdk
 public class JitSuppressor implements PowerSaveMode.Listener {
@@ -94,7 +92,7 @@ public class JitSuppressor implements PowerSaveMode.Listener {
       hvm.executeJCmd("Compiler.directives_add " + tmpFile.getAbsolutePath());
       vm.detach();
     }
-    catch (AttachNotSupportedException | IOException e) {
+    catch (Exception e) {
       LOG.error(e);
     }
     finally {
