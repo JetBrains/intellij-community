@@ -70,7 +70,12 @@ public class PerformanceWatcher implements Disposable {
   private static final boolean PRECISE_MODE = shouldWatch() && Registry.is("performance.watcher.precise");
 
   public static PerformanceWatcher getInstance() {
-    return ApplicationManager.getApplication().getComponent(PerformanceWatcher.class);
+    if (LoadingPhase.isComplete(LoadingPhase.CONFIGURATION_STORE_INITIALIZED)) {
+      return ApplicationManager.getApplication().getComponent(PerformanceWatcher.class);
+    }
+    else {
+      return null;
+    }
   }
 
   public PerformanceWatcher() {

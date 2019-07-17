@@ -489,7 +489,8 @@ public final class IdeEventQueue extends EventQueue {
       if (isFocusEvent(e)) {
         onFocusEvent(e);
       }
-    } finally {
+    }
+    finally {
       if (performanceWatcher != null) {
         performanceWatcher.edtEventFinished();
       }
@@ -581,7 +582,8 @@ public final class IdeEventQueue extends EventQueue {
     if (watcher == null) {
       Application app = ApplicationManager.getApplication();
       if (app != null && !app.isDisposed()) {
-        ourPerformanceWatcher = watcher = PerformanceWatcher.getInstance();
+        watcher = PerformanceWatcher.getInstance();
+        ourPerformanceWatcher = watcher;
       }
     }
     return watcher;
