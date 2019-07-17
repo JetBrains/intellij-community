@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchVariableConstraint;
+import com.intellij.structuralsearch.NamedScriptableDefinition;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
@@ -26,26 +27,37 @@ public class CountFilter extends FilterAction {
 
   @Override
   public boolean hasFilter() {
-    final MatchVariableConstraint constraint = myTable.getConstraint();
-    return constraint.getMinCount() != 1 || constraint.getMaxCount() != 1;
+    final NamedScriptableDefinition variable = myTable.getVariable();
+    if (!(variable instanceof MatchVariableConstraint)) {
+      return false;
+    }
+    final MatchVariableConstraint matchVariableConstraint = (MatchVariableConstraint)variable;
+    return matchVariableConstraint.getMinCount() != 1 || matchVariableConstraint.getMaxCount() != 1;
   }
 
   @Override
   public void clearFilter() {
-    final MatchVariableConstraint constraint = myTable.getConstraint();
+    final NamedScriptableDefinition variable = myTable.getVariable();
+    if (!(variable instanceof MatchVariableConstraint)) {
+      return;
+    }
+    final MatchVariableConstraint constraint = (MatchVariableConstraint)variable;
     constraint.setMinCount(1);
     constraint.setMaxCount(1);
   }
 
   @Override
   public void initFilter() {
-    final MatchVariableConstraint constraint = myTable.getConstraint();
+    final MatchVariableConstraint constraint = (MatchVariableConstraint)myTable.getVariable();
     constraint.setMinCount(myMinZero ? 0 : 1);
     constraint.setMaxCount(myMaxUnlimited ? Integer.MAX_VALUE : 1);
   }
 
   @Override
   public boolean isApplicable(List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
+    if (!(myTable.getVariable() instanceof MatchVariableConstraint)) {
+      return false;
+    }
     final StructuralSearchProfile profile = myTable.getProfile();
     myMinZero = profile.isApplicableConstraint(UIUtil.MINIMUM_ZERO, nodes, completePattern, false);
     myMaxUnlimited = profile.isApplicableConstraint(UIUtil.MAXIMUM_UNLIMITED, nodes, completePattern, false);
@@ -54,7 +66,7 @@ public class CountFilter extends FilterAction {
 
   @Override
   protected void setLabel(SimpleColoredComponent component) {
-    final MatchVariableConstraint constraint = myTable.getConstraint();
+    final MatchVariableConstraint constraint = (MatchVariableConstraint)myTable.getVariable();
     final int min = constraint.getMinCount();
     final int max = constraint.getMaxCount();
     myLabel.append("count=[" + min + "," + (max == Integer.MAX_VALUE ? "∞" : max) + ']');
@@ -62,7 +74,7 @@ public class CountFilter extends FilterAction {
 
   @Override
   public FilterEditor getEditor() {
-    return new FilterEditor(myTable.getConstraint(), myTable.getConstraintChangedCallback()) {
+    return new FilterEditor<MatchVariableConstraint>(myTable.getVariable(), myTable.getConstraintChangedCallback()) {
 
       private final IntegerField myMinField = new IntegerField();
       private final IntegerField myMaxField = new IntegerField();

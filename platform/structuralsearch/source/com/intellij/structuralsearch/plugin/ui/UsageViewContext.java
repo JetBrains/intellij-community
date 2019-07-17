@@ -29,7 +29,7 @@ public class UsageViewContext {
 
   public void configure(@NotNull UsageViewPresentation presentation) {
     final String pattern = myConfiguration.getMatchOptions().getSearchPattern();
-    SearchScope scope = myConfiguration.getMatchOptions().getScope();
+    final SearchScope scope = myConfiguration.getMatchOptions().getScope();
     assert scope != null;
     final String scopeText = scope.getDisplayName();
     presentation.setScopeText(scopeText);

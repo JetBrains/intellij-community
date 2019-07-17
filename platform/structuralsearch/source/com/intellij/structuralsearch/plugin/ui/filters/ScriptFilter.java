@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.structuralsearch.NamedScriptableDefinition;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptLog;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
@@ -28,12 +29,12 @@ public class ScriptFilter extends FilterAction {
 
   @Override
   public boolean hasFilter() {
-    return !StringUtil.isEmpty(myTable.getConstraint().getScriptCodeConstraint());
+    return !StringUtil.isEmpty(myTable.getVariable().getScriptCodeConstraint());
   }
 
   @Override
   public void clearFilter() {
-    myTable.getConstraint().setScriptCodeConstraint("");
+    myTable.getVariable().setScriptCodeConstraint("");
   }
 
   @Override
@@ -43,12 +44,12 @@ public class ScriptFilter extends FilterAction {
 
   @Override
   protected void setLabel(SimpleColoredComponent component) {
-    component.append("script=").append(StringUtil.unquoteString(myTable.getConstraint().getScriptCodeConstraint()));
+    component.append("script=").append(StringUtil.unquoteString(myTable.getVariable().getScriptCodeConstraint()));
   }
 
   @Override
   public FilterEditor getEditor() {
-    return new FilterEditor(myTable.getConstraint(), myTable.getConstraintChangedCallback()) {
+    return new FilterEditor<NamedScriptableDefinition>(myTable.getVariable(), myTable.getConstraintChangedCallback()) {
 
       private final JLabel myLabel = new JLabel("script=");
       private final EditorTextField myTextField = UIUtil.createScriptComponent("", myTable.getProject());

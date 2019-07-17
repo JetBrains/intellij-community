@@ -206,7 +206,14 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
         assert profile != null;
         TemplateEditorUtil.setHighlighter(editor, UIUtil.getTemplateContextType(profile));
         SubstitutionShortInfoHandler.install(editor, variableName -> {
-          myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration));
+          if (variableName.endsWith(ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX)) {
+            variableName = trimEnd(variableName, ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX);
+            assert myConfiguration instanceof ReplaceConfiguration;
+            myFilterPanel.initFilters(UIUtil.getOrAddReplacementVariable(variableName, myConfiguration));
+          }
+          else{
+            myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration));
+          }
           if (isFilterPanelVisible()) {
             myConfiguration.setCurrentVariableName(variableName);
           }
