@@ -146,7 +146,7 @@ public class NST {
   }
 
   public static ID createScrubber(String uid, int itemWidth, NSTLibrary.ScrubberDelegate delegate, NSTLibrary.ScrubberCacheUpdater updater, List<? extends TBItemScrubber.ItemData> items, int visibleItems) {
-    final Memory mem = _packItems(items, 0, items.size(), visibleItems);
+    final Memory mem = items == null ? null : _packItems(items, 0, items.size(), visibleItems);
     final ID scrubberNativePeer = ourNSTLibrary.createScrubber(uid, itemWidth, delegate, updater, mem, mem == null ? 0 : (int)mem.size()); // called from AppKit, uses per-event autorelease-pool
     return scrubberNativePeer;
   }
@@ -207,7 +207,7 @@ public class NST {
   }
 
   static void updateScrubberItems(ID scrubObj, List<? extends TBItemScrubber.ItemData> items, int fromIndex, int itemsCount) {
-    final Memory mem = _packItems(items, fromIndex, itemsCount, itemsCount);
+    final Memory mem = items == null ? null : _packItems(items, fromIndex, itemsCount, itemsCount);
     ourNSTLibrary.updateScrubberItems(scrubObj, mem, mem == null ? 0 : (int)mem.size(), fromIndex); // called from AppKit, uses per-event autorelease-pool
   }
   public static void enableScrubberItems(ID scrubObj, Collection<Integer> indices, boolean enabled) {
