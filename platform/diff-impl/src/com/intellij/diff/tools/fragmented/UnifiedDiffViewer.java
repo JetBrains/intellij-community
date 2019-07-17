@@ -245,38 +245,37 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       final Document document1 = getContent1().getDocument();
       final Document document2 = getContent2().getDocument();
 
-      final CharSequence[] texts = ReadAction.compute(() -> new CharSequence[]{document1.getImmutableCharSequence(), document2.getImmutableCharSequence()});
+      final CharSequence[] texts = ReadAction.compute(
+        () -> new CharSequence[]{document1.getImmutableCharSequence(), document2.getImmutableCharSequence()});
 
       final List<LineFragment> fragments = myTextDiffProvider.compare(texts[0], texts[1], indicator);
 
       final DocumentContent content1 = getContent1();
       final DocumentContent content2 = getContent2();
 
-      indicator.checkCanceled();
-      TwosideDocumentData data = ReadAction.compute(() -> {
+      UnifiedFragmentBuilder builder = ReadAction.compute(() -> {
         indicator.checkCanceled();
-        UnifiedFragmentBuilder builder = new UnifiedFragmentBuilder(fragments, document1, document2, myMasterSide);
-        builder.exec();
-
-        indicator.checkCanceled();
-
-        EditorHighlighter highlighter = buildHighlighter(myProject, content1, content2,
-                                                         texts[0], texts[1], builder.getRanges(),
-                                                         builder.getText().length());
-
-        UnifiedEditorRangeHighlighter rangeHighlighter = new UnifiedEditorRangeHighlighter(myProject, document1, document2,
-                                                                                           builder.getRanges());
-
-        return new TwosideDocumentData(builder, highlighter, rangeHighlighter);
+        return new UnifiedFragmentBuilder(fragments, document1, document2, myMasterSide).exec();
       });
-      UnifiedFragmentBuilder builder = data.getBuilder();
+
+      EditorHighlighter highlighter = ReadAction.compute(() -> {
+        indicator.checkCanceled();
+        return buildHighlighter(myProject, content1, content2,
+                                texts[0], texts[1], builder.getRanges(),
+                                builder.getText().length());
+      });
+
+      UnifiedEditorRangeHighlighter rangeHighlighter = ReadAction.compute(() -> {
+        indicator.checkCanceled();
+        return new UnifiedEditorRangeHighlighter(myProject, document1, document2, builder.getRanges());
+      });
 
       LineNumberConvertor convertor1 = builder.getConvertor1();
       LineNumberConvertor convertor2 = builder.getConvertor2();
       List<LineRange> changedLines = builder.getChangedLines();
       boolean isContentsEqual = builder.isEqual();
 
-      CombinedEditorData editorData = new CombinedEditorData(builder.getText(), data.getHighlighter(), data.getRangeHighlighter(),
+      CombinedEditorData editorData = new CombinedEditorData(builder.getText(), highlighter, rangeHighlighter,
                                                              convertor1.createConvertor(), convertor2.createConvertor());
 
       Side masterSide = builder.getMasterSide();
@@ -1037,35 +1036,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
         return DiffBundle.message("diff.all.differences.ignored.text");
       }
       return DiffBundle.message("diff.count.differences.status.text", changesCount);
-    }
-  }
-
-  private static class TwosideDocumentData {
-    @NotNull private final UnifiedFragmentBuilder myBuilder;
-    @Nullable private final EditorHighlighter myHighlighter;
-    @Nullable private final UnifiedEditorRangeHighlighter myRangeHighlighter;
-
-    TwosideDocumentData(@NotNull UnifiedFragmentBuilder builder,
-                        @Nullable EditorHighlighter highlighter,
-                        @Nullable UnifiedEditorRangeHighlighter rangeHighlighter) {
-      myBuilder = builder;
-      myHighlighter = highlighter;
-      myRangeHighlighter = rangeHighlighter;
-    }
-
-    @NotNull
-    public UnifiedFragmentBuilder getBuilder() {
-      return myBuilder;
-    }
-
-    @Nullable
-    public EditorHighlighter getHighlighter() {
-      return myHighlighter;
-    }
-
-    @Nullable
-    public UnifiedEditorRangeHighlighter getRangeHighlighter() {
-      return myRangeHighlighter;
     }
   }
 

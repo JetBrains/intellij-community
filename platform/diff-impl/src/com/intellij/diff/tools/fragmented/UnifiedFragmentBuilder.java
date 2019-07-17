@@ -59,11 +59,11 @@ class UnifiedFragmentBuilder {
     return myMasterSide;
   }
 
-  public void exec() {
+  public UnifiedFragmentBuilder exec() {
     if (myFragments.isEmpty()) {
       myEqual = true;
       appendTextMaster(0, 0, getLineCount(myDocument1) - 1, getLineCount(myDocument2) - 1);
-      return;
+      return this;
     }
 
     for (LineFragment fragment : myFragments) {
@@ -71,6 +71,8 @@ class UnifiedFragmentBuilder {
       processChanged(fragment);
     }
     processEquals(getLineCount(myDocument1) - 1, getLineCount(myDocument2) - 1);
+
+    return this;
   }
 
   private void processEquals(int endLine1, int endLine2) {
