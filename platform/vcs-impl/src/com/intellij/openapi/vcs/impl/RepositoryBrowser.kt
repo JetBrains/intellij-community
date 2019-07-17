@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.impl
 
 import com.intellij.ide.impl.ContentManagerWatcher
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl
@@ -10,6 +11,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.RemoteFilePath
 import com.intellij.openapi.vcs.actions.VcsContextFactory
@@ -67,7 +69,7 @@ class RepositoryBrowserPanel(
   val project: Project,
   val root: AbstractVcsVirtualFile,
   val localRoot: VirtualFile
-) : JPanel(BorderLayout()), DataProvider {
+) : JPanel(BorderLayout()), DataProvider, Disposable {
   private val fileSystemTree: FileSystemTreeImpl
 
   init {
@@ -113,6 +115,10 @@ class RepositoryBrowserPanel(
       REPOSITORY_BROWSER_DATA_KEY.`is`(dataId) -> this
       else -> null
     }
+  }
+
+  override fun dispose() {
+    Disposer.dispose(fileSystemTree)
   }
 
   fun hasSelectedFiles() = fileSystemTree.selectedFiles.any { it is VcsVirtualFile }
