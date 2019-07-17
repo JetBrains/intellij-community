@@ -176,7 +176,7 @@ class LoginDialogWrapper : DialogWrapper(true) {
     init {
         init()
         myOKAction.putValue(NAME, "Connect")
-        title = "Circlet"
+        title = ProductName
     }
 
     override fun createCenterPanel(): JComponent? {

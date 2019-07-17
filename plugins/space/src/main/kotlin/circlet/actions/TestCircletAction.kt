@@ -21,8 +21,8 @@ class TestCircletAction : AnAction() {
             val project = e.project!!
 
             Notification(
-                "Circlet",
-                "Circlet check",
+                ProductName,
+                "$ProductName check",
                 "Hello, this is a fake check",
                 NotificationType.INFORMATION
             ).notify(project)

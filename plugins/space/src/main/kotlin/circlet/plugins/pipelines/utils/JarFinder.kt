@@ -1,13 +1,14 @@
 package circlet.plugins.pipelines.utils
 
 import com.intellij.ide.plugins.*
+import runtime.*
 import java.io.*
 
 
 object JarFinder {
     val pluginFiles: List<File> by lazy {
         val plugins = PluginManager.getPlugins()
-        val pluginName = "Circlet Integration"
+        val pluginName = "$ProductName Integration"
         val currentPlugin = plugins.firstOrNull { x -> x.name == pluginName } ?: error("Can't find `$pluginName` plugin")
         currentPlugin.path.getFiles()
     }
