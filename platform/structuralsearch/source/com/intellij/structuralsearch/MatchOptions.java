@@ -82,6 +82,12 @@ public class MatchOptions implements JDOMExternalizable {
     variableConstraints.put(constraint.getName(), constraint);
   }
 
+  public MatchVariableConstraint addNewVariableConstraint(@NotNull String name) {
+    final MatchVariableConstraint constraint = new MatchVariableConstraint(name);
+    variableConstraints.put(name, constraint);
+    return constraint;
+  }
+
   public Set<String> getUsedVariableNames() {
     final Set<String> set = TemplateImplUtil.parseVariableNames(pattern);
     set.add(Configuration.CONTEXT_VAR_NAME);

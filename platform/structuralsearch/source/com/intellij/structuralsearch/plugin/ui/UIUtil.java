@@ -35,6 +35,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.plugin.StructuralSearchAction;
+import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.TooltipWithClickableLinks;
 import com.intellij.util.LocalTimeCounter;
@@ -138,14 +139,23 @@ public class UIUtil {
   }
 
   public static MatchVariableConstraint getOrAddVariableConstraint(String varName, Configuration configuration) {
-    MatchVariableConstraint varInfo = configuration.getMatchOptions().getVariableConstraint(varName);
+    final MatchOptions options = configuration.getMatchOptions();
+    final MatchVariableConstraint varInfo = options.getVariableConstraint(varName);
 
-    if (varInfo == null) {
-      varInfo = new MatchVariableConstraint();
-      varInfo.setName(varName);
-      configuration.getMatchOptions().addVariableConstraint(varInfo);
+    if (varInfo != null) {
+      return varInfo;
     }
-    return varInfo;
+    return configuration.getMatchOptions().addNewVariableConstraint(varName);
+  }
+
+  public static ReplacementVariableDefinition getOrAddReplacementVariable(String varName, Configuration configuration) {
+    final ReplaceOptions replaceOptions = configuration.getReplaceOptions();
+    ReplacementVariableDefinition definition = replaceOptions.getVariableDefinition(varName);
+
+    if (definition != null) {
+      return definition;
+    }
+    return replaceOptions.addNewVariableDefinition(varName);
   }
 
   public static boolean isTarget(String varName, MatchOptions matchOptions) {

@@ -462,9 +462,7 @@ public class PatternCompiler {
         MatchVariableConstraint constraint = options.getVariableConstraint(name);
         if (constraint == null) {
           // we do not edited the constraints
-          constraint = new MatchVariableConstraint();
-          constraint.setName(name);
-          options.addVariableConstraint(constraint);
+          constraint = options.addNewVariableConstraint(name);
         }
 
         final SubstitutionHandler handler = result.createSubstitutionHandler(

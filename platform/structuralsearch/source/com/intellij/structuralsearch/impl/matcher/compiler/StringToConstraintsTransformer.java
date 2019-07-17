@@ -37,16 +37,14 @@ public class StringToConstraintsTransformer {
     int anonymousTypedVarsCount = 0;
     boolean targetFound = false;
 
-    final MatchVariableConstraint context = new MatchVariableConstraint();
-    context.setName(Configuration.CONTEXT_VAR_NAME);
-    options.addVariableConstraint(context);
+    final MatchVariableConstraint context = options.addNewVariableConstraint(Configuration.CONTEXT_VAR_NAME);
 
     final int length = criteria.length();
     for(int index = 0; index < length; ++index) {
       char ch = criteria.charAt(index);
 
       if (index == 0 && ch == '[') {
-        index = handleTypedVarCondition(0, criteria, options.getVariableConstraint(Configuration.CONTEXT_VAR_NAME));
+        index = handleTypedVarCondition(0, criteria, context);
         if (index == length) break;
         ch = criteria.charAt(index);
       }
@@ -88,8 +86,7 @@ public class StringToConstraintsTransformer {
         boolean constraintCreated = false;
 
         if (constraint == null) {
-          constraint = new MatchVariableConstraint();
-          constraint.setName( typedVar );
+          constraint = new MatchVariableConstraint(typedVar);
           constraintCreated = true;
         }
 

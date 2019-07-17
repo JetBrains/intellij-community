@@ -75,6 +75,10 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
 
   public MatchVariableConstraint() {}
 
+  public MatchVariableConstraint(String name) {
+    setName(name);
+  }
+
   MatchVariableConstraint(MatchVariableConstraint constraint) {
     super(constraint);
     regExp = constraint.regExp;

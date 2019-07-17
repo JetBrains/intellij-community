@@ -2179,10 +2179,8 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                       "}";
     final String what = "method('_arg+)";
     final String by = "method($newarg$)";
-    final ReplacementVariableDefinition variable = new ReplacementVariableDefinition();
-    variable.setName("newarg");
+    final ReplacementVariableDefinition variable = options.addNewVariableDefinition("newarg");
     variable.setScriptCodeConstraint("arg.collect { \"(String)\" + it.getText() }.join(',')");
-    options.addVariableDefinition(variable);
 
     final String expected = "class A {\n" +
                             "  void method(Object... os) {}\n" +
@@ -2215,11 +2213,9 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "}";
     final String what2 = "'_Instance:[exprtype( Limitless )].'property:[regex( get(.*) )]()";
     final String by2 = "$Instance$.$field$";
-    final ReplacementVariableDefinition variable2 = new ReplacementVariableDefinition();
-    variable2.setName("field");
+    final ReplacementVariableDefinition variable2 = options.addNewVariableDefinition("field");
     variable2.setScriptCodeConstraint("String name = property.methodExpression.referenceName[3..-1]\n" +
                                       "name[0].toLowerCase() + name[1..-1]");
-    options.addVariableDefinition(variable2);
     assertEquals("class Limitless {\n" +
                  "    public int id;\n" +
                  "    public String field;\n" +
