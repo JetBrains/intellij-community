@@ -182,7 +182,7 @@ public class MatchOptions implements JDOMExternalizable {
 
     final Set<String> constraintNames = getUsedVariableNames();
     for (final MatchVariableConstraint matchVariableConstraint : variableConstraints.values()) {
-      if (matchVariableConstraint.isArtificial() || !constraintNames.contains(matchVariableConstraint.getName())) {
+      if (!constraintNames.contains(matchVariableConstraint.getName())) {
         continue;
       }
       final Element infoElement = new Element(CONSTRAINT_TAG_NAME);
