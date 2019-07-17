@@ -19,34 +19,51 @@ import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.testFramework.LightPlatformTestCase;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class TopHitProvidersTest extends LightPlatformTestCase {
   public void testUiSettings() {
-    List<OptionsTopHitProvider> providers = getProvider(AppearanceOptionsTopHitProvider.ID);
-    for (OptionsTopHitProvider provider: providers) {
-      for (OptionDescription option : provider.getOptions(null)) {
+    List<OptionsSearchTopHitProvider> providers = getProviders();
+    for (OptionsSearchTopHitProvider provider : providers) {
+      for (OptionDescription option : getOptions(provider)) {
         if (option instanceof BooleanOptionDescription) {
           BooleanOptionDescription booleanOption = (BooleanOptionDescription)option;
           boolean enabled = booleanOption.isOptionEnabled();
           booleanOption.setOptionState(!enabled);
           assert enabled != booleanOption.isOptionEnabled() : "Can't set " + booleanOption.getOption();
-          booleanOption.setOptionState(!enabled); //restore
+          booleanOption.setOptionState(enabled); //restore
+          assert enabled == booleanOption.isOptionEnabled() : "Can't restore " + booleanOption.getOption();
         }
       }
     }
   }
 
-  private static List<OptionsTopHitProvider> getProvider(String id) {
-    return Arrays.stream(SearchTopHitProvider.EP_NAME.getExtensions())
-      .filter(p -> p instanceof OptionsTopHitProvider && ((OptionsTopHitProvider)p).getId().equals(id))
-      .map(p -> (OptionsTopHitProvider)p)
+  private static List<OptionsSearchTopHitProvider> getProviders() {
+    return Stream.concat(OptionsTopHitProvider.PROJECT_LEVEL_EP.getExtensionList().stream(),
+                         StreamEx.of(SearchTopHitProvider.EP_NAME.getExtensionList()).select(OptionsSearchTopHitProvider.class))
       .collect(Collectors.toList());
+  }
+
+  private Collection<OptionDescription> getOptions(@NotNull OptionsSearchTopHitProvider provider) {
+    if (provider instanceof OptionsSearchTopHitProvider.ProjectLevelProvider) {
+      return ((OptionsSearchTopHitProvider.ProjectLevelProvider)provider).getOptions(getProject());
+    }
+    else if (provider instanceof OptionsSearchTopHitProvider.ApplicationLevelProvider) {
+      return ((OptionsSearchTopHitProvider.ApplicationLevelProvider)provider).getOptions();
+    }
+    else if (provider instanceof OptionsTopHitProvider) {
+      return ((OptionsTopHitProvider)provider).getOptions(getProject());
+    }
+    return Collections.emptyList();
   }
 }

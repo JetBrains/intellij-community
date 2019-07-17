@@ -47,7 +47,7 @@ public abstract class PublicFieldBasedOptionDescription extends BooleanOptionDes
       return field.getBoolean(instance);
     }
     catch (NoSuchFieldException | IllegalAccessException ignore) {
-      LOG.warn(String.format("Boolean field '%s' not found in %s", myFieldName, instance));
+      LOG.error(String.format("Boolean field '%s' not found in %s", myFieldName, instance));
     }
     return false;
   }
@@ -60,7 +60,7 @@ public abstract class PublicFieldBasedOptionDescription extends BooleanOptionDes
       field.setBoolean(instance, enabled);
     }
     catch (NoSuchFieldException | IllegalAccessException ignore) {
-      LOG.warn(String.format("Boolean field '%s' not found in %s", myFieldName, instance));
+      LOG.error(String.format("Boolean field '%s' not found in %s", myFieldName, instance));
     }
     fireUpdated();
   }
