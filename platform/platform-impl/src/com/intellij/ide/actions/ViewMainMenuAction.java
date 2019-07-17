@@ -28,7 +28,7 @@ public class ViewMainMenuAction extends ToggleAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    boolean makesSense = SystemInfo.isWindows || (SystemInfo.isLinux && !GlobalMenuLinux.isAvailable());
+    boolean makesSense = SystemInfo.isWindows || (SystemInfo.isLinux && !GlobalMenuLinux.isPresented());
     e.getPresentation().setEnabledAndVisible(makesSense);
   }
 }
