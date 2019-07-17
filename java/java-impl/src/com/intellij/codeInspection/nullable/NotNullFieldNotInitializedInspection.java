@@ -4,14 +4,14 @@ package com.intellij.codeInspection.nullable;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddVariableInitializerFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.InitializeFinalFieldInConstructorFix;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,13 +22,17 @@ import java.util.List;
 
 public class NotNullFieldNotInitializedInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final String IGNORE_IMPLICITLY_WRITTEN_FIELDS_NAME = "IGNORE_IMPLICITLY_WRITTEN_FIELDS";
+  private static final String IGNORE_FIELDS_WRITTEN_IN_SETUP_NAME = "IGNORE_FIELDS_WRITTEN_IN_SETUP";
   public boolean IGNORE_IMPLICITLY_WRITTEN_FIELDS = true;
+  public boolean IGNORE_FIELDS_WRITTEN_IN_SETUP = true;
 
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("inspection.notnull.field.not.initialized.option"),
-                                          this, IGNORE_IMPLICITLY_WRITTEN_FIELDS_NAME);
+    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionsBundle.message("inspection.notnull.field.not.initialized.option.implicit"), IGNORE_IMPLICITLY_WRITTEN_FIELDS_NAME);
+    panel.addCheckbox(InspectionsBundle.message("inspection.notnull.field.not.initialized.option.setup"), IGNORE_FIELDS_WRITTEN_IN_SETUP_NAME);
+    return panel;
   }
 
   @NotNull
@@ -46,9 +50,10 @@ public class NotNullFieldNotInitializedInspection extends AbstractBaseJavaLocalI
         }
 
         boolean implicitWrite = (IGNORE_IMPLICITLY_WRITTEN_FIELDS || isOnTheFly) && UnusedSymbolUtil.isImplicitWrite(field);
-        if (IGNORE_IMPLICITLY_WRITTEN_FIELDS && implicitWrite) {
-          return;
-        }
+        if (IGNORE_IMPLICITLY_WRITTEN_FIELDS && implicitWrite) return;
+
+        boolean writtenInSetup = (IGNORE_FIELDS_WRITTEN_IN_SETUP || isOnTheFly) && isWrittenInSetup(field);
+        if (IGNORE_FIELDS_WRITTEN_IN_SETUP && writtenInSetup) return;
 
         boolean byDefault = info.isContainer();
         PsiAnnotation annotation = info.getAnnotation();
@@ -61,7 +66,12 @@ public class NotNullFieldNotInitializedInspection extends AbstractBaseJavaLocalI
         if (implicitWrite) {
           fixes.add(new SetInspectionOptionFix(NotNullFieldNotInitializedInspection.this,
                                                IGNORE_IMPLICITLY_WRITTEN_FIELDS_NAME,
-                                               InspectionsBundle.message("inspection.notnull.field.not.initialized.option"), true));
+                                               InspectionsBundle.message("inspection.notnull.field.not.initialized.option.implicit"), true));
+        }
+        if (writtenInSetup) {
+          fixes.add(new SetInspectionOptionFix(NotNullFieldNotInitializedInspection.this,
+                                               IGNORE_FIELDS_WRITTEN_IN_SETUP_NAME,
+                                               InspectionsBundle.message("inspection.notnull.field.not.initialized.option.setup"), true));
         }
         if (ownAnnotation) {
           fixes.add(new DeleteElementFix(annotation, "Remove not-null annotation"));
@@ -74,5 +84,16 @@ public class NotNullFieldNotInitializedInspection extends AbstractBaseJavaLocalI
         holder.registerProblem(anchor, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
       }
     };
+  }
+
+  private static boolean isWrittenInSetup(PsiField field) {
+    PsiMethod method = TestFrameworks.getInstance().findSetUpMethod(field.getContainingClass());
+    if (method != null) {
+      PsiCodeBlock body = method.getBody();
+      if (body != null && HighlightControlFlowUtil.variableDefinitelyAssignedIn(field, body)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

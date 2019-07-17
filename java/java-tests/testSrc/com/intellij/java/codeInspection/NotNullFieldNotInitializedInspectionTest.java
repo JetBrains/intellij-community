@@ -44,6 +44,10 @@ public class NotNullFieldNotInitializedInspectionTest extends LightJavaCodeInsig
     }, getTestRootDisposable());
     doTest();
   }
+  public void testSetupJunit() {
+    myFixture.addClass("package junit.framework; public class TestCase {}");
+    doTest();
+  }
 
   private void doTest() {
     myFixture.enableInspections(new NotNullFieldNotInitializedInspection());
