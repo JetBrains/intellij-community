@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components;
 
+import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.Disposable;
@@ -122,6 +123,8 @@ public final class ServiceManager {
       return instance;
     }
 
+    LoadingPhase.assertAtLeast(LoadingPhase.COMPONENT_REGISTERED);
+
     //noinspection SynchronizeOnThis
     synchronized (serviceClass) {
       //noinspection unchecked
@@ -152,7 +155,7 @@ public final class ServiceManager {
   }
 
   @NotNull
-  private static <T> T createLightService(@NotNull Class<T> serviceClass, ComponentManager componentManager) {
+  private static <T> T createLightService(@NotNull Class<T> serviceClass, @NotNull ComponentManager componentManager) {
     long startTime = StartUpMeasurer.getCurrentTime();
     T instance = ReflectionUtil.newInstance(serviceClass, false);
     if (instance instanceof Disposable) {

@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 public enum LoadingPhase {
   BOOTSTRAP,
   SPLASH,
+  COMPONENT_REGISTERED,
   CONFIGURATION_STORE_INITIALIZED,
   COMPONENT_LOADED,
   FRAME_SHOWN,

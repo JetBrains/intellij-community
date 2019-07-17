@@ -387,6 +387,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   public void registerComponents(@NotNull List<? extends IdeaPluginDescriptor> plugins) {
     super.registerComponents(plugins);
+    LoadingPhase.setCurrentPhase(LoadingPhase.COMPONENT_REGISTERED);
   }
 
   public void load(@Nullable String configPath, @Nullable ProgressIndicator indicator) {

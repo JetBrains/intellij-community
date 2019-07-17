@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components.impl;
 
+import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.StartUpMeasurer;
@@ -44,7 +45,7 @@ import java.util.function.Consumer;
 public final class ServiceManagerImpl implements Disposable {
   private static final Logger LOG = Logger.getInstance(ServiceManagerImpl.class);
 
-  static void registerServices(@NotNull List<? extends ServiceDescriptor> services,
+  static void registerServices(@NotNull List<ServiceDescriptor> services,
                                @NotNull IdeaPluginDescriptor pluginDescriptor,
                                @NotNull ComponentManager componentManager) {
     MutablePicoContainer picoContainer = (MutablePicoContainer)componentManager.getPicoContainer();
@@ -203,6 +204,8 @@ public final class ServiceManagerImpl implements Disposable {
       if (instance != null) {
         return instance;
       }
+
+      LoadingPhase.assertAtLeast(LoadingPhase.COMPONENT_REGISTERED);
 
       //noinspection SynchronizeOnThis
       synchronized (this) {

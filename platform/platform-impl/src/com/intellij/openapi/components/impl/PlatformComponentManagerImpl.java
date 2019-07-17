@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components.impl;
 
+import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.components.ComponentManager;
@@ -41,6 +42,7 @@ public abstract class PlatformComponentManagerImpl extends ComponentManagerImpl 
   @Override
   public void initializeComponent(@NotNull Object component, @Nullable ServiceDescriptor serviceDescriptor) {
     if (serviceDescriptor == null || !(component instanceof PathMacroManager || component instanceof IComponentStore)) {
+      LoadingPhase.assertAtLeast(LoadingPhase.CONFIGURATION_STORE_INITIALIZED);
       getComponentStore().initComponent(component, serviceDescriptor);
     }
   }
