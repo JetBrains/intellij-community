@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.constraints
 
-import com.intellij.openapi.application.constraints.BaseConstrainedExecution.ReschedulingRunnable
+import com.intellij.openapi.application.constraints.BaseConstrainedExecution.ReschedulingAttempt
 import com.intellij.openapi.application.constraints.ConstrainedExecution.ContextConstraint
 import com.intellij.openapi.diagnostic.Logger
 import kotlinx.coroutines.Runnable
@@ -15,7 +15,7 @@ import java.util.function.Consumer
  * ## Implementation notes: ##
  *
  * The [scheduleWithinConstraints] starts checking the list of constraints, one by one, rescheduling and restarting itself
- * for each unsatisfied constraint ([ReschedulingRunnable]), until at some point *all* of the constraints are satisfied *at once*.
+ * for each unsatisfied constraint ([ReschedulingAttempt]), until at some point *all* of the constraints are satisfied *at once*.
  *
  * This ultimately ends up with [ContextConstraint.schedule] being called one by one for every constraint that needs to be scheduled.
  * Finally, the runnable is called, executing the task in the properly arranged context.
@@ -44,23 +44,15 @@ abstract class BaseConstrainedExecution<E : ConstrainedExecution<E>>(protected v
     if (condition?.asBoolean == false) return
     for (constraint in constraints) {
       if (!constraint.isCorrectContext()) {
-        return constraint.schedule(ReschedulingRunnable(task, condition, constraint, previousAttempt))
+        return constraint.schedule(object : ReschedulingAttempt(constraint, previousAttempt), Runnable {
+          override fun run() {
+            LOG.assertTrue(constraint.isCorrectContext())
+            doScheduleWithinConstraints(task, condition, previousAttempt = this)
+          }
+        })
       }
     }
     task.accept(previousAttempt)
-  }
-
-  private inner class ReschedulingRunnable(private val task: Consumer<ReschedulingAttempt>,
-                                           private val condition: BooleanSupplier?,
-                                           private val constraint: ContextConstraint,
-                                           previousAttempt: ReschedulingAttempt) : ReschedulingAttempt(constraint,
-                                                                                                       previousAttempt), Runnable {
-    override fun run() {
-      LOG.assertTrue(constraint.isCorrectContext())
-      doScheduleWithinConstraints(task = task, condition = condition, previousAttempt = this)
-    }
-
-    override fun toString(): String = "$task rescheduled due to " + super.toString()
   }
 
   protected open class ReschedulingAttempt private constructor(private val cause: Any?,
