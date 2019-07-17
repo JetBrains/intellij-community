@@ -163,7 +163,7 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
     }
 
   var showMainMenu: Boolean
-    get() = !SystemInfo.isWindows || (SystemInfo.isWindows && state.showMainMenu)
+    get() = state.showMainMenu
     set(value) {
       state.showMainMenu = value
     }
