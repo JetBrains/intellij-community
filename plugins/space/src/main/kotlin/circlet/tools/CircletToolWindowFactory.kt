@@ -9,7 +9,7 @@ import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.*
 import com.intellij.ui.components.*
 import com.intellij.ui.content.*
-import runtime.*
+import libraries.common.*
 
 class CircletToolWindowFactory : ToolWindowFactory, DumbAware, LifetimedComponent by SimpleLifetimedComponent() {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {

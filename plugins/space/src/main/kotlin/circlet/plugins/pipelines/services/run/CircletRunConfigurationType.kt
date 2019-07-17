@@ -5,7 +5,7 @@ import com.intellij.execution.configurations.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.util.*
-import runtime.*
+import libraries.common.*
 
 class CircletRunConfigurationType : SimpleConfigurationType(
     "CircletRunConfiguration",
