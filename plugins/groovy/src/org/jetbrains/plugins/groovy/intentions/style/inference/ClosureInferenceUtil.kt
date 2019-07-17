@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.intentions.style.inference
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.psi.PsiLiteral
 import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
@@ -14,24 +15,25 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.SignatureHintProcessor
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.*
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpressionConstraint
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCallConstraint
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.TypeConstraint
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
-fun collectClosureParametersConstraints(inferenceSession: GroovyInferenceSession,
+fun collectClosureParametersConstraints(collector: MutableList<ConstraintFormula>,
                                         closureParameter: ParameterizedClosure,
                                         instructions: List<ReadWriteVariableInstruction>) {
   for (call in instructions) {
     val nearestCall = call.element?.parentOfType<GrCall>() ?: continue
     if (nearestCall == call.element?.parent && nearestCall.resolveMethod()?.containingClass?.qualifiedName == GroovyCommonClassNames.GROOVY_LANG_CLOSURE) {
       for (index in nearestCall.expressionArguments.indices) {
-        inferenceSession.addConstraint(
-          ExpressionConstraint(inferenceSession.substituteWithInferenceVariables(closureParameter.typeParameters[index].type()),
-                               nearestCall.expressionArguments[index]))
+        collector.add(ExpressionConstraint(closureParameter.typeParameters[index].type(), nearestCall.expressionArguments[index]))
       }
     }
   }
 }
 
-fun collectDeepClosureDependencies(session: GroovyInferenceSession, closureParameter: ParameterizedClosure,
+fun collectDeepClosureDependencies(constraintCollector: MutableList<ConstraintFormula>, closureParameter: ParameterizedClosure,
                                    usages: List<ReadWriteVariableInstruction>) {
   val parameter = closureParameter.parameter
   for (call in usages) {
@@ -61,7 +63,7 @@ fun collectDeepClosureDependencies(session: GroovyInferenceSession, closureParam
     }
     val signatures = hint.inferExpectedSignatures(gdkGuard!!, substitutor, options)
     signatures.first().zip(closureParameter.typeParameters).forEach { (type, typeParameter) ->
-      session.addConstraint(TypeConstraint(session.substituteWithInferenceVariables(typeParameter.type()), type, outerMethod))
+      constraintCollector.add(TypeConstraint(typeParameter.type(), type, outerMethod))
     }
   }
 }

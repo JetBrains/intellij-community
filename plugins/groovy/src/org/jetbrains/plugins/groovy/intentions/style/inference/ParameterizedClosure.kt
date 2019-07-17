@@ -74,7 +74,7 @@ class ParameterizedClosure(val parameter: GrParameter) {
     "${typeParameters.joinToString(prefix = "<", postfix = ">") { it.text }} Closure ${types.joinToString(prefix = "(", postfix = ")")}"
 
 
-  fun renderTypes(outerParameters: PsiParameterList) {
+  fun renderTypes(outerParameters: PsiParameterList): String {
     if (typeParameters.size == 1) {
       val indexedAnnotation = typeHintChooser.mapNotNull { it(outerParameters, types.first()) }.firstOrNull()
       val resultAnnotation = indexedAnnotation ?: run {
@@ -87,12 +87,11 @@ class ParameterizedClosure(val parameter: GrParameter) {
         }
       }
       if (resultAnnotation != null) {
-        parameter.modifierList.addAnnotation(resultAnnotation.text.substring(1))
-        return
+        //parameter.modifierList.addAnnotation(resultAnnotation.text.substring(1))
+        return resultAnnotation.text
       }
     }
-    parameter.modifierList.addAnnotation(
-      """$CLOSURE_PARAMS_FQ(value=$FROM_STRING_FQ, options=["${types.joinToString(",") { it.canonicalText }}"])""")
+    return """@$CLOSURE_PARAMS_FQ(value=$FROM_STRING_FQ, options=["${types.joinToString(",") { it.canonicalText }}"])"""
   }
 
   private fun createSimpleType(type: PsiType): PsiAnnotation =

@@ -1,27 +1,28 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference.graph
 
+import com.intellij.psi.PsiArrayType
 import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import com.intellij.util.containers.BidirectionalMap
-import org.jetbrains.plugins.groovy.intentions.style.inference.TypeUsageMetaInfo
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.InferenceDriver
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.TypeUsageInformation
 import org.jetbrains.plugins.groovy.intentions.style.inference.ensureWildcards
 import org.jetbrains.plugins.groovy.intentions.style.inference.flattenIntersections
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 
 fun createGraphFromInferenceVariables(variables: Collection<InferenceVariable>,
                                       session: GroovyInferenceSession,
-                                      virtualMethod: GrMethod,
+                                      driver: InferenceDriver,
                                       initialVariables: Array<PsiTypeParameter>,
-                                      storage: TypeUsageMetaInfo,
-                                      constantParameters: List<PsiTypeParameter>): InferenceUnitGraph {
+                                      usageInformation: TypeUsageInformation,
+                                      constantParameters: List<String>): InferenceUnitGraph {
   val variableMap = BidirectionalMap<InferenceUnit, InferenceVariable>()
   val builder = InferenceUnitGraphBuilder()
   val excessParameters = (session.inferenceVariables.map { it.delegate } - initialVariables).map { it.name }.toSet()
@@ -30,7 +31,7 @@ fun createGraphFromInferenceVariables(variables: Collection<InferenceVariable>,
     val extendsTypes = variable.parameter.extendsList.referencedTypes
     val residualExtendsTypes = when {
       extendsTypes.size <= 1 -> extendsTypes.toList()
-      else -> extendsTypes.filter { storage.requiredClassTypes[variableType.className]?.contains(it.resolve()) ?: false }
+      else -> extendsTypes.filter { usageInformation.requiredClassTypes[variableType.className]?.contains(it.resolve()) ?: false }
     }
     val filteredType = when {
       residualExtendsTypes.size > 1 -> PsiIntersectionType.createIntersection(residualExtendsTypes.toList())
@@ -47,10 +48,14 @@ fun createGraphFromInferenceVariables(variables: Collection<InferenceVariable>,
     else {
       filteredType
     }
-    val core = InferenceUnit(variable.parameter, flexible = variableType in virtualMethod.parameters.map { it.type },
-                             constant = variableType in constantParameters.map { it.type() })
+    val core = InferenceUnit(variable.parameter, flexible = variableType in driver.virtualMethod.parameters.map { it.type },
+                             constant = variableType.name in constantParameters)
     builder.setType(core, validType)
-    if (variableType in storage.contravariantTypes) {
+    if (variableType in
+      usageInformation.contravariantTypes +
+      driver.virtualMethod.parameters.mapNotNull { (it.type as? PsiArrayType)?.componentType } +
+      driver.varargParameters.map { it.type }) {
+
       builder.forbidInstantiation(core)
     }
     variableMap[core] = variable

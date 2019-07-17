@@ -2,8 +2,10 @@
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
 import com.intellij.psi.PsiSubstitutor
-import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.PsiType
 import com.intellij.psi.PsiWildcardType
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.InferenceDriver
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.TypeParameterCollector
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitGraph
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode.Companion.InstantiationHint
@@ -13,11 +15,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.putAll
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
-
-/**
- * Allows to infer method parameters types regarding method calls and inner dependencies between types.
- */
-
 /**
  * Performs full substitution for non-typed parameters of [method]
  * Inference is performed in 3 phases:
@@ -26,61 +23,54 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
  * 3. Inferring dependencies between new type parameters and instantiating them.
  */
 fun runInferenceProcess(method: GrMethod): GrMethod {
-  val virtualMethod = createVirtualMethod(method)
   val overridableMethod = findOverridableMethod(method)
   if (overridableMethod != null) {
-    copySignatureFrom(overridableMethod, virtualMethod)
+    return convertToGroovyMethod(overridableMethod)
+  }
+  val driver = InferenceDriver.createDriverFromMethod(method)
+  val signatureSubstitutor = setUpParametersSignature(driver)
+  if (method.isConstructor) {
+    return driver.instantiate(signatureSubstitutor, TypeParameterCollector(driver.virtualMethod))
   }
   else {
-    val metaData = setUpNewTypeParameters(method, virtualMethod)
-    val signatureSubstitutor = setUpParametersSignature(metaData)
-    if (method.isConstructor) {
-      acceptFinalSubstitutor(metaData,
-                             signatureSubstitutor,
-                             TypeParameterCollector(metaData.virtualMethod),
-                             emptyList())
-    }
-    else {
-      val constantParameters = parameterizeMethod(metaData, signatureSubstitutor)
-      val graph = setUpGraph(metaData, constantParameters)
-      inferTypeParameters(metaData, graph, constantParameters)
-    }
+    val parameterizedDriver = InferenceDriver.createParameterizedDriver(driver, signatureSubstitutor)
+    val graph = setUpGraph(parameterizedDriver)
+    return inferTypeParameters(parameterizedDriver, graph)
   }
-  return virtualMethod
 }
 
-private fun setUpParametersSignature(metaData: InferenceMetaData): PsiSubstitutor {
-  val inferenceSession = CollectingGroovyInferenceSession(metaData.virtualMethod.typeParameters, PsiSubstitutor.EMPTY, metaData.virtualMethod,
-                                                          metaData.method.parameters.zip(
-                                                            metaData.virtualMethod.parameters).map { (actual, virtual) -> actual.name to virtual }.toMap())
-  collectOuterCalls(metaData.virtualMethod, metaData.closureParameters, metaData.method, inferenceSession)
+private fun setUpParametersSignature(driver: InferenceDriver): PsiSubstitutor {
+  val inferenceSession = CollectingGroovyInferenceSession(driver.virtualMethod.typeParameters, PsiSubstitutor.EMPTY, driver.virtualMethod,
+                                                          driver.method.parameters.zip(
+                                                            driver.virtualMethod.parameters).map { (actual, virtual) -> actual.name to virtual }.toMap())
+  driver.collectOuterCalls().forEach { inferenceSession.addConstraint(it) }
   return inferenceSession.inferSubst()
 }
 
 
-private fun setUpGraph(metaData: InferenceMetaData,
-                       constantParameters: List<PsiTypeParameter>): InferenceUnitGraph {
-  val inferenceSession = CollectingGroovyInferenceSession(metaData.virtualMethod.typeParameters, PsiSubstitutor.EMPTY, metaData.virtualMethod)
-  val initialVariables = metaData.virtualMethod.typeParameters
-  val typeUsage = collectInnerMethodCalls(metaData.virtualMethod, metaData.closureParameters, metaData.varargParameters, inferenceSession)
-  constantParameters.map { it.type() }.forEach { getInferenceVariable(inferenceSession, it).instantiation = it }
+private fun setUpGraph(driver: InferenceDriver): InferenceUnitGraph {
+  val inferenceSession = CollectingGroovyInferenceSession(driver.virtualMethod.typeParameters, PsiSubstitutor.EMPTY, driver.virtualMethod)
+  val initialVariables = driver.virtualMethod.typeParameters
+  val typeUsage = driver.collectInnerMethodCalls()
+  val constantParameters = driver.defaultTypeParameterList.typeParameters.map { it.name!! }
+  typeUsage.constraints.forEach { inferenceSession.addConstraint(it) }
   inferenceSession.infer()
-  val inferenceVariables = metaData.virtualMethod.typeParameters.map { getInferenceVariable(inferenceSession, it.type()) }
-  return createGraphFromInferenceVariables(inferenceVariables, inferenceSession, metaData.virtualMethod, initialVariables, typeUsage, constantParameters)
+  val inferenceVariables = driver.virtualMethod.typeParameters.map { getInferenceVariable(inferenceSession, it.type()) }
+  return createGraphFromInferenceVariables(inferenceVariables, inferenceSession, driver, initialVariables, typeUsage,
+                                           constantParameters)
 }
 
-private fun inferTypeParameters(metaData: InferenceMetaData,
-                                initialGraph: InferenceUnitGraph,
-                                constantParameters: List<PsiTypeParameter>) {
+private fun inferTypeParameters(driver: InferenceDriver,
+                                initialGraph: InferenceUnitGraph): GrMethod {
   val inferredGraph = determineDependencies(initialGraph)
   var resultSubstitutor = PsiSubstitutor.EMPTY
   val endpoints = mutableSetOf<InferenceUnitNode>()
-  val collector = TypeParameterCollector(metaData.virtualMethod)
+  val collector = TypeParameterCollector(driver.virtualMethod)
   for (unit in inferredGraph.resolveOrder()) {
     val (instantiation, hint) = unit.smartTypeInstantiation()
     val transformedType = when (hint) {
       InstantiationHint.NEW_TYPE_PARAMETER -> collector.createBoundedTypeParameter(unit.type.name, resultSubstitutor,
-                                                                         resultSubstitutor.substitute(instantiation)).type()
+                                                                                   resultSubstitutor.substitute(instantiation)).type()
       InstantiationHint.REIFIED_AS_PROPER_TYPE -> resultSubstitutor.substitute(instantiation)
       InstantiationHint.ENDPOINT_TYPE_PARAMETER -> {
         endpoints.add(unit)
@@ -90,9 +80,14 @@ private fun inferTypeParameters(metaData: InferenceMetaData,
         collector.typeParameterList.add(unit.core.initialTypeParameter)
         instantiation
       }
-      InstantiationHint.BOUNDED_WILDCARD -> resultSubstitutor.substitute(
-        PsiWildcardType.createExtends(metaData.virtualMethod.manager, instantiation))
-      InstantiationHint.UNBOUNDED_WILDCARD -> resultSubstitutor.substitute(PsiWildcardType.createUnbounded(metaData.virtualMethod.manager))
+      InstantiationHint.WILDCARD -> {
+        if (instantiation == PsiType.NULL) {
+          resultSubstitutor.substitute(PsiWildcardType.createUnbounded(driver.virtualMethod.manager))
+        }
+        else {
+          resultSubstitutor.substitute(PsiWildcardType.createExtends(driver.virtualMethod.manager, instantiation))
+        }
+      }
     }
     if (hint != InstantiationHint.ENDPOINT_TYPE_PARAMETER) {
       resultSubstitutor = resultSubstitutor.put(unit.core.initialTypeParameter, transformedType)
@@ -104,5 +99,5 @@ private fun inferTypeParameters(metaData: InferenceMetaData,
   }
   val endpointSubstitutor = PsiSubstitutor.EMPTY.putAll(endpoints.map { it.core.initialTypeParameter }.toTypedArray(),
                                                         endpointTypes.toTypedArray())
-  acceptFinalSubstitutor(metaData, resultSubstitutor.putAll(endpointSubstitutor), collector, constantParameters)
+  return driver.instantiate(resultSubstitutor.putAll(endpointSubstitutor), collector)
 }

@@ -19,13 +19,12 @@ class InferenceUnitNode internal constructor(val core: InferenceUnit,
                                              val direct: Boolean = false) {
 
   companion object {
-    enum class InstantiationHint{
+    enum class InstantiationHint {
       REIFIED_AS_TYPE_PARAMETER,
       REIFIED_AS_PROPER_TYPE,
       ENDPOINT_TYPE_PARAMETER,
       NEW_TYPE_PARAMETER,
-      BOUNDED_WILDCARD,
-      UNBOUNDED_WILDCARD
+      WILDCARD
     }
   }
 
@@ -55,7 +54,7 @@ class InferenceUnitNode internal constructor(val core: InferenceUnit,
     if ((core.flexible && typeInstantiation is PsiIntersectionType) || forbiddenToInstantiate) {
       val advice = parent?.type ?: typeInstantiation
       return if (advice == typeInstantiation) {
-        type to InstantiationHint.ENDPOINT_TYPE_PARAMETER
+        advice to InstantiationHint.ENDPOINT_TYPE_PARAMETER
       }
       else {
         advice to InstantiationHint.NEW_TYPE_PARAMETER
@@ -68,8 +67,8 @@ class InferenceUnitNode internal constructor(val core: InferenceUnit,
 
     return when {
       typeInstantiation == type || typeInstantiation == PsiType.NULL || typeInstantiation.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ->
-        PsiType.NULL to InstantiationHint.UNBOUNDED_WILDCARD
-      else -> typeInstantiation to InstantiationHint.BOUNDED_WILDCARD
+        PsiType.NULL to InstantiationHint.WILDCARD
+      else -> typeInstantiation to InstantiationHint.WILDCARD
     }
   }
 

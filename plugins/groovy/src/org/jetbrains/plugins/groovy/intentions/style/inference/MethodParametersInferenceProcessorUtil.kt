@@ -4,7 +4,6 @@ package org.jetbrains.plugins.groovy.intentions.style.inference
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrder
-import com.intellij.util.IncorrectOperationException
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
@@ -47,25 +46,16 @@ fun Iterable<PsiType>.flattenIntersections(): Iterable<PsiType> {
 }
 
 fun GroovyPsiElementFactory.createProperTypeParameter(name: String, superTypes: Array<out PsiClassType>): PsiTypeParameter {
-  val builder = StringBuilder()
-  builder.append("public <").append(name)
-  if (superTypes.size > 1 || superTypes.size == 1 && !superTypes[0].equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-    builder.append(" extends ")
-    for (type in superTypes) {
-      if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) continue
-      builder.append(type.getCanonicalText(true)).append('&')
+  val extendsBound =
+    if (superTypes.size > 1 || superTypes.size == 1 && !superTypes[0].equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+      val filteredSupertypes = superTypes.filter { !it.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) }
+      " extends ${filteredSupertypes.joinToString("&") { it.getCanonicalText(true) }}"
     }
-
-    builder.delete(builder.length - 1, builder.length)
-  }
-  builder.append("> void foo(){}")
-  try {
-    return createMethodFromText(builder.toString(), null).typeParameters[0]
-  }
-  catch (e: RuntimeException) {
-    throw IncorrectOperationException("type parameter text: $builder")
-  }
-
+    else {
+      ""
+    }
+  val method = "public <$name $extendsBound> void foo(){}"
+  return createMethodFromText(method, null).typeParameters.single()
 }
 
 fun PsiType.ensureWildcards(factory: GroovyPsiElementFactory, manager: PsiManager): PsiType {
@@ -86,8 +76,8 @@ fun PsiType.ensureWildcards(factory: GroovyPsiElementFactory, manager: PsiManage
   })
 }
 
-fun isClosureType(type: PsiType?): Boolean {
-  return (type as? PsiClassType)?.rawType()?.equalsToText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE) ?: false
+fun PsiType?.isClosureType(): Boolean {
+  return (this as? PsiClassType)?.rawType()?.equalsToText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE) ?: false
 }
 
 fun PsiSubstitutor.recursiveSubstitute(type: PsiType): PsiType {
@@ -144,12 +134,12 @@ fun collectDependencies(typeParameterList: PsiTypeParameterList,
   return typeParameterList.typeParameters.map { it to LocalVisitor().collect(resultSubstitutor.substitute(it)!!) }.toMap()
 }
 
-fun PsiType.isTypeParameter(): Boolean {
-  return this is PsiClassType && resolve() is PsiTypeParameter
+fun PsiType?.isTypeParameter(): Boolean {
+  return this.resolve() is PsiTypeParameter
 }
 
-fun PsiType.typeParameter(): PsiTypeParameter? {
-  return (this as? PsiClassType)?.resolve() as? PsiTypeParameter
+fun PsiType?.typeParameter(): PsiTypeParameter? {
+  return this.resolve() as? PsiTypeParameter
 }
 
 fun findOverridableMethod(method: GrMethod): PsiMethod? {
@@ -182,16 +172,22 @@ private fun methodsAgree(pattern: PsiMethod,
 
 fun createVirtualMethod(method: GrMethod): GrMethod {
   val elementFactory = GroovyPsiElementFactory.getInstance(method.project)
-  return if (method.isConstructor) {
+  val virtualMethod = if (method.isConstructor) {
     elementFactory.createConstructorFromText(method.name, method.text, method)
   }
   else {
     elementFactory.createMethodFromText(method.text, method)
   }
+  if (!virtualMethod.hasTypeParameters()) {
+    virtualMethod.addAfter(elementFactory.createTypeParameterList(), virtualMethod.firstChild)
+  }
+  return virtualMethod
 }
 
-fun copySignatureFrom(method: PsiMethod, virtualMethod: GrMethod) {
-  virtualMethod.parameters.zip(method.parameters).forEach { (virtualParameter, actualParameter) ->
-    virtualParameter.setType(actualParameter.type as? PsiClassType)
-  }
+fun convertToGroovyMethod(method: PsiMethod): GrMethod {
+  // because method may be ClsMethod
+  // todo: ctor
+  return GroovyPsiElementFactory.getInstance(method.project).createMethodFromText(method.text)
 }
+
+fun PsiType?.resolve(): PsiClass? = (this as? PsiClassType)?.resolve()
