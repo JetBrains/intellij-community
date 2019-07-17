@@ -31,7 +31,6 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     private val CLASSPATH_REGISTRY = Registry.get("ide.borderless.title.classpath")
     private val PRODUCT_REGISTRY = Registry.get("ide.borderless.title.product")
     private val VERSION_REGISTRY = Registry.get("ide.borderless.title.version")
-    private val SUPERUSER_REGISTRY = Registry.get("ide.borderless.title.superuser")
   }
 
   private val LOGGER = logger<SelectedEditorFilePath>()
@@ -80,7 +79,6 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     classTitle.active = CLASSPATH_REGISTRY.asBoolean()
     productTitle.active = PRODUCT_REGISTRY.asBoolean()
     productVersion.active = VERSION_REGISTRY.asBoolean()
-    superUserSuffix.active = SUPERUSER_REGISTRY.asBoolean()
   }
 
   open fun getView(): JComponent {
@@ -105,7 +103,6 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
       CLASSPATH_REGISTRY.addListener(registryListener, disp)
       PRODUCT_REGISTRY.addListener(registryListener, disp)
       VERSION_REGISTRY.addListener(registryListener, disp)
-      SUPERUSER_REGISTRY.addListener(registryListener, disp)
 
       updateTitlePaths()
 
@@ -304,8 +301,8 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     }
 
     val clipped = isClipped()
-    components.forEach {
-      it.setToolTip(if (!clipped) null else "${projectTitle.toolTipPart}${classTitle.toolTipPart}${productTitle.toolTipPart}${productVersion.toolTipPart}") }
+    val tooltip = if(!clipped) null else components.joinToString(separator = "", transform = {it.toolTipPart})
+    components.forEach {it.setToolTip(tooltip)}
 
     onBoundsChanged?.invoke()
   }
