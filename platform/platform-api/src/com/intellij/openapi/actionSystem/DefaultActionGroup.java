@@ -177,6 +177,10 @@ public class DefaultActionGroup extends ActionGroup {
     if (addedActionId == null) {
       return;
     }
+    addAllToSortedList(actionManager);
+  }
+
+  private void addAllToSortedList(@NotNull ActionManager actionManager) {
     outer:
     while (!myPairs.isEmpty()) {
       for (int i = 0; i < myPairs.size(); i++) {
@@ -301,7 +305,8 @@ public class DefaultActionGroup extends ActionGroup {
   @NotNull
   public final AnAction[] getChildren(@Nullable AnActionEvent e) {
     boolean hasNulls = false;
-
+    ActionManager actionManager = e != null ? e.getActionManager() : ActionManager.getInstance();
+    addAllToSortedList(actionManager);
     // Mix sorted actions and pairs
     int sortedSize = mySortedChildren.size();
     AnAction[] children = new AnAction[sortedSize + myPairs.size()];
