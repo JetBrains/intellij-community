@@ -15,12 +15,11 @@
  */
 package com.intellij.ide.ui;
 
-import com.intellij.application.options.editor.EditorTabsOptionsModelKt;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
+import com.intellij.ide.ui.search.NotABooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,8 +34,6 @@ import java.util.stream.Stream;
  * @author Konstantin Bulenkov
  */
 public class TopHitProvidersTest extends LightPlatformTestCase {
-  private static final List<String> BLACKLIST = ContainerUtil.newArrayList(EditorTabsOptionsModelKt.ID);
-
   public void testUiSettings() {
     List<String> errors = new ArrayList<>();
 
@@ -44,11 +41,13 @@ public class TopHitProvidersTest extends LightPlatformTestCase {
     for (OptionsSearchTopHitProvider provider : providers) {
       for (OptionDescription option : getOptions(provider)) {
         if (option instanceof BooleanOptionDescription) {
-          if (BLACKLIST.contains(option.getConfigurableId())) continue;
-
           try {
             BooleanOptionDescription booleanOption = (BooleanOptionDescription)option;
             boolean enabled = booleanOption.isOptionEnabled();
+
+            // We can't reliably restore original state for non-boolean options
+            if (option instanceof NotABooleanOptionDescription) continue;
+
             booleanOption.setOptionState(!enabled);
             if (enabled == booleanOption.isOptionEnabled()) errors.add("Can't set " + toString(booleanOption));
             booleanOption.setOptionState(enabled); //restore

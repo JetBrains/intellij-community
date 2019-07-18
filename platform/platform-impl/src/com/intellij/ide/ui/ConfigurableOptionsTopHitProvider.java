@@ -2,6 +2,7 @@
 package com.intellij.ide.ui;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
+import com.intellij.ide.ui.search.NotABooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.Disposable;
@@ -185,7 +186,7 @@ public abstract class ConfigurableOptionsTopHitProvider extends OptionsTopHitPro
     }
   }
 
-  private static final class Option2 extends BooleanOptionDescription implements Disposable {
+  private static final class Option2 extends NotABooleanOptionDescription implements Disposable {
     final Configurable myConfigurable;
     final JComboBox<?> myComboBox;
     final int myIndex;

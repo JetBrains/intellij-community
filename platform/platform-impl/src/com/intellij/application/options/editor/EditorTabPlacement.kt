@@ -4,6 +4,7 @@ package com.intellij.application.options.editor
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettings.Companion.TABS_NONE
 import com.intellij.ide.ui.search.BooleanOptionDescription
+import com.intellij.ide.ui.search.NotABooleanOptionDescription
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.SimpleListCellRenderer
@@ -25,7 +26,7 @@ internal fun Cell.tabPlacementComboBox(): CellBuilder<ComboBox<Int>> {
                   })
 }
 
-private fun asOptionDescriptor(i: Int) = object : BooleanOptionDescription(TAB_PLACEMENT + " | " + i.asTabPlacement(), ID) {
+private fun asOptionDescriptor(i: Int) = object : NotABooleanOptionDescription(TAB_PLACEMENT + " | " + i.asTabPlacement(), ID) {
   override fun isOptionEnabled() = ui.editorTabPlacement == i
 
   override fun setOptionState(enabled: Boolean) {
