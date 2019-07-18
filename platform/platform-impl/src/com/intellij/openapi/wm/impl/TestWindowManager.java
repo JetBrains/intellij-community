@@ -214,7 +214,7 @@ public final class TestWindowManager extends WindowManagerEx {
     }
 
     @Override
-    public StatusBar createChild() {
+    public StatusBar createChild(@NotNull IdeFrame frame) {
       return null;
     }
 
@@ -227,9 +227,6 @@ public final class TestWindowManager extends WindowManagerEx {
     public StatusBar findChild(Component c) {
       return null;
     }
-
-    @Override
-    public void install(IdeFrame frame) { }
 
     @Override
     public void setInfo(@Nullable String s, @Nullable String requestor) { }

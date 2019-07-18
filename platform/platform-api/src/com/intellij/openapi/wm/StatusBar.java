@@ -114,7 +114,7 @@ public interface StatusBar extends StatusBarInfo, Disposable {
 
   void fireNotificationPopup(@NotNull JComponent content, Color backgroundColor);
 
-  StatusBar createChild();
+  StatusBar createChild(@NotNull IdeFrame frame);
 
   JComponent getComponent();
 
@@ -126,7 +126,12 @@ public interface StatusBar extends StatusBarInfo, Disposable {
   @Nullable
   Project getProject();
 
-  void install(IdeFrame frame);
+  /**
+   * @deprecated frame is immutable now
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  default void install(@NotNull IdeFrame frame) {}
 
   final class Anchors {
     public static final String DEFAULT_ANCHOR = after(StandardWidgets.COLUMN_SELECTION_MODE_PANEL);

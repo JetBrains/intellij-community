@@ -41,7 +41,8 @@ import java.util.*;
 public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBarEx, IdeEventQueue.EventDispatcher {
   private static final int MIN_ICON_HEIGHT = 18 + 1 + 1;
   private final InfoAndProgressPanel myInfoAndProgressPanel;
-  private IdeFrame myFrame;
+  @NotNull
+  private final IdeFrame myFrame;
 
   private enum Position {LEFT, RIGHT, CENTER}
 
@@ -94,11 +95,6 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     return frame != null ? frame.getStatusBar() : this;
   }
 
-  @Override
-  public void install(IdeFrame frame) {
-    myFrame = frame;
-  }
-
   private void updateChildren(ChildAction action) {
     for (IdeStatusBarImpl child : myChildren) {
       action.update(child);
@@ -111,8 +107,8 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   }
 
   @Override
-  public StatusBar createChild() {
-    IdeStatusBarImpl bar = new IdeStatusBarImpl(false);
+  public StatusBar createChild(@NotNull IdeFrame frame) {
+    IdeStatusBarImpl bar = new IdeStatusBarImpl(frame, false);
     myChildren.add(bar);
     Disposer.register(this, bar);
     Disposer.register(bar, () -> myChildren.remove(bar));
@@ -133,7 +129,8 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     return this;
   }
 
-  private IdeStatusBarImpl(boolean addToolWindowsWidget) {
+  private IdeStatusBarImpl(@NotNull IdeFrame frame, boolean addToolWindowsWidget) {
+    myFrame = frame;
     setLayout(new BorderLayout());
     setBorder(JBUI.Borders.empty());
 
@@ -152,8 +149,8 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     IdeEventQueue.getInstance().addPostprocessor(this, this);
   }
 
-  public IdeStatusBarImpl() {
-    this(true);
+  public IdeStatusBarImpl(@NotNull IdeFrame frame) {
+    this(frame, true);
   }
 
   @Override
@@ -706,6 +703,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     }
   }
 
+  @NotNull
   @Override
   public IdeFrame getFrame() {
     return myFrame;
@@ -714,7 +712,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   @Nullable
   @Override
   public Project getProject() {
-    return myFrame == null ? null : myFrame.getProject();
+    return myFrame.getProject();
   }
 
   @Override
