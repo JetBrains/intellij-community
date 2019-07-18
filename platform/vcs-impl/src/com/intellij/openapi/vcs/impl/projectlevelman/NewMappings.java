@@ -354,8 +354,11 @@ public class NewMappings implements Disposable {
     return checkedDirs.computeIfAbsent(file, key -> rootChecker.isRoot(key.getPath()));
   }
 
-  private static boolean isUnderProject(@NotNull DirectoryIndex directoryIndex, @NotNull VirtualFile f) {
-    return ReadAction.compute(() -> directoryIndex.getInfoForFile(f).isInProject(f));
+  private boolean isUnderProject(@NotNull DirectoryIndex directoryIndex, @NotNull VirtualFile f) {
+    return ReadAction.compute(() -> {
+      if (myProject.isDisposed()) throw new ProcessCanceledException();
+      return directoryIndex.getInfoForFile(f).isInProject(f);
+    });
   }
 
   public void mappingsChanged() {
