@@ -112,7 +112,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
 
   @Override
   public StatusBar createChild() {
-    final IdeStatusBarImpl bar = new IdeStatusBarImpl(this);
+    IdeStatusBarImpl bar = new IdeStatusBarImpl(false);
     myChildren.add(bar);
     Disposer.register(bar, () -> myChildren.remove(bar));
 
@@ -132,7 +132,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     return this;
   }
 
-  private IdeStatusBarImpl(@Nullable IdeStatusBarImpl master) {
+  private IdeStatusBarImpl(boolean addToolWindowsWidget) {
     setLayout(new BorderLayout());
     setBorder(JBUI.Borders.empty());
 
@@ -142,7 +142,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     setOpaque(true);
     updateUI();
 
-    if (master == null) {
+    if (addToolWindowsWidget) {
       addWidget(new ToolWindowsWidget(this), Position.LEFT);
     }
 
@@ -152,7 +152,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   }
 
   public IdeStatusBarImpl() {
-    this(null);
+    this(true);
   }
 
   @Override
