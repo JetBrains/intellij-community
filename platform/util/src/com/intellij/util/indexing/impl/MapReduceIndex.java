@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @ApiStatus.Experimental
@@ -58,7 +59,8 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   private final com.intellij.util.indexing.impl.forward.ForwardIndex myForwardIndexMap;
   private final ForwardIndexAccessor<Key, Value> myForwardIndexAccessor;
 
-  private final ReentrantReadWriteLock myLock = createLock();
+  @NotNull
+  private final ReadWriteLock myLock;
   private final boolean myUseIntForwardIndex;
   private volatile boolean myDisposed;
 
@@ -86,7 +88,8 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
                            @NotNull IndexStorage<Key, Value> storage,
                            @Nullable com.intellij.util.indexing.impl.forward.ForwardIndex forwardIndexMap,
                            @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor,
-                           @Nullable ForwardIndex<Key, Value> forwardIndex) {
+                           @Nullable ForwardIndex<Key, Value> forwardIndex,
+                           @Nullable ReadWriteLock lock) {
     myIndexId = extension.getName();
     myExtension = extension;
     myIndexer = myExtension.getIndexer();
@@ -97,19 +100,20 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     myForwardIndex = forwardIndex;
     myUseIntForwardIndex = forwardIndexMap instanceof IntForwardIndex && forwardIndexAccessor instanceof IntForwardIndexAccessor;
     LOG.assertTrue(forwardIndexMap instanceof IntForwardIndex == forwardIndexAccessor instanceof IntForwardIndexAccessor, "Invalid index configuration");
+    myLock = lock == null ? new ReentrantReadWriteLock() : lock;
   }
 
   protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
                            @NotNull IndexStorage<Key, Value> storage,
                            @Nullable com.intellij.util.indexing.impl.forward.ForwardIndex forwardIndex,
                            @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor) {
-    this(extension, storage, forwardIndex, forwardIndexAccessor, null);
+    this(extension, storage, forwardIndex, forwardIndexAccessor, null, null);
   }
 
   protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
                            @NotNull IndexStorage<Key, Value> storage,
                            @Nullable ForwardIndex<Key, Value> forwardIndex) {
-    this(extension, storage, null, null, forwardIndex);
+    this(extension, storage, null, null, forwardIndex, null);
   }
 
   public com.intellij.util.indexing.impl.forward.ForwardIndex getForwardIndexMap() {
@@ -122,17 +126,17 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   }
 
   @NotNull
+  public IndexExtension<Key, Value, Input> getExtension() {
+    return myExtension;
+  }
+
+  @NotNull
   public IndexStorage<Key, Value> getStorage() {
     return myStorage;
   }
 
   @NotNull
-  protected ReentrantReadWriteLock createLock() {
-    return new ReentrantReadWriteLock();
-  }
-
-  @NotNull
-  public final ReentrantReadWriteLock getLock() {
+  public final ReadWriteLock getLock() {
     return myLock;
   }
 
@@ -350,8 +354,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     }
   };
 
-  protected void updateWithMap(final int inputId,
-                               @NotNull UpdateData<Key, Value> updateData) throws StorageException {
+  public void updateWithMap(int inputId, @NotNull UpdateData<Key, Value> updateData) throws StorageException {
     getWriteLock().lock();
     try {
       IndexId oldIndexId = DebugAssertions.DEBUG_INDEX_ID.get();
