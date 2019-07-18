@@ -78,7 +78,8 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
                                         @NotNull JComponent pane,
                                         @NotNull JEditorPane editorPane,
                                         boolean newLayout,
-                                        boolean highlightActions) {
+                                        boolean highlightActions,
+                                        boolean hasSeparators) {
     JPanel grid = new JPanel(new GridBagLayout()) {
       @Override
       public AccessibleContext getAccessibleContext() {
@@ -97,7 +98,10 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       .weighty(1.0)
       .fillCell();
 
-    pane.setBorder(JBUI.Borders.empty(newLayout ? 10 : 6, newLayout ? 10 : 8, newLayout ? (highlightActions ? 10 : 3) : 6, 12));
+    pane.setBorder(JBUI.Borders.empty(newLayout ? 10 : 6,
+                                      newLayout ? 10 : 8,
+                                      newLayout ? (highlightActions ? 10 : (hasSeparators ? 8 : 3)) : 6,
+                                      12));
     grid.add(pane, bag);
     grid.setBackground(hintHint.getTextBackground());
     grid.setBorder(JBUI.Borders.empty());
@@ -169,7 +173,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     }
 
     ArrayList<AnAction> actions = new ArrayList<>();
-    JPanel grid = createMainPanel(hintHint, scrollPane, editorPane, newLayout, highlightActions);
+    JPanel grid = createMainPanel(hintHint, scrollPane, editorPane, newLayout, highlightActions, !textToDisplay.equals(dressedText));
     if (ScreenReader.isActive()) {
       grid.setFocusTraversalPolicyProvider(true);
       grid.setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
