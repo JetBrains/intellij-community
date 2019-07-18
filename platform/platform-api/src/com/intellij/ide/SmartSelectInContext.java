@@ -18,6 +18,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Sergey Malenkov
@@ -40,7 +41,7 @@ public class SmartSelectInContext extends FileSelectInContext {
     return pointer.getElement();
   }
 
-  public PsiFile getPsiFile() {
+  @Nullable public PsiFile getPsiFile() {
     Object selector = pointer.getElement();
     return selector instanceof PsiFile ? (PsiFile)selector : null;
   }
