@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 import static com.intellij.ide.ui.OptionsTopHitProvider.messageApp;
-import static com.intellij.ide.ui.OptionsTopHitProvider.messageIde;
 
 /**
  * @author Konstantin Bulenkov
@@ -18,8 +17,6 @@ public final class EditorOptionsTopHitProvider implements OptionsTopHitProvider.
   public static final String ID = "editor";
 
   private static final Collection<OptionDescription> ourOptions = ContainerUtil.immutableList(
-    editorUI("Appearance: " + messageIde("checkbox.use.antialiased.font.in.editor"), "ANTIALIASING_IN_EDITOR"),
-    editorUI("Appearance: " + messageIde("checkbox.use.lcd.rendered.font.in.editor"), "USE_LCD_RENDERING_IN_EDITOR"),
     editorApp("Appearance: Caret blinking", "IS_CARET_BLINKING"),
     editorApp("Appearance: " + messageApp("checkbox.use.block.caret"), "IS_BLOCK_CURSOR"),
     editorApp("Appearance: Show right margin", "IS_RIGHT_MARGIN_SHOWN"),
@@ -59,10 +56,6 @@ public final class EditorOptionsTopHitProvider implements OptionsTopHitProvider.
 
   static BooleanOptionDescription editorApp(String option, String field) {
     return option(option, field, "editor.preferences.appearance");
-  }
-
-  static BooleanOptionDescription editorUI(String option, String field) {
-    return AppearanceOptionsTopHitProvider.option(option, field, "editor.preferences.appearance");
   }
 
   static BooleanOptionDescription editorCode(String option, String field) {
