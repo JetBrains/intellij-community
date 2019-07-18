@@ -82,7 +82,7 @@ internal class ParameterizationManager(driver: InferenceDriver) {
                                    parameter: GrParameter? = null): ParameterizationResult {
     val createdTypeParameters = mutableListOf<PsiTypeParameter>()
     val registerAction =
-      { iterable: Iterable<PsiClassType> -> registerTypeParameter(iterable, createdTypeParameters) }
+      { upperBounds: Iterable<PsiClassType> -> registerTypeParameter(upperBounds, createdTypeParameters) }
     val visitor = Parameterizer(context, registerAction)
     val calculatedType =
       when {

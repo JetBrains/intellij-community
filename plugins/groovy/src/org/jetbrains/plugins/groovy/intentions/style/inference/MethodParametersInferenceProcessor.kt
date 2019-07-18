@@ -1,16 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
-import com.intellij.psi.PsiSubstitutor
-import com.intellij.psi.PsiType
-import com.intellij.psi.PsiWildcardType
+import com.intellij.psi.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.InferenceDriver
-import org.jetbrains.plugins.groovy.intentions.style.inference.driver.TypeParameterCollector
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.setUpParameterMapping
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitGraph
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode.Companion.InstantiationHint
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.createGraphFromInferenceVariables
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.determineDependencies
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.putAll
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
@@ -30,7 +29,7 @@ fun runInferenceProcess(method: GrMethod): GrMethod {
   val driver = InferenceDriver.createDriverFromMethod(method)
   val signatureSubstitutor = setUpParametersSignature(driver)
   if (method.isConstructor) {
-    return driver.instantiate(signatureSubstitutor, TypeParameterCollector(driver.virtualMethod))
+    return driver.instantiate(signatureSubstitutor)
   }
   else {
     val parameterizedDriver = InferenceDriver.createParameterizedDriver(driver, signatureSubstitutor)
@@ -40,24 +39,20 @@ fun runInferenceProcess(method: GrMethod): GrMethod {
 }
 
 private fun setUpParametersSignature(driver: InferenceDriver): PsiSubstitutor {
+  val mapping = setUpParameterMapping(driver.method, driver.virtualMethod).map { it.key.name to it.value}.toMap()
   val inferenceSession = CollectingGroovyInferenceSession(driver.virtualMethod.typeParameters, PsiSubstitutor.EMPTY, driver.virtualMethod,
-                                                          driver.method.parameters.zip(
-                                                            driver.virtualMethod.parameters).map { (actual, virtual) -> actual.name to virtual }.toMap())
-  driver.collectOuterCalls().forEach { inferenceSession.addConstraint(it) }
+                                                          mapping)
+  driver.collectOuterConstraints().forEach { inferenceSession.addConstraint(it) }
   return inferenceSession.inferSubst()
 }
 
 
 private fun setUpGraph(driver: InferenceDriver): InferenceUnitGraph {
   val inferenceSession = CollectingGroovyInferenceSession(driver.virtualMethod.typeParameters, PsiSubstitutor.EMPTY, driver.virtualMethod)
-  val initialVariables = driver.virtualMethod.typeParameters
-  val typeUsage = driver.collectInnerMethodCalls()
-  val constantParameters = driver.defaultTypeParameterList.typeParameters.map { it.name!! }
+  val typeUsage = driver.collectInnerConstraints()
   typeUsage.constraints.forEach { inferenceSession.addConstraint(it) }
   inferenceSession.infer()
-  val inferenceVariables = driver.virtualMethod.typeParameters.map { getInferenceVariable(inferenceSession, it.type()) }
-  return createGraphFromInferenceVariables(inferenceVariables, inferenceSession, driver, initialVariables, typeUsage,
-                                           constantParameters)
+  return createGraphFromInferenceVariables(inferenceSession, driver, typeUsage)
 }
 
 private fun inferTypeParameters(driver: InferenceDriver,
@@ -99,5 +94,26 @@ private fun inferTypeParameters(driver: InferenceDriver,
   }
   val endpointSubstitutor = PsiSubstitutor.EMPTY.putAll(endpoints.map { it.core.initialTypeParameter }.toTypedArray(),
                                                         endpointTypes.toTypedArray())
-  return driver.instantiate(resultSubstitutor.putAll(endpointSubstitutor), collector)
+  return driver.instantiate(resultSubstitutor.putAll(endpointSubstitutor), collector.typeParameterList)
+}
+
+
+class TypeParameterCollector(context: PsiElement) {
+  val project = context.project
+  val typeParameterList: MutableList<PsiTypeParameter> = mutableListOf()
+
+  fun createBoundedTypeParameter(name: String,
+                                 resultSubstitutor: PsiSubstitutor,
+                                 advice: PsiType): PsiTypeParameter {
+    val mappedSupertypes = when (advice) {
+      is PsiClassType -> arrayOf(resultSubstitutor.substitute(advice) as PsiClassType)
+      is PsiIntersectionType -> PsiIntersectionType.flatten(advice.conjuncts, mutableSetOf()).map {
+        resultSubstitutor.substitute(it) as PsiClassType
+      }.toTypedArray()
+      else -> emptyArray()
+    }
+    return GroovyPsiElementFactory.getInstance(project).createProperTypeParameter(name, mappedSupertypes).apply {
+      this@TypeParameterCollector.typeParameterList.add(this)
+    }
+  }
 }

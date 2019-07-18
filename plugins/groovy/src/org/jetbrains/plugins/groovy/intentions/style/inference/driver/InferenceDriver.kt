@@ -95,7 +95,7 @@ class InferenceDriver private constructor(val targetParameters: Set<GrParameter>
   }
 
 
-  fun collectOuterCalls(): Collection<ConstraintFormula> {
+  fun collectOuterConstraints(): Collection<ConstraintFormula> {
     val closure = PsiType.getTypeByName(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, virtualMethod.project, virtualMethod.resolveScope)
     val restoreTypeMapping = mutableMapOf<GrParameter, PsiTypeParameter>()
     val constraintCollector = mutableListOf<ConstraintFormula>()
@@ -127,7 +127,7 @@ class InferenceDriver private constructor(val targetParameters: Set<GrParameter>
     return constraintCollector
   }
 
-  fun collectInnerMethodCalls(): TypeUsageInformation {
+  fun collectInnerConstraints(): TypeUsageInformation {
     val analyzer = RecursiveMethodAnalyzer(virtualMethod, closureParameters)
     virtualMethod.accept(analyzer)
     val constraintCollector = mutableListOf<ConstraintFormula>()
@@ -150,7 +150,7 @@ class InferenceDriver private constructor(val targetParameters: Set<GrParameter>
   }
 
   fun instantiate(resultSubstitutor: PsiSubstitutor,
-                  collector: TypeParameterCollector): GrMethod {
+                  newTypeParameters: Collection<PsiTypeParameter> = emptyList()): GrMethod {
     val gatheredTypeParameters = collectDependencies(virtualMethod.typeParameterList!!, resultSubstitutor)
     val resultMethod = createVirtualMethod(method)
     if (resultMethod.parameters.last().typeElementGroovy == null) {
@@ -171,7 +171,7 @@ class InferenceDriver private constructor(val targetParameters: Set<GrParameter>
           resultSubstitutor.substitute((param.type as PsiArrayType).componentType).createArrayType())
       }
     }
-    val residualTypeParameterList = buildResidualTypeParameterList(collector, resultMethod)
+    val residualTypeParameterList = buildResidualTypeParameterList(newTypeParameters, resultMethod)
     resultMethod.typeParameterList!!.replace(residualTypeParameterList)
     if (resultMethod.typeParameters.isEmpty()) {
       resultMethod.typeParameterList?.delete()
@@ -180,8 +180,11 @@ class InferenceDriver private constructor(val targetParameters: Set<GrParameter>
   }
 
 
-  private fun buildResidualTypeParameterList(collector: TypeParameterCollector, resultMethod: GrMethod): PsiTypeParameterList {
-    resultMethod.typeParameterList!!.replace(collector.typeParameterList)
+  private fun buildResidualTypeParameterList(typeParameters: Collection<PsiTypeParameter>, resultMethod: GrMethod): PsiTypeParameterList {
+    val factory = GroovyPsiElementFactory.getInstance(resultMethod.project)
+    val list = factory.createTypeParameterList()
+    typeParameters.forEach { list.add(it) }
+    resultMethod.typeParameterList!!.replace(list)
     val necessaryTypeParameters = mutableSetOf<PsiTypeParameter>()
     val visitor = object : PsiTypeVisitor<Unit>() {
 
@@ -212,8 +215,9 @@ class InferenceDriver private constructor(val targetParameters: Set<GrParameter>
     closureParameters.values.flatMap { it.types }.forEach { it.accept(visitor) }
     val takenNames = necessaryTypeParameters.map { it.name }
     val remainedConstantParameters = defaultTypeParameterList.typeParameters.filter { it.name !in takenNames }
-    return GroovyPsiElementFactory.getInstance(collector.project).createMethodFromText(
-      "def <${(remainedConstantParameters + necessaryTypeParameters).joinToString(", ") { it.text }}> void foo() {}").typeParameterList!!
+    return factory.createMethodFromText(
+      "def <${(remainedConstantParameters + necessaryTypeParameters).joinToString(", ") { it.text }}> void foo() {}")
+      .typeParameterList!!
   }
 
 

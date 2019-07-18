@@ -79,7 +79,7 @@ class ParameterizedClosure(val parameter: GrParameter) {
       val indexedAnnotation = typeHintChooser.mapNotNull { it(outerParameters, types.first()) }.firstOrNull()
       val resultAnnotation = indexedAnnotation ?: run {
         val signatureType = types.first()
-        if (signatureType is PsiClassType && signatureType.resolve() is PsiTypeParameter) {
+        if (signatureType.isTypeParameter()) {
           null
         }
         else {
@@ -87,7 +87,6 @@ class ParameterizedClosure(val parameter: GrParameter) {
         }
       }
       if (resultAnnotation != null) {
-        //parameter.modifierList.addAnnotation(resultAnnotation.text.substring(1))
         return resultAnnotation.text
       }
     }

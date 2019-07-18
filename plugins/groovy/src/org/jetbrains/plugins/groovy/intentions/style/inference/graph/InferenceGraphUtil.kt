@@ -4,7 +4,6 @@ package org.jetbrains.plugins.groovy.intentions.style.inference.graph
 import com.intellij.psi.PsiArrayType
 import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiType
-import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import com.intellij.util.containers.BidirectionalMap
@@ -12,26 +11,32 @@ import org.jetbrains.plugins.groovy.intentions.style.inference.driver.InferenceD
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.TypeUsageInformation
 import org.jetbrains.plugins.groovy.intentions.style.inference.ensureWildcards
 import org.jetbrains.plugins.groovy.intentions.style.inference.flattenIntersections
+import org.jetbrains.plugins.groovy.intentions.style.inference.getInferenceVariable
+import org.jetbrains.plugins.groovy.intentions.style.inference.typeParameter
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 
-fun createGraphFromInferenceVariables(variables: Collection<InferenceVariable>,
-                                      session: GroovyInferenceSession,
+fun createGraphFromInferenceVariables(session: GroovyInferenceSession,
                                       driver: InferenceDriver,
-                                      initialVariables: Array<PsiTypeParameter>,
-                                      usageInformation: TypeUsageInformation,
-                                      constantParameters: List<String>): InferenceUnitGraph {
+                                      usageInformation: TypeUsageInformation): InferenceUnitGraph {
   val variableMap = BidirectionalMap<InferenceUnit, InferenceVariable>()
   val builder = InferenceUnitGraphBuilder()
-  val excessParameters = (session.inferenceVariables.map { it.delegate } - initialVariables).map { it.name }.toSet()
+  val constantNames = driver.defaultTypeParameterList.typeParameters.map { it.name }
+  val flexibleTypes = driver.virtualMethod.parameters.map { it.type }
+  val forbiddingTypes =
+    usageInformation.contravariantTypes +
+    driver.virtualMethod.parameters.mapNotNull { (it.type as? PsiArrayType)?.componentType } +
+    driver.varargParameters.map { it.type }
+  val variables = driver.virtualMethod.typeParameters.map { getInferenceVariable(session, it.type()) }
+
   for (variable in variables) {
     val variableType = variable.parameter.type()
     val extendsTypes = variable.parameter.extendsList.referencedTypes
     val residualExtendsTypes = when {
       extendsTypes.size <= 1 -> extendsTypes.toList()
-      else -> extendsTypes.filter { usageInformation.requiredClassTypes[variableType.className]?.contains(it.resolve()) ?: false }
+      else -> extendsTypes.filter { usageInformation.requiredClassTypes[variableType.typeParameter()]?.contains(it.resolve()) ?: false }
     }
     val filteredType = when {
       residualExtendsTypes.size > 1 -> PsiIntersectionType.createIntersection(residualExtendsTypes.toList())
@@ -41,21 +46,11 @@ fun createGraphFromInferenceVariables(variables: Collection<InferenceVariable>,
       else -> residualExtendsTypes.firstOrNull() ?: variable.instantiation!!.ensureWildcards(
         GroovyPsiElementFactory.getInstance(variable.project), variable.manager)
     }
-    val validType = if (filteredType.canonicalText in excessParameters) {
-      PsiType.getJavaLangObject(session.manager,
-                                session.scope)
-    }
-    else {
-      filteredType
-    }
-    val core = InferenceUnit(variable.parameter, flexible = variableType in driver.virtualMethod.parameters.map { it.type },
-                             constant = variableType.name in constantParameters)
-    builder.setType(core, validType)
-    if (variableType in
-      usageInformation.contravariantTypes +
-      driver.virtualMethod.parameters.mapNotNull { (it.type as? PsiArrayType)?.componentType } +
-      driver.varargParameters.map { it.type }) {
-
+    val core = InferenceUnit(variable.parameter,
+                             flexible = variableType in flexibleTypes,
+                             constant = variableType.name in constantNames)
+    builder.setType(core, filteredType)
+    if (variableType in forbiddingTypes) {
       builder.forbidInstantiation(core)
     }
     variableMap[core] = variable

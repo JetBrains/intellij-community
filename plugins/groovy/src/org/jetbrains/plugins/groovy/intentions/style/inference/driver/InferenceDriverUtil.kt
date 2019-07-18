@@ -1,16 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver
 
-import com.intellij.psi.CommonClassNames
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.plugins.groovy.intentions.style.inference.ParameterizedClosure
-import org.jetbrains.plugins.groovy.intentions.style.inference.isClosureType
-import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
+import org.jetbrains.plugins.groovy.intentions.style.inference.*
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
@@ -83,13 +78,12 @@ tailrec fun extractEndpointType(type: PsiClassType, typeParameters: List<PsiType
 
 
 data class TypeUsageInformation(val contravariantTypes: Set<PsiType>,
-                                val requiredClassTypes: Map<String, List<PsiClass>>,
+                                val requiredClassTypes: Map<PsiTypeParameter, List<PsiClass>>,
                                 val constraints: Collection<ConstraintFormula>)
-
 
 internal class RecursiveMethodAnalyzer(val method: GrMethod,
                                        private val closureParameters: Map<GrParameter, ParameterizedClosure>) : GroovyRecursiveElementVisitor() {
-  private val boundCollector = mutableMapOf<String, MutableList<PsiClass>>()
+  private val boundCollector = mutableMapOf<PsiTypeParameter, MutableList<PsiClass>>()
   private val contravariantTypesCollector = mutableSetOf<PsiType>()
   private val constraintsCollector = mutableListOf<ConstraintFormula>()
 
@@ -98,15 +92,16 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod,
     val candidate = resolveResult?.candidate
     val receiver = candidate?.receiver as? PsiClassType
     receiver?.run {
-      val endpointClassName = extractEndpointType(receiver, method.typeParameters.map { it.type() }).className
-      if (endpointClassName != null) {
-        boundCollector.computeIfAbsent(endpointClassName) { mutableListOf() }.add(candidate.method.containingClass ?: return)
+      val endpointClassName = extractEndpointType(receiver, method.typeParameters.map { it.type() })
+      if (endpointClassName.isTypeParameter()) {
+        boundCollector.computeIfAbsent(endpointClassName.typeParameter()!!) { mutableListOf() }
+          .add(candidate.method.containingClass ?: return)
       }
     }
     candidate?.argumentMapping?.expectedTypes?.forEach { (type, argument) ->
-      val argumentType = (argument.type as? PsiClassType)
+      val argumentType = (argument.type.typeParameter())
       argumentType?.run {
-        boundCollector.computeIfAbsent(argumentType.className) { mutableListOf() }.add(type.resolve() ?: return)
+        boundCollector.computeIfAbsent(argumentType) { mutableListOf() }.add(type.resolve() ?: return)
       }
       resolveResult.contextSubstitutor.substitute(type)?.run { contravariantTypesCollector.add(this) }
     }
