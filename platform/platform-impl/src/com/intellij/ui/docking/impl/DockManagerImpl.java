@@ -21,6 +21,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
@@ -141,8 +142,6 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     }
 
     Component parent = UIUtil.findUltimateParent(c);
-    if (parent == null) return null;
-
     for (DockContainer eachContainer : myContainers) {
       if (parent == UIUtil.findUltimateParent(eachContainer.getContainerComponent())) {
         return eachContainer;
@@ -232,7 +231,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
 
       myWindow.getContentPane().setLayout(new BorderLayout());
       myImageContainer = new JLabel(IconUtil.createImageIcon(myDragImage));
-      myImageContainer.setBorder(new LineBorder(Color.lightGray));
+      myImageContainer.setBorder(new LineBorder(JBColor.LIGHT_GRAY));
       myWindow.getContentPane().add(myImageContainer, BorderLayout.CENTER);
 
       setLocationFrom(me);
@@ -306,12 +305,11 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       else if (e.getID() == MouseEvent.MOUSE_RELEASED) {
         if (myCurrentOverContainer == null) {
           createNewDockContainerFor(myContent, point);
-          stopCurrentDragSession();
         }
         else {
           myCurrentOverContainer.add(myContent, point);
-          stopCurrentDragSession();
         }
+        stopCurrentDragSession();
       }
     }
 
