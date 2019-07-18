@@ -55,17 +55,11 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   protected abstract void rememberRecentRoot(@NotNull String path);
 
   public void activate() {
-    Project project = getProject();
-    if (project != null) {
-      installWidgetToStatusBar(project, this);
-    }
+    installWidgetToStatusBar(getProject(), this);
   }
 
   public void deactivate() {
-    Project project = getProject();
-    if (project != null) {
-      removeWidgetFromStatusBar(project, this);
-    }
+    removeWidgetFromStatusBar();
   }
 
   @Override
@@ -120,7 +114,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   @Override
   public ListPopup getPopupStep() {
     Project project = getProject();
-    if (project == null || project.isDisposed()) return null;
+    if (project.isDisposed()) return null;
     T repository = guessCurrentRepository(project);
     if (repository == null) return null;
 
@@ -136,12 +130,11 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
 
   protected void updateLater() {
     Project project = getProject();
-    if (project != null && !project.isDisposed()) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        LOG.debug("update after repository change");
-        update();
-      }, project.getDisposed());
-    }
+    if (project.isDisposed()) return;
+    ApplicationManager.getApplication().invokeLater(() -> {
+      LOG.debug("update after repository change");
+      update();
+    }, project.getDisposed());
   }
 
   @CalledInAwt
@@ -150,7 +143,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
     myTooltip = null;
 
     Project project = getProject();
-    if (project == null || project.isDisposed()) return;
+    if (project.isDisposed()) return;
     T repository = guessCurrentRepository(project);
     if (repository == null) return;
 
@@ -180,24 +173,23 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
       StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
       if (statusBar != null && !isDisposed()) {
         statusBar.addWidget(widget, StatusBar.Anchors.DEFAULT_ANCHOR, project);
-        subscribeToMappingChanged();
+        subscribeToMappingChanged(project);
         subscribeToRepoChangeEvents(project);
         update();
       }
     }, project.getDisposed());
   }
 
-  private void removeWidgetFromStatusBar(@NotNull final Project project, @NotNull final StatusBarWidget widget) {
+  private void removeWidgetFromStatusBar() {
     ApplicationManager.getApplication().invokeLater(() -> {
-      StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
-      if (statusBar != null && !isDisposed()) {
-        statusBar.removeWidget(widget.ID());
+      if (myStatusBar != null && !isDisposed()) {
+        myStatusBar.removeWidget(ID());
       }
-    }, project.getDisposed());
+    }, getProject().getDisposed());
   }
 
-  private void subscribeToMappingChanged() {
-    myProject.getMessageBus().connect().subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, new VcsRepositoryMappingListener() {
+  private void subscribeToMappingChanged(Project project) {
+    project.getMessageBus().connect().subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, new VcsRepositoryMappingListener() {
       @Override
       public void mappingChanged() {
         LOG.debug("repository mappings changed");

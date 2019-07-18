@@ -21,23 +21,21 @@ public abstract class EditorBasedWidget implements StatusBarWidget, FileEditorMa
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.status.EditorBasedWidget");
   public static final String SWING_FOCUS_OWNER_PROPERTY = "focusOwner";
 
-  protected StatusBar myStatusBar;
-  protected Project myProject;
+  @NotNull
+  protected final Project myProject;
 
+  protected StatusBar myStatusBar;
   protected MessageBusConnection myConnection;
   private volatile boolean myDisposed;
 
   protected EditorBasedWidget(@NotNull Project project) {
     myProject = project;
-    myConnection = myProject.getMessageBus().connect(this);
-    myConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, this);
-    Disposer.register(project, this);
   }
 
   @Nullable
   protected final Editor getEditor() {
     final Project project = getProject();
-    if (project == null || project.isDisposed()) return null;
+    if (project.isDisposed()) return null;
 
     FileEditor fileEditor = StatusBarUtil.getCurrentFileEditor(project, myStatusBar);
     Editor result = null;
@@ -51,7 +49,9 @@ public abstract class EditorBasedWidget implements StatusBarWidget, FileEditorMa
     if (result == null) {
       final FileEditorManager manager = FileEditorManager.getInstance(project);
       Editor editor = manager.getSelectedTextEditor();
-      if (editor != null && WindowManager.getInstance().getStatusBar(editor.getComponent(), project) == myStatusBar && ensureValidEditorFile(editor)) {
+      if (editor != null &&
+          WindowManager.getInstance().getStatusBar(editor.getComponent(), project) == myStatusBar &&
+          ensureValidEditorFile(editor)) {
         result = editor;
       }
     }
@@ -74,7 +74,7 @@ public abstract class EditorBasedWidget implements StatusBarWidget, FileEditorMa
            !Boolean.TRUE.equals(editor.getUserData(EditorTextField.SUPPLEMENTARY_KEY)) &&
            WindowManager.getInstance().getStatusBar(editor.getComponent(), editor.getProject()) == myStatusBar;
   }
-  
+
   Component getFocusedComponent() {
     Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     if (focusOwner == null) {
@@ -102,24 +102,27 @@ public abstract class EditorBasedWidget implements StatusBarWidget, FileEditorMa
     return FileDocumentManager.getInstance().getFile(document);
   }
 
-  @Nullable
+  @NotNull
   protected final Project getProject() {
     return myProject;
   }
 
   @Override
   public void install(@NotNull StatusBar statusBar) {
+    assert statusBar.getProject() == null ||
+           statusBar.getProject().equals(myProject) : "Cannot install widget from one project on status bar of another project";
+
     myStatusBar = statusBar;
+    Disposer.register(myStatusBar, this);
+    myConnection = myProject.getMessageBus().connect(this);
+    myConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, this);
   }
 
   @Override
   public void dispose() {
     myDisposed = true;
-
     myStatusBar = null;
-    myConnection.disconnect();
     myConnection = null;
-    myProject = null;
   }
 
   protected final boolean isDisposed() {

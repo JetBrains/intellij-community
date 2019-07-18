@@ -28,7 +28,7 @@ import java.beans.PropertyChangeListener;
 public class ColumnSelectionModePanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, CustomStatusBarWidget, PropertyChangeListener {
   private final TextPanel myTextPanel = new TextPanel();
 
-  public ColumnSelectionModePanel(Project project) {
+  public ColumnSelectionModePanel(@NotNull Project project) {
     super(project);
     myTextPanel.setVisible(false);
   }
@@ -68,7 +68,7 @@ public class ColumnSelectionModePanel extends EditorBasedWidget implements Statu
   }
 
   private void updateStatus() {
-    if (!myProject.isOpen()) return;
+    if (!myProject.isDisposed()) return;
     final Editor editor = getFocusedEditor();
     if (editor != null && !isOurEditor(editor)) return;
     if (editor == null || !editor.isColumnMode()) {

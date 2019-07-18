@@ -30,44 +30,18 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author spleaner
- */
 public class IdeNotificationArea extends JLabel implements UISettingsListener, CustomStatusBarWidget, IconLikeCustomStatusBarWidget {
   public static final String WIDGET_ID = "Notifications";
-  private final Project myProject;
+  @Nullable
   private StatusBar myStatusBar;
 
-  public IdeNotificationArea(@NotNull Project project) {
-    myProject = project;
-    new ClickListener() {
-      @Override
-      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-        if (!myProject.isDisposed()) {
-          EventLog.toggleLog(myProject, null);
-        }
-        return true;
-      }
-    }.installOn(this);
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(LogModel.LOG_MODEL_CHANGED, () ->
-      ApplicationManager.getApplication().invokeLater(() -> updateStatus()));
-    Disposable onToolWindowRegistration = Disposer.newDisposable("EventLog#onToolWindowRegistration");
-    Disposer.register(this, onToolWindowRegistration);
-    myProject.getMessageBus().connect(onToolWindowRegistration).subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
-      @Override
-      public void toolWindowRegistered(@NotNull String id) {
-        if (EventLog.LOG_TOOL_WINDOW_ID.equals(id)) {
-          Disposer.dispose(onToolWindowRegistration);
-          ApplicationManager.getApplication().invokeLater(() -> updateStatus());
-        }
-      }
-    });
+  public IdeNotificationArea() {
     setBorder(WidgetBorder.ICON);
   }
 
   @Override
   public void uiSettingsChanged(UISettings uiSettings) {
-    updateStatus();
+    updateStatus(myStatusBar != null ? myStatusBar.getProject() : null);
   }
 
   @Override
@@ -77,12 +51,39 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
 
   @Override
   public void dispose() {
+    myStatusBar = null;
   }
 
   @Override
   public void install(@NotNull StatusBar statusBar) {
     myStatusBar = statusBar;
-    updateStatus();
+    Project project = myStatusBar.getProject();
+    if (project != null && !project.isDisposed()) {
+      new ClickListener() {
+        @Override
+        public boolean onClick(@NotNull MouseEvent e, int clickCount) {
+          if (!project.isDisposed()) {
+            EventLog.toggleLog(project, null);
+          }
+          return true;
+        }
+      }.installOn(this);
+      ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(LogModel.LOG_MODEL_CHANGED, () ->
+        ApplicationManager.getApplication().invokeLater(() -> updateStatus(project)));
+      Disposable onToolWindowRegistration = Disposer.newDisposable("EventLog#onToolWindowRegistration");
+      Disposer.register(this, onToolWindowRegistration);
+      project.getMessageBus().connect(onToolWindowRegistration).subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
+        @Override
+        public void toolWindowRegistered(@NotNull String id) {
+          if (EventLog.LOG_TOOL_WINDOW_ID.equals(id)) {
+            Disposer.dispose(onToolWindowRegistration);
+            ApplicationManager.getApplication().invokeLater(() -> updateStatus(project));
+          }
+        }
+      });
+
+      updateStatus(project);
+    }
   }
 
   @Override
@@ -91,26 +92,28 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
     return WIDGET_ID;
   }
 
-  private void updateStatus() {
-    if (myProject.isDisposed()) {
+  private void updateStatus(@Nullable Project project) {
+    if (project == null || project.isDisposed()) {
       return;
     }
-    ArrayList<Notification> notifications = EventLog.getLogModel(myProject).getNotifications();
-    updateIconOnStatusBarAndToolWindow(notifications);
+    ArrayList<Notification> notifications = EventLog.getLogModel(project).getNotifications();
+    updateIconOnStatusBarAndToolWindow(project, notifications);
 
     int count = notifications.size();
     setToolTipText(count > 0 ? String.format("%s notification%s pending", count, count == 1 ? "" : "s") : "No new notifications");
 
-    myStatusBar.updateWidget(ID());
+    if (myStatusBar != null) {
+      myStatusBar.updateWidget(ID());
+    }
   }
 
-  private void updateIconOnStatusBarAndToolWindow(ArrayList<Notification> notifications) {
+  private void updateIconOnStatusBarAndToolWindow(@NotNull Project project, ArrayList<Notification> notifications) {
     if (UISettings.getInstance().getHideToolStripes() || UISettings.getInstance().getPresentationMode()) {
       setVisible(true);
       setIcon(createIconWithNotificationCount(notifications, false));
     }
     else {
-      ToolWindow eventLog = EventLog.getEventLog(myProject);
+      ToolWindow eventLog = EventLog.getEventLog(project);
       if (eventLog != null) {
         eventLog.setIcon(createIconWithNotificationCount(notifications, true));
       }

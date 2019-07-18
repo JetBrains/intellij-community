@@ -297,7 +297,6 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     if (virtualFile == null) return null;
 
     Project project = getProject();
-    if (project == null) return null;
     WidgetState state = getWidgetState(virtualFile);
     if (!(state instanceof MyWidgetState)) return null;
     JsonSchemaService service = getService();

@@ -40,14 +40,13 @@ public class PositionPanel extends EditorBasedWidget
   private static final int CHAR_COUNT_SYNC_LIMIT = 500_000;
   private static final String CHAR_COUNT_UNKNOWN = "...";
 
-  private final Alarm myAlarm;
+  private Alarm myAlarm;
   private CodePointCountTask myCountTask;
 
   private String myText;
 
-  public PositionPanel(@NotNull final Project project) {
+  public PositionPanel(@NotNull Project project) {
     super(project);
-    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
   }
 
   @Override
@@ -92,10 +91,9 @@ public class PositionPanel extends EditorBasedWidget
     return mouseEvent -> {
       Project project = getProject();
       Editor editor = getFocusedEditor();
-      if (project == null || editor == null) return;
+      if (editor == null) return;
 
-      CommandProcessor processor = CommandProcessor.getInstance();
-      processor.executeCommand(
+      CommandProcessor.getInstance().executeCommand(
         project,
         () -> {
           GotoLineNumberDialog dialog = new EditorGotoLineNumberDialog(project, editor);
@@ -111,6 +109,7 @@ public class PositionPanel extends EditorBasedWidget
   @Override
   public void install(@NotNull StatusBar statusBar) {
     super.install(statusBar);
+    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
     EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
     multicaster.addCaretListener(this, this);
     multicaster.addSelectionListener(this, this);
@@ -200,7 +199,7 @@ public class PositionPanel extends EditorBasedWidget
 
   private String getPositionText(@NotNull Editor editor) {
     myCountTask = null;
-    if (!editor.isDisposed() && myStatusBar != null) {
+    if (!editor.isDisposed() && !myAlarm.isDisposed()) {
       StringBuilder message = new StringBuilder();
 
       SelectionModel selectionModel = editor.getSelectionModel();

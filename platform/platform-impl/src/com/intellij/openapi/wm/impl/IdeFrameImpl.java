@@ -503,11 +503,11 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
   private void installDefaultProjectStatusBarWidgets(@NotNull final Project project) {
     final StatusBar statusBar = getStatusBar();
     addWidget(statusBar, new PositionPanel(project), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
-    addWidget(statusBar, new IdeNotificationArea(project), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
+    addWidget(statusBar, new IdeNotificationArea(), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
     addWidget(statusBar, new EncodingPanel(project), StatusBar.Anchors.after(StatusBar.StandardWidgets.POSITION_PANEL));
     addWidget(statusBar, new LineSeparatorPanel(project), StatusBar.Anchors.before(StatusBar.StandardWidgets.ENCODING_PANEL));
     addWidget(statusBar, new ColumnSelectionModePanel(project), StatusBar.Anchors.after(StatusBar.StandardWidgets.ENCODING_PANEL));
-    addWidget(statusBar, new ToggleReadOnlyAttributePanel(project),
+    addWidget(statusBar, new ToggleReadOnlyAttributePanel(),
               StatusBar.Anchors.after(StatusBar.StandardWidgets.COLUMN_SELECTION_MODE_PANEL));
 
     for (StatusBarWidgetProvider widgetProvider: StatusBarWidgetProvider.EP_NAME.getExtensions()) {
@@ -517,8 +517,10 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     }
 
     Disposer.register(project, () -> {
-      for (String widgetID: widgetIDs) {
-        statusBar.removeWidget(widgetID);
+      if (statusBar != null) {
+        for (String widgetID: widgetIDs) {
+          statusBar.removeWidget(widgetID);
+        }
       }
       widgetIDs.clear();
 
