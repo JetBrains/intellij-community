@@ -300,4 +300,9 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
   void testPreserveAnnotations() {
     doTest(true)
   }
+
+  void testInferClassParameter() {
+    doTest(true)
+  }
+
 }

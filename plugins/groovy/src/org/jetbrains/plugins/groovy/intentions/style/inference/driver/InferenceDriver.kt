@@ -91,11 +91,18 @@ class InferenceDriver internal constructor(val processors: List<ParametersProces
       }
     }
     processors.forEach { it.acceptReducingVisitor(visitor, resultMethod) }
+    val restrictedNames = collectClassParameters(method.containingClass).map { it.name }
+    necessaryTypeParameters.removeIf { it.name in restrictedNames }
     val takenNames = necessaryTypeParameters.map { it.name }
     val remainedConstantParameters = defaultTypeParameterList.typeParameters.filter { it.name !in takenNames }
     return factory.createMethodFromText(
       "def <${(remainedConstantParameters + necessaryTypeParameters).joinToString(", ") { it.text }}> void foo() {}")
       .typeParameterList!!
+  }
+
+  private fun collectClassParameters(clazz: PsiClass?): MutableList<PsiTypeParameter> {
+    clazz ?: return mutableListOf()
+    return collectClassParameters(clazz.containingClass).apply { addAll(clazz.typeParameters) }
   }
 }
 
