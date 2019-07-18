@@ -32,7 +32,7 @@ iml_module(
         "//tools/idea/.idea/libraries:Groovy",
         "//tools/idea/platform/platform-api:intellij.platform.ide[module]",
         "//tools/idea/platform/lang-api:intellij.platform.lang[module]",
-        "//tools/idea/java/openapi:intellij.java[module]",
+        "//tools/idea/java/java-psi-api:intellij.java.psi[module]",
         "//tools/idea/platform/duplicates-analysis:intellij.platform.duplicates.analysis[module]",
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
     ],

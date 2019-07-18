@@ -454,6 +454,7 @@ iml_project(
         "//tools/idea/plugins/testng:intellij.testng",
         "//tools/idea/plugins/testng_rt/tests:intellij.testng.rt.tests",
         "//tools/idea/plugins/testng_rt:intellij.testng.rt",
+        "//tools/idea/plugins/textmate:intellij.textmate",
         "//tools/idea/plugins/ui-designer-core:intellij.uiDesigner",
         "//tools/idea/plugins/ui-designer/jps-plugin:intellij.java.guiForms.jps",
         "//tools/idea/plugins/ui-designer:intellij.java.guiForms.designer",

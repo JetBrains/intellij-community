@@ -46,7 +46,7 @@ iml_module(
         "//tools/idea/plugins/groovy/rt-constants:intellij.groovy.constants.rt[module]",
         "//tools/idea/jps/model-serialization:intellij.platform.jps.model.serialization[module]",
         "//tools/idea/jps/model-impl:intellij.platform.jps.model.impl[module]",
-        "//tools/idea/.idea/libraries:Groovy-Eclipse-Batch",
         "//tools/idea/java/compiler/instrumentation-util:intellij.java.compiler.instrumentationUtil[module]",
+        "//tools/idea/.idea/libraries:Eclipse",
     ],
 )

@@ -33,6 +33,7 @@ iml_module(
         "//tools/idea/platform/projectModel-api:intellij.platform.projectModel[module]",
         "//tools/idea/platform/object-serializer:intellij.platform.objectSerializer.annotations[module]",
         "//tools/idea/.idea/libraries:lz4-java",
+        "//tools/idea/.idea/libraries:assertJ[test]",
     ],
 )
 

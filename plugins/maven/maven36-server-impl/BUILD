@@ -35,6 +35,7 @@ iml_module(
         "//tools/idea/.idea/libraries:commons-logging",
         "//tools/idea/plugins/maven:intellij.maven[module, test]",
         "//tools/idea/plugins/maven/maven3-server-common:intellij.maven.server.m3.common[module]",
+        "//tools/idea/plugins/maven/maven3-server-impl:intellij.maven.server.m3.impl[module]",
         "//prebuilts/tools/common/m2/repository/aopalliance/aopalliance/1.0:jar",
         "//prebuilts/tools/common/m2/repository/com/google/code/findbugs/jsr305/3.0.2:jar",
         "//prebuilts/tools/common/m2/repository/com/google/errorprone/error_prone_annotations/2.1.3:jar",

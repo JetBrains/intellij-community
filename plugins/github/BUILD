@@ -75,5 +75,6 @@ iml_module(
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
         "//tools/idea/.idea/libraries:miglayout-swing",
         "//tools/idea/.idea/libraries:jackson-databind",
+        "//tools/idea/platform/editor-ui-api:intellij.platform.editor[module]",
     ],
 )

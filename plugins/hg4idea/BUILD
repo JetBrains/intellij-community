@@ -29,7 +29,6 @@ iml_module(
     # do not sort: must match IML order
     deps = [
         "//tools/idea/platform/vcs-api:intellij.platform.vcs[module]",
-        "//tools/idea/.idea/libraries:TestNG[test]",
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
         "//tools/idea/platform/platform-api:intellij.platform.ide[module]",
         "//tools/idea/platform/vcs-impl:intellij.platform.vcs.impl[module]",
@@ -41,7 +40,6 @@ iml_module(
         "//tools/idea/platform/dvcs-api:intellij.platform.vcs.dvcs[module]",
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
         "//tools/idea/platform/vcs-tests:intellij.platform.vcs.testFramework[module, test]",
-        "//tools/idea/.idea/libraries:XStream[test]",
         "//tools/idea/.idea/libraries:miglayout-swing",
     ],
 )

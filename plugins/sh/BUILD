@@ -61,6 +61,7 @@ iml_module(
         "//tools/idea/plugins/terminal:intellij.terminal[module]",
         "//tools/idea/.idea/libraries:pty4j",
         "//tools/idea/.idea/libraries:gson",
+        "//tools/idea/.idea/libraries:jediterm-pty",
         "//tools/idea:intellij.platform.jps.build_and_others[module, test]",
     ],
 )

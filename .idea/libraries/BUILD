@@ -398,46 +398,40 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-anim/1.12.0-6:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-awt-util/1.12.0-6:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-bridge/1.12.0-6:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-constants/1.12.0-6:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-css/1.12.0-6:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-dom/1.12.0-6:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-ext/1.12.0-6:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-gvt/1.12.0-6:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-parser/1.12.0-6:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-svg-dom/1.12.0-6:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-svggen/1.12.0-6:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-transcoder/1.12.0-6:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-util/1.12.0-6:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-xml/1.12.0-6:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/xmlgraphics-commons/2.3:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-anim/1.12.0-8:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-awt-util/1.12.0-8:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-bridge/1.12.0-8:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-constants/1.12.0-8:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-css/1.12.0-8:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-dom/1.12.0-8:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-ext/1.12.0-8:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-gvt/1.12.0-8:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-parser/1.12.0-8:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-svg-dom/1.12.0-8:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-svggen/1.12.0-8:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-transcoder/1.12.0-8:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-util/1.12.0-8:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-xml/1.12.0-8:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-anim/1.12.0-6:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-awt-util/1.12.0-6:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-bridge/1.12.0-6:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-constants/1.12.0-6:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-css/1.12.0-6:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-dom/1.12.0-6:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-ext/1.12.0-6:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-gvt/1.12.0-6:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-parser/1.12.0-6:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-svg-dom/1.12.0-6:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-svggen/1.12.0-6:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-transcoder/1.12.0-6:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-util/1.12.0-6:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-xml/1.12.0-6:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/xmlgraphics-commons/2.3:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-anim/1.12.0-8:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-awt-util/1.12.0-8:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-bridge/1.12.0-8:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-constants/1.12.0-8:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-css/1.12.0-8:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-dom/1.12.0-8:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-ext/1.12.0-8:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-gvt/1.12.0-8:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-parser/1.12.0-8:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-svg-dom/1.12.0-8:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-svggen/1.12.0-8:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-transcoder/1.12.0-8:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-util/1.12.0-8:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/batik/batik-xml/1.12.0-8:jar",
     ],
-)
-
-# managed by go/iml_to_build
-java_library(
-    name = "xmlgraphics-commons",
-    visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/xmlgraphics-commons/2.3:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/xmlgraphics-commons/2.3:jar"],
 )
 
 # managed by go/iml_to_build
@@ -550,12 +544,12 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/pty4j/pty4j/0.9.3:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/pty4j/pty4j/0.9.4:jar",
         "//prebuilts/tools/common/m2/repository/org/jetbrains/pty4j/purejavacomm/0.0.11.1:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/pty4j/pty4j/0.9.3:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/pty4j/pty4j/0.9.4:jar",
         "//prebuilts/tools/common/m2/repository/org/jetbrains/pty4j/purejavacomm/0.0.11.1:jar",
     ],
 )
@@ -612,8 +606,8 @@ java_library(
 java_library(
     name = "Groovy",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/codehaus/groovy/groovy-all/2.4.15:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/codehaus/groovy/groovy-all/2.4.15:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/codehaus/groovy/groovy-all/2.4.17:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/codehaus/groovy/groovy-all/2.4.17:jar"],
 )
 
 # managed by go/iml_to_build
@@ -782,14 +776,6 @@ java_library(
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/lib:ecj-4.10"],
     runtime_deps = ["//tools/idea/lib:ecj-4.10"],
-)
-
-# managed by go/iml_to_build
-java_library(
-    name = "Groovy-Eclipse-Batch",
-    visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/codehaus/groovy/groovy-eclipse-batch/2.4.15-01:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/codehaus/groovy/groovy-eclipse-batch/2.4.15-01:jar"],
 )
 
 # managed by go/iml_to_build
@@ -1526,24 +1512,24 @@ java_library(
 java_library(
     name = "completion-ranking-java",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.0.6:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.0.6:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.0.7:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.0.7:jar"],
 )
 
 # managed by go/iml_to_build
 java_library(
     name = "completion-ranking-kotlin",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.0.1:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.0.1:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.0.2:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.0.2:jar"],
 )
 
 # managed by go/iml_to_build
 java_library(
     name = "completion-ranking-python",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/completion/completion-ranking-python/0.0.2:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/completion/completion-ranking-python/0.0.2:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/completion/completion-ranking-python/0.0.4:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/completion/completion-ranking-python/0.0.4:jar"],
 )
 
 # managed by go/iml_to_build
@@ -1648,8 +1634,8 @@ java_library(
 java_library(
     name = "ion",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/com/amazon/ion/ion-java/1.4.0:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/amazon/ion/ion-java/1.4.0:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/ion-java/1.5.0-1:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/ion-java/1.5.0-1:jar"],
 )
 
 # managed by go/iml_to_build
