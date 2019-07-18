@@ -168,6 +168,11 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     checkFileName("//", "/////");
   }
 
+  @Test
+  public void testPathNormalization4() throws IOException {
+    checkFileName("/./", "/./");
+  }
+
   private void checkFileName(String prefix, String suffix) throws IOException {
     VirtualFile temp = getVirtualTempRoot();
     String name = "toCreate.txt";

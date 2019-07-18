@@ -257,7 +257,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
           }
           char nextNextc = path.charAt(i + 2);
           if (nextNextc == '/') {
-            i+=2;
+            i++;
             // "/./" in the middle, ignore "/."
             continue;
           }
