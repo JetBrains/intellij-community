@@ -36,7 +36,9 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.Processor
+import com.intellij.util.SystemProperties
 import com.intellij.util.containers.MultiMap
+import com.intellij.util.lang.JavaVersion
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.BuildException
@@ -156,7 +158,7 @@ class JpsCompilationRunner {
 
   private void runBuild(final Set<String> modulesSet, final boolean allModules, Collection<String> artifactNames, boolean includeTests,
                         boolean resolveProjectDependencies) {
-    if (context.options.jdkVersion < 9 && (!modulesSet.isEmpty() || allModules)) {
+    if (JavaVersion.current().feature < 9 && (!modulesSet.isEmpty() || allModules)) {
       addToolsJarToSystemClasspath(context.paths.jdkHome, context.messages)
     }
     System.setProperty(GlobalOptions.USE_DEFAULT_FILE_LOGGING_OPTION, "false")
