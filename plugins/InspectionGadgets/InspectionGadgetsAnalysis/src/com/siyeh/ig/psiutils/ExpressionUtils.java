@@ -1305,21 +1305,18 @@ public class ExpressionUtils {
       PsiPolyadicExpression childPolyadic = (PsiPolyadicExpression)replacement;
       IElementType parentTokenType = parentPolyadic.getOperationTokenType();
       IElementType childTokenType = childPolyadic.getOperationTokenType();
-      if (PsiPrecedenceUtil.getPrecedenceForOperator(parentTokenType) ==
-          PsiPrecedenceUtil.getPrecedenceForOperator(childTokenType)) {
-        int idx = ArrayUtil.indexOf(parentPolyadic.getOperands(), expressionToReplace);
+      if (PsiPrecedenceUtil.getPrecedenceForOperator(parentTokenType) == PsiPrecedenceUtil.getPrecedenceForOperator(childTokenType)) {
+        PsiElement[] children = parentPolyadic.getChildren();
+        int idx = ArrayUtil.indexOf(children, expressionToReplace);
         if (idx > 0 || (idx == 0 && parentTokenType == childTokenType)) {
-          PsiPolyadicExpression copyParentPolyadic = (PsiPolyadicExpression)parent.copy();
-          copyParentPolyadic.getOperands()[idx].replace(replacement);
-          PsiExpression recreateCopyFromText = JavaPsiFacade.getElementFactory(parent.getProject())
-            .createExpressionFromText(copyParentPolyadic.getText(), parent);
-          PsiElement[] children = parent.getChildren();
-          for (PsiElement child : children) {
-            if (child != expressionToReplace) {
-              tracker.markUnchanged(child);
-            }
+          StringBuilder text = new StringBuilder();
+          for (int i = 0; i < children.length; i++) {
+            PsiElement child = children[i];
+            text.append(tracker.text((i == idx) ? replacement : child));
           }
-          return (PsiExpression)tracker.replaceAndRestoreComments(parent, recreateCopyFromText);
+          PsiExpression newExpression =
+            JavaPsiFacade.getElementFactory(parent.getProject()).createExpressionFromText(text.toString(), parent);
+          return (PsiExpression)tracker.replaceAndRestoreComments(parent, newExpression);
         }
       }
     }
