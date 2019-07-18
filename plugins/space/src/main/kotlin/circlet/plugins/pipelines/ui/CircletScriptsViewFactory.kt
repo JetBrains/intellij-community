@@ -1,5 +1,6 @@
 package circlet.plugins.pipelines.ui
 
+import circlet.messages.*
 import circlet.pipelines.config.api.*
 import circlet.plugins.pipelines.services.*
 import circlet.plugins.pipelines.services.run.*
@@ -68,16 +69,27 @@ class CircletScriptsViewFactory : KLogging() {
             viewModel.selectedNode.value = if (selectedNode is CircletModelTreeNode) selectedNode else null
 
         }
-        resetNodes(root, viewModel.script.value)
+        resetNodes(root, viewModel.script.value, viewModel.extendedViewModeEnabled.value)
         TreeUtil.expandAll(tree)
         tree.isRootVisible = false
 
+        fun recalcTree() {
+            val model = viewModel.script.value
+            resetNodes(root, model, viewModel.extendedViewModeEnabled.value)
+            (tree.model as DefaultTreeModel).reload()
+        }
+
+
         viewModel.script.forEach(lifetime) {
             launch(lifetime, ApplicationUiDispatch.coroutineContext) {
-                val model = viewModel.script.value
-                resetNodes(root, model)
-                (tree.model as DefaultTreeModel).reload()
+                recalcTree()
                 viewModel.modelBuildIsRunning.value = false
+            }
+        }
+
+        viewModel.extendedViewModeEnabled.forEach(lifetime) {
+            launch(lifetime, ApplicationUiDispatch.coroutineContext) {
+                recalcTree()
             }
         }
 
@@ -121,6 +133,16 @@ class CircletScriptsViewFactory : KLogging() {
             }
         }
 
+        val showExtendedInfoAction = object : ToggleActionButton(CircletBundle.message("show.details"), AllIcons.Actions.Show) {
+            override fun isSelected(e: AnActionEvent?): Boolean {
+                return viewModel.extendedViewModeEnabled.value
+            }
+
+            override fun setSelected(e: AnActionEvent?, state: Boolean) {
+                viewModel.extendedViewModeEnabled.value = state
+            }
+        }
+
         fun updateActionsIsEnabledStates() {
             val smthIsRunning = viewModel.modelBuildIsRunning.value || viewModel.taskIsRunning.value
             val isSelectedNodeRunnable = viewModel.selectedNode.value?.isRunnable ?: false
@@ -146,13 +168,14 @@ class CircletScriptsViewFactory : KLogging() {
             .addExtraAction(runAction)
             .addExtraAction(expandAllAction)
             .addExtraAction(collapseAllAction)
+            .addExtraAction(showExtendedInfoAction)
             .setToolbarPosition(ActionToolbarPosition.TOP)
             .createPanel()
         panel.border = JBEmptyBorder(0)
         return panel
     }
 
-    private fun resetNodes(root: DefaultMutableTreeNode, model: ScriptViewModel?) {
+    private fun resetNodes(root: DefaultMutableTreeNode, model: ScriptViewModel?, extendedViewModeEnabled: Boolean) {
         root.removeAllChildren()
         if (model == null) {
             root.add(CircletModelTreeNode("model is empty"))
@@ -165,21 +188,23 @@ class CircletScriptsViewFactory : KLogging() {
             val tasksCollectionNode = CircletModelTreeNode("tasks")
             config.tasks.forEach {
                 val taskNode = CircletModelTreeNode(it.name, true)
-                val triggers = it.triggers
-                if (triggers.any()) {
-                    val triggersNode = CircletModelTreeNode("triggers")
-                    triggers.forEach { trigger ->
-                        triggersNode.add(CircletModelTreeNode(trigger::class.java.simpleName))
+                if (extendedViewModeEnabled) {
+                    val triggers = it.triggers
+                    if (triggers.any()) {
+                        val triggersNode = CircletModelTreeNode("triggers")
+                        triggers.forEach { trigger ->
+                            triggersNode.add(CircletModelTreeNode(trigger::class.java.simpleName))
+                        }
+
+                        taskNode.add(triggersNode)
                     }
 
-                    taskNode.add(triggersNode)
+                    val jobsNode = CircletModelTreeNode("jobs")
+                    it.jobs.forEach {
+                        jobsNode.add(it.traverseJobs())
+                    }
+                    taskNode.add(jobsNode)
                 }
-
-                val jobsNode = CircletModelTreeNode("jobs")
-                it.jobs.forEach {
-                    jobsNode.add(it.traverseJobs())
-                }
-                taskNode.add(jobsNode)
 
                 tasksCollectionNode.add(taskNode)
             }
