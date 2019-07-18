@@ -18,6 +18,7 @@ package com.intellij.testFramework.fixtures.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.LightPlatformTestCase;
@@ -132,6 +133,10 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
       }
       else {
         try {
+          if (SystemInfo.isWindows && dirName.endsWith(":")) {
+            // naively ignore drive letters on Windows, todo @roman.shevchenko
+            dirName = dirName.substring(0, dirName.length() - 1);
+          }
           root = root.createChildDirectory(this, dirName);
         }
         catch (IOException e) {

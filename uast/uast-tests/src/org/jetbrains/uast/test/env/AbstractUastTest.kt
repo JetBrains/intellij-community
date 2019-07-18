@@ -19,7 +19,7 @@ abstract class AbstractUastFixtureTest : LightJavaCodeInsightFixtureTestCase() {
   fun doTest(testName: String, checkCallback: (String, UFile) -> Unit = { testName, file -> check(testName, file) }) {
     val testFile = getTestFile(testName)
     if (!testFile.exists()) error("File does not exist: $testFile")
-    val psiFile = myFixture.configureByFile(testFile.path)
+    val psiFile = myFixture.configureByFile(testFile.path.replace(File.separatorChar, '/'))
     val uFile = UastFacade.convertElementWithParent(psiFile, null) ?: error("Can't get UFile for $testName")
     checkCallback(testName, uFile as UFile)
   }
