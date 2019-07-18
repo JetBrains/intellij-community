@@ -13,11 +13,9 @@ import com.intellij.ide.util.*
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.*
 import com.intellij.openapi.project.*
-import com.intellij.openapi.ui.*
 import com.intellij.openapi.vfs.*
 import com.intellij.ui.*
 import com.intellij.ui.components.labels.*
-import com.intellij.ui.treeStructure.*
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.*
 import com.intellij.util.ui.tree.*
@@ -183,9 +181,24 @@ class CircletScriptsViewFactory : KLogging() {
         }
 
         val config = model.config
+
         val tasks = config.tasks
+        val targets = config.targets
+        val pipelines = config.pipelines
+
+        var jobsTypesCount = 0
         if (tasks.any()) {
-            val tasksCollectionNode = CircletModelTreeNode("tasks")
+            jobsTypesCount++
+        }
+        if (targets.any()) {
+            jobsTypesCount++
+        }
+        if (pipelines.any()) {
+            jobsTypesCount++
+        }
+        val shouldAddGroupingNodes = jobsTypesCount > 1
+        if (tasks.any()) {
+            val tasksCollectionNode = getGroupingNode(root, "tasks", shouldAddGroupingNodes)
             config.tasks.forEach {
                 val taskNode = CircletModelTreeNode(it.name, true)
                 if (extendedViewModeEnabled) {
@@ -208,14 +221,13 @@ class CircletScriptsViewFactory : KLogging() {
 
                 tasksCollectionNode.add(taskNode)
             }
-            root.add(tasksCollectionNode)
         }
 
-        config.targets.forEach {
+        targets.forEach {
             val child = CircletModelTreeNode("target + ${it.name}. not implemented in UI yet")
             root.add(child)
         }
-        config.pipelines.forEach {
+        pipelines.forEach {
             val child = CircletModelTreeNode("pipelines + ${it.name}. not implemented in UI yet")
             root.add(child)
         }
@@ -263,6 +275,16 @@ class CircletScriptsViewFactory : KLogging() {
         rootPanel.layout = GridBagLayout()
         rootPanel.add(panel, GridBagConstraints())
         return rootPanel
+    }
+
+    private fun getGroupingNode(root: DefaultMutableTreeNode, name: String, shouldAddGroupingNodes: Boolean): DefaultMutableTreeNode {
+        if (shouldAddGroupingNodes) {
+            val res = CircletModelTreeNode(name, true)
+            root.add(res)
+            return res
+        }
+
+        return root
     }
 }
 
