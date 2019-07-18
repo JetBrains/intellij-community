@@ -45,7 +45,6 @@ import com.intellij.ui.mac.MacOSApplicationProvider
 import com.intellij.ui.mac.touchbar.TouchBarsManager
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.accessibility.ScreenReader
 import java.awt.EventQueue
@@ -153,13 +152,13 @@ private fun registerRegistryAndMessageBusAndComponent(pluginDescriptorsFuture: C
           RegistryKeyBean.addKeysFromPlugins()
         }
 
+        ParallelActivity.PREPARE_APP_INIT.run("add message bus listeners") {
+          app.registerMessageBusListeners(pluginDescriptors, false)
+        }
       }, AppExecutorUtil.getAppExecutorService())
 
       ParallelActivity.PREPARE_APP_INIT.run("app component registration") {
         (ApplicationManager.getApplication() as ApplicationImpl).registerComponents(pluginDescriptors)
-      }
-      ParallelActivity.PREPARE_APP_INIT.run("add message bus listeners") {
-        app.registerMessageBusListeners(pluginDescriptors, false)
       }
 
       future
