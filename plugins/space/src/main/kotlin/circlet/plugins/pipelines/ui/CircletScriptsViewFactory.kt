@@ -144,6 +144,7 @@ class CircletScriptsViewFactory : KLogging() {
             .addExtraAction(runAction)
             .addExtraAction(expandAllAction)
             .addExtraAction(collapseAllAction)
+            .setToolbarPosition(ActionToolbarPosition.TOP)
             .createPanel()
     }
 
