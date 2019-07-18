@@ -54,9 +54,6 @@ internal class InferMethodParametersTypesIntention : Intention() {
         method.addAfter(virtualMethod.typeParameterList!!, method.firstChild)
       }
     }
-    else {
-      method.typeParameterList?.delete()
-    }
     method.parameters.zip(virtualMethod.parameters).forEach { (actual, inferred) ->
       actual.setType(inferred.type)
       actual.modifierList.setModifierProperty("def", false)

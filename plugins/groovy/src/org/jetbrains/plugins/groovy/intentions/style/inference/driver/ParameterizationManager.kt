@@ -22,7 +22,9 @@ private class Parameterizer(val context: PsiElement,
       val wildcards = Array(resolveResult.typeParameters.size) { PsiWildcardType.createUnbounded(context.manager) }
       elementFactory.createType(resolveResult, *wildcards)
     }
-    else classType
+    else {
+      classType
+    }
     val mappedParameters = generifiedClassType.parameters.map { it.accept(this) }.toTypedArray()
     if (classType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
       return registerTypeParameterAction(emptyList())
