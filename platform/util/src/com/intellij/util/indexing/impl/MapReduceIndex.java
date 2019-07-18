@@ -35,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
@@ -256,7 +255,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
 
     return () -> {
       try {
-        updateWithMap(inputId, updateData);
+        updateWithMap(updateData);
       }
       catch (StorageException | ProcessCanceledException ex) {
         LOG.info("An exception during updateWithMap(). Index " + myIndexId.getName() + " will be rebuilt.", ex);
@@ -354,7 +353,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     }
   };
 
-  public void updateWithMap(int inputId, @NotNull UpdateData<Key, Value> updateData) throws StorageException {
+  public void updateWithMap(@NotNull UpdateData<Key, Value> updateData) throws StorageException {
     getWriteLock().lock();
     try {
       IndexId oldIndexId = DebugAssertions.DEBUG_INDEX_ID.get();
