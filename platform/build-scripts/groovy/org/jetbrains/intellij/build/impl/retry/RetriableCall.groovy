@@ -11,7 +11,6 @@ class RetriableCall {
   private final int retries
   private final long delayMs
   private final BuildMessages log
-  private int attempt
 
   RetriableCall(BuildMessages log, int retries = 10, long delayMs = 1000) {
     this.log = log
@@ -23,8 +22,7 @@ class RetriableCall {
     def delayMs = delayMs
     for (i in 1..retries) {
       try {
-        attempt = i
-        return operation(attempt)
+        return operation(i)
       }
       catch (Exception e) {
         if (i == retries) {
