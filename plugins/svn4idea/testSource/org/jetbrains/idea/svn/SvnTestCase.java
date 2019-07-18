@@ -61,7 +61,6 @@ import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static com.intellij.testFramework.UsefulTestCase.*;
-import static com.intellij.util.FunctionUtil.nullConstant;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.map2Array;
 import static com.intellij.util.lang.CompoundRuntimeException.throwIfNotEmpty;
@@ -204,7 +203,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   @NotNull
   protected Set<String> commit(@NotNull List<Change> changes, @NotNull String message) {
     Set<String> feedback = new HashSet<>();
-    throwIfNotEmpty(vcs.getCheckinEnvironment().commit(changes, message, nullConstant(), feedback));
+    throwIfNotEmpty(vcs.getCheckinEnvironment().commit(changes, message, new CommitContext(), feedback));
     return feedback;
   }
 
