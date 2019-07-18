@@ -33,6 +33,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.diagnostic.CompositeLogger
 import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.Processor
 import com.intellij.util.containers.MultiMap
@@ -220,7 +221,7 @@ class JpsCompilationRunner {
       context.messages.error("Compilation failed")
     }
     else if (!compilationData.statisticsReported) {
-      messageHandler.printPerModuleCompilationStatistics()
+      messageHandler.printPerModuleCompilationStatistics(compilationStart)
       context.messages.reportStatisticValue("Compilation time, ms", String.valueOf(System.currentTimeMillis() - compilationStart))
       compilationData.statisticsReported = true
     }
@@ -245,8 +246,8 @@ class JpsCompilationRunner {
 
   private class AntMessageHandler implements MessageHandler {
     private MultiMap<String, String> errorMessagesByCompiler = MultiMap.createLinked()
-    private Map<String, Long> compilationTimeForTarget = new ConcurrentHashMap<>()
     private Map<String, Long> compilationStartTimeForTarget = new ConcurrentHashMap<>()
+    private Map<String, Long> compilationFinishTimeForTarget = new ConcurrentHashMap<>()
     private float progress = -1.0
 
     @Override
@@ -310,22 +311,29 @@ class JpsCompilationRunner {
               compilationStartTimeForTarget.put(targetId, System.currentTimeMillis())
             }
             else {
-              def startTime = compilationStartTimeForTarget.remove(targetId)
-              compilationTimeForTarget.put(targetId, System.currentTimeMillis() - startTime)
+              compilationFinishTimeForTarget.put(targetId, System.currentTimeMillis())
             }
           }
           break
       }
     }
 
-    void printPerModuleCompilationStatistics() {
-      if (compilationTimeForTarget.isEmpty()) return
+    void printPerModuleCompilationStatistics(long compilationStart) {
+      if (compilationStartTimeForTarget.isEmpty()) return
+      new File(context.paths.buildOutputRoot, "log/compilation-time.csv").withWriter { out ->
+        compilationFinishTimeForTarget.each {
+          def startTime = compilationStartTimeForTarget[it.key] - compilationStart
+          def finishTime = it.value - compilationStart
+          out.println("$it.key,$startTime,$finishTime")
+        }
+      }
       def buildMessages = context.messages
       buildMessages.info("Compilation time per target:")
-      buildMessages.info(" average: ${String.format("%.2f", (compilationTimeForTarget.values().sum() as double) / compilationTimeForTarget.size())}ms")
-      def topTargets = compilationTimeForTarget.entrySet().toSorted { it.value }.reverse().take(10)
+      def compilationTimeForTarget = compilationFinishTimeForTarget.collect {new Pair<>(it.key, it.value - compilationStartTimeForTarget[it.key])}
+      buildMessages.info(" average: ${String.format("%.2f", (compilationTimeForTarget.collect {it.second}.sum() as double) / compilationTimeForTarget.size())}ms")
+      def topTargets = compilationTimeForTarget.toSorted { it.second }.reverse().take(10)
       buildMessages.info(" top ${topTargets.size()} targets by compilation time:")
-      topTargets.each { entry -> buildMessages.info("  $entry.key: ${entry.value}ms") }
+      topTargets.each { entry -> buildMessages.info("  $entry.first: ${entry.second}ms") }
     }
 
     @CompileDynamic
