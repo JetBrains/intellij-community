@@ -553,7 +553,7 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
         report("Ignored a regular Python file %r", name)
         return True
     if not quiet:
-        say(name)
+        say('%s (%r)', name, mod_file_name or 'built-in')
         sys.stdout.flush()
     action("doing nothing")
 
@@ -573,7 +573,7 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
 
         cached_skeleton_status = skeleton_status(mod_cache_dir, name, mod_file_name)
         if cached_skeleton_status == SkeletonStatus.OUTDATED:
-            note('Updating cache for %s at %r', name, mod_cache_dir)
+            say('Updating cache for %s at %r', name, mod_cache_dir)
             # All builtin modules go into the same directory
             if not doing_builtins:
                 delete(mod_cache_dir)
@@ -630,10 +630,11 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
                             action("closing %r", mod_cache_dir)
             return GenerationStatus.GENERATED
         elif cached_skeleton_status == SkeletonStatus.FAILING:
+            say('Cache entry for %s at %r indicates failed generation', name, mod_cache_dir)
             return GenerationStatus.FAILED
         else:
             # Copy entire skeletons directory if nothing needs to be updated
-            say('Copying cached skeletons for %s from %r to %r', name, mod_cache_dir, sdk_skeletons_dir)
+            say('Copying cached stubs for %s from %r to %r', name, mod_cache_dir, sdk_skeletons_dir)
             copy_skeletons(mod_cache_dir, sdk_skeletons_dir, get_module_origin(mod_file_name, name))
             return GenerationStatus.COPIED
     except:
