@@ -1,13 +1,19 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.intentions.style.inference
+package org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure
 
 import com.intellij.codeInsight.AnnotationUtil
+import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiLiteral
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
+import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.plugins.groovy.intentions.style.inference.CollectingGroovyInferenceSession
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction
@@ -33,12 +39,57 @@ fun collectClosureParametersConstraints(collector: MutableList<ConstraintFormula
   }
 }
 
-fun collectDeepClosureDependencies(constraintCollector: MutableList<ConstraintFormula>, closureParameter: ParameterizedClosure,
-                                   usages: List<ReadWriteVariableInstruction>) {
+
+fun collectClosureArguments(method: GrMethod, virtualMethod: GrMethod): Map<GrParameter, List<GrExpression>> {
+  val allArgumentExpressions = extractArgumentExpressions(method,
+                                                          method.parameters.filter { it.typeElement == null },
+                                                          mutableSetOf())
+  val proxyMapping = method.parameters.zip(virtualMethod.parameters).toMap()
+  return allArgumentExpressions
+    .map { (parameter, expressions) -> proxyMapping.getValue(parameter) to expressions }
+    .filter { (_, acceptedTypes) -> acceptedTypes.all { it is GrClosableBlock } && acceptedTypes.isNotEmpty() }
+    .toMap()
+
+}
+
+private fun extractArgumentExpressions(method: GrMethod,
+                                       targetParameters: Collection<GrParameter>,
+                                       visitedMethods: MutableSet<GrMethod>): Map<GrParameter, List<GrExpression>> {
+  if (targetParameters.isEmpty()) {
+    return emptyMap()
+  }
+  visitedMethods.add(method)
+  val expressionStorage = mutableMapOf<GrParameter, MutableList<GrExpression>>()
+  targetParameters.forEach { expressionStorage[it] = mutableListOf() }
+  //todo: rewrite to ArgumentMapping usage (or delete this part at all, it might be quite slow)
+  for (call in ReferencesSearch.search(method).findAll().mapNotNull { it.element.parent as? GrCall }) {
+    val argumentList = call.expressionArguments + call.closureArguments
+    val targetExpressions = argumentList.zip(method.parameters).filter { it.second in targetParameters }
+    val objectTypedExpressions = targetExpressions.filter { it.first.type?.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ?: true }
+    (targetExpressions - objectTypedExpressions).forEach { expressionStorage[it.second]!!.add(it.first) }
+    val enclosingMethodParameterMapping = objectTypedExpressions.mapNotNull { (expression, targetParameter) ->
+      val resolved = expression.reference?.resolve() as? GrParameter
+      resolved?.run { this to targetParameter }
+    }.toMap()
+    val enclosingMethod = call.parentOfType(GrMethod::class)
+    if (enclosingMethod != null && !visitedMethods.contains(enclosingMethod)) {
+      val argumentsForEnclosingParameters =
+        extractArgumentExpressions(enclosingMethod, enclosingMethodParameterMapping.keys, visitedMethods)
+      argumentsForEnclosingParameters.forEach { expressionStorage[enclosingMethodParameterMapping[it.key]]!!.addAll(it.value) }
+    }
+  }
+  return expressionStorage
+}
+
+fun collectClosureParamsDependencies(constraintCollector: MutableList<ConstraintFormula>,
+                                     closureParameter: ParameterizedClosure,
+                                     usages: List<ReadWriteVariableInstruction>,
+                                     closureProcessor: ClosureProcessor) {
   val parameter = closureParameter.parameter
-  for (call in usages) {
-    val nearestCall = call.element!!.parentOfType<GrCall>() ?: continue
-    if (nearestCall == call.element!!.parent && nearestCall.resolveMethod()?.containingClass?.qualifiedName == GroovyCommonClassNames.GROOVY_LANG_CLOSURE) {
+  for (usage in usages) {
+    val nearestCall = usage.element!!.parentOfType<GrCall>() ?: continue
+    closureProcessor.processCall(nearestCall, constraintCollector)
+    if (nearestCall == usage.element!!.parent && nearestCall.resolveMethod()?.containingClass?.qualifiedName == GroovyCommonClassNames.GROOVY_LANG_CLOSURE) {
       continue
     }
     val resolveResult = nearestCall.advancedResolve() as? GroovyMethodResult ?: continue
@@ -53,7 +104,7 @@ fun collectDeepClosureDependencies(constraintCollector: MutableList<ConstraintFo
       AnnotationUtil.arrayAttributeValues(innerParameter.annotations.first().findAttributeValue("options")).mapNotNull {
         (it as? PsiLiteral)?.value as? String
       }.toTypedArray()
-    val outerMethod = call.element!!.parentOfType<GrMethod>()!!
+    val outerMethod = usage.element!!.parentOfType<GrMethod>()!!
     val innerMethod = nearestCall.resolveMethod()
     // We cannot use GroovyMethodResult#getSubstitutor because we need to leave type parameters of outerMethod among substitution variants
     val substitutor = collectGenericSubstitutor(resolveResult, outerMethod)
@@ -70,9 +121,10 @@ fun collectDeepClosureDependencies(constraintCollector: MutableList<ConstraintFo
 
 private fun collectGenericSubstitutor(resolveResult: GroovyMethodResult, outerMethod: GrMethod): PsiSubstitutor {
   val outerParameters = outerMethod.typeParameters.map { it.type() }.toSet()
-  val resolveSession = CollectingGroovyInferenceSession(outerMethod.typeParameters.filter {
-    (it.extendsListTypes.run { isEmpty() || first() in outerParameters })
-  }.toTypedArray(), PsiSubstitutor.EMPTY, outerMethod, mirrorBounds = true)
+  val resolveSession = CollectingGroovyInferenceSession(
+    outerMethod.typeParameters.filter {
+      (it.extendsListTypes.run { isEmpty() || first() in outerParameters })
+    }.toTypedArray(), PsiSubstitutor.EMPTY, outerMethod, mirrorBounds = true)
   resolveSession.addConstraint(MethodCallConstraint(null, resolveResult, outerMethod))
   for (typeParameter in outerMethod.typeParameters) {
     resolveSession.getInferenceVariable(

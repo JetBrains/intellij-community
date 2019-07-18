@@ -189,7 +189,8 @@ fun convertToGroovyMethod(method: PsiMethod): GrMethod {
   val factory = GroovyPsiElementFactory.getInstance(method.project)
   return if (method.isConstructor) {
     factory.createConstructorFromText(method.name, method.text, method)
-  } else {
+  }
+  else {
     factory.createMethodFromText(method.text, method)
   }
 }

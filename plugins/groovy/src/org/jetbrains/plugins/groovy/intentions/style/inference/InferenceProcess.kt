@@ -39,7 +39,7 @@ fun runInferenceProcess(method: GrMethod): GrMethod {
 }
 
 private fun setUpParametersSignature(driver: InferenceDriver): PsiSubstitutor {
-  val mapping = setUpParameterMapping(driver.method, driver.virtualMethod).map { it.key.name to it.value}.toMap()
+  val mapping = setUpParameterMapping(driver.method, driver.virtualMethod).map { it.key.name to it.value }.toMap()
   val inferenceSession = CollectingGroovyInferenceSession(driver.virtualMethod.typeParameters, PsiSubstitutor.EMPTY, driver.virtualMethod,
                                                           mapping)
   driver.collectOuterConstraints().forEach { inferenceSession.addConstraint(it) }

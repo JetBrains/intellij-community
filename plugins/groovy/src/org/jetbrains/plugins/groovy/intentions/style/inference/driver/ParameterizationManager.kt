@@ -4,10 +4,8 @@ package org.jetbrains.plugins.groovy.intentions.style.inference.driver
 import com.intellij.psi.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.NameGenerator
 import org.jetbrains.plugins.groovy.intentions.style.inference.createProperTypeParameter
-import org.jetbrains.plugins.groovy.intentions.style.inference.isClosureType
 import org.jetbrains.plugins.groovy.intentions.style.inference.isTypeParameter
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
@@ -56,12 +54,10 @@ private class Parameterizer(val context: PsiElement,
 
 data class ParameterizationResult(val type: PsiType, val typeParameters: List<PsiTypeParameter>)
 
-internal class ParameterizationManager(driver: InferenceDriver) {
+class ParameterizationManager(driver: InferenceDriver) {
   private val nameGenerator = NameGenerator(driver.defaultTypeParameterList.typeParameters.map { it.name!! })
   private val elementFactory = GroovyPsiElementFactory.getInstance(driver.method.project)
   private val context: PsiElement = driver.virtualMethod
-  private val closureParameters = driver.closureParameters
-  private val varargParameters = driver.varargParameters
 
   companion object {
     fun nonTrivial(type: PsiType) = !type.equalsToText(GroovyCommonClassNames.GROOVY_OBJECT)
@@ -78,17 +74,15 @@ internal class ParameterizationManager(driver: InferenceDriver) {
    * Creates type parameter with upper bound of [target].
    * If [target] is parametrized, all it's parameter types will also be parametrized.
    */
-  fun createDeeplyParametrizedType(target: PsiType,
-                                   parameter: GrParameter? = null): ParameterizationResult {
+  fun createDeeplyParameterizedType(target: PsiType, strict: Boolean = false): ParameterizationResult {
     val createdTypeParameters = mutableListOf<PsiTypeParameter>()
     val registerAction =
       { upperBounds: Iterable<PsiClassType> -> registerTypeParameter(upperBounds, createdTypeParameters) }
     val visitor = Parameterizer(context, registerAction)
     val calculatedType =
       when {
-        target.isClosureType() && closureParameters.containsKey(parameter) -> target.accept(visitor)
+        strict -> target.accept(visitor)
         target is PsiArrayType -> target.componentType.accept(visitor).createArrayType()
-        parameter in varargParameters -> target.accept(visitor).createArrayType()
         target.isTypeParameter() -> registerTypeParameter(emptyList(), createdTypeParameters)
         target is PsiIntersectionType -> target.accept(visitor)
         target == PsiType.getJavaLangObject(context.manager, context.resolveScope) -> registerAction(emptyList())

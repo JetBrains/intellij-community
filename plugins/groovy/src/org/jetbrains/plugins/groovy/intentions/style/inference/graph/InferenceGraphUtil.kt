@@ -28,7 +28,7 @@ fun createGraphFromInferenceVariables(session: GroovyInferenceSession,
   val forbiddingTypes =
     usageInformation.contravariantTypes +
     driver.virtualMethod.parameters.mapNotNull { (it.type as? PsiArrayType)?.componentType } +
-    driver.varargParameters.map { it.type }
+    driver.processors.flatMap { it.forbiddingTypes() }
   val variables = driver.virtualMethod.typeParameters.map { getInferenceVariable(session, it.type()) }
 
   for (variable in variables) {

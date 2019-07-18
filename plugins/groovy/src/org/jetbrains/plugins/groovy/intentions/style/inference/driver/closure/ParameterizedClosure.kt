@@ -1,8 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.intentions.style.inference
+package org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import org.jetbrains.plugins.groovy.intentions.style.inference.cartesianProduct
+import org.jetbrains.plugins.groovy.intentions.style.inference.isTypeParameter
+import org.jetbrains.plugins.groovy.intentions.style.inference.typeParameter
+import org.jetbrains.plugins.groovy.intentions.style.inference.unreachable
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
@@ -30,7 +34,8 @@ class ParameterizedClosure(val parameter: GrParameter) {
           }
         }
         if (type == pattern) {
-          createSingleParameterAnnotation(parameterIndex, genericIndex, parameterList.project)
+          createSingleParameterAnnotation(
+            parameterIndex, genericIndex, parameterList.project)
         }
         else {
           null
@@ -38,7 +43,9 @@ class ParameterizedClosure(val parameter: GrParameter) {
       }
 
     private val typeHintChooser: List<(PsiParameterList, PsiType) -> PsiAnnotation?> = run {
-      cartesianProduct((0..2), (-1..2)).map { (paramIndex, genericIndex) -> typeHintFactory(paramIndex, genericIndex) }
+      cartesianProduct((0..2), (-1..2)).map { (paramIndex, genericIndex) ->
+        typeHintFactory(paramIndex, genericIndex)
+      }
     }
 
 
