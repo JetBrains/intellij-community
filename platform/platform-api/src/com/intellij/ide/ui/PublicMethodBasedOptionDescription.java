@@ -41,7 +41,7 @@ public abstract class PublicMethodBasedOptionDescription extends BooleanOptionDe
   public void setOptionState(boolean enabled) {
     Object instance = getInstance();
     try {
-      instance.getClass().getMethod(mySetterName, boolean.class).invoke(getInstance(), Boolean.valueOf(enabled));
+      instance.getClass().getMethod(mySetterName, boolean.class).invoke(instance, Boolean.valueOf(enabled));
     }
     catch (Exception exception) {
       LOG.error(String.format("Boolean setter '%s' not found in %s", mySetterName, instance), exception);
