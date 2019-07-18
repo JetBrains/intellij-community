@@ -523,10 +523,6 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
         }
       }
       widgetIDs.clear();
-
-      if (statusBar instanceof IdeStatusBarImpl) {
-        ((IdeStatusBarImpl)statusBar).removeCustomIndicationComponents();
-      }
     });
   }
 

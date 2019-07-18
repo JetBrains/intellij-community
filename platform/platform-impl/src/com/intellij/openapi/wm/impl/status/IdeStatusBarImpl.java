@@ -114,6 +114,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   public StatusBar createChild() {
     IdeStatusBarImpl bar = new IdeStatusBarImpl(false);
     myChildren.add(bar);
+    Disposer.register(this, bar);
     Disposer.register(bar, () -> myChildren.remove(bar));
 
     for (String eachId : myOrderedWidgets) {
@@ -191,14 +192,6 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     Disposer.register(parentDisposable, () -> removeWidget(widget.ID()));
   }
 
-  public void removeCustomIndicationComponents() {
-    for (final String id : myCustomComponentIds) {
-      removeWidget(id);
-    }
-
-    myCustomComponentIds.clear();
-  }
-
   @Override
   public void addCustomIndicationComponent(@NotNull final JComponent c) {
     final String customId = c.getClass().getName() + new Random().nextLong();
@@ -247,12 +240,21 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
 
   @Override
   public void dispose() {
+    removeCustomIndicationComponents();
+
     myWidgetMap.clear();
     myChildren.clear();
 
     if (myLeftPanel != null) myLeftPanel.removeAll();
     if (myRightPanel != null) myRightPanel.removeAll();
     if (myCenterPanel != null) myCenterPanel.removeAll();
+  }
+
+  private void removeCustomIndicationComponents() {
+    for (final String id : myCustomComponentIds) {
+      removeWidget(id);
+    }
+    myCustomComponentIds.clear();
   }
 
   private void addWidget(@NotNull final StatusBarWidget widget, @NotNull final Position pos, @NotNull final String anchor) {
