@@ -303,7 +303,7 @@ public class DefaultActionGroup extends ActionGroup {
    */
   @Override
   @NotNull
-  public final AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public synchronized final AnAction[] getChildren(@Nullable AnActionEvent e) {
     boolean hasNulls = false;
     ActionManager actionManager = e != null ? e.getActionManager() : ActionManager.getInstance();
     addAllToSortedList(actionManager);
