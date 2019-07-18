@@ -235,6 +235,12 @@
     <keyboard-shortcut first-keystroke="meta 9"/>
     <keyboard-shortcut first-keystroke="meta shift 9"/>
   </action>
+  <action id="NextWindow">
+    <keyboard-shortcut first-keystroke="meta BACK_QUOTE"/>
+  </action>
+  <action id="PreviousWindow">
+    <keyboard-shortcut first-keystroke="meta shift BACK_QUOTE"/>
+  </action>
   <action id="NewElement">
     <keyboard-shortcut first-keystroke="control N"/>
     <keyboard-shortcut first-keystroke="control ENTER"/>
