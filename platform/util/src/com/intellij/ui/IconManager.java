@@ -211,6 +211,7 @@ final class DummyIconManager implements IconManager {
       icons[i] = icon;
     }
 
+    @NotNull
     @Override
     public Icon getDarkIcon(boolean isDark) {
       return this;

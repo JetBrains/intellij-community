@@ -5,6 +5,7 @@ import com.intellij.AbstractBundle;
 import com.intellij.CommonBundle;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ActionsCollector;
@@ -245,6 +246,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
                                        @NotNull Presentation presentation,
                                        final PluginId pluginId) {
     final IconLoader.LazyIcon lazyIcon = new IconLoader.LazyIcon() {
+      @NotNull
       @Override
       protected Icon compute() {
         // try to find icon in idea class path
@@ -255,6 +257,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
         if (icon == null) {
           reportActionError(pluginId, "Icon cannot be found in '" + iconPath + "', action '" + actionClass + "'");
+          icon = AllIcons.Nodes.Unknown;
         }
 
         return icon;

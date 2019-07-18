@@ -68,7 +68,7 @@ public class PaletteItemsComponent extends JBList {
           setIcon(item.getIcon());
         }
         else {
-          setIcon(IconLoader.getDisabledIcon(item.getIcon()));
+          setIcon(item.getIcon() == null ? null : IconLoader.getDisabledIcon(item.getIcon()));
         }
 
         String title = item.getTitle();

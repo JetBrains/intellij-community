@@ -114,7 +114,7 @@ public interface ToolWindow extends BusyObject {
   /**
    * Sets new window icon.
    */
-  void setIcon(Icon icon);
+  void setIcon(@NotNull Icon icon);
 
   /**
    * @return Window title. Returns {@code null} if window has no title.

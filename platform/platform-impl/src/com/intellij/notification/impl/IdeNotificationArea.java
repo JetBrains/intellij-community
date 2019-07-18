@@ -118,7 +118,8 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
     }
   }
 
-  private LayeredIcon createIconWithNotificationCount(ArrayList<? extends Notification> notifications, boolean forToolWindow) {
+  @NotNull
+  private LayeredIcon createIconWithNotificationCount(List<? extends Notification> notifications, boolean forToolWindow) {
     return createIconWithNotificationCount(this, getMaximumType(notifications), notifications.size(), forToolWindow);
   }
 

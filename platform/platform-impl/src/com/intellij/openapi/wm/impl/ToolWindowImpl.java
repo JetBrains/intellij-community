@@ -392,15 +392,14 @@ public final class ToolWindowImpl implements ToolWindowEx, Disposable {
   }
 
   @Override
-  public final void setIcon(Icon icon) {
+  public final void setIcon(@NotNull Icon icon) {
     //icon = IconUtil.filterIcon(icon, new UIUtil.GrayFilter(), myComponent);
     ApplicationManager.getApplication().assertIsDispatchThread();
     final Icon oldIcon = getIcon();
     if (!EventLog.LOG_TOOL_WINDOW_ID.equals(getId())) {
-      if (oldIcon != icon && icon != null && !(icon instanceof LayeredIcon) &&
-          (Math.abs(icon.getIconHeight() - JBUIScale.scale(13f)) >= 1 ||
-           Math.abs(icon.getIconWidth() - JBUIScale.scale(13f)) >= 1))
-      {
+      if (oldIcon != icon &&
+          !(icon instanceof LayeredIcon) &&
+          (Math.abs(icon.getIconHeight() - JBUIScale.scale(13f)) >= 1 || Math.abs(icon.getIconWidth() - JBUIScale.scale(13f)) >= 1)) {
         LOG.warn("ToolWindow icons should be 13x13. Please fix ToolWindow (ID:  " + getId() + ") or icon " + icon);
       }
     }

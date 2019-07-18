@@ -58,6 +58,7 @@ public class ActionButtonWithText extends ActionButton {
     UIUtil.putClientProperty(this, MnemonicHelper.MNEMONIC_CHECKER, keyCode -> getMnemonic() == keyCode);
   }
 
+  @NotNull
   @Override
   protected Icon getFallbackIcon(boolean enabled) {
     return EmptyIcon.ICON_0;

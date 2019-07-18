@@ -45,6 +45,7 @@ public abstract class PythonModuleTypeBase<T extends ModuleBuilder> extends Modu
     return basicDescription;
   }
 
+  @NotNull
   @Override
   public Icon getNodeIcon(final boolean isOpened) {
     return PythonIcons.Python.PythonClosed;

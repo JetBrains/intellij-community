@@ -16,7 +16,6 @@ import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.EditorBasedWidget;
 import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.CalledInAwt;
@@ -57,7 +56,7 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
     myChangesStatus = new HgChangesetStatus(isIncoming ? "In" : "Out");
     isAlreadyShown = false;
     myEnabledIcon = myIsIncoming ? AllIcons.Ide.IncomingChangesOn : AllIcons.Ide.OutgoingChangesOn;
-    myDisabledIcon = ObjectUtils.notNull(IconLoader.getDisabledIcon(myEnabledIcon), myEnabledIcon);
+    myDisabledIcon = IconLoader.getDisabledIcon(myEnabledIcon);
     myCurrentIcon = myDisabledIcon;
     Disposer.register(project, this);
   }

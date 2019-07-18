@@ -414,6 +414,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         return getToolbarDataContext();
       }
 
+      @NotNull
       @Override
       protected Icon getFallbackIcon(boolean enabled) {
         return enabled ? AllIcons.Toolbar.Unknown : IconLoader.getDisabledIcon(AllIcons.Toolbar.Unknown);

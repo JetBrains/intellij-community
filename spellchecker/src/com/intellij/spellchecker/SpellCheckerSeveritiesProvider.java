@@ -39,6 +39,7 @@ public class SpellCheckerSeveritiesProvider extends SeveritiesProvider {
         super(severity, attributesKey);
       }
 
+      @NotNull
       @Override
       public Icon getIcon() {
         return AllIcons.General.InspectionsTypos;

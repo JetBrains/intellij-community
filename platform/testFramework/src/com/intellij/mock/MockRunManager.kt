@@ -9,6 +9,7 @@ import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.openapi.util.Key
+import com.intellij.util.ui.EmptyIcon
 import javax.swing.Icon
 
 class MockRunManager : RunManagerEx() {
@@ -78,8 +79,8 @@ class MockRunManager : RunManagerEx() {
     return null
   }
 
-  override fun getConfigurationIcon(settings: RunnerAndConfigurationSettings, withLiveIndicator: Boolean): Icon? {
-    return null
+  override fun getConfigurationIcon(settings: RunnerAndConfigurationSettings, withLiveIndicator: Boolean): Icon {
+    return EmptyIcon.ICON_13
   }
 
   override fun removeConfiguration(settings: RunnerAndConfigurationSettings?) {}

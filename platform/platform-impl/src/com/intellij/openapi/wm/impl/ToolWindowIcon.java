@@ -12,6 +12,7 @@ import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,16 +30,18 @@ public class ToolWindowIcon implements RetrievableIcon, MenuBarIconProvider {
     LafManager.getInstance().addLafManagerListener(x -> ourCache.clear());
   }
 
+  @NotNull
   private final Icon myIcon;
   private final boolean myUseOriginal;
   private final String myToolWindowId;
 
-  public ToolWindowIcon(Icon icon, String toolWindowId) {
+  ToolWindowIcon(@NotNull Icon icon, String toolWindowId) {
     myIcon = icon;
     myToolWindowId = toolWindowId;
     if (Arrays.asList("Event Log", "Problems").contains(toolWindowId)) {
       myUseOriginal = true;
-    } else {
+    }
+    else {
       int[] rgb = ColorThief.getColor(ImageUtil.toBufferedImage(IconUtil.toImage(icon)));
       @SuppressWarnings("UseJBColor")
       Color color = rgb != null && rgb.length == 3 ? new Color(rgb[0], rgb[1], rgb[2]) : null;
@@ -47,10 +50,12 @@ public class ToolWindowIcon implements RetrievableIcon, MenuBarIconProvider {
   }
 
   @Override
+  @NotNull
   public Icon retrieveIcon() {
     return myIcon;
   }
 
+  @NotNull
   @Override
   public Icon getMenuBarIcon(boolean isDark) { return new ToolWindowIcon(IconLoader.getMenuBarIcon(myIcon, isDark), myToolWindowId); }
 

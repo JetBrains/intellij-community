@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.SmartHashSet;
@@ -16,8 +17,6 @@ import java.awt.*;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.openapi.util.IconLoader.getDisabledIcon;
-import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.immutableList;
 import static java.awt.AlphaComposite.SrcAtop;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -151,7 +150,7 @@ public class AnimatedIcon implements Icon {
     }
 
     public Blinking(int delay, @NotNull Icon icon) {
-      super(delay, icon, notNull(getDisabledIcon(icon), icon));
+      super(delay, icon, IconLoader.getDisabledIcon(icon));
     }
   }
 

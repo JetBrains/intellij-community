@@ -144,6 +144,7 @@ public final class JBHiDPIScaledImage extends BufferedImage {
    * @param scaleFactor the scale factor
    * @return scaled instance
    */
+  @NotNull
   public JBHiDPIScaledImage scale(double scaleFactor) {
     Image img = myImage == null ? this: myImage;
 
@@ -173,6 +174,7 @@ public final class JBHiDPIScaledImage extends BufferedImage {
    *
    * @return scaled instance
    */
+  @NotNull
   public JBHiDPIScaledImage scale(int targetUserWidth, int targetUserHeight) {
     Image img = myImage == null ? this : myImage;
 

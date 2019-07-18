@@ -9,11 +9,9 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * @author Alexander Lobas
@@ -87,16 +85,13 @@ class PluginLogoIcon implements PluginLogoIconProvider {
 
   @NotNull
   protected static Icon createDisabledIcon(@NotNull Icon icon, boolean base) {
-    return Objects.requireNonNull(calculateDisabledIcon(icon, base));
+    return calculateDisabledIcon(icon, base);
   }
 
-  @Nullable
-  private static Icon calculateDisabledIcon(@Nullable Icon icon, boolean base) {
+  @NotNull
+  private static Icon calculateDisabledIcon(@NotNull Icon icon, boolean base) {
     if (icon instanceof IconLoader.LazyIcon) {
       icon = ((IconLoader.LazyIcon)icon).retrieveIcon();
-    }
-    if (icon == null) {
-      return null;
     }
 
     Icon disabledIcon = DisabledIcons.get(icon);

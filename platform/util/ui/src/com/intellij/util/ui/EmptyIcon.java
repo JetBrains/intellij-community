@@ -45,6 +45,7 @@ import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
    *
    * Use {@link JBUI#scale(JBScalableIcon)} to meet HiDPI.
    */
+  @NotNull
   public static EmptyIcon create(int size) {
     return create(size, size);
   }
@@ -54,6 +55,7 @@ import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
    *
    * Use {@link JBUI#scale(JBScalableIcon)} to meet HiDPI.
    */
+  @NotNull
   public static EmptyIcon create(int width, int height) {
     return create(width, height, true);
   }
@@ -61,6 +63,7 @@ import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
   /**
    * Creates an icon of the size of the provided icon base.
    */
+  @NotNull
   public static EmptyIcon create(@NotNull Icon base) {
     return create(base.getIconWidth(), base.getIconHeight());
   }
@@ -87,7 +90,7 @@ import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
     myUseCache = useCache;
   }
 
-  protected EmptyIcon(EmptyIcon icon) {
+  protected EmptyIcon(@NotNull EmptyIcon icon) {
     super(icon);
     width = icon.width;
     height = icon.height;
@@ -115,6 +118,7 @@ import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
     return (EmptyIcon)super.withIconPreScaled(preScaled);
   }
 
+  @NotNull
   private static EmptyIcon create(int width, int height, boolean preScaled) {
     Pair<Integer, Boolean> key = key(width, height, preScaled);
     EmptyIcon icon = key != null ? cache.get(key) : null;
@@ -165,12 +169,13 @@ import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
     return (int)result;
   }
 
+  @NotNull
   public EmptyIconUIResource asUIResource() {
     return new EmptyIconUIResource(this);
   }
 
   public static class EmptyIconUIResource extends EmptyIcon implements UIResource {
-    protected EmptyIconUIResource(EmptyIcon icon) {
+    EmptyIconUIResource(@NotNull EmptyIcon icon) {
       super(icon);
     }
 

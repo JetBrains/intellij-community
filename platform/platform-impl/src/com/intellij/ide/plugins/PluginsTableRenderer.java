@@ -182,7 +182,10 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
       }
       else if (!myPluginDescriptor.isEnabled() && myPluginsView) {
         // a plugin is disabled (plugins view only)
-        myStatus.setIcon(IconLoader.getDisabledIcon(myStatus.getIcon()));
+        Icon icon = myStatus.getIcon();
+        if (icon != null) {
+          myStatus.setIcon(IconLoader.getDisabledIcon(icon));
+        }
       }
       String pluginName = myPluginDescriptor.getName() + "  ";
       if (query instanceof String) {

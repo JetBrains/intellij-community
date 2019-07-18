@@ -996,10 +996,10 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       return this;
     }
 
-    private static String getPathToIcon(Icon value) {
+    private static String getPathToIcon(@NotNull Icon value) {
       if (value instanceof RetrievableIcon) {
         Icon icon = ((RetrievableIcon)value).retrieveIcon();
-        if (icon != null && icon != value) {
+        if (icon != value) {
           return getPathToIcon(icon);
         }
       }

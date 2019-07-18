@@ -136,7 +136,7 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
       Icon actionIcon = getIcon();
       if (!selectedActionEnabled()) {
         Icon disabledIcon = myPresentation.getDisabledIcon();
-        actionIcon = disabledIcon != null ? disabledIcon : IconLoader.getDisabledIcon(actionIcon);
+        actionIcon = disabledIcon != null || actionIcon == null ? disabledIcon : IconLoader.getDisabledIcon(actionIcon);
         if (actionIcon == null) {
           actionIcon = getFallbackIcon(false);
         }

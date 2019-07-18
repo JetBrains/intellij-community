@@ -128,7 +128,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     setEnabled(isEnabled());
   }
 
-  public void setButtonIcon(Icon icon) {
+  public void setButtonIcon(@NotNull Icon icon) {
     myBrowseButton.setIcon(icon);
     myBrowseButton.setDisabledIcon(IconLoader.getDisabledIcon(icon));
   }

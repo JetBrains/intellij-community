@@ -322,7 +322,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
     updateText();
     Icon icon = myDecorator.getToolWindow().getIcon();
     setIcon(icon);
-    setDisabledIcon(IconLoader.getDisabledIcon(icon));
+    setDisabledIcon(icon == null ? null : IconLoader.getDisabledIcon(icon));
   }
 
   private void updateText() {

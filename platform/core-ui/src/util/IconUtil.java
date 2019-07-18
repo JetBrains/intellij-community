@@ -572,8 +572,7 @@ public class IconUtil {
 
   @NotNull
   public static Icon colorize(@NotNull Icon source, @NotNull Color color, boolean keepGray) {
-    Icon icon = filterIcon(source, () -> new ColorFilter(color, keepGray), null);
-    return icon != null ? icon : getEmptyIcon(true);
+    return filterIcon(source, () -> new ColorFilter(color, keepGray), null);
   }
 
   @NotNull
@@ -581,17 +580,17 @@ public class IconUtil {
     return filterIcon(g, source, new ColorFilter(color, keepGray));
   }
 
-  @Nullable
+  @NotNull
   public static Icon desaturate(@NotNull Icon source) {
     return filterIcon(source, () -> new DesaturationFilter(), null);
   }
 
-  @Nullable
+  @NotNull
   public static Icon brighter(@NotNull Icon source, int tones) {
     return filterIcon(source, () -> new BrighterFilter(tones), null);
   }
 
-  @Nullable
+  @NotNull
   public static Icon darker(@NotNull Icon source, int tones) {
     return filterIcon(source, () -> new DarkerFilter(tones), null);
   }
@@ -781,7 +780,7 @@ public class IconUtil {
   /**
    * Creates new icon with the filter applied.
    */
-  @Nullable
+  @NotNull
   public static Icon filterIcon(@NotNull Icon icon, Supplier<? extends RGBImageFilter> filterSupplier, @Nullable Component ancestor) {
     return IconLoader.filterIcon(icon, filterSupplier, ancestor);
   }
@@ -818,12 +817,4 @@ public class IconUtil {
     return icon;
   }
 
-  /**
-   * Returns {@link ScaleContextSupport} which best represents this icon taking into account its compound structure,
-   * or null when not applicable.
-   */
-  @Nullable
-  public static ScaleContextSupport getScaleContextSupport(@Nullable Icon icon) {
-    return IconLoader.getScaleContextSupport(icon);
-  }
 }

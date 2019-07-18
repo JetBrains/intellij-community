@@ -2,7 +2,7 @@
 
 package com.intellij.ui;
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -14,6 +14,6 @@ public interface RetrievableIcon extends Icon {
   /**
    * Returns the wrapped icon.
    */
-  @Nullable
+  @NotNull
   Icon retrieveIcon();
 }

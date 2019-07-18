@@ -26,7 +26,7 @@ import java.util.List;
 
 public class NodeRenderer extends ColoredTreeCellRenderer {
   protected Icon fixIconIfNeeded(Icon icon, boolean selected, boolean hasFocus) {
-    if (!UIUtil.isUnderDarcula() && Registry.is("ide.project.view.change.icon.on.selection") && selected && hasFocus) {
+    if (!UIUtil.isUnderDarcula() && Registry.is("ide.project.view.change.icon.on.selection") && selected && hasFocus && icon != null) {
       return IconLoader.getDarkIcon(icon, true);
     }
     return icon;

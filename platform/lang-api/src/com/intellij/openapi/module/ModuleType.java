@@ -39,10 +39,12 @@ public abstract class ModuleType<T extends ModuleBuilder> {
   @Nls(capitalization = Nls.Capitalization.Sentence)
   public abstract String getDescription();
 
+  @NotNull
   public Icon getIcon() {
     return getNodeIcon(false);
   }
 
+  @NotNull
   public abstract Icon getNodeIcon(@Deprecated boolean isOpened);
 
   @NotNull

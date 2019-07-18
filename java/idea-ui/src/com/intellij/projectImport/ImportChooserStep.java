@@ -70,7 +70,7 @@ public class ImportChooserStep extends ProjectImportWizardStep {
         setText(((ProjectImportProvider)value).getName());
         Icon icon = ((ProjectImportProvider)value).getIcon();
         setIcon(icon);
-        setDisabledIcon(IconLoader.getDisabledIcon(icon));
+        setDisabledIcon(icon == null ? null : IconLoader.getDisabledIcon(icon));
         return rendererComponent;
       }
     });

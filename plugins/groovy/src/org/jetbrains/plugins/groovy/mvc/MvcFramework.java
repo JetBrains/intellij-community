@@ -348,8 +348,10 @@ public abstract class MvcFramework {
     return getFrameworkName();
   }
 
+  @NotNull
   public abstract Icon getIcon(); // 16*16
 
+  @NotNull
   public abstract Icon getToolWindowIcon(); // 13*13
 
   public abstract String getSdkHomePropertyName();

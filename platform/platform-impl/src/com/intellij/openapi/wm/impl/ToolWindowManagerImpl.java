@@ -45,6 +45,7 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EdtInvocationManager;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.PositionTracker;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -492,6 +493,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
           icon = IconLoader.getIcon(bean.icon);
         }
         catch (Exception ignored) {
+          icon = EmptyIcon.ICON_13;
         }
       }
       toolWindow.setIcon(icon);

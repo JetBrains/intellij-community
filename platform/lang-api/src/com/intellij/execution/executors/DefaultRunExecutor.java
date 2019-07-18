@@ -40,11 +40,13 @@ public class DefaultRunExecutor extends Executor {
     return ExecutionBundle.message("default.runner.start.action.text");
   }
 
+  @NotNull
   @Override
   public String getToolWindowId() {
     return ToolWindowId.RUN;
   }
 
+  @NotNull
   @Override
   public Icon getToolWindowIcon() {
     return AllIcons.Toolwindows.ToolWindowRun;

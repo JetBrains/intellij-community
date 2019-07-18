@@ -30,9 +30,10 @@ import javax.swing.*;
 public abstract class ServersToolWindowManager {
   @NotNull private final Project myProject;
   private final String myWindowId;
+  @NotNull
   private final Icon myIcon;
 
-  public ServersToolWindowManager(@NotNull Project project, String windowId, Icon icon) {
+  public ServersToolWindowManager(@NotNull Project project, String windowId, @NotNull Icon icon) {
     myProject = project;
     myWindowId = windowId;
     myIcon = icon;

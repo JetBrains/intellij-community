@@ -68,6 +68,7 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   }
 
   @Override
+  @NotNull
   public Icon getNodeIcon(boolean isOpened) {
     return getJavaModuleNodeIconClosed();
   }
@@ -79,6 +80,7 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
                                                                          moduleBuilder::isSuitableSdkType);
   }
 
+  @NotNull
   private static Icon getJavaModuleNodeIconClosed() {
     return AllIcons.Nodes.Module;
   }

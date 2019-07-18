@@ -158,8 +158,8 @@ public class ActionStepBuilder extends PresentationFactory {
         }
       }
       if (!enabled) {
-        icon = disabledIcon != null ? disabledIcon : IconLoader.getDisabledIcon(icon);
-        selectedIcon = disabledIcon != null ? disabledIcon : IconLoader.getDisabledIcon(selectedIcon);
+        icon = disabledIcon != null || icon == null ? disabledIcon : IconLoader.getDisabledIcon(icon);
+        selectedIcon = disabledIcon != null || selectedIcon == null ? disabledIcon : IconLoader.getDisabledIcon(selectedIcon);
       }
 
       if (myMaxIconWidth != -1 && myMaxIconHeight != -1) {

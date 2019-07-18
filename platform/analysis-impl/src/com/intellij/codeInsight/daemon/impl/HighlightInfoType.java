@@ -367,6 +367,7 @@ public interface HighlightInfoType {
 
   @FunctionalInterface
   interface Iconable {
+    @NotNull
     Icon getIcon();
   }
 

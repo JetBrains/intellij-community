@@ -13,7 +13,6 @@ import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -183,7 +182,7 @@ public final class ActionMenu extends JBMenu {
     if (settings != null && settings.getShowIconsInMenus()) {
       final Presentation presentation = myPresentation;
       Icon icon = presentation.getIcon();
-      if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
+      if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace) && icon != null) {
         // JDK can't paint correctly our HiDPI icons at the system menu bar
         icon = IconLoader.getMenuBarIcon(icon, myUseDarkIcons);
       }
@@ -192,7 +191,7 @@ public final class ActionMenu extends JBMenu {
         setDisabledIcon(presentation.getDisabledIcon());
       }
       else {
-        setDisabledIcon(IconLoader.getDisabledIcon(icon));
+        setDisabledIcon(icon == null ? null : IconLoader.getDisabledIcon(icon));
       }
     }
   }
