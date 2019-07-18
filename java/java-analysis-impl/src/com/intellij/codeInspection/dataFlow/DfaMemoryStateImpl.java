@@ -1506,8 +1506,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private boolean shouldMarkFlushed(@NotNull DfaVariableValue value) {
-    if (value.getInherentNullability() != Nullability.NULLABLE) return false;
-    return getVariableState(value).getFact(DfaFactType.NULLABILITY) == DfaNullability.FLUSHED || isNull(value) || isNotNull(value);
+    Nullability nullability = value.getInherentNullability();
+    PsiModifierListOwner variable = value.getPsiVariable();
+    return (nullability == Nullability.NULLABLE ||
+            nullability == Nullability.NOT_NULL && (variable instanceof PsiParameter || variable instanceof PsiLocalVariable)) &&
+           (getVariableState(value).getFact(DfaFactType.NULLABILITY) == DfaNullability.FLUSHED || isNull(value) || isNotNull(value));
   }
 
   @NotNull

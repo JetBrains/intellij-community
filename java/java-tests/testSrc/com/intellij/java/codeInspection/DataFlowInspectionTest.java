@@ -664,4 +664,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testEqualityLongInteger() { doTest(); }
   public void testFieldRewrittenInInner() { doTest(); }
   public void testArrayElementLocality() { doTest(); }
+  public void testOverwrittenParameter() { doTest(); }
 }
