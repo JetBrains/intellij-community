@@ -1,33 +1,15 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-
 /**
  * @author Sergey.Malenkov
  */
 public abstract class PublicMethodBasedOptionDescription extends BooleanOptionDescription {
   private static final Logger LOG = Logger.getInstance(PublicMethodBasedOptionDescription.class);
-
   private final String myGetterName;
   private final String mySetterName;
 
@@ -47,12 +29,10 @@ public abstract class PublicMethodBasedOptionDescription extends BooleanOptionDe
   public boolean isOptionEnabled() {
     Object instance = getInstance();
     try {
-      Method method = instance.getClass().getMethod(myGetterName);
-      Object object = method.invoke(instance);
-      return (object instanceof Boolean) && (Boolean)object;
+      return (Boolean)instance.getClass().getMethod(myGetterName).invoke(instance);
     }
-    catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException ignore) {
-      LOG.error(String.format("Method '%s' not found in %s", myGetterName, instance));
+    catch (Exception exception) {
+      LOG.error(String.format("Boolean getter '%s' not found in %s", myGetterName, instance), exception);
     }
     return false;
   }
@@ -61,11 +41,10 @@ public abstract class PublicMethodBasedOptionDescription extends BooleanOptionDe
   public void setOptionState(boolean enabled) {
     Object instance = getInstance();
     try {
-      Method method = instance.getClass().getMethod(mySetterName, boolean.class);
-      method.invoke(instance, Boolean.valueOf(enabled));
+      instance.getClass().getMethod(mySetterName, boolean.class).invoke(getInstance(), Boolean.valueOf(enabled));
     }
-    catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException ignore) {
-      LOG.error(String.format("Method '%s' not found in %s", mySetterName, instance));
+    catch (Exception exception) {
+      LOG.error(String.format("Boolean setter '%s' not found in %s", mySetterName, instance), exception);
     }
     fireUpdated();
   }

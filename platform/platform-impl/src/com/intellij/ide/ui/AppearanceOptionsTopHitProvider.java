@@ -61,7 +61,7 @@ public final class AppearanceOptionsTopHitProvider implements OptionsTopHitProvi
     return new PublicMethodBasedOptionDescription(option, configurableId, "get" + StringUtil.capitalize(propertyName), "set" + StringUtil.capitalize(propertyName)) {
       @Override
       public Object getInstance() {
-        return UISettings.getInstance();
+        return UISettings.getInstance().getState();
       }
 
       @Override

@@ -27,7 +27,7 @@ public final class EditorOptionsTopHitProvider implements OptionsTopHitProvider.
     editorApp("Appearance: Show trailing whitespaces", "IS_TRAILING_WHITESPACES_SHOWN"),
     editorApp("Appearance: Show vertical indent guides", "IS_INDENT_GUIDES_SHOWN"),
     editorTabs(messageApp("group.tab.closing.policy") + ": " +
-               messageApp("radio.close.non.modified.files.first"), "CLOSE_NON_MODIFIED_FILES_FIRST")
+               messageApp("radio.close.non.modified.files.first"), "closeNonModifiedFilesFirst")
   );
 
   @NotNull

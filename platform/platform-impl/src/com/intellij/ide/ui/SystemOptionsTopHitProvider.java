@@ -22,7 +22,7 @@ final class SystemOptionsTopHitProvider implements OptionsTopHitProvider.Applica
     ContainerUtil.concat(
       GeneralSettingsConfigurableKt.getAllOptionDescriptors(),
       Arrays.asList(
-        option(messageIde("checkbox.show.tips.on.startup"), "showTipsOnStartup", "setShowTipsOnStartup"),
+        option(messageIde("checkbox.show.tips.on.startup"), "isShowTipsOnStartup", "setShowTipsOnStartup"),
         option(messageIde("checkbox.support.screen.readers"), "isSupportScreenReaders", "setSupportScreenReaders"),
         option("Start search in background", "isSearchInBackground", "setSearchInBackground")
       )
