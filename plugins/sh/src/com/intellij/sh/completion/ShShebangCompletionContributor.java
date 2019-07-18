@@ -35,10 +35,11 @@ public class ShShebangCompletionContributor extends CompletionContributor implem
       CompletionResultSet resultSet = result.withPrefixMatcher(originalText);
 
       String defaultShell = EnvironmentUtil.getValue("SHELL");
-      if (defaultShell == null) return;
-      String defaultShebang = SHEBANG_PREFIX + defaultShell;
-      if (defaultShebang.startsWith(originalText)) {
-        resultSet.addElement(createLookupElement(defaultShebang, parameters, 10));
+      if (defaultShell != null) {
+        String defaultShebang = SHEBANG_PREFIX + defaultShell;
+        if (defaultShebang.startsWith(originalText)) {
+          resultSet.addElement(createLookupElement(defaultShebang, parameters, 10));
+        }
       }
 
       ACCEPTABLE_SHELLS.stream().map(shell -> SHEBANG_PREFIX + shell)
