@@ -62,6 +62,15 @@ public class VcsDirectoryMapping {
     return myDirectory;
   }
 
+  /**
+   * @deprecated Use {@link #getDirectory()}
+   */
+  @NotNull
+  @Deprecated
+  public String systemIndependentPath() {
+    return myDirectory;
+  }
+
   @Nullable
   public String getVcs() {
     return myVcs;
