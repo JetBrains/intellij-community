@@ -17,6 +17,8 @@ import com.intellij.openapi.vfs.*
 import com.intellij.ui.*
 import com.intellij.ui.components.labels.*
 import com.intellij.ui.treeStructure.*
+import com.intellij.ui.treeStructure.Tree
+import com.intellij.util.ui.*
 import com.intellij.util.ui.tree.*
 import libraries.klogging.*
 import runtime.async.*
@@ -138,7 +140,7 @@ class CircletScriptsViewFactory : KLogging() {
             }
         }
 
-        return ToolbarDecorator
+        val panel = ToolbarDecorator
             .createDecorator(tree)
             .addExtraAction(refreshAction)
             .addExtraAction(runAction)
@@ -146,6 +148,8 @@ class CircletScriptsViewFactory : KLogging() {
             .addExtraAction(collapseAllAction)
             .setToolbarPosition(ActionToolbarPosition.TOP)
             .createPanel()
+        panel.border = JBEmptyBorder(0)
+        return panel
     }
 
     private fun resetNodes(root: DefaultMutableTreeNode, model: ScriptViewModel?) {
