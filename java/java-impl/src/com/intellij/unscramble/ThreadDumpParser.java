@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.unscramble;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -135,18 +122,17 @@ public class ThreadDumpParser {
 
   private static int getInterestLevel(final ThreadState state) {
     if (state.isEmptyStackTrace()) return -10;
-    if (isKnownJdkThread(state)) return -5;
+    if (state.isKnownJDKThread()) return -5;
     if (state.isSleeping()) {
       return -2;
     }
     if (state.getOperation() == ThreadOperation.Socket) {
       return -1;
     }
-    return state.getStackTrace().split("\n").length;
+    return StringUtil.countNewLines(state.getStackTrace());
   }
 
-  public static boolean isKnownJdkThread(final ThreadState state) {
-    @NonNls String stackTrace = state.getStackTrace();
+  static boolean isKnownJdkThread(@NotNull String stackTrace) {
     return stackTrace.contains("java.lang.ref.Reference$ReferenceHandler.run") ||
         stackTrace.contains("java.lang.ref.Finalizer$FinalizerThread.run") ||
         stackTrace.contains("sun.awt.AWTAutoShutdown.run") ||

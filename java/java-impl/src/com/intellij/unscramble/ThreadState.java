@@ -29,6 +29,7 @@ public class ThreadState {
 
   @Nullable
   private ThreadOperation myOperation;
+  private boolean myKnownJDKThread;
 
   public ThreadState(final String name, final String state) {
     myName = name;
@@ -47,9 +48,14 @@ public class ThreadState {
     return myStackTrace;
   }
 
-  public void setStackTrace(final String stackTrace, boolean isEmpty) {
+  public void setStackTrace(@NotNull String stackTrace, boolean isEmpty) {
     myStackTrace = stackTrace;
     myEmptyStackTrace = isEmpty;
+    myKnownJDKThread = ThreadDumpParser.isKnownJdkThread(stackTrace);
+  }
+
+  public boolean isKnownJDKThread() {
+    return myKnownJDKThread;
   }
 
   public Collection<ThreadState> getAwaitingThreads() {
