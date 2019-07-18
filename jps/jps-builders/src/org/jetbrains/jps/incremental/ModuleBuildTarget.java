@@ -33,6 +33,7 @@ import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
+import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
@@ -249,11 +250,13 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     if (!isTests()) {
       enumerator = enumerator.productionOnly();
     }
+    if (ProjectStamps.USE_HASHES) {
+      enumerator = enumerator.withoutSdk();
+    }
 
-    for (File file : enumerator.classes().getRoots()) { // todo: what is JpsPathUtil.isJrtUrl(url)
+    for (File file : enumerator.classes().getRoots()) {
       String path = relativizer.toRelative(FileUtil.toSystemIndependentName(file.getAbsolutePath()));
-      // todo [jeka] what to do with tools.jar which is different on mac/linux/windows?
-      // Should we care about JDK for different machines?
+
       if (logBuilder != null) {
         logBuilder.append(path).append("\n");
       }
