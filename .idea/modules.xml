@@ -190,7 +190,7 @@
     <module old-name="log-events" new-name="intellij.statsCollector.logEvents" />
     <module old-name="lvcs-api" new-name="intellij.platform.lvcs" />
     <module old-name="lvcs-impl" new-name="intellij.platform.lvcs.impl" />
-    <module old-name="main_AndroidStudio" new-name="intellij.androidStudio.main" />
+    <module old-name="main_AndroidStudio" new-name="intellij.android.studio.main" />
     <module old-name="main_pycharm_ce" new-name="intellij.pycharm.community.main" />
     <module old-name="manifest" new-name="intellij.java.manifest" />
     <module old-name="maven" new-name="intellij.maven" />
@@ -390,12 +390,12 @@
       <module fileurl="file://$PROJECT_DIR$/android/rt/intellij.android.rt.iml" filepath="$PROJECT_DIR$/android/rt/intellij.android.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/sdk-updates/intellij.android.sdkUpdates.iml" filepath="$PROJECT_DIR$/android/sdk-updates/intellij.android.sdkUpdates.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/smali/intellij.android.smali.iml" filepath="$PROJECT_DIR$/android/smali/intellij.android.smali.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/android/intellij.android.studio.main.iml" filepath="$PROJECT_DIR$/android/android/intellij.android.studio.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-test-framework/intellij.android.testFramework.iml" filepath="$PROJECT_DIR$/android/android-test-framework/intellij.android.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/uitest-framework-bazel/intellij.android.uitestFramework.bazel.iml" filepath="$PROJECT_DIR$/android/uitest-framework-bazel/intellij.android.uitestFramework.bazel.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/whats-new-assistant/intellij.android.whatsNewAssistant.iml" filepath="$PROJECT_DIR$/android/whats-new-assistant/intellij.android.whatsNewAssistant.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/wizard/intellij.android.wizard.iml" filepath="$PROJECT_DIR$/android/wizard/intellij.android.wizard.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/wizard-model/intellij.android.wizard.model.iml" filepath="$PROJECT_DIR$/android/wizard-model/intellij.android.wizard.model.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/android/intellij.androidStudio.main.iml" filepath="$PROJECT_DIR$/android/android/intellij.androidStudio.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ant/intellij.ant.iml" filepath="$PROJECT_DIR$/plugins/ant/intellij.ant.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ant/jps-plugin/intellij.ant.jps.iml" filepath="$PROJECT_DIR$/plugins/ant/jps-plugin/intellij.ant.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/commander/intellij.commander.iml" filepath="$PROJECT_DIR$/plugins/commander/intellij.commander.iml" />
