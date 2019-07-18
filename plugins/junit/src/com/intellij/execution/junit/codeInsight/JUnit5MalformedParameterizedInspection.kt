@@ -6,7 +6,6 @@ import com.intellij.codeInsight.MetaAnnotationUtil
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodQuickFix
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix
-import com.intellij.codeInsight.daemon.quickFix.FileReferenceQuickFixProvider
 import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
@@ -150,15 +149,15 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
 
       private fun checkFileSource(methodSource: PsiAnnotation) {
         val annotationMemberValue = methodSource.findDeclaredAttributeValue("resources")
-        processArrayInAnnotationParameter(annotationMemberValue, { attributeValue ->
-          val refs = attributeValue.references.filter { it -> it is FileReference }
-          if (refs.find { reference -> reference.resolve() != null } == null) {
-            val reference = refs.first()
-            val fixes = if (reference != null) FileReferenceQuickFixProvider.registerQuickFix(reference as FileReference).toTypedArray()
-                        else emptyArray()
-            holder.registerProblem(attributeValue, "Cannot resolve file source: \'${attributeValue.text}\'", *fixes)
+        processArrayInAnnotationParameter(annotationMemberValue) { attributeValue ->
+          for (ref in attributeValue.references) {
+            if (ref.isSoft) continue
+            if (ref is FileReference && ref.multiResolve(false).isEmpty()) {
+              holder.registerProblem(ref.element, ref.rangeInElement,
+                                     "Cannot resolve file source: \'${attributeValue.text}\'", *ref.quickFixes)
+            }
           }
-        })
+        }
       }
 
       private fun checkMethodSource(method: PsiMethod, methodSource: PsiAnnotation) {
