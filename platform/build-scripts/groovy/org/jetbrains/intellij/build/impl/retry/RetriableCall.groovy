@@ -28,25 +28,25 @@ class RetriableCall {
         if (i == retries) {
           log.error("Failed all $retries attempts, see nested exception for details", e)
         }
-        if (i > 1) delayMs = backOff(delayMs, e)
-        log.info("Retry $i of $retries failed with '$e.message'. Retrying in ${delayMs}ms")
-        if (delayMs > 0) Thread.sleep(delayMs)
+        if (i > 1) delayMs = backOff(delayMs, i, e)
       }
     }
     log.error("Should not be reached") as T
   }
 
-  private long backOffLimitInMs = TimeUnit.MINUTES.toMillis(15)
+  private long backOffLimitMs = TimeUnit.MINUTES.toMillis(15)
   private int backOffFactor = 2
   private double backOffJitter = 0.1
   private Random random = new Random()
 
-  private long backOff(long delayMs, Exception cause) {
-    long nextDelay = Math.min(delayMs * backOffFactor, backOffLimitInMs)
-    if (delayMs > backOffLimitInMs) {
-      log.error("Back off limit ${backOffLimitInMs}ms exceeded, see nested exception for details", cause)
+  private long backOff(long delayMs, int attempt, Exception e) {
+    delayMs = Math.min(delayMs, backOffLimitMs)
+    def nextDelay = Math.min(delayMs * backOffFactor, backOffLimitMs) +
+                    (random.nextGaussian() * delayMs * backOffJitter).toLong()
+    if (nextDelay > 0) {
+      log.info("Attempt $attempt of $retries failed with '$e.message'. Retrying in ${nextDelay}ms")
+      Thread.sleep(nextDelay)
     }
-    nextDelay += (random.nextGaussian() * delayMs * backOffJitter).toLong()
     return nextDelay
   }
 }
