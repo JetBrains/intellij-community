@@ -420,8 +420,37 @@ public class ExpectedHighlightingData {
     }
 
     if (failMessage.length() > 0) {
-      fail(failMessage.toString());
+      String filePath = null;
+      if (myFile != null) {
+        VirtualFile file = myFile.getVirtualFile();
+        if (file != null) {
+          filePath = file.getUserData(VfsTestUtil.TEST_DATA_FILE_PATH);
+        }
+      }
+      throw new FileComparisonFailure(failMessage.toString(), myText, getActualLineMarkerFileText(markerInfos), filePath);
     }
+  }
+
+  @NotNull
+  private String getActualLineMarkerFileText(@NotNull Collection<? extends LineMarkerInfo> markerInfos) {
+    StringBuilder result = new StringBuilder();
+    int index = 0;
+    List<LineMarkerInfo> lineMarkerInfos = markerInfos
+      .stream()
+      .sorted(Comparator.comparingInt(o -> o.startOffset))
+      .collect(Collectors.toList());
+    String documentText = myDocument.getText();
+    for (LineMarkerInfo expectedLineMarker : lineMarkerInfos) {
+      result.append(documentText, index, expectedLineMarker.startOffset);
+      result.append("<lineMarker descr=\"");
+      result.append(expectedLineMarker.getLineMarkerTooltip());
+      result.append("\">");
+      result.append(documentText, expectedLineMarker.startOffset, expectedLineMarker.endOffset);
+      result.append("</lineMarker>");
+      index = expectedLineMarker.endOffset;
+    }
+    result.append(documentText, index, myDocument.getTextLength());
+    return result.toString();
   }
 
   private static boolean containsLineMarker(LineMarkerInfo info, Collection<? extends LineMarkerInfo> where) {
