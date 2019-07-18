@@ -238,8 +238,8 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     return editor == null ? null : editor.getUserData(LISTENER_KEY);
   }
 
-  static void install(Editor editor, @Nullable Consumer<? super String> currentVariableCallback, Disposable disposable) {
-    install(editor, currentVariableCallback, disposable, false);
+  static void install(Editor editor, Disposable disposable) {
+    install(editor, null, disposable, false);
   }
 
   static void install(Editor editor, @Nullable Consumer<? super String> currentVariableCallback, Disposable disposable, boolean replace) {
@@ -248,6 +248,13 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     editor.getDocument().addDocumentListener(handler, disposable);
     editor.getCaretModel().addCaretListener(handler, disposable);
     editor.putUserData(LISTENER_KEY, handler);
+  }
+
+  static void updateEditorInlays(Editor editor) {
+    final SubstitutionShortInfoHandler handler = retrieve(editor);
+    if (handler != null) {
+      handler.updateEditorInlays();
+    }
   }
 
   void updateEditorInlays() {

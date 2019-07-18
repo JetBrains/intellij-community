@@ -299,10 +299,8 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     final CompiledPattern compiledPattern = PatternCompiler.compilePattern(getProject(), matchOptions, false, false);
     ApplicationManager.getApplication().invokeLater(() -> {
       if (compiledPattern != null) {
-        final SubstitutionShortInfoHandler handler = SubstitutionShortInfoHandler.retrieve(mySearchCriteriaEdit.getEditor());
-        if (handler != null) {
-          handler.updateEditorInlays();
-        }
+        SubstitutionShortInfoHandler.updateEditorInlays(mySearchCriteriaEdit.getEditor());
+        if (myReplace) SubstitutionShortInfoHandler.updateEditorInlays(myReplaceCriteriaEdit.getEditor());
         myFilterPanel.setCompiledPattern(compiledPattern);
       }
       if (!myFilterPanel.isInitialized()) {

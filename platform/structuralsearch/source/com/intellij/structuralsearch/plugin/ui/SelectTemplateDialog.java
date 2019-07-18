@@ -118,12 +118,12 @@ public class SelectTemplateDialog extends DialogWrapper {
     splitter.setSecondComponent(panel = new JPanel(new BorderLayout()));
 
     searchPatternEditor = UIUtil.createEditor(EditorFactory.getInstance().createDocument(""), project, false, null);
-    SubstitutionShortInfoHandler.install(searchPatternEditor, null, myDisposable);
+    SubstitutionShortInfoHandler.install(searchPatternEditor, myDisposable);
 
     final JComponent centerComponent;
     if (replace) {
       replacePatternEditor = UIUtil.createEditor(EditorFactory.getInstance().createDocument(""), project, false, null);
-      SubstitutionShortInfoHandler.install(replacePatternEditor, null, myDisposable);
+      SubstitutionShortInfoHandler.install(replacePatternEditor, myDisposable);
       centerComponent = new Splitter(true);
       ((Splitter)centerComponent).setFirstComponent(searchPatternEditor.getComponent());
       ((Splitter)centerComponent).setSecondComponent(replacePatternEditor.getComponent());
