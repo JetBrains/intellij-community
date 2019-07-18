@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
@@ -31,23 +32,19 @@ public class EventLogWhitelistPersistence {
   }
 
   @NotNull
-  private File getWhiteListCacheDirectory() {
-    return Paths.get(PathManager.getConfigPath()).resolve(FUS_WHITELIST_PATH + "/" + StringUtil.toLowerCase(myRecorderId) + "/").toFile();
-  }
-
-  @NotNull
-  private File getFileInWhiteListCacheDirectory(@NotNull String fileName) {
-    return new File(getWhiteListCacheDirectory(), "/" + fileName);
-  }
-
-  @NotNull
-  File getWhiteListFile() {
-    return getFileInWhiteListCacheDirectory(WHITE_LIST_DATA_FILE);
+  File getWhiteListFile() throws IOException {
+    Path configPath = Paths.get(PathManager.getConfigPath());
+    Path whiteListCacheDirectory = configPath
+      .resolve(FUS_WHITELIST_PATH)
+      .resolve(StringUtil.toLowerCase(myRecorderId));
+    return whiteListCacheDirectory
+      .resolve(WHITE_LIST_DATA_FILE)
+      .toFile().getCanonicalFile();
   }
 
   public void cacheWhiteList(@NotNull String gsonWhiteListContent, long lastModified) {
-    File file = getWhiteListFile();
     try {
+      File file = getWhiteListFile();
       FileUtil.writeToFile(file, gsonWhiteListContent);
       EventLogWhitelistSettingsPersistence.getInstance().setLastModified(myRecorderId, lastModified);
     } catch (IOException e) {
@@ -57,8 +54,8 @@ public class EventLogWhitelistPersistence {
 
   @Nullable
   public String getCachedWhiteList() {
-    File file = getWhiteListFile();
     try {
+      File file = getWhiteListFile();
       if (!file.exists()) initBuiltinWhiteList(file);
       if (file.exists()) return FileUtil.loadFile(file);
     }
