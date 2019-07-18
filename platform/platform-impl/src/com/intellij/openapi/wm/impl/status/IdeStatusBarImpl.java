@@ -132,7 +132,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   private IdeStatusBarImpl(@NotNull IdeFrame frame, boolean addToolWindowsWidget) {
     myFrame = frame;
     setLayout(new BorderLayout());
-    setBorder(JBUI.Borders.empty());
+    setBorder(BorderFactory.createEmptyBorder(1, 0, 0, 6));
 
     myInfoAndProgressPanel = new InfoAndProgressPanel();
     addWidget(myInfoAndProgressPanel, Position.CENTER);
