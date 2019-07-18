@@ -684,15 +684,15 @@ public class ExternalSystemApiUtil {
                                @NotNull ProjectSystemId systemId,
                                @NotNull ExternalSystemSettingsListener listener) {
     //noinspection unchecked
-    getSettings(project, systemId).subscribe(project, listener);
+    getSettings(project, systemId).subscribe(listener, project);
   }
 
   public static void subscribe(@NotNull Project project,
                                @NotNull ProjectSystemId systemId,
-                               @NotNull Disposable subscription,
-                               @NotNull ExternalSystemSettingsListener listener) {
+                               @NotNull ExternalSystemSettingsListener listener,
+                               @NotNull Disposable parentDisposable) {
     //noinspection unchecked
-    getSettings(project, systemId).subscribe(subscription, listener);
+    getSettings(project, systemId).subscribe(listener, parentDisposable);
   }
 
   @NotNull

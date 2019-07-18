@@ -71,15 +71,21 @@ public abstract class AbstractExternalSystemSettings<
    * <p/>
    * That's why this method allows to wrap given 'generic listener' into external system-specific one.
    *
-   * @param subscription is a disposable to unsubscribe from external system settings events
    * @param listener  target generic listener to wrap to external system-specific implementation
+   * @param parentDisposable is a disposable to unsubscribe from external system settings events
+   *
+   * @abstract at 2021
    */
-  public void subscribe(@NotNull Disposable subscription, @NotNull ExternalSystemSettingsListener<PS> listener) {
-    subscribe(listener);
+  public void subscribe(@NotNull ExternalSystemSettingsListener<PS> listener, @NotNull Disposable parentDisposable) {
+    //noinspection deprecation
+    subscribe(listener); // Api backward compatibility
   }
 
   /**
-   * @deprecated use {@link AbstractExternalSystemSettings#subscribe(Disposable, ExternalSystemSettingsListener)} instead
+   * @deprecated use/implements {@link AbstractExternalSystemSettings#subscribe(ExternalSystemSettingsListener, Disposable)} instead
+   * @remove at 2021
+   *
+   * @see AbstractExternalSystemSettings#subscribe(ExternalSystemSettingsListener, Disposable)
    */
   @Deprecated
   public abstract void subscribe(@NotNull ExternalSystemSettingsListener<PS> listener);
@@ -87,10 +93,10 @@ public abstract class AbstractExternalSystemSettings<
   /**
    * Generic subscribe implementation
    *
-   * @see AbstractExternalSystemSettings#subscribe(Disposable, ExternalSystemSettingsListener)
+   * @see AbstractExternalSystemSettings#subscribe(ExternalSystemSettingsListener, Disposable)
    */
-  protected void doSubscribe(@NotNull Disposable subscription, @NotNull L listener) {
-    getProject().getMessageBus().connect(subscription).subscribe(getChangesTopic(), listener);
+  protected void doSubscribe(@NotNull L listener, @NotNull Disposable parentDisposable) {
+    getProject().getMessageBus().connect(parentDisposable).subscribe(getChangesTopic(), listener);
   }
 
   public void copyFrom(@NotNull SS settings) {
