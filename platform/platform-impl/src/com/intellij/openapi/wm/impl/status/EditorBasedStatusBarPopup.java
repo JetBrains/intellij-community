@@ -21,6 +21,10 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileListener;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
+import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
@@ -29,6 +33,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -41,13 +46,22 @@ import java.lang.ref.WeakReference;
 
 public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implements StatusBarWidget.Multiframe, CustomStatusBarWidget {
   private final TextPanel.WithIconAndArrows myComponent;
+  private final boolean myWriteableFileRequired;
   private boolean actionEnabled;
   private final Alarm update;
   // store editor here to avoid expensive and EDT-only getSelectedEditor() retrievals
   private volatile Reference<Editor> myEditor = new WeakReference<>(null);
 
-  public EditorBasedStatusBarPopup(@NotNull Project project) {
+  /**
+   * @deprecated use this{@link #EditorBasedStatusBarPopup(Project,boolean)}
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  public EditorBasedStatusBarPopup(@NotNull Project project) {this(project, false);}
+
+  public EditorBasedStatusBarPopup(@NotNull Project project, boolean writeableFileRequired) {
     super(project);
+    myWriteableFileRequired = writeableFileRequired;
     update = new Alarm(this);
     myComponent = new TextPanel.WithIconAndArrows();
     myComponent.setVisible(false);
@@ -68,9 +82,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     VirtualFile newFile = event.getNewFile();
 
-    Project project = getProject();
-    assert project != null;
-    FileEditor fileEditor = newFile == null ? null : FileEditorManager.getInstance(project).getSelectedEditor(newFile);
+    FileEditor fileEditor = newFile == null ? null : FileEditorManager.getInstance(getProject()).getSelectedEditor(newFile);
     Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
     myEditor = new WeakReference<>(editor);
 
@@ -117,6 +129,17 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
         updateForDocument(document);
       }
     }, this);
+    if (myWriteableFileRequired) {
+      ApplicationManager.getApplication().getMessageBus().connect(this)
+        .subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileListener() {
+          @Override
+          public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
+            if (VirtualFile.PROP_WRITABLE.equals(event.getPropertyName())) {
+              updateForFile(event.getFile());
+            }
+          }
+        }));
+    }
   }
 
   protected void updateForDocument(@Nullable("null means update anyway") Document document) {

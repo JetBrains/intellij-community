@@ -44,14 +44,14 @@ class PySwitchSdkAction : AnAction("Switch Project Interpreter", null, null) {
   }
 }
 
-private class PySdkStatusBar(project: Project) : EditorBasedStatusBarPopup(project) {
+private class PySdkStatusBar(project: Project) : EditorBasedStatusBarPopup(project, false) {
 
   private var module: Module? = null
 
   override fun getWidgetState(file: VirtualFile?): WidgetState {
     if (file == null) return WidgetState.HIDDEN
 
-    module = ModuleUtil.findModuleForFile(file, project!!) ?: return WidgetState.HIDDEN
+    module = ModuleUtil.findModuleForFile(file, project) ?: return WidgetState.HIDDEN
 
     val sdk = PythonSdkType.findPythonSdk(module)
     return if (sdk == null) {
@@ -63,7 +63,7 @@ private class PySdkStatusBar(project: Project) : EditorBasedStatusBarPopup(proje
   }
 
   override fun registerCustomListeners() {
-    project!!
+    project
       .messageBus
       .connect(this)
       .subscribe(
@@ -74,7 +74,7 @@ private class PySdkStatusBar(project: Project) : EditorBasedStatusBarPopup(proje
       )
   }
 
-  override fun createPopup(context: DataContext): ListPopup? = module?.let { PySdkPopupFactory(project!!, it).createPopup(context) }
+  override fun createPopup(context: DataContext): ListPopup? = module?.let { PySdkPopupFactory(project, it).createPopup(context) }
 
   override fun ID(): String = "PythonInterpreter"
 
