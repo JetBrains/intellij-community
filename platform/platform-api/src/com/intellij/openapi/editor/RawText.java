@@ -49,11 +49,11 @@ public class RawText implements Cloneable, Serializable {
     if (ourFlavor != null) return ourFlavor;
 
     try {
-      DataFlavor flavor = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + RawText.class.getName(), "Raw Text");
+      DataFlavor flavor = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + RawText.class.getName(), "Raw Text", RawText.class.getClassLoader());
       ourFlavor = flavor;
       return flavor;
     }
-    catch (NoClassDefFoundError | IllegalArgumentException ignore) { }
+    catch (NoClassDefFoundError | IllegalArgumentException | ClassNotFoundException ignore) { }
 
     return null;
   }
