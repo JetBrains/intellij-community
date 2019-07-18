@@ -140,8 +140,8 @@ public class DefaultActionGroup extends ActionGroup {
     if (action == this) throw new IllegalArgumentException(CANT_ADD_ITSELF + action);
     // Check that action isn't already registered
     if (!(action instanceof Separator) && containsAction(action)) {
-      LOG.error(CANT_ADD_ACTION_TWICE + action);
-      return new ActionInGroup(this, action);
+      String id = actionManager.getId(action);
+      remove(action, id);
     }
 
     constraint = (Constraints)constraint.clone();
