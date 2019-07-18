@@ -444,10 +444,9 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
         if (info == null) return;
         Point newMouseLocation = info.getLocation();
 
-        Point newLocation = myDragTracker.get().updateLocationOnDrag();
-        if (newLocation != null) {
-          Window window = SwingUtilities.windowForComponent(c);
-          window.setLocation(newLocation);
+        Window window = SwingUtilities.windowForComponent(c);
+        if (!(window instanceof IdeFrame)) {
+          myDragTracker.get().updateLocationOnDrag(window);
         }
         myLastPoint.set(newMouseLocation);
         Component component = getActualSplitter();

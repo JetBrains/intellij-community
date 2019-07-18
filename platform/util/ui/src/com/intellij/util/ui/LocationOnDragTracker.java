@@ -37,12 +37,11 @@ public class LocationOnDragTracker {
   }
 
   /**
-   * Updates and returns new location on drag progress.
+   * Updates the location of the dragged component on drag progress.
    */
-  @Nullable
-  public Point updateLocationOnDrag() {
+  public void updateLocationOnDrag(@NotNull Component draggedComp) {
     PointerInfo mouseInfo = MouseInfo.getPointerInfo();
-    if (mouseInfo == null) return null;
+    if (mouseInfo == null) return;
 
     Point mouseLocation = mouseInfo.getLocation();
     Point offsetXY = myOffsetXY.getLocation();
@@ -62,6 +61,6 @@ public class LocationOnDragTracker {
     }
     Point newLocation = mouseLocation.getLocation();
     newLocation.translate(-offsetXY.x, -offsetXY.y);
-    return newLocation;
+    draggedComp.setLocation(newLocation);
   }
 }
