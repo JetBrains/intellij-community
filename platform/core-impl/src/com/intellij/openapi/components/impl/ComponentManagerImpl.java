@@ -110,21 +110,23 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     myComponentConfigCount = componentConfigCount;
   }
 
-  protected final void init(@Nullable ProgressIndicator indicator, @Nullable Runnable componentsRegistered) {
+  protected final void createComponents(@Nullable ProgressIndicator indicator) {
     LOG.assertTrue(!myComponentsCreated);
 
+    if (indicator != null) {
+      indicator.setIndeterminate(false);
+    }
+
     String activityNamePrefix = activityNamePrefix();
-    boolean isNeededToMeasure = activityNamePrefix != null;
-    if (componentsRegistered != null) {
-      Activity activity = isNeededToMeasure ? StartUpMeasurer.start(activityNamePrefix + Phases.COMPONENTS_REGISTERED_CALLBACK_SUFFIX) : null;
-      componentsRegistered.run();
-      if (activity != null) {
-        activity.end();
+    Activity activity = activityNamePrefix == null ? null : StartUpMeasurer.start(activityNamePrefix + Phases.CREATE_COMPONENTS_SUFFIX);
+
+    DefaultPicoContainer picoContainer = (DefaultPicoContainer)getPicoContainer();
+    for (ComponentAdapter componentAdapter : picoContainer.getComponentAdapters()) {
+      if (componentAdapter instanceof ComponentConfigComponentAdapter) {
+        ((ComponentConfigComponentAdapter)componentAdapter).getComponentInstance(picoContainer, indicator);
       }
     }
 
-    Activity activity = isNeededToMeasure ? StartUpMeasurer.start(activityNamePrefix + Phases.CREATE_COMPONENTS_SUFFIX) : null;
-    createComponents(indicator);
     if (activity != null) {
       activity.end();
     }
@@ -141,18 +143,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   protected final double getPercentageOfComponentsLoaded() {
     return (double)myInstantiatedComponentCount / myComponentConfigCount;
-  }
-
-  protected void createComponents(@Nullable ProgressIndicator indicator) {
-    DefaultPicoContainer picoContainer = (DefaultPicoContainer)getPicoContainer();
-    for (ComponentAdapter componentAdapter : picoContainer.getComponentAdapters()) {
-      if (componentAdapter instanceof ComponentConfigComponentAdapter) {
-        componentAdapter.getComponentInstance(picoContainer);
-        if (indicator != null) {
-          indicator.checkCanceled();
-        }
-      }
-    }
   }
 
   @NotNull
@@ -469,6 +459,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
     @Override
     public Object getComponentInstance(@NotNull PicoContainer picoContainer) {
+      return getComponentInstance(picoContainer, null);
+    }
+
+    Object getComponentInstance(@NotNull PicoContainer picoContainer, @Nullable ProgressIndicator indicator) {
       Object instance = myInitializedComponentInstance;
       // getComponent could be called during some component.dispose() call, in this case we don't attempt to instantiate component
       if (instance != null || myDisposed) {
@@ -500,9 +494,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
             myInitializing = true;
             registerComponentInstance(instance);
 
-            ProgressIndicator indicator = getProgressIndicator();
             if (indicator != null) {
-              indicator.setIndeterminate(false);
               indicator.checkCanceled();
               setProgressDuringInit(indicator);
             }

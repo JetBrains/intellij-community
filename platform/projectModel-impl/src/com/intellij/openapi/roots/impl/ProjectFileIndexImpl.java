@@ -94,7 +94,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   @Override
   public Module getModuleForFile(@NotNull VirtualFile file, boolean honorExclusion) {
     if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
-    if (file instanceof BackedVirtualFile) file = ((BackedVirtualFile)file).getOriginFile();
+    file = BackedVirtualFile.getOriginFileIfBacked(file);
     DirectoryInfo info = getInfoForFileOrDirectory(file);
     if (info.isInProject(file) || !honorExclusion && info.isExcluded(file)) {
       return info.getModule();

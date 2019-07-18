@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.ui;
 
 import com.intellij.debugger.DebuggerManager;
@@ -9,7 +9,6 @@ import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
-import com.intellij.debugger.memory.agent.MemoryAgent;
 import com.intellij.debugger.memory.agent.MemoryAgentUtil;
 import com.intellij.debugger.memory.filtering.FilteringResult;
 import com.intellij.debugger.memory.filtering.FilteringTask;
@@ -30,6 +29,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -82,7 +82,7 @@ class InstancesView extends InstancesViewBase {
   private volatile MyFilteringWorker myFilteringTask = null;
 
   InstancesView(@NotNull XDebugSession session, InstancesProvider instancesProvider, String className, Consumer<? super String> warningMessageConsumer) {
-    super(new BorderLayout(0, JBUI.scale(BORDER_LAYOUT_DEFAULT_GAP)), session, instancesProvider);
+    super(new BorderLayout(0, JBUIScale.scale(BORDER_LAYOUT_DEFAULT_GAP)), session, instancesProvider);
     myClassName = className;
     myDebugProcess = (DebugProcessImpl) (DebuggerManager.getInstance(session.getProject()).getDebugProcess(session.getDebugProcess().getProcessHandler()));
     myNodeManager = new MyNodeManager(session.getProject());
@@ -94,11 +94,11 @@ class InstancesView extends InstancesViewBase {
       editorsProvider, this);
 
     final Dimension filteringButtonSize = myFilterConditionEditor.getEditorComponent().getPreferredSize();
-    filteringButtonSize.width = JBUI.scale(FILTERING_BUTTON_ADDITIONAL_WIDTH) +
-      getFilterButton().getPreferredSize().width;
+    filteringButtonSize.width = JBUIScale.scale(FILTERING_BUTTON_ADDITIONAL_WIDTH) +
+                                getFilterButton().getPreferredSize().width;
     getFilterButton().setPreferredSize(filteringButtonSize);
 
-    final JBPanel filteringPane = new JBPanel(new BorderLayout(JBUI.scale(BORDER_LAYOUT_DEFAULT_GAP), 0));
+    final JBPanel filteringPane = new JBPanel(new BorderLayout(JBUIScale.scale(BORDER_LAYOUT_DEFAULT_GAP), 0));
     final JBLabel sideEffectsWarning = new JBLabel("Warning: filtering may have side effects", SwingConstants.RIGHT);
     sideEffectsWarning.setBorder(JBUI.Borders.emptyTop(1));
     sideEffectsWarning.setComponentStyle(UIUtil.ComponentStyle.SMALL);

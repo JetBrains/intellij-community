@@ -10,7 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.util.Bitness;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Version;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +22,7 @@ import java.io.File;
 
 public class JdkBundle {
   private static final String BUNDLED_JDK_DIR_NAME =
-    SystemInfoRt.isMac ? "jdk" : SystemInfo.is64Bit ? "jre64" : SystemInfoRt.isWindows ? "jre32" : "jre";
+    SystemInfo.isMac ? "jdk" : SystemInfo.is64Bit ? "jre64" : SystemInfo.isWindows ? "jre32" : "jre";
 
   private final File myLocation;
   private final JdkVersionInfo myVersionInfo;
@@ -69,15 +69,15 @@ public class JdkBundle {
     if (myBoot) return true;
 
     File home = myLocation;
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       File contents = new File(home, "Contents/Home");
       if (contents.isDirectory()) {
         home = contents;
       }
     }
-    File javaPath = new File(home, SystemInfoRt.isWindows ? "bin\\java.exe" : "bin/java");
+    File javaPath = new File(home, SystemInfo.isWindows ? "bin\\java.exe" : "bin/java");
     if (!javaPath.isFile()) {
-      javaPath = new File(home, SystemInfoRt.isWindows ? "jre\\bin\\java.exe" : "jre/bin/java");
+      javaPath = new File(home, SystemInfo.isWindows ? "jre\\bin\\java.exe" : "jre/bin/java");
     }
 
     try {
@@ -118,7 +118,7 @@ public class JdkBundle {
     }
 
     File actualHome = bundleHome;
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       if (actualHome.getName().equals("Home") && actualHome.getParentFile().getName().equals("Contents")) {
         bundleHome = actualHome.getParentFile().getParentFile();
       }
@@ -207,7 +207,7 @@ public class JdkBundle {
   /** @deprecated use {@link #createBundled()} (to be removed in IDEA 2019) */
   @Deprecated
   public static File getBundledJDKAbsoluteLocation() {
-    return new File(PathManager.getHomePath(), SystemInfoRt.isMac ? "jdk" : "jre");
+    return new File(PathManager.getHomePath(), SystemInfo.isMac ? "jdk" : "jre");
   }
 
   /** @deprecated use {@link SystemInfo#is64Bit} (to be removed in IDEA 2019) */

@@ -4,7 +4,7 @@ package com.intellij.ui;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.SmartList;
@@ -80,7 +80,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   }
 
   public ToolbarDecorator initPosition() {
-    setToolbarPosition(SystemInfoRt.isMac ? ActionToolbarPosition.BOTTOM : ActionToolbarPosition.RIGHT);
+    setToolbarPosition(SystemInfo.isMac ? ActionToolbarPosition.BOTTOM : ActionToolbarPosition.RIGHT);
     return this;
   }
 

@@ -198,7 +198,9 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
         () -> refResult.set(prepareAndOpenProject(virtualFile, options, finalBaseDir, finalDummyProject, finalDummyProjectName)),
         "Loading Project...", true, null, frame.getComponent()
       );
-      if (progressCompleted) result = refResult.get();
+      if (progressCompleted) {
+        result = refResult.get();
+      }
     }
 
     if (result == null || result.first == null) {

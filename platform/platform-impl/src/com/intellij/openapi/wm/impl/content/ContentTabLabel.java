@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.DataManager;
@@ -15,6 +15,7 @@ import com.intellij.ui.EngravedTextGraphics;
 import com.intellij.ui.Gray;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.JBUI;
@@ -32,9 +33,9 @@ import java.util.Map;
 import java.util.Optional;
 
 class ContentTabLabel extends BaseLabel {
-  private static final int MAX_WIDTH = JBUI.scale(300);
-  private static final int DEFAULT_HORIZONTAL_INSET = JBUI.scale(12);
-  private static final int ICONS_GAP = JBUI.scale(3);
+  private static final int MAX_WIDTH = JBUIScale.scale(300);
+  private static final int DEFAULT_HORIZONTAL_INSET = JBUIScale.scale(12);
+  private static final int ICONS_GAP = JBUIScale.scale(3);
 
   private final ActiveIcon myCloseIcon = new ActiveIcon(JBUI.CurrentTheme.ToolWindow.closeTabIcon(true),
                                                         JBUI.CurrentTheme.ToolWindow.closeTabIcon(false));
@@ -283,7 +284,7 @@ class ContentTabLabel extends BaseLabel {
 
     int right = DEFAULT_HORIZONTAL_INSET;
     if (map.get(true) != null) {
-      right = ICONS_GAP + JBUI.scale(4);
+      right = ICONS_GAP + JBUIScale.scale(4);
 
       for (AdditionalIcon icon : map.get(true)) {
         icon.setX(iconWidth + size.width + ICONS_GAP - right);

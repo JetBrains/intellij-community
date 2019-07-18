@@ -16,11 +16,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
-import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.sun.jna.Callback;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,7 +36,7 @@ public final class MacOSApplicationProvider {
   private MacOSApplicationProvider() { }
 
   public static void initApplication() {
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       try {
         Worker.initMacApplication();
       }
@@ -80,8 +79,6 @@ public final class MacOSApplicationProvider {
       if (JnaLoader.isLoaded()) {
         installAutoUpdateMenu();
       }
-
-      TouchBarsManager.onApplicationInitialized();
     }
 
     private static void installAutoUpdateMenu() {

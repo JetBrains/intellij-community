@@ -14,7 +14,6 @@ import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.util.containers.ContainerUtil.concat
 import com.intellij.util.ui.UIUtil.removeMnemonic
-import com.intellij.vcsUtil.VcsImplUtil.isNonModalCommit
 
 private val LOG = logger<AbstractCommonCheckinAction>()
 
@@ -76,7 +75,7 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
     return DescindingFilesFilter.filterDescindingFiles(roots, project)
   }
 
-  protected open fun isForceUpdateNotEmptyCommitState(): Boolean = false
+  protected open fun isForceUpdateCommitStateFromContext(): Boolean = false
 
   protected open fun performCheckIn(context: VcsContext, project: Project, roots: Array<FilePath>) {
     LOG.debug("invoking commit dialog after update")
@@ -85,7 +84,7 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
     val selectedUnversioned = context.selectedUnversionedFiles
     val initialChangeList = getInitiallySelectedChangeList(context, project)
     val changesToCommit: Collection<Change>
-    val included: Collection<*>
+    val included: Collection<Any>
 
     if (selectedChanges.isNullOrEmpty() && selectedUnversioned.isEmpty()) {
       changesToCommit = getChangesIn(project, roots)
@@ -97,10 +96,10 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
     }
 
     val executor = getExecutor(project)
-    if (executor == null && isNonModalCommit()) {
-      val workflowHandler = (ChangesViewManager.getInstance(project) as? ChangesViewManager)?.commitWorkflowHandler
-      workflowHandler?.run {
-        setCommitState(included, isForceUpdateNotEmptyCommitState())
+    val workflowHandler = (ChangesViewManager.getInstance(project) as? ChangesViewManager)?.commitWorkflowHandler
+    if (executor == null && workflowHandler != null) {
+      workflowHandler.run {
+        setCommitState(included, isForceUpdateCommitStateFromContext())
         activate()
       }
     }

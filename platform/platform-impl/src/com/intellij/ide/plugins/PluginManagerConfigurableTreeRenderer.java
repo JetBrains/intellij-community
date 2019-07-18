@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.plugins.newui.PluginUpdatesService;
@@ -8,8 +8,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AncestorListenerAdapter;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.treeStructure.SimpleTree;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +43,7 @@ public class PluginManagerConfigurableTreeRenderer extends AncestorListenerAdapt
 
       return Pair.create(myCountLabel, (renderer, bounds, text, right, textBaseline) -> {
         Dimension size = renderer.getPreferredSize();
-        int x = right.x - JBUI.scale(2) + (right.width - size.width) / 2;
+        int x = right.x - JBUIScale.scale(2) + (right.width - size.width) / 2;
         int y = bounds.y + textBaseline - renderer.getBaseline(size.width, size.height);
         renderer.setBounds(x, y, size.width, size.height);
       });

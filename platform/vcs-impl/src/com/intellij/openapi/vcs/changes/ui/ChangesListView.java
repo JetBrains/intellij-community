@@ -55,9 +55,6 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
     super(project, showCheckboxes, true);
 
     setDragEnabled(true);
-    if (showCheckboxes) {
-      setInclusionHashingStrategy(ChangeListChange.HASHING_STRATEGY);
-    }
   }
 
   @Override

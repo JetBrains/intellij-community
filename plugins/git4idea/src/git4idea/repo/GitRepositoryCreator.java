@@ -17,6 +17,7 @@ package git4idea.repo;
 
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryCreator;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,9 +35,9 @@ public class GitRepositoryCreator extends VcsRepositoryCreator {
 
   @Override
   @Nullable
-  public Repository createRepositoryIfValid(@NotNull VirtualFile root) {
+  public Repository createRepositoryIfValid(@NotNull VirtualFile root, @NotNull Disposable parentDisposable) {
     VirtualFile gitDir = GitUtil.findGitDir(root);
-    return gitDir == null ? null : GitRepositoryImpl.getInstance(root, gitDir, myProject, true);
+    return gitDir == null ? null : GitRepositoryImpl.getInstance(root, gitDir, myProject, parentDisposable, true);
   }
 
   @NotNull

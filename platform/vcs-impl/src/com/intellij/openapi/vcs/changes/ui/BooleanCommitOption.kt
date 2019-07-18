@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.ide.ui.UISettings
@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.disableWhenDumb
 import com.intellij.openapi.vcs.configurable.CommitOptionsConfigurable
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.vcs.commit.isNonModalCommit
 import java.util.function.Consumer
 import javax.swing.JComponent
 
@@ -17,11 +18,12 @@ open class BooleanCommitOption(private val checkinPanel: CheckinProjectPanel,
                                private val getter: () -> Boolean,
                                private val setter: Consumer<Boolean>) : RefreshableOnComponent, UnnamedConfigurable {
   protected val checkBox = JBCheckBox(text).apply {
-    isFocusable = isInSettings || UISettings.shadowInstance.disableMnemonicsInControls
+    isFocusable = isInSettings || isInNonModalOptionsPopup || UISettings.shadowInstance.disableMnemonicsInControls
     if (disableWhenDumb && !isInSettings) disableWhenDumb(checkinPanel.project, this, "Impossible until indices are up-to-date")
   }
 
   private val isInSettings get() = checkinPanel is CommitOptionsConfigurable.CheckinPanel
+  private val isInNonModalOptionsPopup get() = checkinPanel.isNonModalCommit
 
   override fun refresh() {
   }

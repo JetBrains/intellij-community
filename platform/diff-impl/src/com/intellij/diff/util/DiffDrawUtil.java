@@ -15,8 +15,8 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -133,7 +133,7 @@ public class DiffDrawUtil {
       g.fill(path);
 
       Stroke oldStroke = g.getStroke();
-      g.setStroke(new BasicStroke(JBUI.scale(1f)));
+      g.setStroke(new BasicStroke(JBUIScale.scale(1f)));
       g.draw(middleCurve);
       g.setStroke(oldStroke);
     }

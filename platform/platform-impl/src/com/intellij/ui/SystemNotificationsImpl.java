@@ -7,7 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.AtomicNullableLazyValue;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +33,7 @@ public class SystemNotificationsImpl extends SystemNotifications {
 
   private static Notifier getPlatformNotifier() {
     try {
-      if (SystemInfoRt.isMac) {
+      if (SystemInfo.isMac) {
         if (SystemInfo.isMacOSMountainLion && SystemProperties.getBooleanProperty("ide.mac.mountain.lion.notifications.enabled", true)) {
           return MountainLionNotifications.getInstance();
         }

@@ -3,7 +3,7 @@ package com.intellij.util;
 
 import com.intellij.openapi.util.Bitness;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.lang.JavaVersion;
 import org.junit.Test;
 
@@ -43,7 +43,7 @@ public class JdkBundleTest {
 
     File home = new File(SystemProperties.getJavaHome());
     if ("jre".equals(home.getName())) home = home.getParentFile();
-    if (SystemInfoRt.isMac && "Home".equals(home.getName())) home = home.getParentFile().getParentFile();
+    if (SystemInfo.isMac && "Home".equals(home.getName())) home = home.getParentFile().getParentFile();
     assertEquals(home, bundle.getLocation());
 
     JavaVersion current = JavaVersion.current();
@@ -58,7 +58,7 @@ public class JdkBundleTest {
 
   @Test
   public void testStandardMacOsBundles() {
-    assumeTrue("Mac-only", SystemInfoRt.isMac);
+    assumeTrue("Mac-only", SystemInfo.isMac);
     for (File vm : Objects.requireNonNull(new File("/Library/Java/JavaVirtualMachines").listFiles())) {
       if (new File(vm, "Contents/Home/bin/java").isFile()) {
         JdkBundle bundle = JdkBundle.createBundle(vm);

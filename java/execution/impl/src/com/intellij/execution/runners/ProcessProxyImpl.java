@@ -8,7 +8,7 @@ import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
  */
 class ProcessProxyImpl implements ProcessProxy {
   static final Key<ProcessProxyImpl> KEY = Key.create("ProcessProxyImpl");
-  private static final File ourBreakgenHelper = SystemInfoRt.isWindows ? PathManager.findBinFile("breakgen.dll") : null;
+  private static final File ourBreakgenHelper = SystemInfo.isWindows ? PathManager.findBinFile("breakgen.dll") : null;
 
   private final AsynchronousChannelGroup myGroup;
   private final int myPort;
@@ -67,7 +67,7 @@ class ProcessProxyImpl implements ProcessProxy {
     processHandler.putUserData(KEY, this);
     execute(() -> {
       int pid = -1;
-      if (SystemInfoRt.isUnix && processHandler instanceof BaseOSProcessHandler) {
+      if (SystemInfo.isUnix && processHandler instanceof BaseOSProcessHandler) {
         pid = OSProcessUtil.getProcessID(((BaseOSProcessHandler)processHandler).getProcess());
       }
       synchronized (myLock) {
@@ -86,7 +86,7 @@ class ProcessProxyImpl implements ProcessProxy {
   }
 
   String getBinPath() {
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       if (ourBreakgenHelper != null) {
         return ourBreakgenHelper.getParent();
       }
@@ -96,14 +96,14 @@ class ProcessProxyImpl implements ProcessProxy {
 
   @Override
   public boolean canSendBreak() {
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       synchronized (myLock) {
         if (myConnection == null) return false;
       }
       return ourBreakgenHelper != null;
     }
 
-    if (SystemInfoRt.isUnix) {
+    if (SystemInfo.isUnix) {
       synchronized (myLock) {
         return myPid > 0;
       }
@@ -121,10 +121,10 @@ class ProcessProxyImpl implements ProcessProxy {
 
   @Override
   public void sendBreak() {
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       writeLine("BREAK");
     }
-    else if (SystemInfoRt.isUnix) {
+    else if (SystemInfo.isUnix) {
       int pid;
       synchronized (myLock) {
         pid = myPid;

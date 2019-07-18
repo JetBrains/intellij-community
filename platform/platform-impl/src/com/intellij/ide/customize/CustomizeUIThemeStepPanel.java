@@ -11,7 +11,8 @@ import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -33,17 +34,17 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
 
     public ThemeInfo(String name, String previewFileName, String laf) {
       this.name = name;
-      this.previewFileName = SystemInfoRt.isMac && "IntelliJ".equals(previewFileName) ? "Aqua" : previewFileName;
+      this.previewFileName = SystemInfo.isMac && "IntelliJ".equals(previewFileName) ? "Aqua" : previewFileName;
       this.laf = laf;
     }
 
     private Icon getIcon() {
       if (icon == null) {
         String selector;
-        if (SystemInfoRt.isMac) {
+        if (SystemInfo.isMac) {
           selector = "OSX";
         }
-        else if (SystemInfoRt.isWindows) {
+        else if (SystemInfo.isWindows) {
           selector = "Windows";
         }
         else {
@@ -68,7 +69,6 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
 
   public CustomizeUIThemeStepPanel() {
     setLayout(createSmallBorderLayout());
-    IconLoader.activate();
 
     initThemes(myThemes);
 
@@ -115,11 +115,11 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
   }
 
   protected void initThemes(Collection<? super ThemeInfo> result) {
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       result.add(DARCULA);
       result.add(getDefaultLafOnMac());
     }
-    else if (SystemInfoRt.isWindows) {
+    else if (SystemInfo.isWindows) {
       result.add(DARCULA);
       result.add(INTELLIJ);
     }
@@ -184,12 +184,12 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
     try {
       boolean wasUnderDarcula = UIUtil.isUnderDarcula();
       UIManager.setLookAndFeel(info.getClassName());
-      LafManagerImpl.updateForDarcula(UIUtil.isUnderDarcula());
+      AppUIUtil.updateForDarcula(UIUtil.isUnderDarcula());
       String className = info.getClassName();
       WelcomeWizardUtil.setWizardLAF(className);
       Window window = SwingUtilities.getWindowAncestor(component);
       if (window != null) {
-        if (SystemInfoRt.isMac) {
+        if (SystemInfo.isMac) {
           window.setBackground(new Color(UIUtil.getPanelBackground().getRGB()));
         }
         SwingUtilities.updateComponentTreeUI(window);

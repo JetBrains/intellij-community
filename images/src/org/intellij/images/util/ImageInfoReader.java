@@ -16,6 +16,7 @@
 package org.intellij.images.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ImageLoader;
 import com.intellij.util.SVGLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +25,6 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.stream.ImageInputStream;
-import java.awt.geom.Dimension2D;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Arrays;
@@ -72,7 +72,7 @@ public class ImageInfoReader {
 
   private static Info getSvgSize(byte[] data) {
     try {
-      Dimension2D size = SVGLoader.getDocumentSize(null, new ByteArrayInputStream(data), 1.0f);
+      ImageLoader.Dimension2DDouble size = SVGLoader.getDocumentSize(null, new ByteArrayInputStream(data), 1.0f);
       return new Info((int)Math.round(size.getWidth()), (int)Math.round(size.getHeight()), 32, true);
     }
     catch (Throwable e) {

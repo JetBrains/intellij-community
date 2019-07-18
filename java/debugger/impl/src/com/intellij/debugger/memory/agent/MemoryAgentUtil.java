@@ -35,7 +35,7 @@ import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Bitness;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -48,6 +48,8 @@ import org.jetbrains.jps.model.java.JdkVersionDetector;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -84,7 +86,7 @@ public class MemoryAgentUtil {
     ParametersList parametersList = parameters.getVMParametersList();
     if (parametersList.getParameters().stream().anyMatch(x -> x.contains("memory_agent"))) return;
     boolean isInDebugMode = Registry.is("debugger.memory.agent.debug");
-    File agentFile = null;
+    Path agentFile = null;
     String errorMessage = null;
     long start = System.currentTimeMillis();
     try {
@@ -109,8 +111,8 @@ public class MemoryAgentUtil {
     }
 
     LOG.info("Memory agent extracting took " + (System.currentTimeMillis() - start) + " ms");
-    String agentFileName = agentFile.getName();
-    String path = JavaExecutionUtil.handleSpacesInAgentPath(agentFile.getAbsolutePath(), "debugger-memory-agent",
+    String agentFileName = agentFile.getFileName().toString();
+    String path = JavaExecutionUtil.handleSpacesInAgentPath(agentFile.toAbsolutePath().toString(), "debugger-memory-agent",
                                                             MEMORY_AGENT_EXTRACT_DIRECTORY, f -> agentFileName.equals(f.getName()));
     if (path == null) {
       return;
@@ -172,7 +174,7 @@ public class MemoryAgentUtil {
   }
 
   public static boolean isPlatformSupported() {
-    return SystemInfoRt.isWindows || SystemInfoRt.isMac || SystemInfoRt.isLinux;
+    return SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isLinux;
   }
 
   private static boolean isIbmJdk(@NotNull JavaParameters parameters) {
@@ -181,13 +183,13 @@ public class MemoryAgentUtil {
     return vendor != null && StringUtil.containsIgnoreCase(vendor, "ibm");
   }
 
-  private static File getAgentFile(boolean isInDebugMode, String jdkPath)
+  private static Path getAgentFile(boolean isInDebugMode, String jdkPath)
     throws InterruptedException, ExecutionException, TimeoutException {
     if (isInDebugMode) {
       String debugAgentPath = Registry.get("debugger.memory.agent.debug.path").asString();
       if (!debugAgentPath.isEmpty()) {
         LOG.info("Local memory agent will be used: " + debugAgentPath);
-        return new File(debugAgentPath);
+        return Paths.get(debugAgentPath);
       }
     }
 
@@ -198,8 +200,8 @@ public class MemoryAgentUtil {
 
   private static AgentExtractor.AgentLibraryType detectAgentKind(String jdkPath) {
     LOG.assertTrue(isPlatformSupported());
-    if (SystemInfoRt.isLinux) return AgentExtractor.AgentLibraryType.LINUX;
-    if (SystemInfoRt.isMac) return AgentExtractor.AgentLibraryType.MACOS;
+    if (SystemInfo.isLinux) return AgentExtractor.AgentLibraryType.LINUX;
+    if (SystemInfo.isMac) return AgentExtractor.AgentLibraryType.MACOS;
     JdkVersionDetector.JdkVersionInfo versionInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(jdkPath);
     if (versionInfo == null) {
       LOG.warn("Could not detect jdk bitness. x64 will be used.");

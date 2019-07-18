@@ -5,13 +5,14 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.ComponentValidator;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.EditorTextComponent;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
@@ -210,7 +211,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
           left = UIUtil.getCheckBoxTextHorizontalOffset((JCheckBox)component); // the value returned from this method is already scaled
 
           //noinspection UseDPIAwareInsets
-          return new Insets(top, left, JBUI.scale(bottom), 0);
+          return new Insets(top, left, JBUIScale.scale(bottom), 0);
         }
         else {
           left = isMacDefault ? 26 : isWin10 ? 17 : 23;
@@ -251,7 +252,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     component.setVerticalTextPosition(SwingConstants.TOP);
     component.setFocusable(false);
     component.setForeground(UIUtil.getContextHelpForeground());
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       Font font = component.getFont();
       float size = font.getSize2D();
       Font smallFont = font.deriveFont(size - 2.0f);

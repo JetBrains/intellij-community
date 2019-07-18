@@ -17,6 +17,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
@@ -94,7 +95,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private void createPluginPanel() {
-    myPanel = new OpaquePanel(new BorderLayout(0, JBUI.scale(32)), PluginManagerConfigurableNew.MAIN_BG_COLOR);
+    myPanel = new OpaquePanel(new BorderLayout(0, JBUIScale.scale(32)), PluginManagerConfigurableNew.MAIN_BG_COLOR);
     myPanel.setBorder(new CustomLineBorder(new JBColor(0xC5C5C5, 0x515151), JBUI.insets(1, 0, 0, 0)) {
       @Override
       public Insets getBorderInsets(Component c) {
@@ -108,7 +109,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   @NotNull
   private JPanel createHeaderPanel() {
-    JPanel header = new NonOpaquePanel(new BorderLayout(JBUI.scale(20), 0));
+    JPanel header = new NonOpaquePanel(new BorderLayout(JBUIScale.scale(20), 0));
     header.setBorder(JBUI.Borders.emptyRight(20));
     myPanel.add(header, BorderLayout.NORTH);
 
@@ -125,7 +126,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     int offset = PluginManagerConfigurableNew.offset5();
     JPanel centerPanel = new NonOpaquePanel(new VerticalLayout(offset));
 
-    myNameAndButtons.setYOffset(JBUI.scale(3));
+    myNameAndButtons.setYOffset(JBUIScale.scale(3));
     myNameAndButtons.add(myNameComponent);
     createButtons();
     centerPanel.add(myNameAndButtons, VerticalLayout.FILL_HORIZONTAL);
@@ -226,7 +227,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myVersionSize.setFont(UIUtil.getLabelFont());
     PluginManagerConfigurableNew.installTiny(myVersionSize);
 
-    int offset = JBUI.scale(10);
+    int offset = JBUIScale.scale(10);
     JPanel panel1 = new NonOpaquePanel(new TextHorizontalLayout(offset));
     centerPanel.add(panel1);
     if (myMarketplace) {
@@ -238,7 +239,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     }
     myVendor = new LinkPanel(panel1, false, null, TextHorizontalLayout.FIX_LABEL);
 
-    JPanel panel2 = new NonOpaquePanel(new TextHorizontalLayout(myMarketplace ? offset : JBUI.scale(7)) {
+    JPanel panel2 = new NonOpaquePanel(new TextHorizontalLayout(myMarketplace ? offset : JBUIScale.scale(7)) {
       @Override
       public void layoutContainer(Container parent) {
         super.layoutContainer(parent);
@@ -246,13 +247,15 @@ public class PluginDetailsPageComponent extends MultiPanel {
           int baseline = myTagPanel.getBaseline(-1, -1);
           if (baseline != -1) {
             Rectangle versionBounds = myVersion.getBounds();
-            int versionY = myTagPanel.getY() + baseline - myVersion.getBaseline(versionBounds.width, versionBounds.height);
+            Dimension versionSize = myVersion.getPreferredSize();
+            int versionY = myTagPanel.getY() + baseline - myVersion.getBaseline(versionSize.width, versionSize.height);
             myVersion.setBounds(versionBounds.x, versionY, versionBounds.width, versionBounds.height);
 
             if (myDate.isVisible()) {
               Rectangle dateBounds = myDate.getBounds();
-              int dateY = myTagPanel.getY() + baseline - myDate.getBaseline(dateBounds.width, dateBounds.height);
-              myDate.setBounds(dateBounds.x - JBUI.scale(4), dateY, dateBounds.width, dateBounds.height);
+              Dimension dateSize = myDate.getPreferredSize();
+              int dateY = myTagPanel.getY() + baseline - myDate.getBaseline(dateSize.width, dateSize.height);
+              myDate.setBounds(dateBounds.x - JBUIScale.scale(4), dateY, dateBounds.width, dateBounds.height);
             }
           }
         }
@@ -293,7 +296,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myDescriptionComponent.setEditorKit(kit);
     myDescriptionComponent.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
 
-    bottomPanel.add(myDescriptionComponent, JBUI.scale(700), -1);
+    bottomPanel.add(myDescriptionComponent, JBUIScale.scale(700), -1);
 
     JLabel separator = new JLabel();
     separator.setBorder(JBUI.Borders.emptyTop(20));
@@ -398,7 +401,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
     myVersion.setText(version);
     myVersionSize.setText(version);
-    myVersion.setPreferredSize(new Dimension(myVersionSize.getPreferredSize().width + JBUI.scale(4), myVersion.getPreferredSize().height));
+    myVersion
+      .setPreferredSize(new Dimension(myVersionSize.getPreferredSize().width + JBUIScale.scale(4), myVersion.getPreferredSize().height));
 
     myVersion.setVisible(!StringUtil.isEmptyOrSpaces(version));
 

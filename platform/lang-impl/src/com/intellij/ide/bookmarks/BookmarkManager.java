@@ -20,7 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
@@ -43,8 +43,11 @@ import java.awt.event.InputEvent;
 import java.util.List;
 import java.util.*;
 
-@State(name = "BookmarkManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class BookmarkManager implements PersistentStateComponent<Element> {
+@State(name = "BookmarkManager", storages = {
+  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
+  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
+})
+public final class BookmarkManager implements PersistentStateComponent<Element> {
   private static final int MAX_AUTO_DESCRIPTION_SIZE = 50;
   private final MultiMap<VirtualFile, Bookmark> myBookmarks = MultiMap.createConcurrentSet();
   private final Map<Trinity<VirtualFile, Integer, String>, Bookmark> myDeletedDocumentBookmarks = new HashMap<>();
@@ -361,7 +364,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
     public void mouseClicked(@NotNull final EditorMouseEvent e) {
       if (e.getArea() != EditorMouseEventArea.LINE_MARKERS_AREA) return;
       if (e.getMouseEvent().isPopupTrigger()) return;
-      if ((e.getMouseEvent().getModifiers() & (SystemInfoRt.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK)) == 0) return;
+      if ((e.getMouseEvent().getModifiers() & (SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK)) == 0) return;
 
       Editor editor = e.getEditor();
       int line = editor.xyToLogicalPosition(new Point(e.getMouseEvent().getX(), e.getMouseEvent().getY())).line;

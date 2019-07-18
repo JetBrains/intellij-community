@@ -24,22 +24,7 @@ import java.util.Map;
 /**
  * @author Konstantin Bulenkov
  */
-@State(name = "IntentionsCollector", storages = @Storage(
-  value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true)
-)
-public class IntentionsCollector implements PersistentStateComponent<IntentionsCollector.State> {
-
-  private final State myState = new State();
-
-  @Nullable
-  @Override
-  public State getState() {
-    return myState;
-  }
-
-  @Override
-  public void loadState(@NotNull State state) {
-  }
+public class IntentionsCollector {
 
   public void record(@NotNull IntentionAction action, @NotNull Language language) {
     record(null, action, language);

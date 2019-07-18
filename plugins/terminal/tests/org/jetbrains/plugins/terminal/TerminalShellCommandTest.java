@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.terminal;
 
 import com.google.common.collect.Maps;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
@@ -16,25 +16,25 @@ import java.util.Map;
  */
 public class TerminalShellCommandTest extends TestCase {
   public void testDontAddAnything() {
-    if (SystemInfoRt.isUnix) {
+    if (SystemInfo.isUnix) {
       doTest(new String[]{"myshell", "someargs", "-i"}, "myshell someargs -i", Maps.newHashMap());
       doTest(new String[]{"myshell", "someargs", "--login"}, "myshell someargs --login", Maps.newHashMap());
     }
   }
 
   public void testAddInteractiveOrLogin() {
-    if (SystemInfoRt.isLinux) {
+    if (SystemInfo.isLinux) {
       contains("bash someargs", true, Maps.newHashMap(), "-i", "someargs", "bash");
       contains("bash someargs", false, Maps.newHashMap(), "-i", "someargs", "bash");
     }
-    else if (SystemInfoRt.isMac) {
+    else if (SystemInfo.isMac) {
       contains("bash someargs", true, Maps.newHashMap(), "someargs", "bash");
       contains("bash someargs", false, Maps.newHashMap(), "--login", "someargs", "bash");
     }
   }
 
   public void testAddRcConfig() {
-    if (SystemInfoRt.isUnix) {
+    if (SystemInfo.isUnix) {
       hasRcConfig("bash -i", "jediterm-bash.in", Maps.newHashMap());
       hasRcConfig("bash --login", "jediterm-bash.in", Maps.newHashMap());
       Map<String, String> envs = Maps.newHashMap();

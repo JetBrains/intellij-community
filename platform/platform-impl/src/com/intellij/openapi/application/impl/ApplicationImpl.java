@@ -122,7 +122,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     boolean strictMode = isUnitTestMode || isInternal;
     BundleBase.assertOnMissedKeys(strictMode);
-    IconLoader.setStrictGlobally(strictMode);
 
     AWTExceptionHandler.register(); // do not crash AWT on exceptions
 
@@ -400,15 +399,23 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         });
       }
 
-      init(indicator, () -> {
-        String effectiveConfigPath = FileUtilRt.toSystemIndependentName(configPath == null ? PathManager.getConfigPath() : configPath);
-        ApplicationLoadListener.EP_NAME.forEachExtensionSafe(listener -> listener.beforeApplicationLoaded(this, effectiveConfigPath));
+      Activity componentRegisteredActivity = StartUpMeasurer.start(activityNamePrefix() + Phases.COMPONENTS_REGISTERED_CALLBACK_SUFFIX);
+      String effectiveConfigPath = FileUtilRt.toSystemIndependentName(configPath == null ? PathManager.getConfigPath() : configPath);
+      ApplicationLoadListener.EP_NAME.forEachExtensionSafe(listener -> listener.beforeApplicationLoaded(this, effectiveConfigPath));
 
-        // we set it after beforeApplicationLoaded call, because app store can depends on stream provider state
-        ServiceKt.getStateStore(this).setPath(effectiveConfigPath);
+      // we set it after beforeApplicationLoaded call, because app store can depends on stream provider state
+      ServiceKt.getStateStore(this).setPath(effectiveConfigPath);
 
-        ApplicationLoadListener.EP_NAME.forEachExtensionSafe(listener -> listener.beforeComponentsCreated());
-      });
+      ApplicationLoadListener.EP_NAME.forEachExtensionSafe(listener -> listener.beforeComponentsCreated());
+      componentRegisteredActivity.end();
+
+      if (indicator == null) {
+        // no splash, no need to to use progress manager
+        createComponents(null);
+      }
+      else {
+        ProgressManager.getInstance().runProcess(() -> createComponents(indicator), indicator);
+      }
 
       ourThreadExecutorsService.submit(() -> createLocatorFile());
 
@@ -434,18 +441,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       token.finish();
     }
     myLoaded = true;
-  }
-
-  @Override
-  protected void createComponents(@Nullable ProgressIndicator indicator) {
-    // we cannot wrap "init()" call because ProgressManager instance could be created only after component registration (our "componentsRegistered" callback)
-    if (indicator == null) {
-      // no splash, no need to to use progress manager
-      super.createComponents(null);
-    }
-    else {
-      ProgressManager.getInstance().runProcess(() -> super.createComponents(indicator), indicator);
-    }
   }
 
   @Override

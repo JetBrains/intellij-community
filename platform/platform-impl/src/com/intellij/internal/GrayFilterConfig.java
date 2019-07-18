@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal;
 
 import com.intellij.ide.ui.LafManager;
@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.JBUI;
@@ -106,7 +107,7 @@ public class GrayFilterConfig extends AnAction implements DumbAware {
     table.setTableHeader(null);
 
     for (int c=0; c<table.getColumnCount(); c++)
-      table.getColumnModel().getColumn(c).setPreferredWidth(JBUI.scale(100));
+      table.getColumnModel().getColumn(c).setPreferredWidth(JBUIScale.scale(100));
     for (int r=0; r<table.getRowCount(); r++)
       table.setRowHeight(r, UISettings.getDefFontSize() * 2);
 

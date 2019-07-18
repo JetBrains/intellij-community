@@ -14,8 +14,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@State(name = "masterDetails", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class MasterDetailsStateService implements PersistentStateComponent<MasterDetailsStateService.States>{
+@State(name = "masterDetails", storages = {
+  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
+  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
+})
+public final class MasterDetailsStateService implements PersistentStateComponent<MasterDetailsStateService.States>{
   private final Map<String, ComponentState> myStates = new HashMap<>();
 
   public static MasterDetailsStateService getInstance(@NotNull Project project) {
@@ -55,7 +58,7 @@ public class MasterDetailsStateService implements PersistentStateComponent<Maste
   }
 
   @Tag("state")
-  public static class ComponentState {
+  public static final class ComponentState {
     @Attribute("key")
     public String myKey;
 
@@ -63,7 +66,7 @@ public class MasterDetailsStateService implements PersistentStateComponent<Maste
     public Element mySettings;
   }
 
-  public static class States {
+  public static final class States {
     private List<ComponentState> myStates = new ArrayList<>();
 
     @XCollection(style = XCollection.Style.v2)

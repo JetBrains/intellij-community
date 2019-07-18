@@ -7,7 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.components.BaseState;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBTabbedPane;
@@ -75,7 +75,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     appendPath(cp, TIntObjectHashMap.class);
     appendPath(cp, UIUtil.class);
     appendPath(cp, UIUtilities.class);
-    appendPath(cp, SystemInfoRt.class);
+    appendPath(cp, SystemInfo.class);
     appendPath(cp, ApplicationManager.class);
     appendPath(cp, PathManager.getResourceRoot(this.getClass(), "/messages/UIBundle.properties"));
     appendPath(cp, PathManager.getResourceRoot(this.getClass(), "/RuntimeBundle.properties"));

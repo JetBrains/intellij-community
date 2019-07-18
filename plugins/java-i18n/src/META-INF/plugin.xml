@@ -67,12 +67,23 @@
       <className>com.intellij.codeInspection.capitalization.AnnotateCapitalizationIntention</className>
       <category>Java/I18N</category>
     </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInspection.i18n.folding.EditPropertyValueIntentionAction</className>
+    </intentionAction>
 
     <completion.confidence language="UAST" implementationClass="com.intellij.lang.properties.PropertyKeyLiteralConfidence" id="propertyKeys" order="before javaSkipAutopopupInStrings"/>
+
+    <experimentalFeature id="property.value.inplace.editing" percentOfUsers="100">
+      <description>Edit property value at usage location, where it's displayed in folding placeholder</description>
+    </experimentalFeature>
   </extensions>
   <actions>
     <action id="I18nize" class="com.intellij.codeInspection.i18n.I18nizeAction">
       <add-to-group group-id="RefactoringMenu" anchor="last" />
+    </action>
+    <action id="EditPropertyValue" class="com.intellij.codeInspection.i18n.folding.EditPropertyValueAction" text="Edit property value...">
+      <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="ChangeSignature"/>
+      <keyboard-shortcut first-keystroke="alt F6" keymap="$default"/>
     </action>
   </actions>
 </idea-plugin>

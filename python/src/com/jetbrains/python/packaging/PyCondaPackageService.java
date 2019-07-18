@@ -8,7 +8,7 @@ import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
@@ -62,7 +62,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   public static String getCondaBasePython(@NotNull String systemCondaExecutable) {
     final VirtualFile condaFile = LocalFileSystem.getInstance().findFileByPath(systemCondaExecutable);
     if (condaFile != null) {
-      final VirtualFile condaDir = SystemInfoRt.isWindows ? condaFile.getParent().getParent() : condaFile.getParent();
+      final VirtualFile condaDir = SystemInfo.isWindows ? condaFile.getParent().getParent() : condaFile.getParent();
       final VirtualFile python = condaDir.findChild(getPythonName());
       if (python != null) {
         return python.getPath();
@@ -73,12 +73,12 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
 
   @NotNull
   private static String getPythonName() {
-    return SystemInfoRt.isWindows ? "python.exe" : "python";
+    return SystemInfo.isWindows ? "python.exe" : "python";
   }
 
   @Nullable
   public static String getSystemCondaExecutable() {
-    final String condaName = SystemInfoRt.isWindows ? "conda.exe" : "conda";
+    final String condaName = SystemInfo.isWindows ? "conda.exe" : "conda";
     final File condaInPath = PathEnvironmentVariableUtil.findInPath(condaName);
     if (condaInPath != null) return condaInPath.getPath();
     return getCondaExecutableByName(condaName);
@@ -108,7 +108,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
     final boolean isBaseConda = pyExecutableDir.findChild(CONDA_ENVS_DIR) != null;
     final String condaName;
     final VirtualFile condaFolder;
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       condaName = "conda.exe";
       // On Windows python.exe is directly inside base interpreter/environment directory.
       // On other systems executable normally resides in "bin" subdirectory.
@@ -120,7 +120,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
     }
 
     // XXX Do we still need to support this? When did they drop per-environment conda executable?
-    final String localCondaName = SystemInfoRt.isWindows && !isBaseConda ? "conda.bat" : condaName;
+    final String localCondaName = SystemInfo.isWindows && !isBaseConda ? "conda.bat" : condaName;
     final String immediateConda = findExecutable(localCondaName, condaFolder);
     if (immediateConda != null) {
       return immediateConda;
@@ -140,7 +140,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
         VirtualFile condaFolder = userHome.findChild(root);
         String executableFile = findExecutable(condaName, condaFolder);
         if (executableFile != null) return executableFile;
-        if (SystemInfoRt.isWindows) {
+        if (SystemInfo.isWindows) {
           final VirtualFile appData = userHome.findFileByRelativePath("AppData\\Local\\Continuum\\" + root);
           executableFile = findExecutable(condaName, appData);
           if (executableFile != null) return executableFile;
@@ -156,7 +156,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
       }
     }
 
-    if (!SystemInfoRt.isWindows) {
+    if (!SystemInfo.isWindows) {
       final VirtualFile systemCondaFolder = LocalFileSystem.getInstance().findFileByPath("/opt/anaconda");
       final String executableFile = findExecutable(condaName, systemCondaFolder);
       if (executableFile != null) return executableFile;
@@ -168,7 +168,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   @Nullable
   private static String findExecutable(String condaName, @Nullable final VirtualFile condaFolder) {
     if (condaFolder != null) {
-      final VirtualFile binFolder = condaFolder.findChild(SystemInfoRt.isWindows ? "Scripts" : "bin");
+      final VirtualFile binFolder = condaFolder.findChild(SystemInfo.isWindows ? "Scripts" : "bin");
       if (binFolder != null) {
         final VirtualFile bin = binFolder.findChild(condaName);
         if (bin != null) {

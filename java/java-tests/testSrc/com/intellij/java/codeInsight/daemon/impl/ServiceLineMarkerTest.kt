@@ -17,6 +17,8 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 class ServiceLineMarkerTest : LightCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_9
 
+  override fun isIconRequired() = true
+
   override fun setUp() {
     super.setUp()
 

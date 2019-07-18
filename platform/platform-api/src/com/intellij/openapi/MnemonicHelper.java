@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ComponentTreeWatcher;
 import com.intellij.ui.components.JBOptionButton;
@@ -91,7 +91,7 @@ public class MnemonicHelper extends ComponentTreeWatcher {
   }
 
   private static void fixMacMnemonicKeyStroke(JComponent component, String type) {
-    if (SystemInfoRt.isMac && Registry.is("ide.mac.alt.mnemonic.without.ctrl")) {
+    if (SystemInfo.isMac && Registry.is("ide.mac.alt.mnemonic.without.ctrl")) {
       // hack to make component's mnemonic work for ALT+KEY_CODE on Macs.
       // Default implementation uses ALT+CTRL+KEY_CODE (see BasicLabelUI).
       InputMap inputMap = component.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
@@ -153,7 +153,7 @@ public class MnemonicHelper extends ComponentTreeWatcher {
    */
   public static CustomShortcutSet createShortcut(char ch) {
     Character mnemonic = Character.valueOf(ch);
-    return CustomShortcutSet.fromString("alt " + (SystemInfoRt.isMac ? "released" : "pressed") + " " + mnemonic);
+    return CustomShortcutSet.fromString("alt " + (SystemInfo.isMac ? "released" : "pressed") + " " + mnemonic);
   }
 
   /**
@@ -219,7 +219,7 @@ public class MnemonicHelper extends ComponentTreeWatcher {
   @MagicConstant(flagsFromClass = InputEvent.class)
   public static int getFocusAcceleratorKeyMask() {
     //noinspection MagicConstant
-    return SystemInfoRt.isMac ? ActionEvent.ALT_MASK | ActionEvent.CTRL_MASK : ActionEvent.ALT_MASK;
+    return SystemInfo.isMac ? ActionEvent.ALT_MASK | ActionEvent.CTRL_MASK : ActionEvent.ALT_MASK;
   }
 
   public static void registerMnemonicAction(@NotNull JComponent component, int mnemonic) {

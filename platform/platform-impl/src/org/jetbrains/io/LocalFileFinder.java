@@ -3,7 +3,7 @@ package org.jetbrains.io;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,7 +37,7 @@ public final class LocalFileFinder {
   }
 
   public static boolean windowsDriveExists(@NotNull String path) {
-    if (!SystemInfoRt.isWindows) return true;
+    if (!SystemInfo.isWindows) return true;
 
     if (FileUtil.isWindowsAbsolutePath(path)) {
       final char driveLetter = Character.toUpperCase(path.charAt(0));

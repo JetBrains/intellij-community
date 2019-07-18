@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.schemes;
 
 import com.intellij.openapi.options.Scheme;
@@ -7,7 +7,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ui.JBUI;
+import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,8 +48,8 @@ public class EditableSchemesCombo<T extends Scheme> {
     myRootPanel.add(myComboBox);
     myNameEditorField = createNameEditorField();
     myRootPanel.add(myNameEditorField);
-    myRootPanel.setPreferredSize(new Dimension(JBUI.scale(COMBO_WIDTH), myNameEditorField.getPreferredSize().height));
-    myRootPanel.setMaximumSize(new Dimension(JBUI.scale(COMBO_WIDTH), Short.MAX_VALUE));
+    myRootPanel.setPreferredSize(new Dimension(JBUIScale.scale(COMBO_WIDTH), myNameEditorField.getPreferredSize().height));
+    myRootPanel.setMaximumSize(new Dimension(JBUIScale.scale(COMBO_WIDTH), Short.MAX_VALUE));
   }
 
   private JTextField createNameEditorField() {

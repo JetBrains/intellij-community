@@ -66,7 +66,7 @@ public class PythonTokenSetContributor extends PythonDialectsTokenSetContributor
   @NotNull
   @Override
   public TokenSet getParameterTokens() {
-    return TokenSet.create(NAMED_PARAMETER, TUPLE_PARAMETER, SINGLE_STAR_PARAMETER);
+    return TokenSet.create(NAMED_PARAMETER, TUPLE_PARAMETER, SINGLE_STAR_PARAMETER, SLASH_PARAMETER);
   }
 
   @NotNull

@@ -271,6 +271,10 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
           paramType = typeParams.size() == 2 ? typeParams.get(1) : null;
         }
       }
+      else if (parameter.getParameter() instanceof PySlashParameter) {
+        paramName = "/";
+        showType = false;
+      }
       else if (parameter.getParameter() instanceof PySingleStarParameter) {
         paramName = "*";
         showType = false;

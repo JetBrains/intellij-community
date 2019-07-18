@@ -10,7 +10,7 @@ import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescri
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -85,7 +85,7 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
   @Override
   public NewLibraryConfiguration createNewLibrary(@NotNull JComponent parentComponent, VirtualFile contextDirectory) {
     VirtualFile initial = findFile(System.getenv(myEnvVariable));
-    if (initial == null && GROOVY_FRAMEWORK_NAME.equals(myFrameworkName) && SystemInfoRt.isLinux) {
+    if (initial == null && GROOVY_FRAMEWORK_NAME.equals(myFrameworkName) && SystemInfo.isLinux) {
       initial = findFile("/usr/share/groovy");
     }
 

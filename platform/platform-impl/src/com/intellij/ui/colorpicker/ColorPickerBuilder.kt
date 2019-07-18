@@ -48,7 +48,7 @@ class ColorPickerBuilder {
   private var focusCycleRoot = false
   private var focusedComponentIndex = -1
   private val actionMap = mutableMapOf<KeyStroke, Action>()
-  private val colorListeners = mutableListOf<ColorListener>()
+  private val colorListeners = mutableListOf<ColorListenerInfo>()
 
   fun setOriginalColor(originalColor: Color?) = apply { this.originalColor = originalColor }
 
@@ -112,9 +112,13 @@ class ColorPickerBuilder {
 
   fun addKeyAction(keyStroke: KeyStroke, action: Action) = apply { actionMap[keyStroke] = action }
 
-  fun addColorListener(colorListener: ColorListener) = apply { colorListeners.add(colorListener) }
+  fun addColorListener(colorListener: ColorListener) = addColorListener(colorListener, true)
 
-  fun build(): JPanel {
+  fun addColorListener(colorListener: ColorListener, invokeOnEveryColorChange: Boolean) = apply {
+    colorListeners.add(ColorListenerInfo(colorListener, invokeOnEveryColorChange))
+  }
+
+  fun build(): LightCalloutPopup {
     if (componentsToBuild.isEmpty()) {
       throw IllegalStateException("The Color Picker should have at least one picking component.")
     }
@@ -158,12 +162,16 @@ class ColorPickerBuilder {
       panel.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(keyStroke, key)
     }
 
-    colorListeners.forEach { model.addListener(it) }
+    colorListeners.forEach { model.addListener(it.colorListener, it.invokeOnEveryColorChange) }
 
-    return panel
+    return LightCalloutPopup(panel,
+                             closedCallback = { model.onClose() },
+                             cancelCallBack = { model.onCancel() })
   }
 }
 
 private class MyFocusTraversalPolicy(val defaultComponent: Component?) : LayoutFocusTraversalPolicy() {
   override fun getDefaultComponent(aContainer: Container?): Component? = defaultComponent
 }
+
+private data class ColorListenerInfo(val colorListener: ColorListener, val invokeOnEveryColorChange: Boolean)

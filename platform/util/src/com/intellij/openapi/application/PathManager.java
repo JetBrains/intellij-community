@@ -6,6 +6,7 @@ import com.intellij.openapi.util.PropertiesUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
@@ -92,12 +93,12 @@ public class PathManager {
     else if (insideIde) {
       ourHomePath = getHomePathFor(PathManager.class);
       if (ourHomePath == null) {
-        String advice = SystemInfoRt.isMac ? "reinstall the software." : "make sure bin/idea.properties is present in the installation directory.";
+        String advice = SystemInfo.isMac ? "reinstall the software." : "make sure bin/idea.properties is present in the installation directory.";
         throw new RuntimeException("Could not find installation home path. Please " + advice);
       }
     }
 
-    if (ourHomePath != null && SystemInfoRt.isWindows) {
+    if (ourHomePath != null && SystemInfo.isWindows) {
       ourHomePath = canonicalPath(ourHomePath);
     }
 
@@ -134,7 +135,7 @@ public class PathManager {
     List<String> binDirs = new SmartList<>();
 
     String[] subDirs = {BIN_FOLDER, "community/bin", "ultimate/community/bin"};
-    String osSuffix = SystemInfoRt.isWindows ? "win" : SystemInfoRt.isMac ? "mac" : "linux";
+    String osSuffix = SystemInfo.isWindows ? "win" : SystemInfo.isMac ? "mac" : "linux";
 
     for (String subDir : subDirs) {
       File dir = new File(root, subDir);
@@ -245,7 +246,7 @@ public class PathManager {
   }
 
   public static void ensureConfigFolderExists() {
-    FileUtil.createDirectory(new File(getConfigPath()));
+    FileUtilRt.createDirectory(new File(getConfigPath()));
   }
 
   @NotNull
@@ -265,7 +266,7 @@ public class PathManager {
     if (System.getProperty(PROPERTY_PLUGINS_PATH) != null) {
       ourPluginsPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_PLUGINS_PATH)));
     }
-    else if (SystemInfoRt.isMac && PATHS_SELECTOR != null) {
+    else if (SystemInfo.isMac && PATHS_SELECTOR != null) {
       ourPluginsPath = platformPath(PATHS_SELECTOR, "Library/Application Support", "");
     }
     else {
@@ -277,7 +278,7 @@ public class PathManager {
 
   @NotNull
   public static String getDefaultPluginPathFor(@NotNull String selector) {
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       return platformPath(selector, "Library/Application Support", "");
     }
     else {
@@ -307,7 +308,7 @@ public class PathManager {
       ourSystemPath = getHomePath() + "/" + SYSTEM_FOLDER;
     }
 
-    FileUtil.createDirectory(new File(ourSystemPath));
+    FileUtilRt.createDirectory(new File(ourSystemPath));
     return ourSystemPath;
   }
 
@@ -324,7 +325,7 @@ public class PathManager {
   @NotNull
   public static File getIndexRoot() {
     File indexRoot = new File(System.getProperty("index_root_path", getSystemPath() + "/index"));
-    FileUtil.createDirectory(indexRoot);
+    FileUtilRt.createDirectory(indexRoot);
     return indexRoot;
   }
 
@@ -335,7 +336,7 @@ public class PathManager {
     if (System.getProperty(PROPERTY_LOG_PATH) != null) {
       ourLogPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_LOG_PATH)));
     }
-    else if (SystemInfoRt.isMac && PATHS_SELECTOR != null) {
+    else if (SystemInfo.isMac && PATHS_SELECTOR != null) {
       ourLogPath = SystemProperties.getUserHome() + "/Library/Logs/" + PATHS_SELECTOR;
     }
     else {
@@ -396,7 +397,7 @@ public class PathManager {
     else if (URLUtil.JAR_PROTOCOL.equals(protocol)) {
       Pair<String, String> paths = URLUtil.splitJarUrl(resourceURL.getFile());
       if (paths != null && paths.first != null) {
-        resultPath = FileUtil.toSystemDependentName(paths.first);
+        resultPath = FileUtilRt.toSystemDependentName(paths.first);
       }
     }
     else if (URLUtil.JRT_PROTOCOL.equals(protocol)) {
@@ -564,7 +565,7 @@ public class PathManager {
   }
 
   @NotNull
-  private static String trimPathQuotes(@NotNull String path) {
+  public static String trimPathQuotes(@NotNull String path) {
     if (path.length() >= 3 && StringUtil.startsWithChar(path, '\"') && StringUtil.endsWithChar(path, '\"')) {
       path = path.substring(1, path.length() - 1);
     }
@@ -589,11 +590,11 @@ public class PathManager {
                                      @NotNull String fallback) {
     String userHome = SystemProperties.getUserHome();
 
-    if (macPart != null && SystemInfoRt.isMac) {
+    if (macPart != null && SystemInfo.isMac) {
       return userHome + "/" + macPart + "/" + selector;
     }
 
-    if (winVar != null && SystemInfoRt.isWindows) {
+    if (winVar != null && SystemInfo.isWindows) {
       String dir = System.getenv(winVar);
       if (dir != null) {
         return dir + "/" + selector;

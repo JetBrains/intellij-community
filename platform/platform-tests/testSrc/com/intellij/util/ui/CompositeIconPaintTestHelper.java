@@ -1,11 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.ui.RestoreScaleRule;
-import com.intellij.util.ui.JBUIScale.ScaleContext;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ui.paint.ImageComparator;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
@@ -17,7 +18,7 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.util.function.BiFunction;
 
-import static com.intellij.util.ui.JBUIScale.ScaleType.*;
+import static com.intellij.ui.scale.ScaleType.*;
 import static com.intellij.util.ui.TestScaleHelper.*;
 
 /**
@@ -44,7 +45,7 @@ public abstract class CompositeIconPaintTestHelper {
   private void test(final ScaleContext ctx) {
     assume(ctx);
 
-    JBUI.setUserScaleFactor((float)ctx.getScale(USR_SCALE));
+    JBUIScale.setUserScaleFactor((float)ctx.getScale(USR_SCALE));
 
     ScaleContext ctx_noObjScale = ctx.copy();
     ctx_noObjScale.setScale(OBJ_SCALE.of(1));

@@ -15,7 +15,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -46,6 +46,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static com.intellij.testFramework.UsefulTestCase.*;
@@ -142,7 +143,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
 
   @Test
   public void testToUri() {
-    if (!SystemInfoRt.isWindows) {
+    if (!SystemInfo.isWindows) {
       assertEquals("file:///asd", VfsUtil.toUri(new File("/asd")).toASCIIString());
       assertEquals("file:///asd%20/sd", VfsUtil.toUri(new File("/asd /sd")).toASCIIString());
     }
@@ -166,7 +167,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     assertNotNull(uri);
     assertEquals("someone@example.com", uri.getSchemeSpecificPart());
 
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       uri = VfsUtil.toUri("file://C:/p");
       assertNotNull(uri);
       assertEquals("file", uri.getScheme());
@@ -302,13 +303,23 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
 
   @Test(timeout = 20_000)
   public void testRefreshAndEspeciallyScanChildrenMustBeRunOutsideOfReadActionToAvoidUILags() throws Exception {
+    AtomicReference<Project> project = new AtomicReference<>();
     checkNewDirAndRefresh(temp ->
         WriteCommandAction.runWriteCommandAction(null, ()->{
-          Project project = PlatformTestCase.createProject(temp, ExceptionUtil.currentStackTrace());
-          ProjectManagerEx.getInstanceEx().openProject(project);
-          Disposer.register(getTestRootDisposable(), () -> ProjectUtil.closeAndDispose(project));
+          project.set(PlatformTestCase.createProject(temp, ExceptionUtil.currentStackTrace()));
+          assertTrue(ProjectManagerEx.getInstanceEx().openProject(project.get()));
+          assertTrue(project.get().isOpen());
         }),
-    getAllExcludedCalled->assertTrue(getAllExcludedCalled.get()));
+    getAllExcludedCalled -> {
+      try {
+        assertTrue(getAllExcludedCalled.get());
+      }
+      finally {
+        // this concoction is to ensure close() is called on the mock ProjectManagerImpl
+        assertTrue(project.get().isOpen());
+        ApplicationManager.getApplication().invokeAndWait(() -> ProjectUtil.closeAndDispose(project.get()));
+      }
+    });
   }
 
   private void checkNewDirAndRefresh(Consumer<? super File> dirCreatedCallback, Consumer<? super AtomicBoolean> getAllExcludedCalledChecker) throws IOException {

@@ -10,9 +10,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.Action;
-import javax.swing.ActionMap;
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.HashMap;
 import java.util.function.Function;
@@ -32,7 +30,7 @@ public class SwingActionDelegate extends AnAction implements DumbAware {
   }
 
   protected JComponent getComponent(AnActionEvent event) {
-    JComponent component = UIUtil.getParentOfType(JComponent.class, event.getData(CONTEXT_COMPONENT));
+    JComponent component = ComponentUtil.getParentOfType((Class<? extends JComponent>)JComponent.class, event.getData(CONTEXT_COMPONENT));
     Function<String, JComponent> function = UIUtil.getClientProperty(component, FUNCTION);
     return function == null ? component : function.apply(mySwingActionId);
   }

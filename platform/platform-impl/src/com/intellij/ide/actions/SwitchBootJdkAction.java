@@ -22,7 +22,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Bitness;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,11 +30,11 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.JdkBundle;
 import com.intellij.util.JdkBundleList;
 import com.intellij.util.lang.JavaVersion;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +65,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
   private static final String[] LINUX_JVM_LOCATIONS = {"/usr/lib/jvm", "/usr/java"};
 
   private static final String CONFIG_FILE_EXT =
-    (!SystemInfoRt.isWindows ? ".jdk" : SystemInfo.is64Bit ? "64.exe.jdk" : ".exe.jdk");
+    (!SystemInfo.isWindows ? ".jdk" : SystemInfo.is64Bit ? "64.exe.jdk" : ".exe.jdk");
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -120,14 +120,14 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
     }
 
     String[] locations = ArrayUtilRt.EMPTY_STRING_ARRAY;
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       String dir = SystemInfo.is32Bit ? WINDOWS_X86_JVM_LOCATION : WINDOWS_X64_JVM_LOCATION;
       locations = Stream.of(File.listRoots()).map(root -> new File(root, dir).getPath()).toArray(String[]::new);
     }
-    else if (SystemInfoRt.isMac) {
+    else if (SystemInfo.isMac) {
       locations = MAC_OS_JVM_LOCATIONS;
     }
-    else if (SystemInfoRt.isLinux) {
+    else if (SystemInfo.isLinux) {
       locations = LINUX_JVM_LOCATIONS;
     }
     for (String location : locations) {
@@ -277,7 +277,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
         warningLabel.setIcon(UIUtil.getWarningIcon());
         warningLabel.setForeground(JBColor.RED);
 
-        JPanel panel = new NonOpaquePanel(new BorderLayout(0, JBUI.scale(20)));
+        JPanel panel = new NonOpaquePanel(new BorderLayout(0, JBUIScale.scale(20)));
         panel.add(warningLabel, BorderLayout.NORTH);
         panel.add(new JBLabel("Select Boot JDK"), BorderLayout.CENTER);
         return panel;

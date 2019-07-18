@@ -13,7 +13,7 @@ class TestApp {
   companion object {
     @JvmStatic
     fun main(args: Array<String>) {
-      val inputFile = Paths.get(args[0])
+      val inputFile = Paths.get(args[0].trim())
       val outFile = inputFile.parent.resolve(FileUtilRt.getNameWithoutExtension(inputFile.fileName.toString()) + "-text.ion")
 
       readPossiblyCompressedIonFile(inputFile) { input ->

@@ -586,6 +586,44 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     return c1.getTransform().equals(c2.getTransform()) && c1.getAntiAliasingHint().equals(c2.getAntiAliasingHint());
   }
 
+  public int offsetToVisualColumnInFoldRegion(@NotNull FoldRegion region, int offset, boolean leanTowardsLargerOffsets) {
+    if (offset < 0 || offset == 0 && !leanTowardsLargerOffsets) return 0;
+    String text = region.getPlaceholderText();
+    if (offset > text.length()) {
+      offset = text.length();
+      leanTowardsLargerOffsets = true;
+    }
+    int logicalColumn = LogicalPositionCache.calcColumn(text, 0, 0, offset, getTabSize());
+    int maxColumn = 0;
+    for (LineLayout.VisualFragment fragment : getFoldRegionLayout(region).getFragmentsInVisualOrder(0)) {
+      int startLC = fragment.getStartLogicalColumn();
+      int endLC = fragment.getEndLogicalColumn();
+      if (logicalColumn > startLC && logicalColumn < endLC ||
+          logicalColumn == startLC && leanTowardsLargerOffsets ||
+          logicalColumn == endLC && !leanTowardsLargerOffsets) {
+        return fragment.logicalToVisualColumn(logicalColumn);
+      }
+      maxColumn = fragment.getEndVisualColumn();
+    }
+    return maxColumn;
+  }
+
+  public int visualColumnToOffsetInFoldRegion(@NotNull FoldRegion region, int visualColumn, boolean leansRight) {
+    if (visualColumn < 0 || visualColumn == 0 && !leansRight) return 0;
+    String text = region.getPlaceholderText();
+    for (LineLayout.VisualFragment fragment : getFoldRegionLayout(region).getFragmentsInVisualOrder(0)) {
+      int startVC = fragment.getStartVisualColumn();
+      int endVC = fragment.getEndVisualColumn();
+      if (visualColumn > startVC && visualColumn < endVC ||
+          visualColumn == startVC && leansRight ||
+          visualColumn == endVC && !leansRight) {
+        int logicalColumn = fragment.visualToLogicalColumn(visualColumn);
+        return LogicalPositionCache.calcOffset(text, logicalColumn, 0, 0, text.length(), getTabSize());
+      }
+    }
+    return text.length();
+  }
+
   LineLayout getFoldRegionLayout(FoldRegion foldRegion) {
     LineLayout layout = foldRegion.getUserData(FOLD_REGION_TEXT_LAYOUT);
     if (layout == null) {
@@ -597,10 +635,14 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     return layout;
   }
 
-  void invalidateFoldRegionLayouts() {
+  private void invalidateFoldRegionLayouts() {
     for (FoldRegion region : myEditor.getFoldingModel().getAllFoldRegions()) {
-      region.putUserData(FOLD_REGION_TEXT_LAYOUT, null);
+      invalidateFoldRegionLayout(region);
     }
+  }
+
+  public void invalidateFoldRegionLayout(FoldRegion region) {
+    region.putUserData(FOLD_REGION_TEXT_LAYOUT, null);
   }
 
   float getCodePointWidth(int codePoint, @JdkConstants.FontStyle int fontStyle) {

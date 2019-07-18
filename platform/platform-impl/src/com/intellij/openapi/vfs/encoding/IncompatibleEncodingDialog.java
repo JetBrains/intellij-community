@@ -5,7 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xml.util.XmlStringUtil;
@@ -84,7 +84,7 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
         close(RELOAD_EXIT_CODE);
       }
     };
-    if (!SystemInfoRt.isMac && safeToReload == EncodingUtil.Magic8.NO_WAY) {
+    if (!SystemInfo.isMac && safeToReload == EncodingUtil.Magic8.NO_WAY) {
       reloadAction.putValue(Action.SMALL_ICON, AllIcons.General.Warning);
     }
     reloadAction.putValue(Action.MNEMONIC_KEY, (int)'R');
@@ -114,7 +114,7 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
         return !FileUtilRt.isTooLarge(virtualFile.getLength());
       }
     };
-    if (!SystemInfoRt.isMac && safeToConvert == EncodingUtil.Magic8.NO_WAY) {
+    if (!SystemInfo.isMac && safeToConvert == EncodingUtil.Magic8.NO_WAY) {
       convertAction.putValue(Action.SMALL_ICON, AllIcons.General.Warning);
     }
     convertAction.putValue(Action.MNEMONIC_KEY, (int)'C');

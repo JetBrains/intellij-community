@@ -2,7 +2,6 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -39,7 +38,7 @@ public class SystemProperties {
   /** @deprecated use {@link SystemInfo#OS_NAME} (to be removed in IDEA 2020) */
   @Deprecated
   public static String getOsName() {
-    return SystemInfoRt.OS_NAME;
+    return SystemInfo.OS_NAME;
   }
 
   /** @deprecated use {@link SystemInfo#JAVA_VERSION} (to be removed in IDEA 2020) */

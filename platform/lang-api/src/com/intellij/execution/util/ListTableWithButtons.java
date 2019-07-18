@@ -116,7 +116,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
     int selectedIndex = myTableView.getSelectionModel().getLeadSelectionIndex();
     myTableView.scrollRectToVisible(myTableView.getCellRect(selectedIndex, 0, true));
 
-    List<T> aliveElements = new ArrayList<>(myElements.size() - selectedRows.length);
+    List<T> aliveElements = new ArrayList<>();
     for(int row = 0; row < myTableView.getRowCount(); ++row) {
       T selectedElement = myElements.get(row);
       if(!myTableView.isRowSelected(row) || !canDeleteElement(selectedElement)) {

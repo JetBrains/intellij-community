@@ -4,9 +4,9 @@ package com.intellij.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.Notification;
 import com.intellij.notification.impl.NotificationsManagerImpl;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +34,7 @@ public class BalloonLayoutConfiguration {
   public final int beforeGearSpace;
 
   public static int MaxFullContentWidth() {
-    return JBUI.scale(350);
+    return JBUIScale.scale(350);
   }
 
   @NotNull
@@ -43,7 +43,7 @@ public class BalloonLayoutConfiguration {
   }
 
   public static int MinWidth() {
-    return JBUI.scale(100);
+    return JBUIScale.scale(100);
   }
 
   private static final int RawWidth;
@@ -52,11 +52,11 @@ public class BalloonLayoutConfiguration {
   static {
     int width;
 
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       width = 360;
       RawStyleWidth = 240;
     }
-    else if (SystemInfoRt.isLinux) {
+    else if (SystemInfo.isLinux) {
       width = 410;
       RawStyleWidth = 270;
     }
@@ -72,15 +72,15 @@ public class BalloonLayoutConfiguration {
   }
 
   public static int FixedWidth() {
-    return JBUI.scale(RawWidth);
+    return JBUIScale.scale(RawWidth);
   }
 
   public static int MaxWidth() {
-    return JBUI.scale(RawWidth - 60);
+    return JBUIScale.scale(RawWidth - 60);
   }
 
   public static String MaxWidthStyle() {
-    return "width:" + JBUI.scale(RawStyleWidth) + "px;";
+    return "width:" + JBUIScale.scale(RawStyleWidth) + "px;";
   }
 
   @NotNull
@@ -107,13 +107,14 @@ public class BalloonLayoutConfiguration {
   @NotNull
   private static BalloonLayoutConfiguration twoLines() {
     return new BalloonLayoutConfiguration(new JBDimension(10, 11),
-                                          JBUI.scale(11), JBUI.scale(5), JBUI.scale(5), JBUI.scale(5), JBUI.scale(14));
+                                          JBUIScale.scale(11), JBUIScale.scale(5), JBUIScale.scale(5), JBUIScale.scale(5),
+                                          JBUIScale.scale(14));
   }
 
   @NotNull
   private static BalloonLayoutConfiguration treeLines() {
     return new BalloonLayoutConfiguration(new JBDimension(10, 7),
-                                          JBUI.scale(7), JBUI.scale(3), JBUI.scale(7), 0, JBUI.scale(8));
+                                          JBUIScale.scale(7), JBUIScale.scale(3), JBUIScale.scale(7), 0, JBUIScale.scale(8));
   }
 
   private BalloonLayoutConfiguration(@NotNull Dimension iconOffset,
@@ -122,10 +123,10 @@ public class BalloonLayoutConfiguration {
                                      int contentActionsSpaceHeight,
                                      int titleActionsSpaceHeight,
                                      int bottomSpaceHeight) {
-    this(JBUI.scale(32), iconOffset,
+    this(JBUIScale.scale(32), iconOffset,
          topSpaceHeight, titleContentSpaceHeight, contentActionsSpaceHeight, titleActionsSpaceHeight, bottomSpaceHeight,
-         JBUI.scale(16),
-         new JBDimension(8, 6), JBUI.scale(7), JBUI.scale(5), JBUI.scale(15));
+         JBUIScale.scale(16),
+         new JBDimension(8, 6), JBUIScale.scale(7), JBUIScale.scale(5), JBUIScale.scale(15));
   }
 
   private BalloonLayoutConfiguration(int iconPanelWidth,

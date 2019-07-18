@@ -10,7 +10,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -116,7 +116,7 @@ public class PersistentFsTest extends PlatformTestCase {
   }
 
   public void testDeleteSubstRoots() throws Exception {
-    if (!SystemInfoRt.isWindows) return;
+    if (!SystemInfo.isWindows) return;
 
     File tempDirectory = FileUtil.createTempDirectory(getTestName(false), null);
     File substRoot = IoTestUtil.createSubst(tempDirectory.getPath());

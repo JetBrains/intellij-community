@@ -31,6 +31,7 @@
     <fileEditorProvider implementation="org.editorconfig.configmanagement.editor.EditorConfigEditorProvider"/>
     <codeInsight.lineMarkerProvider language="" implementationClass="org.editorconfig.configmanagement.editor.EditorConfigPreviewMarkerProvider"/>
     <projectService serviceImplementation="org.editorconfig.configmanagement.editor.EditorConfigPreviewManager"/>
+    <gotoFileContributor implementation="org.editorconfig.configmanagement.finder.EditorConfigGotoFileContributor"/>
 
     <!-- Language support -->
     <fileTypeFactory implementation="org.editorconfig.language.filetype.EditorConfigFileTypeFactory"/>

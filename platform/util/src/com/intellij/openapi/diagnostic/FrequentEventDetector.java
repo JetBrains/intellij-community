@@ -41,7 +41,7 @@ public class FrequentEventDetector {
   private final int myEventCountThreshold;
   private final int myTimeSpanMs;
   private final Level myLevel;
-  private static boolean enabled = true;
+  private static AtomicInteger disableRequests = new AtomicInteger();
 
   public FrequentEventDetector(int eventCountThreshold, int timeSpanMs) {
     this(eventCountThreshold, timeSpanMs, Level.INFO);
@@ -58,7 +58,7 @@ public class FrequentEventDetector {
    */
   @Nullable
   public String getMessageOnEvent(@NotNull Object event) {
-    if (!enabled) return null;
+    if (disableRequests.get() != 0) return null;
     if (myEventsPosted.incrementAndGet() > myEventCountThreshold) {
       boolean shouldLog = false;
 
@@ -116,12 +116,7 @@ public class FrequentEventDetector {
 
   @TestOnly
   public static void disableUntil(@NotNull Disposable reenable) {
-    enabled = false;
-    Disposer.register(reenable, new Disposable() {
-      @Override
-      public void dispose() {
-        enabled = true;
-      }
-    });
+    disableRequests.incrementAndGet();
+    Disposer.register(reenable, () -> disableRequests.decrementAndGet());
   }
 }

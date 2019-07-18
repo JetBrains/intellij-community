@@ -5,6 +5,7 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.RectanglePainter;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,7 +18,7 @@ import java.util.Arrays;
  * @author Konstantin Bulenkov
  */
 public class ColorsIcon extends ColorIcon {
-  private static final int SQUARE_SIZE = JBUI.scale(6);
+  private static final int SQUARE_SIZE = JBUIScale.scale(6);
   private static final BufferedImage CHESS_IMAGE = UIUtil.createImage(SQUARE_SIZE, SQUARE_SIZE, BufferedImage.TYPE_INT_RGB);
   private static final TexturePaint CHESS;
 

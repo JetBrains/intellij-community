@@ -42,7 +42,7 @@ public class EditRangeIntention extends BaseIntentionAction implements LowPriori
 
   @Nullable
   private static PsiModifierListOwner getTarget(Editor editor, PsiFile file) {
-    final PsiModifierListOwner owner =  AddAnnotationPsiFix.getContainer(file, editor.getCaretModel().getOffset());
+    final PsiModifierListOwner owner =  AddAnnotationPsiFix.getContainer(file, editor.getCaretModel().getOffset(), true);
     LongRangeSet rangeFromType = rangeFromType(owner);
     if (rangeFromType == null || !ExternalAnnotationsManagerImpl.areExternalAnnotationsApplicable(owner)) return null;
     PsiElement original = owner.getOriginalElement();

@@ -156,7 +156,17 @@ public class JavaPredefinedConfigurationsTest extends StructuralSearchTestCase {
            "  void o(String s) {}" +
            "}",
            "public void m(final int i, int j, int k) {    System.out.println(i);  }");
-    //assertTrue("untested configurations: " + configurationMap.keySet(), configurationMap.isEmpty());
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.methods.of.the.class")),
+                                   "abstract class X {" +
+                                   "  X() {}" +
+                                   "  X(String s) {}" +
+                                   "  abstract void x();" +
+                                   "  int x(int i) {}" +
+                                   "  boolean x(double d, Object o) {}" +
+                                   "}",
+                                   "X() {}", "X(String s) {}", "abstract void x();", "int x(int i) {}", "boolean x(double d, Object o) {}");
+    //assertTrue((templates.length - configurationMap.size()) + " of " + templates.length +
+    //           " existing templates tested. Untested templates: " + configurationMap.keySet(), configurationMap.isEmpty());
   }
 
   private void doTest(Configuration template, String source, String... results) {

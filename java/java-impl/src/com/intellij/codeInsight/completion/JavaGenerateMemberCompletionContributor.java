@@ -17,7 +17,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.RowIcon;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -131,7 +132,8 @@ public class JavaGenerateMemberCompletionContributor {
                                                              PsiMethod baseMethod,
                                                              PsiClass baseClass, PsiSubstitutor substitutor, boolean generateDefaultMethods, PsiClass targetClass) {
 
-    RowIcon icon = new RowIcon(baseMethod.getIcon(0), implemented ? AllIcons.Gutter.ImplementingMethod : AllIcons.Gutter.OverridingMethod);
+    RowIcon icon = IconManager
+      .getInstance().createRowIcon(baseMethod.getIcon(0), implemented ? AllIcons.Gutter.ImplementingMethod : AllIcons.Gutter.OverridingMethod);
     return createGenerateMethodElement(baseMethod, substitutor, icon, baseClass.getName(), new InsertHandler<LookupElement>() {
       @Override
       public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {

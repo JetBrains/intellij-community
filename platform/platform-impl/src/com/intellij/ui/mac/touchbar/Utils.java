@@ -7,8 +7,6 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -49,9 +47,9 @@ public class Utils {
 
   public static String getAppId() {
     try {
-      final ApplicationInfoEx appEx = ApplicationInfoImpl.getInstanceEx();
-      if (appEx == null) // unit-test case
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
         return null;
+      }
     } catch (Throwable e) {
       LOG.debug(e); // no application
       return null;

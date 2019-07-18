@@ -5,7 +5,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -13,6 +13,7 @@ import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.HttpConfigurable;
 import git4idea.GitUtil;
 import git4idea.config.GitVcsApplicationSettings;
+import git4idea.config.GitVersion;
 import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +41,7 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
 
   @NotNull private final GitLineHandler myHandler;
   @NotNull private final Project myProject;
+  @NotNull private final GitVersion myVersion;
 
   @Nullable private UUID myHttpHandler;
   private volatile boolean myHttpAuthFailed;
@@ -48,14 +50,19 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
 
   @Nullable private UUID myNativeSshHandler;
 
-  private GitHandlerAuthenticationManager(@NotNull Project project, @NotNull GitLineHandler handler) {
+  private GitHandlerAuthenticationManager(@NotNull Project project,
+                                          @NotNull GitLineHandler handler,
+                                          @NotNull GitVersion version) {
     myProject = project;
     myHandler = handler;
+    myVersion = version;
   }
 
   @NotNull
-  public static GitHandlerAuthenticationManager prepare(@NotNull Project project, @NotNull GitLineHandler handler) throws IOException {
-    GitHandlerAuthenticationManager manager = new GitHandlerAuthenticationManager(project, handler);
+  public static GitHandlerAuthenticationManager prepare(@NotNull Project project,
+                                                        @NotNull GitLineHandler handler,
+                                                        @NotNull GitVersion version) throws IOException {
+    GitHandlerAuthenticationManager manager = new GitHandlerAuthenticationManager(project, handler, version);
     GitUtil.tryRunOrClose(manager, () -> {
       manager.prepareHttpAuth();
       if (GitVcsApplicationSettings.getInstance().isUseIdeaSsh()) {
@@ -66,7 +73,7 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
       }
       boolean useCredentialHelper = GitVcsApplicationSettings.getInstance().isUseCredentialHelper();
       boolean shouldResetCredentialHelper = !useCredentialHelper &&
-                                            GitVersionSpecialty.CAN_OVERRIDE_CREDENTIAL_HELPER_WITH_EMPTY.existsIn(project);
+                                            GitVersionSpecialty.CAN_OVERRIDE_CREDENTIAL_HELPER_WITH_EMPTY.existsIn(version);
       if (shouldResetCredentialHelper) {
         handler.overwriteConfig("credential.helper=");
       }
@@ -83,7 +90,7 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
 
   private void prepareHttpAuth() throws IOException {
     GitHttpAuthService service = ServiceManager.getService(GitHttpAuthService.class);
-    addHandlerPathToEnvironment(myProject, myHandler, GitAskPassXmlRpcHandler.GIT_ASK_PASS_ENV, service);
+    addHandlerPathToEnvironment(GitAskPassXmlRpcHandler.GIT_ASK_PASS_ENV, service);
     GitAuthenticationGate authenticationGate = notNull(myHandler.getAuthenticationGate(), GitPassthroughAuthenticationGate.getInstance());
     GitHttpAuthenticator httpAuthenticator = service.createAuthenticator(myProject,
                                                                          myHandler.getUrls(),
@@ -142,7 +149,7 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
 
   private void prepareSshAuth() throws IOException {
     GitXmlRpcSshService ssh = ServiceManager.getService(GitXmlRpcSshService.class);
-    addHandlerPathToEnvironment(myProject, myHandler, GitSSHHandler.GIT_SSH_ENV, ssh);
+    addHandlerPathToEnvironment(GitSSHHandler.GIT_SSH_ENV, ssh);
     myHandler.addCustomEnvironmentVariable(GitSSHHandler.GIT_SSH_VAR, "ssh");
     GitAuthenticationGate authenticationGate = notNull(myHandler.getAuthenticationGate(), GitPassthroughAuthenticationGate.getInstance());
     GitSSHGUIHandler guiHandler = new GitSSHGUIHandler(myProject, authenticationGate, myHandler.getIgnoreAuthenticationMode());
@@ -189,7 +196,7 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
     myNativeSshHandler = service.registerHandler(authenticator);
     int port = service.getXmlRcpPort();
 
-    addHandlerPathToEnvironment(myProject, myHandler, GitNativeSshAskPassXmlRpcHandler.SSH_ASK_PASS_ENV, service);
+    addHandlerPathToEnvironment(GitNativeSshAskPassXmlRpcHandler.SSH_ASK_PASS_ENV, service);
     myHandler.addCustomEnvironmentVariable(GitNativeSshAskPassXmlRpcHandler.IJ_HANDLER_ENV, myNativeSshHandler.toString());
     myHandler.addCustomEnvironmentVariable(GitNativeSshAskPassXmlRpcHandler.IJ_PORT_ENV, Integer.toString(port));
     LOG.debug(String.format("myHandler=%s, port=%s", myNativeSshHandler, port));
@@ -203,15 +210,13 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
     }
   }
 
-  private static void addHandlerPathToEnvironment(@NotNull Project project,
-                                                  @NotNull GitHandler handler,
-                                                  @NotNull String env,
-                                                  @NotNull GitXmlRpcHandlerService service) throws IOException {
-    boolean useBatchFile = SystemInfoRt.isWindows &&
+  private void addHandlerPathToEnvironment(@NotNull String env,
+                                           @NotNull GitXmlRpcHandlerService service) throws IOException {
+    boolean useBatchFile = SystemInfo.isWindows &&
                            (!Registry.is("git.use.shell.script.on.windows") ||
-                            !GitVersionSpecialty.CAN_USE_SHELL_HELPER_SCRIPT_ON_WINDOWS.existsIn(project));
+                            !GitVersionSpecialty.CAN_USE_SHELL_HELPER_SCRIPT_ON_WINDOWS.existsIn(myVersion));
     File scriptFile = service.getScriptPath(useBatchFile);
-    handler.addCustomEnvironmentVariable(env, scriptFile.getPath());
+    myHandler.addCustomEnvironmentVariable(env, scriptFile.getPath());
   }
 
   private void cleanupNativeSshAuth() {

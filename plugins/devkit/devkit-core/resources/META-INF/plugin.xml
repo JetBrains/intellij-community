@@ -283,7 +283,8 @@
     <console.folding order="first" implementation="com.intellij.testFramework.FailedTestDebugLogConsoleFolding"/>
 
     <!--cached value profiler-->
-    <fileTypeFactory implementation="org.jetbrains.idea.devkit.cachedValueProfiler.CVPFileTypeFactory"/>
+    <fileType extensions="cvp" name="CVP"
+              implementationClass="org.jetbrains.idea.devkit.cachedValueProfiler.CVPFileType" fieldName="INSTANCE"/>
     <fileEditorProvider implementation="org.jetbrains.idea.devkit.cachedValueProfiler.CVPFileEditorProvider"/>
 
     <!-- themes -->

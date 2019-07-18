@@ -904,7 +904,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
         final String text = isNullLiteralExpression(expr) || expressions.get(expr) == ConstantResult.NULL
                             ? InspectionsBundle.message("dataflow.message.return.null.from.notnull", presentable)
                             : InspectionsBundle.message("dataflow.message.return.nullable.from.notnull", presentable);
-        reporter.registerProblem(expr, text);
+        reporter.registerProblem(expr, text, createNPEFixes(expr, expr, reporter.isOnTheFly()).toArray(LocalQuickFix.EMPTY_ARRAY));
       }
       else if (AnnotationUtil.isAnnotatingApplicable(anchor)) {
         final String defaultNullable = manager.getDefaultNullable();

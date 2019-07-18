@@ -4,7 +4,7 @@ package com.intellij.testGuiFramework.fixtures;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.newEditor.SettingsDialog;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.treeStructure.CachingSimpleNode;
 import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.Robot;
@@ -26,7 +26,7 @@ public class IdeSettingsDialogFixture extends IdeaDialogFixture<SettingsDialog> 
     return new IdeSettingsDialogFixture(robot, find(robot, SettingsDialog.class, new GenericTypeMatcher<JDialog>(JDialog.class) {
       @Override
       protected boolean isMatching(@NotNull JDialog dialog) {
-        String expectedTitle = SystemInfoRt.isMac ? "Preferences" : "Settings";
+        String expectedTitle = SystemInfo.isMac ? "Preferences" : "Settings";
         return expectedTitle.equals(dialog.getTitle()) && dialog.isShowing();
       }
     }));

@@ -2,10 +2,7 @@
 
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.FoldingGroup;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.DocumentUtil;
@@ -18,7 +15,7 @@ public class FoldRegionImpl extends RangeMarkerWithGetterImpl implements FoldReg
 
   private boolean myIsExpanded;
   private final EditorImpl myEditor;
-  private final String myPlaceholderText;
+  private String myPlaceholderText;
   private final FoldingGroup myGroup;
   private final boolean myShouldNeverExpand;
   private boolean myDocumentRegionWasChanged;
@@ -171,6 +168,12 @@ public class FoldRegionImpl extends RangeMarkerWithGetterImpl implements FoldReg
   @Override
   public boolean isGutterMarkEnabledForSingleLine() {
     return Boolean.TRUE.equals(getUserData(SHOW_GUTTER_MARK_FOR_SINGLE_LINE));
+  }
+
+  @Override
+  public void setPlaceholderText(@NotNull String text) {
+    myPlaceholderText = text;
+    myEditor.getFoldingModel().onPlaceholderTextChanged(this);
   }
 
   @Override

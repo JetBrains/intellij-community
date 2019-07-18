@@ -3,205 +3,185 @@ package org.jetbrains.idea.maven.buildtool
 
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.DefaultBuildDescriptor
-import com.intellij.build.SyncViewManager
 import com.intellij.build.events.EventResult
-import com.intellij.build.events.Failure
 import com.intellij.build.events.impl.*
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.annotations.TestOnly
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.ExceptionUtil
+import org.jetbrains.idea.maven.execution.SyncBundle
+import org.jetbrains.idea.maven.server.MavenServerProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 
-
 class MavenSyncConsole(private val myProject: Project) {
-  private lateinit var mySyncView: BuildProgressListener
-  private lateinit var myTaskId: ExternalSystemTaskId
+  @Volatile
+  private var mySyncView: BuildProgressListener = BuildProgressListener { _, _ -> }
+  private var mySyncId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, ExternalSystemTaskType.RESOLVE_PROJECT, myProject)
   private var finished = false
   private var started = false
 
-  private lateinit var myFailuresMap: LinkedHashMap<Any, ArrayList<Failure>>
-  private lateinit var myStartedSet: HashSet<String>
-  private var tasksRunning: Int = 0
-
+  private var myStartedSet = LinkedHashSet<Pair<Any, String>>()
 
   @Synchronized
-  fun startImport() {
-    if(started){
-      return
-    }
-    finished = false
+  fun startImport(syncView: BuildProgressListener) {
     started = true
-    myStartedSet = HashSet()
-    myFailuresMap = LinkedHashMap()
-    tasksRunning = 0
-
-
-    myTaskId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, ExternalSystemTaskType.RESOLVE_PROJECT, myProject)
-    val descriptor = DefaultBuildDescriptor(myTaskId, "Sync", myProject.basePath!!, System.currentTimeMillis())
-    val result = Ref<BuildProgressListener>()
-    ApplicationManager.getApplication().invokeAndWait { result.set(ServiceManager.getService(myProject, SyncViewManager::class.java)) }
-    mySyncView = result.get()
-    mySyncView.onEvent(StartBuildEventImpl(descriptor, "Sync ${myProject.name}"))
+    finished = false
+    mySyncId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, ExternalSystemTaskType.RESOLVE_PROJECT, myProject)
+    val descriptor = DefaultBuildDescriptor(mySyncId, "Sync", myProject.basePath!!, System.currentTimeMillis())
+    mySyncView = syncView
+    mySyncView.onEvent(mySyncId, StartBuildEventImpl(descriptor, "Sync ${myProject.name}"))
     debugLog("maven sync: started importing $myProject")
   }
 
-
   @Synchronized
   fun addText(text: String) {
-    addText(text, true)
+    if (!started || finished) return
+    addText(mySyncId, text, true)
   }
 
   @Synchronized
-  fun addText(text: String, stdout: Boolean) {
-    if(!started) return
-    if (StringUtil.isEmpty(text) || finished) {
+  fun addText(parentId: Any, text: String, stdout: Boolean) {
+    if (!started || finished) return
+    if (StringUtil.isEmpty(text)) {
       return
     }
-    //println("Maven sync: print $text into $parentId")
-    mySyncView.onEvent(OutputBuildEventImpl(myTaskId, "$text\n", stdout))
+    val toPrint = if (text.endsWith('\n')) text else "$text\n"
+    mySyncView.onEvent(mySyncId, OutputBuildEventImpl(parentId, toPrint, stdout))
   }
-
 
   @Synchronized
   fun finishImport() {
     debugLog("Maven sync: finishImport")
+    doFinish(DerivedResultImpl())
+  }
+
+  @Synchronized
+  fun notifyReadingProblems(file: VirtualFile) {
+    debugLog("reading problems in $file")
+  }
+
+  fun getListener(type: MavenServerProgressIndicator.ResolveType): ArtifactSyncListener {
+    return when (type) {
+      MavenServerProgressIndicator.ResolveType.PLUGIN ->ArtifactSyncListenerImpl("maven.sync.plugins")
+      MavenServerProgressIndicator.ResolveType.DEPENDENCY ->ArtifactSyncListenerImpl("maven.sync.dependencies")
+    }
+  }
+
+  @Synchronized
+  private fun doFinish(result: EventResult) {
+    val tasks = myStartedSet.toList().asReversed()
+    debugLog("Tasks $tasks are not completed! Force complete with $result")
+    tasks.forEach { completeTask(it.first, it.second, result) }
+    mySyncView.onEvent(mySyncId, FinishBuildEventImpl(mySyncId, null, System.currentTimeMillis(), "", result))
     finished = true
-    tryFinish()
-  }
-
-  @Synchronized
-  fun startTask(taskName: String) {
-    debugLog("Maven sync: start $taskName $tasksRunning")
-    if (finished||!started) {
-      return
-    }
-    tasksRunning += 1
-    val title = getTitle(taskName)
-    val parentId = extractParent(taskName)
-    myStartedSet.add(taskName.trim('.'))
-    mySyncView.onEvent(StartEventImpl(title, parentId, System.currentTimeMillis(), title))
-  }
-
-
-  @Synchronized
-  fun completeTask(taskName: String) {
-    debugLog("Maven sync: complete $taskName $tasksRunning")
-    if(!started || !myStartedSet.contains(taskName.trim('.'))) return
-
-    val title = getTitle(taskName)
-    val parentId = extractParent(taskName)
-    val result = eventResult(title)
-    mySyncView.onEvent(FinishEventImpl(title, parentId, System.currentTimeMillis(), title, result))
-    tasksRunning -= 1
-    tryFinish()
-  }
-
-
-  @Synchronized
-  fun completeTask(taskName: String, e: Throwable) {
-    debugLog("Maven sync: complete $taskName $tasksRunning with $e")
-    if(!started || !myStartedSet.contains(taskName.trim('.'))) return
-    val title = getTitle(taskName)
-    val parentId = extractParent(taskName)
-    updateErrorStackAbove(e, taskName)
-    mySyncView.onEvent(FinishEventImpl(title, parentId, System.currentTimeMillis(), title, FailureResultImpl(e)))
-    tasksRunning -= 1
-    tryFinish()
-  }
-
-  @Synchronized
-  fun addRootError(e: Throwable) {
-    if(!started) return
-    addRootError(e.message?:"", e)
-  }
-  @Synchronized
-  fun addRootError(message: String, e: Throwable) {
-    addText(message, false)
-    myFailuresMap.compute("Sync") { _, list -> add(list, FailureImpl(message, e)) }
-
-  }
-
-  private fun updateErrorStackAbove(e: Throwable, taskName: String) {
-    taskName.splitToSequence("/").forEach {
-      myFailuresMap.compute(it) { _, list -> add(list, FailureImpl(e.message, e)) }
-    }
-    myFailuresMap.compute("Sync") { _, list -> add(list, FailureImpl(e.message, e)) }
-  }
-
-  private fun add(list: ArrayList<Failure>?, failure: Failure): ArrayList<Failure> {
-    if (list == null) {
-      return arrayListOf(failure)
-    }
-    else {
-      list.add(failure)
-      return list
-    }
-  }
-
-  private fun tryFinish() {
-    if (!finished || tasksRunning > 0) {
-      return
-    }
-    val result = eventResult("Sync")
-    mySyncView
-      .onEvent(FinishBuildEventImpl(myTaskId, null, System.currentTimeMillis(), "Sync Complete", result))
     started = false
   }
 
-
-  private fun eventResult(title: String): EventResult {
-    val failures = myFailuresMap[title]
-    val result = if (failures != null) FailureResultImpl(failures) else SuccessResultImpl(false)
-    return result
+  @Synchronized
+  private fun showError(keyPrefix: String, dependency: String) {
+    val umbrellaString = SyncBundle.message("${keyPrefix}.resolve")
+    val errorString = SyncBundle.message("${keyPrefix}.resolve.error", dependency)
+    startTask(mySyncId, umbrellaString)
+    startTask(umbrellaString, errorString)
+    addText(umbrellaString, umbrellaString, false)
+    completeTask(umbrellaString, errorString, FailureResultImpl())
   }
 
-  private fun extractParent(taskName: String): Any {
-    val parent = taskName.split("--").map { it.trimEnd('.') }.dropLast(1).joinToString("/")
-    return if (parent.isBlank()) myTaskId else parent
+  @Synchronized
+  private fun startTask(parentId: Any, taskName: String) {
+    if (!started || finished) return
+    debugLog("Maven sync: start $taskName")
+    if (myStartedSet.add(parentId to taskName)) {
+      mySyncView.onEvent(mySyncId, StartEventImpl(taskName, parentId, System.currentTimeMillis(), taskName))
+    }
   }
 
-  private fun getTitle(taskName: String): String {
-    return taskName.split("--").last().trimEnd('.')
+
+  @Synchronized
+  private fun completeTask(parentId: Any, taskName: String, result: EventResult) {
+    if (!started || finished) return
+    debugLog("Maven sync: complete $taskName with $result")
+    if (myStartedSet.remove(parentId to taskName)) {
+      mySyncView.onEvent(mySyncId, FinishEventImpl(taskName, parentId, System.currentTimeMillis(), taskName, result))
+    }
   }
 
-  private fun debugLog(text: String) {
-    MavenLog.LOG.debug(text)
+
+  private fun debugLog(s: String, exception: Throwable? = null) {
+    MavenLog.LOG.debug(s, exception)
   }
 
-  @TestOnly
-  fun isFinished(): Boolean {
-    return finished
+  @Synchronized
+  private fun completeUmbrellaEvents(keyPrefix: String) {
+    val taskName = SyncBundle.message("${keyPrefix}.resolve")
+    completeTask(mySyncId, taskName, DerivedResultImpl())
   }
 
-  @TestOnly
-  fun runningProcesses() : Int{
-    return tasksRunning
+  @Synchronized
+  private fun downloadEventStarted(keyPrefix: String, dependency: String) {
+    val downloadString = SyncBundle.message("${keyPrefix}.download")
+    val downloadArtifactString = SyncBundle.message("${keyPrefix}.artifact.download", dependency)
+    startTask(mySyncId, downloadString)
+    startTask(downloadString, downloadArtifactString)
   }
 
-  @TestOnly
-  fun getErrors(): ArrayList<Failure>? {
-    return myFailuresMap["Sync"]
+  @Synchronized
+  private fun downloadEventCompleted(keyPrefix: String, dependency: String) {
+    val downloadString = SyncBundle.message("${keyPrefix}.download")
+    val downloadArtifactString = SyncBundle.message("${keyPrefix}.artifact.download", dependency)
+    addText(downloadArtifactString, downloadArtifactString, true)
+    completeTask(downloadString, downloadArtifactString, SuccessResultImpl(false))
   }
 
-  @TestOnly
-  fun getErrors(key: String): ArrayList<Failure>? {
-    return myFailuresMap[key]
+  @Synchronized
+  private fun downloadEventFailed(keyPrefix: String, dependency: String, error: String, stackTrace: String?) {
+    val downloadString = SyncBundle.message("${keyPrefix}.download")
+    val downloadArtifactString = SyncBundle.message("${keyPrefix}.artifact.download", dependency)
+    if (stackTrace != null) {
+      addText(downloadArtifactString, stackTrace, false)
+    }
+    else {
+      addText(downloadArtifactString, error, true)
+    }
+    completeTask(downloadString, downloadArtifactString, FailureResultImpl(error))
   }
 
-  @TestOnly
-  fun started(key: String): Boolean{
-    return myStartedSet.contains(key.trim('.'))
-  }
 
-  companion object {
-    const val PLUGINS_RESOLVE_PREFIX = "Downloading Maven plugins--"
-  }
+  private inner class ArtifactSyncListenerImpl(val keyPrefix: String) : ArtifactSyncListener {
+    override fun downloadStarted(dependency: String) {
+      downloadEventStarted(keyPrefix, dependency)
+    }
 
+    override fun downloadCompleted(dependency: String) {
+      downloadEventCompleted(keyPrefix, dependency)
+    }
+
+    override fun downloadFailed(dependency: String, error: String, stackTrace: String?) {
+      downloadEventFailed(keyPrefix, dependency, error, stackTrace)
+    }
+
+    override fun finish() {
+      completeUmbrellaEvents(keyPrefix)
+    }
+
+    override fun showError(dependency: String) {
+      showError(keyPrefix, dependency)
+    }
+  }
 
 }
+
+interface ArtifactSyncListener {
+  fun showError(dependency: String)
+  fun downloadStarted(dependency: String)
+  fun downloadCompleted(dependency: String)
+  fun downloadFailed(dependency: String, error: String, stackTrace: String?)
+  fun finish()
+}
+
+
+
+

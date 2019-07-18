@@ -87,20 +87,23 @@ public class MessageBusTest extends TestCase {
   }
 
 
+  private Disposable myParentDisposable = Disposer.newDisposable();
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     myBus = MessageBusFactory.newMessageBus(this);
+    Disposer.register(myParentDisposable, myBus);
     myLog = new ArrayList<>();
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
-      Disposer.dispose(myBus);
+      Disposer.dispose(myParentDisposable);
     }
     finally {
       myBus = null;
+      myParentDisposable = null;
       super.tearDown();
     }
   }
@@ -270,11 +273,12 @@ public class MessageBusTest extends TestCase {
 
   public void testStress() throws Throwable {
     final int threadsNumber = 10;
-    final int iterationsNumber = 100;
     final AtomicReference<Throwable> exception = new AtomicReference<>();
     final CountDownLatch latch = new CountDownLatch(threadsNumber);
     final MessageBus parentBus = MessageBusFactory.newMessageBus("parent");
+    Disposer.register(myParentDisposable, parentBus);
     List<Thread> threads = new ArrayList<>();
+    final int iterationsNumber = 100;
     for (int i = 0; i < threadsNumber; i++) {
       Thread thread = new Thread(String.valueOf(i)) {
         @Override

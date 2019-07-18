@@ -602,6 +602,11 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   public void testEscapedSummaryOfConstructorDocstringInQuickNavigationInfo() {
     checkHover();
   }
+
+  // PY-35512
+  public void testPositionalOnlyParameters() {
+    runWithLanguageLevel(LanguageLevel.PYTHON38, this::checkHover);
+  }
   
   @Override
   protected String getTestDataPath() {

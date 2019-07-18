@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
@@ -25,6 +25,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.ui.*;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.uiDesigner.ErrorAnalyzer;
 import com.intellij.uiDesigner.ErrorInfo;
 import com.intellij.uiDesigner.Properties;
@@ -35,7 +36,10 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.properties.*;
 import com.intellij.uiDesigner.radComponents.*;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.IndentedIcon;
+import com.intellij.util.ui.Table;
+import com.intellij.util.ui.UIUtil;
 import icons.UIDesignerIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -593,7 +597,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   }
 
   private static int getPropertyIndentWidth() {
-    return JBUI.scale(11);
+    return JBUIScale.scale(11);
   }
 
   private Property[] getPropChildren(final Property property) {

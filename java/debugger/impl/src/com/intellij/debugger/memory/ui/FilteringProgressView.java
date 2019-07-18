@@ -4,7 +4,7 @@ package com.intellij.debugger.memory.ui;
 import com.intellij.debugger.memory.filtering.FilteringResult;
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,7 +19,7 @@ class FilteringProgressView extends BorderLayoutPanel {
 
   private final JProgressBar myProgressBar = new JProgressBar();
   private final BorderLayoutPanel myProgressPanel = new BorderLayoutPanel();
-  private final JBLabel myStopButton = new JBLabel(StartupUiUtil.isUnderDarcula()
+  private final JBLabel myStopButton = new JBLabel(UIUtil.isUnderDarcula()
                                                    ? AllIcons.Actions.Clean : AllIcons.Actions.CleanLight);
   private final JBLabel myProgressText = new JBLabel();
 

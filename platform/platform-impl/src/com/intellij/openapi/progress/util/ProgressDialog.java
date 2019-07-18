@@ -11,16 +11,16 @@ import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl;
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.PopupBorder;
 import com.intellij.ui.TitlePanel;
 import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.concurrency.EdtExecutorService;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,10 +108,10 @@ class ProgressDialog implements Disposable {
   }
 
   private void initDialog(@Nullable String cancelText) {
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myText2Label);
     }
-    myInnerPanel.setPreferredSize(new Dimension(SystemInfoRt.isMac ? 350 : JBUI.scale(450), -1));
+    myInnerPanel.setPreferredSize(new Dimension(SystemInfo.isMac ? 350 : JBUIScale.scale(450), -1));
 
     myCancelButton.addActionListener(__ -> doCancelAction());
 

@@ -2,12 +2,9 @@
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
-import com.intellij.internal.statistic.eventLog.EventLogExternalSettingsService;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
-import com.intellij.internal.statistic.service.fus.FUSWhitelist;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,33 +24,19 @@ public class FUStateUsagesLogger implements UsagesCollectorConsumer {
   public static FUStateUsagesLogger create() { return new FUStateUsagesLogger(); }
 
   public void logProjectStates(@NotNull Project project) {
-    logProjectStates(project, EventLogExternalSettingsService.getFeatureUsageSettings().getApprovedGroups(), false);
-  }
-
-  public void logApplicationStates() {
-    logApplicationStates(EventLogExternalSettingsService.getFeatureUsageSettings().getApprovedGroups(), false);
-  }
-
-  public void logProjectStates(@NotNull Project project, @NotNull FUSWhitelist whitelist, boolean recordAll) {
-    if (!whitelist.isEmpty() || ApplicationManager.getApplication().isInternal()) {
-      synchronized (LOCK) {
-        for (ProjectUsagesCollector usagesCollector : ProjectUsagesCollector.getExtensions(this)) {
-          if (recordAll || whitelist.accepts(usagesCollector.getGroupId(), usagesCollector.getVersion())) {
-            final EventLogGroup group = new EventLogGroup(usagesCollector.getGroupId(), usagesCollector.getVersion());
-            logUsagesAsStateEvents(project, group, usagesCollector.getData(project), usagesCollector.getMetrics(project));
-          }
-        }
+    synchronized (LOCK) {
+      for (ProjectUsagesCollector usagesCollector : ProjectUsagesCollector.getExtensions(this)) {
+        final EventLogGroup group = new EventLogGroup(usagesCollector.getGroupId(), usagesCollector.getVersion());
+        logUsagesAsStateEvents(project, group, usagesCollector.getData(project), usagesCollector.getMetrics(project));
       }
     }
   }
 
-  public void logApplicationStates(@NotNull FUSWhitelist whitelist, boolean recordAll) {
+  public void logApplicationStates() {
     synchronized (LOCK) {
       for (ApplicationUsagesCollector usagesCollector : ApplicationUsagesCollector.getExtensions(this)) {
-        if (recordAll || whitelist.accepts(usagesCollector.getGroupId(), usagesCollector.getVersion())) {
-          final EventLogGroup group = new EventLogGroup(usagesCollector.getGroupId(), usagesCollector.getVersion());
-          logUsagesAsStateEvents(null, group, usagesCollector.getData(), usagesCollector.getMetrics());
-        }
+        final EventLogGroup group = new EventLogGroup(usagesCollector.getGroupId(), usagesCollector.getVersion());
+        logUsagesAsStateEvents(null, group, usagesCollector.getData(), usagesCollector.getMetrics());
       }
     }
   }

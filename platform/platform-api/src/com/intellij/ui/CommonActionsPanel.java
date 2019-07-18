@@ -4,7 +4,7 @@ package com.intellij.ui;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.IconUtil;
@@ -332,7 +332,7 @@ public class CommonActionsPanel extends JPanel {
     switch (button) {
       case ADD: return CommonShortcuts.getNewForDialogs();
       case EDIT: return CustomShortcutSet.fromString("ENTER");
-      case REMOVE: return CustomShortcutSet.fromString(SystemInfoRt.isMac ? "meta BACK_SPACE" : "alt DELETE");
+      case REMOVE: return CustomShortcutSet.fromString(SystemInfo.isMac ? "meta BACK_SPACE" : "alt DELETE");
       case UP: return CommonShortcuts.MOVE_UP;
       case DOWN: return CommonShortcuts.MOVE_DOWN;
     }

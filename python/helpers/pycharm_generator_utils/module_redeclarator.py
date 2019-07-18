@@ -1,4 +1,5 @@
 from pycharm_generator_utils.util_methods import *
+from pycharm_generator_utils.util_methods import get_relative_path_by_qname
 
 is_pregenerated = os.getenv("IS_PREGENERATED_SKELETONS", None)
 
@@ -55,19 +56,30 @@ class ClassBuf(Buf):
         super(ClassBuf, self).__init__(indenter)
         self.name = name
 
+class OriginType(object):
+    FILE = 'FILE'
+    BUILTIN = '(built-in)'
+    PREGENERATED = '(pre-generated)'
 
-#noinspection PyUnresolvedReferences,PyBroadException
+
+#noinspection PyBroadException
 class ModuleRedeclarator(object):
-    def __init__(self, module, outfile, mod_filename, indent_size=4, doing_builtins=False):
+    def __init__(self, module, mod_qname, mod_filename, cache_dir, indent_size=4, doing_builtins=False):
         """
-        Create new instance.
-        @param module module to restore.
-        @param outfile output file, must be open and writable.
-        @param mod_filename filename of binary module (the .dll or .so)
-        @param indent_size amount of space characters per indent
+        @param module: module object
+        @param mod_qname: module qualified name
+        @param mod_filename: filename of binary module (the .dll or .so). Can be None for modules
+            that don't have corresponding binary files (e.g. builtins)
+        @param cache_dir: per-binary cache directory where the generated stub will be stored.
+            Normally, it's "<IDE system dir>/python_stubs/cache/<sha256 digest>/".
+        @param indent_size: amount of space characters per indent
         """
+        import generator3
+        self.test_mode = generator3.is_test_mode()
+        self.gen_version = generator3.version()
         self.module = module
-        self.outfile = outfile # where we finally write
+        self.qname = mod_qname
+        self.cache_dir = cache_dir
         self.mod_filename = mod_filename
         # we write things into buffers out-of-order
         self.header_buf = Buf(self)
@@ -118,41 +130,43 @@ class ModuleRedeclarator(object):
         return self._indent_step * level
 
     def flush(self):
-        init = None
-        try:
-            if self.split_modules:
-                mod_path = module_to_package_name(self.outfile)
-
-                fname = build_output_name(mod_path, "__init__")
-                init = fopen(fname, "w")
+        qname_parts = self.qname.split('.')
+        if self.split_modules:
+            last_pkg_dir = build_pkg_structure(self.cache_dir, self.qname)
+            with fopen(os.path.join(last_pkg_dir, "__init__.py"), "w") as init:
                 for buf in (self.header_buf, self.imports_buf, self.functions_buf, self.classes_buf):
                     buf.flush(init)
 
                 data = ""
                 for buf in self.classes_buffs:
-                    fname = build_output_name(mod_path, buf.name)
-                    dummy = fopen(fname, "w")
-                    self.header_buf.flush(dummy)
-                    self.imports_buf.flush(dummy)
-                    buf.flush(dummy)
-                    data += self.create_local_import(buf.name)
-                    dummy.close()
+                    with fopen(os.path.join(last_pkg_dir, buf.name) + '.py', "w") as dummy:
+                        self.header_buf.flush(dummy)
+                        self.imports_buf.flush(dummy)
+                        buf.flush(dummy)
+                        data += self.create_local_import(buf.name)
 
                 init.write(data)
                 self.footer_buf.flush(init)
+        else:
+            last_pkg_dir = build_pkg_structure(self.cache_dir, '.'.join(qname_parts[:-1]))
+            # In some rare cases submodules of a binary might have been generated earlier than the module
+            # for the binary itself. For instance, it happens for "pyexpat" built-in module which
+            # submodules "pyexpat.errors" and "pyexpat.model" are processed together with "_elementtree"
+            # and "pickle" before "pyexpat" and thus empty pyexpat/__init__.py for them should be replaced
+            # with the skeleton for the main module itself later on.
+            existing_pkg_init = os.path.join(last_pkg_dir, qname_parts[-1], '__init__.py')
+            if os.path.exists(existing_pkg_init):
+                skeleton_path = existing_pkg_init
             else:
-                init = fopen(self.outfile, "w")
+                skeleton_path = os.path.join(last_pkg_dir, qname_parts[-1] + '.py')
+            with fopen(skeleton_path, "w") as mod:
                 for buf in (self.header_buf, self.imports_buf, self.functions_buf, self.classes_buf):
-                    buf.flush(init)
+                    buf.flush(mod)
 
                 for buf in self.classes_buffs:
-                    buf.flush(init)
+                    buf.flush(mod)
 
-                self.footer_buf.flush(init)
-
-        finally:
-            if init is not None and not init.closed:
-                init.close()
+                self.footer_buf.flush(mod)
 
     # Some builtin classes effectively change __init__ signature without overriding it.
     # This callable serves as a placeholder to be replaced via REDEFINED_BUILTIN_SIGS
@@ -305,7 +319,11 @@ class ModuleRedeclarator(object):
                             import traceback
                             traceback.print_exc(file=sys.stderr)
                             return
-                        real_value = cleanup(representation)
+                        if not self.test_mode:
+                            real_value = cleanup(representation)
+                        else:
+                            # Don't rely on repr() output in tests, as it may contain memory layout dependent id
+                            real_value = ''
                         if found_name:
                             if found_name == as_name:
                                 notice = " # (!) real value is %r" % real_value
@@ -780,18 +798,25 @@ class ModuleRedeclarator(object):
             mod_name = " does not know its name"
         out(0, "# module ", p_name, mod_name) # line 2
 
-        BUILT_IN_HEADER = "(built-in)"
+        origin_type = OriginType.FILE
         if is_pregenerated is not None:
-            filename = '(pre-generated)'
+            origin = origin_type = OriginType.PREGENERATED
         elif self.mod_filename:
-            filename = self.mod_filename
+            origin = self.mod_filename
         elif p_name in sys.builtin_module_names:
-            filename = BUILT_IN_HEADER
+            origin = origin_type = OriginType.BUILTIN
         else:
-            filename = getattr(self.module, "__file__", BUILT_IN_HEADER)
+            try:
+                origin = getattr(self.module, "__file__")
+            except AttributeError:
+                origin = origin_type = OriginType.BUILTIN
 
-        out(0, "# from %s" % filename)  # line 3
-        out(0, "# by generator %s" % VERSION) # line 4
+        if self.test_mode and origin_type == OriginType.FILE:
+            origin = get_relative_path_by_qname(origin, self.qname)
+
+
+        out(0, "# from %s" % origin)  # line 3
+        out(0, "# by generator %s" % self.gen_version)  # line 4
         if p_name == BUILTIN_MOD_NAME and version[0] == 2 and version[1] >= 6:
             out(0, "from __future__ import print_function")
         out_doc_attr(out, self.module, 0)
@@ -855,6 +880,8 @@ class ModuleRedeclarator(object):
             if item_name in (
                 "__dict__", "__doc__", "__module__", "__file__", "__name__", "__builtins__", "__package__"):
                 continue # handled otherwise
+            if self.test_mode and item_name in ('__loader__', '__spec__', '__cached__'):
+                continue
             try:
                 item = getattr(self.module, item_name) # let getters do the magic
             except AttributeError:
@@ -1111,5 +1138,3 @@ class ModuleRedeclarator(object):
             out(0, "") # empty line after group
 
 
-def module_to_package_name(module_name):
-    return re.sub(r"(.*)\.py$", r"\1", module_name)

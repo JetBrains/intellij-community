@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.stdlib;
 
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.codeInsight.PyCustomMember;
@@ -23,7 +23,7 @@ public class PyStdlibModuleMembersProvider extends PyModuleMembersProvider {
   @NotNull
   protected Collection<PyCustomMember> getMembersByQName(@NotNull PyFile module, @NotNull String qName, @NotNull TypeEvalContext context) {
     if (qName.equals("os")) {
-      final String pathModuleName = SystemInfoRt.isWindows ? "ntpath" : "posixpath";
+      final String pathModuleName = SystemInfo.isWindows ? "ntpath" : "posixpath";
       final PsiElement path = ResolveImportUtil.resolveModuleInRoots(QualifiedName.fromDottedString(pathModuleName), module);
       return Collections.singletonList(new PyCustomMember("path", path));
     }

@@ -14,7 +14,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComponentValidator;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
@@ -259,14 +259,14 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     myModeCombo.setSelectedItem(rc.SERVER_MODE ? Mode.LISTEN : Mode.ATTACH);
     myAutoRestart.setSelected(rc.AUTO_RESTART);
 
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       myTransportCombo.setSelectedItem(rc.USE_SOCKET_TRANSPORT ? Transport.SOCKET : Transport.SHMEM);
       if (!rc.USE_SOCKET_TRANSPORT) {
         myAddress.setText(rc.SHMEM_ADDRESS);
       }
     }
 
-    if (!SystemInfoRt.isWindows || rc.USE_SOCKET_TRANSPORT) {
+    if (!SystemInfo.isWindows || rc.USE_SOCKET_TRANSPORT) {
       rc.USE_SOCKET_TRANSPORT = true;
 
       myHostName.setText(rc.HOST);
@@ -345,7 +345,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     gc.insets = JBUI.emptyInsets();
     panel.add(new JPanel(), gc);
 
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       JLabel addressLabel = createLabelFor("&Address:", myAddress);
 
       addressLabel.setVisible(false);

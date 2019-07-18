@@ -193,6 +193,9 @@ class MacDmgBuilder {
       }
       ftpAction("put", false, "777") {
         ant.fileset(dir: "${buildContext.paths.communityHome}/platform/build-scripts/tools/mac/scripts") {
+          include(name: "entitlements.xml")
+          include(name: "sign.sh")
+          include(name: "notarize.sh")
           include(name: "signapp.sh")
         }
       }
@@ -203,7 +206,9 @@ class MacDmgBuilder {
                            macHostProperties.userName,
                            macHostProperties.password,
                            "\"${macHostProperties.codesignString}\"",
-                           (customizer.helpId != null ? "${customizer.helpId}.help" : "no-help")]
+                           (customizer.helpId != null ? "${customizer.helpId}.help" : "no-help"),
+                           "no" // set to 'yes' to enable notarization
+      ]
       if (jreArchivePath != null) {
         args += '"' + PathUtilRt.getFileName(jreArchivePath) + '"'
       }

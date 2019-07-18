@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -85,7 +85,7 @@ public abstract class PersistentFS extends ManagingFS {
 
   @NotNull
   public static NewVirtualFileSystem replaceWithNativeFS(@NotNull final NewVirtualFileSystem fs) {
-    if (SystemInfoRt.isWindows &&
+    if (SystemInfo.isWindows &&
         !(fs instanceof Win32LocalFileSystem) &&
         fs.getProtocol().equals(LocalFileSystem.PROTOCOL) &&
         Win32LocalFileSystem.isAvailable()) {

@@ -42,6 +42,24 @@ fun <T> addBoolIfDiffers(set: MutableSet<in MetricEvent>, settingsBean: T, defau
   addMetricIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction) { newBooleanMetric(eventId, it, data) }
 }
 
+/**
+ * Adds counter value if count is greater than 0
+ */
+fun <T> addCounterIfNotZero(set: MutableSet<in MetricEvent>, eventId: String, count: Int) {
+  if (count > 0) {
+    set.add(newCounterMetric(eventId, count))
+  }
+}
+
+/**
+ * Adds counter value if count is greater than 0
+ */
+fun <T> addCounterIfNotZero(set: MutableSet<in MetricEvent>, eventId: String, count: Int, data: FeatureUsageData?) {
+  if (count > 0) {
+    set.add(newCounterMetric(eventId, count, data))
+  }
+}
+
 fun <T> addCounterIfDiffers(set: MutableSet<in MetricEvent>, settingsBean: T, defaultSettingsBean: T,
                             valueFunction: Function1<T, Int>, eventId: String) {
   addMetricIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction) { newCounterMetric(eventId, it) }

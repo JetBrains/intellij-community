@@ -30,9 +30,17 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
     reassignAltClickToMultipleCarets = true
     productLayout.mainJarName = "pycharm.jar"
     productLayout.additionalPlatformJars.put("pycharm-pydev.jar", "intellij.python.pydev")
+    productLayout.additionalPlatformJars.putAll("testFramework.jar",
+                                                "intellij.platform.testFramework.core",
+                                                "intellij.platform.testFramework",
+                                                "intellij.tools.testsBootstrap",
+                                                "intellij.java.rt")
 
     buildCrossPlatformDistribution = true
-    mavenArtifacts.additionalModules = ["intellij.java.compiler.antTasks"]
+    mavenArtifacts.additionalModules = [
+      "intellij.java.compiler.antTasks",
+      "intellij.platform.testFramework"
+    ]
   }
 
   @Override
@@ -45,6 +53,7 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
       fileset(dir: "$context.paths.communityHome/python/helpers") {
         exclude(name: "**/setup.py")
         exclude(name: "pydev/test**/**")
+        exclude(name: "tests/")
       }
     }
     context.ant.copy(todir: "$targetDirectory/help", failonerror: false) {

@@ -440,7 +440,7 @@ class VariableView(override val variableName: String, private val variable: Vari
     fun getIcon(value: Value): Icon {
       val type = value.type
       return when (type) {
-        ValueType.FUNCTION -> AllIcons.Nodes.Function
+        ValueType.FUNCTION -> AllIcons.Nodes.Lambda
         ValueType.ARRAY -> AllIcons.Debugger.Db_array
         else -> if (type.isObjectType) AllIcons.Debugger.Value else AllIcons.Debugger.Db_primitive
       }

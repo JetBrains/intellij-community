@@ -7,7 +7,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextComponentAccessor;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.GuiUtils;
@@ -61,7 +61,7 @@ public class AlternativeJREPanel extends JPanel implements PanelWithAnchor {
     for (Sdk jdk : allJDKs) {
       String homePath = jdk.getHomePath();
 
-      if (!SystemInfoRt.isMac) {
+      if (!SystemInfo.isMac) {
         final File jre = new File(jdk.getHomePath(), "jre");
         if (jre.isDirectory()) {
           homePath = jre.getPath();

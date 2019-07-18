@@ -79,7 +79,7 @@ public class SearchDialog extends DialogWrapper {
 
   @NonNls private LanguageFileType ourFtSearchVariant = StructuralSearchUtil.getDefaultFileType();
   private static Language ourDialect = null;
-  private static String ourContext = null;
+  private static PatternContext ourContext = null;
 
   private final boolean myShowScopePanel;
   private final boolean myRunFindActionOnClose;

@@ -12,13 +12,13 @@
 // limitations under the License.
 package org.zmlx.hg4idea.test;
 
-import org.testng.annotations.Test;
+import org.junit.Test;
 import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.command.HgLogCommand;
 
 import java.util.List;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 public class HgLogTest extends HgSingleUserTest {
   
@@ -32,6 +32,6 @@ public class HgLogTest extends HgSingleUserTest {
     runHgOnProjectRepo("commit", "-m", "updated\ncontents");
 
     List<HgFileRevision> fileLog = new HgLogCommand(myProject).execute(getHgFile("file.txt"), 10, false);
-    assertEquals(fileLog.size(), 2, "The file history should show two entries");
+    assertEquals("The file history should show two entries", 2, fileLog.size());
   }
 }

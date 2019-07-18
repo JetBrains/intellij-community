@@ -4,7 +4,7 @@ package com.intellij.internal.statistic.collectors.fus.os;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +21,7 @@ public class LinuxWindowManagerUsageCollector extends ApplicationUsagesCollector
   @NotNull
   @Override
   public Set<UsageDescriptor> getUsages() {
-    if (SystemInfoRt.isLinux) {
+    if (SystemInfo.isLinux) {
       String wmName = System.getenv("XDG_CURRENT_DESKTOP");
 
       return Collections.singleton(new UsageDescriptor(clearUserData(wmName)));

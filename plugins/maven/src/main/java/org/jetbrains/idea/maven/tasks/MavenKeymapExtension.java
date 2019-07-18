@@ -55,7 +55,7 @@ import java.util.*;
 public class MavenKeymapExtension implements ExternalSystemKeymapExtension.ActionsProvider {
 
   @Override
-  public KeymapGroup createGroup(Condition<AnAction> condition, final Project project) {
+  public KeymapGroup createGroup(Condition<? super AnAction> condition, final Project project) {
     KeymapGroup result = KeymapGroupFactory.getInstance().createGroup(TasksBundle.message("maven.tasks.action.group.name"),
                                                                       MavenIcons.MavenLogo
     );
@@ -124,7 +124,7 @@ public class MavenKeymapExtension implements ExternalSystemKeymapExtension.Actio
     return result;
   }
 
-  public static void updateActions(Project project, List<MavenProject> mavenProjects) {
+  static void updateActions(Project project, List<? extends MavenProject> mavenProjects) {
     clearActions(project, mavenProjects);
     createActions(project, mavenProjects);
   }
@@ -140,7 +140,7 @@ public class MavenKeymapExtension implements ExternalSystemKeymapExtension.Actio
     return mavenGoalAction;
   }
 
-  private static void createActions(Project project, List<MavenProject> mavenProjects) {
+  private static void createActions(Project project, List<? extends MavenProject> mavenProjects) {
     ActionManager actionManager = ActionManager.getInstance();
     MavenShortcutsManager shortcutsManager = MavenShortcutsManager.getInstance(project);
     for (MavenProject eachProject : mavenProjects) {
@@ -174,7 +174,7 @@ public class MavenKeymapExtension implements ExternalSystemKeymapExtension.Actio
     }
   }
 
-  public static void clearActions(Project project, List<? extends MavenProject> mavenProjects) {
+  static void clearActions(Project project, List<? extends MavenProject> mavenProjects) {
     ActionManager manager = ActionManager.getInstance();
     for (MavenProject eachProject : mavenProjects) {
       //noinspection TestOnlyProblems
@@ -194,7 +194,7 @@ public class MavenKeymapExtension implements ExternalSystemKeymapExtension.Actio
     return new ArrayList<>(result);
   }
 
-  private static void collectGoals(File repository, MavenPlugin plugin, LinkedHashSet<String> list) {
+  private static void collectGoals(File repository, MavenPlugin plugin, Set<? super String> list) {
     MavenPluginInfo info = MavenArtifactUtil.readPluginInfo(repository, plugin.getMavenId());
     if (info == null) return;
 
@@ -247,6 +247,7 @@ public class MavenKeymapExtension implements ExternalSystemKeymapExtension.Actio
       return myGoal;
     }
 
+    @Override
     public String toString() {
       return myMavenProject + ":" + myGoal;
     }

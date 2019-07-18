@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -153,7 +154,12 @@ public abstract class Language extends UserDataHolderBase {
 
   @Nullable
   public LanguageFileType getAssociatedFileType() {
-    final FileType[] types = FileTypeRegistry.getInstance().getRegisteredFileTypes();
+    return FileTypeRegistry.getInstance().findFileTypeByLanguage(this);
+  }
+
+  @Nullable
+  @ApiStatus.Internal
+  public LanguageFileType findMyFileType(FileType[] types) {
     for (final FileType fileType : types) {
       if (fileType instanceof LanguageFileType && ((LanguageFileType)fileType).getLanguage() == this) {
         return (LanguageFileType)fileType;
@@ -166,6 +172,7 @@ public abstract class Language extends UserDataHolderBase {
     }
     return null;
   }
+
 
   @Nullable
   public Language getBaseLanguage() {

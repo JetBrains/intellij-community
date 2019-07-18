@@ -4,8 +4,8 @@ package org.jetbrains.idea.maven.externalSystemIntegration.output.parsers;
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.events.impl.MessageEventImpl;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.LogMessageType;
@@ -34,12 +34,29 @@ public class WarningNotifier implements MavenLoggedEventParser {
 
     String line = logLine.getLine();
 
-    if (warnings.add(line)) {
-      List<MavenLogEntryReader.MavenLogEntry> toConcat = logEntryReader.readWhile(l -> l.getType() == LogMessageType.WARNING);
-      String contatenated = line + "\n" + StringUtil.join(toConcat, MavenLogEntryReader.MavenLogEntry::getLine, "\n");
-      messageConsumer.accept(new MessageEventImpl(parendId, MessageEvent.Kind.WARNING, "Warning", line, contatenated));
+
+    List<MavenLogEntryReader.MavenLogEntry> toConcat = logEntryReader.readWhile(l -> l.getType() == LogMessageType.WARNING);
+    String contatenated = line + "\n" + StringUtil.join(toConcat, MavenLogEntryReader.MavenLogEntry::getLine, "\n");
+    String message = getMessage(line, toConcat);
+    if (!StringUtil.isEmptyOrSpaces(message) && warnings.add(message)) {
+      messageConsumer.accept(new MessageEventImpl(parendId, MessageEvent.Kind.WARNING, "Warning", message, contatenated));
       return true;
     }
     return false;
+  }
+
+  @NotNull
+  private static String getMessage(String line, List<MavenLogEntryReader.MavenLogEntry> toConcat) {
+    if (toConcat == null || toConcat.isEmpty()) {
+      return line;
+    }
+    if (!StringUtil.isEmptyOrSpaces(line)) {
+      return line;
+    }
+    MavenLogEntryReader.MavenLogEntry entry = ContainerUtil.find(toConcat, e -> !StringUtil.isEmptyOrSpaces(e.getLine()));
+    if (entry != null) {
+      return entry.getLine();
+    }
+    return "";
   }
 }

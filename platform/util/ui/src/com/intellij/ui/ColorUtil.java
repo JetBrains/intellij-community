@@ -94,14 +94,13 @@ public class ColorUtil {
 
   @NotNull
   public static Color dimmer(@NotNull final Color color) {
-    NotNullProducer<Color> func = () -> {
+    return wrap(color, () -> {
       float[] rgb = color.getRGBColorComponents(null);
 
       float alpha = 0.80f;
       float rem = 1 - alpha;
       return new Color(rgb[0] * alpha + rem, rgb[1] * alpha + rem, rgb[2] * alpha + rem);
-    };
-    return wrap(color, func);
+    });
   }
 
   private static Color wrap(@NotNull Color color, NotNullProducer<? extends Color> func) {

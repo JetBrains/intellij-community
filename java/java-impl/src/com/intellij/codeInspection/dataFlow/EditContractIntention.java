@@ -46,7 +46,7 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
 
   @Nullable
   private static PsiMethod getTargetMethod(Editor editor, PsiFile file) {
-    final PsiModifierListOwner owner =  AddAnnotationPsiFix.getContainer(file, editor.getCaretModel().getOffset());
+    final PsiModifierListOwner owner =  AddAnnotationPsiFix.getContainer(file, editor.getCaretModel().getOffset(), true);
     if (owner instanceof PsiMethod && ExternalAnnotationsManagerImpl.areExternalAnnotationsApplicable(owner)) {
       PsiElement original = owner.getOriginalElement();
       return original instanceof PsiMethod ? (PsiMethod)original : (PsiMethod)owner;

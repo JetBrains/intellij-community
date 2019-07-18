@@ -36,6 +36,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -224,9 +225,9 @@ public abstract class PluginManagerMain implements Disposable {
   }
 
   private static String getTextPrefix() {
-    int fontSize = JBUI.scale(12);
-    int m1 = JBUI.scale(2);
-    int m2 = JBUI.scale(5);
+    int fontSize = JBUIScale.scale(12);
+    int m1 = JBUIScale.scale(2);
+    int m2 = JBUIScale.scale(5);
     return String.format(
            "<html><head>" +
            "    <style type=\"text/css\">" +

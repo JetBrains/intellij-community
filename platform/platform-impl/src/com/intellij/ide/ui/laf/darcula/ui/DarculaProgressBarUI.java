@@ -1,11 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.UIUtilities;
 
@@ -96,7 +96,7 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
       if (isSimplified()) {
         Color[] ca = {startColor, endColor};
         int idx = 0;
-        int delta = JBUI.scale(10);
+        int delta = JBUIScale.scale(10);
         if (orientation == SwingConstants.HORIZONTAL) {
           for (float offset = r.x; offset - r.x < r.width; offset += delta) {
             g2.setPaint(ca[(getAnimationIndex() + idx++) % 2]);
@@ -112,7 +112,7 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
       }
       else {
         Shape shape;
-        int step = JBUI.scale(6);
+        int step = JBUIScale.scale(6);
         if (orientation == SwingConstants.HORIZONTAL) {
           shape = getShapedRect(r.x, yOffset, r.width, pHeight, pHeight);
           yOffset = r.y + pHeight / 2;
@@ -268,14 +268,14 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
     Object ho = progressBar.getClientProperty("ProgressBar.stripeWidth");
     if (ho != null) {
       try {
-        return JBUI.scale(Integer.parseInt(ho.toString()));
+        return JBUIScale.scale(Integer.parseInt(ho.toString()));
       }
       catch (NumberFormatException nfe) {
-        return JBUI.scale(DEFAULT_WIDTH);
+        return JBUIScale.scale(DEFAULT_WIDTH);
       }
     }
     else {
-      return JBUI.scale(DEFAULT_WIDTH);
+      return JBUIScale.scale(DEFAULT_WIDTH);
     }
   }
 

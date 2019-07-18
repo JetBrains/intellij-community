@@ -16,6 +16,7 @@ import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportCommunicator;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -460,13 +461,13 @@ public class AddSupportForFrameworksPanel implements Disposable {
     Collections.sort(nodes, (o1, o2) -> comparator.compare(o1.getUserObject(), o2.getUserObject()));
   }
 
-  public void reportFeatureUsageData(FeatureUsageData data) {
+  public void reportSelectedFrameworks(@NotNull String eventId, @NotNull FeatureUsageData original) {
     List<FrameworkSupportNode> nodes = getSelectedNodes();
-    for (int i = 0; i < nodes.size(); i++) {
-      FrameworkSupportNode node = nodes.get(i);
+    for (FrameworkSupportNode node : nodes) {
       FrameworkSupportInModuleProvider provider = node.getUserObject();
-      String id = PluginInfoDetectorKt.getPluginInfo(provider.getClass()).isSafeToReport() ? provider.getId() : "third-party";
-      data.addData("framework" + i, id);
+      final FeatureUsageData data = original.copy();
+      data.addData("framework", PluginInfoDetectorKt.getPluginInfo(provider.getClass()).isSafeToReport() ? provider.getId() : "third.party");
+      FUCounterUsageLogger.getInstance().logEvent("new.project.wizard", eventId + ".add.framework", data);
     }
   }
 }

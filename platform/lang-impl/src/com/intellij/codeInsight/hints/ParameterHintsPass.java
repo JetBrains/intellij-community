@@ -22,7 +22,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.editor.ex.util.CaretVisualPositionKeeper;
+import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -39,6 +39,7 @@ import java.util.stream.Stream;
 import static com.intellij.codeInsight.hints.ParameterHintsPassFactory.forceHintsUpdateOnNextPass;
 import static com.intellij.codeInsight.hints.ParameterHintsPassFactory.putCurrentPsiModificationStamp;
 
+// TODO This pass should be rewritten with new API
 public class ParameterHintsPass extends EditorBoundHighlightingPass {
   private final TIntObjectHashMap<List<HintData>> myHints = new TIntObjectHashMap<>();
   private final TIntObjectHashMap<String> myShowOnlyIfExistedBeforeHints = new TIntObjectHashMap<>();
@@ -123,8 +124,8 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
         String adjusterHintPresentation = provider.getInlayPresentation(hintText);
         if (!hintText.equals(adjusterHintPresentation)) {
           widthAdjustment = new HintWidthAdjustment(widthAdjustment.getEditorTextToMatch(),
-                                                  adjusterHintPresentation,
-                                                  widthAdjustment.getAdjustmentPosition());
+                                                    adjusterHintPresentation,
+                                                    widthAdjustment.getAdjustmentPosition());
         }
       }
     }
@@ -133,12 +134,12 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
 
   @Override
   public void doApplyInformationToEditor() {
-    CaretVisualPositionKeeper keeper = new CaretVisualPositionKeeper(myEditor);
-    ParameterHintsPresentationManager manager = ParameterHintsPresentationManager.getInstance();
-    List<Inlay> hints = hintsInRootElementArea(manager);
-    ParameterHintsUpdater updater = new ParameterHintsUpdater(myEditor, hints, myHints, myShowOnlyIfExistedBeforeHints, myForceImmediateUpdate);
-    updater.update();
-    keeper.restoreOriginalLocation(false);
+    EditorScrollingPositionKeeper.perform(myEditor, false, () -> {
+      ParameterHintsPresentationManager manager = ParameterHintsPresentationManager.getInstance();
+      List<Inlay> hints = hintsInRootElementArea(manager);
+      ParameterHintsUpdater updater = new ParameterHintsUpdater(myEditor, hints, myHints, myShowOnlyIfExistedBeforeHints, myForceImmediateUpdate);
+      updater.update();
+    });
 
     if (ParameterHintsUpdater.hintRemovalDelayed(myEditor)) {
       forceHintsUpdateOnNextPass(myEditor);
@@ -180,7 +181,7 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
 
     return myDocument != null && myDocument.getTextLength() == rootRange.getLength();
   }
-  
+
   public static class HintData {
     public final String presentationText;
     public final boolean relatesToPrecedingText;

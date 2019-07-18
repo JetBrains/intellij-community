@@ -456,7 +456,7 @@ public class BackgroundImageDialog extends DialogWrapper {
 
   @NotNull
   private static Color getSelectionBackground() {
-    return ColorUtil.mix(UIUtil.getListSelectionBackground(), UIUtil.getLabelBackground(), StartupUiUtil.isUnderDarcula() ? .5 : .75);
+    return ColorUtil.mix(UIUtil.getListSelectionBackground(), UIUtil.getLabelBackground(), UIUtil.isUnderDarcula() ? .5 : .75);
   }
 
   private static void initFlipPanel(@NotNull JPanel p, @NotNull JBCheckBox flipHorCb, @NotNull JBCheckBox flipVerCb) {

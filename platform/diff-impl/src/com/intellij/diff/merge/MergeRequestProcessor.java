@@ -27,7 +27,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.LightColors;
@@ -201,7 +201,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     }
 
     List<Action> leftActions = ContainerUtil.packNullables(applyLeft, applyRight);
-    List<Action> rightActions = SystemInfoRt.isMac ? ContainerUtil.packNullables(cancelAction, resolveAction)
+    List<Action> rightActions = SystemInfo.isMac ? ContainerUtil.packNullables(cancelAction, resolveAction)
                                                    : ContainerUtil.packNullables(resolveAction, cancelAction);
 
     JRootPane rootPane = getRootPane();

@@ -10,11 +10,10 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.sh.ShLanguage;
-import com.intellij.sh.codeStyle.ShCodeStyleSettings;
 import com.intellij.sh.settings.ShSettings;
 import com.intellij.sh.statistics.ShFeatureUsagesCollector;
 import com.intellij.util.containers.ContainerUtil;
@@ -52,16 +51,15 @@ public class ShShfmtFormatterUtil {
       directory.mkdirs();
     }
 
-    ShCodeStyleSettings shSettings = settings.getCustomSettings(ShCodeStyleSettings.class);
-    File formatter = new File(DOWNLOAD_PATH + File.separator + SHFMT + (SystemInfoRt.isWindows ? WINDOWS_EXTENSION : ""));
+    File formatter = new File(DOWNLOAD_PATH + File.separator + SHFMT + (SystemInfo.isWindows ? WINDOWS_EXTENSION : ""));
     if (formatter.exists()) {
       try {
         String formatterPath = formatter.getCanonicalPath();
-        if (shSettings.SHFMT_PATH.equals(formatterPath)) {
+        if (ShSettings.getShfmtPath().equals(formatterPath)) {
           LOG.debug("Shfmt formatter already downloaded");
         }
         else {
-          shSettings.SHFMT_PATH = formatterPath;
+          ShSettings.setShfmtPath(formatterPath);
         }
         ApplicationManager.getApplication().invokeLater(onSuccess);
         return;
@@ -73,7 +71,7 @@ public class ShShfmtFormatterUtil {
       }
     }
 
-    String downloadName = SHFMT + (SystemInfoRt.isWindows ? WINDOWS_EXTENSION : "");
+    String downloadName = SHFMT + (SystemInfo.isWindows ? WINDOWS_EXTENSION : "");
     DownloadableFileService service = DownloadableFileService.getInstance();
     DownloadableFileDescription description = service.createFileDescription(getShfmtDistributionLink(), downloadName);
     FileDownloader downloader = service.createDownloader(Collections.singletonList(description), downloadName);
@@ -86,9 +84,8 @@ public class ShShfmtFormatterUtil {
           Pair<File, DownloadableFileDescription> first = ContainerUtil.getFirstItem(pairs);
           File file = first != null ? first.first : null;
           if (file != null) {
-            String path = file.getCanonicalPath();
-            FileUtilRt.setExecutableAttribute(path, true);
-            shSettings.SHFMT_PATH = path;
+            FileUtil.setExecutable(file);
+            ShSettings.setShfmtPath(file.getCanonicalPath());
             ApplicationManager.getApplication().invokeLater(onSuccess);
             ShFeatureUsagesCollector.logFeatureUsage(FEATURE_ACTION_ID);
           }
@@ -110,47 +107,36 @@ public class ShShfmtFormatterUtil {
     File file = new File(path);
     if (!file.canExecute()) return false;
     return file.getName().contains(SHFMT);
-
-//    try {
-//      GeneralCommandLine commandLine = new GeneralCommandLine().withExePath(path).withParameters("-version");
-//      ProcessOutput processOutput = ExecUtil.execAndGetOutput(commandLine, 3000);
-//
-//      return processOutput.getStdout().startsWith(ShShfmtFormatterUtil.SHFMT_VERSION);
-//    }
-//    catch (ExecutionException e) {
-//      LOG.debug("Exception in process execution", e);
-//    }
-//    return false;
   }
 
   @NotNull
   private static String getShfmtDistributionLink() {
     StringBuilder baseUrl = new StringBuilder("https://github.com/mvdan/sh/releases/download/")
         .append(SHFMT_VERSION)
-        .append("/")
+        .append('/')
         .append(SHFMT)
-        .append("_")
+        .append('_')
         .append(SHFMT_VERSION);
 
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       baseUrl.append(MAC);
     }
-    if (SystemInfoRt.isLinux) {
+    if (SystemInfo.isLinux) {
       baseUrl.append(LINUX);
     }
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       baseUrl.append(WINDOWS);
     }
-    if (SystemInfoRt.isFreeBSD) {
+    if (SystemInfo.isFreeBSD) {
       baseUrl.append(FREE_BSD);
     }
-    if (SystemInfoRt.is64Bit) {
+    if (SystemInfo.is64Bit) {
       baseUrl.append(ARCH_x86_64);
     }
     else {
       baseUrl.append(ARCH_i386);
     }
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       baseUrl.append(WINDOWS_EXTENSION);
     }
     return baseUrl.toString();

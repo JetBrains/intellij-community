@@ -4,7 +4,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.Patches;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntHashSet;
 import org.intellij.lang.annotations.JdkConstants;
@@ -157,7 +157,7 @@ public class FontInfo {
 
   public static boolean canDisplay(@NotNull Font font, int codePoint, boolean disableFontFallback) {
     if (!Character.isValidCodePoint(codePoint)) return false;
-    if (disableFontFallback && SystemInfoRt.isMac) {
+    if (disableFontFallback && SystemInfo.isMac) {
       int glyphCode = font.createGlyphVector(DEFAULT_CONTEXT, new String(new int[]{codePoint}, 0, 1)).getGlyphCode(0);
       return (glyphCode & CompositeGlyphMapper.GLYPHMASK) != 0 && (glyphCode & CompositeGlyphMapper.SLOTMASK) == 0;
     }

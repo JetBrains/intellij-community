@@ -33,6 +33,7 @@ import java.util.Map;
  * @see GitBranchWorker
  */
 public interface GitBrancher {
+
   static GitBrancher getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, GitBrancher.class);
   }
@@ -122,15 +123,14 @@ public interface GitBrancher {
   void deleteRemoteBranch(@NotNull String branchName, @NotNull List<GitRepository> repositories);
 
   /**
-   * Compares the HEAD with the specified branch - shows a dialog with the differences.
-   *
-   * @param branchName         name of the branch to compare with.
-   * @param repositories       repositories to operate on.
-   * @param selectedRepository current or selected repository.
-   *                           The list of commits is displayed for the repository selected from the combobox.
-   *                           This parameter tells which repository should be pre-selected in the combobox.
+   * Compares commits from the HEAD with the specified branch.
    */
   void compare(@NotNull String branchName, @NotNull List<GitRepository> repositories, @NotNull GitRepository selectedRepository);
+
+  /**
+   * Compares the current working tree with its state in the selected branch.
+   */
+  void showDiffWithLocal(@NotNull String branchName, @NotNull List<GitRepository> repositories);
 
   /**
    * <p>Merges the given branch to the HEAD.</p>

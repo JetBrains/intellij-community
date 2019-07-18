@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.os;
 
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,7 +34,7 @@ public class OsVersionUsageCollector {
     catch (IOException ignored) {
     }
 
-    return new LinuxRelease(parseName(releaseId), releaseVersion != null ? releaseVersion : SystemInfoRt.OS_VERSION);
+    return new LinuxRelease(parseName(releaseId), releaseVersion != null ? releaseVersion : SystemInfo.OS_VERSION);
   }
 
   @Nullable

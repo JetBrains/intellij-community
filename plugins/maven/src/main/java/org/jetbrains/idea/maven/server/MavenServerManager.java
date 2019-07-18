@@ -67,6 +67,7 @@ import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.jar.Attributes;
 
 @State(
@@ -80,6 +81,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   public static final String BUNDLED_MAVEN_3 = "Bundled (Maven 3)";
 
   @NonNls private static final String MAIN_CLASS = "org.jetbrains.idea.maven.server.RemoteMavenServer";
+  @NonNls private static final String MAIN_CLASS36 = "org.jetbrains.idea.maven.server.RemoteMavenServer36";
 
   private static final String DEFAULT_VM_OPTIONS = "-Xmx768m";
 
@@ -113,8 +115,17 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
         eventListenerJar = new File(root, "maven-event-listener.jar");
       }
 
+      if (!myBundledMaven3Home.exists()) {
+        if (ApplicationManager.getApplication().isInternal()) {
+          MavenLog.LOG.error("Cannot find bundled maven " + myBundledMaven3Home + " please run setupBundledMaven.gradle script");
+        }
+        else {
+          MavenLog.LOG.error("Cannot find bundled maven " + myBundledMaven3Home);
+        }
+      }
+
       if (!eventListenerJar.exists()) {
-        MavenLog.LOG.error("Event listener does not exist" + eventListenerJar);
+        MavenLog.LOG.error("Event listener does not exist " + eventListenerJar);
       }
     }
 
@@ -300,44 +311,43 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
 
     if (StringUtil.compareVersionNumbers(mavenVersion, "3") < 0) {
       classpath.add(new File(root, "maven2-server-impl.jar"));
-      addDir(classpath, new File(root, "maven2-server-lib"));
+      addDir(classpath, new File(root, "maven2-server-lib"), f -> true);
     }
     else {
       classpath.add(new File(root, "maven3-server-common.jar"));
-      addDir(classpath, new File(root, "maven3-server-lib"));
+      addDir(classpath, new File(root, "maven3-server-lib"), f -> true);
 
       if (StringUtil.compareVersionNumbers(mavenVersion, "3.1") < 0) {
         classpath.add(new File(root, "maven30-server-impl.jar"));
       }
-      else if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") < 0) {
-        classpath.add(new File(root, "maven3-server-impl.jar"));
-      }
       else {
-        classpath.add(new File(root, "maven36-server-impl.jar"));
+        classpath.add(new File(root, "maven3-server-impl.jar"));
+        if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") >= 0) {
+          classpath.add(new File(root, "maven36-server-impl.jar"));
+        }
       }
     }
   }
 
-  @NotNull
   private static void prepareClassPathForLocalRunAndUnitTests(@NotNull String mavenVersion, List<File> classpath, String root) {
     classpath.add(new File(root, "intellij.maven.server"));
     File parentFile = getMavenPluginParentFile();
     if (StringUtil.compareVersionNumbers(mavenVersion, "3") < 0) {
       classpath.add(new File(root, "intellij.maven.server.m2.impl"));
-      addDir(classpath, new File(parentFile, "maven2-server-impl/lib"));
+      addDir(classpath, new File(parentFile, "maven2-server-impl/lib"), f -> true);
     }
     else {
       classpath.add(new File(root, "intellij.maven.server.m3.common"));
-      addDir(classpath, new File(parentFile, "maven3-server-common/lib"));
+      addDir(classpath, new File(parentFile, "maven3-server-common/lib"), f -> true);
 
       if (StringUtil.compareVersionNumbers(mavenVersion, "3.1") < 0) {
         classpath.add(new File(root, "intellij.maven.server.m30.impl"));
       }
-      else if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") < 0) {
-        classpath.add(new File(root, "intellij.maven.server.m3.impl"));
-      }
       else {
-        classpath.add(new File(root, "intellij.maven.server.m36.impl"));
+        classpath.add(new File(root, "intellij.maven.server.m3.impl"));
+        if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") >= 0) {
+          classpath.add(new File(root, "intellij.maven.server.m36.impl"));
+        }
       }
     }
   }
@@ -348,7 +358,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   }
 
   private static void addMavenLibs(List<File> classpath, File mavenHome) {
-    addDir(classpath, new File(mavenHome, "lib"));
+    addDir(classpath, new File(mavenHome, "lib"), f -> !f.getName().contains("maven-slf4j-provider"));
     File bootFolder = new File(mavenHome, "boot");
     File[] classworldsJars = bootFolder.listFiles((dir, name) -> StringUtil.contains(name, "classworlds"));
     if (classworldsJars != null) {
@@ -356,12 +366,12 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     }
   }
 
-  private static void addDir(List<File> classpath, File dir) {
+  private static void addDir(List<File> classpath, File dir, Predicate<File> filter) {
     File[] files = dir.listFiles();
     if (files == null) return;
 
     for (File jar : files) {
-      if (jar.isFile() && jar.getName().endsWith(".jar")) {
+      if (jar.isFile() && jar.getName().endsWith(".jar") && filter.test(jar)) {
         classpath.add(jar);
       }
     }
@@ -634,13 +644,18 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     }
 
     @Override
-    public void startTask(String text) throws RemoteException {
-      myProcess.startTask(text);
+    public void startedDownload(ResolveType type, String dependencyId) {
+      myProcess.startedDownload(type, dependencyId);
     }
 
     @Override
-    public void completeTask(String text, String errorMessage) throws RemoteException {
-      myProcess.completeTask(text, errorMessage);
+    public void completedDownload(ResolveType type, String dependencyId) {
+      myProcess.completedDownload(type, dependencyId);
+    }
+
+    @Override
+    public void failedDownload(ResolveType type, String dependencyId, String errorMessage, String stackTrace) {
+      myProcess.failedDownload(type, dependencyId, errorMessage, stackTrace);
     }
 
     @Override
@@ -696,7 +711,6 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
 
       params.setWorkingDirectory(PathManager.getBinPath());
 
-      params.setMainClass(MAIN_CLASS);
 
       Map<String, String> defs = new THashMap<>();
       defs.putAll(MavenUtil.getPropertiesFromMavenOpts());
@@ -753,6 +767,13 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
       }
       MavenLog.LOG.debug("", currentMavenHomeFile, "with version ", mavenVersion, " chosen as maven home");
       assert mavenVersion != null;
+
+      if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") >= 0) {
+        params.setMainClass(MAIN_CLASS36);
+      }
+      else {
+        params.setMainClass(MAIN_CLASS);
+      }
 
       params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_VERSION, mavenVersion);
       String sdkConfigLocation = "Settings | Build, Execution, Deployment | Build Tools | Maven | Importing | JDK for Importer";

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.impl;
 
 import com.intellij.ide.DataManager;
@@ -25,6 +25,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.SwingHelper;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -288,7 +289,7 @@ public class DataManagerImpl extends DataManager {
     Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     if (focusOwner instanceof JComponent) {
       final JComponent jComponent = (JComponent)focusOwner;
-      if (jComponent.getClientProperty("AuxEditorComponent") != null) return null; // Hack for EditorSearchComponent
+      if (jComponent.getClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY) != null) return null;
     }
 
     return editor;

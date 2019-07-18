@@ -1,10 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.service.fus;
 
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.Tag;
-import com.intellij.util.xmlb.annotations.XMap;
+import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,18 +12,18 @@ import java.util.Map;
 import java.util.Objects;
 
 public class FUSWhitelist {
-  private Map<String, List<VersionRange>> myGroups;
+  private Map<String, GroupFilterCondition> myGroups;
 
   public FUSWhitelist() {
   }
 
-  private FUSWhitelist(@NotNull Map<String, List<VersionRange>> groups) {
+  private FUSWhitelist(@NotNull Map<String, GroupFilterCondition> groups) {
     myGroups = groups;
   }
 
   @NotNull
-  public static FUSWhitelist create(@NotNull Map<String, List<VersionRange>> groupsToVersion) {
-    return new FUSWhitelist(groupsToVersion);
+  public static FUSWhitelist create(@NotNull Map<String, GroupFilterCondition> groups) {
+    return new FUSWhitelist(groups);
   }
 
   @NotNull
@@ -33,29 +31,17 @@ public class FUSWhitelist {
     return new FUSWhitelist(Collections.emptyMap());
   }
 
-  @XMap(propertyElementName = "groups", keyAttributeName = "id", entryTagName = "group")
-  public Map<String, List<VersionRange>> getGroups() {
-    return myGroups;
-  }
-
-  public void setGroups(Map<String, List<VersionRange>> groups) {
-    myGroups = groups;
-  }
-
-  public boolean accepts(@NotNull String groupId, @Nullable String version) {
-    final int parsed = tryToParse(version, -1);
-    if (parsed < 0) {
-      return false;
-    }
-    return accepts(groupId, parsed);
-  }
-
-  public boolean accepts(@NotNull String groupId, int version) {
+  public boolean accepts(@NotNull String groupId, @Nullable String version, @NotNull String build) {
     if (!myGroups.containsKey(groupId)) {
       return false;
     }
-    final List<VersionRange> ranges = myGroups.get(groupId);
-    return ranges.isEmpty() || ContainerUtil.find(ranges, range -> range.contains(version)) != null;
+
+    final int parsedVersion = tryToParse(version, -1);
+    if (parsedVersion < 0) {
+      return false;
+    }
+    final GroupFilterCondition condition = myGroups.get(groupId);
+    return condition.accepts(build, parsedVersion);
   }
 
   public int getSize() {
@@ -91,38 +77,104 @@ public class FUSWhitelist {
     return Objects.hash(myGroups);
   }
 
-  @Tag("version")
-  public static class VersionRange {
-    private int myFrom;
-    private int myTo;
+  public static class GroupFilterCondition {
+    private final List<BuildRange> builds;
+    private final List<VersionRange> versions;
 
-    public VersionRange() {
+    public GroupFilterCondition(@NotNull List<BuildRange> builds, @NotNull List<VersionRange> versions) {
+      this.builds = builds;
+      this.versions = versions;
+    }
+
+    public boolean accepts(@NotNull String build, int version) {
+      if (!isValid()) {
+        return false;
+      }
+      return acceptsBuild(build) && acceptsVersion(version);
+    }
+
+    private boolean acceptsBuild(@NotNull String build) {
+      if (builds.isEmpty()) return true;
+
+      final BuildNumber number = BuildNumber.fromString(build);
+      return number != null && builds.stream().anyMatch(b -> b.contains(number));
+    }
+
+    private boolean acceptsVersion(int version) {
+      if (versions.isEmpty()) return true;
+      return version > 0 && versions.stream().anyMatch(v -> v.contains(version));
+    }
+
+    private boolean isValid() {
+      return !builds.isEmpty() || !versions.isEmpty();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      GroupFilterCondition condition = (GroupFilterCondition)o;
+      return Objects.equals(builds, condition.builds) &&
+             Objects.equals(versions, condition.versions);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(builds, versions);
+    }
+  }
+
+  public static class BuildRange {
+    private final BuildNumber myFrom;
+    private final BuildNumber myTo;
+
+    public BuildRange(@Nullable BuildNumber from, @Nullable BuildNumber to) {
+      myFrom = from;
+      myTo = to;
+    }
+
+    @NotNull
+    public static BuildRange create(@Nullable String from, @Nullable String to) {
+      return new BuildRange(
+        StringUtil.isNotEmpty(from) ? BuildNumber.fromString(from) : null,
+        StringUtil.isNotEmpty(to) ? BuildNumber.fromString(to) : null
+      );
+    }
+
+    public boolean contains(@NotNull BuildNumber build) {
+      return (myTo == null || myTo.compareTo(build) > 0) && (myFrom == null || myFrom.compareTo(build) <= 0);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      BuildRange range = (BuildRange)o;
+      return Objects.equals(myFrom, range.myFrom) &&
+             Objects.equals(myTo, range.myTo);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myFrom, myTo);
+    }
+  }
+
+  public static class VersionRange {
+    private final int myFrom;
+    private final int myTo;
+
+    public VersionRange(int from, int to) {
+      myFrom = from;
+      myTo = to;
     }
 
     @NotNull
     public static VersionRange create(@Nullable String from, @Nullable String to) {
-      final VersionRange range = new VersionRange();
-      range.setFrom(from == null ? 0 : tryToParse(from, Integer.MAX_VALUE));
-      range.setTo(to == null ? Integer.MAX_VALUE : tryToParse(to, 0));
-      return range;
-    }
-
-    @Attribute("from")
-    public int getFrom() {
-      return myFrom;
-    }
-
-    public void setFrom(int from) {
-      myFrom = from;
-    }
-
-    @Attribute("to")
-    public int getTo() {
-      return myTo;
-    }
-
-    public void setTo(int to) {
-      myTo = to;
+      return new VersionRange(
+        from == null ? 0 : tryToParse(from, Integer.MAX_VALUE),
+        to == null ? Integer.MAX_VALUE : tryToParse(to, 0)
+      );
     }
 
     public boolean contains(int current) {

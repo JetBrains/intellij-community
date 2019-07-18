@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
@@ -21,6 +21,7 @@ import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.fields.ExtendableTextField;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.ColumnInfo;
@@ -63,7 +64,7 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
 
       int iconWidth = myAnimatedIcon.getIconWidth();
       int cellHeight = myAnimatedIcon.getIconHeight();
-      int offset = JBUI.scale(5);
+      int offset = JBUIScale.scale(5);
       int editingRow = getEditingRow();
       int selectedRow = getSelectedRow();
       Border border = UIUtil.getTableFocusCellHighlightBorder();

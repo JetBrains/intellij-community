@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.RequiredElement;
 import org.jetbrains.annotations.NotNull;
 
 public class ClassExtensionPoint<T> extends AbstractExtensionPointBean implements KeyedLazyInstance<T> {
   // these must be public for scrambling compatibility
   @Attribute("forClass")
+  @RequiredElement
   public String psiElementClass;
 
   @Attribute("implementationClass")
+  @RequiredElement
   public String implementationClass;
 
   private final LazyInstance<T> myHandler = new LazyInstance<T>() {

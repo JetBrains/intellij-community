@@ -31,7 +31,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
@@ -79,7 +79,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
   @NonNls
   private static final String GET_CACHED_STROKE_METHOD_NAME = "getCachedStroke";
   private static final Logger LOG = Logger.getInstance(IdeKeyEventDispatcher.class);
-  private static final boolean JAVA11_ON_WINDOWS = SystemInfoRt.isWindows && SystemInfo.isJavaVersionAtLeast(11, 0, 0);
+  private static final boolean JAVA11_ON_WINDOWS = SystemInfo.isWindows && SystemInfo.isJavaVersionAtLeast(11, 0, 0);
 
   private KeyStroke myFirstKeyStroke;
   /**
@@ -438,7 +438,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return true;
     }
 
-    if (SystemInfoRt.isMac && InputEvent.ALT_DOWN_MASK == e.getModifiersEx() && Registry.is("ide.mac.alt.mnemonic.without.ctrl")) {
+    if (SystemInfo.isMac && InputEvent.ALT_DOWN_MASK == e.getModifiersEx() && Registry.is("ide.mac.alt.mnemonic.without.ctrl")) {
       // the myIgnoreNextKeyTypedEvent changes event processing to support Alt-based mnemonics on Mac only
       if ((KeyEvent.KEY_TYPED == e.getID() && !IdeEventQueue.getInstance().isInputMethodEnabled()) ||
           hasMnemonicInWindow(focusOwner, e)) {
@@ -454,7 +454,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     // workaround for IDEA-177327
-    if (isCandidateForAltGr && SystemInfoRt.isWindows && Registry.is("actionSystem.fix.alt.gr")) {
+    if (isCandidateForAltGr && SystemInfo.isWindows && Registry.is("actionSystem.fix.alt.gr")) {
       myFirstKeyStroke = keyStroke;
       setState(KeyState.STATE_WAIT_FOR_POSSIBLE_ALT_GR);
       return true;

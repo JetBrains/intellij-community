@@ -19,7 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.UniqueNameBuilder;
 import com.intellij.openapi.util.registry.Registry;
@@ -30,6 +30,7 @@ import com.intellij.ui.ClickListener;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PathUtil;
@@ -59,7 +60,7 @@ public class RecentProjectPanel extends JPanel {
   protected final UniqueNameBuilder<ReopenProjectAction> myPathShortener;
   protected AnAction removeRecentProjectAction;
   private int myHoverIndex = -1;
-  private final int closeButtonInset = JBUI.scale(7);
+  private final int closeButtonInset = JBUIScale.scale(7);
   private Icon currentIcon = toSize(AllIcons.Welcome.Project.Remove);
   private static final Logger LOG = Logger.getInstance(RecentProjectPanel.class);
   Set<ReopenProjectAction> projectsWithLongPathes = new HashSet<>(0);
@@ -82,7 +83,7 @@ public class RecentProjectPanel extends JPanel {
   private boolean rectInListCoordinatesContains(Rectangle listCellBounds,  Point p) {
 
     int realCloseButtonInset = (UIUtil.isJreHiDPI(this)) ?
-                               (int)(closeButtonInset * JBUI.sysScale(this)) : closeButtonInset;
+                               (int)(closeButtonInset * JBUIScale.sysScale(this)) : closeButtonInset;
 
     Rectangle closeButtonRect = new Rectangle(myCloseButtonForEditor.getX() - realCloseButtonInset,
                                               myCloseButtonForEditor.getY() - realCloseButtonInset,
@@ -329,7 +330,7 @@ public class RecentProjectPanel extends JPanel {
     JPanel title = new JPanel() {
       @Override
       public Dimension getPreferredSize() {
-        return new Dimension(super.getPreferredSize().width, JBUI.scale(28));
+        return new Dimension(super.getPreferredSize().width, JBUIScale.scale(28));
       }
     };
     title.setBorder(new BottomLineBorder());
@@ -361,7 +362,7 @@ public class RecentProjectPanel extends JPanel {
     public Rectangle getCloseIconRect(int index) {
       final Rectangle bounds = getCellBounds(index, index);
       Icon icon = toSize(AllIcons.Welcome.Project.Remove);
-      return new Rectangle(bounds.width - icon.getIconWidth() - JBUI.scale(10),
+      return new Rectangle(bounds.width - icon.getIconWidth() - JBUIScale.scale(10),
                            bounds.y + (bounds.height - icon.getIconHeight()) / 2,
                            icon.getIconWidth(), icon.getIconHeight());
     }
@@ -466,7 +467,7 @@ public class RecentProjectPanel extends JPanel {
     protected RecentProjectItemRenderer(UniqueNameBuilder<ReopenProjectAction> pathShortener) {
       super(new VerticalFlowLayout());
       myShortener = pathShortener;
-      myPath.setFont(JBUI.Fonts.label(SystemInfoRt.isMac ? 10f : 11f));
+      myPath.setFont(JBUI.Fonts.label(SystemInfo.isMac ? 10f : 11f));
       setFocusable(true);
       layoutComponents();
     }
@@ -498,7 +499,7 @@ public class RecentProjectPanel extends JPanel {
       if (value instanceof ReopenProjectAction) {
         ReopenProjectAction item = (ReopenProjectAction)value;
         myName.setText(item.getTemplatePresentation().getText());
-        myPath.setText(getTitle2Text(item, myPath, JBUI.scale(40)));
+        myPath.setText(getTitle2Text(item, myPath, JBUIScale.scale(40)));
       } else if (value instanceof ProjectGroupActionGroup) {
         final ProjectGroupActionGroup group = (ProjectGroupActionGroup)value;
         myName.setText(group.getGroup().getName());
@@ -517,7 +518,8 @@ public class RecentProjectPanel extends JPanel {
 
       try {
         FontMetrics fm = pathLabel.getFontMetrics(pathLabel.getFont());
-        int maxWidth = RecentProjectPanel.this.getWidth() - leftOffset - (int)ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getWidth() - JBUI.scale(10);
+        int maxWidth = RecentProjectPanel.this.getWidth() - leftOffset - (int)ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getWidth() -
+                       JBUIScale.scale(10);
         if (maxWidth > 0 && fm.stringWidth(fullText) > maxWidth) {
           return truncateDescription(fullText, fm, maxWidth, isTutorial(action));
         }
@@ -579,7 +581,7 @@ public class RecentProjectPanel extends JPanel {
     @Override
     public Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();
-      return new Dimension(Math.min(size.width, JBUI.scale(245)), size.height);
+      return new Dimension(Math.min(size.width, JBUIScale.scale(245)), size.height);
     }
 
     @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.CommonBundle;
@@ -32,7 +32,7 @@ import com.intellij.ui.RecentsManager;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -128,7 +128,7 @@ public class CreateClassDialog extends DialogWrapper {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
 
-    gbConstraints.insets = JBUI.insets(4, 8);
+    gbConstraints.insets = JBInsets.create(4, 8);
     gbConstraints.fill = GridBagConstraints.HORIZONTAL;
     gbConstraints.anchor = GridBagConstraints.WEST;
 
@@ -136,7 +136,7 @@ public class CreateClassDialog extends DialogWrapper {
       gbConstraints.weightx = 0;
       gbConstraints.gridwidth = 1;
       panel.add(myInformationLabel, gbConstraints);
-      gbConstraints.insets = JBUI.insets(4, 8);
+      gbConstraints.insets = JBInsets.create(4, 8);
       gbConstraints.gridx = 1;
       gbConstraints.weightx = 1;
       gbConstraints.gridwidth = 1;

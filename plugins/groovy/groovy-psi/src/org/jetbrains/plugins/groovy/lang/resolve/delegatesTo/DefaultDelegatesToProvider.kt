@@ -9,12 +9,14 @@ import groovy.lang.Closure.*
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureAsAnonymousParameterEnhancer.Companion.substitutorIgnoringClosures
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.FromStringHintProcessor
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
@@ -60,7 +62,7 @@ class DefaultDelegatesToProvider : GrDelegatesToProvider {
     else {
       getFromValue(delegatesTo)
       ?: getFromTarget(method.parameterList, delegatesTo, argumentMapping)
-      ?: getFromType(result, delegatesTo)
+      ?: getFromType(call, result, delegatesTo)
     }
     return DelegatesToInfo(delegateType, strategyValue)
   }
@@ -121,13 +123,20 @@ class DefaultDelegatesToProvider : GrDelegatesToProvider {
     return null
   }
 
-  private fun getFromType(result: GroovyResolveResult, delegatesTo: PsiAnnotation): PsiType? {
+  private fun getFromType(call: GrCall, result: GroovyResolveResult, delegatesTo: PsiAnnotation): PsiType? {
     val element = result.element as? PsiMethod ?: return null
     val typeValue = GrAnnotationUtil.inferStringAttribute(delegatesTo, "type") ?: return null
     if (typeValue.isBlank()) return null
     val context = FromStringHintProcessor.createContext(element)
     val type = JavaPsiFacade.getElementFactory(context.project).createTypeFromText(typeValue, context)
-    val substitutor = if (result is GroovyMethodResult) result.partialSubstitutor else result.substitutor
+    val substitutor = if (result is GroovyMethodResult) {
+      result.candidate?.let { candidate ->
+        substitutorIgnoringClosures(call, candidate, result)
+      } ?: result.partialSubstitutor
+    }
+    else {
+      result.substitutor
+    }
     return substitutor.substitute(type)
   }
 

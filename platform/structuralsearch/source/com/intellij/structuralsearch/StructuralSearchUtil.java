@@ -225,4 +225,22 @@ public class StructuralSearchUtil {
   public static String normalize(@NotNull String text) {
     return stripAccents(normalizeWhiteSpace(text));
   }
+
+  public static PatternContext findPatternContextByID(String id, Language language) {
+    return findPatternContextByID(id, getProfileByLanguage(language));
+  }
+
+  public static PatternContext findPatternContextByID(String id, StructuralSearchProfile profile) {
+    if (profile == null) {
+      return null;
+    }
+    final List<PatternContext> patternContexts = profile.getPatternContexts();
+    if (patternContexts.isEmpty()) {
+      return null;
+    }
+    if (id == null) {
+      return patternContexts.get(0);
+    }
+    return patternContexts.stream().filter(context -> context.getId().equals(id)).findFirst().orElse(patternContexts.get(0));
+  }
 }

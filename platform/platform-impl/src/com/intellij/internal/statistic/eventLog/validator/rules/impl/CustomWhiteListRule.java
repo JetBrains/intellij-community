@@ -6,9 +6,11 @@ import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.PerformanceCareRule;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.internal.statistic.utils.PluginType;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,9 +22,13 @@ public abstract class CustomWhiteListRule extends PerformanceCareRule implements
 
   @NotNull
   protected static ValidationResultType acceptWhenReportedByPluginFromPluginRepository(@NotNull EventContext context) {
-    if ("PLATFORM".equals(context.eventData.get("plugin_type"))) return ValidationResultType.ACCEPTED;
-    Object plugin = context.eventData.get("plugin");
-    if (plugin != null && isPluginFromPluginRepository(plugin.toString())) {
+    final Object pluginType = context.eventData.get("plugin_type");
+    final PluginType type = pluginType != null ? PluginInfoDetectorKt.findPluginTypeByValue(pluginType.toString()) : null;
+    if (type == null || !type.isSafeToReport()) {
+      return ValidationResultType.REJECTED;
+    }
+
+    if (type == PluginType.PLATFORM || hasPluginField(context)) {
       return ValidationResultType.ACCEPTED;
     }
     return ValidationResultType.REJECTED;
@@ -30,21 +36,28 @@ public abstract class CustomWhiteListRule extends PerformanceCareRule implements
 
   @NotNull
   protected static ValidationResultType acceptWhenReportedByJetbrainsPlugin(@NotNull EventContext context) {
-    if ("PLATFORM".equals(context.eventData.get("plugin_type"))) return ValidationResultType.ACCEPTED;
-    Object plugin = context.eventData.get("plugin");
-    if (plugin != null && isPluginDevelopedByJB(plugin.toString())) {
+    final Object pluginType = context.eventData.get("plugin_type");
+    final PluginType type = pluginType != null ? PluginInfoDetectorKt.findPluginTypeByValue(pluginType.toString()) : null;
+    if (type == null || !type.isDevelopedByJetBrains()) {
+      return ValidationResultType.REJECTED;
+    }
+
+    if (type == PluginType.PLATFORM || hasPluginField(context)) {
       return ValidationResultType.ACCEPTED;
     }
     return ValidationResultType.REJECTED;
   }
 
-  protected static boolean isThirdPartyValue(@NotNull String data) {
-    return ValidationResultType.THIRD_PARTY.getDescription().equals(data);
+  private static boolean hasPluginField(@NotNull EventContext context) {
+    if (context.eventData.containsKey("plugin")) {
+      final Object plugin = context.eventData.get("plugin");
+      return plugin instanceof String && StringUtil.isNotEmpty((String)plugin);
+    }
+    return false;
   }
 
-  protected static boolean isPluginDevelopedByJB(@NotNull String plugin) {
-    final PluginId pluginId = PluginId.findId(plugin);
-    return pluginId != null && PluginInfoDetectorKt.getPluginInfoById(pluginId).isDevelopedByJetBrains();
+  protected static boolean isThirdPartyValue(@NotNull String data) {
+    return ValidationResultType.THIRD_PARTY.getDescription().equals(data);
   }
 
   protected static boolean isPluginFromPluginRepository(@NotNull String plugin) {

@@ -110,7 +110,7 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     commits.reverse()
 
     val history = ArrayList<GitFileRevision>()
-    GitFileHistory.loadHistory(myProject, VcsUtil.getFilePath(commits.first().file), repo.root, null, CollectConsumer(history),
+    GitFileHistory.loadHistory(myProject, VcsUtil.getFilePath(commits.first().file), null, CollectConsumer(history),
                                Consumer { exception: VcsException ->
                                  TestCase.fail("No exception expected " + ExceptionUtil.getThrowableText(exception))
                                })

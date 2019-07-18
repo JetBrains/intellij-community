@@ -410,6 +410,7 @@
     <extensionPoint name="indexedRootsProvider" interface="com.intellij.util.indexing.IndexableSetContributor"/>
     <extensionPoint name="include.provider" interface="com.intellij.psi.impl.include.FileIncludeProvider"/>
     <extensionPoint name="globalIndexFilter" interface="com.intellij.util.indexing.GlobalIndexFilter"/>
+    <extensionPoint name="indexImporterFactory" interface="com.intellij.index.IndexImporterFactory"/>
 
     <extensionPoint name="refactoring.copyHandler" interface="com.intellij.refactoring.copy.CopyHandlerDelegate"/>
     <extensionPoint name="refactoring.moveHandler" interface="com.intellij.refactoring.move.MoveHandlerDelegate"/>
@@ -642,6 +643,14 @@
     <extensionPoint name="codeInsight.parameterNameHints" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.hints.InlayParameterHintsProvider"/>
     </extensionPoint>
+
+    <extensionPoint name="codeInsight.inlayProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.hints.InlayHintsProvider"/>
+    </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.codeInsight.inlayProviderFactory"
+                    interface="com.intellij.codeInsight.hints.InlayHintsProviderFactory"/>
+
     <extensionPoint name="codeInsight.typeInfo" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.lang.ExpressionTypeProvider"/>
     </extensionPoint>
@@ -690,6 +699,8 @@
                     area="IDEA_PROJECT"/>
     <extensionPoint name="usageViewFactory"
                     interface="com.intellij.usages.impl.UsageViewFactory"/>
+    <extensionPoint name="usageViewElementsListener"
+                    interface="com.intellij.usages.impl.UsageViewElementsListener"/>
 
     <extensionPoint name="treeStructureProvider"
                     interface="com.intellij.ide.projectView.TreeStructureProvider"

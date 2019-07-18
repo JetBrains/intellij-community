@@ -14,7 +14,7 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import org.assertj.core.api.Assertions;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +61,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
    * do not match because default font name on linux in headless environment falls back to FALLBACK_FONT_FAMILY
    */
   private static String substLinuxFontName(@NotNull String fontName) {
-    return SystemInfoRt.isLinux && GraphicsEnvironment.isHeadless() && FontPreferences.LINUX_DEFAULT_FONT_FAMILY.equals(fontName) ?
+    return SystemInfo.isLinux && GraphicsEnvironment.isHeadless() && FontPreferences.LINUX_DEFAULT_FONT_FAMILY.equals(fontName) ?
            FontPreferences.FALLBACK_FONT_FAMILY :
            fontName;
   }

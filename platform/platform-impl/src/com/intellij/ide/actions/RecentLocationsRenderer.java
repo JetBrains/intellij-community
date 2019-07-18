@@ -16,7 +16,7 @@ import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
@@ -167,7 +167,7 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
 
     titleTextComponent.setBorder(JBUI.Borders.empty());
 
-    if (!SystemInfoRt.isWindows) {
+    if (!SystemInfo.isWindows) {
       titleTextComponent.setFont(FontUtil.minusOne(UIUtil.getLabelFont()));
     }
 

@@ -2,7 +2,7 @@
   <depends>com.intellij.modules.java</depends>
   <depends optional="true" config-file="resources-plugin.xml">com.intellij.properties</depends>
   <extensions defaultExtensionNs="com.intellij">
-    <fileTypeFactory implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory"/>
+    <fileType name="XML" extensions="fxml"/>
     <fileEditorProvider implementation="org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilderEditorProvider"/>
     <xml.xmlExtension implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxXmlExtension"/>
     <xml.fileNSInfoProvider implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxNamespaceDataProvider"/>

@@ -8,7 +8,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
@@ -163,7 +163,7 @@ public class VcsFileUtil {
   }
 
   public static String getRelativeFilePath(String file, @NotNull final VirtualFile baseDir) {
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       file = file.replace('\\', '/');
     }
     final String basePath = baseDir.getPath();
@@ -245,6 +245,19 @@ public class VcsFileUtil {
       file.getPath();
     }
     return relativePath(VfsUtilCore.virtualToIoFile(root), VfsUtilCore.virtualToIoFile(file));
+  }
+
+  /**
+   * Get relative path
+   *
+   * @param root a root path
+   * @param file a target path
+   * @return a relative path
+   * @throws IllegalArgumentException if path is not under root.
+   */
+  @NotNull
+  public static String relativePath(@NotNull FilePath root, @NotNull FilePath file) {
+    return relativePath(root.getIOFile(), file.getIOFile());
   }
 
   /**
@@ -383,5 +396,13 @@ public class VcsFileUtil {
     if (checkinEnvironment != null) {
       checkinEnvironment.scheduleUnversionedFilesForAddition(value);
     }
+  }
+
+  public static boolean isAncestor(@NotNull FilePath ancestor, @NotNull FilePath path, boolean strict) {
+    return FileUtil.isAncestor(ancestor.getIOFile(), path.getIOFile(), strict);
+  }
+
+  public static boolean isAncestor(@NotNull VirtualFile root, @NotNull FilePath path) {
+    return FileUtil.isAncestor(VfsUtilCore.virtualToIoFile(root), path.getIOFile(), false);
   }
 }

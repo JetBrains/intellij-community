@@ -21,6 +21,7 @@ import java.io.File;
 /**
 * @author yole
 */
+@SuppressWarnings("ComponentNotRegistered")
 public class ReopenProjectAction extends AnAction implements DumbAware {
   private final String myProjectPath;
   private final String myProjectName;

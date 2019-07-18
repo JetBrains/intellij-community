@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ColoredSideBorder;
 import com.intellij.ui.TableActions;
 import com.intellij.ui.plaf.beg.*;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -27,13 +28,8 @@ public final class IdeaLaf extends MetalLookAndFeel {
     LafManagerImpl.initInputMapDefaults(defaults);
     initIdeaDefaults(defaults);
 
-    Pair<String, Integer> systemFont = UIUtil.getSystemFontData();
-    if (systemFont != null) {
-      LafManagerImpl.initFontDefaults(defaults, UIUtil.getFontWithFallback(systemFont.first, Font.PLAIN, systemFont.second));
-    }
-    else {
-      LafManagerImpl.initFontDefaults(defaults, UIUtil.getFontWithFallback("Tahoma", Font.PLAIN, 11));
-    }
+    Pair<String, Integer> systemFont = JBUIScale.getSystemFontData();
+    LafManagerImpl.initFontDefaults(defaults, UIUtil.getFontWithFallback(systemFont.first, Font.PLAIN, systemFont.second));
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

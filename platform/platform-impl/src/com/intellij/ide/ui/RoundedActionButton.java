@@ -1,9 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -11,15 +11,15 @@ import java.awt.*;
 
 public abstract class RoundedActionButton extends JButton {
 
-  private final int myHGap = JBUI.scale(4);
+  private final int myHGap = JBUIScale.scale(4);
   private final int myTopBottomBorder;
   private final int myLeftRightBorder;
 
   public RoundedActionButton(int topBottomBorder, int leftRightBorder) {
     setOpaque(false);
     setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    myTopBottomBorder = JBUI.scale(topBottomBorder);
-    myLeftRightBorder = JBUI.scale(leftRightBorder);
+    myTopBottomBorder = JBUIScale.scale(topBottomBorder);
+    myLeftRightBorder = JBUIScale.scale(leftRightBorder);
   }
 
   @Override
@@ -40,8 +40,8 @@ public abstract class RoundedActionButton extends JButton {
     final int w = g.getClipBounds().width;
     final int h = g.getClipBounds().height;
 
-    int borderArc = JBUI.scale(7);
-    int border = JBUI.scale(1);
+    int borderArc = JBUIScale.scale(7);
+    int border = JBUIScale.scale(1);
     int buttonArc = borderArc - border;
 
     g.setPaint(getBackgroundBorderPaint());

@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.skeletons;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -104,7 +105,14 @@ public class PySkeletonGenerator {
     final ProcessOutput genResult = runSkeletonGeneration(modname, modfilename, assemblyRefs, sdkHomePath,
                                                           syspath);
 
-    if (genResult.getStderrLines().size() > 0) {
+    final Application app = ApplicationManager.getApplication();
+    if (app.isInternal() || app.isEAP()) {
+      final String stdout = genResult.getStdout();
+      if (StringUtil.isNotEmpty(stdout)) {
+        LOG.info(stdout);
+      }
+    }
+    if (!genResult.getStderrLines().isEmpty()) {
       StringBuilder sb = new StringBuilder("Skeleton for ");
       sb.append(modname);
       if (genResult.getExitCode() != 0) {
@@ -118,7 +126,7 @@ public class PySkeletonGenerator {
         sb.append(err_line).append("\n");
       }
       sb.append("--");
-      if (ApplicationManager.getApplication().isInternal()) {
+      if (app.isInternal()) {
         LOG.warn(sb.toString());
       }
       else {

@@ -2,7 +2,7 @@
 package com.intellij.ui.mac.foundation;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -263,7 +263,7 @@ public class NSDefaults {
   }
 
   public static boolean isDarkMenuBar() {
-    assert SystemInfoRt.isMac;
+    assert SystemInfo.isMac;
 
     final Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
     try {

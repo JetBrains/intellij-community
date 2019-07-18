@@ -240,7 +240,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     return parentNode;
   }
 
-  private void onEventInternal(@NotNull BuildEvent event) {
+  private void onEventInternal(@NotNull Object buildId, @NotNull BuildEvent event) {
     final ExecutionNode parentNode = getOrMaybeCreateParentNode(event);
     final Object eventId = event.getId();
     ExecutionNode currentNode = nodesMap.get(eventId);
@@ -288,13 +288,13 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
             }
 
             if (parentNode != buildProgressRootNode) {
-              myConsoleViewHandler.addOutput(parentNode, event);
+              myConsoleViewHandler.addOutput(parentNode, buildId, event);
               myConsoleViewHandler.addOutput(parentNode, "\n", true);
             }
             if (parentNode != null) {
               reportMessageKind(messageEvent, parentNode);
             }
-            myConsoleViewHandler.addOutput(currentNode, event);
+            myConsoleViewHandler.addOutput(currentNode, buildId, event);
           }
           currentNode.setAutoExpandNode(currentNode == buildProgressRootNode || parentNode == buildProgressRootNode);
         }
@@ -320,7 +320,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
           }
         }
         else if (event instanceof OutputBuildEvent && parentNode != null) {
-          myConsoleViewHandler.addOutput(parentNode, event);
+          myConsoleViewHandler.addOutput(parentNode, buildId, event);
         }
       }
     }
@@ -337,11 +337,15 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
 
     if (event instanceof FinishEvent) {
       currentNode.setEndTime(event.getEventTime());
-      currentNode.setResult(((FinishEvent)event).getResult());
+      EventResult result = ((FinishEvent)event).getResult();
+      if (result instanceof DerivedResult) {
+        result = calculateDerivedResult((DerivedResult)result, currentNode, new HashSet<>());
+      }
+      currentNode.setResult(result);
       SkippedResult skippedResult = new SkippedResultImpl();
       finishChildren(currentNode, skippedResult);
-      if (((FinishEvent)event).getResult() instanceof FailureResult) {
-        for (Failure failure : ((FailureResult)((FinishEvent)event).getResult()).getFailures()) {
+      if (result instanceof FailureResult) {
+        for (Failure failure : ((FailureResult)result).getFailures()) {
           addChildFailureNode(currentNode, failure, event.getMessage());
         }
       }
@@ -353,12 +357,33 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       String time = DateFormatUtil.formatDateTime(event.getEventTime());
       aHint = aHint == null ? "at " + time : aHint + " at " + time;
       currentNode.setHint(aHint);
-      myDeferredEvents.forEach(this::onEventInternal);
+      myDeferredEvents.forEach(buildEvent -> onEventInternal(buildId, buildEvent));
       if (myConsoleViewHandler.myExecutionNode == null) {
         ApplicationManager.getApplication().invokeLater(() -> myConsoleViewHandler.setNode(buildProgressRootNode));
       }
     }
     scheduleUpdate(currentNode);
+  }
+
+  private static EventResult calculateDerivedResult(DerivedResult result, ExecutionNode node, Set<ExecutionNode> recursionGuard) {
+    if (node.getResult() != null) {
+      return node.getResult(); // if another thread set result for child
+    }
+    if (!recursionGuard.add(node)) {
+      LOG.warn("Ring in execution node graph!" + node);
+      return result.createFailureResult();
+    }
+
+    for (SimpleNode simpleNode : node.getChildren()) {
+      if (simpleNode instanceof ExecutionNode) {
+        ExecutionNode child = (ExecutionNode)simpleNode;
+        EventResult childResult = child.isRunning() ? calculateDerivedResult(result, child, recursionGuard) : child.getResult();
+        if (childResult instanceof FailureResult) {
+          return result.createFailureResult();
+        }
+      }
+    }
+    return result.createSuccessResult();
   }
 
   private void reportMessageKind(@NotNull MessageEvent messageEvent, @NotNull ExecutionNode parentNode) {
@@ -588,8 +613,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   }
 
   @Override
-  public void onEvent(@NotNull BuildEvent event) {
-    myTreeModel.getInvoker().runOrInvokeLater(() -> onEventInternal(event));
+  public void onEvent(@NotNull Object buildId, @NotNull BuildEvent event) {
+    myTreeModel.getInvoker().runOrInvokeLater(() -> onEventInternal(buildId, event));
   }
 
   void scheduleUpdate(ExecutionNode executionNode) {
@@ -833,8 +858,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       addOutput(node, view -> view.append(text, stdOut));
     }
 
-    private void addOutput(ExecutionNode node, BuildEvent event) {
-      addOutput(node, view -> view.onEvent(event));
+    private void addOutput(ExecutionNode node, @NotNull Object buildId, BuildEvent event) {
+      addOutput(node, view -> view.onEvent(buildId, event));
     }
 
     private void addOutput(ExecutionNode node, Failure failure) {

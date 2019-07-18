@@ -11,7 +11,7 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.PropertyOwner;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.PsiMember;
@@ -50,13 +50,13 @@ public class JavaLambdaNodeProvider
   @NotNull
   @Override
   public Shortcut[] getShortcut() {
-    return new Shortcut[]{KeyboardShortcut.fromString(SystemInfoRt.isMac ? "meta L" : "control L")};
+    return new Shortcut[]{KeyboardShortcut.fromString(SystemInfo.isMac ? "meta L" : "control L")};
   }
 
   @NotNull
   @Override
   public ActionPresentation getPresentation() {
-    return new ActionPresentationData(getCheckBoxText(), null, AllIcons.Nodes.Function);
+    return new ActionPresentationData(getCheckBoxText(), null, AllIcons.Nodes.Lambda);
   }
 
   @NotNull

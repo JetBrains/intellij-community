@@ -4,7 +4,7 @@ package com.jetbrains.env.python;
 import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.jetbrains.env.PyEnvTestCase;
@@ -40,7 +40,7 @@ public class PyPackagingTest extends PyEnvTestCase {
   @Override
   public void runPythonTest(PyTestTask testTask) {
     Assume.assumeFalse("Don't run under Windows as after deleting from created virtualenvs original interpreter got spoiled",
-                       UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfoRt.isWindows);
+                       UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
     super.runPythonTest(testTask);
   }
 

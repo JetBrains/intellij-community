@@ -88,6 +88,19 @@ class ListTest {
   }
 
   @Test
+  fun `parametrized array`() {
+    class TestBean<T> {
+      @JvmField
+      var list: Array<T>? = null
+    }
+
+    val bean = TestBean<String>()
+    bean.list = arrayOf("bar")
+    val deserializedBean = test(bean, defaultTestWriteConfiguration.copy(allowAnySubTypes = true))
+    assertThat(deserializedBean.list!!.first()).isEqualTo("bar")
+  }
+
+  @Test
   fun `versioned file`() {
     val file = VersionedFile(fsRule.fs.getPath("/cache.ion"), 42, isCompressed = false)
     val list = listOf("foo", "bar")
@@ -96,7 +109,7 @@ class ListTest {
     assertThat(file.file.readChars().trim()).isEqualToIgnoringNewLines("""
       {
         version:42,
-        formatVersion:1,
+        formatVersion:2,
         data:[
           foo,
           bar

@@ -19,6 +19,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.newImpl.singleRow.ScrollableSingleRowLayout;
@@ -49,16 +50,16 @@ import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
 
-import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 import static com.intellij.openapi.rd.DisposableExKt.createLifetime;
+import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 public class JBTabsImpl extends JComponent
   implements JBTabsEx, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation, Queryable,
              UISettingsListener, QuickActionProvider, Accessible {
 
   @NonNls public static final Key<Integer> SIDE_TABS_SIZE_LIMIT_KEY = Key.create("SIDE_TABS_SIZE_LIMIT_KEY");
-  static final int MIN_TAB_WIDTH = JBUI.scale(75);
-  public static final int DEFAULT_MAX_TAB_WIDTH = JBUI.scale(300);
+  static final int MIN_TAB_WIDTH = JBUIScale.scale(75);
+  public static final int DEFAULT_MAX_TAB_WIDTH = JBUIScale.scale(300);
 
   public static final Color MAC_AQUA_BG_COLOR = Gray._200;
   private static final Comparator<TabInfo> ABC_COMPARATOR = (o1, o2) -> StringUtil.naturalCompare(o1.getText(), o2.getText());
@@ -264,7 +265,7 @@ public class JBTabsImpl extends JComponent
       int units = event.getUnitsToScroll();
 
       // Workaround for 'shaking' scrolling with touchpad when some events have units with opposite (wrong) sign
-      if (SystemInfoRt.isMac && event.getModifiers() == InputEvent.SHIFT_MASK) return;
+      if (SystemInfo.isMac && event.getModifiers() == InputEvent.SHIFT_MASK) return;
 
       if (units == 0) return;
       if (mySingleRowLayout.myLastSingRowLayout != null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,9 +126,7 @@ public class InsertionContext {
   }
 
   /**
-   * Whether completionChar should be added to document at tail offset (see {@link #TAIL_OFFSET}) after insert handler.
-   * By default this value is true (should be added).
-   * @param addCompletionChar
+   * @param addCompletionChar Whether completionChar should be added to document at tail offset (see {@link #TAIL_OFFSET}) after insert handler (default: {@code true}).
    */
   public void setAddCompletionChar(final boolean addCompletionChar) {
     myAddCompletionChar = addCompletionChar;

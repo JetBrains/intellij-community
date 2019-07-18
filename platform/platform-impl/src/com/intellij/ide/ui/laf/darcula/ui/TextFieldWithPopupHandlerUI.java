@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
@@ -6,8 +6,10 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextComponent.Extension;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -31,7 +33,6 @@ import java.util.Objects;
 
 import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.MINIMUM_WIDTH;
 import static com.intellij.openapi.util.text.StringUtil.isEmpty;
-import static com.intellij.util.ui.JBUI.scale;
 
 /**
  * @author Konstantin Bulenkov
@@ -83,7 +84,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
    * @return a gap between the search icon and the editable area
    */
   protected int getSearchIconGap() {
-    return scale(2);
+    return JBUIScale.scale(2);
   }
 
   /**
@@ -105,7 +106,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
    * @return a gap between the clear icon and the editable area
    */
   protected int getClearIconGap() {
-    return scale(2);
+    return JBUIScale.scale(2);
   }
 
   /**
@@ -118,8 +119,8 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
   private void updateIconsLayout(Rectangle bounds) {
     JTextComponent c = getComponent();
-    Insets margin = UIUtil.getParentOfType(JComboBox.class, c) != null ||
-                    UIUtil.getParentOfType(JSpinner.class, c) != null ||
+    Insets margin = ComponentUtil.getParentOfType((Class<? extends JComboBox>)JComboBox.class, (Component)c) != null ||
+                    ComponentUtil.getParentOfType((Class<? extends JSpinner>)JSpinner.class, (Component)c) != null ||
                     UIUtil.isClientPropertyTrue(c, "TextFieldWithoutMargins") ? JBUI.emptyInsets() : getDefaultMargins();
 
     JBInsets.removeFrom(bounds, c.getInsets());

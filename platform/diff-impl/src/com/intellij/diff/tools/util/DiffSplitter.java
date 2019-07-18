@@ -9,8 +9,8 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.GridBag;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +28,7 @@ public class DiffSplitter extends Splitter {
   @Nullable private AnAction myBottomAction;
 
   public DiffSplitter() {
-    setDividerWidth(JBUI.scale(Registry.intValue("diff.divider.width")));
+    setDividerWidth(JBUIScale.scale(Registry.intValue("diff.divider.width")));
   }
 
   @Override
@@ -61,7 +61,7 @@ public class DiffSplitter extends Splitter {
           add(button1, bag.nextLine());
         }
         if (button1 != null && button2 != null) {
-          add(Box.createVerticalStrut(JBUI.scale(20)), bag.nextLine());
+          add(Box.createVerticalStrut(JBUIScale.scale(20)), bag.nextLine());
         }
         if (button2 != null) {
           add(button2, bag.nextLine());

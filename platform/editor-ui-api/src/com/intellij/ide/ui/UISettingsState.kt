@@ -2,12 +2,14 @@
 package com.intellij.ide.ui
 
 import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.ReportValue
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.PlatformUtils
-import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Transient
 import javax.swing.SwingConstants
+import kotlin.math.roundToInt
 
 class UISettingsState : BaseState() {
   companion object {
@@ -18,9 +20,8 @@ class UISettingsState : BaseState() {
      */
     @JvmStatic
     val defFontSize: Int
-      get() = Math.round(UIUtil.DEF_SYSTEM_FONT_SIZE * UISettings.defFontScale)
+      get() = (JBUIScale.DEF_SYSTEM_FONT_SIZE * UISettings.defFontScale).roundToInt()
   }
-
 
   @get:OptionTag("FONT_FACE")
   @Deprecated("", replaceWith = ReplaceWith("NotRoamableUiOptions.fontFace"))
@@ -34,9 +35,11 @@ class UISettingsState : BaseState() {
   @Deprecated("", replaceWith = ReplaceWith("NotRoamableUiOptions.fontScale"))
   var fontScale by property(0f)
 
+  @get:ReportValue
   @get:OptionTag("RECENT_FILES_LIMIT")
   var recentFilesLimit by property(50)
 
+  @get:ReportValue
   @get:OptionTag("RECENT_LOCATIONS_LIMIT")
   var recentLocationsLimit by property(25)
 
@@ -47,6 +50,7 @@ class UISettingsState : BaseState() {
   @get:OptionTag("CONSOLE_CYCLE_BUFFER_SIZE_KB")
   var consoleCycleBufferSizeKb by property(1024)
 
+  @get:ReportValue
   @get:OptionTag("EDITOR_TAB_LIMIT")
   var editorTabLimit by property(10)
 
@@ -76,6 +80,8 @@ class UISettingsState : BaseState() {
   var showMainToolbar by property(false)
   @get:OptionTag("SHOW_STATUS_BAR")
   var showStatusBar by property(true)
+  @get:OptionTag("SHOW_MAIN_MENU")
+  var showMainMenu by property(true)
   @get:OptionTag("SHOW_NAVIGATION_BAR")
   var showNavigationBar by property(true)
   @get:OptionTag("ALWAYS_SHOW_WINDOW_BUTTONS")

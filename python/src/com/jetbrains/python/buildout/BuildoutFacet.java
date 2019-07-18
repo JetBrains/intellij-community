@@ -14,7 +14,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.LineTokenizer;
@@ -84,7 +84,7 @@ public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfigu
             bin.refresh(false, false);
           }
           final String exe;
-          if (SystemInfoRt.isWindows) {
+          if (SystemInfo.isWindows) {
             exe = "buildout.exe";
           }
           else {
@@ -174,7 +174,7 @@ public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfigu
       if (paths == null) {
         VirtualFile root = script.getParent().getParent();
         String partName = FileUtilRt.getNameWithoutExtension(script.getName());
-        if (SystemInfoRt.isWindows && partName.endsWith(SCRIPT_SUFFIX)) {
+        if (SystemInfo.isWindows && partName.endsWith(SCRIPT_SUFFIX)) {
           partName = partName.substring(0, partName.length() - SCRIPT_SUFFIX.length());
         }
         VirtualFile sitePy = root.findFileByRelativePath("parts/" + partName + "/site.py");
@@ -338,7 +338,7 @@ public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfigu
     }
     if (rootPath != null) {
       final File[] scripts = new File(rootPath, "bin").listFiles((dir, name) -> {
-        if (SystemInfoRt.isWindows) {
+        if (SystemInfo.isWindows) {
           return name.endsWith("-script.py");
         }
         String ext = FileUtilRt.getExtension(name);
@@ -353,7 +353,7 @@ public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfigu
 
   @Nullable
   public static File findScript(@Nullable BuildoutFacet buildoutFacet, String name, final VirtualFile baseDir) {
-    String scriptName = SystemInfoRt.isWindows ? name + SCRIPT_SUFFIX : name;
+    String scriptName = SystemInfo.isWindows ? name + SCRIPT_SUFFIX : name;
     final List<File> scripts = getScripts(buildoutFacet, baseDir);
     for (File script : scripts) {
       if (FileUtilRt.getNameWithoutExtension(script.getName()).equals(scriptName)) {

@@ -13,7 +13,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
@@ -109,7 +109,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(isPopupActive() && !StringUtil.isEmpty(getEnteredPrefix()));
       }
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString(SystemInfoRt.isMac ? "meta BACK_SPACE" : "control BACK_SPACE"), myComponent);
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString(SystemInfo.isMac ? "meta BACK_SPACE" : "control BACK_SPACE"), myComponent);
 
     installSupplyTo(component);
   }

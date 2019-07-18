@@ -556,8 +556,6 @@
 
     <treeStructureProvider implementation="com.jetbrains.python.projectView.PyTreeStructureProvider"/>
 
-    <project.converterProvider implementation="com.jetbrains.python.testing.converters.PythonTestConverterProvider"/>
-
     <projectConfigurable groupId="build" dynamic="true" id="pyconsole" instance="com.jetbrains.python.console.PyConsoleOptionsConfigurable"
                          displayName="Console"/>
     <projectService serviceImplementation="com.jetbrains.python.console.PyConsoleOptions"/>
@@ -650,10 +648,6 @@
 
     <!-- Statistics -->
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyInterpreterUsagesCollector"/>
-    <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyInterpreterRemoteUsagesCollector"/>
-    <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyInterpreterVersionUsagesCollector"/>
-    <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyInterpreterTypeUsagesCollector"/>
-    <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyPackageUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyPackageVersionUsagesCollector"/>
   </extensions>
 

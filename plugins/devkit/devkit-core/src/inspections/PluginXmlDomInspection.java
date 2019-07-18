@@ -758,10 +758,17 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       annotateResolveProblems(holder, iconAttribute);
     }
 
+    GenericAttributeValue<PsiClass> clazz = group.getClazz();
+    if (DomUtil.hasXml(clazz) &&
+        !DomUtil.hasXml(group.getId())) {
+      holder.createProblem(group, ProblemHighlightType.WARNING, "'id' should be specified", null,
+                           new AddDomElementQuickFix<>(group.getId()));
+    }
+
+
     GenericAttributeValue<ActionOrGroup> useShortcutOfAttribute = group.getUseShortcutOf();
     if (!DomUtil.hasXml(useShortcutOfAttribute)) return;
 
-    GenericAttributeValue<PsiClass> clazz = group.getClazz();
     if (!DomUtil.hasXml(clazz)) {
       holder.createProblem(group, "'class' must be specified with 'use-shortcut-of'",
                            new AddDomElementQuickFix<GenericAttributeValue>(group.getClazz()));

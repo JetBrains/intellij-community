@@ -12,7 +12,8 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.RowIcon;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
@@ -82,7 +83,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
 
   @Override
   public RowIcon getElementIcon(final int elementFlags) {
-    return createLayeredIcon(this, PlatformIcons.PACKAGE_ICON, elementFlags);
+    return IconManager.getInstance().createLayeredIcon(this, PlatformIcons.PACKAGE_ICON, elementFlags);
   }
 
   @Override

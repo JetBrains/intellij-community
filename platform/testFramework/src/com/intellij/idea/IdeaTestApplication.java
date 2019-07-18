@@ -16,6 +16,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.RegistryKeyBean;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.ui.IconManager;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
@@ -96,6 +97,7 @@ public final class IdeaTestApplication implements Disposable {
     Future<List<IdeaPluginDescriptor>> loadedPluginFuture = AppExecutorUtil.getAppExecutorService().submit(() -> PluginManagerCore.getLoadedPlugins());
     ApplicationImpl.patchSystem();
     ApplicationImpl app = new ApplicationImpl(true, true, true, true, ApplicationManagerEx.IDEA_APPLICATION);
+    IconManager.activate();
     List<IdeaPluginDescriptor> loadedPlugins = null;
     try {
       loadedPlugins = loadedPluginFuture.get(5, TimeUnit.SECONDS);

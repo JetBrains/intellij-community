@@ -9,7 +9,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -46,7 +46,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   public static final DataKey<XDebuggerEvaluationDialog> KEY = DataKey.create("DEBUGGER_EVALUATION_DIALOG");
 
   //can not use new SHIFT_DOWN_MASK etc because in this case ActionEvent modifiers do not match
-  private static final int ADD_WATCH_MODIFIERS = (SystemInfoRt.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK) | InputEvent.SHIFT_MASK;
+  private static final int ADD_WATCH_MODIFIERS = (SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK) | InputEvent.SHIFT_MASK;
   static KeyStroke ADD_WATCH_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, ADD_WATCH_MODIFIERS);
 
   private final JPanel myMainPanel;

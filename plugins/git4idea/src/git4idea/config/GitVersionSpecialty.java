@@ -2,7 +2,7 @@
 package git4idea.config;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.util.ObjectUtils;
 import git4idea.repo.GitRepository;
@@ -91,7 +91,7 @@ public enum GitVersionSpecialty {
   DOESNT_DEFINE_HOME_ENV_VAR {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
-      return SystemInfoRt.isWindows && version.isOlderOrEqual(new GitVersion(1, 7, 0, 2));
+      return SystemInfo.isWindows && version.isOlderOrEqual(new GitVersion(1, 7, 0, 2));
     }
   },
 
@@ -159,7 +159,7 @@ public enum GitVersionSpecialty {
   LOG_AUTHOR_FILTER_SUPPORTS_VERTICAL_BAR {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
-      return !SystemInfoRt.isMac || version.isLaterOrEqual(new GitVersion(1, 8, 3, 3));
+      return !SystemInfo.isMac || version.isLaterOrEqual(new GitVersion(1, 8, 3, 3));
     }
   },
 
@@ -206,7 +206,7 @@ public enum GitVersionSpecialty {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
       // before 2.8.0 git for windows expects to have LF symbol as line separator in standard input instead of CRLF
-      return SystemInfoRt.isWindows && !version.isLaterOrEqual(new GitVersion(2, 8, 0, 0));
+      return SystemInfo.isWindows && !version.isLaterOrEqual(new GitVersion(2, 8, 0, 0));
     }
   },
 

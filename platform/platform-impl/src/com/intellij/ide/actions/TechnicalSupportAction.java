@@ -9,7 +9,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,20 +54,20 @@ public class TechnicalSupportAction extends AnAction implements DumbAware {
    */
   private static String getOSName() {
     String name = "";
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       name += "win-";
       name += getWindowsVersion();
       if (SystemInfo.is64Bit) {
         name += "-64";
       }
     }
-    else if (SystemInfoRt.isLinux) {
+    else if (SystemInfo.isLinux) {
       name += "linux";
     }
-    else if (SystemInfoRt.isSolaris) {
+    else if (SystemInfo.isSolaris) {
       name += "solaris";
     }
-    else if (SystemInfoRt.isMac) {
+    else if (SystemInfo.isMac) {
       name += "mac";
       if (!SystemInfo.isOsVersionAtLeast("10.8")) {
         name += "-old";
@@ -80,7 +80,7 @@ public class TechnicalSupportAction extends AnAction implements DumbAware {
   }
 
   private static boolean isWindowsVersion(String version) {
-    return StringUtil.compareVersionNumbers(SystemInfoRt.OS_VERSION, version) == 0;
+    return StringUtil.compareVersionNumbers(SystemInfo.OS_VERSION, version) == 0;
   }
 
   private static String getWindowsVersion() {

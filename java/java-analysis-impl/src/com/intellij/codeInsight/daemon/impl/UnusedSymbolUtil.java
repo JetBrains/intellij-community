@@ -18,11 +18,16 @@ import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 public class UnusedSymbolUtil {
 
@@ -203,7 +208,9 @@ public class UnusedSymbolUtil {
       // if we've resolved all references, find usages will be fast
       PsiSearchHelper.SearchCostResult cheapEnough = RefResolveService.ENABLED && RefResolveService.getInstance(project).isUpToDate() ? PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES :
                                                      searchHelper.isCheapEnoughToSearch(name, (GlobalSearchScope)useScope, ignoreFile, progress);
-      if (cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) {
+      if (cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES
+          // try to search for private and package-private members unconditionally - they are unlikely to have millions of usages
+          && (member.hasModifierProperty(PsiModifier.PUBLIC) || member.hasModifierProperty(PsiModifier.PROTECTED))) {
         log("* "+member.getName()+" too many usages; false");
         return false;
       }
@@ -215,7 +222,7 @@ public class UnusedSymbolUtil {
         return true;
       }
 
-      if (member instanceof PsiMethod) {
+      if (member instanceof PsiMethod && member.hasModifierProperty(PsiModifier.PUBLIC)) {
         String propertyName = PropertyUtilBase.getPropertyName(member);
         if (propertyName != null) {
           SearchScope fileScope = containingFile.getUseScope();
@@ -229,6 +236,7 @@ public class UnusedSymbolUtil {
       }
     }
     FindUsagesOptions options;
+    Collection<PsiMember> toSearch = new SmartList<>(member);
     if (member instanceof PsiPackage) {
       options = new JavaPackageFindUsagesOptions(useScope);
       options.isSearchForTextOccurrences = true;
@@ -241,6 +249,7 @@ public class UnusedSymbolUtil {
       PsiMethod method = (PsiMethod)member;
       options = new JavaMethodFindUsagesOptions(useScope);
       options.isSearchForTextOccurrences = method.isConstructor();
+      toSearch.addAll(DeepestSuperMethodsSearch.search(method).findAll());
     }
     else if (member instanceof PsiVariable) {
       options = new JavaVariableFindUsagesOptions(useScope);
@@ -251,7 +260,7 @@ public class UnusedSymbolUtil {
       options.isSearchForTextOccurrences = true;
     }
     options.isUsages = true;
-    return JavaFindUsagesHelper.processElementUsages(member, options, usageInfoProcessor);
+    return ContainerUtil.process(toSearch, m -> JavaFindUsagesHelper.processElementUsages(m, options, usageInfoProcessor));
   }
 
   private static boolean isEnumValuesMethodUsed(@NotNull Project project,

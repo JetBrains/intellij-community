@@ -27,15 +27,10 @@ class VcsIgnoreFilesChecker(private val project: Project) : ProjectComponent {
         StartupManager.getInstance(project).runWhenProjectIsInitialized {
           ApplicationManager.getApplication().executeOnPooledThread {
             generateVcsIgnoreFileInStoreDirIfNeeded(project)
+            generateVcsIgnoreFileInRootIfNeeded(project)
           }
         }
       })
-
-    StartupManager.getInstance(project).runWhenProjectIsInitialized {
-      ApplicationManager.getApplication().executeOnPooledThread {
-        generateVcsIgnoreFileInRootIfNeeded(project)
-      }
-    }
   }
 
   /**
@@ -58,11 +53,15 @@ class VcsIgnoreFilesChecker(private val project: Project) : ProjectComponent {
   private fun generateVcsIgnoreFileInRootIfNeeded(project: Project) {
     if (project.isDisposed) return
 
-    val projectFile = project.projectFile ?: return
+    val projectFile = project.getProjectConfigDirOrProjectFile() ?: return
     val projectFileVcsRoot = VcsUtil.getVcsRootFor(project, projectFile) ?: return
     val vcs = VcsUtil.getVcsFor(project, projectFileVcsRoot) ?: return
 
     LOG.debug("Propose manage VCS ignore in ${projectFileVcsRoot.path} for vcs ${vcs.name}")
     VcsImplUtil.proposeUpdateIgnoreFile(project, vcs, projectFileVcsRoot)
   }
+
+  private fun Project.getProjectConfigDirOrProjectFile() =
+    if (isDirectoryBased) project.stateStore.projectConfigDir?.let(LocalFileSystem.getInstance()::findFileByPath)
+    else project.projectFile
 }

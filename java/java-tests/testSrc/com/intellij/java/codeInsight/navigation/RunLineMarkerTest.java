@@ -69,7 +69,7 @@ public class RunLineMarkerTest extends LightCodeInsightFixtureTestCase {
       TestActionEvent actionEvent = new TestActionEvent();
       action.update(actionEvent);
       String text = actionEvent.getPresentation().getText();
-      return text != null && text.startsWith("Run ") && text.endsWith("'");
+      return text != null && text.startsWith("Run '") && text.endsWith("'");
     });
     assertEquals(list.toString(), 2, list.size());
     list.get(0).update(event);
@@ -149,9 +149,9 @@ public class RunLineMarkerTest extends LightCodeInsightFixtureTestCase {
     assertEquals(1, marks.size());
     GutterIconRenderer mark = (GutterIconRenderer)marks.get(0);
     String text = mark.getTooltipText();
-    assertEquals("Run 'Main.main()'\n" +
-                 "Debug 'Main.main()'\n" +
-                 "Run 'Main.main()' with Coverage", text);
+    assertTrue(text.startsWith("Run 'Main.main()'\n" +
+                               "Debug 'Main.main()'\n" +
+                               "Run 'Main.main()' with Coverage"));
   }
 
   public void testTooltipWithUnderscores() {
@@ -163,8 +163,8 @@ public class RunLineMarkerTest extends LightCodeInsightFixtureTestCase {
     assertEquals(1, marks.size());
     GutterIconRenderer mark = (GutterIconRenderer)marks.get(0);
     String text = mark.getTooltipText();
-    assertEquals("Run 'Main_class_test.main()'\n" +
-                 "Debug 'Main_class_test.main()'\n" +
-                 "Run 'Main_class_test.main()' with Coverage", text);
+    assertTrue(text.startsWith("Run 'Main_class_test.main()'\n" +
+                               "Debug 'Main_class_test.main()'\n" +
+                               "Run 'Main_class_test.main()' with Coverage"));
   }
 }

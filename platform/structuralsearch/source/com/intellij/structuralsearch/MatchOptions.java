@@ -31,7 +31,7 @@ public class MatchOptions implements JDOMExternalizable {
   @NotNull
   private String pattern;
 
-  private String myPatternContext;
+  private String myPatternContextId;
 
   @NonNls private static final String TEXT_ATTRIBUTE_NAME = "text";
   @NonNls private static final String LOOSE_MATCHING_ATTRIBUTE_NAME = "loose";
@@ -65,7 +65,7 @@ public class MatchOptions implements JDOMExternalizable {
     scopeType = options.scopeType;
     scopeDescriptor = options.scopeDescriptor;
     pattern = options.pattern;
-    myPatternContext = options.myPatternContext;
+    myPatternContextId = options.myPatternContextId;
   }
 
   public MatchOptions copy() {
@@ -169,11 +169,11 @@ public class MatchOptions implements JDOMExternalizable {
     if (myFileType != null) {
       element.setAttribute(FILE_TYPE_ATTR_NAME, myFileType.getName());
     }
-    if (myDialect != null) {
+    if (myDialect != null && (myFileType == null || myFileType.getLanguage() != myDialect)) {
       element.setAttribute(DIALECT_ATTR_NAME, myDialect.getID());
     }
-    if (myPatternContext != null) {
-      element.setAttribute(PATTERN_CONTEXT_ATTR_NAME, myPatternContext);
+    if (myPatternContextId != null) {
+      element.setAttribute(PATTERN_CONTEXT_ATTR_NAME, myPatternContextId);
     }
 
     if (scope != null) {
@@ -202,7 +202,7 @@ public class MatchOptions implements JDOMExternalizable {
 
     myFileType = getFileTypeByName(element.getAttributeValue(FILE_TYPE_ATTR_NAME));
     myDialect = Language.findLanguageByID(element.getAttributeValue(DIALECT_ATTR_NAME));
-    myPatternContext = element.getAttributeValue(PATTERN_CONTEXT_ATTR_NAME);
+    myPatternContextId = element.getAttributeValue(PATTERN_CONTEXT_ATTR_NAME);
 
     final String value = element.getAttributeValue(SCOPE_TYPE);
     scopeType = (value == null) ? null : Scopes.Type.valueOf(value);
@@ -241,12 +241,12 @@ public class MatchOptions implements JDOMExternalizable {
     if (!variableConstraints.equals(matchOptions.variableConstraints)) return false;
     if (myFileType != matchOptions.myFileType) return false;
     if (!Objects.equals(myDialect, matchOptions.myDialect)) return false;
-    if (!Objects.equals(myPatternContext, matchOptions.myPatternContext)) return false;
+    if (!Objects.equals(myPatternContextId, matchOptions.myPatternContextId)) return false;
 
     return true;
   }
 
-public int hashCode() {
+  public int hashCode() {
     int result = (looseMatching ? 1 : 0);
     result = 29 * result + (recursiveSearch ? 1 : 0);
     result = 29 * result + (caseSensitiveMatch ? 1 : 0);
@@ -256,7 +256,7 @@ public int hashCode() {
       result = 29 * result + scope.hashCode();
     if (myFileType != null) result = 29 * result + myFileType.hashCode();
     if (myDialect != null) result = 29 * result + myDialect.hashCode();
-    if (myPatternContext != null) result = 29 * result + myPatternContext.hashCode();
+    if (myPatternContextId != null) result = 29 * result + myPatternContextId.hashCode();
     return result;
   }
 
@@ -284,11 +284,12 @@ public int hashCode() {
     myDialect = dialect;
   }
 
-  public String getPatternContext() {
-    return myPatternContext;
+  public PatternContext getPatternContext() {
+    if (myPatternContextId == null) return null;
+    return StructuralSearchUtil.findPatternContextByID(myPatternContextId, getDialect());
   }
 
-  public void setPatternContext(String patternContext) {
-    myPatternContext = patternContext;
+  public void setPatternContext(PatternContext patternContext) {
+    myPatternContextId = (patternContext == null) ? null : patternContext.getId();
   }
 }

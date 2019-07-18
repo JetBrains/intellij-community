@@ -3,15 +3,19 @@ package com.intellij.ui;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.MovablePopup;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.MouseEventAdapter;
+import com.intellij.util.ui.MouseEventHandler;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +36,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     protected void paintComponent(Graphics g) {
       Insets insets = getInsets();
       Graphics2D g2d = (Graphics2D)g;
-      double scale = (double)JBUI.sysScale((Graphics2D)g);
+      double scale = (double)JBUIScale.sysScale((Graphics2D)g);
       double devTop = insets.top * scale;
       // A workaround for IDEA-183253. If insets.top is *.5 in device space, then move up the image by one device pixel.
       if (devTop + 0.5 == Math.floor(devTop + 0.5)) {
@@ -281,7 +285,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     if (focus == owner.getOwner()) {
       focus = null; // do not check intersection with parent
     }
-    boolean focused = SystemInfoRt.isWindows || isFocused(owner);
+    boolean focused = SystemInfo.isWindows || isFocused(owner);
     for (Window other : owner.getOwnedWindows()) {
       if (!focused) {
         focused = other.isFocused();

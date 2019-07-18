@@ -10,7 +10,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
@@ -35,6 +38,7 @@ import com.intellij.openapi.wm.ex.*;
 import com.intellij.openapi.wm.impl.commands.*;
 import com.intellij.ui.BalloonImpl;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -62,11 +66,10 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
-@State(
-  name = "ToolWindowManager",
-  defaultStateAsResource = true,
-  storages = @Storage(value = StoragePathMacros.WORKSPACE_FILE, roamingType = RoamingType.DISABLED)
-)
+@State(name = "ToolWindowManager", defaultStateAsResource = true, storages = {
+  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
+  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
+})
 public class ToolWindowManagerImpl extends ToolWindowManagerEx implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.ToolWindowManagerImpl");
 
@@ -327,7 +330,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
     Keymap keymap = Objects.requireNonNull(KeymapManager.getInstance()).getActiveKeymap();
     Shortcut[] baseShortcut = keymap.getShortcuts("ActivateProjectToolWindow");
-    int baseModifiers = SystemInfoRt.isMac ? InputEvent.META_MASK : InputEvent.ALT_MASK;
+    int baseModifiers = SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.ALT_MASK;
     for (Shortcut each : baseShortcut) {
       if (each instanceof KeyboardShortcut) {
         KeyStroke keyStroke = ((KeyboardShortcut)each).getFirstKeyStroke();
@@ -1417,7 +1420,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     Component owner = getFocusManager().getFocusOwner();
-    EditorsSplitters splitters = UIUtil.getParentOfType(EditorsSplitters.class, owner);
+    EditorsSplitters splitters = ComponentUtil.getParentOfType((Class<? extends EditorsSplitters>)EditorsSplitters.class, owner);
     return splitters != null;
   }
 

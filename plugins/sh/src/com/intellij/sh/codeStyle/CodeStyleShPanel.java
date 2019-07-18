@@ -21,6 +21,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.sh.ShFileType;
 import com.intellij.sh.ShLanguage;
 import com.intellij.sh.formatter.ShShfmtFormatterUtil;
+import com.intellij.sh.settings.ShSettings;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.fields.IntegerField;
@@ -96,9 +97,8 @@ public class CodeStyleShPanel extends CodeStyleAbstractPanel {
       @Override
       public void actionPerformed(@NotNull AnActionEvent event) {
         CodeStyleSettings settings = getSettings();
-        ShCodeStyleSettings shSettings = settings.getCustomSettings(ShCodeStyleSettings.class);
         ShShfmtFormatterUtil.download(event.getProject(), settings,
-                                      () -> myShfmtPathSelector.setText(shSettings.SHFMT_PATH),
+                                      () -> myShfmtPathSelector.setText(ShSettings.getShfmtPath()),
                                       () -> myErrorLabel.setVisible(true));
       }
     });
@@ -140,7 +140,7 @@ public class CodeStyleShPanel extends CodeStyleAbstractPanel {
     shSettings.REDIRECT_FOLLOWED_BY_SPACE = myRedirectFollowedBySpace.isSelected();
     shSettings.KEEP_COLUMN_ALIGNMENT_PADDING = myKeepColumnAlignmentPadding.isSelected();
     shSettings.MINIFY_PROGRAM = myMinifyProgram.isSelected();
-    shSettings.SHFMT_PATH = myShfmtPathSelector.getText();
+    ShSettings.setShfmtPath(myShfmtPathSelector.getText());
     myWarningPanel.setVisible(!ShShfmtFormatterUtil.isValidPath(myShfmtPathSelector.getText()));
     myErrorLabel.setVisible(false);
   }
@@ -157,7 +157,7 @@ public class CodeStyleShPanel extends CodeStyleAbstractPanel {
         || isFieldModified(myMinifyProgram, shSettings.MINIFY_PROGRAM)
         || isFieldModified(myTabCharacter, indentOptions.USE_TAB_CHARACTER)
         || isFieldModified(myIndentField, indentOptions.INDENT_SIZE)
-        || isFieldModified(myShfmtPathSelector, shSettings.SHFMT_PATH);
+        || isFieldModified(myShfmtPathSelector, ShSettings.getShfmtPath());
   }
 
   @Nullable
@@ -178,8 +178,8 @@ public class CodeStyleShPanel extends CodeStyleAbstractPanel {
     myRedirectFollowedBySpace.setSelected(shSettings.REDIRECT_FOLLOWED_BY_SPACE);
     myKeepColumnAlignmentPadding.setSelected(shSettings.KEEP_COLUMN_ALIGNMENT_PADDING);
     myMinifyProgram.setSelected(shSettings.MINIFY_PROGRAM);
-    myShfmtPathSelector.setText(shSettings.SHFMT_PATH);
-    myWarningPanel.setVisible(!ShShfmtFormatterUtil.isValidPath(shSettings.SHFMT_PATH));
+    myShfmtPathSelector.setText(ShSettings.getShfmtPath());
+    myWarningPanel.setVisible(!ShShfmtFormatterUtil.isValidPath(ShSettings.getShfmtPath()));
     myErrorLabel.setVisible(false);
   }
 

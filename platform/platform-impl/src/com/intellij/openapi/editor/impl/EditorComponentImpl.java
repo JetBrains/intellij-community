@@ -37,7 +37,7 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -924,7 +924,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
         firePropertyChange(ACCESSIBLE_CARET_PROPERTY,
                            new Integer(myCaretPos), new Integer(dot));
 
-        if (SystemInfoRt.isMac) {
+        if (SystemInfo.isMac) {
           // For MacOSX we also need to fire a caret event to anyone listening
           // to our Document, since *that* rather than the accessible property
           // change is the only way to trigger a speech update
@@ -949,7 +949,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       final Integer pos = event.getOffset();
       if (ApplicationManager.getApplication().isDispatchThread()) {
         firePropertyChange(ACCESSIBLE_TEXT_PROPERTY, null, pos);
-        if (SystemInfoRt.isMac) {
+        if (SystemInfo.isMac) {
           // For MacOSX we also need to fire a JTextComponent event to anyone listening
           // to our Document, since *that* rather than the accessible property
           // change is the only way to trigger a speech update
@@ -982,7 +982,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     @Override
     public AccessibleRole getAccessibleRole() {
       // See comment on TextAccessibleRole class.
-      if (SystemInfoRt.isMac) {
+      if (SystemInfo.isMac) {
         return TextAccessibleRole.TEXT_AREA;
       } else {
         return AccessibleRole.TEXT;

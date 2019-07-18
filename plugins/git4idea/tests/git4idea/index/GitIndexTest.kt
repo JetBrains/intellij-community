@@ -2,7 +2,6 @@
 package git4idea.index
 
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.vcsUtil.VcsUtil
@@ -57,11 +56,11 @@ class GitIndexTest : GitPlatformTest() {
 
     assertEquals(false, readFilePermissions())
 
-    FileUtil.setExecutableAttribute(FILE.path.path, true)
+    assertTrue(FILE.path.ioFile.setExecutable(true))
     git("add .")
     assertEquals(true, readFilePermissions())
 
-    FileUtil.setExecutableAttribute(FILE.path.path, false)
+    assertTrue(FILE.path.ioFile.setExecutable(false))
     assertEquals(true, readFilePermissions())
 
     git("add .")

@@ -2,9 +2,8 @@
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.VfsTestUtil;
@@ -31,7 +30,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
 
   @Before
   public void setUp() {
-    IoTestUtil.assumeSymLinkCreationIsSupported();
+    assumeSymLinkCreationIsSupported();
   }
 
   @After
@@ -120,11 +119,11 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
   public void testSidewaysRecursiveLink() throws Exception {
     File a = myTempDir.newFolder("a");
     File b = createTestDir(a, "b");
-    File link1 = createSymLink(SystemInfoRt.isWindows ? a.getPath() : "../../" + a.getName(), b.getPath() + "/link1");
+    File link1 = createSymLink(SystemInfo.isWindows ? a.getPath() : "../../" + a.getName(), b.getPath() + "/link1");
     File project = myTempDir.newFolder("project");
     File c = createTestDir(project, "c");
     File d = createTestDir(c, "d");
-    File link2 = createSymLink(SystemInfoRt.isWindows ? a.getPath() : "../../../" + a.getName(), d.getPath() + "/link2");
+    File link2 = createSymLink(SystemInfo.isWindows ? a.getPath() : "../../../" + a.getName(), d.getPath() + "/link2");
     assertVisitedPaths(project,
                        c.getPath(), d.getPath(), link2.getPath(), link2.getPath() + "/" + b.getName(),
                        link2.getPath() + "/" + b.getName() + "/" + link1.getName());
@@ -161,7 +160,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
     VirtualFile linkVDir = refreshAndFind(linkDir);
     assertTrue("link=" + linkDir + ", vLink=" + linkVDir, linkVDir != null && linkVDir.isDirectory() && linkVDir.is(VFileProperty.SYMLINK));
 
-    if (!SystemInfoRt.isWindows) {
+    if (!SystemInfo.isWindows) {
       setWritableAndCheck(targetDir, true);
       refresh(myTempDir.getRoot());
       assertTrue(linkVDir.getPath(), linkVDir.isWritable());

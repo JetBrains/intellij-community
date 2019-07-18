@@ -2,7 +2,7 @@
 package com.intellij.ui.mac.foundation;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,14 +10,14 @@ import java.awt.*;
 
 public class NSColor {
   public static @Nullable Color getHighlightColor() {
-    if (!SystemInfoRt.isMac)
+    if (!SystemInfo.isMac)
       return null;
 
     return _getNSColor("selectedControlColor");
   }
 
   public static @Nullable Color getAccentColor() {
-    if (!SystemInfoRt.isMac || !SystemInfo.isOsVersionAtLeast("10.14"))
+    if (!SystemInfo.isMac || !SystemInfo.isOsVersionAtLeast("10.14"))
       return null;
 
     return _getNSColor("controlAccentColor");

@@ -687,7 +687,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     /**
      * A state between entering dumb mode ({@link #queueTaskOnEdt}) and actually starting the background progress later ({@link #runBackgroundProcess}).
-     * In this state, it's possible to call {@link #completeJustSubmittedTasks()} and perform all submitted the tasks modally.
+     * In this state, it's possible to call {@link #completeJustSubmittedTasks()} and perform all submitted the tasks modality.
      * This state can happen after {@link #SMART} or {@link #WAITING_FOR_FINISH}. Followed by {@link #RUNNING_DUMB_TASKS}.
      */
     SCHEDULED_TASKS,

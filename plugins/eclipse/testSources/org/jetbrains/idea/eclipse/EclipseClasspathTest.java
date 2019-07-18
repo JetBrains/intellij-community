@@ -14,7 +14,7 @@ import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -57,7 +57,7 @@ public class EclipseClasspathTest extends JavaProjectTestCase {
   static Module setUpModule(final String path, @NotNull final Project project) throws Exception {
     final File classpathFile = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
     String fileText = FileUtil.loadFile(classpathFile).replaceAll("\\$ROOT\\$", project.getBaseDir().getPath());
-    if (!SystemInfoRt.isWindows) {
+    if (!SystemInfo.isWindows) {
       fileText = fileText.replaceAll(EclipseXml.FILE_PROTOCOL + "/", EclipseXml.FILE_PROTOCOL);
     }
     final Element classpathElement = JDOMUtil.load(fileText);
@@ -85,7 +85,7 @@ public class EclipseClasspathTest extends JavaProjectTestCase {
     final File classpathFile1 = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
     if (!classpathFile1.exists()) return;
     String fileText1 = FileUtil.loadFile(classpathFile1).replaceAll("\\$ROOT\\$", module.getProject().getBaseDir().getPath());
-    if (!SystemInfoRt.isWindows) {
+    if (!SystemInfo.isWindows) {
       fileText1 = fileText1.replaceAll(EclipseXml.FILE_PROTOCOL + "/", EclipseXml.FILE_PROTOCOL);
     }
 

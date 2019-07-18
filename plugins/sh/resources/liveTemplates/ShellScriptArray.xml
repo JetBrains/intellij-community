@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templateSet group="Shell Script">
-  <template name="array create" value="$ARRAY$=($ITEMS$)&#10;" description="Create array" toReformat="true"
-            toShortenFQNames="false">
+  <template name="array create" value="$ARRAY$=($ITEMS$)&#10;" description="Create array" toShortenFQNames="false">
     <variable name="ARRAY" expression="" defaultValue="&quot;myArray&quot;" alwaysStopAt="true"/>
     <variable name="ITEMS" expression="" defaultValue="&quot;item1 item2 item3&quot;" alwaysStopAt="true"/>
     <context>
@@ -9,16 +8,14 @@
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template name="array all" value="${$ARRAY$[@]}&#10;" description="All array elements" toReformat="true"
-            toShortenFQNames="false">
+  <template name="array all" value="${$ARRAY$[@]}&#10;" description="All array elements" toShortenFQNames="false">
     <variable name="ARRAY" expression="" defaultValue="&quot;myArray&quot;" alwaysStopAt="true"/>
     <context>
       <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template name="array at index" value="${$ARRAY$[$INDEX$]}&#10;" description="Elements at index" toReformat="true"
-            toShortenFQNames="false">
+  <template name="array at index" value="${$ARRAY$[$INDEX$]}&#10;" description="Elements at index" toShortenFQNames="false">
     <variable name="ARRAY" expression="" defaultValue="&quot;myArray&quot;" alwaysStopAt="true"/>
     <variable name="INDEX" expression="" defaultValue="&quot;index&quot;" alwaysStopAt="true"/>
     <context>
@@ -26,24 +23,21 @@
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template name="array length" value="${#$ARRAY$[@]}&#10;" description="Array length" toReformat="true"
-            toShortenFQNames="false">
+  <template name="array length" value="${#$ARRAY$[@]}&#10;" description="Array length" toShortenFQNames="false">
     <variable name="ARRAY" expression="" defaultValue="&quot;myArray&quot;" alwaysStopAt="true"/>
     <context>
       <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template name="array delete" value="unset $ARRAY$&#10;" description="Delete array" toReformat="true"
-            toShortenFQNames="false">
+  <template name="array delete" value="unset $ARRAY$&#10;" description="Delete array" toShortenFQNames="false">
     <variable name="ARRAY" expression="" defaultValue="&quot;myArray&quot;" alwaysStopAt="true"/>
     <context>
       <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template name="array delete at" value="unset $ARRAY$[$INDEX$]&#10;" description="Delete from array" toReformat="true"
-            toShortenFQNames="false">
+  <template name="array delete at" value="unset $ARRAY$[$INDEX$]&#10;" description="Delete from array" toShortenFQNames="false">
     <variable name="ARRAY" expression="" defaultValue="&quot;myArray&quot;" alwaysStopAt="true"/>
     <variable name="INDEX" expression="" defaultValue="&quot;index&quot;" alwaysStopAt="true"/>
     <context>
@@ -51,8 +45,7 @@
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template name="array set element" value="$ARRAY$[$INDEX$]=$VALUE$&#10;" description="Array set element at index" toReformat="true"
-            toShortenFQNames="false">
+  <template name="array set element" value="$ARRAY$[$INDEX$]=$VALUE$&#10;" description="Array set element at index" toShortenFQNames="false">
     <variable name="ARRAY" expression="" defaultValue="&quot;myArray&quot;" alwaysStopAt="true"/>
     <variable name="INDEX" expression="" defaultValue="&quot;index&quot;" alwaysStopAt="true"/>
     <variable name="VALUE" expression="" defaultValue="&quot;value&quot;" alwaysStopAt="true"/>
@@ -61,8 +54,7 @@
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template name="array add" value="$ARRAY$+=($ITEM$)&#10;" description="Add new item to the end of array" toReformat="true"
-            toShortenFQNames="false">
+  <template name="array add" value="$ARRAY$+=($ITEM$)&#10;" description="Add new item to the end of array" toShortenFQNames="false">
     <variable name="ARRAY" expression="" defaultValue="&quot;myArray&quot;" alwaysStopAt="true"/>
     <variable name="ITEM" expression="" defaultValue="&quot;item&quot;" alwaysStopAt="true"/>
     <context>
@@ -71,8 +63,7 @@
     </context>
   </template>
   <template name="array iteration" value="for item in ${$ARRAY$[@]}; do&#10;    echo &quot;$item&quot;$END$&#10;done&#10;"
-            description="Iterate through array" toReformat="true"
-            toShortenFQNames="false">
+            description="Iterate through array" toReformat="true" toShortenFQNames="false">
     <variable name="ARRAY" expression="" defaultValue="&quot;myArray&quot;" alwaysStopAt="true"/>
     <context>
       <option name="SHELL_SCRIPT" value="true"/>

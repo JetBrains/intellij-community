@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Consider implementing {@link ChooseByNameContributorEx} additionally for better performance.
+ *
  * @author yole
  */
 public interface GotoClassContributor extends ChooseByNameContributor {
+  
   @Nullable
   String getQualifiedName(NavigationItem item);
 
@@ -34,6 +37,7 @@ public interface GotoClassContributor extends ChooseByNameContributor {
 
   /**
    * Override this method to change texts in 'Go to Class' popup and presentation of 'Navigate | Class' action.
+   *
    * @return collective name of items provided by this contributor
    * @see #getElementLanguage()
    */
@@ -45,6 +49,7 @@ public interface GotoClassContributor extends ChooseByNameContributor {
   /**
    * If the language returned by this method is one of {@link IdeLanguageCustomization#getPrimaryIdeLanguages() the primary IDE languages} the result of
    * {@link #getElementKind()} will be used to name `Navigate | Class' action and in 'Go to Class' popup.
+   *
    * @return the language to which items returned by this contributor belong
    */
   @Nullable

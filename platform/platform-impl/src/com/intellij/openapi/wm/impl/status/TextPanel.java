@@ -3,8 +3,10 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +32,7 @@ public class TextPanel extends JComponent implements Accessible {
 
   @Override
   public Font getFont() {
-    return SystemInfoRt.isMac ? JBUI.Fonts.label(11) : JBUI.Fonts.label();
+    return SystemInfo.isMac ? JBUI.Fonts.label(11) : JBFont.label();
   }
 
   public void recomputeSize() {
@@ -163,7 +165,7 @@ public class TextPanel extends JComponent implements Accessible {
   }
 
   public static class WithIconAndArrows extends TextPanel {
-    private final static int GAP = JBUI.scale(2);
+    private final static int GAP = JBUIScale.scale(2);
     @Nullable private Icon myIcon;
 
     @Override

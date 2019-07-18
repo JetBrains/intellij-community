@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -75,7 +76,10 @@ public class ToggleReadOnlyAttributePanel implements StatusBarWidget.Multiframe,
 
   @Override
   public String getTooltipText() {
-    return UIBundle.message("read.only.attr.panel.double.click.to.toggle.attr.tooltip.text");
+    VirtualFile virtualFile = getCurrentFile();
+    int writable = virtualFile == null || virtualFile.isWritable() ? 1 : 0;
+    int readonly = writable == 1 ? 0 : 1;
+    return ActionsBundle.message("action.ToggleReadOnlyAttribute.files", readonly, writable, 1, 0);
   }
 
   @Override

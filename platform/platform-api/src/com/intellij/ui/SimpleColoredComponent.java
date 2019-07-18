@@ -7,9 +7,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.paint.EffectPainter;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.*;
 import org.intellij.lang.annotations.JdkConstants;
@@ -93,8 +94,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   public SimpleColoredComponent() {
     myFragments = new ArrayList<>(3);
-    myIpad = JBUI.insets(1, 2);
-    myIconTextGap = JBUI.scale(2);
+    myIpad = JBInsets.create(1, 2);
+    myIconTextGap = JBUIScale.scale(2);
     myBorder = JBUI.Borders.empty(1, UIUtil.isUnderWin10LookAndFeel() ? 0 : 1);
     setOpaque(true);
     updateUI();
@@ -429,7 +430,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   protected int getMinHeight() {
-    return JBUI.scale(16);
+    return JBUIScale.scale(16);
   }
 
   private Rectangle computePaintArea() {
@@ -929,7 +930,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     }
 
     if (attributes.isBoldDottedLine()) {
-      final int dottedAt = SystemInfoRt.isMac ? textBaseline : textBaseline + 1;
+      final int dottedAt = SystemInfo.isMac ? textBaseline : textBaseline + 1;
       final Color lineColor = attributes.getWaveColor();
       UIUtil.drawBoldDottedLine(g, offset, offset + fragmentWidth, dottedAt, attributes.getBgColor(), lineColor, isOpaque());
     }

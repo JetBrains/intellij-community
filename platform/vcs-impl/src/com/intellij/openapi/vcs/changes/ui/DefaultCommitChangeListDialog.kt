@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.util.EventDispatcher
@@ -35,6 +36,7 @@ class DefaultCommitChangeListDialog(workflow: SingleChangeListCommitWorkflow) : 
     browser.viewer.setKeepTreeState(true)
 
     val commitMessageEditor = DiffCommitMessageEditor(project, commitMessageComponent)
+    Disposer.register(this, commitMessageEditor)
     browser.setBottomDiffComponent(commitMessageEditor)
 
     browser.setSelectedListChangeListener { changeListEventDispatcher.multicaster.changeListChanged() }

@@ -19,7 +19,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.SimpleModificationTracker;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
@@ -461,7 +461,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
       case NEVER:
         return false;
       case WINDOWS_ONLY:
-        return SystemInfoRt.isWindows;
+        return SystemInfo.isWindows;
       default:
         throw new IllegalStateException(myBOMForNewUTF8Files.toString());
     }

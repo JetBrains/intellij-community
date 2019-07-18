@@ -3,7 +3,7 @@ package com.intellij.debugger.impl;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.util.CaretVisualPositionKeeper;
+import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -40,11 +40,11 @@ public class JavaDebuggerInlayUtil {
       Document document = editor.getDocument();
       int startLine = document.getLineNumber(lBrace.getTextOffset());
       int endLine = document.getLineNumber(rBrace.getTextOffset());
-      CaretVisualPositionKeeper keeper = new CaretVisualPositionKeeper(editor);
-      for (int i = startLine; i < endLine; i++) {
-        XDebuggerInlayUtil.createBlockInlay(editor, document.getLineStartOffset(i));
-      }
-      keeper.restoreOriginalLocation(true);
+      EditorScrollingPositionKeeper.perform(editor, true, () -> {
+        for (int i = startLine; i < endLine; i++) {
+          XDebuggerInlayUtil.createBlockInlay(editor, document.getLineStartOffset(i));
+        }
+      });
     }
 
     @Override
@@ -66,9 +66,7 @@ public class JavaDebuggerInlayUtil {
       }
       if (editor != currentEditor || method != currentMethod) {
         if (currentEditor != null) {
-          CaretVisualPositionKeeper keeper = new CaretVisualPositionKeeper(editor);
-          XDebuggerInlayUtil.clearBlockInlays(currentEditor);
-          keeper.restoreOriginalLocation(true);
+          EditorScrollingPositionKeeper.perform(editor, true, () -> XDebuggerInlayUtil.clearBlockInlays(currentEditor));
         }
         if (editor != null) setupValuePlaceholders(editor, method);
         currentEditor = editor;

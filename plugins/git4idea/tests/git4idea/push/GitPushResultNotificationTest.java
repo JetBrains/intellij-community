@@ -219,7 +219,8 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
     if (wasUpdatePerformed) {
       updatedFiles.getTopLevelGroups().get(0).add("file.txt", "Git", null);
     }
-    return GitPushResultNotification.create(myProject, new GitPushResult(map, updatedFiles, null, null), null, map.size() > 1);
+    return GitPushResultNotification.create(myProject, new GitPushResult(map, updatedFiles, null, null, Collections.emptyMap()),
+                                            null, map.size() > 1);
   }
 
   private static MockGitRepository repo(final String name) {

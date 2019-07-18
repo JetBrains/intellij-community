@@ -13,13 +13,13 @@ import static com.intellij.openapi.editor.ex.util.SegmentArray.calcCapacity;
  * {@link IElementType} index and and restartability of the state (positive values are for initial state).
  */
 public class ShortBasedStorage implements DataStorage {
-  short[] myData;
+  protected short[] myData;
 
   public ShortBasedStorage() {
     myData = new short[INITIAL_SIZE];
   }
 
-  private ShortBasedStorage(short[] data) {
+  protected ShortBasedStorage(short[] data) {
     myData = data;
   }
 

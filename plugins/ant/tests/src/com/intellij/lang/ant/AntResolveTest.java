@@ -4,7 +4,7 @@ package com.intellij.lang.ant;
 import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.dom.AntDomMacrodefAttribute;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
@@ -129,19 +129,19 @@ public class AntResolveTest extends ResolveTestCase {
   }
 
   public void testEnvPropertyW() throws Exception {
-    if (SystemInfoRt.isWindows) doPropertyTestExpectReferenceUnresolved();
+    if (SystemInfo.isWindows) doPropertyTestExpectReferenceUnresolved();
   }
 
   public void testEnvPropertyU() throws Exception {
-    if (SystemInfoRt.isUnix) doPropertyTestExpectReferenceUnresolved();
+    if (SystemInfo.isUnix) doPropertyTestExpectReferenceUnresolved();
   }
 
   public void testEnvProperty1W() throws Exception {
-    if (SystemInfoRt.isWindows) doPropertyTest();
+    if (SystemInfo.isWindows) doPropertyTest();
   }
 
   public void testEnvProperty1U() throws Exception {
-    if (SystemInfoRt.isUnix) doPropertyTest();
+    if (SystemInfo.isUnix) doPropertyTest();
   }
 
   public void testNonExistingEnvProperty() throws Exception {

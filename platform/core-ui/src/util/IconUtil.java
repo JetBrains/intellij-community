@@ -14,9 +14,10 @@ import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.WritingAccessProvider;
 import com.intellij.ui.*;
+import com.intellij.ui.icons.CompositeIcon;
+import com.intellij.ui.icons.CopyableIcon;
+import com.intellij.ui.scale.*;
 import com.intellij.util.ui.*;
-import com.intellij.util.ui.JBUIScale.ScaleContext;
-import com.intellij.util.ui.JBUIScale.ScaleContextAware;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,9 +32,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-import static com.intellij.util.ui.JBUIScale.ScaleType.OBJ_SCALE;
-import static com.intellij.util.ui.JBUIScale.ScaleType.USR_SCALE;
-
+import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
+import static com.intellij.ui.scale.ScaleType.USR_SCALE;
 
 /**
  * @author max
@@ -321,7 +321,7 @@ public class IconUtil {
 
   @NotNull
   private static String getToolbarDecoratorIconsFolder() {
-    return "/toolbarDecorator/" + (SystemInfoRt.isMac ? "mac/" : "");
+    return "/toolbarDecorator/" + (SystemInfo.isMac ? "mac/" : "");
   }
 
   /**
@@ -512,7 +512,7 @@ public class IconUtil {
    */
   @NotNull
   public static Icon scaleByFont(@NotNull Icon icon, @Nullable Component ancestor, float fontSize) {
-    float scale = JBUI.getFontScale(fontSize);
+    float scale = JBUIScale.getFontScale(fontSize);
     if (icon instanceof ScaleContextAware) {
       ScaleContextAware ctxIcon = (ScaleContextAware)icon;
       // take into account the user scale of the icon
@@ -525,10 +525,10 @@ public class IconUtil {
   /**
    * Overrides the provided scale in the icon's scale context and in the composited icon's scale contexts (when applicable).
    *
-   * @see JBUIScale.UserScaleContext#overrideScale(JBUIScale.Scale)
+   * @see UserScaleContext#overrideScale(Scale)
    */
   @NotNull
-  public static Icon overrideScale(@NotNull Icon icon, JBUIScale.Scale scale) {
+  public static Icon overrideScale(@NotNull Icon icon, Scale scale) {
     if (icon instanceof CompositeIcon) {
       CompositeIcon compositeIcon = (CompositeIcon)icon;
       for (int i = 0; i < compositeIcon.getIconCount(); i++) {
@@ -731,7 +731,7 @@ public class IconUtil {
       }
 
       private void update() {
-        myFont = JBFont.create(JBUI.Fonts.label().deriveFont((float)scaleVal(fontSize, OBJ_SCALE))); // fontSize is in USR_SCALE
+        myFont = JBFont.create(JBFont.label().deriveFont((float)scaleVal(fontSize, OBJ_SCALE))); // fontSize is in USR_SCALE
         Component comp = myCompRef.get();
         if (comp == null) comp = new Component() {};
         myMetrics = comp.getFontMetrics(myFont);
@@ -756,7 +756,7 @@ public class IconUtil {
   public static Icon addText(@NotNull Icon base, @NotNull String text) {
     LayeredIcon icon = new LayeredIcon(2);
     icon.setIcon(base, 0);
-    icon.setIcon(textToIcon(text, new JLabel(), JBUI.scale(6f)), 1, SwingConstants.SOUTH_EAST);
+    icon.setIcon(textToIcon(text, new JLabel(), JBUIScale.scale(6f)), 1, SwingConstants.SOUTH_EAST);
     return icon;
   }
 

@@ -25,6 +25,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "intellij.copyright",
     "intellij.properties",
     "intellij.terminal",
+    "intellij.textmate",
     "intellij.editorconfig",
     "intellij.settingsRepository",
     "intellij.configurationScript",

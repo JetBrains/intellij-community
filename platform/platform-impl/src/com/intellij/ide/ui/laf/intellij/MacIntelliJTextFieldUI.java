@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.util.ui.JBInsets;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -30,7 +30,7 @@ public class MacIntelliJTextFieldUI extends DarculaTextFieldUI {
     Insets i = getComponent().getInsets();
     Component c = getComponent();
     return DarculaEditorTextFieldBorder.isComboBoxEditor(c) ||
-           UIUtil.getParentOfType(JSpinner.class, c) != null ||
+           ComponentUtil.getParentOfType((Class<? extends JSpinner>)JSpinner.class, c) != null ||
            isCompact(c) ?
            textHeight : MINIMUM_HEIGHT.get() + i.top + i.bottom;
   }
@@ -38,7 +38,7 @@ public class MacIntelliJTextFieldUI extends DarculaTextFieldUI {
   @Override
   protected Insets getDefaultMargins() {
     Component c = getComponent();
-    return isCompact(c) || isTableCellEditor(c) ? JBUI.insets(0, 3) : JBUI.insets(1, 6);
+    return isCompact(c) || isTableCellEditor(c) ? JBInsets.create(0, 3) : JBInsets.create(1, 6);
   }
 
   @Override

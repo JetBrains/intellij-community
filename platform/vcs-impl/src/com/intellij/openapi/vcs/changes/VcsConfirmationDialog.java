@@ -3,7 +3,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.util.ui.OptionsDialog;
 import org.jetbrains.annotations.NotNull;
@@ -87,6 +87,6 @@ class VcsConfirmationDialog extends OptionsDialog {
         doCancelAction();
       }
     };
-    return SystemInfoRt.isMac ? new Action[] {cancelAction, okAction} : new Action[] {okAction, cancelAction};
+    return SystemInfo.isMac ? new Action[] {cancelAction, okAction} : new Action[] {okAction, cancelAction};
   }
 }

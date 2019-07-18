@@ -5,6 +5,7 @@ import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInManager;
 import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.projectView.impl.PackageViewPane;
+import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -24,6 +25,7 @@ public class PackagesPaneSelectInTarget extends ProjectViewSelectInTarget {
   @Override
   public boolean canSelect(PsiFileSystemItem file) {
     VirtualFile vFile = PsiUtilCore.getVirtualFile(file);
+    vFile = BackedVirtualFile.getOriginFileIfBacked(vFile);
     if (vFile == null || !vFile.isValid()) return false;
 
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();

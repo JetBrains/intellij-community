@@ -2,9 +2,8 @@ import sys
 
 from _pydev_bundle import pydev_log
 from _pydev_imps._pydev_saved_modules import threading
-from _pydevd_bundle.pydevd_comm import get_global_debugger, CMD_SET_BREAK, CMD_SET_NEXT_STATEMENT
+from _pydevd_bundle.pydevd_comm import get_global_debugger, CMD_SET_BREAK
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
-from _pydevd_bundle.pydevd_frame import handle_breakpoint_condition, handle_breakpoint_expression
 
 
 class DummyTracingHolder:
@@ -20,25 +19,6 @@ dummy_tracing_holder = DummyTracingHolder()
 def update_globals_dict(globals_dict):
     new_globals = {'_pydev_stop_at_break': _pydev_stop_at_break}
     globals_dict.update(new_globals)
-
-
-def handle_breakpoint(frame, thread, global_debugger, breakpoint):
-    # ok, hit breakpoint, now, we have to discover if it is a conditional breakpoint
-    new_frame = frame
-    condition = breakpoint.condition
-    info = thread.additional_info
-    if condition is not None:
-        eval_result = handle_breakpoint_condition(global_debugger, info, breakpoint, new_frame)
-        if not eval_result:
-            return False
-
-    if breakpoint.expression is not None:
-        handle_breakpoint_expression(breakpoint, info, new_frame)
-
-    if breakpoint.suspend_policy == "ALL":
-        global_debugger.suspend_all_other_threads(thread)
-
-    return True
 
 
 def _get_line_for_frame(frame):
@@ -63,20 +43,18 @@ def suspend_at_builtin_breakpoint():
         debugger = get_global_debugger()
         debugger.set_suspend(t, CMD_SET_BREAK)
         debugger.do_wait_suspend(t, frame, 'line', None, "frame_eval")
+        frame.f_trace = debugger.get_thread_local_trace_func()
         t.additional_info.is_tracing = False
-        return t.additional_info.pydev_step_cmd == CMD_SET_NEXT_STATEMENT
-    return False
 
 
-def _pydev_stop_at_break():
+def _pydev_stop_at_break(line):
     frame = sys._getframe(1)
     t = threading.currentThread()
     if t.additional_info.is_tracing:
         return False
 
-    if t.additional_info.pydev_step_cmd == -1 and frame.f_trace in (None, dummy_tracing_holder.dummy_trace_func):
-        # do not handle breakpoints while stepping, because they're handled by old tracing function
-        t.additional_info.is_tracing = True
+    t.additional_info.is_tracing = True
+    try:
         debugger = get_global_debugger()
 
         try:
@@ -86,23 +64,34 @@ def _pydev_stop_at_break():
         filename = abs_path_real_path_and_base[1]
 
         breakpoints_for_file = debugger.breakpoints.get(filename)
-        line = _get_line_for_frame(frame)
+
         try:
-            breakpoint = breakpoints_for_file[line]
+            python_breakpoint = breakpoints_for_file[line]
         except KeyError:
             pydev_log.debug("Couldn't find breakpoint in the file {} on line {}".format(frame.f_code.co_filename, line))
-            t.additional_info.is_tracing = False
-            return False
-        if breakpoint and handle_breakpoint(frame, t, debugger, breakpoint):
+            return
+
+        if python_breakpoint:
             pydev_log.debug("Suspending at breakpoint in file: {} on line {}".format(frame.f_code.co_filename, line))
-            debugger.set_suspend(t, CMD_SET_BREAK)
-            debugger.do_wait_suspend(t, frame, 'line', None, "frame_eval")
+            t.additional_info.trace_suspend_type = 'frame_eval'
+
+            pydevd_frame_eval_cython_wrapper = sys.modules['_pydevd_frame_eval.pydevd_frame_eval_cython_wrapper']
+            thread_info = pydevd_frame_eval_cython_wrapper.get_thread_info_py()
+            if thread_info.thread_trace_func is not None:
+                frame.f_trace = thread_info.thread_trace_func
+            else:
+                debugger = get_global_debugger()
+                frame.f_trace = debugger.get_thread_local_trace_func()
+
+    finally:
         t.additional_info.is_tracing = False
-        return t.additional_info.pydev_step_cmd == CMD_SET_NEXT_STATEMENT
-    return False
 
 
-def pydev_trace_code_wrapper():
-    # import this module again, because it's inserted inside user's code
-    global _pydev_stop_at_break
-    return _pydev_stop_at_break()
+def create_pydev_trace_code_wrapper(line):
+    pydev_trace_code_wrapper_code = compile('''
+# Note: _pydev_stop_at_break must be added to the frame locals.
+global _pydev_stop_at_break
+_pydev_stop_at_break(%s)
+''' % (line,), '<pydev_trace_code>', 'exec')
+    return pydev_trace_code_wrapper_code
+

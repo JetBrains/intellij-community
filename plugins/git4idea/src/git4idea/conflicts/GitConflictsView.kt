@@ -7,7 +7,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.progress.runBackgroundableTask
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
@@ -15,10 +16,14 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FileStatus
+import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.DIRECTORY_GROUPING
+import com.intellij.openapi.vcs.impl.BackgroundableActionLock
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.Alarm
@@ -129,9 +134,15 @@ class GitConflictsView(private val project: Project) : Disposable {
     val reversed = HashSet(reversedRoots)
 
     for (conflict in conflicts) {
-      val file = conflict.filePath.virtualFile
-      MergeConflictResolveUtil.showMergeWindow(project, file) {
-        mergeHandler.resolveConflict(conflict, reversed.contains(conflict.root))
+      val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(conflict.filePath.path)
+      if (file == null) {
+        VcsNotifier.getInstance(project).notifyError("Can't Resolve Conflict", "Can't find file for ${conflict.filePath}")
+        continue
+      }
+
+      val lock = getConflictOperationLock(conflict)
+      MergeConflictResolveUtil.showMergeWindow(project, file, lock) {
+        mergeHandler.resolveConflict(conflict, file, reversed.contains(conflict.root))
       }
     }
   }
@@ -142,9 +153,23 @@ class GitConflictsView(private val project: Project) : Disposable {
 
     val reversed = HashSet(reversedRoots)
 
-    runBackgroundableTask(StringUtil.pluralize("Resolving Conflict", conflicts.size), project, true) {
-      mergeHandler.acceptOneVersion(conflicts, reversed, takeTheirs)
-    }
+    val locks = conflicts.map { getConflictOperationLock(it) }
+    if (locks.any { it.isLocked }) return
+    locks.forEach { it.lock() }
+
+    object : Task.Backgroundable(project, StringUtil.pluralize("Resolving Conflict", conflicts.size), true) {
+      override fun run(indicator: ProgressIndicator) {
+        mergeHandler.acceptOneVersion(conflicts, reversed, takeTheirs)
+      }
+
+      override fun onFinished() {
+        locks.forEach { it.unlock() }
+      }
+    }.queue()
+  }
+
+  private fun getConflictOperationLock(conflict: GitConflict): BackgroundableActionLock {
+    return BackgroundableActionLock.getLock(project, conflict.filePath)
   }
 
 
@@ -152,8 +177,9 @@ class GitConflictsView(private val project: Project) : Disposable {
     : ButtonAction("Resolve") {
 
     override fun update(e: AnActionEvent) {
-      val isEnabled = getSelectedConflicts().any { mergeHandler.canResolveConflict(it) }
-      e.presentation.isEnabled = isEnabled
+      val selectedConflicts = getSelectedConflicts()
+      e.presentation.isEnabled = selectedConflicts.any { mergeHandler.canResolveConflict(it) } &&
+                                 selectedConflicts.none { getConflictOperationLock(it).isLocked }
       updateButtonPresentation(e)
     }
 
@@ -166,8 +192,9 @@ class GitConflictsView(private val project: Project) : Disposable {
     : ButtonAction(if (takeTheirs) "Accept Theirs" else "Accept Yours") {
 
     override fun update(e: AnActionEvent) {
-      val isEnabled = getSelectedConflicts().isNotEmpty()
-      e.presentation.isEnabled = isEnabled
+      val selectedConflicts = getSelectedConflicts()
+      e.presentation.isEnabled = selectedConflicts.isNotEmpty() &&
+                                 selectedConflicts.none { getConflictOperationLock(it).isLocked }
       updateButtonPresentation(e)
     }
 
@@ -181,7 +208,7 @@ class GitConflictsView(private val project: Project) : Disposable {
       val button = JButton(presentation.text)
       button.isFocusable = false
       button.addActionListener {
-        val toolbar = UIUtil.getParentOfType(ActionToolbar::class.java, button)
+        val toolbar = ComponentUtil.getParentOfType(ActionToolbar::class.java, button)
         val dataContext = toolbar?.toolbarDataContext ?: DataManager.getInstance().getDataContext(button)
         actionPerformed(AnActionEvent.createFromAnAction(this@ButtonAction, null, place, dataContext))
       }
@@ -242,9 +269,13 @@ private class ConflictChangesBrowserNode(conflict: GitConflict) : ChangesBrowser
     val theirsStatus = conflict.getStatus(ConflictSide.THEIRS, true)
     val conflictType = when {
       oursStatus == Status.DELETED && theirsStatus == Status.DELETED -> "both deleted"
+      oursStatus == Status.ADDED && theirsStatus == Status.ADDED -> "both added"
+      oursStatus == Status.MODIFIED && theirsStatus == Status.MODIFIED -> "both modified"
       oursStatus == Status.DELETED -> "deleted by you"
       theirsStatus == Status.DELETED -> "deleted by them"
-      else -> "both modified"
+      oursStatus == Status.ADDED -> "added by you"
+      theirsStatus == Status.ADDED -> "added by them"
+      else -> throw IllegalStateException("ours: $oursStatus; theirs: $theirsStatus")
     }
     renderer.append(spaceAndThinSpace() + conflictType, SimpleTextAttributes.GRAYED_ATTRIBUTES)
 

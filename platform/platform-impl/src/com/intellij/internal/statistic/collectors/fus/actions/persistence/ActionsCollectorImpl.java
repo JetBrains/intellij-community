@@ -18,7 +18,9 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.impl.BundledKeymapProvider;
 import com.intellij.openapi.keymap.impl.DefaultKeymap;
+import com.intellij.openapi.keymap.impl.DefaultKeymapImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -36,10 +38,7 @@ import java.util.function.Consumer;
 /**
  * @author Konstantin Bulenkov
  */
-@State(name = "ActionsCollector", storages = @Storage(
-  value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true)
-)
-public class ActionsCollectorImpl extends ActionsCollector implements PersistentStateComponent<ActionsCollector.State> {
+public class ActionsCollectorImpl extends ActionsCollector {
   private static final String GROUP = "actions";
   public static final String DEFAULT_ID = "third.party";
 
@@ -59,6 +58,9 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
 
   public ActionsCollectorImpl(@NotNull DefaultKeymap defaultKeymap) {
     for (Keymap keymap : defaultKeymap.getKeymaps()) {
+      if (!(keymap instanceof DefaultKeymapImpl)) continue;
+      Class<BundledKeymapProvider> providerClass = ((DefaultKeymapImpl)keymap).getProviderClass();
+      if (!PluginInfoDetectorKt.getPluginInfo(providerClass).isDevelopedByJetBrains()) continue;
       myXmlActionIds.addAll(keymap.getActionIdList());
     }
   }
@@ -66,7 +68,7 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
   @Override
   public void record(@Nullable String actionId, @Nullable InputEvent event, @NotNull Class context) {
     final String recorded = StringUtil.isNotEmpty(actionId) && ourCustomActionWhitelist.contains(actionId) ? actionId : DEFAULT_ID;
-    final FeatureUsageData data = new FeatureUsageData().addOS();
+    final FeatureUsageData data = new FeatureUsageData();
     if (event instanceof KeyEvent) {
       data.addInputEvent((KeyEvent)event);
     }
@@ -91,7 +93,7 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
     if (action == null) return;
 
     final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(action.getClass());
-    final FeatureUsageData data = new FeatureUsageData().addOS().addProject(project).addPluginInfo(info);
+    final FeatureUsageData data = new FeatureUsageData().addProject(project).addPluginInfo(info);
 
     if (event != null) {
       data.addInputEvent(event).
@@ -102,17 +104,18 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
     if (configurator != null) {
       configurator.accept(data);
     }
-    PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfo(action.getClass());
-    String actionId = ((ActionsCollectorImpl)getInstance()).getActionId(pluginInfo, action);
-    if (action instanceof ActionWithDelegate) {
-      Object delegate = ((ActionWithDelegate)action).getDelegate();
-      PluginInfo delegateInfo = PluginInfoDetectorKt.getPluginInfo(delegate.getClass());
-      data.addData("class", delegateInfo.isSafeToReport() ? delegate.getClass().getName() : DEFAULT_ID);
 
-      data.addData("parent", actionId);
+    final String actionClassName = info.isSafeToReport() ? action.getClass().getName() : DEFAULT_ID;
+    String actionId = ((ActionsCollectorImpl)getInstance()).getActionId(info, action);
+    if (action instanceof ActionWithDelegate) {
+      final Object delegate = ((ActionWithDelegate)action).getDelegate();
+      final PluginInfo delegateInfo = PluginInfoDetectorKt.getPluginInfo(delegate.getClass());
+      actionId = delegateInfo.isSafeToReport() ? delegate.getClass().getName() : DEFAULT_ID;
+      data.addData("class", actionId);
+      data.addData("parent", actionClassName);
     }
     else {
-      data.addData("class", pluginInfo.isSafeToReport() ? action.getClass().getName() : DEFAULT_ID);
+      data.addData("class", actionClassName);
     }
     FUCounterUsageLogger.getInstance().logEvent(groupId, actionId, data);
   }
@@ -134,18 +137,6 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
 
   private boolean canReportActionId(@NotNull String actionId) {
     return myXmlActionIds.contains(actionId);
-  }
-
-  private final State myState = new State();
-
-  @Nullable
-  @Override
-  public State getState() {
-    return myState;
-  }
-
-  @Override
-  public void loadState(@NotNull State state) {
   }
 
   @Override

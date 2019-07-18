@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.processors
 
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.ResolveState
@@ -32,8 +33,11 @@ abstract class BaseMethodProcessor(private val name: String) : ProcessorWithHint
       return false
     }
     if (element !is PsiMethod) {
-      if (state[sorryCannotKnowElementKind] != true) {
-        log.error("Unexpected element. ${elementInfo(element)}")
+      if (state[sorryCannotKnowElementKind] != true && Registry.`is`("groovy.assert.element.kind.in.resolve")) {
+        log.error(
+          "Unexpected element. " + elementInfo(element) + "\n" +
+          "See org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor docs."
+        )
       }
       return true
     }

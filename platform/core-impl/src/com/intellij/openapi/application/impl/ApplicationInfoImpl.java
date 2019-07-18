@@ -11,7 +11,7 @@ import com.intellij.openapi.application.ex.ProgressSlide;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
@@ -684,7 +684,7 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
       currentThread.getName() + " " +
       myMajorVersion + "." + myMinorVersion + "#" + myBuildNumber +
       " " + ApplicationNamesInfo.getInstance().getProductName() +
-      ", eap:" + myEAP + ", os:" + SystemInfoRt.OS_NAME + " " + SystemInfoRt.OS_VERSION +
+      ", eap:" + myEAP + ", os:" + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION +
       ", java-version:" + SystemInfo.JAVA_VENDOR + " " + SystemInfo.JAVA_RUNTIME_VERSION);
 
     Element logoElement = getChild(parentNode, ELEMENT_LOGO);

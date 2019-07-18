@@ -31,6 +31,7 @@ internal fun loadIniFile(file: File): Ini {
   ini.config.isMultiOption = true  // duplicate keys (e.g. url in [remote])
   ini.config.isTree = false        // don't need tree structure: it corrupts url in section name (e.g. [url "http://github.com/"]
   ini.config.isLowerCaseOption = true
+  ini.config.isEmptyOption = true
   try {
     ini.load(file)
     return ini

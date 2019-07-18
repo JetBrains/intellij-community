@@ -4,7 +4,6 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -17,7 +16,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
@@ -25,10 +24,11 @@ import com.intellij.openapi.wm.WindowManagerListener;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.FrameState;
+import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.platform.WindowUtils;
 import org.jdom.Element;
@@ -80,17 +80,14 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   final FrameInfo myDefaultFrameInfo = new FrameInfo();
 
   private final WindowAdapter myActivationListener;
-  private final DataManager myDataManager;
-  private final ActionManagerEx myActionManager;
 
   /**
    * invoked by reflection
    */
-  public WindowManagerImpl(DataManager dataManager, ActionManagerEx actionManager) {
-    myDataManager = dataManager;
-    myActionManager = actionManager;
-    if (myDataManager instanceof DataManagerImpl) {
-        ((DataManagerImpl)myDataManager).setWindowManager(this);
+  public WindowManagerImpl() {
+    DataManager dataManager = DataManager.getInstance();
+    if (dataManager instanceof DataManagerImpl) {
+      ((DataManagerImpl)dataManager).setWindowManager(this);
     }
 
     final Application application = ApplicationManager.getApplication();
@@ -433,7 +430,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   // this method is called when there is some opened project (IDE will not open Welcome Frame, but project)
   public IdeFrame showFrame(@Nullable Runnable beforeSetVisible) {
-    final IdeFrameImpl frame = new IdeFrameImpl(myActionManager, myDataManager);
+    final IdeFrameImpl frame = new IdeFrameImpl();
     myProjectToFrame.put(null, frame);
 
     Rectangle frameBounds = validateFrameBounds(myDefaultFrameInfo.getBounds());
@@ -470,7 +467,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
     IdeFrameImpl frame = myProjectToFrame.remove(null);
     if (frame == null) {
-      frame = new IdeFrameImpl(myActionManager, myDataManager);
+      frame = new IdeFrameImpl();
     }
 
     final FrameInfo frameInfo = ProjectFrameBounds.getInstance(project).getRawFrameInfo();
@@ -698,16 +695,16 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   @Override
   public boolean isFullScreenSupportedInCurrentOS() {
-    return SystemInfo.isMacOSLion || SystemInfoRt.isWindows || SystemInfo.isXWindow && X11UiUtil.isFullScreenSupported();
+    return SystemInfo.isMacOSLion || SystemInfo.isWindows || SystemInfo.isXWindow && X11UiUtil.isFullScreenSupported();
   }
 
   static boolean isFloatingMenuBarSupported() {
-    return !SystemInfoRt.isMac && getInstance().isFullScreenSupportedInCurrentOS();
+    return !SystemInfo.isMac && getInstance().isFullScreenSupportedInCurrentOS();
   }
 
   /**
    * Converts the frame bounds b/w the user space (JRE-managed HiDPI mode) and the device space (IDE-managed HiDPI mode).
-   * See {@link UIUtil#isJreHiDPIEnabled()}
+   * See {@link JreHiDpiUtil#isJreHiDPIEnabled()}
    */
   static class FrameBoundsConverter {
     /**
@@ -754,21 +751,21 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     }
 
     private static boolean shouldConvert() {
-      if (SystemInfoRt.isLinux || // JRE-managed HiDPI mode is not yet implemented (pending)
-          SystemInfoRt.isMac)     // JRE-managed HiDPI mode is permanent
+      if (SystemInfo.isLinux || // JRE-managed HiDPI mode is not yet implemented (pending)
+          SystemInfo.isMac)     // JRE-managed HiDPI mode is permanent
       {
         return false;
       }
       // device space equals user space
-      return UIUtil.isJreHiDPIEnabled();
+      return JreHiDpiUtil.isJreHiDPIEnabled();
     }
 
     private static void scaleUp(@NotNull Rectangle bounds, @NotNull GraphicsConfiguration gc) {
-      scale(bounds, gc.getBounds(), JBUI.sysScale(gc));
+      scale(bounds, gc.getBounds(), JBUIScale.sysScale(gc));
     }
 
     private static void scaleDown(@NotNull Rectangle bounds, @NotNull GraphicsConfiguration gc) {
-      float scale = JBUI.sysScale(gc);
+      float scale = JBUIScale.sysScale(gc);
       assert scale != 0;
       scale(bounds, gc.getBounds(), 1 / scale);
     }

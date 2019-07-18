@@ -296,4 +296,12 @@ public class PyElementVisitor extends PsiElementVisitor {
   public void visitPyAnnotation(PyAnnotation node) {
     visitPyElement(node);
   }
+
+  public void visitPySlashParameter(PySlashParameter node) {
+    visitPyElement(node);
+  }
+
+  public void visitPySingleStarParameter(PySingleStarParameter node) {
+    visitPyElement(node);
+  }
 }

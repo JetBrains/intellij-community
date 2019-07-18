@@ -55,7 +55,7 @@ class ITNProxy {
     Map<String, String> template = new LinkedHashMap<>();
 
     template.put("protocol.version", "1.1");
-    template.put("os.name", SystemInfoRt.OS_NAME);
+    template.put("os.name", SystemInfo.OS_NAME);
     template.put("java.version", SystemInfo.JAVA_VERSION);
     template.put("java.vm.vendor", SystemInfo.JAVA_VENDOR);
 

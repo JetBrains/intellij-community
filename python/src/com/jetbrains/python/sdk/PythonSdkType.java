@@ -27,7 +27,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -198,7 +198,7 @@ public final class PythonSdkType extends SdkType {
   @NotNull
   @Override
   public FileChooserDescriptor getHomeChooserDescriptor() {
-    final boolean isWindows = SystemInfoRt.isWindows;
+    final boolean isWindows = SystemInfo.isWindows;
     return new FileChooserDescriptor(true, false, false, false, false, false) {
       @Override
       public void validateSelectedFiles(@NotNull VirtualFile[] files) throws Exception {
@@ -227,7 +227,7 @@ public final class PythonSdkType extends SdkType {
         }
         return super.isFileVisible(file, showHiddenFiles);
       }
-    }.withTitle(PyBundle.message("sdk.select.path")).withShowHiddenFiles(SystemInfoRt.isUnix);
+    }.withTitle(PyBundle.message("sdk.select.path")).withShowHiddenFiles(SystemInfo.isUnix);
   }
 
   @Override
@@ -326,13 +326,13 @@ public final class PythonSdkType extends SdkType {
    */
   @Nullable
   public static File findExecutableFile(File parent, String name) {
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       for (String suffix : WINDOWS_EXECUTABLE_SUFFIXES) {
         File file = new File(parent, name + "." + suffix);
         if (file.exists()) return file;
       }
     }
-    else if (SystemInfoRt.isUnix) {
+    else if (SystemInfo.isUnix) {
       File file = new File(parent, name);
       if (file.exists()) return file;
     }
@@ -896,7 +896,7 @@ public final class PythonSdkType extends SdkType {
   }
 
   private static String[] getBinaryNames() {
-    if (SystemInfoRt.isUnix) {
+    if (SystemInfo.isUnix) {
       return UNIX_BINARY_NAMES;
     }
     else {

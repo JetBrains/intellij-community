@@ -58,6 +58,16 @@ public interface CodeStyleStatusBarUIContributor {
   AnAction createDisableAction(@NotNull Project project);
 
   /**
+   * Creates an action showing all files related to the code style modification feature.
+   * @param project The project to show the files for.
+   * @return The "Show all" action or {@code null} if not applicable;
+   */
+  @Nullable
+  default AnAction createShowAllAction(@NotNull Project project) {
+    return null;
+  }
+
+  /**
    * @return An icon in the status bar representing a source of changes when modified code style settings are used for a file in editor. By
    * default no icon is shown.
    */

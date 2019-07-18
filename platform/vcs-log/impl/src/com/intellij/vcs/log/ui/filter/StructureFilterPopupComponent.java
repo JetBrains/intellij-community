@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -287,7 +287,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<FilterPair<VcsL
 
     @JdkConstants.InputEventMask
     private int getMask() {
-      return SystemInfoRt.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK;
+      return SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK;
     }
 
     @Override

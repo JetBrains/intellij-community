@@ -12,7 +12,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -92,7 +92,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
 
     myScriptTextField.addBrowseFolderListener(listener);
 
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       //TODO: enable it on Windows when it works there
       emulateTerminalEnabled(false);
     }

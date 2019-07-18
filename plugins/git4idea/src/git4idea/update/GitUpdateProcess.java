@@ -19,11 +19,16 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.impl.HashImpl;
 import git4idea.GitLocalBranch;
+import git4idea.GitRemoteBranch;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchPair;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.Git;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitLineHandler;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.config.UpdateMethod;
@@ -69,6 +74,7 @@ public class GitUpdateProcess {
   @NotNull private final GitMerger myMerger;
 
   @NotNull private final Map<GitRepository, String> mySkippedRoots = new LinkedHashMap<>();
+  @Nullable private Map<GitRepository, HashRange> myUpdatedRanges;
 
   public GitUpdateProcess(@NotNull Project project,
                           @Nullable ProgressIndicator progressIndicator,
@@ -88,9 +94,7 @@ public class GitUpdateProcess {
     myProgressIndicator = progressIndicator == null ? new EmptyProgressIndicator() : progressIndicator;
     myMerger = new GitMerger(myProject);
 
-    for (GitRepository repository : myRepositories) {
-      repository.update();
-    }
+    GitUtil.updateRepositories(repositories);
 
     mySubmodulesInDetachedHead = new LinkedHashMap<>();
     for (GitRepository repository : myRepositories) {
@@ -165,80 +169,87 @@ public class GitUpdateProcess {
       return GitUpdateResult.NOTHING_TO_UPDATE;
     }
 
-    updaters = tryFastForwardMergeForRebaseUpdaters(updaters);
+    GitUpdatedRanges updatedRanges = GitUpdatedRanges.calcInitialPositions(myProject, trackedBranches);
 
-    if (updaters.isEmpty()) {
-      // everything was updated via the fast-forward merge
-      return GitUpdateResult.SUCCESS;
-    }
+    try {
+      updaters = tryFastForwardMergeForRebaseUpdaters(updaters);
 
-    if (myCheckRebaseOverMergeProblem) {
-      Collection<GitRepository> problematicRoots = findRootsRebasingOverMerge(updaters);
-      if (!problematicRoots.isEmpty()) {
-        GitRebaseOverMergeProblem.Decision decision = GitRebaseOverMergeProblem.showDialog();
-        if (decision == GitRebaseOverMergeProblem.Decision.MERGE_INSTEAD) {
-          for (GitRepository repo : problematicRoots) {
-            GitBranchPair branchAndTracked = trackedBranches.get(repo);
-            if (branchAndTracked == null) {
-              LOG.error("No tracked branch information for root " + repo.getRoot());
-              continue;
+      if (updaters.isEmpty()) {
+        // everything was updated via the fast-forward merge
+        return GitUpdateResult.SUCCESS;
+      }
+
+      if (myCheckRebaseOverMergeProblem) {
+        Collection<GitRepository> problematicRoots = findRootsRebasingOverMerge(updaters);
+        if (!problematicRoots.isEmpty()) {
+          GitRebaseOverMergeProblem.Decision decision = GitRebaseOverMergeProblem.showDialog();
+          if (decision == GitRebaseOverMergeProblem.Decision.MERGE_INSTEAD) {
+            for (GitRepository repo : problematicRoots) {
+              GitBranchPair branchAndTracked = trackedBranches.get(repo);
+              if (branchAndTracked == null) {
+                LOG.error("No tracked branch information for root " + repo.getRoot());
+                continue;
+              }
+              updaters.put(repo, new GitMergeUpdater(myProject, myGit, repo, branchAndTracked, myProgressIndicator, myUpdatedFiles));
             }
-            updaters.put(repo, new GitMergeUpdater(myProject, myGit, repo, branchAndTracked, myProgressIndicator, myUpdatedFiles));
+          }
+          else if (decision == GitRebaseOverMergeProblem.Decision.CANCEL_OPERATION) {
+            return GitUpdateResult.CANCEL;
           }
         }
-        else if (decision == GitRebaseOverMergeProblem.Decision.CANCEL_OPERATION) {
-          return GitUpdateResult.CANCEL;
+      }
+
+      // save local changes if needed (update via merge may perform without saving).
+      final Collection<VirtualFile> myRootsToSave = new ArrayList<>();
+      LOG.info("updateImpl: identifying if save is needed...");
+      for (Map.Entry<GitRepository, GitUpdater> entry : updaters.entrySet()) {
+        GitRepository repo = entry.getKey();
+        GitUpdater updater = entry.getValue();
+        if (updater.isSaveNeeded()) {
+          myRootsToSave.add(repo.getRoot());
+          LOG.info("update| root " + repo + " needs save");
         }
       }
-    }
 
-    // save local changes if needed (update via merge may perform without saving).
-    final Collection<VirtualFile> myRootsToSave = new ArrayList<>();
-    LOG.info("updateImpl: identifying if save is needed...");
-    for (Map.Entry<GitRepository, GitUpdater> entry : updaters.entrySet()) {
-      GitRepository repo = entry.getKey();
-      GitUpdater updater = entry.getValue();
-      if (updater.isSaveNeeded()) {
-        myRootsToSave.add(repo.getRoot());
-        LOG.info("update| root " + repo + " needs save");
-      }
-    }
-
-    LOG.info("updateImpl: saving local changes...");
-    final Ref<Boolean> incomplete = Ref.create(false);
-    final Ref<GitUpdateResult> compoundResult = Ref.create();
-    final Map<GitRepository, GitUpdater> finalUpdaters = updaters;
-    new GitPreservingProcess(myProject, myGit, myRootsToSave, "Update", "Remote",
-                             GitVcsSettings.getInstance(myProject).updateChangesPolicy(), myProgressIndicator, () -> {
-                               LOG.info("updateImpl: updating...");
-                               GitRepository currentlyUpdatedRoot = null;
-                               try {
-                                 for (GitRepository repo : finalUpdaters.keySet()) {
-                                   GitUpdater updater = finalUpdaters.get(repo);
-                                   if (updater == null) continue;
-                                   currentlyUpdatedRoot = repo;
-                                   GitUpdateResult res = updater.update();
-                                   LOG.info("updating root " + currentlyUpdatedRoot + " finished: " + res);
-                                   if (res == GitUpdateResult.INCOMPLETE) {
-                                     incomplete.set(true);
+      LOG.info("updateImpl: saving local changes...");
+      final Ref<Boolean> incomplete = Ref.create(false);
+      final Ref<GitUpdateResult> compoundResult = Ref.create();
+      final Map<GitRepository, GitUpdater> finalUpdaters = updaters;
+      new GitPreservingProcess(myProject, myGit, myRootsToSave, "Update", "Remote",
+                               GitVcsSettings.getInstance(myProject).updateChangesPolicy(), myProgressIndicator, () -> {
+                                 LOG.info("updateImpl: updating...");
+                                 GitRepository currentlyUpdatedRoot = null;
+                                 try {
+                                   for (GitRepository repo : finalUpdaters.keySet()) {
+                                     GitUpdater updater = finalUpdaters.get(repo);
+                                     if (updater == null) continue;
+                                     currentlyUpdatedRoot = repo;
+                                     GitUpdateResult res = updater.update();
+                                     LOG.info("updating root " + currentlyUpdatedRoot + " finished: " + res);
+                                     if (res == GitUpdateResult.INCOMPLETE) {
+                                       incomplete.set(true);
+                                     }
+                                     compoundResult.set(joinResults(compoundResult.get(), res));
                                    }
-                                   compoundResult.set(joinResults(compoundResult.get(), res));
                                  }
-                               }
-                               catch (VcsException e) {
-                                 String rootName = (currentlyUpdatedRoot == null) ? "" : getShortRepositoryName(currentlyUpdatedRoot);
-                                 LOG.info("Error updating changes for root " + currentlyUpdatedRoot, e);
-                                 notifyImportantError(myProject, "Error updating " + rootName,
-                                                      "Updating " + rootName + " failed with an error: " + e.getLocalizedMessage());
-                               }
-                             }).execute(() -> {
-      // Note: compoundResult normally should not be null, because the updaters map was checked for non-emptiness.
-      // But if updater.update() fails with exception for the first root, then the value would not be assigned.
-      // In this case we don't restore local changes either, because update failed.
-      return !incomplete.get() && !compoundResult.isNull() && compoundResult.get().isSuccess();
-    });
-    // GitPreservingProcess#save may fail due index.lock presence
-    return ObjectUtils.notNull(compoundResult.get(), GitUpdateResult.ERROR);
+                                 catch (VcsException e) {
+                                   String rootName = (currentlyUpdatedRoot == null) ? "" : getShortRepositoryName(currentlyUpdatedRoot);
+                                   LOG.info("Error updating changes for root " + currentlyUpdatedRoot, e);
+                                   notifyImportantError(myProject, "Error updating " + rootName,
+                                                        "Updating " + rootName + " failed with an error: " + e.getLocalizedMessage());
+                                 }
+                               }).execute(() -> {
+        // Note: compoundResult normally should not be null, because the updaters map was checked for non-emptiness.
+        // But if updater.update() fails with exception for the first root, then the value would not be assigned.
+        // In this case we don't restore local changes either, because update failed.
+        return !incomplete.get() && !compoundResult.isNull() && compoundResult.get().isSuccess();
+      });
+      // GitPreservingProcess#save may fail due index.lock presence
+      return ObjectUtils.notNull(compoundResult.get(), GitUpdateResult.ERROR);
+    }
+    finally {
+      myUpdatedRanges = updatedRanges.calcCurrentPositions();
+    }
   }
 
   @NotNull
@@ -246,8 +257,9 @@ public class GitUpdateProcess {
     return ContainerUtil.mapNotNull(updaters.keySet(), repo -> {
       GitUpdater updater = updaters.get(repo);
       if (updater instanceof GitRebaseUpdater) {
-        String currentRef = ((GitRebaseUpdater)updater).getSourceAndTarget().getBranch().getFullName();
-        String baseRef = ObjectUtils.assertNotNull(((GitRebaseUpdater)updater).getSourceAndTarget().getDest()).getFullName();
+        GitBranchPair sourceAndTarget = ((GitRebaseUpdater)updater).getSourceAndTarget();
+        String currentRef = sourceAndTarget.getSource().getFullName();
+        String baseRef = sourceAndTarget.getTarget().getFullName();
         return GitRebaseOverMergeProblem.hasProblem(myProject, repo.getRoot(), baseRef, currentRef) ? repo : null;
       }
       return null;
@@ -302,6 +314,11 @@ public class GitUpdateProcess {
   @NotNull
   Map<GitRepository, String> getSkippedRoots() {
     return mySkippedRoots;
+  }
+
+  @Nullable
+  public Map<GitRepository, HashRange> getUpdatedRanges() {
+    return myUpdatedRanges;
   }
 
   @NotNull

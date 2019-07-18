@@ -3,7 +3,7 @@ package com.intellij.designer.designSurface.tools;
 
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.model.RadComponent;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -63,7 +63,7 @@ public class SelectionTracker extends TargetingTool {
       // a selection reset (since it makes it impossible to pull up the context menu with
       // a multi-selection: the right click action causes the selection to be replaced
       // with the single item under the mouse)
-      if (SystemInfoRt.isMac && myInputEvent != null && myInputEvent.isControlDown()) {
+      if (SystemInfo.isMac && myInputEvent != null && myInputEvent.isControlDown()) {
         return;
       }
 
@@ -89,7 +89,7 @@ public class SelectionTracker extends TargetingTool {
   }
 
   public static void performSelection(InputTool tool, RadComponent component) {
-    if ((SystemInfoRt.isMac ? tool.myInputEvent.isMetaDown() : tool.myInputEvent.isControlDown())) {
+    if ((SystemInfo.isMac ? tool.myInputEvent.isMetaDown() : tool.myInputEvent.isControlDown())) {
       if (tool.myArea.isSelected(component)) {
         tool.myArea.deselect(component);
       }

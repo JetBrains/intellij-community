@@ -109,7 +109,7 @@ class Stream<T> {
 }
 """)
 
-    JavaInlayParameterHintsProvider.getInstance().isDoNotShowForBuilderLikeMethods.set(false)
+    JavaInlayParameterHintsProvider.getInstance().showForBuilderLikeMethods.set(true)
     check("""
 class Foo {
   void test() {
@@ -276,7 +276,7 @@ public class Test {
   }
 
   fun `test suppress for erroneous parameters`() {
-    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(false)
+    JavaInlayParameterHintsProvider.getInstance().showForParamsWithSameType.set(false)
     check("""
 public class Test {
     void foo(String foo) {}
@@ -288,7 +288,7 @@ public class Test {
     }
 }
 """)
-    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(true)
+    JavaInlayParameterHintsProvider.getInstance().showForParamsWithSameType.set(true)
     check("""
 public class Test {
     void foo(String foo) {}
@@ -530,7 +530,7 @@ class Test {
 }
 """)
     
-    JavaInlayParameterHintsProvider.getInstance().isDoNotShowForBuilderLikeMethods.set(false)
+    JavaInlayParameterHintsProvider.getInstance().showForBuilderLikeMethods.set(true)
     check("""
 class Builder {
   void await(boolean value) {}
@@ -568,7 +568,7 @@ class Test {
 }
 """)
 
-    JavaInlayParameterHintsProvider.getInstance().isDoNotShowForBuilderLikeMethods.set(false)
+    JavaInlayParameterHintsProvider.getInstance().showForBuilderLikeMethods.set(true)
     check("""
 class Builder {
   Builder qwit(boolean value, String sValue) {}
@@ -701,7 +701,7 @@ class Test {
   }
 
   fun `test do not show hint for name contained in method`() {
-    JavaInlayParameterHintsProvider.getInstance().isDoNotShowIfMethodNameContainsParameterName.set(true)
+    JavaInlayParameterHintsProvider.getInstance().showIfMethodNameContainsParameterName.set(false)
     check("""
 class Test {
   void main() {
@@ -715,7 +715,7 @@ class Test {
   }
 
   fun `test show if multiple params but name contained`() {
-    JavaInlayParameterHintsProvider.getInstance().isDoNotShowIfMethodNameContainsParameterName.set(true)
+    JavaInlayParameterHintsProvider.getInstance().showIfMethodNameContainsParameterName.set(false)
     check("""
 class Test {
   void main() {
@@ -729,7 +729,7 @@ class Test {
   }
 
   fun `test show same params`() {
-    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(true)
+    JavaInlayParameterHintsProvider.getInstance().showForParamsWithSameType.set(true)
     check("""
 class Test {
   void main() {
@@ -744,7 +744,7 @@ class Test {
   }
 
   fun `test show triple`() {
-    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(true)
+    JavaInlayParameterHintsProvider.getInstance().showForParamsWithSameType.set(true)
     check("""
 class Test {
   void main() {
@@ -758,7 +758,7 @@ class Test {
   }
 
   fun `test show couple of doubles`() {
-    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(true)
+    JavaInlayParameterHintsProvider.getInstance().showForParamsWithSameType.set(true)
     check("""
 class Test {
   void main() {
@@ -910,7 +910,7 @@ class Test {
 
 
   fun `test params with same type`() {
-    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(true)
+    JavaInlayParameterHintsProvider.getInstance().showForParamsWithSameType.set(true)
     check("""
 class Test {
   void test() {
@@ -952,7 +952,7 @@ public class Test {
   }
 
   fun `test one-char one-digit hints enabled`() {
-    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(false)
+    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(true)
     check("""
 class Test {
   void main() {
@@ -964,7 +964,7 @@ class Test {
   }
 
   fun `test ordered sequential`() {
-    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(true)
+    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(false)
     check("""
 class Test {
   void main() {
@@ -984,7 +984,7 @@ class Test {
   }
 
   fun `test unordered sequential`() {
-    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(true)
+    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(false)
     check("""
 class Test {
   void test() {
@@ -998,7 +998,7 @@ class Test {
   }
 
   fun `test ordered with varargs`() {
-    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(true)
+    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(false)
     check("""
 class Test {
   void test() {
@@ -1012,7 +1012,7 @@ class Test {
   }
 
   fun `test one-char one-digit hints disabled`() {
-    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(true)
+    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(false)
     check("""
 class Test {
   void main() {
@@ -1024,7 +1024,7 @@ class Test {
   }
 
   fun `test just some unparsable parameter name`() {
-    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(true)
+    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(false)
     check("""
 class Test {
   void main() {
@@ -1139,7 +1139,7 @@ public class Test {
 
   fun `test constructor call with other features`() {
     JavaInlayParameterHintsProvider.getInstance().isShowHintsForNewExpressions.set(true)
-    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(true)
+    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(false)
     check("""
 public class Test {
     static class A {

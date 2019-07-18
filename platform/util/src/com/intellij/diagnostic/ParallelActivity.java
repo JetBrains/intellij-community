@@ -15,7 +15,8 @@ public enum ParallelActivity {
   PROJECT_OPEN_HANDLER("openHandler"),
 
   POST_STARTUP_ACTIVITY("projectPostStartupActivity"),
-  GC("GC")
+  GC("GC"),
+  REOPENING_EDITOR("reopeningEditor")
   ;
 
   public static final long MEASURE_THRESHOLD = TimeUnit.MILLISECONDS.toNanos(10);
@@ -48,8 +49,8 @@ public enum ParallelActivity {
     return new ActivityImpl(name, /* description = */ null, StartUpMeasurer.getCurrentTime(), /* parent = */ null, level, this, pluginId);
   }
 
-  public long record(long start, @Nullable Class<?> clazz) {
-    return record(start, clazz, null, null);
+  public long record(long start, @Nullable Class<?> clazz, @Nullable String pluginId) {
+    return record(start, clazz, /* level = */ null, pluginId);
   }
 
   /**

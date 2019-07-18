@@ -17,12 +17,12 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.SmartList;
-import com.intellij.util.ui.JBUI;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,7 +78,7 @@ final class BeforeRunStepsPanel extends JPanel {
     });
 
     ToolbarDecorator myDecorator = ToolbarDecorator.createDecorator(myList);
-    if (!SystemInfoRt.isMac) {
+    if (!SystemInfo.isMac) {
       myDecorator.setAsUsualTopToolbar();
     }
 
@@ -150,7 +150,7 @@ final class BeforeRunStepsPanel extends JPanel {
 
     setLayout(new BorderLayout());
     add(myPanel, BorderLayout.CENTER);
-    JPanel checkboxPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, JBUI.scale(5), JBUI.scale(5)));
+    JPanel checkboxPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, JBUIScale.scale(5), JBUIScale.scale(5)));
     checkboxPanel.add(myShowSettingsBeforeRunCheckBox);
     checkboxPanel.add(myActivateToolWindowBeforeRunCheckBox);
     add(checkboxPanel, BorderLayout.SOUTH);

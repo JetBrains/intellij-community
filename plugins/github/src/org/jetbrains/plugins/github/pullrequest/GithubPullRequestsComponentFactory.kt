@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.codeInsight.AutoPopupController
@@ -20,6 +20,7 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestsDataContext
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GithubPullRequestEditorCommentsThreadComponentFactoryImpl
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTrackerImpl
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoaderImpl
@@ -81,7 +82,8 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
                                                                   busyStateTracker,
                                                                   requestExecutor, account.server, repoDetails.fullPath)
 
-    private val changes = GithubPullRequestChangesComponent(project, pullRequestUiSettings).apply {
+    private val diffCommentComponentFactory = GithubPullRequestEditorCommentsThreadComponentFactoryImpl(avatarIconsProviderFactory)
+    private val changes = GithubPullRequestChangesComponent(project, pullRequestUiSettings, diffCommentComponentFactory).apply {
       diffAction.registerCustomShortcutSet(this@GithubPullRequestsComponent, this@GithubPullRequestsComponent)
     }
     private val details = GithubPullRequestDetailsComponent(dataLoader, securityService, busyStateTracker, metadataService, stateService,
@@ -101,14 +103,13 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
       isFocusCycleRoot = true
 
       listSelectionHolder.addSelectionChangeListener(preview) {
-        val dataProvider = listSelectionHolder.selectionNumber?.let(dataLoader::getDataProvider)
-        preview.setPreviewDataProvider(dataProvider)
+        preview.dataProvider = listSelectionHolder.selectionNumber?.let(dataLoader::getDataProvider)
       }
 
       dataLoader.addInvalidationListener(preview) {
         val selection = listSelectionHolder.selectionNumber
         if (selection != null && selection == it) {
-          preview.setPreviewDataProvider(dataLoader.getDataProvider(it))
+          preview.dataProvider = dataLoader.getDataProvider(selection)
         }
       }
     }

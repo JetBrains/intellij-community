@@ -3,10 +3,9 @@ package com.jetbrains.env.python;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.xdebugger.XDebuggerTestUtil;
@@ -19,6 +18,7 @@ import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.Staging;
 import com.jetbrains.env.StagingOn;
 import com.jetbrains.env.python.debug.PyDebuggerTask;
+import com.jetbrains.env.ut.PyTestTestProcessRunner;
 import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
@@ -36,10 +36,7 @@ import org.junit.Assume;
 import org.junit.Test;
 
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -87,23 +84,58 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   @Test
   @Staging
   public void testPydevTests_Debugger() {
-    unittests("tests_pydevd_python/test_debugger.py", ImmutableSet.of("-iron"), true);
+    pytests("tests_python/test_debugger.py", Sets.newHashSet("pytest", "-iron", "untangle"));
   }
 
   @Test
   public void testPydevMonkey() {
-    unittests("tests_pydevd_python/test_pydev_monkey.py", null);
+    unittests("tests_python/test_pydev_monkey.py", null);
   }
 
   @Test
   public void testBytecodeModification() {
-    unittests("tests_pydevd_python/test_bytecode_modification.py", Sets.newHashSet("python36"));
+    unittests("tests_python/test_bytecode_modification.py", Sets.newHashSet("python3.6", "pytest"));
   }
 
   @Test
   @Staging
   public void testFrameEvalAndTracing() {
-    unittests("tests_pydevd_python/test_frame_eval_and_tracing.py", Sets.newHashSet("python36"), true);
+    pytests("tests_python/test_frame_eval_and_tracing.py", Sets.newHashSet("pytest", "-iron"));
+  }
+
+  private void pytests(final String script, @Nullable Set<String> tags) {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/helpers/pydev/", SdkCreationType.SDK_PACKAGES_ONLY) {
+      @NotNull
+      @Override
+      protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+        return new PyTestTestProcessRunner(script, 0);
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull PyTestTestProcessRunner runner,
+                                      @NotNull String stdout,
+                                      @NotNull String stderr,
+                                      @NotNull String all,
+                                      int exitCode) {
+        runner.assertNoFailures();
+      }
+
+      @NotNull
+      @Override
+      public String getTestDataPath() {
+        return PythonHelpersLocator.getPythonCommunityPath();
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        if (tags == null) {
+          return super.getTags();
+        }
+        return tags;
+      }
+    }
+    );
   }
 
   private void unittests(final String script, @Nullable Set<String> tags) {
@@ -684,7 +716,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testWinEggDebug() {
-    Assume.assumeFalse("Only needs to run on windows", UsefulTestCase.IS_UNDER_TEAMCITY && !SystemInfoRt.isWindows);
+    Assume.assumeFalse("Only needs to run on windows", UsefulTestCase.IS_UNDER_TEAMCITY && !SystemInfo.isWindows);
     runPythonTest(new PyDebuggerTask("/debug", "test_winegg.py") {
       @Override
       public void before() {
@@ -722,7 +754,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testWinLongName() {
-    if (!SystemInfoRt.isWindows) {
+    if (!SystemInfo.isWindows) {
       return; // Only needs to run on windows
     }
     runPythonTest(new PyDebuggerTask("/debug", "long_n~1.py") {
@@ -844,6 +876,12 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForOutput("Done");
         assertFalse(output().contains("KeyboardInterrupt"));
       }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("-iron");
+      }
     });
   }
 
@@ -877,8 +915,37 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
+  public void testMultiprocessProcess() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_multiprocess_process.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath("test_multiprocess_process.py"), 5);
+        setWaitForTermination(false);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("name").hasValue("'subprocess'");
+        resume();
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("-iron", "-jython"); //can't run on iron and jython
+      }
+    });
+  }
+
+  @Test
   public void testPyQtQThreadInheritor() {
-    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfoRt.isWindows);
+    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
 
     runPythonTest(new PyDebuggerTask("/debug", "test_pyqt1.py") {
       @Override
@@ -923,7 +990,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testPyQtMoveToThread() {
-    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfoRt.isWindows);
+    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
 
     runPythonTest(new PyDebuggerTask("/debug", "test_pyqt2.py") {
       @Override
@@ -969,7 +1036,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testPyQtQRunnableInheritor() {
-    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfoRt.isWindows);
+    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
 
     runPythonTest(new PyDebuggerTask("/debug", "test_pyqt3.py") {
       @Override
@@ -1014,7 +1081,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testPySide2QThreadInheritor() {
-    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfoRt.isWindows);
+    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
 
     runPythonTest(new PyDebuggerTask("/debug", "test_pyside2_1.py") {
       @Override
@@ -1060,7 +1127,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testPySide2MoveToThread() {
-    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfoRt.isWindows);
+    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
 
     runPythonTest(new PyDebuggerTask("/debug", "test_pyside2_2.py") {
       @Override
@@ -1105,7 +1172,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testPySide2QRunnableInheritor() {
-    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfoRt.isWindows);
+    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
 
     runPythonTest(new PyDebuggerTask("/debug", "test_pyside2_3.py") {
       @Override
@@ -1263,7 +1330,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-iron", "-python36");
+        return ImmutableSet.of("-iron", "-python3.6");
       }
     });
   }
@@ -1667,10 +1734,13 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test_builtin_break.py") {
       @Override
       public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()),2);
       }
 
       @Override
       public void testing() throws Exception {
+        waitForPause();
+        resume();
         waitForPause();
         eval("a").hasValue("1");
         resume();
@@ -1936,7 +2006,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test_warnings_suppressing.py") {
       @Override
       public void before() {
-        toggleBreakpoint(getFilePath(getScriptName()), 14);
+        toggleBreakpoint(getFilePath(getScriptName()), 15);
       }
 
       @Override
@@ -1948,9 +2018,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         String out = output();
         assertTrue(out.contains("This warning should appear in the output."));
         assertFalse(out.contains("This property is deprecated!"));
-        toggleBreakpoint(getFilePath(getScriptName()), 15);
         resume();
-        waitForPause();
         waitForOutput("This property is deprecated!");
       }
     });
@@ -1959,7 +2027,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   @Test
   public void testExecutableScriptDebug() {
 
-    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfoRt.isWindows);
+    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
 
     runPythonTest(new PyDebuggerTask("/debug", "test_executable_script_debug.py") {
       @Override
@@ -2012,7 +2080,26 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
+  public void testDontStopOnSystemExit() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_sys_exit.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 3);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        resume();
+        waitForOutput("Process finished with exit code 0");
+      }
+    });
+  }
+
+  @Test
   public void testExecAndSpawnWithBytesArgs() {
+
+    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
 
     class ExecAndSpawnWithBytesArgsTask extends PyDebuggerTask {
 
@@ -2020,50 +2107,82 @@ public class PythonDebuggerTest extends PyEnvTestCase {
                                                        "Breakpoints may not work correctly.\n";
       private final static String PYTHON2_TAG = "python2";
 
-      private Map<String, Set<String>> myEnvTags = Maps.newHashMap();
-
-      ExecAndSpawnWithBytesArgsTask(@Nullable String relativeTestDataPath, String scriptName) {
+      private ExecAndSpawnWithBytesArgsTask(@Nullable String relativeTestDataPath, String scriptName) {
         super(relativeTestDataPath, scriptName);
-        loadEnvTags();
       }
 
-      private void loadEnvTags() {
-        List<String> roots = PyEnvTestCase.getPythonRoots();
-
-        roots.forEach((root) -> {
-          Set<String> tags = Sets.newHashSet();
-          tags.addAll(PyEnvTestCase.loadEnvTags(root));
-          myEnvTags.put(root, tags);
-        });
+      private boolean hasPython2Tag() throws NullPointerException {
+          String env = Paths.get(myRunConfiguration.getSdkHome()).getParent().getParent().toString();
+          return envTags.get(env).stream().anyMatch((tag) -> tag.startsWith(PYTHON2_TAG));
       }
 
-      private boolean hasPython2Tag(){
-        String env = Paths.get(myRunConfiguration.getSdkHome()).getParent().getParent().toString();
-        return myEnvTags.get(env).stream().anyMatch((tag) -> tag.startsWith(PYTHON2_TAG));
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 4);
       }
 
       @Override
       public void testing() throws Exception {
-        if (hasPython2Tag()) {
-          waitForTerminate();
-          assertFalse(output().contains(BYTES_ARGS_WARNING));
+        waitForPause();
+        setProcessCanTerminate(true);
+        resume();
+        try {
+          if (hasPython2Tag()) {
+            assertFalse(output().contains(BYTES_ARGS_WARNING));
+          }
+          else
+            waitForOutput(BYTES_ARGS_WARNING);
         }
-        else
-          waitForOutput(BYTES_ARGS_WARNING);
+        catch (NullPointerException e) {
+          fail("Error while checking if the env has the " + PYTHON2_TAG + " tag.");
+        }
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("-iron", "-jython");
       }
     }
 
-    runPythonTest(new ExecAndSpawnWithBytesArgsTask("/debug", "test_call_exec_with_bytes_args.py") {
-      @Override
-      protected void init() {
-        setMultiprocessDebug(true);
-      }
-    });
+    Arrays.asList("test_call_exec_with_bytes_args.py", "test_call_spawn_with_bytes_args.py").forEach(
+      (script) -> runPythonTest(new ExecAndSpawnWithBytesArgsTask("/debug", script))
+    );
+  }
 
-    runPythonTest(new ExecAndSpawnWithBytesArgsTask("/debug", "test_call_spawn_with_bytes_args.py") {
+  @Test
+  public void testListComprehension() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_list_comprehension.py") {
       @Override
-      protected void init() {
-        setMultiprocessDebug(true);
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 2);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        resume();
+        waitForPause();
+        List<PyDebugValue> frameVariables = loadFrame();
+        assertTrue(findDebugValueByName(frameVariables,".0").getType().endsWith("_iterator"));
+        eval(".0");
+        // Different Python versions have different types of an internal list comprehension loop. Whatever the type is, we shouldn't get
+        // an evaluating error.
+        assertFalse(output().contains("Error evaluating"));
+        toggleBreakpoint(getFilePath(getScriptName()), 2);
+        resume();
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        // Remove this after PY-36229 is fixed.
+        return ImmutableSet.of("python3");
       }
     });
   }

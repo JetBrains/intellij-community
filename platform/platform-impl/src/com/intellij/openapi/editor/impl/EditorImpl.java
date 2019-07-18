@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorPopupHandler;
 import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
@@ -69,6 +70,7 @@ import com.intellij.ui.mac.MacGestureSupportForEditor;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
@@ -244,8 +246,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean myKeepSelectionOnMousePress;
 
   private boolean myUpdateCursor;
-  private int myCaretUpdateVShift;
-  private RangeMarker myTopLeftCornerMarker;
+  private final EditorScrollingPositionKeeper myScrollingPositionKeeper;
+  private boolean myRestoreScrollingPosition;
 
   @Nullable
   private final Project myProject;
@@ -467,7 +469,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myCaretCursor = new CaretCursor();
 
-    myFoldingModel.flushCaretShift();
+    myFoldingModel.disableScrollingPositionAdjustment();
     myScrollBarOrientation = VERTICAL_SCROLLBAR_RIGHT;
 
     mySoftWrapModel.addSoftWrapChangeListener(new SoftWrapChangeListener() {
@@ -549,6 +551,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myFocusModeModel = new FocusModeModel(this);
     Disposer.register(myDisposable, myFocusModeModel);
     myPopupHandlers.add(new DefaultPopupHandler());
+
+    myScrollingPositionKeeper = new EditorScrollingPositionKeeper(this);
+    Disposer.register(myDisposable, myScrollingPositionKeeper);
 
     myLatencyPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(LatencyListener.TOPIC);
   }
@@ -944,6 +949,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     ourCaretBlinkingCommand.setBlinkCaret(mySettings.isBlinkCaret());
     ourCaretBlinkingCommand.setBlinkPeriod(mySettings.getCaretBlinkPeriod());
     myView.reinitSettings();
+    myFoldingModel.refreshSettings();
     myFoldingModel.rebuild();
     myInlayModel.reinitSettings();
 
@@ -952,7 +958,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     myHighlighter.setColorScheme(myScheme);
-    myFoldingModel.refreshSettings();
 
     myGutterComponent.reinitSettings(updateGutterSize);
     myGutterComponent.revalidate();
@@ -1436,6 +1441,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myView.offsetToVisualPosition(offset, leanForward, beforeSoftWrap);
   }
 
+  public int offsetToVisualColumnInFoldRegion(@NotNull FoldRegion region, int offset, boolean leanTowardsLargerOffsets) {
+    assertIsDispatchThread();
+    return myView.offsetToVisualColumnInFoldRegion(region, offset, leanTowardsLargerOffsets);
+  }
+
+  public int visualColumnToOffsetInFoldRegion(@NotNull FoldRegion region, int visualColumn, boolean leansRight) {
+    assertIsDispatchThread();
+    return myView.visualColumnToOffsetInFoldRegion(region, visualColumn, leansRight);
+  }
+
   @Override
   @NotNull
   public LogicalPosition offsetToLogicalPosition(int offset) {
@@ -1502,7 +1517,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public float getScale() {
     if (!Registry.is("editor.scale.gutter.icons")) return 1f;
     float normLineHeight = getLineHeight() / myScheme.getLineSpacing(); // normalized, as for 1.0f line spacing
-    return normLineHeight / JBUI.scale(16f);
+    return normLineHeight / JBUIScale.scale(16f);
   }
 
   public int findNearestDirectionBoundary(int offset, boolean lookForward) {
@@ -1592,7 +1607,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myScrollingModel.onBulkDocumentUpdateStarted();
 
-    saveCaretRelativePosition();
+    myScrollingPositionKeeper.savePosition();
 
     myCaretModel.onBulkDocumentUpdateStarted();
     mySoftWrapModel.onBulkDocumentUpdateStarted();
@@ -1613,8 +1628,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     repaintToScreenBottom(0);
     updateCaretCursor();
 
-    if (myTopLeftCornerMarker != null || !Boolean.TRUE.equals(getUserData(DISABLE_CARET_POSITION_KEEPING))) {
-      restoreCaretRelativePosition();
+    if (!Boolean.TRUE.equals(getUserData(DISABLE_CARET_POSITION_KEEPING))) {
+      myScrollingPositionKeeper.restorePosition(true);
     }
   }
 
@@ -1630,11 +1645,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
-    if (getCaretModel().getOffset() < e.getOffset() || getCaretModel().getOffset() > e.getOffset() + e.getOldLength())  {
-      saveCaretRelativePosition();
-    }
-    else {
-      myTopLeftCornerMarker = null;
+    myRestoreScrollingPosition = getCaretModel().getOffset() < e.getOffset() ||
+                                 getCaretModel().getOffset() > e.getOffset() + e.getOldLength();
+    if (myRestoreScrollingPosition) {
+      myScrollingPositionKeeper.savePosition();
     }
   }
 
@@ -1683,10 +1697,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       repaintLines(startLine, endLine);
     }
 
-    if (myTopLeftCornerMarker != null ||
-        !Boolean.TRUE.equals(getUserData(DISABLE_CARET_POSITION_KEEPING)) &&
-        (getCaretModel().getOffset() < e.getOffset() || getCaretModel().getOffset() > e.getOffset() + e.getNewLength())) {
-      restoreCaretRelativePosition();
+    if (myRestoreScrollingPosition && !Boolean.TRUE.equals(getUserData(DISABLE_CARET_POSITION_KEEPING))) {
+      myScrollingPositionKeeper.restorePosition(true);
     }
   }
 
@@ -1704,31 +1716,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myDefaultCursor = EMPTY_CURSOR;
       updateEditorCursor();
     }
-  }
-
-  private void saveCaretRelativePosition() {
-    Rectangle visibleArea = getScrollingModel().getVisibleArea();
-    Point pos = visualPositionToXY(getCaretModel().getVisualPosition());
-    // if caret is not visible we try to keep displayed fragment (its top-left corner to be precise) visible
-    if (visibleArea.height > 0 && (pos.y + getLineHeight() < visibleArea.y || pos.y > (visibleArea.y + visibleArea.height))) {
-      int topLeftCornerOffset = logicalPositionToOffset(xyToLogicalPosition(visibleArea.getLocation()));
-      myTopLeftCornerMarker = myDocument.createRangeMarker(topLeftCornerOffset, topLeftCornerOffset);
-      myCaretUpdateVShift = offsetToXY(topLeftCornerOffset).y - visibleArea.y;
-    }
-    else {
-      myTopLeftCornerMarker = null;
-      myCaretUpdateVShift = pos.y - visibleArea.y;
-    }
-  }
-
-  private void restoreCaretRelativePosition() {
-    Point newLocation = myTopLeftCornerMarker == null || !myTopLeftCornerMarker.isValid()
-                        ? visualPositionToXY(getCaretModel().getVisualPosition())
-                        : offsetToXY(myTopLeftCornerMarker.getStartOffset());
-    getScrollingModel().disableAnimation();
-    getScrollingModel().scrollVertically(newLocation.y - myCaretUpdateVShift);
-    getScrollingModel().enableAnimation();
-    myTopLeftCornerMarker = null;
   }
 
   public boolean isScrollToCaret() {
@@ -1943,7 +1930,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myHeaderPanel.revalidate();
     myHeaderPanel.repaint();
 
-    TouchBarsManager.onUpdateEditorHeader(this, header);
+    if (SystemInfo.isMac) {
+      TouchBarsManager.onUpdateEditorHeader(this, header);
+    }
   }
 
   @Override
@@ -2313,15 +2302,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     final FoldRegion region = getFoldingModel().getFoldingPlaceholderAt(e.getPoint());
-    if (e.getX() >= 0 && e.getY() >= 0 && region != null && region == myMouseSelectedRegion) {
+    if (region != null && region == myMouseSelectedRegion) {
       getFoldingModel().runBatchFoldingOperation(() -> {
-        myFoldingModel.flushCaretShift();
+        myFoldingModel.disableScrollingPositionAdjustment();
         region.setExpanded(true);
       });
-
-      // The call below is performed because gutter's height is not updated sometimes, i.e. it sticks to the value that corresponds
-      // to the situation when fold region is collapsed. That causes bottom of the gutter to not be repainted and that looks really ugly.
-      myGutterComponent.updateSize();
     }
 
     // The general idea is to check if the user performed 'caret position change click' (left click most of the time) inside selection
@@ -2394,7 +2379,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (cursor != Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR) &&
           cursor != Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR) &&
           cursor != EMPTY_CURSOR &&
-          (!SystemInfoRt.isMac || cursor != MacUIUtil.getInvertedTextCursor())) {
+          (!SystemInfo.isMac || cursor != MacUIUtil.getInvertedTextCursor())) {
         // someone else has set cursor, don't touch it
         return;
       }
@@ -3642,7 +3627,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private void replaceInputMethodText(@NotNull InputMethodEvent e) {
-      if (myNeedToSelectPreviousChar && SystemInfoRt.isMac &&
+      if (myNeedToSelectPreviousChar && SystemInfo.isMac &&
           (Registry.is("ide.mac.pressAndHold.brute.workaround") || Registry.is("ide.mac.pressAndHold.workaround") &&
                                                                    (hasRelevantCommittedText(e) || e.getCaret() == null))) {
         // This is required to support input of accented characters using press-and-hold method (http://support.apple.com/kb/PH11264).
@@ -3882,7 +3867,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
           int scrollShift = y - getScrollingModel().getVerticalScrollOffset();
           Runnable processor = () -> {
-            myFoldingModel.flushCaretShift();
+            myFoldingModel.disableScrollingPositionAdjustment();
             range.setExpanded(expansion);
             if (e.isAltDown()) {
               for (FoldRegion region : myFoldingModel.getAllFoldRegions()) {
@@ -4830,7 +4815,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public Insets getBorderInsets(Component c) {
       Container splitters = SwingUtilities.getAncestorOfClass(EditorsSplitters.class, c);
-      boolean thereIsSomethingAbove = !SystemInfoRt.isMac || UISettings.getInstance().getShowMainToolbar() || UISettings.getInstance().getShowNavigationBar() ||
+      boolean thereIsSomethingAbove = !SystemInfo.isMac || UISettings.getInstance().getShowMainToolbar() || UISettings.getInstance().getShowNavigationBar() ||
                                       toolWindowIsNotEmpty();
       //noinspection ConstantConditions
       Component header = myHeaderPanel == null ? null : ArrayUtil.getFirstElement(myHeaderPanel.getComponents());

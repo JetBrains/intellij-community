@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
+import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.util.ThrowableConvertor
 import org.jetbrains.plugins.github.api.GithubApiRequest.*
 import org.jetbrains.plugins.github.api.data.*
@@ -272,6 +273,17 @@ object GithubApiRequests {
         .withOperationName("get pull request")
 
       @JvmStatic
+      fun getDiff(serverPath: GithubServerPath, username: String, repoName: String, number: Long) =
+        object : Get<String>(getUrl(serverPath, Repos.urlSuffix, "/$username/$repoName", urlSuffix, "/$number"),
+                             GithubApiContentHelper.V3_DIFF_JSON_MIME_TYPE) {
+          override fun extractResult(response: GithubApiResponse): String {
+            return response.handleBody(ThrowableConvertor {
+              StreamUtil.readText(it, Charsets.UTF_8)
+            })
+          }
+        }.withOperationName("get pull request diff file")
+
+      @JvmStatic
       fun create(server: GithubServerPath,
                  username: String, repoName: String,
                  title: String, description: String, head: String, base: String) =
@@ -356,6 +368,25 @@ object GithubApiRequests {
 
         @JvmStatic
         fun get(url: String) = Get.jsonPage<GithubCommit>(url)
+          .withOperationName("get commits for pull request")
+      }
+
+      object Comments : Entity("/comments") {
+        @JvmStatic
+        fun pages(server: GithubServerPath, username: String, repoName: String, number: Long) =
+          GithubApiPagesLoader.Request(get(server, username, repoName, number), ::get)
+
+        @JvmStatic
+        fun pages(url: String) = GithubApiPagesLoader.Request(get(url), ::get)
+
+        @JvmStatic
+        fun get(server: GithubServerPath, username: String, repoName: String, number: Long,
+                pagination: GithubRequestPagination? = null) =
+          get(getUrl(server, Repos.urlSuffix, "/$username/$repoName", PullRequests.urlSuffix, "/$number", urlSuffix,
+                     GithubApiUrlQueryBuilder.urlQuery { param(pagination) }))
+
+        @JvmStatic
+        fun get(url: String) = Get.jsonPage<GithubPullRequestCommentWithHtml>(url, GithubApiContentHelper.V3_HTML_JSON_MIME_TYPE)
           .withOperationName("get comments for pull request")
       }
     }

@@ -20,7 +20,7 @@
     <applicationService serviceInterface="com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider"
                         serviceImplementation="com.intellij.spellchecker.ui.SpellCheckingEditorCustomizationProviderImpl"
                         overrides="true"/>
-    <fileTypeFactory implementation="com.intellij.spellchecker.DictionaryFileTypeFactory"/>
+    <fileType name="Dictionary" implementationClass="com.intellij.spellchecker.DictionaryFileType" extensions="dic"/>
     <projectService serviceImplementation="com.intellij.spellchecker.settings.SpellCheckerSettings"/>
     <projectService serviceImplementation="com.intellij.spellchecker.SpellCheckerManager"/>
     <projectConfigurable groupId="editor" instance="com.intellij.spellchecker.settings.SpellCheckerSettingsManager" id="reference.settings.ide.settings.spelling" key="spelling" bundle="com.intellij.spellchecker.util.SpellCheckerBundle" />

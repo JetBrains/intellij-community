@@ -2,7 +2,6 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.diagnostic.IdeMessagePanel;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
@@ -11,7 +10,6 @@ import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -36,8 +34,12 @@ import com.intellij.ui.BalloonLayoutImpl;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.mac.MacMainFrameDecorator;
+import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.io.SuperUserStatus;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +60,7 @@ import java.util.Set;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContextAccessor, DataProvider {
+public final class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContextAccessor, DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.IdeFrameImpl");
 
   public static final String NORMAL_STATE_BOUNDS = "normalBounds";
@@ -82,11 +84,11 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   private boolean ready;
   private Image mySelfie;
 
-  public IdeFrameImpl(ActionManagerEx actionManager, DataManager dataManager) {
+  public IdeFrameImpl() {
     super();
     updateTitle();
 
-    myRootPane = createRootPane(actionManager, dataManager);
+    myRootPane = new IdeRootPane(this);
     setRootPane(myRootPane);
     setBackground(UIUtil.getPanelBackground());
     LafManager.getInstance().addLafManagerListener(myLafListener = src -> setBackground(UIUtil.getPanelBackground()));
@@ -105,7 +107,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
     Dimension size = ScreenUtil.getMainScreenBounds().getSize();
     size.width = Math.min(1400, size.width - 20);
-    size.height= Math.min(1000, size.height - 40);
+    size.height = Math.min(1000, size.height - 40);
     setSize(size);
     setLocationRelativeTo(null);
     setMinimumSize(new Dimension(340, getMinimumSize().height));
@@ -149,7 +151,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
     // to show window thumbnail under Macs
     // http://lists.apple.com/archives/java-dev/2009/Dec/msg00240.html
-    if (SystemInfoRt.isMac) setIconImage(null);
+    if (SystemInfo.isMac) {
+      setIconImage(null);
+    }
 
     MouseGestureManager.getInstance().add(this);
 
@@ -256,14 +260,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   }
 
   @NotNull
-  private IdeRootPane createRootPane(ActionManagerEx actionManager, DataManager dataManager) {
-    return new IdeRootPane(actionManager, dataManager, this);
-  }
-
-  @NotNull
   @Override
   public Insets getInsets() {
-    return SystemInfoRt.isMac && isInFullScreen() ? JBUI.emptyInsets() : super.getInsets();
+    return SystemInfo.isMac && isInFullScreen() ? JBUI.emptyInsets() : super.getInsets();
   }
 
   @Override
@@ -360,7 +359,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   }
 
   public static @Nullable String getSuperUserSuffix() {
-    return !SuperUserStatus.isSuperUser() ? null : SystemInfoRt.isWindows ? "(Administrator)" : "(ROOT)";
+    return !SuperUserStatus.isSuperUser() ? null : SystemInfo.isWindows ? "(Administrator)" : "(ROOT)";
   }
 
   public static void updateTitle(@NotNull JFrame frame, @Nullable String title, @Nullable String fileTitle, @Nullable File currentFile) {
@@ -381,7 +380,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
       if (Boolean.getBoolean("ide.ui.version.in.title")) {
         builder.append(ApplicationNamesInfo.getInstance().getFullProductName() + ' ' + ApplicationInfo.getInstance().getFullVersion());
       }
-      else if (!SystemInfoRt.isMac && !SystemInfo.isGNOME || builder.isEmpty()) {
+      else if (!SystemInfo.isMac && !SystemInfo.isGNOME || builder.isEmpty()) {
         builder.append(ApplicationNamesInfo.getInstance().getFullProductName());
       }
       builder.append(getSuperUserSuffix(), " ");
@@ -552,7 +551,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
   @Override
   public void dispose() {
-    if (SystemInfoRt.isMac && isInFullScreen()) {
+    if (SystemInfo.isMac && isInFullScreen()) {
       ((MacMainFrameDecorator)myFrameDecorator).toggleFullScreenNow();
     }
     if (isTemporaryDisposed()) {
@@ -601,7 +600,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     if (shouldPaintSelfie()) {
       try {
         if (mySelfie == null) {
-          mySelfie = ImageUtil.ensureHiDPI(ImageIO.read(getSelfieLocation()), JBUIScale.ScaleContext.create(this));
+          mySelfie = ImageUtil.ensureHiDPI(ImageIO.read(getSelfieLocation()), ScaleContext.create(this));
         }
       } catch (IOException ignored) {}
       StartupUiUtil.drawImage(g, mySelfie, 0, 0, null);
@@ -677,7 +676,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   }
 
   private boolean temporaryFixForIdea156004(final boolean state) {
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       try {
         Field modalBlockerField = Window.class.getDeclaredField("modalBlocker");
         modalBlockerField.setAccessible(true);

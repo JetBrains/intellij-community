@@ -4,16 +4,20 @@ package com.intellij.util.ui;
 import com.intellij.openapi.util.IconLoader.CachedImageIcon;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
-import com.intellij.ui.*;
+import com.intellij.ui.DeferredIconImpl;
+import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.RestoreScaleRule;
+import com.intellij.ui.RetrievableIcon;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.scale.ScaleContext;
+import com.intellij.ui.scale.ScaleContextAware;
+import com.intellij.ui.scale.UserScaleContext;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.JBUIScale.ScaleContext;
-import com.intellij.util.ui.JBUIScale.ScaleContextAware;
-import com.intellij.util.ui.JBUIScale.UserScaleContext;
 import com.intellij.util.ui.paint.ImageComparator;
-import org.junit.BeforeClass;
+import org.jetbrains.annotations.NotNull;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.ExternalResource;
@@ -24,12 +28,12 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.net.MalformedURLException;
 
-import static com.intellij.util.ui.JBUIScale.DerivedScaleType.DEV_SCALE;
-import static com.intellij.util.ui.JBUIScale.DerivedScaleType.EFF_USR_SCALE;
-import static com.intellij.util.ui.JBUIScale.ScaleType.*;
+import static com.intellij.ui.scale.DerivedScaleType.DEV_SCALE;
+import static com.intellij.ui.scale.DerivedScaleType.EFF_USR_SCALE;
+import static com.intellij.ui.scale.ScaleType.*;
 import static com.intellij.util.ui.TestScaleHelper.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotSame;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * Tests that {@link com.intellij.openapi.util.ScalableIcon#scale(float)} works correctly for custom JB icons.
@@ -41,36 +45,38 @@ public class IconScaleTest extends BareTestFixtureTestCase {
   private static final float ICON_OBJ_SCALE = 1.75f;
   private static final float ICON_OVER_USR_SCALE = 1.0f;
 
+  // 0.75 is impractical system scale factor, however it's used to stress-test the scale subsystem
+  private static final double[] SCALES = {0.75f, 1, 2, 2.5f};
+
   @ClassRule
   public static final ExternalResource manageState = new RestoreScaleRule();
 
-  @BeforeClass
-  public static void beforeClass() {
+  @Test
+  public void testJreHiDpi() throws MalformedURLException {
+    assumeTrue(SystemInfo.IS_AT_LEAST_JAVA9 || !SystemInfo.isLinux);
+
+    overrideJreHiDPIEnabled(true);
+    try {
+      for (double s : SCALES) {
+        test(1, s);
+      }
+    }
+    finally {
+      overrideJreHiDPIEnabled(false);
+    }
   }
 
   @Test
-  public void test() throws MalformedURLException {
-    // 0.75 is impractical system scale factor, however it's used to stress-test the scale subsystem.
-    final double[] SCALES = {0.75f, 1, 2, 2.5f};
-
-    //
-    // 1) JRE-HiDPI
-    //
-    overrideJreHiDPIEnabled(true);
-    if (SystemInfo.IS_AT_LEAST_JAVA9 || !SystemInfoRt.isLinux) {
-      for (double s : SCALES) test(1, s);
+  public void testIdeHiDpi() throws MalformedURLException {
+    for (double s : SCALES) {
+      // the system scale repeats the default user scale in IDE-HiDPI
+      test(s, s);
     }
-
-    //
-    // 2) IDE-HiDPI
-    //
-    overrideJreHiDPIEnabled(false);
-    for (double s : SCALES) test(s, s); // the system scale repeats the default user scale in IDE-HiDPI
   }
 
   public void test(double usrScale, double sysScale) throws MalformedURLException {
-    JBUI.setUserScaleFactor((float)usrScale);
-    JBUI.setSystemScaleFactor((float)sysScale);
+    JBUIScale.setUserScaleFactorForTest((float)usrScale);
+    JBUIScale.setSystemScaleFactor((float)sysScale);
 
     ScaleContext ctx = ScaleContext.create(SYS_SCALE.of(sysScale), USR_SCALE.of(usrScale));
 
@@ -93,13 +99,13 @@ public class IconScaleTest extends BareTestFixtureTestCase {
     //
     // 4. RowIcon
     //
-    test(new RowIcon(new CachedImageIcon(new File(getIconPath()).toURI().toURL())), UserScaleContext.create(ctx));
+    test(new com.intellij.ui.RowIcon(new CachedImageIcon(new File(getIconPath()).toURI().toURL())), UserScaleContext.create(ctx));
   }
 
-  private static void test(Icon icon, UserScaleContext iconCtx) {
-    ((ScaleContextAware)icon).updateScaleContext(iconCtx);
+  private static void test(@NotNull Icon icon, @NotNull UserScaleContext iconContext) {
+    ((ScaleContextAware)icon).updateScaleContext(iconContext);
 
-    ScaleContext ctx = ScaleContext.create(iconCtx);
+    ScaleContext context = ScaleContext.create(iconContext);
 
     /*
      * (A) normal conditions
@@ -107,11 +113,11 @@ public class IconScaleTest extends BareTestFixtureTestCase {
 
     //noinspection UnnecessaryLocalVariable
     Icon iconA = icon;
-    double usrSize2D = ctx.apply(ICON_BASE_SIZE, EFF_USR_SCALE);
+    double usrSize2D = context.apply(ICON_BASE_SIZE, EFF_USR_SCALE);
     int usrSize = (int)Math.round(usrSize2D);
-    int devSize = (int)Math.round(ctx.apply(usrSize2D, DEV_SCALE));
+    int devSize = (int)Math.round(context.apply(usrSize2D, DEV_SCALE));
 
-    assertIcon(iconA, iconCtx, usrSize, devSize);
+    assertIcon(iconA, iconContext, usrSize, devSize);
 
     /*
      * (B) override scale
@@ -120,11 +126,11 @@ public class IconScaleTest extends BareTestFixtureTestCase {
 
       Icon iconB = IconUtil.overrideScale(IconUtil.deepCopy(icon, null), USR_SCALE.of(ICON_OVER_USR_SCALE));
 
-      usrSize2D = ICON_BASE_SIZE * ICON_OVER_USR_SCALE * ctx.getScale(OBJ_SCALE);
+      usrSize2D = ICON_BASE_SIZE * ICON_OVER_USR_SCALE * context.getScale(OBJ_SCALE);
       usrSize = (int)Math.round(usrSize2D);
-      devSize = (int)Math.round(ctx.apply(usrSize2D, DEV_SCALE));
+      devSize = (int)Math.round(context.apply(usrSize2D, DEV_SCALE));
 
-      assertIcon(iconB, iconCtx, usrSize, devSize);
+      assertIcon(iconB, iconContext, usrSize, devSize);
     }
 
     /*
@@ -132,35 +138,36 @@ public class IconScaleTest extends BareTestFixtureTestCase {
      */
     Icon iconC = IconUtil.scale(icon, null, ICON_OBJ_SCALE);
 
-    assertNotSame("scaled instance of the icon " + iconCtx, icon, iconC);
-    assertEquals("ScaleContext of the original icon changed " + iconCtx, iconCtx, ((ScaleContextAware)icon).getScaleContext());
+    assertThat(iconC).isNotSameAs(icon);
+    assertThat(((ScaleContextAware)icon).getScaleContext()).isEqualTo(iconContext);
 
-    usrSize2D = ctx.apply(ICON_BASE_SIZE, EFF_USR_SCALE);
+    usrSize2D = context.apply(ICON_BASE_SIZE, EFF_USR_SCALE);
     double scaledUsrSize2D = usrSize2D * ICON_OBJ_SCALE;
     int scaledUsrSize = (int)Math.round(scaledUsrSize2D);
-    int scaledDevSize = (int)Math.round(ctx.apply(scaledUsrSize2D, DEV_SCALE));
+    int scaledDevSize = (int)Math.round(context.apply(scaledUsrSize2D, DEV_SCALE));
 
-    assertIcon(iconC, iconCtx, scaledUsrSize, scaledDevSize);
+    assertIcon(iconC, iconContext, scaledUsrSize, scaledDevSize);
 
     // Additionally check that the original image hasn't changed after scaling
-    Pair<BufferedImage, Graphics2D> pair = createImageAndGraphics(ctx.getScale(DEV_SCALE), icon.getIconWidth(), icon.getIconHeight());
+    Pair<BufferedImage, Graphics2D> pair = createImageAndGraphics(context.getScale(DEV_SCALE), icon.getIconWidth(), icon.getIconHeight());
     BufferedImage iconImage = pair.first;
     Graphics2D g2d = pair.second;
 
     icon.paintIcon(null, g2d, 0, 0);
 
-    BufferedImage goldImage = loadImage(getIconPath(), ctx);
+    BufferedImage goldImage = loadImage(getIconPath(), context);
 
     ImageComparator.compareAndAssert(
       new ImageComparator.AASmootherComparator(0.1, 0.1, new Color(0, 0, 0, 0)), goldImage, iconImage, null);
   }
 
-  static void assertIcon(Icon icon, UserScaleContext iconCtx, int usrSize, int devSize) {
-    ScaleContext ctx = ScaleContext.create(iconCtx);
-    assertEquals("unexpected icon user width (ctx: " + iconCtx + ")", usrSize, icon.getIconWidth());
-    assertEquals("unexpected icon user height (ctx: " + iconCtx + ")", usrSize, icon.getIconHeight());
-    assertEquals("unexpected icon real width (ctx: " + iconCtx + ")", devSize, ImageUtil.getRealWidth(IconUtil.toImage(icon, ctx)));
-    assertEquals("unexpected icon real height (ctx: " + iconCtx + ")", devSize, ImageUtil.getRealHeight(IconUtil.toImage(icon, ctx)));
+  static void assertIcon(@NotNull Icon icon, @NotNull UserScaleContext iconContext, int usrSize, int devSize) {
+    assertThat(icon.getIconWidth()).describedAs("unexpected icon user width (ctx: " + iconContext + ")").isEqualTo(usrSize);
+    assertThat(icon.getIconHeight()).describedAs("unexpected icon user height (ctx: " + iconContext + ")").isEqualTo(usrSize);
+
+    ScaleContext context = ScaleContext.create(iconContext);
+    assertThat(ImageUtil.getRealWidth(IconUtil.toImage(icon, context))).describedAs("unexpected icon real width (ctx: " + iconContext + ")").isEqualTo(devSize);
+    assertThat(ImageUtil.getRealHeight(IconUtil.toImage(icon, context))).describedAs("unexpected icon real height (ctx: " + iconContext + ")").isEqualTo(devSize);
   }
 
   private static String getIconPath() {

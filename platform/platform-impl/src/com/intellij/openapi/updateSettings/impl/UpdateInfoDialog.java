@@ -19,7 +19,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
@@ -27,6 +27,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -44,7 +45,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 
-import static com.intellij.openapi.updateSettings.impl.UpdateCheckerComponent.SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY;
+import static com.intellij.openapi.updateSettings.impl.UpdateCheckerService.SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY;
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.util.analytics.StudioUpdateAnalyticsUtil.*;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
@@ -73,7 +74,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     myUpdatedPlugins = updatedPlugins;
     myNewBuild = newBuild;
     myPatches = patches;
-    myWriteProtected = myPatches != null && !SystemInfoRt.isWindows && !Files.isWritable(Paths.get(PathManager.getHomePath()));
+    myWriteProtected = myPatches != null && !SystemInfo.isWindows && !Files.isWritable(Paths.get(PathManager.getHomePath()));
     getCancelAction().putValue(DEFAULT_ACTION, Boolean.TRUE);
     myLicenseInfo = initLicensingInfo(myUpdatedChannel, myNewBuild);
     myTestPatch = null;
@@ -282,12 +283,12 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   private static void showPatchInstructions(String[] command) {
     String product = StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getFullProductName().replace(' ', '-'));
     String version = ApplicationInfo.getInstance().getFullVersion();
-    File file = new File(SystemProperties.getUserHome(), product + "-" + version + "-patch." + (SystemInfoRt.isWindows ? "cmd" : "sh"));
+    File file = new File(SystemProperties.getUserHome(), product + "-" + version + "-patch." + (SystemInfo.isWindows ? "cmd" : "sh"));
     try {
-      String text = (SystemInfoRt.isWindows ? "@echo off\n\n" : "#!/bin/sh\n\n") +
+      String text = (SystemInfo.isWindows ? "@echo off\n\n" : "#!/bin/sh\n\n") +
                     StringUtil.join(CommandLineUtil.toCommandLine(Arrays.asList(command)), " ");
       FileUtil.writeToFile(file, text);
-      FileUtil.setExecutableAttribute(file.getPath(), true);
+      FileUtil.setExecutable(file);
     }
     catch (Exception e) {
       Logger.getInstance(UpdateInstaller.class).error(e);
@@ -370,7 +371,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
         @Override
         public Dimension getPreferredScrollableViewportSize() {
           Dimension size = super.getPreferredScrollableViewportSize();
-          size.height = Math.min(size.height, JBUI.scale(400));
+          size.height = Math.min(size.height, JBUIScale.scale(400));
           return size;
         }
       };

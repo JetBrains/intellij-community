@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.LafIconLookup;
@@ -57,8 +58,10 @@ public class WinIntelliJCheckBoxUI extends DarculaCheckBoxUI {
         DarculaUIUtil.Outline.valueOf(op.toString()).setGraphicsColor(g2, b.hasFocus());
         Path2D outline = new Path2D.Float(Path2D.WIND_EVEN_ODD);
 
-        outline.append(new Rectangle2D.Float(iconRect.x - scale(1), iconRect.y - scale(1), scale(15), scale(15)), false);
-        outline.append(new Rectangle2D.Float(iconRect.x + scale(1), iconRect.y + scale(1), scale(11), scale(11)), false);
+        outline.append(new Rectangle2D.Float(iconRect.x - JBUIScale.scale(1), iconRect.y - JBUIScale.scale(1), JBUIScale.scale(15),
+                                             JBUIScale.scale(15)), false);
+        outline.append(new Rectangle2D.Float(iconRect.x + JBUIScale.scale(1), iconRect.y + JBUIScale.scale(1), JBUIScale.scale(11),
+                                             JBUIScale.scale(11)), false);
         g2.fill(outline);
       }
     }
@@ -84,6 +87,6 @@ public class WinIntelliJCheckBoxUI extends DarculaCheckBoxUI {
 
   @Override
   protected int textIconGap() {
-    return scale(4);
+    return JBUIScale.scale(4);
   }
 }

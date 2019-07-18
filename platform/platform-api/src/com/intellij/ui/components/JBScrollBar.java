@@ -2,9 +2,9 @@
 package com.intellij.ui.components;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeGlassPane.TopComponent;
-import com.intellij.util.ui.JBUI;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.RegionPainter;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
@@ -95,7 +95,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
    */
   @SuppressWarnings("UnusedParameters")
   public static ScrollBarUI createUI(JComponent c) {
-    return SystemInfoRt.isMac ? new MacScrollBarUI() : new DefaultScrollBarUI();
+    return SystemInfo.isMac ? new MacScrollBarUI() : new DefaultScrollBarUI();
   }
 
   /**
@@ -270,14 +270,14 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
     double rotation = event.getPreciseWheelRotation();
     if (ScrollSettings.isPixelPerfectEnabled()) {
       // calculate an absolute delta if possible
-      if (SystemInfoRt.isMac) {
+      if (SystemInfo.isMac) {
         // Native code in our JDK for Mac uses 0.1 to convert pixels to units,
         // so we use 10 to restore amount of pixels to scroll.
         return 10 * rotation;
       }
       JViewport viewport = getViewport();
       Font font = viewport == null ? null : getViewFont(viewport);
-      int size = font == null ? JBUI.scale(10) : font.getSize(); // assume an unit size
+      int size = font == null ? JBUIScale.scale(10) : font.getSize(); // assume an unit size
       return size * rotation * event.getScrollAmount();
     }
     if (ScrollSettings.isHighPrecisionEnabled()) {

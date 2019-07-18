@@ -4,6 +4,7 @@ package com.intellij.structuralsearch.plugin.ui;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.structuralsearch.PatternContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,20 +22,16 @@ public class FileTypeInfo {
 
   private final LanguageFileType myFileType;
   private final Language myDialect;
-  private final String myContext;
-  private final boolean myEnabled;
+  private final PatternContext myContext;
+  private final boolean myNested;
   private final String myDescription;
 
-  public FileTypeInfo(@NotNull LanguageFileType fileType,
-                      @Nullable Language dialect,
-                      @Nullable String context,
-                      boolean enabled,
-                      boolean duplicated) {
+  public FileTypeInfo(@NotNull LanguageFileType fileType, @NotNull Language dialect, @Nullable PatternContext context, boolean nested) {
     myFileType = fileType;
     myDialect = dialect;
     myContext = context;
-    myEnabled = enabled;
-    myDescription = getDescription(fileType, duplicated);
+    myNested = nested;
+    myDescription = getDescription(fileType);
   }
 
   @NotNull
@@ -48,62 +45,42 @@ public class FileTypeInfo {
   }
 
   @Nullable
-  public String getContext() {
+  public PatternContext getContext() {
     return myContext;
   }
 
   @NotNull
   public String getText() {
-    if (myDialect != null) {
-      return myDialect.getDisplayName();
-    }
-    if (myContext != null) {
-      return myContext + " Context";
-    }
-    return myFileType.getName();
-  }
-
-  @NotNull
-  public String getSearchText() {
-    if (myDialect != null) {
-      return myDialect.getDisplayName();
-    }
-    return myFileType.getName();
-  }
-
-  @NotNull
-  public String getFullText() {
-    if (myDialect != null) {
-      return myDescription + " - " + myDialect.getDisplayName();
-    }
-    if (myContext != null) {
-      return myDescription + " - " + myContext + " Context";
+    if (myNested) {
+      if (myDialect != null && myDialect != myFileType.getLanguage()) {
+        return myDialect.getDisplayName();
+      }
+      if (myContext != null) {
+        return myDescription + " - " + myContext.getDisplayName();
+      }
     }
     return myDescription;
   }
 
+  @NotNull
+  public String getSearchText() {
+    return (myDialect != null) ? myDialect.getDisplayName() : myFileType.getName();
+  }
+
   public boolean isNested() {
-    return myDialect != null || myContext != null;
+    return myNested;
   }
 
-  public boolean isEnabled() {
-    return myEnabled;
-  }
-
-  public boolean isEqualTo(@NotNull LanguageFileType fileType, @Nullable Language dialect, @Nullable String context) {
-    return Objects.equals(myFileType, fileType) &&
-           Objects.equals(myDialect, dialect) &&
-           Objects.equals(myContext, context);
+  public boolean isEqualTo(@NotNull LanguageFileType fileType, @Nullable Language dialect, @Nullable PatternContext context) {
+    return (myFileType == fileType)
+           && (dialect == null || myDialect == dialect)
+           && (context == null || myContext == context);
   }
 
   @NotNull
-  private static String getDescription(@NotNull LanguageFileType fileType, boolean duplicated) {
+  private static String getDescription(@NotNull LanguageFileType fileType) {
     final String description = fileType.getDescription();
-    final String trimmedDescription = StringUtil.capitalizeWords(CLEANUP.matcher(description).replaceAll(""), true);
-    if (!duplicated) {
-      return trimmedDescription;
-    }
-    return trimmedDescription + " (" + fileType.getName() + ")";
+    return StringUtil.capitalizeWords(CLEANUP.matcher(description).replaceAll(""), true);
   }
 
   @Override
@@ -111,9 +88,9 @@ public class FileTypeInfo {
     if (this == o) return true;
     if (!(o instanceof FileTypeInfo)) return false;
     final FileTypeInfo info = (FileTypeInfo)o;
-    return Objects.equals(myFileType, info.myFileType) &&
-           Objects.equals(myDialect, info.myDialect) &&
-           Objects.equals(myContext, info.myContext);
+    return myFileType == info.myFileType
+           && myDialect == info.myDialect
+           && myContext == info.myContext;
   }
 
   @Override
@@ -123,6 +100,6 @@ public class FileTypeInfo {
 
   @Override
   public String toString() {
-    return getFullText();
+    return getText();
   }
 }

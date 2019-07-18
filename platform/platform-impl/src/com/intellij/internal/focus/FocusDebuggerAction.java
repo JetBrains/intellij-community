@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.focus;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -11,7 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ui.JBUI;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -142,7 +142,7 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
               }
             }
             else {
-              currentFocusGraphics.setStroke(new BasicStroke(JBUI.scale(1)));
+              currentFocusGraphics.setStroke(new BasicStroke(JBUIScale.scale(1)));
               currentFocusGraphics.setColor(myTemporary ? JBColor.ORANGE : JBColor.GREEN);
               UIUtil.drawDottedRectangle(currentFocusGraphics, 1, 1, myCurrent.getSize().width - 2, myCurrent.getSize().height - 2);
             }
@@ -160,7 +160,7 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
                 }
               }
               else {
-                previousFocusGraphics.setStroke(new BasicStroke(JBUI.scale(1)));
+                previousFocusGraphics.setStroke(new BasicStroke(JBUIScale.scale(1)));
                 previousFocusGraphics.setColor(JBColor.RED);
                 UIUtil.drawDottedRectangle(previousFocusGraphics, 1, 1, myPrevious.getSize().width - 2, myPrevious.getSize().height - 2);
               }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.openapi.Disposable;
@@ -34,6 +34,7 @@ import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBSwingUtilities;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -229,7 +230,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
     Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     if (focusOwner instanceof JComponent) {
       final JComponent jComponent = (JComponent)focusOwner;
-      if (jComponent.getClientProperty("AuxEditorComponent") != null) return null; // Hack for EditorSearchComponent
+      if (jComponent.getClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY) != null) return null;
     }
 
     return myEditor;

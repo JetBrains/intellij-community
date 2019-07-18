@@ -186,6 +186,15 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
 
   public void testIDEA140035() {
     doTestAllMethodCallExpressions();
+    doTestAllParameterTypes();
+  }
+
+  public void testIDEA211775() {
+    doTestAllMethodCallExpressions();
+    doTestAllParameterTypes();
+  }
+
+  private static void doTestAllParameterTypes() {
     final Collection<PsiParameter> parameterLists = PsiTreeUtil.findChildrenOfType(getFile(), PsiParameter.class);
     for (PsiParameter parameter : parameterLists) {
       if (parameter.getTypeElement() != null) continue;

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.icons.AllIcons;
@@ -20,6 +20,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.UserActivityProviderComponent;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
@@ -97,7 +98,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     JPanel panel = new JPanel(new GridBagLayout());
     ComboBoxButton button = createComboBoxButton(presentation);
     GridBagConstraints constraints = new GridBagConstraints(
-      0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.insets(0, 3), 0, 0);
+      0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBInsets.create(0, 3), 0, 0);
     panel.add(button, constraints);
     return panel;
   }
@@ -313,10 +314,10 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       Dimension prefSize = super.getPreferredSize();
       int width = prefSize.width
                   + (myPresentation != null && isArrowVisible(myPresentation) ?
-                     (UIUtil.isUnderWin10LookAndFeel() ? getArrowIcon(isEnabled()).getIconWidth() + JBUI.scale(6): ICON_SIZE.get()) : 0)
+                     (UIUtil.isUnderWin10LookAndFeel() ? getArrowIcon(isEnabled()).getIconWidth() + JBUIScale.scale(6) : ICON_SIZE.get()) : 0)
                   + (StringUtil.isNotEmpty(getText()) ? getIconTextGap() : 0);
 
-      Dimension size = new Dimension(width, isSmallVariant() ? JBUI.scale(24) : Math.max(JBUI.scale(24), prefSize.height));
+      Dimension size = new Dimension(width, isSmallVariant() ? JBUIScale.scale(24) : Math.max(JBUIScale.scale(24), prefSize.height));
       JBInsets.addTo(size, getMargin());
       return size;
     }
@@ -345,7 +346,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
       if (UIUtil.isUnderWin10LookAndFeel()) {
         Icon icon = getArrowIcon(isEnabled());
-        int x = getWidth() - icon.getIconWidth() - getInsets().right - getMargin().right - JBUI.scale(3);
+        int x = getWidth() - icon.getIconWidth() - getInsets().right - getMargin().right - JBUIScale.scale(3);
         int y = (getHeight() - icon.getIconHeight()) / 2;
         icon.paintIcon(null, g, x, y);
       }
@@ -363,9 +364,9 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
           g2.setColor(JBUI.CurrentTheme.Arrow.foregroundColor(isEnabled()));
 
           Path2D arrow = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-          arrow.moveTo(JBUI.scale(3.5f), JBUI.scale(6f));
-          arrow.lineTo(JBUI.scale(12.5f), JBUI.scale(6f));
-          arrow.lineTo(JBUI.scale(8f), JBUI.scale(11f));
+          arrow.moveTo(JBUIScale.scale(3.5f), JBUIScale.scale(6f));
+          arrow.lineTo(JBUIScale.scale(12.5f), JBUIScale.scale(6f));
+          arrow.lineTo(JBUIScale.scale(8f), JBUIScale.scale(11f));
           arrow.closePath();
 
           g2.fill(arrow);

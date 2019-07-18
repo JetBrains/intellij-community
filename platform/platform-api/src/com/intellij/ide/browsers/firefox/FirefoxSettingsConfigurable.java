@@ -7,7 +7,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -53,7 +53,7 @@ public class FirefoxSettingsConfigurable implements Configurable {
       public boolean isFileSelectable(VirtualFile file) {
         return file.getName().equals(FirefoxUtil.PROFILES_INI_FILE) && super.isFileSelectable(file);
       }
-    }.withShowHiddenFiles(SystemInfoRt.isUnix);
+    }.withShowHiddenFiles(SystemInfo.isUnix);
   }
 
   @Override

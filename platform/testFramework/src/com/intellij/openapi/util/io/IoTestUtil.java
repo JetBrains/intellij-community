@@ -3,7 +3,7 @@ package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
@@ -31,7 +31,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class IoTestUtil {
-  public static final boolean isSymLinkCreationSupported = SystemInfoRt.isUnix || SystemInfo.isWinVistaOrNewer && canCreateSymlinks();
+  public static final boolean isSymLinkCreationSupported = SystemInfo.isUnix || SystemInfo.isWinVistaOrNewer && canCreateSymlinks();
 
   private IoTestUtil() { }
 
@@ -59,7 +59,7 @@ public class IoTestUtil {
   }
 
   private static File expandWindowsPath(File file) {
-    if (SystemInfoRt.isWindows && file.getPath().indexOf('~') > 0) {
+    if (SystemInfo.isWindows && file.getPath().indexOf('~') > 0) {
       try {
         return file.getCanonicalFile();
       }
@@ -92,7 +92,7 @@ public class IoTestUtil {
 
   @NotNull
   public static File createJunction(@NotNull String target, @NotNull String junction) {
-    assertTrue(SystemInfoRt.isWindows);
+    assertTrue(SystemInfo.isWindows);
     File targetFile = new File(target);
     assertTrue(targetFile.getPath(), targetFile.isDirectory());
     File junctionFile = getFullLinkPath(junction);
@@ -102,13 +102,13 @@ public class IoTestUtil {
   }
 
   public static void deleteJunction(@NotNull String junction) {
-    assertTrue(SystemInfoRt.isWindows);
+    assertTrue(SystemInfo.isWindows);
     assertTrue(new File(junction).delete());
   }
 
   @NotNull
   public static File createSubst(@NotNull String target) {
-    assertTrue(SystemInfoRt.isWindows);
+    assertTrue(SystemInfo.isWindows);
     File targetFile = new File(target);
     assertTrue(targetFile.getPath(), targetFile.isDirectory());
     String substRoot = getFirstFreeDriveLetter() + ":";

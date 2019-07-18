@@ -3,6 +3,8 @@ package org.editorconfig.configmanagement;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
@@ -15,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import org.editorconfig.Utils;
 import org.editorconfig.language.messages.EditorConfigBundle;
 import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EditorConfigActionUtil {
-  private static final NotificationGroup NOTIFICATION_GROUP =
+  public static final NotificationGroup NOTIFICATION_GROUP =
     new NotificationGroup("EditorConfig", NotificationDisplayType.STICKY_BALLOON, true);
 
 
@@ -35,9 +38,9 @@ public class EditorConfigActionUtil {
     return actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  public static AnAction createDisableAction(@NotNull Project project) {
+  public static AnAction createDisableAction(@NotNull Project project, @NotNull String message) {
     return DumbAwareAction.create(
-      EditorConfigBundle.message("action.disable"),
+      message,
       e -> {
         EditorConfigSettings settings = CodeStyle.getSettings(project).getCustomSettings(EditorConfigSettings.class);
         settings.ENABLED = false;
@@ -92,6 +95,29 @@ public class EditorConfigActionUtil {
       CodeStyleSettingsManager.getInstance(myProject).notifyCodeStyleSettingsChanged();
       myNotification.expire();
     }
+  }
+
+  public static AnAction createShowEditorConfigFilesAction() {
+    return new DumbAwareAction(EditorConfigBundle.message("editor.config.files.show")) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        Project project = e.getProject();
+        if (project != null) {
+          showEditorConfigFiles(e.getProject(), e);
+        }
+      }
+    };
+  }
+
+  public static void showEditorConfigFiles(@NotNull Project project, @NotNull AnActionEvent event) {
+    SearchEverywhereManager seManager = SearchEverywhereManager.getInstance(project);
+    String searchProviderID = SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID;
+    if (seManager.isShown()) {
+      if (!searchProviderID.equals(seManager.getSelectedContributorID())) {
+        seManager.setSelectedContributor(searchProviderID);
+      }
+    }
+    seManager.show(searchProviderID, Utils.EDITOR_CONFIG_FILE_NAME, event);
   }
 
 }

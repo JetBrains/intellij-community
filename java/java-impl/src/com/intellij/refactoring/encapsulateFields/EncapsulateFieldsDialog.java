@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.encapsulateFields;
 
 import com.intellij.icons.AllIcons;
@@ -16,6 +16,7 @@ import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.icons.RowIcon;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -652,7 +653,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
               setForeground(JBColor.RED);
             }
 
-            RowIcon icon = new RowIcon(methodIcon, overrideIcon);
+            RowIcon icon = IconManager.getInstance().createRowIcon(methodIcon, overrideIcon);
             setIcon(icon);
             setDisabledIcon(icon);
             break;

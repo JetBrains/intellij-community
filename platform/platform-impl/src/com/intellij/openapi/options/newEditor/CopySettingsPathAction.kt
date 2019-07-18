@@ -11,10 +11,10 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.SystemInfo.isMac
+import com.intellij.ui.ComponentUtil
 import com.intellij.ui.tabs.JBTabs
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.TextTransferable
-import com.intellij.util.ui.UIUtil.getParentOfType
 import org.jetbrains.ide.BuiltInServerManager
 import java.awt.datatransfer.Transferable
 import java.awt.event.ActionEvent
@@ -62,14 +62,14 @@ class CopySettingsPathAction : AnAction(pathActionName, ActionsBundle.message("a
 
   override fun update(event: AnActionEvent) {
     val component = event.getData(CONTEXT_COMPONENT)
-    val editor = getParentOfType(SettingsEditor::class.java, component)
+    val editor = ComponentUtil.getParentOfType(SettingsEditor::class.java, component)
     event.presentation.isEnabledAndVisible = editor != null
   }
 
   override fun actionPerformed(event: AnActionEvent) {
     var component = event.getData(CONTEXT_COMPONENT)
     if (component is JTree) {
-      getParentOfType(SettingsTreeView::class.java, component)?.let { settingsTreeView ->
+      ComponentUtil.getParentOfType(SettingsTreeView::class.java, component)?.let { settingsTreeView ->
         settingsTreeView.createTransferable(event.inputEvent)?.let {
           CopyPasteManager.getInstance().setContents(it)
         }
@@ -77,12 +77,12 @@ class CopySettingsPathAction : AnAction(pathActionName, ActionsBundle.message("a
       }
     }
 
-    val names = getParentOfType(SettingsEditor::class.java, component)?.pathNames ?: return
+    val names = ComponentUtil.getParentOfType(SettingsEditor::class.java, component)?.pathNames ?: return
     if (names.isEmpty()) {
       return
     }
 
-    val inner = getParentOfType(ConfigurableEditor::class.java, component)
+    val inner = ComponentUtil.getParentOfType(ConfigurableEditor::class.java, component)
     if (inner != null) {
       val label = getTextLabel(component)
       val path = ArrayDeque<String>()

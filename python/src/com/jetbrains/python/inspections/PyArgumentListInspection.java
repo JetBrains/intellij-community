@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.ResolveResult;
@@ -86,7 +87,9 @@ public class PyArgumentListInspection extends PyInspection {
           else { // possible unfilled params
             for (int i = firstParamOffset; i < params.size(); i++) {
               final PyCallableParameter parameter = params.get(i);
-              if (parameter.getParameter() instanceof PySingleStarParameter) continue;
+              if (parameter.getParameter() instanceof PySingleStarParameter || parameter.getParameter() instanceof PySlashParameter) {
+                continue;
+              }
               // param tuples, non-starred or non-default won't do
               if (!parameter.isKeywordContainer() && !parameter.isPositionalContainer() && !parameter.hasDefaultValue()) {
                 final String parameterName = parameter.getName();

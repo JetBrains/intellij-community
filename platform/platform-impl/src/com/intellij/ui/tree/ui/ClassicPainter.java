@@ -4,15 +4,12 @@ package com.intellij.ui.tree.ui;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.PaintUtil;
-import com.intellij.util.ui.JBUI;
+import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.Component;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import javax.swing.UIManager;
+import javax.swing.*;
+import java.awt.*;
 
 final class ClassicPainter implements Control.Painter {
   private static final int GAP = 2; // minimal space between a control icon and a renderer component
@@ -36,7 +33,7 @@ final class ClassicPainter implements Control.Painter {
     int left = getLeftIndent(controlWidth / 2);
     int right = getRightIndent();
     int offset = getLeafIndent(leaf);
-    if (offset < 0) offset = Math.max(controlWidth + left - controlWidth / 2 + JBUI.scale(GAP), left + right);
+    if (offset < 0) offset = Math.max(controlWidth + left - controlWidth / 2 + JBUIScale.scale(GAP), left + right);
     return depth > 1 ? (depth - 1) * (left + right) + offset : offset;
   }
 
@@ -80,17 +77,17 @@ final class ClassicPainter implements Control.Painter {
   }
 
   private int getLeftIndent(int min) {
-    return Math.max(min, myLeftIndent != null ? JBUI.scale(myLeftIndent) : UIManager.getInt("Tree.leftChildIndent"));
+    return Math.max(min, myLeftIndent != null ? JBUIScale.scale(myLeftIndent) : UIManager.getInt("Tree.leftChildIndent"));
   }
 
   private int getRightIndent() {
     int old = myRightIndent == null ? Registry.intValue("ide.ui.tree.indent", -1) : -1;
-    if (old >= 0) return JBUI.scale(old); // support old registry key temporarily
-    return Math.max(0, myRightIndent != null ? JBUI.scale(myRightIndent) : UIManager.getInt("Tree.rightChildIndent"));
+    if (old >= 0) return JBUIScale.scale(old);
+    return Math.max(0, myRightIndent != null ? JBUIScale.scale(myRightIndent) : UIManager.getInt("Tree.rightChildIndent"));
   }
 
   private int getLeafIndent(boolean leaf) {
-    return !leaf || myLeafIndent == null ? -1 : JBUI.scale(myLeafIndent);
+    return !leaf || myLeafIndent == null ? -1 : JBUIScale.scale(myLeafIndent);
   }
 
   private static void paintLine(@NotNull Graphics g, int x, int y, int width, int height) {

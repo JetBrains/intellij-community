@@ -16,7 +16,7 @@ import java.lang.reflect.Type
 import java.nio.file.Path
 import kotlin.experimental.or
 
-private const val FORMAT_VERSION = 1
+private const val FORMAT_VERSION = 2
 
 internal class IonObjectSerializer {
   val readerBuilder: IonReaderBuilder = IonReaderBuilder.standard().immutable()
@@ -184,7 +184,7 @@ private data class ReadContextImpl(override val reader: ValueReader,
 
 internal val binaryWriterBuilder by lazy {
   val binaryWriterBuilder = _Private_IonManagedBinaryWriterBuilder
-    .create(_Private_IonManagedBinaryWriterBuilder.AllocatorMode.BASIC)
+    .create(PooledBlockAllocatorProvider())
     .withPaddedLengthPreallocation(0)
     .withStreamCopyOptimization(true)
   binaryWriterBuilder

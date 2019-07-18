@@ -46,7 +46,7 @@ import java.util.List;
 /**
  * @author anna
  */
-public class AbstractRerunFailedTestsAction extends AnAction implements AnAction.TransparentUpdate {
+public abstract class AbstractRerunFailedTestsAction extends AnAction implements AnAction.TransparentUpdate {
   private static final Logger LOG = Logger.getInstance(AbstractRerunFailedTestsAction.class);
 
   private TestFrameworkRunningModel myModel;

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
@@ -15,7 +15,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.util.ui.JBUI;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,7 +109,7 @@ public class CommonJavaParametersPanel extends CommonProgramParametersPanel {
     private final TextFieldWithBrowseButton myInputFile = new TextFieldWithBrowseButton();
 
     RedirectInputPanel() {
-      super(new BorderLayout(JBUI.scale(10), JBUI.scale(2)));
+      super(new BorderLayout(JBUIScale.scale(10), JBUIScale.scale(2)));
        myInputFile.addBrowseFolderListener(null, null, null,
                                            FileChooserDescriptorFactory.createSingleFileDescriptor(),
                                            TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);

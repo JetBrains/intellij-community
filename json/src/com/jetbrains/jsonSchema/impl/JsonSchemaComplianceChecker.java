@@ -127,11 +127,12 @@ public class JsonSchemaComplianceChecker {
     String value = validationError.getMessage();
     if (myMessagePrefix != null) value = myMessagePrefix + value;
     LocalQuickFix[] fix = validationError.createFixes(myWalker.getSyntaxAdapter(myHolder.getProject()));
+    PsiElement element = range.isEmpty() ? psiElement.getContainingFile() : psiElement;
     if (fix.length == 0) {
-      myHolder.registerProblem(psiElement, range, value);
+      myHolder.registerProblem(element, range, value);
     }
     else {
-      myHolder.registerProblem(range.isEmpty() ? psiElement.getContainingFile() : psiElement, range, value, fix);
+      myHolder.registerProblem(element, range, value, fix);
     }
   }
 

@@ -6,7 +6,7 @@ import com.intellij.openapi.fileTypes.PlainTextLanguage
 import icons.MavenIcons
 import javax.swing.Icon
 
-class MavenConfigFileType protected constructor() : LanguageFileType(PlainTextLanguage.INSTANCE) {
+class MavenConfigFileType : LanguageFileType(PlainTextLanguage.INSTANCE) {
 
   override fun getName(): String {
     return "MavenConfig"
@@ -22,10 +22,6 @@ class MavenConfigFileType protected constructor() : LanguageFileType(PlainTextLa
 
   override fun getIcon(): Icon? {
     return MavenIcons.MavenLogo
-  }
-
-  companion object {
-    val INSTANCE = MavenConfigFileType()
   }
 }
 

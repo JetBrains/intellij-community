@@ -17,6 +17,7 @@ public class AllIcons {
 
   public final static class Actions {
     /** 16x16 */ public static final Icon AddMulticaret = load("/actions/AddMulticaret.svg");
+    /** 16x16 */ public static final Icon Amend = load("/actions/amend.svg");
     /** 16x16 */ public static final Icon Annotate = load("/actions/annotate.svg");
     /** 16x16 */ public static final Icon Back = load("/actions/back.svg");
     /** 16x16 */ public static final Icon Cancel = load("/actions/cancel.svg");
@@ -1638,6 +1639,11 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Readonly = load("/ide/readonly.svg");
     /** 16x16 */ public static final Icon Readwrite = load("/ide/readwrite.svg");
 
+    public final static class RunAnything {
+      /** 16x16 */ public static final Icon OpenRecentProject = load("/ide/runAnything/openRecentProject.svg");
+
+    }
+
     public final static class Shadow {
       /** 4x14 */ public static final Icon Bottom = load("/ide/shadow/bottom.svg");
       /** 18x22 */ public static final Icon BottomLeft = load("/ide/shadow/bottomLeft.svg");
@@ -2022,6 +2028,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon KeymapMainMenu = load("/nodes/keymapMainMenu.svg");
     /** 16x16 */ public static final Icon KeymapOther = load("/nodes/keymapOther.svg");
     /** 16x16 */ public static final Icon KeymapTools = load("/nodes/keymapTools.svg");
+    /** 16x16 */ public static final Icon Lambda = load("/nodes/lambda.svg");
     /** 16x16 */ public static final Icon Locked = load("/nodes/locked.svg");
     /** 16x16 */ public static final Icon LogFolder = load("/nodes/logFolder.svg");
     /** 16x16 */ public static final Icon Method = load("/nodes/method.svg");

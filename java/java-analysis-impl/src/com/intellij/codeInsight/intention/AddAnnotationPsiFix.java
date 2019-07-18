@@ -12,6 +12,7 @@ import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.light.LightElement;
@@ -68,7 +69,12 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
 
   @Nullable
   public static PsiModifierListOwner getContainer(final PsiFile file, int offset) {
-    PsiReference reference = file.findReferenceAt(offset);
+    return getContainer(file, offset, false);
+  }
+
+  @Nullable
+  public static PsiModifierListOwner getContainer(final PsiFile file, int offset, boolean availableOnReference) {
+    PsiReference reference = availableOnReference ? file.findReferenceAt(offset) : null;
     if (reference != null) {
       PsiElement target = reference.resolve();
       if (target instanceof PsiMember) {
@@ -140,7 +146,11 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
     if (modifierList == null || modifierList.hasAnnotation(myAnnotation)) return;
     PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(myAnnotation, myModifierListOwner.getResolveScope());
     final ExternalAnnotationsManager.AnnotationPlace annotationAnnotationPlace;
-    if (aClass != null && BaseIntentionAction.canModify(myModifierListOwner) && AnnotationsHighlightUtil.getRetentionPolicy(aClass) == RetentionPolicy.RUNTIME) {
+    if (aClass != null && BaseIntentionAction.canModify(myModifierListOwner) && 
+        (AnnotationsHighlightUtil.getRetentionPolicy(aClass) == RetentionPolicy.RUNTIME || 
+         !CommonClassNames.DEFAULT_PACKAGE.equals(StringUtil.getPackageName(myAnnotation)) && 
+         JavaPsiFacade.getInstance(project).getResolveHelper()//if class is already imported in current file
+           .resolveReferencedClass(StringUtil.getShortName(myAnnotation), myModifierListOwner) != null)) {
       annotationAnnotationPlace = ExternalAnnotationsManager.AnnotationPlace.IN_CODE;
     }
     else {

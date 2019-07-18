@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
@@ -32,6 +31,7 @@ import com.intellij.vcs.log.impl.VcsFileStatusInfo;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
+import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
@@ -190,7 +190,6 @@ public class GitFileHistory {
    *
    * @param project           Context project.
    * @param path              FilePath which history is queried.
-   * @param root              Git root - optional: if this is null, then git root will be detected automatically.
    * @param startingFrom      Revision from which to start file history, when null history is started from HEAD revision.
    * @param consumer          This consumer is notified ({@link Consumer#consume(Object)} when new history records are retrieved.
    * @param exceptionConsumer This consumer is notified in case of error while executing git command.
@@ -198,18 +197,18 @@ public class GitFileHistory {
    */
   public static void loadHistory(@NotNull Project project,
                                  @NotNull FilePath path,
-                                 @Nullable VirtualFile root,
                                  @Nullable VcsRevisionNumber startingFrom,
                                  @NotNull Consumer<GitFileRevision> consumer,
                                  @NotNull Consumer<VcsException> exceptionConsumer,
                                  String... parameters) {
-    VirtualFile repositoryRoot = root == null ? ProjectLevelVcsManager.getInstance(project).getVcsRootFor(path) : root;
-    if (repositoryRoot == null) {
-      exceptionConsumer.consume(new VcsException("The file " + path + " is not under vcs."));
-      return;
+    try {
+      VirtualFile repositoryRoot = GitUtil.getRepositoryForFile(project, path).getRoot();
+      VcsRevisionNumber revision = startingFrom == null ? GitRevisionNumber.HEAD : startingFrom;
+      new GitFileHistory(project, repositoryRoot, path, revision).load(consumer, exceptionConsumer, parameters);
     }
-    VcsRevisionNumber revision = startingFrom == null ? GitRevisionNumber.HEAD : startingFrom;
-    new GitFileHistory(project, repositoryRoot, path, revision).load(consumer, exceptionConsumer, parameters);
+    catch (VcsException e) {
+      exceptionConsumer.consume(e);
+    }
   }
 
   /**
@@ -230,7 +229,7 @@ public class GitFileHistory {
     List<VcsFileRevision> revisions = new ArrayList<>();
     List<VcsException> exceptions = new ArrayList<>();
 
-    loadHistory(project, path, null, startingFrom, revisions::add, exceptions::add, parameters);
+    loadHistory(project, path, startingFrom, revisions::add, exceptions::add, parameters);
 
     if (!exceptions.isEmpty()) {
       throw exceptions.get(0);

@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
@@ -35,7 +36,8 @@ public class MacIntelliJButtonBorder implements Border, UIResource {
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
                             MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
-        float lw = JBUI.scale(UIUtil.isRetina(g2) ? 0.5f : 1.0f);
+        float f = UIUtil.isRetina(g2) ? 0.5f : 1.0f;
+        float lw = JBUIScale.scale(f);
 
         Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
         border.append(new RoundRectangle2D.Float(0, 0, width, height, arc + lw, arc + lw), false);

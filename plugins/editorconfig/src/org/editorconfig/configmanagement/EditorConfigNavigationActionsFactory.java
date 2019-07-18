@@ -1,10 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement;
 
-import com.intellij.ide.actions.OpenFileAction;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -47,8 +47,12 @@ public class EditorConfigNavigationActionsFactory {
   }
 
   private static void openEditorConfig(@NotNull Project project, @NotNull VirtualFile sourceFile, @NotNull VirtualFile editorConfigFile) {
+    final FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
+    if (fileEditorManager.isFileOpen(editorConfigFile)) {
+      fileEditorManager.closeFile(editorConfigFile);
+    }
     EditorConfigPreviewManager.getInstance(project).associateWithPreviewFile(editorConfigFile, sourceFile);
-    OpenFileAction.openFile(editorConfigFile, project);
+    fileEditorManager.openFile(editorConfigFile, true);
   }
 
   public void updateEditorConfigFilePaths(@NotNull List<String> editorConfigFilePaths) {
@@ -61,7 +65,7 @@ public class EditorConfigNavigationActionsFactory {
   @NotNull
   private static String getActionName(@NotNull VirtualFile file, boolean withFolder) {
     final String fileName = EditorConfigPresentationUtil.getFileName(file, withFolder);
-    return !withFolder ? EditorConfigBundle.message("action.open.file", fileName) : fileName;
+    return !withFolder ? EditorConfigBundle.message("action.open.file") : fileName;
   }
 
   @NotNull
@@ -80,7 +84,7 @@ public class EditorConfigNavigationActionsFactory {
     private final AnAction[] myChildActions;
 
     private NavigationActionGroup(AnAction[] actions) {
-      super("Open EditorConfig File", true);
+      super(EditorConfigBundle.message("action.open.file"), true);
       myChildActions = actions;
     }
 

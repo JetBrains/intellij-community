@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public abstract class BaseElementAtCaretIntentionAction extends BaseIntentionAct
 
   /**
    * Checks whether this intention is available at a caret offset in file.
-   * If this method returns true, a light bulb for this intention is shown.
+   * If this method returns {@code true}, a light bulb for this intention is shown.
    *
    * @param project the project in which the availability is checked.
    * @param editor  the editor in which the intention will be invoked.
@@ -67,8 +67,8 @@ public abstract class BaseElementAtCaretIntentionAction extends BaseIntentionAct
 
   @Override
   public final void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PsiElement element = useElementToTheLeft ? getElementToTheLeft(editor, file) : getElementToTheRight(editor,file);
-    if (element == null){
+    final PsiElement element = useElementToTheLeft ? getElementToTheLeft(editor, file) : getElementToTheRight(editor, file);
+    if (element == null) {
       return;
     }
 
@@ -81,7 +81,7 @@ public abstract class BaseElementAtCaretIntentionAction extends BaseIntentionAct
    * @param project the project in which the file is opened.
    * @param editor  the editor for the file.
    * @param element the element under cursor.
-   * @throws IncorrectOperationException
+   * @throws IncorrectOperationException On errors.
    */
   public abstract void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException;
 
@@ -94,6 +94,4 @@ public abstract class BaseElementAtCaretIntentionAction extends BaseIntentionAct
   protected static PsiElement getElementToTheLeft(Editor editor, @NotNull PsiFile file) {
     return file.findElementAt(editor.getCaretModel().getOffset() - 1);
   }
-
-
 }

@@ -52,7 +52,8 @@ public class JavaFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
       if (operationMode == OperationMode.USAGES_WITH_DEFAULT_OPTIONS && 
           Registry.is("java.find.usages.always.use.top.hierarchy.methods")) {
         methods = SuperMethodWarningUtil.getTargetMethodCandidates(method, Collections.emptyList());
-      } else {
+      }
+      else {
         methods = SuperMethodWarningUtil.checkSuperMethods(method, JavaFindUsagesHandler.ACTION_STRING);
       }
 

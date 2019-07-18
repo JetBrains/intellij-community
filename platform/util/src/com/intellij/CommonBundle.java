@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -124,18 +124,18 @@ public class CommonBundle extends BundleBase {
   }
 
   public static String settingsTitle() {
-    return SystemInfoRt.isMac ? message("title.settings.mac") : message("title.settings");
+    return SystemInfo.isMac ? message("title.settings.mac") : message("title.settings");
   }
 
   public static String settingsAction() {
-    return SystemInfoRt.isMac ? message("action.settings.mac") : message("action.settings");
+    return SystemInfo.isMac ? message("action.settings.mac") : message("action.settings");
   }
 
   public static String settingsActionDescription() {
-    return SystemInfoRt.isMac ? message("action.settings.description.mac") : message("action.settings.description");
+    return SystemInfo.isMac ? message("action.settings.description.mac") : message("action.settings.description");
   }
 
   public static String settingsActionPath() {
-    return SystemInfoRt.isMac ? message("action.settings.path.mac") : message("action.settings.path");
+    return SystemInfo.isMac ? message("action.settings.path.mac") : message("action.settings.path");
   }
 }

@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaSpinnerUI;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.LafIconLookup;
@@ -41,7 +42,7 @@ public class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
       Graphics2D g2 = (Graphics2D)g;
       g2.setColor(getBackground());
 
-      float arc = JBUI.scale(6f);
+      float arc = JBUIScale.scale(6f);
       Path2D rect = new Path2D.Float(Path2D.WIND_EVEN_ODD);
       rect.moveTo(x, i.top);
       rect.lineTo(x, c.getHeight() - i.bottom);

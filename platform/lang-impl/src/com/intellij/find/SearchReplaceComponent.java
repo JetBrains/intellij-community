@@ -13,7 +13,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.BooleanGetter;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
@@ -23,6 +23,7 @@ import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.mac.TouchbarDataKeys;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
@@ -173,7 +174,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
       @Override
       public Dimension getMinimumSize() {
         Dimension size = super.getMinimumSize();
-        size.width += JBUI.scale(16);//looks like hack but we need this extra space in case of lack of width
+        size.width += JBUIScale.scale(16);//looks like hack but we need this extra space in case of lack of width
         return size;
       }
     };
@@ -325,7 +326,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
                                                        addTextToRecent(mySearchTextComponent);
                                                      }
                                                    }
-                                                 }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfoRt.isMac
+                                                 }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfo.isMac
                                                                                               ? META_DOWN_MASK : CTRL_DOWN_MASK),
                                                  JComponent.WHEN_FOCUSED);
 
@@ -436,7 +437,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
 
     UIUtil.addUndoRedoActions(textComponent);
 
-    textComponent.putClientProperty("AuxEditorComponent", Boolean.TRUE);
+    textComponent.putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, Boolean.TRUE);
     textComponent.setBackground(UIUtil.getTextFieldBackground());
     textComponent.addFocusListener(new FocusListener() {
       @Override

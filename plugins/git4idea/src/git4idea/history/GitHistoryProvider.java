@@ -159,7 +159,7 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
                               new String[]{"--max-count=" + vcsConfiguration.MAXIMUM_HISTORY_ROWS} :
                               ArrayUtilRt.EMPTY_STRING_ARRAY;
 
-    GitFileHistory.loadHistory(myProject, path, null, startingRevision,
+    GitFileHistory.loadHistory(myProject, path, startingRevision,
                                fileRevision -> partner.acceptRevision(fileRevision),
                                exception -> partner.reportException(exception),
                                additionalArgs);

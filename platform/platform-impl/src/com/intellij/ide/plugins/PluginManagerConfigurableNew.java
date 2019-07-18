@@ -33,6 +33,7 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
@@ -213,8 +214,8 @@ public class PluginManagerConfigurableNew
     mySearchTextField.setBorder(JBUI.Borders.customLine(SEARCH_FIELD_BORDER_COLOR));
 
     JBTextField editor = mySearchTextField.getTextEditor();
-    editor.putClientProperty("JTextField.Search.Gap", JBUI.scale(6));
-    editor.putClientProperty("JTextField.Search.GapEmptyText", JBUI.scale(-1));
+    editor.putClientProperty("JTextField.Search.Gap", JBUIScale.scale(6));
+    editor.putClientProperty("JTextField.Search.GapEmptyText", JBUIScale.scale(-1));
     editor.putClientProperty("StatusVisibleFunction", (BooleanFunction<JBTextField>)field -> field.getText().isEmpty());
     editor.setBorder(JBUI.Borders.empty(0, 6));
     editor.setOpaque(true);
@@ -1695,11 +1696,11 @@ public class PluginManagerConfigurableNew
 
   @NotNull
   public static <T extends Component> T installTiny(@NotNull T component) {
-    return SystemInfoRt.isMac ? RelativeFont.TINY.install(component) : component;
+    return SystemInfo.isMac ? RelativeFont.TINY.install(component) : component;
   }
 
   public static int offset5() {
-    return JBUI.scale(5);
+    return JBUIScale.scale(5);
   }
 
   public static boolean isJBPlugin(@NotNull IdeaPluginDescriptor plugin) {

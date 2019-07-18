@@ -1,0 +1,44 @@
+<idea-plugin>
+  <id>org.jetbrains.plugins.textmate</id>
+  <name>TextMate bundles</name>
+  <vendor>JetBrains</vendor>
+
+  <description><![CDATA[
+      Supports syntax highlighting for arbitrary file types, controlled by <a href="https://macromates.com/textmate/manual/bundles">TextMate bundles</a>
+      ]]></description>
+
+  <depends>com.intellij.modules.lang</depends>
+
+  <application-components>
+    <component>
+      <implementation-class>org.jetbrains.plugins.textmate.TextMateApplicationComponent</implementation-class>
+    </component>
+  </application-components>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileTypeFactory implementation="org.jetbrains.plugins.textmate.TextMateFileTypeFactory"/>
+    <applicationService id="textmateSettings"
+                        serviceImplementation="org.jetbrains.plugins.textmate.configuration.TextMateSettings"/>
+    <applicationService id="textmateService" serviceInterface="org.jetbrains.plugins.textmate.TextMateService"
+                        serviceImplementation="org.jetbrains.plugins.textmate.TextMateServiceImpl"/>
+    <lang.syntaxHighlighterFactory language="textmate"
+                                   implementationClass="org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateSyntaxHighlighterFactory"/>
+    <applicationConfigurable groupId="editor" displayName="TextMate Bundles" id="reference.settingsdialog.textmate.bundles" provider="org.jetbrains.plugins.textmate.configuration.TextMateConfigurableProvider"/>
+    <lang.parserDefinition language="textmate" implementationClass="org.jetbrains.plugins.textmate.psi.TextMateParserDefinition"/>
+    <braceMatcher filetype="textmate" implementationClass="org.jetbrains.plugins.textmate.editor.TextMateBraceMatcher"/>
+    <typedHandler implementation="org.jetbrains.plugins.textmate.editor.TextMateTypedHandler"/>
+    <backspaceHandlerDelegate implementation="org.jetbrains.plugins.textmate.editor.TextMateBackspaceHandler"/>
+    <multiLangCommenter implementation="org.jetbrains.plugins.textmate.editor.TextMateCommentProvider"/>
+    <lang.commenter language="textmate" implementationClass="org.jetbrains.plugins.textmate.editor.TextMateCommentProvider"/>
+    <customLiveTemplate implementation="org.jetbrains.plugins.textmate.editor.TextMateCustomLiveTemplate"/>
+    <registryKey description="Enables tmTheme emulation from current color scheme" key="textmate.theme.emulation" defaultValue="true"/>
+    <todoIndexer filetype="textmate" implementationClass="com.intellij.psi.impl.cache.impl.todo.PlainTextTodoIndexer"/>
+    <indexPatternBuilder implementation="org.jetbrains.plugins.textmate.TextMatePatternBuilder"/>
+    <spellchecker.support language="textmate" implementationClass="org.jetbrains.plugins.textmate.spellchecker.TextMateSpellingStrategy"/>
+  </extensions>
+  <actions>
+    <action id="install-vscode-plugin" class="org.jetbrains.plugins.textmate.actions.InstallVSCodePluginAction"
+            text="Install VSCode plugin..." description="Installs plugin for VSCode"
+            internal="true"/>
+  </actions>
+</idea-plugin>

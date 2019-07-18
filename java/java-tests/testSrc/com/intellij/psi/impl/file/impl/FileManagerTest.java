@@ -12,7 +12,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -387,5 +387,5 @@ public class FileManagerTest extends PsiTestCase {
 
   // timestamps should differ by at least 2 sec (see JarFileInfo.initZipFile())
   // [dsl] unfortunately, 2000 is too small a value for Linux
-  private static final int DELAY_FOR_JAR_MODIFICATION = SystemInfoRt.isWindows ? 3000 : 10000;
+  private static final int DELAY_FOR_JAR_MODIFICATION = SystemInfo.isWindows ? 3000 : 10000;
 }

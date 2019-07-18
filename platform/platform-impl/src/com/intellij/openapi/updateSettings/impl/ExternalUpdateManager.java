@@ -2,7 +2,7 @@
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -34,7 +34,7 @@ public enum ExternalUpdateManager {
   static {
     String home = PathManager.getHomePath().replace('\\', '/');
     if (home.contains("/apps/") && home.contains("/ch-")) ACTUAL = TOOLBOX;
-    else if (SystemInfoRt.isLinux && (home.startsWith("/snap/") || home.startsWith("/var/lib/snapd/snap/"))) ACTUAL = SNAP;
+    else if (SystemInfo.isLinux && (home.startsWith("/snap/") || home.startsWith("/var/lib/snapd/snap/"))) ACTUAL = SNAP;
     else if (System.getProperty("ide.no.platform.update") != null) ACTUAL = UNKNOWN;
     else ACTUAL = null;
   }

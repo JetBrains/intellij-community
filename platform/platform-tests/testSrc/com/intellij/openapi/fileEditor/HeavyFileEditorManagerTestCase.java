@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
-import com.intellij.ui.docking.DockManager;
 
 /**
  * @author Dmitry Avdeev
@@ -26,7 +25,8 @@ public abstract class HeavyFileEditorManagerTestCase extends CodeInsightFixtureT
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myManager = new FileEditorManagerImpl(getProject(), DockManager.getInstance(getProject()));
+
+    myManager = new FileEditorManagerImpl(getProject());
     ((IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(getProject())).setFileEditorManager(myManager);
     ((ComponentManagerImpl)getProject()).registerComponentInstance(FileEditorManager.class, myManager);
   }

@@ -408,7 +408,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
       ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
       for (ShelvedChangeList list : manager.getShelvedChangeLists()) {
         if (name.equals(list.DESCRIPTION)) {
-          manager.unshelveChangeList(list, list.getChanges(myProject), list.getBinaryFiles(), changeListManager.getDefaultChangeList(), true);
+          manager.unshelveChangeList(list, null, list.getBinaryFiles(), changeListManager.getDefaultChangeList(), true);
           return;
         }
       }

@@ -33,7 +33,7 @@ import javax.swing.JComponent
  *
  * The popup is automatically dismissed when the user clicks outside.
  */
-class LightCalloutPopup(
+class LightCalloutPopup(val content: JComponent,
   val closedCallback: (() -> Unit)? = null,
   val cancelCallBack: (() -> Unit)? = null,
   val beforeShownCallback: (() -> Unit)? = null
@@ -50,8 +50,7 @@ class LightCalloutPopup(
    */
   @JvmOverloads
   fun show(
-    content: JComponent,
-    parentComponent: JComponent?,
+    parentComponent: JComponent? = null,
     location: Point,
     position: Balloon.Position = Balloon.Position.below
   ) {

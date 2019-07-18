@@ -2,7 +2,7 @@
 package org.jetbrains.git4idea.util;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -114,11 +114,11 @@ public class ScriptGenerator {
   @NotNull
   private static File createTempExecutable(@NotNull String fileName, @NotNull String content) throws IOException {
     File file = new File(PathManager.getTempPath(), fileName);
-    if (SystemInfoRt.isWindows && file.getPath().contains(" ")) {
+    if (SystemInfo.isWindows && file.getPath().contains(" ")) {
       file = new File(FileUtil.getTempDirectory(), fileName);
     }
     FileUtil.writeToFile(file, content);
-    FileUtil.setExecutableAttribute(file.getPath(), true);
+    FileUtil.setExecutable(file);
     return file;
   }
 
@@ -153,7 +153,7 @@ public class ScriptGenerator {
       cmd.append(p);
     }
     String line = cmd.toString();
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       line = line.replace('\\', '/');
     }
     return line;

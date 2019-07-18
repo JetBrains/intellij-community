@@ -13,6 +13,8 @@
     <group id="withClass" class="foo.bar.BarGroup"/>
     <group id="invalidClass" class="<error descr="'java.lang.String' is not assignable to 'com.intellij.openapi.actionSystem.ActionGroup'">java.lang.String</error>"/>
 
+    <<warning descr="'id' should be specified">group</warning> class="foo.bar.BarGroup"/>
+
     <group id="groupWithUseShortcutOf" class="foo.bar.GroupWithCanBePerformed" use-shortcut-of="myAction"/>
     <group id="groupWithUseShortcutOfInvalid" class="foo.bar.GroupWithCanBePerformed" use-shortcut-of="<error descr="Cannot resolve action 'INVALID_VALUE'">INVALID_VALUE</error>"/>
     <<error descr="'class' must be specified with 'use-shortcut-of'">group</error> id="groupWithUseShortcutOfWithoutClassAttribute" use-shortcut-of="myAction"/>

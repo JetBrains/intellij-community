@@ -10,6 +10,7 @@ public class ShSettings {
   public static final String I_DO_MIND = "I do mind";
 
   private static final String SHELLCHECK_PATH = "SHELLCHECK.PATH";
+  private static final String SHFMT_PATH = "SHFMT.PATH";
 
   @NotNull
   public static String getShellcheckPath() {
@@ -18,5 +19,14 @@ public class ShSettings {
 
   public static void setShellcheckPath(@Nullable String path) {
     if (StringUtil.isNotEmpty(path)) PropertiesComponent.getInstance().setValue(SHELLCHECK_PATH, path);
+  }
+
+  @NotNull
+  public static String getShfmtPath() {
+    return PropertiesComponent.getInstance().getValue(SHFMT_PATH, "");
+  }
+
+  public static void setShfmtPath(@Nullable String path) {
+    if (StringUtil.isNotEmpty(path)) PropertiesComponent.getInstance().setValue(SHFMT_PATH, path);
   }
 }

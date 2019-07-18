@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.plugins.PluginManagerConfigurableNew;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.AbstractLayoutManager;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -13,10 +13,10 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public class PluginsGridLayout extends AbstractLayoutManager {
-  private final int myFirstVOffset = JBUI.scale(10);
-  private final int myMiddleVOffset = JBUI.scale(20);
-  private final int myLastVOffset = JBUI.scale(30);
-  private final int myMiddleHOffset = JBUI.scale(1);
+  private final int myFirstVOffset = JBUIScale.scale(10);
+  private final int myMiddleVOffset = JBUIScale.scale(20);
+  private final int myLastVOffset = JBUIScale.scale(30);
+  private final int myMiddleHOffset = JBUIScale.scale(1);
 
   private final Dimension myCellSize = new Dimension();
   private final ComponentCache myCache = new ComponentCache();
@@ -27,7 +27,7 @@ public class PluginsGridLayout extends AbstractLayoutManager {
 
     int width = PluginManagerConfigurableNew.getParentWidth(parent);
     if (width == 0) {
-      width = JBUI.scale(740);
+      width = JBUIScale.scale(740);
     }
     int cellWidth = myCellSize.width;
     int columns = width / (cellWidth + myMiddleHOffset);

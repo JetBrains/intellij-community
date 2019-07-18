@@ -77,7 +77,6 @@ public class PluginManagerCore {
   private static final TObjectIntHashMap<PluginId> ourId2Index = new TObjectIntHashMap<>();
   private static final String MODULE_DEPENDENCY_PREFIX = "com.intellij.module";
   private static final Map<String, IdeaPluginDescriptorImpl> ourModulesToContainingPlugins = new THashMap<>();
-  private static final PluginClassCache ourPluginClasses = new PluginClassCache();
   private static final String SPECIAL_IDEA_PLUGIN = "IDEA CORE";
   private static final String PROPERTY_PLUGIN_PATH = "plugin.path";
 
@@ -119,7 +118,7 @@ public class PluginManagerCore {
   private static final List<Runnable> ourDisabledPluginsListeners = new CopyOnWriteArrayList<>();
 
   /**
-   * Returns list of all available plugin descriptors (bundled and custom, include disabled ones). Use {@link #getLoadedPlugins(StartupProgress)}
+   * Returns list of all available plugin descriptors (bundled and custom, include disabled ones). Use {@link #getLoadedPlugins()}
    * if you need to get loaded plugins only.
    *
    * <p>
@@ -386,10 +385,6 @@ public class PluginManagerCore {
     return true;
   }
 
-  public static void addPluginClass(@NotNull PluginId pluginId) {
-    ourPluginClasses.addPluginClass(pluginId);
-  }
-
   /**
    * This is an internal method, use {@link PluginException#createByClass(String, Throwable, Class)} instead.
    */
@@ -435,10 +430,6 @@ public class PluginManagerCore {
     catch (Exception e) {
       return false;
     }
-  }
-
-  public static void dumpPluginClassStatistics() {
-    ourPluginClasses.dumpPluginClassStatistics();
   }
 
   private static boolean isDependent(@NotNull IdeaPluginDescriptor descriptor,
@@ -510,7 +501,15 @@ public class PluginManagerCore {
 
   @NotNull
   private static Method getAddUrlMethod(@NotNull ClassLoader loader) {
-    return ReflectionUtil.getDeclaredMethod(loader instanceof URLClassLoader ? URLClassLoader.class : loader.getClass(), "addURL", URL.class);
+    Class<?> loaderClass = loader instanceof URLClassLoader ? URLClassLoader.class : loader.getClass();
+    while (loaderClass != null && !Object.class.equals(loaderClass)) {
+      final Method method = ReflectionUtil.getDeclaredMethod(loaderClass, "addURL", URL.class);
+      if (method != null) {
+        return method;
+      }
+      loaderClass = loaderClass.getSuperclass();
+    }
+    return null;
   }
 
   @Nullable
@@ -1264,15 +1263,14 @@ public class PluginManagerCore {
     boolean parallel = SystemProperties.getBooleanProperty("parallel.pluginDescriptors.loading", true);
     try (LoadDescriptorsContext context = new LoadDescriptorsContext(parallel)) {
       loadDescriptorsFromDir(new File(PathManager.getPluginsPath()), result, false, context);
-      Application application = ApplicationManager.getApplication();
-      if (application == null || !application.isUnitTestMode()) {
+      if (!isUnitTestMode) {
         loadDescriptorsFromDir(new File(PathManager.getPreInstalledPluginsPath()), result, true, context);
       }
 
       loadDescriptorsFromProperty(result, context);
       loadDescriptorsFromClassPath(urlsFromClassPath, result, context, platformPluginURL);
 
-      if (application != null && application.isUnitTestMode() && result.size() <= 1) {
+      if (isUnitTestMode && result.size() <= 1) {
         // We're running in unit test mode but the classpath doesn't contain any plugins; try to load bundled plugins anyway
         ourUnitTestWithBundledPlugins = true;
         loadDescriptorsFromDir(new File(PathManager.getPreInstalledPluginsPath()), result, true, context);

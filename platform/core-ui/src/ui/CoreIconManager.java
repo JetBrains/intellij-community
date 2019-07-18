@@ -54,6 +54,18 @@ public final class CoreIconManager implements IconManager {
 
   @NotNull
   @Override
+  public com.intellij.ui.icons.RowIcon createRowIcon(int iconCount, com.intellij.ui.icons.RowIcon.Alignment alignment) {
+    return new RowIcon(iconCount, alignment);
+  }
+
+  @NotNull
+  @Override
+  public com.intellij.ui.icons.RowIcon createRowIcon(@NotNull Icon... icons) {
+    return new RowIcon(icons);
+  }
+
+  @NotNull
+  @Override
   public RowIcon createLayeredIcon(@NotNull Iconable instance, Icon icon, int flags) {
     List<Icon> layersFromProviders = new SmartList<>();
     for (IconLayerProvider provider : IconLayerProvider.EP_NAME.getExtensionList()) {

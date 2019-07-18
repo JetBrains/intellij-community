@@ -2,7 +2,7 @@
 package com.intellij.ui.mac;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.color.ColorSpace;
@@ -17,7 +17,7 @@ public class MacColorSpaceLoader {
   private static final ColorSpace ourGenericRgbColorSpace;
   static {
     ICC_ColorSpace colorSpace = null;
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       try (InputStream is = new FileInputStream(GENERIC_RGB_PROFILE_PATH)) {
         ICC_Profile profile = ICC_Profile.getInstance(is);
         colorSpace = new ICC_ColorSpace(profile);

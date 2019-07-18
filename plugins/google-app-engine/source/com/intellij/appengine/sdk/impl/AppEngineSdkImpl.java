@@ -5,7 +5,7 @@ import com.intellij.appengine.sdk.AppEngineSdk;
 import com.intellij.appengine.util.AppEngineUtil;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.JarUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -41,7 +41,7 @@ public class AppEngineSdkImpl implements AppEngineSdk {
   @Override
   @NotNull
   public File getAppCfgFile() {
-    final String extension = SystemInfoRt.isWindows ? "cmd" : "sh";
+    final String extension = SystemInfo.isWindows ? "cmd" : "sh";
     return new File(myHomePath, "bin/appcfg." + extension);
   }
 

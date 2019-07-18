@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
-import com.intellij.diagnostic.StartUpPerformanceReporter
+import com.intellij.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.startup.StartupActivity
@@ -33,7 +33,13 @@ internal class StartUpMeasurementService : RestService() {
   }
 
   override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
-    val lastReport = StartupActivity.POST_STARTUP_ACTIVITY.findExtensionOrFail(StartUpPerformanceReporter::class.java).lastReport!!
+    val reporter = StartupActivity.POST_STARTUP_ACTIVITY.findExtension(
+      StartUpPerformanceReporter::class.java)
+    if (reporter == null) {
+      return "Cannot find StartUpPerformanceReporter instance"
+    }
+
+    val lastReport = reporter.lastReport ?: return "Report is not ready yet, start-up in progress"
     val response = response("application/json", Unpooled.wrappedBuffer(lastReport))
     sendResponse(request, context, response)
     return null

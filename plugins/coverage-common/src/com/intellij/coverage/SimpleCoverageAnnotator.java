@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.TestSourcesFilter;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -96,7 +96,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
 
   protected static @NotNull
   String normalizeFilePath(@NotNull String filePath) {
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       filePath = StringUtil.toLowerCase(filePath);
     }
     return FileUtil.toSystemIndependentName(filePath);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.RequiredElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,9 +30,11 @@ public class WeigherExtensionPoint extends AbstractExtensionPointBean implements
 
   // these must be public for scrambling compatibility
   @Attribute("key")
+  @RequiredElement
   public String key;
 
   @Attribute("implementationClass")
+  @RequiredElement
   public String implementationClass;
 
   @Attribute("id")

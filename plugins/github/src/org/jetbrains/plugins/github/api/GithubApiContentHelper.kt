@@ -19,6 +19,7 @@ object GithubApiContentHelper {
   const val JSON_MIME_TYPE = "application/json"
   const val V3_JSON_MIME_TYPE = "application/vnd.github.v3+json"
   const val V3_HTML_JSON_MIME_TYPE = "application/vnd.github.v3.html+json"
+  const val V3_DIFF_JSON_MIME_TYPE = "application/vnd.github.v3.diff+json"
 
   val jackson: ObjectMapper = ObjectMapper()
     .setDateFormat(SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"))

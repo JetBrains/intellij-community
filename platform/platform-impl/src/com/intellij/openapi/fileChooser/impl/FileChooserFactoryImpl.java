@@ -11,7 +11,7 @@ import com.intellij.openapi.fileChooser.ex.FileTextFieldImpl;
 import com.intellij.openapi.fileChooser.ex.LocalFsFinder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.MacFileSaverDialog;
 import com.intellij.ui.mac.MacPathChooserDialog;
@@ -74,12 +74,12 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
   }
 
   private static boolean useNativeWinChooser () {
-    return SystemInfoRt.isWindows &&
+    return SystemInfo.isWindows &&
            Registry.is("ide.win.file.chooser.native");
   }
 
   private static boolean useNativeMacChooser(final FileChooserDescriptor descriptor) {
-    return SystemInfoRt.isMac &&
+    return SystemInfo.isMac &&
            !descriptor.isForcedToUseIdeaFileChooser() &&
            SystemProperties.getBooleanProperty("native.mac.file.chooser.enabled", true) &&
            Registry.is("ide.mac.file.chooser.native") &&
@@ -116,14 +116,14 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
   @NotNull
   @Override
   public FileSaverDialog createSaveFileDialog(@NotNull FileSaverDescriptor descriptor, @Nullable Project project) {
-    return SystemInfoRt.isMac && Registry.is("ide.mac.native.save.dialog")
+    return SystemInfo.isMac && Registry.is("ide.mac.native.save.dialog")
            ? new MacFileSaverDialog(descriptor, project) : new FileSaverDialogImpl(descriptor, project);
   }
 
   @NotNull
   @Override
   public FileSaverDialog createSaveFileDialog(@NotNull FileSaverDescriptor descriptor, @NotNull Component parent) {
-    return SystemInfoRt.isMac && Registry.is("ide.mac.native.save.dialog")
+    return SystemInfo.isMac && Registry.is("ide.mac.native.save.dialog")
            ? new MacFileSaverDialog (descriptor, parent) : new FileSaverDialogImpl(descriptor, parent);
   }
 }

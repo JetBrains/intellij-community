@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.BitUtil;
@@ -112,7 +112,7 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
     }
 
     final int frameState = projectFrame.getExtendedState();
-    if (SystemInfoRt.isMac && BitUtil.isSet(projectFrame.getExtendedState(), Frame.ICONIFIED) && e.getInputEvent() instanceof KeyEvent) {
+    if (SystemInfo.isMac && BitUtil.isSet(projectFrame.getExtendedState(), Frame.ICONIFIED) && e.getInputEvent() instanceof KeyEvent) {
       // On Mac minimized window should not be restored this way
       return;
     }

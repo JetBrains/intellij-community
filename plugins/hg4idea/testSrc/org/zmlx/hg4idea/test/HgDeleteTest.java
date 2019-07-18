@@ -15,12 +15,12 @@ package org.zmlx.hg4idea.test;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.io.File;
 
-import static org.testng.Assert.fail;
+import static org.junit.Assert.fail;
 
 public class HgDeleteTest extends HgSingleUserTest {
 

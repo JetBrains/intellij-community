@@ -25,7 +25,6 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   val doSyncDevRepo: Boolean
   val doSyncRemovedIconsInDev: Boolean
   private val failIfSyncDevIconsRequired: Boolean
-  val assignInvestigation: Boolean
   val notifySlack: Boolean
   lateinit var iconsRepo: File
   lateinit var devRepoRoot: File
@@ -39,10 +38,6 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   var iconsCommitsToSync: Map<File, Collection<CommitInfo>> = emptyMap()
   val iconsCommitHashesToSync: MutableSet<String>
   val devIconsCommitHashesToSync: MutableSet<String>
-  /**
-   * commits to review id
-   */
-  var commitsAlreadyInReview = emptyMap<CommitInfo, String>()
   val devIconsSyncAll: Boolean
 
   init {
@@ -102,7 +97,6 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
     doSyncDevRepo = bool(syncDevIconsArg)
     doSyncIconsRepo = bool(syncIconsArg)
     failIfSyncDevIconsRequired = bool(failIfSyncDevIconsRequiredArg)
-    assignInvestigation = bool(assignInvestigationArg)
     notifySlack = bool(notifySlackArg)
     iconsCommitHashesToSync = commits(iconsCommitHashesToSyncArg)
     doSyncRemovedIconsInDev = bool(syncRemovedIconsInDevArg) || iconsCommitHashesToSync.isNotEmpty()
@@ -157,15 +151,13 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   fun devSyncRequired() = iconsChanges().isNotEmpty()
 
   fun devReviews(): Collection<Review> = createdReviews.filter { it.projectId == UPSOURCE_DEV_PROJECT_ID }
-  fun iconsReviews(): Collection<Review> = createdReviews.filter { it.projectId == UPSOURCE_ICONS_PROJECT_ID }
   fun verifyDevIcons(repos: Collection<File>) = devIconsVerifier?.accept(repos)
   fun doFail(report: String) {
     log(report)
     errorHandler.accept(report)
   }
 
-  fun isFail() = (notifySlack || assignInvestigation) &&
-                 (iconsSyncRequired() || failIfSyncDevIconsRequired && devSyncRequired())
+  fun isFail() = notifySlack && failIfSyncDevIconsRequired && devSyncRequired()
 
   private fun findDirectoryIgnoringCase(path: String?): File? {
     if (path == null) return null

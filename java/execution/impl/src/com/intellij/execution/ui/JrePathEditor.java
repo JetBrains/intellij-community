@@ -11,13 +11,13 @@ import com.intellij.openapi.ui.BrowseFolderRunnable;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextField;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,7 +79,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
     for (Sdk jdk : allJDKs) {
       String homePath = jdk.getHomePath();
 
-      if (!SystemInfoRt.isMac) {
+      if (!SystemInfo.isMac) {
         final File jre = new File(jdk.getHomePath(), "jre");
         if (jre.isDirectory()) {
           homePath = jre.getPath();
@@ -93,7 +93,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
     comboBox.setEditable(true);
     comboBox.setRenderer(new ColoredListCellRenderer<JreComboBoxItem>() {
       {
-        setIpad(JBUI.insets(1, 0));
+        setIpad(JBInsets.create(1, 0));
         setMyBorder(null);
       }
 

@@ -40,6 +40,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtil;
@@ -612,7 +613,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
   private Color getBackgroundColor(boolean enabled, final EditorColorsScheme colorsScheme){
     if (myEnforcedBgColor != null) return myEnforcedBgColor;
-    if (UIUtil.getParentOfType(CellRendererPane.class, this) != null && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
+    if (ComponentUtil.getParentOfType((Class<? extends CellRendererPane>)CellRendererPane.class, (Component)this) != null && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
       return getParent().getBackground();
     }
 
@@ -680,7 +681,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       size.height = myEditor.getLineHeight();
 
       if (UIUtil.isUnderDefaultMacTheme() || UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
-        size.height = Math.max(size.height, JBUI.scale(16));
+        size.height = Math.max(size.height, JBUIScale.scale(16));
       }
 
       JBInsets.addTo(size, getInsets());

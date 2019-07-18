@@ -18,10 +18,8 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyNamedParameter;
-import com.jetbrains.python.psi.PySingleStarParameter;
-import com.jetbrains.python.psi.PyTupleParameter;
+import com.jetbrains.python.PyStubElementTypes;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PySingleStarParameterStub;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +32,7 @@ public class PySingleStarParameterImpl extends PyBaseElementImpl<PySingleStarPar
   }
 
   public PySingleStarParameterImpl(PySingleStarParameterStub stub) {
-    super(stub, PyElementTypes.SINGLE_STAR_PARAMETER);
+    super(stub, PyStubElementTypes.SINGLE_STAR_PARAMETER);
   }
 
   @Override
@@ -71,5 +69,10 @@ public class PySingleStarParameterImpl extends PyBaseElementImpl<PySingleStarPar
   @Override
   public ItemPresentation getPresentation() {
     return new PyElementPresentation(this);
+  }
+
+  @Override
+  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+    pyVisitor.visitPySingleStarParameter(this);
   }
 }

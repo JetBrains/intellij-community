@@ -25,12 +25,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrI
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement
-import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses
 import org.jetbrains.plugins.groovy.lang.resolve.MethodResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate
+import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.getContainingCall
 
 class GroovyInferenceSessionBuilder constructor(
   private val context: PsiElement,
@@ -55,9 +55,9 @@ class GroovyInferenceSessionBuilder constructor(
     return this
   }
 
-  fun skipClosureIn(call: GrMethodCall): GroovyInferenceSessionBuilder {
+  fun skipClosureIn(call: GrCall): GroovyInferenceSessionBuilder {
     expressionFilters.add {
-      it !is GrFunctionalExpression || call != GrClosureSignatureUtil.findCall(it)
+      it !is GrFunctionalExpression || call != getContainingCall(it)
     }
     return this
   }
@@ -119,7 +119,7 @@ fun getMostTopLevelExpression(start: GrExpression): GrExpression {
 
 fun getExpectedType(expression: GrExpression): PsiType? {
   val parent = expression.parent
-  val parentMethod = PsiTreeUtil.getParentOfType(parent, GrMethod::class.java, true, GrFunctionalExpression::class.java)
+  val parentMethod = PsiTreeUtil.getParentOfType(parent, GrMethod::class.java, false, GrFunctionalExpression::class.java)
 
   if (parent is GrReturnStatement && parentMethod != null) {
     return parentMethod.returnType

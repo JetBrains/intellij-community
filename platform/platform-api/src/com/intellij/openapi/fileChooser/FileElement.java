@@ -4,7 +4,7 @@ package com.intellij.openapi.fileChooser;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -89,7 +89,7 @@ public class FileElement {
     return file != null &&
            file.isValid() &&
            file.isInLocalFileSystem() &&
-           (file.is(VFileProperty.HIDDEN) || SystemInfoRt.isUnix && file.getName().startsWith("."));
+           (file.is(VFileProperty.HIDDEN) || SystemInfo.isUnix && file.getName().startsWith("."));
   }
 
   public static boolean isArchive(@Nullable VirtualFile file) {

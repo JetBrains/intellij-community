@@ -9,7 +9,7 @@ import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -391,12 +391,12 @@ public class GeneralCommandLine implements UserDataHolder {
     }
 
     String exePath = myExePath;
-    if (SystemInfoRt.isMac && myParentEnvironmentType == ParentEnvironmentType.CONSOLE && exePath.indexOf(File.pathSeparatorChar) == -1) {
+    if (SystemInfo.isMac && myParentEnvironmentType == ParentEnvironmentType.CONSOLE && exePath.indexOf(File.pathSeparatorChar) == -1) {
       String systemPath = System.getenv("PATH"), shellPath = EnvironmentUtil.getValue("PATH");
       if (!Objects.equals(systemPath, shellPath)) {
         File exeFile = PathEnvironmentVariableUtil.findInPath(myExePath, shellPath, null);
         if (exeFile != null) {
-          LOG.info(exePath + " => " + exeFile);
+          LOG.debug(exePath + " => " + exeFile);
           exePath = exeFile.getPath();
         }
       }
@@ -450,7 +450,7 @@ public class GeneralCommandLine implements UserDataHolder {
       environment.putAll(getParentEnvironment());
     }
 
-    if (SystemInfoRt.isUnix) {
+    if (SystemInfo.isUnix) {
       File workDirectory = getWorkDirectory();
       if (workDirectory != null) {
         environment.put("PWD", FileUtil.toSystemDependentName(workDirectory.getAbsolutePath()));
@@ -458,7 +458,7 @@ public class GeneralCommandLine implements UserDataHolder {
     }
 
     if (!myEnvParams.isEmpty()) {
-      if (SystemInfoRt.isWindows) {
+      if (SystemInfo.isWindows) {
         THashMap<String, String> envVars = new THashMap<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
         envVars.putAll(environment);
         envVars.putAll(myEnvParams);
@@ -509,7 +509,7 @@ public class GeneralCommandLine implements UserDataHolder {
 
   private static class MyTHashMap extends THashMap<String, String> {
     private MyTHashMap() {
-      super(SystemInfoRt.isWindows ? CaseInsensitiveStringHashingStrategy.INSTANCE : ContainerUtil.canonicalStrategy());
+      super(SystemInfo.isWindows ? CaseInsensitiveStringHashingStrategy.INSTANCE : ContainerUtil.canonicalStrategy());
     }
 
     @Override

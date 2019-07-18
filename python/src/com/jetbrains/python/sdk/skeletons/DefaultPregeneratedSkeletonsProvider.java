@@ -6,7 +6,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -86,8 +86,8 @@ public class DefaultPregeneratedSkeletonsProvider implements PyPregeneratedSkele
       }
     }
 
-    if (SystemInfoRt.isMac) {
-      String osVersion = SystemInfoRt.OS_VERSION;
+    if (SystemInfo.isMac) {
+      String osVersion = SystemInfo.OS_VERSION;
       int dot = osVersion.indexOf('.');
       if (dot >= 0) {
         int secondDot = osVersion.indexOf('.', dot + 1);
@@ -98,7 +98,7 @@ public class DefaultPregeneratedSkeletonsProvider implements PyPregeneratedSkele
       return "skeletons-mac-" + generatorVersion + "-" + osVersion + "-" + version + (withExtension ? ".zip" : "");
     }
     else {
-      String os = SystemInfoRt.isWindows ? "win" : "nix";
+      String os = SystemInfo.isWindows ? "win" : "nix";
       return "skeletons-" + os + "-" + generatorVersion + "-" + version + (withExtension ? ".zip" : "");
     }
   }

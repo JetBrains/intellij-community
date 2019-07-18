@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
@@ -131,7 +131,7 @@ public class BaseOutputReaderTest {
   }
 
   private Process launchTest(String mode) throws Exception {
-    String java = System.getProperty("java.home") + (SystemInfoRt.isWindows ? "\\bin\\java.exe" : "/bin/java");
+    String java = System.getProperty("java.home") + (SystemInfo.isWindows ? "\\bin\\java.exe" : "/bin/java");
 
     String className = BaseOutputReaderTest.Runner.class.getName();
     URL url = getClass().getClassLoader().getResource(className.replace('.', '/') + ".class");

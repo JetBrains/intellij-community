@@ -15,10 +15,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.ColoredTableCellRenderer;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.ScrollingUtil;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -340,7 +338,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         maxAuthorWidth = Math.max(getFontMetrics(font).stringWidth(value + "*"), maxAuthorWidth);
       }
 
-      int width = Math.min(maxAuthorWidth + myStringCellRenderer.getHorizontalTextPadding(), JBUI.scale(MAX_DEFAULT_AUTHOR_COLUMN_WIDTH));
+      int width = Math.min(maxAuthorWidth + myStringCellRenderer.getHorizontalTextPadding(),
+                           JBUIScale.scale(MAX_DEFAULT_AUTHOR_COLUMN_WIDTH));
       if (unloaded * 2 <= maxRowsToCheck) myAuthorColumnInitialized = true;
       return width;
     }
@@ -402,7 +401,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       rootWidth = 0;
     }
     else if (!isShowRootNames()) {
-      rootWidth = JBUI.scale(ROOT_INDICATOR_WIDTH);
+      rootWidth = JBUIScale.scale(ROOT_INDICATOR_WIDTH);
     }
     else {
       int width = 0;
@@ -410,7 +409,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         Font tableFont = getTableFont();
         width = Math.max(getFontMetrics(tableFont).stringWidth(file.getName() + "  "), width);
       }
-      rootWidth = Math.min(width, JBUI.scale(ROOT_NAME_MAX_WIDTH));
+      rootWidth = Math.min(width, JBUIScale.scale(ROOT_NAME_MAX_WIDTH));
     }
 
     // NB: all further instructions and their order are important, otherwise the minimum size which is less than 15 won't be applied
@@ -606,7 +605,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   @Override
   public void setCursor(Cursor cursor) {
     super.setCursor(cursor);
-    Component layeredPane = UIUtil.findParentByCondition(this, component -> component instanceof LoadingDecorator.CursorAware);
+    Component layeredPane = ComponentUtil.findParentByCondition(this, component -> component instanceof LoadingDecorator.CursorAware);
     if (layeredPane != null) {
       layeredPane.setCursor(cursor);
     }
@@ -669,7 +668,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         g.setColor(getRootBackgroundColor(getModel().getRoot(lastRow), myColorManager));
 
         int rootWidth = getRootColumn().getWidth();
-        if (!isShowRootNames()) rootWidth -= JBUI.scale(ROOT_INDICATOR_WHITE_WIDTH);
+        if (!isShowRootNames()) rootWidth -= JBUIScale.scale(ROOT_INDICATOR_WHITE_WIDTH);
 
         g.fillRect(x, y, rootWidth, height);
       }

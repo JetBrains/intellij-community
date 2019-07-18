@@ -4,7 +4,7 @@ package com.intellij.openapi.fileChooser;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class FileChooserDescriptorFactory {
@@ -30,7 +30,7 @@ public class FileChooserDescriptorFactory {
     return new FileChooserDescriptor(true, false, false, false, false, false) {
       @Override
       public boolean isFileSelectable(VirtualFile file) {
-        return super.isFileSelectable(file) || SystemInfoRt.isMac && file.isDirectory() && "app".equals(file.getExtension());
+        return super.isFileSelectable(file) || SystemInfo.isMac && file.isDirectory() && "app".equals(file.getExtension());
       }
     };
   }

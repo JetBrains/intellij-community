@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.execution.ExecutionListener;
@@ -188,24 +188,19 @@ class ProjectData {
     return null;
   }
 
-  EditorData registerEditor(@NotNull Editor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    final EditorData result = new EditorData(editor);
-    myEditors.put(editor, result);
-    return result;
+  void registerEditor(@NotNull Editor editor) {
+    myEditors.put(editor, new EditorData(editor));
   }
 
   EditorData getEditorData(@NotNull Editor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     return myEditors.get(editor);
   }
 
   void removeEditor(@NotNull Editor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    if (myEditors.isEmpty()) // already cleared
+    // already cleared
+    if (myEditors.isEmpty()) {
       return;
+    }
 
     final EditorData removed = myEditors.remove(editor);
     if (removed == null) {
@@ -216,7 +211,7 @@ class ProjectData {
     removed.release();
   }
 
-  private void _fillBarContainer(@NotNull BarContainer container) {
+  private static void _fillBarContainer(@NotNull BarContainer container) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     final @NotNull BarType type = container.getType();

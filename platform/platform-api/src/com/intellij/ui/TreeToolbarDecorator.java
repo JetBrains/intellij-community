@@ -2,7 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.ui.EditableModel;
@@ -105,7 +105,7 @@ class TreeToolbarDecorator extends ToolbarDecorator {
 
   @Override
   public ToolbarDecorator initPosition() {
-    return setToolbarPosition(SystemInfoRt.isMac ? ActionToolbarPosition.BOTTOM : ActionToolbarPosition.TOP);
+    return setToolbarPosition(SystemInfo.isMac ? ActionToolbarPosition.BOTTOM : ActionToolbarPosition.TOP);
   }
 
   @Override

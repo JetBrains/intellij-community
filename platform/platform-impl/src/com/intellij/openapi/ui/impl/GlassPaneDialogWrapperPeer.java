@@ -20,7 +20,7 @@ import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
@@ -341,7 +341,7 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
   //[kirillk] for now it only deals with the TaskWindow under Mac OS X: modal dialogs are shown behind JBPopup
   //hopefully this whole code will go away
   private void hidePopupsIfNeeded() {
-    if (!SystemInfoRt.isMac) return;
+    if (!SystemInfo.isMac) return;
 
     final StackingPopupDispatcher stackingPopupDispatcher = StackingPopupDispatcher.getInstance();
     stackingPopupDispatcher.hidePersistentPopups();

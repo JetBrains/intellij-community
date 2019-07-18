@@ -11,7 +11,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.Predicate;
 import com.intellij.util.ui.classpath.ChooseLibrariesFromTablesDialog;
@@ -114,7 +114,7 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
   @NotNull
   @Override
   protected Action[] createActions() {
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       return new Action[]{getCancelAction(), new CreateNewLibraryAction(), getOKAction()};
     }
     return new Action[]{getOKAction(), new CreateNewLibraryAction(), getCancelAction()};

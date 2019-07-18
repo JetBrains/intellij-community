@@ -321,6 +321,7 @@ initializer
 initrans
 injectable
 inline
+inlining
 innodb
 inode
 inode's
@@ -419,6 +420,7 @@ lossy
 lucene
 lvalue
 lvalues
+LVTI
 macrodef
 mailto
 makefile
@@ -718,6 +720,7 @@ sftp
 shader
 sharding
 shellcheck
+shfmt
 sigabrt
 sigaio
 sigalrm

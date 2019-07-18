@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.tree;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
@@ -13,6 +13,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
@@ -21,7 +22,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.containers.TreeTraversal;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -39,8 +39,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.lang.reflect.Method;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -1518,7 +1518,7 @@ public final class TreeUtil {
       }
       else {
         bounds.width = Math.min(bounds.width, width / 2);
-        bounds.x -= JBUI.scale(20); // TODO: calculate a control width
+        bounds.x -= JBUIScale.scale(20); // TODO: calculate a control width
         if (bounds.x < 0) {
           bounds.width += bounds.x;
           bounds.x = 0;

@@ -2,7 +2,7 @@
 package com.intellij.util.ui.components;
 
 import com.intellij.ui.components.JBPanel;
-import com.intellij.util.ui.JBUI;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,35 +21,35 @@ public class BorderLayoutPanel extends JBPanel<BorderLayoutPanel> {
   }
 
   public BorderLayoutPanel(int hgap, int vgap) {
-    super(new BorderLayout(JBUI.scale(hgap), JBUI.scale(vgap)));
+    super(new BorderLayout(JBUIScale.scale(hgap), JBUIScale.scale(vgap)));
   }
 
   @NotNull
-  public BorderLayoutPanel addToCenter(@NotNull Component comp) {
+  public final BorderLayoutPanel addToCenter(@NotNull Component comp) {
     add(comp, BorderLayout.CENTER);
     return this;
   }
 
   @NotNull
-  public BorderLayoutPanel addToRight(@NotNull Component comp) {
+  public final BorderLayoutPanel addToRight(@NotNull Component comp) {
     add(comp, BorderLayout.EAST);
     return this;
   }
 
   @NotNull
-  public BorderLayoutPanel addToLeft(@NotNull Component comp) {
+  public final BorderLayoutPanel addToLeft(@NotNull Component comp) {
     add(comp, BorderLayout.WEST);
     return this;
   }
 
   @NotNull
-  public BorderLayoutPanel addToTop(@NotNull Component comp) {
+  public final BorderLayoutPanel addToTop(@NotNull Component comp) {
     add(comp, BorderLayout.NORTH);
     return this;
   }
 
   @NotNull
-  public BorderLayoutPanel addToBottom(@NotNull Component comp) {
+  public final BorderLayoutPanel addToBottom(@NotNull Component comp) {
     add(comp, BorderLayout.SOUTH);
     return this;
   }

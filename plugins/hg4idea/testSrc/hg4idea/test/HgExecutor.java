@@ -2,7 +2,7 @@
 package hg4idea.test;
 
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.vcs.ExecutableHelper;
 import com.intellij.util.containers.ContainerUtil;
@@ -41,7 +41,7 @@ public class HgExecutor {
   private static String findInSources(String programName, String unixExec, String winExec) {
     File pluginRoot = new File(PluginPathManager.getPluginHomePath("hg4idea"));
     File bin = new File(pluginRoot, FileUtil.toSystemDependentName("testData/bin"));
-    File exec = new File(bin, SystemInfoRt.isWindows ? winExec : unixExec);
+    File exec = new File(bin, SystemInfo.isWindows ? winExec : unixExec);
     if (exec.exists() && exec.canExecute()) {
       debug("Using " + programName + " from test data");
       return exec.getPath();

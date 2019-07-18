@@ -9,7 +9,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -20,7 +20,6 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.util.List;
 
@@ -31,14 +30,12 @@ public abstract class QtFileType extends LanguageFileType implements INativeFile
   private final String myName;
   private final String myDescription;
   private final String myDefaultExtension;
-  private final Icon myIcon;
 
-  QtFileType(String name, String description, String defaultExtension, Icon icon) {
+  QtFileType(String name, String description, String defaultExtension) {
     super(XMLLanguage.INSTANCE);
     myName = name;
     myDescription = description;
     myDefaultExtension = defaultExtension;
-    myIcon = icon;
   }
 
   @NotNull
@@ -57,11 +54,6 @@ public abstract class QtFileType extends LanguageFileType implements INativeFile
   @Override
   public String getDefaultExtension() {
     return myDefaultExtension;
-  }
-
-  @Override
-  public Icon getIcon() {
-    return myIcon;
   }
 
   @Override
@@ -90,7 +82,7 @@ public abstract class QtFileType extends LanguageFileType implements INativeFile
   }
 
   public static String findQtTool(Module module, String toolName) {
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       if (module == null) {
         return null;
       }

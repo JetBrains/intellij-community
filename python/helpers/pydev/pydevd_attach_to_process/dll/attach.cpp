@@ -1080,7 +1080,7 @@ extern "C"
         auto pyFalse = boolFromLong(0);
 
         
-        auto pydevdTracingMod = PyObjectHolder(isDebug, pyImportMod("_pydevd_bundle.pydevd_tracing"));
+        auto pydevdTracingMod = PyObjectHolder(isDebug, pyImportMod("pydevd_tracing"));
         if (*pydevdTracingMod == nullptr) {
             if(showDebugInfo){
                 std::cout << "pydevd_tracing module null! " << std::endl << std::flush;

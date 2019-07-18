@@ -14,7 +14,8 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.ui.RowIcon;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import icons.JetgroovyIcons;
@@ -281,7 +282,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   @Override
   protected Icon getElementIcon(@IconFlags int flags) {
     Icon methodIcon = hasModifierProperty(PsiModifier.ABSTRACT) ? JetgroovyIcons.Groovy.AbstractMethod : JetgroovyIcons.Groovy.Method;
-    RowIcon baseIcon = ElementPresentationUtil.createLayeredIcon(methodIcon, this, false);
+    RowIcon baseIcon = IconManager.getInstance().createLayeredIcon(this, methodIcon, ElementPresentationUtil.getFlags(this, false));
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 

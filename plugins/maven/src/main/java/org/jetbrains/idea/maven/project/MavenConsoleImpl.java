@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -72,7 +72,7 @@ public class MavenConsoleImpl extends MavenConsole {
         @Override
         protected HyperlinkInfo createOpenFileHyperlink(String fileName, int line, int column) {
           HyperlinkInfo res = super.createOpenFileHyperlink(fileName, line, column);
-          if (res == null && fileName.startsWith("\\") && SystemInfoRt.isWindows) {
+          if (res == null && fileName.startsWith("\\") && SystemInfo.isWindows) {
             // Maven cut prefix 'C:\' from paths on Windows
             VirtualFile[] roots = ProjectRootManager.getInstance(project).getContentRoots();
             if (roots.length > 0) {

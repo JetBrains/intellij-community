@@ -2,7 +2,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -42,7 +42,7 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
     myShowRootNode = showRootNode;
     setModel(new TreeModelWrapper(myTreeModel, showRootNode));
     setRenderer(new TreeListCellRenderer(this, showRootNode, defaultText));
-    if (SystemInfoRt.isMac && UIUtil.isUnderAquaLookAndFeel()) setMaximumRowCount(25);
+    if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) setMaximumRowCount(25);
   }
 
   public void setTreeModel(@NotNull final TreeModel model, final boolean showRootNode) {
@@ -166,7 +166,7 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
           SELECTION_PAINTER.paintBorder(this, g, 0, 0, getWidth(), getHeight());
         }
 
-        if (SystemInfoRt.isMac && myChecked && !myEditable) {
+        if (SystemInfo.isMac && myChecked && !myEditable) {
           int i = getHeight() - 4;
           g.setColor(getForeground());
           g.drawString("\u2713", 6, i);

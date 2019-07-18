@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification;
 
 import com.intellij.icons.AllIcons;
@@ -19,8 +19,8 @@ import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.AbstractLayoutManager;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,7 +49,7 @@ public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
     final Editor editor = console.getConsoleEditor();
     JPanel editorPanel = new JPanel(new AbstractLayoutManager() {
       private int getOffset() {
-        return JBUI.scale(4);
+        return JBUIScale.scale(4);
       }
 
       @Override
@@ -98,7 +98,7 @@ public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
 
     return ActionManager.getInstance().createActionToolbar("EventLog", group, false);
   }
-  
+
   private static class EditNotificationSettings extends DumbAwareAction {
     private final Project myProject;
 

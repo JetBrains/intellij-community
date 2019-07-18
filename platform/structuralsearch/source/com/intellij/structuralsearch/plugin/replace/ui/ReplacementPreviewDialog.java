@@ -99,7 +99,7 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
     PsiFile file = null;
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
     if (profile != null) {
-      file = profile.createCodeFragment(project, "");
+      file = profile.createCodeFragment(project, "", null);
     }
 
     if (file != null) {

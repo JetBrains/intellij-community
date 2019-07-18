@@ -351,7 +351,6 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
   protected void refreshApplicationRepository() {
     Project project = getProject();
     GitInit.refreshAndConfigureVcsMappings(project, getRepositoryRoot(), getRepositoryRootFile().getAbsolutePath());
-    GitUtil.proposeUpdateGitignore(project, getRepositoryRoot());
   }
 
   protected void pushApplication(@NotNull CloudGitApplication application) throws ServerRuntimeException {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.messages;
 
 import com.apple.eawt.FullScreenUtilities;
@@ -19,8 +19,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
@@ -163,12 +161,14 @@ class SheetMessage implements Disposable {
   }
 
   private void _showTouchBar() {
-    if (!TouchBarsManager.isTouchBarAvailable())
+    if (!TouchBarsManager.isTouchBarAvailable()) {
       return;
+    }
 
     final Disposable tb = TouchBarsManager.showDialogWrapperButtons(myController.getSheetPanel());
-    if (tb != null)
+    if (tb != null) {
       Disposer.register(this, tb);
+    }
   }
 
   private static void maximizeIfNeeded(final Window owner) {

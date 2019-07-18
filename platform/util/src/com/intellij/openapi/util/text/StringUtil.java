@@ -2842,6 +2842,29 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
+  public static int compare(@Nullable CharSequence s1, @Nullable CharSequence s2, boolean ignoreCase) {
+    if (s1 == s2) return 0;
+    if (s1 == null) return -1;
+    if (s2 == null) return 1;
+
+    int length1 = s1.length();
+    int length2 = s2.length();
+    int i = 0;
+    int j = 0;
+    for (; i < length1 && j < length2; i++, j++) {
+      int diff = compare(s1.charAt(i), s2.charAt(j), ignoreCase);
+      if (diff != 0) {
+        return diff;
+      }
+    }
+    if (i < length1) return +1;
+    if (j < length2) return -1;
+    if (length1 != length2) return length1 - length2;
+
+    return ignoreCase ? compare(s1, s2, false) : 0;
+  }
+
+  @Contract(pure = true)
   public static int comparePairs(@Nullable String s1, @Nullable String t1, @Nullable String s2, @Nullable String t2, boolean ignoreCase) {
     final int compare = compare(s1, s2, ignoreCase);
     return compare != 0 ? compare : compare(t1, t2, ignoreCase);

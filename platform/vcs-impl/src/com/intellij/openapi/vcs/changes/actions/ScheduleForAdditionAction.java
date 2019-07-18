@@ -33,6 +33,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.containers.UtilKt.isEmpty;
 import static com.intellij.util.containers.UtilKt.notNullize;
+import static kotlin.collections.CollectionsKt.intersect;
 
 public class ScheduleForAdditionAction extends AnAction implements DumbAware {
 
@@ -169,6 +170,13 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
         ChangesViewManager.getInstance(project).scheduleRefresh();
 
         if (changesConsumer != null) {
+          if (moveRequired && !newChanges.isEmpty()) {
+            // newChanges contains ChangeListChange instances from active change list in case of partial changes
+            // so we obtain necessary changes again from required change list to pass to callback
+            LocalChangeList newList = changeListManager.getChangeList(list.getId());
+            if (newList != null) newChanges = new ArrayList<>(intersect(newList.getChanges(), newChanges));
+          }
+
           changesConsumer.consume(newChanges);
         }
       }, updateMode, VcsBundle.message("change.lists.manager.add.unversioned"), null);

@@ -2,7 +2,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -97,7 +97,7 @@ public class PathUtil {
 
   @NotNull
   public static String driveLetterToLowerCase(@NotNull String path) {
-    if (SystemInfoRt.isWindows && FileUtil.isWindowsAbsolutePath(path)) {
+    if (SystemInfo.isWindows && FileUtil.isWindowsAbsolutePath(path)) {
       return Character.toLowerCase(path.charAt(0)) + path.substring(1);
     }
     return path;

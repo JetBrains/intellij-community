@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.help.impl;
 
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
@@ -28,6 +28,6 @@ public class MacHelpUtil {
   }
 
   static boolean isApplicable() {
-    return SystemInfoRt.isMac && Registry.is("ide.mac.show.native.help") && !PlatformUtils.isCidr() && !PlatformUtils.isIdeaCommunity();
+    return SystemInfo.isMac && Registry.is("ide.mac.show.native.help") && !PlatformUtils.isCidr() && !PlatformUtils.isIdeaCommunity();
   }
 }

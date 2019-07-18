@@ -10,7 +10,7 @@
 
   @Component
   export default class StatsChart extends BaseChartComponent<StatsChartManager> {
-    createChartManager(): StatsChartManager {
+    async createChartManager() {
       return new StatsChartManager(this.$refs.chartContainer as HTMLElement)
     }
   }

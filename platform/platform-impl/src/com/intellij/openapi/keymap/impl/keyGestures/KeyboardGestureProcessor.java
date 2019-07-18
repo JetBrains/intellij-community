@@ -16,7 +16,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 
 public class KeyboardGestureProcessor {
-
   IdeKeyEventDispatcher myDispatcher;
 
   StateContext myContext = new StateContext();
@@ -31,11 +30,7 @@ public class KeyboardGestureProcessor {
   KeyGestureState myState = myWaitForStart;
 
 
-  final Timer myHoldTimer = UIUtil.createNamedTimer("Keyboard hold",1200, new ActionListener() {
-    @Override
-    public void actionPerformed(final ActionEvent e) {
-    }
-  });
+  final Timer myHoldTimer = UIUtil.createNamedTimer("Keyboard hold", 1200, e -> { });
 
   final Timer myDblClickTimer = UIUtil.createNamedTimer("Double click", SystemProperties.getIntProperty("actionSystem.keyGestureDblClickTime", 650), new ActionListener() {
     @Override

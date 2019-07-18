@@ -4,6 +4,8 @@ package com.intellij.internal.statistic.service.fus;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.GsonBuilder;
 import com.intellij.internal.statistic.eventLog.EventLogExternalSettingsService;
+import com.intellij.internal.statistic.service.fus.FUSWhitelist.BuildRange;
+import com.intellij.internal.statistic.service.fus.FUSWhitelist.GroupFilterCondition;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist.VersionRange;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.BuildNumber;
@@ -14,9 +16,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
-import static com.intellij.util.containers.ContainerUtil.*;
+import static com.intellij.util.containers.ContainerUtil.map;
+import static java.util.Collections.emptyList;
 
 /**
  * <ol>
@@ -47,10 +49,9 @@ public class FUStatisticsWhiteListGroupsService {
    * @return null if error happened during groups fetching
    */
   @Nullable
-  public static FUSWhitelist getApprovedGroups(@NotNull String serviceUrl, @NotNull BuildNumber current) {
-    String content = getFUSWhiteListContent(serviceUrl);
-
-    return content != null ? parseApprovedGroups(content, current) : null;
+  public static FUSWhitelist getApprovedGroups(@NotNull String serviceUrl) {
+    final String content = getFUSWhiteListContent(serviceUrl);
+    return content != null ? parseApprovedGroups(content) : null;
   }
 
   @Nullable
@@ -107,22 +108,26 @@ public class FUStatisticsWhiteListGroupsService {
 
   @VisibleForTesting
   @NotNull
-  public static FUSWhitelist parseApprovedGroups(String content, @NotNull BuildNumber build) {
-    WLGroups groups = parseWhiteListContent(content);
-
+  public static FUSWhitelist parseApprovedGroups(@Nullable String content) {
+    final WLGroups groups = parseWhiteListContent(content);
     if (groups == null) {
       return FUSWhitelist.empty();
     }
 
-    final Map<String, List<VersionRange>> result = groups.groups.stream().
-      filter(group -> group.accepts(build)).
-      collect(Collectors.toMap(group -> group.id, group -> toVersionRanges(group.versions)));
-    return FUSWhitelist.create(result);
+    final Map<String, GroupFilterCondition> groupToCondition = new HashMap<>();
+    for (WLGroup group : groups.groups) {
+      if (group.isValid()) {
+        groupToCondition.put(group.id, toCondition(group.builds, group.versions));
+      }
+    }
+    return FUSWhitelist.create(groupToCondition);
   }
 
   @NotNull
-  private static List<VersionRange> toVersionRanges(@Nullable ArrayList<WLVersion> versions) {
-    return versions == null || versions.isEmpty() ? emptyList() : map(versions, version -> VersionRange.create(version.from, version.to));
+  private static GroupFilterCondition toCondition(@Nullable List<WLBuild> builds, @Nullable List<WLVersion> versions) {
+    final List<BuildRange> buildRanges = builds != null ? map(builds, b -> BuildRange.create(b.from, b.to)) : emptyList();
+    final List<VersionRange> versionRanges = versions != null ? map(versions, v -> VersionRange.create(v.from, v.to)) : emptyList();
+    return new GroupFilterCondition(buildRanges, versionRanges);
   }
 
   public static class WLGroups {

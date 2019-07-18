@@ -2,7 +2,7 @@
 package com.intellij.util;
 
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
-import com.intellij.util.ui.JBUIScale.ScaleContext;
+import com.intellij.ui.scale.ScaleContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;

@@ -1,6 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ParallelActivity;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
@@ -20,8 +23,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindow;
@@ -239,20 +244,28 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   }
 
   public void openFiles() {
-    if (mySplittersElement != null) {
-      final JPanel comp = myUIBuilder.process(mySplittersElement, getTopPanel());
-      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-        if (comp != null) {
-          removeAll();
-          add(comp, BorderLayout.CENTER);
-          mySplittersElement = null;
-        }
-        // clear empty splitters
-        for (EditorWindow window : getWindows()) {
-          if (window.getTabCount() == 0) window.removeFromSplitter();
-        }
-      });
+    if (mySplittersElement == null) {
+      return;
     }
+
+    Activity restoringEditors = StartUpMeasurer.start(StartUpMeasurer.Phases.RESTORING_EDITORS);
+    JPanel component = myUIBuilder.process(mySplittersElement, getTopPanel());
+    restoringEditors.end();
+
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      if (component != null) {
+        removeAll();
+        add(component, BorderLayout.CENTER);
+        mySplittersElement = null;
+      }
+
+      // clear empty splitters
+      for (EditorWindow window : getWindows()) {
+        if (window.getTabCount() == 0) {
+          window.removeFromSplitter();
+        }
+      }
+    }, ModalityState.any());
   }
 
   public int getEditorsCount() {
@@ -597,6 +610,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     add(myCurrentWindow.myPanel, BorderLayout.CENTER);
   }
 
+  @NotNull
   protected EditorWindow createEditorWindow() {
     return new EditorWindow(this);
   }
@@ -825,38 +839,39 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     @Override
     protected JPanel processFiles(@NotNull List<? extends Element> fileElements, Element parent, final JPanel context) {
       final Ref<EditorWindow> windowRef = new Ref<>();
-      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> windowRef.set(context == null ? createEditorWindow() : findWindowWith(context)));
+      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+        EditorWindow editorWindow = context == null ? createEditorWindow() : findWindowWith(context);
+        windowRef.set(editorWindow);
+        if (editorWindow != null) {
+          updateTabSizeLimit(editorWindow, parent.getAttributeValue(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString()));
+        }
+      });
+
       final EditorWindow window = windowRef.get();
       LOG.assertTrue(window != null);
       VirtualFile focusedFile = null;
 
       for (int i = 0; i < fileElements.size(); i++) {
         final Element file = fileElements.get(i);
-        if (i == 0) {
-          EditorTabbedContainer tabbedPane = window.getTabbedPane();
-          if (tabbedPane != null) {
-            String limitValue = parent.getAttributeValue(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString());
-            if (limitValue != null) {
-              try {
-                int limit = Integer.parseInt(limitValue);
-                UIUtil.invokeAndWaitIfNeeded((Runnable)() -> UIUtil.putClientProperty(tabbedPane.getComponent(),
-                                                                                      JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, limit));
-              }
-              catch (NumberFormatException ignored) {}
-            }
-          }
-        }
+        Element historyElement = file.getChild(HistoryEntry.TAG);
+        String fileName = historyElement.getAttributeValue(HistoryEntry.FILE_ATTR);
+        Activity activity = ParallelActivity.REOPENING_EDITOR
+          .start(FileUtil.getLocationRelativeToUserHome(VirtualFileManager.extractPath(fileName), false));
         try {
           final FileEditorManagerImpl fileEditorManager = getManager();
-          Element historyElement = file.getChild(HistoryEntry.TAG);
           final HistoryEntry entry = HistoryEntry.createLight(fileEditorManager.getProject(), historyElement);
           final VirtualFile virtualFile = entry.getFile();
           if (virtualFile == null) throw new InvalidDataException("No file exists: " + entry.getFilePointer().getUrl());
           Document document = ReadAction.compute(() -> virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null);
-          final boolean isCurrentInTab = Boolean.valueOf(file.getAttributeValue(CURRENT_IN_TAB)).booleanValue();
-          Boolean pin = Boolean.valueOf(file.getAttributeValue(PINNED));
-          fileEditorManager.openFileImpl4(window, virtualFile, entry, false, false, pin, i, false);
-          if (isCurrentInTab) {
+
+          FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
+            .withPin(Boolean.valueOf(file.getAttributeValue(PINNED)))
+            .withCurrentTab(Boolean.valueOf(file.getAttributeValue(CURRENT_IN_TAB)).booleanValue())
+            .withIndex(i)
+            .withReopeningEditorsOnStartup();
+
+          fileEditorManager.openFileImpl4(window, virtualFile, entry, openOptions);
+          if (openOptions.isCurrentTab()) {
             focusedFile = virtualFile;
           }
           if (document != null) {
@@ -872,6 +887,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
             LOG.error(e);
           }
         }
+        activity.end();
       }
       if (focusedFile != null) {
         getManager().addSelectionRecord(focusedFile, window);
@@ -930,6 +946,20 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       process(firstChild, firstComponent.get());
       process(secondChild, secondComponent.get());
       return context;
+    }
+  }
+
+  private static void updateTabSizeLimit(EditorWindow editorWindow, String tabSizeLimit) {
+    EditorTabbedContainer tabbedPane = editorWindow.getTabbedPane();
+    if (tabbedPane != null) {
+      if (tabSizeLimit != null) {
+        try {
+          int limit = Integer.parseInt(tabSizeLimit);
+          UIUtil.invokeAndWaitIfNeeded((Runnable)() -> UIUtil.putClientProperty(tabbedPane.getComponent(),
+                                                                                JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, limit));
+        }
+        catch (NumberFormatException ignored) {}
+      }
     }
   }
 }

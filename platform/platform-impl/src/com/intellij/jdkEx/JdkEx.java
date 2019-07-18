@@ -2,7 +2,7 @@
 package com.intellij.jdkEx;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.MethodInvocator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +46,7 @@ public class JdkEx {
   }
 
   public static void setHasCustomDecoration(@NotNull Window window) {
-    if (SystemInfo.isJetBrainsJvm && SystemInfoRt.isWindows) {
+    if (SystemInfo.isJetBrainsJvm && SystemInfo.isWindows) {
       try {
         MethodInvocator invocator = new MethodInvocator(false, Class.forName("java.awt.Window"), "setHasCustomDecoration");
         if (invocator.isAvailable()) {
@@ -59,7 +59,7 @@ public class JdkEx {
   }
 
   public static void setCustomDecorationHitTestSpots(@NotNull Window window, @NotNull List<Rectangle> spots) {
-    if (SystemInfo.isJetBrainsJvm && SystemInfoRt.isWindows) {
+    if (SystemInfo.isJetBrainsJvm && SystemInfo.isWindows) {
       try {
         MethodInvocator invocator =
           new MethodInvocator(false, Class.forName("sun.awt.windows.WWindowPeer"), "setCustomDecorationHitTestSpots", List.class);

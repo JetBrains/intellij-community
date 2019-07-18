@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 
@@ -77,7 +78,7 @@ class SimpleBanner extends JPanel {
 
       int y;
       if (component == myProgress) {
-        y = (int)(JBUI.scale(1.5f) + (template.getHeight() - component.getHeight()) / 2f);
+        y = (int)(JBUIScale.scale(1.5f) + (template.getHeight() - component.getHeight()) / 2f);
       }
       else {
         y = baseline - component.getBaseline(component.getWidth(), component.getHeight());

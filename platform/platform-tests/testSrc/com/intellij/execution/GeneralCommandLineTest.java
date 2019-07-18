@@ -9,7 +9,7 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -152,10 +152,10 @@ public class GeneralCommandLineTest {
     // on Unix, JRE uses "sun.jnu.encoding" for paths and "file.encoding" for forking; they should be the same for the test to pass
     String uni = IoTestUtil.getUnicodeName();
     assumeTrue(uni != null);
-    assumeTrue(SystemInfoRt.isWindows || Comparing.equal(System.getProperty("sun.jnu.encoding"), System.getProperty("file.encoding")));
+    assumeTrue(SystemInfo.isWindows || Comparing.equal(System.getProperty("sun.jnu.encoding"), System.getProperty("file.encoding")));
 
     String mark = String.valueOf(new Random().nextInt());
-    String command = SystemInfoRt.isWindows ? "@echo " + mark + '\n' : "#!/bin/sh\necho " + mark + '\n';
+    String command = SystemInfo.isWindows ? "@echo " + mark + '\n' : "#!/bin/sh\necho " + mark + '\n';
     File script = ExecUtil.createTempExecutableScript("spaces 'and quotes' and " + uni + " ", ".cmd", command);
     try {
       String output = execAndGetOutput(createCommandLine(script.getPath()));
@@ -170,9 +170,9 @@ public class GeneralCommandLineTest {
   public void unicodeClassPath() throws Exception {
     // on Unix, JRE uses "sun.jnu.encoding" for paths and "file.encoding" for forking; they should be the same for the test to pass
     // on Windows, JRE receives arguments in ANSI variant and decodes using "sun.jnu.encoding"
-    String uni = SystemInfoRt.isWindows ? IoTestUtil.getUnicodeName(System.getProperty("sun.jnu.encoding")) : IoTestUtil.getUnicodeName();
+    String uni = SystemInfo.isWindows ? IoTestUtil.getUnicodeName(System.getProperty("sun.jnu.encoding")) : IoTestUtil.getUnicodeName();
     assumeTrue(uni != null);
-    assumeTrue(SystemInfoRt.isWindows || Comparing.equal(System.getProperty("sun.jnu.encoding"), System.getProperty("file.encoding")));
+    assumeTrue(SystemInfo.isWindows || Comparing.equal(System.getProperty("sun.jnu.encoding"), System.getProperty("file.encoding")));
 
     File dir = tempDir.newFolder("spaces 'and quotes' and " + uni);
     Pair<GeneralCommandLine, File> command = makeHelperCommand(dir, CommandTestHelper.ARG, "test");
@@ -189,7 +189,7 @@ public class GeneralCommandLineTest {
 
   @Test(timeout = 60000)
   public void passingArgumentsToJavaAppThroughWinShell() throws Exception {
-    assumeTrue("Windows-only test", SystemInfoRt.isWindows);
+    assumeTrue("Windows-only test", SystemInfo.isWindows);
 
     Pair<GeneralCommandLine, File> command = makeHelperCommand(null, CommandTestHelper.ARG, ARGUMENTS);
     String javaPath = command.first.getExePath();
@@ -201,7 +201,7 @@ public class GeneralCommandLineTest {
 
   @Test(timeout = 60000)
   public void passingArgumentsToJavaAppThroughNestedWinShell() throws Exception {
-    assumeTrue("Windows-only test", SystemInfoRt.isWindows);
+    assumeTrue("Windows-only test", SystemInfo.isWindows);
 
     Pair<GeneralCommandLine, File> command = makeHelperCommand(null, CommandTestHelper.ARG, ARGUMENTS);
     String javaPath = command.first.getExePath();
@@ -216,7 +216,7 @@ public class GeneralCommandLineTest {
 
   @Test(timeout = 60000)
   public void passingArgumentsToJavaAppThroughCmdScriptAndWinShell() throws Exception {
-    assumeTrue("Windows-only test", SystemInfoRt.isWindows);
+    assumeTrue("Windows-only test", SystemInfo.isWindows);
 
     Pair<GeneralCommandLine, File> command = makeHelperCommand(null, CommandTestHelper.ARG);
     File script = ExecUtil.createTempExecutableScript("my script ", ".cmd", "@" + command.first.getCommandLineString() + " %*");
@@ -233,7 +233,7 @@ public class GeneralCommandLineTest {
 
   @Test(timeout = 60000)
   public void passingArgumentsToJavaAppThroughCmdScriptAndNestedWinShell() throws Exception {
-    assumeTrue("Windows-only test", SystemInfoRt.isWindows);
+    assumeTrue("Windows-only test", SystemInfo.isWindows);
 
     Pair<GeneralCommandLine, File> command = makeHelperCommand(null, CommandTestHelper.ARG);
     File script = ExecUtil.createTempExecutableScript("my script ", ".cmd", "@" + command.first.getCommandLineString() + " %*");
@@ -253,7 +253,7 @@ public class GeneralCommandLineTest {
 
   @Test(timeout = 60000)
   public void passingArgumentsToEchoThroughWinShell() throws Exception {
-    assumeTrue("Windows-only test", SystemInfoRt.isWindows);
+    assumeTrue("Windows-only test", SystemInfo.isWindows);
 
     for (String argument : ARGUMENTS) {
       if (argument.trim().isEmpty()) continue;  // would report "ECHO is on"
@@ -265,7 +265,7 @@ public class GeneralCommandLineTest {
 
   @Test(timeout = 60000)
   public void passingArgumentsToCygwinPrintf() throws Exception {
-    assumeTrue("Windows-only test", SystemInfoRt.isWindows);
+    assumeTrue("Windows-only test", SystemInfo.isWindows);
 
     File cygwinPrintf = FileUtil.findFirstThatExist("C:\\cygwin\\bin\\printf.exe", "C:\\cygwin64\\bin\\printf.exe");
     assumeTrue("Cygwin not found", cygwinPrintf != null);
@@ -281,9 +281,9 @@ public class GeneralCommandLineTest {
   public void unicodeParameters() throws Exception {
     // on Unix, JRE uses "sun.jnu.encoding" for paths and "file.encoding" for forking; they should be the same for the test to pass
     // on Windows, JRE receives arguments in ANSI variant and decodes using "sun.jnu.encoding"
-    String uni = SystemInfoRt.isWindows ? IoTestUtil.getUnicodeName(System.getProperty("sun.jnu.encoding")) : IoTestUtil.getUnicodeName();
+    String uni = SystemInfo.isWindows ? IoTestUtil.getUnicodeName(System.getProperty("sun.jnu.encoding")) : IoTestUtil.getUnicodeName();
     assumeTrue(uni != null);
-    assumeTrue(SystemInfoRt.isWindows || Comparing.equal(System.getProperty("sun.jnu.encoding"), System.getProperty("file.encoding")));
+    assumeTrue(SystemInfo.isWindows || Comparing.equal(System.getProperty("sun.jnu.encoding"), System.getProperty("file.encoding")));
 
     String[] args = {"some", uni, "parameters"};
     Pair<GeneralCommandLine, File> command = makeHelperCommand(null, CommandTestHelper.ARG, args);
@@ -293,7 +293,7 @@ public class GeneralCommandLineTest {
 
   @Test(timeout = 60000)
   public void winShellCommand() {
-    assumeTrue("Windows-only test", SystemInfoRt.isWindows);
+    assumeTrue("Windows-only test", SystemInfo.isWindows);
 
     String string = "http://localhost/wtf?a=b&c=d";
     String echo = ExecUtil.execAndReadLine(createCommandLine(ExecUtil.getWindowsShellName(), "/c", "echo", string));
@@ -302,7 +302,7 @@ public class GeneralCommandLineTest {
 
   @Test(timeout = 60000)
   public void winShellScriptQuoting() throws Exception {
-    assumeTrue("Windows-only test", SystemInfoRt.isWindows);
+    assumeTrue("Windows-only test", SystemInfo.isWindows);
 
     String scriptPrefix = "my_script";
     for (String scriptExt : new String[]{".cmd", ".bat"}) {
@@ -322,7 +322,7 @@ public class GeneralCommandLineTest {
 
   @Test(timeout = 60000)
   public void winShellQuotingWithExtraSwitch() throws Exception {
-    assumeTrue("Windows-only test", SystemInfoRt.isWindows);
+    assumeTrue("Windows-only test", SystemInfo.isWindows);
 
     String param = "a&b";
     GeneralCommandLine commandLine = createCommandLine(ExecUtil.getWindowsShellName(), "/D", "/C", "echo", param);
@@ -335,7 +335,7 @@ public class GeneralCommandLineTest {
     String content = "Line 1\nLine 2\n";
     File input = tempDir.newFile("input");
     FileUtil.writeToFile(input, content);
-    String command = SystemInfoRt.isWindows ? "@echo off\nfindstr \"^\"\n" : "#!/bin/sh\ncat\n";
+    String command = SystemInfo.isWindows ? "@echo off\nfindstr \"^\"\n" : "#!/bin/sh\ncat\n";
     File script = ExecUtil.createTempExecutableScript("print-stdin", ".cmd", command);
     try {
       GeneralCommandLine commandLine = createCommandLine(script.getPath()).withInput(input);
@@ -355,7 +355,7 @@ public class GeneralCommandLineTest {
     checkEnvVar("", "-", "empty keys should be rejected");
     checkEnvVar("a\0b", "-", "keys with '\\0' should be rejected");
     checkEnvVar("a=b", "-", "keys with '=' should be rejected");
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       GeneralCommandLine commandLine = createCommandLine("find");
       commandLine.getEnvironment().put("=wtf", "-");
       commandLine.createProcess().waitFor();
@@ -369,7 +369,7 @@ public class GeneralCommandLineTest {
   }
 
   private void checkEnvVar(String name, String value, String message) throws ExecutionException, InterruptedException {
-    GeneralCommandLine commandLine = createCommandLine(SystemInfoRt.isWindows ? "find" : "echo");
+    GeneralCommandLine commandLine = createCommandLine(SystemInfo.isWindows ? "find" : "echo");
     commandLine.getEnvironment().put(name, value);
     try {
       commandLine.createProcess().waitFor();
@@ -392,7 +392,7 @@ public class GeneralCommandLineTest {
   @Test(timeout = 60000)
   public void unicodeEnvironment() throws Exception {
     // on Unix, JRE uses "file.encoding" to encode and decode environment; on Windows, JRE uses wide characters
-    String uni = SystemInfoRt.isWindows ? IoTestUtil.getUnicodeName() : IoTestUtil.getUnicodeName(System.getProperty("file.encoding"));
+    String uni = SystemInfo.isWindows ? IoTestUtil.getUnicodeName() : IoTestUtil.getUnicodeName(System.getProperty("file.encoding"));
     assumeTrue(uni != null);
 
     Map<String, String> testEnv = newHashMap(pair("VALUE_1", uni + "_1"), pair("VALUE_2", uni + "_2"));
@@ -406,7 +406,7 @@ public class GeneralCommandLineTest {
     File temp = tempDir.newFile("temp");
     FileUtil.writeToFile(temp, "something");
     assertTrue(temp.exists());
-    GeneralCommandLine cmd = SystemInfoRt.isWindows ? new GeneralCommandLine("cmd", "/c", "ver") : new GeneralCommandLine("uname");
+    GeneralCommandLine cmd = SystemInfo.isWindows ? new GeneralCommandLine("cmd", "/c", "ver") : new GeneralCommandLine("uname");
     OSProcessHandler.deleteFileOnTermination(cmd, temp);
     execAndGetOutput(cmd);
     assertFalse(temp.exists());

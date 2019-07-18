@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.treeStructure.Tree;
@@ -136,7 +136,7 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
             fillClassTree();
           }
         }
-      }).setToolbarPosition(SystemInfoRt.isMac ? ActionToolbarPosition.BOTTOM : ActionToolbarPosition.RIGHT).createPanel());
+      }).setToolbarPosition(SystemInfo.isMac ? ActionToolbarPosition.BOTTOM : ActionToolbarPosition.RIGHT).createPanel());
 
     mySplitter.setSecondComponent(
       ToolbarDecorator.createDecorator(myPropertiesTable).disableUpDownActions()

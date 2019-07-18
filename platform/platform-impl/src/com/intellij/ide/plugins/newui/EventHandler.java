@@ -2,7 +2,8 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,7 +83,7 @@ public abstract class EventHandler {
     SELECTION, HOVER, NONE
   }
 
-  public static final int DELETE_CODE = SystemInfoRt.isMac ? KeyEvent.VK_BACK_SPACE : KeyEvent.VK_DELETE;
+  public static final int DELETE_CODE = SystemInfo.isMac ? KeyEvent.VK_BACK_SPACE : KeyEvent.VK_DELETE;
 
   @Nullable
   public static ShortcutSet getShortcuts(@NotNull String id) {
@@ -104,7 +105,7 @@ public abstract class EventHandler {
   @NotNull
   protected static CellPluginComponent get(@NotNull ComponentEvent event) {
     //noinspection ConstantConditions
-    return UIUtil.getParentOfType(CellPluginComponent.class, event.getComponent());
+    return ComponentUtil.getParentOfType((Class<? extends CellPluginComponent>)CellPluginComponent.class, event.getComponent());
   }
 
   @Nullable

@@ -20,7 +20,6 @@ import java.lang.reflect.Method;
 import java.util.LinkedHashMap;
 import java.util.stream.Collectors;
 
-// NOTE: If you move this class to a different module, make sure to update BootstrapClassLoaderUtil.MAIN_RUNNER_JAR
 public final class MainRunner {
   public static WindowsCommandLineListener LISTENER;
 
@@ -166,9 +165,10 @@ public final class MainRunner {
 
   // Called via reflection from WindowsCommandLineProcessor.processWindowsLauncherCommandLine
   @SuppressWarnings("unused")
-  public static void processWindowsLauncherCommandLine(final String currentDirectory, final String[] args) {
+  public static int processWindowsLauncherCommandLine(final String currentDirectory, final String[] args) {
     if (LISTENER != null) {
-      LISTENER.processWindowsLauncherCommandLine(currentDirectory, args);
+      return LISTENER.processWindowsLauncherCommandLine(currentDirectory, args);
     }
+    return 1;
   }
 }

@@ -9,7 +9,7 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NullableFunction;
@@ -39,7 +39,7 @@ public class ProcessListUtil {
   @NotNull
   private static List<ProcessInfo> doGetProcessList() {
     List<ProcessInfo> result;
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       result = getProcessListUsingWinNativeHelper();
       if (result != null) return result;
       LOG.info("Cannot get process list via " + WIN_PROCESS_LIST_HELPER_FILENAME + ", fallback to wmic");
@@ -53,8 +53,8 @@ public class ProcessListUtil {
 
       LOG.error("Cannot get process list via wmic and tasklist");
     }
-    else if (SystemInfoRt.isUnix) {
-      if (SystemInfoRt.isMac) {
+    else if (SystemInfo.isUnix) {
+      if (SystemInfo.isMac) {
         result = getProcessListOnMac();
       }
       else {
@@ -65,7 +65,7 @@ public class ProcessListUtil {
       LOG.error("Cannot get process list");
     }
     else {
-      LOG.error("Cannot get process list, unexpected platform: " + SystemInfoRt.OS_NAME);
+      LOG.error("Cannot get process list, unexpected platform: " + SystemInfo.OS_NAME);
     }
     return Collections.emptyList();
   }

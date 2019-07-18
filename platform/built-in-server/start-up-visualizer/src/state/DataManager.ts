@@ -11,7 +11,6 @@ export interface ItemStats {
   readonly reportedServiceCount: number
 }
 
-
 const statSupportMinVersion = semver.coerce("3")!!
 
 export class DataManager {

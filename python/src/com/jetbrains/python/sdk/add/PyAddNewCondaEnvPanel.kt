@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.FileUtil
@@ -27,7 +28,6 @@ import com.jetbrains.python.sdk.createSdkByGenerateTask
 import icons.PythonIcons
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.BorderLayout
-import java.awt.Dimension
 import java.io.File
 import javax.swing.Icon
 import javax.swing.JComboBox
@@ -76,9 +76,8 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
     // https://conda.io/docs/user-guide/install/index.html#system-requirements
     val supportedLanguageLevels = LanguageLevel.SUPPORTED_LEVELS.asReversed().filter { it != LanguageLevel.PYTHON38 }.map { it.toString() }
 
-    languageLevelsField = JComboBox(supportedLanguageLevels.toTypedArray()).apply {
+    languageLevelsField = ComboBox(supportedLanguageLevels.toTypedArray()).apply {
       selectedItem = if (itemCount > 0) getItemAt(0) else null
-      preferredSize = Dimension(Int.MAX_VALUE, preferredSize.height)
     }
 
     updatePathField()

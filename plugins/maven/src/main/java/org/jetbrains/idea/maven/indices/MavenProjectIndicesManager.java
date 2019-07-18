@@ -28,6 +28,8 @@ import org.jetbrains.idea.maven.project.MavenProjectChanges;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
+import org.jetbrains.idea.maven.utils.MavenLog;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
 import org.jetbrains.idea.maven.utils.MavenSimpleProjectComponent;
 
@@ -110,6 +112,8 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
         MavenIndex localIndex = indicesManager.createIndexForLocalRepo(myProject, localRepository);
         if (localIndex != null) {
           providers.add(new IndexBasedCompletionProvider(localIndex));
+        } else {
+          MavenLog.LOG.warn("Cannot create local maven index for " + localRepository);
         }
         providers.add(new ProjectModulesCompletionProvider(myProject));
 

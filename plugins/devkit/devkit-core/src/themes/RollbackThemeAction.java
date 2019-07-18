@@ -2,13 +2,13 @@
 package org.jetbrains.idea.devkit.themes;
 
 import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.laf.LafManagerImpl;
 import com.intellij.ide.ui.laf.TempUIThemeBasedLookAndFeelInfo;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +33,7 @@ public class RollbackThemeAction extends DumbAwareAction {
       LafManager.getInstance().setCurrentLookAndFeel(feel);
     }
     EditorColorsManagerImpl.schemeChangedOrSwitched();
-    LafManagerImpl.updateForDarcula(UIUtil.isUnderDarcula());
+    AppUIUtil.updateForDarcula(UIUtil.isUnderDarcula());
     LafManager.getInstance().updateUI();
   }
 

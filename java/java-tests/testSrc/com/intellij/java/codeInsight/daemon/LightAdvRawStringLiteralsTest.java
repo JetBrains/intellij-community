@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
@@ -17,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class LightAdvRawStringLiteralsTest extends LightCodeInsightFixtureTestCase {
-
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advRawStringLiteral";
@@ -33,13 +32,9 @@ public class LightAdvRawStringLiteralsTest extends LightCodeInsightFixtureTestCa
     doTestHighlighting();
   }
 
-  public void testRawToStringTransformation() {
-    doTestIntention(QuickFixBundle.message("convert.to.string.text"));
-  }
-
+  public void testRawToStringTransformation() { doTestIntention(QuickFixBundle.message("convert.to.string.text")); }
   public void testStringToRawTransformation() { doTestIntention(QuickFixBundle.message("convert.to.raw.string.text")); }
   public void testStringToRawTransformationWithWrongSeparators() { doTestIntention(QuickFixBundle.message("convert.to.raw.string.text")); }
-
   public void testStringToRawTransformationLeadingTics() { doTestIntention(QuickFixBundle.message("convert.to.raw.string.text")); }
 
   public void testStringToRawTransformationOnlyTics() {
@@ -47,9 +42,7 @@ public class LightAdvRawStringLiteralsTest extends LightCodeInsightFixtureTestCa
     assertEmpty(myFixture.filterAvailableIntentions(QuickFixBundle.message("convert.to.raw.string.text")));
   }
 
-  public void testStringToRawTransformationWithTicsInside() {
-    doTestIntention(QuickFixBundle.message("convert.to.raw.string.text"));
-  }
+  public void testStringToRawTransformationWithTicsInside() { doTestIntention(QuickFixBundle.message("convert.to.raw.string.text")); }
 
   public void testSplitRawStringLiteral() { doTestIntention("Split raw string literal"); }
   public void testSplitRawStringLiteralDisabledOnTic() {
@@ -62,7 +55,7 @@ public class LightAdvRawStringLiteralsTest extends LightCodeInsightFixtureTestCa
   }
 
   public void testPasteInRawStringLiteralWrongLineSeparator() {
-    doTestPaste("class A {{String s = `<caret>a`;}}", "\r", "class A {{String s = `\na`;}}");
+    doTestPaste("class A {{String s = `<caret>x`;}}", "\r", "class A {{String s = `\nx`;}}");
   }
 
   public void testPasteInRawStringStaringWithTics() {

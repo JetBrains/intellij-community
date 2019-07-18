@@ -4,7 +4,7 @@ package com.intellij.ide.dnd.aware;
 import com.intellij.ide.dnd.DnDAware;
 import com.intellij.ide.dnd.TransferableList;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.UIUtil;
@@ -46,7 +46,7 @@ public class DnDAwareTree extends Tree implements DnDAware {
 
   @Override
   protected void processMouseMotionEvent(MouseEvent e) {
-    if (SystemInfoRt.isMac && JBSwingUtilities.isRightMouseButton(e) && e.getID() == MouseEvent.MOUSE_DRAGGED) return;
+    if (SystemInfo.isMac && JBSwingUtilities.isRightMouseButton(e) && e.getID() == MouseEvent.MOUSE_DRAGGED) return;
     super.processMouseMotionEvent(e);
   }
 

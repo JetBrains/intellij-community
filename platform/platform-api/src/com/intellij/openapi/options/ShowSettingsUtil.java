@@ -3,7 +3,7 @@ package com.intellij.openapi.options;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,6 +48,6 @@ public abstract class ShowSettingsUtil {
   public abstract boolean editConfigurable(Component parent, String dimensionServiceKey, Configurable configurable);
 
   public static String getSettingsMenuName() {
-    return SystemInfoRt.isMac ? "Preferences" : "Settings";
+    return SystemInfo.isMac ? "Preferences" : "Settings";
   }
 }

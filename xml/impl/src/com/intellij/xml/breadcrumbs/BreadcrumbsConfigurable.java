@@ -14,6 +14,7 @@ import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.ui.components.panels.VerticalLayout;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
@@ -70,7 +71,7 @@ final class BreadcrumbsConfigurable extends CompositeConfigurable<BreadcrumbsCon
           map.put(id, configurable.createComponent());
         }
       }
-      JPanel boxes = new JPanel(new GridLayout(0, 3, isUnderDarcula() ? JBUI.scale(10) : 0, 0));
+      JPanel boxes = new JPanel(new GridLayout(0, 3, isUnderDarcula() ? JBUIScale.scale(10) : 0, 0));
       map.values().stream().sorted((box1, box2) -> naturalCompare(box1.getText(), box2.getText())).forEach(box -> boxes.add(box));
 
       show = new JCheckBox(message("checkbox.show.breadcrumbs"));
@@ -85,7 +86,7 @@ final class BreadcrumbsConfigurable extends CompositeConfigurable<BreadcrumbsCon
 
       placement = new JLabel(message("label.breadcrumbs.placement"));
 
-      JPanel placementPanel = new JPanel(new HorizontalLayout(JBUI.scale(UIUtil.DEFAULT_HGAP)));
+      JPanel placementPanel = new JPanel(new HorizontalLayout(JBUIScale.scale(UIUtil.DEFAULT_HGAP)));
       placementPanel.setBorder(JBUI.Borders.emptyLeft(24));
       placementPanel.add(placement);
       placementPanel.add(above);
@@ -93,12 +94,12 @@ final class BreadcrumbsConfigurable extends CompositeConfigurable<BreadcrumbsCon
 
       languages = new JLabel(message("label.breadcrumbs.languages"));
 
-      JPanel languagesPanel = new JPanel(new VerticalLayout(JBUI.scale(6)));
+      JPanel languagesPanel = new JPanel(new VerticalLayout(JBUIScale.scale(6)));
       languagesPanel.setBorder(JBUI.Borders.empty(0, 24, 12, 0));
       languagesPanel.add(languages);
       languagesPanel.add(boxes);
 
-      component = new JPanel(new VerticalLayout(JBUI.scale(12), LEFT));
+      component = new JPanel(new VerticalLayout(JBUIScale.scale(12), LEFT));
       component.add(show);
       component.add(placementPanel);
       component.add(languagesPanel);

@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
@@ -34,7 +33,6 @@ public abstract class MavenProjectsAction extends MavenAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    MavenActionsUsagesCollector.trigger(e.getProject(), this, e);
     final DataContext context = e.getDataContext();
     final MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(context);
     if(projectsManager == null) return;

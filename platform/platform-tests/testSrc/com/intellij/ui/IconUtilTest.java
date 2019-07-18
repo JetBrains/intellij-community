@@ -29,6 +29,11 @@ import java.util.List;
 
 public class IconUtilTest extends PlatformTestCase {
   @Override
+  protected boolean isIconRequired() {
+    return false;
+  }
+
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     while (DumbService.isDumb(getProject())) {

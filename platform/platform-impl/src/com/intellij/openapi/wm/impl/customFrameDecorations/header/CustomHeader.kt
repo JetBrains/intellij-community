@@ -13,9 +13,10 @@ import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.paint.LinePainter2D
-import com.intellij.util.ObjectUtils
+import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.scale.ScaleType
+import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.JBUIScale
 import java.awt.*
 import java.awt.event.*
 import javax.swing.*
@@ -45,7 +46,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
 
     private var windowListener: WindowAdapter
     private val myComponentListener: ComponentListener
-    private val myIconProvider = JBUIScale.ScaleContext.Cache { ctx -> AppUIUtil.loadSmallApplicationIcon(ctx) }
+    private val myIconProvider = ScaleContext.Cache { ctx -> AppUIUtil.loadSmallApplicationIcon(ctx) }
 
     protected var myActive = false
     protected val windowRootPane: JRootPane? = when (window) {
@@ -59,8 +60,8 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
 
     private val icon: Icon
         get() {
-            val ctx = JBUIScale.ScaleContext.create(window)
-            ctx.overrideScale(JBUIScale.ScaleType.USR_SCALE.of(1.0))
+            val ctx = ScaleContext.create(window)
+            ctx.overrideScale(ScaleType.USR_SCALE.of(1.0))
             return myIconProvider.getOrProvide(ctx)!!
         }
 
@@ -212,7 +213,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
 
     open fun addMenuItems(menu: JMenu) {
         val closeMenuItem = menu.add(myCloseAction)
-        closeMenuItem.font = JBUI.Fonts.label().deriveFont(Font.BOLD)
+        closeMenuItem.font = JBFont.label().deriveFont(Font.BOLD)
     }
 
     inner class CustomFrameTopBorder(val isTopNeeded: ()-> Boolean = {true}, val isBottomNeeded: ()-> Boolean = {false}) : Border {

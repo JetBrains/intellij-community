@@ -44,7 +44,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
@@ -52,16 +52,18 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.LinePainter2D.StrokeType;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.paint.RectanglePainter2D;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
-import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.JBValue.JBValueGroup;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import gnu.trove.*;
@@ -249,7 +251,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       })
       .setImageProvider((NullableFunction<DnDActionInfo, DnDImage>)info -> {
         // [tav] temp workaround for JRE-224
-        boolean inUserScale = !SystemInfoRt.isWindows || !UIUtil.isJreHiDPI(myEditor.getComponent());
+        boolean inUserScale = !SystemInfo.isWindows || !UIUtil.isJreHiDPI(myEditor.getComponent());
         Image image = ImageUtil.toBufferedImage(getDragImage(getGutterRenderer(info.getPoint())), inUserScale);
         return new DnDImage(image, new Point(image.getWidth(null) / 2, image.getHeight(null) / 2));
       })
@@ -342,7 +344,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     paintEditorBackgrounds(g, firstVisibleOffset, lastVisibleOffset);
 
     Object hint = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-    if (!UIUtil.isJreHiDPI(g)) g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+    if (!JreHiDpiUtil.isJreHiDPI(g)) g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 
     try {
       paintAnnotations(g, startVisualLine, endVisualLine);
@@ -1305,7 +1307,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private double scale(double v) {
-    return JBUI.scale((float)v) * myEditor.getScale();
+    return JBUIScale.scale((float)v) * myEditor.getScale();
   }
 
   private int getFoldingAnchorWidth() {
@@ -1313,11 +1315,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private double getFoldingAnchorWidth2D() {
-    return Math.min(scale(4f), myEditor.getLineHeight() / 2f - JBUI.scale(2f)) * 2;
+    return Math.min(scale(4f), myEditor.getLineHeight() / 2f - JBUIScale.scale(2f)) * 2;
   }
 
   private double getStrokeWidth() {
-    double sw = UIUtil.isJreHiDPIEnabled() || scale(1f) < 2 ? 1 : 2;
+    double sw = JreHiDpiUtil.isJreHiDPIEnabled() || scale(1f) < 2 ? 1 : 2;
     ScaleContext ctx = ScaleContext.create(myEditor.getComponent());
     return PaintUtil.alignToInt(sw, ctx, PaintUtil.devValue(1, ctx) > 2 ? RoundingMode.FLOOR : RoundingMode.ROUND, null);
   }
@@ -1327,7 +1329,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private int getFoldingAreaWidth() {
-    return isFoldingOutlineShown() ? getFoldingAnchorWidth() + JBUI.scale(2) :
+    return isFoldingOutlineShown() ? getFoldingAnchorWidth() + JBUIScale.scale(2) :
            isRealEditor() ? getFoldingAnchorWidth() : 0;
   }
 

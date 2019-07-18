@@ -11,7 +11,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +25,7 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     ApplicationInfoEx info = ApplicationInfoEx.getInstanceEx();
-    boolean isSupportedOS = SystemInfoRt.isMac || SystemInfoRt.isLinux || SystemInfoRt.isWindows;
+    boolean isSupportedOS = SystemInfo.isMac || SystemInfo.isLinux || SystemInfo.isWindows;
     if (info != null && info.getFeedbackUrl() != null && isSupportedOS) {
       String feedbackSite = getFeedbackHost(info.getFeedbackUrl(), info.getCompanyName());
       e.getPresentation().setDescription(ActionsBundle.message("action.SendFeedback.detailed.description", feedbackSite));
@@ -118,7 +118,7 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
         sb.append(bounds.width).append("x").append(bounds.height);
       }
       if (UIUtil.isRetina()) {
-        sb.append(SystemInfoRt.isMac ? "; Retina" : "; HiDPI");
+        sb.append(SystemInfo.isMac ? "; Retina" : "; HiDPI");
       }
     }
     for (FeedbackDescriptionProvider ext : EP_NAME.getExtensions()) {

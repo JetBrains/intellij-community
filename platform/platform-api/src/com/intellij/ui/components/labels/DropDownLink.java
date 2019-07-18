@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components.labels;
 
 import com.intellij.icons.AllIcons;
@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.JBUI;
@@ -32,7 +33,7 @@ public class DropDownLink<T> extends LinkLabel<Object> {
 
     setListener((linkLabel, d) -> {
       JBPopup popup = popupBuilder.convert((DropDownLink)linkLabel);
-      Point showPoint = new Point(0, getHeight() + JBUI.scale(4));
+      Point showPoint = new Point(0, getHeight() + JBUIScale.scale(4));
       popup.show(new RelativePoint(this, showPoint));
     }, null);
 
@@ -58,7 +59,7 @@ public class DropDownLink<T> extends LinkLabel<Object> {
   }
 
   private void init() {
-    setIconTextGap(JBUI.scale(1));
+    setIconTextGap(JBUIScale.scale(1));
     setHorizontalAlignment(SwingConstants.LEADING);
     setHorizontalTextPosition(SwingConstants.LEADING);
 
@@ -67,7 +68,7 @@ public class DropDownLink<T> extends LinkLabel<Object> {
       protected String layoutCL(JLabel label, FontMetrics fontMetrics, String text, Icon icon,
                                 Rectangle viewR, Rectangle iconR, Rectangle textR) {
         String result = super.layoutCL(label, fontMetrics, text, icon, viewR, iconR, textR);
-        iconR.y += JBUI.scale(1);
+        iconR.y += JBUIScale.scale(1);
         return result;
       }
     });
@@ -96,7 +97,7 @@ public class DropDownLink<T> extends LinkLabel<Object> {
     }
 
     private Dimension recomputeSize(@NotNull Dimension size) {
-      size.height = Math.max(size.height, JBUI.scale(22));
+      size.height = Math.max(size.height, JBUIScale.scale(22));
       size.width = Math.max(size.width, owner.getPreferredSize().width);
       return size;
     }

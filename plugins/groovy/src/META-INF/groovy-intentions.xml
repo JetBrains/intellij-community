@@ -249,6 +249,10 @@
     </intentionAction>
     <intentionAction>
       <categoryKey>intention.category.groovy.style</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.style.InferMethodParametersTypesIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <categoryKey>intention.category.groovy.style</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.style.parameterToEntry.ConvertParameterToMapEntryIntention</className>
     </intentionAction>
     <intentionAction>

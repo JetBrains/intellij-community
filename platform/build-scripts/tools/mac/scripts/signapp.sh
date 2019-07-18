@@ -12,6 +12,7 @@ USERNAME=$3
 PASSWORD=$4
 CODESIGN_STRING=$5
 HELP_DIR_NAME=$6
+NOTARIZE=$7
 
 cd $(dirname $0)
 
@@ -25,8 +26,8 @@ unzip -q ${INPUT_FILE} -d ${EXPLODED}/
 rm ${INPUT_FILE}
 BUILD_NAME=$(ls ${EXPLODED}/)
 
-if [ $# -eq 7 ] && [ -f $7 ]; then
-  archiveJDK="$7"
+if [ $# -eq 8 ] && [ -f $8 ]; then
+  archiveJDK="$8"
   echo "Modifying Info.plist"
   sed -i -e 's/1.6\*/1.6\+/' ${EXPLODED}/"$BUILD_NAME"/Contents/Info.plist
   jdk=jdk-bundled
@@ -51,21 +52,21 @@ fi
 #enable nullglob option to ensure that 'for' cycles don't iterate if nothing matches to the file pattern
 shopt -s nullglob
 
-for f in ${EXPLODED}/"$BUILD_NAME"/Contents/bin/*.jnilib ; do
+for f in "${EXPLODED}/$BUILD_NAME"/Contents/bin/*.jnilib ; do
   if [ -f "$f" ]; then
     b="$(basename "$f" .jnilib)"
     ln -sf "$b.jnilib" "$(dirname "$f")/$b.dylib"
   fi
 done
 
-for f in ${EXPLODED}/"$BUILD_NAME"/Contents/*.txt ; do
+for f in "${EXPLODED}/$BUILD_NAME"/Contents/*.txt ; do
   if [ -f "$f" ]; then
     echo "Moving $f"
     mv "$f" ${EXPLODED}/"$BUILD_NAME"/Contents/Resources
   fi
 done
 
-for f in ${EXPLODED}/"$BUILD_NAME"/Contents/* ; do
+for f in "${EXPLODED}/$BUILD_NAME"/Contents/* ; do
   if [ -f "$f" ] && [ $(basename -- "$f") != "Info.plist" ] ; then
     echo "Only Info.plist file is allowed in Contents directory but $f is found"
     exit 1
@@ -74,7 +75,7 @@ done
 shopt -u nullglob
 
 # Make sure *.p12 is imported into local KeyChain
-security unlock-keychain -p ${PASSWORD} /Users/${USERNAME}/Library/Keychains/login.keychain
+security unlock-keychain -p "${PASSWORD}" "/Users/${USERNAME}/Library/Keychains/login.keychain"
 
 attempt=1
 limit=3
@@ -82,7 +83,7 @@ set +e
 while [ $attempt -le $limit ]
 do
   echo "signing (attempt $attempt) ${EXPLODED}/$BUILD_NAME"
-  codesign -v --deep --force -s "${CODESIGN_STRING}" "${EXPLODED}/$BUILD_NAME"
+  ./sign.sh "${EXPLODED}/$BUILD_NAME" "$CODESIGN_STRING"
   if [ "$?" != "0" ]; then
     let "attempt += 1"
     if [ $attempt -eq $limit ]; then
@@ -97,6 +98,17 @@ do
     let "attempt += $limit"
   fi
 done
+
+set -e
+
+if [ "$NOTARIZE" = "yes" ]; then
+  echo "Notarizing..."
+  source "$HOME/.notarize_token"
+  ./notarize.sh "${EXPLODED}/$BUILD_NAME" "$APPLE_USERNAME" "$APPLE_PASSWORD"
+
+  echo "Stapling..."
+  xcrun stapler staple "${EXPLODED}/$BUILD_NAME"
+fi
 
 echo "Zipping ${BUILD_NAME} to ${INPUT_FILE}..."
 cd ${EXPLODED}

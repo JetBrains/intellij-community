@@ -25,7 +25,6 @@ import com.jetbrains.python.psi.PyClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -38,17 +37,6 @@ public interface PyClassStub extends NamedStub<PyClass> {
   @NotNull
   Map<QualifiedName, QualifiedName> getSuperClasses();
 
-  /**
-   * Returns literal text of the subscription expressions in the base classes list.
-   * It's intended to be used for resolving generic types and type parameters in PEP 484 notation.
-   *
-   * @deprecated Use {@link PyClassStub#getSuperClassesText()} instead.
-   * This method will be removed in 2019.2.
-   */
-  @NotNull
-  @Deprecated
-  List<String> getSubscriptedSuperClasses();
-
   @Nullable
   QualifiedName getMetaClass();
 
@@ -60,12 +48,9 @@ public interface PyClassStub extends NamedStub<PyClass> {
 
   /**
    * @return literal text of expressions in the base classes list.
-   * @apiNote This method will be marked as abstract in 2019.2.
    */
   @NotNull
-  default List<String> getSuperClassesText() {
-    return Collections.emptyList();
-  }
+  List<String> getSuperClassesText();
 
   /**
    * @deprecated It is our internal API, try to avoid using it.

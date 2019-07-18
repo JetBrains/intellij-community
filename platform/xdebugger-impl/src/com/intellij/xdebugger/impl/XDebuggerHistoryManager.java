@@ -23,8 +23,11 @@ import java.util.Map;
 /**
  * @author nik
  */
-@State(name = "debuggerHistoryManager", storages = @Storage(value = StoragePathMacros.WORKSPACE_FILE))
-public class XDebuggerHistoryManager implements PersistentStateComponent<Element> {
+@State(name = "debuggerHistoryManager", storages = {
+  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
+  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
+})
+public final class XDebuggerHistoryManager implements PersistentStateComponent<Element> {
   public static final int MAX_RECENT_EXPRESSIONS = 10;
   private static final String STATE_TAG = "root";
   private static final String ID_ATTRIBUTE = "id";

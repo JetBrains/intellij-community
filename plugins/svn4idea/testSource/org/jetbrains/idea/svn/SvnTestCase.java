@@ -14,7 +14,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
@@ -118,7 +118,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   @BeforeClass
   public static void assumeWindowsUnderTeamCity() {
     if (IS_UNDER_TEAMCITY) {
-      assumeTrue("Windows is required", SystemInfoRt.isWindows);
+      assumeTrue("Windows is required", SystemInfo.isWindows);
     }
   }
 
@@ -132,13 +132,13 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
       myPluginRoot = new File(getPluginHome());
       myClientBinaryPath = getSvnClientDirectory();
       myRunner =
-        SystemInfoRt.isMac ? createClientRunner(singletonMap("DYLD_LIBRARY_PATH", myClientBinaryPath.getPath())) : createClientRunner();
+        SystemInfo.isMac ? createClientRunner(singletonMap("DYLD_LIBRARY_PATH", myClientBinaryPath.getPath())) : createClientRunner();
 
       myRepoRoot = virtualToIoFile(myTempDirFixture.findOrCreateDir("svnroot"));
       ZipUtil.extract(new File(myPluginRoot, getTestDataDir() + "/svn/newrepo.zip"), myRepoRoot, null);
 
       myWcRoot = virtualToIoFile(myTempDirFixture.findOrCreateDir(myWcRootName));
-      myRepoUrl = (SystemInfoRt.isWindows ? "file:///" : "file://") + toSystemIndependentName(myRepoRoot.getPath());
+      myRepoUrl = (SystemInfo.isWindows ? "file:///" : "file://") + toSystemIndependentName(myRepoRoot.getPath());
       myRepositoryUrl = parseUrl(myRepoUrl);
 
       verify(runSvn("co", myRepoUrl, myWcRoot.getPath()));
@@ -163,8 +163,8 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   private File getSvnClientDirectory() {
     File svnBinDir = new File(myPluginRoot, getTestDataDir() + "/svn/bin");
     String executablePath =
-      SystemInfoRt.isWindows ? "windows/svn.exe" : SystemInfoRt.isLinux ? "linux/svn" : SystemInfoRt.isMac ? "mac/svn" : null;
-    assertNotNull("No Subversion executable was found " + SystemInfoRt.OS_NAME, executablePath);
+      SystemInfo.isWindows ? "windows/svn.exe" : SystemInfo.isLinux ? "linux/svn" : SystemInfo.isMac ? "mac/svn" : null;
+    assertNotNull("No Subversion executable was found " + SystemInfo.OS_NAME, executablePath);
 
     File svnExecutable = new File(svnBinDir, executablePath);
     assertTrue(svnExecutable + " is not executable", svnExecutable.canExecute());
@@ -421,7 +421,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   protected void createAnotherRepo() throws Exception {
     File repo = virtualToIoFile(myTempDirFixture.findOrCreateDir("anotherRepo"));
     copyDir(myRepoRoot, repo);
-    myAnotherRepoUrl = (SystemInfoRt.isWindows ? "file:///" : "file://") + toSystemIndependentName(repo.getPath());
+    myAnotherRepoUrl = (SystemInfo.isWindows ? "file:///" : "file://") + toSystemIndependentName(repo.getPath());
     VirtualFile tmpWcVf = myTempDirFixture.findOrCreateDir("anotherRepoWc");
     File tmpWc = virtualToIoFile(tmpWcVf);
     runInAndVerifyIgnoreOutput("co", myAnotherRepoUrl, tmpWc.getPath());

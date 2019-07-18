@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vcs.roots.VcsRootErrorsFinder;
+import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.JBColor;
@@ -46,6 +47,7 @@ import static com.intellij.openapi.vcs.VcsConfiguration.getInstance;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
+import static java.util.Arrays.asList;
 
 /**
  * @author yole
@@ -497,7 +499,9 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     panel.add(myLimitHistory.createComponent(), gb.nextLine().next());
     panel.add(createShowRecursivelyDirtyOption(), gb.nextLine().next());
     panel.add(createShowChangedOption(), gb.nextLine().next());
-    panel.add(myScopeFilterConfig.createComponent(), gb.nextLine().next());
+    if (!AbstractCommonUpdateAction.showsCustomNotification(asList(myVcsManager.getAllActiveVcss()))) {
+      panel.add(myScopeFilterConfig.createComponent(), gb.nextLine().next());
+    }
     return panel;
   }
 

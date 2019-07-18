@@ -52,7 +52,7 @@ class JavaPredefinedConfigurations {
       // Class based
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.methods.of.the.class"),
-        "'_ReturnType '_Method('_ParameterType '_Parameter*);",
+        "'_ReturnType? '_Method('_ParameterType '_Parameter*);",
         CLASS_TYPE
       ),
       createSearchTemplateInfo(

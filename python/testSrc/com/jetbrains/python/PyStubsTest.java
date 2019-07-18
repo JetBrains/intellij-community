@@ -846,17 +846,6 @@ public class PyStubsTest extends PyTestCase {
     }
   }
 
-  // PY-18816
-  public void testParametrizedBaseClass() {
-    final PyFile file = getTestFile();
-    final PyClass genericClass = file.findTopLevelClass("Class");
-    final PyClassStub stub = genericClass.getStub();
-    assertNotNull(stub);
-    final List<String> genericBases = stub.getSubscriptedSuperClasses();
-    assertContainsOrdered(genericBases, "Generic[T, V]");
-    assertNotParsed(file);
-  }
-
   // PY-25655
   public void testBaseClassText() {
     final PyFile file = getTestFile();
@@ -888,7 +877,7 @@ public class PyStubsTest extends PyTestCase {
       final PyFile file = getTestFile();
       final PyFunction func = file.findTopLevelFunction("func");
       final PyFunctionStub funcStub = func.getStub();
-      assertNull(funcStub.findChildStubByType(PyElementTypes.ANNOTATION));
+      assertNull(funcStub.findChildStubByType(PyStubElementTypes.ANNOTATION));
     });
   }
 
@@ -987,6 +976,21 @@ public class PyStubsTest extends PyTestCase {
     final PyTargetExpression target = file.findTopLevelAttribute("var");
     final TypeEvalContext context = TypeEvalContext.codeInsightFallback(target.getProject());
     context.getType(target);
+    assertNotParsed(file);
+  }
+
+  // PY-35512
+  public void testPositionalOnlyParameters() {
+    final PyFile file = getTestFile();
+
+    final PyParameter[] parameters = file.findTopLevelFunction("f").getParameterList().getParameters();
+    assertSize(5, parameters);
+    assertInstanceOf(parameters[0], PyNamedParameter.class);
+    assertInstanceOf(parameters[1], PySlashParameter.class);
+    assertInstanceOf(parameters[2], PyNamedParameter.class);
+    assertInstanceOf(parameters[3], PySingleStarParameter.class);
+    assertInstanceOf(parameters[4], PyNamedParameter.class);
+
     assertNotParsed(file);
   }
 

@@ -7,7 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
@@ -229,7 +229,7 @@ public class VfsUtil extends VfsUtilCore {
   public static URI toUri(@NotNull File file) {
     String path = file.toURI().getPath();
     try {
-      if (SystemInfoRt.isWindows && path.charAt(0) != '/') {
+      if (SystemInfo.isWindows && path.charAt(0) != '/') {
         path = '/' + path;
       }
       return new URI(StandardFileSystems.FILE_PROTOCOL, "", path, null, null);
@@ -258,7 +258,7 @@ public class VfsUtil extends VfsUtilCore {
       }
     }
 
-    if (SystemInfoRt.isWindows && uri.startsWith(LocalFileSystem.PROTOCOL_PREFIX)) {
+    if (SystemInfo.isWindows && uri.startsWith(LocalFileSystem.PROTOCOL_PREFIX)) {
       int firstSlashIndex = index + "://".length();
       if (uri.charAt(firstSlashIndex) != '/') {
         uri = LocalFileSystem.PROTOCOL_PREFIX + '/' + uri.substring(firstSlashIndex);
@@ -578,7 +578,7 @@ public class VfsUtil extends VfsUtilCore {
     try {
       String protocol = file.getFileSystem().getProtocol();
       if (file.isInLocalFileSystem()) {
-        if (SystemInfoRt.isWindows && path.charAt(0) != '/') {
+        if (SystemInfo.isWindows && path.charAt(0) != '/') {
           path = '/' + path;
         }
         return new URI(protocol, "", path, null, null);

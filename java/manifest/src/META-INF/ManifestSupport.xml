@@ -3,7 +3,7 @@
     <extensionPoint qualifiedName="com.intellij.manifest.parser.provider" interface="org.jetbrains.lang.manifest.header.HeaderParserProvider"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
-    <fileTypeFactory implementation="org.jetbrains.lang.manifest.ManifestFileTypeFactory"/>
+    <fileType name="Manifest" implementationClass="org.jetbrains.lang.manifest.ManifestFileType" fieldName="INSTANCE" extensions="MF" language="Manifest"/>
     <lang.parserDefinition language="Manifest" implementationClass="org.jetbrains.lang.manifest.parser.ManifestParserDefinition"/>
     <lang.syntaxHighlighterFactory language="Manifest" implementationClass="org.jetbrains.lang.manifest.highlighting.ManifestSyntaxHighlighterFactory"/>
     <annotator language="Manifest" implementationClass="org.jetbrains.lang.manifest.highlighting.HeaderAnnotator"/>

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.UiActivity;
@@ -27,8 +27,8 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.impl.ContentImpl;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -398,8 +398,8 @@ public final class ToolWindowImpl implements ToolWindowEx, Disposable {
     final Icon oldIcon = getIcon();
     if (!EventLog.LOG_TOOL_WINDOW_ID.equals(getId())) {
       if (oldIcon != icon && icon != null && !(icon instanceof LayeredIcon) &&
-          (Math.abs(icon.getIconHeight() - JBUI.scale(13f)) >= 1 ||
-           Math.abs(icon.getIconWidth() - JBUI.scale(13f)) >= 1))
+          (Math.abs(icon.getIconHeight() - JBUIScale.scale(13f)) >= 1 ||
+           Math.abs(icon.getIconWidth() - JBUIScale.scale(13f)) >= 1))
       {
         LOG.warn("ToolWindow icons should be 13x13. Please fix ToolWindow (ID:  " + getId() + ") or icon " + icon);
       }

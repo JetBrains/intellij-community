@@ -21,7 +21,7 @@ import java.util.List;
 public abstract class AsyncDiffRequestChain extends DiffRequestChainBase {
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
 
-  private List<? extends DiffRequestProducer> myRequests = null;
+  private volatile List<? extends DiffRequestProducer> myRequests = null;
 
   @Nullable private ProgressIndicator myIndicator;
   private int myAssignments = 0;

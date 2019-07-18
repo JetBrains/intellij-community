@@ -4,7 +4,7 @@ package git4idea.config;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -40,10 +40,10 @@ public class GitExecutableDetector {
 
   @NotNull
   public String detect() {
-    File gitExecutableFromPath = PathEnvironmentVariableUtil.findInPath(SystemInfoRt.isWindows ? GIT_EXE : GIT, getPath(), null);
+    File gitExecutableFromPath = PathEnvironmentVariableUtil.findInPath(SystemInfo.isWindows ? GIT_EXE : GIT, getPath(), null);
     if (gitExecutableFromPath != null) return gitExecutableFromPath.getAbsolutePath();
 
-    return SystemInfoRt.isWindows ? detectForWindows() : detectForUnix();
+    return SystemInfo.isWindows ? detectForWindows() : detectForUnix();
   }
 
   @NotNull

@@ -13,7 +13,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -89,10 +89,10 @@ class ImportOldConfigsPanel extends JDialog {
     for (Enumeration<AbstractButton> e = group.getElements(); e.hasMoreElements(); ) {
       e.nextElement().addChangeListener(event -> update());
     }
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       myLastSelection = new CoreLocalFileSystem().findFileByPath("/Applications");
     }
-    else if (SystemInfoRt.isWindows) {
+    else if (SystemInfo.isWindows) {
       String programFiles = System.getenv("ProgramFiles");
       if (programFiles != null) {
         File jetBrainsHome = new File(programFiles, "JetBrains");
@@ -113,7 +113,7 @@ class ImportOldConfigsPanel extends JDialog {
         JFileChooser fc = new JFileChooser(lastSelectedFile == null ? null : lastSelectedFile.getParentFile());
         fc.setSelectedFile(lastSelectedFile);
         fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-        fc.setFileHidingEnabled(SystemInfoRt.isWindows || SystemInfoRt.isMac);
+        fc.setFileHidingEnabled(SystemInfo.isWindows || SystemInfo.isMac);
         fc.setFileFilter(new FileNameExtensionFilter("settings file", "zip", "jar"));
         int returnVal = fc.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {

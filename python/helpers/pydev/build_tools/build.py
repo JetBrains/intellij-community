@@ -65,12 +65,18 @@ def get_environment_from_batch_command(env_cmd, initial=None):
             raise AssertionError('Error executing %s. View http://blog.ionelmc.ro/2014/12/21/compiling-python-extensions-on-windows/ for details.' % (env_cmd))
         if tag in line:
             break
-    if sys.version_info[0] > 2:
-        # define a way to handle each KEY=VALUE line
-        handle_line = lambda l: l.decode('utf-8').rstrip().split('=', 1)
-    else:
-        # define a way to handle each KEY=VALUE line
-        handle_line = lambda l: l.rstrip().split('=', 1)
+
+    def handle_line(l):
+        try:
+            if sys.version_info[0] > 2:
+                # define a way to handle each KEY=VALUE line
+                return l.decode('utf-8').rstrip().split('=', 1)
+            else:
+                # define a way to handle each KEY=VALUE line
+                return l.rstrip().split('=', 1)
+        except UnicodeDecodeError:
+            print("Bad env variable: ", l)
+
     # parse key/values into pairs
     pairs = map(handle_line, lines)
     # make sure the pairs are valid

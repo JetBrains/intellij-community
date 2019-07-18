@@ -4,6 +4,7 @@ package com.intellij.ide.ui.laf.darcula;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -53,5 +54,13 @@ public class DarculaTableHeaderUI extends BasicTableHeaderUI {
     config.restore();
 
     super.paint(g, c);
+  }
+
+  @Override
+  public Dimension getPreferredSize(JComponent c) {
+    Dimension size = super.getPreferredSize(c);
+    if (size.height == 0) return size;
+    JBValue.UIInteger height = new JBValue.UIInteger("TableHeader.height", 25);
+    return new Dimension(size.width, Math.max(height.get(), size.height));
   }
 }

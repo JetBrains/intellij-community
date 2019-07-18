@@ -260,7 +260,7 @@ public class PyOverrideImplementUtil {
       else if (psi instanceof PySingleStarParameter) {
         hadStar = true;
       }
-      else if (psi != null) {
+      else if (psi != null && !(psi instanceof PySlashParameter)) {
         parameters.add(psi.getText());
       }
     }

@@ -33,10 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -51,6 +48,8 @@ import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
 import gnu.trove.THashSet;
 import icons.MavenIcons;
+import org.jdom.Element;
+import org.jdom.Namespace;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,6 +64,7 @@ import org.jetbrains.idea.maven.project.MavenProjectReaderResult;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerEmbedder;
 import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
 import org.jetbrains.idea.maven.server.MavenServerUtil;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -90,7 +90,6 @@ import static com.intellij.openapi.util.io.JarUtil.getJarAttribute;
 import static com.intellij.openapi.util.io.JarUtil.loadProperties;
 import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.util.xml.NanoXmlBuilder.stop;
-import static org.jetbrains.idea.maven.server.MavenServerProgressIndicator.DEPENDENCIES_RESOLVE_PREFIX;
 
 public class MavenUtil {
   @ApiStatus.Experimental
@@ -108,6 +107,8 @@ public class MavenUtil {
   public static final String LIB_DIR = "lib";
   public static final String CLIENT_ARTIFACT_SUFFIX = "-client";
   public static final String CLIENT_EXPLODED_ARTIFACT_SUFFIX = CLIENT_ARTIFACT_SUFFIX + " exploded";
+  public static final Namespace SETTINGS_NAMESPACE = Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.0.0");
+
 
 
   @SuppressWarnings("unchecked")
@@ -463,12 +464,9 @@ public class MavenUtil {
       if (project.isDisposed()) return;
 
       try {
-        manager.getSyncConsole().startTask(title);
         task.run(indicator);
-        manager.getSyncConsole().completeTask(title);
       }
       catch (MavenProcessCanceledException | ProcessCanceledException e) {
-        manager.getSyncConsole().completeTask(title, e);
         indicator.cancel();
       }
     };
@@ -538,7 +536,7 @@ public class MavenUtil {
       }
     }
 
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       File home = fromBrew();
       if (home != null) {
         return home;
@@ -548,7 +546,7 @@ public class MavenUtil {
         return home;
       }
     }
-    else if (SystemInfoRt.isLinux) {
+    else if (SystemInfo.isLinux) {
       File home = new File("/usr/share/maven");
       if (isValidMavenHome(home)) {
         return home;
@@ -745,10 +743,17 @@ public class MavenUtil {
   @Nullable
   public static String getRepositoryFromSettings(final File file) {
     try {
-      byte[] bytes = FileUtil.loadFileBytes(file);
-      return expandProperties(MavenJDOMUtil.findChildValueByPath(MavenJDOMUtil.read(bytes, null), "localRepository", null));
+      Element repository = JDOMUtil.load(file).getChild("localRepository", SETTINGS_NAMESPACE);
+      if (repository == null) {
+        return null;
+      }
+      String text = repository.getText();
+      if (isEmptyOrSpaces(text)) {
+        return null;
+      }
+      return text;
     }
-    catch (IOException e) {
+    catch (Exception e) {
       return null;
     }
   }
@@ -841,8 +846,7 @@ public class MavenUtil {
 
     MavenSyncConsole syncConsole = MavenProjectsManager.getInstance(project).getSyncConsole();
     for (MavenId id : unresolvedIds) {
-      syncConsole.startTask(DEPENDENCIES_RESOLVE_PREFIX + id.getKey());
-      syncConsole.completeTask(DEPENDENCIES_RESOLVE_PREFIX + id.getKey(), new RuntimeException(id + " not resolved"));
+      syncConsole.getListener(MavenServerProgressIndicator.ResolveType.DEPENDENCY).showError(id.getKey());
     }
   }
 

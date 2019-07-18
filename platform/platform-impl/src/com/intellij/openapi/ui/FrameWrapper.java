@@ -358,7 +358,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       FrameState.setFrameStateListener(this);
       setGlassPane(new IdeGlassPaneImpl(getRootPane(), true));
 
-      final boolean setMenuOnFrame = SystemInfoRt.isMac && !USE_SINGLE_SYSTEM_MENUBAR;
+      final boolean setMenuOnFrame = SystemInfo.isMac && !USE_SINGLE_SYSTEM_MENUBAR;
 
       if (setMenuOnFrame) {
         setJMenuBar(new IdeMenuBar(ActionManagerEx.getInstanceEx(), DataManager.getInstance()));

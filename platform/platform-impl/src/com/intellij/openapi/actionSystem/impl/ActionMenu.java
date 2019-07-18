@@ -13,11 +13,12 @@ import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.JBMenu;
 import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.ui.plaf.beg.IdeaMenuUI;
@@ -255,7 +256,7 @@ public final class ActionMenu extends JBMenu {
         else if (menuComponent instanceof ActionMenuItem) {
           // Looks like an old-fashioned ugly workaround
           // JDK 1.7 on Mac works wrong with such functional keys
-          if (!SystemInfoRt.isMac) {
+          if (!SystemInfo.isMac) {
             ((ActionMenuItem)menuComponent).setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F24, 0));
           }
         }
@@ -276,7 +277,7 @@ public final class ActionMenu extends JBMenu {
       @SuppressWarnings("deprecation") DataContext contextFromFocus = DataManager.getInstance().getDataContext();
       context = contextFromFocus;
       if (PlatformDataKeys.CONTEXT_COMPONENT.getData(context) == null) {
-        IdeFrame frame = UIUtil.getParentOfType(IdeFrame.class, this);
+        IdeFrame frame = ComponentUtil.getParentOfType((Class<? extends IdeFrame>)IdeFrame.class, (Component)this);
         context = DataManager.getInstance().getDataContext(IdeFocusManager.getGlobalInstance().getLastFocusedFor(frame));
       }
     }
@@ -355,7 +356,7 @@ public final class ActionMenu extends JBMenu {
       if (event instanceof ComponentEvent) {
         ComponentEvent componentEvent = (ComponentEvent)event;
         Component component = componentEvent.getComponent();
-        JPopupMenu popup = UIUtil.getParentOfType(JPopupMenu.class, component);
+        JPopupMenu popup = ComponentUtil.getParentOfType((Class<? extends JPopupMenu>)JPopupMenu.class, component);
         if (popup != null && popup.getInvoker() == myComponent && popup.isShowing()) {
           Rectangle bounds = popup.getBounds();
           if (bounds.isEmpty()) return;

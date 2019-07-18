@@ -1,14 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.util
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Computable
+import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.ImageLoader
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.ImageUtil
-import com.intellij.util.ui.JBUIScale
 import java.awt.Image
 import java.util.concurrent.CompletableFuture
 import java.util.function.Supplier
@@ -18,7 +18,7 @@ class GithubImageResizer(private val progressManager: ProgressManager) : Disposa
   private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("GitHub Image Resizer", getThreadPoolSize())
   private val progressIndicator: EmptyProgressIndicator = NonReusableEmptyProgressIndicator()
 
-  fun requestImageResize(image: Image, size: Int, scaleContext: JBUIScale.ScaleContext): CompletableFuture<Image> {
+  fun requestImageResize(image: Image, size: Int, scaleContext: ScaleContext): CompletableFuture<Image> {
     val indicator = progressIndicator
 
     return CompletableFuture.supplyAsync(Supplier {

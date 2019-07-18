@@ -6,10 +6,11 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBOptionButton;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.*;
 
@@ -70,7 +71,7 @@ public class DarculaButtonUI extends BasicButtonUI {
   }
 
   protected int textIconGap() {
-    return JBUI.scale(4);
+    return JBUIScale.scale(4);
   }
 
   /**
@@ -93,7 +94,7 @@ public class DarculaButtonUI extends BasicButtonUI {
       int y = r.x + (r.height - diam) / 2;
 
       g.fill(new Ellipse2D.Float(x, y, diam, diam));
-      AllIcons.Actions.Help.paintIcon(c, g, x + JBUI.scale(3), y + JBUI.scale(3));
+      AllIcons.Actions.Help.paintIcon(c, g, x + JBUIScale.scale(3), y + JBUIScale.scale(3));
       return false;
     }
     else {
@@ -112,7 +113,7 @@ public class DarculaButtonUI extends BasicButtonUI {
           Color shadowColor = JBColor.namedColor("Button.shadowColor", JBColor.namedColor("Button.darcula.shadowColor",
                                                   new JBColor(new Color(0xa6a6a633, true), new Color(0x36363680, true))));
 
-          int shadowWidth = JBUI.scale(JBUI.getInt("Button.shadowWidth", 2));
+          int shadowWidth = JBUIScale.scale(JBUI.getInt("Button.shadowWidth", 2));
           g2.setColor(isDefaultButton(c) ? JBColor.namedColor("Button.default.shadowColor", shadowColor) : shadowColor);
           g2.fill(new RoundRectangle2D.Float(bw, bw + shadowWidth, r.width - bw * 2, r.height - bw * 2, arc, arc));
         }
@@ -259,17 +260,14 @@ public class DarculaButtonUI extends BasicButtonUI {
 
   @Override
   public void update(Graphics g, JComponent c) {
+    setupDefaultButton(c, g);
     super.update(g, c);
-    if (isDefaultButton(c)) {
-      setupDefaultButton((JButton)c);
-    }
   }
 
-  protected void setupDefaultButton(JButton button) {
-    if (!SystemInfoRt.isMac) {
-      if (!button.getFont().isBold()) {
-        button.setFont(new FontUIResource(button.getFont().deriveFont(Font.BOLD)));
-      }
+  protected void setupDefaultButton(JComponent button, Graphics g) {
+    Font f = button.getFont();
+    if (!SystemInfo.isMac && f instanceof FontUIResource && isDefaultButton(button)) {
+      g.setFont(f.deriveFont(Font.BOLD));
     }
   }
 

@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.vcs.VcsException;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,5 +57,13 @@ public interface UpdateSession {
   @Nullable
   default String getAdditionalNotificationContent() {
     return null;
+  }
+
+  /**
+   * Show notification with results of this UpdateSession, instead of the common standard notification and the standard file tree.
+   * @see UpdateEnvironment#hasCustomNotification()
+   */
+  @CalledInAwt
+  default void showNotification() {
   }
 }

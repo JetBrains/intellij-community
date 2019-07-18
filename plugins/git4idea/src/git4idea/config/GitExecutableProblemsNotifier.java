@@ -7,7 +7,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.ui.GuiUtils;
 import git4idea.GitVcs;
@@ -217,7 +217,7 @@ public class GitExecutableProblemsNotifier {
     }
 
     return message != null
-           && SystemInfoRt.isMac
+           && SystemInfo.isMac
            && message.contains("Agreeing to the Xcode/iOS license");
   }
 }

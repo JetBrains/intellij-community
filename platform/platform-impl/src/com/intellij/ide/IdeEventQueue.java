@@ -32,6 +32,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
@@ -40,6 +41,8 @@ import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.AppContext;
@@ -67,7 +70,7 @@ public final class IdeEventQueue extends EventQueue {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue");
   private static final Logger TYPEAHEAD_LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue.typeahead");
   private static final Logger FOCUS_AWARE_RUNNABLES_LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue.runnables");
-  private static final boolean JAVA11_ON_MAC = SystemInfoRt.isMac && SystemInfo.isJavaVersionAtLeast(11, 0, 0);
+  private static final boolean JAVA11_ON_MAC = SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast(11, 0, 0);
   private static TransactionGuardImpl ourTransactionGuard;
   private static ProgressManager ourProgressManager;
 
@@ -79,7 +82,7 @@ public final class IdeEventQueue extends EventQueue {
   private final List<Runnable> myIdleListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<Runnable> myActivityListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Alarm myIdleRequestsAlarm = new Alarm();
-  private final Map<Runnable, MyFireIdleRequest> myListener2Request = new HashMap<>();
+  private final Map<Runnable, MyFireIdleRequest> myListenerToRequest = new THashMap<>();
   // IdleListener -> MyFireIdleRequest
   private final IdeKeyEventDispatcher myKeyEventDispatcher = new IdeKeyEventDispatcher(this);
   private final IdeMouseEventDispatcher myMouseEventDispatcher = new IdeMouseEventDispatcher();
@@ -102,14 +105,14 @@ public final class IdeEventQueue extends EventQueue {
   private WindowManagerEx myWindowManager;
   private final List<EventDispatcher> myDispatchers = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<EventDispatcher> myPostProcessors = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final Set<Runnable> myReady = new HashSet<>();
+  private final Set<Runnable> myReady = new THashSet<>();
   private boolean myKeyboardBusy;
   private boolean myWinMetaPressed;
   private int myInputMethodLock;
   private final com.intellij.util.EventDispatcher<PostEventHook>
     myPostEventListeners = com.intellij.util.EventDispatcher.create(PostEventHook.class);
 
-  private final Map<AWTEvent, List<Runnable>> myRunnablesWaitingFocusChange = new LinkedHashMap<>();
+  private final Map<AWTEvent, List<Runnable>> myRunnablesWaitingFocusChange = new THashMap<>();
 
   public void executeWhenAllFocusEventsLeftTheQueue(@NotNull Runnable runnable) {
     ifFocusEventsInTheQueue(e -> {
@@ -222,7 +225,8 @@ public final class IdeEventQueue extends EventQueue {
       case HierarchyEvent.ANCESTOR_MOVED:
       case HierarchyEvent.ANCESTOR_RESIZED:
         Object source = event.getSource();
-        if (source instanceof Component && null != UIUtil.getParentOfType(CellRendererPane.class, (Component)source)) {
+        if (source instanceof Component &&
+            ComponentUtil.getParentOfType((Class<? extends CellRendererPane>)CellRendererPane.class, (Component)source) != null) {
           return true;
         }
     }
@@ -262,7 +266,7 @@ public final class IdeEventQueue extends EventQueue {
     synchronized (myLock) {
       myIdleListeners.add(runnable);
       final MyFireIdleRequest request = new MyFireIdleRequest(runnable, timeoutMillis);
-      myListener2Request.put(runnable, request);
+      myListenerToRequest.put(runnable, request);
       UIUtil.invokeLaterIfNeeded(() -> myIdleRequestsAlarm.addRequest(request, timeoutMillis));
     }
   }
@@ -273,7 +277,7 @@ public final class IdeEventQueue extends EventQueue {
       if (!wasRemoved) {
         LOG.error("unknown runnable: " + runnable);
       }
-      final MyFireIdleRequest request = myListener2Request.remove(runnable);
+      final MyFireIdleRequest request = myListenerToRequest.remove(runnable);
       LOG.assertTrue(request != null);
       myIdleRequestsAlarm.cancelRequest(request);
     }
@@ -461,7 +465,7 @@ public final class IdeEventQueue extends EventQueue {
 
     boolean metaIsPressed = e instanceof InputEvent && (((InputEvent)e).getModifiersEx() & InputEvent.META_DOWN_MASK) != 0;
     boolean typedKeyEvent = e.getID() == KeyEvent.KEY_TYPED;
-    return SystemInfoRt.isLinux && typedKeyEvent && metaIsPressed;
+    return SystemInfo.isLinux && typedKeyEvent && metaIsPressed;
   }
 
   private boolean skipTypedKeyEventsIfFocusReturnsToOwner(@NotNull AWTEvent e) {
@@ -637,7 +641,7 @@ public final class IdeEventQueue extends EventQueue {
       synchronized (myLock) {
         myIdleRequestsAlarm.cancelAllRequests();
         for (Runnable idleListener : myIdleListeners) {
-          final MyFireIdleRequest request = myListener2Request.get(idleListener);
+          final MyFireIdleRequest request = myListenerToRequest.get(idleListener);
           if (request == null) {
             LOG.error("There is no request for " + idleListener);
           }
@@ -673,13 +677,16 @@ public final class IdeEventQueue extends EventQueue {
       return;
     }
 
-    if (e instanceof InputEvent)
+    if (e instanceof InputEvent && SystemInfo.isMac) {
       TouchBarsManager.onInputEvent((InputEvent)e);
+    }
 
-    if (dispatchByCustomDispatchers(e)) return;
+    if (dispatchByCustomDispatchers(e)) {
+      return;
+    }
 
     if (e instanceof InputMethodEvent) {
-      if (SystemInfoRt.isMac && myKeyEventDispatcher.isWaitingForSecondKeyStroke()) {
+      if (SystemInfo.isMac && myKeyEventDispatcher.isWaitingForSecondKeyStroke()) {
         return;
       }
     }
@@ -750,7 +757,7 @@ public final class IdeEventQueue extends EventQueue {
     final Window eventWindow = we.getWindow();
 
     if (we.getID() == WindowEvent.WINDOW_DEACTIVATED || we.getID() == WindowEvent.WINDOW_LOST_FOCUS) {
-      Component frame = UIUtil.findUltimateParent(eventWindow);
+      Component frame = ComponentUtil.findUltimateParent(eventWindow);
       Component focusOwnerInDeactivatedWindow = eventWindow.getMostRecentFocusOwner();
       IdeFrame[] allProjectFrames = WindowManager.getInstance().getAllProjectFrames();
 
@@ -959,7 +966,7 @@ public final class IdeEventQueue extends EventQueue {
         else {
           UISettings uiSettings = UISettings.getInstanceOrNull();
           if (uiSettings == null ||
-              !SystemInfoRt.isWindows ||
+              !SystemInfo.isWindows ||
               !Registry.is("actionSystem.win.suppressAlt") ||
               !(uiSettings.getHideToolStripes() || uiSettings.getPresentationMode())) {
             return false;
@@ -977,7 +984,7 @@ public final class IdeEventQueue extends EventQueue {
               //noinspection SSBasedInspection
               SwingUtilities.invokeLater(() -> {
                 try {
-                  final Window window = UIUtil.getWindow(component);
+                  final Window window = ComponentUtil.getWindow(component);
                   if (window == null || !window.isActive()) {
                     return;
                   }
@@ -1010,7 +1017,7 @@ public final class IdeEventQueue extends EventQueue {
           && e instanceof KeyEvent
           && e.getID() == KeyEvent.KEY_RELEASED
           && (((KeyEvent)e).getKeyCode() == KeyEvent.VK_UP || ((KeyEvent)e).getKeyCode() == KeyEvent.VK_DOWN)) {
-        Component parent = UIUtil.getWindow(((KeyEvent)e).getComponent());
+        Component parent = ComponentUtil.getWindow(((KeyEvent)e).getComponent());
         if (parent instanceof JDialog) {
           final JDialog dialog = (JDialog)parent;
           SwingUtilities.invokeLater(() -> {
@@ -1034,7 +1041,7 @@ public final class IdeEventQueue extends EventQueue {
     public boolean dispatch(@NotNull AWTEvent e) {
       if (e instanceof KeyEvent && e.getID() == KeyEvent.KEY_PRESSED && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ESCAPE &&
           !getInstance().getPopupManager().isPopupActive()) {
-        final Component owner = UIUtil.findParentByCondition(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner(),
+        final Component owner = ComponentUtil.findParentByCondition(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner(),
                                                              component -> component instanceof JTable || component instanceof JTree);
 
         if (owner instanceof JTable && ((JTable)owner).isEditing()) {
@@ -1051,7 +1058,7 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   public boolean isInputMethodEnabled() {
-    return !SystemInfoRt.isMac || myInputMethodLock == 0;
+    return !SystemInfo.isMac || myInputMethodLock == 0;
   }
 
   public void disableInputMethods(@NotNull Disposable parentDisposable) {
@@ -1131,7 +1138,7 @@ public final class IdeEventQueue extends EventQueue {
 
   private static boolean doesFocusGoIntoPopupFromWindowEvent(@NotNull AWTEvent e) {
     if (e.getID() == WindowEvent.WINDOW_GAINED_FOCUS ||
-        SystemInfoRt.isLinux && e.getID() == WindowEvent.WINDOW_OPENED) {
+        SystemInfo.isLinux && e.getID() == WindowEvent.WINDOW_OPENED) {
       if (UIUtil.isTypeAheadAware(((WindowEvent)e).getWindow())) {
         TYPEAHEAD_LOG.debug("Focus goes into TypeAhead aware window");
         return true;

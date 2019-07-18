@@ -6,7 +6,7 @@ import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -59,7 +59,7 @@ public class TerminalUtil {
     Process process = connector.getProcess();
     if (!process.isAlive()) return false;
     if (process instanceof RemoteSshProcess) return true;
-    if (SystemInfoRt.isUnix && process instanceof UnixPtyProcess) {
+    if (SystemInfo.isUnix && process instanceof UnixPtyProcess) {
       int shellPid = OSProcessUtil.getProcessID(process);
       MultiMap<Integer, Integer> pidToChildPidsMap = MultiMap.create();
       UnixProcessManager.processPSOutput(UnixProcessManager.getPSCmd(false, false), new Processor<String>() {
@@ -74,7 +74,7 @@ public class TerminalUtil {
       });
       return !pidToChildPidsMap.get(shellPid).isEmpty();
     }
-    if (SystemInfoRt.isWindows && process instanceof WinPtyProcess) {
+    if (SystemInfo.isWindows && process instanceof WinPtyProcess) {
       WinPtyProcess winPty = (WinPtyProcess)process;
       try {
         String executable = FileUtil.toSystemIndependentName(StringUtil.notNullize(getExecutable(winPty.getChildProcessId())));
@@ -88,7 +88,7 @@ public class TerminalUtil {
         throw new IllegalStateException(e);
       }
     }
-    throw new IllegalStateException("Cannot determine if there are running processes: " + SystemInfoRt.OS_NAME +
+    throw new IllegalStateException("Cannot determine if there are running processes: " + SystemInfo.OS_NAME +
                                     ", " + process.getClass().getName());
   }
 

@@ -11,7 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -127,7 +127,7 @@ public class PySdkUtil {
         final OutputStream processInput = processHandler.getProcessInput();
         assert processInput != null;
         processInput.write(stdin);
-        if (SystemInfoRt.isWindows && needEOFMarker) {
+        if (SystemInfo.isWindows && needEOFMarker) {
           processInput.write(SUBSTITUTE);
           processInput.flush();
         }
@@ -187,7 +187,7 @@ public class PySdkUtil {
   }
 
   public static String getUserSite() {
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       final String appdata = System.getenv("APPDATA");
       return appdata + File.separator + "Python";
     }

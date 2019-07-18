@@ -3,7 +3,7 @@
 package com.intellij.ui;
 
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,7 +15,7 @@ import java.awt.event.MouseEvent;
 public class CaptionPanel extends JPanel {
 
   public static final Color CNT_ACTIVE_COLOR = new JBColor(Gray._202, Gray._55);
-  public static final Color CNT_ACTIVE_BORDER_COLOR = new JBColor(() -> StartupUiUtil.isUnderDarcula() ? JBColor.border() : CNT_ACTIVE_COLOR);
+  public static final Color CNT_ACTIVE_BORDER_COLOR = new JBColor(() -> UIUtil.isUnderDarcula() ? JBColor.border() : CNT_ACTIVE_COLOR);
 
   /**
    * @deprecated use {@link JBUI.CurrentTheme.Popup#borderColor} instead,

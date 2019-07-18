@@ -3,7 +3,7 @@ package com.intellij.execution.process;
 
 import com.intellij.execution.GeneralCommandLineTest;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -14,7 +14,7 @@ import static org.junit.Assume.assumeTrue;
 public class RunnerMediatedCommandLineTest extends GeneralCommandLineTest {
   @Before
   public void ensureRightOS() {
-    assumeTrue("Windows-oly test", SystemInfoRt.isWindows);
+    assumeTrue("Windows-oly test", SystemInfo.isWindows);
   }
 
   @NotNull

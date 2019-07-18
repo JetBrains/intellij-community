@@ -25,6 +25,7 @@ class ExtractMethodTest extends LightGroovyTestCase {
 
   final String basePath = TestUtils.testDataPath + 'groovy/refactoring/extractMethod/'
 
+  @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
     return GroovyProjectDescriptors.GROOVY_LATEST

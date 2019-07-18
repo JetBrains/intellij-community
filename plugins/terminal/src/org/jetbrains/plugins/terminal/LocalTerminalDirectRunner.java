@@ -13,7 +13,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -135,7 +135,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
 
   private Map<String, String> getTerminalEnvironment() {
-    Map<String, String> envs = new THashMap<>(SystemInfoRt.isWindows ? CaseInsensitiveStringHashingStrategy.INSTANCE
+    Map<String, String> envs = new THashMap<>(SystemInfo.isWindows ? CaseInsensitiveStringHashingStrategy.INSTANCE
                                                                      : ContainerUtil.canonicalStrategy());
 
     EnvironmentVariablesData envData = TerminalOptionsProvider.getInstance().getEnvData();
@@ -143,12 +143,12 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       envs.putAll(System.getenv());
     }
 
-    if (!SystemInfoRt.isWindows) {
+    if (!SystemInfo.isWindows) {
       envs.put("TERM", "xterm-256color");
     }
     envs.put("TERMINAL_EMULATOR", "JetBrains-JediTerm");
 
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       EnvironmentUtil.setLocaleEnv(envs, myDefaultCharset);
     }
 
@@ -246,7 +246,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   @NotNull
   public static String[] getCommand(String shellPath, Map<String, String> envs, boolean shellIntegration) {
-    if (SystemInfoRt.isUnix) {
+    if (SystemInfo.isUnix) {
       List<String> command = Lists.newArrayList(shellPath.split(" "));
 
       String shellCommand = command.size() > 0 ? command.get(0) : null;
@@ -256,7 +256,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         command.remove(0);
 
         if (!containsLoginOrInteractiveOption(command)) {
-          if (isLoginOptionAvailable(shellName) && SystemInfoRt.isMac) {
+          if (isLoginOptionAvailable(shellName) && SystemInfo.isMac) {
             command.add(LOGIN_CLI_OPTION);
           }
           if (isInteractiveOptionAvailable(shellName)) {
@@ -269,7 +269,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         String rcFilePath = findRCFile(shellName);
 
         if (rcFilePath != null && shellIntegration) {
-          if (shellName.equals(BASH_NAME) || (SystemInfoRt.isMac && shellName.equals(SH_NAME))) {
+          if (shellName.equals(BASH_NAME) || (SystemInfo.isMac && shellName.equals(SH_NAME))) {
             addRcFileArgument(envs, command, result, rcFilePath, "--rcfile");
             // remove --login to enable --rcfile sourcing
             boolean loginShell = command.removeAll(LOGIN_CLI_OPTIONS);
@@ -315,11 +315,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   private static boolean isLoginOptionAvailable(@NotNull String shellName) {
-    return shellName.equals(BASH_NAME) || (SystemInfoRt.isMac && shellName.equals(SH_NAME)) || shellName.equals(ZSH_NAME);
+    return shellName.equals(BASH_NAME) || (SystemInfo.isMac && shellName.equals(SH_NAME)) || shellName.equals(ZSH_NAME);
   }
 
   private static boolean isInteractiveOptionAvailable(@NotNull String shellName) {
-    return shellName.equals(BASH_NAME) || (SystemInfoRt.isMac && shellName.equals(SH_NAME)) ||
+    return shellName.equals(BASH_NAME) || (SystemInfo.isMac && shellName.equals(SH_NAME)) ||
            shellName.equals(ZSH_NAME) || shellName.equals(FISH_NAME);
   }
 

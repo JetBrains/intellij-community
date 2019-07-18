@@ -5,7 +5,7 @@ import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +41,7 @@ public class TestClientRunner {
                                  String... commandLine) throws IOException {
     final List<String> arguments = new ArrayList<>();
 
-    final File client = new File(myClientBinaryPath, SystemInfoRt.isWindows ? exeName + ".exe" : exeName);
+    final File client = new File(myClientBinaryPath, SystemInfo.isWindows ? exeName + ".exe" : exeName);
     if (client.exists()) {
       arguments.add(client.toString());
     }

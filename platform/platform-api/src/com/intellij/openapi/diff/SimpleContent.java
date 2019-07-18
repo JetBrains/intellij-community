@@ -143,7 +143,7 @@ public class SimpleContent extends DiffContent {
    * @param charset  name of charset. If null IDE default charset will be used
    * @param fileType content type. If null file name will be used to select file type
    * @return content representing bytes as text
-   * @throws UnsupportedEncodingException
+   * @throws UnsupportedEncodingException On encoding errors.
    */
   public static SimpleContent fromBytes(byte[] bytes, String charset, FileType fileType) throws UnsupportedEncodingException {
     if (charset == null) charset = CharsetToolkit.getDefaultSystemCharset().name();
@@ -155,7 +155,7 @@ public class SimpleContent extends DiffContent {
    * @param charset  name of file charset. If null IDE default charset will be used
    * @param fileType content type. If null file name will be used to select file type
    * @return Content representing text in file
-   * @throws IOException
+   * @throws IOException On I/O errors.
    */
   public static DiffContent fromIoFile(File file, String charset, FileType fileType) throws IOException {
     if (file.isDirectory()) throw new IllegalArgumentException(file.toString());

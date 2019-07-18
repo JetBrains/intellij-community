@@ -5,6 +5,7 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.WindowAction;
+import com.intellij.ide.ui.ScreenAreaTracker;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -30,6 +31,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -53,7 +55,7 @@ import static java.awt.event.MouseEvent.*;
 import static java.awt.event.WindowEvent.WINDOW_ACTIVATED;
 import static java.awt.event.WindowEvent.WINDOW_GAINED_FOCUS;
 
-public class AbstractPopup implements JBPopup {
+public class AbstractPopup implements JBPopup, ScreenAreaTracker.ScreenAreaConsumer {
   public static final String SHOW_HINTS = "ShowHints";
 
   // Popup size stored with DimensionService is null first time
@@ -429,7 +431,7 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public void showUnderneathOf(@NotNull Component aComponent) {
-    show(new RelativePoint(aComponent, new Point(JBUI.scale(2), aComponent.getHeight())));
+    show(new RelativePoint(aComponent, new Point(JBUIScale.scale(2), aComponent.getHeight())));
   }
 
   @Override
@@ -623,11 +625,11 @@ public class AbstractPopup implements JBPopup {
     final int spaceOnTheLeft = bounds.x;
     final int spaceOnTheRight = screen.x + screen.width - rightTopCornerScreen.x;
     if (spaceOnTheLeft > spaceOnTheRight) {
-      myComponent.setPreferredSize(new Dimension(spaceOnTheLeft, Math.max(size.height, JBUI.scale(200))));
+      myComponent.setPreferredSize(new Dimension(spaceOnTheLeft, Math.max(size.height, JBUIScale.scale(200))));
       return new RelativePoint(layeredPane, new Point(0, bounds.y));
     }
     else {
-      myComponent.setPreferredSize(new Dimension(spaceOnTheRight, Math.max(size.height, JBUI.scale(200))));
+      myComponent.setPreferredSize(new Dimension(spaceOnTheRight, Math.max(size.height, JBUIScale.scale(200))));
       return new RelativePoint(layeredPane, rightTopCorner);
     }
   }
@@ -869,7 +871,7 @@ public class AbstractPopup implements JBPopup {
     myRequestorComponent = owner;
 
     boolean forcedDialog = myMayBeParent
-      || SystemInfoRt.isMac && !(myOwner instanceof IdeFrame) && myOwner != null && myOwner.isShowing();
+      || SystemInfo.isMac && !(myOwner instanceof IdeFrame) && myOwner != null && myOwner.isShowing();
 
     PopupComponent.Factory factory = getFactory(myForcedHeavyweight || myResizable, forcedDialog);
     myNativePopup = factory.isNativePopup();
@@ -1030,6 +1032,9 @@ public class AbstractPopup implements JBPopup {
 
     myPopup.show();
     Rectangle bounds = window.getBounds();
+
+    ScreenAreaTracker.register(this);
+
     if (bounds.width > screen.width || bounds.height > screen.height) {
       ScreenUtil.fitToScreen(bounds);
       window.setBounds(bounds);
@@ -1177,7 +1182,7 @@ public class AbstractPopup implements JBPopup {
       }
     };
     mySpeedSearchPatternField.getTextEditor().setFocusable(false);
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       RelativeFont.TINY.install(mySpeedSearchPatternField);
     }
   }
@@ -1626,7 +1631,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   private int getAdComponentHeight() {
-    return myAdComponent != null ? myAdComponent.getPreferredSize().height + JBUI.scale(1) : 0;
+    return myAdComponent != null ? myAdComponent.getPreferredSize().height + JBUIScale.scale(1) : 0;
   }
 
   @Override
@@ -1965,6 +1970,17 @@ public class AbstractPopup implements JBPopup {
   @Override
   public boolean canShow() {
     return myState == State.INIT;
+  }
+
+  @NotNull
+  @Override
+  public Rectangle getConsumedScreenBounds() {
+    return myWindow.getBounds();
+  }
+
+  @Override
+  public Component getUnderlyingAreaOwner() {
+    return myWindow.getOwner();
   }
 
   /**

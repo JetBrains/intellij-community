@@ -3,7 +3,7 @@ package com.intellij.ide.troubleshooting;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.troubleshooting.GeneralTroubleInfoCollector;
-import com.intellij.util.ui.JBUI;
+import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -23,7 +23,7 @@ public class DisplayTroubleInfoCollector implements GeneralTroubleInfoCollector 
     GraphicsDevice[] devices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
     for (int i = 0; i < devices.length; i++) {
       DisplayMode displayMode = devices[i].getDisplayMode();
-      float scale = JBUI.sysScale(devices[i].getDefaultConfiguration());
+      float scale = JBUIScale.sysScale(devices[i].getDefaultConfiguration());
       output.append(
         String.format("Display %d: %2.0fx%3.0f; scale: %4$.2f\n", i, displayMode.getWidth() * scale, displayMode.getHeight() * scale, scale));
     }

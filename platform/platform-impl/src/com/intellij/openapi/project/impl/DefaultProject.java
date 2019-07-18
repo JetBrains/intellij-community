@@ -8,6 +8,7 @@ import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.Condition;
@@ -69,14 +70,14 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
         }
 
         @Override
-        public void init() {
+        public void init(@Nullable ProgressIndicator indicator) {
           super.bootstrapPicoContainer(TEMPLATE_PROJECT_NAME);
           MutablePicoContainer picoContainer = getPicoContainer();
           // do not leak internal delegate, use DefaultProject everywhere instead
           picoContainer.registerComponentInstance(Project.class, DefaultProject.this);
 
           registerComponents(PluginManagerCore.getLoadedPlugins());
-          init(null, null);
+          createComponents(null);
         }
 
         @Override
@@ -100,7 +101,7 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
 
     @Override
     void init(Project project) {
-      ((ProjectImpl)project).init();
+      ((ProjectImpl)project).init(null);
     }
   };
   private static final int DEFAULT_HASH_CODE = 4; // chosen by fair dice roll. guaranteed to be random. see https://xkcd.com/221/ for details.
@@ -132,11 +133,6 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
 
   public boolean isCached() {
     return myDelegate.isCached();
-  }
-
-  @Override
-  public void init() {
-
   }
 
   @Override

@@ -3,7 +3,6 @@ import Vue from "vue"
 import Router, {RouteConfig} from "vue-router"
 import {Notification} from "element-ui"
 import Main from "@/views/Main.vue"
-import ItemChart from "@/charts/ActivityChart.vue"
 import {chartDescriptors} from "@/charts/ActivityChartDescriptor"
 
 Vue.use(Router)
@@ -13,7 +12,7 @@ const chartComponentRoutes: Array<RouteConfig> = chartDescriptors.map(it => {
   return {
     path: `/${it.id}`,
     name: it.label,
-    component: ItemChart,
+    component: () => import(/* webpackMode: "eager" */ "@/views/ActivityChart.vue"),
     props: {type: it.id},
   }
 })
@@ -22,6 +21,11 @@ const routes: Array<RouteConfig> = [
   {
     path: "/",
     component: Main,
+  },
+  {
+    path: `/timeline`,
+    name: "Timeline",
+    component: () => import(/* webpackMode: "eager" */ "@/timeline/TimelineChart.vue"),
   },
   {
     path: "*",

@@ -21,8 +21,9 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.RowIcon;
+import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,7 +100,12 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   private static Icon doComputeIconNow(@NotNull PsiElement element, @Iconable.IconFlags int flags) {
     final Icon providersIcon = PsiIconUtil.getProvidersIcon(element, flags);
     if (providersIcon != null) {
-      return providersIcon instanceof RowIcon ? (RowIcon)providersIcon : createLayeredIcon(element, providersIcon, flags);
+      if (providersIcon instanceof RowIcon) {
+        return providersIcon;
+      }
+      else {
+        return IconManager.getInstance().createLayeredIcon(element, providersIcon, flags);
+      }
     }
     return ((ElementBase)element).getElementIcon(flags);
   }
@@ -112,7 +118,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     if (this instanceof PsiElement) {
       PsiFile file = ((PsiElement)this).getContainingFile();
       if (file != null) {
-        return createLayeredIcon(file, baseIcon, flags);
+        return IconManager.getInstance().createLayeredIcon(file, baseIcon, flags);
       }
     }
     return baseIcon;
@@ -136,7 +142,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
 
   protected Icon getAdjustedBaseIcon(Icon icon, @Iconable.IconFlags int flags) {
     if (BitUtil.isSet(flags, ICON_FLAG_VISIBILITY)) {
-      return new RowIcon(icon, VISIBILITY_ICON_PLACEHOLDER.getValue());
+      return IconManager.getInstance().createRowIcon(icon, VISIBILITY_ICON_PLACEHOLDER.getValue());
     }
     return icon;
   }
@@ -157,7 +163,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
 
   @NotNull
   public static RowIcon buildRowIcon(Icon baseIcon, Icon visibilityIcon) {
-    return new RowIcon(baseIcon, visibilityIcon);
+    return IconManager.getInstance().createRowIcon(baseIcon, visibilityIcon);
   }
 
   public static Icon iconWithVisibilityIfNeeded(@Iconable.IconFlags int flags, Icon baseIcon, Icon visibility) {
@@ -205,7 +211,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     if (element instanceof ItemPresentation) {
       Icon baseIcon = ((ItemPresentation)element).getIcon(false);
       if (baseIcon != null) {
-        return createLayeredIcon(this, baseIcon, elementFlags);
+        return IconManager.getInstance().createLayeredIcon(this, baseIcon, elementFlags);
       }
     }
 
@@ -214,15 +220,17 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       VirtualFile vFile = psiFile.getVirtualFile();
       Icon baseIcon = vFile != null ? IconUtil.getIcon(vFile, flags & ~ICON_FLAG_READ_STATUS, psiFile.getProject())
                                     : psiFile.getFileType().getIcon();
-      return createLayeredIcon(this, baseIcon, elementFlags);
+      return IconManager.getInstance().createLayeredIcon(this, baseIcon, elementFlags);
     }
 
     return null;
   }
 
   @NotNull
-  public static RowIcon createLayeredIcon(@NotNull Iconable instance, Icon icon, int flags) {
-    return (RowIcon)IconManager.getInstance().createLayeredIcon(instance, icon, flags);
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static com.intellij.ui.RowIcon createLayeredIcon(@NotNull Iconable instance, Icon icon, int flags) {
+    return (com.intellij.ui.RowIcon)IconManager.getInstance().createLayeredIcon(instance, icon, flags);
   }
 
   public static int transformFlags(PsiElement element, @IconFlags int _flags) {

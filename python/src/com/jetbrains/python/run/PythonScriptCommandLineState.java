@@ -21,7 +21,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -166,7 +166,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
   public void customizeEnvironmentVars(Map<String, String> envs, boolean passParentEnvs) {
     super.customizeEnvironmentVars(envs, passParentEnvs);
     if (emulateTerminal()) {
-      if (!SystemInfoRt.isWindows) {
+      if (!SystemInfo.isWindows) {
         envs.put("TERM", "xterm-256color");
       }
     }

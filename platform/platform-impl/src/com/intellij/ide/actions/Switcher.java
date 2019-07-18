@@ -52,6 +52,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.PopupUpdateProcessorBase;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.*;
@@ -86,7 +87,7 @@ public class Switcher extends AnAction implements DumbAware {
   private static final Color SEPARATOR_COLOR = JBColor.namedColor("Popup.separatorColor", new JBColor(Gray.xC0, Gray.x4B));
   private static final String TOGGLE_CHECK_BOX_ACTION_ID = "SwitcherRecentEditedChangedToggleCheckBox";
 
-  private static final int MINIMUM_HEIGHT = JBUI.scale(100);
+  private static final int MINIMUM_HEIGHT = JBUIScale.scale(100);
 
   private static final Color ON_MOUSE_OVER_BG_COLOR = new JBColor(new Color(231, 242, 249), new Color(77, 80, 84));
 
@@ -734,8 +735,8 @@ public class Switcher extends AnAction implements DumbAware {
       topPanel.add(showOnlyEditedFilesCheckBox, BorderLayout.EAST);
 
       Dimension size = topPanel.getPreferredSize();
-      size.height = JBUI.scale(29);
-      size.width = titleLabel.getPreferredSize().width + showOnlyEditedFilesCheckBox.getPreferredSize().width + JBUI.scale(50);
+      size.height = JBUIScale.scale(29);
+      size.width = titleLabel.getPreferredSize().width + showOnlyEditedFilesCheckBox.getPreferredSize().width + JBUIScale.scale(50);
       topPanel.setPreferredSize(size);
       topPanel.setMinimumSize(size);
       topPanel.setBorder(JBUI.Borders.empty(5, 8));
@@ -1278,7 +1279,7 @@ public class Switcher extends AnAction implements DumbAware {
 
       @Override
       public void layoutContainer(@NotNull Container target) {
-        final JScrollPane scrollPane = UIUtil.getParentOfType(JScrollPane.class, files);
+        final JScrollPane scrollPane = ComponentUtil.getParentOfType((Class<? extends JScrollPane>)JScrollPane.class, (Component)files);
         JComponent filesPane = scrollPane != null ? scrollPane : files;
         if (sBounds == null || !target.isShowing()) {
           super.layoutContainer(target);

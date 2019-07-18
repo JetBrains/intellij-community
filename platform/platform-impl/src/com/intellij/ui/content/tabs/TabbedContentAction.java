@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.content.tabs;
 
 import com.intellij.openapi.Disposable;
@@ -49,6 +49,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
     }
   }
 
+  @SuppressWarnings("ComponentNotRegistered")
   public static class CloseAction extends ForContent {
     public CloseAction(@NotNull Content content) {
       super(content, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE_ACTIVE_TAB));

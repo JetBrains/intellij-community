@@ -231,6 +231,10 @@ class CommunityRepositoryModules {
       withResource("resources/fish/config.fish", "fish")
 /* Android Studio: exclude
     },
+    plugin("intellij.textmate") {
+      withResource("lib/bundles", "lib/bundles")
+      withResource("lib/themes", "lib/themes")
+    },
     PythonCommunityPluginModules.pythonCommunityPluginLayout(),
     // required for android plugin
     plugin("intellij.android.smali") {
@@ -281,11 +285,6 @@ class CommunityRepositoryModules {
       withModule("intellij.android.adt.ui", "adt-ui.jar")
       withModule("intellij.android.adt.ui.model", "adt-ui.jar")
       withModule("intellij.android.layoutlib", "layoutlib-loader.jar")
-
-      withModule("android.sdktools.deployer", "sdk-tools.jar")
-      withModule("android.sdktools.perflib", "sdk-tools.jar")
-      withModule("android.sdktools.layoutinspector", "sdk-tools.jar")
-      withModule("android.sdktools.usb-devices", "sdk-tools.jar")
 
       withModule("intellij.android.jps", "jps/android-jps-plugin.jar", null)
 

@@ -305,8 +305,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       item.update();
     }
     if (UISettings.getInstance().getShowNavigationBar()) {
-      NavBarRootPaneExtension.NavBarWrapperPanel wrapperPanel = UIUtil.getParentOfType(
-        NavBarRootPaneExtension.NavBarWrapperPanel.class, this);
+      NavBarRootPaneExtension.NavBarWrapperPanel wrapperPanel = ComponentUtil
+        .getParentOfType((Class<? extends NavBarRootPaneExtension.NavBarWrapperPanel>)NavBarRootPaneExtension.NavBarWrapperPanel.class,
+                         (Component)this);
 
       if (wrapperPanel != null) {
         wrapperPanel.revalidate();
@@ -455,14 +456,14 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     ListenerUtil.addMouseListener(component, new MouseAdapter() {
       @Override
       public void mouseReleased(final MouseEvent e) {
-        if (SystemInfoRt.isWindows) {
+        if (SystemInfo.isWindows) {
           click(e);
         }
       }
 
       @Override
       public void mousePressed(final MouseEvent e) {
-        if (!SystemInfoRt.isWindows) {
+        if (!SystemInfo.isWindows) {
           click(e);
         }
       }

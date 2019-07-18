@@ -13,5 +13,28 @@ module.exports = {
         chunks: "initial"
       }
     }
+  },
+  chainWebpack: config => {
+    // noinspection SpellCheckingInspection
+    return config
+      .externals({
+          // doesn't work for pdfmake, because chunk name and module name differs (well, it is ok, prefetch works)
+         "pdfmake": "pdfmake",
+         "xlsx": "xlsx",
+       })
+      .plugin("prefetch")
+      .tap(args => {
+        return [
+          {
+            rel: "prefetch",
+            include: "asyncChunks",
+            fileBlacklist: [
+              /\.map$/,
+              /pdfmake\.[^.]+\.js$/,
+              /xlsx\.[^.]+\.js$/,
+            ]
+          }
+        ]
+      })
   }
 }

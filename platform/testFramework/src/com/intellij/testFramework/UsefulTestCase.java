@@ -16,6 +16,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -174,6 +175,16 @@ public abstract class UsefulTestCase extends TestCase {
 
     // turn off Disposer debugging for performance tests
     Disposer.setDebugMode(!isStressTest);
+
+    if (isIconRequired()) {
+      // ensure that IconLoader will use dummy empty icon
+      IconLoader.deactivate();
+      //IconManager.activate();
+    }
+  }
+
+  protected boolean isIconRequired() {
+    return false;
   }
 
   @Override
@@ -181,6 +192,11 @@ public abstract class UsefulTestCase extends TestCase {
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
     new RunAll(
+      () -> {
+        if (isIconRequired()) {
+          //IconManager.deactivate();
+        }
+      },
       () -> disposeRootDisposable(),
       () -> cleanupSwingDataStructures(),
       () -> cleanupDeleteOnExitHookList(),
@@ -1023,15 +1039,20 @@ public abstract class UsefulTestCase extends TestCase {
       exceptionCase.tryClosure();
     }
     catch (Throwable e) {
+      Throwable cause = e;
+      while (cause instanceof LoggedErrorProcessor.TestLoggerAssertionError && cause.getCause() != null) {
+        cause = cause.getCause();
+      }
+
       if (shouldOccur) {
         wasThrown = true;
         final String errorMessage = exceptionCase.getAssertionErrorMessage();
-        assertEquals(errorMessage, exceptionCase.getExpectedExceptionClass(), e.getClass());
+        assertEquals(errorMessage, exceptionCase.getExpectedExceptionClass(), cause.getClass());
         if (expectedErrorMsg != null) {
-          assertEquals("Compare error messages", expectedErrorMsg, e.getMessage());
+          assertEquals("Compare error messages", expectedErrorMsg, cause.getMessage());
         }
       }
-      else if (exceptionCase.getExpectedExceptionClass().equals(e.getClass())) {
+      else if (exceptionCase.getExpectedExceptionClass().equals(cause.getClass())) {
         wasThrown = true;
 
         //noinspection UseOfSystemOutOrSystemErr
@@ -1039,7 +1060,7 @@ public abstract class UsefulTestCase extends TestCase {
         //noinspection UseOfSystemOutOrSystemErr
         e.printStackTrace(System.out);
 
-        fail("Exception isn't expected here. Exception message: " + e.getMessage());
+        fail("Exception isn't expected here. Exception message: " + cause.getMessage());
       }
       else {
         throw e;

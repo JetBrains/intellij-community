@@ -21,7 +21,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
@@ -130,7 +130,7 @@ public class PyCythonExtensionWarning {
       GeneralCommandLine commandLine = new GeneralCommandLine(cmdline).withEnvironment(environment);
 
       final boolean canCreate = FileUtil.ensureCanCreateFile(new File(cythonExtensionsDir));
-      final boolean useSudo = !canCreate && !SystemInfoRt.isWindows;
+      final boolean useSudo = !canCreate && !SystemInfo.isWindows;
       Process process;
       if (useSudo) {
         process = ExecUtil.sudo(commandLine, "Please enter your password to compile cython extensions: ");
