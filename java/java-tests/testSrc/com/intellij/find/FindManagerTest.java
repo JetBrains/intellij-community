@@ -26,12 +26,14 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -83,6 +85,29 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
   protected void tearDown() throws Exception {
     myFindManager = null;
     super.tearDown();
+  }
+
+  public void testFindInDirectoryCorrectlyFindVirtualFileForJars() {
+    FindModel findModel = FindManagerTestUtils.configureFindModel("done");
+    VirtualFile[] files = getTestProjectJdk().getRootProvider().getFiles(OrderRootType.CLASSES);
+    VirtualFile rtJar = null;
+    for(VirtualFile file:files) {
+      if (file.getPath().contains("rt.jar")) {
+        rtJar = JarFileSystem.getInstance().getLocalVirtualFileFor(file);
+        break;
+      }
+    }
+
+    assertNotNull(rtJar);
+    findModel.setProjectScope(false);
+    findModel.setDirectoryName(rtJar.getPath());
+    assertNotNull(FindInProjectUtil.getDirectory(findModel));
+
+    VirtualFile jarRootForLocalFile = JarFileSystem.getInstance().getJarRootForLocalFile(rtJar);
+    VirtualFile jarPackageInRtJar = jarRootForLocalFile.findChild("java");
+    assertNotNull(jarPackageInRtJar);
+    findModel.setDirectoryName(jarPackageInRtJar.getPath());
+    assertNotNull(FindInProjectUtil.getDirectory(findModel));
   }
 
   public void testFindString() throws InterruptedException {
