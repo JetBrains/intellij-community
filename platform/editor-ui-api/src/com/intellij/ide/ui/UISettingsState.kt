@@ -138,7 +138,7 @@ class UISettingsState : BaseState() {
   @get:OptionTag("OVERRIDE_NONIDEA_LAF_FONTS")
   var overrideLafFonts by property(false)
   @get:OptionTag("SHOW_ICONS_IN_MENUS")
-  var showIconsInMenus by property(!PlatformUtils.isAppCode())
+  var showIconsInMenus by property(true)
   // IDEADEV-33409, should be disabled by default on MacOS
   @get:OptionTag("DISABLE_MNEMONICS")
   var disableMnemonics by property(SystemInfo.isMac)
