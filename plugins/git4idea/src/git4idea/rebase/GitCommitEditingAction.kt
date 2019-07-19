@@ -57,8 +57,9 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
     }
 
     val commit = log.selectedShortDetails[0]
-    val repository = getRepositoryManager(project).getRepositoryForRoot(commit.root)
-    if (repository == null) {
+    val repositoryManager = getRepositoryManager(project)
+    val repository = repositoryManager.getRepositoryForRoot(commit.root)
+    if (repository == null || repositoryManager.isExternal(repository)) {
       e.presentation.isEnabledAndVisible = false
       return
     }
