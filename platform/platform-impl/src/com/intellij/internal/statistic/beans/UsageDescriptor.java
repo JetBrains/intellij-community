@@ -3,11 +3,17 @@ package com.intellij.internal.statistic.beans;
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
+/**
+ * @deprecated use {@link MetricEvent}
+ */
+@Deprecated // to be removed in 2020.2
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
 public final class UsageDescriptor {
   private final String myKey;
   private final int myValue;

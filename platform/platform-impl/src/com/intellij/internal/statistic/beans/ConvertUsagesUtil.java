@@ -101,12 +101,7 @@ public class ConvertUsagesUtil {
     return null;
   }
 
-  /**
-   * Escapes descriptor name so it could be used in {@link #assertDescriptorName(String)}
-   *
-   * @param name name to escape
-   * @return escaped name
-   */
+  @Deprecated
   @NotNull
   public static String escapeDescriptorName(@NotNull final String name) {
     return name.
@@ -131,9 +126,7 @@ public class ConvertUsagesUtil {
     return s == null || s.trim().length() == 0;
   }
 
-  /**
-   * @see #escapeDescriptorName(String)
-   */
+  @Deprecated
   public static void assertDescriptorName(String key) {
     assert key != null;
     assert key.indexOf(GROUP_SEPARATOR) == -1 : key + " contains invalid chars";
