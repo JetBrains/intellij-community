@@ -371,7 +371,6 @@ public class BlockSupportImpl extends BlockSupport {
                                    @NotNull final FlyweightCapableTreeStructure<T> newTreeStructure,
                                    @NotNull ProgressIndicator indicator,
                                    @NotNull CharSequence lastCommittedText) {
-    TreeUtil.ensureParsedRecursivelyCheckingProgress(oldRoot, indicator);
     DiffTree.diff(createInterruptibleASTStructure(oldRoot, indicator), newTreeStructure, comparator, builder, lastCommittedText);
   }
 
