@@ -191,20 +191,14 @@ public class VcsProjectLog implements Disposable {
     public synchronized VcsLogManager getValue(@NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
       if (myValue == null) {
         LOG.debug("Creating Vcs Log for " + VcsLogUtil.getProvidersMapText(logProviders));
-        VcsLogManager value = compute(logProviders);
+        VcsLogManager value = new VcsLogManager(myProject, myUiProperties, logProviders, false,
+                                                VcsProjectLog.this::recreateOnError);
         myValue = value;
         ApplicationManager.getApplication().invokeLater(() -> {
           if (!myProject.isDisposed()) myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logCreated(value);
         });
       }
       return myValue;
-    }
-
-    @NotNull
-    @CalledInBackground
-    protected VcsLogManager compute(@NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
-      return new VcsLogManager(myProject, myUiProperties, logProviders, false,
-                               VcsProjectLog.this::recreateOnError);
     }
 
     @Nullable
