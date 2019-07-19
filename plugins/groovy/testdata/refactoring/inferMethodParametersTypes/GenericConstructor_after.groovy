@@ -1,5 +1,5 @@
 class C {
-  C<caret>(List<? extends Serializable> t) {}
+  C<caret>(List<?> t) {}
 }
 
 

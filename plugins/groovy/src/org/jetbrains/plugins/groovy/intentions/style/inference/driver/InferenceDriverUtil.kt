@@ -15,6 +15,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpressionConstraint
@@ -38,7 +39,7 @@ data class TypeUsageInformation(val contravariantTypes: Set<PsiType>,
                                 val requiredClassTypes: Map<PsiTypeParameter, List<PsiClass>>,
                                 val constraints: Collection<ConstraintFormula>) {
   companion object {
-    fun merge(data: Iterable<TypeUsageInformation>): TypeUsageInformation {
+    fun merge(data: Collection<TypeUsageInformation>): TypeUsageInformation {
       val contravariantTypes = data.flatMap { it.contravariantTypes }.toSet()
       val requiredClassTypes = data.flatMap {
         it.requiredClassTypes.entries.map { entry ->
@@ -46,33 +47,33 @@ data class TypeUsageInformation(val contravariantTypes: Set<PsiType>,
         }
       }
       val constraints = data.flatMap { it.constraints }
-      return TypeUsageInformation(contravariantTypes,
-                                  requiredClassTypes.toMap(),
-                                  constraints)
+      return TypeUsageInformation(contravariantTypes, requiredClassTypes.toMap(), constraints)
     }
   }
 }
 
 internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveElementVisitor() {
-  private val boundCollector = mutableMapOf<PsiTypeParameter, MutableList<PsiClass>>()
+  private val requiredTypesCollector = mutableMapOf<PsiTypeParameter, MutableList<PsiClass>>()
   private val contravariantTypesCollector = mutableSetOf<PsiType>()
   private val constraintsCollector = mutableListOf<ConstraintFormula>()
+
+  private fun addRequiredType(typeParameter: PsiTypeParameter, clazz: PsiClass) =
+    requiredTypesCollector.computeIfAbsent(typeParameter) { mutableListOf() }.add(clazz)
 
   override fun visitCallExpression(callExpression: GrCallExpression) {
     val resolveResult = callExpression.advancedResolve() as? GroovyMethodResult
     val candidate = resolveResult?.candidate
     val receiver = candidate?.receiver as? PsiClassType
     receiver?.run {
-      val endpointClassName = extractEndpointType(receiver, method.typeParameters.map { it.type() })
-      if (endpointClassName.isTypeParameter()) {
-        boundCollector.computeIfAbsent(endpointClassName.typeParameter()!!) { mutableListOf() }
-          .add(candidate.method.containingClass ?: return)
+      val endpointClassType = extractEndpointType(receiver, method.typeParameters.map { it.type() })
+      if (endpointClassType.isTypeParameter()) {
+        addRequiredType(endpointClassType.typeParameter()!!, candidate.method.containingClass ?: return@run)
       }
     }
     candidate?.argumentMapping?.expectedTypes?.forEach { (type, argument) ->
-      val argumentType = (argument.type.typeParameter())
-      argumentType?.run {
-        boundCollector.computeIfAbsent(argumentType) { mutableListOf() }.add(type.resolve() ?: return)
+      val argumentTypeParameter = argument.type.typeParameter()
+      argumentTypeParameter?.run {
+        addRequiredType(argumentTypeParameter, type.resolve() ?: return@run)
       }
       resolveResult.contextSubstitutor.substitute(type)?.run { contravariantTypesCollector.add(this) }
     }
@@ -81,6 +82,14 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
   }
 
   override fun visitAssignmentExpression(expression: GrAssignmentExpression) {
+    run {
+      val lValueReference = (expression.lValue as? GrReferenceExpression)?.lValueReference
+      val accessorResult = lValueReference?.advancedResolve() as? GroovyMethodResult
+      val mapping = accessorResult?.candidate?.argumentMapping
+      mapping?.expectedTypes?.forEach { (type, argument) ->
+        addRequiredType(argument.type?.typeParameter() ?: return@forEach, type.resolve() ?: return@forEach)
+      }
+    }
     constraintsCollector.add(ExpressionConstraint(null, expression))
     super.visitAssignmentExpression(expression)
   }
@@ -100,7 +109,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
   }
 
   fun buildUsageInformation(): TypeUsageInformation =
-    TypeUsageInformation(contravariantTypesCollector, boundCollector, constraintsCollector)
+    TypeUsageInformation(contravariantTypesCollector, requiredTypesCollector, constraintsCollector)
 }
 
 
