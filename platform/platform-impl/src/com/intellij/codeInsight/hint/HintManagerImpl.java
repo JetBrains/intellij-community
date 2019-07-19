@@ -154,11 +154,6 @@ public class HintManagerImpl extends HintManager {
     };
   }
 
-  @Override
-  public boolean isHint(Window component) {
-    return myHintsStack.contains(component);
-  }
-
   /**
    * Sets whether the next {@code showXxx} call will request the focus to the
    * newly shown tooltip. Note the flag applies only to the next call, i.e. is
