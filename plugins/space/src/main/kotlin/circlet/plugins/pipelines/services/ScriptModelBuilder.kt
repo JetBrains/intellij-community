@@ -86,7 +86,7 @@ object ScriptModelBuilder : KLogging() {
                 kotlinCompilerPath,
                 scriptDefFile.absolutePath)
 
-            val config = DslScriptExecutor().evaluateModel(targetJar, "", "", "")
+            val config = DslScriptExecutor().evaluateModel(targetJar, emptyList(),"", "", "")
             config.applyIds()
 
             return ScriptViewModelFactory.create(lifetime, config)
