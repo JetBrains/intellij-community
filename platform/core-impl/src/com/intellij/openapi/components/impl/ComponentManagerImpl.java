@@ -29,8 +29,8 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusFactory;
 import com.intellij.util.messages.Topic;
-import com.intellij.util.messages.impl.MessageBusFactoryImpl;
 import com.intellij.util.messages.impl.MessageBusImpl;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.pico.DefaultPicoContainer;
@@ -55,7 +55,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   private volatile boolean myDisposed;
   private volatile boolean myDisposeCompleted;
 
-  private MessageBus myMessageBus;
+  private volatile MessageBus myMessageBus;
 
   private final Map<String, BaseComponent> myNameToComponent = new THashMap<>(); // contents guarded by this
 
@@ -105,6 +105,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       registerServices(plugin);
     }
     myComponentConfigCount = componentConfigCount;
+    Level level = DefaultPicoContainer.getActivityLevel(getPicoContainer());
+    if (level == Level.APPLICATION) {
+      LoadingPhase.setCurrentPhase(LoadingPhase.COMPONENT_REGISTERED);
+    }
+    getMessageBus(); //register message bus in pico container
   }
 
   protected final void createComponents(@Nullable ProgressIndicator indicator) {
@@ -148,7 +153,27 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     if (myDisposed) {
       throwAlreadyDisposed();
     }
-    return myMessageBus;
+    MessageBus messageBus = myMessageBus;
+    if (messageBus == null) {
+      synchronized (this) {
+        messageBus = myMessageBus;
+        if (messageBus == null) {
+          myMessageBus = messageBus = createMessageBus();
+        }
+      }
+    }
+    return messageBus;
+  }
+
+  @NotNull
+  private MessageBus createMessageBus() {
+    String name = toString();
+    MessageBus messageBus = MessageBusFactory.newMessageBus(name, getParentComponentManager() == null ? null : getParentComponentManager().getMessageBus());
+    if (messageBus instanceof MessageBusImpl) {
+      ((MessageBusImpl) messageBus).setMessageDeliveryListener((topic, messageName, handler, duration) -> logMessageBusDelivery(topic, messageName, handler, duration));
+    }
+    getPicoContainer().registerComponentInstance(MessageBus.class, messageBus);
+    return messageBus;
   }
 
   public final boolean isComponentsCreated() {
@@ -323,15 +348,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   protected void bootstrapPicoContainer(@NotNull String name) {
-    MutablePicoContainer picoContainer = createPicoContainer();
-    myPicoContainer = picoContainer;
-
-    // ServiceManager is not ready yet, instantiate directly instead of MessageBusFactory.getInstance()
-    myMessageBus = myParentComponentManager == null ? new MessageBusFactoryImpl().createMessageBus(name) : new MessageBusImpl(name, myParentComponentManager.getMessageBus());
-    if (myMessageBus instanceof MessageBusImpl) {
-      ((MessageBusImpl) myMessageBus).setMessageDeliveryListener((topic, messageName, handler, duration) -> logMessageBusDelivery(topic, messageName, handler, duration));
-    }
-    picoContainer.registerComponentInstance(MessageBus.class, myMessageBus);
+    myPicoContainer = createPicoContainer();
   }
 
   protected void logMessageBusDelivery(Topic topic, String messageName, Object handler, long durationNanos) {

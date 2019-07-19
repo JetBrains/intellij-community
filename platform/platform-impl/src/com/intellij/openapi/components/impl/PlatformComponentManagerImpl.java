@@ -10,6 +10,7 @@ import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.util.messages.MessageBusFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +42,7 @@ public abstract class PlatformComponentManagerImpl extends ComponentManagerImpl 
 
   @Override
   public void initializeComponent(@NotNull Object component, @Nullable ServiceDescriptor serviceDescriptor) {
-    if (serviceDescriptor == null || !(component instanceof PathMacroManager || component instanceof IComponentStore)) {
+    if (serviceDescriptor == null || !(component instanceof PathMacroManager || component instanceof IComponentStore || component instanceof MessageBusFactory)) {
       LoadingPhase.assertAtLeast(LoadingPhase.CONFIGURATION_STORE_INITIALIZED);
       getComponentStore().initComponent(component, serviceDescriptor);
     }

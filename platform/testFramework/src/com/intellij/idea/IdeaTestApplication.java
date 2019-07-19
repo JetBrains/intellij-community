@@ -108,8 +108,8 @@ public final class IdeaTestApplication implements Disposable {
     catch (Exception e) {
       ExceptionUtil.rethrow(e);
     }
-    app.registerMessageBusListeners(loadedPlugins, true);
     app.registerComponents(loadedPlugins);
+    app.registerMessageBusListeners(loadedPlugins, true);
     RegistryKeyBean.addKeysFromPlugins();
     app.load(configPath, null);
     LoadingPhase.setCurrentPhase(LoadingPhase.FRAME_SHOWN);
