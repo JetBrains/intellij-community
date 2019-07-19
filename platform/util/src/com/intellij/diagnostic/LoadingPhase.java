@@ -29,7 +29,7 @@ public enum LoadingPhase {
     return Logger.getInstance(LoadingPhase.class);
   }
 
-  private final static boolean SKIP_LOADING_PHASE = Boolean.parseBoolean("idea.skip.loading.phase");
+  private final static boolean SKIP_LOADING_PHASE = true;
 
   public static void setCurrentPhase(@NotNull LoadingPhase phase) {
     LoadingPhase old = currentPhase.getAndSet(phase);
