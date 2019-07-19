@@ -143,11 +143,11 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   }
 
   @Override
-  protected void bootstrapPicoContainer(@NotNull String name) {
+  protected MutablePicoContainer bootstrapPicoContainer(@NotNull String name) {
     Extensions.instantiateArea(ExtensionAreas.IDEA_PROJECT, this, null);
-    super.bootstrapPicoContainer(name);
-
-    getPicoContainer().registerComponentImplementation(PathMacroManager.class, ProjectPathMacroManager.class);
+    MutablePicoContainer container = super.bootstrapPicoContainer(name);
+    container.registerComponentImplementation(PathMacroManager.class, ProjectPathMacroManager.class);
+    return container;
   }
 
   // do not call for default project

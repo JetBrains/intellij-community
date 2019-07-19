@@ -35,8 +35,16 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
     Project compute() {
       LOG.assertTrue(!ApplicationManager.getApplication().isDisposeInProgress(), "Application is being disposed!");
       return new ProjectImpl() {
+        private MutablePicoContainer myPicoContainer;
         @Override
-        protected void bootstrapPicoContainer(@NotNull String name) {
+        protected MutablePicoContainer bootstrapPicoContainer(@NotNull String name) {
+          return null;
+        }
+
+        @NotNull
+        @Override
+        public MutablePicoContainer getPicoContainer() {
+          return myPicoContainer;
         }
 
         @Override
@@ -71,7 +79,7 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
 
         @Override
         public void init(@Nullable ProgressIndicator indicator) {
-          super.bootstrapPicoContainer(TEMPLATE_PROJECT_NAME);
+          myPicoContainer = super.bootstrapPicoContainer(TEMPLATE_PROJECT_NAME);
           MutablePicoContainer picoContainer = getPicoContainer();
           // do not leak internal delegate, use DefaultProject everywhere instead
           picoContainer.registerComponentInstance(Project.class, DefaultProject.this);

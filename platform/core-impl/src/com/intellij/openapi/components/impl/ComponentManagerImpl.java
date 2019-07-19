@@ -51,7 +51,7 @@ import java.util.Map;
 public abstract class ComponentManagerImpl extends UserDataHolderBase implements ComponentManager, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentManager");
 
-  private volatile MutablePicoContainer myPicoContainer;
+  private final MutablePicoContainer myPicoContainer;
   private volatile boolean myDisposed;
   private volatile boolean myDisposeCompleted;
 
@@ -62,22 +62,22 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private int myComponentConfigCount;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  private int myInstantiatedComponentCount = 0;
+  private int myInstantiatedComponentCount;
   private boolean myComponentsCreated;
 
   private final List<BaseComponent> myBaseComponents = new SmartList<>();
 
   private final ComponentManager myParentComponentManager;
-  private final Condition myDisposedCondition = o -> isDisposed();
+  private final Condition myDisposedCondition = __ -> isDisposed();
 
   protected ComponentManagerImpl(@Nullable ComponentManager parentComponentManager) {
     myParentComponentManager = parentComponentManager;
-    bootstrapPicoContainer(toString());
+    myPicoContainer = bootstrapPicoContainer(toString());
   }
 
   protected ComponentManagerImpl(@Nullable ComponentManager parentComponentManager, @NotNull String name) {
     myParentComponentManager = parentComponentManager;
-    bootstrapPicoContainer(name);
+    myPicoContainer = bootstrapPicoContainer(name);
   }
 
   @Nullable
@@ -329,7 +329,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       myMessageBus = null;
     }
 
-    myPicoContainer = null;
     //noinspection SynchronizeOnThis
     synchronized (this) {
       myNameToComponent.clear();
@@ -347,8 +346,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return plugin.getAppComponents();
   }
 
-  protected void bootstrapPicoContainer(@NotNull String name) {
-    myPicoContainer = createPicoContainer();
+  protected MutablePicoContainer bootstrapPicoContainer(@NotNull String name) {
+    return createPicoContainer();
   }
 
   protected void logMessageBusDelivery(Topic topic, String messageName, Object handler, long durationNanos) {
@@ -548,7 +547,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     @Nullable
     private Activity createMeasureActivity(@NotNull PicoContainer picoContainer) {
       Level level = DefaultPicoContainer.getActivityLevel(picoContainer);
-      if (level == Level.APPLICATION || (level == Level.PROJECT && activityNamePrefix() != null)) {
+      if (level == Level.APPLICATION || level == Level.PROJECT && activityNamePrefix() != null) {
         return ParallelActivity.COMPONENT.start(getComponentImplementation().getName(), level, myPluginId != null ? myPluginId.getIdString() : null);
       }
       return null;
