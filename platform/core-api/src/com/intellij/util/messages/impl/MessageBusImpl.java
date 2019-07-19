@@ -279,6 +279,11 @@ public class MessageBusImpl implements MessageBus {
     }
   }
 
+  @NotNull
+  String getOwner() {
+    return myOwner;
+  }
+
   private void calcSubscribers(@NotNull Topic topic, @NotNull List<? super MessageBusConnectionImpl> result) {
     final List<MessageBusConnectionImpl> topicSubscribers = mySubscribers.get(topic);
     if (topicSubscribers != null) {

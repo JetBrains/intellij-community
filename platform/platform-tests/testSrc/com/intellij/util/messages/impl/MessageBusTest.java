@@ -1,32 +1,23 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
  */
-package com.intellij.util.messages;
+package com.intellij.util.messages.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.messages.impl.MessageBusImpl;
+import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.MessageBusFactory;
+import com.intellij.util.messages.Topic;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -381,5 +372,18 @@ public class MessageBusTest extends LightPlatformTestCase {
     }
     myBus.syncPublisher(RUNNABLE_TOPIC).run();
     assertTrue(Disposer.isDisposed(disposable));
+  }
+
+  public void testMessageBusOwnerIsCorrect() {
+    checkLevel(ApplicationManager.getApplication(), "Application");
+    checkLevel(getProject(), "Project");
+    checkLevel(getModule(), "Module");
+  }
+
+  private static void checkLevel(ComponentManager component, String level) {
+    MessageBusImpl bus = (MessageBusImpl)component.getPicoContainer().getComponentInstanceOfType(MessageBus.class);
+    assertTrue(bus.getOwner().contains(level));
+    MessageBusImpl bus1 = (MessageBusImpl)component.getMessageBus();
+    assertSame(bus, bus1);
   }
 }
