@@ -14,6 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,8 +55,8 @@ public class TestOnlyInspection extends AbstractBaseJavaLocalInspectionTool {
       @Override
       public void visitNewExpression(PsiNewExpression expression) {
         PsiJavaCodeReferenceElement reference = expression.getClassOrAnonymousClassReference();
-        if (reference != null) {
-          validate(reference, expression.resolveMethod(), h);
+        if (reference != null && validate(reference, expression.resolveMethod(), h)) {
+          validate(reference, ObjectUtils.tryCast(reference.resolve(), PsiMember.class), h);
         }
       }
 
@@ -88,27 +89,33 @@ public class TestOnlyInspection extends AbstractBaseJavaLocalInspectionTool {
     };
   }
 
-  private static void validate(@NotNull PsiElement place, @Nullable PsiMember member, ProblemsHolder h) {
-    if (member == null || !isAnnotatedAsTestOnly(member)) return;
-    if (isInsideTestOnlyMethod(place)) return;
-    if (isInsideTestOnlyField(place)) return;
-    if (isInsideTestClass(place)) return;
-    if (isUnderTestSources(place)) return;
+  private static boolean validate(@NotNull PsiElement place, @Nullable PsiMember member, ProblemsHolder h) {
+    if (member == null) {
+      return true;
+    }
 
-    PsiAnnotation anno = findVisibleForTestingAnnotation(member);
-    if (anno != null) {
-      String modifier = getAccessModifierWithoutTesting(anno);
+    PsiAnnotation vft = findVisibleForTestingAnnotation(member);
+    if (vft == null && !isAnnotatedAsTestOnly(member)) {
+      return true;
+    }
+    if (isInsideTestOnlyMethod(place) || isInsideTestOnlyField(place) || isInsideTestClass(place) || isUnderTestSources(place)) {
+      return true;
+    }
+
+    if (vft != null) {
+      String modifier = getAccessModifierWithoutTesting(vft);
       if (modifier == null) {
         modifier = getNextLowerAccessLevel(member);
       }
 
       LightModifierList modList = new LightModifierList(member.getManager(), JavaLanguage.INSTANCE, modifier);
       if (JavaResolveUtil.isAccessible(member, member.getContainingClass(), modList, place, null, null)) {
-        return;
+        return true;
       }
     }
 
     reportProblem(place, member, h);
+    return false;
   }
 
   private static final List<String> ourModifiersDescending =
@@ -141,13 +148,7 @@ public class TestOnlyInspection extends AbstractBaseJavaLocalInspectionTool {
   @Nullable
   private static PsiAnnotation findVisibleForTestingAnnotation(@NotNull PsiMember member) {
     PsiAnnotation anno = AnnotationUtil.findAnnotation(member, "com.google.common.annotations.VisibleForTesting");
-    if (anno == null) {
-      anno = AnnotationUtil.findAnnotation(member, "com.android.annotations.VisibleForTesting");
-    }
-    if (anno != null) return anno;
-
-    PsiClass containingClass = member.getContainingClass();
-    return containingClass != null ? findVisibleForTestingAnnotation(containingClass) : null;
+    return anno != null ? anno : AnnotationUtil.findAnnotation(member, "com.android.annotations.VisibleForTesting");
   }
 
   private static boolean isInsideTestOnlyMethod(PsiElement e) {
@@ -161,7 +162,6 @@ public class TestOnlyInspection extends AbstractBaseJavaLocalInspectionTool {
   private static boolean isAnnotatedAsTestOnly(@Nullable PsiMember m) {
     if (m == null) return false;
     return AnnotationUtil.isAnnotated(m, AnnotationUtil.TEST_ONLY, CHECK_EXTERNAL)
-           || findVisibleForTestingAnnotation(m) != null
            || isAnnotatedAsTestOnly(m.getContainingClass());
   }
 
