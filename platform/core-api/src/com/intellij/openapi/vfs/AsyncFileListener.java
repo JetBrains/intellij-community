@@ -46,17 +46,6 @@ import java.util.List;
 public interface AsyncFileListener {
 
   /**
-   * Return whether {@link #prepareChange} should be called inside a (cancellable) read action.
-   * This makes sense if the listener wants consistent access to the project model, VFS or PSI.
-   * Avoiding read action makes sense if the listener performs long non-cancellable operations
-   * like disk access. The listener should still call {@code checkCanceled} frequently enough, and
-   * it can still take read actions manually.
-   */
-  default boolean needsReadAction() {
-    return true;
-  }
-
-  /**
    * Called (possibly on a background thread) when a batch of VFS events is ready to be fired.
    * This method should not have side effects and should guarantee its cancellability by calling
    * {@link ProgressManager#checkCanceled()} often enough.<p></p>
