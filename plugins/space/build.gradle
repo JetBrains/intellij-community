@@ -57,7 +57,7 @@ buildPlugin {
 
             new File("$projectDir/build/distributions/update.xml").write("""<!-- Plugin repository URL: "http://buildserver.labs.intellij.net/guestAuth/app/rest/builds/buildType:(id:Space_IdeaSpaceIntegration),tag:release/artifacts/content/update.xml" -->
 <plugins>
-    <plugin id="com.jetbrains.space" url="http://buildserver.labs.intellij.net/guestAuth/app/rest/builds/buildType:(id:Space_IdeaIntegration),number:${buildNumber}/artifacts/content/app-idea-${buildNumber}.zip" version="$buildNumber">
+    <plugin id="com.jetbrains.space" url="http://buildserver.labs.intellij.net/guestAuth/app/rest/builds/buildType:(id:Circlet_IdeaIntegration),number:${buildNumber}/artifacts/content/app-idea-${buildNumber}.zip" version="$buildNumber">
         <name>Space Integration</name>
         <description>Space Integration plugin</description>
     </plugin>
