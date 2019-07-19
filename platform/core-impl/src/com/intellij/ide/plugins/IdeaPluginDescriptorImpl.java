@@ -59,7 +59,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private static final String PROJECT_SERVICE = "com.intellij.projectService";
   private static final String MODULE_SERVICE = "com.intellij.moduleService";
 
-  public static final List<String> SERVICE_QUALIFIED_ELEMENT_NAMES = Arrays.asList(APPLICATION_SERVICE, PROJECT_SERVICE, MODULE_SERVICE);
+  static final List<String> SERVICE_QUALIFIED_ELEMENT_NAMES = Arrays.asList(APPLICATION_SERVICE, PROJECT_SERVICE, MODULE_SERVICE);
 
   private final File myPath;
   private final boolean myBundled;
@@ -249,7 +249,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
       Element child = (Element)content;
       switch (child.getName()) {
-        case "extensions": {
+        case "extensions":
           String ns = child.getAttributeValue("defaultExtensionNs");
           for (Element extensionElement : child.getChildren()) {
             String os = extensionElement.getAttributeValue("os");
@@ -291,30 +291,27 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
             services.add(readServiceDescriptor(extensionElement));
           }
-        }
-        break;
+          break;
 
-        case "extensionPoints": {
+        case "extensionPoints":
           if (myExtensionsPoints == null) {
             myExtensionsPoints = MultiMap.createSmart();
           }
           for (Element extensionPoint : child.getChildren()) {
             myExtensionsPoints.putValue(StringUtilRt.notNullize(extensionPoint.getAttributeValue(ExtensionsAreaImpl.ATTRIBUTE_AREA)), extensionPoint);
           }
-        }
-        break;
+          break;
 
-        case "actions": {
+        case "actions":
           if (myActionElements == null) {
             myActionElements = new ArrayList<>(child.getChildren());
           }
           else {
             myActionElements.addAll(child.getChildren());
           }
-        }
-        break;
+          break;
 
-        case "module": {
+        case "module":
           String moduleName = child.getAttributeValue("value");
           if (moduleName != null) {
             if (myModules == null) {
@@ -322,50 +319,45 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
             }
             myModules.add(moduleName);
           }
-        }
-        break;
+          break;
 
-        case OptimizedPluginBean.APPLICATION_COMPONENTS: {
+        case OptimizedPluginBean.APPLICATION_COMPONENTS:
           // because of x-pointer, maybe several application-components tag in document
           if (myAppComponents == null) {
             myAppComponents = new ArrayList<>();
           }
           readComponents(child, oldComponentConfigBeanBinding, (ArrayList<ComponentConfig>)myAppComponents);
-        }
-        break;
+          break;
 
-        case OptimizedPluginBean.PROJECT_COMPONENTS: {
+        case OptimizedPluginBean.PROJECT_COMPONENTS:
           if (myProjectComponents == null) {
             myProjectComponents = new ArrayList<>();
           }
           readComponents(child, oldComponentConfigBeanBinding, (ArrayList<ComponentConfig>)myProjectComponents);
-        }
-        break;
+          break;
 
-        case OptimizedPluginBean.MODULE_COMPONENTS: {
+        case OptimizedPluginBean.MODULE_COMPONENTS:
           if (myModuleComponents == null) {
             myModuleComponents = new ArrayList<>();
           }
           readComponents(child, oldComponentConfigBeanBinding, (ArrayList<ComponentConfig>)myModuleComponents);
-        }
-        break;
+          break;
 
-        case "applicationListeners": {
+        case "applicationListeners":
           List<ListenerDescriptor> descriptors = myListenerDescriptors;
           if (descriptors == null) {
             descriptors = new ArrayList<>();
             myListenerDescriptors = descriptors;
           }
           readListener(child, descriptors);
-        }
-        break;
+          break;
       }
 
       child.getContent().clear();
     }
   }
 
-  private void readListener(@NotNull Element list, @NotNull List<ListenerDescriptor> descriptors) {
+  private void readListener(@NotNull Element list, @NotNull List<? super ListenerDescriptor> descriptors) {
     for (Content content : list.getContent()) {
       if (!(content instanceof Element)) {
         continue;
@@ -414,7 +406,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
         continue;
       }
 
-      Element componentElement = ((Element)child);
+      Element componentElement = (Element)child;
       if (!componentElement.getName().equals("component")) {
         continue;
       }
@@ -429,7 +421,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
       beanBinding.deserializeInto(componentConfig, componentElement);
       Map<String, String> options = componentConfig.options;
-      if (options != null && (!isComponentSuitableForOs(options.get("os")))) {
+      if (options != null && !isComponentSuitableForOs(options.get("os"))) {
         continue;
       }
 

@@ -106,6 +106,7 @@ public abstract class RunConfigurationBase<T> extends UserDataHolderBase impleme
     return StringUtilRt.notNullize(myName);
   }
 
+  @Override
   public final int hashCode() {
     return super.hashCode();
   }
@@ -123,6 +124,7 @@ public abstract class RunConfigurationBase<T> extends UserDataHolderBase impleme
     return true;
   }
 
+  @Override
   public final boolean equals(final Object obj) {
     return super.equals(obj);
   }
@@ -302,7 +304,6 @@ public abstract class RunConfigurationBase<T> extends UserDataHolderBase impleme
 
   /**
    * @deprecated Use {@link RunProfileWithCompileBeforeLaunchOption#isExcludeCompileBeforeLaunchOption()}
-   * @return
    */
   @Deprecated
   public boolean excludeCompileBeforeLaunchOption() {

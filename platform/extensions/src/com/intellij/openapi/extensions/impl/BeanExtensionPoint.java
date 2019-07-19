@@ -28,8 +28,6 @@ final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
     if (picoContainer.getParent() == null) {
       return new XmlExtensionAdapter(getClassName(), pluginDescriptor, orderId, order, effectiveElement);
     }
-    else {
-      return new XmlExtensionAdapter.SimpleConstructorInjectionAdapter(getClassName(), pluginDescriptor, orderId, order, effectiveElement);
-    }
+    return new XmlExtensionAdapter.SimpleConstructorInjectionAdapter(getClassName(), pluginDescriptor, orderId, order, effectiveElement);
   }
 }

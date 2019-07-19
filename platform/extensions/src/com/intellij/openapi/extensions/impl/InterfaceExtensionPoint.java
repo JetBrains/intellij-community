@@ -44,9 +44,7 @@ public class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
     if (isUsePicoComponentAdapter()) {
       return new XmlExtensionAdapter.ConstructorInjectionAdapter(implementationClassName, pluginDescriptor, orderId, order, effectiveElement);
     }
-    else {
-      return new XmlExtensionAdapter.SimpleConstructorInjectionAdapter(implementationClassName, pluginDescriptor, orderId, order, effectiveElement);
-    }
+    return new XmlExtensionAdapter.SimpleConstructorInjectionAdapter(implementationClassName, pluginDescriptor, orderId, order, effectiveElement);
   }
 
   private static boolean shouldDeserializeInstance(@NotNull Element extensionElement) {
