@@ -134,6 +134,16 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
       if (SystemInfo.isLinux && JBUIScale.isUsrHiDPI()) {
         applySystemFonts(defaults);
       }
+      if (SystemInfo.isMac) {
+        defaults.put("RootPane.defaultButtonWindowKeyBindings", new Object[]{
+          "ENTER", "press",
+          "released ENTER", "release",
+          "ctrl ENTER","press",
+          "ctrl released ENTER","release",
+          "meta ENTER", "press",
+          "meta released ENTER", "release"
+        });
+      }
       defaults.put("EditorPane.font", defaults.getFont("TextField.font"));
       return defaults;
     }
