@@ -39,21 +39,33 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   private boolean myFirstTestingStartedEvent = true;
 
 
-  public OutputToGeneralTestEventsConverter(@NotNull final String testFrameworkName, @NotNull final TestConsoleProperties consoleProperties) {
+  public OutputToGeneralTestEventsConverter(@NotNull final String testFrameworkName,
+                                            @NotNull final TestConsoleProperties consoleProperties) {
     // If console is editable, user may want to see output before new line char.
     // stdout: "enter your name:"
     // There is no new line after it, but user still wants to see this message.
     // So, if console is editable, we enable "doNotBufferTextUntilNewLine".
-    this(testFrameworkName, consoleProperties.isEditable());
+    this(testFrameworkName, consoleProperties.isEditable(), consoleProperties.tcMessageHasNewLinePrefix());
   }
 
   /**
+   * @see OutputToGeneralTestEventsConverter#OutputToGeneralTestEventsConverter(String, boolean, boolean)
+   */
+  public OutputToGeneralTestEventsConverter(@NotNull final String testFrameworkName,
+                                            final boolean doNotBufferTextUntilNewLine) {
+    this(testFrameworkName, doNotBufferTextUntilNewLine, false);
+  }
+
+  /**
+   * @param cutNewLineBeforeServiceMessage see {@link OutputEventSplitter} constructor
    * @param doNotBufferTextUntilNewLine opposite to {@link OutputEventSplitter} constructor
    */
-  public OutputToGeneralTestEventsConverter(@NotNull final String testFrameworkName, final boolean doNotBufferTextUntilNewLine) {
+  public OutputToGeneralTestEventsConverter(@NotNull final String testFrameworkName,
+                                            final boolean doNotBufferTextUntilNewLine,
+                                            final boolean cutNewLineBeforeServiceMessage) {
     myTestFrameworkName = testFrameworkName;
     myServiceMessageVisitor = new MyServiceMessageVisitor();
-    mySplitter = new OutputEventSplitter(! doNotBufferTextUntilNewLine) {
+    mySplitter = new OutputEventSplitter(!doNotBufferTextUntilNewLine, cutNewLineBeforeServiceMessage) {
       @Override
       public void onTextAvailable(@NotNull final String text, @NotNull final Key<?> outputType) {
         processConsistentText(text, outputType);
