@@ -172,7 +172,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       editorPane.setFocusable(true);
     }
 
-    ArrayList<AnAction> actions = new ArrayList<>();
+    List<AnAction> actions = new ArrayList<>();
     JPanel grid = createMainPanel(hintHint, scrollPane, editorPane, newLayout, highlightActions, !textToDisplay.equals(dressedText));
     if (ScreenReader.isActive()) {
       grid.setFocusTraversalPolicyProvider(true);
@@ -353,7 +353,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
                            @NotNull JPanel component,
                            @NotNull LightweightHint hint,
                            @NotNull HintHint hintHint,
-                           @NotNull ArrayList<AnAction> actions,
+                           @NotNull List<? super AnAction> actions,
                            @NotNull TooltipReloader expandCallback,
                            boolean newLayout,
                            boolean highlightActions) {

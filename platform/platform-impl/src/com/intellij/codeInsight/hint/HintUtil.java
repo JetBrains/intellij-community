@@ -10,6 +10,7 @@ import com.intellij.ui.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.Html;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -72,7 +73,7 @@ public class HintUtil {
   public static JComponent createInformationLabel(@NotNull String text,
                                                   @Nullable HyperlinkListener hyperlinkListener,
                                                   @Nullable MouseListener mouseListener,
-                                                  @Nullable Ref<Consumer<String>> updatedTextConsumer) {
+                                                  @Nullable Ref<? super Consumer<? super String>> updatedTextConsumer) {
     HintHint hintHint = getInformationHint();
     HintLabel label = createLabel(text, null, hintHint.getTextBackground(), hintHint);
     configureLabel(label, hyperlinkListener, mouseListener, updatedTextConsumer);
@@ -154,7 +155,7 @@ public class HintUtil {
   public static JComponent createErrorLabel(@NotNull String text,
                                             @Nullable HyperlinkListener hyperlinkListener,
                                             @Nullable MouseListener mouseListener,
-                                            @Nullable Ref<Consumer<String>> updatedTextConsumer) {
+                                            @Nullable Ref<? super Consumer<? super String>> updatedTextConsumer) {
     Color bg = getErrorColor();
     HintHint hintHint = new HintHint().setTextBg(bg)
                                       .setTextFg(JBColor.foreground())
@@ -188,7 +189,7 @@ public class HintUtil {
   }
 
   private static Font getBoldFont() {
-    return UIUtil.getLabelFont().deriveFont(Font.BOLD);
+    return StartupUiUtil.getLabelFont().deriveFont(Font.BOLD);
   }
 
   @NotNull
@@ -222,7 +223,7 @@ public class HintUtil {
 
   private static void configureLabel(@NotNull HintLabel label, @Nullable HyperlinkListener hyperlinkListener,
                                      @Nullable MouseListener mouseListener,
-                                     @Nullable Ref<Consumer<String>> updatedTextConsumer) {
+                                     @Nullable Ref<? super Consumer<? super String>> updatedTextConsumer) {
     if (hyperlinkListener != null) {
       label.myPane.addHyperlinkListener(hyperlinkListener);
     }
@@ -230,13 +231,14 @@ public class HintUtil {
       label.myPane.addMouseListener(mouseListener);
     }
     if (updatedTextConsumer != null) {
-      updatedTextConsumer.set(s -> {
+      Consumer<? super String> consumer = s -> {
         label.myPane.setText(s);
 
         // Force preferred size recalculation.
         label.setPreferredSize(null);
         label.myPane.setPreferredSize(null);
-      });
+      };
+      updatedTextConsumer.set(consumer);
     }
   }
 
@@ -260,9 +262,11 @@ public class HintUtil {
       // the tooltip contents right away.
       if (myPane != null) {
         return myPane.requestFocusInWindow();
-      } else if (myColored != null) {
+      }
+      if (myColored != null) {
         return myColored.requestFocusInWindow();
-      } else if (myIcon != null) {
+      }
+      if (myIcon != null) {
         return myIcon.requestFocusInWindow();
       }
       return super.requestFocusInWindow();
