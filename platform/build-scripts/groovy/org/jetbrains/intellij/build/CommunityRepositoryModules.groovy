@@ -212,7 +212,7 @@ class CommunityRepositoryModules {
       withModule("intellij.cucumber.jvmFormatter")
       withModule("intellij.cucumber.jvmFormatter3")
       withModule("intellij.cucumber.jvmFormatter4")
-      withProjectLibrary("cucumber-core")
+      withModuleLibrary("cucumber-core", "intellij.cucumber.java", "")
       doNotCreateSeparateJarForLocalizableResources()
     },
     plugin("intellij.cucumber.groovy") {
