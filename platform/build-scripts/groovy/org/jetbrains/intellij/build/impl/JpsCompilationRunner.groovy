@@ -68,6 +68,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 
 /**
  * @author nik
@@ -206,7 +207,7 @@ class JpsCompilationRunner {
     String buildArtifactsMessage = !artifactsToBuild.isEmpty() ? ", ${artifactsToBuild.size()} artifacts" : ""
     String resolveDependenciesMessage = resolveProjectDependencies ? ", resolve dependencies" : ""
     context.messages.info("Build scope: ${allModules ? "all" : modulesSet.size()} modules, ${includeTests ? "including tests" : "production only"}$buildArtifactsMessage$resolveDependenciesMessage")
-    long compilationStart = System.currentTimeMillis()
+    long compilationStart = System.nanoTime()
     context.messages.block("Compilation") {
       try {
         JpsModelLoader loader = { context.projectModel }
@@ -224,7 +225,7 @@ class JpsCompilationRunner {
     }
     else if (!compilationData.statisticsReported) {
       messageHandler.printPerModuleCompilationStatistics(compilationStart)
-      context.messages.reportStatisticValue("Compilation time, ms", String.valueOf(System.currentTimeMillis() - compilationStart))
+      context.messages.reportStatisticValue("Compilation time, ms", String.valueOf(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - compilationStart)))
       compilationData.statisticsReported = true
     }
   }
@@ -310,10 +311,10 @@ class JpsCompilationRunner {
             def targetId = "$target.id${targets.size() > 1 ? " and ${targets.size()} more" : ""} ($target.targetType.typeId)".toString()
             if (((BuildingTargetProgressMessage)msg).eventType == BuildingTargetProgressMessage.Event.STARTED) {
               reportProgress(targets, "")
-              compilationStartTimeForTarget.put(targetId, System.currentTimeMillis())
+              compilationStartTimeForTarget.put(targetId, System.nanoTime())
             }
             else {
-              compilationFinishTimeForTarget.put(targetId, System.currentTimeMillis())
+              compilationFinishTimeForTarget.put(targetId, System.nanoTime())
             }
           }
           break
@@ -331,11 +332,11 @@ class JpsCompilationRunner {
       }
       def buildMessages = context.messages
       buildMessages.info("Compilation time per target:")
-      def compilationTimeForTarget = compilationFinishTimeForTarget.collect {new Pair<>(it.key, it.value - compilationStartTimeForTarget[it.key])}
-      buildMessages.info(" average: ${String.format("%.2f", (compilationTimeForTarget.collect {it.second}.sum() as double) / compilationTimeForTarget.size())}ms")
+      def compilationTimeForTarget = compilationFinishTimeForTarget.collect {new Pair<String, Long>(it.key, (it.value - compilationStartTimeForTarget[it.key]) as long)}
+      buildMessages.info(" average: ${String.format("%.2f",((compilationTimeForTarget.collect {it.second}.sum() as double) / compilationTimeForTarget.size()) / 1000000)}ms")
       def topTargets = compilationTimeForTarget.toSorted { it.second }.reverse().take(10)
       buildMessages.info(" top ${topTargets.size()} targets by compilation time:")
-      topTargets.each { entry -> buildMessages.info("  $entry.first: ${entry.second}ms") }
+      topTargets.each { entry -> buildMessages.info("  $entry.first: ${TimeUnit.NANOSECONDS.toMillis(entry.second)}ms") }
     }
 
     @CompileDynamic
