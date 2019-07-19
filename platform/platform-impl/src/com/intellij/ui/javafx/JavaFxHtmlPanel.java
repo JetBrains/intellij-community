@@ -8,6 +8,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.UIUtil;
@@ -25,11 +26,16 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class JavaFxHtmlPanel implements Disposable {
+  private static final Logger LOG = Logger.getInstance(JavaFxHtmlPanel.class);
   // flag is reset after check
   public static final String JAVAFX_INITIALIZATION_INCOMPLETE_PROPERTY = "js.debugger.javafx.inititalization";
   @NotNull
@@ -41,6 +47,8 @@ public class JavaFxHtmlPanel implements Disposable {
   protected JFXPanel myPanel;
   @Nullable protected WebView myWebView;
   private Color background;
+  @NotNull
+  private static final AtomicBoolean HAS_WAITED_FOR_JAVAFX_ONCE = new AtomicBoolean(false);
 
   public JavaFxHtmlPanel() {
     PropertiesComponent.getInstance().setValue(JAVAFX_INITIALIZATION_INCOMPLETE_PROPERTY, true, false);
@@ -49,40 +57,83 @@ public class JavaFxHtmlPanel implements Disposable {
     myPanelWrapper = new JPanel(new BorderLayout());
     myPanelWrapper.setBackground(background);
 
-    ApplicationManager.getApplication().invokeLater(() -> runFX(() -> PlatformImpl.startup(() -> {
-      PropertiesComponent.getInstance().setValue(JAVAFX_INITIALIZATION_INCOMPLETE_PROPERTY, false, false);
-      myWebView = new WebView();
-      myWebView.setContextMenuEnabled(false);
-      myWebView.setZoom(JBUIScale.scale(1.f));
+    ApplicationManager.getApplication().invokeLater(() -> runFX(() -> {
+      // before issuing PlatformImpl.startup(), check if the internal state of JavaFX initialization is stuck
+      // a stuck JavaFX will happen when there is an exception thrown during the first PlatformImpl.startup()
+      try {
+        Field startupLatchField = PlatformImpl.class.getDeclaredField("startupLatch");
+        startupLatchField.setAccessible(true);
+        CountDownLatch startupLatch = (CountDownLatch)startupLatchField.get(null);
 
-      final WebEngine engine = myWebView.getEngine();
-      registerListeners(engine);
-      engine.getLoadWorker().stateProperty().addListener((observable, oldValue, newValue) -> {
-        if (newValue == Worker.State.RUNNING) {
-            WebPage page = Accessor.getPageFor(engine);
-            page.setBackgroundColor(background.getRGB());
+        Field initializedField = PlatformImpl.class.getDeclaredField("initialized");
+        initializedField.setAccessible(true);
+        AtomicBoolean initialized = (AtomicBoolean)initializedField.get(null);
+
+        if (startupLatch.getCount() == 1 && initialized.get()) {
+          if (!HAS_WAITED_FOR_JAVAFX_ONCE.get()) {
+            // wait a bit to allow initialization to finish, but only once
+            try {
+              startupLatch.await(5, TimeUnit.SECONDS);
+            }
+            catch (InterruptedException ignored) {
+            }
+            HAS_WAITED_FOR_JAVAFX_ONCE.set(true);
+          }
+          if (startupLatch.getCount() == 1) {
+            LOG.warn("JavaFX is stuck");
+            // previous initialization failed, JavaFX not available
+            return;
           }
         }
-      );
+      }
+      catch (NoSuchFieldException | IllegalAccessException ex) {
+        LOG.error("can't read state of PlatformImpl", ex);
+      }
+      try {
+        PlatformImpl.startup(() -> {
+          PropertiesComponent.getInstance().setValue(JAVAFX_INITIALIZATION_INCOMPLETE_PROPERTY, false, false);
+          myWebView = new WebView();
+          myWebView.setContextMenuEnabled(false);
+          myWebView.setZoom(JBUIScale.scale(1.f));
 
-      javafx.scene.paint.Color fxColor = toFxColor(background);
-      final Scene scene = new Scene(myWebView, fxColor);
+          final WebEngine engine = myWebView.getEngine();
+          registerListeners(engine);
+          engine.getLoadWorker().stateProperty().addListener((observable, oldValue, newValue) -> {
+                                                               if (newValue == Worker.State.RUNNING) {
+                                                                 WebPage page = Accessor.getPageFor(engine);
+                                                                 page.setBackgroundColor(background.getRGB());
+                                                               }
+                                                             }
+          );
 
-      ApplicationManager.getApplication().invokeLater(() -> runFX(() -> {
-        myPanel = new JFXPanelWrapper();
+          javafx.scene.paint.Color fxColor = toFxColor(background);
+          final Scene scene = new Scene(myWebView, fxColor);
 
-        Platform.runLater(() -> myPanel.setScene(scene));
+          ApplicationManager.getApplication().invokeLater(() -> runFX(() -> {
+            try {
+              myPanel = new JFXPanelWrapper();
 
-        setHtml("");
-        for (Runnable action : myInitActions) {
-          Platform.runLater(action);
-        }
-        myInitActions.clear();
+              Platform.runLater(() -> myPanel.setScene(scene));
 
-        myPanelWrapper.add(myPanel, BorderLayout.CENTER);
-        myPanelWrapper.repaint();
-      }));
-    })));
+              setHtml("");
+              for (Runnable action : myInitActions) {
+                Platform.runLater(action);
+              }
+              myInitActions.clear();
+
+              myPanelWrapper.add(myPanel, BorderLayout.CENTER);
+              myPanelWrapper.repaint();
+            }
+            catch (Throwable e) {
+              LOG.warn("can't initialize JFXPanelWrapper", e);
+            }
+          }));
+        });
+      }
+      catch (Throwable e) {
+        LOG.warn("can't start javaFX", e);
+      }
+    }));
 
     myLafManagerListener = new JavaFXLafManagerListener();
     LafManager.getInstance().addLafManagerListener(myLafManagerListener);
