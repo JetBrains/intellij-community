@@ -6,11 +6,13 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle
 import org.jetbrains.plugins.groovy.intentions.base.Intention
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate
+import org.jetbrains.plugins.groovy.intentions.style.inference.recursiveSubstitute
 import org.jetbrains.plugins.groovy.intentions.style.inference.runInferenceProcess
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
@@ -19,6 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.putAll
 
 
 /**
@@ -47,17 +50,19 @@ internal class InferMethodParametersTypesIntention : Intention() {
     }
     val virtualMethod = runInferenceProcess(method)
     if (virtualMethod.hasTypeParameters()) {
-      if (method.hasTypeParameters()) {
-        method.typeParameterList!!.replace(virtualMethod.typeParameterList!!)
-      }
-      else {
-        method.addAfter(virtualMethod.typeParameterList!!, method.firstChild)
+      when {
+        method.hasTypeParameters() -> method.typeParameterList!!.replace(virtualMethod.typeParameterList!!)
+        method.isConstructor -> {
+          val parameterSubstitutor = collectParameterSubstitutor(virtualMethod)
+          virtualMethod.parameters.forEach { it.setType(parameterSubstitutor.recursiveSubstitute(it.type)) }
+        }
+        else -> method.addAfter(virtualMethod.typeParameterList!!, method.firstChild)
       }
     }
     method.parameters.zip(virtualMethod.parameters).forEach { (actual, inferred) ->
       actual.setType(inferred.type)
       actual.modifierList.setModifierProperty("def", false)
-      if (actual.isVarArgs) {
+      if (actual.isVarArgs && !inferred.isVarArgs) {
         actual.ellipsisDots!!.delete()
       }
       val currentAnnotations = actual.annotations.map { it.text }
@@ -73,6 +78,13 @@ internal class InferMethodParametersTypesIntention : Intention() {
     if ((method.isConstructor && !method.hasTypeParameters()) || method.hasModifier(JvmModifier.STATIC)) {
       method.modifierList.setModifierProperty("def", false)
     }
+  }
+
+  private fun collectParameterSubstitutor(virtualMethod: GrMethod): PsiSubstitutor {
+    val parameterTypes = virtualMethod.typeParameters.map {
+      it.extendsListTypes.firstOrNull() ?: PsiType.getJavaLangObject(virtualMethod.manager, virtualMethod.resolveScope)
+    }
+    return PsiSubstitutor.EMPTY.putAll(virtualMethod.typeParameters, parameterTypes.toTypedArray())
   }
 
   /**

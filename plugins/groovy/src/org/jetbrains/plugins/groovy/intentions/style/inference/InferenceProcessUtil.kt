@@ -80,13 +80,20 @@ fun PsiType?.isClosureType(): Boolean {
   return (this as? PsiClassType)?.rawType()?.equalsToText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE) ?: false
 }
 
-fun PsiSubstitutor.recursiveSubstitute(type: PsiType): PsiType {
+fun PsiSubstitutor.recursiveSubstitute(type: PsiType, recursionDepth: Int = 20): PsiType {
+  if (recursionDepth == 0) {
+    return type.accept(object : PsiTypeMapper() {
+      override fun visitClassType(classType: PsiClassType?): PsiType? {
+        return classType?.rawType()
+      }
+    })
+  }
   val substituted = substitute(type)
   return if (substituted == type) {
     type
   }
   else {
-    recursiveSubstitute(substituted)
+    recursiveSubstitute(substituted, recursionDepth - 1)
   }
 }
 

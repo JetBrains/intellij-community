@@ -28,9 +28,9 @@ fun runInferenceProcess(method: GrMethod): GrMethod {
   }
   val driver = InferenceDriver.createDriverFromMethod(method)
   val signatureSubstitutor = setUpParametersSignature(driver)
-    val parameterizedDriver = InferenceDriver.createParameterizedDriver(driver, signatureSubstitutor)
-    val graph = setUpGraph(parameterizedDriver)
-    return inferTypeParameters(parameterizedDriver, graph)
+  val parameterizedDriver = InferenceDriver.createParameterizedDriver(driver, signatureSubstitutor)
+  val graph = setUpGraph(parameterizedDriver)
+  return inferTypeParameters(parameterizedDriver, graph)
 }
 
 private fun setUpParametersSignature(driver: InferenceDriver): PsiSubstitutor {

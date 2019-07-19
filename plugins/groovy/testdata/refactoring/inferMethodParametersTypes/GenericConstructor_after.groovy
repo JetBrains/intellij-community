@@ -1,7 +1,15 @@
-class C {
-  C<caret>(List<?> t) {}
+class A {
+
+  A<caret>(Comparable a, Comparable b) {
+    a.compareTo(b)
+    b.compareTo(a)
+  }
 }
 
+class B{}
+class C{}
 
-def x = new C([2])
-def y = new C(['q'])
+def m(B b, C c) {
+  new A(1, 1)
+  new A('q', 'q')
+}
