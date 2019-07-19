@@ -29,16 +29,20 @@ import java.util.concurrent.atomic.AtomicReference
  * Otherwise, this is done only for service messages.
  * It is recommended not to enable [bufferTextUntilNewLine] because it gives user ability to see text as fast as possible.
  * In some cases like when there is a separate protocol exists on top of text message that does not support messages
- * flushed in random places, this option must be enabled
+ * flushed in random places, this option must be enabled.
+ *
+ * If [cutNewLineBeforeServiceMessage] is set, each service message must have "\n" prefix which is cut.
  *
  */
-abstract class OutputEventSplitter(private val bufferTextUntilNewLine: Boolean = false) {
+abstract class OutputEventSplitter(private val bufferTextUntilNewLine: Boolean = false,
+                                   private val cutNewLineBeforeServiceMessage: Boolean = false) {
 
   private val prevRefs: Map<ProcessOutputType, AtomicReference<Output>> =
     listOf(ProcessOutputType.STDOUT, ProcessOutputType.STDERR, ProcessOutputType.SYSTEM)
       .map { it to AtomicReference<Output>() }.toMap()
 
   private val ProcessOutputType.prevRef get() = prevRefs[baseOutputType.baseOutputType]
+  private var newLinePending = false
 
 
   /**
@@ -139,12 +143,28 @@ abstract class OutputEventSplitter(private val bufferTextUntilNewLine: Boolean =
   fun flush() {
     prevRefs.values.forEach { reference ->
       reference.getAndSet(null)?.let {
-        flushInternal(it.text, it.outputType)
+        flushInternal(it.text, it.outputType, lastFlush = true)
       }
     }
   }
 
-  private fun flushInternal(text: String, key: Key<*>) {
+
+  private fun flushInternal(text: String, key: Key<*>, lastFlush: Boolean = false) {
+
+    if (cutNewLineBeforeServiceMessage) {
+      if (newLinePending) { //Prev. flush was "\n".
+        if (!text.startsWith(SERVICE_MESSAGE_START) || (lastFlush)) {
+          onTextAvailable("\n", key)
+        }
+        newLinePending = false
+      }
+      if (text == "\n" && !lastFlush) {
+        newLinePending = true
+        return
+      }
+    }
+
+
     val textToAdd = if (USE_CYCLE_BUFFER) cutLineIfTooLong(text) else text
     onTextAvailable(textToAdd, key)
   }

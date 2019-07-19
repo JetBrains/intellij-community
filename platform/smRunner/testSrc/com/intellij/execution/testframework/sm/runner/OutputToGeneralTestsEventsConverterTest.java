@@ -24,7 +24,12 @@ public class OutputToGeneralTestsEventsConverterTest extends BaseSMTRunnerTestCa
     final String testFrameworkName = "SMRunnerTests";
     final SMTRunnerConsoleProperties properties = new SMTRunnerConsoleProperties(createRunConfiguration(),
                                                                                  testFrameworkName,
-                                                                                 DefaultRunExecutor.getRunExecutorInstance());
+                                                                                 DefaultRunExecutor.getRunExecutorInstance()) {
+      @Override
+      public boolean tcMessageHasNewLinePrefix() {
+        return true;
+      }
+    };
     myOutputConsumer = new OutputToGeneralTestEventsConverter(testFrameworkName, properties);
     myEnventsProcessor = new MockGeneralTestEventsProcessorAdapter(properties.getProject(), testFrameworkName);
     myOutputConsumer.setProcessor(myEnventsProcessor);
@@ -146,11 +151,8 @@ public class OutputToGeneralTestsEventsConverterTest extends BaseSMTRunnerTestCa
                    "[stdout]\n" +
                    "[stdout]/Users/user/.rvm/gems/ruby-2.5.3@everydayrails/gems/activesupport-5.1.1/lib/active_support/core_ext/hash/slice.rb:21: warning: method redefined; discarding old slice\n" +
                    "[stdout]/Users/user/.rvm/gems/ruby-2.5.3@everydayrails/gems/activesupport-5.1.1/lib/active_support/core_ext/class/attribute.rb:90: warning: previous definition of default_url_options was here\n" +
-                   "[stdout]\n" +
                    "[stdout]/Users/user/.rvm/gems/ruby-2.5.3@everydayrails/gems/concurrent-ruby-1.0.5/lib/concurrent/concern/logging.rb:20: warning: instance variable @logger not initialized\n" +
-                   "[stdout]\n" +
                    "[stdout]/Users/user/.rvm/gems/ruby-2.5.3@everydayrails/gems/concurrent-ruby-1.0.5/lib/concurrent/concern/logging.rb:20: warning: instance variable @logger not initialized\n" +
-                   "[stdout]\n" +
                    "[stdout]/Users/user/.rvm/gems/ruby-2.5.3@everydayrails/gems/concurrent-ruby-1.0.5/lib/concurrent/concern/logging.rb:20: warning: instance variable @logger not initialized\n" +
                    "[stdout][2019-07-18 11:15:02.615] ERROR -- #<Double (anonymous)> received unexpected message :deliver_now with (no args): nil\n" +
                    "[stdout]\n" +
