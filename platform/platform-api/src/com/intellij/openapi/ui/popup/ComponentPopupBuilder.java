@@ -39,7 +39,7 @@ public interface ComponentPopupBuilder {
   ComponentPopupBuilder setFocusable(boolean focusable);
 
   @NotNull
-  ComponentPopupBuilder setRequestFocusCondition(Project project, Condition<? super Project> condition);
+  ComponentPopupBuilder setRequestFocusCondition(@NotNull Project project, @NotNull Condition<? super Project> condition);
 
   /**
    * @see com.intellij.openapi.util.DimensionService
@@ -48,16 +48,16 @@ public interface ComponentPopupBuilder {
   ComponentPopupBuilder setDimensionServiceKey(@Nullable Project project, @NonNls String key, boolean useForXYLocation);
 
   @NotNull
-  ComponentPopupBuilder setCancelCallback(Computable<Boolean> shouldProceed);
+  ComponentPopupBuilder setCancelCallback(@NotNull Computable<Boolean> shouldProceed);
 
   @NotNull
   ComponentPopupBuilder setCancelOnClickOutside(boolean cancel);
 
   @NotNull
-  ComponentPopupBuilder addListener(JBPopupListener listener);
+  ComponentPopupBuilder addListener(@NotNull JBPopupListener listener);
 
   @NotNull
-  ComponentPopupBuilder setCancelOnMouseOutCallback(MouseChecker shouldCancel);
+  ComponentPopupBuilder setCancelOnMouseOutCallback(@NotNull MouseChecker shouldCancel);
 
   @NotNull
   JBPopup createPopup();

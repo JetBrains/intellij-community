@@ -28,16 +28,16 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
 
   private final JComponent myContent;
 
-  private Color   myBorder             = IdeTooltipManager.getInstance().getBorderColor(true);
-  @Nullable private Insets myBorderInsets = null;
-  private Color   myFill               = MessageType.INFO.getPopupBackground();
+  private Color myBorder = IdeTooltipManager.getInstance().getBorderColor(true);
+  @Nullable private Insets myBorderInsets;
+  private Color myFill = MessageType.INFO.getPopupBackground();
   private boolean myHideOnMouseOutside = true;
-  private boolean myHideOnKeyOutside   = true;
-  private long    myFadeoutTime        = -1;
-  private boolean myShowCallout        = true;
-  private boolean myCloseButtonEnabled = false;
-  private boolean myHideOnFrameResize  = true;
-  private boolean myHideOnLinkClick    = false;
+  private boolean myHideOnKeyOutside = true;
+  private long myFadeoutTime = -1;
+  private boolean myShowCallout = true;
+  private boolean myCloseButtonEnabled;
+  private boolean myHideOnFrameResize = true;
+  private boolean myHideOnLinkClick;
 
   private ActionListener myClickHandler;
   private boolean        myCloseOnClick;
@@ -52,11 +52,10 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   private String  myTitle;
   private Insets  myContentInsets = JBUI.insets(2);
   private boolean myShadow        = true;
-  private boolean mySmallVariant  = false;
-
+  private boolean mySmallVariant;
   private Balloon.Layer myLayer;
-  private boolean myBlockClicks = false;
-  private boolean myRequestFocus = false;
+  private boolean myBlockClicks;
+  private boolean myRequestFocus;
 
   private Dimension myPointerSize;
   private int       myCornerToPointerDistance = -1;
@@ -278,15 +277,12 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
       List<Balloon> balloons = myStorage.get(myAnchor);
       if (balloons == null) {
         myStorage.put(myAnchor, balloons = new ArrayList<>());
-        Disposer.register(myAnchor, new Disposable() {
-          @Override
-          public void dispose() {
-            List<Balloon> toDispose = myStorage.remove(myAnchor);
-            if (toDispose != null) {
-              for (Balloon balloon : toDispose) {
-                if (!balloon.isDisposed()) {
-                  Disposer.dispose(balloon);
-                }
+        Disposer.register(myAnchor, () -> {
+          List<Balloon> toDispose = myStorage.remove(myAnchor);
+          if (toDispose != null) {
+            for (Balloon balloon : toDispose) {
+              if (!balloon.isDisposed()) {
+                Disposer.dispose(balloon);
               }
             }
           }

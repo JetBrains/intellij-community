@@ -46,7 +46,7 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
   }
 
   @Override
-  protected void bindReference(PsiReference ref, PsiClass targetClass) {
+  protected void bindReference(@NotNull PsiReference ref, @NotNull PsiClass targetClass) {
     if (ref instanceof PsiImportStaticReferenceElement) {
       ((PsiImportStaticReferenceElement)ref).bindToTargetClass(targetClass);
     }
@@ -62,12 +62,12 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
   }
 
   @Override
-  protected String getQualifiedName(PsiJavaCodeReferenceElement reference) {
+  protected String getQualifiedName(@NotNull PsiJavaCodeReferenceElement reference) {
     return reference.getQualifiedName();
   }
 
   @Override
-  protected boolean isQualified(PsiJavaCodeReferenceElement reference) {
+  protected boolean isQualified(@NotNull PsiJavaCodeReferenceElement reference) {
     return reference.isQualified();
   }
 
@@ -96,7 +96,7 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
   }
 
   @Override
-  protected String getRequiredMemberName(PsiJavaCodeReferenceElement reference) {
+  protected String getRequiredMemberName(@NotNull PsiJavaCodeReferenceElement reference) {
     PsiElement parent = reference.getParent();
     if (parent instanceof PsiJavaCodeReferenceElement) {
       return ((PsiJavaCodeReferenceElement)parent).getReferenceName();
@@ -106,7 +106,7 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
   }
 
   @Override
-  protected boolean canReferenceClass(PsiJavaCodeReferenceElement ref) {
+  protected boolean canReferenceClass(@NotNull PsiJavaCodeReferenceElement ref) {
     if (PsiTreeUtil.getParentOfType(ref, PsiImportStatementBase.class) != null) return false;
     if (ref instanceof PsiReferenceExpression) {
       PsiElement parent = ref.getParent();
@@ -115,7 +115,7 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
     return !inReturnTypeOfIncompleteGenericMethod(ref);
   }
 
-  private static boolean inReturnTypeOfIncompleteGenericMethod(PsiJavaCodeReferenceElement element) {
+  private static boolean inReturnTypeOfIncompleteGenericMethod(@NotNull PsiJavaCodeReferenceElement element) {
     PsiTypeElement type = SyntaxTraverser.psiApi().parents(element).filter(PsiTypeElement.class).last();
     PsiElement prev = FilterPositionUtil.searchNonSpaceNonCommentBack(type);
     PsiTypeParameterList typeParameterList = PsiTreeUtil.getParentOfType(prev, PsiTypeParameterList.class);
@@ -138,7 +138,10 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
       if (var instanceof PsiVariable) {
         PsiExpression initializer = ((PsiVariable)var).getInitializer();
         if (initializer != null) {
-          return filterAssignableFrom(initializer.getType(), candidates);
+          PsiType type = initializer.getType();
+          if (type != null) {
+            return filterAssignableFrom(type, candidates);
+          }
         }
       }
       if (var instanceof PsiParameter) {
@@ -150,7 +153,7 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
   }
 
   @Override
-  protected boolean isAccessible(PsiMember member, PsiJavaCodeReferenceElement reference) {
+  protected boolean isAccessible(@NotNull PsiMember member, @NotNull PsiJavaCodeReferenceElement reference) {
     return PsiUtil.isAccessible(member, reference, null);
   }
 }

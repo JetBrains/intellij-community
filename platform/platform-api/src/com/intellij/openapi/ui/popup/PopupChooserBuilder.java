@@ -369,12 +369,12 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       builder.addListener(each);
     }
 
-    builder.setDimensionServiceKey(null, myDimensionServiceKey, myUseForXYLocation)
+    builder
+      .setDimensionServiceKey(null, myDimensionServiceKey, myUseForXYLocation)
       .setRequestFocus(myRequestFocus)
       .setResizable(myForceResizable)
       .setMovable(myForceMovable)
       .setTitle(myForceMovable ? myTitle : null)
-      .setCancelCallback(myCancelCallback)
       .setAlpha(myAlpha)
       .setFocusOwners(myFocusOwners)
       .setCancelKeyEnabled(myCancelKeyEnabled)
@@ -388,7 +388,9 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       .setCancelOnClickOutside(myCancelOnClickOutside)
       .setCouldPin(myCouldPin)
       .setOkHandler(myItemChosenRunnable);
-
+    if (myCancelCallback != null) {
+      builder.setCancelCallback(myCancelCallback);
+    }
     BooleanFunction<KeyEvent> keyEventHandler = myChooserComponent.getKeyEventHandler();
     if (keyEventHandler != null) {
       builder.setKeyEventHandler(keyEventHandler);

@@ -60,7 +60,11 @@ public class FramelessNotificationPopup {
     this(owner, content, backgroud, true, null);
   }
 
-  public FramelessNotificationPopup(final JComponent owner, final JComponent content, Color backgroud, boolean useDefaultPreferredSize, final ActionListener listener) {
+  FramelessNotificationPopup(final JComponent owner,
+                             final JComponent content,
+                             Color backgroud,
+                             boolean useDefaultPreferredSize,
+                             final ActionListener listener) {
     myBackgroud = backgroud;
     myUseDefaultPreferredSize = useDefaultPreferredSize;
     myContent = new ContentComponent(content);
@@ -73,16 +77,16 @@ public class FramelessNotificationPopup {
       .setResizable(false)
       .setMovable(true)
       .setLocateWithinScreenBounds(false)
-      .setAlpha(0.2f).addListener(new JBPopupAdapter() {
-      @Override
-      public void onClosed(@NotNull LightweightWindowEvent event) {
-        if (myFadeInTimer.isRunning()) {
-          myFadeInTimer.stop();
+      .setAlpha(0.2f)
+      .addListener(new JBPopupAdapter() {
+        @Override
+        public void onClosed(@NotNull LightweightWindowEvent event) {
+          if (myFadeInTimer.isRunning()) {
+            myFadeInTimer.stop();
+          }
+          myFadeInTimer.removeActionListener(myFadeTracker);
         }
-        myFadeInTimer.removeActionListener(myFadeTracker);
-      }
-    })
-      .createPopup();
+      }).createPopup();
     final Point p = RelativePoint.getSouthEastOf(owner).getScreenPoint();
     Rectangle screen = ScreenUtil.getScreenRectangle(p.x, p.y);
 
