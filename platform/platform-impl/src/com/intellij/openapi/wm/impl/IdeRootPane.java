@@ -310,8 +310,8 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
   private void updateMainMenuVisibility() {
     if (UISettings.getInstance().getPresentationMode()) return;
     if (IdeFrameDecorator.isCustomDecorationActive()) return;
-    final boolean gloablMenuVisible = SystemInfo.isMacSystemMenu || (SystemInfo.isLinux && GlobalMenuLinux.isPresented());
-    boolean visible = !gloablMenuVisible && UISettings.getInstance().getShowMainMenu(); // don't show swing-menu when gloabl (system) menu presented
+    final boolean globalMenuVisible = SystemInfo.isLinux && GlobalMenuLinux.isPresented();
+    final boolean visible = SystemInfo.isMacSystemMenu || !globalMenuVisible && UISettings.getInstance().getShowMainMenu(); // don't show swing-menu when global (system) menu presented
     if (visible != menuBar.isVisible()) {
       menuBar.setVisible(visible);
     }
