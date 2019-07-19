@@ -335,6 +335,7 @@ class CommunityLibraryLicenses {
                        license: "New BSD", licenseUrl: "http://opensource.org/licenses/BSD-3-Clause"),
     new LibraryLicense(name: "JNA", libraryName: "jna", version: "5.3.1", license: "LGPL 2.1",
                        url: "https://github.com/java-native-access/jna", licenseUrl: "http://www.opensource.org/licenses/lgpl-2.1.php"),
+    new LibraryLicense(name: "Joni", libraryName: "joni", license: "MIT", url: "https://github.com/jruby/joni"),  // github.com/JetBrains/intellij-community/pull/1176
     new LibraryLicense(name: "JSch", libraryName: "JSch", version: "0.1.53", license: "BSD", url: "http://www.jcraft.com/jsch/",
                        licenseUrl: "http://www.jcraft.com/jsch/LICENSE.txt"),
     new LibraryLicense(name: "jsch-agent-proxy", libraryName: "jsch-agent-proxy", version: "0.0.9", license: "BSD",
