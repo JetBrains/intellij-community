@@ -11,6 +11,7 @@ import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
 import org.jetbrains.plugins.groovy.intentions.style.inference.typeParameter
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
@@ -21,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpressionConstraint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.OperatorExpressionConstraint
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.TypeConstraint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 /**
@@ -90,6 +92,13 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
       val mapping = accessorResult?.candidate?.argumentMapping
       mapping?.expectedTypes?.forEach { (type, argument) ->
         addRequiredType(argument.type?.typeParameter() ?: return@forEach, type.resolve() ?: return@forEach)
+      }
+      val fieldResult = lValueReference?.resolve() as? GrField
+      if (fieldResult != null) {
+        val leftType = fieldResult.type
+        val rightType = expression.rValue?.type
+        addRequiredType(rightType?.typeParameter() ?: return@run, leftType.resolve() ?: return@run )
+        constraintsCollector.add(TypeConstraint(leftType, rightType, method))
       }
     }
     constraintsCollector.add(ExpressionConstraint(null, expression))
