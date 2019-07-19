@@ -14,11 +14,13 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColorChooser;
 import com.intellij.ui.ColorLineMarkerProvider;
+import com.intellij.ui.ColorPicker;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColorIcon;
@@ -127,11 +129,20 @@ public class ThemeColorAnnotator implements Annotator {
           if (currentColor == null) return;
 
           boolean withAlpha = isRgbaColorHex(myColorText);
-          Color newColor = ColorChooser.chooseColor(editor.getProject(),
-                                                    editor.getComponent(),
-                                                    DevKitBundle.message("theme.choose.color.dialog.title"),
-                                                    currentColor,
-                                                    withAlpha);
+          Color newColor = null;
+          if (Registry.is("ide.new.color.picker")) {
+            ColorPicker.showColorPickerPopup(currentColor, (c, l) -> applyColor(currentColor, withAlpha, c));
+          } else {
+            newColor = ColorChooser.chooseColor(editor.getProject(),
+                                                      editor.getComponent(),
+                                                      DevKitBundle.message("theme.choose.color.dialog.title"),
+                                                      currentColor,
+                                                      withAlpha);
+            applyColor(currentColor, withAlpha, newColor);
+          }
+        }
+
+        private void applyColor(Color currentColor, boolean withAlpha, Color newColor) {
           if (newColor == null || newColor.equals(currentColor)) return;
 
           String newColorHex = "#" + ColorUtil.toHex(newColor, withAlpha);
