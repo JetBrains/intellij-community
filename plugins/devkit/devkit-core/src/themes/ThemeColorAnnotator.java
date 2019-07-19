@@ -129,11 +129,11 @@ public class ThemeColorAnnotator implements Annotator {
           if (currentColor == null) return;
 
           boolean withAlpha = isRgbaColorHex(myColorText);
-          Color newColor = null;
+
           if (Registry.is("ide.new.color.picker")) {
             ColorPicker.showColorPickerPopup(currentColor, (c, l) -> applyColor(currentColor, withAlpha, c));
           } else {
-            newColor = ColorChooser.chooseColor(editor.getProject(),
+            Color newColor = ColorChooser.chooseColor(editor.getProject(),
                                                       editor.getComponent(),
                                                       DevKitBundle.message("theme.choose.color.dialog.title"),
                                                       currentColor,
