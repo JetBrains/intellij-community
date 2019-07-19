@@ -6,16 +6,31 @@ import java.io.*
 
 
 object JarFinder {
-    val pluginFiles: List<File> by lazy {
-        val plugins = PluginManager.getPlugins()
-        val pluginName = "$ProductName Integration"
-        val currentPlugin = plugins.firstOrNull { x -> x.name == pluginName } ?: error("Can't find `$pluginName` plugin")
-        currentPlugin.path.getFiles()
+    private val spacePluginFiles: List<File> by lazy {
+        getPluginFiles("$ProductName Integration")
+    }
+
+    private val kotlinPluginFiles: List<File> by lazy {
+        getPluginFiles("Kotlin")
     }
 
     fun find(name: String) : File {
-        val pluginFiles = pluginFiles
-        return pluginFiles.firstOrNull { x -> x.name.contains(name) } ?: error("Can't find jar $name")
+        return findFile(name, spacePluginFiles)
+    }
+
+    fun findInKotlinPlugin(name: String) : File {
+        return findFile(name, kotlinPluginFiles)
+    }
+
+    private fun findFile(name: String, files: List<File>) : File {
+        return files.firstOrNull { x -> x.name.contains(name) } ?: error("Can't find jar $name")
+
+    }
+
+    private fun getPluginFiles(pluginName: String) : List<File> {
+        val plugins = PluginManager.getPlugins()
+        val currentPlugin = plugins.firstOrNull { x -> x.name == pluginName } ?: error("Can't find `$pluginName` plugin")
+        return currentPlugin.path.getFiles()
     }
 
     private fun File.getFiles() : List<File> {

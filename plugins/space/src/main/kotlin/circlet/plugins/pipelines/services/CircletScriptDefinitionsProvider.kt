@@ -6,6 +6,8 @@ import java.io.*
 import kotlin.script.experimental.intellij.*
 
 class CircletScriptDefinitionsProvider : ScriptDefinitionsProvider {
+    private val mainKtsFile : File by lazy { JarFinder.findInKotlinPlugin("kotlin-main-kts") }
+
     override val id: String = "CircletScriptDefinitionsProvider"
 
     override fun getDefinitionClasses(): Iterable<String> {
@@ -17,7 +19,8 @@ class CircletScriptDefinitionsProvider : ScriptDefinitionsProvider {
         if (!file.exists()) {
             throw Exception("File with ProjectScriptDefinition doesn't exist")
         }
-        return listOf(file)
+
+        return listOf(file, mainKtsFile)
     }
 
     override fun useDiscovery(): Boolean {
