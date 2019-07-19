@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.BalloonImpl
 import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.JBUI
@@ -75,6 +76,13 @@ class LightCalloutPopup(val content: JComponent,
           }
         }
       })
+
+      if (this is BalloonImpl) {
+        setHideListener {
+          closedCallback?.invoke()
+          hide()
+        }
+      }
 
       val relativePoint = if (parentComponent != null) {
         RelativePoint(parentComponent, location)

@@ -43,8 +43,6 @@ class ColorPickerModel(originalColor: Color = DEFAULT_PICKER_COLOR) {
   }
 
   fun onCancel() {
-    //todo[kb] at the moment there is no any good way to close the color picker popup. Cancel outside triggers onCancel
-    onClose()
   }
 
   fun applyColorToSource(newColor: Color, source: Any? = null) {
