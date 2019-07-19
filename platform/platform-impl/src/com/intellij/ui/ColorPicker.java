@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
@@ -355,6 +356,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   }
 
   public static void showColorPickerPopup(@Nullable Color currentColor, @NotNull ColorListener listener) {
+    Ref<LightCalloutPopup> ref = Ref.create();
     LightCalloutPopup popup = new ColorPickerBuilder()
       .setOriginalColor(currentColor)
       .addSaturationBrightnessComponent()
@@ -365,9 +367,38 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       .addColorListener(listener, false)
       .focusWhenDisplay(true)
       .setFocusCycleRoot(true)
+      .addKeyAction(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), cancelPopup(ref))
+      .addKeyAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), applyColor(ref))
       .build();
+    ref.set(popup);
 
     popup.show(MouseInfo.getPointerInfo().getLocation());
+  }
+
+  @NotNull
+  private static AbstractAction cancelPopup(Ref<LightCalloutPopup> ref) {
+    return new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final LightCalloutPopup popup = ref.get();
+        if (popup != null) {
+          popup.cancel();
+        }
+      }
+    };
+  }
+
+  @NotNull
+  private static AbstractAction applyColor(Ref<LightCalloutPopup> ref) {
+    return new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final LightCalloutPopup popup = ref.get();
+        if (popup != null) {
+          popup.close();
+        }
+      }
+    };
   }
 
   private JComponent buildTopPanel(boolean enablePipette) throws ParseException {

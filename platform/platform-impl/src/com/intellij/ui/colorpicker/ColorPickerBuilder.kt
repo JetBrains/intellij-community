@@ -15,6 +15,9 @@
  */
 package com.intellij.ui.colorpicker
 
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CustomShortcutSet
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.JBColor
 import com.intellij.ui.picker.ColorListener
 import com.intellij.util.ui.JBUI
@@ -156,10 +159,10 @@ class ColorPickerBuilder {
     panel.isFocusTraversalPolicyProvider = true
     panel.focusTraversalPolicy = MyFocusTraversalPolicy(defaultFocusComponent)
 
-    actionMap.forEach { keyStroke, action ->
-      val key = keyStroke.toString()
-      panel.actionMap.put(key, action)
-      panel.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(keyStroke, key)
+    actionMap.forEach { (keyStroke, action) ->
+      DumbAwareAction.create {
+        e: AnActionEvent? -> action.actionPerformed(ActionEvent(e?.inputEvent, 0, ""))
+      }.registerCustomShortcutSet(CustomShortcutSet(keyStroke), panel)
     }
 
     colorListeners.forEach { model.addListener(it.colorListener, it.invokeOnEveryColorChange) }
