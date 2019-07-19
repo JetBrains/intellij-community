@@ -12,6 +12,7 @@ import org.jetbrains.plugins.groovy.intentions.style.inference.typeParameter
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression
@@ -56,6 +57,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
   private val requiredTypesCollector = mutableMapOf<PsiTypeParameter, MutableList<PsiClass>>()
   private val contravariantTypesCollector = mutableSetOf<PsiType>()
   private val constraintsCollector = mutableListOf<ConstraintFormula>()
+  private val typeParameters = method.typeParameters.map { it.type() }
 
   private fun addRequiredType(typeParameter: PsiTypeParameter, clazz: PsiClass) =
     requiredTypesCollector.computeIfAbsent(typeParameter) { mutableListOf() }.add(clazz)
@@ -65,7 +67,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
     val candidate = resolveResult?.candidate
     val receiver = candidate?.receiver as? PsiClassType
     receiver?.run {
-      val endpointClassType = extractEndpointType(receiver, method.typeParameters.map { it.type() })
+      val endpointClassType = extractEndpointType(receiver, typeParameters)
       if (endpointClassType.isTypeParameter()) {
         addRequiredType(endpointClassType.typeParameter()!!, candidate.method.containingClass ?: return@run)
       }
@@ -92,6 +94,13 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
     }
     constraintsCollector.add(ExpressionConstraint(null, expression))
     super.visitAssignmentExpression(expression)
+  }
+
+  override fun visitVariableDeclaration(variableDeclaration: GrVariableDeclaration) {
+    variableDeclaration.variables.forEach {
+      addRequiredType(it.initializerGroovy?.type?.typeParameter() ?: return@forEach, it.type.resolve() ?: return@forEach)
+    }
+    super.visitVariableDeclaration(variableDeclaration)
   }
 
   override fun visitVariable(variable: GrVariable) {
