@@ -173,7 +173,18 @@ private fun methodsAgree(pattern: PsiMethod,
   }
   val parameterList = pattern.parameters.zip(tested.parameters)
   return parameterList.all { (patternParameter, testedParameter) ->
-    testedParameter.typeElement == null || testedParameter.type == patternParameter.type
+    testedParameter.typeElement == null || (testedParameter.type as PsiClassType).erasure() == (patternParameter.type as PsiClassType).erasure()
+  }
+}
+
+fun PsiClassType.erasure(): PsiClassType {
+  val raw = rawType()
+  val typeParameter = raw.typeParameter()
+  return if (typeParameter != null) {
+    typeParameter.extendsListTypes.firstOrNull()?.erasure() ?: PsiType.getJavaLangObject(typeParameter.manager, typeParameter.resolveScope)
+  }
+  else {
+    raw
   }
 }
 
