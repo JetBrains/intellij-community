@@ -48,6 +48,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.Pair.pair;
+import static java.util.Comparator.comparingInt;
 import static org.junit.Assert.*;
 
 /**
@@ -435,18 +436,16 @@ public class ExpectedHighlightingData {
   private String getActualLineMarkerFileText(@NotNull Collection<? extends LineMarkerInfo> markerInfos) {
     StringBuilder result = new StringBuilder();
     int index = 0;
-    List<LineMarkerInfo> lineMarkerInfos = markerInfos
-      .stream()
-      .sorted(Comparator.comparingInt(o -> o.startOffset))
-      .collect(Collectors.toList());
+    ArrayList<LineMarkerInfo> lineMarkerInfos = new ArrayList<>(markerInfos);
+    Collections.sort(lineMarkerInfos, comparingInt(o -> o.startOffset));
     String documentText = myDocument.getText();
     for (LineMarkerInfo expectedLineMarker : lineMarkerInfos) {
-      result.append(documentText, index, expectedLineMarker.startOffset);
-      result.append("<lineMarker descr=\"");
-      result.append(expectedLineMarker.getLineMarkerTooltip());
-      result.append("\">");
-      result.append(documentText, expectedLineMarker.startOffset, expectedLineMarker.endOffset);
-      result.append("</lineMarker>");
+      result.append(documentText, index, expectedLineMarker.startOffset)
+        .append("<lineMarker descr=\"")
+        .append(expectedLineMarker.getLineMarkerTooltip())
+        .append("\">")
+        .append(documentText, expectedLineMarker.startOffset, expectedLineMarker.endOffset)
+        .append("</lineMarker>");
       index = expectedLineMarker.endOffset;
     }
     result.append(documentText, index, myDocument.getTextLength());
