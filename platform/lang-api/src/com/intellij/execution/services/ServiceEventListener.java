@@ -18,36 +18,42 @@ public interface ServiceEventListener {
     public final Object target;
     public final Class<?> contributorClass;
 
-    public final ServiceViewContributor parent;
+    public final Object parent;
     public final int index;
 
-    public ServiceEvent(@NotNull Class<?> rootContributorClass) {
-      this(EventType.RESET, rootContributorClass, rootContributorClass);
-    }
-
-    public ServiceEvent(@NotNull EventType type,
-                        @NotNull Object target,
-                        @NotNull Class<?> contributorClass) {
+    private ServiceEvent(@NotNull EventType type,
+                         @NotNull Object target,
+                         @NotNull Class<?> contributorClass) {
       this(type, target, contributorClass, null, -1);
-    }
-
-    public ServiceEvent(@NotNull Object target,
-                        @NotNull Class<?> contributorClass,
-                        @Nullable ServiceViewContributor parent,
-                        int index) {
-      this(EventType.SERVICE_ADDED, target, contributorClass, parent, index);
     }
 
     private ServiceEvent(@NotNull EventType type,
                          @NotNull Object target,
                          @NotNull Class<?> contributorClass,
-                         @Nullable ServiceViewContributor parent,
+                         @Nullable Object parent,
                          int index) {
       this.type = type;
       this.target = target;
       this.contributorClass = contributorClass;
       this.parent = parent;
       this.index = index;
+    }
+
+    public static ServiceEvent createEvent(@NotNull EventType type,
+                                           @NotNull Object target,
+                                           @NotNull Class<?> rootContributorClass) {
+      return new ServiceEvent(type, target, rootContributorClass);
+    }
+
+    public static ServiceEvent createResetEvent(@NotNull Class<?> rootContributorClass) {
+      return new ServiceEvent(EventType.RESET, rootContributorClass, rootContributorClass);
+    }
+
+    public static ServiceEvent createServiceAddedEvent(@NotNull Object target,
+                                                       @NotNull Class<?> contributorClass,
+                                                       @Nullable Object parent,
+                                                       int index) {
+      return new ServiceEvent(EventType.SERVICE_ADDED, target, contributorClass, parent, index);
     }
   }
 

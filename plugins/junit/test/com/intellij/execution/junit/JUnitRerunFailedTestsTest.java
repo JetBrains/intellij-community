@@ -32,12 +32,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.TestDataProvider;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings({"JUnitTestClassNamingConvention"})
-public class JUnitRerunFailedTestsTest extends LightCodeInsightFixtureTestCase  {
+public class JUnitRerunFailedTestsTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   protected void setUp() throws Exception {

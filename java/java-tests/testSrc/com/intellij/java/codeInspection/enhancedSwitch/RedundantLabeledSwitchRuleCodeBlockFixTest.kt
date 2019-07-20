@@ -5,7 +5,7 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.enhancedSwitch.RedundantLabeledSwitchRuleCodeBlockInspection
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
  * @author Pavel.Dolgov
@@ -14,7 +14,7 @@ class RedundantLabeledSwitchRuleCodeBlockFixTest  : LightQuickFixParameterizedTe
 
   override fun configureLocalInspectionTools(): Array<LocalInspectionTool> = arrayOf(RedundantLabeledSwitchRuleCodeBlockInspection())
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = LightCodeInsightFixtureTestCase.JAVA_12
+  override fun getProjectDescriptor(): LightProjectDescriptor = LightJavaCodeInsightFixtureTestCase.JAVA_12
 
   override fun getBasePath() = "/inspection/redundantLabeledSwitchRuleCodeBlockFix"
 }

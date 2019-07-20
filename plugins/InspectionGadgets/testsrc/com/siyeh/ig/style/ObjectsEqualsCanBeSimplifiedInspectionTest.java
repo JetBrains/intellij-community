@@ -3,10 +3,10 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class ObjectsEqualsCanBeSimplifiedInspectionTest extends LightInspectionTestCase {
+public class ObjectsEqualsCanBeSimplifiedInspectionTest extends LightJavaInspectionTestCase {
 
   public void testObjectsEqualsCanBeSimplified() {
     doTest();

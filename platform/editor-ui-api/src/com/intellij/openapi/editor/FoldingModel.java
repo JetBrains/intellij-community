@@ -40,7 +40,7 @@ public interface FoldingModel {
   FoldRegion addFoldRegion(int startOffset, int endOffset, @NotNull String placeholderText);
 
   /**
-   * Do nothing
+   * @deprecated Does nothing
    * TODO to remove in IDEA 2018
    */
   @Deprecated

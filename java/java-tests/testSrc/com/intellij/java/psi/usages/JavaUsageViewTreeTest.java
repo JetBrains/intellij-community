@@ -7,14 +7,14 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageViewSettings;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 
 import java.util.Collections;
 
-public class JavaUsageViewTreeTest extends LightCodeInsightFixtureTestCase {
+public class JavaUsageViewTreeTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   public void setUp() throws Exception {

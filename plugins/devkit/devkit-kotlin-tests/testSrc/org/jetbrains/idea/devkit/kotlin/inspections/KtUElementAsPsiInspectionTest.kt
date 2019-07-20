@@ -3,10 +3,10 @@
  */
 package org.jetbrains.idea.devkit.kotlin.inspections
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.idea.devkit.inspections.UElementAsPsiInspection
 
-class KtUElementAsPsiInspectionTest : LightCodeInsightFixtureTestCase() {
+class KtUElementAsPsiInspectionTest : LightJavaCodeInsightFixtureTestCase() {
 
   override fun setUp() {
     super.setUp()

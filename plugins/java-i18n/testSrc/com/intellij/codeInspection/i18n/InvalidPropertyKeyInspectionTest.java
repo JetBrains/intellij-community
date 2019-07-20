@@ -17,9 +17,9 @@ package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.JavaInspectionTestCase;
 
-public class InvalidPropertyKeyInspectionTest extends InspectionTestCase {
+public class InvalidPropertyKeyInspectionTest extends JavaInspectionTestCase {
   private void doTest() {
     LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(new InvalidPropertyKeyInspection());
     doTest("invalidPropertyKey/" + getTestName(true), tool);

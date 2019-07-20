@@ -296,4 +296,15 @@ class FooFoo {
     myFixture.assertPreferredCompletionItems 0, 'materialQualities', 'materialQualities1', 'qualities', 'materialQualityIterable', 'qualityIterable', 'iterable'
   }
 
+  void "test no name suggestions when the type is unresolved because it is actually a mistyped keyword"() {
+    myFixture.configureByText 'a.java', '''
+class C {
+    { 
+      retur Fi<caret>x
+    }
+    }
+'''
+    assert myFixture.completeBasic()?.size() == 0
+  }
+
 }

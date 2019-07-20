@@ -21,7 +21,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.util.TestUtils;
@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyGotoTest extends LightCodeInsightFixtureTestCase {
+public class GroovyGotoTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return TestUtils.getTestDataPath() + "goto/";

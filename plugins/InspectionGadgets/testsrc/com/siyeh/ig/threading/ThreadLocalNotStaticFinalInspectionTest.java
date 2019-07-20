@@ -16,14 +16,14 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
 @SuppressWarnings("AnonymousHasLambdaAlternative")
-public class ThreadLocalNotStaticFinalInspectionTest extends LightInspectionTestCase {
+public class ThreadLocalNotStaticFinalInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
     doTest("class A {" +

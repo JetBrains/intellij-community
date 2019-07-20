@@ -21,7 +21,7 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 import org.intellij.lang.annotations.MagicConstant
 
@@ -29,7 +29,7 @@ import org.intellij.lang.annotations.MagicConstant
  * @author peter
  */
 @CompileStatic
-class MagicConstantCompletion4Test extends LightCodeInsightFixtureTestCase {
+class MagicConstantCompletion4Test extends LightJavaCodeInsightFixtureTestCase {
   LightProjectDescriptor projectDescriptor = new DefaultLightProjectDescriptor() {
     @Override
     Sdk getSdk() {

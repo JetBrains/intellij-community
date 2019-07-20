@@ -42,7 +42,7 @@ def read_sequence_from_sock(sock):
             result.append(str)
 
         except (socket.error, IOError) as e:
-            print "I/O error({0}): {1} ({2})".format(e.errno, e.strerror, e)
+            print("I/O error({0}): {1} ({2})".format(e.errno, e.strerror, e))
             traceback.print_exception(*sys.exc_info())
             return result
     return result
@@ -124,10 +124,10 @@ def start_new_instance(args):
     if sys.platform == 'darwin':
         if len(args) > 0:
             args.insert(0, '--args')
-        os.execvp(os.P_NOWAIT, '/usr/bin/open', ['-a', RUN_PATH] + args)
+        os.execvp('/usr/bin/open', ['-a', RUN_PATH] + args)
     else:
         bin_file = os.path.split(RUN_PATH)[1]
-        os.execv(os.P_NOWAIT, RUN_PATH, [bin_file] + args)
+        os.execv(RUN_PATH, [bin_file] + args)
 
 
 ide_args = process_args(sys.argv)

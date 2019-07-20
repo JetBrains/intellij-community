@@ -1,10 +1,10 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class IfMayBeConditionalInspectionTest extends LightInspectionTestCase {
+public class IfMayBeConditionalInspectionTest extends LightJavaInspectionTestCase {
 
   public void testIfMayBeConditional() {
     doTest();

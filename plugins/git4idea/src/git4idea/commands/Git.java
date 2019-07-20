@@ -48,7 +48,7 @@ public interface Git {
    *                           make sure to supply a stateless constructor.
    */
   @NotNull
-  GitCommandResult runCommand(@NotNull Computable<GitLineHandler> handlerConstructor);
+  GitCommandResult runCommand(@NotNull Computable<? extends GitLineHandler> handlerConstructor);
 
   /**
    * A generic method to run a Git command, when existing methods are not sufficient. <br/>
@@ -72,14 +72,14 @@ public interface Git {
   GitCommandResult init(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitLineHandlerListener... listeners);
 
   @NotNull
-  Set<VirtualFile> ignoredFiles(@NotNull Project project, @NotNull VirtualFile root, @Nullable Collection<FilePath> paths) throws VcsException;
+  Set<VirtualFile> ignoredFiles(@NotNull Project project, @NotNull VirtualFile root, @Nullable Collection<? extends FilePath> paths) throws VcsException;
 
   @NotNull
   Set<VirtualFile> ignoredFilesNoChunk(@NotNull Project project, @NotNull VirtualFile root, @Nullable List<String> paths) throws VcsException;
 
   @NotNull
   Set<VirtualFile> untrackedFiles(@NotNull Project project, @NotNull VirtualFile root,
-                                  @Nullable Collection<VirtualFile> files) throws VcsException;
+                                  @Nullable Collection<? extends VirtualFile> files) throws VcsException;
 
   // relativePaths are guaranteed to fit into command line length limitations.
   @NotNull
@@ -182,7 +182,7 @@ public interface Git {
 
   @NotNull
   GitCommandResult checkAttr(@NotNull GitRepository repository, @NotNull Collection<String> attributes,
-                             @NotNull Collection<VirtualFile> files);
+                             @NotNull Collection<? extends VirtualFile> files);
 
   @NotNull
   GitCommandResult stashSave(@NotNull GitRepository repository, @NotNull String message);
@@ -193,7 +193,7 @@ public interface Git {
   @NotNull
   GitCommandResult fetch(@NotNull GitRepository repository,
                          @NotNull GitRemote remote,
-                         @NotNull List<GitLineHandlerListener> listeners,
+                         @NotNull List<? extends GitLineHandlerListener> listeners,
                          String... params);
 
   @NotNull

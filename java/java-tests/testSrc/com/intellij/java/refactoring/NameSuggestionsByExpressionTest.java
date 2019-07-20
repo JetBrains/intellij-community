@@ -21,12 +21,12 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.junit.Assert;
 
 import java.util.Arrays;
 
-public class NameSuggestionsByExpressionTest extends LightCodeInsightFixtureTestCase {
+public class NameSuggestionsByExpressionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testNameSuggestionFromLiteralArgument() {
     PsiFile file = myFixture.configureByText("A.java", "class A {{new Str<caret>ing(\"string with spaces\")}}");
     PsiExpression expression = PsiTreeUtil.getParentOfType(file.findElementAt(getEditor().getCaretModel().getOffset()), PsiExpression.class);

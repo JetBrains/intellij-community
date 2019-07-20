@@ -18,10 +18,10 @@ package com.intellij.codeInsight.actions;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.junit.Assert;
 
-public class ChangedLinesCounterTest extends LightPlatformCodeInsightFixtureTestCase {
+public class ChangedLinesCounterTest extends BasePlatformTestCase {
 
   @Override
   protected String getTestDataPath() {

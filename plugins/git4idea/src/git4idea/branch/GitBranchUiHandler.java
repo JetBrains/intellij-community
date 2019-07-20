@@ -45,7 +45,7 @@ public interface GitBranchUiHandler {
    * @param operationName
    * @param repositories
    */
-  void showUnmergedFilesNotification(@NotNull String operationName, @NotNull Collection<GitRepository> repositories);
+  void showUnmergedFilesNotification(@NotNull String operationName, @NotNull Collection<? extends GitRepository> repositories);
 
   /**
    * Shows a modal notification about unmerged files preventing an operation, with "Rollback" button.
@@ -78,7 +78,7 @@ public interface GitBranchUiHandler {
    */
   @NotNull
   GitSmartOperationDialog.Choice showSmartOperationDialog(@NotNull Project project,
-                                                          @NotNull List<Change> changes,
+                                                          @NotNull List<? extends Change> changes,
                                                           @NotNull Collection<String> paths,
                                                           @NotNull String operation,
                                                           @Nullable String forceButtonTitle);

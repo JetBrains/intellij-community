@@ -2,9 +2,9 @@
 package org.editorconfig.language.codeinsight.actions
 
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
-class EnterInEditorConfigFileHandlerTest : LightPlatformCodeInsightFixtureTestCase() {
+class EnterInEditorConfigFileHandlerTest : BasePlatformTestCase() {
   override fun getTestDataPath() =
     "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testData/org/editorconfig/language/codeinsight/actions/enter/"
 

@@ -5,9 +5,9 @@ import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJavaFile
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-class LightJavadocGeneratorTest : LightCodeInsightFixtureTestCase() {
+class LightJavadocGeneratorTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor() = JAVA_9
 
   fun testPlainModule() = doTestModule(

@@ -30,17 +30,17 @@ public class CompositeChangeListFilteringStrategy implements ChangeListFiltering
   }
 
   @Override
-  public void setFilterBase(final List<CommittedChangeList> changeLists) {
+  public void setFilterBase(final List<? extends CommittedChangeList> changeLists) {
     setFilterBaseImpl(changeLists, true);
   }
 
-  private List<CommittedChangeList> setFilterBaseImpl(final List<CommittedChangeList> changeLists, final boolean setFirst) {
+  private List<CommittedChangeList> setFilterBaseImpl(final List<? extends CommittedChangeList> changeLists, final boolean setFirst) {
+    List<CommittedChangeList> list = new ArrayList<>(changeLists);
     if (myInSetBase) {
-      return changeLists;
+      return list;
     }
     myInSetBase = true;
 
-    List<CommittedChangeList> list = new ArrayList<>(changeLists);
     boolean callSetFilterBase = setFirst;
     for (final ChangeListFilteringStrategy delegate : myDelegates.values()) {
       if (callSetFilterBase) {
@@ -77,7 +77,7 @@ public class CompositeChangeListFilteringStrategy implements ChangeListFiltering
   }
 
   @Override
-  public void appendFilterBase(final List<CommittedChangeList> changeLists) {
+  public void appendFilterBase(final List<? extends CommittedChangeList> changeLists) {
     List<CommittedChangeList> list = new ArrayList<>(changeLists);
     for (final ChangeListFilteringStrategy delegate : myDelegates.values()) {
       delegate.appendFilterBase(list);
@@ -87,7 +87,7 @@ public class CompositeChangeListFilteringStrategy implements ChangeListFiltering
 
   @Override
   @NotNull
-  public List<CommittedChangeList> filterChangeLists(final List<CommittedChangeList> changeLists) {
+  public List<CommittedChangeList> filterChangeLists(final List<? extends CommittedChangeList> changeLists) {
     return setFilterBaseImpl(changeLists, false);
   }
 

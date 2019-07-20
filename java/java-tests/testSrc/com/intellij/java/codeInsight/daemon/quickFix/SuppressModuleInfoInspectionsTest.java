@@ -21,11 +21,11 @@ import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 
-public class SuppressModuleInfoInspectionsTest extends LightCodeInsightFixtureTestCase {
+public class SuppressModuleInfoInspectionsTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testModuleInfo() {
     // need to set jdk version here because it is not set correctly in the mock jdk which causes problems in

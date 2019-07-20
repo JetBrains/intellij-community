@@ -15,7 +15,7 @@ public class CommittedListsSequencesZipper {
 
   @NotNull private final VcsCommittedListsZipper myVcsPartner;
   @NotNull private final List<RepositoryLocation> myInLocations;
-  @NotNull private final Map<String, List<CommittedChangeList>> myInLists;
+  @NotNull private final Map<String, List<? extends CommittedChangeList>> myInLists;
   @NotNull private final Comparator<CommittedChangeList> myComparator;
 
   public CommittedListsSequencesZipper(@NotNull VcsCommittedListsZipper vcsPartner) {
@@ -25,7 +25,7 @@ public class CommittedListsSequencesZipper {
     myComparator = (o1, o2) -> Comparing.compare(myVcsPartner.getNumber(o1), myVcsPartner.getNumber(o2));
   }
 
-  public void add(@NotNull RepositoryLocation location, @NotNull List<CommittedChangeList> lists) {
+  public void add(@NotNull RepositoryLocation location, @NotNull List<? extends CommittedChangeList> lists) {
     myInLocations.add(location);
     Collections.sort(lists, myComparator);
     myInLists.put(location.toPresentableString(), lists);
@@ -45,8 +45,8 @@ public class CommittedListsSequencesZipper {
   }
 
   @NotNull
-  private List<List<CommittedChangeList>> collectChangeLists(@NotNull List<RepositoryLocation> locations) {
-    List<List<CommittedChangeList>> result = new ArrayList<>(locations.size());
+  private List<List<? extends CommittedChangeList>> collectChangeLists(@NotNull List<? extends RepositoryLocation> locations) {
+    List<List<? extends CommittedChangeList>> result = new ArrayList<>(locations.size());
 
     for (RepositoryLocation location : locations) {
       result.add(myInLists.get(location.toPresentableString()));
@@ -77,7 +77,7 @@ public class CommittedListsSequencesZipper {
   }
 
   @NotNull
-  private CommittedChangeList zip(@NotNull RepositoryLocationGroup group, @NotNull List<CommittedChangeList> equalLists) {
+  private CommittedChangeList zip(@NotNull RepositoryLocationGroup group, @NotNull List<? extends CommittedChangeList> equalLists) {
     if (equalLists.isEmpty()) {
       throw new IllegalArgumentException("equalLists can not be empty");
     }

@@ -2,9 +2,9 @@
 package com.intellij.sh.formatter;
 
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
-public class ShLineIndentProviderTest extends LightPlatformCodeInsightFixtureTestCase {
+public class ShLineIndentProviderTest extends BasePlatformTestCase {
   private static final String FILE_EXTENSION = ".sh";
   private static final String AFTER_FILE_EXTENSION = ".after.sh";
   private static final char KEY_ENTER = '\n';

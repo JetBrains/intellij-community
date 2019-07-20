@@ -32,7 +32,7 @@ public class FlatSpeedSearchPopup extends PopupFactoryImpl.ActionGroupPopup {
   public FlatSpeedSearchPopup(String title,
                               @NotNull ActionGroup actionGroup,
                               @NotNull DataContext dataContext,
-                              @Nullable Condition<AnAction> preselectActionCondition, boolean showDisableActions) {
+                              @Nullable Condition<? super AnAction> preselectActionCondition, boolean showDisableActions) {
     super(title, actionGroup, dataContext, false, false, showDisableActions, false,
           null, -1, preselectActionCondition, null);
   }

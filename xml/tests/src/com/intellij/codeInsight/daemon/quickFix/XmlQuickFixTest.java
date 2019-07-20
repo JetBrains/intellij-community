@@ -9,11 +9,11 @@ import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.TemporaryPlacesRegistry;
 
-public class XmlQuickFixTest extends LightPlatformCodeInsightFixtureTestCase {
+public class XmlQuickFixTest extends BasePlatformTestCase {
 
   public void testEscapeAmpersandInInjected() {
     XmlFile file = (XmlFile)myFixture.configureByText(XmlFileType.INSTANCE, "<a b=\" &<caret>\"/>");

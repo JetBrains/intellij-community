@@ -17,7 +17,7 @@ package org.jetbrains.plugins.groovy
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
@@ -34,7 +34,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @auther ven
  */
-class ReachingDefsTest extends LightCodeInsightFixtureTestCase {
+class ReachingDefsTest extends LightJavaCodeInsightFixtureTestCase {
 
   String basePath = TestUtils.testDataPath + 'groovy/reachingDefs/'
 

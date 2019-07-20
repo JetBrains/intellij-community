@@ -78,7 +78,7 @@ public class GitAdd extends ScheduleForAdditionAction {
                    !toAdd.isEmpty() ? (indicator, exceptions) -> addPathsToVcs(project, toAdd, exceptions) : null);
   }
 
-  private static void addPathsToVcs(@NotNull Project project, @NotNull Collection<FilePath> toAdd, @NotNull List<VcsException> exceptions) {
+  private static void addPathsToVcs(@NotNull Project project, @NotNull Collection<? extends FilePath> toAdd, @NotNull List<? super VcsException> exceptions) {
     VcsUtil.groupByRoots(project, toAdd, identity()).forEach((vcsRoot, paths) -> {
       try {
         if (!(vcsRoot.getVcs() instanceof GitVcs)) return;
@@ -96,7 +96,7 @@ public class GitAdd extends ScheduleForAdditionAction {
   }
 
   @NotNull
-  private static Stream<FilePath> collectPathsFromChanges(@NotNull Project project, @NotNull Stream<Change> allChanges) {
+  private static Stream<FilePath> collectPathsFromChanges(@NotNull Project project, @NotNull Stream<? extends Change> allChanges) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
 
     return allChanges
@@ -109,7 +109,7 @@ public class GitAdd extends ScheduleForAdditionAction {
   }
 
   @NotNull
-  private static Stream<FilePath> collectPathsFromFiles(@NotNull Project project, @NotNull Stream<VirtualFile> allFiles) {
+  private static Stream<FilePath> collectPathsFromFiles(@NotNull Project project, @NotNull Stream<? extends VirtualFile> allFiles) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
 

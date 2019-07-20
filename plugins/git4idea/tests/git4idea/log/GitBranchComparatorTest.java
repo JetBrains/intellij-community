@@ -70,13 +70,13 @@ public class GitBranchComparatorTest extends GitRefManagerTest {
     check("refs/tags/v1", given("refs/tags/v1", "HEAD"));
   }
 
-  private void check(@NotNull String expectedBest, @NotNull Collection<VcsRef> givenBranches) {
+  private void check(@NotNull String expectedBest, @NotNull Collection<? extends VcsRef> givenBranches) {
     VcsRef actualBest = getTheMostPowerfulRef(givenBranches);
     assertEquals(expect(expectedBest).get(0), actualBest);
   }
 
   @NotNull
-  private VcsRef getTheMostPowerfulRef(@NotNull Collection<VcsRef> givenBranches) {
+  private VcsRef getTheMostPowerfulRef(@NotNull Collection<? extends VcsRef> givenBranches) {
     Comparator<VcsRef> comparator = new GitRefManager(myProject, repositoryManager).getBranchLayoutComparator();
     return ContainerUtil.sorted(givenBranches, comparator).get(0);
   }

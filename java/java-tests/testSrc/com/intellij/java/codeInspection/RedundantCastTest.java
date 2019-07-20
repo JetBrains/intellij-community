@@ -5,9 +5,9 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-public class RedundantCastTest extends LightCodeInsightFixtureTestCase {
+public class RedundantCastTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/redundantCast";

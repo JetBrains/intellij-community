@@ -13,14 +13,14 @@ import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 
 import java.util.List;
 
 /**
  * @author Vitaliy.Bibaev
  */
-public class LambdaToAnonymousTransformTest extends LightCodeInsightTestCase {
+public class LambdaToAnonymousTransformTest extends LightJavaCodeInsightTestCase {
   public void testPsiFileException() {
     ApplicationManager.getApplication().runWriteAction(() -> {
       configureFromFileText("Main.java", "import java.util.stream.Stream;\n" +

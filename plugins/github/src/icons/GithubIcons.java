@@ -5,6 +5,8 @@ import com.intellij.ui.IconManager;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
+
 /**
  * NOTE THIS FILE IS AUTO-GENERATED
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
@@ -27,5 +29,6 @@ public final class GithubIcons {
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.Vcs.Vendors.Github */
   @SuppressWarnings("unused")
   @Deprecated
+  @ScheduledForRemoval(inVersion = "2020.1")
   public static final Icon Github_icon = load("/vcs/vendors/github.svg", com.intellij.icons.AllIcons.class);
 }

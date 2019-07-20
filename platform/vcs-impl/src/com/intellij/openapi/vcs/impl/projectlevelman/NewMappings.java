@@ -315,7 +315,7 @@ public class NewMappings implements Disposable {
           }
 
           VirtualFile parent = f.getParent();
-          if (!isUnderProject(directoryIndex, parent)) {
+          if (parent != null && !isUnderProject(directoryIndex, parent)) {
             if (rootChecker.areChildrenValidMappings()) {
               while (parent != null) {
                 if (vcsRoots.contains(parent) || mappedDirs.contains(parent)) break;
@@ -524,11 +524,11 @@ public class NewMappings implements Disposable {
   }
 
   private static class MyVcsActivator {
-    @NotNull private final Collection<AbstractVcs> myAddVcses;
-    @NotNull private final Collection<AbstractVcs> myRemoveVcses;
+    @NotNull private final Collection<? extends AbstractVcs> myAddVcses;
+    @NotNull private final Collection<? extends AbstractVcs> myRemoveVcses;
 
-    private MyVcsActivator(@NotNull Collection<AbstractVcs> addVcses,
-                           @NotNull Collection<AbstractVcs> removeVcses) {
+    private MyVcsActivator(@NotNull Collection<? extends AbstractVcs> addVcses,
+                           @NotNull Collection<? extends AbstractVcs> removeVcses) {
       myAddVcses = addVcses;
       myRemoveVcses = removeVcses;
     }

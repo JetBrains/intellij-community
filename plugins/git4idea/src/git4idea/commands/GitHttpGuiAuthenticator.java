@@ -130,7 +130,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   }
 
   @Nullable
-  private ProviderAndData acquireData(@NotNull String unifiedUrl, @NotNull Function<AuthDataProvider, AuthData> dataAcquirer) {
+  private ProviderAndData acquireData(@NotNull String unifiedUrl, @NotNull Function<? super AuthDataProvider, ? extends AuthData> dataAcquirer) {
     return myAuthenticationGate.waitAndCompute(() -> {
       try {
         for (AuthDataProvider provider : getProviders(unifiedUrl)) {

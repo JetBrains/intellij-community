@@ -125,7 +125,8 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
 
   @Override
   public boolean shouldCreateStub(final ASTNode node) {
-    if (PsiTreeUtil.getParentOfType(node.getPsi(), PyComprehensionElement.class, true, PyDocStringOwner.class) != null) {
+    if (node.getTreeParent().getElementType() != PyElementTypes.ASSIGNMENT_EXPRESSION &&
+        PsiTreeUtil.getParentOfType(node.getPsi(), PyComprehensionElement.class, true, PyDocStringOwner.class) != null) {
       return false;
     }
     final ASTNode functionNode = TreeUtil.findParent(node, PyElementTypes.FUNCTION_DECLARATION);

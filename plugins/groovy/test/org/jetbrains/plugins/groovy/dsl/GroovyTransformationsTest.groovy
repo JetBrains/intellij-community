@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.groovy.dsl
 
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.util.TestUtils
@@ -10,7 +10,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author ilyas
  */
-class GroovyTransformationsTest extends LightCodeInsightFixtureTestCase {
+class GroovyTransformationsTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {

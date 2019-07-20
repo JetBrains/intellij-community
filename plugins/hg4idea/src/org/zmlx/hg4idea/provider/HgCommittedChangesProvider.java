@@ -83,7 +83,7 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
   public void loadCommittedChanges(ChangeBrowserSettings changeBrowserSettings,
                                    RepositoryLocation repositoryLocation,
                                    int maxCount,
-                                   final AsynchConsumer<CommittedChangeList> consumer) {
+                                   final AsynchConsumer<? super CommittedChangeList> consumer) {
 
     try {
       List<CommittedChangeList> results = getCommittedChanges(changeBrowserSettings, repositoryLocation, maxCount);

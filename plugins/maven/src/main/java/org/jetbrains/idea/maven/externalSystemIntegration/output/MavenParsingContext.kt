@@ -19,6 +19,11 @@ class MavenParsingContext(private val myTaskId: ExternalSystemTaskId) {
       else entries[entries.size - 1].id
     }
 
+  val allEntriesReversed: List<MavenExecutionEntry>
+    get() {
+      return context.get(lastAddedThreadId) ?: emptyList()
+    }
+
 
 
   fun getProject(threadId: Int,  id: String?, create: Boolean): ProjectExecutionEntry? {

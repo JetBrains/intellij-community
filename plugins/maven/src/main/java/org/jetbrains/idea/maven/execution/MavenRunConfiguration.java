@@ -92,8 +92,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
   @Override
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {
-    JavaCommandLineState state = new JavaCommandLineStateImpl(env);
-    return state;
+    return new JavaCommandLineStateImpl(env, getName());
   }
 
   @NotNull
@@ -296,10 +295,12 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
   private class JavaCommandLineStateImpl extends JavaCommandLineState implements RemoteConnectionCreator {
 
+    private final String myName;
     private RemoteConnectionCreator myRemoteConnectionCreator;
 
-    protected JavaCommandLineStateImpl(@NotNull ExecutionEnvironment environment) {
+    protected JavaCommandLineStateImpl(@NotNull ExecutionEnvironment environment, String name) {
       super(environment);
+      myName = name;
     }
 
     @Override
@@ -339,13 +340,13 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       else {
         ExternalSystemTaskId taskId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, EXECUTE_TASK, getProject());
         DefaultBuildDescriptor descriptor =
-          new DefaultBuildDescriptor(taskId, "Run Maven task", getEnvironment().getProject().getBasePath(), System.currentTimeMillis());
+          new DefaultBuildDescriptor(taskId, myName, getEnvironment().getProject().getBasePath(), System.currentTimeMillis());
 
         BuildView buildView = BuildViewMavenConsole.createBuildView(getProject(), console, descriptor);
 
         MavenBuildEventProcessor eventProcessor =
           new MavenBuildEventProcessor(getProject(), getProject().getBasePath(), buildView, descriptor, taskId);
-        processHandler.addProcessListener(new BuildToolConsoleProcessAdapter(eventProcessor));
+        processHandler.addProcessListener(new BuildToolConsoleProcessAdapter(eventProcessor, true));
         buildView.attachToProcess(new MavenHandlerFilterSpyWrapper(processHandler));
         return buildView;
       }
@@ -412,10 +413,10 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
   }
 
 
-  private class MavenHandlerFilterSpyWrapper extends ProcessHandler {
+  private static class MavenHandlerFilterSpyWrapper extends ProcessHandler {
     private final ProcessHandler myOriginalHandler;
 
-    public MavenHandlerFilterSpyWrapper(ProcessHandler original) {
+    MavenHandlerFilterSpyWrapper(ProcessHandler original) {
 
       myOriginalHandler = original;
     }

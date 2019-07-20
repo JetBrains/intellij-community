@@ -4,10 +4,10 @@ package com.intellij.java.refactoring.rename
 import com.intellij.psi.PsiParameter
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.junit.Test
 
-class JavaUniqueNameSuggesterTest : LightCodeInsightFixtureTestCase() {
+class JavaUniqueNameSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
   @Test fun test() {
     myFixture.configureByText("a.java", """import java.util.Map;
 import java.util.Optional;

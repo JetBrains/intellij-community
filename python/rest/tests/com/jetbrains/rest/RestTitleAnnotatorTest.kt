@@ -1,9 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.rest
 
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
-class RestTitleAnnotatorTest : LightPlatformCodeInsightFixtureTestCase() {
+class RestTitleAnnotatorTest : BasePlatformTestCase() {
   fun `test underline match overline`() {
     doTest("----------------\n" +
            "``a_function()``\n" +

@@ -3,7 +3,7 @@ package org.jetbrains.plugins.groovy.gant
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.util.SdkHomeBean
@@ -12,7 +12,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author peter
  */
-class StandaloneGantTest extends LightCodeInsightFixtureTestCase {
+class StandaloneGantTest extends LightJavaCodeInsightFixtureTestCase {
 
   @NotNull
   @Override

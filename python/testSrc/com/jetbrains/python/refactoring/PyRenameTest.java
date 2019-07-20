@@ -5,15 +5,20 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyTargetExpression;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
@@ -321,6 +326,19 @@ public class PyRenameTest extends PyTestCase {
     assertEquals("foo42_bar", PyNameSuggestionProvider.toUnderscores("FOO42BAR"));
     assertEquals("foo_bar", PyNameSuggestionProvider.toUnderscores("FOOBar"));
     assertEquals("foo_bar_baz", PyNameSuggestionProvider.toUnderscores("foo_BarBAZ"));
+  }
+
+  // PY-27749
+  public void testReferencesInsideFStringsNotReportedAsStringOccurrences() {
+    myFixture.configureByFile(RENAME_DATA_PATH + getTestName(true) + ".py");
+    final PyTargetExpression attr = (PyTargetExpression)myFixture.getElementAtCaret();
+    final GlobalSearchScope singleFileScope = GlobalSearchScope.fileScope(myFixture.getFile());
+    final List<PsiElement> found = new ArrayList<>();
+    TextOccurrencesUtil.processUsagesInStringsAndComments(attr, singleFileScope, attr.getName(), true, (psiElement, textRange) -> {
+      found.add(psiElement);
+      return true;
+    });
+    assertEmpty(found);
   }
 
   private void renameWithDocStringFormat(DocStringFormat format, final String newName) {

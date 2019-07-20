@@ -129,7 +129,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
             return;
           }
         }
-        if (resolvedUnderWithStatement(node, resolved)) {
+        if (resolvedUnderWithStatement(node, resolved) || resolvedUnderAssignmentExpressionAndCondition(node, resolved)) {
           return;
         }
         if (PyUnreachableCodeInspection.hasAnyInterruptedControlFlowPaths(node)) {
@@ -157,6 +157,17 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
       return resolved != null &&
              PyUtil.inSameFile(node, resolved) &&
              PsiTreeUtil.getParentOfType(resolved, PyWithStatement.class, true, ScopeOwner.class) != null;
+    }
+
+    private static boolean resolvedUnderAssignmentExpressionAndCondition(@NotNull PyReferenceExpression node,
+                                                                         @Nullable PsiElement resolved) {
+      return resolved instanceof PyTargetExpression &&
+             PyUtil.inSameFile(node, resolved) &&
+             resolved.getParent() instanceof PyAssignmentExpression &&
+             PsiTreeUtil.getParentOfType(
+               PsiTreeUtil.getParentOfType(resolved.getParent(), PyComprehensionElement.class, true, PyConditionalStatementPart.class),
+               PyConditionalStatementPart.class
+             ) != null;
     }
 
     private static boolean isFirstUnboundRead(@NotNull PyReferenceExpression node, @NotNull ScopeOwner owner) {

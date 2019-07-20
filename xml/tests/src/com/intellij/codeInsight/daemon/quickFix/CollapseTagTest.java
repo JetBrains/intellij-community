@@ -19,14 +19,14 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.xml.util.CheckTagEmptyBodyInspection;
 import com.intellij.xml.util.CollapseTagIntention;
 
 /**
  * @author Dmitry Avdeev
  */
-public class CollapseTagTest extends LightPlatformCodeInsightFixtureTestCase{
+public class CollapseTagTest extends BasePlatformTestCase {
 
   public void testAvailable() {
     PsiFile file = myFixture.configureByText(XmlFileType.INSTANCE, "<a>    <caret>   </a>");

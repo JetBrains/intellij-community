@@ -18,10 +18,10 @@ package com.intellij.java.openapi.editor.impl;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 
-public class FoldingExceptionTest extends LightCodeInsightTestCase {
+public class FoldingExceptionTest extends LightJavaCodeInsightTestCase {
   public void test() {
     doTest("FoldingExceptionTest.java");
   }

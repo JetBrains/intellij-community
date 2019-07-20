@@ -16,10 +16,10 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class CastConflictsWithInstanceofInspectionTest extends LightInspectionTestCase {
+public class CastConflictsWithInstanceofInspectionTest extends LightJavaInspectionTestCase {
 
   public void testElseElse() { doTest(); }
   public void testSimple() { doTest(); }

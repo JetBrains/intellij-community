@@ -124,7 +124,7 @@ public class GitRepositoryReaderTest extends GitPlatformTest {
     assertEquals("Incorrect hash of branch " + actual.getName(), expected.hash, hash);
   }
 
-  private static void assertBranches(Map<? extends GitBranch, Hash> actualBranches, Collection<Branch> expectedBranches) {
+  private static void assertBranches(Map<? extends GitBranch, Hash> actualBranches, Collection<? extends Branch> expectedBranches) {
     VcsTestUtil.assertEqualCollections(actualBranches.entrySet(), expectedBranches, new VcsTestUtil.EqualityChecker<Map.Entry<? extends GitBranch, Hash>, Branch>() {
       @Override
       public boolean areEqual(Map.Entry<? extends GitBranch, Hash> actual, Branch expected) {

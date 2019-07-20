@@ -73,7 +73,7 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
   }
 
   @Override
-  public Collection<Change> filterLocalChangesBasedOnLocalCommits(final Collection<Change> localChanges, final VirtualFile vcsRoot)
+  public Collection<Change> filterLocalChangesBasedOnLocalCommits(final Collection<? extends Change> localChanges, final VirtualFile vcsRoot)
     throws VcsException {
     final GitBranchesSearcher searcher = new GitBranchesSearcher(myProject, vcsRoot, true);
     if (searcher.getLocal() == null || searcher.getRemote() == null) {

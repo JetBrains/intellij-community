@@ -18,12 +18,12 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.miscGenerics.RedundantArrayForVarargsCallInspection;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 /**
  * @author anna
  */
-public class RedundantArray4VarargsCallInspectionTest extends LightCodeInsightFixtureTestCase {
+public class RedundantArray4VarargsCallInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,10 @@ public class ActionGroupUtil {
     return action2presentation.computeIfAbsent(action, k -> action.getTemplatePresentation().clone());
   }
 
+  /**
+   * @deprecated use {@link #isGroupEmpty(ActionGroup, AnActionEvent, boolean)} instead
+   */
   @Deprecated
-  // Use #isGroupEmpty with isModalContext instead
   public static boolean isGroupEmpty(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent e) {
     return isGroupEmpty(actionGroup, e, new HashMap<>(), false);
   }

@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,17 +30,17 @@ import java.util.List;
 public interface ChangeListFilteringStrategy {
   @Nullable
   JComponent getFilterUI();
-  void setFilterBase(List<CommittedChangeList> changeLists);
+  void setFilterBase(List<? extends CommittedChangeList> changeLists);
   void addChangeListener(ChangeListener listener);
   void removeChangeListener(ChangeListener listener);
   CommittedChangesFilterKey getKey();
 
   @Nullable
   void resetFilterBase();
-  void appendFilterBase(List<CommittedChangeList> changeLists);
+  void appendFilterBase(List<? extends CommittedChangeList> changeLists);
 
   @NotNull
-  List<CommittedChangeList> filterChangeLists(List<CommittedChangeList> changeLists);
+  List<CommittedChangeList> filterChangeLists(List<? extends CommittedChangeList> changeLists);
 
   ChangeListFilteringStrategy NONE = new ChangeListFilteringStrategy() {
     private final CommittedChangesFilterKey myKey = new CommittedChangesFilterKey("None", CommittedChangesFilterPriority.NONE);
@@ -55,7 +56,7 @@ public interface ChangeListFilteringStrategy {
     }
 
     @Override
-    public void setFilterBase(List<CommittedChangeList> changeLists) {
+    public void setFilterBase(List<? extends CommittedChangeList> changeLists) {
     }
 
     @Override
@@ -72,13 +73,13 @@ public interface ChangeListFilteringStrategy {
     }
 
     @Override
-    public void appendFilterBase(List<CommittedChangeList> changeLists) {
+    public void appendFilterBase(List<? extends CommittedChangeList> changeLists) {
     }
 
     @Override
     @NotNull
-    public List<CommittedChangeList> filterChangeLists(List<CommittedChangeList> changeLists) {
-      return changeLists;
+    public List<CommittedChangeList> filterChangeLists(List<? extends CommittedChangeList> changeLists) {
+      return ContainerUtil.immutableList(changeLists);
     }
 
     @Override

@@ -88,11 +88,11 @@ public class PsiDiamondTypeUtil {
   }
 
   /**
-   * Please use {@link com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil#replaceExplicitWithDiamond(com.intellij.psi.PsiElement)}
+   * @deprecated please use {@link com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil#replaceExplicitWithDiamond(PsiElement)}
    * To be deleted in 2019.3
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
   public static PsiElement replaceExplicitWithDiamond(PsiElement psiElement) {
     PsiElement replacement = createExplicitReplacement(psiElement);
     return replacement == null ? psiElement : psiElement.replace(replacement);

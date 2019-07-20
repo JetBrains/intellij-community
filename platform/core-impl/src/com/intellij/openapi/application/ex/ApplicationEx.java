@@ -54,6 +54,9 @@ public interface ApplicationEx extends Application {
 
   void setSaveAllowed(boolean value);
 
+  /**
+   * @deprecated use {@link #setSaveAllowed(boolean)} with {@code false}
+   */
   @Deprecated
   default void doNotSave() {
     setSaveAllowed(false);
@@ -129,13 +132,13 @@ public interface ApplicationEx extends Application {
   boolean tryRunReadAction(@NotNull Runnable action);
 
   /** DO NOT USE */
-  @Deprecated
+  @ApiStatus.Internal
   default void executeByImpatientReader(@NotNull Runnable runnable) throws ApplicationUtil.CannotRunReadActionException {
     runnable.run();
   }
 
   /** DO NOT USE */
-  @Deprecated
+  @ApiStatus.Internal
   default boolean isInImpatientReader() {
     return false;
   }

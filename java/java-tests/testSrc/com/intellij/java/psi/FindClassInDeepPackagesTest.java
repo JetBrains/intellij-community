@@ -24,14 +24,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.JavaPsiTestCase;
 
 import java.io.File;
 
 /**
  *  @author dsl
  */
-public class FindClassInDeepPackagesTest extends PsiTestCase {
+public class FindClassInDeepPackagesTest extends JavaPsiTestCase {
   @Override
   protected void setUpJdk() {
   }

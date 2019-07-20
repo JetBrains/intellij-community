@@ -2,10 +2,10 @@
 package org.editorconfig.language.documentation
 
 import com.intellij.codeInsight.documentation.DocumentationManager
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.editorconfig.language.codeinsight.documentation.EditorConfigDocumentationProvider
 
-class EditorConfigDocumentationTest : LightCodeInsightFixtureTestCase() {
+class EditorConfigDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
   fun testIndentSizeDoc() {
     myFixture.configureByText(
       ".editorconfig",

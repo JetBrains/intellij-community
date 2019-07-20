@@ -411,7 +411,7 @@ public class GitMergeUtil {
 
   public static void acceptOneVersion(@NotNull Project project,
                                       @NotNull VirtualFile root,
-                                      @NotNull Collection<GitConflict> conflicts,
+                                      @NotNull Collection<? extends GitConflict> conflicts,
                                       @NotNull GitConflict.ConflictSide side) throws VcsException {
     boolean isCurrent = side == GitConflict.ConflictSide.OURS;
 
@@ -446,7 +446,7 @@ public class GitMergeUtil {
    */
   public static void markConflictResolved(@NotNull Project project,
                                           @NotNull VirtualFile root,
-                                          @NotNull Collection<GitConflict> conflicts,
+                                          @NotNull Collection<? extends GitConflict> conflicts,
                                           @Nullable GitConflict.ConflictSide side) throws VcsException {
     List<FilePath> toAdd = new ArrayList<>();
     List<FilePath> toDelete = new ArrayList<>();

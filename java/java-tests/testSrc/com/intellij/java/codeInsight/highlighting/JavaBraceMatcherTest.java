@@ -19,9 +19,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-public class JavaBraceMatcherTest extends LightCodeInsightFixtureTestCase {
+public class JavaBraceMatcherTest extends LightJavaCodeInsightFixtureTestCase {
   public void testGenerics() {
     myFixture.configureByText("a.java", "import java.util.ArrayList;" +
                                         "class A {" +

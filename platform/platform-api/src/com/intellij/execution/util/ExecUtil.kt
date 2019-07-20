@@ -108,7 +108,7 @@ object ExecUtil {
    * No shell substitutions, input/output redirects, etc. in the command are applied.
    *
    * @param commandLine the command line to execute
-   * @param prompt the prompt string for the users
+   * @param prompt the prompt string for the users (not used on Windows)
    * @return the results of running the process
    */
   @JvmStatic

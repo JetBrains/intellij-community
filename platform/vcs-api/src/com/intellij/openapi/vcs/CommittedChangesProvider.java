@@ -43,7 +43,7 @@ public interface CommittedChangesProvider<T extends CommittedChangeList, U exten
 
   List<T> getCommittedChanges(U settings, RepositoryLocation location, final int maxCount) throws VcsException;
 
-  void loadCommittedChanges(U settings, RepositoryLocation location, final int maxCount, final AsynchConsumer<CommittedChangeList> consumer) throws VcsException;
+  void loadCommittedChanges(U settings, RepositoryLocation location, final int maxCount, final AsynchConsumer<? super CommittedChangeList> consumer) throws VcsException;
 
   ChangeListColumn[] getColumns();
 

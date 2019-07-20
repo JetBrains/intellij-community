@@ -17,9 +17,9 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-public class NavigateToAlreadyDeclaredVariableFixTest extends LightCodeInsightFixtureTestCase {
+public class NavigateToAlreadyDeclaredVariableFixTest extends LightJavaCodeInsightFixtureTestCase {
   public void testNavigateToVariableOfDifferentType() {
     myFixture.configureByText("A.java", "class A {{int i = 0; i++; long <caret>i = 0;}}");
     IntentionAction intention = myFixture.findSingleIntention(QuickFixBundle.message("navigate.variable.declaration.text", "i"));

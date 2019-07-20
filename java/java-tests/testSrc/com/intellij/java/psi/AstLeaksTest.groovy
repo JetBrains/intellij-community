@@ -27,11 +27,11 @@ import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.tree.java.JavaFileElement
 import com.intellij.psi.impl.source.tree.java.MethodElement
 import com.intellij.testFramework.LeakHunter
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 /**
  * @author peter
  */
-class AstLeaksTest extends LightCodeInsightFixtureTestCase {
+class AstLeaksTest extends LightJavaCodeInsightFixtureTestCase {
 
   void "test AST should be on a soft reference, for changed files as well"() {
     def file = myFixture.addClass('class Foo {}').containingFile

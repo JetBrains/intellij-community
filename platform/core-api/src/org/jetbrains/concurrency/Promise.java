@@ -125,6 +125,8 @@ public interface Promise<T> {
   /**
    * Execute passed handler on promise resolve (result value will be passed),
    * or on promise reject (null as result value will be passed).
+   *
+   * @deprecated use {@link #onProcessed(java.util.function.Consumer)}
    */
   @Deprecated
   @NotNull

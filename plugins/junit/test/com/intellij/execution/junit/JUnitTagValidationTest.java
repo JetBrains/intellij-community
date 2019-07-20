@@ -2,9 +2,9 @@
 package com.intellij.execution.junit;
 
 import com.intellij.psi.PsiElementFactory;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-public class JUnitTagValidationTest extends LightCodeInsightFixtureTestCase {
+public class JUnitTagValidationTest extends LightJavaCodeInsightFixtureTestCase {
   /**
    * {@link TestTags#parseAsJavaExpression(java.lang.String[])}
    */

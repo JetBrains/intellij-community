@@ -6,7 +6,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -93,14 +92,10 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
       splitter.setSplitterProportionKey(getSplitterProportionKey());
       splitter.setFirstComponent(myEditor.getComponent());
       splitter.setSecondComponent(myPreview.getComponent());
+      splitter.setDividerWidth(3);
 
       myToolbarWrapper = createMarkdownToolbarWrapper(splitter);
-      myToolbarWrapper.addGutterToTrack(((EditorGutterComponentEx)(myEditor).getEditor().getGutter()));
       Disposer.register(this, myToolbarWrapper);
-
-      if (myPreview instanceof TextEditor) {
-        myToolbarWrapper.addGutterToTrack(((EditorGutterComponentEx)((TextEditor)myPreview).getEditor().getGutter()));
-      }
 
       if (myLayout == null) {
         String lastUsed = PropertiesComponent.getInstance().getValue(getLayoutPropertyName());
@@ -118,15 +113,12 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
     final ActionToolbar leftToolbar = createToolbar();
     if (leftToolbar != null) {
       leftToolbar.setTargetComponent(targetComponentForActions);
+      leftToolbar.setReservePlaceAutoPopupIcon(false);
     }
 
-    ActionGroup group = new DefaultActionGroup(
-      new ChangeViewModeAction(Layout.SHOW_EDITOR),
-      new ChangeViewModeAction(Layout.SHOW_EDITOR_AND_PREVIEW),
-      new ChangeViewModeAction(Layout.SHOW_PREVIEW)
-    );
-    ActionToolbar rightToolbar = ActionManager.getInstance().createActionToolbar("TextEditorWithPreview", group, true);
+    final ActionToolbar rightToolbar = createRightToolbar();
     rightToolbar.setTargetComponent(targetComponentForActions);
+    rightToolbar.setReservePlaceAutoPopupIcon(false);
 
     return new SplitEditorToolbar(leftToolbar, rightToolbar);
   }
@@ -281,7 +273,8 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-      myDelegate.propertyChange(new PropertyChangeEvent(TextEditorWithPreview.this, evt.getPropertyName(), evt.getOldValue(), evt.getNewValue()));
+      myDelegate.propertyChange(
+        new PropertyChangeEvent(TextEditorWithPreview.this, evt.getPropertyName(), evt.getOldValue(), evt.getNewValue()));
     }
   }
 
@@ -320,6 +313,40 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
 
   @Nullable
   protected ActionToolbar createToolbar() {
+    ActionGroup actionGroup = createLeftToolbarActionGroup();
+    if (actionGroup != null) {
+      return ActionManager.getInstance().createActionToolbar("TextEditorWithPreview", actionGroup, true);
+    }
+    else {
+      return null;
+    }
+  }
+
+  @Nullable
+  protected ActionGroup createLeftToolbarActionGroup() {
+    return null;
+  }
+
+  @NotNull
+  private ActionToolbar createRightToolbar() {
+    final ActionGroup viewActions = new DefaultActionGroup(
+      new ChangeViewModeAction(Layout.SHOW_EDITOR),
+      new ChangeViewModeAction(Layout.SHOW_EDITOR_AND_PREVIEW),
+      new ChangeViewModeAction(Layout.SHOW_PREVIEW)
+    );
+    final ActionGroup group = createRightToolbarActionGroup();
+    final ActionGroup rightToolbarActions = group == null ?
+                                            viewActions :
+                                            new DefaultActionGroup(
+                                              group,
+                                              Separator.create(),
+                                              viewActions
+                                            );
+    return ActionManager.getInstance().createActionToolbar("TextEditorWithPreview", rightToolbarActions, true);
+  }
+
+  @Nullable
+  protected ActionGroup createRightToolbarActionGroup() {
     return null;
   }
 

@@ -118,7 +118,7 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, JvmAnnotation {
   }
 
   /**
-   * don't use or override; it's temporarily left for compatibility with older plugins
+   * @deprecated don't use or override; it's temporarily left for compatibility with older plugins
    */
   @Nullable
   @Deprecated

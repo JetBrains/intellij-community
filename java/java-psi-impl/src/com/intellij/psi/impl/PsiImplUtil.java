@@ -331,7 +331,7 @@ public class PsiImplUtil {
   }
 
   /**
-   * Types should be proceed by the callers themselves
+   * @deprecated types should be proceed by the callers themselves
    */
   @Deprecated
   public static PsiType normalizeWildcardTypeByPosition(@NotNull PsiType type, @NotNull PsiExpression expression) {

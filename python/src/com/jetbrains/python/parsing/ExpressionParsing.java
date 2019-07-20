@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +42,7 @@ public class ExpressionParsing extends Parsing {
     final IElementType firstToken = myBuilder.getTokenType();
     if (isIdentifier(myBuilder)) {
       if (isTargetExpression) {
-        buildTokenElement(PyElementTypes.TARGET_EXPRESSION, myBuilder);
+        buildTokenElement(PyStubElementTypes.TARGET_EXPRESSION, myBuilder);
       }
       else {
         buildTokenElement(getReferenceType(), myBuilder);
@@ -172,7 +173,8 @@ public class ExpressionParsing extends Parsing {
                                               PyTokenTypes.FSTRING_FRAGMENT_FORMAT_START,
                                               PyTokenTypes.FSTRING_FRAGMENT_END,
                                               PyTokenTypes.FSTRING_END,
-                                              PyTokenTypes.STATEMENT_BREAK)) {
+                                              PyTokenTypes.STATEMENT_BREAK,
+                                              PyTokenTypes.EQ)) {
         nextToken();
         recovery = true;
       }
@@ -183,6 +185,8 @@ public class ExpressionParsing extends Parsing {
       else {
         recoveryMarker.drop();
       }
+
+      matchToken(PyTokenTypes.EQ);
       final boolean hasTypeConversion = matchToken(PyTokenTypes.FSTRING_FRAGMENT_TYPE_CONVERSION);
       final boolean hasFormatPart = atToken(PyTokenTypes.FSTRING_FRAGMENT_FORMAT_START);
       if (hasFormatPart) {
@@ -195,6 +199,7 @@ public class ExpressionParsing extends Parsing {
           errorMessage = "type conversion, " + errorMessage;
         }
       }
+
       checkMatches(PyTokenTypes.FSTRING_FRAGMENT_END, errorMessage);
       marker.setCustomEdgeTokenBinders(null, CONSUME_COMMENTS_AND_SPACES_TO_LEFT);
       marker.done(PyElementTypes.FSTRING_FRAGMENT);
@@ -471,7 +476,7 @@ public class ExpressionParsing extends Parsing {
           myBuilder.advanceLexer();
           checkMatches(PyTokenTypes.IDENTIFIER, message("PARSE.expected.name"));
           if (isTargetExpression && !recastQualifier && !atAnyOfTokens(PyTokenTypes.DOT, PyTokenTypes.LPAR, PyTokenTypes.LBRACKET)) {
-            expr.done(PyElementTypes.TARGET_EXPRESSION);
+            expr.done(PyStubElementTypes.TARGET_EXPRESSION);
           }
           else {
             expr.done(getReferenceType());
@@ -598,12 +603,12 @@ public class ExpressionParsing extends Parsing {
     while (atToken(PyTokenTypes.COMMA)) {
       nextToken();
       PsiBuilder.Marker sliceItemStart = myBuilder.mark();
-      parseTestExpression(false, false);
+      parseNamedTestExpression(false, false);
       if (matchToken(PyTokenTypes.COLON)) {
         inSlice = true;
-        parseTestExpression(false, false);
+        parseNamedTestExpression(false, false);
         if (matchToken(PyTokenTypes.COLON)) {
-          parseTestExpression(false, false);
+          parseNamedTestExpression(false, false);
         }
       }
       sliceItemStart.done(PyElementTypes.SLICE_ITEM);
@@ -729,7 +734,7 @@ public class ExpressionParsing extends Parsing {
 
   protected boolean parseTupleExpression(boolean stopOnIn, boolean isTargetExpression, final boolean oldTest) {
     PsiBuilder.Marker expr = myBuilder.mark();
-    boolean exprParseResult = oldTest ? parseOldTestExpression() : parseTestExpression(stopOnIn, isTargetExpression);
+    boolean exprParseResult = oldTest ? parseOldTestExpression() : parseNamedTestExpression(stopOnIn, isTargetExpression);
     if (!exprParseResult) {
       expr.drop();
       return false;
@@ -738,7 +743,7 @@ public class ExpressionParsing extends Parsing {
       while (myBuilder.getTokenType() == PyTokenTypes.COMMA) {
         myBuilder.advanceLexer();
         PsiBuilder.Marker expr2 = myBuilder.mark();
-        exprParseResult = oldTest ? parseOldTestExpression() : parseTestExpression(stopOnIn, isTargetExpression);
+        exprParseResult = oldTest ? parseOldTestExpression() : parseNamedTestExpression(stopOnIn, isTargetExpression);
         if (!exprParseResult) {
           expr2.rollbackTo();
           break;
@@ -754,7 +759,7 @@ public class ExpressionParsing extends Parsing {
   }
 
   public boolean parseSingleExpression(boolean isTargetExpression) {
-    return parseTestExpression(false, isTargetExpression);
+    return parseNamedTestExpression(false, isTargetExpression);
   }
 
   public boolean parseOldExpression() {
@@ -762,6 +767,40 @@ public class ExpressionParsing extends Parsing {
       return parseLambdaExpression(false);
     }
     return parseORTestExpression(false, false);
+  }
+
+  private boolean parseNamedTestExpression(boolean stopOnIn, boolean isTargetExpression) {
+    final PsiBuilder.Marker expr = myBuilder.mark();
+
+    if (isIdentifier(myBuilder) && myBuilder.lookAhead(1) == PyTokenTypes.COLONEQ) {
+      buildTokenElement(PyStubElementTypes.TARGET_EXPRESSION, myBuilder);
+
+      myBuilder.advanceLexer();
+
+      if (parseTestExpression(stopOnIn, isTargetExpression)) {
+        expr.done(PyElementTypes.ASSIGNMENT_EXPRESSION);
+        return true;
+      }
+      else {
+        expr.drop();
+        myBuilder.error(message("PARSE.expected.expression"));
+        return false;
+      }
+    }
+    else if (parseTestExpression(stopOnIn, isTargetExpression)) {
+      if (!atToken(PyTokenTypes.COLONEQ)) {
+        expr.drop();
+        return true;
+      }
+      else {
+        expr.error(message("PARSE.expected.identifier"));
+        return false;
+      }
+    }
+    else {
+      expr.drop();
+      return false;
+    }
   }
 
   private boolean parseTestExpression(boolean stopOnIn, boolean isTargetExpression) {
@@ -792,7 +831,7 @@ public class ExpressionParsing extends Parsing {
         }
         else {
           myBuilder.advanceLexer();
-          if (!parseTestExpression(stopOnIn, isTargetExpression)) {
+          if (!parseNamedTestExpression(stopOnIn, isTargetExpression)) {
             myBuilder.error(message("PARSE.expected.expression"));
           }
         }

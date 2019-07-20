@@ -2,11 +2,11 @@
 package org.intellij.plugins.markdown.braces;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.intellij.plugins.markdown.lang.MarkdownFileType;
 import org.jetbrains.annotations.NotNull;
 
-public class MarkdownBraceMatcherTest extends LightPlatformCodeInsightFixtureTestCase {
+public class MarkdownBraceMatcherTest extends BasePlatformTestCase {
   public void testParenBeforeIdentifier() {
     doTest('(', "<caret>abc", "(abc");
   }

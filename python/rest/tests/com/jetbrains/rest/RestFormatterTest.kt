@@ -17,9 +17,9 @@ package com.jetbrains.rest
 
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.codeStyle.CodeStyleManager
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
-class RestFormatterTest : LightPlatformCodeInsightFixtureTestCase() {
+class RestFormatterTest : BasePlatformTestCase() {
 
   fun `test directive`() {
     doTest()

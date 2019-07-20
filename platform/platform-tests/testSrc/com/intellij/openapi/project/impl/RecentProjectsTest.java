@@ -69,7 +69,7 @@ public class RecentProjectsTest extends PlatformTestCase {
       ProjectManagerEx manager = ProjectManagerEx.getInstanceEx();
       project = manager.createProject(null, path.getPath());
       closeProject(project);
-      project = manager.loadAndOpenProject(path.getPath());
+      project = manager.loadAndOpenProject(path);
       long timestamp = getProjectOpenTimestamp("z1");
       RecentProjectsManagerBase.getInstanceEx().updateLastProjectPath();
       // "Timestamp for opened project has not been updated"
@@ -129,7 +129,7 @@ public class RecentProjectsTest extends PlatformTestCase {
       project = manager.createProject(null, path.getPath());
       project.save();
       closeProject(project);
-      project = manager.loadAndOpenProject(path.getPath());
+      project = manager.loadAndOpenProject(path);
       return project.getBasePath();
     }
     finally {

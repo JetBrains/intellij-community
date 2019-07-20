@@ -12,8 +12,7 @@ import com.intellij.psi.impl.source.DummyHolder
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
 import com.intellij.psi.impl.source.tree.*
 import com.intellij.psi.tree.IElementType
-import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.IntDistribution
@@ -22,7 +21,7 @@ import org.jetbrains.jetCheck.PropertyChecker
 /**
  * @author peter
  */
-class PsiEventConsistencyTest : LightPlatformCodeInsightFixtureTestCase() {
+class PsiEventConsistencyTest : BasePlatformTestCase() {
 
   fun `test replacing child after changing its subtree`() {
     WriteCommandAction.runWriteCommandAction(project) {

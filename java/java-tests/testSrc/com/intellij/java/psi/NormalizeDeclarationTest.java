@@ -23,12 +23,12 @@ import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 @PlatformTestCase.WrapInCommand
-public class NormalizeDeclarationTest extends PsiTestCase{
+public class NormalizeDeclarationTest extends JavaPsiTestCase {
   private static final String BASE_PATH = JavaTestUtil.getJavaTestDataPath() + "/psi/normalizeDeclaration";
 
   @NotNull

@@ -133,7 +133,7 @@ final class ObjectNode<T extends Disposable> {
 
         try {
           action.execute(myObject);
-          myTree.fireExecuted(myObject);
+          myTree.rememberDisposedTrace(myObject);
         }
         catch (Throwable e) {
           exceptions.add(e);

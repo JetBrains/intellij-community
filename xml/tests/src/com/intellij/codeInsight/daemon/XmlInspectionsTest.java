@@ -21,14 +21,14 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 import java.io.File;
 
 /**
  * @author Dmitry Avdeev
  */
-public class XmlInspectionsTest extends LightPlatformCodeInsightFixtureTestCase {
+public class XmlInspectionsTest extends BasePlatformTestCase {
 
   public void testDefaultAttributeValue() {
     myFixture.enableInspections(new XmlDefaultAttributeValueInspection());

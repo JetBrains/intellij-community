@@ -17,10 +17,10 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class JUnitDatapointInspectionTest extends LightCodeInsightFixtureTestCase {
+public class JUnitDatapointInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testWrongdatapoint() {
     myFixture.addClass("package org.junit.experimental.theories;\n" +
                        "public @interface DataPoint {}");

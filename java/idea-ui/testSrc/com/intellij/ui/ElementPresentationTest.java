@@ -5,13 +5,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.ElementPresentation;
 
 import java.io.File;
 
-public class ElementPresentationTest extends LightCodeInsightFixtureTestCase {
+public class ElementPresentationTest extends LightJavaCodeInsightFixtureTestCase {
   private PsiClass OBJECT_CLASS;
 
   @Override

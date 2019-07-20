@@ -25,7 +25,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.JavaReferenceEditorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,14 +74,7 @@ public class PsiUtilEx {
   }
 
   public static boolean isStringOrCharacterLiteral(final PsiElement place) {
-    if (place instanceof PsiLiteralExpression) {
-      final PsiElement child = place.getFirstChild();
-      if (child instanceof PsiJavaToken) {
-        final IElementType tokenType = ((PsiJavaToken)child).getTokenType();
-        return tokenType == JavaTokenType.CHARACTER_LITERAL || ElementType.STRING_LITERALS.contains(tokenType);
-      }
-    }
-    return false;
+    return place instanceof PsiLiteralExpression && PsiUtil.isJavaToken(place.getFirstChild(), ElementType.TEXT_LITERALS);
   }
 
   public static boolean isString(@NotNull PsiType type) {

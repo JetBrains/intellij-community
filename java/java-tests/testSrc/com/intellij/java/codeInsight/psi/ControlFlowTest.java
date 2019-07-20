@@ -12,7 +12,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NonNls;
 
@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
 /**
  * @author cdr
  */
-public class ControlFlowTest extends LightCodeInsightTestCase {
+public class ControlFlowTest extends LightJavaCodeInsightTestCase {
   @NonNls private static final String BASE_PATH = "/psi/controlFlow";
 
   private static void doTestFor(final File file) throws Exception {

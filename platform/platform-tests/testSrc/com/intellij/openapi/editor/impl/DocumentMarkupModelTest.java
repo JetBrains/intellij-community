@@ -20,7 +20,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -30,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author Dmitry Avdeev
  */
-public class DocumentMarkupModelTest extends LightPlatformCodeInsightFixtureTestCase {
+public class DocumentMarkupModelTest extends BasePlatformTestCase {
   public void testInfoTestAttributes() {
     LanguageExtensionPoint<Annotator> extension = new LanguageExtensionPoint<>();
     extension.language="TEXT";

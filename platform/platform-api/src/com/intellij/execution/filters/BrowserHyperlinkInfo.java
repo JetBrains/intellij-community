@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.project.Project;
 
 /**
- * Consider to use OpenUrlHyperlinkInfo.
+ * Consider to use {@link com.intellij.ide.browsers.OpenUrlHyperlinkInfo}.
  */
 public class BrowserHyperlinkInfo implements HyperlinkInfo {
   private final String myUrl;
@@ -33,6 +33,9 @@ public class BrowserHyperlinkInfo implements HyperlinkInfo {
     BrowserUtil.browse(myUrl);
   }
 
+  /**
+   * @deprecated use {@link BrowserUtil#browse(String)}
+   */
   @Deprecated
   public static void openUrl(String url) {
     BrowserUtil.browse(url);

@@ -4,11 +4,11 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.OverflowingLoopIndexInspection;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 
-public class OverflowingIndexLoopInspectionTest extends LightInspectionTestCase {
+public class OverflowingIndexLoopInspectionTest extends LightJavaInspectionTestCase {
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {

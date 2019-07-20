@@ -16,12 +16,12 @@
 package com.siyeh.ig;
 
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.JavaInspectionTestCase;
 
 /**
  * @author Alexey
  */
-public abstract class IGInspectionTestCase extends InspectionTestCase {
+public abstract class IGInspectionTestCase extends JavaInspectionTestCase {
   @Override
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("InspectionGadgets") + "/test";

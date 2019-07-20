@@ -2,13 +2,13 @@ package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author bas
  */
-public class TypeParameterExtendsFinalClassInspectionTest extends LightInspectionTestCase {
+public class TypeParameterExtendsFinalClassInspectionTest extends LightJavaInspectionTestCase {
 
   public void testTypeParameterExtendsFinalClass() {
     doTest();

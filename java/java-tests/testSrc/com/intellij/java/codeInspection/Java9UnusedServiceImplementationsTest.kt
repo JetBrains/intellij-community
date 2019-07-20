@@ -23,7 +23,7 @@ import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescripto
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.testFramework.InspectionTestCase
+import com.intellij.testFramework.JavaInspectionTestCase
 import org.intellij.lang.annotations.Language
 
 /**
@@ -111,7 +111,7 @@ class Java9UnusedServiceImplementationsTest : LightJava9ModulesCodeInsightFixtur
 
     try {
       moduleEntryPoint?.isSelected = withModuleEntryPoints
-      doGlobalInspectionTest(testPath, InspectionTestCase.getUnusedDeclarationWrapper())
+      doGlobalInspectionTest(testPath, JavaInspectionTestCase.getUnusedDeclarationWrapper())
     }
     finally {
       moduleEntryPoint?.isSelected = wasSelected

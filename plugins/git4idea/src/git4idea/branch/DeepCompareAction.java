@@ -86,8 +86,8 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
 
   private static void selectBranchAndPerformAction(@NotNull VcsLogUi ui,
                                                    @NotNull AnActionEvent event,
-                                                   @NotNull Consumer<String> consumer,
-                                                   @NotNull Collection<VirtualFile> visibleRoots) {
+                                                   @NotNull Consumer<? super String> consumer,
+                                                   @NotNull Collection<? extends VirtualFile> visibleRoots) {
     VcsLogDataPack dataPack = ui.getDataPack();
     ActionGroup actionGroup = new BranchPopupBuilder(dataPack, visibleRoots, null) {
       @NotNull
@@ -139,7 +139,7 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
     return ContainerUtil.filter(VcsLogUtil.getVisibleRoots(ui), root -> isGitRoot(project, root));
   }
 
-  private static boolean hasGitRoots(@NotNull Project project, @NotNull Set<VirtualFile> roots) {
+  private static boolean hasGitRoots(@NotNull Project project, @NotNull Set<? extends VirtualFile> roots) {
     return ContainerUtil.exists(roots, root -> isGitRoot(project, root));
   }
 

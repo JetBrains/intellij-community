@@ -3,11 +3,11 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SwitchStatementWithConfusingDeclarationInspectionTest extends LightInspectionTestCase {
+public class SwitchStatementWithConfusingDeclarationInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSwitchStatementWithConfusingDeclaration() {
     doTest();

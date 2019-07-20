@@ -29,7 +29,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.inline.InlineLocalHandler;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -40,7 +40,7 @@ import java.util.List;
 /**
  * @author ven
  */
-public class InlineLocalTest extends LightCodeInsightTestCase {
+public class InlineLocalTest extends LightJavaCodeInsightTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {

@@ -61,7 +61,7 @@ class WinExeInstallerBuilder {
     customizer.fileAssociations.collect { !it.startsWith(".") ? ".$it" : it}
   }
 
-  void buildInstaller(String winDistPath, String additionalDirectoryToInclude, String secondJreSuffix = null, boolean jre32BitVersionSupported) {
+  void buildInstaller(String winDistPath, String additionalDirectoryToInclude, String suffix, boolean jre32BitVersionSupported) {
 
     if (!SystemInfo.isWindows && !SystemInfo.isLinux) {
       buildContext.messages.warning("Windows installer can be built only under Windows or Linux")
@@ -69,7 +69,6 @@ class WinExeInstallerBuilder {
     }
 
     String communityHome = buildContext.paths.communityHome
-    def suffix = secondJreSuffix != null ? secondJreSuffix : buildContext.bundledJreManager.jreSuffix()
     String outFileName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber) + suffix
     buildContext.messages.progress("Building Windows installer $outFileName")
 
@@ -108,8 +107,8 @@ class WinExeInstallerBuilder {
 
       generator.generateInstallerFile(new File(box, "nsiconf/idea_win.nsh"))
 
-      if (buildContext.bundledJreManager.is32bitArchSupported()) {
-        String jre32Dir = buildContext.bundledJreManager.extractWinJre(JvmArchitecture.x32)
+      if (buildContext.bundledJreManager.doBundleSecondJre()) {
+        String jre32Dir = buildContext.bundledJreManager.extractSecondBundledJreForWin(JvmArchitecture.x32)
         if (jre32Dir != null) {
           generator.addDirectory(jre32Dir)
         }

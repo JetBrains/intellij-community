@@ -18,12 +18,12 @@ package com.intellij.java.codeInspection
 import com.intellij.JavaTestUtil
 import com.intellij.codeInspection.reflectiveAccess.JavaReflectionMemberAccessInspection
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
  * @author Pavel.Dolgov
  */
-class JavaReflectionMemberAccessTest : LightCodeInsightFixtureTestCase() {
+class JavaReflectionMemberAccessTest : LightJavaCodeInsightFixtureTestCase() {
 
   private val inspection = JavaReflectionMemberAccessInspection()
 

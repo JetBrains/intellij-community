@@ -33,7 +33,7 @@ class GitInteractiveRebaseAction : GitCommitEditingAction() {
 
     object : Task.Backgroundable(project, "Rebasing") {
       override fun run(indicator: ProgressIndicator) {
-        val params = GitRebaseParams.editCommits(commit.parents.first().asString(), null, false)
+        val params = GitRebaseParams.editCommits(repository.vcs.version, commit.parents.first().asString(), null, false)
         GitRebaseUtils.rebase(project, listOf(repository), params, indicator);
       }
     }.queue()

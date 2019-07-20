@@ -83,7 +83,7 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider {
    * @param currentRevision - just a hint for optimization
    */
   private FileAnnotation annotate(VirtualFile file, final VcsRevisionNumber revisionNumber, final boolean currentRevision,
-                                  final ThrowableComputable<FileAnnotation, VcsException> delegate) throws VcsException {
+                                  final ThrowableComputable<? extends FileAnnotation, VcsException> delegate) throws VcsException {
 
     final FilePath filePath = VcsUtil.getFilePath(file);
 

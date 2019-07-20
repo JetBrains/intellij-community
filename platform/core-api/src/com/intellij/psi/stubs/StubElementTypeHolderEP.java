@@ -89,6 +89,7 @@ public class StubElementTypeHolderEP extends AbstractExtensionPointBean {
    * @deprecated please don't use this extension to ensure something is initialized as a side effect of stub element type loading,
    * create your own narrow-scoped extension instead
    */
+  @Deprecated
   public void initialize() {
     try {
       findClass(holderClass);

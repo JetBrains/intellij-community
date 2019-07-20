@@ -1,7 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties;
 
-import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
  * @author cdr
  */
 @PlatformTestCase.WrapInCommand
-public class PropertiesResolveTest extends CodeInsightTestCase{
+public class PropertiesResolveTest extends JavaCodeInsightTestCase {
   private static final String BASE_PATH = "testData/resolve/";
 
   public void testJavaStringLiteral() throws Exception{

@@ -94,6 +94,9 @@ public abstract class JBPopupFactory {
                                                Runnable onNo,
                                                int defaultOptionIndex);
 
+  /**
+   * @deprecated use {@link #createActionsStep(ActionGroup, DataContext, String, boolean, boolean, String, Component, boolean, int, boolean)}
+   */
   @Deprecated
   @NotNull
   public ListPopupStep createActionsStep(@NotNull ActionGroup actionGroup,
@@ -106,6 +109,9 @@ public abstract class JBPopupFactory {
     return createActionsStep(actionGroup, dataContext, null, showNumbers, showDisabledActions, title, component, honorActionMnemonics, 0, false);
   }
 
+  /**
+   * @deprecated use {@link #createActionsStep(ActionGroup, DataContext, String, boolean, boolean, String, Component, boolean, int, boolean)}
+   */
   @Deprecated
   @NotNull
   public ListPopupStep createActionsStep(@NotNull ActionGroup actionGroup,

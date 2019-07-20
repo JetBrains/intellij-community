@@ -2,10 +2,10 @@
 package com.siyeh.ig.logging;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 @SuppressWarnings("PlaceholderCountMatchesArgumentCount")
-public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightInspectionTestCase {
+public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightJavaInspectionTestCase {
   @Override
   protected LocalInspectionTool getInspection() {
     return new PlaceholderCountMatchesArgumentCountInspection();

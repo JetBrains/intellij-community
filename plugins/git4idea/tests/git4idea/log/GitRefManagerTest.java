@@ -76,7 +76,7 @@ public abstract class GitRefManagerTest extends GitSingleRepoTest {
     return new VcsRefImpl(hash, name, type, projectRoot);
   }
 
-  private void setUpTracking(@NotNull Collection<VcsRef> refs) {
+  private void setUpTracking(@NotNull Collection<? extends VcsRef> refs) {
     cd(projectRoot);
     for (final VcsRef ref : refs) {
       if (ref.getType() == GitRefManager.LOCAL_BRANCH) {

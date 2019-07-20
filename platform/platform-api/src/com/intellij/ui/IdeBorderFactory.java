@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,8 +75,7 @@ public class IdeBorderFactory {
   }
 
   /**
-   * @deprecated
-   * @see JBUI.Borders#empty()
+   * @deprecated use {@link JBUI.Borders#empty()}
    */
   @Deprecated
   public static Border createEmptyBorder() {
@@ -84,8 +83,7 @@ public class IdeBorderFactory {
   }
 
   /**
-   * @deprecated
-   * @see JBUI.Borders#empty(int)
+   * @deprecated use {@link JBUI.Borders#empty(int)}
    */
   @Deprecated
   public static Border createEmptyBorder(int thickness) {
@@ -93,8 +91,7 @@ public class IdeBorderFactory {
   }
 
   /**
-   * @deprecated
-   * @see JBUI.Borders#empty(int, int, int, int)
+   * @deprecated use {@link JBUI.Borders#empty(int, int, int, int)}
    */
   @Deprecated
   public static Border createEmptyBorder(int top, int left, int bottom, int right) {

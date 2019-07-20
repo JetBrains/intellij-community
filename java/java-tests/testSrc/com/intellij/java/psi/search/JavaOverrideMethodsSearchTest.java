@@ -21,10 +21,10 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaOverrideMethodsSearchTest extends LightCodeInsightFixtureTestCase {
+public class JavaOverrideMethodsSearchTest extends LightJavaCodeInsightFixtureTestCase {
   public void testSearchHonorsLocalScope() {
     myFixture.addClass("package pkg; public interface I {void m();}");
 

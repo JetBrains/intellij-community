@@ -6,12 +6,12 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testIntegration.TestFinderHelper;
 import com.intellij.util.IncorrectOperationException;
 
-public class TestFinderHelperTest extends PsiTestCase {
+public class TestFinderHelperTest extends JavaPsiTestCase {
   private VirtualFile myContentRootDir;
 
   @Override

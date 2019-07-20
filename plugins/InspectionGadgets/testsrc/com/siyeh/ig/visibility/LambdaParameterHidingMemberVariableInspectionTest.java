@@ -16,12 +16,12 @@
 package com.siyeh.ig.visibility;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class LambdaParameterHidingMemberVariableInspectionTest extends LightInspectionTestCase {
+public class LambdaParameterHidingMemberVariableInspectionTest extends LightJavaInspectionTestCase {
   @Override
   protected InspectionProfileEntry getInspection() {
     return new LambdaParameterHidingMemberVariableInspection();

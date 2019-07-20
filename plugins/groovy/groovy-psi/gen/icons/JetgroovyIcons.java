@@ -5,6 +5,8 @@ import com.intellij.ui.IconManager;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
+
 /**
  * NOTE THIS FILE IS AUTO-GENERATED
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
@@ -46,21 +48,25 @@ public final class JetgroovyIcons {
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
+    @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon Ant_task = load("/icons/groovy/ant_task.png");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Property */
     @SuppressWarnings("unused")
     @Deprecated
+    @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon DynamicProperty = load("/nodes/property.svg", com.intellij.icons.AllIcons.class);
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
+    @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon DynamicProperty_13 = load("/icons/groovy/dynamicProperty_13.png");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
+    @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon Groovy_32x32 = load("/icons/groovy/groovy_32x32.png");
 
   }
@@ -72,26 +78,31 @@ public final class JetgroovyIcons {
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.ConfigFolder */
     @SuppressWarnings("unused")
     @Deprecated
+    @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon Config_folder_closed = load("/nodes/configFolder.svg", com.intellij.icons.AllIcons.class);
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Controller */
     @SuppressWarnings("unused")
     @Deprecated
+    @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon Controller = load("/nodes/controller.svg", com.intellij.icons.AllIcons.class);
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.DataTables */
     @SuppressWarnings("unused")
     @Deprecated
+    @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon Domain_class = load("/nodes/DataTables.svg", com.intellij.icons.AllIcons.class);
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Models */
     @SuppressWarnings("unused")
     @Deprecated
+    @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon ModelsNode = load("/nodes/models.svg", com.intellij.icons.AllIcons.class);
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.FileTypes.Config */
     @SuppressWarnings("unused")
     @Deprecated
+    @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon Service = load("/fileTypes/config.svg", com.intellij.icons.AllIcons.class);
 
   }

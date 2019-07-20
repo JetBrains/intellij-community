@@ -54,6 +54,10 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   public static final String NAME_FILE = ".name";
   public static final Key<Long> CREATION_TIME = Key.create("ProjectImpl.CREATION_TIME");
+
+  /**
+   * @deprecated use {@link #getCreationTrace()}
+   */
   @Deprecated
   public static final Key<String> CREATION_TRACE = Key.create("ProjectImpl.CREATION_TRACE");
   @TestOnly

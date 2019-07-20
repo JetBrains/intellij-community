@@ -7,7 +7,7 @@ import com.intellij.codeInsight.completion.StaticallyImportable
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.util.TestUtils
@@ -15,7 +15,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Maxim.Medvedev
  */
-class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCase {
+class GroovyClassNameCompletionTest extends LightJavaCodeInsightFixtureTestCase {
   private boolean old
 
   @Override

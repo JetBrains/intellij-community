@@ -16,10 +16,10 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class UnnecessaryBlockStatementInspectionTest extends LightInspectionTestCase {
+public class UnnecessaryBlockStatementInspectionTest extends LightJavaInspectionTestCase {
 
   public void testUnnecessaryBlockStatement() {
     doTest();

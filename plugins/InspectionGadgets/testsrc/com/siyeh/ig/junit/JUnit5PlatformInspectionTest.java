@@ -16,9 +16,9 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
-public class JUnit5PlatformInspectionTest extends LightInspectionTestCase {
+public class JUnit5PlatformInspectionTest extends LightJavaInspectionTestCase {
 
   public void testNoMethods() {
     doTest("import org.junit.Test;\n" +

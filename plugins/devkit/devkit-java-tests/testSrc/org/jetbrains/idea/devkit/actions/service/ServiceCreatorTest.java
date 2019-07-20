@@ -23,7 +23,7 @@ import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
@@ -34,7 +34,7 @@ import org.jetbrains.idea.devkit.module.PluginModuleType;
 import java.util.List;
 
 @TestDataPath("$CONTENT_ROOT/testData/actions/newService/")
-public class ServiceCreatorTest extends LightCodeInsightFixtureTestCase {
+public class ServiceCreatorTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {

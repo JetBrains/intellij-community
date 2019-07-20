@@ -262,6 +262,11 @@ public class StringUtilTest {
   }
 
   @Test
+  public void testCapitalizeWords() {
+    assertEquals("AspectJ (Syntax Highlighting Only)", StringUtil.capitalizeWords("AspectJ (syntax highlighting only)", true));
+  }
+
+  @Test
   public void testEscapeStringCharacters() {
     assertEquals("\\\"\\n", StringUtil.escapeStringCharacters(3, "\\\"\n", "\"", false, new StringBuilder()).toString());
     assertEquals("\\\"\\n", StringUtil.escapeStringCharacters(2, "\"\n", "\"", false, new StringBuilder()).toString());

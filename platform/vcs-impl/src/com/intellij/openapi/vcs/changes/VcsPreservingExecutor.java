@@ -19,7 +19,7 @@ public interface VcsPreservingExecutor {
    * @return true if the executor supports provided roots or false otherwise.
    */
   boolean execute(@NotNull Project project,
-                  @NotNull Collection<VirtualFile> rootsToSave,
+                  @NotNull Collection<? extends VirtualFile> rootsToSave,
                   @NotNull String operationTitle,
                   @NotNull ProgressIndicator indicator,
                   @NotNull Runnable operation);

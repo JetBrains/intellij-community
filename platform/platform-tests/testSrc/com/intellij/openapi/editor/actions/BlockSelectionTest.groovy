@@ -17,13 +17,13 @@ package com.intellij.openapi.editor.actions
 import com.intellij.ide.ClipboardSynchronizer
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.LogicalPosition
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 import java.awt.datatransfer.StringSelection
 /**
  * @author peter
  */
-class BlockSelectionTest extends LightPlatformCodeInsightFixtureTestCase {
+class BlockSelectionTest extends BasePlatformTestCase {
 
   void "test paste tabs into block selection"() {
     myFixture.configureByText "a.txt", """\

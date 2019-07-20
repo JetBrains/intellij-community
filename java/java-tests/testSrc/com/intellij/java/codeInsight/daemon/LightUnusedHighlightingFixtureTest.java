@@ -10,10 +10,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class LightUnusedHighlightingFixtureTest extends LightCodeInsightFixtureTestCase {
+public class LightUnusedHighlightingFixtureTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   protected void setUp() throws Exception {

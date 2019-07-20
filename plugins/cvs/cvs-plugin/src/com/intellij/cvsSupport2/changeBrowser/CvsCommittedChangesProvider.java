@@ -213,7 +213,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
   public void loadCommittedChanges(ChangeBrowserSettings settings,
                                    RepositoryLocation location,
                                    int maxCount,
-                                   final AsynchConsumer<CommittedChangeList> consumer)
+                                   final AsynchConsumer<? super CommittedChangeList> consumer)
     throws VcsException {
     try {
       final CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) location;

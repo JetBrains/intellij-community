@@ -5,14 +5,14 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class LengthOneStringInIndexOfInspectionTest extends LightCodeInsightFixtureTestCase {
+public class LengthOneStringInIndexOfInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    return LightInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/performance/length_one_strings_in_indexof";
+    return LightJavaInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/performance/length_one_strings_in_indexof";
   }
 
   @NotNull

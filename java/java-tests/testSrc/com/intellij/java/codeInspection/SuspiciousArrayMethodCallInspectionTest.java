@@ -20,11 +20,11 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.SuspiciousArrayMethodCallInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SuspiciousArrayMethodCallInspectionTest extends LightInspectionTestCase {
+public class SuspiciousArrayMethodCallInspectionTest extends LightJavaInspectionTestCase {
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/suspiciousArrayMethodCall";

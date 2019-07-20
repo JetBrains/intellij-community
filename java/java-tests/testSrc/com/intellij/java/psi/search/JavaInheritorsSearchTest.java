@@ -23,7 +23,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public class JavaInheritorsSearchTest extends LightCodeInsightFixtureTestCase {
+public class JavaInheritorsSearchTest extends LightJavaCodeInsightFixtureTestCase {
   public void testScope() {
     myFixture.addClass("package pack1;\npublic class Base { }");
     myFixture.addClass("package pack1;\npublic class Derived1 extends Base { }");

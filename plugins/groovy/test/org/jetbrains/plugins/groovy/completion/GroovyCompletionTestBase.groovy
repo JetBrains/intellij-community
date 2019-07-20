@@ -4,9 +4,9 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-abstract class GroovyCompletionTestBase extends LightCodeInsightFixtureTestCase {
+abstract class GroovyCompletionTestBase extends LightJavaCodeInsightFixtureTestCase {
 
   protected void doSmartTest() {
     doCompletionTest(CompletionType.SMART)

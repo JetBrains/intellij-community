@@ -43,7 +43,7 @@ public class LocalChangesUnderRoots {
     myVcsManager = projectLevelVcsManager;
   }
 
-  public Map<String, Map<VirtualFile, Collection<Change>>> getChangesByLists(@NotNull Collection<VirtualFile> rootsToSave) {
+  public Map<String, Map<VirtualFile, Collection<Change>>> getChangesByLists(@NotNull Collection<? extends VirtualFile> rootsToSave) {
     final Map<String, Map<VirtualFile, Collection<Change>>> result = new HashMap<>();
     myRoots = myVcsManager.getAllVcsRoots();
 
@@ -63,7 +63,7 @@ public class LocalChangesUnderRoots {
    * @return a map, whose keys are VCS roots (from the specified list) and values are {@link Change changes} from these roots.
    */
   @NotNull
-  public Map<VirtualFile, Collection<Change>> getChangesUnderRoots(@NotNull Collection<VirtualFile> rootsToSave) {
+  public Map<VirtualFile, Collection<Change>> getChangesUnderRoots(@NotNull Collection<? extends VirtualFile> rootsToSave) {
     Map<VirtualFile, Collection<Change>> result = new HashMap<>();
     final Collection<Change> allChanges = myChangeManager.getAllChanges();
     myRoots = myVcsManager.getAllVcsRoots();
@@ -72,7 +72,7 @@ public class LocalChangesUnderRoots {
     return result;
   }
 
-  private void addChangesToMap(Collection<VirtualFile> rootsToSave,
+  private void addChangesToMap(Collection<? extends VirtualFile> rootsToSave,
                                Map<VirtualFile, Collection<Change>> result,
                                Collection<? extends Change> allChanges) {
     for (Change change : allChanges) {
@@ -85,13 +85,13 @@ public class LocalChangesUnderRoots {
     }
   }
 
-  private void addChangeToMap(@NotNull Map<VirtualFile, Collection<Change>> result, @NotNull Change change, @NotNull ContentRevision revision, @NotNull Collection<VirtualFile> rootsToSave) {
+  private void addChangeToMap(@NotNull Map<VirtualFile, Collection<Change>> result, @NotNull Change change, @NotNull ContentRevision revision, @NotNull Collection<? extends VirtualFile> rootsToSave) {
     VirtualFile root = getRootForPath(revision.getFile(), rootsToSave);
     addChangeToMap(result, root, change);
   }
 
   @Nullable
-  private VirtualFile getRootForPath(@NotNull FilePath file, @NotNull Collection<VirtualFile> rootsToSave) {
+  private VirtualFile getRootForPath(@NotNull FilePath file, @NotNull Collection<? extends VirtualFile> rootsToSave) {
     final VirtualFile vf = ChangesUtil.findValidParentUnderReadAction(file);
     if (vf == null) {
       return null;

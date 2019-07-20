@@ -64,7 +64,7 @@ class PyTypeHintsInspection : PyInspection() {
       super.visitPyClass(node)
 
       if (node != null) {
-        val superClassExpressions = node.superClassExpressions.toList()
+        val superClassExpressions = node.superClassExpressions.asList()
 
         checkPlainGenericInheritance(superClassExpressions)
         checkGenericDuplication(superClassExpressions)
@@ -122,6 +122,12 @@ class PyTypeHintsInspection : PyInspection() {
       super.visitPyFunction(node)
 
       checkTypeCommentAndParameters(node)
+    }
+
+    override fun visitPyTargetExpression(node: PyTargetExpression) {
+      super.visitPyTargetExpression(node)
+
+      checkAnnotatedNonSelfAttribute(node)
     }
 
     private fun checkTypeVarPlacement(call: PyCallExpression, target: PyExpression?) {
@@ -246,7 +252,9 @@ class PyTypeHintsInspection : PyInspection() {
               PyTypingTypeProvider.GENERIC,
               PyTypingTypeProvider.OPTIONAL,
               PyTypingTypeProvider.CLASS_VAR,
-              PyTypingTypeProvider.NO_RETURN ->
+              PyTypingTypeProvider.NO_RETURN,
+              PyTypingTypeProvider.FINAL,
+              PyTypingTypeProvider.FINAL_EXT ->
                 registerProblem(base,
                                 "'${it.substringAfterLast('.')}' cannot be used with instance and class checks",
                                 ProblemHighlightType.GENERIC_ERROR)
@@ -275,14 +283,12 @@ class PyTypeHintsInspection : PyInspection() {
               val qName = it.qualifiedName
 
               when (qName) {
-                PyTypingTypeProvider.GENERIC -> {
-                  registerProblem(base, "'Generic' cannot be used with instance and class checks", ProblemHighlightType.GENERIC_ERROR)
-                  return@forEach
-                }
-
+                PyTypingTypeProvider.GENERIC,
                 PyTypingTypeProvider.UNION,
                 PyTypingTypeProvider.OPTIONAL,
-                PyTypingTypeProvider.CLASS_VAR -> {
+                PyTypingTypeProvider.CLASS_VAR,
+                PyTypingTypeProvider.FINAL,
+                PyTypingTypeProvider.FINAL_EXT -> {
                   registerProblem(base,
                                   "'${qName.substringAfterLast('.')}' cannot be used with instance and class checks",
                                   ProblemHighlightType.GENERIC_ERROR)
@@ -594,6 +600,23 @@ class PyTypeHintsInspection : PyInspection() {
           registerProblem(node.typeComment,
                           "The type of self '$commentSelfTypeDescription' is not a supertype of its class '$actualSelfTypeDescription'")
         }
+      }
+    }
+
+    private fun checkAnnotatedNonSelfAttribute(node: PyTargetExpression) {
+      val qualifier = node.qualifier ?: return
+      if (node.annotation == null && node.typeComment == null) return
+
+      val scopeOwner = ScopeUtil.getScopeOwner(node)
+      if (scopeOwner !is PyFunction) {
+        registerProblem(node, "Non-self attribute could not be type hinted")
+        return
+      }
+
+      val self = scopeOwner.parameterList.parameters.firstOrNull()?.takeIf { it.isSelf }
+      if (self == null ||
+          PyUtil.multiResolveTopPriority(qualifier, resolveContext).let { it.isNotEmpty() && it.all { e -> e != self }}) {
+        registerProblem(node, "Non-self attribute could not be type hinted")
       }
     }
 

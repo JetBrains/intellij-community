@@ -39,7 +39,7 @@ public class GitConflictResolver {
 
   private static final Logger LOG = Logger.getInstance(GitConflictResolver.class);
 
-  @NotNull private final Collection<VirtualFile> myRoots;
+  @NotNull private final Collection<? extends VirtualFile> myRoots;
   @NotNull private final Params myParams;
 
   @NotNull protected final Project myProject;
@@ -107,11 +107,11 @@ public class GitConflictResolver {
   }
 
   @Deprecated
-  public GitConflictResolver(@NotNull Project project, @NotNull Git git, @NotNull Collection<VirtualFile> roots, @NotNull Params params) {
+  public GitConflictResolver(@NotNull Project project, @NotNull Git git, @NotNull Collection<? extends VirtualFile> roots, @NotNull Params params) {
     this(project, roots, params);
   }
 
-  public GitConflictResolver(@NotNull Project project, @NotNull Collection<VirtualFile> roots, @NotNull Params params) {
+  public GitConflictResolver(@NotNull Project project, @NotNull Collection<? extends VirtualFile> roots, @NotNull Params params) {
     myProject = project;
     myRoots = roots;
     myParams = params;
@@ -222,7 +222,7 @@ public class GitConflictResolver {
 
   }
 
-  private void showMergeDialog(@NotNull Collection<VirtualFile> initiallyUnmergedFiles) {
+  private void showMergeDialog(@NotNull Collection<? extends VirtualFile> initiallyUnmergedFiles) {
     TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
     ApplicationManager.getApplication().invokeAndWait(() -> {
       MergeProvider mergeProvider = new GitMergeProvider(myProject, myParams.reverse);
@@ -243,7 +243,7 @@ public class GitConflictResolver {
    * @see #getUnmergedFiles(VirtualFile)
    */
   @NotNull
-  private Collection<VirtualFile> getUnmergedFiles(@NotNull Collection<VirtualFile> roots) throws VcsException {
+  private Collection<VirtualFile> getUnmergedFiles(@NotNull Collection<? extends VirtualFile> roots) throws VcsException {
     final Collection<VirtualFile> unmergedFiles = new HashSet<>();
     for (VirtualFile root : roots) {
       unmergedFiles.addAll(getUnmergedFiles(root));

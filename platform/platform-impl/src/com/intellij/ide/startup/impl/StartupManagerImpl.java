@@ -21,6 +21,7 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.DumbServiceImpl;
@@ -47,7 +48,6 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.FileNotFoundException;
 import java.util.*;
@@ -355,7 +355,7 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
       return;
     }
 
-    PooledThreadExecutor.INSTANCE.submit(() -> {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
       LOG.debug("FW/roots waiting started");
       while (true) {
         if (myProject.isDisposed()) return;
@@ -446,16 +446,18 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
 
   public void scheduleBackgroundPostStartupActivities() {
     myBackgroundPostStartupScheduledFuture = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
-      for (StartupActivity activity : StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.getIterable()) {
-        activity.runActivity(myProject);
-      }
+      BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, () -> {
+        for (StartupActivity activity : StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.getIterable()) {
+          activity.runActivity(myProject);
+        }
+      });
     }, 5, TimeUnit.SECONDS);
   }
 
   @Override
   public void dispose() {
     if (myBackgroundPostStartupScheduledFuture != null) {
-      myBackgroundPostStartupScheduledFuture.cancel(true);
+      myBackgroundPostStartupScheduledFuture.cancel(false);
     }
   }
 

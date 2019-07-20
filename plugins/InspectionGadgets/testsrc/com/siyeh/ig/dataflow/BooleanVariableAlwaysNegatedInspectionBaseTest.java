@@ -16,13 +16,13 @@
 package com.siyeh.ig.dataflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class BooleanVariableAlwaysNegatedInspectionBaseTest extends LightInspectionTestCase {
+public class BooleanVariableAlwaysNegatedInspectionBaseTest extends LightJavaInspectionTestCase {
 
   public void testSanity() {
     doMemberTest("void m() {" +

@@ -19,6 +19,13 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 
+/**
+ * @see com.intellij.diff.DiffRequestFactory
+ * @see com.intellij.diff.util.DiffUserDataKeysEx#MERGE_CANCEL_MESSAGE
+ * @see com.intellij.diff.util.DiffUserDataKeysEx#MERGE_CANCEL_HANDLER
+ * @see com.intellij.diff.util.DiffUserDataKeysEx#MERGE_ACTION_CAPTIONS
+ * @deprecated kept for API compatibility
+ */
 @Deprecated
 public abstract class ActionButtonPresentation {
   private final String myName;

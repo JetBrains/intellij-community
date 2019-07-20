@@ -10,13 +10,13 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.JavaPsiTestCase;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 
 @PlatformTestCase.WrapInCommand
-public class CoreJavaFileManagerTest extends PsiTestCase {
+public class CoreJavaFileManagerTest extends JavaPsiTestCase {
 
   public void testCommon() throws Exception {
     CoreJavaFileManager manager = configureManager("package foo;\n\n" +

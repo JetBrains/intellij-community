@@ -30,6 +30,7 @@ public class DataNode<T> implements UserDataHolderEx {
   @NotNull
   private final transient UserDataHolderBase userData = new UserDataHolderBase();
 
+  @Nullable
   private T data;
 
   private boolean ignored;
@@ -274,7 +275,9 @@ public class DataNode<T> implements UserDataHolderEx {
 
   @NotNull
   public static <T> DataNode<T> nodeCopy(@NotNull DataNode<T> dataNode) {
-    DataNode<T> copy = new DataNode<>(dataNode.key, dataNode.data, null);
+    DataNode<T> copy = new DataNode<>();
+    copy.key = dataNode.key;
+    copy.data = dataNode.data;
     copy.ignored = dataNode.ignored;
     copy.ready = dataNode.ready;
     dataNode.userData.copyCopyableDataTo(copy.userData);

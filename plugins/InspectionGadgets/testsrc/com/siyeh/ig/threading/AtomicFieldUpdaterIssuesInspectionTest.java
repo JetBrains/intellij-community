@@ -2,13 +2,13 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class AtomicFieldUpdaterIssuesInspectionTest extends LightInspectionTestCase {
+public class AtomicFieldUpdaterIssuesInspectionTest extends LightJavaInspectionTestCase {
 
   public void testAllGood() {
     doTest("import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;" +

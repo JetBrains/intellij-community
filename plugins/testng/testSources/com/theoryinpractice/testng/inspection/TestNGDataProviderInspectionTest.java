@@ -16,10 +16,10 @@
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class TestNGDataProviderInspectionTest extends LightCodeInsightFixtureTestCase {
+public class TestNGDataProviderInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testMissedDataProvider() {
 
     myFixture.testHighlighting(true, false, false, "MissedDataProvider.java");

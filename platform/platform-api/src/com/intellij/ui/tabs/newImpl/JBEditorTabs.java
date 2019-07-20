@@ -27,7 +27,7 @@ import java.util.function.Supplier;
  */
 public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
   /**
-   * @Deprecated use {@link #myTabPainter}.
+   * @deprecated use {@link #myTabPainter}.
    */
   @Deprecated
   protected JBEditorTabsPainter myDefaultPainter = new DefaultEditorTabsPainter(this);

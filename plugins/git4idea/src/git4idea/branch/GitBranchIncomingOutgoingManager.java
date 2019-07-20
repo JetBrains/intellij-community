@@ -248,7 +248,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   @NotNull
   private Map<GitLocalBranch, Hash> calcBranchesToPullForRemote(@NotNull GitRepository repository,
                                                                 @NotNull GitRemote gitRemote,
-                                                                @NotNull Collection<GitBranchTrackInfo> trackInfoList,
+                                                                @NotNull Collection<? extends GitBranchTrackInfo> trackInfoList,
                                                                 GitAuthenticationMode mode) {
     Map<GitLocalBranch, Hash> result = new HashMap<>();
     GitBranchesCollection branchesCollection = repository.getBranches();

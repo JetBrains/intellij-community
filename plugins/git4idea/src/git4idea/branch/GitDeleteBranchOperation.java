@@ -57,7 +57,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   @NotNull private final Map<GitRepository, String> myDeletedBranchTips;
 
   GitDeleteBranchOperation(@NotNull Project project, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,
-                           @NotNull Collection<GitRepository> repositories, @NotNull String branchName) {
+                           @NotNull Collection<? extends GitRepository> repositories, @NotNull String branchName) {
     super(project, git, uiHandler, repositories);
     myBranchName = branchName;
     myNotifier = VcsNotifier.getInstance(myProject);
@@ -275,7 +275,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   }
 
   @NotNull
-  private static Map<GitRepository, GitRemoteBranch> findTrackedBranches(@NotNull Collection<GitRepository> repositories,
+  private static Map<GitRepository, GitRemoteBranch> findTrackedBranches(@NotNull Collection<? extends GitRepository> repositories,
                                                                          @NotNull String localBranchName) {
     Map<GitRepository, GitRemoteBranch> trackedBranches = new HashMap<>();
     for (GitRepository repository : repositories) {

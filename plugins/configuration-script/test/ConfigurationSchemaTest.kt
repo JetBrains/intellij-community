@@ -1,6 +1,6 @@
 package com.intellij.configurationScript
 
-import com.intellij.codeInsight.completion.CompletionTestCase
+import com.intellij.codeInsight.completion.JavaCompletionTestCase
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.configurationScript.schemaGenerators.ComponentStateJsonSchemaGenerator
@@ -18,7 +18,7 @@ import org.intellij.lang.annotations.Language
 import java.nio.file.Paths
 
 // this test requires YamlJsonSchemaCompletionContributor, that's why intellij.yaml is added as test dependency
-internal class ConfigurationSchemaTest : CompletionTestCase() {
+internal class ConfigurationSchemaTest : JavaCompletionTestCase() {
   companion object {
     private val testSnapshotDir = Paths.get(getCommunityPath(), "plugins/configuration-script", "testSnapshots")
   }

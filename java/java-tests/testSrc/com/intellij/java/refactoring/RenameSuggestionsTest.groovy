@@ -8,11 +8,11 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler
-import com.intellij.testFramework.LightCodeInsightTestCase
+import com.intellij.testFramework.LightJavaCodeInsightTestCase
 import groovy.transform.CompileStatic
 
 @CompileStatic
-class RenameSuggestionsTest extends LightCodeInsightTestCase {
+class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
   void "test by parameter name"() {
     def text = """\
      class Test {

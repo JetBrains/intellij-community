@@ -36,10 +36,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -262,7 +259,7 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
     myChangedFilesCollector = new ChangedFilesCollector();
     myConnection = connection;
 
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, myChangedFilesCollector);
+    VirtualFileManager.getInstance().addAsyncFileListener(myChangedFilesCollector, this);
 
     initComponent();
   }
@@ -283,7 +280,7 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
 
   boolean processChangedFiles(@NotNull Project project, @NotNull Processor<? super VirtualFile> processor) {
     // avoid missing files when events are processed concurrently
-    return Stream.concat(myChangedFilesCollector.myVfsEventsMerger.getChangedFiles(),
+    return Stream.concat(myChangedFilesCollector.getEventMerger().getChangedFiles(),
                          myChangedFilesCollector.myFilesToUpdate.values().stream())
       .filter(filesToBeIndexedForProjectCondition(project))
       .distinct()
@@ -311,7 +308,7 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
     // but it is more costly than current code, see IDEA-192192
     //myChangedFilesCollector.invalidateIndicesRecursively(file, false);
     //myChangedFilesCollector.buildIndicesForFileRecursively(file, false);
-    myChangedFilesCollector.invalidateIndicesRecursively(file, true);
+    myChangedFilesCollector.invalidateIndicesRecursively(file, true, myChangedFilesCollector.getEventMerger());
     if (myInitialized) myChangedFilesCollector.ensureUpToDateAsync();
   }
 
@@ -1861,7 +1858,6 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
 
   private final class ChangedFilesCollector extends IndexedFilesListener {
     private final IntObjectMap<VirtualFile> myFilesToUpdate = ContainerUtil.createConcurrentIntObjectMap();
-    private final VfsEventsMerger myVfsEventsMerger = new VfsEventsMerger();
     private final AtomicInteger myProcessedEventIndex = new AtomicInteger();
     private final Phaser myWorkersFinishedSync = new Phaser() {
       @Override
@@ -1896,18 +1892,6 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
           set.iterateIndexableFilesIn(file, iterator);
         }
       }
-    }
-
-    @Override
-    protected void buildIndicesForFile(@NotNull VirtualFile file, boolean contentChange) {
-      int fileId = getIdMaskingNonIdBasedFile(file);
-      myVfsEventsMerger.recordFileEvent(fileId, file, contentChange);
-    }
-
-    @Override
-    protected void doInvalidateIndicesForFile(@NotNull VirtualFile file, boolean contentChange) {
-      final int fileId = Math.abs(getIdMaskingNonIdBasedFile(file));
-      myVfsEventsMerger.recordBeforeFileEvent(fileId, file, contentChange);
     }
 
     void scheduleForUpdate(VirtualFile file) {
@@ -1952,14 +1936,26 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
     }
 
     @Override
-    public void before(@NotNull List<? extends VFileEvent> events) {
-      for (VFileEvent event : events) {
-        if (memoryStorageCleaningNeeded(event)) {
-          cleanupMemoryStorage(false);
-          break;
+    @NotNull
+    public AsyncFileListener.ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
+      boolean shouldCleanup = ContainerUtil.exists(events, this::memoryStorageCleaningNeeded);
+      ChangeApplier superApplier = super.prepareChange(events);
+
+      return new AsyncFileListener.ChangeApplier() {
+        @Override
+        public void beforeVfsChange() {
+          if (shouldCleanup) {
+            cleanupMemoryStorage(false);
+          }
+          superApplier.beforeVfsChange();
         }
-      }
-      super.before(events);
+
+        @Override
+        public void afterVfsChange() {
+          superApplier.afterVfsChange();
+          if (myInitialized) ensureUpToDateAsync();
+        }
+      };
     }
 
     private boolean memoryStorageCleaningNeeded(VFileEvent event) {
@@ -1967,13 +1963,6 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
       return requestor instanceof FileDocumentManager ||
           requestor instanceof PsiManager ||
           requestor == LocalHistory.VFS_EVENT_REQUESTOR;
-    }
-
-    @Override
-    public void after(@NotNull List<? extends VFileEvent> events) {
-      super.after(events);
-
-      if (myInitialized) ensureUpToDateAsync();
     }
 
     boolean isScheduledForUpdate(VirtualFile file) {
@@ -1995,7 +1984,7 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
     }
 
     void ensureUpToDateAsync() {
-      if (myVfsEventsMerger.getApproximateChangesCount() >= 20 && myScheduledVfsEventsWorkers.compareAndSet(0,1)) {
+      if (getEventMerger().getApproximateChangesCount() >= 20 && myScheduledVfsEventsWorkers.compareAndSet(0,1)) {
         myVfsEventsExecutor.submit(this::scheduledEventProcessingInReadActionWithYieldingToWriteAction);
 
         if (Registry.is("try.starting.dumb.mode.where.many.files.changed")) {
@@ -2026,7 +2015,7 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
     private void processFilesInReadAction() {
       assert ApplicationManager.getApplication().isReadAccessAllowed(); // no vfs events -> event processing code can finish
 
-      int publishedEventIndex = myVfsEventsMerger.getPublishedEventIndex();
+      int publishedEventIndex = getEventMerger().getPublishedEventIndex();
       int processedEventIndex = myProcessedEventIndex.get();
       if (processedEventIndex == publishedEventIndex) {
         return;
@@ -2035,7 +2024,7 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
       myWorkersFinishedSync.register();
       int phase = myWorkersFinishedSync.getPhase();
       try {
-        myVfsEventsMerger.processChanges(info ->
+        getEventMerger().processChanges(info ->
           ConcurrencyUtil.withLock(myWriteLock, () -> {
             try {
               ProgressManager.getInstance().executeNonCancelableSection(() -> {
@@ -2061,13 +2050,13 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
 
       myWorkersFinishedSync.awaitAdvance(phase);
 
-      if (myVfsEventsMerger.getPublishedEventIndex() == publishedEventIndex) {
+      if (getEventMerger().getPublishedEventIndex() == publishedEventIndex) {
         myProcessedEventIndex.compareAndSet(processedEventIndex, publishedEventIndex);
       }
     }
 
     private void processFilesInReadActionWithYieldingToWriteAction() {
-      while (myVfsEventsMerger.hasChanges()) {
+      while (getEventMerger().hasChanges()) {
         if (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(this::processFilesInReadAction)) {
           ProgressIndicatorUtils.yieldToPendingWriteActions();
         }
@@ -2248,7 +2237,7 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
             VirtualFile virtualFile = file.getVirtualFile();
 
             if (virtualFile instanceof VirtualFileWithId) {
-              myChangedFilesCollector.myVfsEventsMerger.recordTransientStateChangeEvent(getFileId(virtualFile), virtualFile);
+              myChangedFilesCollector.getEventMerger().recordTransientStateChangeEvent(virtualFile);
             }
           }
         }

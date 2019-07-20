@@ -7,7 +7,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import junit.framework.ComparisonFailure;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,7 +18,7 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 
-public class RichCopyTest extends LightPlatformCodeInsightFixtureTestCase {
+public class RichCopyTest extends BasePlatformTestCase {
   private static final String PLATFORM_SPECIFIC_PLACEHOLDER = "___PLATFORM_SPECIFIC___";
 
   public void testNormalSelection() throws Exception {

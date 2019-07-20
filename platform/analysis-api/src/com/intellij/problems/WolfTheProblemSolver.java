@@ -55,6 +55,9 @@ public abstract class WolfTheProblemSolver {
    */
   public abstract void clearProblemsFromExternalSource(@NotNull VirtualFile file, @NotNull Object source);
 
+  /**
+   * @deprecated use {@link com.intellij.problems.ProblemListener} directly
+   */
   @Deprecated
   public abstract static class ProblemListener implements com.intellij.problems.ProblemListener {
     @Override

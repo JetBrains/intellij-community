@@ -209,12 +209,20 @@ public class SearchTextField extends JPanel {
     }
   }
 
+  /**
+   * @deprecated unused
+   */
   @Deprecated
+  @SuppressWarnings("unused")
   protected boolean isSearchControlUISupported() {
     return true;
   }
 
+  /**
+   * @deprecated unused
+   */
   @Deprecated
+  @SuppressWarnings("unused")
   protected boolean hasIconsOutsideOfTextField() {
     return false;
   }
@@ -494,6 +502,9 @@ public class SearchTextField extends JPanel {
     return false;
   }
 
+  /**
+   * @deprecated unused
+   */
   @Deprecated
   @SuppressWarnings("unused")
   public void setSearchIcon(final Icon icon) {

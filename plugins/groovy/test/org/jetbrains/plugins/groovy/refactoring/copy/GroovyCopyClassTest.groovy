@@ -6,12 +6,12 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.PsiClass
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.refactoring.copy.CopyClassesHandler
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author peter
  */
-class GroovyCopyClassTest extends LightCodeInsightFixtureTestCase {
+class GroovyCopyClassTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {

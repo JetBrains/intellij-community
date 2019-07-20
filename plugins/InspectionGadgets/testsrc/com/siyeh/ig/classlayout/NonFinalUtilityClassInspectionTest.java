@@ -4,20 +4,20 @@ package com.siyeh.ig.classlayout;
 import com.intellij.codeInspection.inheritance.ImplicitSubclassProvider;
 import com.intellij.psi.PsiClass;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class NonFinalUtilityClassInspectionTest extends LightCodeInsightFixtureTestCase {
+public class NonFinalUtilityClassInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   private final DedicatedClassNameImplicitSubclassProvider myImplicitSubclassProvider =
     new DedicatedClassNameImplicitSubclassProvider("ConcreteNoUtilityClass");
 
   @Override
   protected String getBasePath() {
-    return LightInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/classlayout/non_final_utility_class";
+    return LightJavaInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/classlayout/non_final_utility_class";
   }
 
   @Override

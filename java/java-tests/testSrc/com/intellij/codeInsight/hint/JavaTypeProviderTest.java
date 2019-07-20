@@ -8,11 +8,11 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.intellij.lang.annotations.Language;
 
 @SuppressWarnings("HtmlDeprecatedAttribute")
-public class JavaTypeProviderTest extends LightCodeInsightTestCase {
+public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
   public void testRangeHint() {
     doTest("  void test(int x) {\n" +
            "    x = Math.abs(x);\n" +

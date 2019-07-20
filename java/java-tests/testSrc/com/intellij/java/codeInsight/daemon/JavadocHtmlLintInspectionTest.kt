@@ -7,7 +7,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import java.io.File
 
 private val DESCRIPTOR = object : DefaultLightProjectDescriptor() {
@@ -18,7 +18,7 @@ private val DESCRIPTOR = object : DefaultLightProjectDescriptor() {
   }
 }
 
-class JavadocHtmlLintInspectionTest : LightCodeInsightFixtureTestCase() {
+class JavadocHtmlLintInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor(): LightProjectDescriptor = DESCRIPTOR
 
   fun testNoComment() = doTest("class C { }")

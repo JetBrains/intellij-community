@@ -16,10 +16,10 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class UnnecessaryFinalOnLocalVariableOrParameterInspectionJava8Test extends LightInspectionTestCase {
+public class UnnecessaryFinalOnLocalVariableOrParameterInspectionJava8Test extends LightJavaInspectionTestCase {
 
   public void testFinalWithoutInnerClass() {
     doTest("class Issue {\n" +

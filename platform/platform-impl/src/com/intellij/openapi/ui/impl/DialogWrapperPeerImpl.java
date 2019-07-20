@@ -547,6 +547,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       UIUtil.setAutoRequestFocus(this, !Registry.is("suppress.focus.stealing"));
     }
 
+    /**
+     * @deprecated use {@link MyDialog#MyDialog(Window, DialogWrapper, Project, ActionCallback)}
+     */
     @Deprecated
     MyDialog(Window owner,
              DialogWrapper dialogWrapper,

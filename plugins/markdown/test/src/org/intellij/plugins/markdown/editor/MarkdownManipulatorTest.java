@@ -18,11 +18,11 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.intellij.plugins.markdown.lang.MarkdownFileType;
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl;
 
-public class MarkdownManipulatorTest extends LightPlatformCodeInsightFixtureTestCase {
+public class MarkdownManipulatorTest extends BasePlatformTestCase {
   public void testSimpleCodeFence() {
     doTest("```text\n" +
            "Runti<caret>me\n" +
@@ -164,9 +164,7 @@ public class MarkdownManipulatorTest extends LightPlatformCodeInsightFixtureTest
            "Runti<caret>me\n" +
            "```",
            "```singleton_class",
-           "```text\n" +
-           "Runtime\n" +
-           "```");
+           "```singleton_class");
   }
 
   public void testThreeTildaCodeFence() {
@@ -174,9 +172,7 @@ public class MarkdownManipulatorTest extends LightPlatformCodeInsightFixtureTest
            "Runti<caret>me\n" +
            "```",
            "~~~singleton_class",
-           "```text\n" +
-           "Runtime\n" +
-           "```");
+           "~~~singleton_class");
   }
 
   public void doTest(String text, String newContent, String expectedText) {

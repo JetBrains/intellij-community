@@ -6,12 +6,12 @@ package com.intellij.codeInsight;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 
-public abstract class AbstractEnterActionTestCase extends LightCodeInsightTestCase {
+public abstract class AbstractEnterActionTestCase extends LightJavaCodeInsightTestCase {
   private static final String TEST_PATH = "/codeInsight/enterAction/";
 
   protected void doGetIndentTest(final PsiFile file, final int lineNum, final String expected) {

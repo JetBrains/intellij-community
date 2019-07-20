@@ -12,7 +12,7 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * @author Vitaliy.Bibaev
  */
-public abstract class StreamChainBuilderTestCase extends LightCodeInsightTestCase {
+public abstract class StreamChainBuilderTestCase extends LightJavaCodeInsightTestCase {
   private final StreamChainBuilder myBuilder = new JavaStreamChainBuilder(
     new JavaChainTransformerImpl(),
     PackageChainDetector.Companion.forJavaStreams("java.util.stream")

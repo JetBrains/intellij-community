@@ -121,8 +121,9 @@ return yylength()-s.length();
   "}" { return fStringHelper.handleRightBracketInFragment(PyTokenTypes.RBRACE); }
         
   {FSTRING_FRAGMENT_TYPE_CONVERSION} { return PyTokenTypes.FSTRING_FRAGMENT_TYPE_CONVERSION; }
-        
+
   ":" { return fStringHelper.handleColonInFragment(); }
+  ":=" { return fStringHelper.handleColonEqInFragment(); }
 
   {SINGLE_QUOTED_STRING} { return fStringHelper.handleStringLiteral(PyTokenTypes.SINGLE_QUOTED_STRING); }
   {TRIPLE_QUOTED_STRING} { return fStringHelper.handleStringLiteral(PyTokenTypes.TRIPLE_QUOTED_STRING); }
@@ -265,6 +266,7 @@ return PyTokenTypes.DOCSTRING; }
 "`"                   { return PyTokenTypes.TICK; }
 "="                   { return PyTokenTypes.EQ; }
 ";"                   { return PyTokenTypes.SEMICOLON; }
+":="                  { return PyTokenTypes.COLONEQ; }
 
 {FSTRING_START}       { return fStringHelper.handleFStringStart(); }
 

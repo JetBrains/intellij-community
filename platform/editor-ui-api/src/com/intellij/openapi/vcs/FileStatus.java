@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,19 @@ import java.awt.*;
 
 @SuppressWarnings("UseJBColor")
 public interface FileStatus {
+  /** @deprecated use {@link FileStatus#getColor} */
   @Deprecated Color COLOR_MERGE = new Color(117, 3, 220);
+  /** @deprecated use {@link FileStatus#getColor} */
   @Deprecated Color COLOR_MODIFIED = new Color(0, 50, 160);
+  /** @deprecated use {@link FileStatus#getColor} */
   @Deprecated Color COLOR_MISSING = Gray._97;
+  /** @deprecated use {@link FileStatus#getColor} */
   @Deprecated Color COLOR_ADDED = new Color(10, 119, 0);
+  /** @deprecated use {@link FileStatus#getColor} */
   @Deprecated Color COLOR_OUT_OF_DATE = Color.yellow.darker().darker();
+  /** @deprecated use {@link FileStatus#getColor} */
   @Deprecated Color COLOR_SWITCHED = new Color(8, 151, 143);
+  /** @deprecated use {@link FileStatus#getColor} */
   @Deprecated Color COLOR_UNKNOWN = new Color(153, 51, 0);
 
   FileStatus NOT_CHANGED = FileStatusFactory.getInstance().createFileStatus("NOT_CHANGED", VcsBundle.message("file.status.name.up.to.date"));

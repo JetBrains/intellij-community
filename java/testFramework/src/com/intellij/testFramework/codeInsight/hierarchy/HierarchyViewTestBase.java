@@ -15,7 +15,7 @@
  */
 package com.intellij.testFramework.codeInsight.hierarchy;
 
-import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -27,7 +27,7 @@ import java.io.IOException;
 /**
  * Checks tree structure for Type Hierarchy (Ctrl+H), Call Hierarchy (Ctrl+Alt+H), Method Hierarchy (Ctrl+Shift+H).
  */
-public abstract class HierarchyViewTestBase extends CodeInsightTestCase {
+public abstract class HierarchyViewTestBase extends JavaCodeInsightTestCase {
   private final HierarchyViewTestFixture myFixture = new HierarchyViewTestFixture();
 
   protected abstract String getBasePath();

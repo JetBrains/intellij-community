@@ -11,10 +11,10 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
-public class FindUsages15Test extends PsiTestCase{
+public class FindUsages15Test extends JavaPsiTestCase {
 
   @Override
   protected void setUp() throws Exception {

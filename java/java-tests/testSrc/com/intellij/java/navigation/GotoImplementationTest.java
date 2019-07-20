@@ -16,7 +16,7 @@
 package com.intellij.java.navigation;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.codeInsight.navigation.ClassImplementationsSearch;
 import com.intellij.codeInsight.navigation.MethodImplementationsSearch;
 import com.intellij.openapi.module.Module;
@@ -39,7 +39,7 @@ import java.util.Set;
 /**
  * @author cdr
  */
-public class GotoImplementationTest extends CodeInsightTestCase {
+public class GotoImplementationTest extends JavaCodeInsightTestCase {
 
   private static Collection<PsiElement> getClassImplementations(final PsiClass psiClass) {
     CommonProcessors.CollectProcessor<PsiElement> processor = new CommonProcessors.CollectProcessor<>();

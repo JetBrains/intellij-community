@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Max Medvedev
  */
-class StringValueTest extends LightCodeInsightFixtureTestCase {
+class StringValueTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     "${TestUtils.testDataPath}stringValues/"

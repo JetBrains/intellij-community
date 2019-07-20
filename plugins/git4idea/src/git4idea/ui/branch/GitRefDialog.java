@@ -124,7 +124,7 @@ public class GitRefDialog extends DialogWrapper {
 
 
   @NotNull
-  private static Collection<VcsRef> collectCommonVcsRefs(@NotNull Stream<VcsRef> stream) {
+  private static Collection<VcsRef> collectCommonVcsRefs(@NotNull Stream<? extends VcsRef> stream) {
     MultiMap<VirtualFile, VcsRef> map = MultiMap.create();
     stream.forEach(ref -> map.putValue(ref.getRoot(), ref));
 
@@ -134,8 +134,8 @@ public class GitRefDialog extends DialogWrapper {
 
   private static class MyVcsRefCompletionProvider extends VcsRefCompletionProvider {
     MyVcsRefCompletionProvider(@NotNull VcsLogRefs refs,
-                                      @NotNull Collection<VirtualFile> roots,
-                                      @NotNull Comparator<VcsRef> comparator) {
+                                      @NotNull Collection<? extends VirtualFile> roots,
+                                      @NotNull Comparator<? super VcsRef> comparator) {
       super(refs, roots, new VcsRefDescriptor(comparator));
     }
 
@@ -153,11 +153,11 @@ public class GitRefDialog extends DialogWrapper {
   }
 
   private static class MySimpleCompletionListProvider extends TwoStepCompletionProvider<GitReference> {
-    @NotNull private final List<GitBranch> myBranches;
-    @NotNull private final FutureResult<Collection<GitTag>> myTagsFuture;
+    @NotNull private final List<? extends GitBranch> myBranches;
+    @NotNull private final FutureResult<? extends Collection<GitTag>> myTagsFuture;
 
-    MySimpleCompletionListProvider(@NotNull List<GitBranch> branches,
-                                          @NotNull FutureResult<Collection<GitTag>> tagsFuture) {
+    MySimpleCompletionListProvider(@NotNull List<? extends GitBranch> branches,
+                                          @NotNull FutureResult<? extends Collection<GitTag>> tagsFuture) {
       super(new GitReferenceDescriptor());
       myBranches = branches;
       myTagsFuture = tagsFuture;
@@ -184,9 +184,9 @@ public class GitRefDialog extends DialogWrapper {
   }
 
   private static class VcsRefDescriptor extends DefaultTextCompletionValueDescriptor<VcsRef> {
-    @NotNull private final Comparator<VcsRef> myReferenceComparator;
+    @NotNull private final Comparator<? super VcsRef> myReferenceComparator;
 
-    private VcsRefDescriptor(@NotNull Comparator<VcsRef> comparator) {
+    private VcsRefDescriptor(@NotNull Comparator<? super VcsRef> comparator) {
       myReferenceComparator = comparator;
     }
 

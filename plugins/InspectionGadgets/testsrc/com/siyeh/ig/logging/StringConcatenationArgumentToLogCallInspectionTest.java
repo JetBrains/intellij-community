@@ -1,9 +1,9 @@
 package com.siyeh.ig.logging;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
-public class StringConcatenationArgumentToLogCallInspectionTest extends LightInspectionTestCase {
+public class StringConcatenationArgumentToLogCallInspectionTest extends LightJavaInspectionTestCase {
   @Override
   protected LocalInspectionTool getInspection() {
     final StringConcatenationArgumentToLogCallInspection inspection = new StringConcatenationArgumentToLogCallInspection();

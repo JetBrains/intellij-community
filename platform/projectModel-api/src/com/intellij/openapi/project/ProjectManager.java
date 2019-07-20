@@ -3,12 +3,14 @@ package com.intellij.openapi.project;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.util.messages.Topic;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -91,10 +93,13 @@ public abstract class ProjectManager {
    *         or because the project is already open.
    * @throws IOException          if the project file was not found or failed to read
    * @throws JDOMException        if the project file contained invalid XML
-   * @throws InvalidDataException if the project file contained invalid data
    */
   @Nullable
-  public abstract Project loadAndOpenProject(@NotNull String filePath) throws IOException, JDOMException, InvalidDataException;
+  public abstract Project loadAndOpenProject(@NotNull String filePath) throws IOException, JDOMException;
+
+  @ApiStatus.Experimental
+  @TestOnly
+  public abstract Project loadAndOpenProject(@NotNull File file) throws IOException, JDOMException;
 
   /**
    * Closes the specified project, but does not dispose it.

@@ -2,10 +2,10 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class NewExceptionWithoutArgumentsInspectionTest extends LightInspectionTestCase {
+public class NewExceptionWithoutArgumentsInspectionTest extends LightJavaInspectionTestCase {
 
   public void testNewExceptionWithoutArguments() {
     doTest();

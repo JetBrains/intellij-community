@@ -16,6 +16,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -238,14 +239,15 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
     if (modifierList == null) return null;
     for (PsiAnnotation annotation : modifierList.getAnnotations()) {
       if (container instanceof PsiPackage) {
-        PsiFile file = annotation.getContainingFile();
-        ProjectFileIndex index = ProjectRootManager.getInstance(file.getProject()).getFileIndex();
-        VirtualFile annotationFile = file.getVirtualFile();
-        VirtualFile annotationRoot = annotationFile == null ? null : index.getClassRootForFile(annotationFile);
-        VirtualFile ownerFile = owner.getContainingFile().getVirtualFile();
-        VirtualFile ownerRoot = ownerFile == null ? null : index.getClassRootForFile(ownerFile);
-        if (ownerRoot != null && !ownerRoot.equals(annotationRoot)) {
-          continue;
+        VirtualFile annotationFile = PsiUtilCore.getVirtualFile(annotation);
+        VirtualFile ownerFile = PsiUtilCore.getVirtualFile(owner);
+        if (annotationFile != null && ownerFile != null && !annotationFile.equals(ownerFile)) {
+          ProjectFileIndex index = ProjectRootManager.getInstance(container.getProject()).getFileIndex();
+          VirtualFile annotationRoot = index.getClassRootForFile(annotationFile);
+          VirtualFile ownerRoot = index.getClassRootForFile(ownerFile);
+          if (ownerRoot != null && !ownerRoot.equals(annotationRoot)) {
+            continue;
+          }
         }
       }
       NullabilityAnnotationInfo result = checkNullityDefault(annotation, placeTargetTypes, superPackage);

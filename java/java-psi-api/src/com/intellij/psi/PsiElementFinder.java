@@ -24,6 +24,9 @@ import java.util.Set;
 public abstract class PsiElementFinder {
   public static final ProjectExtensionPointName<PsiElementFinder> EP = new ProjectExtensionPointName<>("com.intellij.java.elementFinder");
 
+  /**
+   * @deprecated use {@link #EP}
+   */
   @Deprecated
   public static final ExtensionPointName<PsiElementFinder> EP_NAME = ExtensionPointName.create("com.intellij.java.elementFinder");
 

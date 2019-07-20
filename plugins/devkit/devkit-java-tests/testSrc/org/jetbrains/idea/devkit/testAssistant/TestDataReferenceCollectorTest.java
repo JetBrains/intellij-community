@@ -19,7 +19,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
@@ -29,7 +29,7 @@ import java.util.List;
  * @author yole
  */
 @TestDataPath("$CONTENT_ROOT/testData/")
-public class TestDataReferenceCollectorTest extends LightCodeInsightFixtureTestCase {
+public class TestDataReferenceCollectorTest extends LightJavaCodeInsightFixtureTestCase {
   public void testDoTestParameters() {
     final List<String> references = doTest();
     assertEquals(1, references.size());

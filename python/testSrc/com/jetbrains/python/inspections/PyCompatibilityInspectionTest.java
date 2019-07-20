@@ -215,6 +215,11 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
     doTest(LanguageLevel.PYTHON34);
   }
 
+  // PY-36009
+  public void testEqualitySignInFStrings() {
+    doTest(LanguageLevel.PYTHON38);
+  }
+
   public void testInputFromSixLib() {
     doTest(LanguageLevel.PYTHON27);
   }
@@ -228,6 +233,11 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
         "    pass"
       )
     );
+  }
+
+  // PY-33886
+  public void testAssignmentExpressions() {
+    doTest(LanguageLevel.PYTHON38);
   }
 
   private void doTest(@NotNull LanguageLevel level) {

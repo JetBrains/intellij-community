@@ -16,12 +16,12 @@
 package com.siyeh.ig.resources;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class SocketResourceInspectionTest extends LightInspectionTestCase {
+public class SocketResourceInspectionTest extends LightJavaInspectionTestCase {
 
   public void testNoCloseNoVar() {
     doTest("import java.io.*;" +

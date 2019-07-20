@@ -37,14 +37,14 @@ public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
   }
 
   @Override
-  protected void checkout(@NotNull String taskName, @NotNull List<HgRepository> repos, @Nullable Runnable callInAwtLater) {
+  protected void checkout(@NotNull String taskName, @NotNull List<? extends HgRepository> repos, @Nullable Runnable callInAwtLater) {
     HgUpdateCommand.updateTo(
       !HgBranchUtil.getCommonBookmarks(repos).contains(taskName) ? "head() and not bookmark() and branch(\"" + taskName + "\")" : taskName,
       repos, callInAwtLater);
   }
 
   @Override
-  protected void checkoutAsNewBranch(@NotNull String name, @NotNull List<HgRepository> repositories) {
+  protected void checkoutAsNewBranch(@NotNull String name, @NotNull List<? extends HgRepository> repositories) {
     HgBookmarkCommand.createBookmarkAsynchronously(repositories, name, true);
   }
 
@@ -64,7 +64,7 @@ public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
   }
 
   @Override
-  protected void mergeAndClose(@NotNull final String branch, @NotNull final List<HgRepository> repositories) {
+  protected void mergeAndClose(@NotNull final String branch, @NotNull final List<? extends HgRepository> repositories) {
     String bookmarkRevisionArg = "bookmark(\"" + branch + "\")";
     FileDocumentManager.getInstance().saveAllDocuments();
     final UpdatedFiles updatedFiles = UpdatedFiles.create();

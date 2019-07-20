@@ -116,12 +116,12 @@ public class GitShowExternalLogAction extends DumbAwareAction {
   }
 
   @NotNull
-  private static String calcLogId(@NotNull List<VirtualFile> roots) {
+  private static String calcLogId(@NotNull List<? extends VirtualFile> roots) {
     return EXTERNAL + " " + StringUtil.join(roots, VirtualFile::getPath, File.pathSeparator);
   }
 
   @NotNull
-  private static String calcTabName(@NotNull ContentManager cm, @NotNull List<VirtualFile> roots) {
+  private static String calcTabName(@NotNull ContentManager cm, @NotNull List<? extends VirtualFile> roots) {
     String name = VcsLogContentProvider.TAB_NAME + " (" + roots.get(0).getName();
     if (roots.size() > 1) {
       name += "+";

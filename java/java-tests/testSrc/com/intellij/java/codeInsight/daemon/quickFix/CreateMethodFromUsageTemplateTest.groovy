@@ -10,14 +10,14 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 
 /**
  * @author ven
  */
 @CompileStatic
-class CreateMethodFromUsageTemplateTest extends LightCodeInsightFixtureTestCase {
+class CreateMethodFromUsageTemplateTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testTemplateAssertions() throws Exception {
     myFixture.configureByText "a.java", """

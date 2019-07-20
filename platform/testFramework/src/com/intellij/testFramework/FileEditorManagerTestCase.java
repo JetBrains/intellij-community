@@ -13,7 +13,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.util.ui.UIUtil;
@@ -32,7 +32,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * @author Dmitry Avdeev
  */
-public abstract class FileEditorManagerTestCase extends LightPlatformCodeInsightFixtureTestCase {
+public abstract class FileEditorManagerTestCase extends BasePlatformTestCase {
   protected FileEditorManagerImpl myManager;
   private FileEditorManager myOldManager;
   private Set<DockContainer> myOldDockContainers;

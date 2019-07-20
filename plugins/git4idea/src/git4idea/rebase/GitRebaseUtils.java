@@ -44,7 +44,7 @@ public class GitRebaseUtils {
   }
 
   public static void rebase(@NotNull final Project project,
-                            @NotNull final List<GitRepository> repositories,
+                            @NotNull final List<? extends GitRepository> repositories,
                             @NotNull final GitRebaseParams params,
                             @NotNull final ProgressIndicator indicator) {
     if (!isRebaseAllowed(project, repositories)) return;  // TODO maybe move to the outside
@@ -121,7 +121,7 @@ public class GitRebaseUtils {
                               Collections.emptyMap(), indicator, null, true).abortWithConfirmation();
   }
 
-  private static boolean isRebaseAllowed(@NotNull Project project, @NotNull Collection<GitRepository> repositories) {
+  private static boolean isRebaseAllowed(@NotNull Project project, @NotNull Collection<? extends GitRepository> repositories) {
     // TODO links to 'rebase', 'resolve conflicts', etc.
     for (GitRepository repository : repositories) {
       Repository.State state = repository.getState();

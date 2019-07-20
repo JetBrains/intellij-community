@@ -4,11 +4,11 @@ package com.intellij.java.codeInsight.folding
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import junit.framework.TestCase
 
 class JavaFoldingTypeInferenceFoldingTest : JavaFoldingTestCase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor = LightCodeInsightFixtureTestCase.JAVA_X
+  override fun getProjectDescriptor(): LightProjectDescriptor = LightJavaCodeInsightFixtureTestCase.JAVA_X
 
   private open class FoldRegionPart(val offset: Int)
   private class FoldRegionStart(offset: Int, val placeholder: String) : FoldRegionPart(offset)

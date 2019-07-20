@@ -19,12 +19,12 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 
 /**
  * @author Rustam Vishnyakov
  */
-public class JavaEnterInStringLiteralTest extends LightCodeInsightTestCase {
+public class JavaEnterInStringLiteralTest extends LightJavaCodeInsightTestCase {
   private static final String BASE_PATH = "/codeInsight/editorActions/stringLiteral/";
 
   public void testEnter() {

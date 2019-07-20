@@ -12,7 +12,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.SkipSlowTestLocally;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.propertyBased.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +27,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 @SkipSlowTestLocally
-public class Java12SwitchExpressionSanityTest extends LightCodeInsightFixtureTestCase {
+public class Java12SwitchExpressionSanityTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   protected void tearDown() throws Exception {

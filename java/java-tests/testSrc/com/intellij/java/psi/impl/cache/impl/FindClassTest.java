@@ -25,7 +25,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.util.FindClassUtil;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 
@@ -37,7 +37,7 @@ import java.util.List;
 /**
  * @author max
  */
-public class FindClassTest extends PsiTestCase {
+public class FindClassTest extends JavaPsiTestCase {
   private VirtualFile myPrjDir1;
   private VirtualFile mySrcDir1;
   private VirtualFile myPackDir;

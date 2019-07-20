@@ -16,9 +16,9 @@
 package com.siyeh.ig.initialization;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
-public class AbstractMethodCallInConstructorInspectionTest extends LightInspectionTestCase {
+public class AbstractMethodCallInConstructorInspectionTest extends LightJavaInspectionTestCase {
 
   public void testAbstractMethodCallInConstructor() {
     doTest();

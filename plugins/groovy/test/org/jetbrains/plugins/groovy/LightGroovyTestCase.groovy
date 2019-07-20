@@ -7,7 +7,7 @@ import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiType
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable
 /**
  * @author peter
  */
-abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCase {
+abstract class LightGroovyTestCase extends LightJavaCodeInsightFixtureTestCase {
 
   @NotNull
   JavaCodeInsightTestFixture getFixture() {

@@ -2,14 +2,14 @@
 package com.siyeh.ig.serialization;
 
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class SerializableWithUnconstructableAncestorInspectionTest extends LightCodeInsightFixtureTestCase {
+public class SerializableWithUnconstructableAncestorInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    return LightInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/serialization/serializable_with_unconstructable_ancestor";
+    return LightJavaInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/serialization/serializable_with_unconstructable_ancestor";
   }
 
   @NotNull

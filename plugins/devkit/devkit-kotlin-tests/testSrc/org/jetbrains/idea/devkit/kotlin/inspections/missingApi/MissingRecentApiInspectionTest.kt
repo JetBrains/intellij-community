@@ -10,7 +10,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestDataPath
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.PathUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.inspections.PluginModuleTestCase
@@ -25,7 +25,7 @@ import org.jetbrains.idea.devkit.module.PluginModuleType
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/missingApi")
 class MissingRecentApiInspectionTest : PluginModuleTestCase() {
 
-  private val projectDescriptor = object : LightCodeInsightFixtureTestCase.ProjectDescriptor(LanguageLevel.HIGHEST) {
+  private val projectDescriptor = object : LightJavaCodeInsightFixtureTestCase.ProjectDescriptor(LanguageLevel.HIGHEST) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
       super.configureModule(module, model, contentEntry)
       PsiTestUtil.addProjectLibrary(model, "annotations", listOf(PathUtil.getJarPathForClass(ApiStatus.OverrideOnly::class.java)))

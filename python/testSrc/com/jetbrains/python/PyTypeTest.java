@@ -7,6 +7,7 @@ import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
@@ -3232,16 +3233,16 @@ public class PyTypeTest extends PyTestCase {
   public void testGenericTypingProtocolExt() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON37,
-      () -> doMultiFileTest("int",
-                            "from typing_extensions import Protocol\n" +
-                            "from typing import TypeVar\n" +
-                            "T = TypeVar(\"T\")\n" +
-                            "class MyProto1(Protocol[T]):\n" +
-                            "    def func(self) -> T:\n" +
-                            "        pass\n" +
-                            "class MyClass1(MyProto1[int]):\n" +
-                            "    pass\n" +
-                            "expr = MyClass1().func()")
+      () -> doTest("int",
+                   "from typing_extensions import Protocol\n" +
+                   "from typing import TypeVar\n" +
+                   "T = TypeVar(\"T\")\n" +
+                   "class MyProto1(Protocol[T]):\n" +
+                   "    def func(self) -> T:\n" +
+                   "        pass\n" +
+                   "class MyClass1(MyProto1[int]):\n" +
+                   "    pass\n" +
+                   "expr = MyClass1().func()")
     );
   }
 
@@ -3370,6 +3371,50 @@ public class PyTypeTest extends PyTestCase {
                    "    assert isinstance(g_b, B)\n" +
                    "    expr = g_b")
     );
+  }
+
+  // PY-33886
+  public void testAssignmentExpressions() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON38,
+      () -> {
+        doTest("int", "[expr := 1]");
+        doTest("int", "[expr := (1)]");
+        doTest("int", "expr = (e := 1)");
+        doTest("int", "foo(expr := 1)");
+        doMultiFileTest("Type[A]", "from a import member\nexpr = member");
+
+        assertNull(((PyTargetExpression)parseExpr("(nums := [0 for expr in range(10)])")).findAssignedValue());
+      }
+    );
+  }
+
+  // PY-34945
+  public void testFinal() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> {
+        doTest("int",
+               "from typing_extensions import Final\n" +
+               "expr: Final[int] = undefined");
+
+        doTest("int",
+               "from typing_extensions import Final\n" +
+               "expr: Final = 5");
+
+        doTest("int",
+               "from typing_extensions import Final\n" +
+               "expr: Final[int]");
+      }
+    );
+
+    doTest("int",
+           "from typing_extensions import Final\n" +
+           "expr = undefined  # type: Final[int]");
+
+    doTest("int",
+           "from typing_extensions import Final\n" +
+           "expr = 5  # type: Final");
   }
 
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {

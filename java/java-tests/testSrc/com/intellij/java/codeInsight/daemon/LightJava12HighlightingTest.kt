@@ -2,9 +2,9 @@
 package com.intellij.java.codeInsight.daemon
 
 import com.intellij.JavaTestUtil
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-class LightJava12HighlightingTest : LightCodeInsightFixtureTestCase() {
+class LightJava12HighlightingTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor() = JAVA_12
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advHighlighting12"
 

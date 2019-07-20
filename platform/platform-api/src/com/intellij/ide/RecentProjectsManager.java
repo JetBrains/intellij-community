@@ -53,4 +53,8 @@ public abstract class RecentProjectsManager {
   public boolean hasPath(@SystemIndependent String path) {
     return false;
   }
+
+  public abstract boolean willReopenProjectOnStart();
+
+  public abstract void reopenLastProjectOnStart();
 }

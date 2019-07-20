@@ -9,6 +9,7 @@ import com.intellij.util.ui.UIUtil;
 import java.awt.*;
 
 /**
+ * @deprecated left for API compatibility
  * @author Konstantin Bulenkov
  */
 @Deprecated

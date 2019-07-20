@@ -4,11 +4,11 @@ package com.intellij.java.codeInsight.intention;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 import static com.intellij.testFramework.utils.EncodingManagerUtilKt.doEncodingTest;
 
-public class ConvertToBasicLatinTest extends LightCodeInsightFixtureTestCase {
+public class ConvertToBasicLatinTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/convertToBasicLatin/";

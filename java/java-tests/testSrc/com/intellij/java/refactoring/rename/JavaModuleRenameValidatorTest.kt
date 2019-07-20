@@ -17,11 +17,11 @@ package com.intellij.java.refactoring.rename
 
 import com.intellij.psi.PsiJavaFile
 import com.intellij.refactoring.rename.JavaModuleRenameValidator
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.ProcessingContext
 import org.junit.Test
 
-class JavaModuleRenameValidatorTest : LightCodeInsightFixtureTestCase() {
+class JavaModuleRenameValidatorTest : LightJavaCodeInsightFixtureTestCase() {
   @Test fun test() {
     val validator = JavaModuleRenameValidator()
     val module = (myFixture.configureByText("module-info.java", "module M { }") as PsiJavaFile).moduleDeclaration!!

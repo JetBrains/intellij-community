@@ -8,9 +8,9 @@ import com.intellij.codeInspection.canBeFinal.CanBeFinalInspection;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.JavaInspectionTestCase;
 
-public class CanBeFinalTest extends InspectionTestCase {
+public class CanBeFinalTest extends JavaInspectionTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection";

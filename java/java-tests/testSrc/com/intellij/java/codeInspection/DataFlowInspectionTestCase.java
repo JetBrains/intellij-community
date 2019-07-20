@@ -16,9 +16,9 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-public abstract class DataFlowInspectionTestCase extends LightCodeInsightFixtureTestCase {
+public abstract class DataFlowInspectionTestCase extends LightJavaCodeInsightFixtureTestCase {
   protected void doTest() {
     DataFlowInspection inspection = new DataFlowInspection();
     inspection.SUGGEST_NULLABLE_ANNOTATIONS = true;

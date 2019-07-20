@@ -26,7 +26,7 @@ import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -39,7 +39,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 @PlatformTestCase.WrapInCommand
-public class UpdateCacheTest extends PsiTestCase {
+public class UpdateCacheTest extends JavaPsiTestCase {
   @Override
   protected void setUpProject() throws Exception {
     myProjectManager = ProjectManagerEx.getInstanceEx();

@@ -15,13 +15,13 @@
  */
 package org.jetbrains.idea.maven.plugins;
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 
 /**
  * @author Sergey Evdokimov
  */
-public class MavenParameterGoalTest extends LightCodeInsightFixtureTestCase {
+public class MavenParameterGoalTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {

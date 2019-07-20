@@ -15,7 +15,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.junit.ComparisonFailure;
@@ -34,14 +34,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * A helper class to aid migration from {@link InspectionTestCase} to {@link LightCodeInsightFixtureTestCase}.
+ * A helper class to aid migration from {@link JavaInspectionTestCase} to {@link LightJavaCodeInsightFixtureTestCase}.
  * This class has a global state which is not thread-safe and intended to be used from single thread only.
  */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 class LightTestMigration {
   private static final boolean TREAT_MULTI_FILES_AS_MULTIPLE_TESTS = false;
   private final String myName;
-  private final Class<? extends InspectionTestCase> myTestClass;
+  private final Class<? extends JavaInspectionTestCase> myTestClass;
   private final Path myDir;
   private final List<InspectionToolWrapper<?, ?>> myTools;
   private final List<String> myTestNames = new ArrayList<>();
@@ -56,7 +56,7 @@ class LightTestMigration {
   private Path myBasePath;
 
   LightTestMigration(String name,
-                     Class<? extends InspectionTestCase> testClass,
+                     Class<? extends JavaInspectionTestCase> testClass,
                      String dir,
                      List<InspectionToolWrapper<?, ?>> tools) {
     myName = name;
@@ -112,7 +112,7 @@ class LightTestMigration {
     final String pathSpec;
     Set<Class<?>> importedClasses =
       StreamEx.of(myTools.stream().<Class<?>>map(wrapper -> wrapper.getTool().getClass()))
-        .append(LightCodeInsightFixtureTestCase.class, LightProjectDescriptor.class, NotNull.class)
+        .append(LightJavaCodeInsightFixtureTestCase.class, LightProjectDescriptor.class, NotNull.class)
         .toSet();
     if (myBaseDir.startsWith(myBasePath)) {
       Path relativePath = myBasePath.relativize(myBaseDir);
@@ -126,11 +126,11 @@ class LightTestMigration {
       if (myBaseDir.startsWith(basePath)) {
         Path relativePath = basePath.relativize(myBaseDir);
         String pathText = '/' + relativePath.toString().replace('\\', '/');
-        if (pathText.startsWith(LightInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH)) {
-          importedClasses.add(LightInspectionTestCase.class);
+        if (pathText.startsWith(LightJavaInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH)) {
+          importedClasses.add(LightJavaInspectionTestCase.class);
           pathSpec = "LightInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + \"" +
                      StringUtil.escapeStringCharacters(
-                       pathText.substring(LightInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH.length())) + '"';
+                       pathText.substring(LightJavaInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH.length())) + '"';
         }
         else {
           pathSpec = '"' + StringUtil.escapeStringCharacters(pathText) + '"';

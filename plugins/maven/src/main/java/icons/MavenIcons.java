@@ -5,6 +5,8 @@ import com.intellij.ui.IconManager;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
+
 /**
  * NOTE THIS FILE IS AUTO-GENERATED
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
@@ -32,20 +34,24 @@ public final class MavenIcons {
   /** @deprecated to be removed in IDEA 2020 - use OpenapiIcons.RepositoryLibraryLogo */
   @SuppressWarnings("unused")
   @Deprecated
+  @ScheduledForRemoval(inVersion = "2020.1")
   public static final Icon MavenLogo = load("/icons/repositoryLibraryLogo.svg", icons.OpenapiIcons.class);
 
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.OfflineMode */
   @SuppressWarnings("unused")
   @Deprecated
+  @ScheduledForRemoval(inVersion = "2020.1")
   public static final Icon OfflineMode = load("/actions/offlineMode.svg", com.intellij.icons.AllIcons.class);
 
   /** @deprecated to be removed in IDEA 2020 - use ExternalSystemIcons.Task */
   @SuppressWarnings("unused")
   @Deprecated
+  @ScheduledForRemoval(inVersion = "2020.1")
   public static final Icon Phase = load("/icons/task.svg", icons.ExternalSystemIcons.class);
 
   /** @deprecated to be removed in IDEA 2020 - use ExternalSystemIcons.TaskGroup */
   @SuppressWarnings("unused")
   @Deprecated
+  @ScheduledForRemoval(inVersion = "2020.1")
   public static final Icon PhasesClosed = load("/icons/taskGroup.svg", icons.ExternalSystemIcons.class);
 }

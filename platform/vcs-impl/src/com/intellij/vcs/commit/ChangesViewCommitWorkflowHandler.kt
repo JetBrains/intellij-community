@@ -18,6 +18,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
 import gnu.trove.THashSet
 
+private fun Collection<Change>.toPartialAwareSet() = THashSet(this, ChangeListChange.HASHING_STRATEGY)
+
 class ChangesViewCommitWorkflowHandler(
   override val workflow: ChangesViewCommitWorkflow,
   override val ui: ChangesViewCommitWorkflowUi
@@ -31,8 +33,11 @@ class ChangesViewCommitWorkflowHandler(
   private val changeListManager = ChangeListManager.getInstance(project)
   private var knownActiveChanges: Collection<Change> = emptyList()
 
+  private val inclusionModel = PartialCommitInclusionModel(project)
+
   init {
     Disposer.register(this, Disposable { workflow.disposeCommitOptions() })
+    Disposer.register(this, inclusionModel)
     Disposer.register(ui, this)
 
     workflow.addListener(this, this)
@@ -40,6 +45,8 @@ class ChangesViewCommitWorkflowHandler(
     ui.addExecutorListener(this, this)
     ui.addDataProvider(createDataProvider())
     ui.addInclusionListener(this, this)
+    ui.inclusionModel = inclusionModel
+    Disposer.register(inclusionModel, Disposable { ui.inclusionModel = null })
 
     vcsesChanged() // as currently vcses are set before handler subscribes to corresponding event
   }
@@ -89,6 +96,9 @@ class ChangesViewCommitWorkflowHandler(
       val activeChanges = changeListManager.defaultChangeList.changes
       knownActiveChanges = knownActiveChanges.intersect(activeChanges)
     }
+
+    inclusionModel.changeLists = changeLists
+    ui.setCompletionContext(changeLists)
   }
 
   fun setCommitState(items: Collection<Any>, force: Boolean) {
@@ -103,7 +113,7 @@ class ChangesViewCommitWorkflowHandler(
     }
     else {
       // skip if we have inclusion from other change lists
-      if ((ui.getInclusion() - activeChanges).filterIsInstance<Change>().isNotEmpty()) return
+      if ((ui.getInclusion() - activeChanges.toPartialAwareSet()).filterIsInstance<Change>().isNotEmpty()) return
 
       // we have inclusion in active change list and/or unversioned files => include new active changes if any
       val newChanges = activeChanges - knownActiveChanges

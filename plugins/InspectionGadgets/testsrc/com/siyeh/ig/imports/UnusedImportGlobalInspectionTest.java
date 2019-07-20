@@ -8,13 +8,13 @@ import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.testFramework.InspectionTestUtil;
 import com.intellij.testFramework.InspectionsKt;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.impl.GlobalInspectionContextForTests;
 
 import java.io.File;
 import java.util.Collections;
 
-public class UnusedImportGlobalInspectionTest extends LightCodeInsightFixtureTestCase {
+public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
     return PathManagerEx.getCommunityHomePath() + "/plugins/InspectionGadgets/test/com/siyeh/igtest/imports/globalInspection";

@@ -244,6 +244,9 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
     return result;
   }
 
+  /**
+   * @deprecated use {@link #getFileList()}
+   */
   @NotNull
   @Deprecated
   public synchronized LinkedHashSet<VirtualFile> getFileSet() {

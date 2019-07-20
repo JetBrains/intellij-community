@@ -20,12 +20,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.build.PluginBuildConfiguration;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
-public abstract class PluginModuleTestCase extends LightCodeInsightFixtureTestCase {
+public abstract class PluginModuleTestCase extends LightJavaCodeInsightFixtureTestCase {
 
   private static final DefaultLightProjectDescriptor ourProjectDescriptor = new DefaultLightProjectDescriptor() {
 

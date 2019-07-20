@@ -174,7 +174,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final ResolveResultList results = new ResolveResultList();
     for (RatedResolveResult r : ret) {
       final PsiElement e = r.getElement();
-      if (e == element || element instanceof PyTargetExpression && e != null && PyPsiUtils.isBefore(element, e)) {
+      if (e == element ||
+          element instanceof PyTargetExpression && e != null && PyUtil.inSameFile(element, e) && PyPsiUtils.isBefore(element, e)) {
         continue;
       }
       results.add(changePropertyMethodToSameNameGetter(r, name));
@@ -183,6 +184,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   }
 
   private static boolean isInnerComprehension(PsiElement referenceElement, PsiElement definition) {
+    if (definition != null && definition.getParent() instanceof PyAssignmentExpression) return false;
+
     final PyComprehensionElement definitionComprehension = PsiTreeUtil.getParentOfType(definition, PyComprehensionElement.class);
     if (definitionComprehension != null && PyUtil.isOwnScopeComprehension(definitionComprehension)) {
       final PyComprehensionElement elementComprehension = PsiTreeUtil.getParentOfType(referenceElement, PyComprehensionElement.class);
@@ -267,7 +270,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final ScopeOwner resolvedOwner = processor.getOwner();
 
     final Collection<PsiElement> resolvedElements = processor.getElements();
-    if (resolvedOwner != null && !resolvedElements.isEmpty() && !ControlFlowCache.getScope(resolvedOwner).isGlobal(referencedName)) {
+    if (resolvedOwner != null && !resolvedElements.isEmpty()) {
       if (resolvedOwner == referenceOwner) {
         final List<Instruction> instructions = getLatestDefinitions(referencedName, resolvedOwner, realContext);
         // TODO: Use the results from the processor as a cache for resolving to latest defs

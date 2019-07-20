@@ -46,10 +46,7 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.XCollection;
-import com.intellij.vcs.commit.ChangesViewCommitPanel;
-import com.intellij.vcs.commit.ChangesViewCommitWorkflow;
-import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler;
-import com.intellij.vcs.commit.CommitWorkflowManager;
+import com.intellij.vcs.commit.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,6 +63,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.actionSystem.EmptyAction.registerWithShortcutSet;
@@ -108,7 +106,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
   @NotNull private ChangesViewManager.State myState = new ChangesViewManager.State();
 
-  private PreviewDiffSplitterComponent mySplitterComponent;
+  private PreviewDiffSplitterComponent myDiffPreviewSplitter;
 
   @NotNull private final TreeSelectionListener myTsl;
   @NotNull private final PropertyChangeListener myGroupingChangeListener;
@@ -203,15 +201,26 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
         Disposer.register(myContent, myCommitPanel);
 
         myCommitPanelSplitter.setSecondComponent(myCommitPanel);
+        myDiffPreviewSplitter.setAllowExcludeFromCommit(isAllowExcludeFromCommit());
       }
     }
     else if (myCommitPanel != null) {
+      myDiffPreviewSplitter.setAllowExcludeFromCommit(false);
       myCommitPanelSplitter.setSecondComponent(null);
       Disposer.dispose(myCommitPanel);
 
       myCommitPanel = null;
       myCommitWorkflowHandler = null;
     }
+  }
+
+  public boolean isAllowExcludeFromCommit() {
+    return myCommitWorkflowHandler != null;
+  }
+
+  @NotNull
+  private Function<ChangeNodeDecorator, ChangeNodeDecorator> getChangeDecoratorProvider() {
+    return baseDecorator -> new PartialCommitChangeNodeDecorator(myProject, baseDecorator, () -> isAllowExcludeFromCommit());
   }
 
   @NotNull
@@ -231,8 +240,8 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     myContentPanel.addToCenter(myCommitPanelSplitter);
 
     MyChangeProcessor changeProcessor = new MyChangeProcessor(myProject);
-    mySplitterComponent = new PreviewDiffSplitterComponent(myContentPanel, changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
-                                                           myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
+    myDiffPreviewSplitter = new PreviewDiffSplitterComponent(myContentPanel, changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
+                                                             myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
 
     myView.installPopupHandler((DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewPopupMenu"));
     myView.getGroupingSupport().setGroupingKeysOrSkip(myState.groupingKeys);
@@ -257,7 +266,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
       }
     };
     myProgressLabel = simplePanel();
-    panel.setContent(simplePanel(mySplitterComponent).addToBottom(myProgressLabel));
+    panel.setContent(simplePanel(myDiffPreviewSplitter).addToBottom(myProgressLabel));
     registerShortcuts(panel);
     return panel;
   }
@@ -359,7 +368,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
       List<VirtualFile> unversionedFiles = changeListManager.getUnversionedFiles();
 
       TreeModelBuilder treeModelBuilder = new TreeModelBuilder(myProject, myView.getGrouping())
-        .setChangeLists(changeLists, Registry.is("vcs.skip.single.default.changelist"))
+        .setChangeLists(changeLists, Registry.is("vcs.skip.single.default.changelist"), getChangeDecoratorProvider())
         .setLocallyDeletedPaths(changeListManager.getDeletedFiles())
         .setModifiedWithoutEditing(changeListManager.getModifiedWithoutEditing())
         .setSwitchedFiles(changeListManager.getSwitchedFilesMap())
@@ -393,8 +402,8 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   }
 
   private void updatePreview(boolean fromModelRefresh) {
-    if (mySplitterComponent != null) {
-      mySplitterComponent.updatePreview(fromModelRefresh);
+    if (myDiffPreviewSplitter != null) {
+      myDiffPreviewSplitter.updatePreview(fromModelRefresh);
     }
   }
 
@@ -557,7 +566,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   private class ToggleDetailsAction extends ShowDiffPreviewAction {
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      mySplitterComponent.setDetailsOn(state);
+      myDiffPreviewSplitter.setDetailsOn(state);
       myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = state;
     }
 

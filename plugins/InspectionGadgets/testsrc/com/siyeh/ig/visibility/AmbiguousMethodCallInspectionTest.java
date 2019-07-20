@@ -1,10 +1,10 @@
 package com.siyeh.ig.visibility;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class AmbiguousMethodCallInspectionTest extends LightInspectionTestCase {
+public class AmbiguousMethodCallInspectionTest extends LightJavaInspectionTestCase {
 
   public void testAmbiguousMethodCall() { doTest(); }
 

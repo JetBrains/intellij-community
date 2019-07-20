@@ -321,6 +321,7 @@
   <action id="EditorTab"/>
   <action id="EditorDeleteLine"/>
   <action id="PreviousProjectWindow"/>
+  <action id="Vcs.ToggleAmendCommitMode"/>
   <action id="Vcs.ShowMessageHistory"/>
   <action id="GotoImplementation"/>
   <action id="EditorScrollUp"/>

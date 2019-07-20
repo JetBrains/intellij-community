@@ -16,10 +16,10 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class WaitNotifyNotInSynchronizedContextInspectionTest extends LightInspectionTestCase {
+public class WaitNotifyNotInSynchronizedContextInspectionTest extends LightJavaInspectionTestCase {
 
   public void testWaitNotifyNotInSynchronizedContext() {
     doTest();

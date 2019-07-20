@@ -29,14 +29,14 @@ import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.JavaInspectionTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.dataflow.UnnecessaryLocalVariableInspection;
 import com.siyeh.ig.inheritance.RefusedBequestInspection;
 import com.siyeh.ig.migration.RawUseOfParameterizedTypeInspection;
 import org.jetbrains.annotations.NotNull;
 
-public class RedundantSuppressTest extends InspectionTestCase {
+public class RedundantSuppressTest extends JavaInspectionTestCase {
   private GlobalInspectionToolWrapper myWrapper;
   private InspectionToolWrapper[] myInspectionToolWrappers;
 

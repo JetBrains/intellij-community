@@ -15,7 +15,7 @@
  */
 package com.jetbrains.jsonSchema;
 
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.ThreeState;
 import com.jetbrains.jsonSchema.settings.mappings.JsonSchemaPatternComparator;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +24,7 @@ import org.junit.Assert;
 /**
  * @author Irina.Chernushina on 2/17/2016.
  */
-public class JsonSchemaPatternComparatorTest extends LightPlatformCodeInsightFixtureTestCase {
+public class JsonSchemaPatternComparatorTest extends BasePlatformTestCase {
   public void testPatterns() {
     final JsonSchemaPatternComparator comparator = new JsonSchemaPatternComparator(getProject());
     Assert.assertEquals(ThreeState.YES, comparator.isSimilar(p("test"), p("test")));

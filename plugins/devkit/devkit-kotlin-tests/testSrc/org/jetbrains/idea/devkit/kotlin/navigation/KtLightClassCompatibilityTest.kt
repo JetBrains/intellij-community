@@ -2,9 +2,9 @@
 package org.jetbrains.idea.devkit.kotlin.navigation
 
 import com.intellij.psi.CommonClassNames
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-class KtLightClassCompatibilityTest : LightCodeInsightFixtureTestCase() {
+class KtLightClassCompatibilityTest : LightJavaCodeInsightFixtureTestCase() {
   fun testEnumConstructor() {
     myFixture.addFileToProject("pkg/MyEnum.kt", """
       package pkg

@@ -199,7 +199,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
    * if there is a pending write action.
    */
   @Override
-  @Deprecated
   public void executeByImpatientReader(@NotNull Runnable runnable) throws ApplicationUtil.CannotRunReadActionException {
     if (isDispatchThread()) {
       runnable.run();

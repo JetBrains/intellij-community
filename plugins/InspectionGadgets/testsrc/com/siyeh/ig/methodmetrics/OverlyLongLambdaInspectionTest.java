@@ -16,13 +16,13 @@
 package com.siyeh.ig.methodmetrics;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class OverlyLongLambdaInspectionTest extends LightInspectionTestCase {
+public class OverlyLongLambdaInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
     doStatementTest("Runnable r = /*Lambda expression is too long (# Non-comment source statements = 4)*/() -> {/**/" +

@@ -14,8 +14,8 @@ import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.sh.psi.ShGenericCommandDirective;
 import com.intellij.sh.psi.ShLiteral;
 import com.intellij.sh.statistics.ShFeatureUsagesCollector;
@@ -68,7 +68,7 @@ public class ShDocumentationProvider extends AbstractDocumentationProvider {
   @Override
   public PsiElement getCustomDocumentationElement(@NotNull Editor editor, @NotNull PsiFile file, @Nullable PsiElement contextElement) {
     ASTNode node = contextElement == null ? null : contextElement.getNode();
-    if (node == null || (PsiImplUtil.isWhitespaceOrComment(node) || node.getElementType() == ShTypes.LINEFEED)) {
+    if (node == null || (TreeUtil.isWhitespaceOrComment(node) || node.getElementType() == ShTypes.LINEFEED)) {
       int offset = editor.getCaretModel().getPrimaryCaret().getOffset();
       PsiElement at = offset > 0 ? file.findElementAt(offset - 1) : null;
       if (wordWithDocumentation(at)) return at;

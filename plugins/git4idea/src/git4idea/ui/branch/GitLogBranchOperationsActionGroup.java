@@ -122,7 +122,7 @@ public class GitLogBranchOperationsActionGroup extends GitSingleCommitActionGrou
   private static AnAction createBranchGroup(@NotNull Project project,
                                             @NotNull VcsRef ref,
                                             @NotNull GitRepository repository,
-                                            @NotNull List<GitRepository> allRepositories,
+                                            @NotNull List<? extends GitRepository> allRepositories,
                                             @NotNull Set<String> commonBranches,
                                             @NotNull GitVcsSettings settings,
                                             boolean showBranchesPopup) {
@@ -168,7 +168,7 @@ public class GitLogBranchOperationsActionGroup extends GitSingleCommitActionGrou
 
   @NotNull
   private static ActionGroup createBranchActions(@NotNull Project project,
-                                                 @NotNull List<GitRepository> repositories,
+                                                 @NotNull List<? extends GitRepository> repositories,
                                                  @NotNull VcsRef ref,
                                                  @NotNull GitRepository selectedRepository,
                                                  boolean isLocal) {
@@ -182,7 +182,7 @@ public class GitLogBranchOperationsActionGroup extends GitSingleCommitActionGrou
 
   @NotNull
   private static ActionGroup createTagActions(@NotNull Project project,
-                                              @NotNull List<GitRepository> repositories,
+                                              @NotNull List<? extends GitRepository> repositories,
                                               @NotNull VcsRef ref,
                                               @NotNull GitRepository selectedRepository) {
     return new GitBranchPopupActions.TagActions(project, repositories, ref.getName(), selectedRepository);

@@ -17,13 +17,13 @@ package com.siyeh.ig.j2me;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
-public class PrivateMemberAccessBetweenOuterAndInnerClassInspectionTest extends LightInspectionTestCase {
+public class PrivateMemberAccessBetweenOuterAndInnerClassInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() { doTest(); }
   public void testPrivateMemberAccessBetweenOuterAndInnerClass() { doTest(); }

@@ -16,10 +16,10 @@
 package com.siyeh.ig.finalization;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class FinalizeNotProtectedInspectionTest extends LightInspectionTestCase {
+public class FinalizeNotProtectedInspectionTest extends LightJavaInspectionTestCase {
 
   public void testFinalizeNotProtected() {
     doTest();

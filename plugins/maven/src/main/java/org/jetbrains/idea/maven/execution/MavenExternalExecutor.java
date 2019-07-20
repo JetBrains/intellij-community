@@ -20,6 +20,7 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -31,14 +32,15 @@ import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.buildtool.BuildViewMavenConsole;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.MavenSpyOutputParser;
 import org.jetbrains.idea.maven.project.MavenConsole;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.server.MavenServerConsole;
 
 @Deprecated
-/**
- * external executor should woork through maven run configuration
+/*
+  @deprecated external executor should work through maven run configuration
  */
 public class MavenExternalExecutor extends MavenExecutor {
 
@@ -49,6 +51,8 @@ public class MavenExternalExecutor extends MavenExecutor {
 
   private JavaParameters myJavaParameters;
   private ExecutionException myParameterCreationError;
+  private final AnsiEscapeDecoder myDecoder = new AnsiEscapeDecoder();
+
 
   public MavenExternalExecutor(Project project,
                                @NotNull MavenRunnerParameters parameters,
@@ -79,8 +83,11 @@ public class MavenExternalExecutor extends MavenExecutor {
           @Override
           public void notifyTextAvailable(@NotNull String text, @NotNull Key outputType) {
             // todo move this logic to ConsoleAdapter class
+            if (myConsole instanceof BuildViewMavenConsole) {
+              ((BuildViewMavenConsole)myConsole).onTextAvailable(text, outputType);
+            }
             if (!myConsole.isSuppressed(text) && (!MavenSpyOutputParser.isSpyLog(text) || Registry.is("maven.spy.events.debug"))) {
-              super.notifyTextAvailable(text, outputType);
+              myDecoder.escapeText(text, outputType, (t, ot) -> super.notifyTextAvailable(t, ot));
             }
             updateProgress(indicator, text);
           }

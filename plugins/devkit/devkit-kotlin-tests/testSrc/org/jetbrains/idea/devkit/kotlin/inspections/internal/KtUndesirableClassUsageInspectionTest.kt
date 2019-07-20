@@ -1,11 +1,8 @@
 package org.jetbrains.idea.devkit.kotlin.inspections.internal
 
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.idea.devkit.inspections.PluginModuleTestCase
 import org.jetbrains.idea.devkit.inspections.internal.UndesirableClassUsageInspection
-import org.jetbrains.idea.devkit.module.PluginModuleType
 
 class KtUndesirableClassUsageInspectionTest : PluginModuleTestCase() {
 

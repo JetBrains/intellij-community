@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ public abstract class NodeDescriptor<E> {
   @Nullable protected Icon myClosedIcon;
 
   /**
-   * Unused. It's there only for API compatibility.
+   * @deprecated Unused. Left for API compatibility.
    */
   @Deprecated
   protected Icon myOpenIcon;
@@ -80,7 +80,7 @@ public abstract class NodeDescriptor<E> {
   }
 
   /**
-   Use #getIcon() instead
+   * @deprecated Use {@link #getIcon()} instead
    */
   @Deprecated
   public final Icon getOpenIcon() {
@@ -88,7 +88,7 @@ public abstract class NodeDescriptor<E> {
   }
 
   /**
-   Use #getIcon() instead
+   * @deprecated Use {@link #getIcon()} instead
    */
   @Deprecated
   public final Icon getClosedIcon() {

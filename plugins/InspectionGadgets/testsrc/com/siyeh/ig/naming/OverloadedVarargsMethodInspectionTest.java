@@ -16,12 +16,12 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class OverloadedVarargsMethodInspectionTest extends LightInspectionTestCase
+public class OverloadedVarargsMethodInspectionTest extends LightJavaInspectionTestCase
 {
   @Override
   protected InspectionProfileEntry getInspection() {

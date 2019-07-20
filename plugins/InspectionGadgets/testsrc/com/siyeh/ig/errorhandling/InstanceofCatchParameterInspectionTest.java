@@ -2,14 +2,13 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
-import junit.framework.TestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class InstanceofCatchParameterInspectionTest extends LightInspectionTestCase {
+public class InstanceofCatchParameterInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
     doStatementTest("try {" +

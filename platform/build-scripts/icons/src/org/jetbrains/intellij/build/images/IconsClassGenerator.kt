@@ -210,6 +210,10 @@ class IconsClassGenerator(private val projectHome: File, val modules: List<JpsMo
     append(answer, "", 0)
     append(answer, "import javax.swing.*;", 0)
     append(answer, "", 0)
+    if (images.any(ImagePaths::scheduledForRemoval)) {
+      append(answer, "import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;", 0)
+      append(answer, "", 0)
+    }
 
     // IconsGeneratedSourcesFilter depends on following comment, if you going to change the text
     // please do corresponding changes in IconsGeneratedSourcesFilter as well
@@ -315,13 +319,16 @@ class IconsClassGenerator(private val projectHome: File, val modules: List<JpsMo
     if (image.deprecated) {
       append(answer, "@Deprecated", level)
     }
+    if (image.scheduledForRemoval) {
+      append(answer, """@ScheduledForRemoval(inVersion = "2020.1")""", level)
+    }
 
     val sourceRoot = image.sourceRoot
     var rootPrefix = "/"
     if (sourceRoot.rootType == JavaSourceRootType.SOURCE) {
       @Suppress("UNCHECKED_CAST")
       val packagePrefix = (sourceRoot.properties as JpsSimpleElement<JavaSourceRootProperties>).data.packagePrefix
-      if (!packagePrefix.isEmpty()) {
+      if (packagePrefix.isNotEmpty()) {
         rootPrefix += packagePrefix.replace('.', '/') + "/"
       }
     }

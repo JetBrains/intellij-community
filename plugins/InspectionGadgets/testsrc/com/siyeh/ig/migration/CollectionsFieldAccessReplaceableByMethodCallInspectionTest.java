@@ -16,13 +16,13 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class CollectionsFieldAccessReplaceableByMethodCallInspectionTest extends LightInspectionTestCase {
+public class CollectionsFieldAccessReplaceableByMethodCallInspectionTest extends LightJavaInspectionTestCase {
 
   public void testCollectionsFieldAccessReplaceableByMethodCall() {
     doTest();

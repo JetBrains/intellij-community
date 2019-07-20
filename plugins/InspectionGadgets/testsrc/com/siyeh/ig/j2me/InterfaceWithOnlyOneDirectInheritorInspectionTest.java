@@ -2,14 +2,14 @@
 package com.siyeh.ig.j2me;
 
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class InterfaceWithOnlyOneDirectInheritorInspectionTest extends LightCodeInsightFixtureTestCase {
+public class InterfaceWithOnlyOneDirectInheritorInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    return LightInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/j2me/interface_with_only_one_direct_inheritor";
+    return LightJavaInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/j2me/interface_with_only_one_direct_inheritor";
   }
 
   @NotNull

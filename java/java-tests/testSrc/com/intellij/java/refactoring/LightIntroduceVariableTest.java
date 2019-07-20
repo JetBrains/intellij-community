@@ -10,12 +10,12 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class LightIntroduceVariableTest extends LightCodeInsightFixtureTestCase {
+public class LightIntroduceVariableTest extends LightJavaCodeInsightFixtureTestCase {
   public void testExpressionsUnderCaret() {
     PsiFile file = myFixture.configureByText(StdFileTypes.JAVA, "package a; class A {{new Double(0.<caret>)}}");
     List<PsiExpression> expressions =

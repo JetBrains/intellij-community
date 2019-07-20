@@ -5,13 +5,13 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.structuralsearch.inspection.highlightTemplate.SSBasedInspection;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.JavaInspectionTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class SSBasedInspectionTest extends InspectionTestCase {
+public class SSBasedInspectionTest extends JavaInspectionTestCase {
   private LocalInspectionToolWrapper myWrapper;
 
   @Override

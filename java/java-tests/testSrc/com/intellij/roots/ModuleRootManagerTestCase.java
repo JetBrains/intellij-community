@@ -27,7 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.ModuleTestCase;
+import com.intellij.testFramework.JavaModuleTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.PathsList;
 import org.jetbrains.annotations.Contract;
@@ -41,7 +41,7 @@ import java.io.IOException;
 /**
  * @author nik
  */
-public abstract class ModuleRootManagerTestCase extends ModuleTestCase {
+public abstract class ModuleRootManagerTestCase extends JavaModuleTestCase {
   protected static void assertRoots(PathsList pathsList, VirtualFile... files) {
     assertOrderedEquals(pathsList.getRootDirs(), files);
   }

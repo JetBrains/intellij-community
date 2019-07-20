@@ -16,12 +16,12 @@
 package com.siyeh.ig.resources;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ChannelResourceInspectionTest extends LightInspectionTestCase {
+public class ChannelResourceInspectionTest extends LightJavaInspectionTestCase {
 
   @Override
   protected void setUp() throws Exception {

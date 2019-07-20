@@ -29,7 +29,7 @@ import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.LightVirtualFile
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.FileContentUtilCore
 import com.intellij.util.io.EnumeratorIntegerDescriptor
 import com.intellij.util.io.EnumeratorStringDescriptor
@@ -39,7 +39,7 @@ import groovy.transform.CompileStatic
  * @author peter
  */
 @CompileStatic
-class FileGistTest extends LightCodeInsightFixtureTestCase {
+class FileGistTest extends LightJavaCodeInsightFixtureTestCase {
 
   void "test get data"() {
     def gist = take3Gist()

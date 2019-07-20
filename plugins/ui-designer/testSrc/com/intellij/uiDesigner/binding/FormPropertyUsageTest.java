@@ -12,7 +12,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.Query;
 
@@ -22,7 +22,7 @@ import java.util.Collection;
 /**
  * @author yole
  */
-public class FormPropertyUsageTest extends PsiTestCase {
+public class FormPropertyUsageTest extends JavaPsiTestCase {
   private VirtualFile myTestProjectRoot;
 
   @Override

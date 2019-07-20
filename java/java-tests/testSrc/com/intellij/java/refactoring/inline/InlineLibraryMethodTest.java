@@ -22,7 +22,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.inline.InlineMethodProcessor;
 import com.intellij.refactoring.util.InlineUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
@@ -30,7 +30,7 @@ import java.io.IOException;
 /**
  * @author anna
  */
-public class InlineLibraryMethodTest extends LightCodeInsightFixtureTestCase {
+public class InlineLibraryMethodTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();

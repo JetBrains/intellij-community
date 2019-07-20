@@ -15,13 +15,13 @@
  */
 package org.jetbrains.java.generate.inspection;
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Bas Leijdekkers
  */
-public class FieldNotUsedInToStringInspectionTest extends LightCodeInsightFixtureTestCase {
+public class FieldNotUsedInToStringInspectionTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testBasic() {
     doTest("class X {" +

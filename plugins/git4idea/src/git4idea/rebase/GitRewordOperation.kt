@@ -76,7 +76,8 @@ class GitRewordOperation(private val repository: GitRepository,
                                                 entriesEditor = { list -> injectRewordAction(list) },
                                                 plainTextEditor = { editorText -> supplyNewMessage(editorText) })
 
-    val params = GitRebaseParams.editCommits(commit.parents.first().asString(), rebaseEditor, true,
+    val params = GitRebaseParams.editCommits(repository.vcs.version,
+                                             commit.parents.first().asString(), rebaseEditor, true,
                                              GitRebaseParams.AutoSquashOption.DISABLE)
     val indicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
     val spec = GitRebaseSpec.forNewRebase(project, params, listOf(repository), indicator)

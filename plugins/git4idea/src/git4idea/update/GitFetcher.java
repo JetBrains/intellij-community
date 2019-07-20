@@ -254,7 +254,7 @@ public class GitFetcher {
    * @deprecated Use {@link GitFetchSupport}
    */
   @Deprecated
-  public boolean fetchRootsAndNotify(@NotNull Collection<GitRepository> roots,
+  public boolean fetchRootsAndNotify(@NotNull Collection<? extends GitRepository> roots,
                                      @Nullable String errorNotificationTitle, boolean notifySuccess) {
     MultiRootMessage additionalInfo = new MultiRootMessage(myProject, GitUtil.getRootsFromRepositories(roots), false, true);
     for (GitRepository repository : roots) {

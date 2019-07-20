@@ -207,6 +207,7 @@ public final class SocketLock {
             out.writeUTF(ACTIVATE_COMMAND + token + "\0" + new File(".").getAbsolutePath() + "\0" + StringUtil.join(args, "\0"));
             out.flush();
 
+            socket.setSoTimeout(0);
             List<String> response = readStringSequence(in);
             log("read: response=%s", StringUtil.join(response, ";"));
             if (OK_RESPONSE.equals(ContainerUtil.getFirstItem(response))) {

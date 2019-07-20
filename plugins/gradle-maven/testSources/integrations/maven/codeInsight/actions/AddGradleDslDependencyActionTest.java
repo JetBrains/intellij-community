@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gradle.integrations.maven.codeInsight.actions;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.idea.maven.model.MavenId;
 
 import java.io.File;
@@ -13,7 +13,7 @@ import java.util.Arrays;
 /**
  * @author Vladislav.Soroka
  */
-public class AddGradleDslDependencyActionTest extends LightPlatformCodeInsightFixtureTestCase {
+public class AddGradleDslDependencyActionTest extends BasePlatformTestCase {
 
   public void testAddMavenDependencyInEmptyFile() {
     AddGradleDslDependencyAction.TEST_THREAD_LOCAL.set(Arrays.asList(new MavenId("testGroupId", "testArtifactId", "1.0")));

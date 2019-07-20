@@ -31,6 +31,9 @@ public interface PasswordStorage {
     set(CredentialAttributes(requestor, key), value == null ? null : new Credentials(key, value));
   }
 
+  /**
+   * @deprecated use {@link #get(CredentialAttributes)} + {@link Credentials#getPasswordAsString()}
+   */
   @Deprecated
   @Nullable
   default String getPassword(@SuppressWarnings("UnusedParameters") @Nullable Project project,

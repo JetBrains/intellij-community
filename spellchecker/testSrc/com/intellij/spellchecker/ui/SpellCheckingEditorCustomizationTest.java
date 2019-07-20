@@ -20,11 +20,11 @@ import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.ui.EditorCustomization;
 
 @SuppressWarnings("SpellCheckingInspection")
-public class SpellCheckingEditorCustomizationTest extends LightPlatformCodeInsightFixtureTestCase {
+public class SpellCheckingEditorCustomizationTest extends BasePlatformTestCase {
   public void testEnabled() {
     doTest(true, "<TYPO descr=\"Typo: In word 'missspelling'\">missspelling</TYPO>");
   }

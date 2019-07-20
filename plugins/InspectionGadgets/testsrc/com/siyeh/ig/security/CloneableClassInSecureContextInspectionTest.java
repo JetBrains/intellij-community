@@ -16,10 +16,10 @@
 package com.siyeh.ig.security;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class CloneableClassInSecureContextInspectionTest extends LightInspectionTestCase {
+public class CloneableClassInSecureContextInspectionTest extends LightJavaInspectionTestCase {
 
   public void testCloneableClassInSecureContext() {
     doTest();

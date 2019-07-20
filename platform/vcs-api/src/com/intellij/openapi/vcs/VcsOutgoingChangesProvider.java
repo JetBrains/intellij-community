@@ -30,7 +30,7 @@ public interface VcsOutgoingChangesProvider <T extends CommittedChangeList> exte
   Pair<VcsRevisionNumber, List<T>> getOutgoingChanges(final VirtualFile vcsRoot, final boolean findRemote) throws VcsException;
   @Nullable
   VcsRevisionNumber getMergeBaseNumber(final VirtualFile anyFileUnderRoot) throws VcsException;
-  Collection<Change> filterLocalChangesBasedOnLocalCommits(final Collection<Change> localChanges, final VirtualFile vcsRoot) throws VcsException;
+  Collection<Change> filterLocalChangesBasedOnLocalCommits(final Collection<? extends Change> localChanges, final VirtualFile vcsRoot) throws VcsException;
   @Nullable
   Date getRevisionDate(final VcsRevisionNumber revision, FilePath file);
 }

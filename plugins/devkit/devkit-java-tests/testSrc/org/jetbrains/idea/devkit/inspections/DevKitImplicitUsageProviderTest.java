@@ -18,12 +18,12 @@ package org.jetbrains.idea.devkit.inspections;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.inheritance.ImplicitSubclassInspection;
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.siyeh.ig.inheritance.AbstractClassNeverImplementedInspection;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/implicitUsage")
-public class DevKitImplicitUsageProviderTest extends LightCodeInsightFixtureTestCase {
+public class DevKitImplicitUsageProviderTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {

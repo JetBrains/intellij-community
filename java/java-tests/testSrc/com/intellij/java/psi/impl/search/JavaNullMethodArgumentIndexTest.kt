@@ -17,12 +17,11 @@ package com.intellij.java.psi.impl.search
 
 import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.indexing.FileContentImpl
 import com.intellij.util.indexing.IndexingDataKeys
-import org.intellij.lang.annotations.Language
 
-class JavaNullMethodArgumentIndexTest : LightPlatformCodeInsightFixtureTestCase() {
+class JavaNullMethodArgumentIndexTest : BasePlatformTestCase() {
 
   fun testIndex() {
     val file = myFixture.configureByText(StdFileTypes.JAVA, """

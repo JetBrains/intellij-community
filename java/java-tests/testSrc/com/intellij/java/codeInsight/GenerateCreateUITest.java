@@ -18,12 +18,12 @@ package com.intellij.java.codeInsight;
 import com.intellij.codeInsight.generation.actions.GenerateCreateUIAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 
 /**
  * @author anna
  */
-public class GenerateCreateUITest extends LightCodeInsightTestCase {
+public class GenerateCreateUITest extends LightJavaCodeInsightTestCase {
   public void testSOE() {
     configureByFile("/codeInsight/generate/generateCreateUI/beforeSOE.java");
     final PsiClass targetClass = PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiClass.class);

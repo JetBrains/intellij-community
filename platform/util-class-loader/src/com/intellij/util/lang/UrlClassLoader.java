@@ -87,8 +87,7 @@ public class UrlClassLoader extends ClassLoader {
     return myClassPath.getJarAccessLog();
   }
 
-  public static final class Builder<T extends UrlClassLoader> {
-    private final Class<T> myLoaderClass;
+  public static final class Builder {
     private List<URL> myURLs = ContainerUtilRt.emptyList();
     private Set<URL> myURLsWithProtectionDomain = new HashSet<URL>();
     private ClassLoader myParent;
@@ -101,49 +100,38 @@ public class UrlClassLoader extends ClassLoader {
     private boolean myErrorOnMissingJar = true;
     private boolean myLazyClassloadingCaches;
     private boolean myLogJarAccess;
-    @Nullable private CachePoolImpl myCachePool;
-    @Nullable private CachingCondition myCachingCondition;
+    private @Nullable CachePoolImpl myCachePool;
+    private @Nullable CachingCondition myCachingCondition;
 
-    private Builder(Class<T> loaderClass) {
-      myLoaderClass = loaderClass;
-    }
+    Builder() { }
 
-    @NotNull
-    public Builder<T> urls(@NotNull List<URL> urls) { myURLs = urls; return this; }
-    @NotNull
-    public Builder<T> urls(@NotNull URL... urls) { myURLs = Arrays.asList(urls); return this; }
-    @NotNull
-    public Builder<T> parent(ClassLoader parent) { myParent = parent; return this; }
+    public Builder urls(@NotNull List<URL> urls) { myURLs = urls; return this; }
+    public Builder urls(@NotNull URL... urls) { myURLs = Arrays.asList(urls); return this; }
+    public Builder parent(ClassLoader parent) { myParent = parent; return this; }
 
     /**
      * @param urls List of URLs that are signed by Sun/Oracle and their signatures must be verified.
      */
-    @NotNull
-    public Builder<T> urlsWithProtectionDomain(@NotNull Set<URL> urls) { myURLsWithProtectionDomain = urls; return this; }
+    public Builder urlsWithProtectionDomain(@NotNull Set<URL> urls) { myURLsWithProtectionDomain = urls; return this; }
 
     /**
      * @see #urlsWithProtectionDomain(Set)
      */
-    @NotNull
-    public Builder<T> urlsWithProtectionDomain(@NotNull URL... urls) { return urlsWithProtectionDomain(ContainerUtilRt.newHashSet(urls)); }
+    public Builder urlsWithProtectionDomain(@NotNull URL... urls) { return urlsWithProtectionDomain(ContainerUtilRt.newHashSet(urls)); }
 
     /**
      * ZipFile handles opened in JarLoader will be kept in SoftReference. Depending on OS, the option significantly speeds up classloading
-     * from libraries. Caveat: for Windows opened handle will lock the file preventing its modification
-     * Thus, the option is recommended when jars are not modified or process that uses this option is transient
+     * from libraries. Caveat: for Windows opened handle will lock the file preventing its modification.
+     * Thus, the option is recommended when jars are not modified or process that uses this option is transient.
      */
-    @NotNull
-    public Builder<T> allowLock() { myLockJars = true; return this; }
-    @NotNull
-    public Builder<T> allowLock(boolean lockJars) { myLockJars = lockJars; return this; }
+    public Builder allowLock() { myLockJars = true; return this; }
+    public Builder allowLock(boolean lockJars) { myLockJars = lockJars; return this; }
 
     /**
-     * Build backward index of packages / class or resource names that allows to avoid IO during classloading
+     * Build backward index of packages / class or resource names that allows avoiding IO during classloading.
      */
-    @NotNull
-    public Builder<T> useCache() { myUseCache = true; return this; }
-    @NotNull
-    public Builder<T> useCache(boolean useCache) { myUseCache = useCache; return this; }
+    public Builder useCache() { myUseCache = true; return this; }
+    public Builder useCache(boolean useCache) { myUseCache = useCache; return this; }
 
     /**
      * FileLoader will save list of files / packages under its root and use this information instead of walking filesystem for
@@ -154,17 +142,12 @@ public class UrlClassLoader extends ClassLoader {
      * logical error since code is prepared for that and disk access is performed upon class / resource loading.
      * See also Builder#usePersistentClasspathIndexForLocalClassDirectories.
      */
-    @NotNull
-    public Builder<T> usePersistentClasspathIndexForLocalClassDirectories() {
+    public Builder usePersistentClasspathIndexForLocalClassDirectories() {
       myUsePersistentClasspathIndex = ourClassPathIndexEnabled;
       return this;
     }
 
-    @NotNull
-    public Builder<T> logJarAccess(boolean logJarAccess) {
-      myLogJarAccess = logJarAccess;
-      return this;
-    }
+    public Builder logJarAccess(boolean logJarAccess) { myLogJarAccess = logJarAccess; return this; }
 
     /**
      * Requests the class loader being built to use cache and, if possible, retrieve and store the cached data from a special cache pool
@@ -176,50 +159,34 @@ public class UrlClassLoader extends ClassLoader {
      *
      * @see #createCachePool()
      */
-    @NotNull
-    public Builder<T> useCache(@NotNull CachePool pool, @NotNull CachingCondition condition) {
+    public Builder useCache(@NotNull CachePool pool, @NotNull CachingCondition condition) {
       myUseCache = true;
       myCachePool = (CachePoolImpl)pool;
       myCachingCondition = condition;
       return this;
     }
 
-    @NotNull
-    public Builder<T> allowUnescaped() { myAcceptUnescaped = true; return this; }
-    @NotNull
-    public Builder<T> noPreload() { myPreload = false; return this; }
-    @NotNull
-    public Builder<T> allowBootstrapResources() { myAllowBootstrapResources = true; return this; }
-    @NotNull
-    public Builder<T> setLogErrorOnMissingJar(boolean log) {myErrorOnMissingJar = log; return this; }
+    public Builder allowUnescaped() { myAcceptUnescaped = true; return this; }
+    public Builder noPreload() { myPreload = false; return this; }
+    public Builder allowBootstrapResources() { myAllowBootstrapResources = true; return this; }
+    public Builder setLogErrorOnMissingJar(boolean log) { myErrorOnMissingJar = log; return this; }
 
     /**
      * Package contents information in Jar/File loaders will be lazily retrieved / cached upon classloading.
      * Important: this option will result in much smaller initial overhead but for bulk classloading (like complete IDE start) it is less
      * efficient (in number of disk / native code accesses / CPU spent) than combination of useCache / usePersistentClasspathIndexForLocalClassDirectories.
      */
-    @NotNull
-    public Builder<T> useLazyClassloadingCaches(boolean pleaseBeLazy) { myLazyClassloadingCaches = pleaseBeLazy; return this; }
+    public Builder useLazyClassloadingCaches(boolean pleaseBeLazy) { myLazyClassloadingCaches = pleaseBeLazy; return this; }
 
     @NotNull
-    public T get() {
-      try {
-        return myLoaderClass.getDeclaredConstructor(Builder.class).newInstance(this);
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
+    public UrlClassLoader get() {
+      return new UrlClassLoader(this);
     }
   }
 
   @NotNull
-  public static Builder<UrlClassLoader> build() {
-    return build(UrlClassLoader.class);
-  }
-
-  @NotNull
-  public static <T extends UrlClassLoader> Builder<T> build(Class<T> loaderImplClass) {
-    return new Builder<T>(loaderImplClass);
+  public static Builder build() {
+    return new Builder();
   }
 
   private final List<URL> myURLs;
@@ -227,7 +194,7 @@ public class UrlClassLoader extends ClassLoader {
   private final ClassLoadingLocks myClassLoadingLocks;
   private final boolean myAllowBootstrapResources;
 
-  /** @deprecated use {@link #build()}, left for compatibility with java.system.class.loader setting */
+  /** @deprecated use {@link #build()} (left for compatibility with `java.system.class.loader` setting) */
   @Deprecated
   public UrlClassLoader(@NotNull ClassLoader parent) {
     this(build().urls(((URLClassLoader)parent).getURLs()).parent(parent.getParent()).allowLock().useCache()
@@ -235,7 +202,7 @@ public class UrlClassLoader extends ClassLoader {
            .useLazyClassloadingCaches(Boolean.parseBoolean(System.getProperty("idea.lazy.classloading.caches", "false"))));
   }
 
-  protected UrlClassLoader(@NotNull Builder<? extends UrlClassLoader> builder) {
+  protected UrlClassLoader(@NotNull Builder builder) {
     super(builder.myParent);
     myURLs = ContainerUtilRt.map2List(builder.myURLs, new Function<URL, URL>() {
       @Override
@@ -249,7 +216,7 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   @NotNull
-  protected final ClassPath createClassPath(@NotNull Builder<? extends UrlClassLoader> builder) {
+  protected final ClassPath createClassPath(@NotNull Builder builder) {
     return new ClassPath(myURLs, builder.myLockJars, builder.myUseCache, builder.myAcceptUnescaped, builder.myPreload,
                          builder.myUsePersistentClasspathIndex, builder.myCachePool, builder.myCachingCondition,
                          builder.myErrorOnMissingJar, builder.myLazyClassloadingCaches, builder.myURLsWithProtectionDomain,
@@ -270,12 +237,9 @@ public class UrlClassLoader extends ClassLoader {
     }
   }
 
-  /**
-   * @deprecated Adding additional urls to classloader at runtime could lead to hard-to-debug errors
-   * <b>Note:</b> Used via reflection because of classLoaders incompatibility
-   */
-  @SuppressWarnings({"unused", "DeprecatedIsStillUsed"})
+  /** @deprecated adding URLs to a classloader at runtime could lead to hard-to-debug errors */
   @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
   public void addURL(@NotNull URL url) {
     getClassPath().addURL(internProtocol(url));
     myURLs.add(url);
@@ -293,11 +257,9 @@ public class UrlClassLoader extends ClassLoader {
   @Override
   protected Class findClass(final String name) throws ClassNotFoundException {
     Class clazz = _findClass(name);
-
     if (clazz == null) {
       throw new ClassNotFoundException(name);
     }
-
     return clazz;
   }
 
@@ -307,7 +269,6 @@ public class UrlClassLoader extends ClassLoader {
     if (res == null) {
       return null;
     }
-
     try {
       return defineClass(name, res);
     }
@@ -334,7 +295,7 @@ public class UrlClassLoader extends ClassLoader {
                         null);
         }
         catch (IllegalArgumentException e) {
-          // do nothing, package already defined by some other thread
+          // do nothing, package already defined by some another thread
         }
       }
     }
@@ -411,7 +372,7 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   /**
-   * An interface for a pool to store internal class loader caches, that can be shared between several different class loaders,
+   * An interface for a pool to store internal caches that can be shared between different class loaders,
    * if they contain the same URLs in their class paths.<p/>
    *
    * The implementation is subject to change so one shouldn't rely on it.
@@ -436,7 +397,7 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   /**
-   * @return a new pool to be able to share internal class loader caches between several different class loaders, if they contain the same URLs
+   * @return a new pool to be able to share internal caches between different class loaders, if they contain the same URLs
    * in their class paths.
    */
   @NotNull

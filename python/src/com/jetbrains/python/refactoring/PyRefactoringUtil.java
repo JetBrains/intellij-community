@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.BiPredicate;
 
 public class PyRefactoringUtil {
   private PyRefactoringUtil() {
@@ -326,7 +327,7 @@ public class PyRefactoringUtil {
    */
   @NotNull
   public static String selectUniqueNameFromType(@NotNull String typeName, @NotNull PsiElement scopeAnchor) {
-    return selectUniqueName(typeName, true, scopeAnchor);
+    return selectUniqueName(typeName, true, scopeAnchor, PyRefactoringUtil::isValidNewName);
   }
 
   /**
@@ -339,11 +340,16 @@ public class PyRefactoringUtil {
    */
   @NotNull
   public static String selectUniqueName(@NotNull String templateName, @NotNull PsiElement scopeAnchor) {
-    return selectUniqueName(templateName, false, scopeAnchor);
+    return selectUniqueName(templateName, false, scopeAnchor, PyRefactoringUtil::isValidNewName);
   }
 
   @NotNull
-  private static String selectUniqueName(@NotNull String templateName, boolean templateIsType, @NotNull PsiElement scopeAnchor) {
+  public static String selectUniqueName(@NotNull String templateName, @NotNull PsiElement scopeAnchor, @NotNull BiPredicate<String, PsiElement> isValid) {
+    return selectUniqueName(templateName, false, scopeAnchor, isValid);
+  }
+
+  @NotNull
+  private static String selectUniqueName(@NotNull String templateName, boolean templateIsType, @NotNull PsiElement scopeAnchor, @NotNull BiPredicate<String, PsiElement> isValid) {
     final Collection<String> suggestions;
     if (templateIsType) {
       suggestions = NameSuggesterUtil.generateNamesByType(templateName);
@@ -352,14 +358,14 @@ public class PyRefactoringUtil {
       suggestions = NameSuggesterUtil.generateNames(templateName);
     }
     for (String name : suggestions) {
-      if (isValidNewName(name, scopeAnchor)) {
+      if (isValid.test(name, scopeAnchor)) {
         return name;
       }
     }
 
     final String shortestName = ContainerUtil.getFirstItem(suggestions);
     //noinspection ConstantConditions
-    return appendNumberUntilValid(shortestName, scopeAnchor);
+    return appendNumberUntilValid(shortestName, scopeAnchor, isValid);
   }
 
   /**
@@ -367,13 +373,14 @@ public class PyRefactoringUtil {
    *
    * @param name        initial name
    * @param scopeAnchor PSI element used to determine correct scope
+   * @param predicate used to test if suggested name is valid
    * @return unique name in the scope probably with number suffix appended
    */
   @NotNull
-  public static String appendNumberUntilValid(@NotNull String name, @NotNull PsiElement scopeAnchor) {
+  public static String appendNumberUntilValid(@NotNull String name, @NotNull PsiElement scopeAnchor, @NotNull BiPredicate<String, PsiElement> predicate) {
     int counter = 1;
     String candidate = name;
-    while (!isValidNewName(candidate, scopeAnchor)) {
+    while (!predicate.test(candidate, scopeAnchor)) {
       candidate = name + counter;
       counter++;
     }

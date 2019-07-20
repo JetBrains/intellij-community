@@ -4,14 +4,14 @@
 package com.intellij.java.codeInsight.daemon.indentGuide
 
 import com.intellij.openapi.editor.impl.IndentsModelImpl
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.ArrayUtilRt
 import org.jetbrains.annotations.NotNull
 /**
  * @author Denis Zhdanov
  */
-class IndentGuideTest extends LightCodeInsightFixtureTestCase {
+class IndentGuideTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   protected void setUp() throws Exception {

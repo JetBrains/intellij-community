@@ -7,14 +7,14 @@ import com.intellij.ide.projectView.impl.ProjectViewFileNestingService;
 import com.intellij.ide.projectView.impl.ProjectViewFileNestingService.NestingRule;
 import com.intellij.ide.projectView.impl.ProjectViewImpl;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class NestedFilesInProjectViewTest extends LightPlatformCodeInsightFixtureTestCase {
+public class NestedFilesInProjectViewTest extends BasePlatformTestCase {
 
   private void doTest(@NotNull final String expected) {
     final ProjectViewImpl projectView = (ProjectViewImpl)ProjectView.getInstance(getProject());

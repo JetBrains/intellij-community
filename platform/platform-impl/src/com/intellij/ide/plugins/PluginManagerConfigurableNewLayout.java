@@ -1350,6 +1350,12 @@ public class PluginManagerConfigurableNewLayout
   }
 
   @Override
+  @NotNull
+  public String getHelpTopic() {
+    return PluginManagerConfigurable.ID;
+  }
+
+  @Override
   public void disposeUIResources() {
     myPluginModel.toBackground();
 

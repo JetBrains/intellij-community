@@ -17,10 +17,10 @@ package com.siyeh.ig.javadoc;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class UnnecessaryInheritDocInspectionTest extends LightInspectionTestCase {
+public class UnnecessaryInheritDocInspectionTest extends LightJavaInspectionTestCase {
 
   public void testUnnecessaryInheritDoc() {
     doTest();

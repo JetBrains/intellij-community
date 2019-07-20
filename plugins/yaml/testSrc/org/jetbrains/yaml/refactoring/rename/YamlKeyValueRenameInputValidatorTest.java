@@ -1,10 +1,10 @@
 package org.jetbrains.yaml.refactoring.rename;
 
 import com.intellij.refactoring.rename.RenameInputValidatorEx;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public final class YamlKeyValueRenameInputValidatorTest extends LightPlatformCodeInsightFixtureTestCase {
+public final class YamlKeyValueRenameInputValidatorTest extends BasePlatformTestCase {
   private static final RenameInputValidatorEx INPUT_VALIDATOR = new YamlKeyValueRenameInputValidator();
 
   public void testInvalidNames() {

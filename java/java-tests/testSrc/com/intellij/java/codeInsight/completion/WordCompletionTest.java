@@ -16,7 +16,7 @@
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.completion.CompletionTestCase;
+import com.intellij.codeInsight.completion.JavaCompletionTestCase;
 import com.intellij.lang.StdLanguages;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Maxim.Mossienko
  */
-public class WordCompletionTest extends CompletionTestCase {
+public class WordCompletionTest extends JavaCompletionTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/word/";
 
   @NotNull

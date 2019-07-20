@@ -17,10 +17,10 @@
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class ExtractMethod15Test extends LightCodeInsightTestCase {
+public class ExtractMethod15Test extends LightJavaCodeInsightTestCase {
   private static final String BASE_PATH = "/refactoring/extractMethod15/";
 
   @NotNull

@@ -3,7 +3,7 @@ package org.jetbrains.plugins.groovy.refactoring.introduceParameter
 
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.refactoring.IntroduceParameterRefactoring
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.util.TestUtils
@@ -12,7 +12,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  * @author Max Medvedev
  */
 @CompileStatic
-class GrIntroduceParameterInClosureTest extends LightCodeInsightFixtureTestCase {
+class GrIntroduceParameterInClosureTest extends LightJavaCodeInsightFixtureTestCase {
   protected String getBasePath() {
     return TestUtils.getTestDataPath() + "refactoring/introduceParameterInClosure/"
   }

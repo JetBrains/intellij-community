@@ -23,13 +23,13 @@ import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author oleg
  */
-public class SelectionQuotingTypedHandlerTest extends LightPlatformCodeInsightFixtureTestCase {
+public class SelectionQuotingTypedHandlerTest extends BasePlatformTestCase {
 
   private boolean myPrevValue;
 

@@ -304,4 +304,8 @@ public class PyElementVisitor extends PsiElementVisitor {
   public void visitPySingleStarParameter(PySingleStarParameter node) {
     visitPyElement(node);
   }
+
+  public void visitPyAssignmentExpression(PyAssignmentExpression node) {
+    visitPyExpression(node);
+  }
 }

@@ -16,13 +16,13 @@
 package com.siyeh.ig.resources;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
 @SuppressWarnings("ALL")
-public class JDBCResourceInspectionTest extends LightInspectionTestCase {
+public class JDBCResourceInspectionTest extends LightJavaInspectionTestCase {
 
   public void testCorrectClose() {
     doTest("import java.sql.*;" +

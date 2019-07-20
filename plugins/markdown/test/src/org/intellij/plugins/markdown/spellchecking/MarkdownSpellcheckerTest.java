@@ -1,10 +1,10 @@
 package org.intellij.plugins.markdown.spellchecking;
 
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.intellij.plugins.markdown.MarkdownTestingUtil;
 
-public class MarkdownSpellcheckerTest extends LightPlatformCodeInsightFixtureTestCase {
+public class MarkdownSpellcheckerTest extends BasePlatformTestCase {
 
   @Override
   protected void setUp() throws Exception {

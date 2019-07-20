@@ -19,13 +19,13 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
-public class DomSaxParserTest extends LightPlatformCodeInsightFixtureTestCase {
+public class DomSaxParserTest extends BasePlatformTestCase {
 
   public void testGetRootTagNameWithoutNamespace() {
     assertData("<root>", "root", null, null, null);

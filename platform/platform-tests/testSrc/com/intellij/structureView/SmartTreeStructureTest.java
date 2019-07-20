@@ -18,14 +18,14 @@ package com.intellij.structureView;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 
-public class SmartTreeStructureTest extends LightPlatformCodeInsightFixtureTestCase {
+public class SmartTreeStructureTest extends BasePlatformTestCase {
   private final Queryable.PrintInfo myPrintInfo = new Queryable.PrintInfo();
   private TestTreeModel myModel;
 

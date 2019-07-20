@@ -22,11 +22,11 @@ import com.intellij.openapi.editor.EditorLastActionTracker;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class EditorLastActionTrackerTest extends LightPlatformCodeInsightFixtureTestCase {
+public class EditorLastActionTrackerTest extends BasePlatformTestCase {
   public static final String SAMPLE_ACTION = "EditorDelete";
   private final EditorActionHandler myActionHandler = new MyActionHandler();
 

@@ -474,7 +474,9 @@ class JsonSchemaAnnotatorChecker {
     final JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(value, schema);
     if (walker == null) return;
     final String text = StringUtil.notNullize(walker.getNodeTextForValidation(value));
-    BiFunction<String, String, Boolean> eq = myOptions.isCaseInsensitiveEnumCheck() ? String::equalsIgnoreCase : String::equals;
+    BiFunction<String, String, Boolean> eq = myOptions.isCaseInsensitiveEnumCheck() || schema.isForceCaseInsensitive()
+                                             ? String::equalsIgnoreCase
+                                             : String::equals;
     for (Object object : enumItems) {
       if (checkEnumValue(object, walker, walker.createValueAdapter(value), text, eq)) return;
     }

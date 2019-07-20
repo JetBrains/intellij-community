@@ -27,7 +27,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.TestActionEvent;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testIntegration.TestRunLineMarkerProvider;
 import com.intellij.util.containers.ContainerUtil;
 
@@ -38,7 +38,7 @@ import java.util.Set;
 /**
  * @author Dmitry Avdeev
  */
-public class RunLineMarkerTest extends LightCodeInsightFixtureTestCase {
+public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
   public void testRunLineMarker() {
     myFixture.configureByText("MainTest.java", "public class MainTest {\n" +
                                                "    public static void <caret>foo(String[] args) {\n" +

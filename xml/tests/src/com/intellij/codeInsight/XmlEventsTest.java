@@ -33,11 +33,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class XmlEventsTest extends LightCodeInsightTestCase {
+public class XmlEventsTest extends LightJavaCodeInsightTestCase {
   public void test1() {
     final Listener listener = addPomListener();
     final XmlTag tagFromText = XmlElementFactory.getInstance(getProject()).createTagFromText("<a/>");

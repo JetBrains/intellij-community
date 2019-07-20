@@ -20,19 +20,19 @@ import com.intellij.codeInspection.reflectiveAccess.JavaReflectionInvocationInsp
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
  * @author Pavel.Dolgov
  */
-class JavaReflectionInvocationTest : LightCodeInsightFixtureTestCase() {
+class JavaReflectionInvocationTest : LightJavaCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
     LanguageLevelProjectExtension.getInstance(project).languageLevel = LanguageLevel.JDK_1_5
     myFixture.enableInspections(JavaReflectionInvocationInspection())
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = LightCodeInsightFixtureTestCase.JAVA_8
+  override fun getProjectDescriptor(): LightProjectDescriptor = LightJavaCodeInsightFixtureTestCase.JAVA_8
 
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/javaReflectionInvocation"
 

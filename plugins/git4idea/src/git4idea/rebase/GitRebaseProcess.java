@@ -347,7 +347,7 @@ public class GitRebaseProcess {
            ((GitSuccessfulRebase)rebaseStatus).getSuccessType() != SuccessType.UP_TO_DATE;
   }
 
-  private boolean saveDirtyRootsInitially(@NotNull List<GitRepository> repositories) {
+  private boolean saveDirtyRootsInitially(@NotNull List<? extends GitRepository> repositories) {
     Collection<GitRepository> repositoriesToSave = filter(repositories, repository -> {
       return !repository.equals(myRebaseSpec.getOngoingRebase()); // no need to save anything when --continue/--skip is to be called
     });
@@ -362,7 +362,7 @@ public class GitRebaseProcess {
   }
 
   @Nullable
-  private String saveLocalChanges(@NotNull Collection<VirtualFile> rootsToSave) {
+  private String saveLocalChanges(@NotNull Collection<? extends VirtualFile> rootsToSave) {
     try {
       mySaver.saveLocalChanges(rootsToSave);
       return null;
@@ -393,12 +393,12 @@ public class GitRebaseProcess {
   }
 
   @Nullable
-  private static String getCommonCurrentBranchNameIfAllTheSame(@NotNull Collection<GitRepository> repositories) {
+  private static String getCommonCurrentBranchNameIfAllTheSame(@NotNull Collection<? extends GitRepository> repositories) {
     return getItemIfAllTheSame(map(repositories, Repository::getCurrentBranchName), null);
   }
 
   @Contract("_, !null -> !null")
-  private static <T> T getItemIfAllTheSame(@NotNull Collection<T> collection, @Nullable T defaultItem) {
+  private static <T> T getItemIfAllTheSame(@NotNull Collection<? extends T> collection, @Nullable T defaultItem) {
     return new HashSet<>(collection).size() == 1 ? getFirstItem(collection) : defaultItem;
   }
 

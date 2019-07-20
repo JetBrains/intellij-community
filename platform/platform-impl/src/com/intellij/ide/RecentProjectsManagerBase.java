@@ -9,7 +9,6 @@ import com.intellij.idea.SplashManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.*;
@@ -18,7 +17,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -608,8 +606,15 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     return file.getFileName().toString();
   }
 
-  protected boolean willReopenProjectOnStart() {
-    return getLastProjectPath() != null && GeneralSettings.getInstance().isReopenLastProject();
+  @Override
+  public boolean willReopenProjectOnStart() {
+    @SystemIndependent String lastProjectPath = getLastProjectPath();
+    return lastProjectPath != null && GeneralSettings.getInstance().isReopenLastProject() && ProjectKt.isValidProjectPath(lastProjectPath, true);
+  }
+
+  @Override
+  public void reopenLastProjectOnStart() {
+    doReopenLastProject(null);
   }
 
   protected void doReopenLastProject(@Nullable IdeFrame frame) {
@@ -685,34 +690,16 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
   }
 
   static final class MyAppLifecycleListener implements AppLifecycleListener {
-    private final RecentProjectsManagerBase manager = getInstanceEx();
-
-    @Override
-    public void appFrameCreated(@NotNull List<String> commandLineArgs, @NotNull final Ref<? super Boolean> willOpenProject) {
-      if (manager.willReopenProjectOnStart()) {
-        willOpenProject.set(Boolean.TRUE);
-      }
-    }
-
-    @Override
-    public void appStarting(@Nullable Project projectFromCommandLine) {
-      if (projectFromCommandLine != null || JetBrainsProtocolHandler.appStartedWithCommand()) {
-        return;
-      }
-
-      manager.doReopenLastProject(null);
-    }
-
     @Override
     public void projectOpenFailed() {
-      manager.updateLastProjectPath();
+      getInstanceEx().updateLastProjectPath();
     }
 
     @Override
     public void projectFrameClosed() {
       // ProjectManagerListener.projectClosed cannot be used to call updateLastProjectPath,
       // because called even if project closed on app exit
-      manager.updateLastProjectPath();
+      getInstanceEx().updateLastProjectPath();
     }
   }
 

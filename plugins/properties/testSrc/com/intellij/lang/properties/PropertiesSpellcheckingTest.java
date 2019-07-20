@@ -16,9 +16,9 @@
 package com.intellij.lang.properties;
 
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-public class PropertiesSpellcheckingTest extends LightCodeInsightFixtureTestCase {
+public class PropertiesSpellcheckingTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testPropertiesSpellcheckingStrategy() {
     myFixture.enableInspections(new SpellCheckingInspection());

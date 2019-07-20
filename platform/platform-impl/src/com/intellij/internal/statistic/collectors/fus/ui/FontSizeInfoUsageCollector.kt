@@ -49,6 +49,14 @@ class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
         UsageDescriptor("QuickDoc.font.size[$quickDocFontSize]")
       )
     }
+
+    val lineSpacing: Float = EditorColorsManager.getInstance().globalScheme.lineSpacing
+
+    val usageData = FeatureUsageData()
+    usageData.addData("value", lineSpacing)
+
+    usages.add(UsageDescriptor("editor.lineSpacing", usageData ))
+
     return usages
   }
 

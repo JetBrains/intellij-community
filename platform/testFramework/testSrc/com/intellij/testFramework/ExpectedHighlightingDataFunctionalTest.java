@@ -6,12 +6,12 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiPlainText;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.junit.ComparisonFailure;
 
-public class ExpectedHighlightingDataFunctionalTest extends LightPlatformCodeInsightFixtureTestCase {
+public class ExpectedHighlightingDataFunctionalTest extends BasePlatformTestCase {
 
   public void testExpectedWarning() {
     doTest("<warning descr=\"Magic problem\">just some text</warning>", new MySimpleInspection());

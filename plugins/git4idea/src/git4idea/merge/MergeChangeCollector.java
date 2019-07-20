@@ -60,7 +60,7 @@ public class MergeChangeCollector {
   /**
    * Collects changed files during or after merge operation to the supplied {@code updates} container.
    */
-  public void collect(final UpdatedFiles updates, List<VcsException> exceptions) {
+  public void collect(final UpdatedFiles updates, List<? super VcsException> exceptions) {
     try {
       // collect unmerged
       Set<String> paths = getUnmergedPaths();
@@ -154,7 +154,7 @@ public class MergeChangeCollector {
    * Populates the supplied collections of modified, created and removed files returned by 'git diff #revisions' command,
    * where revisions is the range of revisions to check.
    */
-  public void getChangedFilesExceptUnmerged(Collection<String> updated, Collection<String> created, Collection<String> removed, String revisions)
+  public void getChangedFilesExceptUnmerged(Collection<? super String> updated, Collection<? super String> created, Collection<? super String> removed, String revisions)
     throws VcsException {
     if (revisions == null) {
       return;

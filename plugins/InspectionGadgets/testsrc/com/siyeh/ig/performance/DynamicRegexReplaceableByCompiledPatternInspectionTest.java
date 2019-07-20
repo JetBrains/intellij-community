@@ -16,12 +16,12 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class DynamicRegexReplaceableByCompiledPatternInspectionTest extends LightInspectionTestCase {
+public class DynamicRegexReplaceableByCompiledPatternInspectionTest extends LightJavaInspectionTestCase {
   @Override
   protected InspectionProfileEntry getInspection() {
     return new DynamicRegexReplaceableByCompiledPatternInspection();

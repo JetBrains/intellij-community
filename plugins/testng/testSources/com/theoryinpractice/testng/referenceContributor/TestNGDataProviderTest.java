@@ -2,7 +2,7 @@
 package com.theoryinpractice.testng.referenceContributor;
 
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.UIUtil;
 import org.testng.annotations.AfterMethod;
@@ -11,7 +11,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 @Test
-public class TestNGDataProviderTest extends LightCodeInsightFixtureTestCase {
+public class TestNGDataProviderTest extends LightJavaCodeInsightFixtureTestCase {
   @BeforeMethod
   @Override
   protected void setUp() {

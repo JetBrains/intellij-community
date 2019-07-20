@@ -16,13 +16,13 @@
 package com.siyeh.ig.classmetrics;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ClassComplexityInspectionTest extends LightInspectionTestCase {
+public class ClassComplexityInspectionTest extends LightJavaInspectionTestCase {
 
   public void testClassComplexity() {
     doTest();

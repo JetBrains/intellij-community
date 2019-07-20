@@ -2,12 +2,10 @@
 package com.intellij.java.codeInsight.daemon.quickFix
 
 import com.intellij.codeInsight.daemon.QuickFixBundle.message
-import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import org.jdom.Element
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-class CreateFromUsageOrderTest : LightCodeInsightFixtureTestCase() {
+class CreateFromUsageOrderTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun `test local variable first with default settings`() {
     myFixture.configureByText("_.java", "class A { void usage() { foo(<caret>lllbar); } }")

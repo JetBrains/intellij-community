@@ -116,7 +116,7 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
     return roots;
   }
 
-  private static boolean shouldScanAbove(@NotNull VirtualFile startDir, @NotNull Set<VcsRoot> rootsInsideDir) {
+  private static boolean shouldScanAbove(@NotNull VirtualFile startDir, @NotNull Set<? extends VcsRoot> rootsInsideDir) {
     return rootsInsideDir.stream().noneMatch(it -> startDir.equals(it.getPath()));
   }
 

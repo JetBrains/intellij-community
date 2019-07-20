@@ -5,9 +5,9 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
-public class AstLoadingFilterTest extends LightPlatformCodeInsightFixtureTestCase {
+public class AstLoadingFilterTest extends BasePlatformTestCase {
 
   @Override
   protected void setUp() throws Exception {

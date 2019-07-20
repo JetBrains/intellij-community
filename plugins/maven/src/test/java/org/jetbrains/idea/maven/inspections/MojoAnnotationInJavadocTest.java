@@ -17,9 +17,9 @@ package org.jetbrains.idea.maven.inspections;
 
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-public class MojoAnnotationInJavadocTest extends LightCodeInsightFixtureTestCase {
+public class MojoAnnotationInJavadocTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getTestDataPath() {

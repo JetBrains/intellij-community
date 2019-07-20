@@ -3,10 +3,10 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class NewObjectEqualityInspectionTest extends LightInspectionTestCase {
+public class NewObjectEqualityInspectionTest extends LightJavaInspectionTestCase {
 
   public void testNewObjectEquality() {
     doTest();

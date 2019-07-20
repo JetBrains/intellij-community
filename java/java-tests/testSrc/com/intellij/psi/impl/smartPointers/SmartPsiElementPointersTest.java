@@ -2,7 +2,7 @@
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.highlighter.XmlFileType;
@@ -58,7 +58,7 @@ import java.util.Set;
 
 @PlatformTestCase.WrapInCommand
 @SkipSlowTestLocally
-public class SmartPsiElementPointersTest extends CodeInsightTestCase {
+public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
   private VirtualFile myRoot;
 
   @Override

@@ -8,7 +8,6 @@ import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.scope.packageSet.FilteredPackageSet;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.ui.FileColorName;
 import com.intellij.ui.IconManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Konstantin Bulenkov
  * @author Sergey Malenkov
  */
-public final class TestsScope extends NamedScope implements FileColorName {
+public final class TestsScope extends NamedScope {
   public static final String NAME = IdeBundle.message("predefined.scope.tests.name");
   public static final TestsScope INSTANCE = new TestsScope();
 
@@ -30,7 +29,7 @@ public final class TestsScope extends NamedScope implements FileColorName {
   }
 
   @Override
-  public String colorName() {
+  public String getDefaultColorName() {
     return "Green";
   }
 }

@@ -184,7 +184,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
   }
 
   private static void showUpdates(@NotNull Project project,
-                                  @NotNull List<VcsException> exceptions,
+                                  @NotNull List<? super VcsException> exceptions,
                                   @NotNull VirtualFile root,
                                   @NotNull GitRevisionNumber currentRev,
                                   @NotNull Label beforeLabel,

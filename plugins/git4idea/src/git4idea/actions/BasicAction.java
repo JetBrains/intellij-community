@@ -111,7 +111,7 @@ public abstract class BasicAction extends DumbAwareAction {
    * @param file    the file whose children should be added to the result list
    *                (recursively)
    */
-  private void addChildren(@NotNull final Project project, @NotNull final List<VirtualFile> files, @NotNull VirtualFile file) {
+  private void addChildren(@NotNull final Project project, @NotNull final List<? super VirtualFile> files, @NotNull VirtualFile file) {
     VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor(SKIP_ROOT, null) {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {

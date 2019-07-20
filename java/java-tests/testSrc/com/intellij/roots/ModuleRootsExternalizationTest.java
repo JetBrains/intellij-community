@@ -16,7 +16,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.ModuleTestCase;
+import com.intellij.testFramework.JavaModuleTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -31,7 +31,7 @@ import static com.intellij.testFramework.assertions.Assertions.assertThat;
 /**
  *  @author dsl
  */
-public class ModuleRootsExternalizationTest extends ModuleTestCase {
+public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
   public void testEmptyModuleWrite() {
     ModuleRootManagerImpl moduleRootManager = createTempModuleRootManager();
     Element root = new Element("root");

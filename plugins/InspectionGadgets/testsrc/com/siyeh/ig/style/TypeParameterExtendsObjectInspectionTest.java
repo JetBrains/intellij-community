@@ -5,14 +5,14 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class TypeParameterExtendsObjectInspectionTest extends LightInspectionTestCase {
+public class TypeParameterExtendsObjectInspectionTest extends LightJavaInspectionTestCase {
 
   @NotNull
   @Override

@@ -19,7 +19,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.SmartList;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public abstract class IPPTestCase extends LightCodeInsightFixtureTestCase {
+public abstract class IPPTestCase extends LightJavaCodeInsightFixtureTestCase {
 
   private static final Pattern PATTERN = Pattern.compile("/\\*_(.*)\\*/");
 

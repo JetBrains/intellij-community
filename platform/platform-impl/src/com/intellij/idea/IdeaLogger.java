@@ -52,6 +52,9 @@ public class IdeaLogger extends Log4jBasedLogger {
     };
   }
 
+  /**
+   * @deprecated returns {@code null} always
+   */
   @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
   @Deprecated
   @Nullable

@@ -23,7 +23,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 /**
  * @author Bas Leijdekkers
  */
-public class HtmlMissingClosingTagInspectionTest extends LightPlatformCodeInsightFixtureTestCase {
+public class HtmlMissingClosingTagInspectionTest extends BasePlatformTestCase {
 
   public void testImgElement() {
     highlightTest("<html><body><img></body></html>");

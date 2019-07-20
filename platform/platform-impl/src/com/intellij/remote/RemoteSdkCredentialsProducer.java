@@ -26,9 +26,8 @@ import org.jetbrains.annotations.Nullable;
 public interface RemoteSdkCredentialsProducer<T extends RemoteSdkCredentials> {
   /**
    * Synchronously returns remote sdk credentials
-   * @return
-   * @throws InterruptedException
-   * @deprecated
+   *
+   * @deprecated use {@link #getRemoteSdkCredentials(Project, boolean)}
    */
   @Deprecated
   T getRemoteSdkCredentials() throws InterruptedException, ExecutionException;
@@ -36,10 +35,8 @@ public interface RemoteSdkCredentialsProducer<T extends RemoteSdkCredentials> {
   /**
    * Returns remote sdk credentials for instances saved on application level,
    * e.g. only application level deployment configurations will be available.
-   * @return
-   * @throws InterruptedException
-   * @throws ExecutionException
-   * @deprecated
+   *
+   * @deprecated use {@link #getRemoteSdkCredentials(Project, boolean)}
    */
   @Deprecated
   T getRemoteSdkCredentials(boolean allowSynchronousInteraction) throws InterruptedException, ExecutionException;
@@ -49,18 +46,21 @@ public interface RemoteSdkCredentialsProducer<T extends RemoteSdkCredentials> {
   /**
    * Produces remote sdk credentials for instances saved on application level,
    * e.g. only application level deployment configurations will be available.
+   *
    * @param allowSynchronousInteraction
    * @param remoteSdkCredentialsConsumer
-   * @deprecated
+   * @deprecated use {@link #produceRemoteSdkCredentials(Project, boolean, Consumer)}
    */
   @Deprecated
   void produceRemoteSdkCredentials(boolean allowSynchronousInteraction, Consumer<T> remoteSdkCredentialsConsumer);
 
-  void produceRemoteSdkCredentials(@Nullable Project project, boolean allowSynchronousInteraction, Consumer<T> remoteSdkCredentialsConsumer);
+  void produceRemoteSdkCredentials(@Nullable Project project,
+                                   boolean allowSynchronousInteraction,
+                                   Consumer<T> remoteSdkCredentialsConsumer);
 
   /**
    * @param remoteSdkCredentialsConsumer
-   * @deprecated
+   * @deprecated use {@link #produceRemoteSdkCredentials(Project, boolean, Consumer)}
    */
   @Deprecated
   void produceRemoteSdkCredentials(Consumer<T> remoteSdkCredentialsConsumer);

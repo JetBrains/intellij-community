@@ -85,7 +85,7 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
   public void loadCommittedChanges(CompositeChangeBrowserSettings settings,
                                    RepositoryLocation location,
                                    int maxCount,
-                                   AsynchConsumer<CommittedChangeList> consumer) {
+                                   AsynchConsumer<? super CommittedChangeList> consumer) {
     throw new UnsupportedOperationException();
   }
 

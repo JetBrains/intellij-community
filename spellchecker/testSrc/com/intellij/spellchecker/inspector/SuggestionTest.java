@@ -17,12 +17,12 @@ package com.intellij.spellchecker.inspector;
 
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.settings.SpellCheckerSettings;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 import java.util.List;
 
 @SuppressWarnings("SpellCheckingInspection")
-public class SuggestionTest extends LightPlatformCodeInsightFixtureTestCase {
+public class SuggestionTest extends BasePlatformTestCase {
 
   public static final String TYPPPO = "Typppo";
 

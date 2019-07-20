@@ -17,10 +17,10 @@ package com.siyeh.ig.dataflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class UnnecessaryLocalVariableInspectionTest extends LightInspectionTestCase {
+public class UnnecessaryLocalVariableInspectionTest extends LightJavaInspectionTestCase {
   @Override
   protected InspectionProfileEntry getInspection() {
     return new UnnecessaryLocalVariableInspection();

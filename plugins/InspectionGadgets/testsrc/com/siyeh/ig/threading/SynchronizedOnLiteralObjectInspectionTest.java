@@ -16,13 +16,13 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas
  */
-public class SynchronizedOnLiteralObjectInspectionTest extends LightInspectionTestCase {
+public class SynchronizedOnLiteralObjectInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSynchronizedOnLiteralObject() {
     doTest();

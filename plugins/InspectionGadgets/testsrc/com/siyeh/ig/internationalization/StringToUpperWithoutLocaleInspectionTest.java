@@ -5,11 +5,11 @@ package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class StringToUpperWithoutLocaleInspectionTest extends LightInspectionTestCase {
+public class StringToUpperWithoutLocaleInspectionTest extends LightJavaInspectionTestCase {
 
   public void testStringToUpperWithoutLocale() {
     doTest();

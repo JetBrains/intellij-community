@@ -21,13 +21,13 @@ import com.intellij.codeInspection.capitalization.TitleCapitalizationInspection;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
  */
-public class CapitalizationInspectionTest extends LightCodeInsightFixtureTestCase {
+public class CapitalizationInspectionTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testTitleCapitalization() {
     doTest(true);

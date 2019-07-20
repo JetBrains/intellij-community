@@ -3,11 +3,11 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class UnnecessaryExplicitNumericCastInspectionTest extends LightInspectionTestCase {
+public class UnnecessaryExplicitNumericCastInspectionTest extends LightJavaInspectionTestCase {
 
   public void testUnnecessaryExplicitNumericCast() {
     doTest();

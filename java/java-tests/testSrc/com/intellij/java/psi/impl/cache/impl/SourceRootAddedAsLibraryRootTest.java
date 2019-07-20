@@ -20,7 +20,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
@@ -28,7 +28,7 @@ import java.io.File;
 /**
  * @author max
  */
-public class SourceRootAddedAsLibraryRootTest extends PsiTestCase {
+public class SourceRootAddedAsLibraryRootTest extends JavaPsiTestCase {
   private VirtualFile myDir;
   private VirtualFile myVFile;
 

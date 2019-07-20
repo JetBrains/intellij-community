@@ -24,10 +24,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.RefactoringFactory;
 import com.intellij.refactoring.RenameRefactoring;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class AntRenameTest extends LightCodeInsightTestCase {
+public class AntRenameTest extends LightJavaCodeInsightTestCase {
 
   public void testSimpleProperty() {
     doTest();

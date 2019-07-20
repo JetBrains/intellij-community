@@ -15,7 +15,7 @@ import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.testFramework.CompilerTester;
-import com.intellij.testFramework.ModuleTestCase;
+import com.intellij.testFramework.JavaModuleTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class CoverageAnnotatorIntegrationTest extends ModuleTestCase {
+public class CoverageAnnotatorIntegrationTest extends JavaModuleTestCase {
   private CompilerTester myCompilerTester;
 
   protected String getTestContentRoot() {

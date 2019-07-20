@@ -19,7 +19,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class InferredTypeTest extends LightCodeInsightFixtureTestCase {
+public class InferredTypeTest extends LightJavaCodeInsightFixtureTestCase {
   public void testNestedCallReturnType() {
     myFixture.configureByText("a.java", "import java.util.List;\n" +
                                         "abstract class Test {\n" +

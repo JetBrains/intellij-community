@@ -26,13 +26,13 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.intellij.lang.annotations.Language;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings("WeakerAccess")
-public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase {
+public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestCase {
   private VisibilityInspection myVisibilityInspection;
 
   @Override

@@ -2,11 +2,11 @@ package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AssertEqualsBetweenInconvertibleTypesInspectionTest extends LightInspectionTestCase {
+public class AssertEqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInspectionTestCase {
 
   public void testAssertEqualsBetweenInconvertibleTypes() {
     doTest();

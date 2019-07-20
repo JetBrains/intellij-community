@@ -24,7 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +34,7 @@ import java.io.File;
  * @author maxim
  */
 @SuppressWarnings("ConstantConditions")
-public class XmlDocumentationTest extends LightPlatformCodeInsightFixtureTestCase {
+public class XmlDocumentationTest extends BasePlatformTestCase {
 
   public void testXmlDoc() {
     doOneTest("1.xml", "display-name", false, "web-app_2_3.dtd");

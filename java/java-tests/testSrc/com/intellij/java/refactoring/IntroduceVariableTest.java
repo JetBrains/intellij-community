@@ -15,7 +15,7 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +24,7 @@ import java.util.Collection;
 /**
  * @author dsl
  */
-public class IntroduceVariableTest extends LightCodeInsightTestCase {
+public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {
@@ -210,6 +210,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, "Node"));
   }
   
+  public void testWhileConditionIncomplete() {
+    doTest(new MockIntroduceVariableHandler("temp", true, false, false, "boolean"));
+  }
+
   public void testField() {
     doTest(new MockIntroduceVariableHandler("temp", false, false, false, CommonClassNames.JAVA_LANG_STRING));
   }

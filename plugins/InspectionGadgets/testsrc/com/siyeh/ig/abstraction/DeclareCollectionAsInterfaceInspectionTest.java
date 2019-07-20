@@ -1,9 +1,9 @@
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
-public class DeclareCollectionAsInterfaceInspectionTest extends LightInspectionTestCase {
+public class DeclareCollectionAsInterfaceInspectionTest extends LightJavaInspectionTestCase {
 
   public void testDeclareCollectionAsInterface() { doTest(); }
 

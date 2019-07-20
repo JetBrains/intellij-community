@@ -4,14 +4,14 @@ package com.siyeh.ig.psiutils;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.psi.*;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ThreeState;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
-public class ReorderingUtilsTest extends LightCodeInsightTestCase {
+public class ReorderingUtilsTest extends LightJavaCodeInsightTestCase {
   private static final String PREFIX = "import java.util.Optional;\n" +
                                        "import java.util.List;\n" +
                                        "/** @noinspection all*/\n" +
@@ -93,7 +93,7 @@ public class ReorderingUtilsTest extends LightCodeInsightTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return LightCodeInsightFixtureTestCase.JAVA_9_ANNOTATED;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_9_ANNOTATED;
   }
 
   private static void checkCanBeReordered(@Language(value = "JAVA", prefix = PREFIX, suffix = SUFFIX) String expressionText,

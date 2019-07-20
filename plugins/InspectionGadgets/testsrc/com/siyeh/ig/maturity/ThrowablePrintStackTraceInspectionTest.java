@@ -16,12 +16,12 @@
 package com.siyeh.ig.maturity;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ThrowablePrintStackTraceInspectionTest extends LightInspectionTestCase {
+public class ThrowablePrintStackTraceInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
     doStatementTest("new Throwable()./*Call to 'printStackTrace()' should probably be replaced with more robust logging*/printStackTrace/**/();");

@@ -55,10 +55,10 @@ import java.util.stream.Collectors;
  * @author Irina.Chernushina on 10/1/2015.
  */
 public class JsonSchemaCompletionContributor extends CompletionContributor {
-  private static final String BUILTIN_USAGE_KEY = "json.schema.builtin.completion";
-  private static final String SCHEMA_USAGE_KEY = "json.schema.schema.completion";
-  private static final String USER_USAGE_KEY = "json.schema.user.completion";
-  private static final String REMOTE_USAGE_KEY = "json.schema.remote.completion";
+  private static final String BUILTIN_USAGE_KEY = "builtin";
+  private static final String SCHEMA_USAGE_KEY = "schema";
+  private static final String USER_USAGE_KEY = "user";
+  private static final String REMOTE_USAGE_KEY = "remote";
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {

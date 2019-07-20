@@ -27,10 +27,10 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.encapsulateFields.*;
 import com.intellij.refactoring.util.DocCommentPolicy;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import junit.framework.Assert;
 
-public class EncapsulateFieldsTest extends LightCodeInsightFixtureTestCase {
+public class EncapsulateFieldsTest extends LightJavaCodeInsightFixtureTestCase {
   public void testAlreadyExist() {
     doTest("i" , null);
   }

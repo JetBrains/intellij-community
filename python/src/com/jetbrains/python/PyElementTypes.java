@@ -40,7 +40,7 @@ public interface PyElementTypes extends PyStubElementTypes {
   PyElementType DEL_STATEMENT = new PyElementType("DEL_STATEMENT", PyDelStatementImpl::new);
   PyElementType EXEC_STATEMENT = new PyElementType("EXEC_STATEMENT", PyExecStatementImpl::new);
   PyElementType FOR_STATEMENT = new PyElementType("FOR_STATEMENT", PyForStatementImpl::new);
-  PyElementType TYPE_DECLARATION_STATEMENT = new PyElementType("TYPE_DECLARATION_STATEMENT", PyTypeDeclarationStatementImpl::new); 
+  PyElementType TYPE_DECLARATION_STATEMENT = new PyElementType("TYPE_DECLARATION_STATEMENT", PyTypeDeclarationStatementImpl::new);
 
   PyElementType GLOBAL_STATEMENT = new PyElementType("GLOBAL_STATEMENT", PyGlobalStatementImpl::new);
   PyElementType IF_STATEMENT = new PyElementType("IF_STATEMENT", PyIfStatementImpl::new);
@@ -88,6 +88,7 @@ public interface PyElementTypes extends PyStubElementTypes {
   PyElementType YIELD_EXPRESSION = new PyElementType("YIELD_EXPRESSION", PyYieldExpressionImpl::new);
   PyElementType STAR_EXPRESSION = new PyElementType("STAR_EXPRESSION", PyStarExpressionImpl::new);
   PyElementType DOUBLE_STAR_EXPRESSION = new PyElementType("DOUBLE_STAR_EXPRESSION", PyDoubleStarExpressionImpl::new);
+  PyElementType ASSIGNMENT_EXPRESSION = new PyElementType("ASSIGNMENT_EXPRESSION", PyAssignmentExpressionImpl::new);
 
   PyElementType SET_LITERAL_EXPRESSION = new PyElementType("SET_LITERAL_EXPRESSION", PySetLiteralExpressionImpl::new);
   PyElementType SET_COMP_EXPRESSION = new PyElementType("SET_COMP_EXPRESSION", PySetCompExpressionImpl::new);

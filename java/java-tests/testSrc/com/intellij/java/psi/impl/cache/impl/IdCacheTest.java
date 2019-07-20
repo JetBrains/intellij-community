@@ -2,7 +2,7 @@
 package com.intellij.java.psi.impl.cache.impl;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.todo.TodoIndexPatternProvider;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -23,7 +23,7 @@ import com.intellij.util.ArrayUtilRt;
 import java.io.File;
 import java.util.Arrays;
 
-public class IdCacheTest extends CodeInsightTestCase{
+public class IdCacheTest extends JavaCodeInsightTestCase {
 
   private VirtualFile myRootDir;
   private File myCacheFile;

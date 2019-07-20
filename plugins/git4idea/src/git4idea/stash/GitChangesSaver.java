@@ -77,7 +77,7 @@ public abstract class GitChangesSaver {
    * Saves local changes in stash or in shelf.
    * @param rootsToSave Save changes only from these roots.
    */
-  public void saveLocalChanges(@Nullable Collection<VirtualFile> rootsToSave) throws VcsException {
+  public void saveLocalChanges(@Nullable Collection<? extends VirtualFile> rootsToSave) throws VcsException {
     if (rootsToSave == null || rootsToSave.isEmpty()) {
       return;
     }
@@ -106,7 +106,7 @@ public abstract class GitChangesSaver {
    * Saves local changes - specific for chosen save strategy.
    * @param rootsToSave local changes should be saved on these roots.
    */
-  protected abstract void save(Collection<VirtualFile> rootsToSave) throws VcsException;
+  protected abstract void save(Collection<? extends VirtualFile> rootsToSave) throws VcsException;
 
   /**
    * Loads the changes - specific for chosen save strategy.

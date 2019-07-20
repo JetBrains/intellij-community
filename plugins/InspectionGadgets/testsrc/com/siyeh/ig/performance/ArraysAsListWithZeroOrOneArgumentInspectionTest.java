@@ -1,10 +1,10 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class ArraysAsListWithZeroOrOneArgumentInspectionTest extends LightInspectionTestCase {
+public class ArraysAsListWithZeroOrOneArgumentInspectionTest extends LightJavaInspectionTestCase {
 
   public void testArraysAsListWithZeroOrOneArgument() {
     doTest();

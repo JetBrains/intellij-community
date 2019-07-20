@@ -15,13 +15,13 @@ package org.intellij.plugins.markdown.editor;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElementFactory;
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MarkdownPsiElementFactoryTest extends LightPlatformCodeInsightFixtureTestCase {
+public class MarkdownPsiElementFactoryTest extends BasePlatformTestCase {
   public void testCreateNewCodeFence() {
     doTest("ruby", "a = 1", "```ruby\na = 1\n```");
   }

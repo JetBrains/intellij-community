@@ -21,13 +21,13 @@ import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 import java.util.*;
 
 import static com.intellij.openapi.editor.impl.DisplayedFoldingAnchor.Type;
 
-public class FoldingAnchorsOverlayStrategyTest extends LightPlatformCodeInsightFixtureTestCase {
+public class FoldingAnchorsOverlayStrategyTest extends BasePlatformTestCase {
   public void testExpanded() {
     prepareEditor("<body><div>\n" +
                   "</div><div>\n" +

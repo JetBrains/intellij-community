@@ -2,13 +2,13 @@
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class IntLiteralMayBeLongLiteralInspectionTest extends LightInspectionTestCase {
+public class IntLiteralMayBeLongLiteralInspectionTest extends LightJavaInspectionTestCase {
 
   public void testIntLiteralMayBeLongLiteral() {
     doTest();

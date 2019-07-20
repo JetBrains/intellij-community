@@ -1,12 +1,12 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class AccessToNonThreadSafeStaticFieldFromInstanceInspectionTest extends LightInspectionTestCase {
+public class AccessToNonThreadSafeStaticFieldFromInstanceInspectionTest extends LightJavaInspectionTestCase {
 
   @Override
   protected String[] getEnvironmentClasses() {

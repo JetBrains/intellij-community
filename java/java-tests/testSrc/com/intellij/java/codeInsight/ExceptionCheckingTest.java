@@ -18,7 +18,7 @@ package com.intellij.java.codeInsight;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * @author mike
  */
-public class ExceptionCheckingTest extends LightCodeInsightTestCase {
+public class ExceptionCheckingTest extends LightJavaCodeInsightTestCase {
   public void testNoExceptions() {
     PsiMethodCallExpression methodCall = createCall("void foo() { System.out.println(); }");
     List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(methodCall, null);

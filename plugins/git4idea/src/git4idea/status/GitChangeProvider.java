@@ -160,7 +160,7 @@ public class GitChangeProvider implements ChangeProvider {
       myVcsManager = vcsManager;
     }
 
-    public void changed(final Collection<Change> changes) {
+    public void changed(final Collection<? extends Change> changes) {
       for (Change change : changes) {
         final FilePath beforePath = ChangesUtil.getBeforePath(change);
         if (beforePath != null) {

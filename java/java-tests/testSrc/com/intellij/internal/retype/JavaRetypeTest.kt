@@ -6,14 +6,14 @@ import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.testFramework.TestModeFlags
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 
 /**
  * @author yole
  */
-class JavaRetypeTest : LightCodeInsightFixtureTestCase() {
+class JavaRetypeTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getBasePath(): String = JavaTestUtil.getRelativeJavaTestDataPath()
 
   override fun getTempDirFixture(): TempDirTestFixture {

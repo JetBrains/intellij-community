@@ -17,11 +17,11 @@ package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class TryFinallyCanBeTryWithResourcesInspectionTest extends LightInspectionTestCase {
+public class TryFinallyCanBeTryWithResourcesInspectionTest extends LightJavaInspectionTestCase {
 
   public void testTryFinallyCanBeTryWithResources() {
     doTest();

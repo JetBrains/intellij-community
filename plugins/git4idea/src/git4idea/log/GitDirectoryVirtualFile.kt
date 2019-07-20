@@ -33,7 +33,7 @@ class GitDirectoryVirtualFile(
       when(it) {
         is GitIndexUtil.StagedDirectory -> GitDirectoryVirtualFile(repo, this, it.path.name, commit)
         else -> VcsVirtualFile(this, it.path.name,
-                               GitFileRevision(repo.project, RemoteFilePath(it.path.path, false), gitRevisionNumber),
+                               GitFileRevision(repo.project, repo.root, RemoteFilePath(it.path.path, false), gitRevisionNumber),
                                VcsFileSystem.getInstance())
 
       }

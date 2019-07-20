@@ -222,8 +222,7 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   /**
-   * @see #queueUpdateFrom
-   * @deprecated
+   * @deprecated use {@link #queueUpdate()}
    */
   @Deprecated
   public void updateFromRoot() {
@@ -277,7 +276,7 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   /**
-   * @deprecated
+   * @deprecated use {@link AbstractTreeUi#buildNodeForElement(Object)}
    */
   @Deprecated
   public void buildNodeForElement(@NotNull Object element) {
@@ -286,7 +285,7 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   /**
-   * @deprecated
+   * @deprecated use {@link AbstractTreeUi#getNodeForElement(Object, boolean)}
    */
   @Deprecated
   @Nullable

@@ -16,13 +16,13 @@
 package com.siyeh.ig.initialization;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class DoubleBraceInitializationInspectionTest extends LightInspectionTestCase {
+public class DoubleBraceInitializationInspectionTest extends LightJavaInspectionTestCase {
 
   public void testDoubleBraceInitialization() { doTest(); }
 

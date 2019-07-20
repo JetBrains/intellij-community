@@ -45,12 +45,12 @@ public class GitConfig {
   private static final Pattern BRANCH_INFO_SECTION = Pattern.compile("branch \"(.*)\"", Pattern.CASE_INSENSITIVE);
   private static final Pattern BRANCH_COMMON_PARAMS_SECTION = Pattern.compile("branch", Pattern.CASE_INSENSITIVE);
 
-  @NotNull private final Collection<Remote> myRemotes;
-  @NotNull private final Collection<Url> myUrls;
-  @NotNull private final Collection<BranchConfig> myTrackedInfos;
+  @NotNull private final Collection<? extends Remote> myRemotes;
+  @NotNull private final Collection<? extends Url> myUrls;
+  @NotNull private final Collection<? extends BranchConfig> myTrackedInfos;
 
 
-  private GitConfig(@NotNull Collection<Remote> remotes, @NotNull Collection<Url> urls, @NotNull Collection<BranchConfig> trackedInfos) {
+  private GitConfig(@NotNull Collection<? extends Remote> remotes, @NotNull Collection<? extends Url> urls, @NotNull Collection<? extends BranchConfig> trackedInfos) {
     myRemotes = remotes;
     myUrls = urls;
     myTrackedInfos = trackedInfos;
@@ -76,7 +76,7 @@ public class GitConfig {
   }
 
   @NotNull
-  private static GitRemote convertRemoteToGitRemote(@NotNull Collection<Url> urls, @NotNull Remote remote) {
+  private static GitRemote convertRemoteToGitRemote(@NotNull Collection<? extends Url> urls, @NotNull Remote remote) {
     UrlsAndPushUrls substitutedUrls = substituteUrls(urls, remote);
     return new GitRemote(remote.myName, substitutedUrls.getUrls(), substitutedUrls.getPushUrls(),
                          remote.getFetchSpecs(), remote.getPushSpec());
@@ -86,8 +86,8 @@ public class GitConfig {
    * Create branch tracking information based on the information defined in {@code .git/config}.
    */
   @NotNull
-  Collection<GitBranchTrackInfo> parseTrackInfos(@NotNull final Collection<GitLocalBranch> localBranches,
-                                                 @NotNull final Collection<GitRemoteBranch> remoteBranches) {
+  Collection<GitBranchTrackInfo> parseTrackInfos(@NotNull final Collection<? extends GitLocalBranch> localBranches,
+                                                 @NotNull final Collection<? extends GitRemoteBranch> remoteBranches) {
     return ContainerUtil.mapNotNull(myTrackedInfos, config -> convertBranchConfig(config, localBranches, remoteBranches));
   }
 
@@ -137,8 +137,8 @@ public class GitConfig {
 
   @Nullable
   private static GitBranchTrackInfo convertBranchConfig(@Nullable BranchConfig branchConfig,
-                                                        @NotNull Collection<GitLocalBranch> localBranches,
-                                                        @NotNull Collection<GitRemoteBranch> remoteBranches) {
+                                                        @NotNull Collection<? extends GitLocalBranch> localBranches,
+                                                        @NotNull Collection<? extends GitRemoteBranch> remoteBranches) {
     if (branchConfig == null) {
       return null;
     }
@@ -170,7 +170,7 @@ public class GitConfig {
   }
 
   @Nullable
-  private static GitLocalBranch findLocalBranch(@NotNull String branchName, @NotNull Collection<GitLocalBranch> localBranches) {
+  private static GitLocalBranch findLocalBranch(@NotNull String branchName, @NotNull Collection<? extends GitLocalBranch> localBranches) {
     final String name = GitBranchUtil.stripRefsPrefix(branchName);
     return ContainerUtil.find(localBranches, input -> input.getName().equals(name));
   }
@@ -250,7 +250,7 @@ public class GitConfig {
    * </p>
    */
   @NotNull
-  private static UrlsAndPushUrls substituteUrls(@NotNull Collection<Url> urlSections, @NotNull Remote remote) {
+  private static UrlsAndPushUrls substituteUrls(@NotNull Collection<? extends Url> urlSections, @NotNull Remote remote) {
     List<String> urls = new ArrayList<>(remote.getUrls().size());
     Collection<String> pushUrls = new ArrayList<>();
 

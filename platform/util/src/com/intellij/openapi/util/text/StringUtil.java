@@ -798,7 +798,7 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static String capitalizeWords(@NotNull String text,
                                        boolean allWords) {
-    return capitalizeWords(text, " \t\n\r\f", allWords, false);
+    return capitalizeWords(text, " \t\n\r\f([<", allWords, true);
   }
 
   @NotNull

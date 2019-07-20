@@ -16,13 +16,13 @@
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class UnaryPlusInspectionTest extends LightInspectionTestCase {
+public class UnaryPlusInspectionTest extends LightJavaInspectionTestCase {
 
   public void testUnaryPlus() {
     doTest();

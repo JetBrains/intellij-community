@@ -24,7 +24,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testIntegration.TestFailedLineManager;
 import org.jetbrains.ide.PooledThreadExecutor;
 
@@ -32,7 +32,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class FailedLineTest extends LightCodeInsightFixtureTestCase {
+public class FailedLineTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testFailedLineManager() {
 

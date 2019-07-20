@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogge
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
 import com.intellij.util.lang.JavaVersion
+import java.time.OffsetDateTime
 import java.util.concurrent.TimeUnit
 
 class SystemStateMonitor : FeatureUsageStateEventTracker {
@@ -34,6 +35,11 @@ class SystemStateMonitor : FeatureUsageStateEventTracker {
 
     val data = FeatureUsageData().addVersion(Version(1, JavaVersion.current().feature, 0))
     FUStateUsagesLogger.logStateEvent(JAVA_GROUP, getJavaVendor(), data)
+
+    /** writing current os timezone as os.timezone event_id **/
+    val currentZoneOffset = OffsetDateTime.now().offset
+    val currentZoneOffsetFeatureUsageData = FeatureUsageData().addData("value", currentZoneOffset.toString())
+    FUStateUsagesLogger.logStateEvent(OS_GROUP, "os.timezone" , currentZoneOffsetFeatureUsageData)
   }
 
   private fun getOSVersion(): FeatureUsageData {

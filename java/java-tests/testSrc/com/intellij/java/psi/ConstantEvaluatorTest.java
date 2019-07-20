@@ -16,12 +16,12 @@
 package com.intellij.java.psi;
 
 import com.intellij.psi.*;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 /**
  * @author Dmitry Avdeev
  */
-public class ConstantEvaluatorTest extends LightCodeInsightFixtureTestCase {
+public class ConstantEvaluatorTest extends LightJavaCodeInsightFixtureTestCase {
 
   public enum MyEnum { Foo, Bar }
 

@@ -20,9 +20,9 @@ import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.codeInsight.folding.impl.JavaCodeFoldingSettingsImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-public abstract class JavaFoldingTestCase extends LightCodeInsightFixtureTestCase {
+public abstract class JavaFoldingTestCase extends LightJavaCodeInsightFixtureTestCase {
   protected JavaCodeFoldingSettings myFoldingSettings;
   private JavaCodeFoldingSettings myFoldingSettingsBackup;
 

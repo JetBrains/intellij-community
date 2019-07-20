@@ -1,11 +1,11 @@
 package org.intellij.plugins.markdown.editor;
 
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile;
 import org.jetbrains.annotations.NotNull;
 
-public class MarkdownQuoteHandlerTest extends LightPlatformCodeInsightFixtureTestCase {
+public class MarkdownQuoteHandlerTest extends BasePlatformTestCase {
   private void doTest(@NotNull String text, char charToType, @NotNull String expectedResult) {
     final PsiFile file = myFixture.configureByText("test.md", text);
     assertInstanceOf(file, MarkdownFile.class);

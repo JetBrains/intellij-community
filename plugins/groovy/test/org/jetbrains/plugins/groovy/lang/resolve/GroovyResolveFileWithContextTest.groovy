@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import com.intellij.psi.PsiFile
@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 /**
  * @author Sergey Evdokimov
  */
-class GroovyResolveFileWithContextTest extends LightCodeInsightFixtureTestCase {
+class GroovyResolveFileWithContextTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testResolve() {
     GroovyFile context = GroovyPsiElementFactory.getInstance(project)

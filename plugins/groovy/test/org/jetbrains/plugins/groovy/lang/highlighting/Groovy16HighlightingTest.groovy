@@ -3,7 +3,7 @@ package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
@@ -13,7 +13,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  * @author peter
  */
 @SuppressWarnings(["JUnitTestClassNamingConvention"])
-class Groovy16HighlightingTest extends LightCodeInsightFixtureTestCase {
+class Groovy16HighlightingTest extends LightJavaCodeInsightFixtureTestCase {
 
   @NotNull
   final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_1_6

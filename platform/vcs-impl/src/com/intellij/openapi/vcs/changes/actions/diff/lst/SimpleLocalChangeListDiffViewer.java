@@ -341,7 +341,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
 
     @NotNull
     @Override
-    protected String getText(@NotNull List<MySimpleDiffChange> selectedChanges) {
+    protected String getText(@NotNull List<? extends MySimpleDiffChange> selectedChanges) {
       if (!selectedChanges.isEmpty() && ContainerUtil.and(selectedChanges, change -> !change.isFromActiveChangelist())) {
         String shortChangeListName = StringUtil.trimMiddle(myChangelistName, 40);
         return String.format("Move to '%s' Changelist", StringUtil.escapeMnemonics(shortChangeListName));
@@ -354,7 +354,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     @Override
     protected void doPerform(@NotNull AnActionEvent e,
                              @NotNull PartialLocalLineStatusTracker tracker,
-                             @NotNull List<MySimpleDiffChange> selectedChanges) {
+                             @NotNull List<? extends MySimpleDiffChange> selectedChanges) {
       BitSet selectedLines = getLocalSelectedLines(selectedChanges);
 
       if (ContainerUtil.and(selectedChanges, change -> !change.isFromActiveChangelist())) {
@@ -377,15 +377,15 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
 
     @NotNull
     @Override
-    protected String getText(@NotNull List<MySimpleDiffChange> selectedChanges) {
+    protected String getText(@NotNull List<? extends MySimpleDiffChange> selectedChanges) {
       boolean hasExcluded = ContainerUtil.or(selectedChanges, MySimpleDiffChange::isExcludedFromCommit);
-      return selectedChanges.isEmpty() || !hasExcluded ? "Exclude Lines from Commit" : "Include Lines into Commit";
+      return !selectedChanges.isEmpty() && !hasExcluded ? "Exclude Lines from Commit" : "Include Lines into Commit";
     }
 
     @Override
     protected void doPerform(@NotNull AnActionEvent e,
                              @NotNull PartialLocalLineStatusTracker tracker,
-                             @NotNull List<MySimpleDiffChange> selectedChanges) {
+                             @NotNull List<? extends MySimpleDiffChange> selectedChanges) {
       BitSet selectedLines = getLocalSelectedLines(selectedChanges);
 
       boolean hasExcluded = ContainerUtil.or(selectedChanges, MySimpleDiffChange::isExcludedFromCommit);
@@ -404,10 +404,10 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     @Override
     protected void doPerform(@NotNull AnActionEvent e,
                              @NotNull PartialLocalLineStatusTracker tracker,
-                             @NotNull List<MySimpleDiffChange> selectedChanges) {
+                             @NotNull List<? extends MySimpleDiffChange> selectedChanges) {
       BitSet selectedLines = getLocalSelectedLines(selectedChanges);
 
-      tracker.setExcludedFromCommit(true);
+      tracker.setExcludedFromCommit(myChangelistId, true);
       tracker.setExcludedFromCommit(selectedLines, false);
 
       rediff();
@@ -477,18 +477,18 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     }
 
     @NotNull
-    protected String getText(@NotNull List<MySimpleDiffChange> selectedChanges) {
+    protected String getText(@NotNull List<? extends MySimpleDiffChange> selectedChanges) {
       return getTemplatePresentation().getText();
     }
 
     @CalledWithWriteLock
     protected abstract void doPerform(@NotNull AnActionEvent e,
                                       @NotNull PartialLocalLineStatusTracker tracker,
-                                      @NotNull List<MySimpleDiffChange> selectedChanges);
+                                      @NotNull List<? extends MySimpleDiffChange> selectedChanges);
   }
 
   @NotNull
-  private static BitSet getLocalSelectedLines(@NotNull List<MySimpleDiffChange> changes) {
+  private static BitSet getLocalSelectedLines(@NotNull List<? extends MySimpleDiffChange> changes) {
     BitSet selectedLines = new BitSet();
     for (SimpleDiffChange change : changes) {
       int startLine = change.getStartLine(Side.RIGHT);
@@ -542,7 +542,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       PartialLocalLineStatusTracker tracker = getPartialTracker();
       if (tracker != null && tracker.isValid()) {
         ExclusionState exclusionState = tracker.getExcludedFromCommitState(myChangelistId);
-        getPartialTracker().setExcludedFromCommit(exclusionState == ExclusionState.ALL_INCLUDED);
+        getPartialTracker().setExcludedFromCommit(myChangelistId, exclusionState == ExclusionState.ALL_INCLUDED);
         refresh();
         rediff();
       }

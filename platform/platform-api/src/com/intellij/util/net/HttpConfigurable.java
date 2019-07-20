@@ -153,6 +153,9 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     CommonProxy.getInstance().setCustomAuth(name, new IdeaWideAuthenticator(this));
   }
 
+  /**
+   * @deprecated use {@link #initializeComponent()}
+   */
   @Deprecated
   public void initComponent() {
     initializeComponent();
@@ -358,12 +361,17 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
   }
 
-  //these methods are preserved for compatibility with com.intellij.openapi.project.impl.IdeaServerSettings
+  /**
+   * @deprecated left for compatibility with com.intellij.openapi.project.impl.IdeaServerSettings
+   */
   @Deprecated
   public void readExternal(Element element) throws InvalidDataException {
     loadState(XmlSerializer.deserialize(element, HttpConfigurable.class));
   }
 
+  /**
+   * @deprecated left for compatibility with com.intellij.openapi.project.impl.IdeaServerSettings
+   */
   @Deprecated
   public void writeExternal(Element element) throws WriteExternalException {
     com.intellij.util.xmlb.XmlSerializer.serializeInto(getState(), element);

@@ -10,12 +10,12 @@ import com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testFramework.TestDataProvider;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 import java.util.Arrays;
 import java.util.stream.Stream;
 
-public class JavaFileTemplatesTest extends LightCodeInsightFixtureTestCase {
+public class JavaFileTemplatesTest extends LightJavaCodeInsightFixtureTestCase {
   public void testCreateFromTemplateGroup() {
     myFixture.configureByText("foo.java", "");
     AnAction[] children = new CreateFromTemplateGroup().getChildren(new TestActionEvent(new TestDataProvider(getProject())));

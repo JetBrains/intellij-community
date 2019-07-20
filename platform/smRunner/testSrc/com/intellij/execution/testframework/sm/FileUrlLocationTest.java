@@ -22,14 +22,14 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 import java.util.Collections;
 
 /**
  * @author Roman Chernyatchik
  */
-public class FileUrlLocationTest extends LightPlatformCodeInsightFixtureTestCase {
+public class FileUrlLocationTest extends BasePlatformTestCase {
   public void testExcluded() {
     myFixture.addFileToProject("secondary/my_example_spec.xml", "");
     ModuleRootModificationUtil.updateExcludedFolders(getModule(), ModuleRootManager.getInstance(getModule()).getContentRoots()[0], Collections.emptyList(), Collections.singletonList("/src"));

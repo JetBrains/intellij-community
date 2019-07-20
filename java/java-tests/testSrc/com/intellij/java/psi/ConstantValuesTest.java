@@ -18,9 +18,9 @@ package com.intellij.java.psi;
 import com.intellij.JavaTestUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-public class ConstantValuesTest extends LightCodeInsightFixtureTestCase {
+public class ConstantValuesTest extends LightJavaCodeInsightFixtureTestCase {
   private PsiClass myClass;
 
   @Override
