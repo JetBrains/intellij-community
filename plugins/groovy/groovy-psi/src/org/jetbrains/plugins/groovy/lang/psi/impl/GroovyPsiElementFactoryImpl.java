@@ -195,7 +195,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @NotNull
   @Override
-  public PsiTypeParameter createTypeParameter(String name, PsiClassType[] superTypes) {
+  public PsiTypeParameter createTypeParameter(@NotNull String name, @NotNull PsiClassType[] superTypes) {
     StringBuilder builder = new StringBuilder();
     builder.append("def <").append(name);
     if (superTypes.length > 1 ||
@@ -1131,6 +1131,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return createConstructorFromText(name, name + "(){}", null);
   }
 
+  @NotNull
   @Override
   public PsiMethod createConstructor(@NotNull @NonNls String name, PsiElement context) {
     return createConstructorFromText(name, name + "(){}", context);
@@ -1144,7 +1145,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @NotNull
   @Override
-  public PsiClassType createType(@NotNull PsiClass resolve, @NotNull PsiSubstitutor substitutor, @NotNull LanguageLevel languageLevel) {
+  public PsiClassType createType(@NotNull PsiClass resolve, @NotNull PsiSubstitutor substitutor, @Nullable LanguageLevel languageLevel) {
     return JavaPsiFacade.getElementFactory(myProject).createType(resolve, substitutor, languageLevel);
   }
 
