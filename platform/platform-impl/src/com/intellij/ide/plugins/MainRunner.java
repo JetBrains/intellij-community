@@ -3,6 +3,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.diagnostic.*;
 import com.intellij.ide.WindowsCommandLineListener;
+import com.intellij.ide.WindowsCommandLineProcessor;
 import com.intellij.idea.Main;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -19,16 +20,14 @@ import java.util.LinkedHashMap;
 import java.util.stream.Collectors;
 
 public final class MainRunner {
-  public static WindowsCommandLineListener LISTENER;
+  @SuppressWarnings("StaticNonFinalField") public static WindowsCommandLineListener LISTENER;
+  @SuppressWarnings("StaticNonFinalField") public static Activity startupStart;
 
-  @SuppressWarnings("StaticNonFinalField")
-  public static Activity startupStart;
-
-  /**
-   * Called via reflection
-   */
-  @SuppressWarnings({"UnusedDeclaration", "HardCodedStringLiteral"})
-  private static void start(@NotNull String mainClass, @NotNull String methodName, @NotNull String[] args,
+  /** Called via reflection from {@link com.intellij.ide.Bootstrap#main}. */
+  @SuppressWarnings("UnusedDeclaration")
+  private static void start(@NotNull String mainClass,
+                            @NotNull String methodName,
+                            @NotNull String[] args,
                             @NotNull LinkedHashMap<String, Long> startupTimings) {
     StartUpMeasurer.addTimings(startupTimings, "bootstrap");
 
@@ -69,12 +68,11 @@ public final class MainRunner {
       return;
     }
 
-    PluginManagerCore.EssentialPluginMissingException
-      pluginMissingException = findCause(t, PluginManagerCore.EssentialPluginMissingException.class);
-    if (pluginMissingException != null && pluginMissingException.pluginIds != null) {
+    PluginManagerCore.EssentialPluginMissingException pme = findCause(t, PluginManagerCore.EssentialPluginMissingException.class);
+    if (pme != null && pme.pluginIds != null) {
       Main.showMessage("Corrupted Installation",
-                       "Missing essential " + (pluginMissingException.pluginIds.size() == 1 ? "plugin" : "plugins") + ":\n\n" +
-                       pluginMissingException.pluginIds.stream().sorted().collect(Collectors.joining("\n  ", "  ", "\n\n")) +
+                       "Missing essential " + (pme.pluginIds.size() == 1 ? "plugin" : "plugins") + ":\n\n" +
+                       pme.pluginIds.stream().sorted().collect(Collectors.joining("\n  ", "  ", "\n\n")) +
                        "Please reinstall " + getProductNameSafe() + " from scratch.", true);
       System.exit(Main.INSTALLATION_CORRUPTED);
     }
@@ -88,8 +86,7 @@ public final class MainRunner {
       try {
         PluginManagerCore.getLogger().error(t);
       }
-      catch (Throwable ignore) {
-      }
+      catch (Throwable ignore) { }
 
       // workaround for SOE on parsing PAC file (JRE-247)
       if (t instanceof StackOverflowError && "Nashorn AST Serializer".equals(Thread.currentThread().getName())) {
@@ -161,12 +158,9 @@ public final class MainRunner {
     }
   }
 
-  // Called via reflection from WindowsCommandLineProcessor.processWindowsLauncherCommandLine
-  @SuppressWarnings("unused")
+  /** Called via reflection from {@link WindowsCommandLineProcessor#processWindowsLauncherCommandLine}. */
+  @SuppressWarnings("UnusedDeclaration")
   public static int processWindowsLauncherCommandLine(final String currentDirectory, final String[] args) {
-    if (LISTENER != null) {
-      return LISTENER.processWindowsLauncherCommandLine(currentDirectory, args);
-    }
-    return 1;
+    return LISTENER != null ? LISTENER.processWindowsLauncherCommandLine(currentDirectory, args) : 1;
   }
 }
