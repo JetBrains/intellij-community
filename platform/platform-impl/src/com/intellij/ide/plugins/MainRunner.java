@@ -2,7 +2,6 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.diagnostic.*;
-import com.intellij.ide.ClassUtilCore;
 import com.intellij.ide.WindowsCommandLineListener;
 import com.intellij.idea.Main;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -47,8 +46,6 @@ public final class MainRunner {
     Runnable runnable = () -> {
       try {
         Activity activity = startupStart.startChild(StartUpMeasurer.Phases.LOAD_MAIN_CLASS);
-        ClassUtilCore.clearJarURLCache();
-
         Class<?> aClass = Class.forName(mainClass);
         Method method = aClass.getDeclaredMethod(methodName, ArrayUtil.EMPTY_STRING_ARRAY.getClass());
         method.setAccessible(true);
