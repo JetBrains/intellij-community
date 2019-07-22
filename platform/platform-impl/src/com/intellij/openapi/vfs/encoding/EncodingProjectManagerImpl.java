@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
@@ -39,7 +40,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @State(name = "Encoding", storages = @Storage("encodings.xml"))
-public class EncodingProjectManagerImpl extends EncodingProjectManager implements PersistentStateComponent<Element> {
+public final class EncodingProjectManagerImpl extends EncodingProjectManager implements PersistentStateComponent<Element> {
   @NonNls private static final String PROJECT_URL = "PROJECT";
 
   private final Project myProject;
@@ -48,7 +49,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
   private Charset myDefaultCharsetForPropertiesFiles;
   private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
 
-  private BOMForNewUTF8Files myBOMForNewUTF8Files = BOMForNewUTF8Files.NEVER;
+  private BOMForNewUTF8Files myBomForNewUtf8Files = BOMForNewUTF8Files.NEVER;
 
   public EncodingProjectManagerImpl(Project project, EncodingManager ideEncodingManager) {
     myProject = project;
@@ -87,8 +88,8 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
     if (myDefaultCharsetForPropertiesFiles != null) {
       element.setAttribute("defaultCharsetForPropertiesFiles", myDefaultCharsetForPropertiesFiles.name());
     }
-    if (myBOMForNewUTF8Files != null) {
-      element.setAttribute("addBOMForNewFiles", myBOMForNewUTF8Files.name);
+    if (myBomForNewUtf8Files != BOMForNewUTF8Files.NEVER) {
+      element.setAttribute("addBOMForNewFiles", myBomForNewUtf8Files.name);
     }
 
     return element;
@@ -108,10 +109,10 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
           continue;
         }
 
-        if (url.equals(PROJECT_URL)) {
+        if (PROJECT_URL.equals(url)) {
           myProjectCharset = charset;
         }
-        else {
+        else if (url != null) {
           VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
           if (file != null) {
             mapping.put(file, charset);
@@ -123,12 +124,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
 
     myNative2AsciiForPropertiesFiles = Boolean.parseBoolean(element.getAttributeValue("native2AsciiForPropertiesFiles"));
     myDefaultCharsetForPropertiesFiles = CharsetToolkit.forName(element.getAttributeValue("defaultCharsetForPropertiesFiles"));
-    String addBOMForNewFiles = element.getAttributeValue("addBOMForNewFiles");
-    if(addBOMForNewFiles != null) {
-      BOMForNewUTF8Files bomForNewUTF8Files = BOMForNewUTF8Files.tryFindKnown(addBOMForNewFiles);
-      if(bomForNewUTF8Files != null)
-        myBOMForNewUTF8Files = bomForNewUTF8Files;
-    }
+    myBomForNewUtf8Files = BOMForNewUTF8Files.getByNameOrDefault(element.getAttributeValue("addBOMForNewFiles"));
 
     myModificationTracker.incModificationCount();
   }
@@ -453,27 +449,31 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
       return name;
     }
 
-    public static BOMForNewUTF8Files tryFindKnown(String name) {
-      for (BOMForNewUTF8Files value : values()) {
-        if(value.name.equalsIgnoreCase(name))
-          return value;
+    @NotNull
+    private static BOMForNewUTF8Files getByNameOrDefault(@Nullable String name) {
+      if (!StringUtil.isEmpty(name)) {
+        for (BOMForNewUTF8Files value : values()) {
+          if (value.name.equalsIgnoreCase(name)) {
+            return value;
+          }
+        }
       }
-      return null;
+      return NEVER;
     }
   }
 
   public void setBOMForNewUtf8Files(@NotNull BOMForNewUTF8Files option) {
-    myBOMForNewUTF8Files = option;
+    myBomForNewUtf8Files = option;
   }
 
   @NotNull
   BOMForNewUTF8Files getBOMForNewUTF8Files() {
-    return myBOMForNewUTF8Files;
+    return myBomForNewUtf8Files;
   }
 
   @Override
   public boolean shouldAddBOMForNewUtf8File() {
-    switch (myBOMForNewUTF8Files) {
+    switch (myBomForNewUtf8Files) {
       case ALWAYS:
         return true;
       case NEVER:
@@ -481,7 +481,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
       case WINDOWS_ONLY:
         return SystemInfo.isWindows;
       default:
-        throw new IllegalStateException(myBOMForNewUTF8Files.toString());
+        throw new IllegalStateException(myBomForNewUtf8Files.toString());
     }
   }
 }
