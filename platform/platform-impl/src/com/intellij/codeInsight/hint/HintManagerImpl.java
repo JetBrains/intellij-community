@@ -396,7 +396,7 @@ public class HintManagerImpl extends HintManager {
     JComponent externalComponent = getExternalComponent(editor);
     Dimension size = updateSize ? hint.getComponent().getPreferredSize() : hint.getComponent().getSize();
 
-    if (hint.isRealPopup()) {
+    if (hint.isRealPopup() || hintInfo.isPopupForced()) {
       final Point point = new Point(p);
       SwingUtilities.convertPointToScreen(point, externalComponent);
       final Rectangle editorScreen = ScreenUtil.getScreenRectangle(point.x, point.y);

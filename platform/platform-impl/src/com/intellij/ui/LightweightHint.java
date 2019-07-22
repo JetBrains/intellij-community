@@ -124,7 +124,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
     myComponent.validate();
 
-    if (!myForceShowAsPopup &&
+    if (!myForceShowAsPopup && !hintHint.isPopupForced() &&
         (myForceLightweightPopup ||
          fitsLayeredPane(layeredPane, myComponent, new RelativePoint(parentComponent, new Point(x, y)), hintHint))) {
       beforeShow();

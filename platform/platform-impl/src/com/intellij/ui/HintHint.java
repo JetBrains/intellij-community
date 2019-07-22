@@ -32,6 +32,7 @@ public class HintHint {
   private Component myOriginalComponent;
   private Point myOriginalPoint;
 
+  private boolean myForcePopup;
   private boolean myAwtTooltip = false;
   private Balloon.Position myPreferredPosition = Balloon.Position.below;
 
@@ -93,6 +94,15 @@ public class HintHint {
 
   public boolean isAwtTooltip() {
     return myAwtTooltip;
+  }
+
+  public boolean isPopupForced() {
+    return myForcePopup;
+  }
+
+  public HintHint setForcePopup(boolean forcePopup) {
+    myForcePopup = forcePopup;
+    return this;
   }
 
   public Component getOriginalComponent() {
