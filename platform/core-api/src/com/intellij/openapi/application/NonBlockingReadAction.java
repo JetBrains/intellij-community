@@ -62,6 +62,19 @@ public interface NonBlockingReadAction<T> {
   NonBlockingReadAction<T> finishOnUiThread(@NotNull ModalityState modality, @NotNull Consumer<T> uiThreadAction);
 
   /**
+   * Call this when a newly submitted computation should cancel previous similar ones,
+   * as their results now won't make sense anyway in the changed environment.
+   * @param identity an object that identifies the computation together with the calling class. For simplest cases,
+   *                 a constant string literal or {@code this} can be used to cancel the previously submitted computation.
+   *                 If there can be different computations for different objects (e.g. editors) which can be run in parallel, those objects
+   *                 can be used as identity. Note that the calling class is paired with the identity object, so
+   *                 different computations originating from different classes which have the same identity object won't interfere with each other.
+   * @return a copy of this builder which, when submitted, cancels previously submitted running computations with equal identity objects
+   */
+  @Contract(pure = true)
+  NonBlockingReadAction<T> cancelPrevious(@NotNull Object identity);
+
+  /**
    * Submit this computation to be performed in a non-blocking read action on background thread. The returned promise
    * is completed on the same thread (in the same read action), or on UI thread if {@link #finishOnUiThread} has been called.
    *

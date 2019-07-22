@@ -25,32 +25,22 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.NonUrgentExecutor;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.concurrency.CancellablePromise;
-
-import java.util.Map;
 
 /**
  * @author peter
  */
 public class AsyncHighlighterUpdater {
-  private static final Map<Editor, CancellablePromise<?>> ourHighlighterFutures = ContainerUtil.newConcurrentMap();
 
   public static void updateHighlighters(@NotNull Project project, @NotNull Editor editor, @NotNull VirtualFile file) {
-    CancellablePromise<EditorHighlighter> promise = ReadAction
+    ReadAction
       .nonBlocking(() -> updateHighlighter(project, editor, file))
       .expireWith(project)
       .expireWhen(() -> !file.isValid() || editor.isDisposed())
+      .cancelPrevious(editor)
       .finishOnUiThread(ModalityState.any(), highlighter -> ((EditorEx)editor).setHighlighter(highlighter))
       .submit(NonUrgentExecutor.getInstance());
-
-    CancellablePromise<?> prev = ourHighlighterFutures.put(editor, promise);
-    if (prev != null) {
-      prev.cancel();
-    }
-    promise.onProcessed(__ -> ourHighlighterFutures.remove(editor, promise));
   }
 
   @NotNull
