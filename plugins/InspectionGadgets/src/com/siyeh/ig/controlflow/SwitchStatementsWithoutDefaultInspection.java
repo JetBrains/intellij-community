@@ -68,9 +68,9 @@ public class SwitchStatementsWithoutDefaultInspection extends AbstractBaseJavaLo
       public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
         super.visitSwitchStatement(statement);
         final int count = SwitchUtils.calculateBranchCount(statement);
-        if (count < 0 || statement.getBody() == null) {
-          return;
-        }
+        if (count < 0) return;
+        PsiCodeBlock body = statement.getBody();
+        if (body == null || body.getRBrace() == null) return;
         boolean infoMode = false;
         if (count == 0 || m_ignoreFullyCoveredEnums && switchStatementIsFullyCoveredEnum(statement)) {
           if (!isOnTheFly) return;
