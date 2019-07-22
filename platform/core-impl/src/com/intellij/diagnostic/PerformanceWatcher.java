@@ -315,8 +315,10 @@ public class PerformanceWatcher implements Disposable {
   }
 
   private void dumpThreads() {
-    dumpThreads(getFreezeFolderName(myFreezeStart) + "/", false);
-    if (System.currentTimeMillis() - myFreezeStart > getMaxDumpDuration()) {
+    if (myFreezeStart != 0 && System.currentTimeMillis() - myFreezeStart <= getMaxDumpDuration()) {
+      dumpThreads(getFreezeFolderName(myFreezeStart) + "/", false);
+    }
+    else {
       stopDumping();
     }
   }
