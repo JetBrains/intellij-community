@@ -50,7 +50,7 @@ public interface ToolWindowFactory {
    * Example: Tool Window initialization takes a huge amount of time and makes project loading slower.
    *
    * @return {@code true} if Tool Window should not be activated on start even if was opened previously.
-   * {@code false} otherwise.
+   * {@code false} otherwise. Please note that active (visible and focused) tool window would be activated on start in any case.
    */
   default boolean isDoNotActivateOnStart() {return false;}
 }
