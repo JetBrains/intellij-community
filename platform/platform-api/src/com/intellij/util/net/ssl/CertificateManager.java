@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.net.ssl;
 
 import com.intellij.openapi.application.Application;
@@ -38,13 +38,12 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * {@code CertificateManager} is responsible for negotiation SSL connection with server
- * and deals with untrusted/self-singed/expired and other kinds of digital certificates.
+ * and deals with untrusted/self-signed/expired and other kinds of digital certificates.
  * <h1>Integration details:</h1>
  * If you're using httpclient-3.1 without custom {@code Protocol} instance for HTTPS you don't have to do anything
  * at all: default {@code HttpClient} will use "Default" {@code SSLContext}, which is set up by this component itself.
  * <p/>
  * However for httpclient-4.x you have several of choices:
- * <pre>
  * <ol>
  *  <li>Client returned by {@code HttpClients.createSystem()} will use "Default" SSL context as it does in httpclient-3.1.</li>
  *  <li>If you want to customize {@code HttpClient} using {@code HttpClients.custom()}, you can use the following methods of the builder
@@ -57,7 +56,6 @@ import java.util.concurrent.atomic.AtomicReference;
  *      </ol>
  *    </li>
  * </ol>
- * </pre>
  *
  * @author Mikhail Golubev
  */
