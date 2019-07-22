@@ -2309,6 +2309,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon UpLevel = load("/nodes/upLevel.svg");
     /** 16x16 */ public static final Icon Variable = load("/nodes/variable.svg");
     /** 16x16 */ public static final Icon WarningIntroduction = load("/nodes/warningIntroduction.svg");
+    /** 16x16 */ public static final Icon WarningMark = load("/nodes/warningMark.svg");
     /** 16x16 */ public static final Icon WebFolder = load("/nodes/webFolder.svg");
     /** 16x16 */ public static final Icon Weblistener = load("/nodes/weblistener.svg");
     /** 16x16 */ public static final Icon Write_access = load("/nodes/write-access.svg");
