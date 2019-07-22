@@ -354,7 +354,8 @@ class Test88 {
     configureByTestName()
     def p = LookupElementPresentation.renderElement(assertOneElement(myFixture.lookupElements))
     assert p.itemText == 'Entry::getKey'
-    assert p.tailText.contains(' java.util.Map')
+    assert p.tailText == ' java.util.Map'
+    assert !p.typeText
   }
 
   void testPreferVariableToLambda() {

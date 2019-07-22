@@ -552,6 +552,10 @@ public class JavaCompletionUtil {
       return JavaConstructorCallElement.wrap(classItem, reference.getElement());
     }
     if (completion instanceof PsiMethod) {
+      if (reference instanceof PsiMethodReferenceExpression) {
+        return Collections.singleton(new JavaMethodReferenceElement((PsiMethod)completion, (PsiMethodReferenceExpression)reference));
+      }
+
       JavaMethodCallElement item = new JavaMethodCallElement((PsiMethod)completion).setQualifierSubstitutor(substitutor);
       item.setForcedQualifier(completionElement.getQualifierText());
       return Collections.singletonList(item);
