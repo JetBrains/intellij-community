@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.OpaquePanel;
@@ -195,8 +196,10 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
       JComponent actualComponent = new OpaquePanel(new BorderLayout());
       actualComponent.add(myComponent, BorderLayout.CENTER);
       if (isAwtTooltip()) {
-        int inset = BalloonImpl.getNormalInset();
-        actualComponent.setBorder(new LineBorder(hintHint.getTextBackground(), inset));
+        if (!Registry.is("editor.new.mouse.hover.popups")) {
+          int inset = BalloonImpl.getNormalInset();
+          actualComponent.setBorder(new LineBorder(hintHint.getTextBackground(), inset));
+        }
         actualComponent.setBackground(hintHint.getTextBackground());
         actualComponent.validate();
       }
