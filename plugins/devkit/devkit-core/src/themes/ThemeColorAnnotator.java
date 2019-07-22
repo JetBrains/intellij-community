@@ -85,7 +85,7 @@ public class ThemeColorAnnotator implements Annotator {
     private static final int ICON_SIZE = 12;
 
     private final String myColorText;
-    private final JsonStringLiteral myLiteral;
+    private JsonStringLiteral myLiteral;
 
 
     private MyRenderer(@NotNull String colorText, @NotNull JsonStringLiteral literal) {
@@ -131,7 +131,7 @@ public class ThemeColorAnnotator implements Annotator {
           boolean withAlpha = isRgbaColorHex(myColorText);
 
           if (Registry.is("ide.new.color.picker")) {
-            ColorPicker.showColorPickerPopup(currentColor, (c, l) -> applyColor(currentColor, withAlpha, c));
+            ColorPicker.showColorPickerPopup(e.getProject(), currentColor, (c, l) -> applyColor(currentColor, withAlpha, c));
           } else {
             Color newColor = ColorChooser.chooseColor(editor.getProject(),
                                                       editor.getComponent(),
@@ -149,7 +149,9 @@ public class ThemeColorAnnotator implements Annotator {
           Project project = myLiteral.getProject();
           JsonStringLiteral newLiteral = new JsonElementGenerator(project).createStringLiteral(newColorHex);
 
-          WriteCommandAction.writeCommandAction(project, myLiteral.getContainingFile()).run(() -> myLiteral.replace(newLiteral));
+          WriteCommandAction.writeCommandAction(project, myLiteral.getContainingFile()).run(
+            () -> myLiteral = (JsonStringLiteral)myLiteral.replace(newLiteral)
+          );
         }
       };
     }
