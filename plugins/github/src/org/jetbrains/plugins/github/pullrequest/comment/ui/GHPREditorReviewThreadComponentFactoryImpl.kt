@@ -14,8 +14,8 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
-import org.jetbrains.plugins.github.pullrequest.comment.ui.model.GithubPullRequestFileComment
-import org.jetbrains.plugins.github.pullrequest.comment.ui.model.GithubPullRequestFileCommentsThread
+import org.jetbrains.plugins.github.pullrequest.comment.ui.model.GHPRReviewCommentModel
+import org.jetbrains.plugins.github.pullrequest.comment.ui.model.GHPRReviewThreadModel
 import java.awt.*
 import java.awt.event.MouseEvent
 import java.awt.geom.RoundRectangle2D
@@ -26,11 +26,11 @@ import javax.swing.JPanel
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
-class GithubPullRequestEditorCommentsThreadComponentFactoryImpl
+class GHPREditorReviewThreadComponentFactoryImpl
 internal constructor(private val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory)
-  : GithubPullRequestEditorCommentsThreadComponentFactory {
+  : GHPREditorReviewThreadComponentFactory {
 
-  override fun createComponent(thread: GithubPullRequestFileCommentsThread): JComponent {
+  override fun createComponent(thread: GHPRReviewThreadModel): JComponent {
     val threadPanel = RoundedPanel(VerticalFlowLayout(JBUI.scale(UIUtil.DEFAULT_HGAP), JBUI.scale(UIUtil.DEFAULT_VGAP))).apply {
       border = BorderFactory.createCompoundBorder(JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, 0),
                                                   IdeBorderFactory.createRoundedBorder(10, 1))
@@ -56,7 +56,7 @@ internal constructor(private val avatarIconsProviderFactory: CachingGithubAvatar
     }
   }
 
-  private fun createComponent(avatarsProvider: CachingGithubAvatarIconsProvider, comment: GithubPullRequestFileComment): JComponent {
+  private fun createComponent(avatarsProvider: CachingGithubAvatarIconsProvider, comment: GHPRReviewCommentModel): JComponent {
     return JPanel().apply {
       isOpaque = false
       border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, 0)
@@ -72,7 +72,7 @@ internal constructor(private val avatarIconsProviderFactory: CachingGithubAvatar
       add(avatar, CC().spanY(2).alignY("top"))
 
       val username = LinkLabel.create(comment.authorUsername) {
-        BrowserUtil.browse(comment.authorLinkUrl)
+        comment.authorLinkUrl?.let { BrowserUtil.browse(it) }
       }.apply {
         border = JBUI.Borders.emptyRight(UIUtil.DEFAULT_HGAP)
       }
@@ -132,7 +132,7 @@ internal constructor(private val avatarIconsProviderFactory: CachingGithubAvatar
     }
   }
 
-  private inner class ThreadPanelController(private val thread: GithubPullRequestFileCommentsThread, private val panel: JPanel) {
+  private inner class ThreadPanelController(private val thread: GHPRReviewThreadModel, private val panel: JPanel) {
     private val avatarsProvider = avatarIconsProviderFactory.create(JBValue.UIInteger("GitHub.Avatar.Size", 20), panel)
 
     private val collapseThreshold = 2
@@ -165,6 +165,8 @@ internal constructor(private val avatarIconsProviderFactory: CachingGithubAvatar
             panel.remove(i + 1)
           }
           updateFolding()
+          panel.revalidate()
+          panel.repaint()
         }
 
         override fun intervalAdded(e: ListDataEvent) {
@@ -172,6 +174,8 @@ internal constructor(private val avatarIconsProviderFactory: CachingGithubAvatar
             panel.add(createComponent(avatarsProvider, thread.getElementAt(i)), i + 1)
           }
           updateFolding()
+          panel.validate()
+          panel.repaint()
         }
 
         override fun contentsChanged(e: ListDataEvent) {
@@ -180,6 +184,8 @@ internal constructor(private val avatarIconsProviderFactory: CachingGithubAvatar
             panel.remove(idx)
             panel.add(createComponent(avatarsProvider, thread.getElementAt(i)), idx)
           }
+          panel.revalidate()
+          panel.repaint()
         }
       })
       thread.addFoldStateChangeListener { updateFolding() }

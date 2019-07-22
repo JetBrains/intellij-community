@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.comment
 
 import com.intellij.diff.util.Side
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.PatchLine
 import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
@@ -14,10 +15,11 @@ import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitCommit
 import git4idea.GitUtil
 import git4idea.repo.GitRepository
-import org.jetbrains.plugins.github.api.data.GithubPullRequestCommentWithHtml
-import org.jetbrains.plugins.github.pullrequest.data.model.GithubPullRequestFileCommentsThreadMapping
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
+import org.jetbrains.plugins.github.pullrequest.data.model.GHPRDiffReviewThreadMapping
 
-object GithubPullRequestCommentsUtil {
+object GHPRCommentsUtil {
+  val LOG = logger<GHPRCommentsUtil>()
 
   /**
    * For file comments GitHub provides 5 key values:   *
@@ -30,7 +32,7 @@ object GithubPullRequestCommentsUtil {
    *    path - relative file path after commit "originalCommitId"
    *
    * We use this info to map comments to file line number and change side:
-   *  1. Build threads from comments to reduce amount of work (so we only have to do it for the first comment in thread)
+   *  1. Build reviewThreads from comments to reduce amount of work (so we only have to do it for the first comment in thread)
    *  2. Find revision range for file using list of commits, "originalCommitId" and "path" (we need to analyze commit chain to track renames)
    *    a. Find commit "originalCommitId"
    *    b. Walk up and down list of commits from "originalCommitId" to find first and last known revisions of that particular file
@@ -41,31 +43,48 @@ object GithubPullRequestCommentsUtil {
   fun buildThreadsAndMapLines(repository: GitRepository,
                               commits: List<GitCommit>,
                               diffFile: String,
-                              comments: List<GithubPullRequestCommentWithHtml>): Map<Change, List<GithubPullRequestFileCommentsThreadMapping>> {
-
-    val activeFileComments = comments.filter { it.path != null && it.position != null }
-    if (activeFileComments.isEmpty()) return emptyMap()
+                              reviewThreads: List<GHPullRequestReviewThread>): Map<Change, List<GHPRDiffReviewThreadMapping>> {
 
     val patchReader = PatchReader(diffFile, true)
     patchReader.parseAllPatches()
 
     val fileChangesFinder = FileChangesTracker(commits)
 
-    return buildThreads(activeFileComments).groupBy {
-      val threadRoot = it.first()
-      val commitSha = threadRoot.originalCommitId!!
-      val filePath = VcsUtil.getFilePath(repository.root, GitUtil.unescapePath(threadRoot.path!!))
-      fileChangesFinder.traceAndCollectFileChanges(commitSha, filePath)
-    }.mapValues { (change, threads) ->
-      val diff = findDiffForChange(repository, patchReader, change) ?: throw IllegalStateException("Missing diff for change $change")
-
-      threads.map { comments ->
-        val diffLineNumber = comments.first().position!! + 1
-        calculateLineLocation(diff, diffLineNumber)?.let { (side, line) ->
-          GithubPullRequestFileCommentsThreadMapping(side, line, comments)
-        } ?: throw IllegalStateException("Invalid diff position ")
+    val threadsByChange = mutableMapOf<Change, MutableList<GHPullRequestReviewThread>>()
+    for (thread in reviewThreads.filter { it.position != null }) {
+      val commitSha = thread.originalCommit?.oid
+      if (commitSha == null) {
+        LOG.debug("Missing original commit sha for thread $thread")
+        continue
       }
+      val filePath = VcsUtil.getFilePath(repository.root, GitUtil.unescapePath(thread.path))
+      val change = fileChangesFinder.traceAndCollectFileChanges(commitSha, filePath)
+      threadsByChange.getOrPut(change, ::mutableListOf).add(thread)
     }
+
+    val threadMappingsByChange = mutableMapOf<Change, List<GHPRDiffReviewThreadMapping>>()
+    for ((change, threads) in threadsByChange) {
+      val diff = findDiffForChange(repository, patchReader, change)
+      if (diff == null) {
+        LOG.debug("Missing diff for change $change")
+        continue
+      }
+
+      val mappings = mutableListOf<GHPRDiffReviewThreadMapping>()
+      for (thread in threads) {
+        val diffLineNumber = thread.position!! + 1
+        val mapping = calculateLineLocation(diff, diffLineNumber)?.let { (side, line) ->
+          GHPRDiffReviewThreadMapping(side, line, thread)
+        }
+        if (mapping == null) {
+          LOG.debug("Invalid position $diffLineNumber\nin diff $diff")
+          continue
+        }
+        mappings.add(mapping)
+      }
+      if (mappings.isNotEmpty()) threadMappingsByChange[change] = mappings
+    }
+    return threadMappingsByChange
   }
 
   private fun findDiffForChange(repository: GitRepository, patchReader: PatchReader, change: Change): TextFilePatch? {
@@ -77,17 +96,6 @@ object GithubPullRequestCommentsUtil {
       it.afterName == afterPath && it.isNewFile ||
       it.beforeName == beforePath && it.afterName == afterPath
     }
-  }
-
-  private fun buildThreads(comments: Collection<GithubPullRequestCommentWithHtml>): Collection<List<GithubPullRequestCommentWithHtml>> {
-    val commentsByThreadRootId: Map<Long?, List<GithubPullRequestCommentWithHtml>> = comments.groupBy { it.inReplyToId }
-    val threadRoots = commentsByThreadRootId[null] ?: return emptyList()
-
-    val threadsByRootId = threadRoots.map { it.id to mutableListOf(it) }.toMap()
-    for ((id, threadComments) in commentsByThreadRootId) {
-      if (id != null) threadsByRootId[id]?.addAll(threadComments)
-    }
-    return threadsByRootId.values
   }
 
   private fun calculateLineLocation(diff: TextFilePatch, diffLineNumber: Int): Pair<Side, Int>? {

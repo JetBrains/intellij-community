@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.api.data.pullrequest
 
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHNode
-import org.jetbrains.plugins.github.api.data.GHNodes
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import java.util.*
 
@@ -12,6 +11,5 @@ open class GHPullRequestReview(id: String,
                                val author: GHActor?,
                                val bodyHTML: String,
                                val state: GHPullRequestReviewState,
-                               val comments: GHNodes<GHPullRequestReviewComment>,
                                val createdAt: Date)
   : GHNode(id), GHPRTimelineItem

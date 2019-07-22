@@ -71,7 +71,7 @@ class GHPRTimelineComponent(private val model: ListModel<GHPRTimelineItem>)
     else {
       val text = when (item) {
         is GHPullRequestCommit -> """Commit "${item.commit.messageHeadlineHTML}" by ${item.commit.author?.name}"""
-        is GHPullRequestReview -> """${item.author?.login} added review with text "${item.bodyHTML}" and ${item.comments.nodes.size} comment(s)"""
+        is GHPullRequestReview -> """${item.author?.login} added review with text "${item.bodyHTML}"""
         is GHIssueComment -> """Comment "${item.bodyHtml}" by ${item.author?.login}"""
 
         is GHPRRenamedTitleEvent -> """${item.actor?.login} renamed from "${item.previousTitle}" to "${item.currentTitle}""""

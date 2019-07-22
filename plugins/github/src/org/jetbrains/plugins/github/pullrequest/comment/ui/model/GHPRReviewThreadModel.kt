@@ -3,19 +3,14 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui.model
 
 import com.intellij.ui.CollectionListModel
 import com.intellij.util.EventDispatcher
-import org.jetbrains.plugins.github.api.data.GithubPullRequestCommentWithHtml
-import org.jetbrains.plugins.github.pullrequest.data.model.GithubPullRequestFileCommentsThreadMapping
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
 import kotlin.properties.Delegates.observable
 
-class GithubPullRequestFileCommentsThread(comments: List<GithubPullRequestFileComment>)
-  : CollectionListModel<GithubPullRequestFileComment>(comments) {
+class GHPRReviewThreadModel(thread: GHPullRequestReviewThread)
+  : CollectionListModel<GHPRReviewCommentModel>(thread.comments.map(GHPRReviewCommentModel.Companion::convert)) {
 
   private val collapseStateEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
-
-  init {
-    if (comments.isEmpty()) throw IllegalArgumentException("Thread cannot be empty")
-  }
 
   val firstCommentId = items.first().id
   val firstCommentCreated = items.first().dateCreated
@@ -25,11 +20,11 @@ class GithubPullRequestFileCommentsThread(comments: List<GithubPullRequestFileCo
   }
 
   // New comments can only appear at the end of the list and cannot change order
-  fun update(comments: List<GithubPullRequestCommentWithHtml>) {
+  fun update(thread: GHPullRequestReviewThread) {
     var removed = 0
     for (i in 0 until items.size) {
       val idx = i - removed
-      val newComment = comments.getOrNull(idx)
+      val newComment = thread.comments.getOrNull(idx)
       if (newComment == null) {
         removeRange(idx, items.size - 1)
         break
@@ -46,9 +41,9 @@ class GithubPullRequestFileCommentsThread(comments: List<GithubPullRequestFileCo
       }
     }
 
-    if (size == comments.size) return
-    val newComments = comments.subList(size, comments.size)
-    add(newComments.map { GithubPullRequestFileComment.convert(it) })
+    if (size == thread.comments.size) return
+    val newComments = thread.comments.subList(size, thread.comments.size)
+    add(newComments.map { GHPRReviewCommentModel.convert(it) })
   }
 
   fun addFoldStateChangeListener(listener: () -> Unit) {
@@ -61,7 +56,7 @@ class GithubPullRequestFileCommentsThread(comments: List<GithubPullRequestFileCo
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
-    if (other !is GithubPullRequestFileCommentsThread) return false
+    if (other !is GHPRReviewThreadModel) return false
 
     if (firstCommentId != other.firstCommentId) return false
 
@@ -70,11 +65,5 @@ class GithubPullRequestFileCommentsThread(comments: List<GithubPullRequestFileCo
 
   override fun hashCode(): Int {
     return firstCommentId.hashCode()
-  }
-
-
-  companion object {
-    fun convert(mapping: GithubPullRequestFileCommentsThreadMapping): GithubPullRequestFileCommentsThread =
-      GithubPullRequestFileCommentsThread(mapping.comments.map(GithubPullRequestFileComment.Companion::convert))
   }
 }

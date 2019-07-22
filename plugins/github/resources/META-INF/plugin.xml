@@ -44,7 +44,7 @@
     <statistics.applicationUsagesCollector
         implementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountsStatisticsCollector"/>
 
-    <diff.DiffExtension implementation="org.jetbrains.plugins.github.pullrequest.comment.GithubPullRequestCommentsDiffExtension"/>
+    <diff.DiffExtension implementation="org.jetbrains.plugins.github.pullrequest.comment.GHPRReviewThreadsDiffExtension"/>
     <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
         implementation="org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtension"/>
 

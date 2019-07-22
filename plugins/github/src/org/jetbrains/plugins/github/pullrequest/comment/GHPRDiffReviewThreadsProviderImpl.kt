@@ -9,42 +9,42 @@ import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.Change
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GithubPullRequestEditorCommentsThreadComponentFactory
-import org.jetbrains.plugins.github.pullrequest.comment.viewer.GithubPullRequestDiffViewerBaseCommentsHandler
-import org.jetbrains.plugins.github.pullrequest.comment.viewer.GithubPullRequestSimpleOnesideDiffViewerCommentsHandler
-import org.jetbrains.plugins.github.pullrequest.comment.viewer.GithubPullRequestTwosideDiffViewerCommentsHandler
-import org.jetbrains.plugins.github.pullrequest.comment.viewer.GithubPullRequestUnifiedDiffViewerCommentsHandler
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadComponentFactory
+import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRDiffViewerBaseReviewThreadsHandler
+import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRSimpleOnesideDiffViewerReviewThreadsHandler
+import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRTwosideDiffViewerReviewThreadsHandler
+import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRUnifiedDiffViewerReviewThreadsHandler
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
 import org.jetbrains.plugins.github.util.handleOnEdt
 
-class GithubPullRequestFilesDiffCommentsProvider(private val dataProvider: GithubPullRequestDataProvider,
-                                                 private val componentFactory: GithubPullRequestEditorCommentsThreadComponentFactory)
-  : GithubPullRequestDiffCommentsProvider {
+class GHPRDiffReviewThreadsProviderImpl(private val dataProvider: GithubPullRequestDataProvider,
+                                        private val componentFactory: GHPREditorReviewThreadComponentFactory)
+  : GHPRDiffReviewThreadsProvider {
 
   override fun install(viewer: DiffViewerBase, change: Change) {
     val commentsHandler = when (viewer) {
       is SimpleOnesideDiffViewer ->
-        GithubPullRequestSimpleOnesideDiffViewerCommentsHandler(viewer, componentFactory)
+        GHPRSimpleOnesideDiffViewerReviewThreadsHandler(viewer, componentFactory)
       is UnifiedDiffViewer ->
-        GithubPullRequestUnifiedDiffViewerCommentsHandler(viewer, componentFactory)
+        GHPRUnifiedDiffViewerReviewThreadsHandler(viewer, componentFactory)
       is TwosideTextDiffViewer ->
-        GithubPullRequestTwosideDiffViewerCommentsHandler(viewer, componentFactory)
+        GHPRTwosideDiffViewerReviewThreadsHandler(viewer, componentFactory)
       else -> return
     }
     Disposer.register(viewer, commentsHandler)
 
     loadAndShowComments(commentsHandler, change)
     dataProvider.addRequestsChangesListener(commentsHandler, object : GithubPullRequestDataProvider.RequestsChangedListener {
-      override fun commentsRequestChanged() {
+      override fun reviewThreadsRequestChanged() {
         loadAndShowComments(commentsHandler, change)
       }
     })
   }
 
-  private fun loadAndShowComments(commentsHandler: GithubPullRequestDiffViewerBaseCommentsHandler<out ListenerDiffViewerBase>,
+  private fun loadAndShowComments(commentsHandler: GHPRDiffViewerBaseReviewThreadsHandler<out ListenerDiffViewerBase>,
                                   change: Change) {
     val disposable = Disposer.newDisposable()
-    dataProvider.filesCommentThreadsRequest.handleOnEdt(disposable) { result, error ->
+    dataProvider.filesReviewThreadsRequest.handleOnEdt(disposable) { result, error ->
       if (result != null) {
         commentsHandler.mappings = result[change].orEmpty()
       }
@@ -56,6 +56,6 @@ class GithubPullRequestFilesDiffCommentsProvider(private val dataProvider: Githu
   }
 
   companion object {
-    val LOG = logger<GithubPullRequestFilesDiffCommentsProvider>()
+    val LOG = logger<GHPRDiffReviewThreadsProviderImpl>()
   }
 }

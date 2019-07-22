@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.github.pullrequest.comment.viewer
 
 import com.intellij.openapi.Disposable
-import org.jetbrains.plugins.github.pullrequest.data.model.GithubPullRequestFileCommentsThreadMapping
+import org.jetbrains.plugins.github.pullrequest.data.model.GHPRDiffReviewThreadMapping
 
-interface GithubPullRequestDiffViewerCommentsHandler : Disposable {
-  var mappings: List<GithubPullRequestFileCommentsThreadMapping>
+interface GHPRDiffViewerReviewThreadsHandler : Disposable {
+  var mappings: List<GHPRDiffReviewThreadMapping>
 }

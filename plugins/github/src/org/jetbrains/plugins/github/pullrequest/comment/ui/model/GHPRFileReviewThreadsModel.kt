@@ -3,17 +3,17 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui.model
 
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.SortedList
-import org.jetbrains.plugins.github.pullrequest.data.model.GithubPullRequestFileCommentsThreadMapping
+import org.jetbrains.plugins.github.pullrequest.data.model.GHPRDiffReviewThreadMapping
 import java.util.*
 
-class GithubPullRequestFileCommentsThreadsMap {
+class GHPRFileReviewThreadsModel {
   private val changeEventDispatcher = EventDispatcher.create(ChangesListener::class.java)
 
-  val threadsByLine: MutableMap<Int, SortedList<GithubPullRequestFileCommentsThread>> = mutableMapOf()
+  val threadsByLine: MutableMap<Int, SortedList<GHPRReviewThreadModel>> = mutableMapOf()
 
   fun addChangesListener(listener: ChangesListener) = changeEventDispatcher.addListener(listener)
 
-  fun update(mappingsByLine: Map<Int, List<GithubPullRequestFileCommentsThreadMapping>>) {
+  fun update(mappingsByLine: Map<Int, List<GHPRDiffReviewThreadMapping>>) {
     val removedLines = threadsByLine.keys - mappingsByLine.keys
     for (line in removedLines) {
       val removed = threadsByLine.remove(line).orEmpty()
@@ -24,23 +24,23 @@ class GithubPullRequestFileCommentsThreadsMap {
       val threads = threadsByLine.computeIfAbsent(line) { SortedList(compareBy { it.firstCommentCreated }) }
 
       val threadsById = threads.map { it.firstCommentId to it }.toMap()
-      val mappingsById = mappings.map { it.comments.first().id to it }.toMap()
+      val mappingsById = mappings.map { it.thread.comments.first().id to it }.toMap()
       val removedThreads = (threadsById - mappingsById.keys).values
       if (removedThreads.isNotEmpty()) {
         threads.removeAll(removedThreads)
         changeEventDispatcher.multicaster.threadsRemoved(line, removedThreads.toList())
       }
 
-      val addedThreads = mutableListOf<GithubPullRequestFileCommentsThread>()
+      val addedThreads = mutableListOf<GHPRReviewThreadModel>()
       for ((id, mapping) in mappingsById) {
         val current = threadsById[id]
         if (current == null) {
-          val thread = GithubPullRequestFileCommentsThread.convert(mapping)
+          val thread = GHPRReviewThreadModel(mapping.thread)
           threads.add(thread)
           addedThreads.add(thread)
         }
         else {
-          current.update(mapping.comments)
+          current.update(mapping.thread)
         }
       }
       if (addedThreads.isNotEmpty()) changeEventDispatcher.multicaster.threadsAdded(line, addedThreads)
@@ -48,7 +48,7 @@ class GithubPullRequestFileCommentsThreadsMap {
   }
 
   interface ChangesListener : EventListener {
-    fun threadsAdded(line: Int, threads: List<GithubPullRequestFileCommentsThread>)
-    fun threadsRemoved(line: Int, threads: List<GithubPullRequestFileCommentsThread>)
+    fun threadsAdded(line: Int, threads: List<GHPRReviewThreadModel>)
+    fun threadsRemoved(line: Int, threads: List<GHPRReviewThreadModel>)
   }
 }

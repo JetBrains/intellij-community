@@ -3,12 +3,13 @@ package org.jetbrains.plugins.github.api
 
 import org.jetbrains.plugins.github.api.GithubApiRequest.Post.GQLQuery
 import org.jetbrains.plugins.github.api.data.GHConnection
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.graphql.GHGQLPageInfo
 import org.jetbrains.plugins.github.api.data.graphql.GHGQLPagedRequestResponse
 import org.jetbrains.plugins.github.api.data.graphql.GHGQLRequestPagination
 import org.jetbrains.plugins.github.api.data.graphql.query.GHGQLSearchQueryResponse
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 
 object GHGQLRequests {
@@ -34,6 +35,24 @@ object GHGQLRequests {
 
     private class PRSearch(search: SearchConnection<GHPullRequestShort>)
       : GHGQLSearchQueryResponse<GHPullRequestShort>(search)
+
+    fun reviewThreads(server: GithubServerPath,
+                      repoOwner: String,
+                      repoName: String,
+                      number: Long,
+                      pagination: GHGQLRequestPagination? = null): GQLQuery<GHGQLPagedRequestResponse<GHPullRequestReviewThread>> {
+      return GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.pullRequestReviewThreads,
+                                      mapOf("repoOwner" to repoOwner,
+                                            "repoName" to repoName,
+                                            "number" to number,
+                                            "pageSize" to pagination?.pageSize,
+                                            "cursor" to pagination?.afterCursor),
+                                      ThreadsConnection::class.java,
+                                      "repository", "pullRequest", "reviewThreads")
+    }
+
+    private class ThreadsConnection(pageInfo: GHGQLPageInfo, nodes: List<GHPullRequestReviewThread>)
+      : GHConnection<GHPullRequestReviewThread>(pageInfo, nodes)
 
     object Timeline {
       fun items(server: GithubServerPath, repoOwner: String, repoName: String, number: Long

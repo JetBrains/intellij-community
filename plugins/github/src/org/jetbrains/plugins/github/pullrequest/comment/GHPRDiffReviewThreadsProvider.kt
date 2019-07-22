@@ -6,11 +6,11 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.Change
 import org.jetbrains.annotations.CalledInAwt
 
-interface GithubPullRequestDiffCommentsProvider {
+interface GHPRDiffReviewThreadsProvider {
   @CalledInAwt
   fun install(viewer: DiffViewerBase, change: Change)
 
   companion object {
-    val KEY = Key.create<GithubPullRequestDiffCommentsProvider>("Github.PullRequest.Diff.Comments")
+    val KEY = Key.create<GHPRDiffReviewThreadsProvider>("Github.PullRequest.Diff.Comments")
   }
 }

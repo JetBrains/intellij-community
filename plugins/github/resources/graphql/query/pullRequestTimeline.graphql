@@ -1,43 +1,12 @@
-fragment commentInfo on Comment {
-    ...nodeInfo
-    author {
-        ...actorInfo
-    }
-    bodyHTML
-    createdAt
-}
-
 fragment issueCommentInfo on IssueComment {
-    ...commentInfo
+    ...comment
     url
-}
-
-fragment commitHash on Commit {
-    ...nodeInfo
-    oid
-    abbreviatedOid
-}
-
-fragment commitInfo on Commit {
-    ...commitHash
-    url
-    author {
-        name
-        email
-        avatarUrl
-        date
-        user {
-            url
-        }
-    }
-    messageHeadlineHTML
-    messageBodyHTML
 }
 
 fragment prCommitInfo on PullRequestCommit {
     ...nodeInfo
     commit {
-        ...commitInfo
+        ...commit
     }
     url
 }
@@ -47,22 +16,6 @@ fragment prReviewerInfo on RequestedReviewer {
     ... on User {
         ...userInfo
     }
-}
-
-fragment prReview on PullRequestReview {
-    ...nodeInfo
-    url
-    author {
-        ...actorInfo
-    }
-    bodyHTML
-    state
-    comments(first: 100) {
-        nodes {
-            ...prReviewCommentInfo
-        }
-    }
-    createdAt
 }
 
 fragment reviewDismissedEvent on ReviewDismissedEvent {
@@ -75,24 +28,6 @@ fragment reviewDismissedEvent on ReviewDismissedEvent {
         author {
             ...actorInfo
         }
-    }
-}
-
-fragment prReviewCommentInfo on PullRequestReviewComment {
-    __typename
-    ...commentInfo
-    url
-    path
-    commit {
-        ...commitHash
-    }
-    position
-    originalCommit {
-        ...commitHash
-    }
-    originalPosition
-    replyTo {
-        ...nodeInfo
     }
 }
 
@@ -249,15 +184,12 @@ query($repoOwner: String!, $repoName: String!, $number: Int!, $pageSize: Int = 1
         pullRequest(number: $number) {
             timelineItems(first: $pageSize, after: $cursor) {
                 pageInfo {
-                    startCursor
-                    hasPreviousPage
-                    endCursor
-                    hasNextPage
+                    ...pageInfo
                 }
                 nodes {
                     __typename
                     ...prCommitInfo
-                    ...prReview
+                    ...pullRequestReview
                     ...issueCommentInfo
 
                     ...renamedEvent
