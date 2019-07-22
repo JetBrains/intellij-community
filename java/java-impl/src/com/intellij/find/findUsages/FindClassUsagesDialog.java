@@ -16,6 +16,8 @@
 package com.intellij.find.findUsages;
 
 import com.intellij.find.FindBundle;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -69,6 +71,19 @@ public class FindClassUsagesDialog extends JavaFindUsagesDialog<JavaClassFindUsa
     options.isSkipImportStatements = false;
     options.isCheckDeepInheritance = true;
     options.isIncludeInherited = false;
+
+    FUStateUsagesLogger.logStateEvent(myEventLogGroup, "FindClassUsages", createFeatureUsageData(options));
+  }
+
+  @Override
+  protected FeatureUsageData createFeatureUsageData(JavaClassFindUsagesOptions options) {
+    FeatureUsageData data = super.createFeatureUsageData(options);
+    data.addData("methodUsages", options.isMethodsUsages);
+    data.addData("fieldUsages", options.isFieldsUsages);
+    data.addData("derivedUsages", options.isDerivedClasses);
+    data.addData("implementingClasses", options.isImplementingClasses);
+    data.addData("derivedInterfaces", options.isDerivedInterfaces);
+    return data;
   }
 
   @Override
