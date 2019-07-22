@@ -1,8 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution;
+package com.intellij.execution.configurations;
 
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.configurations.PtyCommandLine;
+import com.intellij.execution.GeneralCommandLineTest;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +22,7 @@ public class PtyCommandLineTest extends GeneralCommandLineTest {
 
   @Override
   protected GeneralCommandLine createCommandLine(String... command) {
-    return new PtyCommandLine(Arrays.asList(command));
+    return new PtyCommandLine(Arrays.asList(command)).withWindowsAnsiColorDisabled();
   }
 
   @NotNull
