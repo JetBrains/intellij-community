@@ -155,7 +155,7 @@ public class RepositoryHelper {
         }
       });
 
-    return process(descriptors, repositoryUrl);
+    return process(descriptors, repositoryUrl, build);
   }
 
   private static String loadPluginListETag(File pluginListFile) {
@@ -201,7 +201,7 @@ public class RepositoryHelper {
   @Nullable
   public static List<IdeaPluginDescriptor> loadCachedPlugins() throws IOException {
     File file = new File(PathManager.getPluginsPath(), PLUGIN_LIST_FILE);
-    return file.length() > 0 ? process(loadPluginList(file), null) : null;
+    return file.length() > 0 ? process(loadPluginList(file), null, null) : null;
   }
 
   private static List<PluginNode> loadPluginList(File file) throws IOException {
@@ -222,8 +222,9 @@ public class RepositoryHelper {
     }
   }
 
-  private static List<IdeaPluginDescriptor> process(List<PluginNode> list, @Nullable String repositoryUrl) {
+  private static List<IdeaPluginDescriptor> process(List<PluginNode> list, @Nullable String repositoryUrl, @Nullable BuildNumber build) {
     Map<PluginId, IdeaPluginDescriptor> result = new LinkedHashMap<>(list.size());
+    if (build == null) build = PluginManagerCore.getBuildNumber();
 
     for (PluginNode node : list) {
       PluginId pluginId = node.getPluginId();
@@ -232,7 +233,7 @@ public class RepositoryHelper {
         LOG.debug("Malformed plugin record (id:" + pluginId + " repository:" + repositoryUrl + ")");
         continue;
       }
-      if (PluginManagerCore.isBrokenPlugin(node) || PluginManagerCore.isIncompatible(node)) {
+      if (PluginManagerCore.isBrokenPlugin(node) || PluginManagerCore.isIncompatible(node, build)) {
         LOG.debug("Incompatible plugin (id:" + pluginId + " repository:" + repositoryUrl + ")");
         continue;
       }
