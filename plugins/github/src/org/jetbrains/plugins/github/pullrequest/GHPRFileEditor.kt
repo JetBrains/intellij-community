@@ -19,6 +19,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineIt
 import org.jetbrains.plugins.github.pullrequest.data.GHPRTimelineLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRHeaderPanel
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRReviewThreadsModel
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineComponent
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineMergingModel
 import org.jetbrains.plugins.github.ui.GHListLoaderPanel
@@ -52,7 +53,8 @@ internal class GHPRFileEditor(private val file: GHPRVirtualFile)
     Disposer.register(this, header)
 
     val timelineListModel = GHPRTimelineMergingModel()
-    val timeline = GHPRTimelineComponent(timelineListModel)
+    val reviewThreadsModel = GHPRReviewThreadsModel(dataProvider)
+    val timeline = GHPRTimelineComponent(timelineListModel, reviewThreadsModel)
     val loadingIcon = AsyncProcessIcon("Loading").apply {
       isVisible = false
     }

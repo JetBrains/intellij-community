@@ -20,6 +20,7 @@ import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubServerPath
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.pullrequest.GHNotFoundException
@@ -95,6 +96,9 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
       GHGQLRequests.PullRequest.reviewThreads(serverPath, username, repositoryName, number, p)
     }).loadAll(it)
   }
+  override val reviewThreadsRequest: CompletableFuture<List<GHPullRequestReviewThread>>
+    get() = GithubAsyncUtil.futureOfMutable { invokeAndWaitIfNeeded { reviewThreadsRequestValue.value } }
+
   private val filesReviewThreadsRequestValue = backingValue {
     GHPRCommentsUtil.buildThreadsAndMapLines(repository,
                                              logCommitsRequestValue.value.joinCancellable(),

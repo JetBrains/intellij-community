@@ -16,7 +16,8 @@ import javax.swing.ListModel
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
-class GHPRTimelineComponent(private val model: ListModel<GHPRTimelineItem>)
+class GHPRTimelineComponent(private val model: ListModel<GHPRTimelineItem>,
+                            private val reviewsThreadsModel: GHPRReviewThreadsModel)
   : JBPanelWithEmptyText(VerticalFlowLayout()) {
 
   init {
@@ -71,7 +72,8 @@ class GHPRTimelineComponent(private val model: ListModel<GHPRTimelineItem>)
     else {
       val text = when (item) {
         is GHPullRequestCommit -> """Commit "${item.commit.messageHeadlineHTML}" by ${item.commit.author?.name}"""
-        is GHPullRequestReview -> """${item.author?.login} added review with text "${item.bodyHTML}"""
+        is GHPullRequestReview -> """${item.author?.login} added review with text "${item.bodyHTML} and ${reviewsThreadsModel.getThreads(
+          item.id).size} comment threads"""
         is GHIssueComment -> """Comment "${item.bodyHtml}" by ${item.author?.login}"""
 
         is GHPRRenamedTitleEvent -> """${item.actor?.login} renamed from "${item.previousTitle}" to "${item.currentTitle}""""
