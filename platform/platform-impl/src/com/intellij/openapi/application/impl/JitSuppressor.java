@@ -33,6 +33,7 @@ public class JitSuppressor implements PowerSaveMode.Listener {
     "com/intellij/util/*.*",
     "com/intellij/semantic/*.*",
     "com/intellij/lang/impl/*.*", // PsiBuilder and related classes
+    "com/intellij/lang/parser/*.*", // GeneratedParserUtilBase
     "java/lang/*.*",
     "java/math/*.*",
     "jdk/internal/*.*",
