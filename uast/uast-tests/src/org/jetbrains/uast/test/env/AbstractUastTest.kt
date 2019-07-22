@@ -9,17 +9,13 @@ import org.jetbrains.uast.UFile
 import org.jetbrains.uast.UastFacade
 import org.jetbrains.uast.toUElementOfType
 import org.jetbrains.uast.visitor.UastVisitor
-import java.io.File
 
 abstract class AbstractUastFixtureTest : LightJavaCodeInsightFixtureTestCase() {
-  abstract fun getTestFile(testName: String): File
   abstract fun check(testName: String, file: UFile)
 
   @Suppress("NAME_SHADOWING")
   fun doTest(testName: String, checkCallback: (String, UFile) -> Unit = { testName, file -> check(testName, file) }) {
-    val testFile = getTestFile(testName)
-    if (!testFile.exists()) error("File does not exist: $testFile")
-    val psiFile = myFixture.configureByFile(testFile.path.replace(File.separatorChar, '/'))
+    val psiFile = myFixture.configureByFile(testName)
     val uFile = UastFacade.convertElementWithParent(psiFile, null) ?: error("Can't get UFile for $testName")
     checkCallback(testName, uFile as UFile)
   }

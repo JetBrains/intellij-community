@@ -4,17 +4,10 @@ package org.jetbrains.plugins.groovy.uast
 import com.intellij.openapi.application.ex.PathManagerEx
 import org.jetbrains.uast.test.common.RenderLogTestBase
 import org.jetbrains.uast.test.env.AbstractUastFixtureTest
-import java.io.File
 
 abstract class AbstractGroovyUastTest : AbstractUastFixtureTest() {
-  protected companion object {
-    val TEST_GROOVY_MODEL_DIR = File(PathManagerEx.getCommunityHomePath(), "plugins/groovy/groovy-uast-tests/testData")
-  }
-
-  override fun getTestFile(testName: String): File = File(TEST_GROOVY_MODEL_DIR, testName)
+  public override fun getTestDataPath(): String =
+    PathManagerEx.getCommunityHomePath() + "/plugins/groovy/groovy-uast-tests/testData"
 }
 
-abstract class AbstractGroovyRenderLogTest : AbstractGroovyUastTest(), RenderLogTestBase {
-  override fun getTestFile(testName: String, ext: String) =
-    File(File(TEST_GROOVY_MODEL_DIR, testName).canonicalPath.substringBeforeLast('.') + '.' + ext)
-}
+abstract class AbstractGroovyRenderLogTest : AbstractGroovyUastTest(), RenderLogTestBase
