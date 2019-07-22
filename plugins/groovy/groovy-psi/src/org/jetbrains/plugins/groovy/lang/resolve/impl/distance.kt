@@ -29,21 +29,9 @@ fun compare(left: ArgumentMapping, right: ArgumentMapping): Int {
     return -1
   }
 
-  if (left is VarargArgumentMapping && right is VarargArgumentMapping) {
-    // prefer which one has less varargs
-    return left.varargs.size - right.varargs.size
-  }
-  else if (left is VarargArgumentMapping) {
-    // prefer right
-    return 1
-  }
-  else if (right is VarargArgumentMapping) {
-    // prefer left
-    return -1
-  }
+  val leftDistance = (left as? PositionalArgumentMapping)?.distance ?: (left as VarargArgumentMapping).distance
+  val rightDistance = (right as? PositionalArgumentMapping)?.distance ?: (right as VarargArgumentMapping).distance
 
-  val leftDistance = (left as PositionalArgumentMapping).distance
-  val rightDistance = (right as PositionalArgumentMapping).distance
   return when {
     leftDistance == 0L -> -1
     rightDistance == 0L -> 1
