@@ -17,7 +17,7 @@ import javax.swing.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class RollbackThemeAction extends DumbAwareAction {
+final class RollbackThemeAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     EditorColorsManagerImpl colorsManager = (EditorColorsManagerImpl)EditorColorsManager.getInstance();
@@ -29,10 +29,13 @@ public class RollbackThemeAction extends DumbAwareAction {
     UIManager.LookAndFeelInfo feel = LafManager.getInstance().getCurrentLookAndFeel();
     if (feel instanceof TempUIThemeBasedLookAndFeelInfo) {
       LafManager.getInstance().setCurrentLookAndFeel(((TempUIThemeBasedLookAndFeelInfo)feel).getPreviousLaf());
-    } else {
+    }
+    else {
       LafManager.getInstance().setCurrentLookAndFeel(feel);
     }
-    EditorColorsManagerImpl.schemeChangedOrSwitched();
+
+    EditorColorsManagerImpl manager = (EditorColorsManagerImpl)EditorColorsManager.getInstance();
+    manager.schemeChangedOrSwitched(manager.getGlobalScheme());
     AppUIUtil.updateForDarcula(UIUtil.isUnderDarcula());
     LafManager.getInstance().updateUI();
   }

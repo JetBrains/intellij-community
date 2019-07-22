@@ -64,7 +64,7 @@ import java.util.function.Function;
   storages = @Storage("colors.scheme.xml"),
   additionalExportFile = EditorColorsManagerImpl.FILE_SPEC
 )
-public class EditorColorsManagerImpl extends EditorColorsManager implements PersistentStateComponent<EditorColorsManagerImpl.State> {
+public final class EditorColorsManagerImpl extends EditorColorsManager implements PersistentStateComponent<EditorColorsManagerImpl.State> {
   private static final Logger LOG = Logger.getInstance(EditorColorsManagerImpl.class);
   private static final ExtensionPointName<BundledSchemeEP> BUNDLED_EP_NAME = ExtensionPointName.create("com.intellij.bundledColorScheme");
 
@@ -200,7 +200,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
 
   private void loadBundledSchemes() {
     if (!isUnitTestOrHeadlessMode()) {
-      for (BundledSchemeEP ep : BUNDLED_EP_NAME.getExtensionList()) {
+      for (BundledSchemeEP ep : BUNDLED_EP_NAME.getIterable()) {
         mySchemeManager.loadBundledScheme(ep.getPath() + ".xml", ep);
       }
     }
@@ -265,12 +265,6 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
     editableCopy.setCanBeDeleted(false);
   }
 
-  @Deprecated
-  public static void schemeChangedOrSwitched() {
-    EditorColorsManagerImpl manager = (EditorColorsManagerImpl)getInstance();
-    manager.schemeChangedOrSwitched(manager.getGlobalScheme());
-  }
-
   public void schemeChangedOrSwitched(@Nullable EditorColorsScheme newScheme) {
     // refreshAllEditors is not enough - for example, change "Errors and warnings -> Typo" from green (default) to red
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
@@ -284,7 +278,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
     myTreeDispatcher.getMulticaster().globalSchemeChange(newScheme);
   }
 
-  static class BundledScheme extends EditorColorsSchemeImpl implements ReadOnlyColorsScheme {
+  static final class BundledScheme extends EditorColorsSchemeImpl implements ReadOnlyColorsScheme {
     BundledScheme() {
       super(null);
     }
@@ -295,7 +289,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
     }
   }
 
-  static class State {
+  static final class State {
     public boolean USE_ONLY_MONOSPACED_FONTS = true;
 
     @OptionTag(tag = "global_color_scheme", nameAttribute = "", valueAttribute = "name")

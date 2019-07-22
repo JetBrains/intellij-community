@@ -32,11 +32,11 @@ private fun getDirectoryTree(dir: Path, indent: Int, sb: StringBuilder, excluded
   }
 }
 
-private fun sortedFileList(dir: Path, excluded: Set<String>?): List<Path>? {
+private fun sortedFileList(dir: Path, excluded: Set<String>): List<Path>? {
   return dir.directoryStreamIfExists { stream ->
     var sequence = stream.asSequence()
-    if (!excluded.isNullOrEmpty()) {
-      sequence = sequence.filter { excluded.contains(it.fileName.toString()) }
+    if (excluded.isNotEmpty()) {
+      sequence = sequence.filter { !excluded.contains(it.fileName.toString()) }
     }
     val list = sequence.toMutableList()
     list.sort()
