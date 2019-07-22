@@ -5,6 +5,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
@@ -355,8 +357,18 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     return null;
   }
 
-  public static void showColorPickerPopup(@Nullable Color currentColor, @NotNull ColorListener listener) {
+  public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @NotNull ColorListener listener) {
     Ref<LightCalloutPopup> ref = Ref.create();
+
+    ColorListener colorListener = new ColorListener() {
+      final Object groupId = new Object();
+
+      @Override
+      public void colorChanged(Color color, Object source) {
+        CommandProcessor.getInstance().executeCommand(project, () -> listener.colorChanged(color, source), "Apply Color", groupId);
+      }
+    };
+
     LightCalloutPopup popup = new ColorPickerBuilder()
       .setOriginalColor(currentColor)
       .addSaturationBrightnessComponent()
@@ -364,7 +376,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       .addColorValuePanel().withFocus()
       //.addSeparator()
       //.addCustomComponent(MaterialColorPaletteProvider.INSTANCE)
-      .addColorListener(listener, false)
+      .addColorListener(colorListener,true)
       .focusWhenDisplay(true)
       .setFocusCycleRoot(true)
       .addKeyAction(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), cancelPopup(ref))
