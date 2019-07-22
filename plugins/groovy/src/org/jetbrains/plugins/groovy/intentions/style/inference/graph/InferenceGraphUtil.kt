@@ -9,11 +9,10 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import com.intellij.util.containers.BidirectionalMap
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.InferenceDriver
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.TypeUsageInformation
-import org.jetbrains.plugins.groovy.intentions.style.inference.ensureWildcards
 import org.jetbrains.plugins.groovy.intentions.style.inference.flattenIntersections
+import org.jetbrains.plugins.groovy.intentions.style.inference.forceWildcardsAsTypeArguments
 import org.jetbrains.plugins.groovy.intentions.style.inference.getInferenceVariable
 import org.jetbrains.plugins.groovy.intentions.style.inference.typeParameter
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
@@ -43,8 +42,7 @@ fun createGraphFromInferenceVariables(session: GroovyInferenceSession,
       residualExtendsTypes.isEmpty() && variable.instantiation is PsiIntersectionType -> PsiType.getJavaLangObject(session.manager,
                                                                                                                    session.scope)
       // questionable conditions. I guess, we can allow LUB instead of Object if variable's inferred type is simple (not an intersection).
-      else -> residualExtendsTypes.firstOrNull() ?: variable.instantiation!!.ensureWildcards(
-        GroovyPsiElementFactory.getInstance(variable.project), variable.manager)
+      else -> residualExtendsTypes.firstOrNull() ?: variable.instantiation!!.forceWildcardsAsTypeArguments()
     }
     val core = InferenceUnit(variable.parameter,
                              flexible = variableType in flexibleTypes,

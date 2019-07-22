@@ -4,11 +4,8 @@ package org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.plugins.groovy.intentions.style.inference.NameGenerator
-import org.jetbrains.plugins.groovy.intentions.style.inference.collectDependencies
-import org.jetbrains.plugins.groovy.intentions.style.inference.createProperTypeParameter
+import org.jetbrains.plugins.groovy.intentions.style.inference.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.*
-import org.jetbrains.plugins.groovy.intentions.style.inference.typeParameter
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
@@ -56,7 +53,10 @@ class ClosureProcessor private constructor(private val closureParameters: Map<Gr
       val newClosureParameter = ParameterizedClosure(newParameter)
       newClosureParameter.closureArguments.addAll(closureParameter.closureArguments)
       closureParameter.typeParameters.forEach { directInnerParameter ->
-        val innerParameterType = manager.createDeeplyParameterizedType(substitutor.substitute(directInnerParameter)!!)
+        // we need to force wildcards here, because otherwise closure may accept outer method's parameter and only it.
+        // This will lead to non-wildcard instantiation of class parameter and we wont be able to guess it's dependencies
+        val innerParameterType = manager.createDeeplyParameterizedType(
+          substitutor.substitute(directInnerParameter)!!.forceWildcardsAsTypeArguments())
         newClosureParameter.types.add(innerParameterType.type)
         newClosureParameter.typeParameters.addAll(innerParameterType.typeParameters)
         innerParameterType.typeParameters.forEach { parameterizedMethod.typeParameterList!!.add(it) }

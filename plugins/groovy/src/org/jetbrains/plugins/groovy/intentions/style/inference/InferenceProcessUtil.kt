@@ -58,19 +58,22 @@ fun GroovyPsiElementFactory.createProperTypeParameter(name: String, superTypes: 
   return createMethodFromText(method, null).typeParameters.single()
 }
 
-fun PsiType.ensureWildcards(factory: GroovyPsiElementFactory, manager: PsiManager): PsiType {
-  val enclosing = this
+fun PsiType.forceWildcardsAsTypeArguments(): PsiType {
+  val manager = resolve()?.manager ?: return this
+  val factory = GroovyPsiElementFactory.getInstance(manager.project)
   return accept(object : PsiTypeMapper() {
     override fun visitClassType(classType: PsiClassType?): PsiType? {
       classType ?: return classType
-      val mappedParameters = classType.parameters.map { it.accept(this) }
-      val newType = factory.createType(classType.resolve()!!, *mappedParameters.toTypedArray())
-      if (classType == enclosing) {
-        return newType
+      val mappedParameters = classType.parameters.map {
+        val accepted = it.accept(this)
+        if (accepted is PsiWildcardType) {
+          accepted
+        }
+        else {
+          PsiWildcardType.createExtends(manager, accepted)
+        }
       }
-      else {
-        return PsiWildcardType.createExtends(manager, newType)
-      }
+      return factory.createType(classType.resolve()!!, *mappedParameters.toTypedArray())
     }
 
   })

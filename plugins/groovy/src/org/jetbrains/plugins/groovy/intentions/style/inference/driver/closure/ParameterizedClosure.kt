@@ -114,7 +114,7 @@ class ParameterizedClosure(val parameter: GrParameter) {
       val dependencies = typeParametersDependencies
         .filter { it.key.type() != parameterType }
         .flatMap { it.value.map(PsiTypeParameter::type) }.toSet()
-      if (dependencies.contains(parameterType)) {
+      if (dependencies.contains(parameterType) || !resultSubstitutor.substitute(parameterType).equalsToText(parameterType.canonicalText)) {
         resultSubstitutor.substitute(parameterType)
       }
       else {
