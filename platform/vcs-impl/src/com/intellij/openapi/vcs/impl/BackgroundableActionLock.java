@@ -65,6 +65,7 @@ public class BackgroundableActionLock {
 
   @CalledInAwt
   public static void unlock(@NotNull Project project, @NotNull Object... keys) {
+    if (project.isDisposed()) return;
     getManager(project).stopBackgroundTask(keys);
   }
 
