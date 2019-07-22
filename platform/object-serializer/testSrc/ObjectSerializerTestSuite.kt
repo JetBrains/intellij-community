@@ -38,7 +38,7 @@ internal fun <T : Any> test(bean: T, testName: TestName, writeConfiguration: Wri
 
   // just to test binary
   objectSerializer.write(bean, out, writeConfiguration.copy(binary = true))
-  assertThat(out.size() > 0)
+  assertThat(out.size()).isGreaterThan(0)
   out.reset()
 
   objectSerializer.write(bean, out, writeConfiguration)
