@@ -239,7 +239,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
    */
   default boolean isCallee(@NotNull FQNamesProvider... name) {
     final PyExpression callee = getCallee();
-    return callee != null && NameResolverTools.isName(callee, name);
+    return callee instanceof PyReferenceExpression && NameResolverTools.isName(callee, name);
   }
 
   class PyArgumentsMapping {
