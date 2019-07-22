@@ -193,6 +193,10 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     else {
       myIsRealPopup = true;
       Point actualPoint = new Point(x, y);
+      if (hintHint.getPreferredPosition() == Balloon.Position.atLeft) {
+        int width = myComponent.getPreferredSize().width;
+        actualPoint.translate(-width, 0);
+      }
       JComponent actualComponent = new OpaquePanel(new BorderLayout());
       actualComponent.add(myComponent, BorderLayout.CENTER);
       if (isAwtTooltip()) {
