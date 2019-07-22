@@ -17,12 +17,14 @@ package com.intellij.xml;
 
 import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @deprecated to be removed in 2020.1
  * @author yole
  */
+@ApiStatus.ScheduledForRemoval
 @Deprecated
 public class XmlFileTypeFactory extends FileTypeFactory {
   @Override
