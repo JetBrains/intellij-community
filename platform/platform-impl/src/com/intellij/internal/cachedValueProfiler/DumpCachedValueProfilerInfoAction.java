@@ -2,7 +2,7 @@
 package com.intellij.internal.cachedValueProfiler;
 
 import com.intellij.CommonBundle;
-import com.intellij.ide.actions.ShowFilePathAction;
+import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
@@ -31,8 +31,8 @@ public class DumpCachedValueProfilerInfoAction extends DumbAwareAction {
     try {
       File file = CachedValueProfilerDumper.dumpResults(new File(PathManager.getLogPath()));
       String url = FileUtil.getUrl(file);
-      String message = CommonBundle.message("cached.value.snapshot.success", file, url, ShowFilePathAction.getFileManagerName());
-      GROUP.createNotification("", message, NotificationType.INFORMATION, ShowFilePathAction.FILE_SELECTING_LISTENER).notify(project);
+      String message = CommonBundle.message("cached.value.snapshot.success", file, url, RevealFileAction.getFileManagerName());
+      GROUP.createNotification("", message, NotificationType.INFORMATION, RevealFileAction.FILE_SELECTING_LISTENER).notify(project);
     }
     catch (IOException exception) {
       GROUP.createNotification(CommonBundle.message("cached.value.snapshot.error", exception.getMessage()),

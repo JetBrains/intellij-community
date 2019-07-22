@@ -34,7 +34,7 @@ public class DumpThreadsAction extends AnAction implements DumbAware {
     if (file != null) {
       String url = FileUtil.getUrl(file);
       String message = CommonBundle.message("thread.dump.is.taken", url);
-      return GROUP.createNotification("", message, NotificationType.INFORMATION, ShowFilePathAction.FILE_SELECTING_LISTENER);
+      return GROUP.createNotification("", message, NotificationType.INFORMATION, RevealFileAction.FILE_SELECTING_LISTENER);
     }
     else {
       return GROUP.createNotification(CommonBundle.message("failed.to.take.thread.dump"), NotificationType.INFORMATION);

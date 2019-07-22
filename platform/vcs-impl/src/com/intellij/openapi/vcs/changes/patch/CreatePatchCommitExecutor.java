@@ -2,7 +2,7 @@
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.CommonBundle;
-import com.intellij.ide.actions.ShowFilePathAction;
+import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
@@ -153,7 +153,7 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
       WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> {
         final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
         if (Boolean.TRUE.equals(configuration.SHOW_PATCH_IN_EXPLORER)) {
-          ShowFilePathAction.openFile(file);
+          RevealFileAction.openFile(file);
         }
         else if (configuration.SHOW_PATCH_IN_EXPLORER == null) {
           configuration.SHOW_PATCH_IN_EXPLORER = showDialog(file);
@@ -232,7 +232,7 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
       }
     };
 
-    ShowFilePathAction.showDialog(myProject, message, title, file, option);
+    RevealFileAction.showDialog(myProject, message, title, file, option);
 
     return ref[0];
   }

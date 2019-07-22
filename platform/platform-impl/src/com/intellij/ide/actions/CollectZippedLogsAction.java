@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.troubleshooting.CompositeGeneralTroubleInfoCollector;
@@ -44,7 +44,7 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
       if (!doNotShowDialog) {
         Messages.showIdeaMessageDialog(
           project, "Included logs and settings may contain sensitive data.", "Sensitive Data",
-          new String[]{"Show in " + ShowFilePathAction.getFileManagerName()}, 1, Messages.getWarningIcon(),
+          new String[]{"Show in " + RevealFileAction.getFileManagerName()}, 1, Messages.getWarningIcon(),
           new DialogWrapper.DoNotAskOption.Adapter() {
             @Override
             public void rememberChoice(final boolean selected, final int exitCode) {
@@ -62,8 +62,8 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
             return createZip(troubleshooting);
           }
         });
-      if (ShowFilePathAction.isSupported()) {
-        ShowFilePathAction.openFile(zippedLogsFile);
+      if (RevealFileAction.isSupported()) {
+        RevealFileAction.openFile(zippedLogsFile);
       }
       else {
         Messages.showInfoMessage(zippedLogsFile.getAbsolutePath(), "Log File");
@@ -134,6 +134,6 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
 
   @NotNull
   private static String getActionName() {
-    return "Compress Logs and Show in " + ShowFilePathAction.getFileManagerName();
+    return "Compress Logs and Show in " + RevealFileAction.getFileManagerName();
   }
 }
