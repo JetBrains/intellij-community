@@ -18,16 +18,8 @@ import java.util.concurrent.TimeoutException;
  * Only internal usage.
  */
 @ApiStatus.Internal
-public class InternalPromiseUtil {
+public final class InternalPromiseUtil {
   public static final RuntimeException OBSOLETE_ERROR = new MessageError("Obsolete", false);
-
-  public static final NotNullLazyValue<Promise<Object>> CANCELLED_PROMISE = new NotNullLazyValue<Promise<Object>>() {
-    @NotNull
-    @Override
-    protected Promise<Object> compute() {
-      return new DonePromise<>(PromiseValue.createRejected(OBSOLETE_ERROR));
-    }
-  };
 
   public static final NotNullLazyValue<CancellablePromise<Object>> FULFILLED_PROMISE = new NotNullLazyValue<CancellablePromise<Object>>() {
     @NotNull
@@ -51,7 +43,7 @@ public class InternalPromiseUtil {
   }
 
   @SuppressWarnings("ExceptionClassNameDoesntEndWithException")
-  public static class MessageError extends RuntimeException {
+  public static final class MessageError extends RuntimeException {
     public final ThreeState log;
 
     public MessageError(@NotNull String message, boolean isLog) {
