@@ -127,6 +127,15 @@ public interface StatusBar extends StatusBarInfo, Disposable {
   Project getProject();
 
   /**
+   * @deprecated use {@link #createChild(IdeFrame)} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  default StatusBar createChild() {
+    return this;
+  }
+
+  /**
    * @deprecated frame is immutable now
    */
   @Deprecated
