@@ -258,7 +258,13 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
         updateWithMap(updateData);
       }
       catch (StorageException | ProcessCanceledException ex) {
-        LOG.info("An exception during updateWithMap(). Index " + myIndexId.getName() + " will be rebuilt.", ex);
+        String message = "An exception during updateWithMap(). Index " + myIndexId.getName() + " will be rebuilt.";
+        //noinspection InstanceofCatchParameter
+        if (ex instanceof ProcessCanceledException) {
+          LOG.error(message, ex);
+        } else {
+          LOG.info(message, ex);
+        }
         requestRebuild(ex);
         return Boolean.FALSE;
       }
