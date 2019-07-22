@@ -131,7 +131,7 @@ public class PluginManagerCore {
   @NotNull
   public static IdeaPluginDescriptor[] getPlugins() {
     IdeaPluginDescriptor[] result = ourPlugins.get();
-    return result == null ? initPlugins() : result;
+    return result == null ? initPlugins(null) : result;
   }
 
   /**
@@ -139,9 +139,14 @@ public class PluginManagerCore {
    * the plugins it depends on.
    */
   @NotNull
-  public static synchronized List<IdeaPluginDescriptor> getLoadedPlugins() {
+  public static List<IdeaPluginDescriptor> getLoadedPlugins() {
+    return getLoadedPlugins(null);
+  }
+
+  @NotNull
+  public static synchronized List<IdeaPluginDescriptor> getLoadedPlugins(@Nullable ClassLoader coreClassLoader) {
     if (ourLoadedPlugins == null) {
-      initPlugins();
+      initPlugins(coreClassLoader);
     }
     return ourLoadedPlugins;
   }
@@ -578,7 +583,7 @@ public class PluginManagerCore {
     return cpElement.toPath().normalize().toUri().toURL();  // it is important not to have "." and ".." in classpath elements
   }
 
-  public static void invalidatePlugins() {
+  public static synchronized void invalidatePlugins() {
     ourPlugins.set(null);
     ourLoadedPlugins = null;
     ourDisabledPlugins = null;
@@ -1494,7 +1499,7 @@ public class PluginManagerCore {
   }
 
   @NotNull
-  private static IdeaPluginDescriptorImpl[] initializePlugins() {
+  private static IdeaPluginDescriptorImpl[] initializePlugins(@NotNull ClassLoader coreLoader) {
     Activity loadPluginsActivity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.INIT_PLUGINS);
     configureExtensions();
 
@@ -1503,10 +1508,6 @@ public class PluginManagerCore {
     if (!isUnitTestMode) {
       checkEssentialPluginsAreAvailable(pluginDescriptors);
     }
-
-    Class callerClass = ReflectionUtil.findCallerClass(1);
-    assert callerClass != null;
-    ClassLoader coreLoader = callerClass.getClassLoader();
 
     List<IdeaPluginDescriptorImpl> result = new ArrayList<>();
     Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap = new THashMap<>();
@@ -1685,10 +1686,16 @@ public class PluginManagerCore {
   }
 
   @NotNull
-  private static synchronized IdeaPluginDescriptorImpl[] initPlugins() {
+  private static synchronized IdeaPluginDescriptorImpl[] initPlugins(@Nullable ClassLoader coreLoader) {
+    if (coreLoader == null) {
+      Class callerClass = ReflectionUtil.findCallerClass(1);
+      assert callerClass != null;
+      coreLoader = callerClass.getClassLoader();
+    }
+
     IdeaPluginDescriptorImpl[] result;
     try {
-      result = initializePlugins();
+      result = initializePlugins(coreLoader);
     }
     catch (PicoPluginExtensionInitializationException e) {
       throw new PluginException(e, e.getPluginId());

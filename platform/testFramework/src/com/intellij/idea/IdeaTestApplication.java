@@ -3,6 +3,7 @@ package com.intellij.idea;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.LoadingPhase;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.HeadlessDataManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -26,6 +27,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public final class IdeaTestApplication implements Disposable {
   private static volatile IdeaTestApplication ourInstance;
@@ -94,13 +96,19 @@ public final class IdeaTestApplication implements Disposable {
     PluginManagerCore.isUnitTestMode = true;
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
 
-    Future<List<IdeaPluginDescriptor>> loadedPluginFuture = AppExecutorUtil.getAppExecutorService().submit(() -> PluginManagerCore.getLoadedPlugins());
+    Future<List<IdeaPluginDescriptor>> loadedPluginFuture = AppExecutorUtil.getAppExecutorService().submit(() -> {
+      //noinspection CodeBlock2Expr
+      return PluginManagerCore.getLoadedPlugins(IdeaTestApplication.class.getClassLoader());
+    });
     ApplicationImpl.patchSystem();
     ApplicationImpl app = new ApplicationImpl(true, true, true, true, ApplicationManagerEx.IDEA_APPLICATION);
     IconManager.activate();
     List<IdeaPluginDescriptor> loadedPlugins = null;
     try {
-      loadedPlugins = loadedPluginFuture.get(5, TimeUnit.SECONDS);
+      loadedPlugins = loadedPluginFuture.get(10, TimeUnit.SECONDS);
+    }
+    catch (TimeoutException e) {
+      throw new RuntimeException("Cannot load plugin descriptors in 10 seconds: " + ThreadDumper.dumpThreadsToString(), e);
     }
     catch (ExecutionException e) {
       ExceptionUtil.rethrow(e.getCause() == null ? e : e.getCause());

@@ -45,7 +45,6 @@ import com.intellij.ui.mac.MacOSApplicationProvider
 import com.intellij.ui.mac.touchbar.TouchBarsManager
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.accessibility.ScreenReader
 import java.awt.EventQueue
@@ -247,7 +246,7 @@ object IdeaApplication {
     EventQueue.invokeLater { executeInitAppInEdt(rawArgs, initAppActivity, pluginDescriptorsFuture) }
 
     val plugins = try {
-      PluginManagerCore.getLoadedPlugins()
+      PluginManagerCore.getLoadedPlugins(IdeaApplication.javaClass.classLoader)
     }
     catch (e: Throwable) {
       pluginDescriptorsFuture.completeExceptionally(e)
