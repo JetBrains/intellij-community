@@ -108,7 +108,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
   }
 
   @Override
-  public StatusBarWidget copy() {
+  public final StatusBarWidget copy() {
     return createInstance(getProject());
   }
 
