@@ -11,10 +11,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
-import static org.jetbrains.concurrency.InternalPromiseUtil.CANCELLED_PROMISE;
-import static org.jetbrains.concurrency.InternalPromiseUtil.isHandlerObsolete;
-
-class DonePromise<T> extends InternalPromiseUtil.BasePromise<T> {
+final class DonePromise<T> extends InternalPromiseUtil.BasePromise<T> {
   private final PromiseValue<T> value;
 
   DonePromise(@NotNull PromiseValue<T> value) {
@@ -28,7 +25,7 @@ class DonePromise<T> extends InternalPromiseUtil.BasePromise<T> {
       return this;
     }
 
-    if (!isHandlerObsolete(handler)) {
+    if (!InternalPromiseUtil.isHandlerObsolete(handler)) {
       handler.accept(value.result);
     }
     return this;
@@ -54,7 +51,7 @@ class DonePromise<T> extends InternalPromiseUtil.BasePromise<T> {
     if (value.error == null) {
       onSuccess(handler);
     }
-    else if (!isHandlerObsolete(handler)) {
+    else if (!InternalPromiseUtil.isHandlerObsolete(handler)) {
       handler.accept(null);
     }
     return this;
@@ -63,7 +60,7 @@ class DonePromise<T> extends InternalPromiseUtil.BasePromise<T> {
   @NotNull
   @Override
   public Promise<T> onError(@NotNull Consumer<? super Throwable> handler) {
-    if (value.error != null && !isHandlerObsolete(handler)) {
+    if (value.error != null && !InternalPromiseUtil.isHandlerObsolete(handler)) {
       handler.accept(value.error);
     }
     return this;
@@ -76,9 +73,8 @@ class DonePromise<T> extends InternalPromiseUtil.BasePromise<T> {
       //noinspection unchecked
       return (Promise<SUB_RESULT>)this;
     }
-    else if (isHandlerObsolete(done)) {
-      //noinspection unchecked
-      return (Promise<SUB_RESULT>)CANCELLED_PROMISE.getValue();
+    else if (InternalPromiseUtil.isHandlerObsolete(done)) {
+      return Promises.cancelledPromise();
     }
     else {
       return new DonePromise<>(PromiseValue.createFulfilled(done.fun(value.result)));
@@ -107,7 +103,7 @@ class DonePromise<T> extends InternalPromiseUtil.BasePromise<T> {
   public void _setValue(@NotNull PromiseValue<T> value) {
   }
 
-  @Nullable
+  @NotNull
   @Override
   protected PromiseValue<T> getValue() {
     return value;

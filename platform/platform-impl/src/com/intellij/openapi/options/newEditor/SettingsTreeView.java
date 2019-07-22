@@ -433,7 +433,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       @Override
       public void setRejected() {
         super.setRejected();
-        promise.setError("rejected");
+        promise.setError(Promises.getObsoleteError());
       }
     });
     return promise;
