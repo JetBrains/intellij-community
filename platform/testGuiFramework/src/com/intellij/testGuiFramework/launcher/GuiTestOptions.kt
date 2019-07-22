@@ -52,9 +52,7 @@ object GuiTestOptions {
 
   // PyCharm Tests needs global projects folder
   val projectsDir: Path by lazy {
-    // The temporary location might contain symlinks, such as /var@ -> /private/var on MacOS.
-    // EditorFixture seems to require a canonical path when opening the file.
-    FileUtil.generateRandomTemporaryPath().toPath().toRealPath()
+    FileUtil.generateRandomTemporaryPath().toPath()
   }
 
   private val configDefaultPath: String by lazy {
