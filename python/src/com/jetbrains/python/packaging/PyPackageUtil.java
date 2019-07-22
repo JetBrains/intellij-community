@@ -16,6 +16,7 @@
 package com.jetbrains.python.packaging;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -521,6 +522,7 @@ public class PyPackageUtil {
    */
   public static void runOnChangeUnderInterpreterPaths(@NotNull Sdk sdk, @NotNull Runnable runnable) {
     final Application app = ApplicationManager.getApplication();
+    final Disposable disposable = sdk instanceof Disposable ? (Disposable)sdk : app;
     VirtualFileManager.getInstance().addAsyncFileListener(new AsyncFileListener() {
       @Nullable
       @Override
@@ -542,6 +544,6 @@ public class PyPackageUtil {
         // No continuation in write action is needed
         return null;
       }
-    }, app);
+    }, disposable);
   }
 }
