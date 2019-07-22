@@ -183,7 +183,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     registerExtensionPoint(point);
     point.addExtensionPointListener(new ExtensionPointListener<EPAvailabilityListenerExtension>() {
       @Override
-      public void extensionRemoved(@NotNull EPAvailabilityListenerExtension extension, @Nullable PluginDescriptor pluginDescriptor) {
+      public void extensionRemoved(@NotNull EPAvailabilityListenerExtension extension, @NotNull PluginDescriptor pluginDescriptor) {
         synchronized (myAvailabilityListeners) {
           Collection<ExtensionPointAvailabilityListener> listeners = myAvailabilityListeners.get(extension.getExtensionPointName());
           for (Iterator<ExtensionPointAvailabilityListener> iterator = listeners.iterator(); iterator.hasNext(); ) {
@@ -198,7 +198,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
       }
 
       @Override
-      public void extensionAdded(@NotNull EPAvailabilityListenerExtension extension, @Nullable PluginDescriptor pluginDescriptor) {
+      public void extensionAdded(@NotNull EPAvailabilityListenerExtension extension, @NotNull PluginDescriptor pluginDescriptor) {
         String epName = extension.getExtensionPointName();
 
         ExtensionPointAvailabilityListener listener;
@@ -232,12 +232,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     }
 
     if (parentDisposable != null) {
-      Disposer.register(parentDisposable, new Disposable() {
-        @Override
-        public void dispose() {
-          removeAvailabilityListener(extensionPointName, listener);
-        }
-      });
+      Disposer.register(parentDisposable, () -> removeAvailabilityListener(extensionPointName, listener));
     }
   }
 
@@ -267,12 +262,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
                                      @NotNull Disposable parentDisposable) {
     String extensionPointName = extensionPoint.getName();
     doRegisterExtensionPoint(extensionPointName, extensionPointBeanClass, kind);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        unregisterExtensionPoint(extensionPointName);
-      }
-    });
+    Disposer.register(parentDisposable, () -> unregisterExtensionPoint(extensionPointName));
   }
 
   void doRegisterExtensionPoint(@NotNull String extensionPointName, @NotNull String extensionPointBeanClass, @NotNull ExtensionPoint.Kind kind) {
@@ -297,7 +287,8 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
       return;
     }
 
-    PluginId id1 = id(getExtensionPoint(pointName).getDescriptor()), id2 = id(pluginDescriptor);
+    PluginId id1 = id(getExtensionPoint(pointName).getDescriptor());
+    PluginId id2 = id(pluginDescriptor);
     String message = "Duplicate registration for EP '" + pointName + "': first in " + id1 + ", second in " + id2;
     if (DEBUG_REGISTRATION) {
       LOG.error(message, myEPTraces.get(pointName));

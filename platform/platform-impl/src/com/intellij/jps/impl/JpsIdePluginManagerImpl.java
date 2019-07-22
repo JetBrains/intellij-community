@@ -4,7 +4,6 @@ package com.intellij.jps.impl;
 import com.intellij.openapi.extensions.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.plugin.JpsPluginManager;
 
 import java.io.BufferedReader;
@@ -27,7 +26,7 @@ public class JpsIdePluginManagerImpl extends JpsPluginManager {
     if (rootArea.hasExtensionPoint(JpsPluginBean.EP_NAME)) {
       JpsPluginBean.EP_NAME.getPoint(null).addExtensionPointListener(new ExtensionPointListener<JpsPluginBean>() {
         @Override
-        public void extensionAdded(@NotNull JpsPluginBean extension, @Nullable PluginDescriptor pluginDescriptor) {
+        public void extensionAdded(@NotNull JpsPluginBean extension, @NotNull PluginDescriptor pluginDescriptor) {
           ContainerUtil.addIfNotNull(myExternalBuildPlugins, pluginDescriptor);
         }
       }, true, null);
@@ -37,7 +36,7 @@ public class JpsIdePluginManagerImpl extends JpsPluginManager {
       //noinspection unchecked
       extensionPoint.addExtensionPointListener(new ExtensionPointListener() {
         @Override
-        public void extensionAdded(@NotNull Object extension, @Nullable PluginDescriptor pluginDescriptor) {
+        public void extensionAdded(@NotNull Object extension, @NotNull PluginDescriptor pluginDescriptor) {
           ContainerUtil.addIfNotNull(myExternalBuildPlugins, pluginDescriptor);
         }
       });

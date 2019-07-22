@@ -276,14 +276,14 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
     FileTypeDetector.EP_NAME.getPoint(null).addExtensionPointListener(new ExtensionPointListener<FileTypeDetector>() {
       @Override
-      public void extensionAdded(@NotNull FileTypeDetector extension, @Nullable PluginDescriptor pluginDescriptor) {
+      public void extensionAdded(@NotNull FileTypeDetector extension, @NotNull PluginDescriptor pluginDescriptor) {
         synchronized (FILE_TYPE_DETECTOR_MAP_LOCK) {
           myFileTypeDetectorMap = null;
         }
       }
 
       @Override
-      public void extensionRemoved(@NotNull FileTypeDetector extension, @Nullable PluginDescriptor pluginDescriptor) {
+      public void extensionRemoved(@NotNull FileTypeDetector extension, @NotNull PluginDescriptor pluginDescriptor) {
         synchronized (FILE_TYPE_DETECTOR_MAP_LOCK) {
           myFileTypeDetectorMap = null;
         }

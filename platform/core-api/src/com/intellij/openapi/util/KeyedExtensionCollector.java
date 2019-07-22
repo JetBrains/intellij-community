@@ -34,14 +34,10 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
 
   private final ExtensionPointAndAreaListener<KeyedLazyInstance<T>> myListener = new ExtensionPointAndAreaListener<KeyedLazyInstance<T>>() {
     @Override
-    public void extensionAdded(@NotNull KeyedLazyInstance<T> bean, @Nullable PluginDescriptor pluginDescriptor) {
+    public void extensionAdded(@NotNull KeyedLazyInstance<T> bean, @NotNull PluginDescriptor pluginDescriptor) {
       synchronized (myLock) {
         if (bean.getKey() == null) {
-          if (pluginDescriptor != null) {
-            throw new PluginException("No key specified for extension of class " + bean.getInstance().getClass(), pluginDescriptor.getPluginId());
-          }
-          LOG.error("No key specified for extension of class " + bean.getInstance().getClass());
-          return;
+          throw new PluginException("No key specified for extension of class " + bean.getInstance().getClass(), pluginDescriptor.getPluginId());
         }
         myCache.remove(bean.getKey());
         myTracker.incModificationCount();
@@ -49,7 +45,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     }
 
     @Override
-    public void extensionRemoved(@NotNull KeyedLazyInstance<T> bean, @Nullable PluginDescriptor pluginDescriptor) {
+    public void extensionRemoved(@NotNull KeyedLazyInstance<T> bean, @NotNull PluginDescriptor pluginDescriptor) {
       synchronized (myLock) {
         myCache.remove(bean.getKey());
         myTracker.incModificationCount();
@@ -171,9 +167,9 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   }
 
   @Nullable
-  protected final List<T> buildExtensionsFromExtensionPoint(@Nullable List<T> result,
-                                                            @NotNull Predicate<? super KeyedLazyInstance<T>> isMyBean,
-                                                            @NotNull List<KeyedLazyInstance<T>> extensions) {
+  final List<T> buildExtensionsFromExtensionPoint(@Nullable List<T> result,
+                                                  @NotNull Predicate<? super KeyedLazyInstance<T>> isMyBean,
+                                                  @NotNull List<? extends KeyedLazyInstance<T>> extensions) {
     for (KeyedLazyInstance<T> bean : extensions) {
       if (!isMyBean.test(bean)) {
         continue;

@@ -79,12 +79,12 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     myPersistentEntryPoints = new LinkedHashMap<>(); // To keep the order between readExternal to writeExternal
     Extensions.getRootArea().<EntryPoint>getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL).addExtensionPointListener(new ExtensionPointListener<EntryPoint>() {
       @Override
-      public void extensionAdded(@NotNull EntryPoint extension, @Nullable PluginDescriptor pluginDescriptor) {
+      public void extensionAdded(@NotNull EntryPoint extension, @NotNull PluginDescriptor pluginDescriptor) {
         extensionRemoved(extension, pluginDescriptor);
       }
 
       @Override
-      public void extensionRemoved(@NotNull EntryPoint extension, @Nullable PluginDescriptor pluginDescriptor) {
+      public void extensionRemoved(@NotNull EntryPoint extension, @NotNull PluginDescriptor pluginDescriptor) {
         if (ADDITIONAL_ANNOS != null) {
           ADDITIONAL_ANNOS = null;
           UIUtil.invokeLaterIfNeeded(() -> {

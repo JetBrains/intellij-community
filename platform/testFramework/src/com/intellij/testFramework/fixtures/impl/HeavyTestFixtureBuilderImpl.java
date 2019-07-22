@@ -35,6 +35,7 @@ import java.util.Map;
 class HeavyTestFixtureBuilderImpl implements TestFixtureBuilder<IdeaProjectTestFixture> {
   private final HeavyIdeaTestFixtureImpl myFixture;
   private final Map<Class<? extends ModuleFixtureBuilder>, Class<? extends ModuleFixtureBuilder>> myProviders;
+  @NotNull
   private final MutablePicoContainer myContainer;
 
   HeavyTestFixtureBuilderImpl(HeavyIdeaTestFixtureImpl fixture, final Map<Class<? extends ModuleFixtureBuilder>, Class<? extends ModuleFixtureBuilder>> providers) {

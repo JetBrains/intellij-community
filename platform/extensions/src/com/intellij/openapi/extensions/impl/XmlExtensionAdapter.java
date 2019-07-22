@@ -17,8 +17,6 @@ import org.picocontainer.PicoContainer;
 import org.picocontainer.PicoIntrospectionException;
 import org.picocontainer.PicoVisitor;
 
-import java.util.Objects;
-
 class XmlExtensionAdapter extends ExtensionComponentAdapter {
   @Nullable
   private Element myExtensionElement;
@@ -26,7 +24,7 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
   private Object myComponentInstance;
 
   XmlExtensionAdapter(@NotNull String implementationClassName,
-                      @Nullable PluginDescriptor pluginDescriptor,
+                      @NotNull PluginDescriptor pluginDescriptor,
                       @Nullable String orderId,
                       @NotNull LoadingOrder order,
                       @Nullable Element extensionElement) {
@@ -42,7 +40,7 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
 
   @NotNull
   @Override
-  public synchronized Object createInstance(@Nullable PicoContainer container) {
+  public synchronized Object createInstance(@NotNull PicoContainer container) {
     Object instance = myComponentInstance;
     if (instance != null) {
       // todo add assert that createInstance was already called
@@ -67,7 +65,7 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
 
   private static class PicoComponentAdapter extends XmlExtensionAdapter implements AssignableToComponentAdapter {
     PicoComponentAdapter(@NotNull String implementationClassName,
-                         @Nullable PluginDescriptor pluginDescriptor,
+                         @NotNull PluginDescriptor pluginDescriptor,
                          @Nullable String orderId,
                          @NotNull LoadingOrder order,
                          @Nullable Element extensionElement) {
@@ -76,7 +74,7 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
 
     @Override
     @NotNull
-    public final Object getComponentInstance(@Nullable PicoContainer container) {
+    public final Object getComponentInstance(@NotNull PicoContainer container) {
       return createInstance(container);
     }
 
@@ -103,7 +101,7 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
 
   static final class ConstructorInjectionAdapter extends PicoComponentAdapter {
     ConstructorInjectionAdapter(@NotNull String implementationClassName,
-                                @Nullable PluginDescriptor pluginDescriptor,
+                                @NotNull PluginDescriptor pluginDescriptor,
                                 @Nullable String orderId,
                                 @NotNull LoadingOrder order, @Nullable Element extensionElement) {
       super(implementationClassName, pluginDescriptor, orderId, order, extensionElement);
@@ -111,9 +109,9 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
 
     @NotNull
     @Override
-    protected Object instantiateClass(@NotNull Class<?> clazz, @Nullable PicoContainer container) {
+    protected Object instantiateClass(@NotNull Class<?> clazz, @NotNull PicoContainer container) {
       return new CachingConstructorInjectionComponentAdapter(getComponentKey(), clazz, null, true)
-        .getComponentInstance(Objects.requireNonNull(container));
+        .getComponentInstance(container);
     }
   }
 
@@ -123,14 +121,15 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
     SimpleConstructorInjectionAdapter(@NotNull String implementationClassName,
                                       @NotNull PluginDescriptor pluginDescriptor,
                                       @Nullable String orderId,
-                                      @NotNull LoadingOrder order, @Nullable Element extensionElement) {
+                                      @NotNull LoadingOrder order,
+                                      @Nullable Element extensionElement) {
       super(implementationClassName, pluginDescriptor, orderId, order, extensionElement);
     }
 
     @NotNull
     @Override
-    protected Object instantiateClass(@NotNull Class<?> clazz, @Nullable PicoContainer container) {
-      if (container != null && container.getParent() == null) {
+    protected Object instantiateClass(@NotNull Class<?> clazz, @NotNull PicoContainer container) {
+      if (container.getParent() == null) {
         // for app try without pico container
         try {
           return ReflectionUtil.newInstance(clazz, false);
@@ -146,7 +145,7 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
           String message = "Cannot create app level extension without pico container (class: " +
                            clazz.getName() +
                            "), please remove constructor parameters";
-          PluginDescriptor pluginDescriptor = Objects.requireNonNull(getPluginDescriptor());
+          PluginDescriptor pluginDescriptor = getPluginDescriptor();
           if (pluginDescriptor.isBundled() && !pluginDescriptor.getPluginId().getIdString().equals("org.jetbrains.kotlin")) {
             LOG.error(message, e);
           }
@@ -157,7 +156,7 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
       }
 
       return new CachingConstructorInjectionComponentAdapter(this, clazz, null, true)
-        .getComponentInstance(Objects.requireNonNull(container));
+        .getComponentInstance(container);
     }
   }
 }

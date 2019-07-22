@@ -48,7 +48,9 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   @Nullable
   private volatile T[] myExtensionsCacheAsArray;
 
+  @NotNull
   final MutablePicoContainer myPicoContainer;
+  @NotNull
   private final PluginDescriptor myDescriptor;
 
   // guarded by this
@@ -122,7 +124,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
       }
     }
 
-    ObjectComponentAdapter<T> adapter = new ObjectComponentAdapter<>(extension, order);
+    ObjectComponentAdapter<T> adapter = new ObjectComponentAdapter<>(extension, getDescriptor(), order);
     addExtensionAdapter(adapter);
     notifyListenersOnAdd(extension, adapter.getPluginDescriptor(), myListeners);
 
@@ -166,13 +168,13 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
 
     int index = firstIndex;
     for (T extension : extensions) {
-      myAdapters.add(index++, new ObjectComponentAdapter<>(extension, LoadingOrder.ANY));
+      myAdapters.add(index++, new ObjectComponentAdapter<>(extension, getDescriptor(), LoadingOrder.ANY));
     }
 
     clearCache();
 
     for (int i = firstIndex; i < index; i++) {
-      notifyListenersOnAdd(castComponentInstance(myAdapters.get(i)), null, myListeners);
+      notifyListenersOnAdd(castComponentInstance(myAdapters.get(i)), getDescriptor(), myListeners);
     }
   }
 
@@ -200,7 +202,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     }
   }
 
-  private void notifyListenersOnAdd(@NotNull T extension, @Nullable PluginDescriptor pluginDescriptor, @NotNull ExtensionPointListener<T>[] listeners) {
+  private void notifyListenersOnAdd(@NotNull T extension, @NotNull PluginDescriptor pluginDescriptor, @NotNull ExtensionPointListener<T>[] listeners) {
     for (ExtensionPointListener<T> listener : listeners) {
       try {
         listener.extensionAdded(extension, pluginDescriptor);
@@ -543,11 +545,11 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     if (myListeners.length > 0) {
       if (oldList != null) {
         for (T extension : oldList) {
-          notifyListenersOnRemove(extension, null, myListeners);
+          notifyListenersOnRemove(extension, getDescriptor(), myListeners);
         }
       }
       for (T extension : list) {
-        notifyListenersOnAdd(extension, null, myListeners);
+        notifyListenersOnAdd(extension, getDescriptor(), myListeners);
       }
     }
 
@@ -560,11 +562,11 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
           myExtensionsCacheAsArray = oldArray;
 
           for (T extension : list) {
-            notifyListenersOnRemove(extension, null, myListeners);
+            notifyListenersOnRemove(extension, getDescriptor(), myListeners);
           }
           if (oldList != null) {
             for (T extension : oldList) {
-              notifyListenersOnAdd(extension, null, myListeners);
+              notifyListenersOnAdd(extension, getDescriptor(), myListeners);
             }
           }
         }
@@ -656,7 +658,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   }
 
   private void notifyListenersOnRemove(@NotNull T extensionObject,
-                                       @Nullable PluginDescriptor pluginDescriptor,
+                                       @NotNull PluginDescriptor pluginDescriptor,
                                        @NotNull ExtensionPointListener<T>[] listeners) {
     for (ExtensionPointListener<T> listener : listeners) {
       try {
@@ -909,8 +911,10 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   private static final class ObjectComponentAdapter<T> extends ExtensionComponentAdapter {
     private final T myComponentInstance;
 
-    private ObjectComponentAdapter(@NotNull T extension, @NotNull LoadingOrder loadingOrder) {
-      super(extension.getClass().getName(), null, null, loadingOrder);
+    private ObjectComponentAdapter(@NotNull T extension,
+                                   @NotNull PluginDescriptor pluginDescriptor,
+                                   @NotNull LoadingOrder loadingOrder) {
+      super(extension.getClass().getName(), pluginDescriptor, null, loadingOrder);
 
       myComponentInstance = extension;
     }

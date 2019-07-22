@@ -11,6 +11,7 @@ import org.picocontainer.PicoContainer;
 public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderable {
   public static final ExtensionComponentAdapter[] EMPTY_ARRAY = new ExtensionComponentAdapter[0];
 
+  @NotNull
   private final PluginDescriptor myPluginDescriptor;
   @NotNull
   private Object myImplementationClassOrName; // Class or String
@@ -18,10 +19,10 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
   private final String myOrderId;
   private final LoadingOrder myOrder;
 
-  public ExtensionComponentAdapter(@NotNull String implementationClassName,
-                                   @Nullable PluginDescriptor pluginDescriptor,
-                                   @Nullable String orderId,
-                                   @NotNull LoadingOrder order) {
+  ExtensionComponentAdapter(@NotNull String implementationClassName,
+                            @NotNull PluginDescriptor pluginDescriptor,
+                            @Nullable String orderId,
+                            @NotNull LoadingOrder order) {
     myImplementationClassOrName = implementationClassName;
     myPluginDescriptor = pluginDescriptor;
 
@@ -32,7 +33,7 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
   abstract boolean isInstanceCreated();
 
   @NotNull
-  public Object createInstance(@Nullable PicoContainer container) {
+  public Object createInstance(@NotNull PicoContainer container) {
     Object instance;
     try {
       Class<?> impl = getImplementationClass();
@@ -46,7 +47,7 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
       throw e;
     }
     catch (Throwable t) {
-      PluginId pluginId = myPluginDescriptor != null ? myPluginDescriptor.getPluginId() : null;
+      PluginId pluginId = myPluginDescriptor.getPluginId();
       throw new PicoPluginExtensionInitializationException(t.getMessage(), t, pluginId);
     }
 
@@ -57,7 +58,7 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
   }
 
   @NotNull
-  protected Object instantiateClass(@NotNull Class<?> clazz, @Nullable PicoContainer container) {
+  protected Object instantiateClass(@NotNull Class<?> clazz, @NotNull PicoContainer container) {
     return ReflectionUtil.newInstance(clazz, false);
   }
 
@@ -74,7 +75,7 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
     return myOrderId;
   }
 
-  @Nullable
+  @NotNull
   public final PluginDescriptor getPluginDescriptor() {
     return myPluginDescriptor;
   }
@@ -84,7 +85,7 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
     Object implementationClassOrName = myImplementationClassOrName;
     if (implementationClassOrName instanceof String) {
       try {
-        ClassLoader classLoader = myPluginDescriptor == null ? getClass().getClassLoader() : myPluginDescriptor.getPluginClassLoader();
+        ClassLoader classLoader = myPluginDescriptor.getPluginClassLoader();
         if (classLoader == null) {
           classLoader = getClass().getClassLoader();
         }

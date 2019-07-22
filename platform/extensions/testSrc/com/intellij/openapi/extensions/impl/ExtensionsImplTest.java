@@ -8,7 +8,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.junit.After;
 import org.junit.Test;
 import org.picocontainer.MutablePicoContainer;
@@ -66,12 +65,12 @@ public class ExtensionsImplTest {
     ExtensionPointImpl<Object> point = extensionsArea.getExtensionPoint(EXTENSION_POINT_NAME_1);
     point.addExtensionPointListener(new ExtensionPointListener<Object>() {
       @Override
-      public void extensionAdded(@NotNull Object extension, @Nullable PluginDescriptor pluginDescriptor) {
+      public void extensionAdded(@NotNull Object extension, @NotNull PluginDescriptor pluginDescriptor) {
         removed[0] = false;
       }
 
       @Override
-      public void extensionRemoved(@NotNull Object extension, PluginDescriptor pluginDescriptor) {
+      public void extensionRemoved(@NotNull Object extension, @NotNull PluginDescriptor pluginDescriptor) {
         removed[0] = true;
       }
     }, false, null);
