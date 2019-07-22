@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,6 +69,12 @@ public abstract class FileReferenceHelper {
 
   @NotNull
   public abstract Collection<PsiFileSystemItem> getContexts(final Project project, @NotNull final VirtualFile file);
+
+  // JavaDoc
+  @NotNull
+  public Collection<FileTargetContext> getTargetContexts(Project project, @NotNull VirtualFile file) {
+    return ContainerUtil.map(getContexts(project, file), FileTargetContext::new);
+  }
 
   public abstract boolean isMine(final Project project, @NotNull final VirtualFile file);
 
