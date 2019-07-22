@@ -5,6 +5,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.hint.*;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
@@ -52,6 +53,7 @@ import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
+import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Queue;
 import java.util.*;
@@ -107,6 +109,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private int myRowAdjuster;
   private int myWheelAccumulator;
   private int myLastVisualLine;
+  private WeakReference<LightweightHint> myCurrentHint;
+  private Point myOriginalMouseLocation;
+  private int myCurrentHintAnchorY;
+  private boolean myKeepHint;
 
   EditorMarkupModelImpl(@NotNull EditorImpl editor) {
     super(editor.getDocument());
@@ -172,10 +178,37 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
   }
 
+  private LightweightHint getCurrentHint() {
+    if (myCurrentHint == null) return null;
+    LightweightHint hint = myCurrentHint.get();
+    if (hint == null || !hint.isVisible()) {
+      myCurrentHint = null;
+      hint = null;
+    }
+    return hint;
+  }
+
+  @NotNull
+  private static Rectangle getBoundsOnScreen(@NotNull LightweightHint hint) {
+    JComponent component = hint.getComponent();
+    Point location = hint.getLocationOn(component);
+    SwingUtilities.convertPointToScreen(location, component);
+    return new Rectangle(location, hint.getSize());
+  }
+
   private boolean showToolTipByMouseMove(@NotNull final MouseEvent e) {
     if (myEditor.getVisibleLineCount() == 0) return false;
     MouseEvent me = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiers(), 0, e.getY() + 1, e.getClickCount(),
                                               e.isPopupTrigger());
+
+    boolean newLook = Registry.is("editor.new.mouse.hover.popups");
+    Point currentPosition = e.getLocationOnScreen();
+    LightweightHint currentHint = getCurrentHint();
+    if (newLook && currentHint != null) {
+      if (myKeepHint || ScreenUtil.isMovementTowards(myOriginalMouseLocation, currentPosition, getBoundsOnScreen(currentHint))) {
+        return true;
+      }
+    }
 
     final int visualLine = getVisualLineByEvent(e);
     myLastVisualLine = visualLine;
@@ -197,11 +230,16 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         int eachEndY = range.getEndOffset();
         y = eachStartY + (eachEndY - eachStartY) / 2;
       }
+      if (newLook && currentHint != null && y == myCurrentHintAnchorY) return true;
       me = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiers(), me.getX(), y + 1, e.getClickCount(),
                           e.isPopupTrigger());
       TooltipRenderer bigRenderer = myTooltipRendererProvider.calcTooltipRenderer(highlighters);
       if (bigRenderer != null) {
-        showTooltip(me, bigRenderer, createHint(me));
+        LightweightHint hint = showTooltip(bigRenderer, createHint(me).setForcePopup(newLook));
+        myCurrentHint = new WeakReference<>(hint);
+        myOriginalMouseLocation = e.getLocationOnScreen();
+        myCurrentHintAnchorY = y;
+        myKeepHint = false;
         return true;
       }
       return false;
@@ -878,7 +916,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       if (myTrafficTooltipRenderer == null) {
         myTrafficTooltipRenderer = myTooltipRendererProvider.createTrafficTooltipRenderer(() -> myTrafficTooltipRenderer = null, myEditor);
       }
-      showTooltip(e, myTrafficTooltipRenderer, new HintHint(e).setAwtTooltip(true).setMayCenterPosition(true).setContentActive(false)
+      showTooltip(myTrafficTooltipRenderer, new HintHint(e).setAwtTooltip(true).setMayCenterPosition(true).setContentActive(false)
         .setPreferredPosition(Balloon.Position.atLeft));
     }
 
@@ -896,23 +934,37 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       }
     }
 
-    private void hideMyEditorPreviewHint() {
-      if (myEditorPreviewHint != null) {
-        myEditorPreviewHint.hide();
-        myEditorPreviewHint = null;
-        myRowAdjuster = 0;
-        myWheelAccumulator = 0;
-        myLastVisualLine = 0;
-      }
-    }
-
     @Override
     public void mouseEntered(@NotNull MouseEvent e) {
     }
 
     @Override
     public void mouseExited(@NotNull MouseEvent e) {
-      cancelMyToolTips(e, true);
+      if (Registry.is("editor.new.mouse.hover.popups")) {
+        hideMyEditorPreviewHint();
+        LightweightHint currentHint = getCurrentHint();
+        if (currentHint != null && !myKeepHint) {
+          closeHintOnMovingMouseAway(currentHint);
+        }
+      }
+      else {
+        cancelMyToolTips(e, true);
+      }
+    }
+
+    private void closeHintOnMovingMouseAway(LightweightHint hint) {
+      Disposable disposable = Disposer.newDisposable();
+      IdeEventQueue.getInstance().addDispatcher(e -> {
+        if (e.getID() == MouseEvent.MOUSE_PRESSED) {
+          myKeepHint = true;
+          Disposer.dispose(disposable);
+        }
+        else if (e.getID() == MouseEvent.MOUSE_MOVED && !hint.isInsideHint(new RelativePoint((MouseEvent)e))) {
+          hint.hide();
+          Disposer.dispose(disposable);
+        }
+        return false;
+      }, disposable);
     }
 
     @Override
@@ -932,11 +984,23 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
   }
 
-  private void showTooltip(@NotNull MouseEvent e, final TooltipRenderer tooltipObject, @NotNull HintHint hintHint) {
-    TooltipController tooltipController = TooltipController.getInstance();
-    tooltipController.showTooltipByMouseMove(myEditor, new RelativePoint(e), tooltipObject,
-                                             myEditor.getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_RIGHT,
-                                             ERROR_STRIPE_TOOLTIP_GROUP, hintHint);
+  private void hideMyEditorPreviewHint() {
+    if (myEditorPreviewHint != null) {
+      myEditorPreviewHint.hide();
+      myEditorPreviewHint = null;
+      myRowAdjuster = 0;
+      myWheelAccumulator = 0;
+      myLastVisualLine = 0;
+    }
+  }
+
+  private LightweightHint showTooltip(final TooltipRenderer tooltipObject, @NotNull HintHint hintHint) {
+    if (Registry.is("editor.new.mouse.hover.popups")) {
+      hideMyEditorPreviewHint();
+    }
+    return TooltipController.getInstance().showTooltipByMouseMove(myEditor, hintHint.getTargetPoint(), tooltipObject,
+                                                                  myEditor.getVerticalScrollbarOrientation() ==
+                                                                  EditorEx.VERTICAL_SCROLLBAR_RIGHT, ERROR_STRIPE_TOOLTIP_GROUP, hintHint);
   }
 
   private void fireErrorMarkerClicked(RangeHighlighter marker, MouseEvent e) {

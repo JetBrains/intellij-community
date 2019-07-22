@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
@@ -274,31 +273,30 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
           }
         }
       });
+
+      ListenerUtil.addMouseListener(grid, new MouseAdapter() {
+        @Override
+        public void mouseExited(final MouseEvent e) {
+          if (expanded) return;
+
+          Container parentContainer = grid;
+          //ComponentWithMnemonics is top balloon component
+          while (!(parentContainer instanceof ComponentWithMnemonics)) {
+            Container candidate = parentContainer.getParent();
+            if (candidate == null) break;
+            parentContainer = candidate;
+          }
+
+          MouseEvent newMouseEvent = SwingUtilities.convertMouseEvent(e.getComponent(), e, parentContainer);
+
+          if (parentContainer.contains(newMouseEvent.getPoint())) {
+            return;
+          }
+
+          hint.hide();
+        }
+      });
     }
-
-    ListenerUtil.addMouseListener(grid, new MouseAdapter() {
-      @Override
-      public void mouseExited(final MouseEvent e) {
-        if (expanded || JBPopupFactory.getInstance().getParentBalloonFor(grid) == null) return;
-
-        Container parentContainer = grid;
-        //ComponentWithMnemonics is top balloon component
-        while (!(parentContainer instanceof ComponentWithMnemonics)) {
-          Container candidate = parentContainer.getParent();
-          if (candidate == null) break;
-          parentContainer = candidate;
-        }
-
-        MouseEvent newMouseEvent = SwingUtilities.convertMouseEvent(e.getComponent(), e, parentContainer);
-
-        if (parentContainer.contains(newMouseEvent.getPoint())) {
-          return;
-        }
-
-        hint.hide();
-      }
-    });
-
 
     return hint;
   }
@@ -344,7 +342,11 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     hint.hide();
 
     hintHint.setShowImmediately(true);
-    TooltipController.getInstance().showTooltip(editor, new Point(p.x - 3, p.y - 3),
+    Point point = new Point(p);
+    if (!Registry.is("editor.new.mouse.hover.popups")) {
+      point.translate(-3, -3);
+    }
+    TooltipController.getInstance().showTooltip(editor, point,
                                                 createRenderer(myText, expand ? pane.getWidth() : 0), alignToRight, group,
                                                 hintHint);
   }
