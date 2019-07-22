@@ -34,6 +34,8 @@ import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import static java.util.Collections.singletonMap;
+
 /**
  * @author stathik
  */
@@ -98,8 +100,8 @@ public class RepositoryHelper {
     File pluginListFile;
     Url url;
     if (repositoryUrl == null) {
-      url = Urls.newFromEncoded(ApplicationInfoImpl.getShadowInstance().getPluginsListUrl());
-      url = url.addParameters(Collections.singletonMap("uuid", PermanentInstallationID.get()));
+      String base = ApplicationInfoImpl.getShadowInstance().getPluginsListUrl();
+      url = Urls.newFromEncoded(base).addParameters(singletonMap("uuid", PermanentInstallationID.get()));
       pluginListFile = new File(PathManager.getPluginsPath(), PLUGIN_LIST_FILE);
       eTag = loadPluginListETag(pluginListFile);
     }
@@ -110,7 +112,7 @@ public class RepositoryHelper {
     }
 
     if (!URLUtil.FILE_PROTOCOL.equals(url.getScheme())) {
-      url = url.addParameters(Collections.singletonMap("build", build != null ? build.asString() : ApplicationInfoImpl.getShadowInstance().getApiVersion()));
+      url = url.addParameters(singletonMap("build", build != null ? build.asString() : ApplicationInfoImpl.getShadowInstance().getApiVersion()));
     }
 
     if (indicator != null) {
