@@ -6,9 +6,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.QuickChangeLookAndFeel;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceKt;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -38,8 +35,6 @@ import java.util.Hashtable;
  * @author Eugene Belyaev
  */
 public class AppearanceConfigurable implements SearchableConfigurable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.AppearanceConfigurable");
-
   private MyComponent myComponent;
 
   @Override
@@ -223,7 +218,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     if (settings.getColorBlindness() != blindness) {
       settings.setColorBlindness(blindness);
       update = true;
-      ServiceKt.getStateStore(ApplicationManager.getApplication()).reloadState(DefaultColorSchemesManager.class);
+      DefaultColorSchemesManager.getInstance().reload();
       updateEditorScheme = true;
     }
 
@@ -255,7 +250,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     }
     // reset to default when unchecked
     if (!myComponent.myOverrideLAFFonts.isSelected()) {
-      assert !shouldUpdateUI;
       int defSize = JBFont.label().getSize();
       settingsManager.setFontSize(defSize);
       myComponent.myFontSizeCombo.getModel().setSelectedItem(String.valueOf(defSize));
@@ -389,19 +383,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     myComponent.myAlphaModeRatioSlider.setEnabled(alphaModeEnabled && settings.getEnableAlphaMode());
     myComponent.myInitialTooltipDelaySlider.setValue(Registry.intValue("ide.tooltip.initialDelay"));
     myComponent.updateCombo();
-  }
-
-  public static String antialiasingTypeInEditorAsString (boolean antialiased, LCDRenderingScope scope) {
-    if (!antialiased) return "No antialiasing";
-    switch (scope) {
-      case IDE:
-        return "Subpixel";
-      case OFF:
-      case EXCLUDING_EDITOR:
-        return "Greyscale";
-    }
-    LOG.info("Wrong antialiasing state");
-    return "No antialiasing";
   }
 
   @Override

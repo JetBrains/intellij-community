@@ -1,17 +1,23 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.colors.ex;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EmptyColorScheme;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ExceptionUtil;
 import org.jdom.Attribute;
 import org.jdom.Element;
+import org.jdom.JDOMException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -20,9 +26,11 @@ import static com.intellij.openapi.editor.colors.impl.AbstractColorsScheme.NAME_
 @State(
   name = "DefaultColorSchemesManager",
   defaultStateAsResource = true,
-  storages = @Storage(value = "other.xml", roamingType = RoamingType.DISABLED)
+  storages = @Storage(value = StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED)
 )
-public class DefaultColorSchemesManager implements PersistentStateComponent<Element> {
+@Service
+@ApiStatus.Internal
+public final class DefaultColorSchemesManager {
   private static final String SCHEME_ELEMENT = "scheme";
 
   private volatile List<DefaultColorsScheme> mySchemes = Collections.emptyList();
@@ -31,13 +39,21 @@ public class DefaultColorSchemesManager implements PersistentStateComponent<Elem
     return ServiceManager.getService(DefaultColorSchemesManager.class);
   }
 
-  @Nullable
-  @Override
-  public Element getState() {
-    return null;
+  public DefaultColorSchemesManager() {
+    reload();
   }
 
-  @Override
+  public void reload() {
+    try {
+      loadState(JDOMUtil.load(DefaultColorSchemesManager.class, "/DefaultColorSchemesManager.xml"));
+    }
+    catch (JDOMException|IOException e) {
+      ExceptionUtil.rethrow(e);
+      mySchemes = Collections.emptyList();
+    }
+  }
+
+  // public for Upsource
   public void loadState(@NotNull Element state) {
     List<DefaultColorsScheme> schemes = new ArrayList<>();
     for (Element schemeElement : state.getChildren(SCHEME_ELEMENT)) {
@@ -59,20 +75,21 @@ public class DefaultColorSchemesManager implements PersistentStateComponent<Elem
       }
     }
     schemes.add(EmptyColorScheme.INSTANCE);
-    mySchemes = schemes;
+    mySchemes = Collections.unmodifiableList(schemes);
   }
 
   @NotNull
   public List<DefaultColorsScheme> getAllSchemes() {
-    return Collections.unmodifiableList(mySchemes);
+    return mySchemes;
   }
 
-  public String[] listNames() {
+  @NotNull
+  public List<String> listNames() {
     String[] names = new String[mySchemes.size()];
     for (int i = 0; i < names.length; i ++) {
       names[i] = mySchemes.get(i).getName();
     }
-    return names;
+    return Arrays.asList(names);
   }
 
   @NotNull

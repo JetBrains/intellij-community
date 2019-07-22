@@ -50,9 +50,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
-import java.io.File;
 import java.net.URL;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -70,16 +70,13 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
 
   private final ComponentTreeEventDispatcher<EditorColorsListener> myTreeDispatcher = ComponentTreeEventDispatcher.create(EditorColorsListener.class);
 
-  private final DefaultColorSchemesManager myDefaultColorSchemeManager;
   private final SchemeManager<EditorColorsScheme> mySchemeManager;
   static final String FILE_SPEC = "colors";
 
   private State myState = new State();
 
-  public EditorColorsManagerImpl(@NotNull DefaultColorSchemesManager defaultColorSchemeManager, @NotNull SchemeManagerFactory schemeManagerFactory) {
-    myDefaultColorSchemeManager = defaultColorSchemeManager;
-
-    class EditorColorSchemeProcessor extends LazySchemeProcessor<EditorColorsScheme, EditorColorsSchemeImpl> implements SchemeExtensionProvider {
+  public EditorColorsManagerImpl(@NotNull SchemeManagerFactory schemeManagerFactory) {
+    final class EditorColorSchemeProcessor extends LazySchemeProcessor<EditorColorsScheme, EditorColorsSchemeImpl> implements SchemeExtensionProvider {
       @NotNull
       @Override
       public EditorColorsSchemeImpl createScheme(@NotNull SchemeDataHolder<? super EditorColorsSchemeImpl> dataHolder,
@@ -157,14 +154,14 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   }
 
   private void initDefaultSchemes() {
-    for (DefaultColorsScheme defaultScheme : myDefaultColorSchemeManager.getAllSchemes()) {
+    for (DefaultColorsScheme defaultScheme : DefaultColorSchemesManager.getInstance().getAllSchemes()) {
       mySchemeManager.addScheme(defaultScheme);
     }
     loadAdditionalTextAttributes();
   }
 
   private void initEditableDefaultSchemesCopies() {
-    for (DefaultColorsScheme defaultScheme : myDefaultColorSchemeManager.getAllSchemes()) {
+    for (DefaultColorsScheme defaultScheme : DefaultColorSchemesManager.getInstance().getAllSchemes()) {
       if (defaultScheme.hasEditableCopy()) {
         createEditableCopy(defaultScheme, defaultScheme.getEditableCopyName());
       }
@@ -379,7 +376,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
 
   @NotNull
   private EditorColorsScheme getDefaultScheme() {
-    DefaultColorsScheme defaultScheme = myDefaultColorSchemeManager.getFirstScheme();
+    DefaultColorsScheme defaultScheme = DefaultColorSchemesManager.getInstance().getFirstScheme();
     String editableCopyName = defaultScheme.getEditableCopyName();
     EditorColorsScheme editableCopy = getScheme(editableCopyName);
     assert editableCopy != null : "An editable copy of " + defaultScheme.getName() + " has not been initialized.";
@@ -475,10 +472,11 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     }
     if (scheme == null) {
       String schemeName = UIUtil.isUnderDarcula() ? "Darcula" : DEFAULT_SCHEME_NAME;
-      scheme = myDefaultColorSchemeManager.getScheme(schemeName);
+      DefaultColorSchemesManager colorSchemeManager = DefaultColorSchemesManager.getInstance();
+      scheme = colorSchemeManager.getScheme(schemeName);
       assert scheme != null :
         "The default scheme '" + schemeName + "' not found, " +
-        "available schemes: " + Arrays.toString(myDefaultColorSchemeManager.listNames());
+        "available schemes: " + colorSchemeManager.listNames();
     }
     EditorColorsScheme editableCopy = getEditableCopy(scheme);
     return editableCopy != null ? editableCopy : scheme;
@@ -502,7 +500,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     if (isTempScheme(scheme)) {
       String path = scheme.getMetaProperties().getProperty(TEMP_SCHEME_FILE_KEY);
       if (path != null) {
-        return new File(path).toPath();
+        return Paths.get(path);
       }
     }
     return null;
