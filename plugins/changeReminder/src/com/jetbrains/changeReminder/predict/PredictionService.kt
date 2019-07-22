@@ -97,6 +97,8 @@ class PredictionService(val project: Project,
 
   private fun setDataManager(dataManager: VcsLogData?) {
     dataManager ?: return
+    if (predictionRequirements?.dataManager == dataManager) return
+
     dataManager.addDataPackChangeListener(dataPackChangeListener)
     dataManager.index.addListener(indexingFinishedListener)
 
@@ -127,7 +129,9 @@ class PredictionService(val project: Project,
 
   private fun startService() = synchronized(LOCK) {
     projectLogListenerDisposable = Disposer.newDisposable()
-    projectLog.addProjectLogListener(projectLogListener, projectLogListenerDisposable)
+    project.messageBus.connect(projectLogListenerDisposable).subscribe(VcsProjectLog.VCS_PROJECT_LOG_CHANGED, projectLogListener)
+
+    setDataManager(VcsProjectLog.getInstance(project).dataManager)
 
     changeListManager.addChangeListListener(changeListsListener)
   }

@@ -11,7 +11,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -93,10 +95,20 @@ public class VcsProjectLog implements Disposable {
 
   @CalledInAny
   private void recreateLog() {
-    GuiUtils.invokeLaterIfNeeded(() -> disposeLog(() -> {
+    myExecutor.execute(() -> {
+      VcsLogManager logManager = invokeAndWait(() -> {
+        VcsLogManager manager = myLogManager.dropValue();
+        if (manager != null) {
+          manager.disposeUi();
+        }
+        return manager;
+      });
+      if (logManager != null) {
+        Disposer.dispose(logManager);
+      }
       if (myProject.isDisposed()) return;
       createLog(false);
-    }), ModalityState.any());
+    });
   }
 
   @CalledInAwt
@@ -121,7 +133,6 @@ public class VcsProjectLog implements Disposable {
   }
 
   @NotNull
-  @CalledInAwt
   Future<VcsLogManager> createLogInBackground(boolean forceInit) {
     return myExecutor.submit(() -> createLog(forceInit));
   }
@@ -160,24 +171,6 @@ public class VcsProjectLog implements Disposable {
     }, ModalityState.any());
   }
 
-  @CalledInAwt
-  private void disposeLog(@Nullable Runnable callback) {
-    VcsLogManager logManager = myLogManager.dropValue();
-    if (logManager != null) {
-      logManager.disposeUi();
-      myExecutor.submit(() -> {
-          Disposer.dispose(logManager);
-          if (callback != null) {
-            callback.run();
-          }
-        });
-    }
-
-    else if (callback != null) {
-      myExecutor.submit(callback);
-    }
-  }
-
   @NotNull
   private Map<VirtualFile, VcsLogProvider> getLogProviders() {
     return VcsLogManager.findLogProviders(Arrays.asList(ProjectLevelVcsManager.getInstance(myProject).getAllVcsRoots()), myProject);
@@ -187,35 +180,33 @@ public class VcsProjectLog implements Disposable {
     return ServiceManager.getService(project, VcsProjectLog.class);
   }
 
-  public void addProjectLogListener(@NotNull ProjectLogListener listener, @NotNull Disposable disposable) {
-    UIUtil.invokeLaterIfNeeded(() -> {
-      synchronized (myLogManager) {
-        VcsLogManager cached = myLogManager.getCached();
-        myMessageBus.connect(disposable).subscribe(VCS_PROJECT_LOG_CHANGED, listener);
-        if (cached != null) {
-          listener.logCreated(cached);
-        }
-      }
-    });
-  }
-
   @Override
   public void dispose() {
-    disposeLog(null);
+    VcsLogManager logManager = myLogManager.dropValue();
+    if (logManager != null) {
+      logManager.disposeUi();
+      myExecutor.submit(() -> Disposer.dispose(logManager));
+    }
+  }
+
+  private static <T> T invokeAndWait(@NotNull Computable<T> computable) {
+    Ref<T> result = new Ref<>();
+    ApplicationManager.getApplication().invokeAndWait(() -> result.set(computable.compute()), ModalityState.any());
+    return result.get();
   }
 
   private class LazyVcsLogManager {
-    @Nullable private VcsLogManager myValue;
+    @Nullable private volatile VcsLogManager myValue;
 
     @NotNull
     @CalledInBackground
-    public synchronized VcsLogManager getValue(@NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
+    public VcsLogManager getValue(@NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
       if (myValue == null) {
         LOG.debug("Creating Vcs Log for " + VcsLogUtil.getProvidersMapText(logProviders));
         VcsLogManager value = new VcsLogManager(myProject, myUiProperties, logProviders, false,
                                                 VcsProjectLog.this::recreateOnError);
         myValue = value;
-        ApplicationManager.getApplication().invokeLater(() -> {
+        ApplicationManager.getApplication().invokeAndWait(() -> {
           if (!myProject.isDisposed()) myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logCreated(value);
         }, ModalityState.any());
       }
@@ -224,7 +215,7 @@ public class VcsProjectLog implements Disposable {
 
     @Nullable
     @CalledInAwt
-    public synchronized VcsLogManager dropValue() {
+    public VcsLogManager dropValue() {
       LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
       if (myValue != null) {
         VcsLogManager oldValue = myValue;
@@ -239,7 +230,7 @@ public class VcsProjectLog implements Disposable {
     }
 
     @Nullable
-    public synchronized VcsLogManager getCached() {
+    public VcsLogManager getCached() {
       return myValue;
     }
   }
