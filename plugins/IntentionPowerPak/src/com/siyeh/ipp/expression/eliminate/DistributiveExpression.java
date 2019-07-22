@@ -3,15 +3,14 @@ package com.siyeh.ipp.expression.eliminate;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -37,13 +36,13 @@ class DistributiveExpression extends EliminableExpression {
   boolean eliminate(@Nullable PsiJavaToken tokenBefore, @NotNull StringBuilder sb) {
     PsiPolyadicExpression innerExpr = PsiTreeUtil.findChildOfType(myOperand, PsiPolyadicExpression.class);
     if (innerExpr == null) return false;
-    String fmt = createOperandFormat(myExpression, myOperand, innerExpr);
+    ExpressionFormat fmt = ExpressionFormat.create(myExpression, myOperand);
     boolean isNegated = EliminateUtils.isNegated(myExpression == null ? myOperand : myExpression, false);
     return eliminateExpression(innerExpr, fmt, tokenBefore == null ? null : tokenBefore.getTokenType(), isNegated, sb);
   }
 
   private boolean eliminateExpression(@NotNull PsiPolyadicExpression expression,
-                                      @NotNull String fmt,
+                                      @NotNull ExpressionFormat fmt,
                                       @Nullable IElementType tokenBefore,
                                       boolean isNegated,
                                       @NotNull StringBuilder sb) {
@@ -57,7 +56,7 @@ class DistributiveExpression extends EliminableExpression {
   }
 
   private boolean eliminateOperand(@NotNull PsiExpression operand,
-                                   @NotNull String fmt,
+                                   @NotNull ExpressionFormat fmt,
                                    @Nullable IElementType tokenType,
                                    boolean isNegated,
                                    @NotNull StringBuilder sb) {
@@ -76,7 +75,7 @@ class DistributiveExpression extends EliminableExpression {
       operandText.append(operand.getText());
     }
     if (!EliminateUtils.addPrefix(tokenType, isNegated, sb)) return false;
-    sb.append(String.format(fmt, operandText));
+    sb.append(fmt.format(operandText.toString()));
     return true;
   }
 
@@ -98,45 +97,6 @@ class DistributiveExpression extends EliminableExpression {
     return true;
   }
 
-  @NotNull
-  private static String createOperandFormat(@Nullable PsiPolyadicExpression expression,
-                                            @Nullable PsiExpression myOperand,
-                                            @NotNull PsiPolyadicExpression innerExpr) {
-    if (expression == null) return "%s";
-    StringBuilder sb = new StringBuilder();
-    createOperandFormat(expression, myOperand, innerExpr, sb);
-    return sb.toString();
-  }
-
-  private static void createOperandFormat(@NotNull PsiPolyadicExpression expression,
-                                          @Nullable PsiExpression myOperand,
-                                          @NotNull PsiPolyadicExpression innerExpr,
-                                          @NotNull StringBuilder sb) {
-    boolean areParenthesisNeeded = areParenthesisNeeded(expression.getOperationTokenType(), innerExpr.getOperationTokenType());
-    if (areParenthesisNeeded) sb.append("(");
-    for (PsiExpression operand : expression.getOperands()) {
-      PsiJavaToken beforeOperand = expression.getTokenBeforeOperand(operand);
-      if (beforeOperand != null) sb.append(beforeOperand.getText());
-      if (operand == myOperand) {
-        sb.append("%s");
-        continue;
-      }
-      PsiPolyadicExpression polyadic = ObjectUtils.tryCast(operand, PsiPolyadicExpression.class);
-      if (polyadic != null) {
-        createOperandFormat(polyadic, null, innerExpr, sb);
-        continue;
-      }
-      EliminateUtils.processPrefixed(operand, false, (op, isOpNegated) -> sb.append(op.getText()));
-    }
-    if (areParenthesisNeeded) sb.append(")");
-  }
-
-  private static boolean areParenthesisNeeded(@NotNull IElementType outerOperator, @NotNull IElementType innerOperator) {
-    int outerPrecedence = PsiPrecedenceUtil.getPrecedenceForOperator(outerOperator);
-    int innerPrecedence = PsiPrecedenceUtil.getPrecedenceForOperator(innerOperator);
-    return outerPrecedence > innerPrecedence;
-  }
-
   @Nullable
   static DistributiveExpression create(@NotNull PsiParenthesizedExpression parenthesized) {
     DistributiveExpression expression = EliminateUtils.createExpression(parenthesized, DistributiveExpression::new, OUTER_OPERATORS);
@@ -147,5 +107,57 @@ class DistributiveExpression extends EliminableExpression {
     if (polyadicExpression.getTokenBeforeOperand(operand) != null) return null;
     if (TypeConversionUtil.isIntegralNumberType(polyadicExpression.getType())) return null;
     return expression;
+  }
+
+  private static class ExpressionFormat {
+
+    private static final ExpressionFormat EMPTY = new ExpressionFormat("", "");
+
+    private final String myBeforeText;
+    private final String myAfterText;
+
+    @Contract(pure = true)
+    private ExpressionFormat(String beforeText, String afterText) {
+      myBeforeText = beforeText;
+      myAfterText = afterText;
+    }
+
+    @NotNull
+    @Contract(pure = true)
+    private String format(String operandText) {
+      return myBeforeText + operandText + myAfterText;
+    }
+
+    private static ExpressionFormat create(@Nullable PsiPolyadicExpression expression, @Nullable PsiExpression myOperand) {
+      if (expression == null) return EMPTY;
+
+      StringBuilder beforeText = new StringBuilder();
+      int operandIdx = constructExpressionText(beforeText, expression, 0, myOperand);
+      StringBuilder afterText = new StringBuilder();
+      constructExpressionText(afterText, expression, operandIdx + 1, null);
+
+      return new ExpressionFormat(beforeText.toString(), afterText.toString());
+    }
+
+    private static int constructExpressionText(@NotNull StringBuilder sb,
+                                               @NotNull PsiPolyadicExpression expression,
+                                               int i,
+                                               @Nullable PsiExpression stopAt) {
+      PsiExpression[] operands = expression.getOperands();
+      for (; i < operands.length; i++) {
+        PsiExpression operand = operands[i];
+        PsiJavaToken beforeOperand = expression.getTokenBeforeOperand(operand);
+        if (beforeOperand != null) sb.append(beforeOperand.getText());
+        if (operand == stopAt) break;
+        PsiPolyadicExpression polyadic = ObjectUtils.tryCast(operand, PsiPolyadicExpression.class);
+        if (polyadic != null) {
+          constructExpressionText(sb, polyadic, 0, null);
+          continue;
+        }
+        EliminateUtils.processPrefixed(operand, false, (op, isOpNegated) -> sb.append(op.getText()));
+      }
+
+      return i;
+    }
   }
 }
