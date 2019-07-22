@@ -506,10 +506,10 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
       setFrameBoundsFromDeviceSpace(frame, frameInfo);
     }
 
-    frame.setVisible(true);
     if (frameInfo != null) {
       setFrameExtendedState(frame, frameInfo);
     }
+    frame.setVisible(true);
     return frame;
   }
 
@@ -576,10 +576,10 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     myProjectToFrame.put(project, frame);
 
     if (isNewFrame) {
-      frame.setVisible(true);
       if (frameInfo != null) {
         frame.setExtendedState(frameInfo.getExtendedState());
       }
+      frame.setVisible(true);
 
       if (isFullScreenSupportedInCurrentOS() &&
           ((frameInfo != null && frameInfo.getFullScreen()) || IdeFrameImpl.SHOULD_OPEN_IN_FULL_SCREEN.get(project) == Boolean.TRUE)) {
