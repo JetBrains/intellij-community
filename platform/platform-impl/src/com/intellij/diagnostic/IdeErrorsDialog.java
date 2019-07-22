@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
@@ -206,7 +207,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     panel.add(controls, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, NORTH, NONE, JBUI.emptyInsets(), 0, 0));
     panel.add(myCountLabel, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, NORTH, HORIZONTAL, JBUI.insets(0, 10), 0, 2));
     panel.add(myInfoLabel, new GridBagConstraints(2, 0, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
-    panel.add(myDetailsLabel, new GridBagConstraints(3, 0, 1, 1, 1.0, 0.0, NORTHEAST, NONE, JBUI.emptyInsets(), 0, 0));
+    panel.add(myDetailsLabel, new GridBagConstraints(3, 0, 1, 1, 0.0, 0.0, NORTHEAST, NONE, JBUI.emptyInsets(), 0, 0));
     panel.add(myForeignPluginWarningLabel, new GridBagConstraints(1, 1, 4, 1, 1.0, 0.0, WEST, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
     return panel;
   }
@@ -334,7 +335,12 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   @NotNull
   @Override
   protected Action[] createActions() {
-    return new Action[]{new ClearErrorsAction(), getCancelAction(), getOKAction()};
+    if (SystemInfo.isWindows) {
+      return new Action[]{getOKAction(), new ClearErrorsAction(), getCancelAction()};
+    }
+    else {
+      return new Action[]{new ClearErrorsAction(), getCancelAction(), getOKAction()};
+    }
   }
 
   @NotNull
@@ -450,17 +456,18 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       info.append(DiagnosticBundle.message("error.list.message.blame.core", ApplicationNamesInfo.getInstance().getProductName()));
     }
 
+    if (pluginId != null && !ApplicationInfoEx.getInstanceEx().isEssentialPlugin(pluginId.getIdString())) {
+      info.append(' ').append("<a style=\"white-space: nowrap;\" href=\"" + DISABLE_PLUGIN_URL + "\">")
+        .append(DiagnosticBundle.message("error.list.disable.plugin")).append("</a>");
+    }
+
     if (message.isSubmitted()) {
-      SubmittedReportInfo submissionInfo = message.getSubmissionInfo();
-      appendSubmissionInformation(submissionInfo, info);
-      info.append('.');
+      info.append(' ').append("<span style=\"white-space: nowrap;\">");
+      appendSubmissionInformation(message.getSubmissionInfo(), info);
+      info.append("</span>");
     }
     else if (message.isSubmitting()) {
       info.append(' ').append(DiagnosticBundle.message("error.list.message.submitting"));
-    }
-
-    if (pluginId != null && !ApplicationInfoEx.getInstanceEx().isEssentialPlugin(pluginId.getIdString())) {
-      info.append(' ').append("<a href=\"" + DISABLE_PLUGIN_URL + "\">").append(DiagnosticBundle.message("error.list.disable.plugin")).append("</a>");
     }
 
     myInfoLabel.setText(info.toString());
@@ -947,16 +954,16 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   public static void appendSubmissionInformation(@NotNull SubmittedReportInfo info, @NotNull StringBuilder out) {
     if (info.getStatus() == SubmittedReportInfo.SubmissionStatus.FAILED) {
-      out.append(' ').append(DiagnosticBundle.message("error.list.message.submission.failed"));
+      out.append(DiagnosticBundle.message("error.list.message.submission.failed"));
     }
     else if (info.getURL() != null && info.getLinkText() != null) {
-      out.append(' ').append(DiagnosticBundle.message("error.list.message.submitted.as.link", info.getURL(), info.getLinkText()));
+      out.append(DiagnosticBundle.message("error.list.message.submitted.as.link", info.getURL(), info.getLinkText()));
       if (info.getStatus() == SubmittedReportInfo.SubmissionStatus.DUPLICATE) {
-        out.append(' ').append(DiagnosticBundle.message("error.list.message.duplicate"));
+        out.append(DiagnosticBundle.message("error.list.message.duplicate"));
       }
     }
     else {
-      out.append(' ').append(DiagnosticBundle.message("error.list.message.submitted"));
+      out.append(DiagnosticBundle.message("error.list.message.submitted"));
     }
   }
 }

@@ -64,10 +64,11 @@ class PrivacyNoticeComponent(private val label: String, private val expandedLabe
     privacyPolicyPane.foreground = noticeColor()
     privacyPolicyPane.font = privacyPolicyPane.font.deriveFont((privacyPolicyPane.font.size - if (SystemInfo.isWindows) 2 else 1).toFloat())
     privacyPolicyPane.editorKit = UIUtil.getHTMLEditorKit()
+    privacyPolicyPane.border = JBUI.Borders.empty(0, 0, 6, 6)
     privacyPolicyPane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
 
-    add(iconLabelPanel, GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0))
-    add(mySeparatorPanel, GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.VERTICAL, JBUI.emptyInsets(), 0, 0))
+    add(mySeparatorPanel, GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.VERTICAL, JBUI.emptyInsets(), 0, 0))
+    add(iconLabelPanel, GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0))
     add(titleLabel, GridBagConstraints(2, 0, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, JBUI.emptyInsets(), 0, 0))
     add(privacyPolicyPane, GridBagConstraints(2, 1, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, JBUI.emptyInsets(), 0, 0))
 
