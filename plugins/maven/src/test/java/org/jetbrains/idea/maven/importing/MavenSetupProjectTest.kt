@@ -33,17 +33,15 @@ class MavenSetupProjectTest : ExternalSystemSetupProjectTest, MavenImportingTest
   override fun assertDefaultProjectSettings(project: Project) {
   }
 
-  override fun attachProject(project: Project, projectFile: VirtualFile) {
+  override fun doAttachProject(project: Project, projectFile: VirtualFile) {
     AddManagedFilesAction().perform(project, selectedFile = projectFile)
-    waitForImportCompletion(project)
   }
 
-  override fun attachProjectFromScript(project: Project, projectFile: VirtualFile) {
+  override fun doAttachProjectFromScript(project: Project, projectFile: VirtualFile) {
     AddFileAsMavenProjectAction().perform(project, selectedFile = projectFile)
-    waitForImportCompletion(project)
   }
 
-  private fun waitForImportCompletion(project: Project) {
+  override fun waitForImportCompletion(project: Project) {
     invokeAndWaitIfNeeded {
       val projectsManager = MavenProjectsManager.getInstance(project)
       projectsManager.waitForResolvingCompletion()
