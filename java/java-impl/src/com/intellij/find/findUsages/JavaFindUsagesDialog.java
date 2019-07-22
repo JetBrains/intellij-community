@@ -17,6 +17,8 @@ package com.intellij.find.findUsages;
 
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindSettings;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -29,6 +31,7 @@ import javax.swing.*;
 public abstract class JavaFindUsagesDialog<T extends JavaFindUsagesOptions> extends CommonFindUsagesDialog {
   private StateRestoringCheckBox myCbIncludeOverloadedMethods;
   private boolean myIncludeOverloadedMethodsAvailable;
+  protected final EventLogGroup myEventLogGroup = new EventLogGroup("JavaFindUsages", 1);
 
   protected JavaFindUsagesDialog(@NotNull PsiElement element,
                                  @NotNull Project project,
@@ -51,6 +54,14 @@ public abstract class JavaFindUsagesDialog<T extends JavaFindUsagesOptions> exte
       ((JavaMethodFindUsagesOptions)options).isIncludeOverloadUsages =
         myIncludeOverloadedMethodsAvailable && isToChange(myCbIncludeOverloadedMethods) && myCbIncludeOverloadedMethods.isSelected();
     }
+  }
+
+  protected FeatureUsageData createFeatureUsageData(T options) {
+    FeatureUsageData data = new FeatureUsageData();
+    data.addData("usages", options.isUsages);
+    data.addData("textOccurrences", options.isSearchForTextOccurrences);
+    addScopeData(data, options.searchScope);
+    return data;
   }
 
   @Override
