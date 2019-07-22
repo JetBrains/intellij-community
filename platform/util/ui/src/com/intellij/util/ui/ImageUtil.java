@@ -102,8 +102,8 @@ public final class ImageUtil {
   public static BufferedImage toBufferedImage(@NotNull Image image, boolean inUserSize) {
     if (image instanceof JBHiDPIScaledImage) {
       JBHiDPIScaledImage jbImage = (JBHiDPIScaledImage)image;
-      Image delagate = jbImage.getDelegate();
-      if (delagate != null) image = delagate;
+      Image delegate = jbImage.getDelegate();
+      if (delegate != null) image = delegate;
       if (inUserSize) {
         image = scaleImage(image, 1 / jbImage.getScale());
       }
