@@ -27,7 +27,7 @@ class GitChangeProviderConflictTest : GitChangeProviderTest() {
    */
   fun testConflictMM() {
     modifyFileInBranches("a.txt", FileAction.MODIFY, FileAction.MODIFY)
-    assertChanges(atxt, FileStatus.MERGED_WITH_CONFLICTS)
+    assertProviderChanges(atxt, FileStatus.MERGED_WITH_CONFLICTS)
     assertManagerConflicts(Conflict("a.txt", Status.MODIFIED, Status.MODIFIED))
   }
 
@@ -36,7 +36,7 @@ class GitChangeProviderConflictTest : GitChangeProviderTest() {
    */
   fun testConflictMD() {
     modifyFileInBranches("a.txt", FileAction.MODIFY, FileAction.DELETE)
-    assertChanges(atxt, FileStatus.MERGED_WITH_CONFLICTS)
+    assertProviderChanges(atxt, FileStatus.MERGED_WITH_CONFLICTS)
     assertManagerConflicts(Conflict("a.txt", Status.MODIFIED, Status.DELETED))
   }
 
@@ -45,7 +45,7 @@ class GitChangeProviderConflictTest : GitChangeProviderTest() {
    */
   fun testConflictDM() {
     modifyFileInBranches("a.txt", FileAction.DELETE, FileAction.MODIFY)
-    assertChanges(atxt, FileStatus.MERGED_WITH_CONFLICTS)
+    assertProviderChanges(atxt, FileStatus.MERGED_WITH_CONFLICTS)
     assertManagerConflicts(Conflict("a.txt", Status.DELETED, Status.MODIFIED))
   }
 
@@ -55,21 +55,21 @@ class GitChangeProviderConflictTest : GitChangeProviderTest() {
   fun testConflictCC() {
     modifyFileInBranches("z.txt", FileAction.CREATE, FileAction.CREATE)
     val zfile = projectRoot.findChild("z.txt")
-    assertChanges(zfile!!, FileStatus.MERGED_WITH_CONFLICTS)
+    assertProviderChanges(zfile!!, FileStatus.MERGED_WITH_CONFLICTS)
     assertManagerConflicts(Conflict("z.txt", Status.ADDED, Status.ADDED))
   }
 
   fun testConflictRD() {
     modifyFileInBranches("a.txt", FileAction.RENAME, FileAction.DELETE)
     val newfile = projectRoot.findChild("a.txt_master_new") // renamed in master
-    assertChanges(newfile!!, FileStatus.MERGED_WITH_CONFLICTS)
+    assertProviderChanges(newfile!!, FileStatus.MERGED_WITH_CONFLICTS)
     assertManagerConflicts(Conflict("a.txt_master_new", Status.ADDED, Status.MODIFIED))
   }
 
   fun testConflictDR() {
     modifyFileInBranches("a.txt", FileAction.DELETE, FileAction.RENAME)
     val newFile = projectRoot.findChild("a.txt_feature_new") // deleted in master, renamed in feature
-    assertChanges(newFile!!, FileStatus.MERGED_WITH_CONFLICTS)
+    assertProviderChanges(newFile!!, FileStatus.MERGED_WITH_CONFLICTS)
     assertManagerConflicts(Conflict("a.txt_feature_new", Status.MODIFIED, Status.ADDED))
   }
 
@@ -77,7 +77,7 @@ class GitChangeProviderConflictTest : GitChangeProviderTest() {
     modifyFileInBranches("a.txt", FileAction.RENAME, FileAction.RENAME)
     val newMasterFile = projectRoot.findChild("a.txt_master_new")!!
     val newFeatureFile = projectRoot.findChild("a.txt_feature_new")!!
-    assertChanges(listOf(newMasterFile, newFeatureFile), listOf(FileStatus.MERGED_WITH_CONFLICTS, FileStatus.MERGED_WITH_CONFLICTS))
+    assertProviderChanges(listOf(newMasterFile, newFeatureFile), listOf(FileStatus.MERGED_WITH_CONFLICTS, FileStatus.MERGED_WITH_CONFLICTS))
     assertManagerConflicts(Conflict("a.txt_master_new", Status.ADDED, Status.MODIFIED),
                            Conflict("a.txt_feature_new", Status.MODIFIED, Status.ADDED),
                            Conflict("a.txt", Status.DELETED, Status.DELETED, false))

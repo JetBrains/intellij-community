@@ -8,7 +8,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.changes.Change
 import git4idea.checkin.GitCheckinEnvironment
 import git4idea.checkin.GitCheckinExplicitMovementProvider
 import git4idea.checkin.isCommitRenamesSeparately
@@ -915,14 +914,6 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
   private fun generateCaseRename(from: String, to: String) {
     tac(from)
     git("mv -f $from $to")
-  }
-
-  private fun assertNoChanges() {
-    changeListManager.assertNoChanges()
-  }
-
-  private fun assertChanges(changes: ChangesBuilder.() -> Unit): List<Change> {
-    return changeListManager.assertChanges(changes)
   }
 
   private class MyExplicitMovementProvider : GitCheckinExplicitMovementProvider() {

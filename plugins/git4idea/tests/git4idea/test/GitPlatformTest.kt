@@ -228,6 +228,14 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     assertTrue("Commit dialog was not shown", vcsHelper.commitDialogWasShown())
   }
 
+  protected fun assertNoChanges() {
+    changeListManager.assertNoChanges()
+  }
+
+  protected fun assertChanges(changes: ChangesBuilder.() -> Unit): List<Change> {
+    return changeListManager.assertChanges(changes)
+  }
+
   protected data class ReposTrinity(val projectRepo: GitRepository, val parent: File, val bro: File)
 
 
