@@ -20,11 +20,13 @@ import org.zmlx.hg4idea.util.HgVersion;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.intellij.openapi.util.io.FileUtilRt.doIOOperation;
 
 /**
  * Reads information about the Hg repository from Hg service files located in the {@code .hg} folder.
@@ -116,11 +118,18 @@ public class HgRepositoryReader {
 
   @NotNull
   private static byte[] readHashBytesFromFile(@NotNull File file) throws IOException {
-    byte[] bytes;
-    try (InputStream stream = new FileInputStream(file)) {
-      bytes = FileUtil.loadBytes(stream, 20);
+    try (final FileInputStream stream = doIOOperation(lastAttempt -> {
+      try {
+        return new FileInputStream(file);
+      }
+      catch (FileNotFoundException e) {
+        if (lastAttempt) throw e;
+        return null;
+      }
+    })) {
+      assert stream != null;
+      return FileUtil.loadBytes(stream, 20);
     }
-    return bytes;
   }
 
   /**
