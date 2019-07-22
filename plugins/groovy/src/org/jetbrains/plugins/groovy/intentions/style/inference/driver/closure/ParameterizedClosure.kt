@@ -8,12 +8,14 @@ import org.jetbrains.plugins.groovy.intentions.style.inference.isTypeParameter
 import org.jetbrains.plugins.groovy.intentions.style.inference.typeParameter
 import org.jetbrains.plugins.groovy.intentions.style.inference.unreachable
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 class ParameterizedClosure(val parameter: GrParameter) {
   val types: MutableList<PsiType> = ArrayList()
   val typeParameters: MutableList<PsiTypeParameter> = ArrayList()
+  val closureArguments: MutableList<GrClosableBlock> = mutableListOf()
 
   companion object {
     private const val CLOSURE_PARAMS = "ClosureParams"

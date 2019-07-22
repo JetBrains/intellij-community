@@ -124,7 +124,7 @@ private fun collectGenericSubstitutor(resolveResult: GroovyMethodResult, outerMe
   val resolveSession = CollectingGroovyInferenceSession(
     outerMethod.typeParameters.filter {
       (it.extendsListTypes.run { isEmpty() || first() in outerParameters })
-    }.toTypedArray(), PsiSubstitutor.EMPTY, outerMethod, mirrorBounds = true)
+    }.toTypedArray(), PsiSubstitutor.EMPTY, outerMethod)
   resolveSession.addConstraint(MethodCallConstraint(null, resolveResult, outerMethod))
   for (typeParameter in outerMethod.typeParameters) {
     resolveSession.getInferenceVariable(

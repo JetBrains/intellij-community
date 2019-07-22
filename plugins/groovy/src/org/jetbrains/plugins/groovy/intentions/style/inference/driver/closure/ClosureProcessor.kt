@@ -7,10 +7,7 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.NameGenerator
 import org.jetbrains.plugins.groovy.intentions.style.inference.collectDependencies
 import org.jetbrains.plugins.groovy.intentions.style.inference.createProperTypeParameter
-import org.jetbrains.plugins.groovy.intentions.style.inference.driver.ParameterizationManager
-import org.jetbrains.plugins.groovy.intentions.style.inference.driver.ParametersProcessor
-import org.jetbrains.plugins.groovy.intentions.style.inference.driver.TypeUsageInformation
-import org.jetbrains.plugins.groovy.intentions.style.inference.driver.setUpParameterMapping
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.typeParameter
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
@@ -33,6 +30,7 @@ class ClosureProcessor private constructor(private val closureParameters: Map<Gr
       collectClosureArguments(method, virtualMethod).forEach { (parameter, calls) ->
         // todo: default-valued parameters
         val parameterizedClosure = ParameterizedClosure(parameter)
+        parameterizedClosure.closureArguments.addAll(calls.map { it as GrClosableBlock })
         closureParameters[parameter] = parameterizedClosure
         repeat((calls.first() as GrClosableBlock).allParameters.size) {
           val newTypeParameter = elementFactory.createProperTypeParameter(generator.name, PsiClassType.EMPTY_ARRAY)
@@ -56,6 +54,7 @@ class ClosureProcessor private constructor(private val closureParameters: Map<Gr
     for ((parameter, closureParameter) in closureParameters) {
       val newParameter = parameterMapping.getValue(parameter)
       val newClosureParameter = ParameterizedClosure(newParameter)
+      newClosureParameter.closureArguments.addAll(closureParameter.closureArguments)
       closureParameter.typeParameters.forEach { directInnerParameter ->
         val innerParameterType = manager.createDeeplyParameterizedType(substitutor.substitute(directInnerParameter)!!)
         newClosureParameter.types.add(innerParameterType.type)
@@ -99,11 +98,26 @@ class ClosureProcessor private constructor(private val closureParameters: Map<Gr
 
 
   override fun collectInnerConstraints(): TypeUsageInformation {
-    if (method == null) {
+    if (this.method == null) {
       return TypeUsageInformation(emptySet(), emptyMap(), emptyList())
     }
+    val typeInformation = closureParameters.values.flatMap { parameter ->
+      parameter.closureArguments.map { closureBlock ->
+        val newMethod = createMethodFromClosureBlock(closureBlock, parameter)
+        val commonProcessor = CommonProcessor.createDirectlyFromMethod(newMethod)
+        val usageInformation = commonProcessor.collectInnerConstraints()
+        val mapping = newMethod.typeParameters.zip(method.typeParameters).toMap()
+        val newUsageInformation = usageInformation.run {
+          TypeUsageInformation(contravariantTypes.mapNotNull { mapping[it.typeParameter()]?.type() }.toSet(),
+                               requiredClassTypes.map { (param, list) -> mapping.getValue(param) to list }.toMap(),
+                               constraints)
+        }
+        newUsageInformation
+      }
+    }
+    val closureBodyAnalysisResult = TypeUsageInformation.merge(typeInformation)
     val constraintCollector = mutableListOf<ConstraintFormula>()
-    method.block?.controlFlow
+    this.method.block?.controlFlow
       ?.filterIsInstance<ReadWriteVariableInstruction>()
       ?.groupBy { it.element?.reference?.resolve() }
       ?.forEach { (parameter, usages) ->
@@ -111,10 +125,26 @@ class ClosureProcessor private constructor(private val closureParameters: Map<Gr
           collectClosureParamsDependencies(constraintCollector, closureParameters.getValue(parameter), usages, this)
         }
       }
-    return TypeUsageInformation(
+    val closureParamsTypeInformation = TypeUsageInformation(
       closureParameters.flatMap { it.value.types }.toSet(),
       emptyMap(),
       constraintCollector)
+    return TypeUsageInformation.merge(listOf(closureParamsTypeInformation, closureBodyAnalysisResult))
+  }
+
+  private fun createMethodFromClosureBlock(body: GrClosableBlock,
+                                           param: ParameterizedClosure): GrMethod {
+    val parameters = param.types
+      .zip(body.parameters)
+      .joinToString { (type, name) -> type.canonicalText + " " + name.text }
+    val statements = body.statements.joinToString("\n") { it.text }
+    return GroovyPsiElementFactory
+      .getInstance(method!!.project)
+      .createMethodFromText("""
+        def ${method.typeParameterList!!.text} void unique_named_method($parameters) {
+          $statements
+        }
+      """.trimIndent(), method)
   }
 
   override fun instantiate(resultMethod: GrMethod, resultSubstitutor: PsiSubstitutor) {

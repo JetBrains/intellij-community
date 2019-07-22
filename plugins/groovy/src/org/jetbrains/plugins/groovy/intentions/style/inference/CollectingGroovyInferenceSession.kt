@@ -3,10 +3,7 @@ package org.jetbrains.plugins.groovy.intentions.style.inference
 
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiSubstitutor
-import com.intellij.psi.PsiType
-import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
@@ -23,12 +20,24 @@ class CollectingGroovyInferenceSession(
   contextSubstitutor: PsiSubstitutor,
   context: PsiElement,
   private val proxyMethodMapping: Map<String, GrParameter> = emptyMap(),
-  private val parent: CollectingGroovyInferenceSession? = null,
-  private val mirrorBounds: Boolean = false
+  private val parent: CollectingGroovyInferenceSession? = null
 ) : GroovyInferenceSession(typeParams, contextSubstitutor, context, true, emptySet()) {
 
+
+  private fun substituteForeignTypeParameters(type: PsiType?) : PsiType? {
+    return type?.accept(object : PsiTypeMapper() {
+      override fun visitClassType(classType: PsiClassType?): PsiType? {
+        if (classType.isTypeParameter()) {
+          return myInferenceVariables.find { it.delegate.name == classType?.canonicalText }?.type() ?: classType
+        } else {
+          return classType
+        }
+      }
+    })
+  }
+
   override fun substituteWithInferenceVariables(type: PsiType?): PsiType? {
-    val result = super.substituteWithInferenceVariables(type)
+    val result = substituteForeignTypeParameters(super.substituteWithInferenceVariables(type))
     if ((result == type || result == null) && parent != null) {
       return parent.substituteWithInferenceVariables(result)
     }
@@ -78,17 +87,7 @@ class CollectingGroovyInferenceSession(
   private fun mergeVariables(variable: InferenceVariable, bound: InferenceBound) {
     variable.getBounds(bound).forEach {
       InferenceVariable.addBound(substituteWithInferenceVariables(variable.parameter.type()), it, bound, this)
-      if (mirrorBounds) {
-        // todo: try to remove this condition, it is very strange
-        InferenceVariable.addBound(substituteWithInferenceVariables(it), variable.type(), negate(bound), this)
-      }
     }
   }
 
-  private fun negate(bound: InferenceBound): InferenceBound =
-    when (bound) {
-      InferenceBound.EQ -> InferenceBound.EQ
-      InferenceBound.LOWER -> InferenceBound.UPPER
-      InferenceBound.UPPER -> InferenceBound.LOWER
-    }
 }

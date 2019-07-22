@@ -20,6 +20,11 @@ class CommonProcessor constructor(private val targetParameters: Set<GrParameter>
   private val method = targetParameters.firstOrNull()?.parentOfType<GrMethod>()
 
   companion object {
+
+    internal fun createDirectlyFromMethod(method: GrMethod): CommonProcessor {
+      return CommonProcessor(method.parameters.toSet(), null)
+    }
+
     fun createFromMethod(method: GrMethod, virtualMethod: GrMethod, generator: NameGenerator): CommonProcessor {
       val elementFactory = GroovyPsiElementFactory.getInstance(virtualMethod.project)
       val targetParameters = setUpParameterMapping(method, virtualMethod)
