@@ -4,17 +4,16 @@ package com.intellij.vcs.log.data.index;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DataIndexer;
-import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.indexing.StorageException;
-import com.intellij.util.indexing.impl.ForwardIndex;
-import com.intellij.util.indexing.impl.KeyCollectionBasedForwardIndex;
+import com.intellij.util.indexing.impl.InputData;
+import com.intellij.util.indexing.impl.forward.*;
 import com.intellij.util.io.*;
 import com.intellij.vcs.log.VcsLogIndexService;
 import com.intellij.vcs.log.data.VcsLogStorage;
@@ -55,28 +54,21 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
 
   @Nullable
   @Override
-  protected ForwardIndex<Integer, List<VcsLogPathsIndex.ChangeKind>> createForwardIndex(@NotNull IndexExtension<Integer, List<ChangeKind>, VcsLogIndexer.CompressedDetails> extension)
-    throws IOException {
-    if (!VcsLogIndexService.isPathsForwardIndexRequired()) return super.createForwardIndex(extension);
-    return new KeyCollectionBasedForwardIndex<Integer, List<ChangeKind>>(extension) {
-      @NotNull
-      @Override
-      public PersistentHashMap<Integer, Collection<Integer>> createMap() throws IOException {
-        File storageFile = myStorageId.getStorageFile(myName + ".idx");
-        return new PersistentHashMap<>(storageFile, EnumeratorIntegerDescriptor.INSTANCE, new IntCollectionDataExternalizer(),
-                                       Page.PAGE_SIZE);
-      }
-
-      @NotNull
-      @Override
-      protected Collection<Integer> convertToMapValueType(int inputId, @NotNull Map<Integer, List<ChangeKind>> map) {
-        if (!map.isEmpty()) {
-          List<ChangeKind> changesToParents = ContainerUtil.getFirstItem(map.values());
-          if (changesToParents.size() > 1) return Collections.emptySet();
-        }
-        return super.convertToMapValueType(inputId, map);
-      }
-    };
+  protected Pair<ForwardIndex, ForwardIndexAccessor<Integer, List<ChangeKind>>> createdForwardIndex() throws IOException {
+    if (!VcsLogIndexService.isPathsForwardIndexRequired()) return null;
+    return Pair.create(new PersistentMapBasedForwardIndex(myStorageId.getStorageFile(myName + ".idx")),
+                       new KeyCollectionForwardIndexAccessor<Integer, List<ChangeKind>>(new IntCollectionDataExternalizer()) {
+                         @Nullable
+                         @Override
+                         public Collection<Integer> convertToDataType(@NotNull InputData<Integer, List<ChangeKind>> data) {
+                           Map<Integer, List<ChangeKind>> map = data.getKeyValues();
+                           if (!map.isEmpty()) {
+                             List<ChangeKind> changesToParents = ContainerUtil.getFirstItem(map.values());
+                             if (changesToParents.size() > 1) return Collections.emptySet();
+                           }
+                           return super.convertToDataType(data);
+                         }
+                       });
   }
 
   @NotNull
