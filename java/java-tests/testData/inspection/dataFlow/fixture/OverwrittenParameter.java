@@ -3,12 +3,12 @@ import org.jetbrains.annotations.Nullable;
 
 class X {
   void test(@NotNull String string) {
-    string = fetchString();
+    string = getString();
     if (string == null) {
     }
   }
   @Nullable
-  String fetchString() {
+  String getString() {
     return null;
   }
 }
