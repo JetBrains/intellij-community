@@ -178,4 +178,4 @@ internal fun closeReview(projectId: String, review: Review) {
   }""")
 }
 
-internal fun commitUrl(projectId: String, commit: CommitInfo) = "$UPSOURCE/$projectId/revision/${commit.hash}"
+internal fun commitUrl(projectId: String?, commit: CommitInfo) = projectId?.let { "$UPSOURCE/$it/revision/${commit.hash}" }
