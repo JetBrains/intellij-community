@@ -11,7 +11,6 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -72,18 +71,21 @@ public class RevealFileAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    VirtualFile file = findLocalFile(e.getData(CommonDataKeys.VIRTUAL_FILE));
-    Presentation presentation = e.getPresentation();
-    presentation.setText(getActionName());
-    presentation.setEnabled(file != null);
+    e.getPresentation().setEnabledAndVisible(isSupported() && getFile(e) != null);
+    e.getPresentation().setText(getActionName());
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    VirtualFile file = findLocalFile(e.getData(CommonDataKeys.VIRTUAL_FILE));
+    VirtualFile file = getFile(e);
     if (file != null) {
       openFile(new File(file.getPresentableUrl()));
     }
+  }
+
+  @Nullable
+  private static VirtualFile getFile(@NotNull AnActionEvent e) {
+    return findLocalFile(e.getData(CommonDataKeys.VIRTUAL_FILE));
   }
 
   public static boolean isSupported() {
