@@ -39,12 +39,12 @@ import java.util.*;
 
 /**
  * <p>
- *   Collects changes from the Git repository in the given {@link com.intellij.openapi.vcs.changes.VcsDirtyScope}
- *   by calling {@code 'git status --porcelain -z'} on it.
- *   Works only on Git 1.7.0 and later.
+ * Collects changes from the Git repository in the given {@link com.intellij.openapi.vcs.changes.VcsDirtyScope}
+ * by calling {@code 'git status --porcelain -z'} on it.
+ * Works only on Git 1.7.0 and later.
  * </p>
  * <p>
- *   The class is immutable: collect changes and get the instance from where they can be retrieved by {@link #collect}.
+ * The class is immutable: collect changes and get the instance from where they can be retrieved by {@link #collect}.
  * </p>
  *
  * @author Kirill Likhodedov
@@ -166,7 +166,8 @@ class GitChangesCollector {
     Iterator<FilePath> it = paths.iterator();
     while (it.hasNext()) {
       FilePath path = it.next();
-      if (prevPath != null && FileUtil.startsWith(path.getPath(), prevPath.getPath(), true)) { // the file is under previous file, so enough to check the parent
+      // the file is under previous file, so enough to check the parent
+      if (prevPath != null && FileUtil.startsWith(path.getPath(), prevPath.getPath(), true)) {
         it.remove();
       }
       else {
@@ -234,15 +235,20 @@ class GitChangesCollector {
         case ' ':
           if (yStatus == 'M') {
             reportModified(filepath, head);
-          } else if (yStatus == 'D') {
+          }
+          else if (yStatus == 'D') {
             reportDeleted(filepath, head);
-          } else if (yStatus == 'A') {
+          }
+          else if (yStatus == 'A') {
             reportAdded(filepath);
-          } else if (yStatus == 'T') {
+          }
+          else if (yStatus == 'T') {
             reportTypeChanged(filepath, head);
-          } else if (yStatus == 'U') {
+          }
+          else if (yStatus == 'U') {
             reportConflict(filepath, head, Status.MODIFIED, Status.MODIFIED);
-          } else {
+          }
+          else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
           break;
@@ -250,9 +256,11 @@ class GitChangesCollector {
         case 'M':
           if (yStatus == ' ' || yStatus == 'M' || yStatus == 'T') {
             reportModified(filepath, head);
-          } else if (yStatus == 'D') {
+          }
+          else if (yStatus == 'D') {
             reportDeleted(filepath, head);
-          } else {
+          }
+          else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
           break;
@@ -265,7 +273,8 @@ class GitChangesCollector {
         case 'A':
           if (yStatus == 'M' || yStatus == ' ' || yStatus == 'T') {
             reportAdded(filepath);
-          } else if (yStatus == 'D') {
+          }
+          else if (yStatus == 'D') {
             // added + deleted => no change (from IDEA point of view).
           }
           else if (yStatus == 'U') { // AU - unmerged, added by us
@@ -282,11 +291,14 @@ class GitChangesCollector {
         case 'D':
           if (yStatus == 'M' || yStatus == ' ' || yStatus == 'T') {
             reportDeleted(filepath, head);
-          } else if (yStatus == 'U') { // DU - unmerged, deleted by us
+          }
+          else if (yStatus == 'U') { // DU - unmerged, deleted by us
             reportConflict(filepath, head, Status.DELETED, Status.MODIFIED);
-          } else if (yStatus == 'D') { // DD - unmerged, both deleted
+          }
+          else if (yStatus == 'D') { // DD - unmerged, both deleted
             reportConflict(filepath, head, Status.DELETED, Status.DELETED);
-          } else {
+          }
+          else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
           break;
@@ -313,9 +325,11 @@ class GitChangesCollector {
 
           if (yStatus == 'D') {
             reportDeleted(oldFilepath, head);
-          } else if (yStatus == ' ' || yStatus == 'M' || yStatus == 'T') {
+          }
+          else if (yStatus == ' ' || yStatus == 'M' || yStatus == 'T') {
             reportRename(filepath, oldFilepath, head);
-          } else {
+          }
+          else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
           break;
@@ -323,9 +337,11 @@ class GitChangesCollector {
         case 'T'://TODO
           if (yStatus == ' ' || yStatus == 'M') {
             reportTypeChanged(filepath, head);
-          } else if (yStatus == 'D') {
+          }
+          else if (yStatus == 'D') {
             reportDeleted(filepath, head);
-          } else {
+          }
+          else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
           break;
@@ -339,7 +355,6 @@ class GitChangesCollector {
 
         default:
           throwGFE("Unexpected symbol as xStatus.", handler, output, line, xStatus, yStatus);
-
       }
     }
   }
