@@ -231,6 +231,18 @@ class GitChangesCollector {
 
       final FilePath filepath = GitContentRevision.createPath(myVcsRoot, path);
 
+      FilePath oldFilepath;
+      if (xStatus == 'R' || xStatus == 'C' ||
+          yStatus == 'R' || yStatus == 'C') {
+        // We treat "Copy" as "Added", but we still have to read the old path not to break the format parsing.
+        //noinspection AssignmentToForLoopParameter
+        pos += 1;  // read the "from" filepath which is separated also by NUL character.
+        oldFilepath = GitContentRevision.createPath(myVcsRoot, split[pos]);
+      }
+      else {
+        oldFilepath = null;
+      }
+
       switch (xStatus) {
         case ' ':
           if (yStatus == 'M') {
@@ -239,7 +251,7 @@ class GitChangesCollector {
           else if (yStatus == 'D') {
             reportDeleted(filepath, head);
           }
-          else if (yStatus == 'A') {
+          else if (yStatus == 'A' || yStatus == 'C') {
             reportAdded(filepath);
           }
           else if (yStatus == 'T') {
@@ -247,6 +259,9 @@ class GitChangesCollector {
           }
           else if (yStatus == 'U') {
             reportConflict(filepath, head, Status.MODIFIED, Status.MODIFIED);
+          }
+          else if (yStatus == 'R') {
+            reportRename(filepath, oldFilepath, head);
           }
           else {
             throwYStatus(output, handler, line, xStatus, yStatus);
@@ -266,10 +281,6 @@ class GitChangesCollector {
           break;
 
         case 'C':
-          //noinspection AssignmentToForLoopParameter
-          pos += 1;  // read the "from" filepath which is separated also by NUL character.
-          // NB: no "break" here!
-          // we treat "Copy" as "Added", but we still have to read the old path not to break the format parsing.
         case 'A':
           if (yStatus == 'M' || yStatus == ' ' || yStatus == 'T') {
             reportAdded(filepath);
@@ -298,6 +309,12 @@ class GitChangesCollector {
           else if (yStatus == 'D') { // DD - unmerged, both deleted
             reportConflict(filepath, head, Status.DELETED, Status.DELETED);
           }
+          else if (yStatus == 'C') {
+            reportModified(filepath, head);
+          }
+          else if (yStatus == 'R') {
+            reportRename(filepath, oldFilepath, head);
+          }
           else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
@@ -319,10 +336,6 @@ class GitChangesCollector {
           break;
 
         case 'R':
-          //noinspection AssignmentToForLoopParameter
-          pos += 1;  // read the "from" filepath which is separated also by NUL character.
-          FilePath oldFilepath = GitContentRevision.createPath(myVcsRoot, split[pos]);
-
           if (yStatus == 'D') {
             reportDeleted(oldFilepath, head);
           }

@@ -55,7 +55,7 @@ fun createFileStructure(rootDir: VirtualFile, vararg paths: String) {
       mkdir(path)
     }
     else {
-      touch(path, "initial_content_" + Math.random())
+      touch(path, "initial_content_in_{$path}")
     }
   }
 }

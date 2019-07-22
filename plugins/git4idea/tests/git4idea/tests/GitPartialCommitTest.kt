@@ -7,14 +7,16 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vcs.Executor.child
-import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.ui.UIUtil
-import git4idea.test.*
+import git4idea.test.GitSingleRepoTest
+import git4idea.test.assertCommitted
+import git4idea.test.gitAsBytes
+import git4idea.test.tac
 
 class GitPartialCommitTest : GitSingleRepoTest() {
   fun `test partial commit with changelists`() {
@@ -189,14 +191,6 @@ class GitPartialCommitTest : GitSingleRepoTest() {
     assertCommittedContent("a.java", "A\r\nB\r\nZ", true)
   }
 
-
-  private fun assertNoChanges() {
-    changeListManager.assertNoChanges()
-  }
-
-  private fun assertChanges(changes: ChangesBuilder.() -> Unit): List<Change> {
-    return changeListManager.assertChanges(changes)
-  }
 
   private fun assertCommittedContent(fileName: String, expectedContent: String, useFilters: Boolean = false) {
     val actualContent = repo.gitAsBytes("cat-file" +
