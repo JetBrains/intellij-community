@@ -52,11 +52,11 @@ inline fun <reified T : UElement> PsiElement.findUElementByTextFromPsi(refText: 
   val elementAtStart = this.findElementAt(this.text.indexOf(refText))
                        ?: throw AssertionError("requested text '$refText' was not found in $this")
   val uElementContainingText = generateSequence(elementAtStart) { if (it is PsiFile) null else it.parent }
-    .let {
-      if (strict) it.dropWhile { !it.text.contains(refText) } else it
-    }.mapNotNull { it.toUElementOfType<T>() }.firstOrNull() ?: throw AssertionError("requested text '$refText' not found as ${T::class.java}")
+    .let { if (strict) it.dropWhile { e -> !e.text.contains(refText) } else it }
+    .mapNotNull { it.toUElementOfType<T>() }
+    .firstOrNull() ?: throw AssertionError("requested text '$refText' not found as ${T::class.java}")
   if (strict && uElementContainingText.sourcePsi != null && uElementContainingText.sourcePsi?.text != refText) {
     throw AssertionError("requested text '$refText' found as '${uElementContainingText.sourcePsi?.text}' in $uElementContainingText")
   }
-  return uElementContainingText;
+  return uElementContainingText
 }

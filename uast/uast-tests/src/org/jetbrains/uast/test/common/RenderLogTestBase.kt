@@ -3,7 +3,6 @@ package org.jetbrains.uast.test.common
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
-import junit.framework.TestCase
 import org.jetbrains.uast.*
 import org.jetbrains.uast.test.env.assertEqualsToFile
 import org.jetbrains.uast.visitor.UastVisitor
@@ -17,9 +16,7 @@ interface RenderLogTestBase {
   private fun getTestFile(testName: String, ext: String) =
     File(getTestDataPath(), testName.substringBeforeLast('.') + '.' + ext)
 
-  fun check(testName: String, file: UFile) {
-    check(testName, file, true)
-  }
+  fun check(testName: String, file: UFile) = check(testName, file, true)
 
   fun check(testName: String, file: UFile, checkParentConsistency: Boolean) {
     val renderFile = getTestFile(testName, "render.txt")
@@ -73,9 +70,9 @@ interface RenderLogTestBase {
         val uElement = element.toUElement()
         val expectedParents = parentMap[element]
         if (expectedParents != null) {
-          TestCase.assertNotNull("Expected to be able to convert PSI element $element", uElement)
+          Assert.assertNotNull("Expected to be able to convert PSI element $element", uElement)
           val parents = generateSequence(uElement!!.uastParent) { it.uastParent }.joinToString { it.asLogString() }
-          TestCase.assertEquals(
+          Assert.assertEquals(
             "Inconsistent parents for $uElement (converted from $element) parent: -> ${uElement.uastParent}",
             expectedParents,
             parents)
@@ -90,25 +87,24 @@ interface RenderLogTestBase {
       override fun visitElement(node: UElement): Boolean {
         if (node is PsiElement) {
           val uElement = node.sourcePsi.toUElement()!!
-          TestCase.assertEquals("getContainingUFile should be equal to source for ${uElement.javaClass}",
+          Assert.assertEquals("getContainingUFile should be equal to source for ${uElement.javaClass}",
                                 this@checkContainingFileForAllElements,
                                 uElement.getContainingUFile())
         }
 
         val uastAnchor = (node as? UDeclaration)?.uastAnchor
         if (uastAnchor != null) {
-          TestCase.assertEquals("should be appropriate sourcePsi for uastAnchor for ${node.javaClass} [${node.sourcePsi?.text}] ",
+          Assert.assertEquals("should be appropriate sourcePsi for uastAnchor for ${node.javaClass} [${node.sourcePsi?.text}] ",
                                 node.sourcePsiElement!!.containingFile!!, uastAnchor.sourcePsi?.containingFile)
         }
 
         val anchorPsi = uastAnchor?.sourcePsi
         if (anchorPsi != null) {
-          TestCase.assertEquals(anchorPsi.containingFile, node.sourcePsiElement!!.containingFile!!)
+          Assert.assertEquals(anchorPsi.containingFile, node.sourcePsiElement!!.containingFile!!)
         }
 
         return false
       }
     })
   }
-
 }

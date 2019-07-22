@@ -36,7 +36,7 @@ interface ValuesTestBase {
     }
   }
 
-  class ValueLogger(val evaluationContext: UEvaluationContext, val cachedOnly: Boolean) : UastVisitor {
+  class ValueLogger(private val evaluationContext: UEvaluationContext, private val cachedOnly: Boolean) : UastVisitor {
     private val builder = StringBuilder()
     private var level = 0
 
@@ -51,7 +51,7 @@ interface ValuesTestBase {
         }
       } + "]"
 
-      (1..level).forEach { builder.append("    ") }
+      (1..level).forEach { _ -> builder.append("    ") }
       builder.append(initialLine)
       if (node is UExpression) {
         val value = if (cachedOnly) {

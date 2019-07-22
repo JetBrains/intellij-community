@@ -5,7 +5,7 @@ import org.jetbrains.uast.evaluation.UEvaluatorExtension
 import org.jetbrains.uast.test.common.ValuesTestBase
 
 abstract class AbstractJavaValuesTest : AbstractJavaUastTest(), ValuesTestBase {
-  protected var _evaluatorExtension: UEvaluatorExtension? = null
+  private var _evaluatorExtension: UEvaluatorExtension? = null
 
   override fun getEvaluatorExtension(): UEvaluatorExtension? = _evaluatorExtension
 
