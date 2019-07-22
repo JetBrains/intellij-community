@@ -1,8 +1,6 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <gotoSymbolContributor implementation="org.intellij.plugins.relaxNG.GotoSymbolContributor" />
-    <xml.schemaProvider implementation="org.intellij.plugins.relaxNG.config.NoNamespaceSchemaProvider" />
-    <hectorComponentProvider implementation="org.intellij.plugins.relaxNG.config.NoNamespaceConfigImpl$HectorProvider" />
 
     <fileType name="RNG Compact" language="RELAX-NG" extensions="rnc"
               implementationClass="org.intellij.plugins.relaxNG.compact.RncFileType" fieldName="INSTANCE"/>
@@ -53,13 +51,6 @@
     <xml.validateHandler implementation="org.intellij.plugins.relaxNG.validation.RngValidateHandler"/>
     <metaDataContributor implementation="org.intellij.plugins.relaxNG.ApplicationLoader" order="first"/>
   </extensions>
-
-  <project-components>
-    <component>
-      <interface-class>org.intellij.plugins.relaxNG.config.NoNamespaceConfig</interface-class>
-      <implementation-class>org.intellij.plugins.relaxNG.config.NoNamespaceConfigImpl</implementation-class>
-    </component>
-  </project-components>
 
   <actions>
     <action id="ConvertSchemaAction" class="org.intellij.plugins.relaxNG.convert.ConvertSchemaAction"
