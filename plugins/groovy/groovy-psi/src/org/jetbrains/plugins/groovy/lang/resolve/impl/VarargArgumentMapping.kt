@@ -9,6 +9,11 @@ import org.jetbrains.plugins.groovy.util.recursionAwareLazy
 
 private typealias MapWithVarargs = Pair<Map<Argument, PsiParameter>, Set<Argument>>
 
+/**
+ * @see org.codehaus.groovy.runtime.MetaClassHelper.VARGS_SHIFT
+ */
+private const val VARGS_SHIFT = 44
+
 class VarargArgumentMapping(
   method: PsiMethod,
   override val arguments: Arguments,
@@ -99,6 +104,27 @@ class VarargArgumentMapping(
 
     return positionalApplicabilities + varargApplicabilities
   }
+
+  /**
+   * @see org.codehaus.groovy.runtime.MetaClassHelper.calculateParameterDistance
+   */
+  val distance: Long
+    get() {
+      val map = requireNotNull(mapping) {
+        "#distance should not be accessed on inapplicable mapping"
+      }
+      val (positional, varargs) = map
+      var distance = positionalParametersDistance(positional, context)
+
+      distance += (1L + varargs.size) shl VARGS_SHIFT // vararg penalty
+
+      for (vararg in varargs) {
+        val argumentType = vararg.runtimeType ?: continue
+        distance += parameterDistance(argumentType, varargType, context)
+      }
+
+      return distance
+    }
 
   val varargs: Collection<Argument>
     get() = requireNotNull(mapping) {

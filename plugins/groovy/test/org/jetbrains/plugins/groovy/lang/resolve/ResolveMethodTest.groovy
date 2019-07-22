@@ -2376,4 +2376,56 @@ def foo(Object[] o) {}
 ''', GrMethod
     assert method.parameterList.parameters.first().type.equalsToText('java.util.List')
   }
+
+  void 'test IDEA-216095'() {
+    def method = resolveByText '''\
+void foo(Integer i, Class c, Object... objects){
+}
+
+void foo(Object i, Class... classes){
+}
+
+fo<caret>o(1, Object, Object)
+''', GrMethod
+    assert method.getParameters().size() == 3
+  }
+
+  void 'test IDEA-216095-2'() {
+    def method = resolveByText '''\
+void foo(Integer i, Object... objects){
+}
+
+void foo(Object i){
+}
+
+fo<caret>o(1)
+''', GrMethod
+    assert method.getParameters().size() == 1
+  }
+
+  void 'test IDEA-216095-3'() {
+    def method = resolveByText '''\
+void foo(Double i, Object... objects){
+}
+
+void foo(Object i, Integer... objects){
+}
+
+f<caret>oo(1, 1)
+''', GrMethod
+    assert method.getParameters()[1].type.canonicalText == "java.lang.Integer..."
+  }
+
+  void 'test IDEA-216095-4'() {
+    def method = resolveByText '''\
+void foo(Double i, Object... objects){
+}
+
+void foo(Object i, Integer... objects){
+}
+
+f<caret>oo(1, 1, new Object())
+''', GrMethod
+    assert method.getParameters()[1].type.canonicalText == "java.lang.Object..."
+  }
 }
