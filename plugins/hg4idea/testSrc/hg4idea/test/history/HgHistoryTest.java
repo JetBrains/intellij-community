@@ -15,7 +15,6 @@
  */
 package hg4idea.test.history;
 
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -131,11 +130,13 @@ public class HgHistoryTest extends HgPlatformTest {
     String beforeName = names[namesSize - 1];
     VirtualFile before = VfsUtil.findFileByIoFile(new File(subDir.getPath(), beforeName), true);
     assert before != null;
-    FilePath filePath = VcsUtil.getFilePath(VfsUtilCore.virtualToIoFile(before));
     final String renamed = "renamed";
     hg("mv " + beforeName + " " + renamed);
     myRepository.refresh(false, true);
-    List<HgFileRevision> revisions = HgHistoryProvider.getHistory((filePath), myRepository, myProject);
+    VirtualFile renamedFile = VfsUtil.findFileByIoFile(new File(subDir.getPath(), renamed), true);
+    assert renamedFile != null;
+    changeListManager.ensureUpToDate();
+    List<HgFileRevision> revisions = HgHistoryProvider.getHistory(VcsUtil.getFilePath(renamedFile), myRepository, myProject);
     assertEquals(3, revisions.size());
   }
 }
