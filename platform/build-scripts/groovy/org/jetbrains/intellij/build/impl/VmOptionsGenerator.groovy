@@ -24,7 +24,7 @@ import org.jetbrains.intellij.build.ProductProperties
  */
 @CompileStatic
 class VmOptionsGenerator {
-  private static final String COMMON_VM_OPTIONS = "-XX:+UseG1GC -XX:SoftRefLRUPolicyMSPerMB=50 " +  // Android Studio: modified by Change Ie7351d92 / commit 6303bdc
+  private static final String COMMON_VM_OPTIONS = "-XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 " +  // Android Studio: modified by changes Ie7351d92 and I12955aeb
                                           "-Dsun.io.useCanonPrefixCache=false -Djava.net.preferIPv4Stack=true " +
                                           "-Djdk.http.auth.tunneling.disabledSchemes=\"\" " +
                                           "-Djna.nosys=true -Djna.boot.library.path= " +  // Android Studio: modified by Change Ie7351d92 / commit 6303bdc
