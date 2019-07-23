@@ -29,13 +29,25 @@ import java.nio.charset.Charset;
  */
 public abstract class LanguageFileType implements FileType{
   private final Language myLanguage;
+  private final boolean mySecondary;
 
   /**
    * Creates a language file type for the specified language.
    * @param language The language used in the files of the type.
    */
   protected LanguageFileType(@NotNull final Language language) {
+    this(language, false);
+  }
+
+  /**
+   * Creates a language file type for the specified language.
+   * @param language The language used in the files of the type.
+   * @param secondary If true, this language file type will never be returned as the associated file type for the language.
+   *                  (Used when a file type is reusing the language of another file type, e.g. XML).
+   */
+  protected LanguageFileType(@NotNull final Language language, boolean secondary) {
     myLanguage = language;
+    mySecondary = secondary;
   }
 
   /**
@@ -55,6 +67,10 @@ public abstract class LanguageFileType implements FileType{
   @Override
   public boolean isReadOnly() {
     return false;
+  }
+
+  public boolean isSecondary() {
+    return mySecondary;
   }
 
   @Override

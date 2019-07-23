@@ -63,8 +63,8 @@ public class FileTypeBean extends AbstractExtensionPointBean {
   public String fileNamesCaseInsensitive;
 
   /**
-   * For file types that extend {@link LanguageFileType}, this must be set to the ID of the language
-   * returned by {@link LanguageFileType#getLanguage()}.
+   * For file types that extend {@link LanguageFileType} and are the primary file type for the corresponding language, this must be set
+   * to the ID of the language returned by {@link LanguageFileType#getLanguage()}
    */
   @Attribute("language")
   public String language;
