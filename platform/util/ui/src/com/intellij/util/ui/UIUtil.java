@@ -86,6 +86,9 @@ public final class UIUtil extends StartupUiUtil {
     return Logger.getInstance("#com.intellij.util.ui.UIUtil");
   }
 
+  /**
+   * @deprecated use {@link #decorateWindowHeader(JRootPane)}
+   */
   @Deprecated
   public static void decorateFrame(@NotNull JRootPane pane) {
     decorateWindowHeader(pane);
@@ -889,12 +892,18 @@ public final class UIUtil extends StartupUiUtil {
     return UIManager.getColor("TableHeader.background");
   }
 
+  /**
+   * @deprecated use {@link #getTreeForeground()}
+   */
   @NotNull
   @Deprecated
   public static Color getTreeTextForeground() {
     return getTreeForeground();
   }
 
+  /**
+   * @deprecated use {@link #getTreeBackground()}
+   */
   @NotNull
   @Deprecated
   public static Color getTreeTextBackground() {
@@ -915,7 +924,7 @@ public final class UIUtil extends StartupUiUtil {
   }
 
   /**
-   * @deprecated use com.intellij.util.ui.UIUtil#getTextFieldBackground()
+   * @deprecated use {@link UIUtil#getTextFieldBackground()} instead
    */
   @Deprecated
   public static Color getActiveTextFieldBackgroundColor() {
@@ -927,7 +936,7 @@ public final class UIUtil extends StartupUiUtil {
   }
 
   /**
-   * @deprecated use com.intellij.util.ui.UIUtil#getInactiveTextColor()
+   * @deprecated use {@link UIUtil#getInactiveTextColor()} instead
    */
   @NotNull
   @Deprecated
@@ -1055,6 +1064,9 @@ public final class UIUtil extends StartupUiUtil {
     return UIManager.getFont("Menu.font");
   }
 
+  /**
+   * @deprecated use {@link JBUI.CurrentTheme.CustomFrameDecorations#separatorForeground()}
+   */
   @NotNull
   @Deprecated
   public static Color getSeparatorForeground() {
@@ -1073,6 +1085,9 @@ public final class UIUtil extends StartupUiUtil {
     return UIManager.getColor("Separator.highlight");
   }
 
+  /**
+   * @deprecated use {@link JBUI.CurrentTheme.CustomFrameDecorations#separatorForeground()}
+   */
   @NotNull
   @Deprecated
   public static Color getSeparatorColor() {
@@ -1083,6 +1098,9 @@ public final class UIUtil extends StartupUiUtil {
     return UIManager.getBorder("Table.focusCellHighlightBorder");
   }
 
+  /**
+   * @deprecated unsupported UI feature
+   */
   @Deprecated
   public static void setLineStyleAngled(@NotNull final JTree component) {
   }
@@ -1166,6 +1184,9 @@ public final class UIUtil extends StartupUiUtil {
     return UIManager.getIcon("Tree.expandedIcon");
   }
 
+  /**
+   * @deprecated use {@link #getTreeExpandedIcon()} and {@link #getTreeCollapsedIcon()}
+   */
   @Deprecated
   public static Icon getTreeIcon(boolean expanded) {
     return expanded ? getTreeExpandedIcon() : getTreeCollapsedIcon();
@@ -1200,21 +1221,25 @@ public final class UIUtil extends StartupUiUtil {
   }
 
   /**
-   * Alloy Look-n-Feel is deprecated and does not supported by IntelliJ Platform
-   * @return false
-   * @deprecated
+   * @deprecated Alloy Look-n-Feel is deprecated and not supported anymore
    */
   @Deprecated
   public static boolean isUnderAlloyIDEALookAndFeel() {
     return false;
   }
 
+  /**
+   * @deprecated Native OS Look-n-Feel is not supported anymore
+   */
   @Deprecated
   @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderWindowsLookAndFeel() {
     return SystemInfo.isWindows && UIManager.getLookAndFeel().getName().equals("Windows");
   }
 
+  /**
+   * @deprecated Native OS Look-n-Feel is not supported anymore
+   */
   @Deprecated
   @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderWindowsClassicLookAndFeel() {
@@ -1227,9 +1252,7 @@ public final class UIUtil extends StartupUiUtil {
   }
 
   /**
-   * Nimbus Look-n-Feel is deprecated and does not supported by IntelliJ Platform
-   * @return false
-   * @deprecated
+   * @deprecated Nimbus Look-n-Feel is deprecated and not supported anymore
    */
   @Deprecated
   public static boolean isUnderNimbusLookAndFeel() {
@@ -1237,9 +1260,7 @@ public final class UIUtil extends StartupUiUtil {
   }
 
   /**
-   * JGoodies Look-n-Feel is deprecated and does not supported by IntelliJ Platform
-   * @return false
-   * @deprecated
+   * @deprecated JGoodies Look-n-Feel is deprecated and not supported anymore
    */
   @Deprecated
   public static boolean isUnderJGoodiesLookAndFeel() {
@@ -1293,6 +1314,9 @@ public final class UIUtil extends StartupUiUtil {
     }
   }
 
+  /**
+   * @deprecated GTK Look-n-Feel is not supported anymore
+   */
   @Deprecated
   @SuppressWarnings("HardCodedStringLiteral")
   @Nullable
@@ -1318,6 +1342,9 @@ public final class UIUtil extends StartupUiUtil {
     return SystemInfo.isMac ? getLabelFont(UIUtil.FontSize.SMALL) : getLabelFont();
   }
 
+  /**
+   * @deprecated GTK Look-n-Feel is not supported anymore
+   */
   @Deprecated
   @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isMurrineBasedTheme() {
@@ -2067,6 +2094,9 @@ public final class UIUtil extends StartupUiUtil {
     return ComponentUtil.findParentByCondition(c, Component::isOpaque);
   }
 
+  /**
+   * @deprecated use {@link ComponentUtil#findParentByCondition(Component, java.util.function.Predicate)}
+   */
   @Deprecated
   public static Component findParentByCondition(@Nullable Component c, @NotNull Condition<? super Component> condition) {
     return ComponentUtil.findParentByCondition(c, it -> condition.value(it));
@@ -2157,6 +2187,9 @@ public final class UIUtil extends StartupUiUtil {
     return component != null && component.isFocusable() && component.isEnabled() && component.isShowing();
   }
 
+  /**
+   * @deprecated use {@link com.intellij.openapi.wm.IdeFocusManager}
+   */
   @Deprecated
   public static void requestFocus(@NotNull final JComponent c) {
     if (c.isShowing()) {
@@ -3609,18 +3642,27 @@ public final class UIUtil extends StartupUiUtil {
     return !selected ? getListBackground() : getListSelectionBackground(focused);
   }
 
+  /**
+   * @deprecated use {@link #getListBackground(boolean, boolean)}
+   */
   @NotNull
   @Deprecated
   public static Color getListBackground(boolean selected) {
     return getListBackground(selected, true);
   }
 
+  /**
+   * @deprecated use {@link #getListSelectionBackground(boolean)}
+   */
   @NotNull
   @Deprecated
   public static Color getListSelectionBackground() {
     return getListSelectionBackground(true);
   }
 
+  /**
+   * @deprecated use {@link #getListSelectionBackground(boolean)}
+   */
   @NotNull
   @Deprecated
   public static Color getListUnfocusedSelectionBackground() {
@@ -3646,12 +3688,18 @@ public final class UIUtil extends StartupUiUtil {
     return !selected ? getListForeground() : getListSelectionForeground(focused);
   }
 
+  /**
+   * @deprecated use {@link #getListForeground(boolean, boolean)}
+   */
   @NotNull
   @Deprecated
   public static Color getListForeground(boolean selected) {
     return getListForeground(selected, true);
   }
 
+  /**
+   * @deprecated use {@link #getListSelectionForeground(boolean)}
+   */
   @NotNull
   @Deprecated
   public static Color getListSelectionForeground() {
@@ -3684,12 +3732,18 @@ public final class UIUtil extends StartupUiUtil {
     return !selected ? getTreeBackground() : getTreeSelectionBackground(focused);
   }
 
+  /**
+   * @deprecated use {@link #getTreeSelectionBackground(boolean)}
+   */
   @NotNull
   @Deprecated
   public static Color getTreeSelectionBackground() {
     return getTreeSelectionBackground(true);
   }
 
+  /**
+   * @deprecated use {@link #getTreeSelectionBackground(boolean)}
+   */
   @NotNull
   @Deprecated
   public static Color getTreeUnfocusedSelectionBackground() {
@@ -3714,6 +3768,9 @@ public final class UIUtil extends StartupUiUtil {
     return !selected ? getTreeForeground() : getTreeSelectionForeground(focused);
   }
 
+  /**
+   * @deprecated use {@link #getTreeSelectionForeground(boolean)}
+   */
   @NotNull
   @Deprecated
   public static Color getTreeSelectionForeground() {
@@ -3735,18 +3792,27 @@ public final class UIUtil extends StartupUiUtil {
     return !selected ? getTableBackground() : getTableSelectionBackground(focused);
   }
 
+  /**
+   * @deprecated use {@link #getTableBackground(boolean, boolean)}
+   */
   @NotNull
   @Deprecated
   public static Color getTableBackground(boolean selected) {
     return getTableBackground(selected, true);
   }
 
+  /**
+   * @deprecated use {@link #getTableSelectionBackground(boolean)}
+   */
   @NotNull
   @Deprecated
   public static Color getTableSelectionBackground() {
     return getTableSelectionBackground(true);
   }
 
+  /**
+   * @deprecated use {@link #getTableSelectionBackground(boolean)}
+   */
   @NotNull
   @Deprecated
   public static Color getTableUnfocusedSelectionBackground() {
@@ -3771,28 +3837,43 @@ public final class UIUtil extends StartupUiUtil {
     return !selected ? getTableForeground() : getTableSelectionForeground(focused);
   }
 
+  /**
+   * @deprecated use {@link #getTableForeground(boolean, boolean)}
+   */
   @NotNull
   @Deprecated
   public static Color getTableForeground(boolean selected) {
     return getTableForeground(selected, true);
   }
 
+  /**
+   * @deprecated use {@link #getTableSelectionForeground(boolean)}
+   */
   @NotNull
   @Deprecated
   public static Color getTableSelectionForeground() {
     return UIManager.getColor("Table.selectionForeground");
   }
 
+  /**
+   * @deprecated use {@link JBUIScale#getSystemFontData()}
+   */
   @Deprecated
   public static Pair<String, Integer> getSystemFontData() {
     return JBUIScale.getSystemFontData();
   }
 
+  /**
+   * @deprecated use {@link JreHiDpiUtil#isJreHiDPIEnabled()}
+   */
   @Deprecated
   public static boolean isJreHiDPIEnabled() {
     return JreHiDpiUtil.isJreHiDPIEnabled();
   }
 
+  /**
+   * @deprecated use {@link JreHiDpiUtil#isJreHiDPI(Graphics2D)}
+   */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public static boolean isJreHiDPI(@Nullable Graphics2D g) {
@@ -3800,7 +3881,7 @@ public final class UIUtil extends StartupUiUtil {
   }
 
   /**
-   * @deprecated use com.intellij.util.ui.UIUtil#getPanelBackground() instead
+   * @deprecated use {@link UIUtil#getPanelBackground()} instead
    */
   @SuppressWarnings("SpellCheckingInspection")
   @NotNull

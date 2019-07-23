@@ -16,6 +16,8 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FakePsiElement;
+import com.intellij.psi.impl.source.html.dtd.HtmlAttributeDescriptorImpl;
+import com.intellij.psi.impl.source.html.dtd.HtmlElementDescriptorImpl;
 import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
@@ -254,7 +256,10 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
     if (element != null && LookupManager.getInstance(element.getProject()).getActiveLookup() == null) {
       XmlAttribute attribute = ReadAction.compute(() -> PsiTreeUtil.getParentOfType(element, XmlAttribute.class, true));
       if (attribute != null) {
-        return HtmlCompatibilityData.getAttributeData(attribute.getParent(), attribute.getName());
+        XmlAttributeDescriptor descriptor = attribute.getDescriptor();
+        String name = descriptor instanceof HtmlAttributeDescriptorImpl && !((HtmlAttributeDescriptorImpl)descriptor).isCaseSensitive() ?
+                      StringUtil.toLowerCase(attribute.getName()) : attribute.getName();
+        return HtmlCompatibilityData.getAttributeData(attribute.getParent(), name);
       }
       else if (element.getParent() instanceof XmlTag) {
         return HtmlCompatibilityData.getTagData((XmlTag)element.getParent());
@@ -265,7 +270,10 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
     } else {
       XmlTag tag = ReadAction.compute(() -> PsiTreeUtil.getParentOfType(element, XmlTag.class, true));
       if (tag != null) {
-        return HtmlCompatibilityData.getAttributeData(tag, entity.name);
+        XmlElementDescriptor descriptor = tag.getDescriptor();
+        String name = descriptor instanceof HtmlElementDescriptorImpl && !((HtmlElementDescriptorImpl)descriptor).isCaseSensitive() ?
+                      StringUtil.toLowerCase(entity.name) : entity.name;
+        return HtmlCompatibilityData.getAttributeData(tag, name);
       }
     }
     return null;

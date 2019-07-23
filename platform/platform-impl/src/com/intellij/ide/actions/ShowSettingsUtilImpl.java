@@ -206,6 +206,23 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   @Override
+  public boolean editConfigurable(@Nullable Component parent, @NotNull String displayName) {
+    return editConfigurable(parent, displayName, (Runnable)null);
+  }
+
+  @Override
+  public boolean editConfigurable(@Nullable Component parent, @NotNull String displayName, @Nullable Runnable advancedInitialization) {
+    ConfigurableGroup group = ConfigurableExtensionPointUtil.getConfigurableGroup(null, /* withIdeSettings = */ true);
+    List<ConfigurableGroup> groups = group.getConfigurables().length == 0 ? Collections.emptyList() : Collections.singletonList(group);
+    Configurable configurable = findPreselectedByDisplayName(displayName, groups);
+    if (configurable == null) {
+      LOG.error("Cannot find configurable for name [" + displayName + "]");
+      return false;
+    }
+    return editConfigurable(parent, configurable, advancedInitialization);
+  }
+
+  @Override
   public boolean editConfigurable(@Nullable Component parent, @NotNull Configurable configurable, @Nullable Runnable advancedInitialization) {
     return editConfigurable(parent, null, configurable, createDimensionKey(configurable), advancedInitialization, isWorthToShowApplyButton(configurable));
   }

@@ -25,7 +25,6 @@ import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;

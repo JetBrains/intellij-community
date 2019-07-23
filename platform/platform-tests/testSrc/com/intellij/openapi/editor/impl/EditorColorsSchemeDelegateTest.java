@@ -72,9 +72,9 @@ public class EditorColorsSchemeDelegateTest extends AbstractEditorTest {
       ((ModifiableFontPreferences)globalPrefs).register(secondaryFont, globalPrefs.getSize(globalPrefs.getFontFamily()));
       LOG.debug(dumpFontPreferences("globalPrefs", globalPrefs));
       assertEquals(2, globalPrefs.getRealFontFamilies().size());
-      ((EditorEx)myEditor).reinitSettings();
+      ((EditorEx)getEditor()).reinitSettings();
 
-      EditorColorsScheme editorScheme = myEditor.getColorsScheme();
+      EditorColorsScheme editorScheme = getEditor().getColorsScheme();
       assertInstanceOf(editorScheme, DelegateColorScheme.class);
       EditorColorsScheme delegate = ((DelegateColorScheme)editorScheme).getDelegate();
       assertTrue(delegate.isUseAppFontPreferencesInEditor());

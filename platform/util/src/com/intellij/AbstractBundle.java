@@ -2,7 +2,6 @@
 package com.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;

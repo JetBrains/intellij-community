@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.codeInspection.confusing;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;

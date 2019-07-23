@@ -10,7 +10,6 @@ import gnu.trove.TIntIntHashMap;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;

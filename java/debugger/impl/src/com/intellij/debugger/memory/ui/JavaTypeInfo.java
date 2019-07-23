@@ -8,7 +8,6 @@ import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 
 public class JavaTypeInfo implements TypeInfo {

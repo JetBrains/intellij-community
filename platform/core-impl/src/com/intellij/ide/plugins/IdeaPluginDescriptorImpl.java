@@ -599,6 +599,11 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
             }
           }
           else {
+            // hack for IDEA-219113, to be removed after merging jre11-compatible Android plugin
+            if ("org.jetbrains.android".equals(getPluginId().getIdString())) {
+              if (f.getName().equals(SystemInfo.isJavaVersionAtLeast(11) ? "jdk11" : "jdk8"))
+                result.add(new File(f, "layoutlib.jar"));
+            }
             result.add(f);
           }
         }

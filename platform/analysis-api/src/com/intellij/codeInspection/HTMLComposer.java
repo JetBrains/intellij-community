@@ -18,7 +18,6 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.openapi.util.Key;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 public abstract class HTMLComposer {

@@ -21,7 +21,6 @@ import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.buildout.config.BuildoutCfgElementTypes;
 import com.jetbrains.python.buildout.config.BuildoutCfgTokenTypes;
 import com.jetbrains.python.buildout.config.psi.impl.*;
-import com.jetbrains.python.buildout.config.psi.impl.BuildoutCfgPsiElement;
 
 /**
  * @author traff

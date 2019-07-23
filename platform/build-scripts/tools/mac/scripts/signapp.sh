@@ -13,6 +13,7 @@ PASSWORD=$4
 CODESIGN_STRING=$5
 HELP_DIR_NAME=$6
 NOTARIZE=$7
+BUNDLE_ID=$8
 
 cd "$(dirname "$0")"
 
@@ -35,8 +36,8 @@ log "$INPUT_FILE unzipped and removed"
 
 APPLICATION_PATH="$EXPLODED/$BUILD_NAME"
 
-if [ $# -eq 8 ] && [ -f "$8" ]; then
-  archiveJDK="$8"
+if [ $# -eq 9 ] && [ -f "$9" ]; then
+  archiveJDK="$9"
   log "Preparing jdk $archiveJDK..."
   log "Modifying Info.plist"
   sed -i -e 's/1.6\*/1.6\+/' "$APPLICATION_PATH/Contents/Info.plist"
@@ -118,7 +119,13 @@ if [ "$NOTARIZE" = "yes" ]; then
   # shellcheck disable=SC1090
   source "$HOME/.notarize_token"
   APP_NAME="${INPUT_FILE%.*}"
-  ./notarize.sh "$APPLICATION_PATH" "$APPLE_USERNAME" "$APPLE_PASSWORD" "$APP_NAME"
+  # Since notarization tool uses same file for upload token we have to trick it into using different folders, hence fake root
+  # Also it leaves copy of zip file in TMPDIR, so notarize.sh overrides it and uses FAKE_ROOT as location for temp TMPDIR
+  FAKE_ROOT="$(pwd)/fake-root"
+  mkdir -p "$FAKE_ROOT"
+  echo "Notarization will use fake root: $FAKE_ROOT"
+  ./notarize.sh "$APPLICATION_PATH" "$APPLE_USERNAME" "$APPLE_PASSWORD" "$APP_NAME" "$BUNDLE_ID" "$FAKE_ROOT"
+  rm -rf "$FAKE_ROOT"
 
   log "Stapling..."
   xcrun stapler staple "$APPLICATION_PATH"

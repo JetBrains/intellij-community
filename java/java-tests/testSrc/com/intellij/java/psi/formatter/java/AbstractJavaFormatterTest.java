@@ -74,7 +74,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
   }
 
 
-  public static JavaCodeStyleSettings getJavaSettings() {
+  public JavaCodeStyleSettings getJavaSettings() {
     return getSettings().getRootSettings().getCustomSettings(JavaCodeStyleSettings.class);
   }
 
@@ -89,12 +89,12 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.HIGHEST);
   }
 
-  public static CommonCodeStyleSettings getSettings() {
+  public CommonCodeStyleSettings getSettings() {
     CodeStyleSettings rootSettings = CodeStyle.getSettings(getProject());
     return rootSettings.getCommonSettings(JavaLanguage.INSTANCE);
   }
 
-  public static CommonCodeStyleSettings.IndentOptions getIndentOptions() {
+  public CommonCodeStyleSettings.IndentOptions getIndentOptions() {
     return getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA);
   }
 

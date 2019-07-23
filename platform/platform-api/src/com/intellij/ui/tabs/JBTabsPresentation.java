@@ -26,8 +26,6 @@ public interface JBTabsPresentation {
 
   JBTabsPresentation setPaintFocus(boolean paintFocus);
 
-  JBTabsPresentation setAlwaysPaintSelectedTab(final boolean paintSelected);
-
   JBTabsPresentation setStealthTabMode(boolean stealthTabMode);
 
   JBTabsPresentation setSideComponentVertical(boolean vertical);

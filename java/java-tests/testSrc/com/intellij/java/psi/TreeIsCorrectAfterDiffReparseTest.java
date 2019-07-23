@@ -1100,8 +1100,8 @@ public class TreeIsCorrectAfterDiffReparseTest extends LightJavaCodeInsightTestC
                    "}";
     configureFromFileText("Foo.java", part1 + part2);
 
-    final PsiDocumentManager docManager = PsiDocumentManager.getInstance(ourProject);
-    final Document doc = docManager.getDocument(myFile);
+    final PsiDocumentManager docManager = PsiDocumentManager.getInstance(getProject());
+    final Document doc = docManager.getDocument(getFile());
     WriteCommandAction.runWriteCommandAction(getProject(), () -> doc.insertString(part1.length(), "/**"));
 
 

@@ -13,9 +13,13 @@ import com.intellij.openapi.vcs.VcsShowConfirmationOption.Value.DO_NOTHING_SILEN
 import com.intellij.openapi.vcs.changes.ChangeListListener
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.project.isDirectoryBased
+import com.intellij.project.stateStore
 import com.intellij.util.concurrency.QueueProcessor
 import com.intellij.vfs.AsyncVfsEventsListener
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
@@ -78,11 +82,13 @@ class ExternallyAddedFilesProcessorImpl(project: Project,
   override fun filesChanged(events: List<VFileEvent>) {
     if (!needProcessExternalFiles()) return
 
+    val configDir = project.getProjectConfigDir()
     val externallyAddedFiles =
       events.asSequence()
         .filter(VFileEvent::isFromRefresh)
         .filter { it is VFileCreateEvent }
         .mapNotNull(VFileEvent::getFile)
+        .filterNot { isProjectConfigDirOrUnderIt(configDir, it) }
         .toSet()
 
     if (externallyAddedFiles.isEmpty()) return
@@ -145,6 +151,19 @@ class ExternallyAddedFilesProcessorImpl(project: Project,
   override fun rememberForAllProjects() {}
 
   private fun isUnder(parents: Collection<VirtualFile>, child: VirtualFile) = generateSequence(child) { it.parent }.any { it in parents }
+
+  private fun isProjectConfigDirOrUnderIt(configDir: VirtualFile?, file: VirtualFile) =
+    configDir != null && VfsUtilCore.isAncestor(configDir, file, false)
+
+  private fun Project.getProjectConfigDir(): VirtualFile? {
+    if (!isDirectoryBased || isDefault) return null
+
+    val projectConfigDir = stateStore.projectConfigDir?.let(LocalFileSystem.getInstance()::findFileByPath)
+    if (projectConfigDir == null) {
+      LOG.warn("Cannot find project config directory for non-default and non-directory based project ${name}")
+    }
+    return projectConfigDir
+  }
 
   @TestOnly
   fun waitForEventsProcessedInTestMode() {

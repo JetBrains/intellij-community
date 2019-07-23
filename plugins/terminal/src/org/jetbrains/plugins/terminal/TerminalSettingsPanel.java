@@ -151,7 +151,7 @@ public class TerminalSettingsPanel {
            || (myShellIntegration.isSelected() != myOptionsProvider.shellIntegration())
            || (myHighlightHyperlinks.isSelected() != myOptionsProvider.highlightHyperlinks()) ||
            myConfigurables.stream().anyMatch(c -> c.isModified())
-           || !Comparing.equal(myEnvVarField.getData(), myOptionsProvider.getEnvData());
+           || !Comparing.equal(myEnvVarField.getData(), myProjectOptionsProvider.getEnvData());
   }
 
   public void apply() {
@@ -174,7 +174,7 @@ public class TerminalSettingsPanel {
         //pass
       }
     });
-    myOptionsProvider.setEnvData(myEnvVarField.getData());
+    myProjectOptionsProvider.setEnvData(myEnvVarField.getData());
   }
 
   public void reset() {
@@ -190,7 +190,7 @@ public class TerminalSettingsPanel {
     myShellIntegration.setSelected(myOptionsProvider.shellIntegration());
     myHighlightHyperlinks.setSelected(myOptionsProvider.highlightHyperlinks());
     myConfigurables.forEach(c -> c.reset());
-    myEnvVarField.setData(myOptionsProvider.getEnvData());
+    myEnvVarField.setData(myProjectOptionsProvider.getEnvData());
   }
 
   public Color getDefaultValueColor() {

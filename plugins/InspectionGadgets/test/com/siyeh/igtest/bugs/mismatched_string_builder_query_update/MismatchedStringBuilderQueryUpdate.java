@@ -16,6 +16,7 @@
 package com.siyeh.igtest.bugs.mismatched_string_builder_query_update;
 
 import java.util.*;
+import java.util.function.*;
 
 public class MismatchedStringBuilderQueryUpdate {
 
@@ -101,6 +102,32 @@ public class MismatchedStringBuilderQueryUpdate {
       }
     }
     return null;
+  }
+
+  public static void methodRefQuery(String name) {
+    final StringBuilder sb = new StringBuilder();
+    sb.append("Hello, ").append(name != null ? name : "world");
+    foo(sb::toString);
+
+    final StringBuilder sb2 = new StringBuilder();
+    sb2.append("Hello, ").append(name != null ? name : "world");
+    foo2(sb2::append); // StringBuilder can leak, because it's returned from function
+
+    final StringBuilder <warning descr="Contents of StringBuilder 'sb3' are updated, but never queried">sb3</warning> = new StringBuilder();
+    sb3.append("Hello, ").append(name != null ? name : "world");
+    foo3(sb3::append); // StringBuilder cannot leak
+  }
+
+  static void foo(Supplier<String> s) {
+    System.out.println(s.get());
+  }
+
+  static void foo2(Function<String, StringBuilder> fn) {
+    System.out.println(fn.apply("foo"));
+  }
+
+  static void foo3(Consumer<String> fn) {
+    fn.accept("foo");
   }
 }
 interface List<T> {

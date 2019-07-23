@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project;
 
+import com.amazon.ion.IonType;
 import com.google.gson.GsonBuilder;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.openapi.application.PathManager;
@@ -24,9 +25,11 @@ import com.intellij.openapi.externalSystem.util.PathPrefixTreeMapImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
@@ -37,12 +40,10 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.text.CharArrayUtil;
+import gnu.trove.THash;
 import org.codehaus.groovy.runtime.typehandling.ShortTypeHandling;
 import org.gradle.internal.impldep.com.google.common.collect.Multimap;
-import org.gradle.tooling.model.DomainObjectSet;
-import org.gradle.tooling.model.GradleModuleVersion;
-import org.gradle.tooling.model.GradleTask;
-import org.gradle.tooling.model.UnsupportedMethodException;
+import org.gradle.tooling.model.*;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.gradle.tooling.model.idea.*;
@@ -54,7 +55,7 @@ import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.model.tests.ExternalTestSourceMapping;
 import org.jetbrains.plugins.gradle.model.tests.ExternalTestsModel;
-import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataService;
+import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache;
 import org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataService;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.builder.ModelBuildScriptClasspathBuilderImpl;
@@ -121,7 +122,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   public void populateProjectExtraModels(@NotNull IdeaProject gradleProject, @NotNull DataNode<ProjectData> ideProject) {
     final ExternalProject externalProject = resolverCtx.getExtraProject(ExternalProject.class);
     if (externalProject != null) {
-      ideProject.createChild(ExternalProjectDataService.KEY, externalProject);
+      ideProject.createChild(ExternalProjectDataCache.KEY, externalProject);
       ideProject.getData().setDescription(externalProject.getDescription());
     }
 
@@ -252,7 +253,9 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   public void populateModuleExtraModels(@NotNull IdeaModule gradleModule, @NotNull DataNode<ModuleData> ideModule) {
     GradleExtensions gradleExtensions = resolverCtx.getExtraProject(gradleModule, GradleExtensions.class);
     if (gradleExtensions != null) {
-      DefaultGradleExtensions extensions = new DefaultGradleExtensions(gradleExtensions);
+      boolean useCustomSerialization = Registry.is("gradle.tooling.custom.serializer", true);
+      DefaultGradleExtensions extensions = useCustomSerialization ? (DefaultGradleExtensions)gradleExtensions
+                                                                  : new DefaultGradleExtensions(gradleExtensions);
       ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
       if (externalProject != null) {
         extensions.addTasks(externalProject.getTasks().values());
@@ -267,7 +270,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     }
 
     ProjectImportAction.AllModels models = resolverCtx.getModels();
-    ExternalTestsModel externalTestsModel = models.getExtraProject(gradleModule, ExternalTestsModel.class);
+    ExternalTestsModel externalTestsModel = models.getModel(gradleModule, ExternalTestsModel.class);
     if (externalTestsModel != null) {
       for (ExternalTestSourceMapping testSourceMapping : externalTestsModel.getTestSourceMappings()) {
         String testName = testSourceMapping.getTestName();
@@ -739,8 +742,8 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
   @NotNull
   @Override
-  public ProjectImportExtraModelProvider getExtraModelProvider() {
-    return new ClassSetProjectImportExtraModelProvider(getExtraProjectModelClasses());
+  public ProjectImportModelProvider getModelProvider() {
+    return new ClassSetProjectImportModelProvider(getExtraProjectModelClasses());
   }
 
   @NotNull
@@ -756,7 +759,13 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       // repacked gradle guava
       Multimap.class,
       GsonBuilder.class,
-      ShortTypeHandling.class
+      ShortTypeHandling.class,
+      // trove4j jar
+      THash.class,
+      // ion-java jar
+      IonType.class,
+      // util-rt jat
+      SystemInfoRt.class // !!! do not replace it with SystemInfo.class from util module
     );
   }
 

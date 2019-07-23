@@ -41,6 +41,7 @@ final class ThumbnailViewImpl implements ThumbnailView {
 
     ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
     myThumbnailViewUI = new ThumbnailViewUI(this);
+    Disposer.register(this, myThumbnailViewUI);
     toolWindow = windowManager.registerToolWindow(TOOLWINDOW_ID, myThumbnailViewUI, ToolWindowAnchor.BOTTOM);
     toolWindow.setIcon(ImagesIcons.ThumbnailToolWindow);
     setVisible(false);
@@ -147,9 +148,6 @@ final class ThumbnailViewImpl implements ThumbnailView {
       setTitle();
       getUI().refresh();
     }
-    else {
-      Disposer.dispose(getUI());
-    }
   }
 
   @Override
@@ -218,8 +216,6 @@ final class ThumbnailViewImpl implements ThumbnailView {
 
   @Override
   public void dispose() {
-    // Dispose UI
-    Disposer.dispose(getUI());
     // Unregister ToolWindow
     ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
     windowManager.unregisterToolWindow(TOOLWINDOW_ID);

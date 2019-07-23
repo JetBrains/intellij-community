@@ -27,11 +27,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.Range;
+import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
 import com.sun.jdi.ReferenceType;
+import gnu.trove.TObjectIntHashMap;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -148,6 +150,10 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
         @Override
         public void visitAnonymousClass(PsiAnonymousClass aClass) {
+          PsiExpressionList argumentList = aClass.getArgumentList();
+          if (argumentList != null) {
+            argumentList.accept(this);
+          }
           for (PsiMethod psiMethod : aClass.getMethods()) {
             targets.add(0, new MethodSmartStepTarget(psiMethod, getCurrentParamName(), psiMethod.getBody(), true, null));
           }
@@ -354,13 +360,14 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
             return smart ? targets : Collections.emptyList();
           }
           // sanity check
+          DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
           try {
             List<MethodSmartStepTarget> methodTargets =
               StreamEx.of(targets)
                 .select(MethodSmartStepTarget.class)
                 .filter(target -> !target.needsBreakpointRequest())
                 .toList();
-            visitLinesMethods(frameProxy.location(), true, lines, (opcode, owner, name, desc, itf) -> {
+            visitLinesInstructions(frameProxy.location(), true, lines, (opcode, owner, name, desc, itf, ordinal) -> {
               if (name.startsWith("access$")) { // bridge method
                 ReferenceType cls = ContainerUtil.getFirstItem(virtualMachine.classesByName(owner));
                 if (cls != null) {
@@ -372,14 +379,14 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
                         if ("java/lang/AbstractMethodError".equals(owner)) {
                           return;
                         }
-                        removeMatchingMethod(methodTargets, owner, name, desc, suspendContext.getDebugProcess());
+                        removeMatchingMethod(methodTargets, owner, name, desc, ordinal, debugProcess);
                       }
                     }, false);
                   }
                 }
               }
               else {
-                removeMatchingMethod(methodTargets, owner, name, desc, suspendContext.getDebugProcess());
+                removeMatchingMethod(methodTargets, owner, name, desc, ordinal, debugProcess);
               }
             });
             if (!methodTargets.isEmpty()) {
@@ -390,30 +397,27 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
             LOG.error(e);
           }
 
-          // remove already executed
           try {
-            visitLinesMethods(frameProxy.location(), false, lines, (opcode, owner, name, desc, itf) -> {
-              Iterator<SmartStepTarget> iterator = targets.iterator();
-              while (iterator.hasNext()) {
-                SmartStepTarget e = iterator.next();
-                if (e instanceof MethodSmartStepTarget &&
-                    DebuggerUtilsEx.methodMatches(((MethodSmartStepTarget)e).getMethod(),
-                                                  owner.replace("/", "."), name, desc,
-                                                  suspendContext.getDebugProcess())) {
-                  iterator.remove();
-                  MethodSmartStepTarget target = (MethodSmartStepTarget)e;
-                  // fix ordinals
-                  existingMethodCalls(targets, target.getMethod())
-                    .forEach(t -> {
-                      int ordinal = t.getOrdinal();
-                      if (ordinal > target.getOrdinal()) {
-                        t.setOrdinal(ordinal - 1);
-                      }
-                    });
-                  break;
-                }
-              }
-            });
+            // remove already executed
+            JumpsAndInsnVisitor visitor = new JumpsAndInsnVisitor(targets, debugProcess);
+            visitLinesInstructions(frameProxy.location(), false, lines, visitor);
+
+            if (!smart) {
+              // remove after jumps
+              visitor.setJumpsToIgnore(visitor.getJumpCounter() + 1);
+              visitLinesInstructions(frameProxy.location(), true, lines, visitor);
+            }
+
+            // fix ordinals
+            for (MethodSmartStepTarget target : visitor.getRemoved()) {
+              existingMethodCalls(targets, target.getMethod())
+                .forEach(t -> {
+                  int ordinal = t.getOrdinal();
+                  if (ordinal > target.getOrdinal()) {
+                    t.setOrdinal(ordinal - 1);
+                  }
+                });
+            }
           }
           catch (Exception e) {
             LOG.info(e);
@@ -430,10 +434,13 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
                                            String owner,
                                            String name,
                                            String desc,
+                                           int ordinal,
                                            DebugProcessImpl process) {
     Iterator<MethodSmartStepTarget> iterator = targets.iterator();
     while (iterator.hasNext()) {
-      if (DebuggerUtilsEx.methodMatches(iterator.next().getMethod(), owner.replace("/", "."), name, desc, process)) {
+      MethodSmartStepTarget target = iterator.next();
+      if (DebuggerUtilsEx.methodMatches(target.getMethod(), owner.replace("/", "."), name, desc, process) &&
+          target.getOrdinal() == ordinal) {
         iterator.remove();
         break;
       }
@@ -441,12 +448,28 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
   }
 
   private interface MethodInsnVisitor {
-    void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf);
+    void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf, int ordinal);
+    default void visitJumpInsn(int opcode, Label label) {}
+    default void visitCode() {}
   }
 
-  private static void visitLinesMethods(Location location, boolean full, Range<Integer> lines, MethodInsnVisitor visitor) {
+  private static void visitLinesInstructions(Location location, boolean full, Range<Integer> lines, MethodInsnVisitor visitor) {
+    TObjectIntHashMap<String> myCounter = new TObjectIntHashMap<>();
+
     MethodBytecodeUtil.visit(location.method(), full ? Long.MAX_VALUE : location.codeIndex(), new MethodVisitor(Opcodes.API_VERSION) {
       boolean myLineMatch = false;
+
+      @Override
+      public void visitJumpInsn(int opcode, Label label) {
+        if (myLineMatch) {
+          visitor.visitJumpInsn(opcode, label);
+        }
+      }
+
+      @Override
+      public void visitCode() {
+        visitor.visitCode();
+      }
 
       @Override
       public void visitLineNumber(int line, Label start) {
@@ -456,7 +479,10 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       @Override
       public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
         if (myLineMatch) {
-          visitor.visitMethodInsn(opcode, owner, name, desc, itf);
+          String key = owner + "." + name + desc;
+          int currentCount = myCounter.get(key);
+          myCounter.put(key, currentCount + 1);
+          visitor.visitMethodInsn(opcode, owner, name, desc, itf, currentCount);
         }
       }
     }, true);
@@ -467,5 +493,57 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       .select(MethodSmartStepTarget.class)
       .filter(target -> !target.needsBreakpointRequest())
       .filter(t -> t.getMethod().equals(psiMethod));
+  }
+
+  private static class JumpsAndInsnVisitor implements MethodInsnVisitor {
+    private final List<SmartStepTarget> myTargets;
+    private final DebugProcessImpl myDebugProcess;
+    private final List<MethodSmartStepTarget> myRemoved = new SmartList<>();
+    private int myJumpCounter;
+    private int myJumpsToIgnore;
+
+    JumpsAndInsnVisitor(List<SmartStepTarget> targets, DebugProcessImpl debugProcess) {
+      myTargets = targets;
+      myDebugProcess = debugProcess;
+    }
+
+    @Override
+    public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf, int ordinal) {
+      if (myJumpCounter >= myJumpsToIgnore) {
+        Iterator<SmartStepTarget> iterator = myTargets.iterator();
+        while (iterator.hasNext()) {
+          SmartStepTarget e = iterator.next();
+          if (e instanceof MethodSmartStepTarget &&
+              DebuggerUtilsEx.methodMatches(((MethodSmartStepTarget)e).getMethod(), owner.replace("/", "."), name, desc, myDebugProcess) &&
+              ((MethodSmartStepTarget)e).getOrdinal() == ordinal) {
+            iterator.remove();
+            myRemoved.add((MethodSmartStepTarget)e);
+            break;
+          }
+        }
+      }
+    }
+
+    @Override
+    public void visitCode() {
+      myJumpCounter = 0;
+    }
+
+    @Override
+    public void visitJumpInsn(int opcode, Label label) {
+      myJumpCounter++;
+    }
+
+    int getJumpCounter() {
+      return myJumpCounter;
+    }
+
+    void setJumpsToIgnore(int jumpsToIgnore) {
+      myJumpsToIgnore = jumpsToIgnore;
+    }
+
+    List<MethodSmartStepTarget> getRemoved() {
+      return myRemoved;
+    }
   }
 }

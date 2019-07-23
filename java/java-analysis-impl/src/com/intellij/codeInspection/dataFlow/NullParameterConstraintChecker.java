@@ -132,10 +132,10 @@ class NullParameterConstraintChecker extends DataFlowRunner {
     }
 
     @Override
-    public void flushVariable(@NotNull DfaVariableValue variable) {
+    protected void flushVariable(@NotNull DfaVariableValue variable, boolean shouldMarkFlushed) {
       final PsiModifierListOwner psi = variable.getPsiVariable();
       if (psi instanceof PsiParameter && myPossiblyViolatedParameters.contains(psi)) return;
-      super.flushVariable(variable);
+      super.flushVariable(variable, shouldMarkFlushed);
     }
 
     @NotNull

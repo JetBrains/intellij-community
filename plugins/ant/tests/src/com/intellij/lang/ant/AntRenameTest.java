@@ -142,7 +142,7 @@ public class AntRenameTest extends LightJavaCodeInsightTestCase {
     final int off = text.indexOf("<ren>");
     text = text.replace("<ren>", "");
     configureFromFileText(filename, text);
-    assertNotNull(myFile);
+    assertNotNull(getFile());
     PsiElement element = TargetElementUtil.getInstance().findTargetElement(
       getEditor(), 
       TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtil.ELEMENT_NAME_ACCEPTED,

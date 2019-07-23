@@ -89,7 +89,7 @@ public class XmlCodeEditUtilTest extends LightJavaCodeInsightTestCase {
     assertEquals("<html><body><p/><p/></body></html>", htmlTag.getText());
   }
 
-  private static void execute(Runnable runnable) {
+  private void execute(Runnable runnable) {
     ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance()
       .executeCommand(getProject(), runnable, "", null, UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION));
   }

@@ -180,14 +180,14 @@ public class IterationStateTest extends AbstractEditorTest {
     assertEquals(Color.red, it.getBeforeLineStartBackgroundAttributes().getBackgroundColor());
   }
 
-  private static void addRangeHighlighter(int startOffset, int endOffset, int layer, Color bgColor) {
+  private void addRangeHighlighter(int startOffset, int endOffset, int layer, Color bgColor) {
     getEditor().getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer,
                                                      new TextAttributes(null, bgColor, null, null, Font.PLAIN),
                                                      HighlighterTargetArea.EXACT_RANGE);
   }
 
 
-  private static void verifySplitting(boolean checkForegroundColor, @NotNull Segment... expectedSegments) {
+  private void verifySplitting(boolean checkForegroundColor, @NotNull Segment... expectedSegments) {
     EditorEx editor = (EditorEx)getEditor();
     IterationState.CaretData caretData = IterationState.createCaretData(editor);
     IterationState iterationState = new IterationState(editor, 0, editor.getDocument().getTextLength(),
@@ -211,7 +211,7 @@ public class IterationStateTest extends AbstractEditorTest {
     EditorTestUtil.setEditorVisibleSize(getEditor(), 1000, 1000);
   }
 
-  private static void setColumnModeOn() {
+  private void setColumnModeOn() {
     ((EditorEx)getEditor()).setColumnMode(true);
   }
 

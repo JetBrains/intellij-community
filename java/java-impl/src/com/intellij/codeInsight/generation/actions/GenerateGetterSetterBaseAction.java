@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.generation.actions;
 
 import com.intellij.codeInsight.generation.GenerateGetterSetterHandlerBase;
-import com.intellij.psi.PsiClass;
 
 /**
  * Action group which contains Generate... actions

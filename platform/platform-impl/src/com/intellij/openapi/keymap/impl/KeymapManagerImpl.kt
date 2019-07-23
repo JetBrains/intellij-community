@@ -13,6 +13,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.editor.actions.CtrlYActionChooser
 import com.intellij.openapi.keymap.Keymap
+import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
 import com.intellij.openapi.options.SchemeManager
@@ -96,9 +97,15 @@ class KeymapManagerImpl(factory: SchemeManagerFactory) : KeymapManagerEx(), Pers
 
   override fun getKeymap(name: String): Keymap? = schemeManager.findSchemeByName(name)
 
-  override fun getActiveKeymap(): Keymap = schemeManager.activeScheme ?: schemeManager.findSchemeByName(DefaultKeymap.instance.defaultKeymapName)!!
+  override fun getActiveKeymap(): Keymap {
+    return schemeManager.activeScheme
+           ?: schemeManager.findSchemeByName(DefaultKeymap.instance.defaultKeymapName)
+           ?: schemeManager.findSchemeByName(KeymapManager.DEFAULT_IDEA_KEYMAP)!!
+  }
 
-  override fun setActiveKeymap(keymap: Keymap): Unit = schemeManager.setCurrent(keymap)
+  override fun setActiveKeymap(keymap: Keymap) {
+    schemeManager.setCurrent(keymap)
+  }
 
   override fun bindShortcuts(sourceActionId: String, targetActionId: String) {
     boundShortcuts.put(targetActionId, sourceActionId)

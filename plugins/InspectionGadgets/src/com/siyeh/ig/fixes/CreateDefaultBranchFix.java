@@ -57,7 +57,7 @@ public class CreateDefaultBranchFix extends BaseSwitchFix {
     PsiExpression switchExpression = switchBlock.getExpression();
     if (switchExpression == null) return;
     boolean isRuleBasedFormat = SwitchUtils.isRuleFormatSwitch(switchBlock);
-    PsiElement anchor = body.getLastChild();
+    PsiElement anchor = body.getRBrace();
     if (anchor == null) return;
     PsiElement parent = anchor.getParent();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(anchor.getProject());

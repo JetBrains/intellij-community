@@ -96,6 +96,7 @@ public class HtmlLexer extends BaseHtmlLexer {
     return (tokenType == XmlTokenType.XML_DATA_CHARACTERS ||
             tokenType == XmlTokenType.XML_CDATA_START ||
             tokenType == XmlTokenType.XML_COMMENT_START ||
+            tokenType == XmlTokenType.XML_START_TAG_START ||
             tokenType == XmlTokenType.XML_REAL_WHITE_SPACE || tokenType == TokenType.WHITE_SPACE ||
             tokenType == XmlTokenType.XML_ENTITY_REF_TOKEN || tokenType == XmlTokenType.XML_CHAR_ENTITY_REF
     );

@@ -382,7 +382,7 @@ public class PluginDescriptorStructureUtil {
 
   @NotNull
   private static String toDisplayName(@NotNull String tagName) {
-    String result = tagName.replaceAll("-", " ").replaceAll("\\.", " | ");
+    String result = tagName.replaceAll("-", " ").replaceAll("\\.", "|");
 
     String[] words = NameUtil.nameToWords(result);
     for (int i = 0; i < words.length; i++) {

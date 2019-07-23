@@ -122,7 +122,8 @@ public final class Main {
   public static boolean isApplicationStarterForBuilding(final String[] args) {
     return args.length > 0 && (Comparing.strEqual(args[0], "traverseUI") ||
                                Comparing.strEqual(args[0], "listBundledPlugins") ||
-                               Comparing.strEqual(args[0], "buildAppcodeCache"));
+                               Comparing.strEqual(args[0], "buildAppcodeCache") ||
+                               Comparing.strEqual(args[0], "keymap"));
   }
 
   // TODO: Use PlatformUtils#isAndroidStudio?
@@ -140,7 +141,7 @@ public final class Main {
       t = awtError;
     }
     else {
-      message.append("Internal error. Please report to ");
+      message.append("Internal error. Please refer to ");
       boolean studio = isStudio();
       message.append(studio ? "https://code.google.com/p/android/issues" : "http://jb.gg/ide/critical-startup-errors");
       message.append("\n\n");

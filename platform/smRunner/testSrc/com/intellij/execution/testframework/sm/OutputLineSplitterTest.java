@@ -57,12 +57,12 @@ public class OutputLineSplitterTest extends LightPlatformTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    mySplitter = createEventSplitter(false);
+    mySplitter = createEventSplitter(false, false);
   }
 
   @NotNull
-  private OutputEventSplitter createEventSplitter(final boolean bufferTextUntilNewLine) {
-    return new OutputEventSplitter(bufferTextUntilNewLine) {
+  private OutputEventSplitter createEventSplitter(final boolean bufferTextUntilNewLine, final boolean cutNewLineBeforeServiceMessage) {
+    return new OutputEventSplitter(bufferTextUntilNewLine, cutNewLineBeforeServiceMessage) {
       @Override
       public void onTextAvailable(@NotNull final String text, @NotNull final Key<?> outputType) {
         final ProcessOutputType baseOutputType = ((ProcessOutputType)outputType).getBaseOutputType();
@@ -82,6 +82,19 @@ public class OutputLineSplitterTest extends LightPlatformTestCase {
     final String shortenedLine = myOutput.get(ProcessOutputTypes.STDOUT).toList().get(0);
     Assert.assertEquals(shortenedLine.length(), maxSize);
     Assert.assertTrue(shortenedLine.startsWith(string));
+  }
+
+  public void testTcMessageRedundantNewLine() {
+    mySplitter = createEventSplitter(false, true);
+    final ProcessOutputType stdout = ProcessOutputType.STDOUT;
+    mySplitter.process("hello\n", stdout);
+    mySplitter.process("world\n", stdout);
+    final String message = ServiceMessage.asString("testStart", Collections.emptyMap());
+    mySplitter.process("\n" + message + "\n", stdout);
+    mySplitter.process("hi", stdout);
+    mySplitter.flush();
+    final String[] strings = myOutput.get(stdout).toArray();
+    Assert.assertArrayEquals(new String[]{"hello\n", "world\n", message+ "\n", "hi"}, strings);
   }
 
   public void testLongMessage() throws ParseException {
@@ -130,7 +143,7 @@ public class OutputLineSplitterTest extends LightPlatformTestCase {
   }
 
   public void testFlushOnNewLineOnlyModeTcMessage() {
-    mySplitter = createEventSplitter(true);
+    mySplitter = createEventSplitter(true, false);
     mySplitter.process("a", ProcessOutputTypes.STDOUT);
     mySplitter.process("bc", ProcessOutputTypes.STDOUT);
     mySplitter.process("d##teamcity[start]\n", ProcessOutputTypes.STDOUT);
@@ -143,7 +156,7 @@ public class OutputLineSplitterTest extends LightPlatformTestCase {
   }
 
   public void testFlushOnNewLineOnlyMode() {
-    mySplitter = createEventSplitter(true);
+    mySplitter = createEventSplitter(true, false);
     for (final Key<?> key : new Key[]{ProcessOutputTypes.STDOUT, ProcessOutputTypes.STDERR}) {
       mySplitter.process("a\nbc\n", key);
       mySplitter.process("a", key);
@@ -218,7 +231,7 @@ public class OutputLineSplitterTest extends LightPlatformTestCase {
   }
 
   public void testStderrNotBufferingServiceMessage() {
-    mySplitter = createEventSplitter(false);
+    mySplitter = createEventSplitter(false, false);
     mySplitter.process("Some stderr", ProcessOutputTypes.STDERR);
     Assert.assertEquals(ContainerUtil.newArrayList("Some stderr"),
                         myOutput.get(ProcessOutputTypes.STDERR).toList());

@@ -7,9 +7,9 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-import static com.intellij.testFramework.LightJavaCodeInsightTestCase.getJavaFacade;
 
 public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
 
@@ -30,7 +30,7 @@ public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testAnonymousClassConstructorParameter() { doTest(); }
   public void testStringBufferNonNls() { doTest(); }
   public void testEnum() {
-     final JavaPsiFacade facade = getJavaFacade();
+     final JavaPsiFacade facade = JavaPsiFacadeEx.getInstanceEx(getProject());
      final LanguageLevel effectiveLanguageLevel = LanguageLevelProjectExtension.getInstance(facade.getProject()).getLanguageLevel();
      LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
      try {

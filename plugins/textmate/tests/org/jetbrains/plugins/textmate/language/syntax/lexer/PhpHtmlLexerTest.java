@@ -5,8 +5,6 @@ import org.jetbrains.plugins.textmate.TestUtil;
 import java.util.Collections;
 import java.util.List;
 
-import static java.util.Arrays.asList;
-
 public class PhpHtmlLexerTest extends LexerTestCase {
 
   @Override

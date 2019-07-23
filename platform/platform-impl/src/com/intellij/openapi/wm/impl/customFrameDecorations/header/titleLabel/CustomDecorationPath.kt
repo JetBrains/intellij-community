@@ -9,7 +9,8 @@ import java.util.*
 import javax.swing.JComponent
 import javax.swing.JFrame
 
-class CustomDecorationPath(val frame: JFrame) : SelectedEditorFilePath() {
+class CustomDecorationPath(val frame: JFrame, onBoundsChanged: () -> Unit) : SelectedEditorFilePath(onBoundsChanged) {
+
   private val titleChangeListener = PropertyChangeListener{
     updateProjectName()
   }

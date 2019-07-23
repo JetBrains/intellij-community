@@ -17,7 +17,6 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiQualifiedNamedElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.refactoring.listeners.UndoRefactoringElementAdapter;

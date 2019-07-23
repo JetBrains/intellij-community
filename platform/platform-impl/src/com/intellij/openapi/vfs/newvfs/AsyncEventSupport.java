@@ -71,11 +71,7 @@ public class AsyncEventSupport {
       long startNs = System.nanoTime();
       boolean canceled = false;
       try {
-        if (listener.needsReadAction()) {
-          ReadAction.run(() -> ContainerUtil.addIfNotNull(appliers, listener.prepareChange(events)));
-        } else {
-          ContainerUtil.addIfNotNull(appliers, listener.prepareChange(events));
-        }
+        ReadAction.run(() -> ContainerUtil.addIfNotNull(appliers, listener.prepareChange(events)));
       }
       catch (ProcessCanceledException e) {
         canceled = true;

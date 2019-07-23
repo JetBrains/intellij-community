@@ -396,11 +396,17 @@ public final class ImageLoader implements Serializable {
     return loadFromStream(inputStream, ScaleContext.create(), null);
   }
 
+  /**
+   * @deprecated use {@link #loadFromStream(InputStream, ScaleContext, ImageFilter)}
+   */
   @Deprecated
   public static Image loadFromStream(@NotNull final InputStream inputStream, final int scale) {
     return loadFromStream(inputStream, ScaleContext.create(ScaleType.OBJ_SCALE.of(scale)), null);
   }
 
+  /**
+   * @deprecated use {@link #loadFromStream(InputStream, ScaleContext, ImageFilter)}
+   */
   @Deprecated
   public static Image loadFromStream(@NotNull final InputStream inputStream, final int scale, ImageFilter filter) {
     return loadFromStream(inputStream, ScaleContext.create(ScaleType.OBJ_SCALE.of(scale)), filter);

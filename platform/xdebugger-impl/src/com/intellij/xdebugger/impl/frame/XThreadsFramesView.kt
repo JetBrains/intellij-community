@@ -7,9 +7,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.ui.OnePixelSplitter
-import com.intellij.ui.PopupHandler
-import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.*
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.frame.XExecutionStack
@@ -20,13 +18,18 @@ import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Rectangle
 import javax.swing.JComponent
+import javax.swing.JList
 import javax.swing.JPanel
+import javax.swing.JScrollPane
+import kotlin.math.min
 
 class XThreadsFramesView(val project: Project) : XDebugView() {
     private val myPauseDisposables = SequentialDisposables(this)
 
     private val myThreadsList = XDebuggerThreadsList.createDefault()
     private val myFramesList = XDebuggerFramesList(project)
+
+    private val mySplitter: OnePixelDisproportionateSplitter
 
     private var myListenersEnabled = false
 
@@ -48,6 +51,18 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
 
         private fun Disposable.onTermination(disposable: Disposable) = Disposer.register(this, disposable)
         private fun Disposable.onTermination(action: () -> Unit) = Disposer.register(this, Disposable { action() })
+
+        private fun Component.toScrollPane(): JScrollPane {
+            return ScrollPaneFactory.createScrollPane(this)
+        }
+
+        private fun <T> T.withSpeedSearch(
+          shouldMatchFromTheBeginning: Boolean = false,
+          shouldMatchCamelCase: Boolean = true
+        ): T where T : JList<*> {
+            ListSpeedSearch(this).comparator = SpeedSearchComparator(shouldMatchFromTheBeginning, shouldMatchCamelCase)
+            return this
+        }
     }
 
     init {
@@ -56,14 +71,12 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
         myThreadsContainer = ThreadsContainer(myThreadsList, null, disposable)
         myPauseDisposables.terminateCurrent()
 
-        val splitter = OnePixelSplitter(
-            splitterProportionKey,
-            splitterProportionDefaultValue
-        )
-        splitter.firstComponent = ScrollPaneFactory.createScrollPane(myThreadsList)
-        splitter.secondComponent = ScrollPaneFactory.createScrollPane(myFramesList)
+        mySplitter = OnePixelDisproportionateSplitter(splitterProportionKey, splitterProportionDefaultValue).apply {
+            firstComponent = myThreadsList.withSpeedSearch().toScrollPane()
+            secondComponent = myFramesList.toScrollPane()
+        }
 
-        mainPanel.add(splitter, BorderLayout.CENTER)
+        mainPanel.add(mySplitter, BorderLayout.CENTER)
 
         myThreadsList.addListSelectionListener { e ->
             if (e.valueIsAdjusting || !myListenersEnabled) return@addListSelectionListener
@@ -109,6 +122,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
                 clear()
 
                 start(session)
+                mySplitter.fixFirstComponent()
                 return@invokeLaterIfNeeded
             }
 
@@ -117,7 +131,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
             }
 
             if (event == SessionEvent.SETTINGS_CHANGED) {
-              //todo
+              myFramesManager.refresh()
             }
         }
     }
@@ -169,7 +183,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
         private var isProcessed = false
         private var isStarted = false
 
-        private var myCurrentIndex = -1
+        private var mySelectedValue: Any? = null
         private var myVisibleRectangle: Rectangle? = null
         private val myItems = mutableListOf<Any?>()
 
@@ -194,7 +208,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
             activeDisposable.onTermination {
                 isActive = false
                 myVisibleRectangle = myFramesList.visibleRect
-                myCurrentIndex = if (myFramesList.isSelectionEmpty) -1 else myFramesList.selectedIndex
+                mySelectedValue = if (myFramesList.isSelectionEmpty) null else myFramesList.selectedValue
             }
 
             updateView()
@@ -204,9 +218,14 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
             if (!isActive) return
 
             myFramesList.model.replaceAll(myItems)
-            if (myCurrentIndex >= 0 && myCurrentIndex < myFramesList.model.size) {
-                myFramesList.selectedIndex = myCurrentIndex
+            if (mySelectedValue != null) {
+                myFramesList.setSelectedValue(mySelectedValue, true)
             }
+            else if (myFramesList.model.items.isNotEmpty()) {
+                myFramesList.selectedIndex = 0
+                mySelectedValue = myFramesList.selectedValue
+            }
+
             val visibleRectangle = myVisibleRectangle
             if (visibleRectangle != null)
                 myFramesList.scrollRectToVisible(visibleRectangle)
@@ -239,9 +258,8 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
                     isProcessed = true
                 }
 
-                if (toSelect != null) {
-                    val index = myItems.indexOf(toSelect)
-                    if (index >= 0) myCurrentIndex = index
+                if (toSelect != null && myItems.contains(toSelect)) {
+                    mySelectedValue = toSelect
                 }
 
                 updateView()
@@ -261,6 +279,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
     private class FramesManager(private val myFramesList: XDebuggerFramesList, private val disposable: Disposable) {
         private val myMap = mutableMapOf<StackInfo, FramesContainer>()
         private val myActiveStackDisposables = SequentialDisposables(disposable)
+        private var myActiveStack: XExecutionStack? = null
 
         private fun XExecutionStack.getContainer(): FramesContainer {
             return myMap.getOrPut(StackInfo.from(this)) {
@@ -270,11 +289,17 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
 
         fun setActive(stack: XExecutionStack) {
             val disposable = myActiveStackDisposables.next()
+            myActiveStack = stack
             stack.getContainer().setActive(disposable)
         }
 
         fun tryGetCurrentFrame(stack: XExecutionStack): XStackFrame? {
             return stack.getContainer().currentFrame
+        }
+
+        fun refresh() {
+            myMap.clear()
+            setActive(myActiveStack ?: return)
         }
     }
 
@@ -387,5 +412,38 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
         }
 
         override fun dispose() = terminateCurrent()
+    }
+
+    // todo extend Splitter in 19.3 (resizing without proportions @Vassiliy.Kudryashov)
+    private class OnePixelDisproportionateSplitter(proportionKey: String, defaultProportion: Float) : OnePixelSplitter(proportionKey, defaultProportion) {
+        private var myFirstFixedSize = -1
+        private var myIsFixed = false
+
+        private val JComponent.sizeForComponent: Int get() = if (isVertical) this.height else this.width
+
+        fun fixFirstComponent() {
+            assert(firstComponent != null)
+            myFirstFixedSize = firstComponent.sizeForComponent
+            myIsFixed = true
+        }
+
+        override fun doLayout() {
+            val total = this.sizeForComponent - dividerWidth
+            val firstFixedSize = myFirstFixedSize
+            if (myIsFixed && total > 0 && firstFixedSize > 0) {
+                val fixedProportion = (firstFixedSize.toFloat() + 0.9f) / total
+                myProportion = min(0.95f, fixedProportion)
+            }
+            super.doLayout()
+        }
+
+        override fun setProportion(proportion: Float) {
+            super.setProportion(proportion)
+
+            val total = this.sizeForComponent - dividerWidth
+            if (myIsFixed) {
+                myFirstFixedSize = (myProportion * total).toInt()
+            }
+        }
     }
 }

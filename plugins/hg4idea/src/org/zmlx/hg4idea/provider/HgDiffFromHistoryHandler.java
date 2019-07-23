@@ -18,7 +18,6 @@ package org.zmlx.hg4idea.provider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.history.BaseDiffFromHistoryHandler;
 import com.intellij.openapi.vcs.history.DiffFromHistoryHandler;

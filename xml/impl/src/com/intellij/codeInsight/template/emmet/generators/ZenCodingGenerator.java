@@ -130,6 +130,10 @@ public abstract class ZenCodingGenerator {
   public Configurable createConfigurable() {
     return null;
   }
+  
+  public boolean addToCompletion() {
+    return hasCompletionItem();
+  }
 
   public boolean hasCompletionItem() {
     return false;

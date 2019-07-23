@@ -16,11 +16,8 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.Constants;
-import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiIdentifierImpl extends LeafPsiElement implements PsiIdentifier, PsiJavaToken {

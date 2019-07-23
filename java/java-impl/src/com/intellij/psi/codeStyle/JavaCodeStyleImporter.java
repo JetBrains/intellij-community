@@ -6,7 +6,6 @@ package com.intellij.psi.codeStyle;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.externalSystem.service.project.settings.CodeStyleConfigurationImporter;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;

@@ -31,7 +31,6 @@ import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileContent;
-import com.intellij.util.indexing.FileContentImpl;
 import com.intellij.util.indexing.IndexingDataKeys;
 import com.intellij.util.indexing.PsiDependentFileContent;
 import org.jetbrains.annotations.NotNull;

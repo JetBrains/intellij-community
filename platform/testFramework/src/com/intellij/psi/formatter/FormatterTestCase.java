@@ -216,7 +216,7 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
    * @return Language common settings or root settings if the language doesn't have any common
    *         settings of its own.
    */
-  protected static CommonCodeStyleSettings getSettings(Language language) {
+  protected CommonCodeStyleSettings getSettings(Language language) {
     return CodeStyle.getSettings(getProject()).getCommonSettings(language);
   }
 

@@ -51,8 +51,8 @@ public abstract class TodoItemsTestCase extends LightPlatformCodeInsightTestCase
 
   protected void testTodos(String text) {
     configureFromFileText("Foo." + getFileExtension(), text);
-    EditorTestUtil.setEditorVisibleSize(myEditor, 1000, 1000); // set visible area for highlighting
-    List<TextRange> expectedTodoRanges = extractExpectedTodoRanges(myEditor.getDocument());
+    EditorTestUtil.setEditorVisibleSize(getEditor(), 1000, 1000); // set visible area for highlighting
+    List<TextRange> expectedTodoRanges = extractExpectedTodoRanges(getEditor().getDocument());
     List<HighlightInfo> highlightInfos = doHighlighting();
     List<TextRange> actualTodoRanges = getActualTodoRanges(highlightInfos);
     assertTodoRanges(expectedTodoRanges, actualTodoRanges);
@@ -67,16 +67,16 @@ public abstract class TodoItemsTestCase extends LightPlatformCodeInsightTestCase
     assertTodoRanges(expectedTodoRanges, actualTodoRanges);
   }
 
-  private static List<TextRange> extractExpectedTodoRanges(Document document) {
+  private List<TextRange> extractExpectedTodoRanges(Document document) {
     ArrayList<TextRange> result = new ArrayList<>();
     int offset = 0;
     int startPos;
     while ((startPos = document.getText().indexOf('[', offset)) != -1) {
       int finalStartPos = startPos;
-      WriteCommandAction.runWriteCommandAction(ourProject, () -> document.deleteString(finalStartPos, finalStartPos + 1));
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> document.deleteString(finalStartPos, finalStartPos + 1));
       int endPos = document.getText().indexOf(']', startPos);
       if (endPos == -1) break;
-      WriteCommandAction.runWriteCommandAction(ourProject, () -> document.deleteString(endPos, endPos + 1));
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> document.deleteString(endPos, endPos + 1));
       result.add(new TextRange(startPos, endPos));
     }
     return result;
@@ -90,12 +90,12 @@ public abstract class TodoItemsTestCase extends LightPlatformCodeInsightTestCase
       .collect(Collectors.toList());
   }
 
-  private static void assertTodoRanges(List<? extends TextRange> expectedTodoRanges, List<? extends TextRange> actualTodoRanges) {
+  private void assertTodoRanges(List<? extends TextRange> expectedTodoRanges, List<? extends TextRange> actualTodoRanges) {
     assertEquals("Unexpected todos highlighting", generatePresentation(expectedTodoRanges), generatePresentation(actualTodoRanges));
   }
 
-  private static String generatePresentation(List<? extends TextRange> ranges) {
-    StringBuilder b = new StringBuilder(myEditor.getDocument().getText());
+  private String generatePresentation(List<? extends TextRange> ranges) {
+    StringBuilder b = new StringBuilder(getEditor().getDocument().getText());
     int prevStart = Integer.MAX_VALUE;
     for (int i = ranges.size() - 1; i >= 0; i--) {
       TextRange r = ranges.get(i);

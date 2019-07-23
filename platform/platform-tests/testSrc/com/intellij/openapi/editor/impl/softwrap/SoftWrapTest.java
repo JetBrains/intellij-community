@@ -81,10 +81,10 @@ public class SoftWrapTest extends AbstractEditorTest {
       }
     }
 
-    EditorTestUtil.configureSoftWraps(myEditor, wrapWidth);
+    EditorTestUtil.configureSoftWraps(getEditor(), wrapWidth);
 
     List<Integer> actualWrapPositions = new ArrayList<>();
-    for (SoftWrap wrap : myEditor.getSoftWrapModel().getSoftWrapsForRange(0, myEditor.getDocument().getTextLength())) {
+    for (SoftWrap wrap : getEditor().getSoftWrapModel().getSoftWrapsForRange(0, getEditor().getDocument().getTextLength())) {
       actualWrapPositions.add(wrap.getStart());
     }
     assertEquals("Wrong wrap positions", wrapPositions, actualWrapPositions);

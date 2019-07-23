@@ -135,7 +135,7 @@ abstract class GitImplBase implements Git {
       throw new ProcessCanceledException();
     }
 
-    if (project != null && handler.isRemote()) {
+    if (project != null) {
       try (GitHandlerAuthenticationManager authenticationManager = GitHandlerAuthenticationManager.prepare(project, handler, version)) {
         GitCommandResult result = doRun(handler, version, outputCollector);
         return GitCommandResult.withAuthentication(result, authenticationManager.isHttpAuthFailed());

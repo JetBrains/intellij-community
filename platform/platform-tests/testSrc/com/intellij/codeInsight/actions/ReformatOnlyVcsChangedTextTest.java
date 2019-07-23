@@ -313,14 +313,14 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     assertTrue(!isImportsOptimized(toKeep2));
   }
 
-  private static void registerChangeListManager(@NotNull ChangeListManager manager) {
+  private void registerChangeListManager(@NotNull ChangeListManager manager) {
     Project project = getProject();
     assert (project instanceof ComponentManagerImpl);
     ComponentManagerImpl projectComponentManager = (ComponentManagerImpl)project;
     projectComponentManager.registerComponentInstance(ChangeListManager.class, manager);
   }
 
-  private static void registerCodeStyleManager(@NotNull CodeStyleManager manager) {
+  private void registerCodeStyleManager(@NotNull CodeStyleManager manager) {
     String componentKey = CodeStyleManager.class.getName();
     MutablePicoContainer container = (MutablePicoContainer)getProject().getPicoContainer();
     container.unregisterComponent(componentKey);
@@ -365,7 +365,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     return "Expected: " + Arrays.toString(expected) + " Actual: " + Arrays.toString(actual);
   }
 
-  private static void reformatDirectory(@NotNull PsiDirectory dir) {
+  private void reformatDirectory(@NotNull PsiDirectory dir) {
     ReformatCodeProcessor processor = new ReformatCodeProcessor(getProject(), dir, true, true);
     processor.run();
   }

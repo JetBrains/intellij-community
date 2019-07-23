@@ -17,7 +17,6 @@ package com.intellij.tasks.actions.vcs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsType;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.tasks.ChangeListInfo;

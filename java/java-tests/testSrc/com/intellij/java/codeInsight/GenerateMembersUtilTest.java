@@ -66,7 +66,7 @@ public class GenerateMembersUtilTest extends LightJavaCodeInsightTestCase {
     List<GenerationInfo> list = Collections.singletonList(new PsiGenerationInfo<>(method));
     List<GenerationInfo> members =
       WriteAction.compute(() -> GenerateMembersUtil.insertMembersAtOffset(getFile(), offset, list));
-    members.get(0).positionCaret(myEditor, true);
+    members.get(0).positionCaret(getEditor(), true);
     checkResultByFile(null, BASE_PATH + getTestName(false) + "_after.java", true);
   }
 

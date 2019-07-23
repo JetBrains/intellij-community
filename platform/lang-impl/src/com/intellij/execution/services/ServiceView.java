@@ -19,6 +19,7 @@ import org.jetbrains.concurrency.Promise;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 abstract class ServiceView extends JPanel implements Disposable {
   protected final Project myProject;
@@ -87,6 +88,8 @@ abstract class ServiceView extends JPanel implements Disposable {
     }
   }
 
+  abstract void jumpToServices();
+
   static ServiceView createView(@NotNull Project project, @NotNull ServiceViewModel viewModel, @NotNull ServiceViewState viewState) {
     ServiceView serviceView = viewModel instanceof ServiceViewModel.SingeServiceModel ?
                               createSingleView(project, viewModel) :
@@ -105,6 +108,17 @@ abstract class ServiceView extends JPanel implements Disposable {
   }
 
   private static void setDataProvider(ServiceView serviceView) {
+    ServiceViewOptions viewOptions = new ServiceViewOptions() {
+      @Override
+      public boolean isGroupByContributor() {
+        return serviceView.isGroupByContributor();
+      }
+
+      @Override
+      public boolean isGroupByServiceGroups() {
+        return serviceView.isGroupByServiceGroups();
+      }
+    };
     serviceView.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, (DataProvider)dataId -> {
       if (PlatformDataKeys.HELP_ID.is(dataId)) {
         return ServiceViewManagerImpl.getToolWindowContextHelpId();
@@ -119,13 +133,19 @@ abstract class ServiceView extends JPanel implements Disposable {
       }
       if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
         List<ServiceViewItem> selection = serviceView.getSelectedItems();
-        ServiceViewContributor contributor = ServiceViewDragHelper.getTheOnlyContributor(selection);
+        ServiceViewContributor contributor = ServiceViewDragHelper.getTheOnlyRootContributor(selection);
         DataProvider delegate = contributor == null ? null : contributor.getViewDescriptor().getDataProvider();
         DeleteProvider deleteProvider = delegate == null ? null : PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getData(delegate);
         return deleteProvider == null ? new ServiceViewDeleteProvider(serviceView) : deleteProvider;
       }
       if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
         return new ServiceViewCopyProvider(serviceView);
+      }
+      if (ServiceViewActionUtils.CONTRIBUTORS_KEY.is(dataId)) {
+        return serviceView.getModel().getRoots().stream().map(item -> item.getRootContributor()).collect(Collectors.toSet());
+      }
+      if (ServiceViewActionUtils.OPTIONS_KEY.is(dataId)) {
+        return viewOptions;
       }
       List<ServiceViewItem> selectedItems = serviceView.getSelectedItems();
       ServiceViewItem selectedItem = ContainerUtil.getOnlyItem(selectedItems);

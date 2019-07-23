@@ -97,6 +97,11 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     doTest();
   }
 
+  public void testNoOverridingChecksOnInapplicableAnnotations() {
+    myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+    doTest();
+  }
+
   public void testOverriddenMethodsWithDefaults() {
     DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
     DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);

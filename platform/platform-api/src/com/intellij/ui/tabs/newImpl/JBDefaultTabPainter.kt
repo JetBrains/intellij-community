@@ -50,8 +50,16 @@ open class JBDefaultTabPainter(val theme : TabTheme = DefaultTabTheme()) : JBTab
       }
     }
 
+    paintUnderline(position, rect, borderThickness, g, active)
+  }
+
+  override fun paintUnderline(position: JBTabsPosition,
+                              rect: Rectangle,
+                              borderThickness: Int,
+                              g: Graphics2D,
+                              active: Boolean) {
     val underline = underlineRectangle(position, rect, theme.underlineHeight)
-    g.fill2DRect(underline, if(active) theme.underlineColor else theme.inactiveUnderlineColor)
+    g.fill2DRect(underline, if (active) theme.underlineColor else theme.inactiveUnderlineColor)
   }
 
   override fun paintBorderLine(g: Graphics2D, thickness: Int, from: Point, to: Point) {

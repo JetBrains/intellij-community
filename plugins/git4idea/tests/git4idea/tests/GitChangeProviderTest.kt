@@ -7,20 +7,19 @@ import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsTestUtil.*
-import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.ContentRevision
-import com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope
+import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.vcs.MockChangeListManagerGate
 import com.intellij.testFramework.vcs.MockChangelistBuilder
 import com.intellij.testFramework.vcs.MockDirtyScope
 import com.intellij.vcsUtil.VcsUtil
+import git4idea.config.GitVersion
 import git4idea.status.GitChangeProvider
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.addCommit
 import git4idea.test.createFileStructure
+import org.junit.Assume
 import java.io.File
 import java.util.*
 
@@ -61,16 +60,21 @@ abstract class GitChangeProviderTest : GitSingleRepoTest() {
 
   override fun makeInitialCommit() = false
 
-  private fun getVirtualFile(relativePath: String) = VfsUtil.findFileByIoFile(File(projectPath, relativePath), true)!!
+  protected fun getVirtualFile(relativePath: String) = VfsUtil.findFileByIoFile(File(projectPath, relativePath), true)!!
 
   /**
    * Checks that the given files have respective statuses in the change list retrieved from myChangesProvider.
    * Pass null in the fileStatuses array to indicate that proper file has not changed.
    */
-  protected fun assertChanges(virtualFiles: List<VirtualFile>, fileStatuses: List<FileStatus?>) {
-    val result = getChanges(virtualFiles)
-    for (i in virtualFiles.indices) {
-      val fp = VcsUtil.getFilePath(virtualFiles[i])
+
+  protected fun assertProviderChanges(virtualFiles: List<VirtualFile>, fileStatuses: List<FileStatus?>) {
+    assertProviderChangesInPaths(virtualFiles.map { VcsUtil.getFilePath(it) }, fileStatuses)
+  }
+
+  protected fun assertProviderChangesInPaths(paths: List<FilePath>, fileStatuses: List<FileStatus?>) {
+    val result = getProviderChanges(paths)
+    for (i in paths.indices) {
+      val fp = paths[i]
       val status = fileStatuses[i]
       if (status == null) {
         assertFalse("File [" + tos(fp) + " shouldn't be in the changelist, but it was.", result.containsKey(fp))
@@ -81,17 +85,20 @@ abstract class GitChangeProviderTest : GitSingleRepoTest() {
     }
   }
 
-  protected fun assertChanges(virtualFile: VirtualFile, fileStatus: FileStatus) {
-    assertChanges(listOf(virtualFile), listOf(fileStatus))
+  protected fun assertProviderChanges(virtualFile: VirtualFile, fileStatus: FileStatus) {
+    assertProviderChanges(listOf(virtualFile), listOf(fileStatus))
+  }
+
+  protected fun assumeWorktreeRenamesSupported() {
+    Assume.assumeTrue("Worktree renames are not supported by git: ${vcs.version}",
+                      vcs.version.isLaterOrEqual(GitVersion(2, 17, 0, 0)))
   }
 
   /**
    * Marks the given files dirty in myDirtyScope, gets changes from myChangeProvider and groups the changes in the map.
    * Assumes that only one change for a file has happened.
    */
-  private fun getChanges(changedFiles: List<VirtualFile>): Map<FilePath, Change> {
-    val changedPaths = changedFiles.map { VcsUtil.getFilePath(it) }
-
+  private fun getProviderChanges(changedPaths: List<FilePath>): Map<FilePath, Change> {
     // get changes
     val builder = MockChangelistBuilder()
     changeProvider.getChanges(dirtyScope, builder, EmptyProgressIndicator(),
@@ -101,21 +108,7 @@ abstract class GitChangeProviderTest : GitSingleRepoTest() {
     // get changes for files
     val result = HashMap<FilePath, Change>()
     for (change in changes) {
-      val file = change.virtualFile
-      var filePath: FilePath? = null
-      if (file == null) { // if a file was deleted, just find the reference in the original list of files and use it.
-        val path = change.beforeRevision!!.file.path
-        for (fp in changedPaths) {
-          if (FileUtil.pathsEqual(fp.path, path)) {
-            filePath = fp
-            break
-          }
-        }
-      }
-      else {
-        filePath = VcsUtil.getFilePath(file)
-      }
-      result.put(filePath!!, change)
+      result.put(ChangesUtil.getFilePath(change), change)
     }
     return result
   }

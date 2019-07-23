@@ -44,9 +44,9 @@ public class TextMateSettingsUI implements ConfigurableUi<TextMateSettings>, Dis
                                                                 PerformInBackgroundOption.ALWAYS_BACKGROUND) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          textMateService.unregisterAllBundles(false);
+          textMateService.unregisterAllBundles();
           textMateService.reloadThemesFromDisk();
-          textMateService.registerEnabledBundles(true);
+          textMateService.registerEnabledBundles();
         }
       });
     }

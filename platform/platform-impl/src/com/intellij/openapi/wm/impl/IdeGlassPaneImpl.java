@@ -26,19 +26,14 @@ import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.ui.EmptyClipboardOwner;
 import com.intellij.util.ui.MouseEventAdapter;
-import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEventQueue.EventDispatcher {

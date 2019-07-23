@@ -38,6 +38,18 @@ public class MarkdownEnterHandlerTest extends BasePlatformTestCase {
     doTest();
   }
 
+  public void testQuoteInListWithSpace() {
+    doTest();
+  }
+
+  public void testCodeFenceWithSpace() {
+    doTest();
+  }
+
+  public void testQuoteInListMiddleWithSpace() {
+    doTest();
+  }
+
   private void doTest() {
     String testName = getTestName(true);
     myFixture.configureByFile(testName + ".before.md");

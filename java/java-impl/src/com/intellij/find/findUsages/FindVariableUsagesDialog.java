@@ -15,6 +15,8 @@
  */
 package com.intellij.find.findUsages;
 
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
@@ -39,6 +41,15 @@ public class FindVariableUsagesDialog extends JavaFindUsagesDialog<JavaVariableF
 
     options.isReadAccess = true;
     options.isWriteAccess = true;
+    FUStateUsagesLogger.logStateEvent(myEventLogGroup, "FindVariableUsages", createFeatureUsageData(options));
+  }
+
+  @Override
+  protected FeatureUsageData createFeatureUsageData(JavaVariableFindUsagesOptions options) {
+    FeatureUsageData data = super.createFeatureUsageData(options);
+    data.addData("readAccess", options.isReadAccess);
+    data.addData("writeAccess", options.isWriteAccess);
+    return data;
   }
 
   @Override

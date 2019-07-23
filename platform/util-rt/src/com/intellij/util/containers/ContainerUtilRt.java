@@ -250,6 +250,16 @@ public class ContainerUtilRt {
   }
 
   /**
+   * @deprecated Use {@link TreeSet#TreeSet(Comparator)}
+   */
+  @Deprecated
+  @NotNull
+  @Contract(value = "_ -> new", pure = true)
+  public static <T> TreeSet<T> newTreeSet(@Nullable Comparator<? super T> comparator) {
+    return new TreeSet<T>(comparator);
+  }
+
+  /**
    * A variant of {@link Collections#emptyList()},
    * except that {@link #toArray()} here does not create garbage {@code new Object[0]} constantly.
    */

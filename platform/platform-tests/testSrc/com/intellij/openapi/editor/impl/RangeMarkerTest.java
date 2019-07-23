@@ -956,7 +956,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   public void testRangeHighlightersRecreateBug() {
     Document document = EditorFactory.getInstance().createDocument("[xxxxxxxxxxxxxx]");
 
-    MarkupModel markupModel = DocumentMarkupModel.forDocument(document, ourProject, true);
+    MarkupModel markupModel = DocumentMarkupModel.forDocument(document, getProject(), true);
     for (int i=0; i<2; i++) {
       RangeMarker m = markupModel.addRangeHighlighter(1, 6, 0, null, HighlighterTargetArea.EXACT_RANGE);
       RangeMarker m2 = markupModel.addRangeHighlighter(2, 7, 0, null, HighlighterTargetArea.EXACT_RANGE);
@@ -1044,7 +1044,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   public void testRangeHighlighterDisposeVsRemoveAllConflict() {
     Document document = EditorFactory.getInstance().createDocument("[xxxxxxxxxxxxxx]");
 
-    MarkupModel markupModel = DocumentMarkupModel.forDocument(document, ourProject, true);
+    MarkupModel markupModel = DocumentMarkupModel.forDocument(document, getProject(), true);
     RangeMarker m = markupModel.addRangeHighlighter(1, 6, 0, null, HighlighterTargetArea.EXACT_RANGE);
     assertTrue(m.isValid());
     markupModel.removeAllHighlighters();
@@ -1058,7 +1058,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     final int N = 50000;
     Document document = EditorFactory.getInstance().createDocument(StringUtil.repeatSymbol('x', 2 * N));
 
-    final MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, ourProject, true);
+    final MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
     for (int i=0; i<N-1;i++) {
       markupModel.addRangeHighlighter(2*i, 2*i+1, 0, null, HighlighterTargetArea.EXACT_RANGE);
     }
@@ -1078,7 +1078,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   public void testRangeHighlighterIteratorOrder() {
     Document document = EditorFactory.getInstance().createDocument("1234567890");
 
-    final MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, ourProject, true);
+    final MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
     RangeHighlighter exact = markupModel.addRangeHighlighter(3, 6, 0, null, HighlighterTargetArea.EXACT_RANGE);
     RangeHighlighter line = markupModel.addRangeHighlighter(4, 5, 0, null, HighlighterTargetArea.LINES_IN_RANGE);
     List<RangeHighlighter> list = new ArrayList<>();
@@ -1422,7 +1422,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     checkRMTreesAreGCedWhenNoReachableRangeMarkersLeft(vf, marker, persistentMarker);
   }
 
-  private static void checkRMTreesAreGCedWhenNoReachableRangeMarkersLeft(@NotNull VirtualFile vf,
+  private void checkRMTreesAreGCedWhenNoReachableRangeMarkersLeft(@NotNull VirtualFile vf,
                                                                          @NotNull RangeMarker[] marker,
                                                                          @NotNull RangeMarker[] persistentMarker) {
     Reference<RangeMarker> markerRef = new WeakReference<>(marker[0]);

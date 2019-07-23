@@ -38,7 +38,7 @@ public class BuildScriptClasspathModelImpl implements BuildScriptClasspathModel 
   private String myGradleVersion;
 
   public BuildScriptClasspathModelImpl() {
-    myClasspathEntries = new ArrayList<ClasspathEntryModel>();
+    myClasspathEntries = new ArrayList<ClasspathEntryModel>(0);
   }
 
   @Override
@@ -68,5 +68,27 @@ public class BuildScriptClasspathModelImpl implements BuildScriptClasspathModel 
   @Override
   public String getGradleVersion() {
     return myGradleVersion;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    BuildScriptClasspathModelImpl model = (BuildScriptClasspathModelImpl)o;
+
+    if (!myClasspathEntries.equals(model.myClasspathEntries)) return false;
+    if (gradleHomeDir != null ? !gradleHomeDir.equals(model.gradleHomeDir) : model.gradleHomeDir != null) return false;
+    if (!myGradleVersion.equals(model.myGradleVersion)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myClasspathEntries.hashCode();
+    result = 31 * result + (gradleHomeDir != null ? gradleHomeDir.hashCode() : 0);
+    result = 31 * result + myGradleVersion.hashCode();
+    return result;
   }
 }

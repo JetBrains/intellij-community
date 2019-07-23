@@ -3,7 +3,6 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.lambdaToExplicit.ExcessiveLambdaUsageInspection;
 import com.intellij.codeInspection.lambdaToExplicit.ExplicitArgumentCanBeLambdaInspection;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;

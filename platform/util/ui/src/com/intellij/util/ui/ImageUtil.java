@@ -1,11 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.JBHiDPIScaledImage;
-import com.intellij.util.MethodInvocator;
 import com.intellij.util.RetinaImage;
 import org.imgscalr.Scalr;
 import org.jetbrains.annotations.ApiStatus;
@@ -15,10 +13,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.image.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
 import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
 
@@ -35,13 +29,10 @@ public class ImageUtil {
   public static BufferedImage toBufferedImage(@NotNull Image image, boolean inUserSize) {
     if (image instanceof JBHiDPIScaledImage) {
       JBHiDPIScaledImage jbImage = (JBHiDPIScaledImage)image;
-      Image img = jbImage.getDelegate();
-      if (img != null) {
-        if (inUserSize) {
-          double scale = jbImage.getScale();
-          img = scaleImage(img, 1 / scale);
-        }
-        image = img;
+      Image delagate = jbImage.getDelegate();
+      if (delagate != null) image = delagate;
+      if (inUserSize) {
+        image = scaleImage(image, 1 / jbImage.getScale());
       }
     }
     if (image instanceof BufferedImage) {
@@ -187,95 +178,5 @@ public class ImageUtil {
       return new JBHiDPIScaledImage(image, userWidth, userHeight, BufferedImage.TYPE_INT_ARGB);
     }
     return image;
-  }
-
-  /**
-   * A wrapper over {@code java.awt.image.MultiResolutionImage} available since JDK 9.
-   */
-  public static class MultiResolutionImageWrapper {
-    private static final Class MRI_CLASS;
-    private static final MethodInvocator GET_RESOLUTION_VARIANTS_METHOD;
-    private static final MethodInvocator GET_RESOLUTION_VARIANT_METHOD;
-
-    private final Image image;
-
-    static {
-      Class cls = null;
-      MethodInvocator m1 = null;
-      MethodInvocator m2 = null;
-      if (SystemInfo.IS_AT_LEAST_JAVA9) {
-        try {
-          cls = Class.forName("java.awt.image.MultiResolutionImage");
-        }
-        catch (ClassNotFoundException ignore) {
-        }
-        if (cls != null) {
-          m1 = new MethodInvocator(cls, "getResolutionVariants");
-          m2 = new MethodInvocator(cls, "getResolutionVariant", double.class, double.class);
-        }
-      }
-      MRI_CLASS = cls;
-      GET_RESOLUTION_VARIANTS_METHOD = m1;
-      GET_RESOLUTION_VARIANT_METHOD = m2;
-    }
-
-    private MultiResolutionImageWrapper(Image image) {
-      this.image = image;
-    }
-
-    /**
-     * Checks whether the image is an instance of MultiResolutionImage.
-     */
-    public static boolean isMultiResolutionImage(@Nullable Image image) {
-      return image != null && MRI_CLASS != null && MRI_CLASS.isInstance(image);
-    }
-
-    /**
-     * Returns a wrapper over the provided image.
-     * If the image is not MultiResolutionImage the resolution methods will default to the image itself.
-     */
-    @NotNull
-    public static MultiResolutionImageWrapper wrap(@NotNull Image image) {
-      if (!checkSize(image)) {
-        //noinspection CallToPrintStackTrace
-        new IllegalArgumentException("the image has illegal size 0x0").printStackTrace();
-      }
-      return new MultiResolutionImageWrapper(image);
-    }
-
-    /**
-     * @see {@code java.awt.image.MultiResolutionImage.getResolutionVariants}
-     */
-    public List<Image> getResolutionVariants() {
-      if (!isMultiResolutionImage(image)) {
-        return Collections.singletonList(image);
-      }
-      //noinspection unchecked
-      return (List<Image>)GET_RESOLUTION_VARIANTS_METHOD.invoke(image);
-    }
-
-    /**
-     * @see {@code java.awt.image.MultiResolutionImage.getResolutionVariant}
-     */
-    public Image getResolutionVariant(double width, double height) {
-      if (!isMultiResolutionImage(image)) {
-        if (!checkSize(image)) {
-          return image;
-        }
-        return Scalr.resize(toBufferedImage(image), Scalr.Method.QUALITY, Scalr.Mode.FIT_EXACT, (int)width, (int)height, (BufferedImageOp[])null);
-      }
-      return (Image)GET_RESOLUTION_VARIANT_METHOD.invoke(image, width, height);
-    }
-
-    /**
-     * Returns the wrappee image.
-     */
-    public Image getImage() {
-      return image;
-    }
-
-    private static boolean checkSize(Image image) {
-      return image.getWidth(null) != 0 && image.getHeight(null) != 0;
-    }
   }
 }

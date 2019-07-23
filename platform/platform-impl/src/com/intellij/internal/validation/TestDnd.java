@@ -16,7 +16,6 @@
 package com.intellij.internal.validation;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.dnd.DnDActionInfo;
 import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.dnd.DnDImage;
 import com.intellij.ide.dnd.DnDSupport;
@@ -24,7 +23,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -65,7 +65,7 @@ public class AnonymousToInnerTest extends LightJavaCodeInsightTestCase {
         return true;
       }
     };
-    handler.invoke(getProject(), myEditor, myFile, null);
+    handler.invoke(getProject(), getEditor(), getFile(), null);
     assertFalse(handler.needsThis());
     checkResultByFile(TEST_ROOT + getTestName(true) + "_after.java");
   }
@@ -84,7 +84,7 @@ public class AnonymousToInnerTest extends LightJavaCodeInsightTestCase {
         return true;
       }
     };
-    handler.invoke(getProject(), myEditor, myFile, null);
+    handler.invoke(getProject(), getEditor(), getFile(), null);
     checkResultByFile(TEST_ROOT + getTestName(true) + "_after.java");
   }
   
@@ -101,7 +101,7 @@ public class AnonymousToInnerTest extends LightJavaCodeInsightTestCase {
     };
 
 
-    handler.invoke(getProject(), myEditor, myFile, null);
+    handler.invoke(getProject(), getEditor(), getFile(), null);
     checkResultByFile(TEST_ROOT + getTestName(true) + "_after.java");
   }
 }

@@ -10,7 +10,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.EmptyStackException;
 import java.util.Iterator;
-import java.util.Stack;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 /**

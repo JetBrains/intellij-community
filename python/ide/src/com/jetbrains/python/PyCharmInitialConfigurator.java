@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.util.messages.MessageBus;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;

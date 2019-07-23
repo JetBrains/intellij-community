@@ -16,7 +16,6 @@
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
 import com.intellij.util.IncorrectOperationException;

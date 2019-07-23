@@ -244,7 +244,7 @@ public class CompletionStyleTest extends LightJavaCodeInsightTestCase {
     styleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES = space_before_method_call_parentheses;
   }
 
-  private static CommonCodeStyleSettings getCodeStyleSettings() {
+  private CommonCodeStyleSettings getCodeStyleSettings() {
     return CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
   }
 
@@ -304,23 +304,23 @@ public class CompletionStyleTest extends LightJavaCodeInsightTestCase {
     checkResultByFile(path + "/after38.java");
   }
 
-  private static void performSmartCompletion(){
+  private void performSmartCompletion(){
     new CodeCompletionHandlerBase(CompletionType.SMART).invokeCompletion(getProject(), getEditor());
   }
 
-  private static void performNormalCompletion(){
+  private void performNormalCompletion(){
     new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(getProject(), getEditor());
   }
 
-  private static void select(char completionChar, int index){
+  private void select(char completionChar, int index){
     ((LookupManagerImpl)LookupManager.getInstance(getProject())).forceSelection(completionChar, index);
   }
 
-  private static void select(char completionChar, LookupElement item){
+  private void select(char completionChar, LookupElement item){
     ((LookupManagerImpl)LookupManager.getInstance(getProject())).forceSelection(completionChar, item);
   }
 
-  private static LookupElement getSelected(){
+  private LookupElement getSelected(){
     return LookupManager.getInstance(getProject()).getActiveLookup().getCurrentItem();
   }
 

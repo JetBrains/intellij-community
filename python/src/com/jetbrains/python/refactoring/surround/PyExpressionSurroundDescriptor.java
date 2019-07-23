@@ -8,7 +8,6 @@ import com.intellij.psi.PsiFile;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.surround.surrounders.expressions.*;
-import com.jetbrains.python.refactoring.surround.surrounders.expressions.PyLenExpressionStatementSurrounder;
 import org.jetbrains.annotations.NotNull;
 
 public class PyExpressionSurroundDescriptor implements SurroundDescriptor {

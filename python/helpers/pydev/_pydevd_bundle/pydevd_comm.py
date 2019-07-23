@@ -705,9 +705,15 @@ class NetCommandFactory:
 
                 abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_frame(curr_frame)
                 if get_file_type(abs_path_real_path_and_base[2]) == PYDEV_FILE:
-                    # Skip pydevd files.
-                    curr_frame = curr_frame.f_back
-                    continue
+                    # Syntax errors are a special case in which we don't want to skip the debugger files.
+                    # When a syntax error happens, we stop either in the `execfile` or `_exec` function.
+                    exception_info, is_syntax_error = curr_frame.f_locals.get('__exception__'), False
+                    if exception_info:
+                        is_syntax_error = exception_info[0] is SyntaxError
+                    if not is_syntax_error:
+                        # Skip pydevd files.
+                        curr_frame = curr_frame.f_back
+                        continue
 
                 my_file = abs_path_real_path_and_base[0]
 

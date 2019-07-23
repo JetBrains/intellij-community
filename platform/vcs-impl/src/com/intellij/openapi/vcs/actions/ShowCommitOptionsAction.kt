@@ -4,9 +4,8 @@ package com.intellij.openapi.vcs.actions
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.vcs.changes.ChangesViewManager
-import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
 import com.intellij.ui.LayeredIcon
+import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
 
 private val ICON = LayeredIcon(AllIcons.General.GearPlain, AllIcons.General.Dropdown)
 
@@ -24,8 +23,6 @@ class ShowCommitOptionsAction : AnAction() {
     workflowHandler.showCommitOptions(e.isFromActionToolbar, e.dataContext)
   }
 
-  private fun getCommitWorkflowHandler(e: AnActionEvent): ChangesViewCommitWorkflowHandler? {
-    val project = e.project ?: return null
-    return (ChangesViewManager.getInstance(project) as? ChangesViewManager)?.commitWorkflowHandler
-  }
+  private fun getCommitWorkflowHandler(e: AnActionEvent): ChangesViewCommitWorkflowHandler? =
+    e.project?.getNonModalCommitWorkflowHandler()
 }

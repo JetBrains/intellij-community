@@ -16,14 +16,11 @@
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsShowOptionsSettingImpl;
 import com.intellij.openapi.vcs.changes.RemoteRevisionsCache;
 import com.intellij.openapi.vcs.changes.committed.CacheSettingsPanel;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;

@@ -49,6 +49,10 @@ public class MavenLogOutputParser implements BuildOutputParser {
     }
   }
 
+  public MavenParsingContext getParsingContext() {
+    return myParsingContext;
+  }
+
   private void completeParsers(Consumer<? super BuildEvent> messageConsumer) {
     for (MavenLoggedEventParser parser : myRegisteredEvents) {
       parser.finish(myTaskId, messageConsumer);

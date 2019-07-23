@@ -69,7 +69,7 @@ public class TrailingSpacesStripperTest extends LightPlatformCodeInsightTestCase
     checkResultByText(after);
   }
 
-  private static void stripTrailingSpaces() {
+  private void stripTrailingSpaces() {
     WriteCommandAction.runWriteCommandAction(null, () -> {
       TrailingSpacesStripper.strip(getEditor().getDocument(), true, true);
     });
@@ -116,7 +116,7 @@ public class TrailingSpacesStripperTest extends LightPlatformCodeInsightTestCase
   public void testOnlyModifiedLinesGetStripped() {
     @NonNls String text = "xxx<caret>   \nyyy   ";
     configureFromFileText("x.txt", text);
-    ((DocumentEx)myEditor.getDocument()).clearLineModificationFlags();
+    ((DocumentEx)getEditor().getDocument()).clearLineModificationFlags();
     stripTrailingSpaces();
     checkResultByText(text);
     type('z');
@@ -128,7 +128,7 @@ public class TrailingSpacesStripperTest extends LightPlatformCodeInsightTestCase
   public void testOnlyModifiedLinesWhenDoesNotAllowCaretAfterEndOfLine() {
     configureFromFileText("x.txt", "xxx<caret>   \nZ   ");
     type(' ');
-    myEditor.getCaretModel().moveToOffset(myEditor.getDocument().getText().indexOf('Z') + 1);
+    getEditor().getCaretModel().moveToOffset(getEditor().getDocument().getText().indexOf('Z') + 1);
     type('Z');
 
     stripTrailingSpaces();
@@ -156,7 +156,7 @@ public class TrailingSpacesStripperTest extends LightPlatformCodeInsightTestCase
     type(' ');
     FileDocumentManager.getInstance().saveAllDocuments();
     checkResultByText("xxx  <caret>\nyyy\n"); // caret in the way
-    myEditor.getCaretModel().moveToOffset(myEditor.getDocument().getText().indexOf("yyy"));
+    getEditor().getCaretModel().moveToOffset(getEditor().getDocument().getText().indexOf("yyy"));
 
     FileDocumentManager.getInstance().saveAllDocuments();
     checkResultByText("xxx\n<caret>yyy\n"); // now we can strip
@@ -168,14 +168,14 @@ public class TrailingSpacesStripperTest extends LightPlatformCodeInsightTestCase
 
     configureFromFileText("x.txt", "");
     type("xxx   \nyyy   \nzzz   \n");
-    myEditor.getCaretModel().moveToOffset(0);
+    getEditor().getCaretModel().moveToOffset(0);
     end();end();
     FileDocumentManager.getInstance().saveAllDocuments();
     checkResultByText("xxx   <caret>\nyyy   \nzzz   \n");
 
     settings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED);
     type(' ');
-    myEditor.getCaretModel().moveToOffset(myEditor.getDocument().getText().length());
+    getEditor().getCaretModel().moveToOffset(getEditor().getDocument().getText().length());
     FileDocumentManager.getInstance().saveAllDocuments();
     checkResultByText("xxx\nyyy   \nzzz   \n<caret>");
   }
@@ -229,7 +229,7 @@ public class TrailingSpacesStripperTest extends LightPlatformCodeInsightTestCase
   }
 
   @NotNull
-  private static Editor createHeavyEditor(@NotNull String name, @NotNull String text) {
+  private Editor createHeavyEditor(@NotNull String name, @NotNull String text) {
     VirtualFile myVFile = WriteAction.compute(() -> {
       try {
         VirtualFile file = getSourceRoot().createChildData(null, name);

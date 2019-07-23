@@ -20,7 +20,7 @@ class MacDmgBuilder {
   private final MacHostProperties macHostProperties
   private final String remoteDir
   private final MacDistributionCustomizer customizer
-  private static final def ENV_FOR_MAC_BUILDER = ['APPL_USER', 'APPL_PASSWORD', 'ARTIFACTORY_API_KEY', 'ARTIFACTORY_URL']
+  private static final def ENV_FOR_MAC_BUILDER = ['APPL_USER', 'APPL_PASSWORD', 'ARTIFACTORY_URL']
 
   private MacDmgBuilder(BuildContext buildContext, MacDistributionCustomizer customizer, String remoteDir, MacHostProperties macHostProperties) {
     this.customizer = customizer
@@ -195,7 +195,8 @@ class MacDmgBuilder {
                            macHostProperties.password,
                            "\"${macHostProperties.codesignString}\"",
                            (customizer.helpId != null ? "${customizer.helpId}.help" : "no-help"),
-                           notarize ? "yes" : "no"
+                           notarize ? "yes" : "no",
+                           customizer.bundleIdentifier
       ]
       if (jreArchivePath != null) {
         args += '"' + PathUtilRt.getFileName(jreArchivePath) + '"'

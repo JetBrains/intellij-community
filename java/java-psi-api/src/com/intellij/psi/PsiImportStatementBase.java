@@ -16,7 +16,6 @@
 package com.intellij.psi;
 
 import com.intellij.util.ArrayFactory;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**

@@ -4,6 +4,9 @@ package com.intellij.testFramework;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 /**
+ * NOTE: test was changed to <em>light</em> test in 2019.1 - use dedicated {@link ProjectDescriptor ProjectDescriptor} or
+ * rollback project setup changes in {@code tearDown()} to avoid side effects.
+ *
  * @deprecated Use {@link JavaInspectionTestCase} for Java-dependent tests,
  * {@link BasePlatformTestCase} for non-Java-dependent tests
  */

@@ -36,7 +36,6 @@ public class Field {
   private boolean myEditable = true;
   private boolean myDeprecated = false;
   private boolean myAnyNameAllowed;
-  private boolean myAnyValueAllowed;
   private boolean myEmptyValueAllowed;
   private boolean myIsMany;
   private Relation myOverriddenDefaultRelation;
@@ -171,21 +170,6 @@ public class Field {
   public Field withAnyName(boolean allowAnyName) {
     myAnyNameAllowed = allowAnyName;
     return this;
-  }
-
-  @NotNull
-  public Field withAnyValue() {
-    return withAnyValue(true);
-  }
-
-  @NotNull
-  public Field withAnyValue(boolean allowOtherValues) {
-    myAnyValueAllowed = allowOtherValues;
-    return this;
-  }
-
-  public final boolean isAnyValueAllowed() {
-    return myAnyValueAllowed;
   }
 
   public final boolean isAnyNameAllowed() {

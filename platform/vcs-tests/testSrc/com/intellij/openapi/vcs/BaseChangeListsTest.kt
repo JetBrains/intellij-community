@@ -43,18 +43,18 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
   override fun setUp() {
     super.setUp()
     testRoot = runWriteAction {
-      VfsUtil.markDirtyAndRefresh(false, false, true, ourProject.baseDir)
-      VfsUtil.createDirectoryIfMissing(ourProject.baseDir, getTestName(true))
+      VfsUtil.markDirtyAndRefresh(false, false, true, this.project.baseDir)
+      VfsUtil.createDirectoryIfMissing(this.project.baseDir, getTestName(true))
     }
 
-    vcs = MyMockVcs(ourProject)
+    vcs = MyMockVcs(this.project)
     changeProvider = MyMockChangeProvider()
     vcs.changeProvider = changeProvider
 
-    clm = ChangeListManagerImpl.getInstanceImpl(ourProject)
-    dirtyScopeManager = VcsDirtyScopeManager.getInstance(ourProject) as VcsDirtyScopeManagerImpl
+    clm = ChangeListManagerImpl.getInstanceImpl(this.project)
+    dirtyScopeManager = VcsDirtyScopeManager.getInstance(this.project) as VcsDirtyScopeManagerImpl
 
-    vcsManager = ProjectLevelVcsManager.getInstance(ourProject) as ProjectLevelVcsManagerImpl
+    vcsManager = ProjectLevelVcsManager.getInstance(this.project) as ProjectLevelVcsManagerImpl
     vcsManager.registerVcs(vcs)
     vcsManager.directoryMappings = listOf(VcsDirectoryMapping(testRoot.path, vcs.name))
     vcsManager.waitForInitialized()
@@ -75,7 +75,7 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
       .append(ThrowableRunnable { resetChanges() })
       .append(ThrowableRunnable { resetChangelists() })
       .append(ThrowableRunnable { vcsManager.directoryMappings = emptyList() })
-      .append(ThrowableRunnable { AllVcses.getInstance(ourProject).unregisterManually(vcs) })
+      .append(ThrowableRunnable { AllVcses.getInstance(getProject()).unregisterManually(vcs) })
       .append(ThrowableRunnable { runWriteAction { testRoot.delete(this) } })
       .append(ThrowableRunnable { super.tearDown() })
       .run()
@@ -186,12 +186,12 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
 
 
   fun runBatchFileChangeOperation(task: () -> Unit) {
-    BackgroundTaskUtil.syncPublisher(ourProject, VcsFreezingProcess.Listener.TOPIC).onFreeze()
+    BackgroundTaskUtil.syncPublisher(project, VcsFreezingProcess.Listener.TOPIC).onFreeze()
     try {
       task()
     }
     finally {
-      BackgroundTaskUtil.syncPublisher(ourProject, VcsFreezingProcess.Listener.TOPIC).onUnfreeze()
+      BackgroundTaskUtil.syncPublisher(project, VcsFreezingProcess.Listener.TOPIC).onUnfreeze()
     }
   }
 

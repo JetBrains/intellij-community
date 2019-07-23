@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
 public class ControlFlowTest extends LightJavaCodeInsightTestCase {
   @NonNls private static final String BASE_PATH = "/psi/controlFlow";
 
-  private static void doTestFor(final File file) throws Exception {
+  private void doTestFor(final File file) throws Exception {
     String contents = StringUtil.convertLineSeparators(FileUtil.loadFile(file));
     configureFromFileText(file.getName(), contents);
     // extract factory policy class name
@@ -57,7 +57,7 @@ public class ControlFlowTest extends LightJavaCodeInsightTestCase {
     assertEquals("Text mismatch (in file "+expectedFullPath+"):\n",expected, result);
   }
 
-  private static void doAllTests() throws Exception {
+  private void doAllTests() throws Exception {
     final String testDirPath = PathManagerEx.getTestDataPath().replace(File.separatorChar, '/') + BASE_PATH;
     File testDir = new File(testDirPath);
     final File[] files = testDir.listFiles((dir, name) -> name.endsWith(".java"));

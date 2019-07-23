@@ -742,6 +742,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     PsiParameter[] parameters = method.getParameterList().getParameters();
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
+      if (parameter.getType() instanceof PsiPrimitiveType) continue;
 
       List<PsiParameter> superParameters = new ArrayList<>();
       for (PsiMethod superMethod : superMethods) {
@@ -846,15 +847,18 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                @NotNull NullableNotNullManager nullableManager) {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     if (REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS) {
-      boolean[] parameterAnnotated = new boolean[parameters.length];
+      boolean[] checkParameter = new boolean[parameters.length];
       boolean[] parameterQuickFixSuggested = new boolean[parameters.length];
       boolean hasAnnotatedParameter = false;
       for (int i = 0; i < parameters.length; i++) {
         PsiParameter parameter = parameters[i];
-        parameterAnnotated[i] = isNotNullNotInferred(parameter, false, false) && !hasInheritableNotNull(parameter);
-        hasAnnotatedParameter |= parameterAnnotated[i];
+        checkParameter[i] = isNotNullNotInferred(parameter, false, false) &&
+                                !hasInheritableNotNull(parameter) &&
+                                !(parameter.getType() instanceof PsiPrimitiveType);
+        hasAnnotatedParameter |= checkParameter[i];
       }
-      if (hasAnnotatedParameter || annotated.isDeclaredNotNull && !hasInheritableNotNull(method)) {
+      boolean checkReturnType = annotated.isDeclaredNotNull && !hasInheritableNotNull(method) && !(method.getReturnType() instanceof PsiPrimitiveType);
+      if (hasAnnotatedParameter || checkReturnType) {
         final String defaultNotNull = nullableManager.getDefaultNotNull();
         final boolean superMethodApplicable = AnnotationUtil.isAnnotatingApplicable(method, defaultNotNull);
         PsiMethod[] overridings =
@@ -864,7 +868,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
           if (shouldSkipOverriderAsGenerated(overriding)) continue;
 
           if (!methodQuickFixSuggested
-              && annotated.isDeclaredNotNull
+              && checkReturnType
               && !isNotNullNotInferred(overriding, false, false)
               && (isNullableNotInferred(overriding, false) || !isNullableNotInferred(overriding, true))
               && AddAnnotationPsiFix.isAvailable(overriding, defaultNotNull)) {
@@ -891,7 +895,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
             for (int i = 0; i < psiParameters.length; i++) {
               if (parameterQuickFixSuggested[i]) continue;
               PsiParameter parameter = psiParameters[i];
-              if (parameterAnnotated[i] &&
+              if (checkParameter[i] &&
                   !isNotNullNotInferred(parameter, false, false) &&
                   !isNullableNotInferred(parameter, false) &&
                   AddAnnotationPsiFix.isAvailable(parameter, defaultNotNull)) {

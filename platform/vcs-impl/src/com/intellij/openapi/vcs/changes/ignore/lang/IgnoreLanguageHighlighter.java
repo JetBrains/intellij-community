@@ -48,7 +48,9 @@ public class IgnoreLanguageHighlighter extends SyntaxHighlighterBase {
 
   /* Binds parser definitions with highlighter colors. */
   static {
-    SyntaxHighlighterBase.fillMap(ATTRIBUTES, IgnoreParserDefinition.Lazy.COMMENTS, DefaultLanguageHighlighterColors.LINE_COMMENT);
+    fillMap(ATTRIBUTES, IgnoreParserDefinition.Lazy.COMMENTS, DefaultLanguageHighlighterColors.LINE_COMMENT);
+    fillMap(ATTRIBUTES, IgnoreParserDefinition.Lazy.SECTIONS, DefaultLanguageHighlighterColors.LINE_COMMENT);
+    fillMap(ATTRIBUTES, IgnoreParserDefinition.Lazy.HEADERS, DefaultLanguageHighlighterColors.LINE_COMMENT);
   }
 
   public IgnoreLanguageHighlighter(@Nullable VirtualFile currentHighlightedFile) {

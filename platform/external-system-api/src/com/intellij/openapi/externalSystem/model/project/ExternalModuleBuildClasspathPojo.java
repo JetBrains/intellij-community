@@ -3,7 +3,7 @@ package com.intellij.openapi.externalSystem.model.project;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -11,13 +11,13 @@ import java.util.List;
  */
 public class ExternalModuleBuildClasspathPojo {
 
-  @NotNull private List<String> myEntries;
+  @NotNull private final List<String> myEntries;
   @NotNull private String myPath;
 
   @SuppressWarnings("UnusedDeclaration")
   public ExternalModuleBuildClasspathPojo() {
     // Used by IJ serialization
-    this("___DUMMY___", new ArrayList<>());
+    this("___DUMMY___", Collections.emptyList());
   }
 
   public ExternalModuleBuildClasspathPojo(@NotNull String path, @NotNull List<String> entries) {
@@ -37,10 +37,6 @@ public class ExternalModuleBuildClasspathPojo {
   @NotNull
   public List<String> getEntries() {
     return myEntries;
-  }
-
-  public void setEntries(@NotNull List<String> entries) {
-    myEntries = entries;
   }
 
   @Override

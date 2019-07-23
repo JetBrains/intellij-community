@@ -84,7 +84,7 @@ public class RenameMembersInplaceTest extends LightJavaCodeInsightTestCase {
   public void testSameNamedMethodsInOneFile() {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
 
-    final PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.getInstance().getAllAccepted());
+    final PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.getInstance().getAllAccepted());
     assertNotNull(element);
 
     Editor editor = getEditor();
@@ -110,7 +110,7 @@ public class RenameMembersInplaceTest extends LightJavaCodeInsightTestCase {
   public void testNameSuggestion() {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
 
-    final PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.getInstance().getAllAccepted());
+    final PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.getInstance().getAllAccepted());
     assertNotNull(element);
 
     final Set<String> result = new LinkedHashSet<>();
@@ -135,28 +135,28 @@ public class RenameMembersInplaceTest extends LightJavaCodeInsightTestCase {
 
   public void testNearParameterHint() {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
-    int originalCaretPosition = myEditor.getCaretModel().getOffset();
-    Inlay inlay = EditorTestUtil.addInlay(myEditor, originalCaretPosition);
+    int originalCaretPosition = getEditor().getCaretModel().getOffset();
+    Inlay inlay = EditorTestUtil.addInlay(getEditor(), originalCaretPosition);
     VisualPosition inlayPosition = inlay.getVisualPosition();
     // make sure caret is to the right of inlay initially
-    myEditor.getCaretModel().moveToVisualPosition(new VisualPosition(inlayPosition.line, inlayPosition.column + 1));
+    getEditor().getCaretModel().moveToVisualPosition(new VisualPosition(inlayPosition.line, inlayPosition.column + 1));
 
-    final PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.getInstance().getAllAccepted());
+    final PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.getInstance().getAllAccepted());
     assertNotNull(element);
 
     TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
-    new MemberInplaceRenameHandler().doRename(element, myEditor, DataManager.getInstance().getDataContext(myEditor.getComponent()));
-    assertEquals(originalCaretPosition, myEditor.getCaretModel().getOffset());
+    new MemberInplaceRenameHandler().doRename(element, getEditor(), DataManager.getInstance().getDataContext(getEditor().getComponent()));
+    assertEquals(originalCaretPosition, getEditor().getCaretModel().getOffset());
     assertTrue(inlay.isValid());
     assertEquals(inlayPosition, inlay.getVisualPosition());
     // check caret is still to the right
-    assertEquals(new VisualPosition(inlayPosition.line, inlayPosition.column + 1), myEditor.getCaretModel().getVisualPosition());
+    assertEquals(new VisualPosition(inlayPosition.line, inlayPosition.column + 1), getEditor().getCaretModel().getVisualPosition());
   }
 
   private void doTestInplaceRename(final String newName) {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
 
-    final PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.getInstance().getAllAccepted());
+    final PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.getInstance().getAllAccepted());
     assertNotNull(element);
 
     CodeInsightTestUtil.doInlineRename(new MemberInplaceRenameHandler(), newName, getEditor(), element);

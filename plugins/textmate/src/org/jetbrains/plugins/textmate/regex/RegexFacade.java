@@ -25,9 +25,7 @@ public class RegexFacade {
   private byte[] myRegexBytes;
   private Regex myRegex = null;
 
-  private Object lastId = null;
-  private int lastOffset = Integer.MAX_VALUE;
-  private MatchData lastMatch = MatchData.NOT_MATCHED;
+  private final ThreadLocal<LastMatch> matchResult = new ThreadLocal<>();
 
   private RegexFacade(@NotNull byte[] regexBytes) {
     myRegexBytes = regexBytes;
@@ -38,8 +36,14 @@ public class RegexFacade {
   }
 
   public MatchData match(@NotNull StringWithId string, int byteOffset) {
+    LastMatch lastResult = matchResult.get();
+    Object lastId = lastResult != null ? lastResult.lastId : null;
+    int lastOffset = lastResult != null ? lastResult.lastOffset : Integer.MAX_VALUE;
+    MatchData lastMatch = lastResult != null ? lastResult.lastMatch : MatchData.NOT_MATCHED;
+
     if (lastId == string.id && lastOffset <= byteOffset) {
       if (!lastMatch.matched() || lastMatch.byteOffset().getStartOffset() >= byteOffset) {
+        checkMatched(lastMatch, string);
         return lastMatch;
       }
     }
@@ -49,7 +53,17 @@ public class RegexFacade {
     final Matcher matcher = getRegex().matcher(string.bytes);
     int matchIndex = matcher.search(byteOffset, string.bytes.length, Option.CAPTURE_GROUP);
     lastMatch = matchIndex > -1 ? MatchData.fromRegion(matcher.getEagerRegion()) : MatchData.NOT_MATCHED;
+    checkMatched(lastMatch, string);
+    matchResult.set(new LastMatch(lastId, lastOffset, lastMatch));
     return lastMatch;
+  }
+
+  private static void checkMatched(MatchData match, StringWithId string) {
+    if (match.matched() && match.byteOffset().getEndOffset() > string.bytes.length) {
+      throw new IllegalStateException(
+        "Match data out of bounds: " + match.byteOffset().getStartOffset() + " > " + string.bytes.length + "\n" +
+        new String(string.bytes, StandardCharsets.UTF_8));
+    }
   }
 
   public Searcher searcher(byte[] stringBytes) {
@@ -81,6 +95,18 @@ public class RegexFacade {
     }
     catch (ExecutionException e) {
       return new RegexFacade(regexString.getBytes(StandardCharsets.UTF_8));
+    }
+  }
+
+  private class LastMatch {
+    private final Object lastId;
+    private final int lastOffset;
+    private final MatchData lastMatch;
+
+    private LastMatch(Object id, int offset, MatchData data) {
+      lastId = id;
+      lastOffset = offset;
+      lastMatch = data;
     }
   }
 }

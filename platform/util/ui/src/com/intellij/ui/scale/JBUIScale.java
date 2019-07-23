@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.util.LazyInitializer.MutableNotNullValue;
 import com.intellij.util.LazyInitializer.NullableValue;

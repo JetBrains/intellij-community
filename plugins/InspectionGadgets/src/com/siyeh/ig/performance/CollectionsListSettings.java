@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.HashSet;
 
 /**
  * @author Dmitry Batkovich

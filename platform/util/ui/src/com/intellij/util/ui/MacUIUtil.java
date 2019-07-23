@@ -2,7 +2,6 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;

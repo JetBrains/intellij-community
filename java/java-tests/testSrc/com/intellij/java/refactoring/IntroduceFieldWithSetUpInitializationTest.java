@@ -97,7 +97,7 @@ public class IntroduceFieldWithSetUpInitializationTest extends LightJavaCodeInsi
                                                          PsiModifier.PRIVATE, local, local.getType(), true, (BaseExpressionToFieldHandler.TargetDestination)null, false,
                                                          false);
       }
-    }.convertLocalToField(local, myEditor);
+    }.convertLocalToField(local, getEditor());
     checkResultByFile("after" + getTestName(false)+ ".java");
   }
 

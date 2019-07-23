@@ -5,19 +5,19 @@ import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ChangeListListener
-import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.ChangeListManagerEx
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.VcsIgnoreManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.project.getProjectStoreDirectory
 import com.intellij.project.isDirectoryBased
+import com.intellij.project.stateStore
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcsUtil.VcsImplUtil
+import java.util.concurrent.atomic.AtomicBoolean
 
 private val LOG = Logger.getInstance(ProjectConfigurationFilesProcessorImpl::class.java)
 
@@ -31,13 +31,15 @@ class ProjectConfigurationFilesProcessorImpl(project: Project,
                                              private val parentDisposable: Disposable,
                                              private val vcsName: String,
                                              private val addChosenFiles: (Collection<VirtualFile>) -> Unit)
-  : FilesProcessorWithNotificationImpl(project, parentDisposable), FilesProcessor, ChangeListListener {
+  : FilesProcessorWithNotificationImpl(project, parentDisposable), ChangeListListener {
+
+  private val foundProjectConfigurationFiles = AtomicBoolean()
 
   private val fileSystem = LocalFileSystem.getInstance()
 
-  private val projectConfigurationFilesStore = getProjectConfigurationFilesStore(project)
+  private val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
 
-  private val changeListManager = ChangeListManager.getInstance(project) as ChangeListManagerEx
+  private val vcsIgnoreManager = VcsIgnoreManager.getInstance(project)
 
   fun install() {
     runReadAction {
@@ -47,34 +49,38 @@ class ProjectConfigurationFilesProcessorImpl(project: Project,
     }
   }
 
+  fun filterNotProjectConfigurationFiles(files: List<VirtualFile>): List<VirtualFile> {
+    val projectConfigurationFiles = doFilterFiles(files)
+
+    foundProjectConfigurationFiles.set(projectConfigurationFiles.isNotEmpty())
+
+    return files - projectConfigurationFiles
+  }
+
   override fun changeListUpdateDone() {
-    if (!projectProperties.getBoolean(SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY, false) && VcsImplUtil.isProjectSharedInVcs(project)) {
-      projectProperties.setValue(SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY, true)
+    if (foundProjectConfigurationFiles.compareAndSet(true, false)) {
+      val unversionedProjectConfigurationFiles = doFilterFiles(changeListManager.unversionedFiles)
+      if (unversionedProjectConfigurationFiles.isNotEmpty()) {
+        projectProperties.setValue(SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY, VcsImplUtil.isProjectSharedInVcs(project))
+        processFiles(unversionedProjectConfigurationFiles.toList())
+      }
     }
   }
 
   override fun doFilterFiles(files: Collection<VirtualFile>): Collection<VirtualFile> {
-    val projectBasePath = project.basePath ?: return files
-    val projectBaseDir = fileSystem.findFileByPath(projectBasePath) ?: return files
-    val storeDir = getProjectStoreDirectory(projectBaseDir)
-    if (project.isDirectoryBased && storeDir == null) {
-      LOG.warn("Cannot find store directory for project in directory ${projectBaseDir.path}")
-      return files
-    }
+    val projectConfigDir = project.getProjectConfigDir()
 
-    val filteredFiles = files.filter {
-      configurationFilesExtensionsOutsideStoreDirectory.contains(it.extension) || isProjectConfigurationFile(storeDir, it)
-    }
-
-    val previouslyStoredFiles = projectConfigurationFilesStore.cleanupAndGetValidFiles()
-    projectConfigurationFilesStore.addAll(filteredFiles)
-
-    return filteredFiles + previouslyStoredFiles
+    return files
+      .asSequence()
+      .filter {
+        configurationFilesExtensionsOutsideStoreDirectory.contains(it.extension) || isProjectConfigurationFile(projectConfigDir, it)
+      }
+      .filterNot(vcsIgnoreManager::isPotentiallyIgnoredFile)
+      .toSet()
   }
 
   override fun doActionOnChosenFiles(files: Collection<VirtualFile>) {
     addChosenFiles(files)
-    projectConfigurationFilesStore.removeAll(files)
   }
 
   override val askedBeforeProperty = ASKED_SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY
@@ -84,48 +90,27 @@ class ProjectConfigurationFilesProcessorImpl(project: Project,
   override fun notificationTitle() = ""
 
   override fun notificationMessage(): String = VcsBundle.message("project.configuration.files.add.notification.message", vcsName)
+
   override val showActionText: String = VcsBundle.getString("project.configuration.files.add.notification.action.view")
-
-
   override val forCurrentProjectActionText: String = VcsBundle.getString("project.configuration.files.add.notification.action.add")
+
+
   override val forAllProjectsActionText: String? = null
   override val muteActionText: String = VcsBundle.getString("project.configuration.files.add.notification.action.mute")
-
   override val viewFilesDialogTitle: String? = VcsBundle.message("project.configuration.files.view.dialog.title", vcsName)
 
   override fun rememberForAllProjects() {}
 
-  private fun isProjectConfigurationFile(storeDir: VirtualFile?, file: VirtualFile) =
-    storeDir != null && VfsUtilCore.isAncestor(storeDir, file, true)
-}
+  private fun isProjectConfigurationFile(configDir: VirtualFile?, file: VirtualFile) =
+    configDir != null && VfsUtilCore.isAncestor(configDir, file, true)
 
-@State(name = "ProjectConfigurationFiles", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
-class ProjectConfigurationFilesStoreState : PersistentStateComponent<ProjectConfigurationFilesStoreState.State> {
+  private fun Project.getProjectConfigDir(): VirtualFile? {
+    if (!isDirectoryBased || isDefault) return null
 
-  private val fileSystem = LocalFileSystem.getInstance()
-
-  data class State(var files: MutableList<String> = mutableListOf())
-
-  var myState = State()
-
-  fun cleanupAndGetValidFiles(): List<VirtualFile> {
-    val validFiles = state.files.mapNotNull { fileSystem.findFileByPath(it)}
-    state.files.retainAll(validFiles.map { it.path })
-    return validFiles
-  }
-
-  fun addAll(files: Collection<VirtualFile>) =
-    state.files.addAll(files.map(VirtualFile::getPath))
-
-  fun removeAll(files: Collection<VirtualFile>) =
-    state.files.removeAll(files.map(VirtualFile::getPath))
-
-  override fun getState() = myState
-
-  override fun loadState(state: State) {
-    myState = state
+    val projectConfigDir = stateStore.projectConfigDir?.let(fileSystem::findFileByPath)
+    if (projectConfigDir == null) {
+      LOG.warn("Cannot find project config directory for non-default and non-directory based project ${name}")
+    }
+    return projectConfigDir
   }
 }
-
-fun getProjectConfigurationFilesStore(project: Project): ProjectConfigurationFilesStoreState =
-  ServiceManager.getService(project, ProjectConfigurationFilesStoreState::class.java)

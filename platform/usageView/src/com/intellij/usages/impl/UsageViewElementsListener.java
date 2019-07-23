@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 public interface UsageViewElementsListener {
   ExtensionPointName<UsageViewElementsListener> EP_NAME = ExtensionPointName.create("com.intellij.usageViewElementsListener");
 
-  default void beforeUsageAdded(@NotNull Usage usage) {}
+  default void beforeUsageAdded(@NotNull UsageView view, @NotNull Usage usage) {}
 
   default boolean isExcludedByDefault(@NotNull UsageView view, @NotNull Usage usage) {
     return false;

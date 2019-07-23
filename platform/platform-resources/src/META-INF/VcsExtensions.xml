@@ -37,7 +37,6 @@
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.IgnoredFileGenerator"
                     serviceImplementation="com.intellij.openapi.vcs.changes.ignore.IgnoredFileGeneratorImpl"/>
     <projectService serviceImplementation="com.intellij.openapi.vcs.changes.ignore.IgnoredFileGeneratorImpl$IgnoredFileRootStore"/>
-    <projectService serviceImplementation="com.intellij.openapi.vcs.ProjectConfigurationFilesStoreState"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.VcsIgnoreManager"
                     serviceImplementation="com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl"/>
 

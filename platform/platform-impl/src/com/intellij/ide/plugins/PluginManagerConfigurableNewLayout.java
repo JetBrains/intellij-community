@@ -378,7 +378,7 @@ public class PluginManagerConfigurableNewLayout
             for (String host : UpdateSettings.getInstance().getPluginHosts()) {
               List<IdeaPluginDescriptor> allDescriptors = customRepositoriesMap.get(host);
               if (allDescriptors != null) {
-                addGroup(groups, "Repository: " + host, "repository:\"" + host + "\"", descriptors -> {
+                addGroup(groups, "Repository: " + host, "/repository:\"" + host + "\"", descriptors -> {
                   int allSize = allDescriptors.size();
                   descriptors.addAll(ContainerUtil.getFirstItems(allDescriptors, PluginManagerConfigurableNew.ITEMS_PER_GROUP));
                   PluginsGroup.sortByName(descriptors);

@@ -2,7 +2,6 @@
 package com.intellij.find.impl;
 
 import com.intellij.CommonBundle;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.*;
 import com.intellij.find.actions.ShowUsagesAction;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
@@ -1710,7 +1709,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   }
 
   private class MyPinAction extends ToggleAction {
-    private MyPinAction() {super(null, null, AllIcons.General.Pin_tab);}
+    private MyPinAction() {super(null, "Pin Window", AllIcons.General.Pin_tab);}
 
     @Override
     public boolean isDumbAware() {

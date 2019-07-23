@@ -148,13 +148,14 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
         return updateIfCurrent(myFilter.myContext.getCurrentConfigurable());
       }
 
-      private Promise<? super Object> updateIfCurrent(Configurable configurable) {
+      @NotNull
+      private Promise<? super Object> updateIfCurrent(@Nullable Configurable configurable) {
         if (configurable != null && configurable == myFilter.myContext.getCurrentConfigurable()) {
           updateStatus(configurable);
           return Promises.resolvedPromise();
         }
         else {
-          return Promises.rejectedPromise("rejected");
+          return Promises.cancelledPromise();
         }
       }
     });

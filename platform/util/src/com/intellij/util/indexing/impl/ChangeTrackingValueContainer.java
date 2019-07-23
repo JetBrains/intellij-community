@@ -21,7 +21,6 @@ import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.TIntHashSet;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataOutput;

@@ -31,7 +31,6 @@ import java.util.Set;
 
 import static com.intellij.openapi.util.Conditions.notInstanceOf;
 import static com.intellij.patterns.PsiJavaPatterns.*;
-import static com.intellij.patterns.StandardPatterns.not;
 import static com.intellij.psi.SyntaxTraverser.psiApi;
 
 public class JavaKeywordCompletion {

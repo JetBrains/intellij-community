@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -17,9 +17,6 @@ package com.intellij.history.core;
 
 import com.intellij.history.core.changes.ChangeSet;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class ChangeSetHolder {
   public final int id;
   public final ChangeSet changeSet;

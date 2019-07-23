@@ -208,7 +208,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (var == value) return;
 
     value = handleStackValueOnVariableFlush(value, var, null);
-    flushVariable(var);
+    flushVariable(var, var.getInherentNullability() != Nullability.UNKNOWN);
     flushQualifiedMethods(var);
 
     if (value instanceof DfaUnknownValue) {
@@ -1351,7 +1351,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @NotNull
   private DfaValue resolveVariableValue(DfaVariableValue var) {
-    DfaConstValue constValue = getConstantValue(var);
+    DfaConstValue constValue = getConstantValue(var, false);
     if (constValue != null) {
       return constValue;
     }
@@ -1505,6 +1505,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public void flushVariable(@NotNull final DfaVariableValue variable) {
+    flushVariable(variable, false);
+  }
+
+  protected void flushVariable(@NotNull final DfaVariableValue variable, boolean shouldMarkFlushed) {
     EqClass eqClass = variable.getDependentVariables().isEmpty() ? null : getEqClass(variable);
     DfaVariableValue newCanonical =
       eqClass == null ? null : StreamEx.of(eqClass.getVariables(false)).without(variable).min(EqClass.CANONICAL_VARIABLE_COMPARATOR)
@@ -1512,7 +1516,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         .orElse(null);
     myStack.replaceAll(value -> handleStackValueOnVariableFlush(value, variable, newCanonical));
 
-    doFlush(variable, false);
+    doFlush(variable, shouldMarkFlushed);
     flushDependencies(variable);
     myCachedHash = null;
   }

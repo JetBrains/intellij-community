@@ -12,5 +12,6 @@ public class IntegerDivisionInFloatingPointContext {
 
     void comparison(int intValue, int anotherIntValue) {
         if(<warning descr="'intValue/anotherIntValue': integer division in floating-point context">intValue/anotherIntValue</warning> > 0.1);
+        float f = <warning descr="'intValue / anotherIntValue': integer division in floating-point context">intValue / anotherIntValue</warning>;
     }
 }

@@ -63,7 +63,7 @@ public abstract class GenerateEqualsTestCase extends LightJavaCodeInsightTestCas
     checkResultByFile("/codeInsight/generateEquals/after" + getTestName(false) + ".java");
   }
 
-  private static void performTest(Function<PsiField[], PsiField[]> equals,
+  private void performTest(Function<PsiField[], PsiField[]> equals,
                                   Function<PsiField[], PsiField[]> hashCode,
                                   Function<PsiField[], PsiField[]> nonNull,
                                   boolean insertOverride, 

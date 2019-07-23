@@ -243,7 +243,6 @@ class CommunityRepositoryModules {
       withModule("intellij.android.smali")
     },
     plugin("intellij.statsCollector") {
-      bundlingRestrictions.includeInEapOnly = true
       withModule("intellij.statsCollector.features", "features.jar")
       withModule("intellij.statsCollector.logEvents")
       withModule("intellij.statsCollector.completionRanker")
@@ -295,7 +294,6 @@ class CommunityRepositoryModules {
 
       withProjectLibrary("freemarker") //todo[nik] move to module libraries
       withProjectLibrary("kxml2") //todo[nik] move to module libraries
-      withProjectLibrary("layoutlib") //todo[nik] move to module libraries
 
       withResourceFromModule("intellij.android.core","lib/asm-5.0.3.jar", "lib")
       withResourceFromModule("intellij.android.core","lib/asm-analysis-5.0.3.jar", "lib")
@@ -314,6 +312,9 @@ class CommunityRepositoryModules {
       withResourceArchive("../android/annotations", "lib/androidAnnotations.jar")
 
       // here go some differences from original Android Studio layout
+      withResource("../android/lib/jdk8/layoutlib.jar", "lib/jdk8")
+      withResource("../android/lib/jdk11/layoutlib.jar", "lib/jdk11")
+
       withResourceFromModule("android.sdktools.layoutlib-resources", ".", "lib/layoutlib") // todo replace this with runtime downloading
       withResourceFromModule("android.sdktools.sdklib", "../templates", "lib/templates")
 

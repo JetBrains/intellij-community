@@ -92,7 +92,7 @@ public class CtrlYActionChooser {
                                        KeyMapBundle.message("keymap.patch.dialog.redo.option"),
                                        KeyMapBundle.message("keymap.patch.dialog.delete.line.option"),
                                        KeyMapBundle.message("keymap.patch.dialog.cancel.option")
-                                     }, -1, Messages.getInformationIcon(), null);
+                                     }, 2, Messages.getInformationIcon(), null);
     IdeEventQueue.getInstance().setEventCount(savedCount); // keep data context valid after showing modal dialog
 
     if (choice < 0 || choice > 1) return false;

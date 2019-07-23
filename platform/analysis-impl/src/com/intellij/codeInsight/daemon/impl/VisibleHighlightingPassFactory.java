@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;

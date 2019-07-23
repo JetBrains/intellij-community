@@ -8,8 +8,6 @@ import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 

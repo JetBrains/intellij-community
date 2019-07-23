@@ -132,6 +132,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   @Override
   @CalledInAwt
   protected void onDispose() {
+    myFoldingModel.destroy();
     super.onDispose();
     EditorFactory.getInstance().releaseEditor(myEditor);
   }
@@ -316,6 +317,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   @CalledInAwt
   protected void markStateIsOutOfDate() {
     myStateIsOutOfDate = true;
+    myFoldingModel.disposeLineConvertor();
     if (myChangedBlockData != null) {
       for (UnifiedDiffChange diffChange : myChangedBlockData.getDiffChanges()) {
         diffChange.updateGutterActions();
@@ -1274,11 +1276,10 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   }
 
   private static class MyFoldingModel extends FoldingModelSupport {
-    @Nullable private final Project myProject;
+    @NotNull private DisposableLineNumberConvertor myLineNumberConvertor = new DisposableLineNumberConvertor(null);
 
     MyFoldingModel(@Nullable Project project, @NotNull EditorEx editor, @NotNull Disposable disposable) {
-      super(new EditorEx[]{editor}, disposable);
-      myProject = project;
+      super(project, new EditorEx[]{editor}, disposable);
     }
 
     @Nullable
@@ -1294,7 +1295,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
       if (it == null || settings.range == -1) return null;
 
-      MyFoldingBuilder builder = new MyFoldingBuilder(myProject, document, lineConvertor, lineCount, settings);
+      myLineNumberConvertor = new DisposableLineNumberConvertor(lineConvertor);
+      MyFoldingBuilder builder = new MyFoldingBuilder(document, myLineNumberConvertor, lineCount, settings);
       return builder.build(it);
     }
 
@@ -1303,29 +1305,46 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       return getLineConvertor(0);
     }
 
-    private static class MyFoldingBuilder extends FoldingBuilderBase {
-      @Nullable private final Project myProject;
-      @NotNull private final Document myDocument;
-      @NotNull private final LineNumberConvertor myLineConvertor;
+    public void disposeLineConvertor() {
+      myLineNumberConvertor.dispose();
+    }
 
-      private MyFoldingBuilder(@Nullable Project project,
-                               @NotNull Document document,
-                               @NotNull LineNumberConvertor lineConvertor,
+    private static class MyFoldingBuilder extends FoldingBuilderBase {
+      @NotNull private final Document myDocument;
+      @NotNull private final DisposableLineNumberConvertor myLineConvertor;
+
+      private MyFoldingBuilder(@NotNull Document document,
+                               @NotNull DisposableLineNumberConvertor lineConvertor,
                                int lineCount,
                                @NotNull Settings settings) {
         super(new int[]{lineCount}, settings);
-        myProject = project;
         myDocument = document;
         myLineConvertor = lineConvertor;
       }
 
       @Nullable
       @Override
-      protected FoldedRangeDescription getDescription(int lineNumber, int index) {
-        if (myProject == null) return null;
+      protected FoldedRangeDescription getDescription(@NotNull Project project, int lineNumber, int index) {
         int masterLine = myLineConvertor.convert(lineNumber);
         if (masterLine == -1) return null;
-        return getLineSeparatorDescription(myProject, myDocument, masterLine);
+        return getLineSeparatorDescription(project, myDocument, masterLine);
+      }
+    }
+
+    private static class DisposableLineNumberConvertor {
+      @Nullable private volatile LineNumberConvertor myConvertor;
+
+      private DisposableLineNumberConvertor(@Nullable LineNumberConvertor convertor) {
+        myConvertor = convertor;
+      }
+
+      public int convert(int lineNumber) {
+        LineNumberConvertor convertor = myConvertor;
+        return convertor != null ? convertor.convert(lineNumber) : -1;
+      }
+
+      public void dispose() {
+        myConvertor = null;
       }
     }
   }

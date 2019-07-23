@@ -16,7 +16,6 @@
 package com.intellij.psi.util;
 
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;

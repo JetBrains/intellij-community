@@ -11,18 +11,28 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.FrameTitleBuilder
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import net.miginfocom.swing.MigLayout
+import java.awt.Dimension
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
 
 
-open class SelectedEditorFilePath {
+open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = null ) {
+  companion object{
+    private val PROJECT_PATH_REGISTRY = Registry.get("ide.borderless.title.project.path")
+    private val CLASSPATH_REGISTRY = Registry.get("ide.borderless.title.classpath")
+    private val PRODUCT_REGISTRY = Registry.get("ide.borderless.title.product")
+    private val VERSION_REGISTRY = Registry.get("ide.borderless.title.version")
+  }
+
   private val LOGGER = logger<SelectedEditorFilePath>()
 
   private val projectTitle = ProjectTitlePane()
@@ -32,6 +42,13 @@ open class SelectedEditorFilePath {
   private val superUserSuffix = DefaultPartTitle(" ")
 
   protected val components = listOf(projectTitle, classTitle, productTitle, productVersion, superUserSuffix)
+
+  private val registryListener = object : RegistryValueListener.Adapter() {
+    override fun afterValueChanged(value: RegistryValue) {
+      updateTitlePaths()
+      update()
+    }
+  }
 
   private val pane = object : JPanel(MigLayout("ins 0, gap 0", "[min!][pref][pref][pref][pref]push")){
     override fun addNotify() {
@@ -43,12 +60,25 @@ open class SelectedEditorFilePath {
       super.removeNotify()
       unInstallListeners()
     }
+
+    override fun getMinimumSize(): Dimension {
+      return Dimension(projectTitle.shortWidth, super.getMinimumSize().height)
+    }
   }.apply {
+    isOpaque = false
+    
     add(projectTitle.component)
     add(classTitle.component, "growx")
     add(productTitle.component)
     add(productVersion.component)
     add(superUserSuffix.component)
+  }
+
+  private fun updateTitlePaths() {
+    projectTitle.active = PROJECT_PATH_REGISTRY.asBoolean()
+    classTitle.active = CLASSPATH_REGISTRY.asBoolean()
+    productTitle.active = PRODUCT_REGISTRY.asBoolean()
+    productVersion.active = VERSION_REGISTRY.asBoolean()
   }
 
   open fun getView(): JComponent {
@@ -68,6 +98,13 @@ open class SelectedEditorFilePath {
       val disp = Disposer.newDisposable()
       Disposer.register(it, disp)
       disposable = disp
+
+      PROJECT_PATH_REGISTRY.addListener(registryListener, disp)
+      CLASSPATH_REGISTRY.addListener(registryListener, disp)
+      PRODUCT_REGISTRY.addListener(registryListener, disp)
+      VERSION_REGISTRY.addListener(registryListener, disp)
+
+      updateTitlePaths()
 
       it.messageBus.connect(disp).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
         override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
@@ -140,9 +177,8 @@ open class SelectedEditorFilePath {
   }
 
   protected fun updateProjectName() {
-    if (!SystemInfo.isMac && !SystemInfo.isGNOME) productTitle.longText = ApplicationNamesInfo.getInstance().fullProductName else productTitle.ignore()
-
-    if(java.lang.Boolean.getBoolean("ide.ui.version.in.title")) productVersion.longText = ApplicationInfo.getInstance().fullVersion else productVersion.ignore()
+    productTitle.longText = ApplicationNamesInfo.getInstance().fullProductName
+    productVersion.longText = ApplicationInfo.getInstance().fullVersion ?: ""
 
     superUserSuffix.longText = IdeFrameImpl.getSuperUserSuffix() ?: ""
 
@@ -264,7 +300,10 @@ open class SelectedEditorFilePath {
       }
     }
 
-    components.forEach { it.setToolTip(if (!isClipped()) null else "${projectTitle.toolTipPart}${classTitle.toolTipPart}${productTitle.toolTipPart}${productVersion.toolTipPart}") }
+    val clipped = isClipped()
+    val tooltip = if(!clipped) null else components.joinToString(separator = "", transform = {it.toolTipPart})
+    components.forEach {it.setToolTip(tooltip)}
 
+    onBoundsChanged?.invoke()
   }
 }

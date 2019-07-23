@@ -55,7 +55,7 @@ fun createFileStructure(rootDir: VirtualFile, vararg paths: String) {
       mkdir(path)
     }
     else {
-      touch(path, "initial_content_" + Math.random())
+      touch(path, "initial_content_in_{$path}")
     }
   }
 }
@@ -93,6 +93,10 @@ fun setupUsername(project: Project, name: String, email: String) {
   git(project, "config user.email '$email'")
 }
 
+fun disableGitGc(project: Project) {
+  git(project, "config gc.auto 0")
+}
+
 /**
  * Creates a Git repository in the given root directory;
  * registers it in the Settings;
@@ -122,6 +126,8 @@ fun registerRepo(project: Project, root: String): GitRepository {
   assertFalse(vcsManager.allVcsRoots.isEmpty())
   val repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(file)
   assertNotNull("Couldn't find repository for root $root", repository)
+  cd(root)
+  disableGitGc(project)
   return repository!!
 }
 

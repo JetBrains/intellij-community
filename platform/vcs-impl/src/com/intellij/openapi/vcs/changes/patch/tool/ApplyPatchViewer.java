@@ -122,7 +122,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     myFocusTrackerSupport.setCurrentSide(Side.LEFT);
     myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
     myStatusPanel = new MyStatusPanel();
-    myFoldingModel = new MyFoldingModel(myResultEditor, this);
+    myFoldingModel = new MyFoldingModel(myProject, myResultEditor, this);
 
 
     DiffUtil.installLineConvertor(myResultEditor, myFoldingModel);
@@ -714,8 +714,8 @@ class ApplyPatchViewer implements DataProvider, Disposable {
   }
 
   private static class MyFoldingModel extends FoldingModelSupport {
-    MyFoldingModel(@NotNull EditorEx editor, @NotNull Disposable disposable) {
-      super(new EditorEx[]{editor}, disposable);
+    MyFoldingModel(@Nullable Project project, @NotNull EditorEx editor, @NotNull Disposable disposable) {
+      super(project, new EditorEx[]{editor}, disposable);
     }
 
     public void install(@Nullable List<ApplyPatchChange> changes,

@@ -2,7 +2,6 @@
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.CommonBundle;
-import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.eventLog.FeatureUsageUiEventsKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -19,7 +18,6 @@ import com.intellij.openapi.options.ex.ConfigurableVisitor;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.labels.LinkLabel;

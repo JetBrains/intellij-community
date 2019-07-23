@@ -50,7 +50,7 @@ public class VisualLinesIteratorTest extends AbstractEditorTest {
     assertTrue(it.atEnd());
   }
   
-  private static VisualLinesIterator createIterator(int startVisualLine) {
-    return new VisualLinesIterator((EditorImpl)myEditor, startVisualLine);
+  private VisualLinesIterator createIterator(int startVisualLine) {
+    return new VisualLinesIterator((EditorImpl)getEditor(), startVisualLine);
   }
 }

@@ -3,20 +3,29 @@ package git4idea.tests
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vcs.Executor.rm
+import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.FileStatus.*
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.VfsTestUtil.createDir
 import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.ui.GuiUtils
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.test.add
+import git4idea.test.addCommit
+import git4idea.test.git
 
 class GitChangeProviderVersionedTest : GitChangeProviderTest() {
 
   fun testCreateFile() {
     val file = create(projectRoot, "new.txt")
     repo.add(file.path)
-    assertChanges(file, ADDED)
+    assertProviderChanges(file, ADDED)
+
+    assertChanges {
+      added("new.txt")
+    }
   }
 
   fun testCreateFileInDir() {
@@ -24,17 +33,30 @@ class GitChangeProviderVersionedTest : GitChangeProviderTest() {
     dirty(dir)
     val bfile = create(dir, "new.txt")
     repo.add(bfile.path)
-    assertChanges(listOf(bfile, dir), listOf(ADDED, null))
+    assertProviderChanges(listOf(bfile, dir),
+                          listOf(ADDED, null))
+
+    assertChanges {
+      added("newdir/new.txt")
+    }
   }
 
   fun testEditFile() {
     edit(atxt, "new content")
-    assertChanges(atxt, MODIFIED)
+    assertProviderChanges(atxt, MODIFIED)
+
+    assertChanges {
+      modified("a.txt")
+    }
   }
 
   fun testDeleteFile() {
     deleteFile(atxt)
-    assertChanges(atxt, DELETED)
+    assertProviderChanges(atxt, DELETED)
+
+    assertChanges {
+      deleted("a.txt")
+    }
   }
 
   fun testDeleteDirRecursively() {
@@ -45,8 +67,13 @@ class GitChangeProviderVersionedTest : GitChangeProviderTest() {
         FileUtil.delete(VfsUtilCore.virtualToIoFile(dir))
       }
     }
-    assertChanges(listOf(dir_ctxt, subdir_dtxt),
-                  listOf(DELETED, DELETED))
+    assertProviderChanges(listOf(dir_ctxt, subdir_dtxt),
+                          listOf(DELETED, DELETED))
+
+    assertChanges {
+      deleted("dir/c.txt")
+      deleted("dir/subdir/d.txt")
+    }
   }
 
   fun testSimultaneousOperationsOnMultipleFiles() {
@@ -56,7 +83,61 @@ class GitChangeProviderVersionedTest : GitChangeProviderTest() {
     val newfile = create(projectRoot, "newfile.txt")
     repo.add()
 
-    assertChanges(listOf(atxt, dir_ctxt, subdir_dtxt, newfile), listOf(MODIFIED, MODIFIED, DELETED, ADDED))
+    assertProviderChanges(listOf(atxt, dir_ctxt, subdir_dtxt, newfile),
+                          listOf(MODIFIED, MODIFIED, DELETED, ADDED))
+
+    assertChanges {
+      modified("a.txt")
+      modified("dir/c.txt")
+      deleted("dir/subdir/d.txt")
+      added("newfile.txt")
+    }
   }
 
+  fun testRenamedInWorktree() {
+    assumeWorktreeRenamesSupported()
+
+    touch("rename.txt", "rename_file_content")
+    addCommit("init rename")
+
+    // do not trigger move via VcsVFSListener
+    rm("rename.txt")
+    touch("unstaged.txt", "rename_file_content")
+    repo.git("add -N unstaged.txt")
+
+    VfsUtil.markDirtyAndRefresh(false, true, true, projectRoot)
+    dirty(projectRoot)
+
+    assertProviderChangesInPaths(listOf("rename.txt", "staged.txt", "unstaged.txt").map { VcsUtil.getFilePath(projectRoot, it) },
+                                 listOf(null, null, MODIFIED))
+
+    assertChanges {
+      rename("rename.txt", "unstaged.txt")
+    }
+  }
+
+  fun testTwiceRenamed() {
+    assumeWorktreeRenamesSupported()
+
+    touch("rename.txt", "rename_file_content")
+    addCommit("init rename")
+
+    repo.git("mv rename.txt staged.txt")
+
+    // do not trigger move via VcsVFSListener
+    rm("staged.txt")
+    touch("unstaged.txt", "rename_file_content")
+    repo.git("add -N unstaged.txt")
+
+    VfsUtil.markDirtyAndRefresh(false, true, true, projectRoot)
+    dirty(projectRoot)
+
+    assertProviderChangesInPaths(listOf("rename.txt", "staged.txt", "unstaged.txt").map { VcsUtil.getFilePath(projectRoot, it) },
+                                 listOf(null, MODIFIED, MODIFIED))
+
+    assertChanges {
+      rename("rename.txt", "staged.txt")
+      rename("staged.txt", "unstaged.txt")
+    }
+  }
 }

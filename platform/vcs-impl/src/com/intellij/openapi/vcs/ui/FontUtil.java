@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.impl.FontFallbackIterator;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import sun.java2d.SunGraphics2D;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;

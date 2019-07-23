@@ -12,15 +12,15 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class TextOccurrencesRenamer {
+class TextOccurrencesRenamer {
   private final Editor myEditor;
   private final String myOldName;
   private final List<TextRange> myOccurrences;
   private final TextRange myOccurrenceAtCaret;
   private final long myInitialModificationStamp;
 
-  public TextOccurrencesRenamer(@NotNull Editor editor, @NotNull String occurrenceText,
-                                @NotNull Collection<TextRange> occurrences, @NotNull TextRange occurrenceAtCaret) {
+  TextOccurrencesRenamer(@NotNull Editor editor, @NotNull String occurrenceText,
+                         @NotNull Collection<TextRange> occurrences, @NotNull TextRange occurrenceAtCaret) {
     myEditor = editor;
     myOldName = occurrenceText;
     myOccurrences = new ArrayList<>(occurrences);

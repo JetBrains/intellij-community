@@ -76,7 +76,7 @@ public class NullableNotNullManagerTest extends LightPlatformTestCase {
     assertNull(nullability);
   }
 
-  private static NullabilityAnnotationInfo getMethodReturnNullability(String className, String methodName) {
+  private NullabilityAnnotationInfo getMethodReturnNullability(String className, String methodName) {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
     GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
     NullableNotNullManager manager = NullableNotNullManager.getInstance(getProject());

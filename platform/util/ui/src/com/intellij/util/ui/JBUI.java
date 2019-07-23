@@ -9,10 +9,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.border.CustomLineBorder;
-import com.intellij.ui.scale.DerivedScaleType;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.scale.Scale;
-import com.intellij.ui.scale.UserScaleContext;
+import com.intellij.ui.scale.*;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -32,16 +29,26 @@ import java.lang.ref.WeakReference;
  */
 @SuppressWarnings("UseJBColor")
 public class JBUI {
+
+  /**
+   * @deprecated use {@link JBUIScale#sysScale()}
+   */
   @Deprecated
   public static float sysScale() {
     return JBUIScale.sysScale();
   }
 
+  /**
+   * @deprecated use {@link JBUIScale#sysScale(Graphics2D)}
+   */
   @Deprecated
   public static float sysScale(@Nullable Graphics2D g) {
     return JBUIScale.sysScale(g);
   }
 
+  /**
+   * @deprecated use {@link JBUIScale#sysScale(Component)}
+   */
   @Deprecated
   public static float sysScale(@Nullable Component comp) {
     return JBUIScale.sysScale(comp);
@@ -77,11 +84,17 @@ public class JBUI {
     return pixScale(comp != null ? comp.getGraphicsConfiguration() : null);
   }
 
+  /**
+   * @deprecated use {@link JBUIScale#setUserScaleFactor(float)}
+   */
   @Deprecated
   public static float setUserScaleFactor(float scale) {
     return JBUIScale.setUserScaleFactor(scale);
   }
 
+  /**
+   * @deprecated use {@link JBUIScale#scale(float)}
+   */
   @Deprecated
   public static float scale(float f) {
     return JBUIScale.scale(f);
@@ -207,6 +220,9 @@ public class JBUI {
     return JBUIScale.isUsrHiDPI();
   }
 
+  /**
+   * @deprecated use {@link JBUIScale#isUsrHiDPI()}
+   */
   @Deprecated
   public static boolean isUsrHiDPI() {
     return JBUIScale.isUsrHiDPI();
@@ -392,18 +408,40 @@ public class JBUI {
       }
 
       @NotNull
+      public static Color titlePaneButtonHoverBackground() {
+        return JBColor.namedColor("TitlePane.Button.hoverBackground",
+                           new JBColor(ColorUtil.withAlpha(Color.BLACK, .1),
+                                       ColorUtil.withAlpha(Color.WHITE, .1)));
+      }
+
+      @NotNull
+      public static Color titlePaneButtonPressBackground() {
+        return titlePaneButtonHoverBackground();
+      }
+
+      @NotNull
+      public static Color titlePaneInactiveBackground() {
+        return JBColor.namedColor("TitlePane.inactiveBackground", titlePaneBackground());
+      }
+
+      @NotNull
+      public static Color titlePaneBackground(boolean active) {
+        return active ? titlePaneBackground() : titlePaneInactiveBackground();
+      }
+
+      @NotNull
       public static Color titlePaneBackground() {
         return JBColor.namedColor("TitlePane.background", paneBackground());
       }
 
       @NotNull
       public static Color titlePaneInfoForeground() {
-        return JBColor.namedColor("TitlePane.infoForeground", new JBColor(0x595959, 0x999999));
+        return JBColor.namedColor("TitlePane.infoForeground", new JBColor(0x616161, 0x919191));
       }
 
       @NotNull
       public static Color titlePaneInactiveInfoForeground() {
-        return JBColor.namedColor("TitlePane.inactiveInfoForeground", new JBColor(0xB1B1B1, 0x737373));
+        return JBColor.namedColor("TitlePane.inactiveInfoForeground", new JBColor(0xA6A6A6, 0x737373));
       }
 
       @NotNull
@@ -640,6 +678,9 @@ public class JBUI {
         return getInt("ToolWindow.HeaderTab.verticalPadding", JBUIScale.scale(6));
       }
 
+      /**
+       * @deprecated obsolete UI
+       */
       @NotNull
       @Deprecated
       public static Border tabBorder() {
@@ -989,13 +1030,14 @@ public class JBUI {
   }
 
   /*
-   * The scaling classes/methods below are left for binary compatibility with plugins (based on API Watcher).
+   * The scaling classes/methods below are kept for binary compatibility with plugins built with IJ SDK 2018.3-2019.1
    */
 
   /**
    * @deprecated Use {@link com.intellij.ui.scale.ScaleType}.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public enum ScaleType {
     USR_SCALE,
     SYS_SCALE,
@@ -1007,6 +1049,7 @@ public class JBUI {
    * @deprecated Use {@link UserScaleContext}.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static class BaseScaleContext extends UserScaleContext {
     @SuppressWarnings("MethodOverloadsMethodOfSuperclass")
     public boolean update(@Nullable BaseScaleContext ctx) {
@@ -1017,6 +1060,10 @@ public class JBUI {
       return setScale(scale);
     }
 
+    /**
+     * @deprecated Use {@link UserScaleContext#getScale(com.intellij.ui.scale.ScaleType)}.
+     */
+    @Deprecated
     public double getScale(@NotNull ScaleType type) {
       switch (type) {
         case USR_SCALE: return usrScale.value();
@@ -1059,6 +1106,7 @@ public class JBUI {
       setScale(scale);
     }
 
+    @Override
     public double getScale(@NotNull ScaleType type) {
       switch (type) {
         case USR_SCALE: return usrScale.value();
@@ -1069,8 +1117,7 @@ public class JBUI {
       return 1f; // unreachable
     }
 
-    // backward compatibility
-    @SuppressWarnings("MethodOverloadsMethodOfSuperclass")
+    @Override
     public boolean update(@Nullable BaseScaleContext context) {
       return super.update(context);
     }
@@ -1080,6 +1127,14 @@ public class JBUI {
    * @deprecated Use {@link JBScalableIcon}.
    */
   @Deprecated
-  @SuppressWarnings("AbstractClassNeverImplemented")
-  public abstract static class JBIcon extends JBScalableIcon {}
+  @ApiStatus.ScheduledForRemoval
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  public abstract static class JBIcon<T extends JBScalableIcon> extends JBScalableIcon {
+    public JBIcon() {
+      super();
+    }
+    public JBIcon(T icon) {
+      super(icon);
+    }
+  }
 }

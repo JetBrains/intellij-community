@@ -19,7 +19,6 @@ import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;

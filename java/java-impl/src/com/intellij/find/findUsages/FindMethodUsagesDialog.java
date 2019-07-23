@@ -2,9 +2,10 @@
 package com.intellij.find.findUsages;
 
 import com.intellij.find.FindBundle;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.search.ImplicitToStringSearcher;
 import com.intellij.psi.search.searches.ImplicitToStringSearch;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
@@ -46,6 +47,18 @@ public class FindMethodUsagesDialog extends JavaFindUsagesDialog<JavaMethodFindU
       options.isImplicitToString = isSelected(myCbImplicitToString);
     }
     options.isCheckDeepInheritance = true;
+    FUStateUsagesLogger.logStateEvent(myEventLogGroup, "FindMethodUsages", createFeatureUsageData(options));
+  }
+
+  @Override
+  protected FeatureUsageData createFeatureUsageData(JavaMethodFindUsagesOptions options) {
+    FeatureUsageData data = super.createFeatureUsageData(options);
+    data.addData("overridingMethods", options.isOverridingMethods);
+    data.addData("implementingMethods", options.isImplementingMethods);
+    data.addData("includeInherited", options.isIncludeInherited);
+    data.addData("includeOverload", options.isIncludeOverloadUsages);
+    data.addData("implicitCalls", options.isImplicitToString);
+    return data;
   }
 
   @Override

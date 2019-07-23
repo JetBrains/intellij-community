@@ -1,6 +1,5 @@
 package com.jetbrains.python.debugger;
 
-import com.intellij.xdebugger.frame.XReferrersProvider;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 

@@ -7,8 +7,12 @@ class GitSubmodule(
 
 fun GitRepository.asSubmodule() : GitSubmodule? {
   val repositoryManager = GitRepositoryManager.getInstance(project)
-  val parent = repositoryManager.repositories.find { it.getDirectSubmodules().contains(this) }
+  val parent = repositoryManager.repositories.find { it.isParentRepositoryFor(this) }
   return if (parent != null) GitSubmodule(this, parent) else null
+}
+
+private fun GitRepository.isParentRepositoryFor(submodule: GitRepository): Boolean {
+  return submodules.any { module -> root.findFileByRelativePath(module.path) == submodule.root }
 }
 
 fun GitRepository.isSubmodule(): Boolean = asSubmodule() != null

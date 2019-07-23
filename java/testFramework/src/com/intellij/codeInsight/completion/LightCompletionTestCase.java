@@ -62,7 +62,7 @@ public abstract class LightCompletionTestCase extends LightJavaCodeInsightTestCa
   protected void complete(final int time) {
     new CodeCompletionHandlerBase(myType).invokeCompletion(getProject(), getEditor(), time);
 
-    LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
+    LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(getEditor());
     myItems = lookup == null ? null : lookup.getItems().toArray(LookupElement.EMPTY_ARRAY);
     myPrefix = lookup == null ? null : lookup.itemPattern(lookup.getItems().get(0));
   }
@@ -135,7 +135,7 @@ public abstract class LightCompletionTestCase extends LightJavaCodeInsightTestCa
     return actual;
   }
 
-  protected static LookupImpl getLookup() {
-    return (LookupImpl)LookupManager.getActiveLookup(myEditor);
+  protected LookupImpl getLookup() {
+    return (LookupImpl)LookupManager.getActiveLookup(getEditor());
   }
 }

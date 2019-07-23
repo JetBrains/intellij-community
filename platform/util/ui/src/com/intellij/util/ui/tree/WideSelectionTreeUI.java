@@ -195,6 +195,9 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     map.put("selectParent", COLLAPSE_OR_SELECT_PREVIOUS);
   }
 
+  /**
+   * @deprecated not supported in UI
+   */
   @Deprecated
   public void setForceDontPaintLines() {
     myForceDontPaintLines = true;

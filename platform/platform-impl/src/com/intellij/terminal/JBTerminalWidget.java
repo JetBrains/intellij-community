@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -252,6 +253,11 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
       }
       return null;
     });
+  }
+
+  @Override
+  public void runFilters(@NotNull Runnable runnable) {
+    ReadAction.run(() -> runnable.run());
   }
 
   public void start(TtyConnector connector) {

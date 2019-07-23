@@ -52,15 +52,15 @@ public abstract class AbstractNewLineBlocksIteratorTest extends LightPlatformCod
   }
 
   @NotNull
-  protected static Iterator<Block> newLineBlockIterator() {
-    FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(myFile);
+  protected Iterator<Block> newLineBlockIterator() {
+    FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(getFile());
     Assert.assertNotNull(builder);
 
     CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings();
-    FormattingModel model = builder.createModel(myFile, settings);
+    FormattingModel model = builder.createModel(getFile(), settings);
 
     Block root = model.getRootBlock();
-    Document document = PsiDocumentManager.getInstance(getProject()).getDocument(myFile);
+    Document document = PsiDocumentManager.getInstance(getProject()).getDocument(getFile());
     Assert.assertNotNull(document);
 
     return new NewLineBlocksIterator(root, document);

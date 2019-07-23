@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.configurable;
 
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.VcsConfiguration;

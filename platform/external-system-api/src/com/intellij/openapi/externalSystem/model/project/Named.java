@@ -2,10 +2,6 @@ package com.intellij.openapi.externalSystem.model.project;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.util.Comparator;
-
 /**
  * @author Denis Zhdanov
  */

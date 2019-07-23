@@ -16,6 +16,8 @@
 package com.intellij.find.findUsages;
 
 import com.intellij.find.FindBundle;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.IdeBorderFactory;
@@ -50,6 +52,14 @@ public class FindPackageUsagesDialog extends JavaFindUsagesDialog<JavaPackageFin
     }
     options.isSkipPackageStatements = false;
     options.isSkipImportStatements = false;
+    FUStateUsagesLogger.logStateEvent(myEventLogGroup, "FindPackageUsages", createFeatureUsageData(options));
+  }
+
+  @Override
+  protected FeatureUsageData createFeatureUsageData(JavaPackageFindUsagesOptions options) {
+    FeatureUsageData data = super.createFeatureUsageData(options);
+    data.addData("classesUsages", options.isClassesUsages);
+    return data;
   }
 
   @Override

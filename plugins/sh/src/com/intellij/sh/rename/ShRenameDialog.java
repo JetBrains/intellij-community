@@ -16,13 +16,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class ShRenameDialog extends RefactoringDialog {
+class ShRenameDialog extends RefactoringDialog {
 
   private final JLabel myNameLabel;
   private final NameSuggestionsField myNameSuggestionsField;
   private final TextOccurrencesRenamer myRenamer;
 
-  protected ShRenameDialog(@NotNull Project project, @NotNull TextOccurrencesRenamer renamer) {
+  ShRenameDialog(@NotNull Project project, @NotNull TextOccurrencesRenamer renamer) {
     super(project, false);
     myRenamer = renamer;
     String nameLabelText = RefactoringBundle.message("rename.0.and.its.usages.to", "'" + renamer.getOldName() + "'");

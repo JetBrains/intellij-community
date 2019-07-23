@@ -1,10 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.propertyBased;
 
-import com.intellij.java.psi.formatter.java.AbstractJavaFormatterTest;
+import com.intellij.application.options.CodeStyle;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.PsiEnumConstantImpl;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.SkipSlowTestLocally;
@@ -60,9 +63,9 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
   }
 
   public void testPreserveComments() {
-    boolean oldSettings = AbstractJavaFormatterTest.getJavaSettings().ENABLE_JAVADOC_FORMATTING;
+    boolean oldSettings = getJavaSettings().ENABLE_JAVADOC_FORMATTING;
     try {
-      AbstractJavaFormatterTest.getJavaSettings().ENABLE_JAVADOC_FORMATTING = false;
+      getJavaSettings().ENABLE_JAVADOC_FORMATTING = false;
       enableInspections();
       Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
         file -> Generator.sampledFrom(new InvokeIntention(file, new JavaCommentingStrategy()),
@@ -71,8 +74,13 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
         .checkScenarios(actionsOnJavaFiles(fileActions));
     }
     finally {
-      AbstractJavaFormatterTest.getJavaSettings().ENABLE_JAVADOC_FORMATTING = oldSettings;
+      getJavaSettings().ENABLE_JAVADOC_FORMATTING = oldSettings;
     }
+  }
+
+  private JavaCodeStyleSettings getJavaSettings() {
+    CodeStyleSettings rootSettings = CodeStyle.getSettings(getProject());
+    return rootSettings.getCommonSettings(JavaLanguage.INSTANCE).getRootSettings().getCustomSettings(JavaCodeStyleSettings.class);
   }
 
   public void testParenthesesDontChangeIntention() {

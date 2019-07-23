@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
+import com.intellij.build.BuildDescriptor;
 import com.intellij.build.BuildTreeFilters;
 import com.intellij.build.BuildView;
 import com.intellij.build.DefaultBuildDescriptor;
@@ -31,6 +32,7 @@ import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.buildtool.BuildToolConsoleProcessAdapter;
@@ -39,12 +41,13 @@ import org.jetbrains.idea.maven.buildtool.MavenBuildEventProcessor;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.MavenSpyOutputParser;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenGeneralSettingsEditor;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.ProjectBundle;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
@@ -314,42 +317,52 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
       final ProcessHandler processHandler = startProcess();
 
-      final ConsoleView console = createConsoleViewAndAttachToProcess(executor, processHandler);
+      ExternalSystemTaskId taskId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, EXECUTE_TASK, getProject());
+      DefaultBuildDescriptor descriptor =
+        new DefaultBuildDescriptor(taskId, myName, getEnvironment().getProject().getBasePath(), System.currentTimeMillis());
 
-      AnAction[] actions = console instanceof BuildView ?
-                           new AnAction[]{BuildTreeFilters.createFilteringActionsGroup((BuildView)console)} : AnAction.EMPTY_ARRAY;
-      DefaultExecutionResult res = new DefaultExecutionResult(console, processHandler, actions);
+      final BuildView buildView = createBuildView(executor, taskId, descriptor);
+
+
+      if (buildView == null) {
+        MavenLog.LOG.warn("buildView is null for " + myName);
+      }
+      MavenParsingContext context = initializeParsersAndAttachToProcess(buildView, taskId, descriptor, processHandler);
+      AnAction[] actions = buildView != null ?
+                           new AnAction[]{BuildTreeFilters.createFilteringActionsGroup(buildView)} : AnAction.EMPTY_ARRAY;
+      DefaultExecutionResult res = new DefaultExecutionResult(buildView, processHandler, actions);
       if (MavenResumeAction.isApplicable(getEnvironment().getProject(), getJavaParameters(), MavenRunConfiguration.this)) {
-        MavenResumeAction resumeAction = new MavenResumeAction(res.getProcessHandler(), runner, getEnvironment());
+        MavenResumeAction resumeAction = new MavenResumeAction(res.getProcessHandler(), runner, getEnvironment(), context);
         res.setRestartActions(resumeAction);
       }
       return res;
     }
 
-    private @Nullable
-    ConsoleView createConsoleViewAndAttachToProcess(Executor executor, ProcessHandler processHandler) throws ExecutionException {
+    @Contract("null, _, _, _ -> null;_, _, _,_ -> _")
+    @Nullable
+    private MavenParsingContext initializeParsersAndAttachToProcess(@Nullable BuildView buildView,
+                                                                    @NotNull ExternalSystemTaskId taskId,
+                                                                    @NotNull BuildDescriptor descriptor,
+                                                                    @NotNull ProcessHandler processHandler)
+      throws ExecutionException {
+      if (buildView == null) {
+        return null;
+      }
+      MavenBuildEventProcessor eventProcessor =
+        new MavenBuildEventProcessor(getProject(), getProject().getBasePath(), buildView, descriptor, taskId);
+      processHandler.addProcessListener(new BuildToolConsoleProcessAdapter(eventProcessor, true));
+      buildView.attachToProcess(new MavenHandlerFilterSpyWrapper(processHandler));
+      return eventProcessor.getParsingContext();
+    }
+
+    @Nullable
+    private BuildView createBuildView(@NotNull Executor executor, @NotNull ExternalSystemTaskId taskId,
+                                      @NotNull BuildDescriptor descriptor) throws ExecutionException {
       ConsoleView console = super.createConsole(executor);
       if (console == null) {
         return null;
       }
-
-      if (!Registry.is("maven.build.tool.window.enabled")) {
-        console.attachToProcess(processHandler);
-        return console;
-      }
-      else {
-        ExternalSystemTaskId taskId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, EXECUTE_TASK, getProject());
-        DefaultBuildDescriptor descriptor =
-          new DefaultBuildDescriptor(taskId, myName, getEnvironment().getProject().getBasePath(), System.currentTimeMillis());
-
-        BuildView buildView = BuildViewMavenConsole.createBuildView(getProject(), console, descriptor);
-
-        MavenBuildEventProcessor eventProcessor =
-          new MavenBuildEventProcessor(getProject(), getProject().getBasePath(), buildView, descriptor, taskId);
-        processHandler.addProcessListener(new BuildToolConsoleProcessAdapter(eventProcessor, true));
-        buildView.attachToProcess(new MavenHandlerFilterSpyWrapper(processHandler));
-        return buildView;
-      }
+      return BuildViewMavenConsole.createBuildView(getProject(), console, descriptor);
     }
 
     @NotNull
@@ -372,7 +385,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
             @Override
             public boolean sendIncompleteLines() {
-              return false;
+              return true;
             }
           };
         }
@@ -453,29 +466,40 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     }
 
     private ProcessListener filtered(ProcessListener listener) {
-      return new ProcessListener() {
-        @Override
-        public void startNotified(@NotNull ProcessEvent event) {
-          listener.startNotified(event);
-        }
+      return new ProcessListenerWithFilteredSpyOutput(listener);
+    }
 
-        @Override
-        public void processTerminated(@NotNull ProcessEvent event) {
-          listener.processTerminated(event);
-        }
+    private class ProcessListenerWithFilteredSpyOutput implements ProcessListener {
+      private final ProcessListener myListener;
+      private final MavenExternalExecutor.MavenSimpleConsoleEventsBuffer mySimpleConsoleEventsBuffer;
 
-        @Override
-        public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
-          listener.processWillTerminate(event, willBeDestroyed);
-        }
+      ProcessListenerWithFilteredSpyOutput(ProcessListener listener) {
+        myListener = listener;
+        mySimpleConsoleEventsBuffer = new MavenExternalExecutor.MavenSimpleConsoleEventsBuffer(
+          (l, k) -> myListener.onTextAvailable(new ProcessEvent(MavenHandlerFilterSpyWrapper.this, l), k),
+          Registry.is("maven.spy.events.debug")
+        );
+      }
 
-        @Override
-        public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-          if (!MavenSpyOutputParser.isSpyLog(event.getText()) || Registry.is("maven.spy.events.debug")) {
-            listener.onTextAvailable(event, outputType);
-          }
-        }
-      };
+      @Override
+      public void startNotified(@NotNull ProcessEvent event) {
+        myListener.startNotified(event);
+      }
+
+      @Override
+      public void processTerminated(@NotNull ProcessEvent event) {
+        myListener.processTerminated(event);
+      }
+
+      @Override
+      public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
+        myListener.processWillTerminate(event, willBeDestroyed);
+      }
+
+      @Override
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+        mySimpleConsoleEventsBuffer.addText(event.getText(), outputType);
+      }
     }
   }
 }

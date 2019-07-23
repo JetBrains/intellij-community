@@ -15,6 +15,8 @@ import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.impl.VcsDescriptor;
+import com.intellij.openapi.vcs.impl.projectlevelman.AllVcsesI;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
@@ -427,7 +429,16 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
 
   @ApiStatus.Internal
   public boolean needsLegacyDefaultMappings() {
-    return false;
+    if (getCustomConvertor() != null) return true;
+
+    for (VcsRootChecker checker : VcsRootChecker.EXTENSION_POINT_NAME.getExtensionList()) {
+      if (checker.getSupportedVcs().equals(getKeyInstanceMethod())) return false;
+    }
+
+    VcsDescriptor descriptor = AllVcsesI.getInstance(myProject).getDescriptor(myName);
+    if (descriptor != null && descriptor.hasVcsDirPattern()) return false;
+
+    return true;
   }
 
   /**

@@ -32,7 +32,6 @@ import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider;
 import org.jetbrains.idea.maven.execution.RunnerBundle;
 import org.jetbrains.idea.maven.importing.MavenImporter;

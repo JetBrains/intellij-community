@@ -36,7 +36,6 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.*;
-import com.intellij.xdebugger.impl.frame.XThreadsFramesView;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

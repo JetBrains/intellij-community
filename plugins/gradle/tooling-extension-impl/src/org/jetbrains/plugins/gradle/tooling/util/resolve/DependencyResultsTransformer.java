@@ -32,7 +32,8 @@ import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolv
 
 public class DependencyResultsTransformer {
 
-  private static final boolean is46rBetter = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.6")) >= 0;
+  private static final boolean is31orBetter = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("3.1")) >= 0;
+  private static final boolean is46rBetter = is31orBetter && GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.6")) >= 0;
 
 
   private final Project myProject;
@@ -120,15 +121,28 @@ public class DependencyResultsTransformer {
     boolean resolveFromArtifacts = resultId instanceof ModuleComponentIdentifier;
 
     if (resultId instanceof ProjectComponentIdentifier) {
+      ProjectComponentIdentifier projectComponentIdentifier = (ProjectComponentIdentifier)resultId;
       Collection<ProjectDependency> projectDependencies = configurationProjectDependencies.get(componentIdentifier);
       Collection<Configuration> dependencyConfigurations;
-      String projectPath = ((ProjectComponentIdentifier)resultId).getProjectPath();
+      String projectPath = projectComponentIdentifier.getProjectPath();
+      boolean currentBuild;
+      if (is31orBetter) {
+        currentBuild = projectComponentIdentifier.getBuild().isCurrentBuild();
+      }
+      else {
+        currentBuild = true;
+      }
+
       if (projectDependencies.isEmpty()) {
         Project dependencyProject = myProject.findProject(projectPath);
-        if (dependencyProject != null) {
+        if (dependencyProject != null && currentBuild) {
           Configuration dependencyProjectConfiguration =
-            dependencyProject.getConfigurations().getByName(Dependency.DEFAULT_CONFIGURATION);
-          dependencyConfigurations = Collections.singleton(dependencyProjectConfiguration);
+            dependencyProject.getConfigurations().findByName(Dependency.DEFAULT_CONFIGURATION);
+          if (dependencyProjectConfiguration != null) {
+            dependencyConfigurations = Collections.singleton(dependencyProjectConfiguration);
+          } else {
+            dependencyConfigurations = Collections.emptySet();
+          }
         }
         else {
           dependencyConfigurations = Collections.emptySet();
@@ -240,8 +254,9 @@ public class DependencyResultsTransformer {
             dDep.setProjectPath(artifactComponentIdentifier.getProjectPath());
             dDep.setConfigurationName(Dependency.DEFAULT_CONFIGURATION);
 
-            List<File> files = new ArrayList<File>();
-            for (ResolvedArtifact resolvedArtifact : artifactMap.get(componentResult.getModuleVersion())) {
+            Collection<ResolvedArtifact> resolvedArtifacts = artifactMap.get(componentResult.getModuleVersion());
+            List<File> files = new ArrayList<File>(resolvedArtifacts.size());
+            for (ResolvedArtifact resolvedArtifact : resolvedArtifacts) {
               files.add(resolvedArtifact.getFile());
             }
             dDep.setProjectDependencyArtifacts(files);

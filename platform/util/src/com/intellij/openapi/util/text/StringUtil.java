@@ -2299,7 +2299,12 @@ public class StringUtil extends StringUtilRt {
         builder.append("\\r");
       }
       else {
-        builder.append('\\').append(c);
+        final Character.UnicodeBlock block = Character.UnicodeBlock.of(c);
+        if (block == Character.UnicodeBlock.HIGH_SURROGATES || block == Character.UnicodeBlock.LOW_SURROGATES) {
+          builder.append(c);
+        } else {
+          builder.append('\\').append(c);
+        }
       }
     }
 

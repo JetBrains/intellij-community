@@ -2554,25 +2554,25 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
   public void testNotApplicableConstraints() {
     options.fillSearchCriteria("class A extends '_B* {}");
-    assertEquals("MAXIMUM UNLIMITED not applicable for B", checkApplicableConstraints(options));
+    assertEquals("MAXIMUM UNLIMITED not applicable for B", checkApplicableConstraints(options, getProject()));
 
     options.fillSearchCriteria("'_a?.'_b?");
-    assertEquals("MINIMUM ZERO not applicable for b", checkApplicableConstraints(options));
+    assertEquals("MINIMUM ZERO not applicable for b", checkApplicableConstraints(options, getProject()));
 
     options.fillSearchCriteria("case '_a* :");
-    assertEquals("MINIMUM ZERO not applicable for a", checkApplicableConstraints(options));
+    assertEquals("MINIMUM ZERO not applicable for a", checkApplicableConstraints(options, getProject()));
 
     options.fillSearchCriteria("int '_a:* ;");
-    assertEquals("TEXT HIERARCHY not applicable for a", checkApplicableConstraints(options));
+    assertEquals("TEXT HIERARCHY not applicable for a", checkApplicableConstraints(options, getProject()));
 
     options.fillSearchCriteria("void '_a:* ();");
-    assertEquals("TEXT HIERARCHY not applicable for a", checkApplicableConstraints(options));
+    assertEquals("TEXT HIERARCHY not applicable for a", checkApplicableConstraints(options, getProject()));
 
     options.fillSearchCriteria("if (true) '_st{0,0};");
-    assertEquals("MINIMUM ZERO not applicable for st", checkApplicableConstraints(options));
+    assertEquals("MINIMUM ZERO not applicable for st", checkApplicableConstraints(options, getProject()));
 
     options.fillSearchCriteria("while (true) '_st+;");
-    assertEquals("MAXIMUM UNLIMITED not applicable for st", checkApplicableConstraints(options));
+    assertEquals("MAXIMUM UNLIMITED not applicable for st", checkApplicableConstraints(options, getProject()));
   }
 
   public void testFindInnerClass() {

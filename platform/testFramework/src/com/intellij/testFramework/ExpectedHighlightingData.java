@@ -48,6 +48,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.Pair.pair;
+import static java.util.Comparator.comparingInt;
 import static org.junit.Assert.*;
 
 /**
@@ -420,8 +421,35 @@ public class ExpectedHighlightingData {
     }
 
     if (failMessage.length() > 0) {
-      fail(failMessage.toString());
+      String filePath = null;
+      if (myFile != null) {
+        VirtualFile file = myFile.getVirtualFile();
+        if (file != null) {
+          filePath = file.getUserData(VfsTestUtil.TEST_DATA_FILE_PATH);
+        }
+      }
+      throw new FileComparisonFailure(failMessage.toString(), myText, getActualLineMarkerFileText(markerInfos), filePath);
     }
+  }
+
+  @NotNull
+  private String getActualLineMarkerFileText(@NotNull Collection<? extends LineMarkerInfo> markerInfos) {
+    StringBuilder result = new StringBuilder();
+    int index = 0;
+    ArrayList<LineMarkerInfo> lineMarkerInfos = new ArrayList<>(markerInfos);
+    Collections.sort(lineMarkerInfos, comparingInt(o -> o.startOffset));
+    String documentText = myDocument.getText();
+    for (LineMarkerInfo expectedLineMarker : lineMarkerInfos) {
+      result.append(documentText, index, expectedLineMarker.startOffset)
+        .append("<lineMarker descr=\"")
+        .append(expectedLineMarker.getLineMarkerTooltip())
+        .append("\">")
+        .append(documentText, expectedLineMarker.startOffset, expectedLineMarker.endOffset)
+        .append("</lineMarker>");
+      index = expectedLineMarker.endOffset;
+    }
+    result.append(documentText, index, myDocument.getTextLength());
+    return result.toString();
   }
 
   private static boolean containsLineMarker(LineMarkerInfo info, Collection<? extends LineMarkerInfo> where) {

@@ -171,13 +171,13 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
       long start = System.currentTimeMillis();
 
       LOG.debug("i = " + i);
-      String s = myFile.getText();
+      String s = getFile().getText();
       int offset;
       while (true) {
         offset = random.nextInt(s.length());
         if (s.charAt(offset) == ' ') break;
       }
-      myEditor.getCaretModel().moveToOffset(offset);
+      getEditor().getCaretModel().moveToOffset(offset);
       type("/*--*/");
       List<HighlightInfo> infos = doHighlighting();
       if (oldWarningSize != infos.size()) {
@@ -256,7 +256,7 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
     Random random = new Random();
     int unused = 0;
     for (int i = 0; i < 100; i++) {
-      String s = myFile.getText();
+      String s = getFile().getText();
 
       int offset;
       while (true) {
@@ -266,12 +266,12 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
 
       char next = offset < s.length()-1 ? s.charAt(offset+1) : 0;
       if (next == '/') {
-        myEditor.getCaretModel().moveToOffset(offset + 1);
+        getEditor().getCaretModel().moveToOffset(offset + 1);
         type("**");
         unused--;
       }
       else if (next == '*') {
-        myEditor.getCaretModel().moveToOffset(offset + 1);
+        getEditor().getCaretModel().moveToOffset(offset + 1);
         delete();
         delete();
         unused++;

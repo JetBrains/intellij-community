@@ -9,11 +9,11 @@ import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
  */
 public abstract class DetectFileTypeTestCase extends LightPlatformCodeInsightTestCase {
 
-  protected static void doTest(LanguageFileType fileType, String text) {
+  protected void doTest(LanguageFileType fileType, String text) {
     doTest(fileType, text, null);
   }
 
-  protected static void doTest(LanguageFileType fileType, String text, String ext) {
+  protected void doTest(LanguageFileType fileType, String text, String ext) {
     if (ext == null) ext = fileType.getDefaultExtension();
     configureFromFileText("test." + ext, text, true);
     final SearchContext context = new SearchContext(getProject(), getFile(), getEditor());

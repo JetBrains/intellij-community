@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
@@ -52,7 +53,6 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   private final List<InstructionImpl> myInstructions = new ArrayList<>();
 
   private final Deque<InstructionImpl> myProcessingStack = new ArrayDeque<>();
-  private final PsiConstantEvaluationHelper myConstantEvaluator;
   private GroovyPsiElement myScope;
 
 
@@ -90,7 +90,6 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   public ControlFlowBuilder(Project project, GrControlFlowPolicy policy) {
     myPolicy = policy;
-    myConstantEvaluator = JavaPsiFacade.getInstance(project).getConstantEvaluationHelper();
   }
 
   @Override
@@ -909,8 +908,13 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     finishNode(instruction);
   }
 
-  private boolean alwaysTrue(GroovyPsiElement condition) {
-    return Boolean.TRUE.equals(myConstantEvaluator.computeConstantExpression(condition));
+  private static boolean alwaysTrue(GroovyPsiElement condition) {
+    if (condition instanceof GrExpression) {
+      return Boolean.TRUE.equals(GroovyConstantExpressionEvaluator.evaluateNoResolve((GrExpression)condition));
+    }
+    else {
+      return false;
+    }
   }
 
   @Override

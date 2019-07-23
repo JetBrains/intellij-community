@@ -240,13 +240,9 @@ public class JBTabsImpl extends JComponent
     });
     addMouseWheelListener(event -> {
       int units = event.getUnitsToScroll();
-
-      // Workaround for 'shaking' scrolling with touchpad when some events have units with opposite (wrong) sign
-      if (SystemInfo.isMac && event.getModifiers() == InputEvent.SHIFT_MASK) return;
-
       if (units == 0) return;
       if (mySingleRowLayout.myLastSingRowLayout != null) {
-        mySingleRowLayout.scroll(units * mySingleRowLayout.getScrollUnitIncrement());
+        mySingleRowLayout.scroll((int)(event.getPreciseWheelRotation() * mySingleRowLayout.getScrollUnitIncrement()));
         revalidateAndRepaint(false);
       }
     });
@@ -2909,12 +2905,6 @@ public class JBTabsImpl extends JComponent
   @Override
   public JBTabsPresentation setPaintFocus(final boolean paintFocus) {
     myPaintFocus = paintFocus;
-    return this;
-  }
-
-  @Override
-  public JBTabsPresentation setAlwaysPaintSelectedTab(final boolean paintSelected) {
-    myAlwaysPaintSelectedTab = paintSelected;
     return this;
   }
 

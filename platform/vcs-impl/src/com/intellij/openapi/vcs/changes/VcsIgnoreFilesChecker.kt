@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
@@ -25,10 +26,10 @@ class VcsIgnoreFilesChecker(private val project: Project) : ProjectComponent {
       .connect()
       .subscribe(VCS_CONFIGURATION_CHANGED, VcsListener {
         StartupManager.getInstance(project).runWhenProjectIsInitialized {
-          ApplicationManager.getApplication().executeOnPooledThread {
+          BackgroundTaskUtil.executeOnPooledThread(project, Runnable {
             generateVcsIgnoreFileInStoreDirIfNeeded(project)
             generateVcsIgnoreFileInRootIfNeeded(project)
-          }
+          })
         }
       })
   }

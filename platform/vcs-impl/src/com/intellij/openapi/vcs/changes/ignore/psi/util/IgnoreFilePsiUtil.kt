@@ -66,7 +66,7 @@ fun addNewElementsToIgnoreBlock(project: Project,
   return ignoreFilePsi
 }
 
-fun addNewElements(project: Project, ignoreFile: VirtualFile, vararg newEntries: IgnoredFileDescriptor): PsiFile? {
+fun addNewElements(project: Project, ignoreFile: VirtualFile, newEntries: List<IgnoredFileDescriptor>): PsiFile? {
   val vcs = VcsUtil.getVcsFor(project, ignoreFile) ?: return null
   val ignoredFileContentProvider = VcsImplUtil.findIgnoredFileContentProvider(project, vcs) ?: return null
   val ignoreFilePsi = ignoreFile.findIgnorePsi(project) ?: return null
@@ -107,7 +107,7 @@ private fun updateIgnoreBlock(psiParserFacade: PsiParserFacade,
 
 private fun addNewElements(ignoreFilePsi: PsiFile, newEntries: List<PsiElement>) {
   with(ignoreFilePsi) {
-    if (!lastChild.isNewLine()) {
+    if (lastChild != null && !lastChild.isNewLine()) {
       add(createNewline())
     }
     newEntries.forEach { add(it); add(createNewline()) }

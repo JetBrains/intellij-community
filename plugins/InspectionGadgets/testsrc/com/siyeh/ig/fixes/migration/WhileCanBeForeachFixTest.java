@@ -7,9 +7,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.migration.WhileCanBeForeachInspection;
 
-import java.util.Iterator;
-import java.util.List;
-
 public class WhileCanBeForeachFixTest extends IGQuickFixesTestCase {
   @Override
   protected void setUp() throws Exception {

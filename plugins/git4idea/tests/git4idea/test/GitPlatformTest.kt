@@ -125,20 +125,20 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     git("remote add origin " + parentRepo.path)
     git("push --set-upstream origin master:master")
 
-    Executor.cd(broRepo.path)
+    cd(broRepo.path)
     git("pull")
 
     return ReposTrinity(repository, parentRepo, broRepo)
   }
 
   private fun createParentRepo(parentName: String): File {
-    Executor.cd(testRoot)
+    cd(testRoot)
     git("init --bare $parentName.git")
-    return File(testRoot, parentName + ".git")
+    return File(testRoot, "$parentName.git")
   }
 
   protected fun createBroRepo(broName: String, parentRepo: File): File {
-    Executor.cd(testRoot)
+    cd(testRoot)
     git("clone " + parentRepo.name + " " + broName)
     cd(broName)
     setupDefaultUsername(project)
@@ -176,7 +176,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   }
 
   private fun restoreCredentialHelpers() {
-    credentialHelpers.forEach { scope, values ->
+    credentialHelpers.forEach { (scope, values) ->
       values.forEach { git("config --add ${scope.param()} credential.helper ${it}", true) }
     }
   }
@@ -223,6 +223,14 @@ abstract class GitPlatformTest : VcsPlatformTest() {
 
   protected fun `assert commit dialog was shown`() {
     assertTrue("Commit dialog was not shown", vcsHelper.commitDialogWasShown())
+  }
+
+  protected fun assertNoChanges() {
+    changeListManager.assertNoChanges()
+  }
+
+  protected fun assertChanges(changes: ChangesBuilder.() -> Unit): List<Change> {
+    return changeListManager.assertChanges(changes)
   }
 
   protected data class ReposTrinity(val projectRepo: GitRepository, val parent: File, val bro: File)

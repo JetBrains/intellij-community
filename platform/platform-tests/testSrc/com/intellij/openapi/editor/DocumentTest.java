@@ -85,7 +85,7 @@ public class DocumentTest extends LightPlatformTestCase {
   }
 
   public void testEmptyDocumentLineCount() {
-    WriteCommandAction.runWriteCommandAction(ourProject, () -> {
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
       DocumentImpl document = new DocumentImpl("");
       assertEquals(0, document.getLineCount());
       document.insertString(0, "a");

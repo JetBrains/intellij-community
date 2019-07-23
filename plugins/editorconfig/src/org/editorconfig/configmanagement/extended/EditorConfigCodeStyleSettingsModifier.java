@@ -4,6 +4,7 @@ package org.editorconfig.configmanagement.extended;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
 import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
+import com.intellij.application.options.codeStyle.properties.GeneralCodeStylePropertyMapper;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -74,16 +75,20 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
   }
 
   private static boolean applyCodeStyleSettings(@NotNull MyContext context) {
+    AbstractCodeStylePropertyMapper mapper = getPropertyMapper(context);
+    Set<String> processed = new HashSet<>();
+    boolean isModified = processOptions(context, mapper, false, processed);
+    isModified = processOptions(context, mapper, true, processed) || isModified;
+    return isModified;
+  }
+
+  @NotNull
+  private static AbstractCodeStylePropertyMapper getPropertyMapper(@NotNull MyContext context) {
     LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.findUsingBaseLanguage(context.getLanguage());
     if (provider != null) {
-      AbstractCodeStylePropertyMapper mapper = provider.getPropertyMapper(context.getSettings());
-      Set<String> processed = new HashSet<>();
-      boolean isModified = processOptions(context, mapper, false, processed);
-      isModified = processOptions(context, mapper, true, processed) || isModified;
-      return isModified;
-
+      return provider.getPropertyMapper(context.getSettings());
     }
-    return false;
+    return new GeneralCodeStylePropertyMapper(context.getSettings());
   }
 
   @Override

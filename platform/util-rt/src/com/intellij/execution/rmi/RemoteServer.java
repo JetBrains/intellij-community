@@ -29,10 +29,13 @@ import java.lang.reflect.Proxy;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.net.Socket;
 import java.rmi.Remote;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.rmi.server.*;
+import java.rmi.server.ExportException;
+import java.rmi.server.RMISocketFactory;
+import java.rmi.server.UnicastRemoteObject;
 import java.security.Security;
 import java.util.Hashtable;
 import java.util.Random;
@@ -57,21 +60,13 @@ public class RemoteServer {
     if (ourRemote != null) throw new AssertionError("Already started");
     ourRemote = remote;
 
-    RMIClientSocketFactory clientSocketFactory = RMISocketFactory.getDefaultSocketFactory();
-    RMIServerSocketFactory serverSocketFactory = new RMIServerSocketFactory() {
-      final InetAddress loopbackAddress = InetAddress.getByName(getLoopbackAddress());
-      public ServerSocket createServerSocket(int port) throws IOException {
-        return new ServerSocket(port, 0, loopbackAddress);
-      }
-    };
-
     Registry registry;
     int port;
     for (Random random = new Random(); ;) {
       port = random.nextInt(0xffff);
       if (port < 4000) continue;
       try {
-        registry = LocateRegistry.createRegistry(port, clientSocketFactory, serverSocketFactory);
+        registry = LocateRegistry.createRegistry(port);
         break;
       }
       catch (ExportException ignored) { }
@@ -113,6 +108,25 @@ public class RemoteServer {
     }
     // do not use HTTP tunnelling
     System.setProperty("java.rmi.server.disableHttp", "true");
+
+    // bind to localhost only
+    try {
+      RMISocketFactory.setSocketFactory(new RMISocketFactory() {
+        final InetAddress loopbackAddress = InetAddress.getByName(getLoopbackAddress());
+        @Override
+        public Socket createSocket(String host, int port) throws IOException {
+          return new Socket(host, port);
+        }
+
+        @Override
+        public ServerSocket createServerSocket(int port) throws IOException {
+          return new ServerSocket(port, 0, loopbackAddress);
+        }
+      });
+    }
+    catch (IOException e) {
+      throw new AssertionError(e);
+    }
   }
 
   private static void banJNDI() {

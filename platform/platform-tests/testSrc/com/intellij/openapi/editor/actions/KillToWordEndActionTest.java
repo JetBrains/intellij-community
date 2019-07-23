@@ -151,7 +151,7 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
                   "        }\n" +
                   "    }";
     configureFromFileText(getTestName(false) + ".java", text);
-    final FoldingModel model = myEditor.getFoldingModel();
+    final FoldingModel model = getEditor().getFoldingModel();
     model.runBatchFoldingOperation(() -> {
       final FoldRegion foldRegion = model.addFoldRegion(70, 90, "");
       assertNotNull(foldRegion);
@@ -181,9 +181,9 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
   public void testDoubleEditors() throws Exception {
     String text = "<caret>first second third";
     configureFromFileText(getTestName(false) + ".txt", text);
-    final Document document = myEditor.getDocument();
+    final Document document = getEditor().getDocument();
     EditorFactory editorFactory = EditorFactory.getInstance();
-    Editor otherEditor = editorFactory.createEditor(document, ourProject);
+    Editor otherEditor = editorFactory.createEditor(document, getProject());
     try {
       otherEditor.getCaretModel().moveToOffset(document.getTextLength() - 1);
       killToWordEnd();

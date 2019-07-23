@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
 import com.intellij.openapi.Disposable;
@@ -942,6 +942,46 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
         if (path == null) return false;
       }
       return true;
+    }
+  }
+
+  @Override
+  protected void treeStructureChanged(TreePath path, int[] indices, Object[] children) {
+    try {
+      super.treeStructureChanged(path, indices, children);
+    }
+    catch (Throwable throwable) {
+      LOG.error("custom model: " + model, throwable);
+    }
+  }
+
+  @Override
+  protected void treeNodesChanged(TreePath path, int[] indices, Object[] children) {
+    try {
+      super.treeNodesChanged(path, indices, children);
+    }
+    catch (Throwable throwable) {
+      LOG.error("custom model: " + model, throwable);
+    }
+  }
+
+  @Override
+  protected void treeNodesInserted(TreePath path, int[] indices, Object[] children) {
+    try {
+      super.treeNodesInserted(path, indices, children);
+    }
+    catch (Throwable throwable) {
+      LOG.error("custom model: " + model, throwable);
+    }
+  }
+
+  @Override
+  protected void treeNodesRemoved(TreePath path, int[] indices, Object[] children) {
+    try {
+      super.treeNodesRemoved(path, indices, children);
+    }
+    catch (Throwable throwable) {
+      LOG.error("custom model: " + model, throwable);
     }
   }
 

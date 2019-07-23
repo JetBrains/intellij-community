@@ -6,12 +6,11 @@ import org.jetbrains.annotations.NotNull;
 
 public class DeprecatedMethodException extends RuntimeException {
   private static final Logger LOG = Logger.getInstance(DeprecatedMethodException.class);
-  private DeprecatedMethodException(String message) {
+  private DeprecatedMethodException(@NotNull String message) {
     super(message);
   }
 
   public static void report(@NotNull String message) {
-
     LOG.warn(new DeprecatedMethodException("This method in " + ReflectionUtil.findCallerClass(2) +
                                            " is deprecated and going to be removed soon. "+message));
   }

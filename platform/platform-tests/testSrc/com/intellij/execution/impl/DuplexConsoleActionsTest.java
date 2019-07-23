@@ -58,8 +58,8 @@ public class DuplexConsoleActionsTest extends LightPlatformTestCase {
   }
 
   public void testMergeSameConsoles() {
-    final ConsoleViewImpl console1 = ConsoleViewImplTest.createConsole();
-    final ConsoleViewImpl console2 = ConsoleViewImplTest.createConsole();
+    final ConsoleViewImpl console1 = ConsoleViewImplTest.createConsole(false, getProject());
+    final ConsoleViewImpl console2 = ConsoleViewImplTest.createConsole(false, getProject());
     final DuplexConsoleView<ConsoleViewImpl, ConsoleViewImpl> duplexConsoleView = new DuplexConsoleView<>(console1, console2);
     Disposer.register(myDisposable, duplexConsoleView);
 
@@ -72,7 +72,7 @@ public class DuplexConsoleActionsTest extends LightPlatformTestCase {
   }
 
   public void testMergeReversedConsoles() {
-    final ConsoleViewImpl console1 = ConsoleViewImplTest.createConsole();
+    final ConsoleViewImpl console1 = ConsoleViewImplTest.createConsole(false, getProject());
     final ConsoleViewImpl console2 = createConsoleWithReversedActions();
     final DuplexConsoleView<ConsoleViewImpl, ConsoleViewImpl> duplexConsoleView = new DuplexConsoleView<>(console1, console2);
     Disposer.register(myDisposable, duplexConsoleView);
@@ -86,8 +86,8 @@ public class DuplexConsoleActionsTest extends LightPlatformTestCase {
   }
   
   public void testMergedClear() {
-    final ConsoleViewImpl console1 = ConsoleViewImplTest.createConsole();
-    final ConsoleViewImpl console2 = ConsoleViewImplTest.createConsole();
+    final ConsoleViewImpl console1 = ConsoleViewImplTest.createConsole(false, getProject());
+    final ConsoleViewImpl console2 = ConsoleViewImplTest.createConsole(false, getProject());
     final DuplexConsoleView<ConsoleViewImpl, ConsoleViewImpl> duplexConsoleView = new DuplexConsoleView<>(console1, console2);
     Disposer.register(myDisposable, duplexConsoleView);
     final AnAction clearAction = findAction(duplexConsoleView.createConsoleActions(), "Clear");
@@ -118,7 +118,7 @@ public class DuplexConsoleActionsTest extends LightPlatformTestCase {
   }
 
   @NotNull
-  private static ConsoleViewImpl createConsoleWithReversedActions() {
+  private ConsoleViewImpl createConsoleWithReversedActions() {
     Project project = getProject();
     ConsoleViewImpl console = new ConsoleViewImpl(project,
                                                   GlobalSearchScope.allScope(project),

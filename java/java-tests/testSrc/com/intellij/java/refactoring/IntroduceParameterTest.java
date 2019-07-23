@@ -352,13 +352,13 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
     boolean enabled = true;
     try {
       configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
-      enabled = myEditor.getSettings().isVariableInplaceRenameEnabled();
-      myEditor.getSettings().setVariableInplaceRenameEnabled(false);
-      new IntroduceParameterHandler().invoke(getProject(), myEditor, myFile, DataContext.EMPTY_CONTEXT);
+      enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
+      getEditor().getSettings().setVariableInplaceRenameEnabled(false);
+      new IntroduceParameterHandler().invoke(getProject(), getEditor(), getFile(), DataContext.EMPTY_CONTEXT);
       checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
     }
     finally {
-      myEditor.getSettings().setVariableInplaceRenameEnabled(enabled);
+      getEditor().getSettings().setVariableInplaceRenameEnabled(enabled);
     }
   }
 
@@ -403,8 +403,8 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
     boolean enabled = true;
     try {
       configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
-      enabled = myEditor.getSettings().isVariableInplaceRenameEnabled();
-      myEditor.getSettings().setVariableInplaceRenameEnabled(false);
+      enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
+      getEditor().getSettings().setVariableInplaceRenameEnabled(false);
       perform(true, replaceFieldsWithGetters, "anObject", searchForSuper, declareFinal, removeUnusedParameters, generateDelegate);
       checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
       if (conflict != null) {
@@ -417,34 +417,34 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
       }
       assertEquals(conflict, e.getMessage());
     } finally {
-      myEditor.getSettings().setVariableInplaceRenameEnabled(enabled);
+      getEditor().getSettings().setVariableInplaceRenameEnabled(enabled);
     }
   }
 
-  private static boolean perform(boolean replaceAllOccurrences,
-                                 int replaceFieldsWithGetters,
-                                 @NonNls String parameterName,
-                                 boolean searchForSuper,
-                                 boolean declareFinal,
-                                 boolean removeUnusedParameters,
-                                 boolean generateDelegate) {
+  private boolean perform(boolean replaceAllOccurrences,
+                          int replaceFieldsWithGetters,
+                          @NonNls String parameterName,
+                          boolean searchForSuper,
+                          boolean declareFinal,
+                          boolean removeUnusedParameters,
+                          boolean generateDelegate) {
     return perform(
       replaceAllOccurrences, replaceFieldsWithGetters, parameterName, searchForSuper, declareFinal,
       removeUnusedParameters, generateDelegate, 0, false
     );
   }
 
-  private static boolean perform(boolean replaceAllOccurrences,
-                                 int replaceFieldsWithGetters,
-                                 @NonNls String parameterName,
-                                 boolean searchForSuper,
-                                 boolean declareFinal,
-                                 boolean removeUnusedParameters,
-                                 boolean generateDelegate,
-                                 int enclosingLevel,
-                                 final boolean replaceDuplicates) {
+  private boolean perform(boolean replaceAllOccurrences,
+                          int replaceFieldsWithGetters,
+                          @NonNls String parameterName,
+                          boolean searchForSuper,
+                          boolean declareFinal,
+                          boolean removeUnusedParameters,
+                          boolean generateDelegate,
+                          int enclosingLevel,
+                          final boolean replaceDuplicates) {
     final ElementToWorkOn[] elementToWorkOn = new ElementToWorkOn[1];
-    ElementToWorkOn.processElementToWorkOn(myEditor, myFile, "INtr param", HelpID.INTRODUCE_PARAMETER, getProject(),
+    ElementToWorkOn.processElementToWorkOn(getEditor(), getFile(), "INtr param", HelpID.INTRODUCE_PARAMETER, getProject(),
                                            new ElementToWorkOn.ElementsProcessor<ElementToWorkOn>() {
                                              @Override
                                              public boolean accept(ElementToWorkOn el) {
@@ -508,17 +508,17 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
     }
     processor.run();
 
-    myEditor.getSelectionModel().removeSelection();
+    getEditor().getSelectionModel().removeSelection();
     return true;
   }
 
-  private static void performForLocal(boolean searchForSuper,
-                                      boolean removeLocalVariable,
-                                      boolean replaceAllOccurrences,
-                                      boolean declareFinal,
-                                      final boolean removeUnusedParameters) {
-    final int offset = myEditor.getCaretModel().getOffset();
-    final PsiElement element = ObjectUtils.assertNotNull(myFile.findElementAt(offset)).getParent();
+  private void performForLocal(boolean searchForSuper,
+                               boolean removeLocalVariable,
+                               boolean replaceAllOccurrences,
+                               boolean declareFinal,
+                               final boolean removeUnusedParameters) {
+    final int offset = getEditor().getCaretModel().getOffset();
+    final PsiElement element = ObjectUtils.assertNotNull(getFile().findElementAt(offset)).getParent();
     assertTrue(element instanceof PsiLocalVariable);
     PsiMethod method = Util.getContainingMethod(element);
     final PsiMethod methodToSearchFor;

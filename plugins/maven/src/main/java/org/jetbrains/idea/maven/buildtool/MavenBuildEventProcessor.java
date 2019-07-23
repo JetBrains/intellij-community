@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenResumeAction;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLogOutputParser;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenOutputParserProvider;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext;
 import org.jetbrains.idea.maven.project.MavenConsoleImpl;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -75,7 +76,8 @@ public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAc
       .withExecutionFilters(MavenConsoleImpl.getMavenConsoleFilters(myProject));
     if (executionEnvironment != null && processHandler != null) {
       startEvent
-        .withRestartAction(new MavenResumeAction(processHandler, DefaultJavaProgramRunner.getInstance(), executionEnvironment));
+        .withRestartAction(
+          new MavenResumeAction(processHandler, DefaultJavaProgramRunner.getInstance(), executionEnvironment, getParsingContext()));
     }
 
     myBuildProgressListener.onEvent(myDescriptor.getId(), startEvent);
@@ -90,6 +92,10 @@ public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAc
     if (!closed) {
       myInstantReader.append(text);
     }
+  }
+
+  public MavenParsingContext getParsingContext() {
+    return myParser.getParsingContext();
   }
 
   @Override

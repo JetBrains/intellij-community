@@ -155,9 +155,7 @@ public class Splitter extends JPanel implements Splittable {
   /**
    * This is temporary solution for UIDesigner. <b>DO NOT</b> use it from code.
    *
-   * @see #setFirstComponent(JComponent)
-   * @see #setSecondComponent(JComponent)
-   * @deprecated
+   * @deprecated use {@link #setFirstComponent(JComponent)} and {@link #setSecondComponent(JComponent)}
    */
   @Deprecated
   @Override

@@ -199,7 +199,10 @@ public class XmlResourceResolver implements XMLEntityResolver {
     // Find relative to myFile
     File workingFile = new File("");
     String workingDir = workingFile.getAbsoluteFile().getAbsolutePath().replace(File.separatorChar, '/');
-    String id = StringUtil.replace(baseSystemId, workingDir, myFile.getVirtualFile().getParent().getPath());
+    VirtualFile parent = myFile.getVirtualFile().getParent();
+    if (parent == null)
+      return null;
+    String id = StringUtil.replace(baseSystemId, workingDir, parent.getPath());
     VirtualFile vFile = UriUtil.findRelative(id, myFile);
 
     if (vFile == null) {

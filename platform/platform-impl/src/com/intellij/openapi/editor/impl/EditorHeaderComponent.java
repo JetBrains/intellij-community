@@ -20,7 +20,6 @@ import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.tabs.JBTabsFactory;
-import com.intellij.ui.tabs.newImpl.TabsHeightController;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

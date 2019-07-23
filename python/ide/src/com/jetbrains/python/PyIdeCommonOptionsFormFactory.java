@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python;
 
-import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.PyCommonOptionsFormData;
 import com.jetbrains.python.run.PyCommonOptionsFormFactory;
 

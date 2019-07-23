@@ -78,7 +78,7 @@ public class VFileCreateEvent extends VFileEvent {
   @Override
   public VirtualFile getFile() {
     VirtualFile createdFile = myCreatedFile;
-    if (createdFile == null) {
+    if (createdFile == null && myParent.isValid()) {
       myCreatedFile = createdFile = myParent.findChild(myChildName);
     }
     return createdFile;

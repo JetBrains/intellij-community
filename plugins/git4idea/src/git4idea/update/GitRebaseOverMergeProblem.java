@@ -28,7 +28,6 @@ import com.intellij.util.containers.ContainerUtil;
 import git4idea.DialogManager;
 import git4idea.GitCommit;
 import git4idea.history.GitHistoryUtils;
-import git4idea.history.GitLogUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 

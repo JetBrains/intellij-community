@@ -19,8 +19,8 @@ import java.util.regex.Pattern;
 public abstract class LightJavaCodeInsightTestCase extends LightPlatformCodeInsightTestCase {
   private static final Pattern JDK_SELECT_PATTERN = Pattern.compile("Java([\\d.]+)(Preview)?(\\.java)?$");
 
-  public static JavaPsiFacadeEx getJavaFacade() {
-    return JavaPsiFacadeEx.getInstanceEx(ourProject);
+  public JavaPsiFacadeEx getJavaFacade() {
+    return JavaPsiFacadeEx.getInstanceEx(getProject());
   }
 
   @Override

@@ -80,7 +80,7 @@ public class EditorMultiCaretUndoRedoTest extends AbstractEditorTest {
 
   public void testBlockSelectionStateAfterUndo() {
     init("a");
-    ((EditorEx)myEditor).setColumnMode(true);
+    ((EditorEx)getEditor()).setColumnMode(true);
     mouse().clickAt(0, 2);
     type('b');
     undo();
@@ -90,7 +90,7 @@ public class EditorMultiCaretUndoRedoTest extends AbstractEditorTest {
 
   public void testBlockSelectionStateAfterUndo2() {
     init("a");
-    ((EditorEx)myEditor).setColumnMode(true);
+    ((EditorEx)getEditor()).setColumnMode(true);
     mouse().pressAt(0, 0).dragTo(0, 2).release();
     type('b');
     undo();
@@ -103,27 +103,27 @@ public class EditorMultiCaretUndoRedoTest extends AbstractEditorTest {
     mouse().alt().pressAt(1, 1).dragTo(0, 0).release();
     type(' ');
     undo();
-    assertEquals(new LogicalPosition(0, 0), myEditor.getCaretModel().getPrimaryCaret().getLogicalPosition());
+    assertEquals(new LogicalPosition(0, 0), getEditor().getCaretModel().getPrimaryCaret().getLogicalPosition());
   }
 
   private void checkResult(final String text) {
     CommandProcessor.getInstance().runUndoTransparentAction(() -> checkResultByText(text));
   }
 
-  private static void undo() {
+  private void undo() {
     getUndoManager().undo(getTextEditor());
   }
 
-  private static void redo() {
+  private void redo() {
     getUndoManager().redo(getTextEditor());
   }
 
-  private static UndoManagerImpl getUndoManager() {
-    return (UndoManagerImpl) UndoManager.getInstance(ourProject);
+  private UndoManagerImpl getUndoManager() {
+    return (UndoManagerImpl) UndoManager.getInstance(getProject());
   }
 
-  private static TextEditor getTextEditor() {
-    return TextEditorProvider.getInstance().getTextEditor(myEditor);
+  private TextEditor getTextEditor() {
+    return TextEditorProvider.getInstance().getTextEditor(getEditor());
   }
 
   private void init(String text) {

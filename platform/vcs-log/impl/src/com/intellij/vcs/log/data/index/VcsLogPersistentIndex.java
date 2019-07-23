@@ -143,11 +143,8 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     if (myCommitsToIndex.isEmpty() || myIndexStorage == null) return;
     // for fresh index, wait for complete log to load and index everything in one command
     if (myIndexStorage.isFresh() && !full) return;
-    Map<VirtualFile, TIntHashSet> commitsToIndex = myCommitsToIndex;
 
-    for (VirtualFile root : commitsToIndex.keySet()) {
-      myNumberOfTasks.get(root).incrementAndGet();
-    }
+    Map<VirtualFile, TIntHashSet> commitsToIndex = myCommitsToIndex;
     myCommitsToIndex = new HashMap<>();
 
     boolean isFull = full && myIndexStorage.isFresh();
@@ -463,11 +460,14 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       myPathsEncoder = encoder;
       myCommits = commits;
       myFull = full;
+
+      myNumberOfTasks.get(root).incrementAndGet();
     }
 
     public void run(@NotNull ProgressIndicator indicator) {
       if (myBigRepositoriesList.isBig(myRoot)) {
         LOG.info("Indexing repository " + myRoot.getName() + " is skipped since it is too big");
+        myNumberOfTasks.get(myRoot).decrementAndGet();
         return;
       }
 

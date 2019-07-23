@@ -15,13 +15,17 @@
  */
 package org.jetbrains.plugins.gradle.tooling.builder;
 
+import com.amazon.ion.IonType;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.lang.JavaVersion;
+import gnu.trove.THash;
 import org.codehaus.groovy.runtime.typehandling.ShortTypeHandling;
 import org.gradle.internal.impldep.com.google.common.collect.Multimap;
 import org.gradle.tooling.BuildActionExecuter;
@@ -31,6 +35,7 @@ import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.util.GradleVersion;
+import org.hamcrest.CustomMatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
@@ -97,6 +102,7 @@ public abstract class AbstractModelBuilderTest {
   @Before
   public void setUp() throws Exception {
     assumeThat(gradleVersion, versionMatcherRule.getMatcher());
+    assumeGradleCompatibleWithJava(gradleVersion);
 
     ensureTempDirCreated();
 
@@ -148,11 +154,9 @@ public abstract class AbstractModelBuilderTest {
     ProjectConnection connection = connector.connect();
 
     try {
-      boolean isGradleProjectDirSupported = _gradleVersion.compareTo(GradleVersion.version("2.4")) >= 0;
-      boolean isCompositeBuildsSupported = isGradleProjectDirSupported && _gradleVersion.compareTo(GradleVersion.version("3.1")) >= 0;
-      final ProjectImportAction projectImportAction = new ProjectImportAction(false, isGradleProjectDirSupported,
-                                                                              isCompositeBuildsSupported);
-      projectImportAction.addProjectImportExtraModelProvider(new ClassSetProjectImportExtraModelProvider(getModels()));
+      boolean isCompositeBuildsSupported = _gradleVersion.compareTo(GradleVersion.version("3.1")) >= 0;
+      final ProjectImportAction projectImportAction = new ProjectImportAction(false, isCompositeBuildsSupported, false);
+      projectImportAction.addProjectImportModelProvider(new ClassSetProjectImportModelProvider(getModels()));
       BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = connection.action(projectImportAction);
       File initScript = GradleExecutionHelper.generateInitScript(false, getToolingExtensionClasses());
       assertNotNull(initScript);
@@ -167,6 +171,20 @@ public abstract class AbstractModelBuilderTest {
     }
   }
 
+  public static void assumeGradleCompatibleWithJava(@NotNull String gradleVersion) {
+    if (GradleVersion.version(gradleVersion).getBaseVersion().compareTo(GradleVersion.version("4.8")) < 0) {
+      Properties properties = System.getProperties();
+      String javaVersionString = properties.getProperty("java.runtime.version", properties.getProperty("java.version", "unknown"));
+      JavaVersion javaVersion = JavaVersion.tryParse(javaVersionString);
+      assumeThat(javaVersion.feature, new CustomMatcher<Integer>("Java version older than 9") {
+        @Override
+        public boolean matches(Object item) {
+          return item instanceof Integer && ((Integer)item).compareTo(9) < 0;
+        }
+      });
+    }
+  }
+
   @NotNull
   private Set<Class> getToolingExtensionClasses() {
     final Set<Class> classes = ContainerUtil.set(
@@ -176,7 +194,13 @@ public abstract class AbstractModelBuilderTest {
       // gradle-tooling-extension-impl jar
       ModelBuildScriptClasspathBuilderImpl.class,
       Multimap.class,
-      ShortTypeHandling.class
+      ShortTypeHandling.class,
+      // trove4j jar
+      THash.class,
+      // ion-java jar
+      IonType.class,
+      // util-rt jat
+      SystemInfoRt.class // !!! do not replace it with SystemInfo.class from util module
     );
 
     ContainerUtil.addAllNotNull(classes, doGetToolingExtensionClasses());
@@ -203,7 +227,7 @@ public abstract class AbstractModelBuilderTest {
 
     final String filterKey = "to_filter";
     final Map<String, T> map = ContainerUtil.map2Map(ideaModules, (Function<IdeaModule, Pair<String, T>>)module -> {
-      final T value = allModels.getExtraProject(module, aClass);
+      final T value = allModels.getModel(module, aClass);
       final String key = value != null ? module.getGradleProject().getPath() : filterKey;
       return Pair.create(key, value);
     });

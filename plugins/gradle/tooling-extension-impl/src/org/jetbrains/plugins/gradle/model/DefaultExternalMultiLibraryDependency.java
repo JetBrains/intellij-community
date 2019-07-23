@@ -8,13 +8,19 @@ import java.io.File;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 
+import static com.intellij.util.containers.ContainerUtilRt.map2List;
+import static org.jetbrains.plugins.gradle.tooling.util.FunctionUtils.FILE_TO_PATH;
+
 public final class DefaultExternalMultiLibraryDependency extends AbstractExternalDependency implements ExternalMultiLibraryDependency {
   private static final long serialVersionUID = 1L;
-  private Collection<File> files = new LinkedHashSet<File>();
-  private Collection<File> sources = new LinkedHashSet<File>();
-  private Collection<File> javadocs = new LinkedHashSet<File>();
+  private final Collection<File> files;
+  private final Collection<File> sources;
+  private final Collection<File> javadocs;
 
   public DefaultExternalMultiLibraryDependency() {
+    files = new LinkedHashSet<File>(0);
+    sources = new LinkedHashSet<File>(0);
+    javadocs = new LinkedHashSet<File>(0);
   }
 
   public DefaultExternalMultiLibraryDependency(ExternalMultiLibraryDependency dependency) {
@@ -48,16 +54,16 @@ public final class DefaultExternalMultiLibraryDependency extends AbstractExterna
     if (!(o instanceof DefaultExternalMultiLibraryDependency)) return false;
     if (!super.equals(o)) return false;
     DefaultExternalMultiLibraryDependency that = (DefaultExternalMultiLibraryDependency)o;
-    return Objects.equal(files, that.files);
+    return map2List(files, FILE_TO_PATH).equals(map2List(that.files, FILE_TO_PATH));
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(super.hashCode(), files);
+    return Objects.hashCode(super.hashCode(), map2List(files, FILE_TO_PATH));
   }
 
   @Override
   public String toString() {
-    return "library '" + files + '\'';
+    return "library '" + files + '\'' + super.toString();
   }
 }

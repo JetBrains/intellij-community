@@ -17,6 +17,7 @@ package com.intellij.troubleshooting.ui;
 
 
 import com.intellij.ide.troubleshooting.CompositeGeneralTroubleInfoCollector;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -55,9 +56,15 @@ public class CollectTroubleshootingInformationDialog extends DialogWrapper {
     }
     troubleTypeBox.addItemListener(new ItemListener() {
       @Override
-      public void itemStateChanged(ItemEvent e) {
-        TroubleInfoCollector item = (TroubleInfoCollector)e.getItem();
-        summary.setText(item.collectInfo(project));
+      public void itemStateChanged(final ItemEvent e) {
+        summary.setText("Loading...");
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          TroubleInfoCollector item = (TroubleInfoCollector)e.getItem();
+          String collectedInfo = item.collectInfo(project);
+          if (e.getItem() == troubleTypeBox.getSelectedItem()) {
+            summary.setText(collectedInfo);
+          }
+        });
       }
     });
     summary.setText(generalInfoCollector.collectInfo(project));

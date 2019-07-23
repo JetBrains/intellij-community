@@ -510,6 +510,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
         descriptor.putUserData(key, evalDescriptor);
         return evalDescriptor.getValueLabel();
       }
+      descriptor.putUserData(key, null);
       return "null";
     }
 

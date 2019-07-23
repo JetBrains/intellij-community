@@ -17,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.intellij.plugins.markdown.lang.MarkdownElementTypes.*;
 import static org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets.*;
 
 public class MarkdownPsiUtil {

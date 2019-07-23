@@ -89,10 +89,10 @@ public class RenameFieldTest extends LightRefactoringTestCase {
     doTest("jj", "java");
   }
   
-  protected static void perform(String newName) {
-    PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil
+  protected void perform(String newName) {
+    PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil
                                                                          .ELEMENT_NAME_ACCEPTED |
-                                                                       TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
+                                                                          TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
 
     new RenameProcessor(getProject(), element, newName, false, false).run();
   }

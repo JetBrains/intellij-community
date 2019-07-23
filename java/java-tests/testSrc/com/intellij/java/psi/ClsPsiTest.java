@@ -443,7 +443,7 @@ public class ClsPsiTest extends LightIdeaTestCase {
     return getFile(getTestName(false));
   }
 
-  private static PsiJavaFile getFile(String name) {
+  private PsiJavaFile getFile(String name) {
     String path = PathManagerEx.getTestDataPath() + TEST_DATA_PATH + "/pack/" + name + ".class";
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
     assertNotNull(path, file);

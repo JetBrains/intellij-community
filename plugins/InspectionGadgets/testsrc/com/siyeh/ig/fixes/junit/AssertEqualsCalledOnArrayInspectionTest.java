@@ -16,10 +16,8 @@
 package com.siyeh.ig.fixes.junit;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.junit.AssertEqualsCalledOnArrayInspection;
-import com.siyeh.ig.junit.UseOfObsoleteAssertInspection;
 
 public class AssertEqualsCalledOnArrayInspectionTest extends IGQuickFixesTestCase {
   @Override

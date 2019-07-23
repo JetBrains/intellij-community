@@ -102,7 +102,7 @@ public class FinderRecursivePanelListModelMergeTest extends LightPlatformTestCas
   }
 
   @NotNull
-  private static StringFinderRecursivePanel createStringPanel(String[] initialItems) {
+  private StringFinderRecursivePanel createStringPanel(String[] initialItems) {
     StringFinderRecursivePanel panel = new StringFinderRecursivePanel(initialItems, getProject());
     panel.initPanel();
     return panel;

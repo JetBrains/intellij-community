@@ -43,10 +43,10 @@ public class GenerateJavadocTest extends LightJavaCodeInsightTestCase {
     checkResultByFile("/codeInsight/generateJavadoc/after" + name + ".java");
   }
 
-  private static void performAction() {
+  private void performAction() {
     EditorActionManager actionManager = EditorActionManager.getInstance();
     EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_ENTER);
-    DataContext context = DataManager.getInstance().getDataContext(myEditor.getComponent());
-    actionHandler.execute(myEditor, myEditor.getCaretModel().getCurrentCaret(), context);
+    DataContext context = DataManager.getInstance().getDataContext(getEditor().getComponent());
+    actionHandler.execute(getEditor(), getEditor().getCaretModel().getCurrentCaret(), context);
   }
 }

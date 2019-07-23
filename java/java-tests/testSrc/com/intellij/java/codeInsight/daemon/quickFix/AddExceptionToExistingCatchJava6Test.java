@@ -3,11 +3,6 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.ui.ChooserInterceptor;
-import com.intellij.ui.UiInterceptors;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class AddExceptionToExistingCatchJava6Test extends LightIntentionActionTestCase {
   @Override

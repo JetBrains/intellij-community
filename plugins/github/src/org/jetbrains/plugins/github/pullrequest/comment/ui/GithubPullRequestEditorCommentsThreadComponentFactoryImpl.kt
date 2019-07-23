@@ -87,7 +87,6 @@ internal constructor(private val avatarIconsProviderFactory: CachingGithubAvatar
         init {
           isOpaque = false
           border = JBUI.Borders.empty()
-          editorKit = UIUtil.JBWordWrapHtmlEditorKit()
           update()
 
           putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)

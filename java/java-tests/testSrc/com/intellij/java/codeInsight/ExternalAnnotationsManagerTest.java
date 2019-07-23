@@ -94,7 +94,7 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
     findAnnotationsXmlAndCheckSyntax(root);
   }
 
-  private static void findAnnotationsXmlAndCheckSyntax(String root) {
+  private void findAnnotationsXmlAndCheckSyntax(String root) {
     VirtualFile jdkAnnoRoot = LocalFileSystem.getInstance().findFileByPath(root);
     VfsUtilCore.visitChildrenRecursively(
       jdkAnnoRoot, new VirtualFileVisitor() {
@@ -109,7 +109,7 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
       });
   }
 
-  private static void checkSyntax(@NotNull VirtualFile file, @NotNull String assumedPackage) {
+  private void checkSyntax(@NotNull VirtualFile file, @NotNull String assumedPackage) {
     //System.out.println("file = " + file);
     ExternalAnnotationsManagerImpl manager = (ExternalAnnotationsManagerImpl)ExternalAnnotationsManager.getInstance(getProject());
     PsiFile psiFile = getPsiManager().findFile(file);
@@ -126,7 +126,7 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
     }
   }
 
-  private static PsiClass assertClassFqn(@NotNull String text,
+  private PsiClass assertClassFqn(@NotNull String text,
                                          @NotNull PsiFile psiFile,
                                          @NotNull String externalName,
                                          @Nullable("null means can be any") String assumedPackage) {
@@ -152,7 +152,7 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
     fail(error + "\nFile: " + psiFile.getVirtualFile().getPath() + ":" + (line+1) + " (offset: "+offset+")");
   }
 
-  private static void checkExternalName(@NotNull PsiFile psiFile, @NotNull String externalName, @NotNull String assumedPackage) {
+  private void checkExternalName(@NotNull PsiFile psiFile, @NotNull String externalName, @NotNull String assumedPackage) {
     // 'item name="java.lang.ClassLoader java.net.URL getResource(java.lang.String) 0"' should have all FQNs
     String unescaped = StringUtil.unescapeXmlEntities(externalName);
     List<String> words = StringUtil.split(unescaped, " ");

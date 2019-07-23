@@ -2,28 +2,31 @@
 package com.intellij.completion.sorting
 
 import com.intellij.lang.Language
+import com.intellij.openapi.diagnostic.logger
 import com.jetbrains.completion.feature.impl.FeatureTransformer
 import com.jetbrains.completion.ranker.JavaCompletionRanker
 import com.jetbrains.completion.ranker.KotlinCompletionRanker
 import com.jetbrains.completion.ranker.LanguageCompletionRanker
 import com.jetbrains.completion.ranker.PythonCompletionRanker
+import java.io.IOException
 
 
 object RankingSupport {
-  private val rankers: Map<String, LanguageRanker> = mapOf(
-    "java" to LanguageRanker(JavaCompletionRanker()),
-    "kotlin" to LanguageRanker(KotlinCompletionRanker()),
-    "python" to LanguageRanker(PythonCompletionRanker())
-  )
+  private val LOG = logger<RankingSupport>()
+  private val language2ranker: Map<String, LanguageRanker> = buildRankerMap()
 
   fun getRanker(language: Language?): LanguageRanker? {
     if (language == null) return null
-    return rankers[language.key()]
+    return language2ranker[language.key()]
+  }
+
+  fun availableLanguages(): List<String> {
+    return language2ranker.values.map { it.displayName }
   }
 
   private fun Language.key(): String = displayName.toLowerCase()
 
-  class LanguageRanker(private val ranker: LanguageCompletionRanker) {
+  class LanguageRanker(val displayName: String, private val ranker: LanguageCompletionRanker) {
     private val transformer: FeatureTransformer = ranker.modelMetadata.createTransformer()
 
     fun rank(relevance: Map<String, Any>, userFactors: Map<String, Any?>): Double {
@@ -35,5 +38,25 @@ object RankingSupport {
     fun version(): String? {
       return ranker.modelMetadata.version
     }
+  }
+
+  private fun registerRanker(rankerMap: MutableMap<String, LanguageRanker>, builder: () -> LanguageRanker) {
+    try {
+      val ranker = builder()
+      rankerMap[ranker.displayName.toLowerCase()] = ranker
+    }
+    catch (e: IOException) {
+      LOG.error("Could not initialize language ranker", e)
+    }
+  }
+
+  private fun buildRankerMap(): Map<String, LanguageRanker> {
+    val result = mutableMapOf<String, LanguageRanker>()
+
+    registerRanker(result) { LanguageRanker("Java", JavaCompletionRanker()) }
+    registerRanker(result) { LanguageRanker("Kotlin", KotlinCompletionRanker()) }
+    registerRanker(result) { LanguageRanker("Python", PythonCompletionRanker()) }
+
+    return result
   }
 }

@@ -16,7 +16,6 @@
 package com.siyeh.ipp.concatenation;
 
 import com.siyeh.ipp.IPPTestCase;
-import junit.framework.TestCase;
 
 /**
  * @author Bas Leijdekkers

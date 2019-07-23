@@ -39,16 +39,16 @@ public class ExtractMethodObjectWithMultipleExitPointsTest extends LightRefactor
   private void doTest(final boolean createInnerClass) throws Exception {
     final String testName = getTestName(false);
     configureByFile("/refactoring/extractMethodObject/multipleExitPoints/" + testName + ".java");
-    int startOffset = myEditor.getSelectionModel().getSelectionStart();
-    int endOffset = myEditor.getSelectionModel().getSelectionEnd();
+    int startOffset = getEditor().getSelectionModel().getSelectionStart();
+    int endOffset = getEditor().getSelectionModel().getSelectionEnd();
 
     final PsiElement[] elements;
-    PsiExpression expr = CodeInsightUtil.findExpressionInRange(myFile, startOffset, endOffset);
+    PsiExpression expr = CodeInsightUtil.findExpressionInRange(getFile(), startOffset, endOffset);
     if (expr != null) {
       elements = new PsiElement[]{expr};
     }
     else {
-      elements = CodeInsightUtil.findStatementsInRange(myFile, startOffset, endOffset);
+      elements = CodeInsightUtil.findStatementsInRange(getFile(), startOffset, endOffset);
     }
 
     final ExtractMethodObjectProcessor processor =

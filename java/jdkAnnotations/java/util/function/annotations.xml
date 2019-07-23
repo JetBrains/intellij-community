@@ -1,0 +1,248 @@
+<root>
+    <item name='java.util.function.BiConsumer java.util.function.BiConsumer&lt;T,U&gt; andThen(java.util.function.BiConsumer&lt;? super T,? super U&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.BiConsumer java.util.function.BiConsumer&lt;T,U&gt; andThen(java.util.function.BiConsumer&lt;? super T,? super U&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.BiFunction java.util.function.BiFunction&lt;T,U,V&gt; andThen(java.util.function.Function&lt;? super R,? extends V&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.BiFunction java.util.function.BiFunction&lt;T,U,V&gt; andThen(java.util.function.Function&lt;? super R,? extends V&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.BiPredicate java.util.function.BiPredicate&lt;T,U&gt; and(java.util.function.BiPredicate&lt;? super T,? super U&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.BiPredicate java.util.function.BiPredicate&lt;T,U&gt; and(java.util.function.BiPredicate&lt;? super T,? super U&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.BiPredicate java.util.function.BiPredicate&lt;T,U&gt; negate()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.BiPredicate java.util.function.BiPredicate&lt;T,U&gt; or(java.util.function.BiPredicate&lt;? super T,? super U&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.BiPredicate java.util.function.BiPredicate&lt;T,U&gt; or(java.util.function.BiPredicate&lt;? super T,? super U&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.Consumer java.util.function.Consumer&lt;T&gt; andThen(java.util.function.Consumer&lt;? super T&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.Consumer java.util.function.Consumer&lt;T&gt; andThen(java.util.function.Consumer&lt;? super T&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.DoubleConsumer java.util.function.DoubleConsumer andThen(java.util.function.DoubleConsumer)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.DoubleConsumer java.util.function.DoubleConsumer andThen(java.util.function.DoubleConsumer) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.DoublePredicate java.util.function.DoublePredicate and(java.util.function.DoublePredicate)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.DoublePredicate java.util.function.DoublePredicate and(java.util.function.DoublePredicate) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.DoublePredicate java.util.function.DoublePredicate negate()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.DoublePredicate java.util.function.DoublePredicate or(java.util.function.DoublePredicate)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.DoublePredicate java.util.function.DoublePredicate or(java.util.function.DoublePredicate) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.DoubleUnaryOperator java.util.function.DoubleUnaryOperator andThen(java.util.function.DoubleUnaryOperator)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.DoubleUnaryOperator java.util.function.DoubleUnaryOperator andThen(java.util.function.DoubleUnaryOperator) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.DoubleUnaryOperator java.util.function.DoubleUnaryOperator compose(java.util.function.DoubleUnaryOperator)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.DoubleUnaryOperator java.util.function.DoubleUnaryOperator compose(java.util.function.DoubleUnaryOperator) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.Function java.util.function.Function&lt;T,V&gt; andThen(java.util.function.Function&lt;? super R,? extends V&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.Function java.util.function.Function&lt;T,V&gt; andThen(java.util.function.Function&lt;? super R,? extends V&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.Function java.util.function.Function&lt;V,R&gt; compose(java.util.function.Function&lt;? super V,? extends T&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.Function java.util.function.Function&lt;V,R&gt; compose(java.util.function.Function&lt;? super V,? extends T&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.IntConsumer java.util.function.IntConsumer andThen(java.util.function.IntConsumer)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.IntConsumer java.util.function.IntConsumer andThen(java.util.function.IntConsumer) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.IntPredicate java.util.function.IntPredicate and(java.util.function.IntPredicate)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.IntPredicate java.util.function.IntPredicate and(java.util.function.IntPredicate) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.IntPredicate java.util.function.IntPredicate negate()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.IntPredicate java.util.function.IntPredicate or(java.util.function.IntPredicate)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.IntPredicate java.util.function.IntPredicate or(java.util.function.IntPredicate) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.IntUnaryOperator java.util.function.IntUnaryOperator andThen(java.util.function.IntUnaryOperator)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.IntUnaryOperator java.util.function.IntUnaryOperator andThen(java.util.function.IntUnaryOperator) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.IntUnaryOperator java.util.function.IntUnaryOperator compose(java.util.function.IntUnaryOperator)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.IntUnaryOperator java.util.function.IntUnaryOperator compose(java.util.function.IntUnaryOperator) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.LongConsumer java.util.function.LongConsumer andThen(java.util.function.LongConsumer)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.LongConsumer java.util.function.LongConsumer andThen(java.util.function.LongConsumer) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.LongPredicate java.util.function.LongPredicate and(java.util.function.LongPredicate)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.LongPredicate java.util.function.LongPredicate and(java.util.function.LongPredicate) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.LongPredicate java.util.function.LongPredicate negate()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.LongPredicate java.util.function.LongPredicate or(java.util.function.LongPredicate)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.LongPredicate java.util.function.LongPredicate or(java.util.function.LongPredicate) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.LongUnaryOperator java.util.function.LongUnaryOperator andThen(java.util.function.LongUnaryOperator)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.LongUnaryOperator java.util.function.LongUnaryOperator andThen(java.util.function.LongUnaryOperator) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.LongUnaryOperator java.util.function.LongUnaryOperator compose(java.util.function.LongUnaryOperator)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.LongUnaryOperator java.util.function.LongUnaryOperator compose(java.util.function.LongUnaryOperator) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.Predicate java.util.function.Predicate&lt;T&gt; and(java.util.function.Predicate&lt;? super T&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.Predicate java.util.function.Predicate&lt;T&gt; and(java.util.function.Predicate&lt;? super T&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.Predicate java.util.function.Predicate&lt;T&gt; negate()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.Predicate java.util.function.Predicate&lt;T&gt; or(java.util.function.Predicate&lt;? super T&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.function.Predicate java.util.function.Predicate&lt;T&gt; or(java.util.function.Predicate&lt;? super T&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+</root>

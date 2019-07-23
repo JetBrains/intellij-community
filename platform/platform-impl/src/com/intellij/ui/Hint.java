@@ -6,6 +6,9 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+/**
+ * @see LightweightHint
+ */
 public interface Hint {
   /**
    * @param parentComponent    defines coordinate system where hint will be shown.

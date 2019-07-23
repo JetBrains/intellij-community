@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
  */
 public abstract class DummyCachingFileSystem<T extends VirtualFile> extends DummyFileSystem {
   private final String myProtocol;
-  private final ConcurrentMap<String, T> myCachedFiles = ConcurrentFactoryMap.createMap(
+  private final ConcurrentMap<String, T> myCachedFiles = ConcurrentFactoryMap.create(
     this::findFileByPathInner, ContainerUtil::createConcurrentWeakValueMap);
 
   public DummyCachingFileSystem(String protocol) {

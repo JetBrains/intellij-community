@@ -37,7 +37,6 @@ import java.util.Map;
 
 import static com.intellij.psi.util.PsiModificationTracker.MODIFICATION_COUNT;
 import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.VariableDescriptorFactory.createDescriptor;
-import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.UtilKt.getVarIndexes;
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.NestedContextKt.checkNestedContext;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.*;
 
@@ -89,9 +88,6 @@ public class TypeInferenceHelper {
     final GrControlFlowOwner scope = ControlFlowUtils.findControlFlowOwner(refExpr);
     if (scope == null) return null;
 
-    final InferenceCache cache = getInferenceCache(scope);
-    if (cache == null) return null;
-
     PsiElement resolve = refExpr.resolve();
     boolean mixinOnly = resolve instanceof GrField && isCompileStatic(refExpr);
 
@@ -101,13 +97,14 @@ public class TypeInferenceHelper {
     final ReadWriteVariableInstruction rwInstruction = ControlFlowUtils.findRWInstruction(refExpr, scope.getControlFlow());
     if (rwInstruction == null) return null;
 
+    final InferenceCache cache = getInferenceCache(scope);
     return cache.getInferredType(descriptor, rwInstruction, mixinOnly);
   }
 
   @Nullable
   public static PsiType getInferredType(VariableDescriptor descriptor, Instruction instruction, GrControlFlowOwner scope) {
     InferenceCache cache = getInferenceCache(scope);
-    return cache != null ? cache.getInferredType(descriptor, instruction, false) : null;
+    return cache.getInferredType(descriptor, instruction, false);
   }
 
   @Nullable
@@ -121,36 +118,21 @@ public class TypeInferenceHelper {
     boolean mixinOnly = variable instanceof GrField && isCompileStatic(scope);
 
     final InferenceCache cache = getInferenceCache(scope);
-    if (cache == null) return null;
-
     final PsiType inferredType = cache.getInferredType(createDescriptor(variable), nearest, mixinOnly);
     return inferredType != null ? inferredType : variable.getType();
   }
 
   public static boolean isTooComplexTooAnalyze(@NotNull GrControlFlowOwner scope) {
-    return getInferenceCache(scope) == null;
+    return getInferenceCache(scope).isTooComplexToAnalyze();
   }
 
-  @Nullable
+  @NotNull
   private static InferenceCache getInferenceCache(@NotNull final GrControlFlowOwner scope) {
-    return CachedValuesManager.getCachedValue(scope, () -> Result.create(createInferenceCache(scope), MODIFICATION_COUNT));
+    return CachedValuesManager.getCachedValue(scope, () -> Result.create(new InferenceCache(scope), MODIFICATION_COUNT));
   }
 
   @Nullable
-  private static InferenceCache createInferenceCache(@NotNull GrControlFlowOwner scope) {
-    TObjectIntHashMap<VariableDescriptor> varIndexes = getVarIndexes(scope);
-    Instruction[] flow = scope.getControlFlow();
-    List<DefinitionMap> defUse = getDefUseMaps(flow, varIndexes);
-    if (defUse == null) {
-      return null;
-    }
-    else {
-      return new InferenceCache(scope, varIndexes, defUse);
-    }
-  }
-
-  @Nullable
-  private static List<DefinitionMap> getDefUseMaps(@NotNull Instruction[] flow, @NotNull TObjectIntHashMap<VariableDescriptor> varIndexes) {
+  static List<DefinitionMap> getDefUseMaps(@NotNull Instruction[] flow, @NotNull TObjectIntHashMap<VariableDescriptor> varIndexes) {
     final ReachingDefinitionsDfaInstance dfaInstance = new TypesReachingDefinitionsInstance(flow, varIndexes);
     final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();
     final DFAEngine<DefinitionMap> engine = new DFAEngine<>(flow, dfaInstance, lattice);

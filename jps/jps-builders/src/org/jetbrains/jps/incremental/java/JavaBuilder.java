@@ -91,7 +91,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static final List<String> COMPILABLE_EXTENSIONS = Collections.singletonList(JAVA_EXTENSION);
 
   private static final Set<String> FILTERED_OPTIONS = ContainerUtil.newHashSet(
-    "-target"
+    "-target", "--release"
   );
   private static final Set<String> FILTERED_SINGLE_OPTIONS = ContainerUtil.newHashSet(
     "-g", "-deprecation", "-nowarn", "-verbose", "-proc:none", "-proc:only", "-proceedOnError"

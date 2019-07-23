@@ -69,15 +69,15 @@ public class PropertyUtilTest extends LightJavaCodeInsightTestCase {
     assertFalse(PropertyUtilBase.hasGetterName(createMethod("isOk", "int")));
   }
 
-  private static PsiType getType(@NonNls String type) throws IncorrectOperationException {
-    return PsiElementFactory.getInstance(ourProject).createTypeFromText(type, null);
+  private PsiType getType(@NonNls String type) throws IncorrectOperationException {
+    return PsiElementFactory.getInstance(getProject()).createTypeFromText(type, null);
   }
 
-  private static PsiField createField(@NonNls String name, @NonNls String type) throws IncorrectOperationException {
-    return PsiElementFactory.getInstance(ourProject).createField(name, getType(type));
+  private PsiField createField(@NonNls String name, @NonNls String type) throws IncorrectOperationException {
+    return PsiElementFactory.getInstance(getProject()).createField(name, getType(type));
   }
 
-  private static PsiMethod createMethod(@NonNls String name, String type) throws IncorrectOperationException {
-    return PsiElementFactory.getInstance(ourProject).createMethod(name, getType(type));
+  private PsiMethod createMethod(@NonNls String name, String type) throws IncorrectOperationException {
+    return PsiElementFactory.getInstance(getProject()).createMethod(name, getType(type));
   }
 }

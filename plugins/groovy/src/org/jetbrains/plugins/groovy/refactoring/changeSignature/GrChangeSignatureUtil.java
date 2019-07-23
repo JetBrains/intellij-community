@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiNameHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;

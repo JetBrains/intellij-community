@@ -14,7 +14,6 @@ package org.zmlx.hg4idea;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.vcsUtil.VcsUtil;

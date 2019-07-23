@@ -132,21 +132,22 @@ public class InheritanceUtil {
     }
   }
 
-  public static boolean hasEnclosingInstanceInScope(PsiClass aClass,
+  public static boolean hasEnclosingInstanceInScope(@NotNull PsiClass aClass,
                                                     PsiElement scope,
                                                     boolean isSuperClassAccepted,
                                                     boolean isTypeParamsAccepted) {
     return hasEnclosingInstanceInScope(aClass, scope, psiClass -> isSuperClassAccepted, isTypeParamsAccepted);
   }
 
-  public static boolean hasEnclosingInstanceInScope(PsiClass aClass,
+  public static boolean hasEnclosingInstanceInScope(@NotNull PsiClass aClass,
                                                     PsiElement scope,
                                                     Condition<? super PsiClass> isSuperClassAccepted,
                                                     boolean isTypeParamsAccepted) {
     return findEnclosingInstanceInScope(aClass, scope, isSuperClassAccepted, isTypeParamsAccepted) != null;
   }
 
-  public static PsiClass findEnclosingInstanceInScope(PsiClass aClass,
+  @Nullable
+  public static PsiClass findEnclosingInstanceInScope(@NotNull PsiClass aClass,
                                                       PsiElement scope,
                                                       Condition<? super PsiClass> isSuperClassAccepted,
                                                       boolean isTypeParamsAccepted) {

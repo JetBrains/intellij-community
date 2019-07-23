@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.refactoring.extract;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;

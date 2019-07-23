@@ -19,7 +19,6 @@ import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.shelf.SimpleBinaryContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;

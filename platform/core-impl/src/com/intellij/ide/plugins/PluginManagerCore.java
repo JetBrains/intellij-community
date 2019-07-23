@@ -1709,6 +1709,9 @@ public class PluginManagerCore {
     catch (PicoPluginExtensionInitializationException e) {
       throw new PluginException(e, e.getPluginId());
     }
+    catch (ExtensionInstantiationException e) {
+      throw new PluginException(e, e.getExtensionOwnerId());
+    }
     catch (RuntimeException e) {
       getLogger().error(e);
       throw e;

@@ -5,7 +5,6 @@ import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 
 final class CompactPainter implements Control.Painter {

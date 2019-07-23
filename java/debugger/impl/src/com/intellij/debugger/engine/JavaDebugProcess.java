@@ -26,7 +26,6 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.ExecutionConsoleEx;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.PlaceInGrid;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;

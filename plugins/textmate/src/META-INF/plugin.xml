@@ -20,7 +20,8 @@
                  description="The maximum length of the line to be highlighted by TextMate lexer."/>
     <registryKey description="Enables tmTheme emulation from current color scheme" key="textmate.theme.emulation" defaultValue="true"/>
 
-    <fileTypeFactory implementation="org.jetbrains.plugins.textmate.TextMateFileTypeFactory"/>
+    <fileType name="textmate" implementationClass="org.jetbrains.plugins.textmate.language.TextMateFileType" fieldName="INSTANCE"
+      language="textmate"/>
     <applicationService id="textmateSettings"
                         serviceImplementation="org.jetbrains.plugins.textmate.configuration.TextMateSettings"/>
     <applicationService id="textmateService" serviceInterface="org.jetbrains.plugins.textmate.TextMateService"

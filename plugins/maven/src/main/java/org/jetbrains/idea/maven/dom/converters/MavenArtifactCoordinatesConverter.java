@@ -39,6 +39,7 @@ import org.jetbrains.idea.maven.dom.DependencyConflictId;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.model.*;
+import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -52,6 +53,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.Set;
 
+
 public abstract class MavenArtifactCoordinatesConverter extends ResolvingConverter<String> implements MavenDomSoftAwareConverter {
   @Override
   public String fromString(@Nullable @NonNls String s, ConvertContext context) {
@@ -60,7 +62,19 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     MavenId id = MavenArtifactCoordinatesHelper.getId(context);
     MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(context.getProject());
 
-    return selectStrategy(context).isValid(id, manager, context) ? s : null;
+    ConverterStrategy strategy = selectStrategy(context);
+    boolean isValid = strategy.isValid(id, manager, context);
+    if (!isValid) {
+      File localRepository = MavenProjectsManager.getInstance(context.getProject()).getLocalRepository();
+      VirtualFile file = strategy.getRepositoryFile(id, MavenProjectsManager.getInstance(context.getProject()));
+      if (file != null) {
+        File artifactFile = new File(file.getPath());
+        MavenIndicesManager.getInstance().fixArtifactIndex(artifactFile, localRepository);
+        return s;
+      }
+      return null;
+    }
+    return s;
   }
 
   protected abstract boolean doIsValid(MavenId id, MavenProjectIndicesManager manager, ConvertContext context);
@@ -230,13 +244,16 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     }
 
     private PsiFile resolveInLocalRepository(MavenId id, MavenProjectsManager projectsManager, PsiManager psiManager) {
-      File file = makeLocalRepositoryFile(id, projectsManager.getLocalRepository());
-      if (file == null) return null;
-
-      VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+      VirtualFile virtualFile = getRepositoryFile(id, projectsManager);
       if (virtualFile == null) return null;
 
       return psiManager.findFile(virtualFile);
+    }
+
+    @Nullable
+    protected VirtualFile getRepositoryFile(MavenId id, MavenProjectsManager projectsManager) {
+      File file = makeLocalRepositoryFile(id, projectsManager.getLocalRepository());
+      return LocalFileSystem.getInstance().findFileByIoFile(file);
     }
 
     private File makeLocalRepositoryFile(MavenId id, File localRepository) {

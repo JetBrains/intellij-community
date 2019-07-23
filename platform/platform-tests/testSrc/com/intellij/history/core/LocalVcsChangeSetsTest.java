@@ -17,8 +17,6 @@
 package com.intellij.history.core;
 
 import com.intellij.history.core.revisions.Revision;
-import com.intellij.history.core.tree.RootEntry;
-import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
 import java.util.List;

@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.annotator.checkers;
 
 import com.intellij.lang.annotation.AnnotationHolder;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;

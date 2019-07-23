@@ -70,7 +70,7 @@ public class MakeClassStaticTest extends LightRefactoringTestCase {
 
   private void perform() {
     configureByFile(TEST_ROOT + getTestName(false) + ".java");
-    PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
+    PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiClass);
     PsiClass aClass = (PsiClass)element;
 
@@ -85,7 +85,7 @@ public class MakeClassStaticTest extends LightRefactoringTestCase {
 
   private void performWithFields() {
     configureByFile(TEST_ROOT + getTestName(false) + ".java");
-    PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
+    PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiClass);
     PsiClass aClass = (PsiClass)element;
     final ArrayList<VariableData> parametersForFields = new ArrayList<>();

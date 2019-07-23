@@ -16,17 +16,14 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.notification.*;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.keymap.KeyboardSettingsExternalizable;
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
-import java.awt.*;
 
 /**
  * @author Denis Fokin

@@ -3,7 +3,6 @@ package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.PropertiesUtil;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;

@@ -56,6 +56,10 @@ public class NormalizeDeclarationFix extends InspectionGadgetsFix {
     if (!(element instanceof PsiVariable) && !(element instanceof PsiMethod) && !(element instanceof PsiDeclarationStatement)) {
       element = element.getParent();
     }
+    if (element instanceof PsiParameter) {
+      JavaSharedImplUtil.normalizeBrackets((PsiVariable)element);
+      return;
+    }
     if (element instanceof PsiLocalVariable) {
       element = element.getParent();
       if (!(element instanceof PsiDeclarationStatement)) {

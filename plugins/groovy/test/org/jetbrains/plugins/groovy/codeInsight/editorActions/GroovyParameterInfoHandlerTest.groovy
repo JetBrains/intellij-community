@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInsight.editorActions
 
 import com.intellij.openapi.actionSystem.IdeActions
@@ -50,6 +50,16 @@ class GroovyParameterInfoHandlerTest implements ResolveTest {
 
   @Test
   void 'instance method reference overloads'() {
+    testParameterHint()
+  }
+
+  @Test
+  void 'method with several named params'() {
+    testParameterHint()
+  }
+
+  @Test
+  void 'method with named params annotation'() {
     testParameterHint()
   }
 

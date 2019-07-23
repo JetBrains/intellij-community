@@ -31,7 +31,6 @@ import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogFiltersKt;
 import com.intellij.vcsUtil.VcsFileUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBranchesCollection;
@@ -613,10 +612,9 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
 
   @Nullable
   @Override
-  public VirtualFile getVcsRoot(@NotNull Project project, @NotNull FilePath path) {
-    VirtualFile file = path.getVirtualFile();
-    if (file != null && file.isDirectory()) {
-      GitRepository repository = myRepositoryManager.getRepositoryForRootQuick(file);
+  public VirtualFile getVcsRoot(@NotNull Project project, @NotNull VirtualFile detectedRoot, @NotNull FilePath path) {
+    if (detectedRoot.equals(path.getVirtualFile())) {
+      GitRepository repository = myRepositoryManager.getRepositoryForRootQuick(detectedRoot);
       if (repository != null) {
         GitSubmodule submodule = GitSubmoduleKt.asSubmodule(repository);
         if (submodule != null) {
@@ -624,7 +622,7 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
         }
       }
     }
-    return VcsUtil.getVcsRootFor(project, path);
+    return detectedRoot;
   }
 
   @SuppressWarnings("unchecked")

@@ -2,7 +2,6 @@
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiReference;

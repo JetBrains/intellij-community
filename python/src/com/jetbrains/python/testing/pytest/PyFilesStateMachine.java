@@ -3,7 +3,6 @@ package com.jetbrains.python.testing.pytest;
 
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Automata searches for file links and numbers.

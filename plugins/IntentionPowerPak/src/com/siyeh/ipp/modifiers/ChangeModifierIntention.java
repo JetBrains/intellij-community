@@ -55,7 +55,6 @@ import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.IntentionPowerPackBundle;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +63,6 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Stream;
 
 public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
   private static final List<AccessModifier> ALL_MODIFIERS = ContainerUtil.immutableList(AccessModifier.values());

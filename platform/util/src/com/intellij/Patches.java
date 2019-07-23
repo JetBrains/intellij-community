@@ -2,7 +2,6 @@
 package com.intellij;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
 
 import java.awt.*;
 

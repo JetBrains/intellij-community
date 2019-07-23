@@ -1,18 +1,25 @@
 import json
 import os
-import socket
-import struct
-from urllib.parse import urlencode
-from urllib.request import Request, urlopen
+
+import sys
 
 from .supported_data_type import _standardize_value
+
+IS_PY3K = True
+if sys.version_info[0] < 3:
+    IS_PY3K = False
+
+if IS_PY3K:
+    from urllib.request import urlopen
+else:
+    from urllib2 import urlopen
 
 __all__ = ['display']
 
 HOST = "http://127.0.0.1"
-PORT = os.getenv("PYCHARM_DISPLAY_PORT")
-PORT = int(PORT) if PORT is not None else None
-PORT = PORT if PORT != -1 else None
+PORT = int(os.getenv("PYCHARM_DISPLAY_PORT", "-1"))
+if PORT == -1:
+    PORT = None
 
 
 def display(data):

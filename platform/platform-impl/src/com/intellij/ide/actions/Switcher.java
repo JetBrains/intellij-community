@@ -75,7 +75,6 @@ import java.util.*;
 
 import static com.intellij.ide.actions.RecentLocationsAction.SHORTCUT_HEX_COLOR;
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
-import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 import static java.awt.event.KeyEvent.*;
 import static javax.swing.KeyStroke.getKeyStroke;
 

@@ -2,9 +2,9 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.BrowseFilesListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -141,21 +141,25 @@ public class NamePathComponent extends JPanel {
 
     File file = new File(projectDirectory);
     if (file.exists() && !file.canWrite()) {
-      throw new ConfigurationException(String.format("Directory '%s' is not seem to be writable. Please consider another location.", projectDirectory));
+      throw new ConfigurationException(IdeBundle.message("project.directory.is.not.writable", projectDirectory));
     }
     for (Project p : ProjectManager.getInstance().getOpenProjects()) {
       if (ProjectUtil.isSameProject(projectDirectory, p)) {
-        throw new ConfigurationException(String.format("Directory '%s' is already taken by the project '%s'. Please consider another location.", projectDirectory, p.getName()));
+        throw new ConfigurationException(IdeBundle.message("project.directory.is.already.taken", projectDirectory, p.getName()));
       }
     }
 
     boolean shouldContinue = true;
-    String fileName = defaultFormat ? name + ProjectFileType.DOT_DEFAULT_EXTENSION : Project.DIRECTORY_STORE_FOLDER;
-    File projectFile = new File(file, fileName);
-    if (projectFile.exists()) {
-      message = IdeBundle.message("prompt.overwrite.project.file", projectFile.getAbsolutePath(), context.getPresentationName());
-      int answer = Messages.showYesNoDialog(message, IdeBundle.message("title.file.already.exists"), Messages.getQuestionIcon());
-      shouldContinue = (answer == Messages.YES);
+    String[] children = file.list();
+    if (children == null) {
+      throw new ConfigurationException(IdeBundle.message("project.directory.is.not.directory", projectDirectory));
+    }
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      if (children.length > 0) {
+        message = IdeBundle.message("prompt.overwrite.project", context.getPresentationName());
+        int answer = Messages.showYesNoDialog(message, IdeBundle.message("title.folder.not.empty"), Messages.getQuestionIcon());
+        shouldContinue = (answer == Messages.YES);
+      }
     }
     return shouldContinue;
   }

@@ -516,4 +516,33 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
                   "test-plugin", "test-plugin.main", "test-plugin.test",
                   "consumer", "consumer.library", "consumer.library.main", "consumer.library.test", "consumer.library.integrationTest");
   }
+
+
+
+  @Test
+  @TargetVersions("3.1+")
+  public void testSubstituteDependencyWithRootProject() throws Exception {
+    createSettingsFile("rootProject.name = \"root-project\"\n" +
+                       "include 'sub-project'\n" +
+                       "includeBuild('included-project') { dependencySubstitution { substitute module('my.grp:myId') with project(':') } }");
+
+
+    createProjectSubFile("sub-project/build.gradle", "apply plugin: 'java'\n" +
+                                                     "dependencies {\n" +
+                                                     "  implementation 'my.grp:myId:1.0'\n" +
+                                                     "}");
+
+    createProjectSubFile("included-project/settings.gradle", "rootProject.name = 'myId'");
+    createProjectSubFile("included-project/build.gradle", "apply plugin: 'java'\n" +
+                                                          "group = 'my.grp'\n" +
+                                                          "version = '1.0'");
+
+    importProject(new GradleBuildScriptBuilderEx().generate());
+
+    assertModules("root-project",
+                  "root-project.sub-project", "root-project.sub-project.main", "root-project.sub-project.test",
+                  "myId", "myId.main", "myId.test");
+
+    assertModuleModuleDeps("root-project.sub-project.main", "myId.main");
+  }
 }

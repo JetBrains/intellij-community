@@ -157,7 +157,7 @@ sealed class GithubApiRequestExecutor {
         .connectTimeout(githubSettings.connectionTimeout)
         .userAgent("Intellij IDEA Github Plugin")
         .throwStatusCodeException(false)
-        .forceHttps(true)
+        .forceHttps(false)
         .accept(request.acceptMimeType)
     }
 

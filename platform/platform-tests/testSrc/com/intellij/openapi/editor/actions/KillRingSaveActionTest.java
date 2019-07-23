@@ -30,7 +30,7 @@ public class KillRingSaveActionTest extends AbstractRegionToKillRingTest {
   protected void doTest(@NotNull String text) {
     configureFromFileText(getTestName(false) + ".txt", text);
     Pair<String,String> parseResult = parse();
-    String textBefore = myEditor.getDocument().getText();
+    String textBefore = getEditor().getDocument().getText();
     killRingSave();
     if (parseResult.first == null) {
       return;
@@ -38,6 +38,6 @@ public class KillRingSaveActionTest extends AbstractRegionToKillRingTest {
 
     String contents = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
     assertEquals(parseResult.first, contents);
-    assertEquals(textBefore, myEditor.getDocument().getText());
+    assertEquals(textBefore, getEditor().getDocument().getText());
   }
 }

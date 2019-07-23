@@ -16,7 +16,6 @@
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.html.impl.RelaxedHtmlFromSchemaElementDescriptor;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.html.HtmlTag;

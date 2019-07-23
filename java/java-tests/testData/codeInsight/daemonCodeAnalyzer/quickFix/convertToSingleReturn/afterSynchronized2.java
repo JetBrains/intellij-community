@@ -5,10 +5,8 @@ class Test {
         synchronized (this) {
             if (x == 0) {
                 result = "foo";
-            } else {
-                if (x == 1) {
-                    result = "bar";
-                }
+            } else if (x == 1) {
+                result = "bar";
             }
         }
         if (result == null) {

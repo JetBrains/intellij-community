@@ -17,7 +17,7 @@ public class EndActionTest extends LightPlatformCodeInsightTestCase {
 
   public void testEmptyLine1() {
     init();
-    assertEquals(new VisualPosition(1, 4), myEditor.getCaretModel().getVisualPosition());
+    assertEquals(new VisualPosition(1, 4), getEditor().getCaretModel().getVisualPosition());
   }
   public void testInComment() { doTest(); }
   
@@ -25,7 +25,7 @@ public class EndActionTest extends LightPlatformCodeInsightTestCase {
   
   public void testAlignedJavadocParameterDescription() {
     init();
-    assertEquals(new VisualPosition(4, 23), myEditor.getCaretModel().getVisualPosition());
+    assertEquals(new VisualPosition(4, 23), getEditor().getCaretModel().getVisualPosition());
   }
 
   public void testNonAlignedJavadocParameterDescription() {
@@ -33,7 +33,7 @@ public class EndActionTest extends LightPlatformCodeInsightTestCase {
     configureByFile(PATH + name + ".java");
     JavaCodeStyleSettings.getInstance(getProject()).JD_ALIGN_PARAM_COMMENTS = false;
     performAction();
-    assertEquals(new VisualPosition(4, 16), myEditor.getCaretModel().getVisualPosition());
+    assertEquals(new VisualPosition(4, 16), getEditor().getCaretModel().getVisualPosition());
   }
 
   public void testNonEmptyParameterDescription() { doTest(); }
@@ -71,7 +71,7 @@ public class EndActionTest extends LightPlatformCodeInsightTestCase {
     checkResultByFile(null, PATH + getTestName(false) + ".java.after", false);
   }
 
-  private static void performAction() {
+  private void performAction() {
     EditorActionManager actionManager = EditorActionManager.getInstance();
     EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_LINE_END);
     actionHandler.execute(getEditor(), null, DataManager.getInstance().getDataContext(getEditor().getComponent()));

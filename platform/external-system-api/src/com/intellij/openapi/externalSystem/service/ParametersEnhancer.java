@@ -17,11 +17,7 @@ package com.intellij.openapi.externalSystem.service;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.SimpleJavaParameters;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-
-import java.net.URL;
-import java.util.List;
 
 /**
  * @author Denis Zhdanov

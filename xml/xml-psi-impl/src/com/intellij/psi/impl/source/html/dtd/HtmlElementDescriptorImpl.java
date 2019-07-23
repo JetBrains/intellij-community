@@ -224,4 +224,8 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
   public String toString() {
     return myDelegate.toString();
   }
+
+  public boolean isCaseSensitive() {
+    return myCaseSensitive;
+  }
 }

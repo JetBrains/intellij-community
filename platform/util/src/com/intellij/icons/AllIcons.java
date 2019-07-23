@@ -128,6 +128,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Resume = load("/actions/resume.svg");
     /** 16x16 */ public static final Icon Rollback = load("/actions/rollback.svg");
     /** 16x16 */ public static final Icon Run_anything = load("/actions/run_anything.svg");
+    /** 16x16 */ public static final Icon RunAll = load("/actions/runAll.svg");
     /** 16x16 */ public static final Icon RunToCursor = load("/actions/runToCursor.svg");
     /** 16x16 */ public static final Icon Scratch = load("/actions/scratch.svg");
     /** 16x16 */ public static final Icon Search = load("/actions/search.svg");
@@ -595,6 +596,12 @@ public class AllIcons {
     /** 16x16 */ public static final Icon PromptInputHistory = load("/debugger/promptInputHistory.svg");
     /** 7x9 */ public static final Icon Question_badge = load("/debugger/question_badge.svg");
     /** 16x16 */ public static final Icon RestoreLayout = load("/debugger/restoreLayout.svg");
+
+    public final static class Reveal {
+      /** 16x16 */ public static final Icon RevealOff = load("/debugger/reveal/revealOff.svg");
+      /** 16x16 */ public static final Icon RevealOn = load("/debugger/reveal/revealOn.svg");
+
+    }
     /** 16x16 */ public static final Icon Selfreference = load("/debugger/selfreference.svg");
     /** 16x16 */ public static final Icon ShowCurrentFrame = load("/debugger/showCurrentFrame.svg");
     /** 16x16 */ public static final Icon SmartStepInto = load("/debugger/smartStepInto.svg");
@@ -859,10 +866,6 @@ public class AllIcons {
     @ScheduledForRemoval(inVersion = "2020.1")
     /** 16x16 */ public static final Icon Watches = load("/debugger/watch.svg");
 
-    public final static class Reveal {
-      /** 16x16 */ public static final Icon RevealOn = load("/debugger/reveal/revealOn.svg");
-      /** 16x16 */ public static final Icon RevealOff = load("/debugger/reveal/revealOff.svg");
-    }
   }
 
   public final static class Diff {
@@ -2339,6 +2342,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon RunnableMark = load("/nodes/runnableMark.svg");
     /** 16x16 */ public static final Icon Rw_access = load("/nodes/rw-access.svg");
     /** 16x16 */ public static final Icon SecurityRole = load("/nodes/securityRole.svg");
+    /** 14x12 */ public static final Icon Services = load("/nodes/services.svg");
     /** 16x16 */ public static final Icon Servlet = load("/nodes/servlet.svg");
     /** 16x16 */ public static final Icon Shared = load("/nodes/shared.svg");
     /** 16x16 */ public static final Icon SortBySeverity = load("/nodes/sortBySeverity.svg");

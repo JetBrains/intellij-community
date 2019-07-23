@@ -21,7 +21,6 @@ import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
 import com.intellij.cvsSupport2.cvsExecution.DefaultCvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsOperation;
-import com.intellij.cvsSupport2.cvsoperations.cvsContent.DirectoryContent;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.DirectoryContentProvider;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetDirectoriesListViaUpdateOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsListenerWithProgress;

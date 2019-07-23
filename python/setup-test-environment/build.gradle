@@ -122,6 +122,18 @@ envs {
                "python3.7",
                true)
 
+  // For TensorFlow
+  createPython("py37_tensorflow1",
+               "3.7.3",
+               ["tensorflow < 2"],
+               "python3.7\npython3\ntensorflow1",
+               true)
+  createPython("py37_tensorflow2",
+               "3.7.3",
+               ["tensorflow ~= 2.0.0b1"],
+               "python3.7\npython3\ntensorflow2",
+               true)
+
   if (Os.isFamily(Os.FAMILY_UNIX)) {
     createPython("qt_env", "3.7.2", ["pyqt5==5.12", "PySide2==5.12.1"], "qt", true)
   }

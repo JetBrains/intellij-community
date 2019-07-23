@@ -21,23 +21,6 @@ public class EditorStressTest extends AbstractEditorTest {
   private static final int ITERATIONS = 10_000;
   private static final Long SEED_OVERRIDE = null; // set non-null value to run with a specific seed
 
-  private static final List<? extends Action> ourActions = Arrays.asList(new AddText("a"),
-                                                                         new AddText("\n"),
-                                                                         new AddText("\t"),
-                                                                         new AddText(HIGH_SURROGATE),
-                                                                         new AddText(LOW_SURROGATE),
-                                                                         new RemoveCharacter(),
-                                                                         new MoveCharacter(),
-                                                                         new AddFoldRegion(),
-                                                                         new RemoveFoldRegion(),
-                                                                         new ExpandOrCollapseFoldRegions(),
-                                                                         new ClearFoldRegions(),
-                                                                         new ChangeBulkModeState(),
-                                                                         new ChangeEditorVisibility(),
-                                                                         new AddInlay(),
-                                                                         new RemoveInlay(),
-                                                                         new MoveCaret());
-
   private final Random myRandom = new Random() {{
     //noinspection ConstantConditions
     setSeed(mySeed = SEED_OVERRIDE == null ? nextLong() : SEED_OVERRIDE);
@@ -45,14 +28,30 @@ public class EditorStressTest extends AbstractEditorTest {
   private long mySeed;
 
   public void testRandomActions() {
+    List<? extends Action> actions = Arrays.asList(new AddText("a"),
+                                                     new AddText("\n"),
+                                                     new AddText("\t"),
+                                                     new AddText(HIGH_SURROGATE),
+                                                     new AddText(LOW_SURROGATE),
+                                                     new RemoveCharacter(),
+                                                     new MoveCharacter(),
+                                                     new AddFoldRegion(),
+                                                     new RemoveFoldRegion(),
+                                                     new ExpandOrCollapseFoldRegions(),
+                                                     new ClearFoldRegions(),
+                                                     new ChangeBulkModeState(),
+                                                     new ChangeEditorVisibility(),
+                                                     new AddInlay(),
+                                                     new RemoveInlay(),
+                                                     new MoveCaret());
     LOG.debug("Seed is " + mySeed);
     int i = 0;
     try {
       initText("");
       configureSoftWraps(10);
-      EditorImpl editor = (EditorImpl)myEditor;
+      EditorImpl editor = (EditorImpl)getEditor();
       for (i = 0; i < ITERATIONS; i++) {
-        doRandomAction(editor);
+        doRandomAction(editor, actions);
         editor.validateState();
       }
       if (editor.getDocument().isInBulkUpdate()) editor.getDocument().setInBulkUpdate(false);
@@ -64,8 +63,8 @@ public class EditorStressTest extends AbstractEditorTest {
     }
   }
 
-  private void doRandomAction(EditorEx editor) {
-    ourActions.get(myRandom.nextInt(ourActions.size())).perform(editor, myRandom);
+  private void doRandomAction(EditorEx editor, List<? extends Action> actions) {
+    actions.get(myRandom.nextInt(actions.size())).perform(editor, myRandom);
   }
 
   @FunctionalInterface
@@ -73,7 +72,7 @@ public class EditorStressTest extends AbstractEditorTest {
     void perform(EditorEx editor, Random random);
   }
 
-  private static class AddText implements Action {
+  private class AddText implements Action {
     private final String myText;
 
     AddText(String text) {
@@ -88,7 +87,7 @@ public class EditorStressTest extends AbstractEditorTest {
     }
   }
 
-  private static class RemoveCharacter implements Action {
+  private class RemoveCharacter implements Action {
     @Override
     public void perform(EditorEx editor, Random random) {
       Document document = editor.getDocument();
@@ -99,7 +98,7 @@ public class EditorStressTest extends AbstractEditorTest {
     }
   }
 
-  private static class MoveCharacter implements Action {
+  private class MoveCharacter implements Action {
     @Override
     public void perform(EditorEx editor, Random random) {
       DocumentEx document = editor.getDocument();
@@ -189,27 +188,27 @@ public class EditorStressTest extends AbstractEditorTest {
     }
   }
 
-  private static class AddInlay implements Action {
+  private class AddInlay implements Action {
     @Override
     public void perform(EditorEx editor, Random random) {
       addInlay(random.nextInt(editor.getDocument().getTextLength() + 1));
     }
   }
 
-  private static class RemoveInlay implements Action {
+  private class RemoveInlay implements Action {
     @Override
     public void perform(EditorEx editor, Random random) {
-      List<Inlay> inlays = myEditor.getInlayModel().getInlineElementsInRange(0, editor.getDocument().getTextLength());
+      List<Inlay> inlays = getEditor().getInlayModel().getInlineElementsInRange(0, editor.getDocument().getTextLength());
       if (!inlays.isEmpty()) Disposer.dispose(inlays.get(random.nextInt(inlays.size())));
     }
   }
 
-  private static class MoveCaret implements Action {
+  private class MoveCaret implements Action {
     @Override
     public void perform(EditorEx editor, Random random) {
       DocumentEx document = editor.getDocument();
       if (document.isInBulkUpdate()) return;
-      myEditor.getCaretModel().moveToOffset(random.nextInt(document.getTextLength() + 1));
+      getEditor().getCaretModel().moveToOffset(random.nextInt(document.getTextLength() + 1));
     }
   }
 }

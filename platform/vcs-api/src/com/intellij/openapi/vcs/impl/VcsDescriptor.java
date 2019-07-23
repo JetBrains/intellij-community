@@ -89,6 +89,10 @@ public class VcsDescriptor implements Comparable<VcsDescriptor> {
     return false;
   }
 
+  public boolean hasVcsDirPattern() {
+    return !myAdministrativePatterns.isEmpty();
+  }
+
   public boolean matchesVcsDirPattern(@NotNull String dirName) {
     return myAdministrativePatterns.contains(dirName);
   }

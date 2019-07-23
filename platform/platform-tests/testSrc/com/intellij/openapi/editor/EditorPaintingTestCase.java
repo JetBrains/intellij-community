@@ -69,27 +69,27 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     return getTestName(true) + ".png";
   }
 
-  protected static void setUniformEditorHighlighter(@NotNull TextAttributes attributes) {
-    ((EditorEx)myEditor).setHighlighter(new UniformHighlighter(attributes));
+  protected void setUniformEditorHighlighter(@NotNull TextAttributes attributes) {
+    ((EditorEx)getEditor()).setHighlighter(new UniformHighlighter(attributes));
   }
 
-  protected static RangeHighlighter addRangeHighlighter(int startOffset, int endOffset, int layer, Color foregroundColor, Color backgroundColor) {
+  protected RangeHighlighter addRangeHighlighter(int startOffset, int endOffset, int layer, Color foregroundColor, Color backgroundColor) {
     return addRangeHighlighter(startOffset, endOffset, layer, new TextAttributes(foregroundColor, backgroundColor, null, null, Font.PLAIN));
   }
 
-  protected static RangeHighlighter addLineHighlighter(int startOffset, int endOffset, int layer, Color foregroundColor, Color backgroundColor) {
+  protected RangeHighlighter addLineHighlighter(int startOffset, int endOffset, int layer, Color foregroundColor, Color backgroundColor) {
     return addLineHighlighter(startOffset, endOffset, layer, new TextAttributes(foregroundColor, backgroundColor, null, null, Font.PLAIN));
   }
 
-  protected static RangeHighlighter addRangeHighlighter(int startOffset, int endOffset, int layer, TextAttributes textAttributes) {
-    return myEditor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer, textAttributes, HighlighterTargetArea.EXACT_RANGE);
+  protected RangeHighlighter addRangeHighlighter(int startOffset, int endOffset, int layer, TextAttributes textAttributes) {
+    return getEditor().getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer, textAttributes, HighlighterTargetArea.EXACT_RANGE);
   }
 
-  protected static RangeHighlighter addLineHighlighter(int startOffset, int endOffset, int layer, TextAttributes textAttributes) {
-    return myEditor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer, textAttributes, HighlighterTargetArea.LINES_IN_RANGE);
+  protected RangeHighlighter addLineHighlighter(int startOffset, int endOffset, int layer, TextAttributes textAttributes) {
+    return getEditor().getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer, textAttributes, HighlighterTargetArea.LINES_IN_RANGE);
   }
 
-  protected static RangeHighlighter addBorderHighlighter(int startOffset, int endOffset, int layer, Color borderColor) {
+  protected RangeHighlighter addBorderHighlighter(int startOffset, int endOffset, int layer, Color borderColor) {
     return addRangeHighlighter(startOffset, endOffset, layer, new TextAttributes(null, null, borderColor, EffectType.BOXED, Font.PLAIN));
   }
 
@@ -97,11 +97,11 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
   protected void configureSoftWraps(int charCountToWrapAt) {
     int charWidthInPixels = BitmapFont.CHAR_WIDTH;
     // we're adding 1 to charCountToWrapAt, to account for wrap character width, and 1 to overall width to overcome wrapping logic subtleties
-    EditorTestUtil.configureSoftWraps(myEditor, (charCountToWrapAt + 1) * charWidthInPixels + 1, charWidthInPixels);
-    ((SoftWrapModelImpl)myEditor.getSoftWrapModel()).setSoftWrapPainter(new SoftWrapPainter() {
+    EditorTestUtil.configureSoftWraps(getEditor(), (charCountToWrapAt + 1) * charWidthInPixels + 1, charWidthInPixels);
+    ((SoftWrapModelImpl)getEditor().getSoftWrapModel()).setSoftWrapPainter(new SoftWrapPainter() {
       @Override
       public int paint(@NotNull Graphics g, @NotNull SoftWrapDrawingType drawingType, int x, int y, int lineHeight) {
-        g.setColor(myEditor.getColorsScheme().getDefaultForeground());
+        g.setColor(getEditor().getColorsScheme().getDefaultForeground());
         int xStart = x + charWidthInPixels / 4;
         int xEnd = x + charWidthInPixels * 3 / 4;
         int yStart = y + lineHeight / 4;
@@ -158,11 +158,11 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
   }
 
   private void checkResult(@TestDataFile String expectedResultFileName, boolean withGutter) throws IOException {
-    myEditor.getSettings().setAdditionalLinesCount(0);
-    myEditor.getSettings().setAdditionalColumnsCount(1);
+    getEditor().getSettings().setAdditionalLinesCount(0);
+    getEditor().getSettings().setAdditionalColumnsCount(1);
 
-    JComponent editorComponent = myEditor.getContentComponent();
-    JComponent gutterComponent = withGutter ? ((EditorImpl)myEditor).getGutterComponentEx() : new MyEmptyPanel();
+    JComponent editorComponent = getEditor().getContentComponent();
+    JComponent gutterComponent = withGutter ? ((EditorImpl)getEditor()).getGutterComponentEx() : new MyEmptyPanel();
 
     Dimension editorSize = editorComponent.getPreferredSize();
     Dimension gutterSize = gutterComponent.getPreferredSize();

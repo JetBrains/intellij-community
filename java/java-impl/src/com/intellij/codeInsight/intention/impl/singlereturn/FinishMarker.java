@@ -93,19 +93,23 @@ public class FinishMarker {
       currentContext = loopOrSwitch;
     }
     else {
-      while (true) {
+      while (currentContext instanceof PsiIfStatement) {
         PsiElement ifParent = currentContext.getParent();
-        if (!(ifParent instanceof PsiCodeBlock)) break;
-        if (!(ifParent.getParent() instanceof PsiStatement)) {
-          return ifParent != block;
+        if (ifParent instanceof PsiIfStatement) {
+          currentContext = (PsiStatement)ifParent;
         }
-        currentContext = (PsiStatement)ifParent.getParent();
-        if (!(currentContext instanceof PsiBlockStatement) ||
-            !(currentContext.getParent() instanceof PsiIfStatement) ||
-            ControlFlowUtils.codeBlockMayCompleteNormally((PsiCodeBlock)ifParent)) {
-          break;
+        else if (ifParent instanceof PsiCodeBlock) {
+          if (!(ifParent.getParent() instanceof PsiStatement)) {
+            return ifParent != block;
+          }
+          currentContext = (PsiStatement)ifParent.getParent();
+          if (!(currentContext instanceof PsiBlockStatement) ||
+              !(currentContext.getParent() instanceof PsiIfStatement) ||
+              ControlFlowUtils.codeBlockMayCompleteNormally((PsiCodeBlock)ifParent)) {
+            break;
+          }
+          currentContext = (PsiStatement)currentContext.getParent();
         }
-        currentContext = (PsiStatement)currentContext.getParent();
       }
     }
     while (true) {
@@ -144,10 +148,11 @@ public class FinishMarker {
       .map(val -> val instanceof PsiLiteralExpression ? ((PsiLiteralExpression)val).getValue() : NULL)
       .toSet();
     if (!mayNeedMarker) {
-      if (nonTerminalReturnValues.size() == 1 && nonTerminalReturnValues.iterator().next() != NULL) {
-        return new FinishMarker(FinishMarkerType.SEPARATE_VAR, nonTerminalReturns.iterator().next());
+      PsiExpression initValue = findBestExpression(terminalReturn, nonTerminalReturns, mayNeedMarker);
+      if (initValue == null && nonTerminalReturnValues.size() == 1 && nonTerminalReturnValues.iterator().next() != NULL) {
+        initValue = nonTerminalReturns.iterator().next();
       }
-      return new FinishMarker(FinishMarkerType.SEPARATE_VAR, findBestExpression(terminalReturn, nonTerminalReturns, mayNeedMarker));
+      return new FinishMarker(FinishMarkerType.SEPARATE_VAR, initValue);
     }
     if (PsiType.BOOLEAN.equals(returnType)) {
       if (nonTerminalReturnValues.size() == 1) {

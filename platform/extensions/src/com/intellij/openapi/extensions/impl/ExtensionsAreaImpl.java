@@ -100,7 +100,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     if (pointName == null) {
       final String name = extensionPointElement.getAttributeValue("name");
       if (name == null) {
-        throw new RuntimeException("'name' attribute not specified for extension point in '" + pluginDescriptor + "' plugin");
+        throw new ExtensionInstantiationException("'name' attribute not specified for extension point in '" + pluginDescriptor + "' plugin", pluginDescriptor);
       }
       assert pluginDescriptor.getPluginId() != null;
       pointName = pluginDescriptor.getPluginId().getIdString() + '.' + name;
@@ -109,11 +109,11 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     String beanClassName = extensionPointElement.getAttributeValue("beanClass");
     String interfaceClassName = extensionPointElement.getAttributeValue("interface");
     if (beanClassName == null && interfaceClassName == null) {
-      throw new RuntimeException("Neither 'beanClass' nor 'interface' attribute is specified for extension point '" + pointName + "' in '" + pluginDescriptor + "' plugin");
+      throw new ExtensionInstantiationException("Neither 'beanClass' nor 'interface' attribute is specified for extension point '" + pointName + "' in '" + pluginDescriptor + "' plugin", pluginDescriptor);
     }
 
     if (beanClassName != null && interfaceClassName != null) {
-      throw new RuntimeException("Both 'beanClass' and 'interface' attributes are specified for extension point '" + pointName + "' in '" + pluginDescriptor + "' plugin");
+      throw new ExtensionInstantiationException("Both 'beanClass' and 'interface' attributes are specified for extension point '" + pointName + "' in '" + pluginDescriptor + "' plugin", pluginDescriptor);
     }
 
     ExtensionPointImpl<Object> point;
@@ -206,7 +206,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
           listener = (ExtensionPointAvailabilityListener)instantiate(extension.loadListenerClass());
         }
         catch (ClassNotFoundException e) {
-          throw new RuntimeException(e);
+          throw new ExtensionInstantiationException(e, pluginDescriptor);
         }
 
         addAvailabilityListener(epName, listener, null);

@@ -16,6 +16,8 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
 
+val obsoleteError by lazy { MessageError("Obsolete", false) }
+
 val Promise<*>.isRejected: Boolean
   get() = state == Promise.State.REJECTED
 
@@ -61,8 +63,12 @@ fun <T> rejectedPromise(error: Throwable?): Promise<T> {
   }
 }
 
+private val CANCELLED_PROMISE: Promise<Any?> by lazy {
+  DonePromise<Any?>(InternalPromiseUtil.PromiseValue.createRejected(obsoleteError))
+}
+
 @Suppress("UNCHECKED_CAST")
-fun <T> cancelledPromise(): Promise<T> = InternalPromiseUtil.CANCELLED_PROMISE.value as Promise<T>
+fun <T> cancelledPromise(): Promise<T> = CANCELLED_PROMISE as Promise<T>
 
 
 // only internal usage

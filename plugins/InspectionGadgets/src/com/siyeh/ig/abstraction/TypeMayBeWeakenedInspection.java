@@ -43,7 +43,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Query;

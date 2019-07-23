@@ -3,7 +3,7 @@ package com.intellij.stats.completion
 
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.completion.settings.CompletionStatsCollectorSettings
+import com.intellij.completion.settings.CompletionMLRankingSettings
 import com.intellij.completion.tracker.PositionTrackingListener
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.lang.Language
@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.reporting.isUnitTestMode
 import com.intellij.stats.experiment.WebServiceStatus
 import com.intellij.stats.personalization.UserFactorDescriptions
@@ -66,15 +67,16 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
     return CompletionActionsTracker(lookup, logger, experimentHelper)
   }
 
-  private fun shouldInitialize() = StatisticsUploadAssistant.isSendAllowed() || isUnitTestMode()
+  private fun shouldInitialize() = (ApplicationManager.getApplication().isEAP && StatisticsUploadAssistant.isSendAllowed())
+                                   || isUnitTestMode()
 
-  private fun shouldTrackSession() = CompletionStatsCollectorSettings.getInstance().isCompletionLogsSendAllowed || isUnitTestMode()
+  private fun shouldTrackSession() = CompletionMLRankingSettings.getInstance().isCompletionLogsSendAllowed || isUnitTestMode()
 
   private fun shouldUseUserFactors() = UserFactorsManager.ENABLE_USER_FACTORS
 
   private fun sessionShouldBeLogged(experimentHelper: WebServiceStatus, language: Language?): Boolean {
     val application = ApplicationManager.getApplication()
-    if (!application.isEAP) return false
+    if (Registry.`is`("completion.stats.show.ml.ranking.diff")) return false
     if (application.isUnitTestMode || experimentHelper.isExperimentOnCurrentIDE()) return true
 
     var logSessionChance = 0.0
@@ -88,13 +90,10 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
   private fun processUserFactors(lookup: LookupImpl) {
     if (!shouldUseUserFactors()) return
 
-    val globalStorage = UserFactorStorage.getInstance()
-    val projectStorage = UserFactorStorage.getInstance(lookup.project)
-
-    val userFactors = UserFactorsManager.getInstance(lookup.project).getAllFactors()
+    val userFactors = UserFactorsManager.getInstance().getAllFactors()
     val userFactorValues = mutableMapOf<String, String?>()
-    userFactors.asSequence().map { "${it.id}:App" to it.compute(globalStorage) }.toMap(userFactorValues)
-    userFactors.asSequence().map { "${it.id}:Project" to it.compute(projectStorage) }.toMap(userFactorValues)
+    userFactors.associateTo(userFactorValues) { "${it.id}:App" to it.compute(UserFactorStorage.getInstance()) }
+    userFactors.associateTo(userFactorValues) { "${it.id}:Project" to it.compute(UserFactorStorage.getInstance(lookup.project)) }
 
     lookup.putUserData(UserFactorsManager.USER_FACTORS_KEY, userFactorValues)
 

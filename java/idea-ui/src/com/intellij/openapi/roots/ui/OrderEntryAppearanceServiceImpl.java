@@ -17,7 +17,6 @@ import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.roots.ui.util.SimpleTextCellAppearance;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;

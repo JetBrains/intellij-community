@@ -450,12 +450,16 @@ class VariableView(override val variableName: String, private val variable: Vari
 
 fun getClassName(value: ObjectValue): String {
   val className = value.className
-  return if (className.isNullOrEmpty()) "Object" else className!!
+  return when {
+    className.isNullOrEmpty() -> "Object"
+    className == "console" -> "Console"
+    else -> className
+  }
 }
 
 fun getObjectValueDescription(value: ObjectValue): String {
   val description = value.valueString
-  return if (description.isNullOrEmpty()) getClassName(value) else description!!
+  return if (description.isNullOrEmpty()) getClassName(value) else description
 }
 
 internal fun trimFunctionDescription(value: Value): String {

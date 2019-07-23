@@ -14,6 +14,7 @@ import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.paint.LinePainter2D
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.ui.JBFont
@@ -25,8 +26,12 @@ import javax.swing.border.Border
 
 abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     companion object {
-        const val H_GAP = 7
-        const val MIN_HEIGHT = 24
+        val H_GAP
+            get() = JBUIScale.scale(7)
+        val MIN_HEIGHT
+            get() = JBUIScale.scale(24)
+        val GAP_AFTER_MENU
+            get() = JBUIScale.scale(18)
 
         val WINDOWS_VERSION = WindowsRegistryUtil.readRegistryValue("HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "ReleaseId")
 
@@ -112,7 +117,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
 
         myComponentListener = object : ComponentAdapter() {
             override fun componentResized(e: ComponentEvent?) {
-                updateCustomDecorationHitTestSpots()
+               SwingUtilities.invokeLater{updateCustomDecorationHitTestSpots()}
             }
         }
 
@@ -131,13 +136,17 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
       updateCustomDecorationHitTestSpots()
     }
 
+    private var added = false
+
     override fun addNotify() {
         super.addNotify()
+        added = true
         installListeners()
         updateCustomDecorationHitTestSpots()
     }
 
     override fun removeNotify() {
+        added = false
         super.removeNotify()
         uninstallListeners()
     }
@@ -157,6 +166,8 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     }
 
     protected fun updateCustomDecorationHitTestSpots() {
+        if(!added) return
+
         val toList = getHitTestSpots().map {it.getRectangleOn(window)}.toList()
         JdkEx.setCustomDecorationHitTestSpots(window, toList)
     }
@@ -173,6 +184,8 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         buttonPanes.isSelected = myActive
         buttonPanes.updateVisibility()
         customFrameTopBorder?.repaintBorder()
+
+        background = JBUI.CurrentTheme.CustomFrameDecorations.titlePaneBackground(myActive)
     }
 
     protected val myCloseAction: Action = CustomFrameAction("Close", AllIcons.Windows.CloseSmall) { close() }
@@ -230,6 +243,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         private val affectsBorders: Boolean = Toolkit.getDefaultToolkit().getDesktopProperty("win.dwm.colorizationColor.affects.borders") as Boolean? ?: true
         private val activeColor = Toolkit.getDefaultToolkit().getDesktopProperty("win.dwm.colorizationColor") as Color? ?:
          Toolkit.getDefaultToolkit().getDesktopProperty("win.frame.activeBorderColor") as Color? ?: menuBarBorderColor
+        private val inactiveColor = Color(0xaaaaaa)
 
         fun repaintBorder() {
             val borderInsets = getBorderInsets(this@CustomHeader)
@@ -239,8 +253,8 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         }
 
         override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
-            if (isTopNeeded() && myActive && isAffectsBorder()) {
-                g.color = activeColor
+            if (isTopNeeded() && (myActive && isAffectsBorder() || !myActive)) {
+                g.color = if (myActive) activeColor else inactiveColor
                 LinePainter2D.paint(g as Graphics2D, x.toDouble(), y.toDouble(), width.toDouble(), y.toDouble())
             }
 

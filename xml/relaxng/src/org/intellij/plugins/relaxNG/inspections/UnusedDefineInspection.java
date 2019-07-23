@@ -47,8 +47,6 @@ import org.intellij.plugins.relaxNG.compact.psi.RncGrammar;
 import org.intellij.plugins.relaxNG.compact.psi.impl.RncDefineImpl;
 import org.intellij.plugins.relaxNG.model.resolve.RelaxIncludeIndex;
 import org.intellij.plugins.relaxNG.xml.dom.RngGrammar;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class UnusedDefineInspection extends BaseInspection {

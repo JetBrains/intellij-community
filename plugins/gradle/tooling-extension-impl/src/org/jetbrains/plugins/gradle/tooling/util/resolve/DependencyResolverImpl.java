@@ -27,10 +27,7 @@ import org.jetbrains.plugins.gradle.ExternalDependencyId;
 import org.jetbrains.plugins.gradle.model.ExternalDependency;
 import org.jetbrains.plugins.gradle.model.FileCollectionDependency;
 import org.jetbrains.plugins.gradle.model.*;
-import org.jetbrains.plugins.gradle.tooling.util.DependencyResolver;
-import org.jetbrains.plugins.gradle.tooling.util.DependencyTraverser;
-import org.jetbrains.plugins.gradle.tooling.util.ModuleComponentIdentifierImpl;
-import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder;
+import org.jetbrains.plugins.gradle.tooling.util.*;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -60,30 +57,21 @@ public class DependencyResolverImpl implements DependencyResolver {
                                                                     (GradleVersion.current().compareTo(GradleVersion.version("2.0")) >= 0);
 
   @NotNull
-  protected final Project myProject;
-  protected final boolean myIsPreview;
-  protected final boolean myDownloadJavadoc;
-  protected final boolean myDownloadSources;
-  protected final SourceSetCachedFinder mySourceSetFinder;
+  private final Project myProject;
+  private final boolean myIsPreview;
+  private final boolean myDownloadJavadoc;
+  private final boolean myDownloadSources;
+  @NotNull
+  private final SourceSetCachedFinder mySourceSetFinder;
   public static final String PROVIDED_SCOPE = "PROVIDED";
   public static final String COMPILE_SCOPE = CompileDependenciesProvider.SCOPE;
   public static final String RUNTIME_SCOPE = RuntimeDependenciesProvider.SCOPE;
 
-  @SuppressWarnings("GroovyUnusedDeclaration")
-  public DependencyResolverImpl(@NotNull Project project, boolean isPreview) {
-    myProject = project;
-    myIsPreview = isPreview;
-    myDownloadJavadoc = false;
-    myDownloadSources = false;
-    mySourceSetFinder = new SourceSetCachedFinder(project);
-  }
-
-  public DependencyResolverImpl(
-    @NotNull Project project,
-    boolean isPreview,
-    boolean downloadJavadoc,
-    boolean downloadSources,
-    SourceSetCachedFinder sourceSetFinder) {
+  public DependencyResolverImpl(@NotNull Project project,
+                                boolean isPreview,
+                                boolean downloadJavadoc,
+                                boolean downloadSources,
+                                @NotNull SourceSetCachedFinder sourceSetFinder) {
     myProject = project;
     myIsPreview = isPreview;
     myDownloadJavadoc = downloadJavadoc;
@@ -354,11 +342,8 @@ public class DependencyResolverImpl implements DependencyResolver {
       return null;
     }
 
-    if (project.hasProperty("sourceSets")
-        && (project.property("sourceSets") instanceof SourceSetContainer)) {
-      return ((SourceSetContainer)project.property("sourceSets")).findByName(name);
-    }
-    return null;
+    SourceSetContainer sourceSets = JavaPluginUtil.getSourceSetContainer(project);
+    return sourceSets == null ? null : sourceSets.findByName(name);
   }
 
 

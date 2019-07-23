@@ -563,19 +563,6 @@ bool LoadVMOptions()
   std::string dllName(jvmPath);
   std::string binDirs = dllName + "\\bin;" + dllName + "\\bin\\server";
 
-  std::vector<char> pathEnvVar(_MAX_PATH);
-  DWORD pathSizeWithoutTerminator = GetEnvironmentVariableA("PATH", pathEnvVar.data(), pathEnvVar.size());
-  if (pathSizeWithoutTerminator >= pathEnvVar.size())
-  {
-    pathEnvVar.resize(pathSizeWithoutTerminator + 1);
-    pathSizeWithoutTerminator = GetEnvironmentVariableA("PATH", pathEnvVar.data(), pathEnvVar.size());
-  }
-
-  if (pathSizeWithoutTerminator)
-  {
-    std::string path = binDirs + ";" + std::string(pathEnvVar.data());
-    SetEnvironmentVariableA("PATH", path.c_str());
-  }
   vmOptionLines.push_back(std::string("-Djava.library.path=") + binDirs);
   AddPredefinedVMOptions(vmOptionLines);
 
@@ -597,7 +584,6 @@ bool LoadJVMLibrary()
 {
   std::string dllName(jvmPath);
   std::string binDir = dllName + "\\bin";
-  TCHAR currentDir[MAX_PATH];
   std::string serverDllName = binDir + "\\server\\jvm.dll";
   std::string clientDllName = binDir + "\\client\\jvm.dll";
   if ((bServerJVM && FileExists(serverDllName)) || !FileExists(clientDllName))
@@ -609,15 +595,14 @@ bool LoadJVMLibrary()
     dllName = clientDllName;
   }
 
-  // ensure we can find msvcr100.dll which is located in jre/bin directory; jvm.dll depends on it.
-  GetCurrentDirectory(sizeof(currentDir),currentDir);
+  // Call SetCurrentDirectory to allow jvm.dll to load the corresponding runtime libraries.
   SetCurrentDirectoryA(binDir.c_str());
   hJVM = LoadLibraryA(dllName.c_str());
   if (hJVM)
   {
     pCreateJavaVM = (JNI_createJavaVM) GetProcAddress(hJVM, "JNI_CreateJavaVM");
   }
-  SetCurrentDirectory(currentDir);
+
   if (!pCreateJavaVM)
   {
     std::string jvmError = "Failed to load JVM DLL ";
@@ -669,10 +654,17 @@ void SetProcessDPIAwareProperty()
 
 std::string getErrorMessage(int errorCode)
 {
+// possible error values:
+// JNI_ERR          (-1)  /* unknown error */
+// JNI_EDETACHED    (-2)  /* thread detached from the VM */
+// JNI_EVERSION     (-3)  /* JNI version error */
+// JNI_ENOMEM       (-4)  /* not enough memory */
+// JNI_EEXIST       (-5)  /* VM already created */
+// JNI_EINVAL       (-6)  /* invalid arguments */
   std::string errorMessage = "";
   if (errorCode == -6)
   {
-      errorMessage = "MaxJavaStackTraceDepth=-1 is outside the allowed range [ 0 ... 1073741823 ].\nImproperly specified VM option 'MaxJavaStackTraceDepth=-1'\n";
+      errorMessage = "Improperly specified VM option. To fix the problem, edit your JVM options and remove the options that are obsolete or not supported by the current version of the JVM.";
   }
   return errorMessage;
 }
@@ -1152,6 +1144,19 @@ void StartSplashProcess()
   }
 }
 
+std::wstring GetCurrentDirectoryAsString()
+{
+  std::vector<wchar_t> buffer(_MAX_PATH);
+  DWORD sizeWithoutTerminatingZero = GetCurrentDirectoryW(buffer.size(), buffer.data());
+  if (sizeWithoutTerminatingZero >= buffer.size())
+  {
+    buffer.resize(sizeWithoutTerminatingZero + 1);
+    sizeWithoutTerminatingZero = GetCurrentDirectoryW(buffer.size(), buffer.data());
+  }
+
+  return std::wstring(buffer.data(), sizeWithoutTerminatingZero);
+}
+
 int APIENTRY _tWinMain(HINSTANCE hInstance,
                        HINSTANCE hPrevInstance,
                        LPTSTR    lpCmdLine,
@@ -1177,6 +1182,11 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
   //it's OK to return 0 here, because the control is transferred to the first instance
   int exitCode = CheckSingleInstance();
   if (exitCode != -1) return exitCode;
+
+  // Read current directory and pass it to JVM through environment variable. The real current directory will be changed
+  // in LoadJVMLibrary.
+  std::wstring currentDirectory = GetCurrentDirectoryAsString();
+  SetEnvironmentVariableW(L"IDEA_INITIAL_DIRECTORY", currentDirectory.c_str());
 
   std::vector<LPWSTR> args = ParseCommandLine(GetCommandLineW());
 

@@ -191,6 +191,26 @@ public class IgnoreReferenceSet extends FileReferenceSet {
     myReferences = referencesList.toArray(FileReference.EMPTY);
   }
 
+  @Override
+  protected String getNewAbsolutePath(@NotNull PsiFileSystemItem root, @NotNull String relativePath) {
+    PsiFile ignoreFile = getContainingFile();
+    VirtualFile rootVF = root.getVirtualFile();
+    if (rootVF != null &&
+        ignoreFile != null &&
+        ignoreFile.getVirtualFile() != null &&
+        ignoreFile.getVirtualFile().getParent() != null &&
+        !rootVF.equals(ignoreFile.getVirtualFile().getParent())) {
+      VirtualFile relativeFile = rootVF.findFileByRelativePath(relativePath);
+      if (relativeFile != null) {
+        String relativeToIgnoreFileParent = VfsUtilCore.getRelativePath(relativeFile, ignoreFile.getVirtualFile().getParent());
+        if (relativeToIgnoreFileParent != null) {
+          return absoluteUrlNeedsStartSlash() ? "/" + relativeToIgnoreFileParent : relativeToIgnoreFileParent;
+        }
+      }
+    }
+    return super.getNewAbsolutePath(root, relativePath);
+  }
+
   /**
    * Custom definition of {@link FileReference}.
    */
@@ -239,8 +259,7 @@ public class IgnoreReferenceSet extends FileReferenceSet {
           VirtualFile root = parent != null ? parent.getVirtualFile() : null;
           PsiManager psiManager = getElement().getManager();
 
-          List<VirtualFile> files = new ArrayList<>();
-          files.addAll(myIgnorePatternsMatchedFilesCache.getFilesForPattern(pattern));
+          List<VirtualFile> files = new ArrayList<>(myIgnorePatternsMatchedFilesCache.getFilesForPattern(pattern));
           if (files.isEmpty()) {
             files.addAll(ContainerUtil.filter(
               context.getVirtualFile().getChildren(),

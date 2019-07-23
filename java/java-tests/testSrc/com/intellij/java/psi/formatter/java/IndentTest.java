@@ -33,7 +33,7 @@ import java.io.File;
 public class IndentTest extends LightIdeaTestCase {
   private static final String BASE_PATH = PathManagerEx.getTestDataPath() + "/psi/formatter/indent";
 
-  private static CommonCodeStyleSettings getJavaSettings() {
+  private CommonCodeStyleSettings getJavaSettings() {
     return  CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
   }
 

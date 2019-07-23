@@ -6,6 +6,7 @@ import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.MainRunner;
 import com.intellij.ide.plugins.PluginManager;
@@ -15,7 +16,6 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogEarthquakeShaker;
@@ -63,7 +63,7 @@ public final class IdeaApplication {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.idea.IdeaApplication");
 
-  private static boolean ourPerformProjectLoad = true;
+  private static List<File> ourFilesToLoad = Collections.emptyList();
 
   private IdeaApplication() { }
 
@@ -360,7 +360,9 @@ public final class IdeaApplication {
       Project project = null;
       if (!commandLineArgs.isEmpty() && commandLineArgs.get(0) != null) {
         LOG.info("IdeaApplication.loadProject");
-        project = CommandLineProcessor.processExternalCommandLine(commandLineArgs, null).getFirst();
+        String currentDirectory = System.getenv("IDEA_INITIAL_DIRECTORY");
+        LOG.info("IDEA_INITIAL_DIRECTORY: " + currentDirectory);
+        project = CommandLineProcessor.processExternalCommandLine(commandLineArgs, currentDirectory).getFirst();
       }
       return project;
     }
@@ -420,9 +422,13 @@ public final class IdeaApplication {
       app.executeOnPooledThread(() -> LifecycleUsageTriggerCollector.onIdeStart());
 
       TransactionGuard.submitTransaction(app, () -> {
-        Project projectFromCommandLine = ourPerformProjectLoad ? loadProjectFromExternalCommandLine(commandLineArgs) : null;
-        app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appStarting(projectFromCommandLine);
-        if (projectFromCommandLine == null && !JetBrainsProtocolHandler.appStartedWithCommand()) {
+        Project project = !ourFilesToLoad.isEmpty() ? ProjectUtil.tryOpenFileList(null, ourFilesToLoad, "MacMenu") :
+                          !commandLineArgs.isEmpty() ? loadProjectFromExternalCommandLine(commandLineArgs) :
+                          null;
+
+        app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appStarting(project);
+
+        if (project == null && !JetBrainsProtocolHandler.appStartedWithCommand()) {
           RecentProjectsManager.getInstance().reopenLastProjectOnStart();
         }
 
@@ -457,7 +463,7 @@ public final class IdeaApplication {
     }
   }
 
-  public static void disableProjectLoad() {
-    ourPerformProjectLoad = false;
+  public static void openFilesOnLoading(@NotNull List<File> files) {
+    ourFilesToLoad = files;
   }
 }

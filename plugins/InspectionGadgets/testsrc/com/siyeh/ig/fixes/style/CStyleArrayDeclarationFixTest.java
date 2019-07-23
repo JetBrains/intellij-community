@@ -15,6 +15,7 @@ public class CStyleArrayDeclarationFixTest extends IGQuickFixesTestCase {
   public void testInForLoop() { doTest(); }
   public void testMultipleVariablesSingleDeclaration() { doTest(); }
   public void testMultipleFieldsSingleDeclaration() { doTest(); }
+  public void testParameter() { doTest(); }
 
   @Override
   public void setUp() throws Exception {

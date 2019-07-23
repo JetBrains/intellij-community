@@ -19,8 +19,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.tree.LeafPsiElement;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.highlighting.PyHighlighter;

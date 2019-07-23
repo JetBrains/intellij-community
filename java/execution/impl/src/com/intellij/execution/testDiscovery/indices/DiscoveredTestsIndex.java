@@ -5,7 +5,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.indexing.IndexId;
-import com.intellij.util.indexing.impl.KeyCollectionBasedForwardIndex;
 import com.intellij.util.indexing.impl.MapIndexStorage;
 import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.indexing.impl.forward.KeyCollectionForwardIndexAccessor;
@@ -16,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 
 public class DiscoveredTestsIndex extends MapReduceIndex<Integer, TIntArrayList, UsedSources> {
   protected DiscoveredTestsIndex(@NotNull File file) throws IOException {

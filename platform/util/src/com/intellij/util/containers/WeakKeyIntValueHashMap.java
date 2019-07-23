@@ -13,9 +13,7 @@
 // limitations under the License.
 package com.intellij.util.containers;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import gnu.trove.THashSet;

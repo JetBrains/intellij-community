@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.collectors.fus.ui;
 
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
@@ -65,7 +66,16 @@ public class UiInfoUsageCollector extends ApplicationUsagesCollector {
     add(set, "Show.tips.on.startup", GeneralSettings.getInstance().isShowTipsOnStartup() ? 1 : 0);
     set.add(getBooleanUsage("Allow.merging.buttons", ui.getAllowMergeButtons()));
 
+    PropertiesComponent properties = PropertiesComponent.getInstance();
+    add(set, "QuickDoc.Show.Toolwindow", properties.isTrueValue("ShowDocumentationInToolWindow") ? 1 : 0);
+    add(set, "QuickDoc.AutoUpdate", properties.getBoolean("DocumentationAutoUpdateEnabled", true) ? 1 : 0);
+
     return set;
+  }
+
+  @Override
+  public int getVersion() {
+    return 2;
   }
 
   private static String recentPeriod(int recent) {

@@ -88,7 +88,8 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
   }
 
   private void createAllServicesView() {
-    myAllServicesView = ServiceView.createView(myProject, new AllServicesModel(myModel, myModelFilter), myState.allServicesViewState);
+    myAllServicesView = ServiceView.createView(myProject, new AllServicesModel(myModel, myModelFilter),
+                                               prepareViewState(myState.allServicesViewState));
 
     myAllServicesContent = ContentFactory.SERVICE.getInstance().createContent(myAllServicesView, null, false);
     myAllServicesContent.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
@@ -241,11 +242,11 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
         }
 
         Collections.reverse(contents);
-        select(myProject, contents.iterator(), result, service, contributorClass);
+        select(myProject, contents.iterator(), result, service, contributorClass, focus);
       };
       ToolWindow window = activate ? ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.SERVICES) : null;
       if (window != null) {
-        window.activate(runnable, false, focus);
+        window.activate(runnable, focus, focus);
       }
       else {
         runnable.run();
@@ -255,12 +256,12 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
   }
 
   private static void select(Project project, Iterator<Content> iterator, AsyncPromise<Void> result,
-                             @NotNull Object service, @NotNull Class<?> contributorClass) {
+                             @NotNull Object service, @NotNull Class<?> contributorClass, boolean focus) {
     Content content = iterator.next();
     ServiceView serviceView = getServiceView(content);
     if (serviceView == null) {
       if (iterator.hasNext()) {
-        select(project, iterator, result, service, contributorClass);
+        select(project, iterator, result, service, contributorClass, focus);
       }
       else {
         result.setError("Not services content");
@@ -274,7 +275,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
           if (contentManager == null) return;
 
           if (contentManager.getSelectedContent() != content && contentManager.getIndexOfContent(content) >= 0) {
-            contentManager.setSelectedContent(content);
+            contentManager.setSelectedContent(content, focus);
           }
         }, project.getDisposed());
 
@@ -282,7 +283,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
       })
       .onError(e -> {
         if (iterator.hasNext()) {
-          select(project, iterator, result, service, contributorClass);
+          select(project, iterator, result, service, contributorClass, focus);
         }
         else {
           result.setError(e);
@@ -336,7 +337,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
   }
 
   private void extract(ServiceViewModel viewModel, ServiceViewState viewState, boolean select) {
-    ServiceView serviceView = ServiceView.createView(myProject, viewModel, viewState);
+    ServiceView serviceView = ServiceView.createView(myProject, viewModel, prepareViewState(viewState));
     if (viewModel instanceof ContributorModel) {
       extractContributor((ContributorModel)viewModel, serviceView, select);
     }
@@ -372,7 +373,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
           myContentManager.removeContent(content, true);
           ServiceListModel listModel = new ServiceListModel(myModel, myModelFilter, ContainerUtil.newSmartList(item),
                                                             viewModel.getFilter().getParent());
-          ServiceView listView = ServiceView.createView(myProject, listModel, new ServiceViewState());
+          ServiceView listView = ServiceView.createView(myProject, listModel, prepareViewState(new ServiceViewState()));
           extractList(listModel, listView, null, true, index);
         }, myProject.getDisposed());
       }
@@ -504,6 +505,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     public ServiceViewState allServicesViewState = new ServiceViewState();
     public List<ServiceViewState> viewStates = new ArrayList<>();
     public int selectedView = -1;
+    public boolean showServicesTree = true;
   }
 
   private static String getToolWindowId() {
@@ -516,6 +518,26 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
 
   static String getToolWindowContextHelpId() {
     return HELP_ID;
+  }
+
+  private ServiceViewState prepareViewState(ServiceViewState state) {
+    state.showServicesTree = myState.showServicesTree;
+    return state;
+  }
+
+  boolean isShowServicesTree() {
+    return myState.showServicesTree;
+  }
+
+  void setShowServicesTree(boolean value) {
+    myState.showServicesTree = value;
+    ServiceView allServicesView = myAllServicesView;
+    if (allServicesView != null) {
+      allServicesView.getUi().setMasterComponentVisible(value);
+    }
+    for (ServiceView serviceView : myServiceViews) {
+      serviceView.getUi().setMasterComponentVisible(value);
+    }
   }
 
   boolean isSplitByTypeEnabled() {
@@ -551,7 +573,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     }
 
     ContributorModel contributorModel = new ContributorModel(myModel, myModelFilter, contributor, null);
-    ServiceView contributorView = ServiceView.createView(myProject, contributorModel, new ServiceViewState());
+    ServiceView contributorView = ServiceView.createView(myProject, contributorModel, prepareViewState(new ServiceViewState()));
     extractContributor(contributorModel, contributorView, true);
   }
 

@@ -9,6 +9,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.MethodInvocator;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -78,10 +79,32 @@ public final class HidpiInfo extends AnAction implements DumbAware {
       {USR_SCALE_TEXT, "" + JBUIScale.scale(1f), _USR_SCALE_DESC},
     };
 
-    JTable table = new JTable(data, columns) {
+    if (SystemInfo.isLinux && SystemInfo.isJetBrainsJvm) {
+      try {
+        Class cls = Class.forName("sun.awt.X11GraphicsDevice");
+        MethodInvocator getDpiInfo = new MethodInvocator(cls, "getDpiInfo");
+        if (getDpiInfo.isAvailable()) {
+          String[][] dpiInfo = (String[][])getDpiInfo.invoke(activeFrame.getGraphicsConfiguration().getDevice());
+          if (dpiInfo != null && dpiInfo.length > 0) {
+            for (String[] row : dpiInfo) {
+              row[2] = "<html><span style='font-size:x-small'>" + row[2] + "</span></html>";
+            }
+            String[][] _exData = new String[data.length + dpiInfo.length][];
+            System.arraycopy(data, 0, _exData, 0, data.length);
+            System.arraycopy(dpiInfo, 0, _exData, data.length, dpiInfo.length);
+            data = _exData;
+          }
+        }
+      }
+      catch (ClassNotFoundException ignore) {
+      }
+    }
+    final String[][] exData = data;
+
+    JTable table = new JTable(exData, columns) {
       @Override
       public TableCellRenderer getCellRenderer(int row, int column) {
-        return (table1, value, isSelected, hasFocus, row1, column1) -> label(data[row1][column1]);
+        return (table1, value, isSelected, hasFocus, row1, column1) -> label(exData[row1][column1]);
       }
 
       @Override
@@ -90,7 +113,7 @@ public final class HidpiInfo extends AnAction implements DumbAware {
       }
     };
 
-    BiFunction<Integer, Integer, Dimension> size = (row, col) -> label(data[row][col]).getPreferredSize();
+    BiFunction<Integer, Integer, Dimension> size = (row, col) -> label(exData[row][col]).getPreferredSize();
     int padding = JBUIScale.scale(10);
 
     table.setColumnSelectionAllowed(true);
@@ -98,10 +121,9 @@ public final class HidpiInfo extends AnAction implements DumbAware {
     tcm.getColumn(0).setPreferredWidth(size.apply(0, 0).width + padding);
     tcm.getColumn(1).setPreferredWidth(size.apply(1, 1).width + padding);
     tcm.getColumn(2).setPreferredWidth(size.apply(0, 2).width + padding);
-    table.setRowHeight(0, size.apply(0, 2).height);
-    table.setRowHeight(1, size.apply(0, 2).height);
-    table.setRowHeight(2, size.apply(0, 2).height);
-    table.setRowHeight(3, size.apply(3, 2).height);
+    for (int i = 0; i < table.getRowCount(); i++) {
+      table.setRowHeight(i, size.apply(0, 2).height);
+    }
 
     JPanel tablePanel = new JPanel(new BorderLayout());
     tablePanel.add(table, BorderLayout.CENTER);

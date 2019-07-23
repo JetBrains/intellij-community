@@ -16,7 +16,6 @@
 package com.intellij.cvsSupport2.errorHandling;
 
 import java.io.File;
-import java.text.MessageFormat;
 
 /**
  * author: lesya

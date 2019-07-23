@@ -75,9 +75,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.containers.ContainerUtil.*;
@@ -713,6 +711,11 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   public RootsConvertor getCustomConvertor() {
     if (myProject.isDefault()) return null;
     return getSvnFileUrlMapping();
+  }
+
+  @Override
+  public boolean needsLegacyDefaultMappings() {
+    return false;
   }
 
   @Override

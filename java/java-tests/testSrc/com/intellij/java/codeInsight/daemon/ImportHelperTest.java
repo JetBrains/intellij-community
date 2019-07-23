@@ -72,10 +72,10 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     return LightJavaCodeInsightFixtureTestCase.JAVA_1_7; // Java 8 mock does not have java.sql package used here
   }
 
-  private static PsiJavaFile configureByText(String text) {
+  private PsiJavaFile configureByText(String text) {
     configureFromFileText("dummy.java", text);
-    assertTrue(myFile instanceof PsiJavaFile);
-    return (PsiJavaFile)myFile;
+    assertTrue(getFile() instanceof PsiJavaFile);
+    return (PsiJavaFile)getFile();
   }
 
   @Override
@@ -171,7 +171,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
       }), "", "");
   }
 
-  private static void checkAddImport(PsiJavaFile file, String fqn, String... expectedOrder) {
+  private void checkAddImport(PsiJavaFile file, String fqn, String... expectedOrder) {
     JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(file);
     ImportHelper importHelper = new ImportHelper(settings);
 
@@ -223,15 +223,15 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
 
       assertOneElement(highlightErrors());
 
-      int offset = myEditor.getCaretModel().getOffset();
-      PsiReference ref = myFile.findReferenceAt(offset - 1);
+      int offset = getEditor().getCaretModel().getOffset();
+      PsiReference ref = getFile().findReferenceAt(offset - 1);
       assertTrue(ref instanceof PsiJavaCodeReferenceElement);
 
       ImportClassFixBase.Result result = new ImportClassFix((PsiJavaCodeReferenceElement)ref).doFix(getEditor(), true, false);
       assertEquals(ImportClassFixBase.Result.POPUP_NOT_SHOWN, result);
       UIUtil.dispatchAllInvocationEvents();
 
-      myEditor.getCaretModel().moveToOffset(offset - 1);
+      getEditor().getCaretModel().moveToOffset(offset - 1);
       result = new ImportClassFix((PsiJavaCodeReferenceElement)ref).doFix(getEditor(), true, false);
       assertEquals(ImportClassFixBase.Result.CLASS_AUTO_IMPORTED, result);
       UIUtil.dispatchAllInvocationEvents();
@@ -258,8 +258,8 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
       assertEquals(2, highlightErrors().size());
       UIUtil.dispatchAllInvocationEvents();
 
-      int offset = myEditor.getCaretModel().getOffset();
-      PsiReference ref = myFile.findReferenceAt(offset);
+      int offset = getEditor().getCaretModel().getOffset();
+      PsiReference ref = getFile().findReferenceAt(offset);
       assertTrue(ref instanceof PsiJavaCodeReferenceElement);
 
       ImportClassFixBase.Result result = new ImportClassFix((PsiJavaCodeReferenceElement)ref).doFix(getEditor(), true, false);
@@ -400,7 +400,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     @Language("JAVA")
     @NonNls final String text = "class S {{ new ArrayList<caret><String> }}";
     configureByText(text);
-    EditorTestUtil.setEditorVisibleSize(myEditor, 1000, 1000); // make sure editor is visible - auto-import works only for visible area
+    EditorTestUtil.setEditorVisibleSize(getEditor(), 1000, 1000); // make sure editor is visible - auto-import works only for visible area
     boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
     try {

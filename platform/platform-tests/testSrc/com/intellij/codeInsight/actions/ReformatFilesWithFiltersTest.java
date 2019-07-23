@@ -77,7 +77,7 @@ public class ReformatFilesWithFiltersTest extends LightPlatformTestCase {
     }
   }
 
-  private static void registerCodeStyleManager(@NotNull CodeStyleManager manager) {
+  private void registerCodeStyleManager(@NotNull CodeStyleManager manager) {
     String componentKey = CodeStyleManager.class.getName();
     MutablePicoContainer container = (MutablePicoContainer)getProject().getPicoContainer();
     container.unregisterComponent(componentKey);

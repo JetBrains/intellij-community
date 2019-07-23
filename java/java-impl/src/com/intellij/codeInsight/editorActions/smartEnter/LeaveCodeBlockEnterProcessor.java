@@ -28,7 +28,6 @@ import com.intellij.psi.PsiReturnStatement;
 import com.intellij.psi.PsiThrowStatement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nullable;
 

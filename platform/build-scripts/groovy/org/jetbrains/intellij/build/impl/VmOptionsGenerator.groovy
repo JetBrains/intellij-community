@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import groovy.transform.CompileStatic
@@ -24,12 +10,18 @@ import org.jetbrains.intellij.build.ProductProperties
  */
 @CompileStatic
 class VmOptionsGenerator {
-  private static final String COMMON_VM_OPTIONS = "-XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 " +  // Android Studio: modified by changes Ie7351d92 and I12955aeb
-                                          "-XX:CICompilerCount=2 " +
-                                          "-Dsun.io.useCanonPrefixCache=false -Djava.net.preferIPv4Stack=true " +
-                                          "-Djdk.http.auth.tunneling.disabledSchemes=\"\" " +
-                                          "-Djna.nosys=true -Djna.boot.library.path= " +  // Android Studio: modified by Change Ie7351d92 / commit 6303bdc
-                                          "-Djdk.attach.allowAttachSelf"
+  static final List<String> COMMON_VM_OPTIONS =
+    [
+      '-XX:+UseConcMarkSweepGC', '-XX:SoftRefLRUPolicyMSPerMB=50',
+      '-ea',
+      '-XX:CICompilerCount=2',
+      '-Dsun.io.useCanonPrefixCache=false', '-Djava.net.preferIPv4Stack=true',
+      '-Djdk.http.auth.tunneling.disabledSchemes=""',
+      '-XX:+HeapDumpOnOutOfMemoryError',
+      '-XX:-OmitStackTraceInFastThrow',
+      '-Djdk.attach.allowAttachSelf',
+      '-Dkotlinx.coroutines.debug=off',
+    ]
 
   static String computeVmOptions(JvmArchitecture arch, boolean isEAP, ProductProperties productProperties) {
     String options = vmOptionsForArch(arch, productProperties) + " " + computeCommonVmOptions(isEAP)
@@ -37,13 +29,10 @@ class VmOptionsGenerator {
   }
 
   static String computeCommonVmOptions(boolean isEAP) {
-    String options = COMMON_VM_OPTIONS
+    String options = COMMON_VM_OPTIONS.join(" ")
     if (isEAP) {
       //must be consistent with com.intellij.openapi.application.ConfigImportHelper.updateVMOptions
-      // Android Studio: modified by Change Ie7351d92 / commit 6303bdc
-      options += " -XX:MaxJavaStackTraceDepth=10000 -XX:+HeapDumpOnOutOfMemoryError -XX:-OmitStackTraceInFastThrow -ea"
-    } else {
-      options += " -da"
+      options += " -XX:MaxJavaStackTraceDepth=10000"
     }
     return options
   }
@@ -51,8 +40,8 @@ class VmOptionsGenerator {
   static String vmOptionsForArch(JvmArchitecture arch, ProductProperties productProperties) {
     switch (arch) {
       // NOTE: when changing, please review usages of ProductProperties.getCustomJvmMemoryOptionsX64 and synchronize if necessary  
-      case JvmArchitecture.x32: return "-server -Xms256m -Xmx768m -XX:ReservedCodeCacheSize=240m"
-      case JvmArchitecture.x64: return productProperties.customJvmMemoryOptionsX64 ?: "-Xms256m -Xmx1280m -XX:ReservedCodeCacheSize=240m"
+      case JvmArchitecture.x32: return "-server -Xms128m -Xmx512m -XX:ReservedCodeCacheSize=240m"
+      case JvmArchitecture.x64: return productProperties.customJvmMemoryOptionsX64 ?: "-Xms128m -Xmx750m -XX:ReservedCodeCacheSize=240m"
     }
     throw new AssertionError(arch)
   }

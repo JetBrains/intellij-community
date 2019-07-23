@@ -39,12 +39,12 @@ import java.util.*;
 
 /**
  * <p>
- *   Collects changes from the Git repository in the given {@link com.intellij.openapi.vcs.changes.VcsDirtyScope}
- *   by calling {@code 'git status --porcelain -z'} on it.
- *   Works only on Git 1.7.0 and later.
+ * Collects changes from the Git repository in the given {@link com.intellij.openapi.vcs.changes.VcsDirtyScope}
+ * by calling {@code 'git status --porcelain -z'} on it.
+ * Works only on Git 1.7.0 and later.
  * </p>
  * <p>
- *   The class is immutable: collect changes and get the instance from where they can be retrieved by {@link #collect}.
+ * The class is immutable: collect changes and get the instance from where they can be retrieved by {@link #collect}.
  * </p>
  *
  * @author Kirill Likhodedov
@@ -166,7 +166,8 @@ class GitChangesCollector {
     Iterator<FilePath> it = paths.iterator();
     while (it.hasNext()) {
       FilePath path = it.next();
-      if (prevPath != null && FileUtil.startsWith(path.getPath(), prevPath.getPath(), true)) { // the file is under previous file, so enough to check the parent
+      // the file is under previous file, so enough to check the parent
+      if (prevPath != null && FileUtil.startsWith(path.getPath(), prevPath.getPath(), true)) {
         it.remove();
       }
       else {
@@ -230,19 +231,39 @@ class GitChangesCollector {
 
       final FilePath filepath = GitContentRevision.createPath(myVcsRoot, path);
 
+      FilePath oldFilepath;
+      if (xStatus == 'R' || xStatus == 'C' ||
+          yStatus == 'R' || yStatus == 'C') {
+        // We treat "Copy" as "Added", but we still have to read the old path not to break the format parsing.
+        //noinspection AssignmentToForLoopParameter
+        pos += 1;  // read the "from" filepath which is separated also by NUL character.
+        oldFilepath = GitContentRevision.createPath(myVcsRoot, split[pos]);
+      }
+      else {
+        oldFilepath = null;
+      }
+
       switch (xStatus) {
         case ' ':
           if (yStatus == 'M') {
             reportModified(filepath, head);
-          } else if (yStatus == 'D') {
+          }
+          else if (yStatus == 'D') {
             reportDeleted(filepath, head);
-          } else if (yStatus == 'A') {
+          }
+          else if (yStatus == 'A' || yStatus == 'C') {
             reportAdded(filepath);
-          } else if (yStatus == 'T') {
+          }
+          else if (yStatus == 'T') {
             reportTypeChanged(filepath, head);
-          } else if (yStatus == 'U') {
+          }
+          else if (yStatus == 'U') {
             reportConflict(filepath, head, Status.MODIFIED, Status.MODIFIED);
-          } else {
+          }
+          else if (yStatus == 'R') {
+            reportRename(filepath, oldFilepath, head);
+          }
+          else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
           break;
@@ -250,22 +271,21 @@ class GitChangesCollector {
         case 'M':
           if (yStatus == ' ' || yStatus == 'M' || yStatus == 'T') {
             reportModified(filepath, head);
-          } else if (yStatus == 'D') {
+          }
+          else if (yStatus == 'D') {
             reportDeleted(filepath, head);
-          } else {
+          }
+          else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
           break;
 
         case 'C':
-          //noinspection AssignmentToForLoopParameter
-          pos += 1;  // read the "from" filepath which is separated also by NUL character.
-          // NB: no "break" here!
-          // we treat "Copy" as "Added", but we still have to read the old path not to break the format parsing.
         case 'A':
           if (yStatus == 'M' || yStatus == ' ' || yStatus == 'T') {
             reportAdded(filepath);
-          } else if (yStatus == 'D') {
+          }
+          else if (yStatus == 'D') {
             // added + deleted => no change (from IDEA point of view).
           }
           else if (yStatus == 'U') { // AU - unmerged, added by us
@@ -282,11 +302,20 @@ class GitChangesCollector {
         case 'D':
           if (yStatus == 'M' || yStatus == ' ' || yStatus == 'T') {
             reportDeleted(filepath, head);
-          } else if (yStatus == 'U') { // DU - unmerged, deleted by us
+          }
+          else if (yStatus == 'U') { // DU - unmerged, deleted by us
             reportConflict(filepath, head, Status.DELETED, Status.MODIFIED);
-          } else if (yStatus == 'D') { // DD - unmerged, both deleted
+          }
+          else if (yStatus == 'D') { // DD - unmerged, both deleted
             reportConflict(filepath, head, Status.DELETED, Status.DELETED);
-          } else {
+          }
+          else if (yStatus == 'C') {
+            reportModified(filepath, head);
+          }
+          else if (yStatus == 'R') {
+            reportRename(filepath, oldFilepath, head);
+          }
+          else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
           break;
@@ -307,15 +336,13 @@ class GitChangesCollector {
           break;
 
         case 'R':
-          //noinspection AssignmentToForLoopParameter
-          pos += 1;  // read the "from" filepath which is separated also by NUL character.
-          FilePath oldFilepath = GitContentRevision.createPath(myVcsRoot, split[pos]);
-
           if (yStatus == 'D') {
             reportDeleted(oldFilepath, head);
-          } else if (yStatus == ' ' || yStatus == 'M' || yStatus == 'T') {
+          }
+          else if (yStatus == ' ' || yStatus == 'M' || yStatus == 'T') {
             reportRename(filepath, oldFilepath, head);
-          } else {
+          }
+          else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
           break;
@@ -323,9 +350,11 @@ class GitChangesCollector {
         case 'T'://TODO
           if (yStatus == ' ' || yStatus == 'M') {
             reportTypeChanged(filepath, head);
-          } else if (yStatus == 'D') {
+          }
+          else if (yStatus == 'D') {
             reportDeleted(filepath, head);
-          } else {
+          }
+          else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
           break;
@@ -339,7 +368,6 @@ class GitChangesCollector {
 
         default:
           throwGFE("Unexpected symbol as xStatus.", handler, output, line, xStatus, yStatus);
-
       }
     }
   }

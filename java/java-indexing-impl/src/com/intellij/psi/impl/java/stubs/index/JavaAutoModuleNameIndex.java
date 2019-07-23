@@ -1,6 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.java.stubs.index;
 
+import com.intellij.ide.highlighter.JavaClassFileType;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.light.LightJavaModule;
@@ -11,6 +13,7 @@ import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Collections;
 
 import static java.util.Collections.singletonMap;
 
@@ -55,6 +58,12 @@ public class JavaAutoModuleNameIndex extends ScalarIndexExtension<String> {
   @Override
   public DataIndexer<String, Void, FileContent> getIndexer() {
     return myIndexer;
+  }
+
+  @NotNull
+  @Override
+  public Collection<FileType> getFileTypesWithSizeLimitNotApplicable() {
+    return Collections.singleton(JavaClassFileType.INSTANCE);
   }
 
   @NotNull

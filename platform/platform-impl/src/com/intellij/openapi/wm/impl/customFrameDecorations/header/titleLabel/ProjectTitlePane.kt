@@ -18,6 +18,11 @@ class ProjectTitlePane : ShrinkingTitlePart {
 
   private val projectTitle = ProjectTitle()
   var parsed = false
+  override var active: Boolean
+    get() = projectTitle.active
+    set(value) {
+      projectTitle.active = value
+    }
 
   private val pane = object : JPanel(MigLayout("ins 0, gap 0, hidemode 3", "[pref][pref]")){
     override fun setForeground(fg: Color?) {
@@ -85,11 +90,6 @@ class ProjectTitlePane : ShrinkingTitlePart {
   override val isClipped: Boolean
     get() = if (parsed) projectTitle.isClipped else unparsed.isClipped
 
-  override fun ignore() {
-    state = TitlePart.State.IGNORED
-    unparsed.ignore()
-    projectTitle.ignore()
-  }
 
   override fun hide() {
     state = TitlePart.State.HIDE
@@ -137,13 +137,18 @@ class ProjectTitlePane : ShrinkingTitlePart {
 }
 
 class ProjectTitle : ShrinkingTitlePart {
-  private val label = BoldTitleLabel()
+  private val label = DefaultPartTitle.TitleLabel()
   private val description = ClippingTitle()
 
   private var projectTextWidth: Int = 0
   private var longTextWidth: Int = 0
 
   private var state = TitlePart.State.LONG
+  override var active: Boolean
+    get() = description.active
+    set(value) {
+      description.active = value
+    }
 
   private val pane = object : JPanel(MigLayout("ins 0, gap 0", "[pref][pref]")){
     override fun setForeground(fg: Color?) {
@@ -198,13 +203,7 @@ class ProjectTitle : ShrinkingTitlePart {
   }
 
   override val isClipped: Boolean
-    get() = !(state == TitlePart.State.LONG || state == TitlePart.State.IGNORED)
-
-  override fun ignore() {
-    state = TitlePart.State.IGNORED
-    description.hide()
-    label.text = ""
-  }
+    get() = state != TitlePart.State.LONG || !description.active
 
   override fun showLong() {
     label.text = project

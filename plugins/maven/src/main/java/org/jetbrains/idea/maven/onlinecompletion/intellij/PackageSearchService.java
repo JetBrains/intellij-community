@@ -14,6 +14,8 @@ import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactIn
 import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.function.Consumer;
 
 public class PackageSearchService {
@@ -110,7 +112,7 @@ public class PackageSearchService {
       return null;
     }
 
-    return url + "?query=" + coord.trim();
+    return url + "?query=" + encode(coord.trim());
   }
 
   private String createUrlSuggestPrefix(@NotNull String groupId, @NotNull String artifactId) {
@@ -118,8 +120,8 @@ public class PackageSearchService {
     if (url == null) {
       return null;
     }
-    String groupParam = StringUtil.isEmpty(groupId) ? "" : "groupId=" + groupId.trim();
-    String artifactParam = StringUtil.isEmpty(artifactId) ? "" : "artifactId=" + artifactId.trim();
+    String groupParam = StringUtil.isEmpty(groupId) ? "" : "groupId=" + encode(groupId.trim());
+    String artifactParam = StringUtil.isEmpty(artifactId) ? "" : "artifactId=" + encode(artifactId.trim());
     return url + "?" + groupParam + "&" + artifactParam;
   }
 
@@ -144,6 +146,16 @@ public class PackageSearchService {
                                                      MavenDependencyCompletionItem.Type.REMOTE);
       }
       consumer.accept(new MavenRepositoryArtifactInfo(items[0].getGroupId(), items[0].getArtifactId(), items));
+    }
+  }
+
+  @NotNull
+  private static String encode(@NotNull String s) {
+    try {
+      return URLEncoder.encode(s.trim(), "UTF-8");
+    }
+    catch (UnsupportedEncodingException e) {
+      throw new RuntimeException(e);
     }
   }
 }

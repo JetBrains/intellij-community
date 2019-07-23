@@ -57,7 +57,7 @@ public abstract class EditorActionTestCase extends LightJavaCodeInsightTestCase 
     configureFromFileText(fileName, textBefore);
     invokeAction();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    assertEquals("Reparse error!", myEditor.getDocument().getText(), myFile.getText());
+    assertEquals("Reparse error!", getEditor().getDocument().getText(), getFile().getText());
     checkResultByText(null, textAfter, ignoreTrailingSpaces);
   }
 

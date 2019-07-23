@@ -29,7 +29,7 @@ class EditorConfigConfigurable : CodeStyleSettingsProvider(), GeneralCodeStyleOp
   private lateinit var myEnabled: JCheckBox
 
   override fun createComponent(): JComponent {
-    return panel(title = EditorConfigBundle.message("config.title")) {
+    return panel {
       row {
         myEnabled = checkBox(EditorConfigBundle.message("config.enable"), comment = EditorConfigBundle.message("config.warning"))
 

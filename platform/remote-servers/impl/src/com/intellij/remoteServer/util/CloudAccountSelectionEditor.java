@@ -26,7 +26,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;

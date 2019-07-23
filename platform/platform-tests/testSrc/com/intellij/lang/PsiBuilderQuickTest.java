@@ -542,7 +542,7 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
     void parse(PsiBuilder builder);
   }
 
-  private static void doTest(@NonNls final String text, final Parser parser, @NonNls final String expected) {
+  private void doTest(@NonNls final String text, final Parser parser, @NonNls final String expected) {
     final PsiBuilder builder = createBuilder(text);
     final PsiBuilder.Marker rootMarker = builder.mark();
     parser.parse(builder);
@@ -613,7 +613,7 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
     });
   }
 
-  private static PsiBuilderImpl createBuilder(CharSequence text) {
+  private PsiBuilderImpl createBuilder(CharSequence text) {
     ParserDefinition parserDefinition = new PlainTextParserDefinition() {
       @NotNull
       @Override
@@ -696,7 +696,7 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
     }
   }
 
-  private static class MyChameleon1Type extends MyLazyElementType {
+  private class MyChameleon1Type extends MyLazyElementType {
     private final IElementType myCHAMELEON_2;
 
     MyChameleon1Type(IElementType CHAMELEON_2) {
@@ -739,7 +739,7 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
     }
   }
 
-  private static class MyChameleon2Type extends MyLazyElementType {
+  private class MyChameleon2Type extends MyLazyElementType {
     MyChameleon2Type() {
       super("CHAMELEON_2");
     }

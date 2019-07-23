@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.troubleshooting.GeneralTroubleInfoCollector;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;

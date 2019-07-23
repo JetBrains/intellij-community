@@ -96,7 +96,7 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
      exceptionPropagationTest(method, collectNonPhysicalMethodsToPropagate(method));
   }
 
-  private static HashSet<PsiMethod> collectNonPhysicalMethodsToPropagate(PsiMethod method) {
+  private HashSet<PsiMethod> collectNonPhysicalMethodsToPropagate(PsiMethod method) {
     final HashSet<PsiMethod> methodsToPropagate = new HashSet<>();
     final PsiReference[] references =
       MethodReferencesSearch.search(method, GlobalSearchScope.allScope(getProject()), true).toArray(PsiReference.EMPTY_ARRAY);
@@ -180,7 +180,7 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
   private PsiMethod getPrimaryMethod() {
     final String filePath = getBasePath() + getTestName(false) + ".java";
     configureByFile(filePath);
-    final PsiElement targetElement = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
+    final PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
     return (PsiMethod) targetElement;
   }
