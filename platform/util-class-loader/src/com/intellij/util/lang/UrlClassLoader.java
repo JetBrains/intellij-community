@@ -101,8 +101,8 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   public static final class Builder {
-    private List<? extends URL> myURLs = ContainerUtilRt.emptyList();
-    private Set<? extends URL> myURLsWithProtectionDomain = new HashSet<URL>();
+    private List<URL> myURLs = ContainerUtilRt.emptyList();
+    private Set<URL> myURLsWithProtectionDomain = new HashSet<URL>();
     private ClassLoader myParent;
     private boolean myLockJars;
     private boolean myUseCache;
@@ -119,7 +119,7 @@ public class UrlClassLoader extends ClassLoader {
     Builder() { }
 
     @NotNull
-    public Builder urls(@NotNull List<? extends URL> urls) { myURLs = urls; return this; }
+    public Builder urls(@NotNull List<URL> urls) { myURLs = urls; return this; }
     @NotNull
     public Builder urls(@NotNull URL... urls) { myURLs = Arrays.asList(urls); return this; }
     @NotNull
@@ -129,7 +129,7 @@ public class UrlClassLoader extends ClassLoader {
      * @param urls List of URLs that are signed by Sun/Oracle and their signatures must be verified.
      */
     @NotNull
-    Builder urlsWithProtectionDomain(@NotNull Set<? extends URL> urls) { myURLsWithProtectionDomain = urls; return this; }
+    Builder urlsWithProtectionDomain(@NotNull Set<URL> urls) { myURLsWithProtectionDomain = urls; return this; }
 
     /**
      * @see #urlsWithProtectionDomain(Set)

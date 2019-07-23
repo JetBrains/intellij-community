@@ -43,7 +43,7 @@ public class ClassPath {
   private final AtomicInteger myLastLoaderProcessed = new AtomicInteger();
   private final Map<URL, Loader> myLoadersMap = new HashMap<URL, Loader>();
   private final ClasspathCache myCache = new ClasspathCache();
-  private final Set<? extends URL> myURLsWithProtectionDomain;
+  private final Set<URL> myURLsWithProtectionDomain;
 
   final boolean myCanLockJars; // true implies that the .jar file will not be modified in the lifetime of the JarLoader
   private final boolean myCanUseCache;
@@ -57,7 +57,7 @@ public class ClassPath {
   private final boolean myLogJarAccess;
   private final LinkedHashSet<String> myJarAccessLog = new LinkedHashSet<String>();
 
-  public ClassPath(List<? extends URL> urls,
+  public ClassPath(List<URL> urls,
                    boolean canLockJars,
                    boolean canUseCache,
                    boolean acceptUnescapedUrls,
@@ -67,7 +67,7 @@ public class ClassPath {
                    @Nullable UrlClassLoader.CachingCondition cachingCondition,
                    boolean logErrorOnMissingJar,
                    boolean lazyClassloadingCaches,
-                   @NotNull Set<? extends URL> urlsWithProtectionDomain,
+                   @NotNull Set<URL> urlsWithProtectionDomain,
                    boolean logJarAccess) {
     myLazyClassloadingCaches = lazyClassloadingCaches;
     myCanLockJars = canLockJars;
@@ -91,7 +91,7 @@ public class ClassPath {
     push(Collections.singletonList(url));
   }
 
-  private void push(List<? extends URL> urls) {
+  private void push(List<URL> urls) {
     if (!urls.isEmpty()) {
       synchronized (myUrls) {
         for (int i = urls.size() - 1; i >= 0; i--) {
