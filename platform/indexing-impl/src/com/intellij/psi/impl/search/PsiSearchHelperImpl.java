@@ -299,7 +299,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       return processFilesConcurrentlyDespiteWriteActions(myManager.getProject(), files, progress, stopped, vfile -> {
         TooManyUsagesStatus.getFrom(progress).pauseProcessingIfTooManyUsages();
         try {
-          processVirtualFile(vfile, localProcessor, stopped);
+          processVirtualFile(vfile, stopped, localProcessor);
         }
         catch (ProcessCanceledException | IndexNotReadyException e) {
           throw e;
@@ -390,8 +390,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   private void processVirtualFile(@NotNull final VirtualFile vfile,
-                                  @NotNull final Processor<? super PsiFile> localProcessor,
-                                  @NotNull final AtomicBoolean stopped) throws ApplicationUtil.CannotRunReadActionException {
+                                  @NotNull final AtomicBoolean stopped, @NotNull final Processor<? super PsiFile> localProcessor) throws ApplicationUtil.CannotRunReadActionException {
     final PsiFile file = ApplicationUtil.tryRunReadAction(() -> vfile.isValid() ? myManager.findFile(vfile) : null);
     if (file != null && !(file instanceof PsiBinaryFile)) {
       ApplicationUtil.tryRunReadAction(() -> {
@@ -1005,8 +1004,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   public static boolean processTextOccurrences(@NotNull final PsiElement element,
                                                @NotNull String stringToSearch,
                                                @NotNull GlobalSearchScope searchScope,
-                                               @NotNull final Processor<? super UsageInfo> processor,
-                                               @NotNull final UsageInfoFactory factory) {
+                                               @NotNull final UsageInfoFactory factory,
+                                               @NotNull final Processor<? super UsageInfo> processor) {
     PsiSearchHelper helper = ReadAction.compute(() -> PsiSearchHelper.getInstance(element.getProject()));
 
     return helper.processUsagesInNonJavaFiles(element, stringToSearch, (psiFile, startOffset, endOffset) -> {
