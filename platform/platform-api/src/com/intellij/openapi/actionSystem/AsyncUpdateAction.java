@@ -21,7 +21,7 @@ import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 
 /**
  * Base class for the actions, which update() method might be potentially slow to be executed synchronously in Swing UI thread.
@@ -31,8 +31,7 @@ import java.util.concurrent.ExecutorService;
 public abstract class AsyncUpdateAction<T> extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.AsyncUpdateAction");
 
-  private static final ExecutorService ourUpdaterService = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
-    "AsyncUpdateAction Pool");
+  private static final Executor ourUpdaterService = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("AsyncUpdateAction Pool");
 
   // Async update
   @Override
@@ -41,7 +40,7 @@ public abstract class AsyncUpdateAction<T> extends AnAction {
     final Presentation originalPresentation = e.getPresentation();
     if (!forceSyncUpdate(e) && isDumbAware()) {
       final Presentation realPresentation = originalPresentation.clone();
-      ourUpdaterService.submit(() -> {
+      ourUpdaterService.execute(() -> {
         performUpdate(realPresentation, data);
         SwingUtilities.invokeLater(() -> {
           if (originalPresentation.isVisible() != realPresentation.isVisible()) {

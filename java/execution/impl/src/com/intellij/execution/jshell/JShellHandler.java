@@ -302,7 +302,7 @@ public class JShellHandler {
   }
 
   public void dropState() {
-    myTaskQueue.submit(() -> sendInput(new Request(nextUid(), Request.Command.DROP_STATE, null)));
+    myTaskQueue.execute(() -> sendInput(new Request(nextUid(), Request.Command.DROP_STATE, null)));
   }
 
   private static String nextUid() {

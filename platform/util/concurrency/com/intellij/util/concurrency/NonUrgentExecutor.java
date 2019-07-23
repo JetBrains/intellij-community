@@ -4,7 +4,6 @@ package com.intellij.util.concurrency;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
 
 /**
  * A common executor for non-urgent tasks, which are expected to be fast most of the time.
@@ -23,13 +22,13 @@ import java.util.concurrent.ExecutorService;
  */
 public class NonUrgentExecutor implements Executor {
   private static final NonUrgentExecutor ourInstance = new NonUrgentExecutor();
-  private final ExecutorService myBackend = AppExecutorUtil.createBoundedApplicationPoolExecutor("NonUrgentExecutor", 2);
+  private final Executor myBackend = AppExecutorUtil.createBoundedApplicationPoolExecutor("NonUrgentExecutor", 2);
 
   private NonUrgentExecutor() {}
 
   @Override
   public void execute(@NotNull Runnable command) {
-    myBackend.submit(command);
+    myBackend.execute(command);
   }
 
   @NotNull

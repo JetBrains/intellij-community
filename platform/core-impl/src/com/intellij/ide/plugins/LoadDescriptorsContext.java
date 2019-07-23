@@ -59,7 +59,7 @@ final class LoadDescriptorsContext implements AutoCloseable {
       return;
     }
 
-    myExecutorService.submit(() -> {
+    myExecutorService.execute(() -> {
       for (Interner<String> interner : myInterners) {
         interner.clear();
       }

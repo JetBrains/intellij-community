@@ -180,7 +180,7 @@ public class JobLauncherImpl extends JobLauncher {
     }
 
     private void submit() {
-      ForkJoinPool.commonPool().submit(myForkJoinTask);
+      ForkJoinPool.commonPool().execute(myForkJoinTask);
     }
     //////////////// Job
 

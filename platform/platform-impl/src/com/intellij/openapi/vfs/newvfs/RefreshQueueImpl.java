@@ -26,7 +26,6 @@ import org.jetbrains.ide.PooledThreadExecutor;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -36,7 +35,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.RefreshQueueImpl");
 
   private final Executor myQueue = AppExecutorUtil.createBoundedApplicationPoolExecutor("RefreshQueue Pool", PooledThreadExecutor.INSTANCE, 1, this);
-  private final ExecutorService myEventProcessingQueue =
+  private final Executor myEventProcessingQueue =
     AppExecutorUtil.createBoundedApplicationPoolExecutor("Async Refresh Event Processing", PooledThreadExecutor.INSTANCE, 1, this);
 
   private final ProgressIndicator myRefreshIndicator = RefreshProgress.create(VfsBundle.message("file.synchronize.progress"));
@@ -98,7 +97,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
   }
 
   private void scheduleAsynchronousPreprocessing(@NotNull RefreshSessionImpl session, @Nullable TransactionId transaction) {
-    myEventProcessingQueue.submit(() -> {
+    myEventProcessingQueue.execute(() -> {
       startRefreshActivity();
       try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Processing VFS events. " + session)) {
         processAndFireEvents(session, transaction);

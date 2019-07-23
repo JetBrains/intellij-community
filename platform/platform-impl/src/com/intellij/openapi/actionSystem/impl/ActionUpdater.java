@@ -37,13 +37,13 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.PaintEvent;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 class ActionUpdater {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.impl.ActionUpdater");
-  private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater", 2);
+  private static final Executor ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater", 2);
 
   private final boolean myModalContext;
   private final PresentationFactory myFactory;
@@ -168,7 +168,7 @@ class ActionUpdater {
 
     cancelAndRestartOnUserActivity(promise, indicator);
 
-    ourExecutor.submit(() -> {
+    ourExecutor.execute(() -> {
       while (promise.getState() == Promise.State.PENDING) {
         try {
           boolean success = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {

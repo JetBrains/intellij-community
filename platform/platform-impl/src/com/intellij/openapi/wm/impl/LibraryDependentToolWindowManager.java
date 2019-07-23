@@ -21,11 +21,11 @@ import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 
 public class LibraryDependentToolWindowManager implements StartupActivity {
 
-  private static final ExecutorService ourExecutor =
+  private static final Executor ourExecutor =
     SequentialTaskExecutor.createSequentialApplicationPoolExecutor("LibraryDependentToolWindowManager");
 
   @Override
@@ -52,7 +52,7 @@ public class LibraryDependentToolWindowManager implements StartupActivity {
   private static void checkToolWindowStatuses(@NotNull final Project project) {
     final ModalityState currentModalityState = ModalityState.current();
 
-    ourExecutor.submit(() -> doCheckToolWindowStatuses(project, currentModalityState));
+    ourExecutor.execute(() -> doCheckToolWindowStatuses(project, currentModalityState));
   }
 
   private static void doCheckToolWindowStatuses(@NotNull final Project project,

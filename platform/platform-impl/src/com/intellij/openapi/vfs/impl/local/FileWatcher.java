@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.local;
 
-import com.google.common.util.concurrent.MoreExecutors;
+import com.intellij.concurrency.SameThreadExecutorService;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -69,7 +69,7 @@ public class FileWatcher {
 
   private static ExecutorService executor() {
     boolean async = Registry.is("vfs.filewatcher.works.in.async.way");
-    return async ? AppExecutorUtil.createBoundedApplicationPoolExecutor("File Watcher", 1) : MoreExecutors.newDirectExecutorService();
+    return async ? AppExecutorUtil.createBoundedApplicationPoolExecutor("File Watcher", 1) : new SameThreadExecutorService();
   }
 
   private final ManagingFS myManagingFS;
@@ -87,7 +87,7 @@ public class FileWatcher {
     myNotificationSink = new MyFileWatcherNotificationSink();
     myWatchers = PluggableFileWatcher.EP_NAME.getExtensions();
 
-    myFileWatcherExecutor.submit(() -> {
+    myFileWatcherExecutor.execute(() -> {
       try {
         for (PluggableFileWatcher watcher : myWatchers) {
           watcher.initialize(myManagingFS, myNotificationSink);

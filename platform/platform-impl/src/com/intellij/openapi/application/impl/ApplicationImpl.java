@@ -396,7 +396,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         // wanted for UI, but should not affect start-up time,
         // since MigLayout is not important for start-up UI, it is ok execute it in a pooled thread
         // (call itself is cheap but leads to loading classes)
-        AppExecutorUtil.getAppExecutorService().submit(() -> {
+        executeOnPooledThread(() -> {
           //IDEA-170295
           PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE);
         });
@@ -421,7 +421,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         ProgressManager.getInstance().runProcess(() -> createComponents(indicator), indicator);
       }
 
-      ourThreadExecutorsService.submit(() -> createLocatorFile());
+      executeOnPooledThread(() -> createLocatorFile());
 
       Activity activity = StartUpMeasurer.start(Phases.APP_INITIALIZED_CALLBACK);
       for (ApplicationInitializedListener listener : ((ExtensionsAreaImpl)Extensions.getRootArea()).<ApplicationInitializedListener>getExtensionPoint("com.intellij.applicationInitializedListener")) {
@@ -485,7 +485,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       LOG.info(writeActionStatistics());
       LOG.info(ActionUtil.ActionPauses.STAT.statistics());
       //noinspection TestOnlyProblems
-      LOG.info(((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).statistics()
+      LOG.info(service.statistics()
                + "; ProcessIOExecutorService threads: "+((ProcessIOExecutorService)ProcessIOExecutorService.INSTANCE).getThreadCounter()
       );
     }

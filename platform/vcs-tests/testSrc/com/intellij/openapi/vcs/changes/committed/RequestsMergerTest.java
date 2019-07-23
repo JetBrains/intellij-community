@@ -155,7 +155,7 @@ public class RequestsMergerTest extends TestCase {
 
     @Override
     public void consume(Runnable runnable) {
-      myExecutor.submit(runnable);
+      myExecutor.execute(runnable);
     }
 
     public void dispose() throws InterruptedException {

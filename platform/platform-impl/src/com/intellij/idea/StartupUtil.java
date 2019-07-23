@@ -202,7 +202,7 @@ public class StartupUtil {
 
     if (isParallelExecution) {
       // no need to wait
-      executorService.submit(() -> loadSystemLibraries(log));
+      executorService.execute(() -> loadSystemLibraries(log));
 
       Activity activity = StartUpMeasurer.start(Phases.WAIT_TASKS);
       for (Future<?> future : futures) {
@@ -550,7 +550,7 @@ public class StartupUtil {
 
   private static void startLogging(@NotNull Logger log) {
     log.info("------------------------------------------------------ IDE STARTED ------------------------------------------------------");
-    AppExecutorUtil.getAppExecutorService().submit(() -> startLoggingAsync(log));
+    AppExecutorUtil.getAppExecutorService().execute(() -> startLoggingAsync(log));
   }
 
   private static void startLoggingAsync(@NotNull Logger log) {

@@ -13,7 +13,7 @@ import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 
 class MacEventReader {
   private static final int MAX_MESSAGE_LENGTH = 100;
@@ -24,8 +24,6 @@ class MacEventReader {
       process(notification);
     }
   };
-
-  private static ExecutorService ourService = null;
 
   MacEventReader() {
     if (SystemInfo.isMac) {
@@ -55,7 +53,7 @@ class MacEventReader {
 
     if (!message.isEmpty()) {
       final String copy = message;
-      getService().submit(() -> {
+      ExecutorHolder.ourService.execute(() -> {
         try {
           Runtime.getRuntime().exec("say " + copy).waitFor();
         }
@@ -66,11 +64,8 @@ class MacEventReader {
     }
   }
 
-  private static synchronized ExecutorService getService() {
-    if (ourService == null) {
-      ourService = ConcurrencyUtil.newSingleThreadExecutor("Mac event reader");
-    }
-    return ourService;
+  private static class ExecutorHolder  {
+    private static final Executor ourService = ConcurrencyUtil.newSingleThreadExecutor("Mac event reader");
   }
 
   public static class ProjectTracker {

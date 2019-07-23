@@ -75,7 +75,7 @@ import java.lang.reflect.Field;
 import java.net.URL;
 import java.nio.channels.FileChannel;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -486,12 +486,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     LOG.debug(message + " - "+Thread.currentThread());
   }
 
-  private final ExecutorService reDetectExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("FileTypeManager Redetect Pool", PooledThreadExecutor.INSTANCE, 1, this);
+  private final Executor
+    reDetectExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("FileTypeManager Redetect Pool", PooledThreadExecutor.INSTANCE, 1, this);
   private final HashSetQueue<VirtualFile> filesToRedetect = new HashSetQueue<>();
 
   private static final int CHUNK_SIZE = 10;
   private void awakeReDetectExecutor() {
-    reDetectExecutor.submit(() -> {
+    reDetectExecutor.execute(() -> {
       List<VirtualFile> files = new ArrayList<>(CHUNK_SIZE);
       synchronized (filesToRedetect) {
         for (int i = 0; i < CHUNK_SIZE; i++) {
