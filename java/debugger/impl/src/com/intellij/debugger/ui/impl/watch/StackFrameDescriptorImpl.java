@@ -23,6 +23,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * Nodes of this type cannot be updated, because StackFrame objects become invalid as soon as VM has been resumed
@@ -46,14 +48,8 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     try {
       myUiIndex = frame.getFrameIndex();
       myLocation = frame.location();
-      try {
-        myThisObject = frame.thisObject();
-      } catch (EvaluateException e) {
-        // catch internal exceptions here
-        if (!(e.getCause() instanceof InternalException)) {
-          throw e;
-        }
-        LOG.info(e);
+      if (!getValueMarkers().isEmpty()) {
+        getThisObject(); // init this object for markup
       }
       myMethodOccurrence = tracker.getMethodOccurrence(myUiIndex, DebuggerUtilsEx.getMethod(myLocation));
       myIsSynthetic = DebuggerUtils.isSynthetic(myMethodOccurrence.getMethod());
@@ -101,19 +97,25 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
 
   @Nullable
   public ValueMarkup getValueMarkup() {
-    if (myThisObject != null) {
-      DebugProcess process = myFrame.getVirtualMachine().getDebugProcess();
-      if (process instanceof DebugProcessImpl) {
-        XDebugSession session = ((DebugProcessImpl)process).getSession().getXDebugSession();
-        if (session instanceof XDebugSessionImpl) {
-          XValueMarkers<?, ?> markers = ((XDebugSessionImpl)session).getValueMarkers();
-          if (markers != null) {
-            return markers.getAllMarkers().get(myThisObject);
-          }
+    Map<?, ValueMarkup> markers = getValueMarkers();
+    if (!markers.isEmpty() && myThisObject != null) {
+      return markers.get(myThisObject);
+    }
+    return null;
+  }
+
+  private Map<?, ValueMarkup> getValueMarkers() {
+    DebugProcess process = myFrame.getVirtualMachine().getDebugProcess();
+    if (process instanceof DebugProcessImpl) {
+      XDebugSession session = ((DebugProcessImpl)process).getSession().getXDebugSession();
+      if (session instanceof XDebugSessionImpl) {
+        XValueMarkers<?, ?> markers = ((XDebugSessionImpl)session).getValueMarkers();
+        if (markers != null) {
+          return markers.getAllMarkers();
         }
       }
     }
-    return null;
+    return Collections.emptyMap();
   }
 
   @Override
@@ -214,6 +216,13 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
 
   @Nullable
   public ObjectReference getThisObject() {
+    if (myThisObject == null) {
+      try {
+        myThisObject = myFrame.thisObject();
+      } catch (EvaluateException e) {
+        LOG.info(e);
+      }
+    }
     return myThisObject;
   }
 }
