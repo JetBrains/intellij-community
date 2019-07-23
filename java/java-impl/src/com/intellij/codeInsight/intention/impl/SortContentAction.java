@@ -804,7 +804,11 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       if (call == null) return;
       String methodName = call.getMethodExpression().getText();
       if (methodName == null) return;
-      StringBuilder sb = new StringBuilder(methodName);
+      StringBuilder sb = new StringBuilder();
+      for (PsiElement child : call.getChildren()) {
+        if (child == expressionList) break;
+        sb.append(child.getText());
+      }
       PsiExpression firstVararg = context.myVarargArguments.get(0);
       PsiElement child = expressionList.getFirstChild();
       while(child != firstVararg) {
