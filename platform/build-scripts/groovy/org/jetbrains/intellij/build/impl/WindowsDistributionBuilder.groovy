@@ -93,15 +93,8 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
           jreDirectoryPaths = [jreDirectoryPath64, jreDirectoryPath]
         }
       }
-    // Android Studio: we build separate artifacts for win32 and win64.
       if (customizer.buildZipArchive) {
-      // Android Studio: added by Change Idc07b110 / commit f20681e
-      buildWinZip(buildContext.bundledJreManager.extractWinJre(JvmArchitecture.x64),
-                  buildContext.productProperties.buildCrossPlatformDistribution ? ".win" : "", winDistPath, [])
-      buildWinZip(buildContext.bundledJreManager.extractWinJre(JvmArchitecture.x32),
-                  buildContext.productProperties.buildCrossPlatformDistribution ? ".win32" : "", winDistPath, [])
-/* Android Studio: removed by Change Idc07b110 / commit f20681e
-         buildWinZip(jreDirectoryPaths.findAll { it != null }, "${jreSuffix}.win", winDistPath, [])
+        buildWinZip(jreDirectoryPath64, "${jreSuffix}.win", winDistPath, excludeList)  // Android Studio: modified by Change I22bfabed
       }
       if (arch != null && customizer.buildZipWithBundledOracleJre && arch != JvmArchitecture.x32) {
         String oracleJrePath = buildContext.bundledJreManager.extractSecondBundledOracleJreForWin(arch)
@@ -112,12 +105,13 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
           buildContext.messages.warning("Skipping building Windows zip archive with bundled Oracle JRE because JRE archive is missing")
         }
       }
-Android Studio: removed by Change Idc07b110 / commit f20681e */
     }
 
     def jreDirectoryPath = buildContext.bundledJreManager.extractJre("windows")
     if (customizer.buildZipArchive) {
-      buildWinZip([jreDirectoryPath], ".win", winDistPath, excludeList)
+      // Android Studio: we build separate artifacts for win32 and win64.
+      buildWinZip(buildContext.bundledJreManager.extractJre("win64"), ".win", winDistPath, [])
+      buildWinZip(buildContext.bundledJreManager.extractJre("win32"), ".win32", winDistPath, [])
     }
 
     /* Android Studio: this is handled by ADRT?

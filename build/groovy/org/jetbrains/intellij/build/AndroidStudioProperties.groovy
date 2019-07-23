@@ -387,10 +387,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         "https://www.jetbrains.com/idea/uninstall/?edition=IC-${applicationInfo.majorVersion}.${applicationInfo.minorVersion}"
       }
 
-// TODO:
-      @Override
-      String getBaseDownloadUrlForJre() { "https://download.jetbrains.com/idea" }
-
       @Override
       @CompileDynamic
       void copyAdditionalFiles(BuildContext context, String targetDirectory) {

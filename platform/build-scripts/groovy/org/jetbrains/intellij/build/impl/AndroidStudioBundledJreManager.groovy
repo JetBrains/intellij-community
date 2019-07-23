@@ -29,37 +29,26 @@ class AndroidStudioBundledJreManager extends BundledJreManager {
   }
 
   @Override
-  String extractLinuxJre() {
-    return "$baseDirectoryForJdk/linux"
+  String extractSecondBundledJreForLinux() {
+    return extractSecondBundledJre("linux")
   }
 
   @Override
-  String getSecondJreBuild() {
-    return "$baseDirectoryForJdk/jdk11"
+  String extractJre(String osName) {
+    return "$baseDirectoryForJdk/$osName"
   }
 
   @Override
-  String getSecondJreVersion() {
-    return 11
+  String extractSecondBundledJreForWin(JvmArchitecture arch) {
+    return extractSecondBundledJre(arch == JvmArchitecture.x32 ? "win32" : "win64")
+  }
+
+  private String extractSecondBundledJre(String osName) {
+    return "$baseDirectoryForJdk/jdk11/$osName"
   }
 
   @Override
-  String extractSecondJre(String osName, String secondJreBuild) {
-    return secondJreBuild + "/" + osName
-  }
-
-  @Override
-  String extractWinJre(JvmArchitecture arch) {
-    return  "$baseDirectoryForJdk/" + (arch == JvmArchitecture.x32 ? "win32" : "win64")
-  }
-
-  @Override
-  String findMacJreArchive() {
-    return "$baseDirectoryForJdk/mac"
-  }
-
-  @Override
-  String jreSuffix() {
+  String secondJreSuffix() {
     isBundledJreModular() ? "-jbr${buildContext.options.bundledJreVersion}" : ""
   }
 }

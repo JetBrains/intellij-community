@@ -112,7 +112,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   @Override
   void buildArtifacts(String osSpecificDistPath) {
     buildContext.executeStep("Build macOS artifacts", BuildOptions.MAC_ARTIFACTS_STEP) {
-      def macZipPath = buildMacZip(osSpecificDistPath)
+      def macZipPath = buildMacZip(buildContext.bundledJreManager.extractJre("mac"), osSpecificDistPath)  // Android Studio: modified by Change I22bfabed
       if (buildContext.proprietaryBuildTools.macHostProperties == null) {
         buildContext.messages.info("A macOS build agent isn't configured - .dmg artifact won't be produced")
         buildContext.notifyArtifactBuilt(macZipPath)
@@ -123,6 +123,8 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
           // With second JRE
           def jreManager = buildContext.bundledJreManager
           if (jreManager.doBundleSecondJre()) {
+            buildMacZip(buildContext.bundledJreManager.extractSecondBundledJre("mac"), osSpecificDistPath)  // Android Studio: added by Change I22bfabed
+/* Android Studio: removed by Change I22bfabed
             MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath,
                                           jreManager.findSecondBundledJreArchiveForMac(), jreManager.isSecondBundledJreModular(),
                                           jreManager.secondJreSuffix(),
@@ -133,6 +135,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
           if (jreArchive.file) {
             MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath,
                                           jreArchive.absolutePath, jreManager.isBundledJreModular(), "", notarize)
+Android Studio: removed by Change I22bfabed */
           }
           else {
             buildContext.messages.info("Skipping building macOS distribution with bundled JRE because JRE archive is missing")
