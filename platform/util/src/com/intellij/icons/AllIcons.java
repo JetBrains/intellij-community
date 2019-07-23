@@ -128,6 +128,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Resume = load("/actions/resume.svg");
     /** 16x16 */ public static final Icon Rollback = load("/actions/rollback.svg");
     /** 16x16 */ public static final Icon Run_anything = load("/actions/run_anything.svg");
+    /** 16x16 */ public static final Icon RunAll = load("/actions/runAll.svg");
     /** 16x16 */ public static final Icon RunToCursor = load("/actions/runToCursor.svg");
     /** 16x16 */ public static final Icon Scratch = load("/actions/scratch.svg");
     /** 16x16 */ public static final Icon Search = load("/actions/search.svg");
