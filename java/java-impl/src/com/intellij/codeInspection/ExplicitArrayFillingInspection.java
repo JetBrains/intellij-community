@@ -13,6 +13,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.*;
@@ -54,8 +55,7 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
         if (!ExpressionUtils.isReferenceTo(index, loop.getCounter())) return;
         PsiExpression rValue = assignment.getRExpression();
         if (rValue == null) return;
-        if (!VariableAccessUtils.collectUsedVariables(rValue).contains(loop.getCounter()) &&
-            !SideEffectChecker.mayHaveSideEffects(rValue)) {
+        if (!isChangedInLoop(loop, rValue)) {
           Object constValue = ExpressionUtils.computeConstantExpression(rValue);
           if (constValue != null && constValue.equals(PsiTypesUtil.getDefaultValue(assignment.getType()))) {
             holder.registerProblem(statement, getRange(statement, ProblemHighlightType.WARNING),
@@ -70,6 +70,12 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
         if (!StreamApiUtil.isSupportedStreamElement(container.getElementType())) return;
         if (!LambdaGenerationUtil.canBeUncheckedLambda(rValue, Predicate.isEqual(loop.getCounter()))) return;
         registerProblem(statement, true);
+      }
+
+      private boolean isChangedInLoop(@NotNull CountingLoop loop, @NotNull PsiExpression rValue) {
+        return VariableAccessUtils.collectUsedVariables(rValue).contains(loop.getCounter()) ||
+               SideEffectChecker.mayHaveSideEffects(rValue) ||
+               PsiTreeUtil.findChildOfType(rValue, PsiNewExpression.class, false) != null;
       }
 
       private void registerProblem(@NotNull PsiForStatement statement, boolean isSetAll) {
