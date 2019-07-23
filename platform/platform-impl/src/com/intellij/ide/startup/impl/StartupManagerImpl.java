@@ -309,15 +309,15 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
 
       Application app = ApplicationManager.getApplication();
       if (!app.isCommandLine()) {
-        final long sessionId = VirtualFileManager.getInstance().asyncRefresh(null);
-        final MessageBusConnection connection = app.getMessageBus().connect();
+        long sessionId = VirtualFileManager.getInstance().asyncRefresh(null);
+        MessageBusConnection connection = app.getMessageBus().connect();
         connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
           @Override
           public void afterProjectClosed(@NotNull Project project) {
-            if (project != myProject) return;
-
-            RefreshQueue.getInstance().cancelSession(sessionId);
-            connection.disconnect();
+            if (project == myProject) {
+              RefreshQueue.getInstance().cancelSession(sessionId);
+              connection.disconnect();
+            }
           }
         });
       }
@@ -457,13 +457,12 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
   }
 
   public void scheduleBackgroundPostStartupActivities() {
-    myBackgroundPostStartupScheduledFuture = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
-      BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, () -> {
+    myBackgroundPostStartupScheduledFuture = AppExecutorUtil.getAppScheduledExecutorService().schedule(
+      () -> BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, () -> {
         for (StartupActivity activity : StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.getIterable()) {
           activity.runActivity(myProject);
         }
-      });
-    }, 5, TimeUnit.SECONDS);
+      }), 5, TimeUnit.SECONDS);
   }
 
   @Override
