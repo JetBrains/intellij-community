@@ -40,6 +40,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.regexp.DefaultRegExpPropertiesProvider;
 import org.intellij.lang.regexp.RegExpLanguageHost;
+import org.intellij.lang.regexp.UnicodeCharacterNames;
 import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -421,5 +422,15 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   @Override
   public String[][] getKnownCharacterClasses() {
     return myPropertiesProvider.getKnownCharacterClasses();
+  }
+
+  @Override
+  public boolean supportsNamedCharacters(RegExpNamedCharacter namedCharacter) {
+    return LanguageLevel.forElement(this).isAtLeast(LanguageLevel.PYTHON38);
+  }
+
+  @Override
+  public boolean isValidNamedCharacter(RegExpNamedCharacter namedCharacter) {
+    return UnicodeCharacterNames.getCodePoint(namedCharacter.getName()) >= 0;
   }
 }
