@@ -454,6 +454,18 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       LOG.error(e);
       return null;
     }
+
+    if (!fileType.getName().equals(fileTypeBean.name)) {
+      LOG.error("Incorrect name specified in <fileType>, should be " + fileType.getName() + ", actual " + fileTypeBean.name);
+    }
+    if (fileType instanceof LanguageFileType) {
+      final LanguageFileType languageFileType = (LanguageFileType)fileType;
+      String expectedLanguage = languageFileType.isSecondary() ? null : languageFileType.getLanguage().getID();
+      if (!Comparing.equal(fileTypeBean.language, expectedLanguage)) {
+        LOG.error("Incorrect language specified in <fileType> for " + fileType.getName() + ", should be " + expectedLanguage + ", actual " + fileTypeBean.language);
+      }
+    }
+
     final StandardFileType standardFileType = new StandardFileType(fileType, fileTypeBean.getMatchers());
     myStandardFileTypes.put(fileTypeBean.name, standardFileType);
     registerFileTypeWithoutNotification(standardFileType.fileType, standardFileType.matchers, true);
