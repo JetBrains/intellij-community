@@ -48,8 +48,9 @@ public class AddAntBuildFile extends AnAction {
 
     for (VirtualFile file : files) {
       try {
-        antConfiguration.addBuildFile(file);
-        filesAdded++;
+        if (antConfiguration.addBuildFile(file) != null) {
+          filesAdded++;
+        }
       }
       catch (AntNoFileException ex) {
         String message = ex.getMessage();

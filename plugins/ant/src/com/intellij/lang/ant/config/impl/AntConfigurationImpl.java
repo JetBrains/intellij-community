@@ -24,10 +24,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileListener;
@@ -375,10 +372,11 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     return myBuildFiles;
   }
 
+  @Nullable
   @Override
   public AntBuildFile addBuildFile(final VirtualFile file) throws AntNoFileException {
-    final AntBuildFile[] result = new AntBuildFile[]{null};
-    final AntNoFileException[] ex = new AntNoFileException[]{null};
+    final Ref<AntBuildFile> result = Ref.create(null);
+    final Ref<AntNoFileException> ex = Ref.create(null);
     final String title = AntBundle.message("register.ant.build.progress", file.getPresentableUrl());
     ProgressManager.getInstance().run(new Task.Modal(getProject(), title, false) {
       @NotNull
@@ -394,17 +392,26 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
         try {
           indicator.setText(title);
           incModificationCount();
-          ApplicationManager.getApplication().runReadAction(() -> {
+          boolean added = ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
             try {
-              result[0] = addBuildFileImpl(file);
+              for (AntBuildFile buildFile : getBuildFiles()) {
+                final VirtualFile vFile = buildFile.getVirtualFile();
+                if (vFile != null && vFile.equals(file)) {
+                  result.set(buildFile);
+                  return Boolean.FALSE;
+                }
+              }
+              result.set(addBuildFileImpl(file));
               updateRegisteredActions();
+              return Boolean.TRUE;
             }
             catch (AntNoFileException e) {
-              ex[0] = e;
+              ex.set(e);
             }
+            return Boolean.FALSE;
           });
-          if (result[0] != null) {
-            ApplicationManager.getApplication().invokeLater(() -> myEventDispatcher.getMulticaster().buildFileAdded(result[0]));
+          if (added) {
+            ApplicationManager.getApplication().invokeLater(() -> myEventDispatcher.getMulticaster().buildFileAdded(result.get()));
           }
         }
         finally {
@@ -412,10 +419,10 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
         }
       }
     });
-    if (ex[0] != null) {
-      throw ex[0];
+    if (ex.get() != null) {
+      throw ex.get();
     }
-    return result[0];
+    return result.get();
   }
 
   @Override
