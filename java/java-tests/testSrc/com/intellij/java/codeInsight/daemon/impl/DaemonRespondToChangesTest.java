@@ -179,7 +179,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   private static void typeInAlienEditor(Editor alienEditor, char c) {
-    TypedAction action = EditorActionManager.getInstance().getTypedAction();
+    EditorActionManager.getInstance();
+    TypedAction action = TypedAction.getInstance();
     DataContext dataContext = ((EditorEx)alienEditor).getDataContext();
 
     action.actionPerformed(alienEditor, c, dataContext);

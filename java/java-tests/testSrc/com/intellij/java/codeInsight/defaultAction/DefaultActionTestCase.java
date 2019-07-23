@@ -24,7 +24,7 @@ import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 public abstract class DefaultActionTestCase extends LightJavaCodeInsightTestCase {
   protected void performAction(char c) {
     EditorActionManager actionManager = EditorActionManager.getInstance();
-    TypedAction action = actionManager.getTypedAction();
+    TypedAction action = TypedAction.getInstance();
     action.actionPerformed(getEditor(), c, DataManager.getInstance().getDataContext());
   }
 }

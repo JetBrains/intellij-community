@@ -75,7 +75,7 @@ public class EditorTestUtil {
       executeAction(editor, IdeActions.ACTION_EDITOR_ENTER);
     }
     else {
-      TypedAction action = actionManager.getTypedAction();
+      TypedAction action = TypedAction.getInstance();
       action.actionPerformed(editor, c, DataManager.getInstance().getDataContext(editor.getContentComponent()));
     }
   }

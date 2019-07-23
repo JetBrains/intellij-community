@@ -10,6 +10,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension;
@@ -405,7 +406,8 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
   }
 
   private void typeInChar(Editor e, char c) {
-    getActionManager().getTypedAction().actionPerformed(e, c, createDataContextFor(e));
+    getActionManager();
+    TypedAction.getInstance().actionPerformed(e, c, createDataContextFor(e));
   }
 
   private DataContext createDataContextFor(final Editor editor) {

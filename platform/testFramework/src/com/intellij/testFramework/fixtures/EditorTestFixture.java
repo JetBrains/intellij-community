@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -110,7 +111,7 @@ public class EditorTestFixture {
       }
 
       ActionManagerEx.getInstanceEx().fireBeforeEditorTyping(c, getEditorDataContext());
-      actionManager.getTypedAction().actionPerformed(myEditor, c, getEditorDataContext());
+      TypedAction.getInstance().actionPerformed(myEditor, c, getEditorDataContext());
     });
 
   }

@@ -1291,7 +1291,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   void processKeyTypedImmediately(char c, Graphics graphics, DataContext dataContext) {
     EditorActionPlan plan = new EditorActionPlan(this);
-    EditorActionManager.getInstance().getTypedAction().beforeActionPerformed(this, c, dataContext, plan);
+    EditorActionManager.getInstance();
+    TypedAction.getInstance().beforeActionPerformed(this, c, dataContext, plan);
     if (myImmediatePainter.paint(graphics, plan)) {
       measureTypingLatency();
       myLastTypedActionTimestamp = -1;
@@ -1299,7 +1300,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   void processKeyTypedNormally(char c, DataContext dataContext) {
-    EditorActionManager.getInstance().getTypedAction().actionPerformed(this, c, dataContext);
+    EditorActionManager.getInstance();
+    TypedAction.getInstance().actionPerformed(this, c, dataContext);
   }
 
   private void fireFocusLost(@NotNull FocusEvent event) {

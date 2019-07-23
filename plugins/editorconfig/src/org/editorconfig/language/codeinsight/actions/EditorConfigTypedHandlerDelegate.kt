@@ -6,8 +6,8 @@ import com.intellij.codeInsight.editorActions.TypedHandlerDelegate
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
-import com.intellij.openapi.editor.actionSystem.EditorActionManager
-import com.intellij.openapi.editor.impl.EditorActionManagerImpl
+import com.intellij.openapi.editor.actionSystem.TypedAction
+import com.intellij.openapi.editor.impl.TypedActionImpl
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -40,10 +40,10 @@ class EditorConfigTypedHandlerDelegate : TypedHandlerDelegate() {
     val newOffset = offset + 1
 
     val document = editor.document
-    val manager = EditorActionManager.getInstance() as EditorActionManagerImpl
+    val typedAction = TypedAction.getInstance() as TypedActionImpl
 
     runWriteAction {
-      manager.defaultRawTypedHandler.beginUndoablePostProcessing()
+      typedAction.defaultRawTypedHandler.beginUndoablePostProcessing()
       document.insertString(lBraceIndex, "{")
       document.insertString(rBraceIndex, "}")
       caretModel.moveToOffset(newOffset)

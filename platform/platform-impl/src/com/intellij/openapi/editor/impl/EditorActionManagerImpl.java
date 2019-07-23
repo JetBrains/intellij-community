@@ -11,15 +11,11 @@ import com.intellij.injected.editor.DocumentWindow;
 import org.jetbrains.annotations.NotNull;
 
 public class EditorActionManagerImpl extends EditorActionManager {
-  private final TypedAction myTypedAction = new TypedAction();
-  private final DefaultRawTypedHandler myDefaultRawTypedHandler;
   private ReadonlyFragmentModificationHandler myReadonlyFragmentsHandler = new DefaultReadOnlyFragmentModificationHandler();
   private final ActionManager myActionManager;
 
   public EditorActionManagerImpl(ActionManager actionManager) {
     myActionManager = actionManager;
-    myDefaultRawTypedHandler = new DefaultRawTypedHandler(myTypedAction);
-    myTypedAction.setupRawHandler(myDefaultRawTypedHandler);
   }
 
   @Override
@@ -33,10 +29,9 @@ public class EditorActionManagerImpl extends EditorActionManager {
     return action.setupHandler(handler);
   }
 
-  @Override
   @NotNull
   public TypedAction getTypedAction() {
-    return myTypedAction;
+    return TypedAction.getInstance();
   }
 
   @Override
@@ -74,10 +69,6 @@ public class EditorActionManagerImpl extends EditorActionManager {
       Messages.showErrorDialog(EditorBundle.message("guarded.block.modification.attempt.error.message"),
                                EditorBundle.message("guarded.block.modification.attempt.error.title"));
     }
-  }
-
-  public DefaultRawTypedHandler getDefaultRawTypedHandler() {
-    return myDefaultRawTypedHandler;
   }
 }
 

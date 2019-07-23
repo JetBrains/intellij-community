@@ -27,7 +27,7 @@ import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.actionSystem.EditorActionManager
+import com.intellij.openapi.editor.actionSystem.TypedAction
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
@@ -767,7 +767,7 @@ public interface Test {
 
     Editor another = null
     Runnable wca = { WriteCommandAction.writeCommandAction(getProject()).run ({
-        EditorActionManager.instance.getTypedAction().handler.execute(another, (char) 'x', DataManager.instance.dataContext)
+      TypedAction.instance.handler.execute(another, (char) 'x', DataManager.instance.dataContext)
     } as ThrowableRunnable) }
 
     try {

@@ -152,14 +152,14 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     console.clear();
     EditorActionManager actionManager = EditorActionManager.getInstance();
     DataContext dataContext = DataManager.getInstance().getDataContext(console.getComponent());
-    TypedAction action = actionManager.getTypedAction();
+    TypedAction action = TypedAction.getInstance();
     action.actionPerformed(console.getEditor(), 'h', dataContext);
     assertEquals(1, console.getContentSize());
   }
 
   public void testTypingAfterMultipleCR() {
     final EditorActionManager actionManager = EditorActionManager.getInstance();
-    final TypedAction typedAction = actionManager.getTypedAction();
+    final TypedAction typedAction = TypedAction.getInstance();
     final TestDataProvider dataContext = new TestDataProvider(getProject());
 
     final ConsoleViewImpl console = myConsole;
@@ -352,7 +352,8 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   }
 
   private static void typeIn(Editor editor, char c) {
-    TypedAction action = EditorActionManager.getInstance().getTypedAction();
+    EditorActionManager.getInstance();
+    TypedAction action = TypedAction.getInstance();
     DataContext dataContext = ((EditorEx)editor).getDataContext();
 
     action.actionPerformed(editor, c, dataContext);
