@@ -13,8 +13,8 @@ iml_module(
         "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/plugins/stats-collector/features:intellij.statsCollector.features[module]",
         "//tools/idea/.idea/libraries:JUnit4[test]",
-        "//tools/idea/.idea/libraries:completion-ranking-java",
-        "//tools/idea/.idea/libraries:completion-ranking-python",
-        "//tools/idea/.idea/libraries:completion-ranking-kotlin",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.0.7:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.0.2:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/completion/completion-ranking-python/0.0.4:jar",
     ],
 )

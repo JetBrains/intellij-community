@@ -15,6 +15,9 @@ iml_module(
         "//tools/idea/.idea/libraries:Groovy",
         "//tools/idea/.idea/libraries:gson",
         "//tools/idea/platform/object-serializer:intellij.platform.objectSerializer.annotations[module]",
+        "//tools/idea/.idea/libraries:Trove4j",
+        "//tools/idea/.idea/libraries:ion",
+        "//tools/idea/platform/util-rt:intellij.platform.util.rt[module]",
     ],
 )
 
@@ -71,6 +74,10 @@ iml_module(
         "//tools/idea/plugins/gradle/tooling-extension-impl:intellij.gradle.toolingExtension.impl[module]",
         "//tools/idea/plugins/gradle:intellij.gradle.common[module]",
         "//tools/idea:intellij.platform.jps.build_and_others[module, test]",
-        "//tools/idea/.idea/libraries:assertJ",
+        "//tools/idea/.idea/libraries:assertJ[test]",
+        "//prebuilts/tools/common/m2/repository/io/github/classgraph/classgraph/4.8.29:jar[test]",
+        "//prebuilts/tools/common/m2/repository/org/jeasy/easy-random-core/4.0.0:jar[test]",
+        "//prebuilts/tools/common/m2/repository/org/objenesis/objenesis/3.0.1:jar[test]",
+        "//tools/idea/.idea/libraries:ion[test]",
     ],
 )

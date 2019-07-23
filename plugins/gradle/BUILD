@@ -138,11 +138,10 @@ iml_module(
         "//tools/idea/platform/smRunner:intellij.platform.smRunner[module]",
         "//tools/idea/.idea/libraries:Slf4j",
         "//tools/idea/.idea/libraries:Gradle",
-        "//tools/idea/.idea/libraries:Kryo",
-        "//tools/idea/.idea/libraries:Objenesis",
         "//tools/idea/.idea/libraries:Groovy",
         "//tools/idea/.idea/libraries:gson",
         "//tools/idea/platform/object-serializer:intellij.platform.objectSerializer.annotations[module]",
         "//tools/idea/plugins/gradle/tooling-loader-rt:intellij.gradle.toolingLoaderRt[module]",
+        "//tools/idea/.idea/libraries:ion",
     ],
 )
