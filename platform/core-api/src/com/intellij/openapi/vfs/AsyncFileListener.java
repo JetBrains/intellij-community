@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +25,10 @@ import java.util.List;
  * To migrate a "before"-handler, you need to split the listener into two parts: one that analyzes the events but has no side effects,
  * and one which actually modifies some other subsystem's state based on these events. The first part then goes into {@link #prepareChange},
  * and the second one into {@link ChangeApplier#beforeVfsChange()}. Please ensure that the ordering of events
- * (if it's important) isn't lost during this splitting, and that your listener can handle several events about the same file.<p></p>
+ * (if it's important) isn't lost during this splitting, and that your listener can handle several events about the same file.
+ * If your listener depends on state that's not synchronized using read-write actions, be aware that this state can be changed
+ * during {@link #prepareChange} or before {@link ChangeApplier#beforeVfsChange()}.
+ * Take care to synchronize the state properly and handle its changes.<p></p>
  *
  * The "after"-part is more complicated, as it might need to observe the state of the whole system (e.g. VFS, project model, PSI) after
  * the file system is changed. So moving these computations into "before"-part might not be straightforward. It's still possible sometimes:
@@ -69,15 +73,24 @@ public interface AsyncFileListener {
   interface ChangeApplier {
     /**
      * This method is called in write action before the VFS events are delivered and applied, and allows
-     * to apply modifications based on the information calculated during {@link #prepareChange}.
-     * The implementations should be as fast as possible.
+     * to apply modifications based on the information calculated during {@link #prepareChange}.<p></p>
+     *
+     * Although it's guaranteed that no write actions happen between {@link #prepareChange} and invoking all {@link ChangeApplier}s,
+     * another listener might already have changed something (e.g. send PSI events, increase modification trackers, etc)
+     * by the time this implementation is executed, so be prepared. And if your listener depends on state not synchronized via read-write actions,
+     * it can be changed by this moment as well.
      */
     default void beforeVfsChange() {}
 
     /**
      * This method is called in write action after the VFS events are delivered and applied, and allows
      * to apply modifications based on the information calculated during {@link #prepareChange}.
-     * The implementations should be as fast as possible.
+     * The implementations should be as fast as possible.<p></p>
+     *
+     * If you process events passed into {@link #prepareChange} here, remember that an event might be superseded by further events
+     * from the same list. For example, the {@link VFileEvent#getFile()} may be invalid (if it was deleted by that further event),
+     * {@link VFileCreateEvent#getFile()} may return null, property value in
+     * {@link com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent} may be already outdated, etc.
      */
     default void afterVfsChange() {}
   }
