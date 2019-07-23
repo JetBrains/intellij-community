@@ -438,7 +438,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
   }
 
-  private FileType instantiateFileTypeBean(FileTypeBean fileTypeBean) {
+  private FileType instantiateFileTypeBean(@NotNull FileTypeBean fileTypeBean) {
     FileType fileType;
     try {
       if (fileTypeBean.fieldName != null) {
@@ -1076,7 +1076,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       // a file has unknown file type if none of file type detectors matched it
       // for plain text file type, we run file type detection based on content
 
-      //noinspection SSBasedInspection
       return file.getFileType().equals(type);
     }
 

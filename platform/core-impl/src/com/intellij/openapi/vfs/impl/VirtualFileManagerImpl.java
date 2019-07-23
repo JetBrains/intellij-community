@@ -291,7 +291,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
 
     @Override
     public void fileCopied(@NotNull VirtualFileCopyEvent event) {
-      LOG.debug("fileCopied: file = " + event.getFile() + "originalFile = " + event.getOriginalFile() +
+      LOG.debug("fileCopied: file = " + event.getFile() + ", originalFile = " + event.getOriginalFile() +
                 ", requestor = " + event.getRequestor());
     }
 

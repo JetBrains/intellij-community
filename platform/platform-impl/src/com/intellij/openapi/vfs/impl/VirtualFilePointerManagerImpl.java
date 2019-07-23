@@ -49,15 +49,18 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   private final Map<VirtualFilePointerListener, FilePointerPartNode> myPointers = ContainerUtil.newIdentityTroveMap(); // guarded by this
   // compare by identity because VirtualFilePointerContainer has too smart equals
   private final Set<VirtualFilePointerContainerImpl> myContainers = ContainerUtil.newIdentityTroveSet();  // guarded by myContainers
-  @NotNull private final VirtualFileManager myVirtualFileManager;
-  @NotNull private final MessageBus myBus;
-  @NotNull private final FileTypeManager myFileTypeManager;
+  @NotNull
+  private final VirtualFileManager myVirtualFileManager;
+  @NotNull
+  private final MessageBus myBus;
+  @NotNull
+  private final FileTypeManager myFileTypeManager;
 
-  VirtualFilePointerManagerImpl() {
-    myVirtualFileManager = VirtualFileManager.getInstance();
-    myBus = ApplicationManager.getApplication().getMessageBus();
-    myFileTypeManager = FileTypeManager.getInstance();
-    VirtualFileManager.getInstance().addAsyncFileListener(this, ApplicationManager.getApplication());
+  VirtualFilePointerManagerImpl(@NotNull MessageBus messageBus, VirtualFileManager virtualFileManager, @NotNull FileTypeManager fileTypeManager) {
+    myVirtualFileManager = virtualFileManager;
+    myBus = messageBus;
+    myFileTypeManager = fileTypeManager;
+    virtualFileManager.addAsyncFileListener(this, this);
   }
 
   @Override
@@ -451,7 +454,8 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
               && !Comparing.equal(change.getOldValue(), change.getNewValue())) {
             VirtualFile eventFile = change.getFile();
             VirtualFile parent = eventFile.getParent(); // e.g. for LightVirtualFiles
-            addRelevantPointers(parent, true, change.getNewValue().toString(), toFireEvents, true);
+            CharSequence newName = (CharSequence)change.getNewValue();
+            addRelevantPointers(parent, true, newName, toFireEvents, true);
 
             List<FilePointerPartNode> nodes = new ArrayList<>();
             addRelevantPointers(eventFile, false, "", nodes, true);
@@ -519,7 +523,9 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     }
   }
 
-  private void after(List<FilePointerPartNode> toFireEvents, List<FilePointerPartNode> toUpdateUrl, List<EventDescriptor> eventList) {
+  private void after(@NotNull List<? extends FilePointerPartNode> toFireEvents,
+                     @NotNull List<? extends FilePointerPartNode> toUpdateUrl,
+                     @NotNull List<? extends EventDescriptor> eventList) {
     ApplicationManager.getApplication().assertIsDispatchThread(); // guarantees no attempts to get read action lock under "this" lock
     incModificationCount();
     VirtualFilePointer[] pointersToFireArray;
