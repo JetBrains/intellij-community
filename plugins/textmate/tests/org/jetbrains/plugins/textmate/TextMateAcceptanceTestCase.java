@@ -42,8 +42,7 @@ public abstract class TextMateAcceptanceTestCase extends BasePlatformTestCase {
       }
       state.setBundles(bundles);
       TextMateSettings.getInstance().loadState(state);
-      TextMateService.getInstance().unregisterAllBundles(true);
-      TextMateService.getInstance().registerEnabledBundles(false);
+      TextMateServiceImpl.disableBuiltinBundles(getTestRootDisposable());
       UIUtil.dispatchAllInvocationEvents();
     }
   }
@@ -52,8 +51,6 @@ public abstract class TextMateAcceptanceTestCase extends BasePlatformTestCase {
   protected void tearDown() throws Exception {
     try {
       TextMateSettings.getInstance().loadState(new TextMateSettings.TextMateSettingsState());
-      TextMateService.getInstance().unregisterAllBundles(true);
-      TextMateService.getInstance().registerEnabledBundles(true);
       UIUtil.dispatchAllInvocationEvents();
     }
     catch (Throwable e) {

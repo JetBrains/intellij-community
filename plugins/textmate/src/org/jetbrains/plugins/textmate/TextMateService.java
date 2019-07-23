@@ -56,14 +56,13 @@ public abstract class TextMateService {
    * 1. read all enabled bundles
    * 2. prepare syntax table of supported languages
    * 3. prepare preferences table of enabled bundles
-   * 4. registering {@link org.jetbrains.plugins.textmate.language.TextMateFileType} for extensions declared in bundles
+   * 4. fill the extensions mapping for {@link org.jetbrains.plugins.textmate.language.TextMateFileType}
    */
-  public abstract void registerEnabledBundles(boolean loadBuiltin);
+  public abstract void registerEnabledBundles();
 
   /**
    * Unregister bundles scenario:
    * <ul>
-   * <li>removes textmate file types (according to argument value)</li>
    * <li>clear textmate syntax table</li>
    * <li>clear preferences table</li>
    * <li>clear extensions mapping</li>
@@ -71,10 +70,10 @@ public abstract class TextMateService {
    * <p/>
    * <p/>
    */
-  public abstract void unregisterAllBundles(boolean unregisterFileTypes);
+  public abstract void unregisterAllBundles();
 
   @Nullable
-  public abstract TextMateLanguageDescriptor getLanguageDescriptorByExtension(String extension);
+  public abstract TextMateLanguageDescriptor getLanguageDescriptorByExtension(@Nullable CharSequence extension);
 
   @Nullable
   public abstract TextMateShellVariable getVariable(@NotNull String name, @NotNull EditorEx editor);
@@ -83,7 +82,7 @@ public abstract class TextMateService {
   public abstract SnippetsRegistry getSnippetsRegistry();
 
   @Nullable
-  public abstract TextMateLanguageDescriptor getLanguageDescriptorByFileName(String fileName);
+  public abstract TextMateLanguageDescriptor getLanguageDescriptorByFileName(@NotNull CharSequence fileName);
 
   /**
    * @return names of all registered TextMate themes {@link this#registerTheme(VirtualFile)}

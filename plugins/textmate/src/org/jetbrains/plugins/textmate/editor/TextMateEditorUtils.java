@@ -4,8 +4,10 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
@@ -150,5 +152,20 @@ public final class TextMateEditorUtils {
     HashMap<K, V> result = new HashMap<>(map.size(), 1.0f);
     result.putAll(map);
     return result;
+  }
+
+  public static void processExtensions(@NotNull CharSequence fileName, @NotNull Processor<? super CharSequence> processor) {
+    if (!processor.process(fileName)) {
+      return;
+    }
+    int index = StringUtil.indexOf(fileName, '.');
+    while (index >= 0) {
+      CharSequence extension = fileName.subSequence(index + 1, fileName.length());
+      if (extension.length() == 0) break;
+      if (!processor.process(extension)) {
+        return;
+      }
+      index = StringUtil.indexOf(fileName, '.', index + 1);
+    }
   }
 }

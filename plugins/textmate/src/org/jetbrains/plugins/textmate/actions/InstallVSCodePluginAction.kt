@@ -148,8 +148,8 @@ class InstallVSCodePluginAction : AnAction(), DumbAware {
         val state = TextMateSettings.getInstance().state ?: TextMateSettings.TextMateSettingsState()
         state.bundles.add(BundleConfigBean(selectedValue.toString(), File(extensionDir, "extension").path, true))
         val textMateService = TextMateService.getInstance()
-        textMateService.unregisterAllBundles(false)
-        textMateService.registerEnabledBundles(true)
+        textMateService.unregisterAllBundles()
+        textMateService.registerEnabledBundles()
       }
     })
   }

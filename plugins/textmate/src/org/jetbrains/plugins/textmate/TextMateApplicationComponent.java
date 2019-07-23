@@ -8,12 +8,10 @@ final class TextMateApplicationComponent implements Disposable {
   TextMateApplicationComponent() {
     myTextMateService = TextMateService.getInstance();
     myTextMateService.reloadThemesFromDisk();
-    myTextMateService.registerEnabledBundles(true);
   }
 
   @Override
   public void dispose() {
-    myTextMateService.unregisterAllBundles(true);
     myTextMateService.clearListeners();
   }
 }

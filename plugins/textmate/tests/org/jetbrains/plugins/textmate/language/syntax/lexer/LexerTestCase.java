@@ -12,8 +12,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.PathInterner;
 import org.jetbrains.plugins.textmate.TestUtil;
-import org.jetbrains.plugins.textmate.TextMateServiceImpl;
 import org.jetbrains.plugins.textmate.bundles.Bundle;
+import org.jetbrains.plugins.textmate.editor.TextMateEditorUtils;
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
 import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTable;
 import org.jetbrains.plugins.textmate.plist.Plist;
@@ -89,12 +89,10 @@ abstract public class LexerTestCase extends UsefulTestCase {
     }
     mySyntaxTable.compact();
 
-    for (String extension : TextMateServiceImpl.getExtensions(myFileName)) {
-      myRootScope = myLanguageDescriptors.get(extension);
-      if (myRootScope != null) {
-        break;
-      }
-    }
+    TextMateEditorUtils.processExtensions(myFileName, extension -> {
+      myRootScope = myLanguageDescriptors.get(extension.toString());
+      return myRootScope == null;
+    });
     assertNotNull("scope is empty for file name: " + myFileName, myRootScope);
   }
 
