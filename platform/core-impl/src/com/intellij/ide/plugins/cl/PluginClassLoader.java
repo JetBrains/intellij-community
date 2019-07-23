@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.cl;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginId;
@@ -350,8 +351,9 @@ public final class PluginClassLoader extends UrlClassLoader {
     return myPluginId;
   }
 
+  @NotNull
   public String getPluginIdString() {
-    return myPluginId != null ? myPluginId.getIdString() : "com.intellij";
+    return myPluginId != null ? myPluginId.getIdString() : PluginManagerCore.CORE_PLUGIN_ID;
   }
 
   @Override

@@ -5,6 +5,7 @@ import com.intellij.diagnostic.*;
 import com.intellij.diagnostic.StartUpMeasurer.Level;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -357,7 +358,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
 
     ClassLoader loader = handler.getClass().getClassLoader();
-    String pluginId = loader instanceof PluginClassLoader ? ((PluginClassLoader) loader).getPluginIdString() : "com.intellij";
+    String pluginId = loader instanceof PluginClassLoader ? ((PluginClassLoader) loader).getPluginIdString() : PluginManagerCore.CORE_PLUGIN_ID;
     StartUpMeasurer.addPluginCost(pluginId, "MessageBus", durationNanos);
   }
 

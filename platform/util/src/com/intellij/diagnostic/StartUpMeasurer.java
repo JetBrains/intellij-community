@@ -157,8 +157,8 @@ public final class StartUpMeasurer {
     items.add(parent);
   }
 
-  public static void addPluginCost(@Nullable String pluginId, @NotNull String phase, long timeNanos) {
-    if (pluginId == null || !isMeasuringPluginStartupCosts()) {
+  public static void addPluginCost(@NotNull String pluginId, @NotNull String phase, long timeNanos) {
+    if (!isMeasuringPluginStartupCosts()) {
       return;
     }
 

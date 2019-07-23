@@ -4,6 +4,7 @@ package com.intellij.openapi.application;
 import com.google.common.base.MoreObjects;
 import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -375,7 +376,7 @@ public class TransactionGuardImpl extends TransactionGuard {
     }
     if (processId instanceof Runnable) {
       ClassLoader loader = processId.getClass().getClassLoader();
-      String pluginId = loader instanceof PluginClassLoader ? ((PluginClassLoader) loader).getPluginIdString() : "com.intellij";
+      String pluginId = loader instanceof PluginClassLoader ? ((PluginClassLoader) loader).getPluginIdString() : PluginManagerCore.CORE_PLUGIN_ID;
       StartUpMeasurer.addPluginCost(pluginId, "invokeLater", TimeUnit.MILLISECONDS.toNanos(time));
     }
     LOG.warn(time + "ms to process " + processId);

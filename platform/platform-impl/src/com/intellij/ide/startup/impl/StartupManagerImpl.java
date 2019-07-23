@@ -6,6 +6,7 @@ import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.ide.startup.StartupManagerEx;
@@ -447,7 +448,7 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
       long startTime = StartUpMeasurer.getCurrentTime();
 
       ClassLoader loader = runnable.getClass().getClassLoader();
-      String pluginId = loader instanceof PluginClassLoader ? ((PluginClassLoader) loader).getPluginId().getIdString() : "com.intellij";
+      String pluginId = loader instanceof PluginClassLoader ? ((PluginClassLoader) loader).getPluginId().getIdString() : PluginManagerCore.CORE_PLUGIN_ID;
 
       runActivity(runnable);
 
