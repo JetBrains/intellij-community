@@ -17,8 +17,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 class CollectingGroovyInferenceSession(
   typeParams: Array<PsiTypeParameter>,
-  contextSubstitutor: PsiSubstitutor,
-  context: PsiElement,
+  contextSubstitutor: PsiSubstitutor = PsiSubstitutor.EMPTY,
+  context: PsiElement = typeParams.first(),
   private val proxyMethodMapping: Map<String, GrParameter> = emptyMap(),
   private val parent: CollectingGroovyInferenceSession? = null
 ) : GroovyInferenceSession(typeParams, contextSubstitutor, context, true, emptySet()) {

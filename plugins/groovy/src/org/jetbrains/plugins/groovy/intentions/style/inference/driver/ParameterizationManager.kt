@@ -6,6 +6,7 @@ import org.jetbrains.plugins.groovy.intentions.style.inference.NameGenerator
 import org.jetbrains.plugins.groovy.intentions.style.inference.createProperTypeParameter
 import org.jetbrains.plugins.groovy.intentions.style.inference.isTypeParameter
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
@@ -56,10 +57,10 @@ private class Parameterizer(val context: PsiElement,
 
 data class ParameterizationResult(val type: PsiType, val typeParameters: List<PsiTypeParameter>)
 
-class ParameterizationManager(driver: InferenceDriver) {
-  private val nameGenerator = NameGenerator(driver.defaultTypeParameterList.typeParameters.map { it.name!! })
-  private val elementFactory = GroovyPsiElementFactory.getInstance(driver.method.project)
-  private val context: PsiElement = driver.virtualMethod
+class ParameterizationManager(method: GrMethod) {
+  val nameGenerator = NameGenerator(method.typeParameters.map { it.name!! })
+  private val elementFactory = GroovyPsiElementFactory.getInstance(method.project)
+  private val context: PsiElement = method
 
   companion object {
     fun nonTrivial(type: PsiType) = !type.equalsToText(GroovyCommonClassNames.GROOVY_OBJECT)
@@ -85,7 +86,7 @@ class ParameterizationManager(driver: InferenceDriver) {
       when {
         strict -> target.accept(visitor)
         target is PsiArrayType -> target.componentType.accept(visitor).createArrayType()
-        target.isTypeParameter() -> registerTypeParameter(emptyList(), createdTypeParameters)
+        target.isTypeParameter() -> registerTypeParameter(listOf(target as PsiClassType), createdTypeParameters)
         target is PsiIntersectionType -> target.accept(visitor)
         target == PsiType.getJavaLangObject(context.manager, context.resolveScope) -> registerAction(emptyList())
         else -> registerAction(listOf(target.accept(visitor)))

@@ -1,7 +1,7 @@
 import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.FromString
 
-def <X0 extends A> Object foo(X0 a, @ClosureParams(value = FromString, options = ["java.util.List<X0>,X0"]) Closure<?> c) {
+Object foo(A a, @ClosureParams(value = FromString, options = ["java.util.List<? extends A>,A"]) Closure<?> c) {
   c([a], a)
 }
 

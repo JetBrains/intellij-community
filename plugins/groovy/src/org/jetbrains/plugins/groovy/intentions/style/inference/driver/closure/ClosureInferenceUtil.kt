@@ -83,12 +83,10 @@ private fun extractArgumentExpressions(method: GrMethod,
 
 fun collectClosureParamsDependencies(constraintCollector: MutableList<ConstraintFormula>,
                                      closureParameter: ParameterizedClosure,
-                                     usages: List<ReadWriteVariableInstruction>,
-                                     closureProcessor: ClosureProcessor) {
+                                     usages: List<ReadWriteVariableInstruction>) {
   val parameter = closureParameter.parameter
   for (usage in usages) {
     val nearestCall = usage.element!!.parentOfType<GrCall>() ?: continue
-    closureProcessor.processCall(nearestCall, constraintCollector)
     if (nearestCall == usage.element!!.parent && nearestCall.resolveMethod()?.containingClass?.qualifiedName == GroovyCommonClassNames.GROOVY_LANG_CLOSURE) {
       continue
     }

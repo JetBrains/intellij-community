@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.intentions.style.inference.graph
 import com.intellij.psi.PsiArrayType
 import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import com.intellij.util.containers.BidirectionalMap
@@ -13,22 +14,25 @@ import org.jetbrains.plugins.groovy.intentions.style.inference.flattenIntersecti
 import org.jetbrains.plugins.groovy.intentions.style.inference.forceWildcardsAsTypeArguments
 import org.jetbrains.plugins.groovy.intentions.style.inference.getInferenceVariable
 import org.jetbrains.plugins.groovy.intentions.style.inference.typeParameter
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 
 fun createGraphFromInferenceVariables(session: GroovyInferenceSession,
+                                      virtualMethod: GrMethod,
                                       driver: InferenceDriver,
-                                      usageInformation: TypeUsageInformation): InferenceUnitGraph {
+                                      usageInformation: TypeUsageInformation,
+                                      constantTypes : List<PsiTypeParameter>): InferenceUnitGraph {
   val variableMap = BidirectionalMap<InferenceUnit, InferenceVariable>()
   val builder = InferenceUnitGraphBuilder()
-  val constantNames = driver.defaultTypeParameterList.typeParameters.map { it.name }
-  val flexibleTypes = driver.virtualMethod.parameters.map { it.type }
+  val constantNames = constantTypes.map { it.name }
+  val flexibleTypes = virtualMethod.parameters.map { it.type }
   val forbiddingTypes =
     usageInformation.contravariantTypes +
-    driver.virtualMethod.parameters.mapNotNull { (it.type as? PsiArrayType)?.componentType } +
-    driver.processors.flatMap { it.forbiddingTypes() }
-  val variables = driver.virtualMethod.typeParameters.map { getInferenceVariable(session, it.type()) }
+    virtualMethod.parameters.mapNotNull { (it.type as? PsiArrayType)?.componentType } +
+    driver.forbiddingTypes()
+  val variables = virtualMethod.typeParameters.mapNotNull { getInferenceVariable(session, it.type()) }
 
   for (variable in variables) {
     val variableType = variable.parameter.type()

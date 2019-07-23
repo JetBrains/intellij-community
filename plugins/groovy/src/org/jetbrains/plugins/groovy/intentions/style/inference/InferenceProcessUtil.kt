@@ -37,7 +37,7 @@ class NameGenerator(private val restrictions: Collection<String> = emptySet()) {
 
 typealias InferenceGraphNode = InferenceVariablesOrder.InferenceGraphNode<InferenceUnitNode>
 
-fun getInferenceVariable(session: GroovyInferenceSession, variableType: PsiType): InferenceVariable {
+fun getInferenceVariable(session: GroovyInferenceSession, variableType: PsiType): InferenceVariable? {
   return session.getInferenceVariable(session.substituteWithInferenceVariables(variableType))
 }
 

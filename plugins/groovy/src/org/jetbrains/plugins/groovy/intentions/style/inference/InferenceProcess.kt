@@ -2,8 +2,9 @@
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
 import com.intellij.psi.*
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.CommonDriver
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.InferenceDriver
-import org.jetbrains.plugins.groovy.intentions.style.inference.driver.setUpParameterMapping
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.ParameterizationManager
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitGraph
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode.Companion.InstantiationHint
@@ -26,36 +27,47 @@ fun runInferenceProcess(method: GrMethod): GrMethod {
   if (overridableMethod != null) {
     return convertToGroovyMethod(overridableMethod)
   }
-  val driver = InferenceDriver.createDriverFromMethod(method)
+  val driver = createDriver(method)
   val signatureSubstitutor = setUpParametersSignature(driver)
-  val parameterizedDriver = InferenceDriver.createParameterizedDriver(driver, signatureSubstitutor)
-  val graph = setUpGraph(parameterizedDriver)
-  return inferTypeParameters(parameterizedDriver, graph)
+  val (parameterizedDriver, virtualMethod) = createParameterizedDriver(driver, method, signatureSubstitutor)
+  val graph = setUpGraph(parameterizedDriver, virtualMethod, method.typeParameters.asList())
+  return inferTypeParameters(parameterizedDriver, graph, method)
+}
+
+private fun createDriver(method: GrMethod): InferenceDriver {
+  val virtualMethod = createVirtualMethod(method)
+  val generator = NameGenerator(virtualMethod.typeParameters.mapNotNull { it.name })
+  return CommonDriver.createFromMethod(method, virtualMethod, generator)
 }
 
 private fun setUpParametersSignature(driver: InferenceDriver): PsiSubstitutor {
-  val mapping = setUpParameterMapping(driver.method, driver.virtualMethod).map { it.key.name to it.value }.toMap()
-  val inferenceSession = CollectingGroovyInferenceSession(driver.virtualMethod.typeParameters, PsiSubstitutor.EMPTY, driver.virtualMethod,
-                                                          mapping)
-  driver.collectOuterConstraints().forEach { inferenceSession.addConstraint(it) }
-  return inferenceSession.inferSubst()
+  return driver.collectSignatureSubstitutor()
+}
+
+private fun createParameterizedDriver(driver: InferenceDriver,
+                                      method: GrMethod,
+                                      substitutor: PsiSubstitutor): Pair<InferenceDriver, GrMethod> {
+  val parameterizationManager = ParameterizationManager(method)
+  val parameterizedMethod = createVirtualMethod(method)
+  parameterizedMethod.parameters.lastOrNull()?.ellipsisDots?.delete()
+  return driver.createParameterizedDriver(parameterizationManager, parameterizedMethod, substitutor) to parameterizedMethod
 }
 
 
-private fun setUpGraph(driver: InferenceDriver): InferenceUnitGraph {
-  val inferenceSession = CollectingGroovyInferenceSession(driver.virtualMethod.typeParameters, PsiSubstitutor.EMPTY, driver.virtualMethod)
+private fun setUpGraph(driver: InferenceDriver, virtualMethod: GrMethod, constantTypes: List<PsiTypeParameter>): InferenceUnitGraph {
+  val inferenceSession = CollectingGroovyInferenceSession(virtualMethod.typeParameters, context = virtualMethod)
   val typeUsage = driver.collectInnerConstraints()
   typeUsage.constraints.forEach { inferenceSession.addConstraint(it) }
   inferenceSession.infer()
-  return createGraphFromInferenceVariables(inferenceSession, driver, typeUsage)
+  return createGraphFromInferenceVariables(inferenceSession, virtualMethod, driver, typeUsage, constantTypes)
 }
 
 private fun inferTypeParameters(driver: InferenceDriver,
-                                initialGraph: InferenceUnitGraph): GrMethod {
+                                initialGraph: InferenceUnitGraph, method: GrMethod): GrMethod {
   val inferredGraph = determineDependencies(initialGraph)
   var resultSubstitutor = PsiSubstitutor.EMPTY
   val endpoints = mutableSetOf<InferenceUnitNode>()
-  val collector = TypeParameterCollector(driver.virtualMethod)
+  val collector = TypeParameterCollector(method)
   for (unit in inferredGraph.resolveOrder()) {
     val (instantiation, hint) = unit.smartTypeInstantiation()
     val transformedType = when (hint) {
@@ -72,10 +84,10 @@ private fun inferTypeParameters(driver: InferenceDriver,
       }
       InstantiationHint.WILDCARD -> {
         if (instantiation == PsiType.NULL) {
-          resultSubstitutor.substitute(PsiWildcardType.createUnbounded(driver.virtualMethod.manager))
+          resultSubstitutor.substitute(PsiWildcardType.createUnbounded(method.manager))
         }
         else {
-          resultSubstitutor.substitute(PsiWildcardType.createExtends(driver.virtualMethod.manager, instantiation))
+          resultSubstitutor.substitute(PsiWildcardType.createExtends(method.manager, instantiation))
         }
       }
     }
@@ -89,9 +101,69 @@ private fun inferTypeParameters(driver: InferenceDriver,
   }
   val endpointSubstitutor = PsiSubstitutor.EMPTY.putAll(endpoints.map { it.core.initialTypeParameter }.toTypedArray(),
                                                         endpointTypes.toTypedArray())
-  return driver.instantiate(resultSubstitutor.putAll(endpointSubstitutor), collector.typeParameterList)
+  val resultMethod = createVirtualMethod(method)
+  if (resultMethod.parameters.last().typeElementGroovy == null) {
+    resultMethod.parameters.last().ellipsisDots?.delete()
+  }
+  val finalSubstitutor = resultSubstitutor.putAll(endpointSubstitutor)
+  driver.instantiate(resultMethod, finalSubstitutor)
+  val residualTypeParameterList = buildResidualTypeParameterList(collector.typeParameterList, resultMethod, driver, method)
+  resultMethod.typeParameterList!!.replace(residualTypeParameterList)
+  if (resultMethod.typeParameters.isEmpty()) {
+    resultMethod.typeParameterList?.delete()
+  }
+  return resultMethod
 }
 
+
+private fun buildResidualTypeParameterList(typeParameters: Collection<PsiTypeParameter>,
+                                           resultMethod: GrMethod,
+                                           driver: InferenceDriver,
+                                           method: GrMethod): PsiTypeParameterList {
+  val factory = GroovyPsiElementFactory.getInstance(resultMethod.project)
+  val list = factory.createTypeParameterList()
+  typeParameters.forEach { list.add(it) }
+  resultMethod.typeParameterList!!.replace(list)
+  val necessaryTypeParameters = mutableSetOf<PsiTypeParameter>()
+  val visitor = object : PsiTypeVisitor<Unit>() {
+
+    override fun visitClassType(classType: PsiClassType?) {
+      classType ?: return
+      val resolvedClass = classType.resolveGenerics().element
+      if (resolvedClass is PsiTypeParameter) {
+        if (resolvedClass.name !in necessaryTypeParameters.map { it.name }) {
+          necessaryTypeParameters.add(resolvedClass)
+          resolvedClass.extendsList.referencedTypes.forEach { it.accept(this) }
+        }
+      }
+      classType.parameters.forEach { it.accept(this) }
+      super.visitClassType(classType)
+    }
+
+    override fun visitWildcardType(wildcardType: PsiWildcardType?) {
+      wildcardType?.extendsBound?.accept(this)
+      super.visitWildcardType(wildcardType)
+    }
+
+    override fun visitArrayType(arrayType: PsiArrayType?) {
+      arrayType?.componentType?.accept(this)
+      super.visitArrayType(arrayType)
+    }
+  }
+  driver.acceptReducingVisitor(visitor, resultMethod)
+  val restrictedNames = collectClassParameters(method.containingClass).map { it.name }
+  necessaryTypeParameters.removeIf { it.name in restrictedNames }
+  val takenNames = necessaryTypeParameters.map { it.name }
+  val remainedConstantParameters = method.typeParameters.filter { it.name !in takenNames }
+  return factory.createMethodFromText(
+    "def <${(remainedConstantParameters + necessaryTypeParameters).joinToString(", ") { it.text }}> void foo() {}")
+    .typeParameterList!!
+}
+
+private fun collectClassParameters(clazz: PsiClass?): MutableList<PsiTypeParameter> {
+  clazz ?: return mutableListOf()
+  return collectClassParameters(clazz.containingClass).apply { addAll(clazz.typeParameters) }
+}
 
 class TypeParameterCollector(context: PsiElement) {
   val project = context.project

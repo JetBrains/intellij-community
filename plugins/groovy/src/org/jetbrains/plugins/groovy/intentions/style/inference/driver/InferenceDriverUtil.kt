@@ -41,6 +41,10 @@ tailrec fun extractEndpointType(type: PsiClassType, typeParameters: List<PsiType
 data class TypeUsageInformation(val contravariantTypes: Set<PsiType>,
                                 val requiredClassTypes: Map<PsiTypeParameter, List<PsiClass>>,
                                 val constraints: Collection<ConstraintFormula>) {
+  operator fun plus(typeUsageInformation: TypeUsageInformation): TypeUsageInformation {
+    return merge(listOf(this, typeUsageInformation))
+  }
+
   companion object {
     fun merge(data: Collection<TypeUsageInformation>): TypeUsageInformation {
       val contravariantTypes = data.flatMap { it.contravariantTypes }.toSet()
@@ -97,7 +101,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
       if (fieldResult != null) {
         val leftType = fieldResult.type
         val rightType = expression.rValue?.type
-        addRequiredType(rightType?.typeParameter() ?: return@run, leftType.resolve() ?: return@run )
+        addRequiredType(rightType?.typeParameter() ?: return@run, leftType.resolve() ?: return@run)
         constraintsCollector.add(TypeConstraint(leftType, rightType, method))
       }
     }
