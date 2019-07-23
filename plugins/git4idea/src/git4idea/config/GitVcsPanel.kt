@@ -162,7 +162,9 @@ internal class GitVcsPanel(private val project: Project,
           { selectedStrategy ->
             projectSettings.incomingCheckStrategy = selectedStrategy as GitIncomingCheckStrategy
             updateBranchUpdateInfoRow()
-            GitBranchIncomingOutgoingManager.getInstance(project).updateIncomingScheduling()
+            if (!project.isDefault) {
+              GitBranchIncomingOutgoingManager.getInstance(project).updateIncomingScheduling()
+            }
           })
       }
       branchUpdateInfoCommentRow = row {
