@@ -37,7 +37,7 @@ public class TestFilesIndex extends MapReduceIndex<Integer, Void, UsedSources> {
 
   @Nullable
   Collection<Integer> getTestDataFor(int testId) throws IOException {
-    ForwardIndex forwardIndex = getForwardIndexMap();
+    ForwardIndex forwardIndex = getForwardIndex();
     KeyCollectionForwardIndexAccessor<Integer, Void> forwardIndexAccessor = (KeyCollectionForwardIndexAccessor<Integer, Void>)getForwardIndexAccessor();
     return forwardIndexAccessor.deserializeData(forwardIndex.get(testId));
   }
