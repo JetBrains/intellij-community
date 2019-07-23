@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.hint.*;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
@@ -292,10 +293,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     final int startOffset = getOffset(fitLineToEditor(visualLine - myPreviewLines), true);
     final int endOffset = getOffset(fitLineToEditor(visualLine + myPreviewLines), false);
     markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, highlighter -> {
-      if (highlighter.getErrorStripeMarkColor() != null) {
-        if (highlighter.getStartOffset() < endOffset && highlighter.getEndOffset() > startOffset) {
-          highlighters.add(highlighter);
-        }
+      Object tooltip = highlighter.getErrorStripeTooltip();
+      if (tooltip != null &&
+          !(tooltip instanceof HighlightInfo && ((HighlightInfo)tooltip).type == HighlightInfoType.TODO) &&
+          highlighter.getErrorStripeMarkColor() != null &&
+          highlighter.getStartOffset() < endOffset &&
+          highlighter.getEndOffset() > startOffset) {
+        highlighters.add(highlighter);
       }
       return true;
     });
