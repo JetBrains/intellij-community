@@ -30,6 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.ui.ComponentUtil;
@@ -79,11 +80,17 @@ public final class IdeEventQueue extends EventQueue {
   private static void updateActivatedWindowSet() {
     for (Iterator<Window> iter = activatedWindows.iterator(); iter.hasNext(); ) {
       Window window = iter.next();
-      if (!window.isVisible()) {
+      if (!window.isVisible() || UIUtil.isMinimized(window) || isInFullscreen(window)) {
         iter.remove();
       }
     }
-    assert !activatedWindows.isEmpty();
+    // The list can be empty if all windows are in fullscreen or minimized state
+  }
+
+  private static boolean isInFullscreen (Window window) {
+    if (!(window instanceof IdeFrameEx)) return false;
+    IdeFrameEx ideFrameEx = (IdeFrameEx) window;
+    return ideFrameEx.isInFullScreen();
   }
 
   public Window nextWindowAfter (@NotNull Window w) {
