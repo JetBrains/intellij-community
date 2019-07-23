@@ -28,9 +28,6 @@ final class SystemOptionsTopHitProvider implements OptionsTopHitProvider.Applica
       )
     ));
 
-    //option("Use default browser", "isUseDefaultBrowser", "setUseDefaultBrowser"),
-    //option("Show confirmation before extracting files", "isConfirmExtractFiles", "setConfirmExtractFiles"),
-
   @NotNull
   @Override
   public Collection<OptionDescription> getOptions() {
@@ -45,6 +42,7 @@ final class SystemOptionsTopHitProvider implements OptionsTopHitProvider.Applica
 
   static BooleanOptionDescription option(String option, String getter, String setter) {
     return new PublicMethodBasedOptionDescription(option, "preferences.general", getter, setter) {
+      @NotNull
       @Override
       public Object getInstance() {
         return GeneralSettings.getInstance();
