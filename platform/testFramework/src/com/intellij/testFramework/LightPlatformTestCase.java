@@ -296,7 +296,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   @NotNull
   public static Pair.NonNull<Project, Module> doSetup(@NotNull LightProjectDescriptor descriptor,
                                                       @NotNull LocalInspectionTool[] localInspectionTools,
-                                                      @NotNull Disposable parentDisposable) throws Exception {
+                                                      @NotNull Disposable parentDisposable) {
     assertNull("Previous test " + ourTestCase + " hasn't called tearDown(). Probably overridden without super call.", ourTestCase);
     IdeaLogger.ourErrorsOccurred = null;
     ApplicationManager.getApplication().assertIsDispatchThread();
