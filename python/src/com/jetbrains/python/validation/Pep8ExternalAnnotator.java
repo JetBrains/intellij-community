@@ -173,7 +173,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     if (file instanceof PyFileImpl && !((PyFileImpl)file).isAcceptedFor(PyPep8Inspection.class)) {
       return null;
     }
-    final PyPep8Inspection inspection = (PyPep8Inspection)profile.getUnwrappedTool(PyPep8Inspection.KEY.toString(), file);
+    final PyPep8Inspection inspection = (PyPep8Inspection)profile.getUnwrappedTool(PyPep8Inspection.INSPECTION_SHORT_NAME, file);
     final CodeStyleSettings commonSettings = CodeStyle.getSettings(file);
     final PyCodeStyleSettings customSettings = CodeStyle.getCustomSettings(file, PyCodeStyleSettings.class);
 
