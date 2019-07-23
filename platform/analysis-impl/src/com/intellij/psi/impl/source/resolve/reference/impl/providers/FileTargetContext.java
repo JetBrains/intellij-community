@@ -9,23 +9,35 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Collections;
 
-// todo JavaDoc
+/**
+ * Describes existing or non-existing location in file system where new files can be created.
+ */
 public class FileTargetContext {
 
   private final PsiFileSystemItem myContext;
   private final String[] myPathToCreate;
 
-  // todo JavaDoc
+  /**
+   * Constructs new target context.
+   *
+   * @param context file system item that will be used as target directory
+   * @param pathToCreate additional existing or non-existing paths
+   */
   public FileTargetContext(@NotNull PsiFileSystemItem context, @NotNull String[] pathToCreate) {
     myContext = context;
     myPathToCreate = pathToCreate;
   }
 
+  /**
+   * Constructs new target context.
+   *
+   * @param context file system item that will be used as target directory
+   */
   public FileTargetContext(@NotNull PsiFileSystemItem context) {
     this(context, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
-  public PsiFileSystemItem getContext() {
+  public PsiFileSystemItem getFileSystemItem() {
     return myContext;
   }
 

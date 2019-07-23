@@ -411,17 +411,30 @@ public class FileReferenceSet {
     PsiFile file = getContainingFile();
     if (file == null) return Collections.emptyList();
 
+    Collection<FileTargetContext> result;
+
     Collection<PsiFileSystemItem> contexts = getCustomizationContexts(file);
     if (contexts != null) {
-      return toTargetContexts(contexts);
+      result = toTargetContexts(contexts);
     }
-
-    if (isAbsolutePathReference()) {
+    else if (isAbsolutePathReference()) {
       Collection<PsiFileSystemItem> locations = getAbsoluteTopLevelDirLocations(file);
-      return toTargetContexts(locations);
+      result = toTargetContexts(locations);
+    }
+    else {
+      result = getTargetContextByFile(file);
     }
 
-    return getTargetContextByFile(file);
+    return sortTargetContexts(file, result);
+  }
+
+  private static Collection<FileTargetContext> sortTargetContexts(PsiFile file, Collection<FileTargetContext> targetContexts) {
+    for (FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
+      if (helper.isMine(file.getProject(), file.getVirtualFile())) {
+        return helper.sortTargetContexts(file.getProject(), file.getVirtualFile(), targetContexts);
+      }
+    }
+    return targetContexts;
   }
 
   @Nullable
@@ -471,7 +484,7 @@ public class FileReferenceSet {
           Collection<FileTargetContext> contexts = helper.getTargetContexts(project, virtualFile);
           for (FileTargetContext context : contexts) {
             list.add(context);
-            hasRealContexts |= !(context.getContext() instanceof FileReferenceResolver);
+            hasRealContexts |= !(context.getFileSystemItem() instanceof FileReferenceResolver);
           }
         }
       }

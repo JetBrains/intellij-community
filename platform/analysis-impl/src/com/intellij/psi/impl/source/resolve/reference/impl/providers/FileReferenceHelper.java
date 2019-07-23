@@ -70,10 +70,30 @@ public abstract class FileReferenceHelper {
   @NotNull
   public abstract Collection<PsiFileSystemItem> getContexts(final Project project, @NotNull final VirtualFile file);
 
-  // JavaDoc
+  /**
+   * Provides file target contexts, locations where users can create a file, depending on passed {@code file}.
+   *
+   * @param project project
+   * @param file file
+   * @return target contexts
+   */
   @NotNull
   public Collection<FileTargetContext> getTargetContexts(Project project, @NotNull VirtualFile file) {
     return ContainerUtil.map(getContexts(project, file), FileTargetContext::new);
+  }
+
+  /**
+   * Sorts target contexts depending on passed {@code file}. This sorting affects UI of quick fixes that create files in target locations.
+   *
+   * @param project project
+   * @param file file
+   * @param targetContexts available targets
+   * @return sorted targets collection
+   */
+  @NotNull
+  public Collection<FileTargetContext> sortTargetContexts(Project project, @NotNull VirtualFile file,
+                                                          @NotNull Collection<FileTargetContext> targetContexts) {
+    return targetContexts;
   }
 
   public abstract boolean isMine(final Project project, @NotNull final VirtualFile file);
