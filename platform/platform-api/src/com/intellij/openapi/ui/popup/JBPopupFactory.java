@@ -22,6 +22,63 @@ import java.util.List;
 /**
  * Factory class for creating popup chooser windows (similar to the Code | Generate... popup) and various notifications/confirmations.
  *
+ * <p>Types of popups in IntelliJ platform:</p>
+ * <ul>
+ *   <li>
+ *     <p>Lightweight</p>
+ *     <p>Lightweight Swing components, located in the contained window's layered pane. Cannot extend beyond window bounds.</p>
+ *     <ul>
+ *       <li>
+ *         <p>{@link Balloon} interface (implemented in BalloonImpl)</p>
+ *         <p>Platform's lowest-level lightweight popup component. Supports title bar, shadow, callout pointer at specified side, animated
+ *            showing/hiding, fade-out after delay, two layers for positioning, hiding on condition (mouse move, mouse click, key press),
+ *            custom mouse click handler, custom action buttons, notification about showing/hiding.</p>
+ *         <p>Usually created via {@link JBPopupFactory#createBalloonBuilder}.</p>
+ *       </li>
+ *       <li>
+ *         <p>IdeTooltip and IdeTooltipManager</p>
+ *         <p>Subsystem which replaces (by default) Swing's ToolTipManager. Allows to define a custom mouse hover tooltip for any UI
+ *            component. Tooltip can also be explicitly requested to show in the given location.</p>
+ *         <p>Uses balloons to show tooltips internally (but doesn't expose this logic).</p>
+ *       </li>
+ *     </ul>
+ *   </li>
+ *   <li>
+ *     <p>Heavyweight</p>
+ *     <p>Components using a separate (OS-recognized) window. Can have location and size not limited by the parent window.</p>
+ *     <ul>
+ *       <li>
+ *         <p>{@link JBPopup} interface (implemented in AbstractPopup)</p>
+ *         <p>Platform's lowest-level heavyweight popup component. Supports title and footer (ad) bar, resizing using mouse, fitting size to
+ *            screen bounds, notification about showing/hiding/resizing/moving, hiding on condition (mouse exit, mouse click, key press,
+ *            window deactivation), speed search, saving and restoring previously used location and size, custom keyboard actions for the
+ *            content, custom settings/pin actions.</p>
+ *         <p>Usually created via {@link JBPopupFactory#createComponentPopupBuilder}.</p>
+ *       </li>
+ *     </ul>
+ *   </li>
+ *   <li>
+ *     <p>Combined (lightweight/heavyweight)</p>
+ *     <ul>
+ *       <li>
+ *         <p>Hint interface (implemented in LightweightHint)</p>
+ *         <p>By default, if content fits the layered pane, tries to use lightweight components to display it (either using
+ *            IdeTooltipManager, or by directly adding content to the layered pane). If the content doesn't fit, uses heavyweight approach
+ *            (via JBPopup).</p>
+ *         <p>Usually created directly (via constructor).</p>
+ *       </li>
+ *       <li>
+ *         <p>HintManager/HintManagerImpl</p>
+ *         <p>Mostly used for showing hints in editor (works via LightweightHint), but also has a method to show a hint at arbitrary
+ *            location (works via JBPopup). Supports hiding of hints on additional conditions (caret movement, scrolling in editor, document
+ *            change, showing of another hint), update of hint position on scrolling in editor, hiding hint after delay. The class also has
+ *            utility methods to calculate appropriate hint position for the given location in editor coordinates
+ *            (offset/LogicalPosition/VisualPosition), and to show simple text hints.</p>
+ *       </li>
+ *     </ul>
+ *   </li>
+ * </ul>
+ *
  * @author mike
  */
 public abstract class JBPopupFactory {
