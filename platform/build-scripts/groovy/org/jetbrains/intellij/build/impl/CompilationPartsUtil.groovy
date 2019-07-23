@@ -151,18 +151,25 @@ class CompilationPartsUtil {
     }
 
     messages.block("Building zip archives") {
-      runUnderStatisticsTimer(messages, 'compile-parts:pack:time') {
-        contexts.each { PackAndUploadContext ctx ->
-          executor.submit {
-            pack(messages, context.ant, ctx, incremental)
+      try {
+        runUnderStatisticsTimer(messages, 'compile-parts:pack:time') {
+          contexts.each { PackAndUploadContext ctx ->
+            def childMessages = messages.forkForParallelTask(ctx.name)
+            executor.submit {
+              withForkedMessages(childMessages) { BuildMessages msgs ->
+                pack(msgs, context.ant, ctx, incremental)
+              }
+            }
           }
-        }
 
-        executor.waitForAllComplete(messages)
+          executor.waitForAllComplete(messages)
+        }
+        executor.reportErrors(messages)
+      }
+      finally {
+        messages.onAllForksFinished()
       }
     }
-
-    executor.reportErrors(messages)
 
     // TODO: Remove hardcoded constant
     String uploadPrefix = "intellij-compile/v1/$branch".toString()
@@ -487,20 +494,28 @@ class CompilationPartsUtil {
     }
 
     messages.block("Unpack compiled classes archives") {
-      long start = System.nanoTime()
-      toUnpack.each { ctx ->
-        executor.submit {
-          unpack(messages, ctx)
+      try {
+        long start = System.nanoTime()
+        toUnpack.each { ctx ->
+          def childMessages = messages.forkForParallelTask("Unpacking $ctx.name")
+          executor.submit {
+            withForkedMessages(childMessages) { BuildMessages msgs ->
+              unpack(msgs, ctx)
+            }
+          }
         }
+        executor.waitForAllComplete(messages)
+
+        messages.reportStatisticValue('compile-parts:unpacked:bytes', toUnpack.collect { it.jar.size() }.sum(0l).toString())
+        messages.reportStatisticValue('compile-parts:unpacked:count', toUnpack.size().toString())
+        messages.reportStatisticValue('compile-parts:unpack:time',
+                                      TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
+
+        executor.reportErrors(messages)
       }
-      executor.waitForAllComplete(messages)
-
-      messages.reportStatisticValue('compile-parts:unpacked:bytes', toUnpack.collect { it.jar.size() }.sum(0l).toString())
-      messages.reportStatisticValue('compile-parts:unpacked:count', toUnpack.size().toString())
-      messages.reportStatisticValue('compile-parts:unpack:time',
-                                    TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
-
-      executor.reportErrors(messages)
+      finally {
+        messages.onAllForksFinished()
+      }
     }
 
     executor.close()
@@ -610,7 +625,7 @@ class CompilationPartsUtil {
     private final ConcurrentLinkedDeque<Throwable> errors = new ConcurrentLinkedDeque<Throwable>()
 
     NamedThreadPoolExecutor(String threadNamePrefix, int maximumPoolSize) {
-      super(1, maximumPoolSize, 1, TimeUnit.MINUTES, new LinkedBlockingDeque(2048))
+      super(maximumPoolSize, maximumPoolSize, 1, TimeUnit.MINUTES, new LinkedBlockingDeque(2048))
       setThreadFactory(new ThreadFactory() {
         @NotNull
         @Override
@@ -692,6 +707,16 @@ class CompilationPartsUtil {
     finally {
       def time = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
       messages.reportStatisticValue(name, time.toString())
+    }
+  }
+
+  private static <V> V withForkedMessages(BuildMessages messages, Closure<V> body) {
+    messages.onForkStarted()
+    try {
+      return body.call(messages)
+    }
+    finally {
+      messages.onForkFinished()
     }
   }
 }
