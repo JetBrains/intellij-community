@@ -3,7 +3,6 @@ package com.intellij.idea;
 
 import com.intellij.ide.Bootstrap;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
@@ -112,13 +111,6 @@ public final class Main {
     }
 
     return true;
-  }
-
-  public static boolean isApplicationStarterForBuilding(final String[] args) {
-    return args.length > 0 && (Comparing.strEqual(args[0], "traverseUI") ||
-                               Comparing.strEqual(args[0], "listBundledPlugins") ||
-                               Comparing.strEqual(args[0], "buildAppcodeCache") ||
-                               Comparing.strEqual(args[0], "keymap"));
   }
 
   public static void showMessage(String title, Throwable t) {
