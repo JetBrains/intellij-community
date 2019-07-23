@@ -4,16 +4,23 @@ package com.intellij.openapi.vcs.changes.actions.diff.lst
 import com.intellij.diff.fragments.LineFragment
 import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.tools.util.text.TwosideTextDiffProvider
+import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Range
+import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.ex.LineStatusTracker
-import com.intellij.openapi.vcs.ex.LocalRange
-import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
-import com.intellij.openapi.vcs.ex.SimpleLocalLineStatusTracker
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.ex.*
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
+import org.jetbrains.annotations.CalledWithWriteLock
+import java.util.*
 
 object LocalTrackerDiffUtil {
   @JvmStatic
@@ -143,7 +150,7 @@ object LocalTrackerDiffUtil {
 
     LineStatusTrackerManager.getInstanceImpl(localRequest.project).addTrackerListener(lstmListener, viewer)
 
-    val tracker = localRequest.lineStatusTracker as? PartialLocalLineStatusTracker
+    val tracker = localRequest.partialTracker
     if (tracker != null) tracker.addListener(trackerListener, viewer)
   }
 
@@ -175,4 +182,168 @@ object LocalTrackerDiffUtil {
       }
     }
   }
+
+
+  @JvmStatic
+  fun createTrackerActions(provider: LocalTrackerActionProvider): List<AnAction> {
+    return listOf(MoveSelectedChangesToAnotherChangelistAction(provider),
+                  ExcludeSelectedChangesFromCommitAction(provider),
+                  IncludeOnlySelectedChangesIntoCommitAction(provider))
+  }
+
+  private class MoveSelectedChangesToAnotherChangelistAction(provider: LocalTrackerActionProvider)
+    : MySelectedChangesActionBase(false, provider) {
+
+    init {
+      copyShortcutFrom(ActionManager.getInstance().getAction("Vcs.MoveChangedLinesToChangelist"))
+    }
+
+    override fun getText(changes: List<LocalTrackerChange>): String {
+      if (changes.isNotEmpty() && changes.all { !it.isFromActiveChangelist }) {
+        val shortChangeListName = StringUtil.trimMiddle(provider.localRequest.changelistName, 40)
+        return String.format("Move to '%s' Changelist", StringUtil.escapeMnemonics(shortChangeListName))
+      }
+      else {
+        return ActionsBundle.message("action.ChangesView.Move.text")
+      }
+    }
+
+    override fun doPerform(e: AnActionEvent,
+                           tracker: PartialLocalLineStatusTracker,
+                           changes: List<LocalTrackerChange>) {
+      val selectedLines = getLocalSelectedLines(changes)
+
+      if (changes.all { !it.isFromActiveChangelist }) {
+        val changeList = ChangeListManager.getInstance(tracker.project).getChangeList(activeChangelistId)
+        if (changeList != null) tracker.moveToChangelist(selectedLines, changeList)
+      }
+      else {
+        MoveChangesLineStatusAction.moveToAnotherChangelist(tracker, selectedLines)
+      }
+
+      provider.viewer.rediff()
+    }
+  }
+
+  private class ExcludeSelectedChangesFromCommitAction(provider: LocalTrackerActionProvider)
+    : MySelectedChangesActionBase(true, provider) {
+
+    init {
+      ActionUtil.copyFrom(this, "Vcs.Diff.ExcludeChangedLinesFromCommit")
+    }
+
+    override fun getText(changes: List<LocalTrackerChange>): String {
+      val hasExcluded = changes.any { it.isExcludedFromCommit }
+      return if (changes.isNotEmpty() && !hasExcluded) "Exclude Lines from Commit" else "Include Lines into Commit"
+    }
+
+    override fun doPerform(e: AnActionEvent,
+                           tracker: PartialLocalLineStatusTracker,
+                           changes: List<LocalTrackerChange>) {
+      val selectedLines = getLocalSelectedLines(changes)
+
+      val hasExcluded = changes.any { it.isExcludedFromCommit }
+      tracker.setExcludedFromCommit(selectedLines, !hasExcluded)
+
+      provider.viewer.rediff()
+    }
+  }
+
+  private class IncludeOnlySelectedChangesIntoCommitAction(provider: LocalTrackerActionProvider)
+    : MySelectedChangesActionBase(true, provider) {
+
+    init {
+      ActionUtil.copyFrom(this, "Vcs.Diff.IncludeOnlyChangedLinesIntoCommit")
+    }
+
+    override fun doPerform(e: AnActionEvent,
+                           tracker: PartialLocalLineStatusTracker,
+                           changes: List<LocalTrackerChange>) {
+      val selectedLines = getLocalSelectedLines(changes)
+
+      tracker.setExcludedFromCommit(activeChangelistId, true)
+      tracker.setExcludedFromCommit(selectedLines, false)
+
+      provider.viewer.rediff()
+    }
+  }
+
+  private abstract class MySelectedChangesActionBase(private val forActiveChangelistOnly: Boolean,
+                                                     protected val provider: LocalTrackerActionProvider) : DumbAwareAction() {
+
+    override fun update(e: AnActionEvent) {
+      if (forActiveChangelistOnly && !provider.allowExcludeChangesFromCommit) {
+        e.presentation.isEnabledAndVisible = false
+        return
+      }
+
+      if (DiffUtil.isFromShortcut(e)) {
+        e.presentation.isEnabledAndVisible = true
+        return
+      }
+
+      val tracker = provider.localRequest.partialTracker
+      val affectedChanges = getAffectedChanges(e)
+      if (tracker == null || affectedChanges == null) {
+        e.presentation.isVisible = true
+        e.presentation.isEnabled = false
+        e.presentation.text = getText(emptyList())
+        return
+      }
+
+      e.presentation.isVisible = true
+      e.presentation.isEnabled = affectedChanges.isNotEmpty()
+      e.presentation.text = getText(affectedChanges)
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {
+      val tracker = provider.localRequest.partialTracker ?: return
+      val affectedChanges = getAffectedChanges(e) ?: return
+      if (affectedChanges.isEmpty()) return
+
+      doPerform(e, tracker, affectedChanges)
+    }
+
+    private fun getAffectedChanges(e: AnActionEvent): List<LocalTrackerChange>? {
+      val changes = provider.getSelectedTrackerChanges(e) ?: return null
+      if (forActiveChangelistOnly) {
+        return changes.filter { it.isFromActiveChangelist }
+      }
+      else {
+        return changes
+      }
+    }
+
+    protected open fun getText(changes: List<LocalTrackerChange>): String {
+      return templatePresentation.text
+    }
+
+    protected val LocalTrackerChange.isFromActiveChangelist get() = changelistId == activeChangelistId
+    protected val activeChangelistId get() = provider.localRequest.changelistId
+
+    @CalledWithWriteLock
+    protected abstract fun doPerform(e: AnActionEvent,
+                                     tracker: PartialLocalLineStatusTracker,
+                                     changes: List<LocalTrackerChange>)
+  }
+
+  private fun getLocalSelectedLines(changes: List<LocalTrackerChange>): BitSet {
+    val selectedLines = BitSet()
+    for (change in changes) {
+      val startLine = change.startLine
+      val endLine = change.endLine
+      selectedLines.set(startLine, if (startLine == endLine) startLine + 1 else endLine)
+    }
+    return selectedLines
+  }
+
+  abstract class LocalTrackerActionProvider(val viewer: DiffViewerBase,
+                                            val localRequest: LocalChangeListDiffRequest,
+                                            val allowExcludeChangesFromCommit: Boolean) {
+    abstract fun getSelectedTrackerChanges(e: AnActionEvent): List<LocalTrackerChange>?
+  }
+
+  class LocalTrackerChange(val startLine: Int, val endLine: Int, val changelistId: String, val isExcludedFromCommit: Boolean)
+
+  private val LocalChangeListDiffRequest.partialTracker get() = lineStatusTracker as? PartialLocalLineStatusTracker
 }

@@ -459,6 +459,10 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     return convertor != null ? convertor.convertApproximateInv(line) : line;
   }
 
+  public int transferLineFromOneside(@NotNull Side side, int line) {
+    return side.select(transferLineFromOneside(line).first);
+  }
+
   /*
    * This convertor returns 'good enough' position, even if exact matching is impossible
    */
@@ -665,18 +669,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       return DiffUtil.isSomeRangeSelected(getEditor(), lines -> ContainerUtil.exists(changes, change -> isChangeSelected(change, lines)));
     }
 
-    @NotNull
-    @CalledInAwt
-    private List<UnifiedDiffChange> getSelectedChanges() {
-      final BitSet lines = DiffUtil.getSelectedLines(myEditor);
-      List<UnifiedDiffChange> changes = ContainerUtil.notNullize(myModel.getDiffChanges());
-      return ContainerUtil.filter(changes, change -> isChangeSelected(change, lines));
-    }
-
-    private boolean isChangeSelected(@NotNull UnifiedDiffChange change, @NotNull BitSet lines) {
-      return DiffUtil.isSelectedByLine(lines, change.getLine1(), change.getLine2());
-    }
-
     @CalledWithWriteLock
     protected abstract void apply(@NotNull List<? extends UnifiedDiffChange> changes);
   }
@@ -747,6 +739,18 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
                                outputSide.getEndLine(lineFragment), outputSide.getEndLine(lineFragment),
                                sourceSide.select(document1, document2),
                                sourceSide.getStartLine(lineFragment), sourceSide.getEndLine(lineFragment));
+  }
+
+  @NotNull
+  @CalledInAwt
+  protected List<UnifiedDiffChange> getSelectedChanges() {
+    final BitSet lines = DiffUtil.getSelectedLines(myEditor);
+    List<UnifiedDiffChange> changes = ContainerUtil.notNullize(myModel.getDiffChanges());
+    return ContainerUtil.filter(changes, change -> isChangeSelected(change, lines));
+  }
+
+  private static boolean isChangeSelected(@NotNull UnifiedDiffChange change, @NotNull BitSet lines) {
+    return DiffUtil.isSelectedByLine(lines, change.getLine1(), change.getLine2());
   }
 
   //

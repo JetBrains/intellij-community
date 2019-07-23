@@ -7,12 +7,18 @@ import com.intellij.diff.tools.fragmented.UnifiedDiffChange;
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer;
 import com.intellij.diff.tools.fragmented.UnifiedFragmentBuilder;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.Side;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
@@ -20,14 +26,25 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
 
   private final boolean myAllowExcludeChangesFromCommit;
 
+  private final LocalTrackerDiffUtil.LocalTrackerActionProvider myTrackerActionProvider;
+
   public UnifiedLocalChangeListDiffViewer(@NotNull DiffContext context,
                                           @NotNull LocalChangeListDiffRequest localRequest) {
     super(context, localRequest.getRequest());
     myLocalRequest = localRequest;
 
     myAllowExcludeChangesFromCommit = DiffUtil.isUserDataFlagSet(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, context);
+    myTrackerActionProvider = new MyLocalTrackerActionProvider(this, localRequest, myAllowExcludeChangesFromCommit);
 
     LocalTrackerDiffUtil.installTrackerListener(this, myLocalRequest);
+  }
+
+  @NotNull
+  @Override
+  protected List<AnAction> createEditorPopupActions() {
+    List<AnAction> group = new ArrayList<>(super.createEditorPopupActions());
+    group.addAll(LocalTrackerDiffUtil.createTrackerActions(myTrackerActionProvider));
+    return group;
   }
 
   @NotNull
@@ -129,7 +146,67 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
       LocalTrackerDiffUtil.LineFragmentData data = myFragmentsData.get(fragmentIndex);
       boolean isSkipped = data.isSkipped();
       boolean isExcluded = data.isExcluded(myAllowExcludeChangesFromCommit);
-      return new UnifiedDiffChange(blockStart, insertedStart, blockEnd, fragment, isExcluded, isSkipped);
+      return new MyUnifiedDiffChange(blockStart, insertedStart, blockEnd, fragment, isExcluded, isSkipped,
+                                     data.getChangelistId(), data.isFromActiveChangelist(), data.isExcludedFromCommit());
+    }
+  }
+
+  private static class MyUnifiedDiffChange extends UnifiedDiffChange {
+    @NotNull private final String myChangelistId;
+    private final boolean myIsFromActiveChangelist;
+    private final boolean myIsExcludedFromCommit;
+
+    private MyUnifiedDiffChange(int blockStart,
+                                int insertedStart,
+                                int blockEnd,
+                                @NotNull LineFragment lineFragment,
+                                boolean isExcluded,
+                                boolean isSkipped,
+                                @NotNull String changelistId,
+                                boolean isFromActiveChangelist,
+                                boolean isExcludedFromCommit) {
+      super(blockStart, insertedStart, blockEnd, lineFragment, isExcluded, isSkipped);
+      myChangelistId = changelistId;
+      myIsFromActiveChangelist = isFromActiveChangelist;
+      myIsExcludedFromCommit = isExcludedFromCommit;
+    }
+
+    @NotNull
+    public String getChangelistId() {
+      return myChangelistId;
+    }
+
+    public boolean isFromActiveChangelist() {
+      return myIsFromActiveChangelist;
+    }
+
+    public boolean isExcludedFromCommit() {
+      return myIsExcludedFromCommit;
+    }
+  }
+
+  private static class MyLocalTrackerActionProvider extends LocalTrackerDiffUtil.LocalTrackerActionProvider {
+    @NotNull private final UnifiedLocalChangeListDiffViewer myViewer;
+
+    private MyLocalTrackerActionProvider(@NotNull UnifiedLocalChangeListDiffViewer viewer,
+                                         @NotNull LocalChangeListDiffRequest localRequest,
+                                         boolean allowExcludeChangesFromCommit) {
+      super(viewer, localRequest, allowExcludeChangesFromCommit);
+      myViewer = viewer;
+    }
+
+    @Nullable
+    @Override
+    public List<LocalTrackerDiffUtil.LocalTrackerChange> getSelectedTrackerChanges(@NotNull AnActionEvent e) {
+      if (!myViewer.isContentGood()) return null;
+
+      return StreamEx.of(myViewer.getSelectedChanges())
+        .select(MyUnifiedDiffChange.class)
+        .map(it -> new LocalTrackerDiffUtil.LocalTrackerChange(myViewer.transferLineFromOneside(Side.RIGHT, it.getLine1()),
+                                                               myViewer.transferLineFromOneside(Side.RIGHT, it.getLine2()),
+                                                               it.myChangelistId,
+                                                               it.myIsExcludedFromCommit))
+        .toList();
     }
   }
 }

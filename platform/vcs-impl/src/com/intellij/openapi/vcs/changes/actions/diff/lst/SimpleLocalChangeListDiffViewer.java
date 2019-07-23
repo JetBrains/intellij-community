@@ -11,12 +11,9 @@ import com.intellij.diff.util.DiffGutterRenderer;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
 import com.intellij.icons.AllIcons;
-import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
@@ -24,21 +21,16 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.LocalTrackerChange;
 import com.intellij.openapi.vcs.ex.ExclusionState;
 import com.intellij.openapi.vcs.ex.LocalRange;
-import com.intellij.openapi.vcs.ex.MoveChangesLineStatusAction;
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.CalledWithWriteLock;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,17 +38,20 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.*;
 
 public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   @NotNull private final LocalChangeListDiffRequest myLocalRequest;
   @NotNull private final String myChangelistId;
   @NotNull private final String myChangelistName;
 
+  private final boolean myAllowExcludeChangesFromCommit;
+
+  private final LocalTrackerDiffUtil.LocalTrackerActionProvider myTrackerActionProvider;
   private ExcludeAllCheckboxPanel myExcludeAllCheckboxPanel;
 
-  private final boolean myAllowExcludeChangesFromCommit;
 
   public SimpleLocalChangeListDiffViewer(@NotNull DiffContext context,
                                          @NotNull LocalChangeListDiffRequest localRequest) {
@@ -66,6 +61,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     myChangelistName = localRequest.getChangelistName();
 
     myAllowExcludeChangesFromCommit = DiffUtil.isUserDataFlagSet(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, context);
+    myTrackerActionProvider = new MyLocalTrackerActionProvider(this, localRequest, myAllowExcludeChangesFromCommit);
 
     LocalTrackerDiffUtil.installTrackerListener(this, myLocalRequest);
   }
@@ -98,11 +94,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   @Override
   protected List<AnAction> createEditorPopupActions() {
     List<AnAction> group = new ArrayList<>(super.createEditorPopupActions());
-
-    group.add(new MoveSelectedChangesToAnotherChangelistAction());
-    group.add(new ExcludeSelectedChangesFromCommitAction());
-    group.add(new IncludeOnlySelectedChangesIntoCommitAction());
-
+    group.addAll(LocalTrackerDiffUtil.createTrackerActions(myTrackerActionProvider));
     return group;
   }
 
@@ -286,167 +278,31 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   }
 
 
-  private class MoveSelectedChangesToAnotherChangelistAction extends MySelectedChangesActionBase {
-    MoveSelectedChangesToAnotherChangelistAction() {
-      super(false);
-      copyShortcutFrom(ActionManager.getInstance().getAction("Vcs.MoveChangedLinesToChangelist"));
+  private static class MyLocalTrackerActionProvider extends LocalTrackerDiffUtil.LocalTrackerActionProvider {
+    @NotNull private final SimpleLocalChangeListDiffViewer myViewer;
+
+    private MyLocalTrackerActionProvider(@NotNull SimpleLocalChangeListDiffViewer viewer,
+                                         @NotNull LocalChangeListDiffRequest localRequest,
+                                         boolean allowExcludeChangesFromCommit) {
+      super(viewer, localRequest, allowExcludeChangesFromCommit);
+      myViewer = viewer;
     }
 
-    @NotNull
+    @Nullable
     @Override
-    protected String getText(@NotNull List<? extends MySimpleDiffChange> selectedChanges) {
-      if (!selectedChanges.isEmpty() && ContainerUtil.and(selectedChanges, change -> !change.isFromActiveChangelist())) {
-        String shortChangeListName = StringUtil.trimMiddle(myChangelistName, 40);
-        return String.format("Move to '%s' Changelist", StringUtil.escapeMnemonics(shortChangeListName));
-      }
-      else {
-        return ActionsBundle.message("action.ChangesView.Move.text");
-      }
-    }
-
-    @Override
-    protected void doPerform(@NotNull AnActionEvent e,
-                             @NotNull PartialLocalLineStatusTracker tracker,
-                             @NotNull List<? extends MySimpleDiffChange> selectedChanges) {
-      BitSet selectedLines = getLocalSelectedLines(selectedChanges);
-
-      if (ContainerUtil.and(selectedChanges, change -> !change.isFromActiveChangelist())) {
-        LocalChangeList changeList = ChangeListManager.getInstance(getProject()).getChangeList(myChangelistId);
-        if (changeList != null) tracker.moveToChangelist(selectedLines, changeList);
-      }
-      else {
-        MoveChangesLineStatusAction.moveToAnotherChangelist(tracker, selectedLines);
-      }
-
-      rediff();
-    }
-  }
-
-  private class ExcludeSelectedChangesFromCommitAction extends MySelectedChangesActionBase {
-    ExcludeSelectedChangesFromCommitAction() {
-      super(true);
-      ActionUtil.copyFrom(this, "Vcs.Diff.ExcludeChangedLinesFromCommit");
-    }
-
-    @NotNull
-    @Override
-    protected String getText(@NotNull List<? extends MySimpleDiffChange> selectedChanges) {
-      boolean hasExcluded = ContainerUtil.or(selectedChanges, MySimpleDiffChange::isExcludedFromCommit);
-      return !selectedChanges.isEmpty() && !hasExcluded ? "Exclude Lines from Commit" : "Include Lines into Commit";
-    }
-
-    @Override
-    protected void doPerform(@NotNull AnActionEvent e,
-                             @NotNull PartialLocalLineStatusTracker tracker,
-                             @NotNull List<? extends MySimpleDiffChange> selectedChanges) {
-      BitSet selectedLines = getLocalSelectedLines(selectedChanges);
-
-      boolean hasExcluded = ContainerUtil.or(selectedChanges, MySimpleDiffChange::isExcludedFromCommit);
-      tracker.setExcludedFromCommit(selectedLines, !hasExcluded);
-
-      rediff();
-    }
-  }
-
-  private class IncludeOnlySelectedChangesIntoCommitAction extends MySelectedChangesActionBase {
-    IncludeOnlySelectedChangesIntoCommitAction() {
-      super(true);
-      ActionUtil.copyFrom(this, "Vcs.Diff.IncludeOnlyChangedLinesIntoCommit");
-    }
-
-    @Override
-    protected void doPerform(@NotNull AnActionEvent e,
-                             @NotNull PartialLocalLineStatusTracker tracker,
-                             @NotNull List<? extends MySimpleDiffChange> selectedChanges) {
-      BitSet selectedLines = getLocalSelectedLines(selectedChanges);
-
-      tracker.setExcludedFromCommit(myChangelistId, true);
-      tracker.setExcludedFromCommit(selectedLines, false);
-
-      rediff();
-    }
-  }
-
-  private abstract class MySelectedChangesActionBase extends DumbAwareAction {
-    private final boolean myActiveChangelistOnly;
-
-    MySelectedChangesActionBase(boolean activeChangelistOnly) {
-      myActiveChangelistOnly = activeChangelistOnly;
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      if (myActiveChangelistOnly && !myAllowExcludeChangesFromCommit) {
-        e.getPresentation().setEnabledAndVisible(false);
-        return;
-      }
-
-      if (DiffUtil.isFromShortcut(e)) {
-        e.getPresentation().setEnabledAndVisible(true);
-        return;
-      }
-
-      PartialLocalLineStatusTracker tracker = getPartialTracker();
+    public List<LocalTrackerChange> getSelectedTrackerChanges(@NotNull AnActionEvent e) {
       Editor editor = e.getData(CommonDataKeys.EDITOR);
-      Side side = Side.fromValue(getEditors(), editor);
-      if (side == null || tracker == null) {
-        e.getPresentation().setVisible(true);
-        e.getPresentation().setEnabled(false);
-        e.getPresentation().setText(getText(Collections.emptyList()));
-        return;
-      }
+      Side side = Side.fromValue(myViewer.getEditors(), editor);
+      if (side == null) return null;
 
-      List<MySimpleDiffChange> selectedChanges = getSelectedChanges(side);
-      e.getPresentation().setVisible(true);
-      e.getPresentation().setEnabled(!selectedChanges.isEmpty());
-      e.getPresentation().setText(getText(selectedChanges));
+      return StreamEx.of(myViewer.getSelectedChanges(side))
+        .select(MySimpleDiffChange.class)
+        .map(it -> new LocalTrackerChange(it.getStartLine(Side.RIGHT),
+                                          it.getEndLine(Side.RIGHT),
+                                          it.myChangelistId,
+                                          it.myIsExcludedFromCommit))
+        .toList();
     }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      PartialLocalLineStatusTracker tracker = getPartialTracker();
-      Editor editor = e.getData(CommonDataKeys.EDITOR);
-      Side side = Side.fromValue(getEditors(), editor);
-      if (editor == null || side == null || tracker == null) return;
-
-      List<MySimpleDiffChange> selectedChanges = getSelectedChanges(side);
-      if (selectedChanges.isEmpty()) return;
-
-      doPerform(e, tracker, selectedChanges);
-    }
-
-    @NotNull
-    private List<MySimpleDiffChange> getSelectedChanges(@NotNull Side side) {
-      List<MySimpleDiffChange> changes = ContainerUtil.findAll(SimpleLocalChangeListDiffViewer.this.getSelectedChanges(side),
-                                                               MySimpleDiffChange.class);
-      if (myActiveChangelistOnly) {
-        return ContainerUtil.filter(changes, MySimpleDiffChange::isFromActiveChangelist);
-      }
-      else {
-        return changes;
-      }
-    }
-
-    @NotNull
-    protected String getText(@NotNull List<? extends MySimpleDiffChange> selectedChanges) {
-      return getTemplatePresentation().getText();
-    }
-
-    @CalledWithWriteLock
-    protected abstract void doPerform(@NotNull AnActionEvent e,
-                                      @NotNull PartialLocalLineStatusTracker tracker,
-                                      @NotNull List<? extends MySimpleDiffChange> selectedChanges);
-  }
-
-  @NotNull
-  private static BitSet getLocalSelectedLines(@NotNull List<? extends MySimpleDiffChange> changes) {
-    BitSet selectedLines = new BitSet();
-    for (SimpleDiffChange change : changes) {
-      int startLine = change.getStartLine(Side.RIGHT);
-      int endLine = change.getEndLine(Side.RIGHT);
-      selectedLines.set(startLine, startLine == endLine ? startLine + 1 : endLine);
-    }
-    return selectedLines;
   }
 
   private class ExcludeAllCheckboxPanel extends JPanel {
