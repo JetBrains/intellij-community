@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.diagnostic.ThreadDumper;
@@ -77,7 +78,10 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     DebuggerManagerThreadImpl.assertIsManagerThread();
     try {
       if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
-        myKeptReferences.forEach(DebuggerUtilsEx::enableCollection);
+        // delay enable collection to speedup the resume
+        for (ObjectReference r : myKeptReferences) {
+          myDebugProcess.getManagerThread().schedule(PrioritizedTask.Priority.LOWEST, () -> DebuggerUtilsEx.enableCollection(r));
+        }
         myKeptReferences.clear();
       }
 
