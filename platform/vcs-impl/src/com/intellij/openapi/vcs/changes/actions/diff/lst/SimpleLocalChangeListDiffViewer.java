@@ -24,7 +24,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.LocalTrackerChange;
 import com.intellij.openapi.vcs.ex.ExclusionState;
-import com.intellij.openapi.vcs.ex.LocalRange;
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.scale.JBUIScale;
@@ -263,14 +262,8 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
           protected void handleMouseClick() {
             if (!myChange.isValid()) return;
 
-            PartialLocalLineStatusTracker tracker = getViewer().getPartialTracker();
-            if (tracker == null) return;
-            LocalRange range = tracker.getRangeForLine(myChange.getStartLine(Side.RIGHT));
-            if (range == null) return;
-
-            tracker.setExcludedFromCommit(range, !isExcludedFromCommit);
-
-            getViewer().rediff();
+            int line = myChange.getStartLine(Side.RIGHT);
+            LocalTrackerDiffUtil.toggleRangeAtLine(getViewer().myTrackerActionProvider, line, isExcludedFromCommit);
           }
         };
       }

@@ -4,20 +4,25 @@ package com.intellij.openapi.vcs.changes.actions.diff.lst;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.tools.fragmented.UnifiedDiffChange;
+import com.intellij.diff.tools.fragmented.UnifiedDiffChangeUi;
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer;
 import com.intellij.diff.tools.fragmented.UnifiedFragmentBuilder;
+import com.intellij.diff.util.DiffGutterRenderer;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,6 +50,13 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
     List<AnAction> group = new ArrayList<>(super.createEditorPopupActions());
     group.addAll(LocalTrackerDiffUtil.createTrackerActions(myTrackerActionProvider));
     return group;
+  }
+
+  @NotNull
+  @Override
+  protected UnifiedDiffChangeUi createUi(@NotNull UnifiedDiffChange change) {
+    if (change instanceof MyUnifiedDiffChange) return new MyUnifiedDiffChangeUi(this, (MyUnifiedDiffChange)change);
+    return super.createUi(change);
   }
 
   @NotNull
@@ -182,6 +194,50 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
 
     public boolean isExcludedFromCommit() {
       return myIsExcludedFromCommit;
+    }
+  }
+
+  private static class MyUnifiedDiffChangeUi extends UnifiedDiffChangeUi {
+    private MyUnifiedDiffChangeUi(@NotNull UnifiedLocalChangeListDiffViewer viewer,
+                                  @NotNull MyUnifiedDiffChange change) {
+      super(viewer, change);
+    }
+
+    @NotNull
+    private UnifiedLocalChangeListDiffViewer getViewer() {
+      return (UnifiedLocalChangeListDiffViewer)myViewer;
+    }
+
+    @NotNull
+    private MyUnifiedDiffChange getChange() {
+      return ((MyUnifiedDiffChange)myChange);
+    }
+
+    @Override
+    protected void doInstallActionHighlighters() {
+      if (getViewer().myAllowExcludeChangesFromCommit && getChange().isFromActiveChangelist()) {
+        myOperations.add(new ExcludeGutterOperation());
+      }
+      super.doInstallActionHighlighters();
+    }
+
+    private class ExcludeGutterOperation extends MyGutterOperation {
+      @Override
+      public GutterIconRenderer createRenderer() {
+        if (!getChange().isFromActiveChangelist()) return null;
+
+        final boolean isExcludedFromCommit = getChange().isExcludedFromCommit();
+        Icon icon = isExcludedFromCommit ? AllIcons.Diff.GutterCheckBox : AllIcons.Diff.GutterCheckBoxSelected;
+        return new DiffGutterRenderer(icon, "Include into commit") {
+          @Override
+          protected void handleMouseClick() {
+            if (!getViewer().isContentGood()) return;
+
+            int line = myViewer.transferLineFromOneside(Side.RIGHT, myChange.getLine1());
+            LocalTrackerDiffUtil.toggleRangeAtLine(getViewer().myTrackerActionProvider, line, isExcludedFromCommit);
+          }
+        };
+      }
     }
   }
 

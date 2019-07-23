@@ -183,6 +183,15 @@ object LocalTrackerDiffUtil {
     }
   }
 
+  @JvmStatic
+  fun toggleRangeAtLine(provider: LocalTrackerActionProvider, line: Int, isExcludedFromCommit: Boolean) {
+    val tracker = provider.localRequest.partialTracker ?: return
+    val range = tracker.getRangeForLine(line) ?: return
+
+    tracker.setExcludedFromCommit(range, !isExcludedFromCommit)
+
+    provider.viewer.rediff()
+  }
 
   @JvmStatic
   fun createTrackerActions(provider: LocalTrackerActionProvider): List<AnAction> {

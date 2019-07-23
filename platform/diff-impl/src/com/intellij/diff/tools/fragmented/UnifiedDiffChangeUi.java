@@ -21,12 +21,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UnifiedDiffChangeUi {
-  @NotNull private final UnifiedDiffViewer myViewer;
-  @NotNull private final EditorEx myEditor;
-  @NotNull private final UnifiedDiffChange myChange;
+  @NotNull protected final UnifiedDiffViewer myViewer;
+  @NotNull protected final EditorEx myEditor;
+  @NotNull protected final UnifiedDiffChange myChange;
 
-  @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<>();
-  @NotNull private final List<MyGutterOperation> myOperations = new ArrayList<>();
+  @NotNull protected final List<RangeHighlighter> myHighlighters = new ArrayList<>();
+  @NotNull protected final List<MyGutterOperation> myOperations = new ArrayList<>();
 
   public UnifiedDiffChangeUi(@NotNull UnifiedDiffViewer viewer, @NotNull UnifiedDiffChange change) {
     myViewer = viewer;
@@ -53,7 +53,7 @@ public class UnifiedDiffChangeUi {
     doInstallActionHighlighters();
   }
 
-  private void doInstallActionHighlighters() {
+  protected void doInstallActionHighlighters() {
     if (myChange.isSkipped()) return;
 
     boolean leftEditable = myViewer.isEditable(Side.LEFT, false);
@@ -89,21 +89,32 @@ public class UnifiedDiffChangeUi {
 
   @NotNull
   private MyGutterOperation createOperation(@NotNull Side sourceSide) {
-    int offset = myEditor.getDocument().getLineStartOffset(myChange.getLine1());
-    RangeHighlighter highlighter = myEditor.getMarkupModel().addRangeHighlighter(offset, offset,
-                                                                                 HighlighterLayer.ADDITIONAL_SYNTAX,
-                                                                                 null,
-                                                                                 HighlighterTargetArea.LINES_IN_RANGE);
-    return new MyGutterOperation(sourceSide, highlighter);
+    return new MyGutterOperation() {
+      @Nullable
+      @Override
+      public GutterIconRenderer createRenderer() {
+        if (myViewer.isStateIsOutOfDate()) return null;
+        if (!myViewer.isEditable(sourceSide.other(), true)) return null;
+
+        if (sourceSide.isLeft()) {
+          return createIconRenderer(sourceSide, "Revert", AllIcons.Diff.Remove);
+        }
+        else {
+          return createIconRenderer(sourceSide, "Accept", AllIcons.Actions.Checked);
+        }
+      }
+    };
   }
 
-  private class MyGutterOperation {
-    @NotNull private final Side mySide;
+  protected abstract class MyGutterOperation {
     @NotNull private final RangeHighlighter myHighlighter;
 
-    private MyGutterOperation(@NotNull Side sourceSide, @NotNull RangeHighlighter highlighter) {
-      mySide = sourceSide;
-      myHighlighter = highlighter;
+    public MyGutterOperation() {
+      int offset = myEditor.getDocument().getLineStartOffset(myChange.getLine1());
+      myHighlighter = myEditor.getMarkupModel().addRangeHighlighter(offset, offset,
+                                                                    HighlighterLayer.ADDITIONAL_SYNTAX,
+                                                                    null,
+                                                                    HighlighterTargetArea.LINES_IN_RANGE);
 
       update();
     }
@@ -117,17 +128,7 @@ public class UnifiedDiffChangeUi {
     }
 
     @Nullable
-    public GutterIconRenderer createRenderer() {
-      if (myViewer.isStateIsOutOfDate()) return null;
-      if (!myViewer.isEditable(mySide.other(), true)) return null;
-
-      if (mySide.isLeft()) {
-        return createIconRenderer(mySide, "Revert", AllIcons.Diff.Remove);
-      }
-      else {
-        return createIconRenderer(mySide, "Accept", AllIcons.Actions.Checked);
-      }
-    }
+    public abstract GutterIconRenderer createRenderer();
   }
 
   private GutterIconRenderer createIconRenderer(@NotNull final Side sourceSide,
