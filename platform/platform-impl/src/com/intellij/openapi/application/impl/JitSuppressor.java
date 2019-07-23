@@ -25,11 +25,13 @@ public class JitSuppressor implements PowerSaveMode.Listener {
     "com/intellij/openapi/editor/*.*",
     "com/intellij/openapi/project/*.*",
     "com/intellij/openapi/util/text/*.*",
+    "com/intellij/openapi/util/io/*.*", // FileUtil
     "com/intellij/openapi/vfs/*.*",
     "com/intellij/openapi/fileTypes/*.*",
     "com/intellij/openapi/progress/*.*",
     "com/intellij/psi/codeStyle/*.*",
     "com/intellij/psi/util/*.*",
+    "com/intellij/psi/impl/source/tree/*.*",
     "com/intellij/util/*.*",
     "com/intellij/semantic/*.*",
     "com/intellij/lang/impl/*.*", // PsiBuilder and related classes
