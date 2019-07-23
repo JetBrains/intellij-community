@@ -73,7 +73,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
       }
 
       @Override
-      protected boolean reportConflicts(MultiMap<PsiElement,String> conflicts, final Project project, IntroduceVariableSettings dialog) {
+      protected boolean reportConflicts(MultiMap<PsiElement, String> conflicts, final Project project, IntroduceVariableSettings dialog) {
         assertEquals(2, conflicts.size());
         Collection<? extends String> conflictsMessages = conflicts.values();
         assertTrue(conflictsMessages.contains("Introducing variable may break code logic"));
