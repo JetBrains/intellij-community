@@ -103,7 +103,7 @@ public class HtmlCompatibilityData {
   public static Map getAttributeData(@Nullable XmlTag tag, String attributeName) {
     Object data = getTagData(tag);
     if (data != null) {
-      Object attributeData = ((Map)data).get(StringUtil.toLowerCase(attributeName));
+      Object attributeData = ((Map)data).get(attributeName);
       if (attributeData != null) return (Map)attributeData;
     }
     if (ourGlobalAttributesCache.get() == null) {
