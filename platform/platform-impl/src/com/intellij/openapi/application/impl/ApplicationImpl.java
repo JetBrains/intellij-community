@@ -550,7 +550,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     final AtomicBoolean threadStarted = new AtomicBoolean();
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> {
-      executeOnPooledThread(() -> {
+      executeOnPooledThread(ConcurrencyUtil.underThreadNameRunnable(progressTitle, () -> {
         try {
           ProgressManager.getInstance().runProcess(process, progress);
         }
@@ -562,7 +562,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
           progress.cancel();
           throw e;
         }
-      });
+      }));
       threadStarted.set(true);
     });
 

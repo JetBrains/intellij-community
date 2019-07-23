@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -114,16 +115,16 @@ public class CacheUpdateRunner {
     try {
       int threadsCount = indexingThreadCount();
       if (threadsCount == 1 || application.isWriteAccessAllowed()) {
-        Runnable process = new MyRunnable(innerIndicator, suspendableIndicator, queue, isFinished, progressUpdater, project, fileProcessor);
+        Runnable process = createRunnable(project, queue, progressUpdater, suspendableIndicator, innerIndicator, isFinished, fileProcessor);
         ProgressManager.getInstance().runProcess(process, innerIndicator);
       }
       else {
         AtomicBoolean[] finishedRefs = new AtomicBoolean[threadsCount];
         Future<?>[] futures = new Future<?>[threadsCount];
         for (int i = 0; i < threadsCount; i++) {
-          AtomicBoolean ref = new AtomicBoolean();
-          finishedRefs[i] = ref;
-          Runnable process = new MyRunnable(innerIndicator, suspendableIndicator, queue, ref, progressUpdater, project, fileProcessor);
+          AtomicBoolean localFinished = new AtomicBoolean();
+          finishedRefs[i] = localFinished;
+          Runnable process = createRunnable(project, queue, progressUpdater, suspendableIndicator, innerIndicator, localFinished, fileProcessor);
           futures[i] = application.executeOnPooledThread(process);
         }
         isFinished.set(waitForAll(finishedRefs, futures));
@@ -134,6 +135,18 @@ public class CacheUpdateRunner {
     }
 
     return isFinished.get();
+  }
+
+  @NotNull
+  private static Runnable createRunnable(@NotNull Project project,
+                                         @NotNull FileContentQueue queue,
+                                         @NotNull ProgressUpdater progressUpdater,
+                                         @NotNull ProgressIndicator suspendableIndicator,
+                                         @NotNull ProgressIndicatorBase innerIndicator,
+                                         @NotNull AtomicBoolean isFinished,
+                                         @NotNull Consumer<? super FileContent> fileProcessor) {
+    return ConcurrencyUtil.underThreadNameRunnable("Indexing",
+       new MyRunnable(innerIndicator, suspendableIndicator, queue, isFinished, progressUpdater, project, fileProcessor));
   }
 
   public static int indexingThreadCount() {

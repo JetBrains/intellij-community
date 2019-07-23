@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -405,7 +406,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
         final long start = System.currentTimeMillis();
         try {
-          runProcess(process, progressIndicator);
+          ConcurrencyUtil.runUnderThreadName(task.getTitle(), ()-> runProcess(process, progressIndicator));
         }
         catch (ProcessCanceledException e) {
           processCanceled = true;
