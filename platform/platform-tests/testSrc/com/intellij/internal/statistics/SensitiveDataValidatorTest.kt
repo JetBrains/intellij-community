@@ -5,11 +5,13 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
+import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.LocalEnumCustomWhitelistRule
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.RegexpWhiteListRule
 import com.intellij.internal.statistic.eventLog.validator.rules.utils.WhiteListSimpleRuleFactory.parseSimpleExpression
+import com.intellij.internal.statistic.eventLog.whitelist.WhitelistStorage
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
@@ -23,6 +25,7 @@ import java.util.*
 import java.util.regex.Pattern
 import kotlin.test.assertTrue
 
+@Suppress("SameParameterValue")
 class SensitiveDataValidatorTest : UsefulTestCase() {
   private var myFixture: CodeInsightTestFixture? = null
 
@@ -50,7 +53,7 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
 
   @Test
   fun test_refexg_escapes() {
-    var foo = "[aa] \\ \\p{Lower} (a|b|c) [a-zA-Z_0-9] X?+ X*+ X?? [\\p{L}&&[^\\p{Lu}]] "
+    val foo = "[aa] \\ \\p{Lower} (a|b|c) [a-zA-Z_0-9] X?+ X*+ X?? [\\p{L}&&[^\\p{Lu}]] "
     val pattern = Pattern.compile(RegexpWhiteListRule.escapeText(foo))
     assertTrue(pattern.matcher(foo).matches())
     assert(true)
@@ -292,7 +295,7 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
   }
 
   private fun createTestSensitiveDataValidator(content: String): TestSensitiveDataValidator {
-    return TestSensitiveDataValidator(content).update() as TestSensitiveDataValidator
+    return TestSensitiveDataValidator(content)
   }
 
 
@@ -303,19 +306,16 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
   }
 
 
-  internal inner class TestSensitiveDataValidator constructor(private val myContent: String) : SensitiveDataValidator("TEST") {
-    override fun getWhiteListContent(): String {
-      return myContent
-    }
+  internal inner class TestSensitiveDataValidator constructor(myContent: String) : SensitiveDataValidator(TestWhitelistStorage(myContent)) {
 
     fun getEventRules(group: EventLogGroup): Array<FUSRule> {
-      val whiteListRule = eventsValidators[group.id]
+      val whiteListRule = myWhiteListStorage.getGroupRules(group.id)
 
       return if (whiteListRule == null) FUSRule.EMPTY_ARRAY else whiteListRule.eventIdRules
     }
 
     fun getEventDataRules(group: EventLogGroup): Map<String, Array<FUSRule>> {
-      val whiteListRule = eventsValidators[group.id]
+      val whiteListRule = myWhiteListStorage.getGroupRules(group.id)
 
       return if (whiteListRule == null) emptyMap() else whiteListRule.eventDataRules
     }
@@ -323,9 +323,17 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
     fun validateEventData(group: EventLogGroup, key: String, value: Any): ValidationResultType {
       if (FeatureUsageData.platformDataKeys.contains(key)) return ValidationResultType.ACCEPTED
 
-      val whiteListRule = eventsValidators[group.id]
+      val whiteListRule = myWhiteListStorage.getGroupRules(group.id)
       return if (whiteListRule == null || !whiteListRule.areEventDataRulesDefined()) ValidationResultType.UNDEFINED_RULE
       else whiteListRule.validateEventData(key, value, EventContext.create("", Collections.emptyMap())) // there are no configured rules
+    }
+  }
+
+  class TestWhitelistStorage(myContent: String) : WhitelistStorage("TEST", TestEventLogWhitelistPersistence(myContent))
+
+  class TestEventLogWhitelistPersistence(private val myContent: String) : EventLogWhitelistPersistence("TEST") {
+    override fun getCachedWhitelist(): String? {
+      return myContent
     }
   }
 

@@ -8,7 +8,7 @@ import com.intellij.ide.FrameStateListener;
 import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerKt;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider;
-import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
+import com.intellij.internal.statistic.eventLog.whitelist.WhitelistStorageProvider;
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger;
 import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsPersistence;
 import com.intellij.internal.statistic.service.fus.collectors.LegacyFUSProjectUsageTrigger;
@@ -69,16 +69,16 @@ public class StatisticsJobsScheduler implements ApplicationInitializedListener {
     runEventLogStatisticsService();
     runStatesLogging();
     runLegacyDataCleanupService();
-    runSensitiveDataValidatorUpdater();
+    runWhitelistStorageUpdater();
   }
 
-  private static void runSensitiveDataValidatorUpdater() {
+  private static void runWhitelistStorageUpdater() {
     JobScheduler.getScheduler().scheduleWithFixedDelay(
       () -> {
         final List<StatisticsEventLoggerProvider> providers = StatisticsEventLoggerKt.getEventLogProviders();
         for (StatisticsEventLoggerProvider provider : providers) {
           if (provider.isRecordEnabled()) {
-            SensitiveDataValidator.getInstance(provider.getRecorderId()).update();
+            WhitelistStorageProvider.getInstance(provider.getRecorderId()).update();
           }
         }
       }, 3, 180, TimeUnit.MINUTES);

@@ -1,8 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.actions;
 
-import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
-import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogTestWhitelistPersistence;
+import com.intellij.internal.statistic.eventLog.whitelist.WhitelistTestGroupStorage;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -36,17 +35,14 @@ public class AddTestGroupToLocalWhitelistAction extends AnAction {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         final String recorderId = dialog.getRecorderId();
-        final SensitiveDataValidator validator = SensitiveDataValidator.getInstance(recorderId);
-
-        validator.update();
+        final WhitelistTestGroupStorage testWhitelist = WhitelistTestGroupStorage.getInstance(recorderId);
         try {
           if (dialog.isCustomRules()) {
-            EventLogTestWhitelistPersistence.addGroupWithCustomRules(recorderId, dialog.getGroupId(), dialog.getCustomRules());
+            testWhitelist.addGroupWithCustomRules(dialog.getGroupId(), dialog.getCustomRules());
           }
           else {
-            EventLogTestWhitelistPersistence.addTestGroup(recorderId, dialog.getGroupId());
+            testWhitelist.addTestGroup(dialog.getGroupId());
           }
-          validator.reload();
           showNotification(project, NotificationType.INFORMATION, "Group '" + dialog.getGroupId() + "' was added to local whitelist");
         }
         catch (IOException ex) {
