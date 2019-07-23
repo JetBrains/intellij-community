@@ -62,7 +62,7 @@ grammar {
         attribute x2 { Coordinate.datatype }?,
         attribute y2 { Coordinate.datatype }?,
         attribute gradientUnits {
-            string "userSpaceOnUse" | string "objectBoundingBox"
+            string "objectBoundingBox" | string "userSpaceOnUse"
         }?,
         attribute gradientTransform { TransformList.datatype }?,
         attribute spreadMethod { string "pad" | string "reflect" | string "repeat" }?
