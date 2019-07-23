@@ -19,7 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.treeWithCheckedNodes.SelectionManager;
 import com.intellij.util.treeWithCheckedNodes.TreeNodeState;
@@ -35,7 +35,7 @@ import java.util.Map;
 /**
  * @author irengrig
  */
-public class SelectionManagerTest extends PlatformTestCase {
+public class SelectionManagerTest extends HeavyPlatformTestCase {
   private FileStructure myFs;
   private SelectionManager myCm;
 

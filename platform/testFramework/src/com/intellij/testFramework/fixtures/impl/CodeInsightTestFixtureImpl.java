@@ -1152,7 +1152,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
       VirtualFile tempDir = myTempDirFixture.getFile("");
       assertNotNull(tempDir);
-      PlatformTestCase.synchronizeTempDirVfs(tempDir);
+      HeavyPlatformTestCase.synchronizeTempDirVfs(tempDir);
 
       myPsiManager = (PsiManagerImpl)PsiManager.getInstance(getProject());
       InspectionsKt.configureInspections(LocalInspectionTool.EMPTY_ARRAY, getProject(), myProjectFixture.getTestRootDisposable());

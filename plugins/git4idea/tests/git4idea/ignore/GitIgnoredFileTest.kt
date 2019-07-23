@@ -18,7 +18,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
 import com.intellij.project.stateStore
-import com.intellij.testFramework.PlatformTestCase
+import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.UsefulTestCase
 import git4idea.GitUtil
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
@@ -477,9 +477,9 @@ internal fun assertGitignoreValid(ignoreFile: File, gitIgnoreExpectedContent: St
 
   UsefulTestCase.assertExists(ignoreFile)
   val generatedGitIgnoreContent = ignoreFile.readText()
-  PlatformTestCase.assertFalse("Generated ignore file is empty", generatedGitIgnoreContent.isBlank())
-  PlatformTestCase.assertFalse("Generated ignore file content should be system-independent", generatedGitIgnoreContent.contains('\\'))
-  PlatformTestCase.assertContainsOrdered(generatedGitIgnoreContent.lines(), gitIgnoreExpectedContentList)
+  HeavyPlatformTestCase.assertFalse("Generated ignore file is empty", generatedGitIgnoreContent.isBlank())
+  HeavyPlatformTestCase.assertFalse("Generated ignore file content should be system-independent", generatedGitIgnoreContent.contains('\\'))
+  HeavyPlatformTestCase.assertContainsOrdered(generatedGitIgnoreContent.lines(), gitIgnoreExpectedContentList)
 }
 
 internal fun VirtualFile.findOrCreateDir(dirName: String) = this.findChild(dirName) ?: createChildDirectory(this, dirName)

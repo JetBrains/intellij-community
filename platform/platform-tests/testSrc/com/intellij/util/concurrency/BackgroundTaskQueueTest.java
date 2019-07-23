@@ -23,7 +23,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +49,7 @@ import java.util.function.IntConsumer;
  * <li>The test is started not from UI thread.</li>
  * </ul></li></p>
  */
-public class BackgroundTaskQueueTest extends PlatformTestCase {
+public class BackgroundTaskQueueTest extends HeavyPlatformTestCase {
   private BackgroundTaskQueue myQueue;
   private ThreadRunner myThreadRunner;
   private Random myRandom;

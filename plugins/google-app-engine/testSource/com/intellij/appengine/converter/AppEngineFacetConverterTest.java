@@ -6,7 +6,7 @@ import com.intellij.conversion.impl.ProjectConversionUtil;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 
 import java.io.File;
@@ -15,7 +15,7 @@ import java.io.IOException;
 /**
  * @author nik
  */
-public class AppEngineFacetConverterTest extends PlatformTestCase {
+public class AppEngineFacetConverterTest extends HeavyPlatformTestCase {
   public void testConvert() throws IOException {
     String testDataPath = "plugins/google-app-engine/testData/conversion/appEngineFacet/";
     File testData = PathManagerEx.findFileUnderProjectHome(testDataPath + "before", getClass());

@@ -16,7 +16,7 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.util.messages.MessageBusConnection;
@@ -32,7 +32,7 @@ import static java.util.Collections.singletonList;
 /**
  * @author yole
  */
-public class CommittedChangesCacheTest extends PlatformTestCase {
+public class CommittedChangesCacheTest extends HeavyPlatformTestCase {
   private MockAbstractVcs myVcs;
   private MockCommittedChangesProvider myProvider;
   private MockDiffProvider myDiffProvider;

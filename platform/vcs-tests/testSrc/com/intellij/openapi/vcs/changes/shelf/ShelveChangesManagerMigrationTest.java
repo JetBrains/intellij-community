@@ -6,7 +6,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +17,7 @@ import java.util.Collections;
 
 import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.getInstance;
 
-public class ShelveChangesManagerMigrationTest extends PlatformTestCase {
+public class ShelveChangesManagerMigrationTest extends HeavyPlatformTestCase {
 
   public void testMigrateInfo() throws Exception {
     doTest();

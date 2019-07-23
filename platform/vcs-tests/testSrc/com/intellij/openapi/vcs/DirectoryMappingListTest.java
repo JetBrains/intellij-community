@@ -15,7 +15,7 @@ import com.intellij.openapi.vcs.impl.projectlevelman.AllVcsesI;
 import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -27,7 +27,7 @@ import java.util.Arrays;
 /**
  * @author yole
  */
-public class DirectoryMappingListTest extends PlatformTestCase {
+public class DirectoryMappingListTest extends HeavyPlatformTestCase {
   @NonNls private static final String BASE_PATH = "/vcs/directoryMappings/";
   private NewMappings myMappings;
   private VirtualFile myProjectRoot;

@@ -3,14 +3,14 @@ package com.intellij.openapi.diff.impl.patch
 
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.testFramework.PlatformTestCase
+import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataFile
 import com.intellij.testFramework.TestDataPath
 import java.io.File
 
 @TestDataPath("\$CONTENT_ROOT/testData/diff/patchTextDetection/")
-class PatchTextDetectionTest : PlatformTestCase() {
+class PatchTextDetectionTest : HeavyPlatformTestCase() {
   fun testClassicalContextDiff() {
     doTest(true)
   }

@@ -17,7 +17,7 @@ import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
@@ -248,11 +248,11 @@ public abstract class AbstractVcsTestCase {
   }
 
   public void setFileText(@NotNull final VirtualFile file, @NotNull final String text) throws IOException {
-    PlatformTestCase.setFileText(file, text);
+    HeavyPlatformTestCase.setFileText(file, text);
   }
 
   public static void setBinaryContent(final VirtualFile file, final byte[] content) {
-    PlatformTestCase.setBinaryContent(file, content);
+    HeavyPlatformTestCase.setBinaryContent(file, content);
   }
 
 }

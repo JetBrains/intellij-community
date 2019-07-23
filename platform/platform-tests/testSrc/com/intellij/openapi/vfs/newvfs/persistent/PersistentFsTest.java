@@ -23,7 +23,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.testFramework.LoggedErrorProcessor;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
@@ -43,7 +43,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.jar.JarFile;
 
-public class PersistentFsTest extends PlatformTestCase {
+public class PersistentFsTest extends HeavyPlatformTestCase {
   private PersistentFS myFs;
   private LocalFileSystem myLocalFs;
 

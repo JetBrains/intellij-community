@@ -18,7 +18,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
@@ -29,7 +29,7 @@ import javax.swing.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
-@PlatformTestCase.WrapInCommand
+@HeavyPlatformTestCase.WrapInCommand
 public class PsiDocumentManager2Test extends LightPlatformTestCase {
   public void testUnregisteredFileType() {
     class MyFileType extends XmlLikeFileType {

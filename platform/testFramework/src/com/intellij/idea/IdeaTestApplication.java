@@ -16,7 +16,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.RegistryKeyBean;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.ui.IconManager;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -87,7 +87,7 @@ public final class IdeaTestApplication implements Disposable {
     }
     isBootstrappingAppNow = true;
 
-    PlatformTestCase.doAutodetectPlatformPrefix();
+    HeavyPlatformTestCase.doAutodetectPlatformPrefix();
 
     String[] args = {"inspect", "", "", ""};
     Main.setFlags(args);

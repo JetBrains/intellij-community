@@ -17,11 +17,11 @@ package com.intellij.openapi.project
 
 import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.project.impl.ProjectImpl
-import com.intellij.testFramework.PlatformTestCase
+import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import java.io.File
 
-class ProjectUtilTest : PlatformTestCase() {
+class ProjectUtilTest : HeavyPlatformTestCase() {
   fun testDoNotUseNameAsHashPrefixForIpr() {
     val cachePath = appSystemDir.relativize(project.getProjectCachePath("foo")).toString()
     // remove location hash suffix because it is not constant value (depends on machine)

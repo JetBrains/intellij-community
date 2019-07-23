@@ -10,7 +10,7 @@ import com.intellij.openapi.vcs.checkin.TodoCheckinHandlerWorker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.search.TodoItem;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 /**
  * @author irengrig
  */
-public class TodoCheckinHandlerWorkerTest extends PlatformTestCase {
+public class TodoCheckinHandlerWorkerTest extends HeavyPlatformTestCase {
   private VirtualFile myChildData;
   private String myNewText;
   private VirtualFile myRootFile;

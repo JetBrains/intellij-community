@@ -4,7 +4,7 @@ package com.intellij.openapi.vcs.changes.committed;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.junit.Before;
 
@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public class VcsExcludedFileProcessingTest extends PlatformTestCase {
+public class VcsExcludedFileProcessingTest extends HeavyPlatformTestCase {
   private ProjectLevelVcsManagerImpl myVcsManager;
   private MockAbstractVcs myVcs;
 

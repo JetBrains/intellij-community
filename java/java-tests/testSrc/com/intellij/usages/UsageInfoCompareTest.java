@@ -7,7 +7,7 @@ import com.intellij.find.impl.FindResultImpl;
 import com.intellij.find.impl.FindResultUsageInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.usageView.UsageInfo;
 
@@ -16,7 +16,7 @@ import java.nio.charset.StandardCharsets;
 
 import static org.junit.Assert.assertNotEquals;
 
-public class UsageInfoCompareTest extends PlatformTestCase {
+public class UsageInfoCompareTest extends HeavyPlatformTestCase {
   public void testFindResultHasCorrectCompare() throws IOException {
     VirtualFile file = createTempFile("txt", null, "xxxx", StandardCharsets.UTF_8);
     PsiFile psiFile = PlatformTestUtil.notNull(getPsiManager().findFile(file));

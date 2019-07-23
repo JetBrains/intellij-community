@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformLiteFixture;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.TimeoutUtil;
@@ -309,7 +309,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     AtomicReference<Project> project = new AtomicReference<>();
     checkNewDirAndRefresh(temp ->
         WriteCommandAction.runWriteCommandAction(null, ()->{
-          project.set(PlatformTestCase.createProject(temp));
+          project.set(HeavyPlatformTestCase.createProject(temp));
           assertTrue(ProjectManagerEx.getInstanceEx().openProject(project.get()));
           assertTrue(project.get().isOpen());
         }),

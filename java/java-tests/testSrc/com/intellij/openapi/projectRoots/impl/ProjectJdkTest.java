@@ -12,7 +12,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.util.ObjectUtils;
 import org.intellij.lang.annotations.Language;
 import org.jdom.Element;
@@ -22,7 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ProjectJdkTest extends PlatformTestCase {
+public class ProjectJdkTest extends HeavyPlatformTestCase {
   public void testDoesntCrashOnJdkRootDisappearance() throws Exception {
     VirtualFile nDir = ObjectUtils.assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(createTempDir("nroot", true)));
     String nUrl = nDir.getUrl();

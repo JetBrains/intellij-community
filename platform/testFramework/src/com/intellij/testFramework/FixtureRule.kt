@@ -70,7 +70,7 @@ class ProjectRule(val projectDescriptor: LightProjectDescriptor = LightProjectDe
       val buffer = ByteArrayOutputStream()
       Throwable(projectFile.systemIndependentPath, null).printStackTrace(PrintStream(buffer))
 
-      val project = PlatformTestCase.createProject(projectFile) as ProjectEx
+      val project = HeavyPlatformTestCase.createProject(projectFile) as ProjectEx
       PlatformTestUtil.registerProjectCleanup {
         try {
           disposeProject()

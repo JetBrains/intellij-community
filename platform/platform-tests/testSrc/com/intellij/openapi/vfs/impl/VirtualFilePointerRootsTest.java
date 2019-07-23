@@ -32,7 +32,7 @@ import java.util.List;
 
 @RunFirst
 @SkipSlowTestLocally
-public class VirtualFilePointerRootsTest extends PlatformTestCase {
+public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
   private final Disposable disposable = Disposer.newDisposable();
   private VirtualFilePointerManagerImpl myVirtualFilePointerManager;
   private int numberOfPointersBefore;

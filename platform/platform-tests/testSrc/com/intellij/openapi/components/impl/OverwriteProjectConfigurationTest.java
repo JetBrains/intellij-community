@@ -9,7 +9,7 @@ import com.intellij.openapi.module.ModuleTypeId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 
 import java.io.File;
@@ -17,7 +17,7 @@ import java.io.File;
 /**
  * @author nik
  */
-public class OverwriteProjectConfigurationTest extends PlatformTestCase {
+public class OverwriteProjectConfigurationTest extends HeavyPlatformTestCase {
   private File myProjectDir;
 
   @Override

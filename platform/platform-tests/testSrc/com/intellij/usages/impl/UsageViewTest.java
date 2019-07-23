@@ -32,7 +32,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
@@ -60,7 +60,7 @@ public class UsageViewTest extends BasePlatformTestCase {
           return false;
         }
         Project project = ((PsiFile)file).getProject();
-        System.err.println(project + " already leaking; its creation trace: " + PlatformTestCase.getCreationPlace(project));
+        System.err.println(project + " already leaking; its creation trace: " + HeavyPlatformTestCase.getCreationPlace(project));
       }
       alreadyLeaking.add(file);
       return false;

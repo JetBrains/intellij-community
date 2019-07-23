@@ -56,7 +56,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-@PlatformTestCase.WrapInCommand
+@HeavyPlatformTestCase.WrapInCommand
 @SkipSlowTestLocally
 public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
   private VirtualFile myRoot;

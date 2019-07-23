@@ -7,7 +7,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.IconUtil;
@@ -27,7 +27,7 @@ import java.text.AttributedCharacterIterator;
 import java.util.Collections;
 import java.util.List;
 
-public class IconUtilTest extends PlatformTestCase {
+public class IconUtilTest extends HeavyPlatformTestCase {
   @Override
   protected boolean isIconRequired() {
     return false;

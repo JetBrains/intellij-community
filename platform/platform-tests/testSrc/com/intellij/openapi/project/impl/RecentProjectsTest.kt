@@ -81,7 +81,7 @@ class RecentProjectsTest {
     var project: Project? = null
     try {
       val path = tempDir.newPath("z1")
-      project = PlatformTestCase.createProject(path)
+      project = HeavyPlatformTestCase.createProject(path)
       closeProject(project)
       project = ProjectManagerEx.getInstanceEx().loadAndOpenProject(path)
       val timestamp = getProjectOpenTimestamp("z1")
@@ -140,7 +140,7 @@ class RecentProjectsTest {
     var project: Project? = null
     try {
       val path = tempDir.newPath(name)
-      project = PlatformTestCase.createProject(path)
+      project = HeavyPlatformTestCase.createProject(path)
       PlatformTestUtil.saveProject(project)
       closeProject(project)
       project = ProjectManagerEx.getInstanceEx().loadAndOpenProject(path)

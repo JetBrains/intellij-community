@@ -100,7 +100,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
             moduleFixtureBuilder.getFixture().tearDown();
           }
         })
-        .append(() -> EdtTestUtil.runInEdtAndWait(() -> PlatformTestCase.closeAndDisposeProjectAndCheckThatNoOpenProjects(getProject())))
+        .append(() -> EdtTestUtil.runInEdtAndWait(() -> HeavyPlatformTestCase.closeAndDisposeProjectAndCheckThatNoOpenProjects(getProject())))
         .append(() -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(getProject()))
         .append(() -> myProject = null);
     }
@@ -150,15 +150,15 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
           myOldSdks.checkForJdkTableLeaks();
         }
       })
-      .append(() -> PlatformTestCase.cleanupApplicationCaches(null))  // project is disposed by now, no point in passing it
+      .append(() -> HeavyPlatformTestCase.cleanupApplicationCaches(null))  // project is disposed by now, no point in passing it
       .run();
   }
 
   private void setUpProject() {
     Path tempDirectory = TemporaryDirectory.generateTemporaryPath(myName);
-    PlatformTestCase.synchronizeTempDirVfs(tempDirectory);
+    HeavyPlatformTestCase.synchronizeTempDirVfs(tempDirectory);
     myFilesToDelete.add(tempDirectory);
-    myProject = PlatformTestCase.createProject(generateProjectPath(tempDirectory));
+    myProject = HeavyPlatformTestCase.createProject(generateProjectPath(tempDirectory));
 
     EdtTestUtil.runInEdtAndWait(() -> {
       ProjectManagerEx.getInstanceEx().openTestProject(myProject);

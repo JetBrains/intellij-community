@@ -67,7 +67,7 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
       })
       .append(() -> {
         if (project != null) {
-          PlatformTestCase.waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS);
+          HeavyPlatformTestCase.waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS);
         }
       })
       .append(() -> super.tearDown()) // call all disposables' dispose() while the project is still open
@@ -91,7 +91,7 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
           PersistentFS.getInstance().clearIdCache();
         }
       })
-      .append(() -> PlatformTestCase.cleanupApplicationCaches(project))
+      .append(() -> HeavyPlatformTestCase.cleanupApplicationCaches(project))
       .run();
   }
 

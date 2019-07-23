@@ -4,7 +4,7 @@ package com.intellij.openapi.application.impl;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Pair;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -12,7 +12,7 @@ import org.jetbrains.concurrency.CancellablePromise;
 /**
  * @author peter
  */
-public class NonBlockingReadActionTest extends PlatformTestCase {
+public class NonBlockingReadActionTest extends HeavyPlatformTestCase {
 
   public void testCancelPrevious_SameClass_SameIdentity() throws Exception {
     CancellablePromise<String> promise = WriteAction.compute(() -> {

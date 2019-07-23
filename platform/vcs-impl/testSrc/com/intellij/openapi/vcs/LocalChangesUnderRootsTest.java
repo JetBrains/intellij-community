@@ -11,7 +11,7 @@ import com.intellij.openapi.vcs.impl.LocalChangesUnderRoots;
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcsesI;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.vcs.MockChangeListManager;
@@ -20,7 +20,7 @@ import com.intellij.vcsUtil.VcsUtil;
 
 import java.util.*;
 
-public class LocalChangesUnderRootsTest extends PlatformTestCase {
+public class LocalChangesUnderRootsTest extends HeavyPlatformTestCase {
 
   private LocalChangesUnderRoots myLocalChangesUnderRoots;
   private MockChangeListManager myChangeListManager;

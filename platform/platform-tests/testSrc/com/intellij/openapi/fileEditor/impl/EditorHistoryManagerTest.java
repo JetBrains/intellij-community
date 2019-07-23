@@ -15,7 +15,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ref.GCWatcher;
@@ -30,7 +30,7 @@ import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class EditorHistoryManagerTest extends PlatformTestCase {
+public class EditorHistoryManagerTest extends HeavyPlatformTestCase {
   public void testSavingStateForNotOpenedEditors() throws Exception {
     Path dir = createTempDir("foo").toPath();
     Path file = dir.resolve("some.txt");

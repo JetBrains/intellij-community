@@ -223,8 +223,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ApplicationManager.getApplication().runWriteAction(LightPlatformTestCase::cleanPersistedVFSContent);
 
     Path tempDirectory = TemporaryDirectory.generateTemporaryPath(ProjectImpl.LIGHT_PROJECT_NAME + ProjectFileType.DOT_DEFAULT_EXTENSION);
-    PlatformTestCase.synchronizeTempDirVfs(tempDirectory);
-    setProject(PlatformTestCase.createProject(tempDirectory));
+    HeavyPlatformTestCase.synchronizeTempDirVfs(tempDirectory);
+    setProject(HeavyPlatformTestCase.createProject(tempDirectory));
     ourPathToKeep = tempDirectory;
     ourPsiManager = null;
 
@@ -474,7 +474,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       append(() -> TemplateDataLanguageMappings.getInstance(project).cleanupForNextTest()).
       append(() -> ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest()).
       append(() -> ((StructureViewFactoryImpl)StructureViewFactory.getInstance(project)).cleanupForNextTest()).
-      append(() -> PlatformTestCase.waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS)).
+      append(() -> HeavyPlatformTestCase.waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS)).
       append(() -> ProjectManagerEx.getInstanceEx().closeTestProject(project)).
       append(() -> application.setDataProvider(null)).
       append(() -> UiInterceptors.clear()).
@@ -573,7 +573,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         try {
           Application application = ApplicationManager.getApplication();
           if (application instanceof ApplicationEx) {
-            PlatformTestCase.cleanupApplicationCaches(getProject());
+            HeavyPlatformTestCase.cleanupApplicationCaches(getProject());
           }
           resetAllFields();
         }

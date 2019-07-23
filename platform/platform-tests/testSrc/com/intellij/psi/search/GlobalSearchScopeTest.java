@@ -6,7 +6,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -14,7 +14,7 @@ import org.junit.Assert;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class GlobalSearchScopeTest extends PlatformTestCase {
+public class GlobalSearchScopeTest extends HeavyPlatformTestCase {
   public void testUniteDirectorySearchScopeDoesNotSOE() throws Exception {
     VirtualFile genRoot = getVirtualFile(createTempDir("genSrcRoot"));
     VirtualFile srcRoot = getVirtualFile(createTempDir("srcRoot"));

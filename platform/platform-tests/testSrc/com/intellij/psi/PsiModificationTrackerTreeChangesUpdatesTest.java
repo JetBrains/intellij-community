@@ -5,12 +5,12 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 
 import java.io.IOException;
 
-public class PsiModificationTrackerTreeChangesUpdatesTest extends PlatformTestCase {
+public class PsiModificationTrackerTreeChangesUpdatesTest extends HeavyPlatformTestCase {
   private PsiModificationTrackerImpl myTracker;
 
   @Override

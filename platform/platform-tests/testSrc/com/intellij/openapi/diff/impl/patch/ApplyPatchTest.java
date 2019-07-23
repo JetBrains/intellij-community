@@ -11,7 +11,7 @@ import com.intellij.openapi.vcs.changes.patch.ApplyPatchAction;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.testFramework.TestDataPath;
@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @TestDataPath("$CONTENT_ROOT/testData/diff/applyPatch/")
-public class ApplyPatchTest extends PlatformTestCase {
+public class ApplyPatchTest extends HeavyPlatformTestCase {
   public void testAddLine() throws Exception {
     doTest(1, ApplyPatchStatus.SUCCESS, null);
   }

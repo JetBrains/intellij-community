@@ -9,8 +9,8 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.PlatformTestCase
-import com.intellij.testFramework.PlatformTestCase.assertOrderedEquals
+import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.testFramework.HeavyPlatformTestCase.assertOrderedEquals
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcsUtil.VcsUtil.getFilePath
@@ -63,10 +63,10 @@ fun GitRepository.assertStagedChanges(changes: ChangesBuilder.() -> Unit) {
   val actualChanges = GitChangeUtils.getStagedChanges(project, root)
   for (change in cb.changes) {
     val found = actualChanges.find(change.matcher)
-    PlatformTestCase.assertNotNull("The change [$change] is not staged", found)
+    HeavyPlatformTestCase.assertNotNull("The change [$change] is not staged", found)
     actualChanges.remove(found)
   }
-  PlatformTestCase.assertTrue(actualChanges.isEmpty())
+  HeavyPlatformTestCase.assertTrue(actualChanges.isEmpty())
 }
 
 fun GitRepository.assertCommitted(depth: Int = 1, changes: ChangesBuilder.() -> Unit) {
@@ -77,10 +77,10 @@ fun GitRepository.assertCommitted(depth: Int = 1, changes: ChangesBuilder.() -> 
   val actualChanges = allChanges.toMutableSet()
   for (change in cb.changes) {
     val found = actualChanges.find(change.matcher)
-    PlatformTestCase.assertNotNull("The change [$change] wasn't committed\n$allChanges", found)
+    HeavyPlatformTestCase.assertNotNull("The change [$change] wasn't committed\n$allChanges", found)
     actualChanges.remove(found)
   }
-  PlatformTestCase.assertTrue(actualChanges.isEmpty())
+  HeavyPlatformTestCase.assertTrue(actualChanges.isEmpty())
 }
 
 fun GitPlatformTest.assertLastMessage(actual: String, failMessage: String = "Last commit is incorrect") {
@@ -100,12 +100,12 @@ fun GitPlatformTest.assertLogMessages(vararg messages: String) {
 }
 
 fun ChangeListManager.assertNoChanges() {
-  PlatformTestCase.assertEmpty("No changes is expected: ${allChanges.joinToString()}}", allChanges)
+  HeavyPlatformTestCase.assertEmpty("No changes is expected: ${allChanges.joinToString()}}", allChanges)
 }
 
 fun ChangeListManager.assertOnlyDefaultChangelist() {
-  PlatformTestCase.assertEquals("Only default changelist is expected among: ${dumpChangeLists()}", 1, changeListsNumber)
-  PlatformTestCase.assertEquals("Default changelist is not active", LocalChangeList.DEFAULT_NAME, defaultChangeList.name)
+  HeavyPlatformTestCase.assertEquals("Only default changelist is expected among: ${dumpChangeLists()}", 1, changeListsNumber)
+  HeavyPlatformTestCase.assertEquals("Default changelist is not active", LocalChangeList.DEFAULT_NAME, defaultChangeList.name)
 }
 
 fun ChangeListManager.waitScheduledChangelistDeletions() {
@@ -118,7 +118,7 @@ fun ChangeListManager.waitScheduledChangelistDeletions() {
 fun ChangeListManager.assertChangeListExists(comment: String): LocalChangeList {
   val changeLists = changeListsCopy
   val list = changeLists.find { it.comment == comment }
-  PlatformTestCase.assertNotNull("Didn't find changelist with comment '$comment' among: ${dumpChangeLists()}", list)
+  HeavyPlatformTestCase.assertNotNull("Didn't find changelist with comment '$comment' among: ${dumpChangeLists()}", list)
   return list!!
 }
 
@@ -139,11 +139,11 @@ fun ChangeListManager.assertChanges(changes: ChangesBuilder.() -> Unit): List<Ch
 
   for (change in cb.changes) {
     val found = actualChanges.find(change.matcher)
-    PlatformTestCase.assertNotNull("The change [$change] not found\n$vcsChanges", found)
+    HeavyPlatformTestCase.assertNotNull("The change [$change] not found\n$vcsChanges", found)
     actualChanges.remove(found)
     allChanges.add(found!!)
   }
-  PlatformTestCase.assertTrue(actualChanges.isEmpty())
+  HeavyPlatformTestCase.assertTrue(actualChanges.isEmpty())
   return allChanges
 }
 
@@ -164,25 +164,25 @@ class ChangesBuilder {
   val changes = linkedSetOf<AChange>()
 
   fun deleted(name: String) {
-    PlatformTestCase.assertTrue(changes.add(AChange(FileStatus.DELETED, name) {
+    HeavyPlatformTestCase.assertTrue(changes.add(AChange(FileStatus.DELETED, name) {
       it.fileStatus == FileStatus.DELETED && it.beforeRevision.relativePath == name && it.afterRevision == null
     }))
   }
 
   fun added(name: String) {
-    PlatformTestCase.assertTrue(changes.add(AChange(FileStatus.ADDED, name) {
+    HeavyPlatformTestCase.assertTrue(changes.add(AChange(FileStatus.ADDED, name) {
       it.fileStatus == FileStatus.ADDED && it.beforeRevision == null && it.afterRevision.relativePath == name
     }))
   }
 
   fun modified(name:String) {
-    PlatformTestCase.assertTrue(changes.add(AChange(FileStatus.MODIFIED, name) {
+    HeavyPlatformTestCase.assertTrue(changes.add(AChange(FileStatus.MODIFIED, name) {
       it.fileStatus == FileStatus.MODIFIED && it.beforeRevision.relativePath == name && it.afterRevision.relativePath == name
     }))
   }
 
   fun rename(from: String, to: String) {
-    PlatformTestCase.assertTrue(changes.add(AChange(FileStatus.MODIFIED, from, to) {
+    HeavyPlatformTestCase.assertTrue(changes.add(AChange(FileStatus.MODIFIED, from, to) {
       (it.isRenamed || it.isMoved) && from == it.beforeRevision.relativePath && to == it.afterRevision.relativePath
     }))
   }

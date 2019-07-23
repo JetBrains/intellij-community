@@ -13,10 +13,10 @@ import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.util.ref.GCUtil;
 
-@PlatformTestCase.WrapInCommand
+@HeavyPlatformTestCase.WrapInCommand
 public class CodeFragmentsTest extends LightIdeaTestCase {
   public void testAddImport() {
     Project project = getProject();

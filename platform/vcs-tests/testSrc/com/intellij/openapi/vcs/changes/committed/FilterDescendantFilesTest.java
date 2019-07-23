@@ -21,13 +21,13 @@ import com.intellij.openapi.vcs.FilterDescendantVirtualFiles;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FilterDescendantFilesTest extends PlatformTestCase {
+public class FilterDescendantFilesTest extends HeavyPlatformTestCase {
   public void testSecondModuleSameLevelAsProject() {
     final File tmpDir = createDir(new File(FileUtil.getTempDirectory()), "tmpDir");
     final File child1 = createDir(tmpDir, "child1");

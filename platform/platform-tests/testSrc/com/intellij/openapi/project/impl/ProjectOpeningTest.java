@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +25,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 /**
  * @author Dmitry Avdeev
  */
-public class ProjectOpeningTest extends PlatformTestCase {
+public class ProjectOpeningTest extends HeavyPlatformTestCase {
   public void testOpenProjectCancelling() throws Exception {
     Project project = null;
     MyStartupActivity activity = new MyStartupActivity();

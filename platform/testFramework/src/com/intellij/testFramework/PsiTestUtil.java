@@ -81,7 +81,7 @@ public class PsiTestUtil {
 
     VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
     assert vDir != null && vDir.isDirectory() : dir;
-    PlatformTestCase.synchronizeTempDirVfs(vDir);
+    HeavyPlatformTestCase.synchronizeTempDirVfs(vDir);
 
     EdtTestUtil.runInEdtAndWait(() -> WriteAction.run(() -> {
       if (rootPath != null) {

@@ -21,7 +21,7 @@ import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.PlatformTestCase
+import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.runInEdtAndWait
@@ -34,7 +34,7 @@ import java.util.*
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
-abstract class VcsPlatformTest : PlatformTestCase() {
+abstract class VcsPlatformTest : HeavyPlatformTestCase() {
   protected lateinit var testRoot: File
   protected lateinit var testRootFile: VirtualFile
   protected lateinit var projectRoot: VirtualFile
