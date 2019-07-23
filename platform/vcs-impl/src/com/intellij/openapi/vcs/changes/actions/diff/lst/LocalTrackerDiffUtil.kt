@@ -6,21 +6,37 @@ import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.tools.util.text.TwosideTextDiffProvider
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Range
+import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.ex.*
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
+import com.intellij.ui.InplaceButton
+import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.CalledWithWriteLock
+import java.awt.BorderLayout
+import java.awt.Cursor
+import java.awt.Dimension
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import java.util.*
+import javax.swing.Icon
+import javax.swing.JPanel
+import kotlin.math.max
+import kotlin.math.min
 
 object LocalTrackerDiffUtil {
   @JvmStatic
@@ -345,6 +361,90 @@ object LocalTrackerDiffUtil {
     }
     return selectedLines
   }
+
+  class ExcludeAllCheckboxPanel(private val viewer: DiffViewerBase, private val editor: EditorEx)
+    : JPanel(BorderLayout()) {
+
+    private var localRequest: LocalChangeListDiffRequest? = null
+    private val checkbox: InplaceButton
+
+    private val icon: Icon?
+      get() {
+        val tracker = localRequest?.partialTracker
+        if (tracker == null || !tracker.isValid()) return null
+
+        when (tracker.getExcludedFromCommitState(localRequest!!.changelistId)) {
+          ExclusionState.ALL_INCLUDED -> return AllIcons.Diff.GutterCheckBoxSelected
+          ExclusionState.ALL_EXCLUDED -> return AllIcons.Diff.GutterCheckBox
+          ExclusionState.PARTIALLY -> return AllIcons.Diff.GutterCheckBoxIndeterminate
+          ExclusionState.NO_CHANGES -> return null
+          else -> return null
+        }
+      }
+
+    init {
+      checkbox = InplaceButton(null, AllIcons.Diff.GutterCheckBox) { toggleState() }
+      checkbox.cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+      checkbox.isVisible = false
+      add(checkbox, BorderLayout.CENTER)
+
+      editor.gutterComponentEx.addComponentListener(object : ComponentAdapter() {
+        override fun componentResized(e: ComponentEvent?) {
+          ApplicationManager.getApplication().invokeLater({ updateLayout() }, ModalityState.any())
+        }
+      })
+    }
+
+    fun init(localRequest: LocalChangeListDiffRequest, allowExcludeChangesFromCommit: Boolean) {
+      if (allowExcludeChangesFromCommit) {
+        this.localRequest = localRequest
+      }
+    }
+
+    override fun doLayout() {
+      val size = checkbox.preferredSize
+      val gutter = editor.gutterComponentEx
+      val gap = height - size.height
+      val y = if (gap > JBUI.scale(8)) gap - JBUI.scale(2) else gap / 2
+      val x = gutter.iconAreaOffset + 2 // "+2" from EditorGutterComponentImpl.processIconsRow
+      checkbox.setBounds(min(width - AllIcons.Diff.GutterCheckBox.iconWidth, x), max(0, y), size.width, size.height)
+    }
+
+    override fun getPreferredSize(): Dimension {
+      val size = checkbox.preferredSize
+      val gutter = editor.gutterComponentEx
+      val gutterWidth = gutter.lineMarkerFreePaintersAreaOffset
+      return Dimension(max(gutterWidth + JBUIScale.scale(2), size.width), size.height)
+    }
+
+    private fun updateLayout() {
+      invalidate()
+      viewer.component.validate()
+      viewer.component.repaint()
+    }
+
+    private fun toggleState() {
+      val tracker = localRequest?.partialTracker
+      if (tracker != null && tracker.isValid()) {
+        val exclusionState = tracker.getExcludedFromCommitState(localRequest!!.changelistId)
+        tracker.setExcludedFromCommit(localRequest!!.changelistId, exclusionState === ExclusionState.ALL_INCLUDED)
+        refresh()
+        viewer.rediff()
+      }
+    }
+
+    fun refresh() {
+      val icon = icon
+      if (icon != null) {
+        checkbox.icon = icon
+        checkbox.isVisible = true
+      }
+      else {
+        checkbox.isVisible = false
+      }
+    }
+  }
+
 
   abstract class LocalTrackerActionProvider(val viewer: DiffViewerBase,
                                             val localRequest: LocalChangeListDiffRequest,

@@ -97,8 +97,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     myDocument = EditorFactory.getInstance().createDocument("");
     myEditor = DiffUtil.createEditor(myDocument, myProject, true, true);
 
-    List<JComponent> titles = DiffUtil.createTextTitles(myRequest, Arrays.asList(myEditor, myEditor));
-    UnifiedContentPanel contentPanel = new UnifiedContentPanel(titles, myEditor);
+    JComponent titlesPanel = createTitles();
+    UnifiedContentPanel contentPanel = new UnifiedContentPanel(titlesPanel, myEditor);
 
     myPanel = new UnifiedDiffPanel(myProject, contentPanel, this, myContext);
 
@@ -152,6 +152,17 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     super.updateContextHints();
     myInitialScrollHelper.updateContext(myRequest);
     myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
+  }
+
+  @Nullable
+  protected JComponent createTitles() {
+    List<JComponent> titles = DiffUtil.createTextTitles(myRequest, Arrays.asList(myEditor, myEditor));
+    assert titles.size() == 2;
+
+    titles = ContainerUtil.skipNulls(titles);
+    if (titles.isEmpty()) return null;
+
+    return DiffUtil.createStackedComponents(titles, DiffUtil.TITLE_GAP);
   }
 
   @CalledInAwt

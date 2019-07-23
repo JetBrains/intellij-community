@@ -14,67 +14,41 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.LocalTrackerChange;
-import com.intellij.openapi.vcs.ex.ExclusionState;
-import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker;
-import com.intellij.ui.InplaceButton;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   @NotNull private final LocalChangeListDiffRequest myLocalRequest;
-  @NotNull private final String myChangelistId;
-  @NotNull private final String myChangelistName;
 
   private final boolean myAllowExcludeChangesFromCommit;
 
   private final LocalTrackerDiffUtil.LocalTrackerActionProvider myTrackerActionProvider;
-  private ExcludeAllCheckboxPanel myExcludeAllCheckboxPanel;
+  private LocalTrackerDiffUtil.ExcludeAllCheckboxPanel myExcludeAllCheckboxPanel;
 
 
   public SimpleLocalChangeListDiffViewer(@NotNull DiffContext context,
                                          @NotNull LocalChangeListDiffRequest localRequest) {
     super(context, localRequest.getRequest());
     myLocalRequest = localRequest;
-    myChangelistId = localRequest.getChangelistId();
-    myChangelistName = localRequest.getChangelistName();
 
     myAllowExcludeChangesFromCommit = DiffUtil.isUserDataFlagSet(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, context);
     myTrackerActionProvider = new MyLocalTrackerActionProvider(this, localRequest, myAllowExcludeChangesFromCommit);
+    myExcludeAllCheckboxPanel.init(myLocalRequest, myAllowExcludeChangesFromCommit);
 
     LocalTrackerDiffUtil.installTrackerListener(this, myLocalRequest);
-  }
-
-  @NotNull
-  @Override
-  public Project getProject() {
-    //noinspection ConstantConditions
-    return super.getProject();
-  }
-
-  @Nullable
-  public PartialLocalLineStatusTracker getPartialTracker() {
-    return ObjectUtils.tryCast(myLocalRequest.getLineStatusTracker(), PartialLocalLineStatusTracker.class);
   }
 
   @NotNull
@@ -83,8 +57,11 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     List<JComponent> titles = DiffUtil.createTextTitles(myRequest, getEditors());
     assert titles.size() == 2;
 
-    myExcludeAllCheckboxPanel = new ExcludeAllCheckboxPanel();
-    JPanel titleWithCheckbox = JBUI.Panels.simplePanel(titles.get(1)).addToLeft(myExcludeAllCheckboxPanel);
+    myExcludeAllCheckboxPanel = new LocalTrackerDiffUtil.ExcludeAllCheckboxPanel(this, getEditor2());
+
+    BorderLayoutPanel titleWithCheckbox = JBUI.Panels.simplePanel();
+    if (titles.get(1) != null) titleWithCheckbox.addToCenter(titles.get(1));
+    titleWithCheckbox.addToLeft(myExcludeAllCheckboxPanel);
 
     return DiffUtil.createSyncHeightComponents(Arrays.asList(titles.get(0), titleWithCheckbox));
   }
@@ -116,7 +93,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       myLocalRequest.getLineStatusTracker(),
       getContent1().getDocument(),
       getContent2().getDocument(),
-      myChangelistId,
+      myLocalRequest.getChangelistId(),
       myTextDiffProvider,
       indicator,
       new MyLocalTrackerDiffHandler(indicator)
@@ -295,89 +272,6 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
                                           it.myChangelistId,
                                           it.myIsExcludedFromCommit))
         .toList();
-    }
-  }
-
-  private class ExcludeAllCheckboxPanel extends JPanel {
-    private final InplaceButton myCheckbox;
-
-    private ExcludeAllCheckboxPanel() {
-      myCheckbox = new InplaceButton(null, AllIcons.Diff.GutterCheckBox, e -> toggleState());
-      myCheckbox.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      myCheckbox.setVisible(false);
-      add(myCheckbox);
-
-      getEditor2().getGutterComponentEx().addComponentListener(new ComponentAdapter() {
-        @Override
-        public void componentResized(ComponentEvent e) {
-          ApplicationManager.getApplication().invokeLater(() -> updateLayout(), ModalityState.any());
-        }
-      });
-    }
-
-    @Override
-    public void doLayout() {
-      Dimension size = myCheckbox.getPreferredSize();
-      EditorGutterComponentEx gutter = getEditor2().getGutterComponentEx();
-      int y = (getHeight() - size.height) / 2;
-      int x = gutter.getIconAreaOffset() + 2; // "+2" from EditorGutterComponentImpl.processIconsRow
-      myCheckbox.setBounds(Math.min(getWidth() - AllIcons.Diff.GutterCheckBox.getIconWidth(), x), Math.max(0, y), size.width, size.height);
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      Dimension size = myCheckbox.getPreferredSize();
-      EditorGutterComponentEx gutter = getEditor2().getGutterComponentEx();
-      int gutterWidth = gutter.getLineMarkerFreePaintersAreaOffset();
-      return new Dimension(Math.max(gutterWidth + JBUIScale.scale(2), size.width), size.height);
-    }
-
-    private void updateLayout() {
-      invalidate();
-      myPanel.validate();
-      myPanel.repaint();
-    }
-
-    private void toggleState() {
-      PartialLocalLineStatusTracker tracker = getPartialTracker();
-      if (tracker != null && tracker.isValid()) {
-        ExclusionState exclusionState = tracker.getExcludedFromCommitState(myChangelistId);
-        getPartialTracker().setExcludedFromCommit(myChangelistId, exclusionState == ExclusionState.ALL_INCLUDED);
-        refresh();
-        rediff();
-      }
-    }
-
-    public void refresh() {
-      Icon icon = getIcon();
-      if (icon != null) {
-        myCheckbox.setIcon(icon);
-        myCheckbox.setVisible(true);
-      }
-      else {
-        myCheckbox.setVisible(false);
-      }
-    }
-
-    @Nullable
-    private Icon getIcon() {
-      if (!myAllowExcludeChangesFromCommit) return null;
-
-      PartialLocalLineStatusTracker tracker = getPartialTracker();
-      if (tracker == null || !tracker.isValid()) return null;
-
-      ExclusionState exclusionState = tracker.getExcludedFromCommitState(myChangelistId);
-      switch (exclusionState) {
-        case ALL_INCLUDED:
-          return AllIcons.Diff.GutterCheckBoxSelected;
-        case ALL_EXCLUDED:
-          return AllIcons.Diff.GutterCheckBox;
-        case PARTIALLY:
-          return AllIcons.Diff.GutterCheckBoxIndeterminate;
-        case NO_CHANGES:
-        default:
-          return null;
-      }
     }
   }
 }

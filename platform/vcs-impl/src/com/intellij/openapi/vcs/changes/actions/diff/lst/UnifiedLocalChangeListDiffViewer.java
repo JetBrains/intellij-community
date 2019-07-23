@@ -18,6 +18,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +34,7 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
   private final boolean myAllowExcludeChangesFromCommit;
 
   private final LocalTrackerDiffUtil.LocalTrackerActionProvider myTrackerActionProvider;
+  private LocalTrackerDiffUtil.ExcludeAllCheckboxPanel myExcludeAllCheckboxPanel;
 
   public UnifiedLocalChangeListDiffViewer(@NotNull DiffContext context,
                                           @NotNull LocalChangeListDiffRequest localRequest) {
@@ -40,8 +43,22 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
 
     myAllowExcludeChangesFromCommit = DiffUtil.isUserDataFlagSet(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, context);
     myTrackerActionProvider = new MyLocalTrackerActionProvider(this, localRequest, myAllowExcludeChangesFromCommit);
+    myExcludeAllCheckboxPanel.init(myLocalRequest, myAllowExcludeChangesFromCommit);
 
     LocalTrackerDiffUtil.installTrackerListener(this, myLocalRequest);
+  }
+
+  @Nullable
+  @Override
+  protected JComponent createTitles() {
+    JComponent titles = super.createTitles();
+
+    myExcludeAllCheckboxPanel = new LocalTrackerDiffUtil.ExcludeAllCheckboxPanel(this, getEditor());
+
+    BorderLayoutPanel titleWithCheckbox = JBUI.Panels.simplePanel();
+    if (titles != null) titleWithCheckbox.addToCenter(titles);
+    titleWithCheckbox.addToLeft(myExcludeAllCheckboxPanel);
+    return titleWithCheckbox;
   }
 
   @NotNull
@@ -161,6 +178,12 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
       return new MyUnifiedDiffChange(blockStart, insertedStart, blockEnd, fragment, isExcluded, isSkipped,
                                      data.getChangelistId(), data.isFromActiveChangelist(), data.isExcludedFromCommit());
     }
+  }
+
+  @Override
+  protected void onAfterRediff() {
+    super.onAfterRediff();
+    myExcludeAllCheckboxPanel.refresh();
   }
 
   private static class MyUnifiedDiffChange extends UnifiedDiffChange {
