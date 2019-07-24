@@ -831,12 +831,10 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   private static class MyFoldingModel extends FoldingModelSupport {
-    @Nullable private final Project myProject;
     private final MyPaintable myPaintable = new MyPaintable(0, 1);
 
     MyFoldingModel(@Nullable Project project, @NotNull List<? extends EditorEx> editors, @NotNull Disposable disposable) {
-      super(editors.toArray(new EditorEx[0]), disposable);
-      myProject = project;
+      super(project, editors.toArray(new EditorEx[0]), disposable);
     }
 
     @Nullable
@@ -848,7 +846,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         change.getEndLine(Side.RIGHT),
       });
 
-      return computeFoldedRanges(myProject, it, settings);
+      return computeFoldedRanges(it, settings);
     }
 
     public void paintOnDivider(@NotNull Graphics2D gg, @NotNull Component divider) {
