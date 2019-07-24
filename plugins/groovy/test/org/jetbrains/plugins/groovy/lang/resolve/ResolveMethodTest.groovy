@@ -2438,4 +2438,17 @@ f<caret>oo(1, 1, new Object())
 ''', GrMethod
     assert method.getParameters()[1].type.canonicalText == "java.lang.Object..."
   }
+
+  void 'test IDEA-216095-5'() {
+    def method = resolveByText '''\
+void foo(Runnable... objects){
+}
+
+void foo(Object... objects){
+}
+
+f<caret>oo(null)
+''', GrMethod
+    assert method.getParameters()[0].type.canonicalText == "java.lang.Object..."
+  }
 }
