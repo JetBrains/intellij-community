@@ -8,10 +8,13 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ClosureDriver
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpressionConstraint
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCallConstraint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 class CommonDriver constructor(private val targetParameters: Set<GrParameter>,
@@ -105,8 +108,16 @@ class CommonDriver constructor(private val targetParameters: Set<GrParameter>,
     for (parameter in targetParameters) {
       constraintCollector.add(ExpressionConstraint(parameter.type, parameter.initializerGroovy ?: continue))
     }
-    for (call in ReferencesSearch.search(originalMethod).findAll().mapNotNull { it.element.parent as? GrExpression }) {
-      constraintCollector.add(ExpressionConstraint(null, call))
+    for (call in ReferencesSearch.search(originalMethod).findAll().mapNotNull { it.element.parent }) {
+      if (call is GrExpression) {
+        constraintCollector.add(ExpressionConstraint(null, call))
+      }
+      else if (call is GrConstructorInvocation) {
+        val resolveResult = call.constructorReference.advancedResolve()
+        if (resolveResult is GroovyMethodResult) {
+          constraintCollector.add(MethodCallConstraint(null, resolveResult, method))
+        }
+      }
     }
     return constraintCollector
   }

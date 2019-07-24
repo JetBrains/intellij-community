@@ -337,4 +337,8 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testSuperCallInConstructor() {
+    doTest(true)
+  }
+
 }
