@@ -28,4 +28,12 @@ public class FlipConditionalIntentionTest extends IPPTestCase {
            "  }\n" +
            "}");
   }
+
+  public void testIncomplete2() {
+    doTestIntentionNotAvailable("class X {\n" +
+                                "  void test(int a, int b) {\n" +
+                                "    int x = /*_Flip '?:'*/a ? 1 : b ? 2 : ;\n" +
+                                "  }\n" +
+                                "}");
+  }
 }
