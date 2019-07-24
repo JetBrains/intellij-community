@@ -5,3 +5,7 @@ static void foo(self, closure) {
 
 
 foo([1, 2, 3], {list, ind -> println(list)})
+
+def m(Closure cl) {
+  foo([1, 2, 3], cl)
+}

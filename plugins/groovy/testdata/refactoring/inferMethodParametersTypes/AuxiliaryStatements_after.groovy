@@ -8,3 +8,7 @@ static void foo(List<Integer> self, @ClosureParams(value = FromString, options =
 
 
 foo([1, 2, 3], {list, ind -> println(list)})
+
+def m(Closure cl) {
+  foo([1, 2, 3], cl)
+}

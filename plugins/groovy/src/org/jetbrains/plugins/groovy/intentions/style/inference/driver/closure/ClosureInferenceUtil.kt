@@ -46,8 +46,17 @@ fun collectClosureArguments(method: GrMethod, virtualMethod: GrMethod): Map<GrPa
                                                           mutableSetOf())
   val proxyMapping = method.parameters.zip(virtualMethod.parameters).toMap()
   return allArgumentExpressions
-    .map { (parameter, expressions) -> proxyMapping.getValue(parameter) to expressions }
-    .filter { (_, acceptedTypes) -> acceptedTypes.all { it is GrClosableBlock } && acceptedTypes.isNotEmpty() }
+    .filter { (_, arguments) ->
+      val hasClosableBlock = arguments.fold(false) { meetBlockBefore, expression ->
+        when {
+          expression is GrClosableBlock -> true
+          expression.type?.equalsToText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE) != true -> return@filter false
+          else -> meetBlockBefore
+        }
+      }
+      hasClosableBlock
+    }
+    .map { (parameter, expressions) -> proxyMapping.getValue(parameter)!! to expressions.filterIsInstance<GrClosableBlock>() }
     .toMap()
 
 }
