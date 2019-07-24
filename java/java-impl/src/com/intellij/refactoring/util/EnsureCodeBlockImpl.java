@@ -182,7 +182,7 @@ class EnsureCodeBlockImpl {
     }
     else {
       PsiBlockStatement newBody = BlockUtils.createBlockStatement(project);
-      newBody.add(body);
+      newBody.getCodeBlock().add(body);
       blockBody = (PsiBlockStatement)body.replace(newBody);
     }
     PsiExpression lOperands;
