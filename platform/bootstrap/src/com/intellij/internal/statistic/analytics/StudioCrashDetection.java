@@ -43,6 +43,7 @@ public class StudioCrashDetection {
   private static final String RECORD_FILE_KEY = "studio.record.file";
   private static final String PLATFORM_PREFIX = "AndroidStudio";
   private static final String LINE_SEPARATOR = System.getProperty("line.separator");
+  private static ArrayList<StudioCrashDetails> ourCrashes;
 
   private StudioCrashDetection() {
   }
@@ -144,6 +145,9 @@ public class StudioCrashDetection {
    * Returns and deletes any records created by {@link #start} in previous runs.
    */
   public static List<StudioCrashDetails> reapCrashDescriptions() {
+    if (ourCrashes != null) {
+      return ourCrashes;
+    }
     File[] previousRecords = new File(PathManager.getTempPath()).listFiles(
       new FileFilter() {
         final String recordFile = System.getProperty(RECORD_FILE_KEY);
@@ -153,7 +157,7 @@ public class StudioCrashDetection {
           return pathname.getName().startsWith(PLATFORM_PREFIX) && !pathname.getAbsolutePath().equals(recordFile);
         }
       });
-    ArrayList<StudioCrashDetails> crashes = new ArrayList<>();
+    ourCrashes = new ArrayList<>();
     if (previousRecords != null) {
       for (File record : previousRecords) {
         StudioCrashDetails crash;
@@ -164,10 +168,10 @@ public class StudioCrashDetection {
           crash = StudioCrashDetails.UNKNOWN;
         }
         if (FileUtil.delete(record)) {
-          crashes.add(crash);
+          ourCrashes.add(crash);
         }
       }
     }
-    return crashes;
+    return ourCrashes;
   }
 }
