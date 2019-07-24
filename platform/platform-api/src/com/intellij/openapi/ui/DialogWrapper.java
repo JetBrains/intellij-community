@@ -36,6 +36,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import kotlin.jvm.functions.Function0;
@@ -52,6 +53,8 @@ import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeListener;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.*;
 import java.util.stream.IntStream;
@@ -948,7 +951,7 @@ public abstract class DialogWrapper {
     unregisterKeyboardActions(rootPane);
     Container contentPane = rootPane.getContentPane();
     if (contentPane != null) contentPane.removeAll();
-    Disposer.clearOwnFields(rootPane, field -> {
+    clearOwnFields(rootPane, field -> {
       String clazz = field.getDeclaringClass().getName();
       // keep AWT and Swing fields intact, except some
       if (!clazz.startsWith("java.") && !clazz.startsWith("javax.")) return true;
@@ -2231,4 +2234,18 @@ public abstract class DialogWrapper {
       this.info = info;
     }
   }
+
+  private static void clearOwnFields(@Nullable Object object, @NotNull Condition<? super Field> selectCondition) {
+    if (object == null) return;
+    for (Field each : ReflectionUtil.collectFields(object.getClass())) {
+      if ((each.getModifiers() & (Modifier.FINAL | Modifier.STATIC)) > 0) continue;
+      if (!selectCondition.value(each)) continue;
+      try {
+        ReflectionUtil.resetField(object, each);
+      }
+      catch (Exception ignore) {
+      }
+    }
+  }
+
 }
