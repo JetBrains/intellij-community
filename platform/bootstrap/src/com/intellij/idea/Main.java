@@ -130,7 +130,7 @@ public final class Main {
       t = awtError;
     }
     else {
-      message.append("Internal error. Please report to ");
+      message.append("Internal error. Please refer to ");
       boolean studio = "AndroidStudio".equalsIgnoreCase(System.getProperty(PLATFORM_PREFIX_PROPERTY));
       message.append(studio ? "https://code.google.com/p/android/issues" : "http://jb.gg/ide/critical-startup-errors");
       message.append("\n\n");
