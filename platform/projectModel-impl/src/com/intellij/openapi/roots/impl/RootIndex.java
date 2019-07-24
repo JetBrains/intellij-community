@@ -606,6 +606,10 @@ class RootIndex {
         if (ourFileTypes.isFileIgnored(each)) {
           return NonProjectDirectoryInfo.IGNORED;
         }
+        if (LOG.isDebugEnabled() && (id > 500_000_000 || id < 0)) {
+          LOG.error("Invalid id: " + id + " for " + file + " of " + file.getClass());
+        }
+
         myNonInterestingIds.set(id);
       }
     }
