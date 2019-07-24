@@ -166,15 +166,30 @@ public class MismatchedStringCaseInspection extends AbstractBaseJavaLocalInspect
         if (argCase.myHasUpper != ThreeState.YES && argCase.myHasLower != ThreeState.YES) return;
         StringCase qualifierCase = fromExpression(qualifier, ANALYSIS_COMPLEXITY);
         String problematicCase;
+        String oppositeCase;
         if (qualifierCase.myHasLower == ThreeState.NO && argCase.myHasLower == ThreeState.YES) {
-          problematicCase = "lower case";
+          problematicCase = "a lowercase";
+          oppositeCase = "uppercase";
         } else if (qualifierCase.myHasUpper == ThreeState.NO && argCase.myHasUpper == ThreeState.YES) {
-          problematicCase = "upper case";
+          problematicCase = "an uppercase";
+          oppositeCase = "lowercase";
         } else {
           return;
         }
-        holder.registerProblem(Objects.requireNonNull(call.getMethodExpression().getReferenceNameElement()),
-                               InspectionGadgetsBundle.message("inspection.case.mismatch.message", problematicCase));
+        PsiElement anchor = Objects.requireNonNull(call.getMethodExpression().getReferenceNameElement());
+        String methodName = anchor.getText();
+        String returnValue;
+        switch (methodName) {
+          case "indexOf":
+          case "lastIndexOf":
+            returnValue = "-1";
+            break;
+          default:
+            returnValue = "false";
+        }
+        String message = InspectionGadgetsBundle.message("inspection.case.mismatch.message",
+                                                         methodName, returnValue, problematicCase, oppositeCase);
+        holder.registerProblem(anchor, message);
       }
     };
   }
