@@ -71,11 +71,14 @@ public abstract class FileReferenceHelper {
   public abstract Collection<PsiFileSystemItem> getContexts(final Project project, @NotNull final VirtualFile file);
 
   /**
-   * Provides file target contexts, locations where users can create a file, depending on passed {@code file}.
+   * Provides file target contexts, locations where users can create a file, depending on passed {@code file}. If a caller requires logical
+   * order of entries they must sort them with {@link #sortTargetContexts(Project, VirtualFile, Collection)}.
    *
    * @param project project
    * @param file file
    * @return target contexts
+   *
+   * @see #sortTargetContexts(Project, VirtualFile, Collection)
    */
   @NotNull
   public Collection<FileTargetContext> getTargetContexts(Project project, @NotNull VirtualFile file) {
