@@ -4760,3 +4760,22 @@ PIL Pillow
 robot robotframework
 cv2 opencv-python
 ldap pyldap
+wx wxPython
+pubsub PyPubSub
+serial pyserial
+win32api pypiwin32 pywin32
+MySQLdb mysqlclient
+mysql mysql-connector-python
+gi PyGObject
+lzf python-lzf
+pytest_bdd pytest-bdd
+lark lark-parser
+bson pymongo
+dotenv python-dotenv
+avro avro-python3
+modeltranslation django-modeltranslation
+torch torch-nightly
+can python-can
+github PyGithub
+gitlab python-gitlab
+tensorflow tensorflow-gpu
