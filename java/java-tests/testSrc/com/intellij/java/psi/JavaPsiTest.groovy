@@ -2,11 +2,12 @@
 package com.intellij.java.psi
 
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.psi.PsiField
-import com.intellij.psi.PsiJavaFile
-import com.intellij.psi.PsiLiteralExpression
+import com.intellij.psi.*
+import com.intellij.psi.impl.source.PsiClassReferenceType
+import com.intellij.psi.impl.source.PsiImmediateClassType
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.util.IdempotenceChecker
 import com.intellij.util.ThrowableRunnable
 import groovy.transform.CompileStatic
 
@@ -123,6 +124,16 @@ class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
     assert values[7] == "<p>\n\thello\n</p>"
     assert values[8] == ""
     assert values[9] == "test\n\n\n"
+  }
+
+  void "test IdempotenceChecker understands type equivalence"() {
+    def immediate = getElementFactory().createType(myFixture.findClass(String.name), PsiSubstitutor.EMPTY)
+    def ref = getElementFactory().createTypeFromText(String.name, null)
+    assert immediate == ref
+    assert immediate instanceof PsiImmediateClassType
+    assert ref instanceof PsiClassReferenceType
+
+    IdempotenceChecker.checkEquivalence((PsiType)immediate, (PsiType)ref, getClass()) // shouldn't throw
   }
 
   private PsiJavaFile configureFile(String text) {
