@@ -209,27 +209,27 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
       }
     }
 
-    Ref<Pair<Project, Module>> refResult = new Ref<>(Pair.empty());
     ProjectFrameAllocator frameAllocator = ApplicationManager.getApplication().isHeadlessEnvironment()
                                            ? new ProjectFrameAllocator()
                                            : new ProjectUiFrameAllocator(options);
-
-    if (!frameAllocator.run(() -> {
+    Ref<Pair<Project, Module>> refResult = new Ref<>(Pair.empty());
+    boolean isCompleted = frameAllocator.run(() -> {
       Pair<Project, Module> result = prepareProject(file, options, baseDir, dummyProjectName);
       if (result == null) {
         return;
       }
 
       refResult.set(result);
-      Project project1 = result.first;
-      frameAllocator.projectLoaded(project1);
-      if (ProjectManagerEx.getInstanceEx().openProject(project1)) {
-        frameAllocator.projectOpened(project1);
+      Project project = result.first;
+      frameAllocator.projectLoaded(project);
+      if (ProjectManagerEx.getInstanceEx().openProject(project)) {
+        frameAllocator.projectOpened(project);
       }
       else {
         refResult.set(Pair.empty());
       }
-    }, file)) {
+    }, file);
+    if (!isCompleted) {
       refResult.set(Pair.empty());
     }
 
