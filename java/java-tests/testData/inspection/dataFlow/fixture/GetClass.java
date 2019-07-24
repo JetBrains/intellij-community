@@ -20,6 +20,11 @@ class GetClass {
 
   }
 
+  void testNew() {
+    Object x = new HashSet();
+    if (<warning descr="Condition 'x.getClass() == HashSet.class' is always 'true'">x.getClass() == HashSet.class</warning>) {}
+  }
+
   void testInstanceOfInterop(Object obj) {
     if (obj instanceof CharSequence) {
       if (<warning descr="Condition 'obj.getClass() == Integer.class' is always 'false'">obj.getClass() == Integer.class</warning>) {}

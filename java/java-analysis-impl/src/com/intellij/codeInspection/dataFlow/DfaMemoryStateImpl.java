@@ -1124,15 +1124,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     DfaPsiType dfaType = myFactory.createDfaType(value);
     TypeConstraint constraint = TypeConstraint.exact(dfaType);
     PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(value);
-    if (!negated) {
-      if (psiClass != null && (psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT))) {
-        // getClass() result cannot be an interface or an abstract class
-        return ThreeState.NO;
-      }
-      return ThreeState.fromBoolean(applyFact(qualifier, DfaFactType.TYPE_CONSTRAINT, constraint));
-    }
     if (psiClass != null && (psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT))) {
-      return ThreeState.YES;
+      // getClass() result cannot be an interface or an abstract class
+      return ThreeState.fromBoolean(negated);
+    }
+    if (!negated) {
+      return ThreeState.fromBoolean(applyFact(qualifier, DfaFactType.TYPE_CONSTRAINT, constraint));
     }
     TypeConstraint existingConstraint = getValueFact(qualifier, DfaFactType.TYPE_CONSTRAINT);
     if (existingConstraint != null && existingConstraint.isExact()) {
