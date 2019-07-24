@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.ID;
-import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.util.loader.NativeLibraryLoader;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
@@ -73,16 +72,6 @@ public class NST {
           }
         } else {
           LOG.error("nst library wasn't loaded");
-        }
-      }
-
-      if (ourNSTLibrary != null) {
-        final String appId = Utils.getAppId();
-        if (appId == null || appId.isEmpty()) {
-          LOG.debug("can't obtain application id from NSBundle");
-        } else if (NSDefaults.isShowFnKeysEnabled(appId)) {
-          LOG.info("nst library was loaded, but user enabled fn-keys in touchbar");
-          ourNSTLibrary = null;
         }
       }
     } catch (Throwable e) {
