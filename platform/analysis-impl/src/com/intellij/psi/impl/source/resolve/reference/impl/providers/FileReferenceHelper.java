@@ -67,36 +67,30 @@ public abstract class FileReferenceHelper {
     return Collections.emptyList();
   }
 
+  /**
+   * Provides root contexts, depending on passed {@code file}.
+   *
+   * @param file file
+   * @return target contexts
+   */
+  @NotNull
+  public Collection<PsiFileSystemItem> getRoots(@NotNull Module module, @NotNull VirtualFile file) {
+    return getRoots(module);
+  }
+
   @NotNull
   public abstract Collection<PsiFileSystemItem> getContexts(final Project project, @NotNull final VirtualFile file);
 
   /**
-   * Provides file target contexts, locations where users can create a file, depending on passed {@code file}. If a caller requires logical
-   * order of entries they must sort them with {@link #sortTargetContexts(Project, VirtualFile, Collection)}.
+   * Provides file target contexts, locations where users can create a file, depending on passed {@code file}.
    *
    * @param project project
    * @param file file
    * @return target contexts
-   *
-   * @see #sortTargetContexts(Project, VirtualFile, Collection)
    */
   @NotNull
   public Collection<FileTargetContext> getTargetContexts(Project project, @NotNull VirtualFile file) {
     return ContainerUtil.map(getContexts(project, file), FileTargetContext::new);
-  }
-
-  /**
-   * Sorts target contexts depending on passed {@code file}. This sorting affects UI of quick fixes that create files in target locations.
-   *
-   * @param project project
-   * @param file file
-   * @param targetContexts available targets
-   * @return sorted targets collection
-   */
-  @NotNull
-  public Collection<FileTargetContext> sortTargetContexts(Project project, @NotNull VirtualFile file,
-                                                          @NotNull Collection<FileTargetContext> targetContexts) {
-    return targetContexts;
   }
 
   public abstract boolean isMine(final Project project, @NotNull final VirtualFile file);

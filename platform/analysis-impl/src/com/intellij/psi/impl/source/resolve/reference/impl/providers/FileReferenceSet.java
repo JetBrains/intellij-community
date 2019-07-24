@@ -411,30 +411,17 @@ public class FileReferenceSet {
     PsiFile file = getContainingFile();
     if (file == null) return Collections.emptyList();
 
-    Collection<FileTargetContext> result;
-
     Collection<PsiFileSystemItem> contexts = getCustomizationContexts(file);
     if (contexts != null) {
-      result = toTargetContexts(contexts);
+      return toTargetContexts(contexts);
     }
-    else if (isAbsolutePathReference()) {
+
+    if (isAbsolutePathReference()) {
       Collection<PsiFileSystemItem> locations = getAbsoluteTopLevelDirLocations(file);
-      result = toTargetContexts(locations);
-    }
-    else {
-      result = getTargetContextByFile(file);
+      return toTargetContexts(locations);
     }
 
-    return sortTargetContexts(file, result);
-  }
-
-  private static Collection<FileTargetContext> sortTargetContexts(PsiFile file, Collection<FileTargetContext> targetContexts) {
-    for (FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
-      if (helper.isMine(file.getProject(), file.getVirtualFile())) {
-        return helper.sortTargetContexts(file.getProject(), file.getVirtualFile(), targetContexts);
-      }
-    }
-    return targetContexts;
+    return getTargetContextByFile(file);
   }
 
   @Nullable
@@ -541,7 +528,7 @@ public class FileReferenceSet {
         if (helper.isFallback() && !list.isEmpty()) {
           continue;
         }
-        final Collection<PsiFileSystemItem> roots = helper.getRoots(module);
+        Collection<PsiFileSystemItem> roots = helper.getRoots(module, virtualFile);
         for (PsiFileSystemItem root : roots) {
           if (root == null) {
             LOG.error("Helper " + helper + " produced a null root for " + file);
