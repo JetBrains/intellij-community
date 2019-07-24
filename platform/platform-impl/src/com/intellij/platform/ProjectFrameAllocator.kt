@@ -38,13 +38,13 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask) : P
   private var ideFrame: IdeFrameImpl? = null
 
   override fun run(task: Runnable, file: Path): Boolean {
-    var progressCompleted = false
-    val component = showFrame(file)
+    var completed = false
     TransactionGuard.getInstance().submitTransactionAndWait {
-      progressCompleted = ProgressManager.getInstance()
+      val component = showFrame(file)
+      completed = ProgressManager.getInstance()
         .runProcessWithProgressSynchronously(task, "Loading Project...", true, null, component)
     }
-    return progressCompleted
+    return completed
   }
 
   private fun showFrame(file: Path): JComponent {
