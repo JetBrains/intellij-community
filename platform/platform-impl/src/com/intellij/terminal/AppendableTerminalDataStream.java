@@ -25,9 +25,14 @@ import java.util.concurrent.LinkedBlockingDeque;
  */
 public class AppendableTerminalDataStream implements TerminalDataStream, Appendable {
   private final LinkedBlockingDeque<Character> myQueue = new LinkedBlockingDeque<>(10000000);
+  private final LinkedBlockingDeque<Character> myPushBackQueue = new LinkedBlockingDeque<>();
 
   @Override
   public char getChar() throws IOException {
+    Character ch = myPushBackQueue.poll();
+    if (ch != null) {
+      return ch;
+    }
     try {
       return myQueue.take();
     }
@@ -38,18 +43,27 @@ public class AppendableTerminalDataStream implements TerminalDataStream, Appenda
 
   @Override
   public void pushChar(char c) {
-    myQueue.push(c);
+    myPushBackQueue.addFirst(c);
   }
 
   @Override
   public String readNonControlCharacters(int maxLength) {
     StringBuilder sb = new StringBuilder();
     while (sb.length() < maxLength) {
-      Character c = myQueue.peek();
-      if (c == null || c.charValue() < 32) {
-        break;
+      Character c = myPushBackQueue.peek();
+      if (c != null) {
+        if (c.charValue() < 32) {
+          break;
+        }
+        sb.append(myPushBackQueue.poll());
       }
-      sb.append(myQueue.poll());
+      else {
+        c = myQueue.peek();
+        if (c == null || c.charValue() < 32) {
+          break;
+        }
+        sb.append(myQueue.poll());
+      }
     }
 
     return sb.toString();
@@ -58,24 +72,20 @@ public class AppendableTerminalDataStream implements TerminalDataStream, Appenda
   @Override
   public void pushBackBuffer(char[] chars, int length) {
     for (int i = length - 1; i >= 0; i--) {
-      myQueue.addFirst(chars[i]);
+      myPushBackQueue.addFirst(chars[i]);
     }
   }
 
   @Override
   public Appendable append(CharSequence csq) throws IOException {
-    for (int i = 0; i<csq.length(); i++) {
-      append(csq.charAt(i));
-    }
-    return this;
+    return append(csq, 0, csq.length());
   }
 
   @Override
   public Appendable append(CharSequence csq, int start, int end) throws IOException {
-    for (int i = start; i<end; i++) {
+    for (int i = start; i < end; i++) {
       append(csq.charAt(i));
     }
-
     return this;
   }
 
