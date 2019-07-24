@@ -15,6 +15,7 @@
  */
 package com.intellij.util.indexing.impl;
 
+import com.intellij.util.IntIntFunction;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
@@ -32,8 +33,9 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, UpdatableValu
   ValueContainerMap(@NotNull final File file,
                     @NotNull KeyDescriptor<Key> keyKeyDescriptor,
                     @NotNull DataExternalizer<Value> valueExternalizer,
-                    boolean keyIsUniqueForIndexedFile) throws IOException {
-    super(file, keyKeyDescriptor, new ValueContainerExternalizer<>(valueExternalizer));
+                    boolean keyIsUniqueForIndexedFile,
+                    @NotNull IntIntFunction inputRemapping) throws IOException {
+    super(file, keyKeyDescriptor, new ValueContainerExternalizer<>(valueExternalizer, inputRemapping));
     myValueExternalizer = valueExternalizer;
     myKeyIsUniqueForIndexedFile = keyIsUniqueForIndexedFile;
   }
@@ -68,9 +70,11 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, UpdatableValu
 
   private static final class ValueContainerExternalizer<T> implements DataExternalizer<UpdatableValueContainer<T>> {
     @NotNull private final DataExternalizer<T> myValueExternalizer;
+    @NotNull private final IntIntFunction myInputRemapping;
 
-    private ValueContainerExternalizer(@NotNull DataExternalizer<T> valueExternalizer) {
+    private ValueContainerExternalizer(@NotNull DataExternalizer<T> valueExternalizer, @NotNull IntIntFunction inputRemapping) {
       myValueExternalizer = valueExternalizer;
+      myInputRemapping = inputRemapping;
     }
 
     @Override
@@ -83,7 +87,7 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, UpdatableValu
     public UpdatableValueContainer<T> read(@NotNull final DataInput in) throws IOException {
       final ValueContainerImpl<T> valueContainer = new ValueContainerImpl<>();
 
-      valueContainer.readFrom((DataInputStream)in, myValueExternalizer);
+      valueContainer.readFrom((DataInputStream)in, myValueExternalizer, myInputRemapping);
       return valueContainer;
     }
   }
