@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.components.breadcrumbs.Crumb;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
@@ -345,6 +346,7 @@ public class FoldingModelSupport {
     @Nullable
     private FoldedBlock createBlock(@NotNull Data data, @NotNull Data.Block block, boolean expanded) {
       FoldRegion[] regions = new FoldRegion[myCount];
+      String[] cachedDescriptions = null;
       for (int i = 0; i < myCount; i++) {
         LineRange range = block.ranges[i];
         if (range != null) regions[i] = addFolding(myEditors[i], range.start, range.end, expanded);
@@ -359,7 +361,18 @@ public class FoldingModelSupport {
           if (region != null) region.setExpanded(true);
         }
       }
-      return hasFolding ? new FoldedBlock(regions, data.descriptionComputer) : null;
+
+      if (!hasExpanded && !expanded) {
+        cachedDescriptions = new String[myCount];
+        for (int i = 0; i < myCount; i++) {
+          LineRange range = block.ranges[i];
+          if (range != null) {
+            cachedDescriptions[i] = myExpandSuggester.getCachedDescription(range.start, range.end, i);
+          }
+        }
+      }
+
+      return hasFolding ? new FoldedBlock(regions, data.descriptionComputer, cachedDescriptions) : null;
     }
   }
 
@@ -608,6 +621,34 @@ public class FoldingModelSupport {
     private Boolean getCachedExpanded(int start, int end, int index) {
       if (start == end) return null;
 
+      FoldedGroupState range = getCachedState(start, end, index);
+      if (range == null) return null;
+
+      if (range.collapsed != null && range.collapsed.contains(start, end)) return false;
+      if (range.expanded != null && range.expanded.contains(start, end)) return true;
+
+      assert false : "Invalid LineRange" + range.expanded + ", " + range.collapsed + ", " + new LineRange(start, end);
+      return null;
+    }
+
+    @Nullable
+    public String getCachedDescription(int start, int end, int index) {
+      if (myCache == null || myCache.ranges.length != myCount) return null;
+
+      FoldedGroupState range = getCachedState(start, end, index);
+      if (range == null) return null;
+
+      if (range.collapsed != null && range.collapsed.contains(start, end)) {
+        return range.collapsedDescription != null ? range.collapsedDescription[index] : null;
+      }
+
+      return null;
+    }
+
+    @Nullable
+    private FoldedGroupState getCachedState(int start, int end, int index) {
+      if (start == end) return null;
+
       //noinspection ConstantConditions
       List<FoldedGroupState> ranges = myCache.ranges[index];
       for (; myIndex[index] < ranges.size(); myIndex[index]++) {
@@ -615,11 +656,7 @@ public class FoldingModelSupport {
         LineRange lineRange = range.getLineRange();
 
         if (lineRange.end <= start) continue;
-        if (lineRange.contains(start, end)) {
-          if (range.collapsed != null && range.collapsed.contains(start, end)) return false;
-          if (range.expanded != null && range.expanded.contains(start, end)) return true;
-          assert false : "Invalid LineRange" + range.expanded + ", " + range.collapsed + ", " + new LineRange(start, end);
-        }
+        if (lineRange.contains(start, end)) return range;
         if (lineRange.start >= start) return null; // we could need current range for enclosing next-level foldings
       }
       return null;
@@ -653,6 +690,7 @@ public class FoldingModelSupport {
     for (FoldedGroup group : myFoldings) {
       LineRange expanded = null;
       LineRange collapsed = null;
+      String[] collapsedDescription = null;
 
       for (FoldedBlock folding : group.blocks) {
         FoldRegion region = folding.getRegion(index);
@@ -669,12 +707,13 @@ public class FoldingModelSupport {
           int line1 = document.getLineNumber(region.getStartOffset());
           int line2 = document.getLineNumber(region.getEndOffset()) + 1;
           collapsed = new LineRange(line1, line2);
+          collapsedDescription = ContainerUtil.map(folding.myDescriptions, it -> it.get(), ArrayUtil.EMPTY_STRING_ARRAY);
           break;
         }
       }
 
       if (expanded != null || collapsed != null) {
-        ranges.add(new FoldedGroupState(expanded, collapsed));
+        ranges.add(new FoldedGroupState(expanded, collapsed, collapsedDescription));
       }
     }
     return ranges;
@@ -730,12 +769,14 @@ public class FoldingModelSupport {
   private static class FoldedGroupState {
     @Nullable public final LineRange expanded;
     @Nullable public final LineRange collapsed;
+    @Nullable public final String[] collapsedDescription;
 
-    FoldedGroupState(@Nullable LineRange expanded, @Nullable LineRange collapsed) {
+    FoldedGroupState(@Nullable LineRange expanded, @Nullable LineRange collapsed, @Nullable String[] collapsedDescription) {
       assert expanded != null || collapsed != null;
 
       this.expanded = expanded;
       this.collapsed = collapsed;
+      this.collapsedDescription = collapsedDescription;
     }
 
     @NotNull
@@ -811,15 +852,18 @@ public class FoldingModelSupport {
     private final Disposable myDescriptionsDisposable = Disposer.newDisposable();
 
     public FoldedBlock(@NotNull FoldRegion[] regions,
-                       @NotNull DescriptionComputer descriptionComputer) {
+                       @NotNull DescriptionComputer descriptionComputer,
+                       @Nullable String[] cachedDescriptions) {
       assert regions.length == myCount;
+      assert cachedDescriptions == null || cachedDescriptions.length == myCount;
       myRegions = regions;
       myLines = new int[myCount];
 
       myDescriptions = new LazyDescription[myCount];
       if (myProject != null) {
         for (int i = 0; i < myCount; i++) {
-          myDescriptions[i] = new LazyDescription(myProject, i, descriptionComputer);
+          String cachedDescription = cachedDescriptions != null ? cachedDescriptions[i] : null;
+          myDescriptions[i] = new LazyDescription(myProject, i, descriptionComputer, cachedDescription);
         }
       }
     }
@@ -891,13 +935,14 @@ public class FoldingModelSupport {
       private final int myIndex;
       @NotNull private final DescriptionComputer myDescriptionComputer;
 
-      @NotNull private RangeDescription myDescription = new RangeDescription(null);
+      @NotNull private RangeDescription myDescription;
       private boolean myLoadingStarted = false;
 
-      LazyDescription(@NotNull Project project, int index, @NotNull DescriptionComputer descriptionComputer) {
+      LazyDescription(@NotNull Project project, int index, @NotNull DescriptionComputer descriptionComputer, @Nullable String cachedValue) {
         myProject = project;
         myIndex = index;
         myDescriptionComputer = descriptionComputer;
+        myDescription = new RangeDescription(cachedValue);
       }
 
       @Override
@@ -944,6 +989,12 @@ public class FoldingModelSupport {
           LOG.error(e);
           return null;
         }
+      }
+
+      @Nullable
+      @CalledInAwt
+      public String get() {
+        return myDescription.description;
       }
     }
   }
