@@ -845,6 +845,7 @@
       <reference ref="ShowExecutionPoint"/>
       <separator/>
       <reference ref="StepOver"/>
+      <reference ref="SmartStepInto"/>
       <reference ref="StepInto"/>
       <reference ref="ForceStepInto"/>
       <reference ref="StepOut"/>
