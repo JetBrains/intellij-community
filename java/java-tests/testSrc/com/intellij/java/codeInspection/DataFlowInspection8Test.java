@@ -247,4 +247,5 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
 
   public void testLambdaWritesArrayInTry() { doTest(); }
   public void testManyNestedOptionals() { doTest(); }
+  public void testGetClass() { doTest(); }
 }

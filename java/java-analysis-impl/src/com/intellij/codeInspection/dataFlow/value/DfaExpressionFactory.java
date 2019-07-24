@@ -369,8 +369,12 @@ public class DfaExpressionFactory {
 
     GetterDescriptor(@NotNull PsiMethod getter) {
       myGetter = getter;
-      PsiField field = PsiUtil.canBeOverridden(getter) ? null : PropertyUtil.getFieldOfGetter(getter);
-      myStable = field != null && field.hasModifierProperty(PsiModifier.FINAL);
+      if (PsiTypesUtil.isGetClass(getter)) {
+        myStable = true;
+      } else {
+        PsiField field = PsiUtil.canBeOverridden(getter) ? null : PropertyUtil.getFieldOfGetter(getter);
+        myStable = field != null && field.hasModifierProperty(PsiModifier.FINAL);
+      }
     }
 
     @NotNull

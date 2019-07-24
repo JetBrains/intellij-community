@@ -494,6 +494,7 @@ public abstract class TypeConstraint {
     return new Exact(type);
   }
 
+  @NotNull
   public static TypeConstraint empty() {
     return Constrained.EMPTY;
   }

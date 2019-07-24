@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ThreeState;
@@ -518,7 +519,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                                DfaMemoryState state, DfaValueFactory factory) {
     DfaValue precalculated = instruction.getPrecalculatedReturnValue();
     if (precalculated != null) {
-      return precalculated;
+      return getPrecalculatedResult(qualifierValue, state, factory, precalculated);
     }
 
     PsiType type = instruction.getResultType();
@@ -568,6 +569,25 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       return factory.getFactValue(DfaFactType.RANGE, range);
     }
     return DfaUnknownValue.getInstance();
+  }
+
+  private static DfaValue getPrecalculatedResult(@Nullable DfaValue qualifierValue,
+                                                 DfaMemoryState state,
+                                                 DfaValueFactory factory, DfaValue precalculated) {
+    if (precalculated instanceof DfaVariableValue && qualifierValue != null) {
+      PsiModifierListOwner psi = ((DfaVariableValue)precalculated).getPsiVariable();
+      // Perform constant folding for getClass() call.
+      if (psi instanceof PsiMethod && PsiTypesUtil.isGetClass((PsiMethod)psi)) {
+        TypeConstraint fact = state.getValueFact(qualifierValue, DfaFactType.TYPE_CONSTRAINT);
+        if (fact != null && fact.isExact()) {
+          PsiType javaLangClass = precalculated.getType();
+          if (javaLangClass != null) {
+            return factory.getConstFactory().createFromValue(fact.getPsiType(), javaLangClass);
+          }
+        }
+      }
+    }
+    return precalculated;
   }
 
   protected boolean checkNotNullable(DfaMemoryState state, DfaValue value, @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {

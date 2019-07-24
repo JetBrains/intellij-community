@@ -38,6 +38,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -409,6 +410,8 @@ public class GuessManagerImpl extends GuessManager {
   }
 
   private static class GuessTypeVisitor extends JavaElementVisitor {
+    private static final CallMatcher OBJECT_GET_CLASS =
+      CallMatcher.exactInstanceCall(CommonClassNames.JAVA_LANG_OBJECT, "getClass").parameterCount(0);
     private final @NotNull PsiExpression myPlace;
     PsiType mySpecificType;
     private boolean myNeedDfa;
@@ -460,6 +463,17 @@ public class GuessManagerImpl extends GuessManager {
         myNeedDfa = true;
       }
       super.visitTypeCastExpression(expression);
+    }
+
+    @Override
+    public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      if (OBJECT_GET_CLASS.test(call)) {
+        PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(call.getMethodExpression());
+        if (qualifier != null && ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY.equals(qualifier, myPlace)) {
+          myNeedDfa = true;
+        }
+      }
+      super.visitMethodCallExpression(call);
     }
 
     @Override
