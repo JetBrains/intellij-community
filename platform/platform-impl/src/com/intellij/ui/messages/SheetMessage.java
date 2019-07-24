@@ -4,7 +4,6 @@ package com.intellij.ui.messages;
 import com.apple.eawt.FullScreenUtilities;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.Gray;
@@ -25,9 +24,7 @@ import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 /**
  * Created by Denis Fokin
  */
-class SheetMessage implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.messages.SheetMessage");
-
+final class SheetMessage implements Disposable {
   private final JDialog myWindow;
   private final Window myParent;
   private final SheetController myController;

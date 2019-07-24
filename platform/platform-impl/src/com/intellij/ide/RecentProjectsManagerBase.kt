@@ -445,7 +445,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
                                     projectWorkspaceId = value.projectWorkspaceId,
                                     showWelcomeScreenIfNoProjectOpened = false,
                                     sendFrameBack = someProjectWasOpened)
-      val project = doOpenProject(key, options)
+      val project = doOpenProject(Paths.get(key), options)
       if (!someProjectWasOpened) {
         someProjectWasOpened = project != null
       }
