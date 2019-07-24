@@ -32,6 +32,8 @@ import org.junit.Before;
 import org.picocontainer.MutablePicoContainer;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.io.*;
 import java.util.Arrays;
@@ -189,11 +191,18 @@ public abstract class HgTest extends AbstractJunitVcsTestCase {
 
   /**
    * Executes the given native Mercurial command with parameters in the given working directory.
+   *
    * @param workingDir  working directory where the command will be executed. May be null.
    * @param commandLine command and parameters (e.g. 'status, -m').
    */
   protected ProcessOutput runHg(@Nullable File workingDir, String... commandLine) throws IOException {
-    return createClientRunner().runClient(HG_EXECUTABLE, null, workingDir, commandLine);
+    ProcessOutput processOutput;
+    int attempt = 0;
+    do {
+      processOutput = createClientRunner().runClient(HG_EXECUTABLE, null, workingDir, commandLine);
+    }
+    while (HgErrorUtil.isWLockError(new HgCommandResult(processOutput)) && attempt++ < 2);
+    return processOutput;
   }
 
   protected File fillFile(File aParentDir, String[] filePath, String fileContents) throws FileNotFoundException {
