@@ -311,7 +311,9 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     GitIncomingCheckStrategy selectedStrategy = requireNonNull((GitIncomingCheckStrategy)myIncomingStrategyComboBox.getSelectedItem());
     if (projectSettings.getIncomingCheckStrategy() != selectedStrategy) {
       projectSettings.setIncomingCheckStrategy(selectedStrategy);
-      GitBranchIncomingOutgoingManager.getInstance(myProject).updateIncomingScheduling();
+      if (!myProject.isDefault()) {
+        GitBranchIncomingOutgoingManager.getInstance(myProject).updateIncomingScheduling();
+      }
     }
   }
 
