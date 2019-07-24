@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.*;
@@ -806,6 +807,15 @@ public class JavaCompletionContributor extends CompletionContributor {
       String dummyIdentifier = customizeDummyIdentifier(context, file);
       if (dummyIdentifier != null) {
         context.setDummyIdentifier(dummyIdentifier);
+      }
+
+      PsiLiteralExpression literal =
+        PsiTreeUtil.findElementOfClassAtOffset(file, context.getStartOffset(), PsiLiteralExpression.class, false);
+      if (literal != null) {
+        TextRange range = literal.getTextRange();
+        if (range.getStartOffset() == context.getStartOffset()) {
+          context.setReplacementOffset(range.getEndOffset());
+        }
       }
     }
   }
