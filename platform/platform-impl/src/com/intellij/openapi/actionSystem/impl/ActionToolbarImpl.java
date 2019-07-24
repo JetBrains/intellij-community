@@ -203,10 +203,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     updateActionsImmediately();
   }
 
-  private boolean doMacEnhancementsForMainToolbar() {
-    return UIUtil.isUnderAquaLookAndFeel() && (ActionPlaces.MAIN_TOOLBAR.equals(myPlace) || myForceUseMacEnhancements);
-  }
-
   public void setForceUseMacEnhancements(boolean useMacEnhancements) {
     myForceUseMacEnhancements = useMacEnhancements;
   }
@@ -270,13 +266,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   @Override
   protected void paintComponent(final Graphics g) {
-    if (doMacEnhancementsForMainToolbar()) {
-      final Rectangle r = getBounds();
-      UIUtil.drawGradientHToolbarBackground(g, r.width, r.height);
-    }
-    else {
-      super.paintComponent(g);
-    }
+    super.paintComponent(g);
 
     if (myLayoutPolicy == AUTO_LAYOUT_POLICY && myAutoPopupRec != null) {
       if (myOrientation == SwingConstants.HORIZONTAL) {
