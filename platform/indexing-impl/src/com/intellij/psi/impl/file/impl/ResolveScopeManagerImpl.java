@@ -38,7 +38,7 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
     myManager = psiManager;
     myAdditionalIndexableFileSet = new AdditionalIndexableFileSet(project);
 
-    myDefaultResolveScopesCache = ConcurrentFactoryMap.createMap(
+    myDefaultResolveScopesCache = ConcurrentFactoryMap.create(
       key -> {
         GlobalSearchScope scope = null;
         for (ResolveScopeProvider resolveScopeProvider : ResolveScopeProvider.EP_NAME.getExtensionList()) {

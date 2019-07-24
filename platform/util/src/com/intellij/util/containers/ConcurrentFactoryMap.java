@@ -190,7 +190,9 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
    */
   @Deprecated
   @NotNull
-  public static <K, V> ConcurrentMap<K, V> createMap(@NotNull final Function<? super K, ? extends V> computeValue, @NotNull final Producer<? extends ConcurrentMap<K, V>> mapCreator) {
+  public static <K, V> ConcurrentMap<K, V> createMap(@NotNull Function<? super K, ? extends V> computeValue,
+                                                     @NotNull Producer<? extends ConcurrentMap<K, V>> mapCreator) {
+    DeprecatedMethodException.report("Use ConcurrentFactoryMap.create() instead");
     return new ConcurrentFactoryMap<K, V>(true) {
       @Nullable
       @Override
@@ -207,7 +209,8 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
   }
 
   @NotNull
-  public static <K, V> ConcurrentMap<K, V> create(@NotNull final Function<? super K, ? extends V> computeValue, @NotNull final Supplier<? extends ConcurrentMap<K, V>> mapCreator) {
+  public static <K, V> ConcurrentMap<K, V> create(@NotNull Function<? super K, ? extends V> computeValue,
+                                                  @NotNull Supplier<? extends ConcurrentMap<K, V>> mapCreator) {
     return new ConcurrentFactoryMap<K, V>(true) {
       @Nullable
       @Override
