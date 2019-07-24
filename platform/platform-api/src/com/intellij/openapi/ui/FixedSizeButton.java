@@ -49,7 +49,7 @@ public class FixedSizeButton extends JButton {
     setMargin(JBUI.emptyInsets());
     setDefaultCapable(false);
     setFocusable(false);
-    if (((UIUtil.isUnderAquaLookAndFeel()) && size == -1) || UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula()) {
+    if (UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula()) {
       putClientProperty("JButton.buttonType", "square");
     }
   }

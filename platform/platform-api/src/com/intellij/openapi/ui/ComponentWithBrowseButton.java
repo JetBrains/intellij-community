@@ -109,7 +109,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     comp.setPreferredSize(size);
     Dimension preferredSize = myBrowseButton.getPreferredSize();
 
-    boolean keepHeight = UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderWin10LookAndFeel();
+    boolean keepHeight = UIUtil.isUnderWin10LookAndFeel();
     preferredSize.setSize(size.width + preferredSize.width + 2,
                           keepHeight ? preferredSize.height : preferredSize.height + 2);
 
