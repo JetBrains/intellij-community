@@ -34,6 +34,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.breadcrumbs.NavigatableCrumb;
 import gnu.trove.TIntFunction;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -620,21 +621,22 @@ public class FoldingModelSupport {
     }
   }
 
+  @CalledInAwt
   public void updateContext(@NotNull UserDataHolder context, @NotNull final Settings settings) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (myFoldings.isEmpty()) return; // do not rewrite cache by initial state
     context.putUserData(CACHE_KEY, getFoldingCache(settings));
   }
 
   @NotNull
-  private FoldingCache getFoldingCache(@NotNull final Settings settings) {
-    return ReadAction.compute(() -> {
-      //noinspection unchecked
-      List<FoldedGroupState>[] result = new List[myCount];
-      for (int i = 0; i < myCount; i++) {
-        result[i] = collectFoldedGroupsStates(i);
-      }
-      return new FoldingCache(result, settings.defaultExpanded);
-    });
+  @CalledInAwt
+  private FoldingCache getFoldingCache(@NotNull Settings settings) {
+    //noinspection unchecked
+    List<FoldedGroupState>[] result = new List[myCount];
+    for (int i = 0; i < myCount; i++) {
+      result[i] = collectFoldedGroupsStates(i);
+    }
+    return new FoldingCache(result, settings.defaultExpanded);
   }
 
   @NotNull
