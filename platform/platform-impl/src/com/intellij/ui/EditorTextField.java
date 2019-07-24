@@ -552,7 +552,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   }
 
   protected void setupBorder(@NotNull EditorEx editor) {
-    if (UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
+    if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
       if (UIUtil.isUnderDefaultMacTheme()) {
         editor.setBorder(new DarculaUIUtil.MacEditorTextFieldBorder(this, editor));
       } else if (UIUtil.isUnderWin10LookAndFeel()) {

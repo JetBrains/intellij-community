@@ -779,7 +779,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     @Override
     public void paint(Graphics g) {
-      if (!SystemInfo.isMac || UIUtil.isUnderAquaLookAndFeel()) {  // avoid rendering problems with non-aqua (alloy) LaFs under mac
+      if (!SystemInfo.isMac) {  // avoid rendering problems with non-aqua (alloy) LaFs under mac
         // actually, it's a bad idea to globally enable this for dialog graphics since renderers, for example, may not
         // inherit graphics so rendering hints won't be applied and trees or lists may render ugly.
         UISettings.setupAntialiasing(g);

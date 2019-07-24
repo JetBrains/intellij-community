@@ -53,7 +53,6 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.impl.DockManagerImpl;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -319,13 +318,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   private static class MyBorder implements Border {
     @Override
     public void paintBorder(@NotNull Component c, @NotNull Graphics g, int x, int y, int width, int height) {
-      if (UIUtil.isUnderAquaLookAndFeel()) {
-        g.setColor(JBTabsImpl.MAC_AQUA_BG_COLOR);
-        final Insets insets = getBorderInsets(c);
-        if (insets.top > 0) {
-          g.fillRect(x, y, width, height + insets.top);
-        }
-      }
     }
 
     @NotNull
