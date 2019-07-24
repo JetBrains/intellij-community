@@ -38,6 +38,7 @@ class TooltipReferencesPanel extends ReferencesPanel {
     for (Map.Entry<VcsRefType, Collection<VcsRef>> typeAndRefs : myGroupedVisibleReferences.entrySet()) {
       if (typeAndRefs.getValue().size() > 1) {
         myHasGroupWithMultipleRefs = true;
+        break;
       }
     }
     super.update();
