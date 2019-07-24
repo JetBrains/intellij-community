@@ -132,6 +132,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   @Override
   @CalledInAwt
   protected void onDispose() {
+    myFoldingModel.destroy();
     super.onDispose();
     EditorFactory.getInstance().releaseEditor(myEditor);
   }
