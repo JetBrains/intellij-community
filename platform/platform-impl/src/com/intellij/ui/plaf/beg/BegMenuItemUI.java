@@ -117,21 +117,13 @@ public class BegMenuItemUI extends BasicMenuItemUI {
       g.setColor(jmenuitem.getBackground());
       g.fillRect(0, 0, j1, k1);
       if (isSelected(jmenuitem)) {
-        if (UIUtil.isUnderAquaLookAndFeel()) {
-          myAquaSelectedBackgroundPainter.paintBorder(comp, g, 0, 0, j1, k1);
-        } else {
+        g.setColor(selectionBackground);
+        if (icon2 != null && !(UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())){
+          g.fillRect(k, 0, j1 - k, k1);
+        }
+        else{
+          g.fillRect(0, 0, j1, k1);
           g.setColor(selectionBackground);
-          if (icon2 != null && !(UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())){
-            g.fillRect(k, 0, j1 - k, k1);
-          }
-          else{
-            g.fillRect(0, 0, j1, k1);
-            //graphics.setColor(BegResources.q);
-            //graphics.drawLine(0, 0, 0, k1);
-            g.setColor(selectionBackground);
-          }
-          //graphics.setColor(BegResources.r);
-          //graphics.drawLine(j1 - 1, 0, j1 - 1, k1);
         }
       }
       g.setColor(color2);
