@@ -38,6 +38,7 @@ public final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
     DeprecatedMethodException.report("Use ContainerUtil#createSoftKeySoftValueMap() instead");
   }
 
+  @SuppressWarnings("unused")
   SoftKeySoftValueHashMap(boolean goodConstructor) {
   }
 
@@ -52,7 +53,7 @@ public final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
   }
 
   // returns true if some refs were tossed
-  boolean processQueue() {
+  private boolean processQueue() {
     boolean processed = mySoftKeyMap.processQueue();
     while(true) {
       @SuppressWarnings("unchecked")

@@ -3,10 +3,12 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +31,11 @@ public abstract class DaemonCodeAnalyzer {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
-  public abstract void updateVisibleHighlighters(@NotNull Editor editor);
+  public void updateVisibleHighlighters(@NotNull Editor editor) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    DeprecatedMethodException.report("Please remove usages of this method deprecated eons ago");
+    // no need, will not work anyway
+  }
 
   public abstract void setUpdateByTimerEnabled(boolean value);
   public abstract void disableUpdateByTimer(@NotNull Disposable parentDisposable);
