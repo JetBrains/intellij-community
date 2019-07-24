@@ -3,7 +3,6 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -13,6 +12,8 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,7 +31,8 @@ public abstract class IdeFrameDecorator implements Disposable {
 
   public abstract boolean isInFullScreen();
 
-  public abstract ActionCallback toggleFullScreen(boolean state);
+  @NotNull
+  public abstract Promise<?> toggleFullScreen(boolean state);
 
   @Override
   public void dispose() {
@@ -75,9 +77,12 @@ public abstract class IdeFrameDecorator implements Disposable {
       return UIUtil.isWindowClientPropertyTrue(myFrame, WindowManagerImpl.FULL_SCREEN);
     }
 
+    @NotNull
     @Override
-    public ActionCallback toggleFullScreen(boolean state) {
-      if (myFrame == null) return ActionCallback.REJECTED;
+    public Promise<?> toggleFullScreen(boolean state) {
+      if (myFrame == null) {
+        return Promises.rejectedPromise();
+      }
 
       Rectangle bounds = myFrame.getBounds();
       int extendedState = myFrame.getExtendedState();
@@ -85,7 +90,10 @@ public abstract class IdeFrameDecorator implements Disposable {
         myFrame.getRootPane().putClientProperty(IdeFrameImpl.NORMAL_STATE_BOUNDS, bounds);
       }
       GraphicsDevice device = ScreenUtil.getScreenDevice(bounds);
-      if (device == null) return ActionCallback.REJECTED;
+      if (device == null) {
+        return Promises.rejectedPromise();
+      }
+
       Rectangle defaultBounds = device.getDefaultConfiguration().getBounds();
       try {
         myFrame.getRootPane().putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, Boolean.TRUE);
@@ -110,7 +118,7 @@ public abstract class IdeFrameDecorator implements Disposable {
         }
         notifyFrameComponents(state);
       }
-      return ActionCallback.DONE;
+      return Promises.resolvedPromise();
     }
   }
 
@@ -155,18 +163,19 @@ public abstract class IdeFrameDecorator implements Disposable {
       return myFrame != null && X11UiUtil.isInFullScreenMode(myFrame);
     }
 
+    @NotNull
     @Override
-    public ActionCallback toggleFullScreen(boolean state) {
+    public Promise<?> toggleFullScreen(boolean state) {
       if (myFrame != null) {
         myRequestedState = state;
         X11UiUtil.toggleFullScreenMode(myFrame);
 
         if (myFrame.getJMenuBar() instanceof IdeMenuBar) {
-          final IdeMenuBar frameMenuBar = (IdeMenuBar)myFrame.getJMenuBar();
+          IdeMenuBar frameMenuBar = (IdeMenuBar)myFrame.getJMenuBar();
           frameMenuBar.onToggleFullScreen(state);
         }
       }
-      return ActionCallback.DONE;
+      return Promises.resolvedPromise();
     }
   }
 

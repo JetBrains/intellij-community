@@ -20,7 +20,6 @@ import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
@@ -46,6 +45,8 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 import org.jetbrains.io.PowerSupplyKit;
 
 import javax.accessibility.AccessibleContext;
@@ -635,15 +636,11 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
 
   @NotNull
   @Override
-  public ActionCallback toggleFullScreen(boolean state) {
-
-    if (temporaryFixForIdea156004(state)) return ActionCallback.DONE;
-
-    if (myFrameDecorator != null) {
-      return myFrameDecorator.toggleFullScreen(state);
+  public Promise<?> toggleFullScreen(boolean state) {
+    if (temporaryFixForIdea156004(state) || myFrameDecorator == null) {
+      return Promises.resolvedPromise();
     }
-
-    return ActionCallback.DONE;
+    return myFrameDecorator.toggleFullScreen(state);
   }
 
   private boolean temporaryFixForIdea156004(final boolean state) {

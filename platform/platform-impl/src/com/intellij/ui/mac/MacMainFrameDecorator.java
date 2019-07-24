@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac;
 
 import com.apple.eawt.*;
@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
@@ -26,6 +25,9 @@ import com.intellij.util.ui.UIUtil;
 import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.awt.*;
@@ -336,26 +338,30 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
     return myInFullScreen;
   }
 
+  @NotNull
   @Override
-  public ActionCallback toggleFullScreen(final boolean state) {
-    if (!SystemInfo.isMacOSLion || myFrame == null || myInFullScreen == state) return ActionCallback.REJECTED;
-    final ActionCallback callback = new ActionCallback();
+  public Promise<?> toggleFullScreen(final boolean state) {
+    if (!SystemInfo.isMacOSLion || myFrame == null || myInFullScreen == state) {
+      return Promises.rejectedPromise();
+    }
+
+    AsyncPromise<?> promise = new AsyncPromise<>();
     myDispatcher.addListener(new FSAdapter() {
       @Override
       public void windowExitedFullScreen(AppEvent.FullScreenEvent event) {
-        callback.setDone();
+        promise.setResult(null);
         myDispatcher.removeListener(this);
       }
 
       @Override
       public void windowEnteredFullScreen(AppEvent.FullScreenEvent event) {
-        callback.setDone();
+        promise.setResult(null);
         myDispatcher.removeListener(this);
       }
     });
 
     myFullscreenQueue.runOrEnqueue(() -> toggleFullScreenNow());
-    return callback;
+    return promise;
   }
 
   public void toggleFullScreenNow() {
