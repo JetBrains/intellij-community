@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.BooleanGetter;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.PaintUtil;
@@ -386,7 +387,7 @@ public class DiffDrawUtil {
                                                                       int offset1,
                                                                       int offset2,
                                                                       @NotNull BooleanGetter condition,
-                                                                      @Nullable String description) {
+                                                                      @Nullable Computable<String> description) {
     RangeHighlighter marker = editor.getMarkupModel()
       .addRangeHighlighter(offset1, offset2, LINE_MARKER_LAYER, null, HighlighterTargetArea.LINES_IN_RANGE);
 

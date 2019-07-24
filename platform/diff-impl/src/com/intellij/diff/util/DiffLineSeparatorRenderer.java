@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.LineMarkerRendererEx;
 import com.intellij.openapi.editor.markup.LineSeparatorRenderer;
 import com.intellij.openapi.util.BooleanGetter;
+import com.intellij.openapi.util.Computable;
 import com.intellij.ui.Gray;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.scale.JBUIScale;
@@ -32,9 +33,9 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
 
   @NotNull private final Editor myEditor;
   @NotNull private final BooleanGetter myCondition;
-  @Nullable private final String myDescription;
+  @Nullable private final Computable<String> myDescription;
 
-  public DiffLineSeparatorRenderer(@NotNull Editor editor, @NotNull BooleanGetter condition, @Nullable String description) {
+  public DiffLineSeparatorRenderer(@NotNull Editor editor, @NotNull BooleanGetter condition, @Nullable Computable<String> description) {
     myEditor = editor;
     myCondition = condition;
     myDescription = description;
@@ -105,8 +106,9 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
       shiftX += -gutterWidth % interval - interval;
     }
 
-    if (myDescription != null && myEditor instanceof EditorImpl) {
-      drawWithDescription((Graphics2D)g, x1, y, shiftX, lineHeight, (EditorImpl)myEditor, myDescription);
+    String description = myDescription != null && myEditor instanceof EditorImpl ? myDescription.compute() : null;
+    if (description != null) {
+      drawWithDescription((Graphics2D)g, x1, y, shiftX, lineHeight, (EditorImpl)myEditor, description);
     }
     else {
       draw(g, shiftX, y, lineHeight, myEditor.getColorsScheme());
