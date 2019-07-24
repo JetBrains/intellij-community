@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -130,7 +130,7 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static boolean overridesToString(Type type) {
     if (type instanceof ClassType) {
-      Method toStringMethod = ((ClassType)type).concreteMethodByName("toString", "()Ljava/lang/String;");
+      Method toStringMethod = DebuggerUtilsEx.concreteMethodByName((ClassType)type, "toString", "()Ljava/lang/String;");
       return toStringMethod != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(toStringMethod.declaringType().name());
     }
     return false;
