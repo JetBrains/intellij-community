@@ -10,6 +10,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.putAll
 
 
 class NameGenerator(private val restrictions: Collection<String> = emptySet()) {
@@ -213,3 +214,54 @@ fun convertToGroovyMethod(method: PsiMethod): GrMethod {
 }
 
 fun PsiType?.resolve(): PsiClass? = (this as? PsiClassType)?.resolve()
+
+fun PsiSubstitutor.removeForeignTypeParameters(method: GrMethod): PsiSubstitutor {
+  val typeParameters = mutableListOf<PsiTypeParameter>()
+  val substitutions = mutableListOf<PsiType>()
+  val allowedTypeParameters = method.typeParameters.asList()
+  val factory = GroovyPsiElementFactory.getInstance(method.project)
+
+  class ForeignTypeParameterEraser : PsiTypeMapper() {
+    override fun visitClassType(classType: PsiClassType?): PsiType? {
+      classType ?: return classType
+      val typeParameter = classType.typeParameter()
+      if (typeParameter != null && typeParameter !in allowedTypeParameters) {
+        return (compress(typeParameter.extendsListTypes.asList()) ?: PsiType.getJavaLangObject(method.manager, method.resolveScope))
+          .accept(this)
+      }
+      else {
+        return factory.createType(classType.resolve()!!, *classType.parameters.map { it.accept(this) }.toTypedArray())
+      }
+    }
+
+    override fun visitIntersectionType(intersectionType: PsiIntersectionType?): PsiType? {
+      return compress(intersectionType?.conjuncts?.map { it.accept(this) })
+    }
+
+    override fun visitWildcardType(wildcardType: PsiWildcardType?): PsiType? {
+      return when {
+        wildcardType == null -> null
+        wildcardType.isExtends -> PsiWildcardType.createExtends(method.manager, wildcardType.bound!!.accept(this))
+        wildcardType.isSuper -> PsiWildcardType.createSuper(method.manager, wildcardType.bound!!.accept(this))
+        else -> wildcardType
+      }
+    }
+
+  }
+
+  for ((typeParameter, type) in substitutionMap.entries) {
+    typeParameters.add(typeParameter)
+    substitutions.add(type.accept(ForeignTypeParameterEraser()))
+  }
+  return PsiSubstitutor.EMPTY.putAll(typeParameters.toTypedArray(), substitutions.toTypedArray())
+}
+
+
+fun compress(types: List<PsiType>?): PsiType? {
+  types ?: return null
+  return when {
+    types.isEmpty() -> PsiType.NULL
+    types.size == 1 -> types.single()
+    else -> PsiIntersectionType.createIntersection(types)
+  }
+}

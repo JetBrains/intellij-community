@@ -345,4 +345,8 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testParameterizedMethod2() {
+    doTest(true)
+  }
+
 }

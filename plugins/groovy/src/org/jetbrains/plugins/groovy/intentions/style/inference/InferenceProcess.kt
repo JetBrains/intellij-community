@@ -28,7 +28,7 @@ fun runInferenceProcess(method: GrMethod): GrMethod {
     return convertToGroovyMethod(overridableMethod)
   }
   val driver = createDriver(method)
-  val signatureSubstitutor = driver.collectSignatureSubstitutor()
+  val signatureSubstitutor = driver.collectSignatureSubstitutor().removeForeignTypeParameters(method)
   val virtualMethod = createVirtualMethod(method)
   val parameterizedDriver = driver.createParameterizedDriver(ParameterizationManager(method), virtualMethod, signatureSubstitutor)
   val graph = setUpGraph(parameterizedDriver, virtualMethod, method.typeParameters.asList())
