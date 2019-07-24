@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.RunAll;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.vcs.AbstractJunitVcsTestCase;
 import com.intellij.vcsUtil.VcsUtil;
 import hg4idea.test.HgExecutor;
@@ -143,7 +144,7 @@ public abstract class HgTest extends AbstractJunitVcsTestCase {
   protected void verifyStatus(@Nullable File workingDir, String... status) throws IOException {
     ProcessOutput statusOutput = runHg(workingDir, "status");
     verify(statusOutput);
-    assertTrue(statusOutput.getStdoutLines().containsAll(Arrays.asList(status)));
+    UsefulTestCase.assertContainsElements(statusOutput.getStdoutLines(), Arrays.asList(status));
   }
 
   /**
