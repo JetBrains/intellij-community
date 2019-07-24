@@ -36,7 +36,7 @@ public class DomApplicationComponent {
     }
   );
 
-  private final Map<Class, InvocationCache> myInvocationCaches = ConcurrentFactoryMap.createMap(InvocationCache::new,
+  private final Map<Class, InvocationCache> myInvocationCaches = ConcurrentFactoryMap.create(InvocationCache::new,
                                                                                                 ContainerUtil::createConcurrentSoftValueMap);
   private final Map<Class<? extends DomElementVisitor>, VisitorDescription> myVisitorDescriptions =
     ConcurrentFactoryMap.createMap(VisitorDescription::new);
