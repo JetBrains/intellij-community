@@ -1292,7 +1292,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
       if (it == null || settings.range == -1) return null;
 
-      MyFoldingBuilder builder = new MyFoldingBuilder(myProject, document, lineConvertor, lineCount, settings);
+      MyFoldingBuilder builder = new MyFoldingBuilder(document, lineConvertor, lineCount, settings);
       return builder.build(it);
     }
 
@@ -1302,28 +1302,24 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     }
 
     private static class MyFoldingBuilder extends FoldingBuilderBase {
-      @Nullable private final Project myProject;
       @NotNull private final Document myDocument;
       @NotNull private final LineNumberConvertor myLineConvertor;
 
-      private MyFoldingBuilder(@Nullable Project project,
-                               @NotNull Document document,
+      private MyFoldingBuilder(@NotNull Document document,
                                @NotNull LineNumberConvertor lineConvertor,
                                int lineCount,
                                @NotNull Settings settings) {
         super(new int[]{lineCount}, settings);
-        myProject = project;
         myDocument = document;
         myLineConvertor = lineConvertor;
       }
 
       @Nullable
       @Override
-      protected FoldedRangeDescription getDescription(int lineNumber, int index) {
-        if (myProject == null) return null;
+      protected FoldedRangeDescription getDescription(@NotNull Project project, int lineNumber, int index) {
         int masterLine = myLineConvertor.convert(lineNumber);
         if (masterLine == -1) return null;
-        return getLineSeparatorDescription(myProject, myDocument, masterLine);
+        return getLineSeparatorDescription(project, myDocument, masterLine);
       }
     }
   }
