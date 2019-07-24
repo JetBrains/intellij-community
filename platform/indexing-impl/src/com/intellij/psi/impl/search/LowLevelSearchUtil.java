@@ -66,7 +66,7 @@ public class LowLevelSearchUtil {
                                            final int offset,
                                            final boolean processInjectedPsi,
                                            @NotNull ProgressIndicator progress,
-                                           TreeElement lastElement,
+                                           final TreeElement lastElement,
                                            @NotNull TextOccurenceProcessor processor) {
     final ASTNode scopeNode = scope.getNode();
     if (scopeNode == null) {
@@ -85,7 +85,6 @@ public class LowLevelSearchUtil {
     }
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(project);
     TreeElement currentNode = leafNode;
-    lastElement = leafNode;
     boolean contains = false;
     TreeElement prevNode = null;
     PsiElement run = null;
@@ -99,7 +98,7 @@ public class LowLevelSearchUtil {
         if (processInjectedPsi) {
           Boolean result = processInjectedFile(run, searcher, start, progress, injectedLanguageManager, processor);
           if (result != null) {
-            return result.booleanValue() ? lastElement : null;
+            return result.booleanValue() ? leafNode : null;
           }
         }
         if (!processor.execute(run, start)) {
@@ -117,7 +116,7 @@ public class LowLevelSearchUtil {
                           (PsiTreeUtil.getParentOfType(scope, PsiFile.class, false) ==
                            PsiTreeUtil.getParentOfType(run, PsiFile.class, false));
 
-    return lastElement;
+    return leafNode;
   }
 
   private static TreeElement findNextLeafElementAt(ASTNode scopeNode, TreeElement last, int offset) {
