@@ -5,6 +5,7 @@ import com.apple.eawt.*;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -57,7 +58,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator implements UI
         enqueue(runnable);
       }
       else {
-        ApplicationManager.getApplication().invokeLater(runnable);
+        ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any());
         waitingForAppKit = true;
       }
     }
@@ -222,7 +223,6 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator implements UI
           }
         });
         myDispatcher.addListener(new FSAdapter() {
-
           @Override
           public void windowEnteringFullScreen(AppEvent.FullScreenEvent event) {
             JRootPane rootPane = frame.getRootPane();
