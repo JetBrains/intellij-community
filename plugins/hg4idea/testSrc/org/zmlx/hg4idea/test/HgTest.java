@@ -206,9 +206,10 @@ public abstract class HgTest extends AbstractJunitVcsTestCase {
     }
     File outputFile = new File(parentDir, filePath[filePath.length - 1]);
 
-    PrintStream printer = new PrintStream(new FileOutputStream(outputFile));
-    printer.print(fileContents);
-    printer.close();
+    //noinspection ImplicitDefaultCharsetUsage
+    try (PrintStream printer = new PrintStream(new FileOutputStream(outputFile))) {
+      printer.print(fileContents);
+    }
 
     return outputFile;
   }
