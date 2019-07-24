@@ -279,8 +279,9 @@ class VariableExtractor {
     Set<PsiExpression> allOccurrences = StreamEx.of(occurrences).append(expr).toSet();
     PsiExpression firstOccurrence = Collections.min(allOccurrences, Comparator.comparing(e -> e.getTextRange().getStartOffset()));
     if (anchor instanceof PsiWhileStatement) {
-      PsiExpression condition = ((PsiWhileStatement)anchor).getCondition();
-      if (condition != null) {
+      PsiWhileStatement whileStatement = (PsiWhileStatement)anchor;
+      PsiExpression condition = whileStatement.getCondition();
+      if (condition != null && allOccurrences.stream().allMatch(occurrence -> PsiTreeUtil.isAncestor(whileStatement, occurrence, true))) {
         if (firstOccurrence != null && PsiTreeUtil.isAncestor(condition, firstOccurrence, false)) {
           PsiPolyadicExpression polyadic = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(condition), PsiPolyadicExpression.class);
           if (polyadic != null && JavaTokenType.ANDAND.equals(polyadic.getOperationTokenType())) {
