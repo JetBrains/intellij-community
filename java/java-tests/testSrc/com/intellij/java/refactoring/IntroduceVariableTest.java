@@ -218,6 +218,14 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, "int"));
   }
 
+  public void testWhileConditionPlusNormal() {
+    doTest(new MockIntroduceVariableHandler("temp", true, false, false, "int"));
+  }
+
+  public void testWhileConditionPlusNormal2() {
+    doTest(new MockIntroduceVariableHandler("temp", true, false, false, "int"));
+  }
+
   public void testField() {
     doTest(new MockIntroduceVariableHandler("temp", false, false, false, CommonClassNames.JAVA_LANG_STRING));
   }
