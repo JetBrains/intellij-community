@@ -432,14 +432,12 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
   }
 
   protected static class MyFoldingModel extends FoldingModelSupport {
-    @Nullable private final Project myProject;
     private final MyPaintable myPaintable1 = new MyPaintable(0, 1);
     private final MyPaintable myPaintable2 = new MyPaintable(1, 2);
 
     public MyFoldingModel(@Nullable Project project, @NotNull EditorEx[] editors, @NotNull Disposable disposable) {
-      super(editors, disposable);
+      super(project, editors, disposable);
       assert editors.length == 3;
-      myProject = project;
     }
 
     @Nullable
@@ -453,7 +451,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
         fragment.getStartLine(ThreeSide.RIGHT),
         fragment.getEndLine(ThreeSide.RIGHT)
       });
-      return computeFoldedRanges(myProject, it, settings);
+      return computeFoldedRanges(it, settings);
     }
 
     public void paintOnDivider(@NotNull Graphics2D gg, @NotNull Component divider, @NotNull Side side) {

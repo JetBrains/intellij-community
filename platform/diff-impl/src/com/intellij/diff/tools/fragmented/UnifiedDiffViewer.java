@@ -1275,11 +1275,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   }
 
   private static class MyFoldingModel extends FoldingModelSupport {
-    @Nullable private final Project myProject;
-
     MyFoldingModel(@Nullable Project project, @NotNull EditorEx editor, @NotNull Disposable disposable) {
-      super(new EditorEx[]{editor}, disposable);
-      myProject = project;
+      super(project, new EditorEx[]{editor}, disposable);
     }
 
     @Nullable

@@ -57,6 +57,7 @@ public class FoldingModelSupport {
   private static final Key<FoldingCache> CACHE_KEY = Key.create("Diff.FoldingUtil.Cache");
 
   protected final int myCount;
+  @Nullable protected final Project myProject;
   @NotNull protected final EditorEx[] myEditors;
 
   @NotNull protected final List<FoldedGroup> myFoldings = new ArrayList<>();
@@ -64,7 +65,8 @@ public class FoldingModelSupport {
   private boolean myDuringSynchronize;
   private final boolean[] myShouldUpdateLineNumbers;
 
-  public FoldingModelSupport(@NotNull EditorEx[] editors, @NotNull Disposable disposable) {
+  public FoldingModelSupport(@Nullable Project project, @NotNull EditorEx[] editors, @NotNull Disposable disposable) {
+    myProject = project;
     myEditors = editors;
     myCount = myEditors.length;
     myShouldUpdateLineNumbers = new boolean[myCount];
@@ -92,12 +94,11 @@ public class FoldingModelSupport {
    * Iterator returns ranges of changed lines: start1, end1, start2, end2, ...
    */
   @Nullable
-  protected Data computeFoldedRanges(@Nullable Project project,
-                                     @Nullable final Iterator<int[]> changedLines,
+  protected Data computeFoldedRanges(@Nullable final Iterator<int[]> changedLines,
                                      @NotNull final Settings settings) {
     if (changedLines == null || settings.range == -1) return null;
 
-    FoldingBuilder builder = new FoldingBuilder(project, myEditors, settings);
+    FoldingBuilder builder = new FoldingBuilder(myProject, myEditors, settings);
     return builder.build(changedLines);
   }
 
@@ -107,7 +108,7 @@ public class FoldingModelSupport {
   protected void install(@Nullable final Iterator<int[]> changedLines,
                          @Nullable final UserDataHolder context,
                          @NotNull final Settings settings) {
-    Data data = computeFoldedRanges(null, changedLines, settings);
+    Data data = computeFoldedRanges(changedLines, settings);
     install(data, context, settings);
   }
 
