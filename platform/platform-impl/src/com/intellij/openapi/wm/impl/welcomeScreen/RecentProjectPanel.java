@@ -668,7 +668,7 @@ public class RecentProjectPanel extends JPanel {
         final long startTime = System.currentTimeMillis();
         boolean pathIsValid;
         try {
-          if (!isFileSystemPath(path))
+          if (!RecentProjectsManagerBase.isFileSystemPath(path))
             pathIsValid = true;
           else {
             pathIsValid = isFileAvailable(new File(path));
@@ -708,10 +708,5 @@ public class RecentProjectPanel extends JPanel {
     return IconUtil.toSize(icon,
                            (int)ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getWidth(),
                            (int)ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getHeight());
-  }
-
-  //todo better code to guess if it is a real file system path or just a tutorial's description
-  public static boolean isFileSystemPath(String path) {
-    return path.indexOf('/') != -1 || path.indexOf('\\') != -1;
   }
 }

@@ -9,7 +9,9 @@ data class OpenProjectTask @JvmOverloads constructor(val forceOpenInNewFrame: Bo
                                                      val projectToClose: Project? = null,
                                                      val frame: FrameInfo? = null,
                                                      val projectWorkspaceId: String? = null,
-                                                     val isNewProject: Boolean = false) {
+                                                     val isNewProject: Boolean = false,
+                                                     val showWelcomeScreenIfNoProjectOpened: Boolean = true,
+                                                     val sendFrameBack: Boolean = false) {
   /**
    * Used only by [ProjectUtil.openOrImport].
    */
@@ -18,9 +20,6 @@ data class OpenProjectTask @JvmOverloads constructor(val forceOpenInNewFrame: Bo
   var useDefaultProjectAsTemplate: Boolean = true
 
   var callback: ProjectOpenedCallback? = null
-
-  var showWelcomeScreenIfNoProjectOpened = true
-  var sendFrameBack = false
 
   // for java clients only
   fun withNewProject(value: Boolean) = copy(isNewProject = value)
