@@ -39,19 +39,24 @@ public class JsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
                                                                                     "}");
   }
 
-  // todo fix working with live template in test; test-only problem
-  /*public void testAddMissingStringProperty() throws Exception {
+  public void testAddMissingNonStringProperties() throws Exception {
     doTest("{\n" +
+           "  \"required\": [\"x\", \"y\"],\n" +
            "  \"properties\": {\n" +
-           "    \"a\": {\n" +
-           "      \"type\": \"string\"" +
+           "    \"x\": {\n" +
+           "      \"type\": \"boolean\",\n" +
+           "      \"default\": true\n" +
+           "    },\n" +
+           "    \"y\": {\n" +
+           "      \"type\": \"number\",\n" +
+           "      \"default\": 1\n" +
            "    }\n" +
-           "  },\n" +
-           "  \"required\": [\"a\"]\n" +
-           "}", "<warning>{\"c\": 5}</warning>", "Add missing property 'a'", "{\"c\": 5,\n" +
-                                                                             "  \"a\": \"<caret>\"" +
-                                                                             "\n}");
-  }*/
+           "  }\n" +
+           "}", "<warning>{}</warning>", "Add missing properties 'x', 'y'", "{\n" +
+                                                                            "  \"x\": true,\n" +
+                                                                            "  \"y\": 1\n" +
+                                                                            "}");
+  }
 
   public void testRemoveProhibitedProperty() throws Exception {
     doTest("{\n" +

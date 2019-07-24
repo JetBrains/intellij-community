@@ -28,6 +28,7 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.JsonLikeSyntaxAdapter;
 import com.jetbrains.jsonSchema.impl.JsonValidationError;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -113,7 +114,7 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix<Commo
         = ContainerUtil.reverse(new ArrayList<>(myData.myMissingPropertyIssues));
       for (JsonValidationError.MissingPropertyIssueData issue: reverseOrder) {
         Object defaultValueObject = issue.defaultValue;
-        String defaultValue = defaultValueObject instanceof String ? StringUtil.wrapWithDoubleQuote(defaultValueObject.toString()) : null;
+        String defaultValue = formatDefaultValue(defaultValueObject);
         PsiElement property = myQuickFixAdapter.createProperty(issue.propertyName, defaultValue == null
                                                                                    ? myQuickFixAdapter
                                                                                      .getDefaultValueFromType(issue.propertyType)
@@ -143,6 +144,24 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix<Commo
      });
 
     return newElementRef.get();
+  }
+
+  @Nullable
+  @Contract("null -> null")
+  public String formatDefaultValue(@Nullable Object defaultValueObject) {
+    if (defaultValueObject instanceof String) {
+      return StringUtil.wrapWithDoubleQuote(defaultValueObject.toString());
+    }
+    else if (defaultValueObject instanceof Boolean) {
+      return Boolean.toString((Boolean)defaultValueObject);
+    }
+    else if (defaultValueObject instanceof Number) {
+      return defaultValueObject.toString();
+    }
+    else if (defaultValueObject instanceof PsiElement) {
+      return ((PsiElement)defaultValueObject).getText();
+    }
+    return null;
   }
 
   @Override
