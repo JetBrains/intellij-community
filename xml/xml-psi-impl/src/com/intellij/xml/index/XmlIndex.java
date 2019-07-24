@@ -16,7 +16,6 @@
 package com.intellij.xml.index;
 
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;

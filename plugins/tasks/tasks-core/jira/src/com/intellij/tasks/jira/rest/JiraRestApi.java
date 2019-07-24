@@ -10,7 +10,6 @@ import com.intellij.tasks.jira.JiraVersion;
 import com.intellij.tasks.jira.rest.api2.JiraRestApi2;
 import com.intellij.tasks.jira.rest.api20alpha1.JiraRestApi20Alpha1;
 import com.intellij.tasks.jira.rest.model.JiraIssue;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.methods.GetMethod;

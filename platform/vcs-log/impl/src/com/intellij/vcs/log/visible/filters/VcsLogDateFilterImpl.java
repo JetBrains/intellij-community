@@ -4,7 +4,6 @@ package com.intellij.vcs.log.visible.filters;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogDateFilter;
 import com.intellij.vcs.log.VcsLogDetailsFilter;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

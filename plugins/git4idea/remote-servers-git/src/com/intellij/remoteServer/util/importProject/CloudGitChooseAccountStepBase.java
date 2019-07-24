@@ -27,7 +27,6 @@ import com.intellij.remoteServer.util.CloudGitDeploymentDetector;
 
 import javax.swing.*;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * @author michael.golubev

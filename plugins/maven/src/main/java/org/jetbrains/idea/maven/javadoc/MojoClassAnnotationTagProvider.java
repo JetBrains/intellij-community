@@ -22,7 +22,6 @@ import com.intellij.psi.javadoc.CustomJavadocTagProvider;
 import com.intellij.psi.javadoc.JavadocTagInfo;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

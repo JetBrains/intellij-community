@@ -17,7 +17,6 @@ package com.intellij.build.events;
 
 import com.intellij.build.process.BuildProcessHandler;
 import com.intellij.execution.filters.Filter;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunContentDescriptor;

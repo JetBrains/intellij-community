@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
-import com.intellij.execution.console.ConsolePromptDecorator;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.filters.OpenFileHyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewUtil;
@@ -38,7 +37,6 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.xdebugger.impl.frame.XStandaloneVariablesView;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.completion.PythonConsoleAutopopupBlockingHandler;
-import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.PyDebuggerEditorsProvider;

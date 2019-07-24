@@ -17,7 +17,6 @@ package com.intellij.xml.impl.dtd;
 
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.xml.XmlContentParticle;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;

@@ -21,10 +21,8 @@ import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaFoldingBuilder extends JavaFoldingBuilderBase {

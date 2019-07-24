@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.util.ExceptionUtilRt;
 import org.eclipse.aether.transfer.TransferCancelledException;
 import org.eclipse.aether.transfer.TransferEvent;
 import org.eclipse.aether.transfer.TransferListener;

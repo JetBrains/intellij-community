@@ -16,7 +16,6 @@
 package com.intellij.psi.scope.processor;
 
 import com.intellij.psi.*;
-import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.conflictResolvers.JavaMethodsConflictResolver;

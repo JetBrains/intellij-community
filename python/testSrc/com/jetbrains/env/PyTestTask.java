@@ -2,7 +2,6 @@ package com.jetbrains.env;
 
 import com.google.common.collect.Sets;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.testFramework.LeakHunter;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

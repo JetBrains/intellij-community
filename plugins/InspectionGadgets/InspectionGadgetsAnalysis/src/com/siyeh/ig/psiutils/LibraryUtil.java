@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;

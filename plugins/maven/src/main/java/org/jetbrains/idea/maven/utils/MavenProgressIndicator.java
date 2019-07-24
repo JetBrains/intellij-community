@@ -19,7 +19,6 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Condition;
-import org.jetbrains.idea.maven.buildtool.ArtifactSyncListener;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
 

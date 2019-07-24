@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;

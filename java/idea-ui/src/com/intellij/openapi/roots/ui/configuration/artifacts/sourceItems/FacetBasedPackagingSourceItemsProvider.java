@@ -24,7 +24,6 @@ import com.intellij.packaging.elements.PackagingElementOutputKind;
 import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.ui.*;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -2,7 +2,6 @@ package org.jetbrains.idea.svn.difftool;
 
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.FrameDiffTool;
-import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;

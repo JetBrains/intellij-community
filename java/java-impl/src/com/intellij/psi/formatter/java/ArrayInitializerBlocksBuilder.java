@@ -20,10 +20,8 @@ import com.intellij.formatting.Block;
 import com.intellij.formatting.Indent;
 import com.intellij.formatting.Wrap;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 

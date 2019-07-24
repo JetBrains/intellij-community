@@ -20,7 +20,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.history.SvnChangeList;
 
 public class SvnRemoteFileAnnotation extends BaseSvnFileAnnotation {
   private final VirtualFile myCurrentFile;

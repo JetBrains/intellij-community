@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ex.ClipboardUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;

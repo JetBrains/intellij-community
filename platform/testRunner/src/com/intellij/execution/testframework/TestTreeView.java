@@ -41,7 +41,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.datatransfer.StringSelection;
-import java.util.List;
 import java.util.*;
 
 public abstract class TestTreeView extends Tree implements DataProvider, CopyProvider {

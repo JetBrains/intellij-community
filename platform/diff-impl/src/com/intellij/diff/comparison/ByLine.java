@@ -15,7 +15,6 @@
  */
 package com.intellij.diff.comparison;
 
-import com.intellij.diff.comparison.iterables.DiffIterableUtil.*;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.util.MergeRange;
 import com.intellij.diff.util.Range;

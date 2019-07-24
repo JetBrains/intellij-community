@@ -19,8 +19,6 @@ import org.jetbrains.idea.maven.onlinecompletion.OfflineSearchService;
 import org.jetbrains.idea.maven.onlinecompletion.IndexBasedCompletionProvider;
 import org.jetbrains.idea.maven.onlinecompletion.ProjectModulesCompletionProvider;
 
-import java.util.List;
-
 public class MavenProjectIndicesManagerTest extends MavenIndicesTestCase {
   private MavenIndicesTestFixture myIndicesFixture;
 

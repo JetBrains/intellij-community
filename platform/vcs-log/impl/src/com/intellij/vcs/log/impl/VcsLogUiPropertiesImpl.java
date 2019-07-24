@@ -3,14 +3,11 @@ package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-
-import static com.intellij.vcs.log.ui.table.GraphTableModel.*;
 
 /**
  * Stores UI configuration based on user activity and preferences.

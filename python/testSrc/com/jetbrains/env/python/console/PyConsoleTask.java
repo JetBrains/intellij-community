@@ -19,7 +19,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.testFramework.LeakHunter;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.env.PyExecutionFixtureTestTask;

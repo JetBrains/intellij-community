@@ -2,7 +2,6 @@
 package com.intellij.execution;
 
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;

@@ -24,7 +24,6 @@ import java.util.stream.Stream;
 
 import static com.intellij.codeInsight.completion.JavaCompletionContributor.isInJavaContext;
 import static com.intellij.patterns.PsiJavaPatterns.*;
-import static com.intellij.patterns.StandardPatterns.or;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
 /**

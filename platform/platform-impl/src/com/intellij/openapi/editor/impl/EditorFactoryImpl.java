@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.actionSystem.ActionPlan;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandlerEx;
 import com.intellij.openapi.editor.colors.EditorColorsManager;

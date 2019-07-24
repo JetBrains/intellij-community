@@ -4,7 +4,6 @@ package com.intellij.vcs.log.visible.filters;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.vcs.log.VcsLogHashFilter;
 import com.intellij.vcs.log.util.VcsLogUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;

@@ -16,7 +16,6 @@
 package com.intellij.tasks.generic;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import java.util.HashMap;
 import org.apache.commons.httpclient.HttpMethod;

@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.TreeUIHelper;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;

@@ -24,16 +24,13 @@ import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.reference.RefPackage;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiIdentifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.dependency.DependencyUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.UClass;
 import org.jetbrains.uast.UDeclarationKt;
 
 import java.util.Set;

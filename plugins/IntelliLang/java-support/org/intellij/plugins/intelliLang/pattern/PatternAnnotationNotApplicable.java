@@ -15,7 +15,6 @@
  */
 package org.intellij.plugins.intelliLang.pattern;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;

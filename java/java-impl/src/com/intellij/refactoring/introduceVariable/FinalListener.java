@@ -5,7 +5,6 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.psi.*;
 
 public class FinalListener {

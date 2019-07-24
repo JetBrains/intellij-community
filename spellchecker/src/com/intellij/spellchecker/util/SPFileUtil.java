@@ -17,7 +17,6 @@ package com.intellij.spellchecker.util;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.Processor;
 
 import java.io.File;
 

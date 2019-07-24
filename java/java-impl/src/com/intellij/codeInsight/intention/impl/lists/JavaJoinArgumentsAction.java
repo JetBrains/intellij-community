@@ -4,7 +4,6 @@ package com.intellij.codeInsight.intention.impl.lists;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

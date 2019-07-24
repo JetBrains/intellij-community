@@ -7,7 +7,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsAbstractHistorySession;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsHistorySessionConsumer;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;

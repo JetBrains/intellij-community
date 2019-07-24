@@ -45,7 +45,6 @@ import static git4idea.commands.GitAuthenticationMode.*;
 import static git4idea.config.GitIncomingCheckStrategy.*;
 import static git4idea.repo.GitRefUtil.addRefsHeadsPrefixIfNeeded;
 import static git4idea.repo.GitRefUtil.getResolvedHashes;
-import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toSet;
 import static one.util.streamex.StreamEx.of;
 

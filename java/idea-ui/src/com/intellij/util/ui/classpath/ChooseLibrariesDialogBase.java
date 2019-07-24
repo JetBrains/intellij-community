@@ -56,7 +56,6 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

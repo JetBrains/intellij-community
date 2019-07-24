@@ -19,7 +19,6 @@ package com.intellij.util.indexing.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.EmptyIterator;
-import com.intellij.util.indexing.IndexId;
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.indexing.containers.ChangeBufferingList;
 import com.intellij.util.indexing.containers.IntIdsIterator;

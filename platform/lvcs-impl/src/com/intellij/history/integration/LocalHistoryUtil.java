@@ -20,7 +20,6 @@ import com.intellij.history.core.revisions.ChangeRevision;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.integration.ui.models.HistoryDialogModel;
 import com.intellij.history.integration.ui.models.RevisionItem;
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 

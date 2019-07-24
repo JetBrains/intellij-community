@@ -20,7 +20,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.StdLanguages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 /**

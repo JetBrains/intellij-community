@@ -6,7 +6,6 @@ import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.Map;
 
 public class MapForwardIndexAccessor<Key, Value, Input> extends AbstractMapForwardIndexAccessor<Key, Value, Map<Key, Value>> {

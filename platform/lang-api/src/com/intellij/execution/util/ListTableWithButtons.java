@@ -4,7 +4,6 @@ package com.intellij.execution.util;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;

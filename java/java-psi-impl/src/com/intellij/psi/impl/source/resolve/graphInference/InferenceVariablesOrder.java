@@ -16,7 +16,6 @@
 package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.psi.PsiType;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.*;

@@ -26,7 +26,6 @@ import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.util.AnnotateFix;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

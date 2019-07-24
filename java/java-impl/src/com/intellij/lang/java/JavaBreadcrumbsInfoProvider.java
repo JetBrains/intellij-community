@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
 
-import static com.intellij.openapi.util.Iconable.*;
 import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.psi.PsiNameHelper.getShortClassName;
 

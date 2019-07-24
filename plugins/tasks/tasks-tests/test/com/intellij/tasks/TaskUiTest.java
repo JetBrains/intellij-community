@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
-import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.tasks.actions.SwitchTaskAction;
 import com.intellij.tasks.config.TaskSettings;
 import com.intellij.tasks.impl.LocalTaskImpl;

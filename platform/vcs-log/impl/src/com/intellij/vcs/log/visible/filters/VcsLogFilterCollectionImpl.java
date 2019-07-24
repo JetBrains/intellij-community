@@ -3,7 +3,6 @@ package com.intellij.vcs.log.visible.filters;
 
 import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.VcsLogFilterCollection;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

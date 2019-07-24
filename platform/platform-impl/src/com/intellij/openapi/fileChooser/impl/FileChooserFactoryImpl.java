@@ -11,7 +11,6 @@ import com.intellij.openapi.fileChooser.ex.FileTextFieldImpl;
 import com.intellij.openapi.fileChooser.ex.LocalFsFinder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.MacFileSaverDialog;
 import com.intellij.ui.mac.MacPathChooserDialog;

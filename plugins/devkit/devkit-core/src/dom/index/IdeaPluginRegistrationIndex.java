@@ -17,7 +17,6 @@ package org.jetbrains.idea.devkit.dom.index;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;

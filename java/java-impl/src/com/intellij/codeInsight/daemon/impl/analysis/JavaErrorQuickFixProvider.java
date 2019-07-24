@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddExceptionToCatchFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddFinallyFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.WrapSwitchRuleStatementsIntoBlockFix;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;

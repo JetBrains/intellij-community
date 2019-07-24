@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.util.registry.Registry;

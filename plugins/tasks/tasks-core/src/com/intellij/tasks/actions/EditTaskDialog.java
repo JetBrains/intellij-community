@@ -18,7 +18,6 @@ package com.intellij.tasks.actions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsTaskHandler;
 import com.intellij.openapi.vcs.changes.ChangeListManager;

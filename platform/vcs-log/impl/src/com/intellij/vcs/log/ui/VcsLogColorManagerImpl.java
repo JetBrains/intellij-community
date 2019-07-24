@@ -2,12 +2,10 @@
 package com.intellij.vcs.log.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;

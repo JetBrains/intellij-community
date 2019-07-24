@@ -42,10 +42,6 @@ import java.awt.event.*;
 import java.io.File;
 import java.util.List;
 import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
-import java.util.function.UnaryOperator;
-import java.util.stream.Stream;
 
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_CODE_COMPLETION;
 

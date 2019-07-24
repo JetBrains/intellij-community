@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
-import com.intellij.codeInsight.ExpectedTypeInfo.*;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.template.TemplateBuilder;
