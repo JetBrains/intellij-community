@@ -159,7 +159,6 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
   protected XNamedValue createThisNode(EvaluationContextImpl evaluationContext) {
     ObjectReference thisObjectReference = myDescriptor.getThisObject();
     if (thisObjectReference != null) {
-      myDescriptor.putUserData(BreakpointIntentionAction.THIS_TYPE_KEY, thisObjectReference.type().name());
       return JavaValue.create(myNodeManager.getThisDescriptor(null, thisObjectReference), evaluationContext, myNodeManager);
     }
     return null;

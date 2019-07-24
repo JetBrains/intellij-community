@@ -8,6 +8,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.ThreadsViewSettings;
+import com.intellij.debugger.ui.breakpoints.BreakpointIntentionAction;
 import com.intellij.debugger.ui.tree.StackFrameDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.icons.AllIcons;
@@ -221,6 +222,10 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
         myThisObject = myFrame.thisObject();
       } catch (EvaluateException e) {
         LOG.info(e);
+      }
+      if (myThisObject != null) {
+        putUserData(BreakpointIntentionAction.THIS_ID_KEY, myThisObject.uniqueID());
+        putUserData(BreakpointIntentionAction.THIS_TYPE_KEY, myThisObject.type().name());
       }
     }
     return myThisObject;
