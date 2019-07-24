@@ -17,7 +17,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.withValue
 import com.intellij.openapi.vfs.*
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiCompiledFile
@@ -167,22 +167,10 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
     PlatformTestUtil.assertTreeEqual(svc.tree, s.trimIndent())
   }
 
-
   private fun getTestFile(name: String): VirtualFile {
     val path = if (FileUtil.isAbsolute(name)) name else "${myFixture.testDataPath}/${name}"
     val fs = if (path.contains(URLUtil.JAR_SEPARATOR)) StandardFileSystems.jar() else StandardFileSystems.local()
     return fs.refreshAndFindFileByPath(path)!!
-  }
-
-  private fun RegistryValue.withValue(testValue: Boolean, block: () -> Unit) {
-    val currentValue = asBoolean()
-    try {
-      setValue(testValue)
-      block()
-    }
-    finally {
-      setValue(currentValue)
-    }
   }
 
   private class MyFileVisitor(private val psiManager: PsiManager) : VirtualFileVisitor<Any>() {
@@ -199,7 +187,7 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
         decompiled.split("\n").dropLastWhile(String::isEmpty).toTypedArray().forEach { s ->
           val pos = s.indexOf(prefix)
           if (pos == 0 && prefix.length < s.length && Character.isDigit(s[prefix.length])) {
-            fail("Incorrect line mapping in file " + file.path + " line: " + s)
+            fail("Incorrect line mapping in the file " + file.path + " line: " + s)
           }
         }
       }
