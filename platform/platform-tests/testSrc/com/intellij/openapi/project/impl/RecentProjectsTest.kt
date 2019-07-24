@@ -85,7 +85,7 @@ class RecentProjectsTest {
       closeProject(project)
       project = ProjectManagerEx.getInstanceEx().loadAndOpenProject(path)
       val timestamp = getProjectOpenTimestamp("z1")
-      RecentProjectsManagerBase.getInstanceEx().updateLastProjectPath()
+      RecentProjectsManagerBase.instanceEx.updateLastProjectPath()
       // "Timestamp for opened project has not been updated"
       assertThat(getProjectOpenTimestamp("z1")).isGreaterThan(timestamp)
     }
@@ -95,7 +95,7 @@ class RecentProjectsTest {
   }
 
   private fun getProjectOpenTimestamp(projectName: String): Long {
-    val additionalInfo = RecentProjectsManagerBase.getInstanceEx().state!!.additionalInfo
+    val additionalInfo = RecentProjectsManagerBase.instanceEx.state!!.additionalInfo
     for (s in additionalInfo.keys) {
       if (s.endsWith(projectName)) {
         return additionalInfo.get(s)!!.projectOpenTimestamp

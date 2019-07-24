@@ -1,618 +1,559 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide;
+package com.intellij.ide
 
-import com.intellij.configurationStore.StorageUtilKt;
-import com.intellij.ide.impl.OpenProjectTask;
-import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.project.impl.ProjectImpl;
-import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.*;
-import com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectPanel;
-import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
-import com.intellij.platform.PlatformProjectOpenProcessor;
-import com.intellij.project.ProjectKt;
-import com.intellij.util.*;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemIndependent;
+import com.intellij.configurationStore.readProjectNameFile
+import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.impl.ProjectUtil
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.project.impl.ProjectImpl
+import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.impl.ProjectFrameBounds.Companion.getInstance
+import com.intellij.openapi.wm.impl.SystemDock
+import com.intellij.openapi.wm.impl.WindowManagerImpl
+import com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectPanel
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
+import com.intellij.platform.PlatformProjectOpenProcessor
+import com.intellij.project.stateStore
+import com.intellij.util.PathUtil
+import com.intellij.util.PathUtilRt
+import com.intellij.util.SmartList
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.toArray
+import com.intellij.util.io.systemIndependentPath
+import com.intellij.util.pooledThreadSingleAlarm
+import gnu.trove.THashMap
+import gnu.trove.THashSet
+import org.jetbrains.annotations.ApiStatus.Internal
+import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.util.*
+import java.util.concurrent.atomic.AtomicLong
+import javax.swing.Icon
+import kotlin.collections.Map.Entry
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.set
 
-import javax.swing.*;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
+private const val MAX_PROJECTS_IN_MAIN_MENU = 6
 
 /**
  * Used directly by IntelliJ IDEA.
  *
  * @see RecentDirectoryProjectsManager base class primary for minor IDEs on IntelliJ Platform
  */
-@State(name = "RecentProjectsManager", storages = @Storage(value = "recentProjects.xml", roamingType = RoamingType.DISABLED))
-public class RecentProjectsManagerBase extends RecentProjectsManager implements PersistentStateComponent<RecentProjectManagerState>,
-                                                                                ModificationTracker {
-  private static final int MAX_PROJECTS_IN_MAIN_MENU = 6;
-
-  private final AtomicLong myModCounter = new AtomicLong();
-
-  private final RecentProjectIconHelper myProjectIconHelper = new RecentProjectIconHelper();
-
-  private final Set<String> myNamesToResolve = new THashSet<>(MAX_PROJECTS_IN_MAIN_MENU);
-  private final Map<String, String> myNameCache = Collections.synchronizedMap(new THashMap<>());
-
-  private final SingleAlarm myNamesResolver = new SingleAlarm(() -> {
-    final Set<String> paths;
-    synchronized (myNamesToResolve) {
-      paths = new THashSet<>(myNamesToResolve);
-      myNamesToResolve.clear();
-    }
-    for (String p : paths) {
-      myNameCache.put(p, readProjectName(p));
-    }
-  }, 50, Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
-
-  public static RecentProjectsManagerBase getInstanceEx() {
-    return (RecentProjectsManagerBase)RecentProjectsManager.getInstance();
+@State(name = "RecentProjectsManager", storages = [Storage(value = "recentProjects.xml", roamingType = RoamingType.DISABLED)])
+open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateComponent<RecentProjectManagerState?>, ModificationTracker {
+  companion object {
+    @JvmStatic
+    val instanceEx: RecentProjectsManagerBase
+      get() = getInstance() as RecentProjectsManagerBase
   }
 
-  private final Object myStateLock = new Object();
-  private RecentProjectManagerState myState = new RecentProjectManagerState();
+  private val modCounter = AtomicLong()
+  private val myProjectIconHelper = RecentProjectIconHelper()
+  private val namesToResolve: MutableSet<String> = THashSet(MAX_PROJECTS_IN_MAIN_MENU)
 
-  @SuppressWarnings("deprecation")
-  @Override
-  public RecentProjectManagerState getState() {
-    synchronized (myStateLock) {
-      myState.getRecentPaths().clear();
-      myState.getRecentPaths().addAll(ContainerUtil.reverse(new ArrayList<>(myState.getAdditionalInfo().keySet())));
+  private val nameCache: MutableMap<String, String>? = Collections.synchronizedMap(THashMap())
 
-      if (myState.getPid() == null) {
+  private val nameResolver = pooledThreadSingleAlarm(50) {
+    var paths: Set<String>
+    synchronized(namesToResolve) {
+      paths = THashSet(namesToResolve)
+      namesToResolve.clear()
+    }
+    for (p in paths) {
+      nameCache!!.put(p, readProjectName(p))
+    }
+  }
+
+  private val stateLock = Any()
+  private var myState = RecentProjectManagerState()
+
+  override fun getState(): RecentProjectManagerState? {
+    synchronized(stateLock) {
+      @Suppress("DEPRECATION")
+      myState.recentPaths.clear()
+      @Suppress("DEPRECATION")
+      myState.recentPaths.addAll(ContainerUtil.reverse(myState.additionalInfo.keys.toList()))
+      if (myState.pid == null) {
         //todo[kb] uncomment when we will fix JRE-251 The pid is needed for 3rd parties like Toolbox App to show the project is open now
-        myState.setPid(null);//OSProcessUtil.getApplicationPid();
+        myState.pid = null
       }
-      return myState;
+      return myState
     }
   }
 
-  @Nullable
-  public RecentProjectMetaInfo getProjectMetaInfo(@NotNull Path file) {
-    synchronized (myStateLock) {
-      return myState.getAdditionalInfo().get(FileUtil.toSystemIndependentName(file.toString()));
+  fun getProjectMetaInfo(file: Path): RecentProjectMetaInfo? {
+    synchronized(stateLock) {
+      return myState.additionalInfo.get(file.systemIndependentPath)
     }
   }
 
-  @Override
-  public void loadState(@NotNull RecentProjectManagerState state) {
-    synchronized (myStateLock) {
-      myState = state;
-      myState.setPid(null);
-
-      @SuppressWarnings("deprecation")
-      List<String> openPaths = myState.getOpenPaths();
+  override fun loadState(state: RecentProjectManagerState) {
+    synchronized(stateLock) {
+      myState = state
+      myState.pid = null
+      @Suppress("DEPRECATION")
+      val openPaths = myState.openPaths
       if (!openPaths.isEmpty()) {
-        migrateOpenPaths(openPaths);
+        migrateOpenPaths(openPaths)
       }
     }
   }
 
   // reorder according to openPaths order and mark as opened
-  private void migrateOpenPaths(@NotNull List<String> openPaths) {
-    Map<String, RecentProjectMetaInfo> oldInfoMap = new THashMap<>();
-    for (String path : openPaths) {
-      RecentProjectMetaInfo info = myState.getAdditionalInfo().remove(path);
+  private fun migrateOpenPaths(openPaths: MutableList<String>) {
+    val oldInfoMap: MutableMap<String, RecentProjectMetaInfo> = THashMap()
+    for (path in openPaths) {
+      val info = myState.additionalInfo.remove(path)
       if (info != null) {
-        oldInfoMap.put(path, info);
+        oldInfoMap[path] = info
       }
     }
 
-    for (String path : ContainerUtil.reverse(openPaths)) {
-      RecentProjectMetaInfo info = oldInfoMap.get(path);
-      if (info == null) {
-        info = new RecentProjectMetaInfo();
-      }
-      info.setOpened(true);
-      myState.getAdditionalInfo().put(path, info);
+    for (path in ContainerUtil.reverse(openPaths)) {
+      val info = oldInfoMap[path] ?: RecentProjectMetaInfo()
+      info.opened = true
+      myState.additionalInfo[path] = info
     }
-
-    openPaths.clear();
-    myModCounter.incrementAndGet();
+    openPaths.clear()
+    modCounter.incrementAndGet()
   }
 
-  @Override
-  public void removePath(@Nullable @SystemIndependent String path) {
+  override fun removePath(path: String?) {
     if (path == null) {
-      return;
+      return
     }
 
-    synchronized (myStateLock) {
-      myState.getAdditionalInfo().remove(path);
-      for (ProjectGroup group : myState.getGroups()) {
+    synchronized(stateLock) {
+      myState.additionalInfo.remove(path)
+      for (group in myState.groups) {
         if (group.removeProject(path)) {
-          myModCounter.incrementAndGet();
+          modCounter.incrementAndGet()
         }
       }
     }
   }
 
-  @Override
-  public boolean hasPath(@SystemIndependent String path) {
-    synchronized (myStateLock) {
-      return myState.getAdditionalInfo().containsKey(path);
+  override fun hasPath(path: String?): Boolean {
+    synchronized(stateLock) {
+      return myState.additionalInfo.containsKey(path)
     }
   }
 
   /**
    * @return a path pointing to a directory where the last project was created or null if not available
    */
-  @Override
-  @Nullable
-  @SystemIndependent
-  public String getLastProjectCreationLocation() {
-    synchronized (myStateLock) {
-      return myState.getLastProjectLocation();
+  override fun getLastProjectCreationLocation(): String? {
+    synchronized(stateLock) {
+      return myState.lastProjectLocation
     }
   }
 
-  @Override
-  public void setLastProjectCreationLocation(@Nullable @SystemIndependent String value) {
-    String newValue = PathUtil.toSystemIndependentName(StringUtil.nullize(value, true));
-    synchronized (myStateLock) {
-      myState.setLastProjectLocation(newValue);
+  override fun setLastProjectCreationLocation(value: String?) {
+    val newValue = PathUtil.toSystemIndependentName(StringUtil.nullize(value, true))
+    synchronized(stateLock) {
+      myState.lastProjectLocation = newValue
     }
   }
 
-  @Override
-  public final void updateLastProjectPath() {
-    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    synchronized (myStateLock) {
-      for (RecentProjectMetaInfo info : myState.getAdditionalInfo().values()) {
-        info.setOpened(false);
+  override fun updateLastProjectPath() {
+    val openProjects: Array<Project?> = ProjectManager.getInstance().openProjects
+    synchronized(stateLock) {
+      for (info in myState.additionalInfo.values) {
+        info.opened = false
       }
 
-      for (Project project : openProjects) {
-        String path = getProjectPath(project);
-        RecentProjectMetaInfo info = path == null ? null : myState.getAdditionalInfo().get(path);
+      for (project in openProjects) {
+        val path = getProjectPath(project!!)
+        val info = if (path == null) null else myState.additionalInfo.get(path)
         if (info != null) {
-          info.setOpened(true);
-          info.setProjectOpenTimestamp(System.currentTimeMillis());
-          info.setDisplayName(getProjectDisplayName(project));
+          info.opened = true
+          info.projectOpenTimestamp = System.currentTimeMillis()
+          info.displayName = getProjectDisplayName(project)
         }
       }
-
-      myState.validateRecentProjects(myModCounter);
+      myState.validateRecentProjects(modCounter)
     }
   }
 
-  @Nullable
-  protected String getProjectDisplayName(@NotNull Project project) {
-    return null;
+  protected open fun getProjectDisplayName(project: Project): String? = null
+
+  fun getProjectIcon(path: String, isDark: Boolean): Icon? {
+    return myProjectIconHelper.getProjectIcon(path, isDark)
   }
 
-  @Nullable
-  public final Icon getProjectIcon(@NotNull @SystemIndependent String path, boolean isDark) {
-    return myProjectIconHelper.getProjectIcon(path, isDark);
+  fun getProjectOrAppIcon(path: String): Icon {
+    return myProjectIconHelper.getProjectOrAppIcon(path)
   }
 
-  public final Icon getProjectOrAppIcon(@SystemIndependent @NotNull String path) {
-    return myProjectIconHelper.getProjectOrAppIcon(path);
-  }
-
-  @NotNull
-  private Set<String> getDuplicateProjectNames(@NotNull Set<String> openedPaths, @NotNull Set<String> recentPaths) {
-    Set<String> names = new THashSet<>();
-    Set<String> duplicates = new THashSet<>();
-    for (String path : ContainerUtil.union(openedPaths, recentPaths)) {
-      String name = getProjectName(path);
+  private fun getDuplicateProjectNames(openedPaths: Set<String>, recentPaths: Set<String>): Set<String> {
+    val names: MutableSet<String> = THashSet()
+    val duplicates: MutableSet<String> = THashSet()
+    for (path in ContainerUtil.union(openedPaths, recentPaths)) {
+      val name = getProjectName(path)
       if (!names.add(name)) {
-        duplicates.add(name);
+        duplicates.add(name)
       }
     }
-    return duplicates;
+    return duplicates
   }
 
-  @Override
-  @NotNull
-  public AnAction[] getRecentProjectsActions(boolean forMainMenu) {
-    return getRecentProjectsActions(forMainMenu, false);
+  override fun getRecentProjectsActions(forMainMenu: Boolean): Array<AnAction?> {
+    return getRecentProjectsActions(forMainMenu, false)
   }
 
-  @Override
-  @NotNull
-  public AnAction[] getRecentProjectsActions(boolean forMainMenu, boolean useGroups) {
-    Set<String> paths;
-    synchronized (myStateLock) {
-      myState.validateRecentProjects(myModCounter);
-      paths = new LinkedHashSet<>(ContainerUtil.reverse(new ArrayList<>(myState.getAdditionalInfo().keySet())));
+  override fun getRecentProjectsActions(forMainMenu: Boolean, useGroups: Boolean): Array<AnAction?> {
+    var paths: MutableSet<String>
+    synchronized(stateLock) {
+      myState.validateRecentProjects(modCounter)
+      paths = LinkedHashSet(ContainerUtil.reverse(myState.additionalInfo.keys.toList()))
     }
 
-    Set<String> openedPaths = new THashSet<>();
-    for (Project openProject : ProjectManager.getInstance().getOpenProjects()) {
-      ContainerUtil.addIfNotNull(openedPaths, getProjectPath(openProject));
+    val openedPaths = THashSet<String>()
+    for (openProject in ProjectManager.getInstance().openProjects) {
+      ContainerUtil.addIfNotNull(openedPaths, getProjectPath(openProject!!))
     }
 
-    List<AnAction> actions = new SmartList<>();
-    Set<String> duplicates = getDuplicateProjectNames(openedPaths, paths);
+    val actions: MutableList<AnAction?> = SmartList()
+    val duplicates = getDuplicateProjectNames(openedPaths, paths)
     if (useGroups) {
-      final List<ProjectGroup> groups;
-      synchronized (myStateLock) {
-        groups = new ArrayList<>(myState.getGroups());
+      val groups = synchronized(stateLock) {
+        myState.groups.toMutableList()
       }
-      final List<String> projectPaths = new ArrayList<>(paths);
-      groups.sort(new Comparator<ProjectGroup>() {
-        @Override
-        public int compare(ProjectGroup o1, ProjectGroup o2) {
-          int ind1 = getGroupIndex(o1);
-          int ind2 = getGroupIndex(o2);
-          return ind1 == ind2 ? StringUtil.naturalCompare(o1.getName(), o2.getName()) : ind1 - ind2;
+
+      val projectPaths: List<String?> = ArrayList(paths)
+      groups.sortWith(object : Comparator<ProjectGroup> {
+        override fun compare(o1: ProjectGroup, o2: ProjectGroup): Int {
+          val ind1 = getGroupIndex(o1)
+          val ind2 = getGroupIndex(o2)
+          return if (ind1 == ind2) StringUtil.naturalCompare(o1.name, o2.name) else ind1 - ind2
         }
 
-        private int getGroupIndex(ProjectGroup group) {
-          int index = Integer.MAX_VALUE;
-          for (String path : group.getProjects()) {
-            final int i = projectPaths.indexOf(path);
-            if (i >= 0 && index > i) {
-              index = i;
+        private fun getGroupIndex(group: ProjectGroup): Int {
+          var index = Integer.MAX_VALUE
+          for (path in group.projects) {
+            val i = projectPaths.indexOf(path)
+            if (i in 0 until index) {
+              index = i
             }
           }
-          return index;
+          return index
         }
-      });
+      })
 
-      for (ProjectGroup group : groups) {
-        paths.removeAll(group.getProjects());
+      for (group in groups) {
+        paths.removeAll(group.projects)
       }
 
-      for (ProjectGroup group : groups) {
-        final List<AnAction> children = new ArrayList<>();
-        for (String path : group.getProjects()) {
-          children.add(createOpenAction(path, duplicates));
-          if (forMainMenu && children.size() >= MAX_PROJECTS_IN_MAIN_MENU) {
-            break;
+      for (group in groups) {
+        val children: MutableList<AnAction?> = ArrayList()
+        for (path in group.projects) {
+          children.add(createOpenAction(path!!, duplicates))
+          if (forMainMenu && children.size >= MAX_PROJECTS_IN_MAIN_MENU) {
+            break
           }
         }
-        actions.add(new ProjectGroupActionGroup(group, children));
-        if (group.isExpanded()) {
-          actions.addAll(children);
+        actions.add(ProjectGroupActionGroup(group, children))
+        if (group.isExpanded) {
+          actions.addAll(children)
         }
       }
     }
-
-    for (String path : paths) {
-      actions.add(createOpenAction(path, duplicates));
+    for (path in paths) {
+      actions.add(createOpenAction(path, duplicates))
     }
 
-    if (actions.isEmpty()) {
-      return AnAction.EMPTY_ARRAY;
+    return when {
+      actions.isEmpty() -> AnAction.EMPTY_ARRAY
+      else -> actions.toArray(AnAction.EMPTY_ARRAY)
     }
-
-    return actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
   // for Rider
-  @NotNull
-  protected AnAction createOpenAction(@NotNull @SystemIndependent String path, @NotNull Set<String> duplicates) {
-    String projectName = getProjectName(path);
-    String displayName;
-    synchronized (myStateLock) {
-      RecentProjectMetaInfo info = myState.getAdditionalInfo().get(path);
-      displayName = info == null ? null : info.getDisplayName();
+  @Suppress("MemberVisibilityCanBePrivate")
+  protected open fun createOpenAction(path: String, duplicates: Set<String>): AnAction {
+    val projectName = getProjectName(path)
+    var displayName: String?
+    synchronized(stateLock) {
+      displayName = myState.additionalInfo.get(path)?.displayName
     }
-    if (StringUtil.isEmptyOrSpaces(displayName)) {
-      displayName = duplicates.contains(projectName) ? FileUtil.toSystemDependentName(path) : projectName;
+
+    if (displayName.isNullOrBlank()) {
+      displayName = if (duplicates.contains(projectName)) FileUtil.toSystemDependentName(path) else projectName
     }
 
     // It's better don't to remove non-existent projects. Sometimes projects stored
     // on USB-sticks or flash-cards, and it will be nice to have them in the list
     // when USB device or SD-card is mounted
-    return new ReopenProjectAction(path, projectName, displayName);
+    return ReopenProjectAction(path, projectName, displayName)
   }
 
-  private void markPathRecent(@NotNull @SystemIndependent String path, @NotNull Project project) {
-    synchronized (myStateLock) {
-      for (ProjectGroup group : myState.getGroups()) {
+  private fun markPathRecent(path: String, project: Project) {
+    synchronized(stateLock) {
+      for (group in myState.groups) {
         if (group.markProjectFirst(path)) {
-          myModCounter.incrementAndGet();
-          break;
+          modCounter.incrementAndGet()
+          break
         }
       }
 
       // remove instead of get to re-order
-      RecentProjectMetaInfo info = myState.getAdditionalInfo().remove(path);
-      if (info == null) {
-        info = new RecentProjectMetaInfo();
-      }
-      myState.getAdditionalInfo().put(path, info);
-      myModCounter.incrementAndGet();
-
-      ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
-      info.setDisplayName(getProjectDisplayName(project));
-      info.setProjectWorkspaceId(ProjectKt.getStateStore(project).getProjectWorkspaceId());
-      info.setFrame(ProjectFrameBounds.getInstance(project).getState());
-      info.setBuild(appInfo.getBuild().asString());
-      info.setProductionCode(appInfo.getBuild().getProductCode());
-      info.setEap(appInfo.isEAP());
-      info.setBinFolder(FileUtilRt.toSystemIndependentName(PathManager.getBinPath()));
-      info.setProjectOpenTimestamp(System.currentTimeMillis());
-      info.setBuildTimestamp(appInfo.getBuildDate().getTimeInMillis());
-      info.setMetadata(getRecentProjectMetadata(path, project));
+      val info = myState.additionalInfo.remove(path) ?: RecentProjectMetaInfo()
+      myState.additionalInfo[path] = info
+      modCounter.incrementAndGet()
+      val appInfo = ApplicationInfoEx.getInstanceEx()
+      info.displayName = getProjectDisplayName(project)
+      info.projectWorkspaceId = project.stateStore.projectWorkspaceId
+      info.frame = getInstance(project).state
+      info.build = appInfo!!.build.asString()
+      info.productionCode = appInfo.build.productCode
+      info.eap = appInfo.isEAP
+      info.binFolder = FileUtilRt.toSystemIndependentName(
+        PathManager.getBinPath())
+      info.projectOpenTimestamp = System.currentTimeMillis()
+      info.buildTimestamp = appInfo.buildDate.timeInMillis
+      info.metadata = getRecentProjectMetadata(path, project)
     }
   }
 
-  @SuppressWarnings("unused")
-  @Nullable
-  protected String getRecentProjectMetadata(@SystemIndependent String path, @NotNull Project project) {
-    return null;
+  @Suppress("MemberVisibilityCanBePrivate", "UNUSED_PARAMETER")
+  // for Rider
+  protected open fun getRecentProjectMetadata(path: String, project: Project): String? {
+    return null
   }
 
-  @Nullable
-  @SystemIndependent
-  protected String getProjectPath(@NotNull Project project) {
-    return PathUtil.toSystemIndependentName(project.getPresentableUrl());
+  protected open fun getProjectPath(project: Project): String? {
+    return PathUtil.toSystemIndependentName(project.presentableUrl)
   }
 
-  @Nullable
-  public Project doOpenProject(@NotNull @SystemIndependent String projectPath, @NotNull OpenProjectTask openProjectOptions) {
-    return doOpenProject(Paths.get(projectPath), openProjectOptions);
+  fun doOpenProject(projectPath: String, openProjectOptions: OpenProjectTask): Project? {
+    return doOpenProject(Paths.get(projectPath), openProjectOptions)
   }
 
-  @Nullable
-  public Project doOpenProject(@NotNull Path projectFile, @NotNull OpenProjectTask openProjectOptions) {
-    Project existing = ProjectUtil.findAndFocusExistingProjectForPath(projectFile);
+  fun doOpenProject(projectFile: Path, openProjectOptions: OpenProjectTask): Project? {
+    val existing = ProjectUtil.findAndFocusExistingProjectForPath(projectFile)
     if (existing != null) {
-      return existing;
+      return existing
     }
 
     if (ProjectUtil.isValidProjectPath(projectFile)) {
-      return PlatformProjectOpenProcessor.openExistingProject(projectFile, projectFile, openProjectOptions, null);
+      return PlatformProjectOpenProcessor.openExistingProject(projectFile, projectFile, openProjectOptions, null)
     }
     else {
       // If .idea is missing in the recent project's dir; this might mean, for instance, that 'git clean' was called.
       // Reopening such a project should be similar to opening the dir first time (and trying to import known project formats)
       // IDEA-144453 IDEA rejects opening recent project if there are no .idea subfolder
       // CPP-12106 Auto-load CMakeLists.txt on opening from Recent projects when .idea and cmake-build-debug were deleted
-      return ProjectUtil.openOrImport(projectFile, openProjectOptions);
+      return ProjectUtil.openOrImport(projectFile, openProjectOptions)
     }
   }
 
-  @ApiStatus.Internal
-  public static final class MyProjectListener implements ProjectManagerListener {
-    private final RecentProjectsManagerBase manager = getInstanceEx();
+  @Internal
+  class MyProjectListener : ProjectManagerListener {
+    private val manager = instanceEx
 
-    @Override
-    public void projectOpened(@NotNull Project project) {
-      String path = manager.getProjectPath(project);
+    override fun projectOpened(project: Project) {
+      val path = manager.getProjectPath(project)
       if (path != null) {
-        manager.markPathRecent(path, project);
+        manager.markPathRecent(path, project)
       }
-      manager.updateLastProjectPath();
-      updateSystemDockMenu();
+      manager.updateLastProjectPath()
+      updateSystemDockMenu()
     }
 
-    private static void updateSystemDockMenu() {
-      if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        SystemDock.updateMenu();
+    override fun projectClosing(project: Project) {
+      val path = manager.getProjectPath(project) ?: return
+      if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
+        manager.updateProjectInfo(project,
+                                  (WindowManager.getInstance() as WindowManagerImpl))
       }
+      manager.nameCache!![path] = project.name
     }
 
-    @Override
-    public void projectClosing(@NotNull Project project) {
-      String path = manager.getProjectPath(project);
-      if (path == null) {
-        return;
-      }
-
-      if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        manager.updateProjectInfo(project, (WindowManagerImpl)WindowManager.getInstance());
-      }
-      manager.myNameCache.put(path, project.getName());
-    }
-
-    @Override
-    public void projectClosed(@NotNull Project project) {
-      Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-      if (openProjects.length > 0) {
-        Project openProject = openProjects[openProjects.length - 1];
-        String path = manager.getProjectPath(openProject);
+    override fun projectClosed(project: Project) {
+      val openProjects: Array<Project?> = ProjectManager.getInstance().openProjects
+      if (openProjects.isNotEmpty()) {
+        val openProject = openProjects[openProjects.size - 1]
+        val path = manager.getProjectPath(openProject!!)
         if (path != null) {
-          manager.markPathRecent(path, openProject);
+          manager.markPathRecent(path, openProject)
         }
       }
-      updateSystemDockMenu();
+      updateSystemDockMenu()
+    }
+
+    companion object {
+      private fun updateSystemDockMenu() {
+        if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
+          SystemDock.updateMenu()
+        }
+      }
     }
   }
 
-  @NotNull
-  public String getProjectName(@NotNull @SystemIndependent String path) {
-    String cached = myNameCache.get(path);
+  fun getProjectName(path: String): String {
+    val cached = nameCache!!.get(path)
     if (cached != null) {
-      return cached;
+      return cached
     }
 
-    myNamesResolver.cancel();
-    synchronized (myNamesToResolve) {
-      myNamesToResolve.add(path);
-    }
-    myNamesResolver.request();
-
-    String name = PathUtilRt.getFileName(path);
-    return path.endsWith(".ipr") ? FileUtilRt.getNameWithoutExtension(name) : name;
+    nameResolver.cancel()
+    synchronized(namesToResolve) { namesToResolve.add(path) }
+    nameResolver.request()
+    val name = PathUtilRt.getFileName(path)
+    return if (path.endsWith(".ipr")) FileUtilRt.getNameWithoutExtension(name) else name
   }
 
-  private static String readProjectName(@NotNull String path) {
-    if (!RecentProjectPanel.isFileSystemPath(path))
-      return path;
-
-    final Path file = Paths.get(path);
-    //noinspection SSBasedInspection
-    if (!Files.isDirectory(file)) {
-      return FileUtilRt.getNameWithoutExtension(file.getFileName().toString());
+  override fun willReopenProjectOnStart(): Boolean {
+    if (!GeneralSettings.getInstance().isReopenLastProject) {
+      return false
     }
 
-    final Path nameFile = file.resolve(Project.DIRECTORY_STORE_FOLDER).resolve(ProjectImpl.NAME_FILE);
-    try {
-      String result = StorageUtilKt.readProjectNameFile(nameFile);
-      if (result != null) {
-        return result;
-      }
-    }
-    catch (NoSuchFileException ignore) {
-      // ignore not found
-    }
-    catch (IOException ignored) {
-    }
-    return file.getFileName().toString();
-  }
-
-  @Override
-  public boolean willReopenProjectOnStart() {
-    if (!GeneralSettings.getInstance().isReopenLastProject()) {
-      return false;
-    }
-
-    synchronized (myStateLock) {
-      for (RecentProjectMetaInfo info : myState.getAdditionalInfo().values()) {
-        if (info.getOpened()) {
-          return true;
+    synchronized(stateLock) {
+      for (info in myState.additionalInfo.values) {
+        if (info.opened) {
+          return true
         }
       }
     }
-    return false;
+    return false
   }
 
-  @Override
-  public void reopenLastProjectsOnStart() {
-    if (!GeneralSettings.getInstance().isReopenLastProject()) {
-      return;
+  override fun reopenLastProjectsOnStart() {
+    if (!GeneralSettings.getInstance().isReopenLastProject) {
+      return
     }
 
-    List<Map.Entry<String, RecentProjectMetaInfo>> openPaths = getLastOpenedProjects();
-    boolean someProjectWasOpened = false;
-    for (Map.Entry<String, RecentProjectMetaInfo> it : openPaths) {
+    val openPaths = lastOpenedProjects
+    var someProjectWasOpened = false
+    for ((key, value) in openPaths) {
       // https://youtrack.jetbrains.com/issue/IDEA-166321
-      OpenProjectTask options = new OpenProjectTask(/* forceOpenInNewFrame = */ true, /* projectToClose = */ null, it.getValue().getFrame(), /* projectWorkspaceId = */ it.getValue().getProjectWorkspaceId());
-      options.setShowWelcomeScreenIfNoProjectOpened(false);
-      options.setSendFrameBack(someProjectWasOpened);
-      Project project = doOpenProject(it.getKey(), options);
+      val options = OpenProjectTask(forceOpenInNewFrame = true, projectToClose = null, frame = value.frame,  projectWorkspaceId = value.projectWorkspaceId)
+      options.showWelcomeScreenIfNoProjectOpened = false
+      options.sendFrameBack = someProjectWasOpened
+      val project = doOpenProject(key, options)
       if (!someProjectWasOpened) {
-        someProjectWasOpened = project != null;
+        someProjectWasOpened = project != null
       }
     }
 
     if (!someProjectWasOpened) {
-      WelcomeFrame.showIfNoProjectOpened();
+      WelcomeFrame.showIfNoProjectOpened()
     }
   }
 
-  @NotNull
-  protected final List<Map.Entry<String, RecentProjectMetaInfo>> getLastOpenedProjects() {
-    synchronized (myStateLock) {
-      return ContainerUtil.reverse(ContainerUtil.findAll(myState.getAdditionalInfo().entrySet(), it -> it.getValue().getOpened()));
+  protected val lastOpenedProjects: List<Entry<String, RecentProjectMetaInfo>>
+    get() = synchronized(stateLock) {
+      return ContainerUtil.reverse(ContainerUtil.findAll(myState.additionalInfo.entries) { it.value.opened })
     }
+
+  override fun getGroups(): List<ProjectGroup?> {
+    synchronized(stateLock) { return Collections.unmodifiableList(myState.groups) }
   }
 
-  @Override
-  @NotNull
-  public List<ProjectGroup> getGroups() {
-    synchronized (myStateLock) {
-      return Collections.unmodifiableList(myState.getGroups());
-    }
-  }
-
-  @Override
-  public void addGroup(@NotNull ProjectGroup group) {
-    synchronized (myStateLock) {
-      if (!myState.getGroups().contains(group)) {
-        myState.getGroups().add(group);
+  override fun addGroup(group: ProjectGroup) {
+    synchronized(stateLock) {
+      if (!myState.groups.contains(group)) {
+        myState.groups.add(group)
       }
     }
   }
 
-  @Override
-  public void removeGroup(@NotNull ProjectGroup group) {
-    synchronized (myStateLock) {
-      myState.getGroups().remove(group);
-    }
+  override fun removeGroup(group: ProjectGroup) {
+    synchronized(stateLock) { myState.groups.remove(group) }
   }
 
-  @Override
-  public long getModificationCount() {
-    synchronized (myStateLock) {
-      return myModCounter.get() + myState.getModificationCount();
-    }
+  override fun getModificationCount(): Long {
+    synchronized(stateLock) { return modCounter.get() + myState.modificationCount }
   }
 
-  private void updateProjectInfo(@NotNull Project project, @NotNull WindowManagerImpl windowManager) {
-    IdeFrameImpl frame = windowManager.getFrame(project);
-    if (frame == null) {
-      return;
-    }
-
-    String workspaceId = ProjectKt.getStateStore(project).getProjectWorkspaceId();
+  private fun updateProjectInfo(project: Project, windowManager: WindowManagerImpl) {
+    val frame = windowManager.getFrame(project) ?: return
+    val workspaceId = project.stateStore.projectWorkspaceId
 
     // ensure that last closed project frame bounds will be used as newly created project frame bounds (if will be no another focused opened project)
-    FrameInfo frameInfo = ProjectFrameBounds.getInstance(project).getActualFrameInfoInDeviceSpace(frame, windowManager);
-    String path = getProjectPath(project);
-    synchronized (myStateLock) {
-      RecentProjectMetaInfo info = myState.getAdditionalInfo().get(path);
+    val frameInfo = getInstance(project).getActualFrameInfoInDeviceSpace(frame, windowManager)
+    val path = getProjectPath(project)
+    synchronized(stateLock) {
+      val info = myState.additionalInfo[path]
       if (info != null) {
-        if (info.getFrame() != frameInfo) {
-          info.setFrame(frameInfo);
+        if (info.frame !== frameInfo) {
+          info.frame = frameInfo
         }
-        info.setProjectWorkspaceId(workspaceId);
+        info.projectWorkspaceId = workspaceId
       }
     }
-
-    if (workspaceId != null && Registry.is("ide.project.loading.show.last.state")) {
-      frame.takeASelfie(workspaceId);
+    if (workspaceId != null && Registry.`is`("ide.project.loading.show.last.state")) {
+      frame.takeASelfie(workspaceId)
     }
   }
 
-  @ApiStatus.Internal
-  public static final class MyAppLifecycleListener implements AppLifecycleListener {
-    @Override
-    public void projectOpenFailed() {
-      getInstanceEx().updateLastProjectPath();
+  @Internal
+  class MyAppLifecycleListener : AppLifecycleListener {
+    override fun projectOpenFailed() {
+      instanceEx.updateLastProjectPath()
     }
 
-    @Override
-    public void appClosing() {
-      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        return;
+    override fun appClosing() {
+      if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+        return
       }
-
-      WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
-      RecentProjectsManagerBase manager = getInstanceEx();
-      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-        manager.updateProjectInfo(project, windowManager);
+      val windowManager = WindowManager.getInstance() as WindowManagerImpl
+      val manager = instanceEx
+      for (project in ProjectManager.getInstance().openProjects) {
+        manager.updateProjectInfo(project!!, windowManager)
       }
     }
 
-    @Override
-    public void projectFrameClosed() {
+    override fun projectFrameClosed() {
       // ProjectManagerListener.projectClosed cannot be used to call updateLastProjectPath,
       // because called even if project closed on app exit
-      getInstanceEx().updateLastProjectPath();
+
+      instanceEx.updateLastProjectPath()
     }
   }
+}
+
+private fun readProjectName(path: String): String {
+  if (!RecentProjectPanel.isFileSystemPath(path)) return path
+  val file = Paths.get(path)
+
+
+  if (!Files.isDirectory(file)) {
+    return FileUtilRt.getNameWithoutExtension(file.fileName.toString())
+  }
+  val nameFile = file.resolve(Project.DIRECTORY_STORE_FOLDER).resolve(
+    ProjectImpl.NAME_FILE)
+  try {
+    val result = readProjectNameFile(nameFile)
+    if (result != null) {
+      return result
+    }
+  }
+  catch (ignore: NoSuchFileException) {
+    // ignore not found
+
+  }
+  catch (ignored: IOException) {
+  }
+  return file.fileName.toString()
 }
