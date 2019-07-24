@@ -37,12 +37,12 @@ public class AppendableTerminalDataStream implements TerminalDataStream, Appenda
   }
 
   @Override
-  public void pushChar(char c) throws IOException {
+  public void pushChar(char c) {
     myQueue.push(c);
   }
 
   @Override
-  public String readNonControlCharacters(int maxLength) throws IOException {
+  public String readNonControlCharacters(int maxLength) {
     StringBuilder sb = new StringBuilder();
     while (sb.length() < maxLength) {
       Character c = myQueue.peek();
@@ -56,9 +56,9 @@ public class AppendableTerminalDataStream implements TerminalDataStream, Appenda
   }
 
   @Override
-  public void pushBackBuffer(char[] chars, int length) throws IOException {
-    for (int i = 0; i < length; i++) {
-      myQueue.addFirst(chars[length - i - i]);
+  public void pushBackBuffer(char[] chars, int length) {
+    for (int i = length - 1; i >= 0; i--) {
+      myQueue.addFirst(chars[i]);
     }
   }
 
