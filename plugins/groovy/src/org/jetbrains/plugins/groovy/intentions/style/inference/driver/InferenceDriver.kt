@@ -16,7 +16,7 @@ interface InferenceDriver {
   fun collectInnerConstraints(): TypeUsageInformation
 
   fun createParameterizedDriver(manager: ParameterizationManager,
-                                parameterizedMethod: GrMethod,
+                                targetMethod: GrMethod,
                                 substitutor: PsiSubstitutor): InferenceDriver
 
   fun instantiate(resultMethod: GrMethod, resultSubstitutor: PsiSubstitutor)
@@ -25,9 +25,9 @@ interface InferenceDriver {
 
   fun forbiddingTypes(): List<PsiType> = emptyList()
 
-  fun typeParameters() : Collection<PsiTypeParameter>
+  fun typeParameters(): Collection<PsiTypeParameter>
 
-  fun collectSignatureSubstitutor() : PsiSubstitutor {
+  fun collectSignatureSubstitutor(): PsiSubstitutor {
     val constraints = collectOuterConstraints()
     val session = CollectingGroovyInferenceSession(typeParameters().toTypedArray())
     constraints.forEach { session.addConstraint(it) }

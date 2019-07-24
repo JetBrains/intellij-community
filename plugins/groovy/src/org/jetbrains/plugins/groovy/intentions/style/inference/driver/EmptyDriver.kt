@@ -13,7 +13,7 @@ object EmptyDriver : InferenceDriver {
   override fun collectInnerConstraints(): TypeUsageInformation = TypeUsageInformation(emptySet(), emptyMap(), emptyList())
 
   override fun createParameterizedDriver(manager: ParameterizationManager,
-                                         parameterizedMethod: GrMethod,
+                                         targetMethod: GrMethod,
                                          substitutor: PsiSubstitutor): InferenceDriver = this
 
   override fun instantiate(resultMethod: GrMethod, resultSubstitutor: PsiSubstitutor) {}

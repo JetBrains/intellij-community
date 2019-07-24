@@ -38,7 +38,8 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
       }
       if (closureParameters.isEmpty()) {
         return EmptyDriver
-      } else {
+      }
+      else {
         return ClosureDriver(closureParameters)
       }
     }
@@ -46,9 +47,9 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
 
 
   override fun createParameterizedDriver(manager: ParameterizationManager,
-                                         parameterizedMethod: GrMethod,
+                                         targetMethod: GrMethod,
                                          substitutor: PsiSubstitutor): ClosureDriver {
-    val parameterMapping = setUpParameterMapping(method, parameterizedMethod)
+    val parameterMapping = setUpParameterMapping(method, targetMethod)
     val newClosureParameters = mutableMapOf<GrParameter, ParameterizedClosure>()
     for ((parameter, closureParameter) in closureParameters) {
       val newParameter = parameterMapping.getValue(parameter)
@@ -61,7 +62,7 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
           substitutor.substitute(directInnerParameter)!!.forceWildcardsAsTypeArguments())
         newClosureParameter.types.add(innerParameterType.type)
         newClosureParameter.typeParameters.addAll(innerParameterType.typeParameters)
-        innerParameterType.typeParameters.forEach { parameterizedMethod.typeParameterList!!.add(it) }
+        innerParameterType.typeParameters.forEach { targetMethod.typeParameterList!!.add(it) }
       }
       newClosureParameters[newParameter] = newClosureParameter
     }
@@ -71,7 +72,6 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
   override fun typeParameters(): Collection<PsiTypeParameter> {
     return closureParameters.flatMap { it.value.typeParameters }
   }
-
 
 
   override fun collectOuterConstraints(): Collection<ConstraintFormula> {

@@ -1,14 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference.graph
 
-import com.intellij.psi.PsiArrayType
 import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import com.intellij.util.containers.BidirectionalMap
-import org.jetbrains.plugins.groovy.intentions.style.inference.driver.InferenceDriver
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.TypeUsageInformation
 import org.jetbrains.plugins.groovy.intentions.style.inference.flattenIntersections
 import org.jetbrains.plugins.groovy.intentions.style.inference.forceWildcardsAsTypeArguments
@@ -21,17 +19,13 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 fun createGraphFromInferenceVariables(session: GroovyInferenceSession,
                                       virtualMethod: GrMethod,
-                                      driver: InferenceDriver,
+                                      forbiddingTypes: Collection<PsiType>,
                                       usageInformation: TypeUsageInformation,
-                                      constantTypes : List<PsiTypeParameter>): InferenceUnitGraph {
+                                      constantTypes: List<PsiTypeParameter>): InferenceUnitGraph {
   val variableMap = BidirectionalMap<InferenceUnit, InferenceVariable>()
   val builder = InferenceUnitGraphBuilder()
   val constantNames = constantTypes.map { it.name }
   val flexibleTypes = virtualMethod.parameters.map { it.type }
-  val forbiddingTypes =
-    usageInformation.contravariantTypes +
-    virtualMethod.parameters.mapNotNull { (it.type as? PsiArrayType)?.componentType } +
-    driver.forbiddingTypes()
   val variables = virtualMethod.typeParameters.mapNotNull { getInferenceVariable(session, it.type()) }
 
   for (variable in variables) {
