@@ -442,23 +442,21 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
     final JPanel rgbPanel = new JPanel();
     rgbPanel.setLayout(new BoxLayout(rgbPanel, BoxLayout.X_AXIS));
-    if (!UIUtil.isUnderAquaLookAndFeel()) {
-      myR_after.setPreferredSize(new Dimension(14, -1));
-      myG_after.setPreferredSize(new Dimension(14, -1));
-      myB_after.setPreferredSize(new Dimension(14, -1));
-    }
+    myR_after.setPreferredSize(new Dimension(14, -1));
+    myG_after.setPreferredSize(new Dimension(14, -1));
+    myB_after.setPreferredSize(new Dimension(14, -1));
     rgbPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
     rgbPanel.add(myR);
     rgbPanel.add(myRed);
-    if (!UIUtil.isUnderAquaLookAndFeel()) rgbPanel.add(myR_after);
+    rgbPanel.add(myR_after);
     rgbPanel.add(Box.createHorizontalStrut(2));
     rgbPanel.add(myG);
     rgbPanel.add(myGreen);
-    if (!UIUtil.isUnderAquaLookAndFeel()) rgbPanel.add(myG_after);
+    rgbPanel.add(myG_after);
     rgbPanel.add(Box.createHorizontalStrut(2));
     rgbPanel.add(myB);
     rgbPanel.add(myBlue);
-    if (!UIUtil.isUnderAquaLookAndFeel()) rgbPanel.add(myB_after);
+    rgbPanel.add(myB_after);
     rgbPanel.add(Box.createHorizontalStrut(2));
     rgbPanel.add(myFormat);
 

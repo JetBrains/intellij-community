@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -72,7 +71,7 @@ public class ComboboxEditorTextField extends EditorTextField {
 
   private void repaintComboBox() {
     // TODO:
-    if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() || (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel())) {
+    if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
       IdeFocusManager.getInstance(getProject()).doWhenFocusSettlesDown(() -> {
         JComboBox comboBox = ComponentUtil.getParentOfType((Class<? extends JComboBox>)JComboBox.class, (Component)this);
         if (comboBox != null) {
