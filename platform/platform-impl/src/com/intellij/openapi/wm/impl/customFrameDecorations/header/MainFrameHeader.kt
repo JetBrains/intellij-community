@@ -31,15 +31,10 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
   private var disposable: Disposable? = null
 
   init {
-    layout = MigLayout("novisualpadding, fillx, ins 0, gap 0, top", "$H_GAP[pref!]$H_GAP[][grow][pref!]")
+    layout = MigLayout("novisualpadding, fillx, ins 0, gap 0, top, hidemode 2", "$H_GAP[pref!][][grow][pref!]")
     add(productIcon)
 
     myIdeMenu = CustomHeaderMenuBar()
-
-    mainMenuUpdater = UISettingsListener {
-      myIdeMenu.isVisible = UISettings.instance.showMainMenu
-      SwingUtilities.invokeLater { updateCustomDecorationHitTestSpots() }
-    }
 
     changeListener = ChangeListener {
       updateCustomDecorationHitTestSpots()
@@ -47,16 +42,22 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
 
     mySelectedEditorFilePath = CustomDecorationPath(frame) {updateCustomDecorationHitTestSpots()}
 
-    menuHolder = JPanel(MigLayout("filly, ins 0, novisualpadding, hidemode 2", "[pref!]"))
+    menuHolder = JPanel(MigLayout("filly, ins 0, novisualpadding, hidemode 2", "$H_GAP[pref!]${GAP_AFTER_MENU - H_GAP}"))
     menuHolder.isOpaque = false
     menuHolder.add(myIdeMenu, "wmin 0, wmax pref, top, growy")
 
-    add(menuHolder, "wmin 0, top, growy, pushx, gapafter $H_GAP")
-    add(mySelectedEditorFilePath.getView(), "left, growx, gapafter $H_GAP, gapbottom 1")
+    add(menuHolder, "wmin 0, top, growy, pushx")
+    add(mySelectedEditorFilePath.getView(), "left, growx, gapafter $H_GAP, gapbottom 1, gapbefore $H_GAP")
     add(buttonPanes.getView(), "top, wmin pref")
 
     setCustomFrameTopBorder({ myState != Frame.MAXIMIZED_VERT && myState != Frame.MAXIMIZED_BOTH }, {true})
-    myIdeMenu.isVisible = UISettings.instance.showMainMenu
+
+    mainMenuUpdater = UISettingsListener {
+      menuHolder.isVisible = UISettings.instance.showMainMenu
+      SwingUtilities.invokeLater { updateCustomDecorationHitTestSpots() }
+    }
+
+    menuHolder.isVisible = UISettings.instance.showMainMenu
   }
 
   fun setProject(project: Project) {
@@ -94,7 +95,7 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
   override fun getHitTestSpots(): ArrayList<RelativeRectangle> {
     val hitTestSpots = super.getHitTestSpots()
 
-    if(myIdeMenu.isVisible) {
+    if(menuHolder.isVisible) {
       val menuRect = Rectangle(menuHolder.size)
 
       val state = frame.extendedState

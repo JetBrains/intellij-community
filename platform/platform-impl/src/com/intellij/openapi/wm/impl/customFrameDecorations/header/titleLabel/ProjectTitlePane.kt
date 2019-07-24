@@ -137,7 +137,7 @@ class ProjectTitlePane : ShrinkingTitlePart {
 }
 
 class ProjectTitle : ShrinkingTitlePart {
-  private val label = BoldTitleLabel()
+  private val label = DefaultPartTitle.TitleLabel()
   private val description = ClippingTitle()
 
   private var projectTextWidth: Int = 0

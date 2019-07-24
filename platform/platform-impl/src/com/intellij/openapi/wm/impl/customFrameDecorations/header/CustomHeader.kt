@@ -14,6 +14,7 @@ import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.paint.LinePainter2D
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.ui.JBFont
@@ -25,8 +26,12 @@ import javax.swing.border.Border
 
 abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     companion object {
-        const val H_GAP = 7
-        const val MIN_HEIGHT = 24
+        val H_GAP
+            get() = JBUIScale.scale(7)
+        val MIN_HEIGHT
+            get() = JBUIScale.scale(24)
+        val GAP_AFTER_MENU
+            get() = JBUIScale.scale(18)
 
         val WINDOWS_VERSION = WindowsRegistryUtil.readRegistryValue("HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "ReleaseId")
 
