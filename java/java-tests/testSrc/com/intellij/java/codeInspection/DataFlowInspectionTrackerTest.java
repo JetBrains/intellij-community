@@ -178,4 +178,5 @@ public class DataFlowInspectionTrackerTest extends LightJavaCodeInsightFixtureTe
   public void testFinalFieldInitialized() { doTest(); }
   public void testFinalFieldInitializedCtor() { doTest(); }
   public void testEqualsNull() { doTest(); }
+  public void testEnumCompare() { doTest(); }
 }

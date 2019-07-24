@@ -927,9 +927,10 @@ public class TrackingRunner extends StandardDataFlowRunner {
             else {
               continue;
             }
-            return Arrays.asList(getFactory().getRelationFactory().createRelation(left, type, right),
-                                 getFactory().getRelationFactory()
-                                   .createRelation(actualVar, actualRelation.myRelationType, actualRelation.myCounterpart));
+            DfaRelationValue.Factory factory = getFactory().getRelationFactory();
+            DfaRelationValue rel1 = factory.createRelation(left, type, right);
+            DfaRelationValue rel2 = factory.createRelation(actualVar, actualRelation.myRelationType, actualRelation.myCounterpart);
+            return StreamEx.of(rel1, rel2).nonNull().toImmutableList();
           }
         }
       }
