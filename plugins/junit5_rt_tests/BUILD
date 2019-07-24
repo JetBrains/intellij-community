@@ -6,15 +6,16 @@ iml_module(
     iml_files = ["intellij.junit.v5.rt.tests.iml"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea/java/manifest:intellij.java.manifest",
         "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
+        "//tools/idea/java/manifest:intellij.java.manifest",
         "//tools/idea/java/remote-servers/impl:intellij.java.remoteServers.impl",
         "//tools/idea:intellij.java.ui.tests",
         "//tools/idea/java/plugin:intellij.java.plugin",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
+        "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
-        "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
         "//tools/idea/java/ide-resources:intellij.java.ide.resources",
+        "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
         "//tools/idea/plugins/ui-designer-core:intellij.uiDesigner",
     ],
     test_srcs = ["test"],

@@ -14,5 +14,23 @@ iml_module(
         "//tools/idea/plugins/gradle/tooling-extension-api:intellij.gradle.toolingExtension[module]",
         "//tools/idea/plugins/gradle/tooling-extension-impl:intellij.gradle.toolingExtension.impl[module]",
         "//tools/idea/.idea/libraries:Gradle",
+        "//tools/idea/platform/object-serializer:intellij.platform.objectSerializer.annotations[module]",
+    ],
+)
+
+# managed by go/iml_to_build
+iml_module(
+    name = "intellij.gradle.native.tooling.tests",
+    iml_files = ["intellij.gradle.native.tooling.tests.iml"],
+    test_srcs = ["testSources"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8[test]",
+        "//tools/idea/.idea/libraries:JUnit4[test]",
+        "//tools/idea/plugins/gradle/native/tooling:intellij.gradle.native.tooling[module, test]",
+        "//tools/idea/plugins/gradle/tooling-extension-impl:intellij.gradle.toolingExtension.impl[module, test]",
+        "//tools/idea/platform/object-serializer:intellij.platform.objectSerializer[module, test]",
+        "//tools/idea/plugins/gradle/tooling-extension-api:intellij.gradle.toolingExtension[module, test]",
     ],
 )

@@ -9,11 +9,12 @@ iml_module(
     test_runtime_deps = [
         "//tools/idea/uast/uast-tests:intellij.platform.uast.tests",
         "//tools/idea/jvm/jvm-analysis-java-tests:intellij.jvm.analysis.java.tests",
+        "//tools/idea/plugins/java-i18n:intellij.java.i18n",
         "//tools/idea/plugins/java-decompiler/plugin:intellij.java.decompiler",
-        "//tools/idea:intellij.java.ui.tests",
-        "//tools/idea/plugins/eclipse:intellij.eclipse",
         "//tools/idea/plugins/testng:intellij.testng",
+        "//tools/idea:intellij.java.ui.tests",
         "//tools/idea/plugins/ui-designer:intellij.java.guiForms.designer",
+        "//tools/idea/plugins/eclipse:intellij.eclipse",
     ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order

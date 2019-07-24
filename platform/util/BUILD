@@ -78,6 +78,7 @@ iml_module(
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
         "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions[module, test]",
         "//tools/idea/.idea/libraries:bouncy-castle-provider[test]",
+        "//tools/idea/.idea/libraries:memoryfilesystem[test]",
         "//tools/idea/.idea/libraries:jimfs[test]",
         "//tools/idea/.idea/libraries:HdrHistogram[test]",
         "//tools/idea/.idea/libraries:studio-analytics-proto[test]",

@@ -8,9 +8,9 @@ iml_module(
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/uast/uast-tests:intellij.platform.uast.tests",
+        "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
         "//tools/idea/jvm/jvm-analysis-java-tests:intellij.jvm.analysis.java.tests",
         "//tools/idea/java/manifest:intellij.java.manifest",
-        "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
         "//tools/idea/plugins/java-decompiler/plugin:intellij.java.decompiler",
         "//tools/idea/java/remote-servers/impl:intellij.java.remoteServers.impl",
         "//tools/idea:intellij.java.ui.tests",

@@ -6,20 +6,21 @@ iml_module(
     iml_files = ["intellij.platform.langInjection.tests.iml"],
     # do not sort: must match IML order
     test_runtime_deps = [
+        "//tools/idea/plugins/properties:intellij.properties",
         "//tools/idea/uast/uast-tests:intellij.platform.uast.tests",
         "//tools/idea/plugins/groovy/jps-plugin:intellij.groovy.jps",
         "//tools/idea/plugins/ant/jps-plugin:intellij.ant.jps",
         "//tools/idea/jvm/jvm-analysis-java-tests:intellij.jvm.analysis.java.tests",
-        "//tools/idea/plugins/yaml:intellij.yaml",
+        "//tools/idea/plugins/java-i18n:intellij.java.i18n",
         "//tools/idea/plugins/java-decompiler/plugin:intellij.java.decompiler",
+        "//tools/idea/plugins/testng:intellij.testng",
         "//tools/idea/plugins/junit:intellij.junit",
         "//tools/idea:intellij.java.ui.tests",
         "//tools/idea/plugins/coverage:intellij.java.coverage",
+        "//tools/idea/plugins/ui-designer:intellij.java.guiForms.designer",
         "//tools/idea/plugins/ByteCodeViewer:intellij.java.byteCodeViewer",
         "//tools/idea/plugins/groovy/groovy-psi:intellij.groovy.psi",
         "//tools/idea/plugins/eclipse:intellij.eclipse",
-        "//tools/idea/plugins/testng:intellij.testng",
-        "//tools/idea/plugins/ui-designer:intellij.java.guiForms.designer",
     ],
     test_srcs = ["test"],
     test_tags = ["manual"],
@@ -41,7 +42,6 @@ iml_module(
         "//tools/idea/plugins/ui-designer-core:intellij.uiDesigner",
         "//tools/idea/java/structuralsearch-java:intellij.java.structuralSearch",
         "//tools/idea/java/typeMigration:intellij.java.typeMigration",
-        "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
     ],
     # do not sort: must match IML order
     deps = [
@@ -50,5 +50,9 @@ iml_module(
         "//tools/idea/plugins/IntelliLang:intellij.xml.langInjection[module]",
         "//tools/idea/xml/impl:intellij.xml.impl[module]",
         "//tools/idea/plugins/IntelliLang:intellij.java.langInjection[module]",
+        "//tools/idea/jps/model-api:intellij.platform.jps.model[module]",
+        "//tools/idea/java/compiler/instrumentation-util:intellij.java.compiler.instrumentationUtil[module]",
+        "//tools/idea/.idea/libraries:assertJ",
+        "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps[module]",
     ],
 )
