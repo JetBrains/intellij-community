@@ -473,7 +473,11 @@ public final class ConfigImportHelper {
     return line.trim().startsWith("-agentlib:yjpagent") ? "" : line;
   }
 
-  private static boolean blockImport(@NotNull Path path, Path oldConfig, Path newConfig) {
-    return path.getParent() == oldConfig && ("user.web.token".equals(path.getFileName().toString()) || Files.exists(newConfig.resolve(path.getFileName())));
+  private static boolean blockImport(@NotNull Path path, @NotNull Path oldConfig, @NotNull Path newConfig) {
+    if (oldConfig.equals(path.getParent())) {
+      String name = path.getFileName().toString();
+      return "user.web.token".equals(name) || name.startsWith("chrome-user-data") || Files.exists(newConfig.resolve(path.getFileName()));
+    }
+    return false;
   }
 }
