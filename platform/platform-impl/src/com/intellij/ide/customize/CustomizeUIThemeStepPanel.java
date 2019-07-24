@@ -59,7 +59,6 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
     }
   }
 
-  protected static final ThemeInfo AQUA = new ThemeInfo("Aqua", "Aqua", "com.apple.laf.AquaLookAndFeel");
   protected static final ThemeInfo DARCULA = new ThemeInfo("Darcula", "Darcula", DarculaLaf.class.getName());
   protected static final ThemeInfo INTELLIJ = new ThemeInfo("Light", "IntelliJ", IntelliJLaf.class.getName());
 
@@ -137,7 +136,6 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
   @NotNull
   private ThemeInfo getDefaultTheme() {
     if (ApplicationManager.getApplication() != null) {
-      if (UIUtil.isUnderAquaLookAndFeel()) return AQUA;
       if (UIUtil.isUnderDarcula()) return DARCULA;
       return INTELLIJ;
     }
