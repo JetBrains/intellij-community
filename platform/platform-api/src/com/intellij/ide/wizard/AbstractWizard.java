@@ -116,9 +116,6 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       if (!UIUtil.isUnderDarcula()) {
         myHelpButton.putClientProperty("JButton.buttonType", "help");
       }
-      if (UIUtil.isUnderAquaLookAndFeel()) {
-        myHelpButton.setText("");
-      }
 
       int index = 0;
       JPanel leftPanel = new JPanel();
