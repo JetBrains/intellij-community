@@ -317,6 +317,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   @CalledInAwt
   protected void markStateIsOutOfDate() {
     myStateIsOutOfDate = true;
+    myFoldingModel.disposeLineConvertor();
     if (myChangedBlockData != null) {
       for (UnifiedDiffChange diffChange : myChangedBlockData.getDiffChanges()) {
         diffChange.updateGutterActions();
@@ -1275,6 +1276,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   }
 
   private static class MyFoldingModel extends FoldingModelSupport {
+    @NotNull private DisposableLineNumberConvertor myLineNumberConvertor = new DisposableLineNumberConvertor(null);
+
     MyFoldingModel(@Nullable Project project, @NotNull EditorEx editor, @NotNull Disposable disposable) {
       super(project, new EditorEx[]{editor}, disposable);
     }
@@ -1292,7 +1295,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
       if (it == null || settings.range == -1) return null;
 
-      MyFoldingBuilder builder = new MyFoldingBuilder(document, lineConvertor, lineCount, settings);
+      myLineNumberConvertor = new DisposableLineNumberConvertor(lineConvertor);
+      MyFoldingBuilder builder = new MyFoldingBuilder(document, myLineNumberConvertor, lineCount, settings);
       return builder.build(it);
     }
 
@@ -1301,12 +1305,16 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       return getLineConvertor(0);
     }
 
+    public void disposeLineConvertor() {
+      myLineNumberConvertor.dispose();
+    }
+
     private static class MyFoldingBuilder extends FoldingBuilderBase {
       @NotNull private final Document myDocument;
-      @NotNull private final LineNumberConvertor myLineConvertor;
+      @NotNull private final DisposableLineNumberConvertor myLineConvertor;
 
       private MyFoldingBuilder(@NotNull Document document,
-                               @NotNull LineNumberConvertor lineConvertor,
+                               @NotNull DisposableLineNumberConvertor lineConvertor,
                                int lineCount,
                                @NotNull Settings settings) {
         super(new int[]{lineCount}, settings);
@@ -1320,6 +1328,23 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
         int masterLine = myLineConvertor.convert(lineNumber);
         if (masterLine == -1) return null;
         return getLineSeparatorDescription(project, myDocument, masterLine);
+      }
+    }
+
+    private static class DisposableLineNumberConvertor {
+      @Nullable private volatile LineNumberConvertor myConvertor;
+
+      private DisposableLineNumberConvertor(@Nullable LineNumberConvertor convertor) {
+        myConvertor = convertor;
+      }
+
+      public int convert(int lineNumber) {
+        LineNumberConvertor convertor = myConvertor;
+        return convertor != null ? convertor.convert(lineNumber) : -1;
+      }
+
+      public void dispose() {
+        myConvertor = null;
       }
     }
   }
