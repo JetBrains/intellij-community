@@ -439,12 +439,12 @@ public class JBUI {
 
       @NotNull
       public static Color titlePaneInfoForeground() {
-        return JBColor.namedColor("TitlePane.infoForeground", new JBColor(0x595959, 0x999999));
+        return JBColor.namedColor("TitlePane.infoForeground", new JBColor(0x616161, 0x919191));
       }
 
       @NotNull
       public static Color titlePaneInactiveInfoForeground() {
-        return JBColor.namedColor("TitlePane.inactiveInfoForeground", new JBColor(0xB1B1B1, 0x737373));
+        return JBColor.namedColor("TitlePane.inactiveInfoForeground", new JBColor(0xA6A6A6, 0x737373));
       }
 
       @NotNull
