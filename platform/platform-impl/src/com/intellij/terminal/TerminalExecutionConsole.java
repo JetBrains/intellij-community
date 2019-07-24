@@ -31,7 +31,6 @@ import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.model.JediTerminal;
 import com.jediterm.terminal.model.StyleState;
 import com.jediterm.terminal.model.TerminalTextBuffer;
-import com.jediterm.terminal.ui.TerminalSession;
 import com.jediterm.terminal.ui.settings.SettingsProvider;
 import com.jediterm.terminal.util.CharUtils;
 import com.pty4j.PtyProcess;
@@ -180,16 +179,12 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     if (!myAttachedToProcess.compareAndSet(false, true)) {
       return;
     }
-    TerminalSession session = myTerminalWidget
-      .createTerminalSession(
-        new ProcessHandlerTtyConnector(processHandler, EncodingProjectManager.getInstance(myProject).getDefaultCharset()));
+    myTerminalWidget.createTerminalSession(new ProcessHandlerTtyConnector(
+      processHandler, EncodingProjectManager.getInstance(myProject).getDefaultCharset())
+    );
+    myTerminalWidget.start();
 
     processHandler.addProcessListener(new ProcessAdapter() {
-      @Override
-      public void startNotified(@NotNull ProcessEvent event) {
-        session.start();
-      }
-
       @Override
       public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         if (attachToProcessOutput) {
