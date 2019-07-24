@@ -19,7 +19,6 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Consumer;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -432,16 +431,6 @@ public class SearchTextField extends JPanel {
       myPopup.cancel();
       myPopup = null;
     }
-  }
-
-  @Override
-  public Dimension getPreferredSize() {
-    Dimension size = super.getPreferredSize();
-    Border border = super.getBorder();
-    if (border != null && UIUtil.isUnderAquaLookAndFeel()) {
-      JBInsets.addTo(size, border.getBorderInsets(this));
-    }
-    return size;
   }
 
   protected Runnable createItemChosenCallback(final JList list) {
