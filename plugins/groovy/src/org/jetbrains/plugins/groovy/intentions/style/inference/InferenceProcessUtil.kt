@@ -11,6 +11,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.putAll
+import org.jetbrains.plugins.groovy.lang.typing.box
 
 
 class NameGenerator(private val restrictions: Collection<String> = emptySet()) {
@@ -178,7 +179,9 @@ private fun methodsAgree(pattern: PsiMethod,
   }
   val parameterList = pattern.parameters.zip(tested.parameters)
   return parameterList.all { (patternParameter, testedParameter) ->
-    testedParameter.typeElement == null || (testedParameter.type as PsiClassType).erasure() == (patternParameter.type as PsiClassType).erasure()
+    val boxedPatternParameter = (patternParameter.type as? PsiPrimitiveType)?.box(tested) ?: patternParameter.type
+    testedParameter.typeElement == null ||
+    (testedParameter.type.box(tested) as PsiClassType).erasure() == (boxedPatternParameter as? PsiClassType)?.erasure()
   }
 }
 
