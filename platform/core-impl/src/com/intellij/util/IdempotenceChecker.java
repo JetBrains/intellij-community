@@ -11,6 +11,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.ResolveResult;
+import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -151,7 +154,7 @@ public class IdempotenceChecker {
     Object[] deps2 = fresh.getDependencies();
     Object eValue = existing.get();
     Object fValue = fresh.get();
-    if (deps1 != null && deps2 != null && deps1.length != deps2.length) {
+    if (deps1.length != deps2.length) {
       String msg = reportProblem(deps1.length, deps2.length);
       msg = appendDetail(msg, "which is length of CachedValue dependencies: " + Arrays.toString(deps1) + " and " + Arrays.toString(deps2));
       msg = appendDetail(msg, "where values are  " + objAndClass(eValue) + " and " + objAndClass(fValue));
@@ -182,8 +185,14 @@ public class IdempotenceChecker {
     if (existing instanceof Map && fresh instanceof Map && isOrderedMap(existing) == isOrderedMap(fresh)) return true;
     if (existing instanceof Set && fresh instanceof Set && isOrderedSet(existing) == isOrderedSet(fresh)) return true;
     if (existing instanceof List && fresh instanceof List) return true;
-    return false;
+    return ContainerUtil.intersects(allSupersWithEquals.get(existing.getClass()), allSupersWithEquals.get(fresh.getClass()));
   }
+
+  private static final Map<Class, Set<Class>> allSupersWithEquals = ConcurrentFactoryMap.createMap(
+    clazz -> JBIterable
+      .generate(clazz, Class::getSuperclass)
+      .filter(c -> c != Object.class && ReflectionUtil.getDeclaredMethod(c, "equals", Object.class) != null)
+      .toSet());
 
   private static String checkPsiEquivalence(@NotNull PsiElement existing, @NotNull PsiElement fresh) {
     if (!existing.equals(fresh) &&
