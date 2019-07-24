@@ -117,7 +117,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
     return setOriginalElement(generated, originalElement);
   }
 
-  private PsiElement setDependsOnElement(PsiElement generated, PsiElement dependsOnElement) {
+  private static PsiElement setDependsOnElement(PsiElement generated, PsiElement dependsOnElement) {
     PsiElement e = generated;
     while (e != null) {
       e.putUserData(XmlElement.DEPENDING_ELEMENT, dependsOnElement);
@@ -126,7 +126,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
     return generated;
   }
 
-  private PsiElement setOriginalElement(PsiElement element, PsiElement valueElement) {
+  private static PsiElement setOriginalElement(PsiElement element, PsiElement valueElement) {
     PsiElement e = element;
     while (e != null) {
       e.putUserData(XmlElement.INCLUDING_ELEMENT, (XmlElement)valueElement);
@@ -142,16 +142,14 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
 
     if (attributeValue != null) {
       final String value = attributeValue.getValue();
-      if (value != null) {
-        XmlFile xmlFile = XmlUtil.findNamespaceByLocation(baseFile, value);
-        if (xmlFile != null) {
-          return xmlFile;
-        }
+      XmlFile xmlFile = XmlUtil.findNamespaceByLocation(baseFile, value);
+      if (xmlFile != null) {
+        return xmlFile;
+      }
 
-        final int i = XmlUtil.getPrefixLength(value);
-        if (i > 0) {
-          return XmlUtil.findNamespaceByLocation(baseFile, value.substring(i));
-        }
+      final int i = XmlUtil.getPrefixLength(value);
+      if (i > 0) {
+        return XmlUtil.findNamespaceByLocation(baseFile, value.substring(i));
       }
     }
 
