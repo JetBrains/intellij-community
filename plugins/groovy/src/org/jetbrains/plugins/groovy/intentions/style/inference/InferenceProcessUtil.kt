@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.intentions.style.inference
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrder
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
@@ -192,17 +193,12 @@ fun PsiClassType.erasure(): PsiClassType {
 }
 
 fun createVirtualMethod(method: GrMethod): GrMethod {
-  val elementFactory = GroovyPsiElementFactory.getInstance(method.project)
-  val virtualMethod = if (method.isConstructor) {
-    elementFactory.createConstructorFromText(method.name, method.text, method)
+  val virtualFile = method.containingFile.copy()
+  val newMethod = virtualFile.findElementAt(method.textOffset)?.parentOfType<GrMethod>()!!
+  if (!newMethod.hasTypeParameters()) {
+    newMethod.addAfter(GroovyPsiElementFactory.getInstance(virtualFile.project).createTypeParameterList(), newMethod.firstChild)
   }
-  else {
-    elementFactory.createMethodFromText(method.text, method)
-  }
-  if (!virtualMethod.hasTypeParameters()) {
-    virtualMethod.addAfter(elementFactory.createTypeParameterList(), virtualMethod.firstChild)
-  }
-  return virtualMethod
+  return newMethod
 }
 
 fun convertToGroovyMethod(method: PsiMethod): GrMethod {

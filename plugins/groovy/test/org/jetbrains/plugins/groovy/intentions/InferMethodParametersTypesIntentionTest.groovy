@@ -153,6 +153,10 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testCustomSetter2() {
+    doTest(true)
+  }
+
   void testMultipleInterfaces() {
     doTest(true)
   }
