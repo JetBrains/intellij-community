@@ -6,9 +6,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,9 +27,7 @@ public class HideToolWindowAction extends AnAction implements DumbAware {
     if (id == null) {
       id = toolWindowManager.getLastActiveToolWindowId();
     }
-    if (shouldBeHiddenByShortCut(toolWindowManager, id)) {
-      toolWindowManager.getToolWindow(id).hide(null);
-    }
+    toolWindowManager.getToolWindow(id).hide(null);
   }
 
   static boolean shouldBeHiddenByShortCut(@NotNull ToolWindowManagerEx manager, @Nullable String id) {
@@ -50,6 +50,14 @@ public class HideToolWindowAction extends AnAction implements DumbAware {
     if (id == null) {
       id = toolWindowManager.getLastActiveToolWindowId();
     }
-    presentation.setEnabled(shouldBeHiddenByShortCut(toolWindowManager, id));
+    ToolWindow window = id != null ? toolWindowManager.getToolWindow(id) : null;
+    if (window != null &&
+        window.isVisible() &&
+        UIUtil.isDescendingFrom(IdeFocusManager.getGlobalInstance().getFocusOwner(), window.getComponent())) {
+      presentation.setEnabled(true);
+    }
+    else {
+      presentation.setEnabled(shouldBeHiddenByShortCut(toolWindowManager, id));
+    }
   }
 }
