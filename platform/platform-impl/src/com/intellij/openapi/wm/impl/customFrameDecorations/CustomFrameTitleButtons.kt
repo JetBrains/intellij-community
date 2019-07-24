@@ -6,11 +6,11 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.ComponentStyle
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.ComponentStyleState
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.StyleManager
-import com.intellij.ui.JBColor
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.JBUI.*
+import com.intellij.util.ui.JBUI.Borders
+import com.intellij.util.ui.JBUI.CurrentTheme
 import net.miginfocom.swing.MigLayout
 import java.awt.*
 import javax.accessibility.AccessibleContext
@@ -158,6 +158,7 @@ open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
       }
     }
     button.action = action
+    button.isFocusable = false
     button.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, accessibleName)
     button.text = null
     return button
