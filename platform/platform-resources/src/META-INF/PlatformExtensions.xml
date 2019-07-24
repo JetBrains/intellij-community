@@ -247,14 +247,18 @@
 
     <applicationService serviceInterface="com.intellij.ide.UiActivityMonitor" serviceImplementation="com.intellij.ide.UiActivityMonitorImpl"/>
 
+    <!-- Android Studio: don't register IntelliJ forks
     <applicationService serviceImplementation="com.intellij.diagnostic.WindowsDefenderChecker"/>
     <applicationService serviceImplementation="com.intellij.diagnostic.GcPauseWatcher"/>
+    Android Studio: don't register IntelliJ forks -->
 
     <applicationService serviceInterface="com.intellij.execution.process.ProcessHandlerFactory"
                         serviceImplementation="com.intellij.execution.process.ProcessHandlerFactoryImpl" />
     <applicationService serviceImplementation="com.intellij.ide.CommandLineWaitingManager" />
 
+    <!-- Android Studio: don't register IntelliJ fork
     <applicationService serviceImplementation="com.intellij.diagnostic.HeapDumpAnalysisSupport"/>
+    Android Studio: don't register IntelliJ fork -->
 
     <projectService serviceInterface="com.intellij.openapi.vfs.ReadonlyStatusHandler"
                     serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
@@ -494,7 +498,9 @@
     <postStartupActivity implementation="com.intellij.openapi.wm.impl.ToolWindowManagerImpl$InitToolWindowsActivity"/>
     <postStartupActivity implementation="com.intellij.xml.breadcrumbs.BreadcrumbsInitializingActivity"/>
 
+    <!-- Android Studio: don't register IntelliJ fork
     <backgroundPostStartupActivity implementation="com.intellij.diagnostic.WindowsDefenderCheckerActivity" os="windows"/>
+    Android Studio: don't register IntelliJ fork -->
 
     <preloadingActivity implementation="com.intellij.openapi.actionSystem.impl.ActionPreloader"/>
     <preloadingActivity implementation="com.intellij.ide.ui.search.SearchableOptionPreloader"/>
