@@ -39,9 +39,7 @@ import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil.CommitPresentation;
 import com.intellij.vcs.log.ui.table.CommitSelectionListener;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
-import com.intellij.vcs.log.util.TroveUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
-import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +59,6 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
 
   @NotNull private final VcsLogData myLogData;
 
-  @NotNull private final JScrollPane myScrollPane;
   @NotNull private final JPanel myMainContentPanel;
   @NotNull private final StatusText myEmptyText;
 
@@ -69,7 +66,6 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
   @NotNull private final VcsLogColorManager myColorManager;
 
   @NotNull private List<Integer> mySelection = ContainerUtil.emptyList();
-  @NotNull private TIntHashSet myCommitIds = new TIntHashSet();
   @Nullable private ProgressIndicator myResolveIndicator = null;
 
   public DetailsPanel(@NotNull VcsLogData logData,
@@ -78,7 +74,6 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
     myLogData = logData;
     myColorManager = colorManager;
 
-    myScrollPane = new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     myMainContentPanel = new MyMainContentPanel();
     myEmptyText = new StatusText(myMainContentPanel) {
       @Override
@@ -89,9 +84,11 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
     myMainContentPanel.setLayout(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
 
     myMainContentPanel.setOpaque(false);
-    myScrollPane.setViewportView(myMainContentPanel);
-    myScrollPane.setBorder(JBUI.Borders.empty());
-    myScrollPane.setViewportBorder(JBUI.Borders.empty());
+    JScrollPane scrollPane = new JBScrollPane(myMainContentPanel,
+                                              ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                              ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    scrollPane.setBorder(JBUI.Borders.empty());
+    scrollPane.setViewportBorder(JBUI.Borders.empty());
 
     myLoadingPanel = new JBLoadingPanel(new BorderLayout(), parent, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
       @Override
@@ -99,7 +96,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
         return CommitPanel.getCommitDetailsBackground();
       }
     };
-    myLoadingPanel.add(myScrollPane);
+    myLoadingPanel.add(scrollPane);
 
     setLayout(new BorderLayout());
     add(myLoadingPanel, BorderLayout.CENTER);
@@ -265,12 +262,6 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
                                                                                              unResolvedHashes));
       setPresentations(ids, presentations);
 
-      TIntHashSet newCommitIds = TroveUtil.map2IntSet(detailsList, c -> myLogData.getStorage().getCommitIndex(c.getId(), c.getRoot()));
-      if (!TroveUtil.intersects(myCommitIds, newCommitIds)) {
-        myScrollPane.getVerticalScrollBar().setValue(0);
-      }
-      myCommitIds = newCommitIds;
-
       List<Integer> currentSelection = mySelection;
       resolveHashes(ids, presentations, unResolvedHashes, o -> currentSelection != mySelection);
     }
@@ -327,7 +318,6 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
       myEmptyText.setText(text);
       myMainContentPanel.removeAll();
       mySelection = ContainerUtil.emptyList();
-      myCommitIds = new TIntHashSet();
     }
   }
 
