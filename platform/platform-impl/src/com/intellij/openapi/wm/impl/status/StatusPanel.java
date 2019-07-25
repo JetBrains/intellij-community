@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.JBMenuItem;
@@ -52,9 +51,8 @@ import java.awt.event.MouseEvent;
  * @author peter
  */
 class StatusPanel extends JPanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.status.StatusPanel");
   private Notification myCurrentNotification;
-  private int myTimeStart;
+  @Nullable private String myTimeText;
   private boolean myDirty;
   private boolean myAfterClick;
   private Alarm myLogAlarm;
@@ -72,18 +70,13 @@ class StatusPanel extends JPanel {
 
     @Override
     protected String truncateText(String text, Rectangle bounds, FontMetrics fm, Rectangle textR, Rectangle iconR, int maxWidth) {
-      if (myTimeStart > 0) {
-        if (myTimeStart >= text.length()) {
-          LOG.error(myTimeStart + " " + text.length());
-        }
-        final String time = text.substring(myTimeStart);
-        final int withoutTime = maxWidth - fm.stringWidth(time);
-
-        int end = Math.min(myTimeStart - 1, 1000);
+      if (myTimeText != null && text.endsWith(myTimeText)) {
+        int withoutTime = maxWidth - fm.stringWidth(myTimeText);
+        int end = Math.min(myTimeText.length() - 1, 1000);
         while (end > 0) {
           final String truncated = text.substring(0, end) + "... ";
           if (fm.stringWidth(truncated) < withoutTime) {
-            text = truncated + time;
+            text = truncated + myTimeText;
             break;
           }
           end--;
@@ -207,10 +200,10 @@ class StatusPanel extends JPanel {
           assert statusMessage != null;
           String text = statusMessage.second;
           if (myDirty || System.currentTimeMillis() - statusMessage.third >= DateFormatUtil.MINUTE) {
-            myTimeStart = text.length() + 1;
-            text += " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.third)) + ")";
+            myTimeText = "(" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.third)) + ")";
+            text += " " + myTimeText;
           } else {
-            myTimeStart = -1;
+            myTimeText = null;
           }
           setStatusText(text);
           alarm.addRequest(this, 30000);
@@ -218,7 +211,7 @@ class StatusPanel extends JPanel {
       }.run();
     }
     else {
-      myTimeStart = -1;
+      myTimeText = null;
       UIUtil.setCursor(myTextPanel, Cursor.getDefaultCursor());
       myDirty = true;
       setStatusText(nonLogText);
