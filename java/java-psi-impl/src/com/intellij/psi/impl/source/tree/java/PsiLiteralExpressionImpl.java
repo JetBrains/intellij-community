@@ -108,7 +108,8 @@ public class PsiLiteralExpressionImpl
       return innerText == null ? null : internedParseStringCharacters(innerText);
     }
     if (type == JavaTokenType.TEXT_BLOCK_LITERAL) {
-      return getTextBlockText();
+      final String textBlockText = getTextBlockText();
+      return textBlockText == null ? null : internedParseStringCharacters(textBlockText);
     }
     if (type == JavaTokenType.RAW_STRING_LITERAL) {
       return getRawString();
