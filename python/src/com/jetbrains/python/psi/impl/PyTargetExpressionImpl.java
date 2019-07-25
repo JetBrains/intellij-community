@@ -22,8 +22,8 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -64,7 +64,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   }
 
   public PyTargetExpressionImpl(final PyTargetExpressionStub stub) {
-    super(stub, PyStubElementTypes.TARGET_EXPRESSION);
+    super(stub, PyElementTypes.TARGET_EXPRESSION);
   }
 
   public PyTargetExpressionImpl(final PyTargetExpressionStub stub, IStubElementType nodeType) {

@@ -877,7 +877,7 @@ public class PyStubsTest extends PyTestCase {
       final PyFile file = getTestFile();
       final PyFunction func = file.findTopLevelFunction("func");
       final PyFunctionStub funcStub = func.getStub();
-      assertNull(funcStub.findChildStubByType(PyStubElementTypes.ANNOTATION));
+      assertNull(funcStub.findChildStubByType(PyElementTypes.ANNOTATION));
     });
   }
 

@@ -2,7 +2,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.jetbrains.python.PyStubElementTypes;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PySlashParameterStub;
 import org.jetbrains.annotations.ApiStatus;
@@ -16,7 +16,7 @@ public class PySlashParameterImpl extends PyBaseElementImpl<PySlashParameterStub
   }
 
   public PySlashParameterImpl(PySlashParameterStub stub) {
-    super(stub, PyStubElementTypes.SLASH_PARAMETER);
+    super(stub, PyElementTypes.SLASH_PARAMETER);
   }
 
   @Override
