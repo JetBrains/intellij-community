@@ -2562,6 +2562,38 @@ public class ContainerUtil extends ContainerUtilRt {
     return result.isEmpty() ? emptyList() : result;
   }
 
+  /**
+   * @return read-only list consisting of the elements from all of the collections returned by the mapping function,
+   * or a read-only view of the list returned by the mapping function, if it only returned a single list that was not empty
+   */
+  @NotNull
+  public static <T, V> List<V> flatMap(@NotNull Iterable<? extends T> iterable, @NotNull Function<? super T, ? extends List<V>> mapping) {
+    // GC optimization for critical clients
+    List<V> result = null;
+    boolean isOriginal = true;
+
+    for (T each : iterable) {
+      List<V> toAdd = mapping.fun(each);
+      if (toAdd.isEmpty()) continue;
+
+      if (result == null) {
+        result = toAdd;
+        continue;
+      }
+
+      if (isOriginal) {
+        List<V> original = result;
+        result = new ArrayList<>(Math.max(10, result.size() + toAdd.size()));
+        result.addAll(original);
+        isOriginal = false;
+      }
+
+      result.addAll(toAdd);
+    }
+
+    return result == null ? emptyList() : Collections.unmodifiableList(result);
+  }
+
   @NotNull
   public static <K,V> V[] convert(@NotNull K[] from, @NotNull V[] to, @NotNull Function<? super K, ? extends V> fun) {
     if (to.length < from.length) {
