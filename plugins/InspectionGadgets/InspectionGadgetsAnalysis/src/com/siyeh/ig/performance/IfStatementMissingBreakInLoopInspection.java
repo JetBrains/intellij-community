@@ -13,6 +13,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Contract;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -232,9 +234,18 @@ public class IfStatementMissingBreakInLoopInspection extends BaseInspection {
         operand = ((PsiAssignmentExpression)e).getLExpression();
       }
       if (operand == null) return false;
-      PsiReferenceExpression ref = tryCast(PsiUtil.skipParenthesizedExprDown(operand), PsiReferenceExpression.class);
-      if (ref == null) return true;
-      PsiVariable variable = tryCast(ref.resolve(), PsiVariable.class);
+      operand = PsiUtil.skipParenthesizedExprDown(operand);
+      PsiReferenceExpression ref = tryCast(operand, PsiReferenceExpression.class);
+      if (ref != null) return isDeclaredVariable(ref.resolve(), declaredVariables);
+      PsiArrayAccessExpression arrayAccess = tryCast(operand, PsiArrayAccessExpression.class);
+      if (arrayAccess == null) return true;
+      return ExpressionUtils.nonStructuralChildren(arrayAccess.getArrayExpression())
+        .map(child -> tryCast(child, PsiReferenceExpression.class)).filter(Objects::nonNull)
+        .allMatch(r -> isDeclaredVariable(r.resolve(), declaredVariables));
+    }
+
+    private static boolean isDeclaredVariable(PsiElement element, Set<PsiVariable> declaredVariables) {
+      PsiVariable variable = tryCast(element, PsiVariable.class);
       return variable == null || declaredVariables.contains(variable);
     }
   }
