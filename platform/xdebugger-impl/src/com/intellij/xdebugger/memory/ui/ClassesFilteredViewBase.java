@@ -41,7 +41,7 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
   protected static final double DELAY_BEFORE_INSTANCES_QUERY_COEFFICIENT = 0.5;
   protected static final double MAX_DELAY_MILLIS = TimeUnit.SECONDS.toMillis(2);
   protected static final int DEFAULT_BATCH_SIZE = Integer.MAX_VALUE;
-  private static final String EMPTY_TABLE_CONTENT_WHEN_RUNNING = "The application is running";
+  private static final String EMPTY_TABLE_CONTENT_WHEN_RUNNING = "Stop at a breakpoint to load the list of classes";
   private static final String EMPTY_TABLE_CONTENT_WHEN_STOPPED = "Classes are not available";
   private static final int INITIAL_TIME = 0;
 
