@@ -364,7 +364,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
                 .select(MethodSmartStepTarget.class)
                 .filter(target -> !target.needsBreakpointRequest())
                 .toList();
-            visitLinesMethods(frameProxy.location(), true, lines, (opcode, owner, name, desc, itf) -> {
+            visitLinesMethods(frameProxy.location(), true, lines, false, (opcode, owner, name, desc, itf) -> {
               if (name.startsWith("access$")) { // bridge method
                 ReferenceType cls = ContainerUtil.getFirstItem(virtualMachine.classesByName(owner));
                 if (cls != null) {
@@ -394,9 +394,8 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
             LOG.error(e);
           }
 
-          // remove already executed
           try {
-            visitLinesMethods(frameProxy.location(), false, lines, (opcode, owner, name, desc, itf) -> {
+            MethodInsnVisitor visitor = (opcode, owner, name, desc, itf) -> {
               Iterator<SmartStepTarget> iterator = targets.iterator();
               while (iterator.hasNext()) {
                 SmartStepTarget e = iterator.next();
@@ -417,7 +416,11 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
                   break;
                 }
               }
-            });
+            };
+            // remove already executed
+            visitLinesMethods(frameProxy.location(), false, lines, false, visitor);
+            // remove after jumps
+            visitLinesMethods(frameProxy.location(), true, lines, true, visitor);
           }
           catch (Exception e) {
             LOG.info(e);
@@ -448,20 +451,34 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
     void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf);
   }
 
-  private static void visitLinesMethods(Location location, boolean full, Range<Integer> lines, MethodInsnVisitor visitor) {
+  private static void visitLinesMethods(Location location, boolean full, Range<Integer> lines, boolean afterJumps, MethodInsnVisitor visitor) {
     MethodBytecodeUtil.visit(location.method(), full ? Long.MAX_VALUE : location.codeIndex(), new MethodVisitor(Opcodes.API_VERSION) {
       boolean myLineMatch = false;
+      boolean myAfterJump = false;
+
+      @Override
+      public void visitJumpInsn(int opcode, Label label) {
+        myAfterJump = true;
+      }
 
       @Override
       public void visitLineNumber(int line, Label start) {
-        myLineMatch = lines.isWithin(line - 1);
+        boolean within = lines.isWithin(line - 1);
+        if (within != myLineMatch) {
+          myAfterJump = false;
+        }
+        myLineMatch = within;
       }
 
       @Override
       public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-        if (myLineMatch) {
+        if (isMatch()) {
           visitor.visitMethodInsn(opcode, owner, name, desc, itf);
         }
+      }
+
+      boolean isMatch() {
+        return myLineMatch && (!afterJumps ||  myAfterJump);
       }
     }, true);
   }
