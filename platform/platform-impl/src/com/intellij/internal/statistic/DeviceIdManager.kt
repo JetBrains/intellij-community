@@ -23,7 +23,7 @@ object DeviceIdManager {
 
     var deviceId = prefs.get(DEVICE_ID_PREFERENCE_KEY, null)
     if (StringUtil.isEmptyOrSpaces(deviceId)) {
-      deviceId = generateId(Calendar.getInstance(), getOSChar())
+      deviceId = generateId(Calendar.getInstance(Locale.ENGLISH), getOSChar())
       prefs.put(DEVICE_ID_PREFERENCE_KEY, deviceId)
       LOG.info("Generating new Device ID")
     }
@@ -49,7 +49,7 @@ object DeviceIdManager {
    */
   fun generateId(calendar: Calendar, OSChar: Char): String {
     calendar.set(Calendar.YEAR, calendar.get(Calendar.YEAR).coerceIn(2000, 2099))
-    return SimpleDateFormat("ddMMyy").format(calendar.time) + OSChar + UUID.randomUUID().toString()
+    return SimpleDateFormat("ddMMyy", Locale.ENGLISH).format(calendar.time) + OSChar + UUID.randomUUID().toString()
   }
 
   private fun getOSChar() = if (SystemInfo.isWindows) '1' else if (SystemInfo.isMac) '2' else if (SystemInfo.isLinux) '3' else '0'
