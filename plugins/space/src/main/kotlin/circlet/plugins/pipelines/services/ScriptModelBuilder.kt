@@ -2,8 +2,8 @@ package circlet.plugins.pipelines.services
 
 import circlet.pipelines.config.api.*
 import circlet.pipelines.config.dsl.compile.*
+import circlet.pipelines.config.dsl.resolve.*
 import circlet.pipelines.config.dsl.script.exec.common.*
-import circlet.pipelines.config.dsl.scriptdefinition.*
 import circlet.pipelines.config.utils.*
 import circlet.plugins.pipelines.utils.*
 import circlet.plugins.pipelines.viewmodel.*
@@ -87,7 +87,7 @@ object ScriptModelBuilder : KLogging() {
                 kotlinCompilerPath,
                 scriptDefFile.absolutePath)
 
-            val metadata = ScriptCompilationResultMetadataUtil.tryReadFromFile(metadataPath)  ?: ScriptCompilationResultMetadataUtil.empty()
+            val metadata = ScriptResolveResultMetadataUtil.tryReadFromFile(metadataPath) ?: ScriptResolveResultMetadataUtil.empty()
             val config = DslScriptExecutor().evaluateModel(targetJar, metadata.classpath,"", "", "")
             config.applyIds()
 
