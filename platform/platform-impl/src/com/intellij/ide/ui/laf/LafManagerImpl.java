@@ -441,7 +441,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   @Nullable
   private static Icon getAquaMenuInvertedIcon() {
-    if (UIUtil.isUnderAquaLookAndFeel() || (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF())) {
+    if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
       return AllIcons.Mac.Tree_white_right_arrow;
     }
     return null;
@@ -459,10 +459,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     fixMenuIssues(uiDefaults);
 
-    if (UIUtil.isUnderAquaLookAndFeel()) {
-      uiDefaults.put("Panel.opaque", Boolean.TRUE);
-    }
-
     initInputMapDefaults(uiDefaults);
 
     uiDefaults.put("Button.defaultButtonFollowsFocus", Boolean.FALSE);
@@ -476,8 +472,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     patchTreeUI(uiDefaults);
 
     patchHiDPI(uiDefaults);
-
-    fixSeparatorColor(uiDefaults);
 
     fixProgressBar(uiDefaults);
 
@@ -613,7 +607,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private static void fixMenuIssues(UIDefaults uiDefaults) {
-    if (UIUtil.isUnderAquaLookAndFeel() || (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF())) {
+    if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
       // update ui for popup menu to get round corners
       uiDefaults.put("PopupMenuUI", MacPopupMenuUI.class.getCanonicalName());
       uiDefaults.put("Menu.invertedArrowIcon", getAquaMenuInvertedIcon());
@@ -627,13 +621,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
 
     uiDefaults.put("MenuItem.background", UIManager.getColor("Menu.background"));
-  }
-
-  private static void fixSeparatorColor(UIDefaults uiDefaults) {
-    if (UIUtil.isUnderAquaLookAndFeel()) {
-      uiDefaults.put("Separator.background", UIUtil.AQUA_SEPARATOR_BACKGROUND_COLOR);
-      uiDefaults.put("Separator.separatorColor", UIUtil.AQUA_SEPARATOR_FOREGROUND_COLOR);
-    }
   }
 
   private static void fixProgressBar(UIDefaults uiDefaults) {
