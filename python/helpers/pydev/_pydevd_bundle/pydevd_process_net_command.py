@@ -345,10 +345,10 @@ def process_net_command(py_db, cmd_id, seq, text):
                 if pydevd_file_utils.is_real_file(file):
                     file = pydevd_file_utils.norm_file_to_server(file)
 
-                if not pydevd_file_utils.exists(file):
-                    sys.stderr.write('pydev debugger: warning: trying to add breakpoint' \
-                                     ' to file that does not exist: %s (will have no effect)\n' % (file,))
-                    sys.stderr.flush()
+                    if not pydevd_file_utils.exists(file):
+                        sys.stderr.write('pydev debugger: warning: trying to add breakpoint'
+                                         ' to file that does not exist: %s (will have no effect)\n' % (file,))
+                        sys.stderr.flush()
 
                 if condition is not None and (len(condition) <= 0 or condition == "None"):
                     condition = None
@@ -785,7 +785,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                                     lines_ignored = py_db.filename_to_lines_where_exceptions_are_ignored[filename] = {}
                                 lines_ignored[int(line_number)] = 1
                             else:
-                                sys.stderr.write('pydev debugger: warning: trying to ignore exception thrown' \
+                                sys.stderr.write('pydev debugger: warning: trying to ignore exception thrown'
                                                  ' on file that does not exist: %s (will have no effect)\n' % (filename,))
 
             elif cmd_id == CMD_ENABLE_DONT_TRACE:

@@ -134,12 +134,12 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
                        final @NotNull XDebuggerEditorsProvider editorsProvider,
                        final @Nullable XSourcePosition sourcePosition,
                        final @NotNull String popupActionGroupId, @Nullable XValueMarkers<?, ?> valueMarkers) {
+    super(new DefaultTreeModel(null));
     myValueMarkers = valueMarkers;
     myProject = project;
     myEditorsProvider = editorsProvider;
     mySourcePosition = sourcePosition;
-    myTreeModel = new DefaultTreeModel(null);
-    setModel(myTreeModel);
+    myTreeModel = (DefaultTreeModel)getModel();
     setCellRenderer(new XDebuggerTreeRenderer());
     new TreeLinkMouseListener(new XDebuggerTreeRenderer()) {
       @Override

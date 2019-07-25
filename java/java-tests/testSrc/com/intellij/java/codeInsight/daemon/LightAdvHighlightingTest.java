@@ -116,6 +116,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testOverriddenMethodIsFinal() { doTest(false); }
   public void testMissingReturn() { doTest(false); }
   public void testUnreachable() { doTest(false); }
+  public void testUnreachableMultiFinally() { doTest(false); }
   public void testFinalFieldInit() { doTest(false); }
   public void testLocalVariableInitialization() { doTest(false); }
   public void testVarDoubleInitialization() { doTest(false); }

@@ -25,7 +25,7 @@ internal abstract class BaseCollectionBinding(itemType: Type, context: BindingIn
     }
   }
 
-  fun readInto(result: MutableCollection<Any?>, context: ReadContext) {
+  fun readInto(hostObject: Any?, result: MutableCollection<Any?>, context: ReadContext) {
     val reader = context.reader
     reader.stepIn()
     while (true) {
@@ -33,7 +33,7 @@ internal abstract class BaseCollectionBinding(itemType: Type, context: BindingIn
       val type = reader.next() ?: break
       val item = when (type) {
         IonType.NULL -> null
-        else -> itemBinding.deserialize(context)
+        else -> itemBinding.deserialize(context, hostObject)
       }
       result.add(item)
     }
@@ -44,14 +44,14 @@ internal abstract class BaseCollectionBinding(itemType: Type, context: BindingIn
 internal class CollectionBinding(type: ParameterizedType, context: BindingInitializationContext) : BaseCollectionBinding(type.actualTypeArguments[0], context) {
   private val collectionClass = ClassUtil.typeToClass(type)
 
-  override fun deserialize(context: ReadContext): Collection<Any?> {
+  override fun deserialize(context: ReadContext, hostObject: Any?): Collection<Any?> {
     if (context.reader.type == IonType.INT) {
       LOG.assertTrue(context.reader.intValue() == 0)
       return if (Set::class.java.isAssignableFrom(collectionClass)) emptySet() else emptyList()
     }
 
     val result = createCollection()
-    readInto(result, context)
+    readInto(hostObject, result, context)
     return result
   }
 
@@ -88,7 +88,7 @@ internal class CollectionBinding(type: ParameterizedType, context: BindingInitia
       result = createCollection()
       property.set(hostObject, result)
     }
-    readInto(result, context)
+    readInto(hostObject, result, context)
   }
 
   private fun createCollection(propertyForDebugPurposes: MutableAccessor? = null): MutableCollection<Any?> {
@@ -117,7 +117,7 @@ internal class CollectionBinding(type: ParameterizedType, context: BindingInitia
 }
 
 internal class ArrayBinding(private val itemClass: Class<*>, context: BindingInitializationContext) : BaseCollectionBinding(itemClass, context) {
-  override fun deserialize(context: ReadContext) = readArray(context)
+  override fun deserialize(context: ReadContext, hostObject: Any?) = readArray(context, hostObject)
 
   override fun deserialize(hostObject: Any, property: MutableAccessor, context: ReadContext) {
     val type = context.reader.type
@@ -125,7 +125,7 @@ internal class ArrayBinding(private val itemClass: Class<*>, context: BindingIni
       property.set(hostObject, null)
     }
     else if (type != IonType.INT) {
-      property.set(hostObject, readArray(context))
+      property.set(hostObject, readArray(context, hostObject))
     }
   }
 
@@ -143,9 +143,9 @@ internal class ArrayBinding(private val itemClass: Class<*>, context: BindingIni
     writer.stepOut()
   }
 
-  private fun readArray(context: ReadContext): Array<out Any> {
+  private fun readArray(context: ReadContext, hostObject: Any?): Array<out Any> {
     val list = ArrayList<Any?>()
-    readInto(list, context)
+    readInto(hostObject, list, context)
     val result = ArrayUtil.newArray(itemClass, list.size)
     list.toArray(result)
     return result

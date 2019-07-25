@@ -1,142 +1,150 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl
 
-import com.intellij.ide.RecentProjectsManager
 import com.intellij.idea.Bombed
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.JBProtocolCommand
-import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.module.EmptyModuleType
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.testFramework.PlatformTestCase
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.VfsTestUtil
+import com.intellij.testFramework.*
+import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.util.io.sanitizeFileName
+import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.ui.UIUtil
-import junit.framework.TestCase
-import java.io.IOException
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.TestName
+import java.nio.file.Paths
 
-class JBNavigateCommandTest : PlatformTestCase() {
+class JBNavigateCommandTest {
+  companion object {
+    @JvmField
+    @ClassRule
+    val appRule = ApplicationRule()
+  }
+
+  @JvmField
+  @Rule
+  val tempDir = TemporaryDirectory()
+
+  @JvmField
+  @Rule
+  val testName = TestName()
+
   fun getTestDataPath(): String {
     return "${PlatformTestUtil.getPlatformTestDataPath()}/commands/navigate/"
   }
 
-  @Throws(Exception::class)
-  override fun setUp() {
-    super.setUp()
-
-    //this is a service. Initialized lazily
-    RecentProjectsManager.getInstance()
-  }
-
-  fun testPath1() {
-    val project = configureProject()
-
-    navigate(project.name, mapOf("path" to "A.java"))
-
-    TestCase.assertEquals(getCurrentElement(project).name, "A.java")
-    PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+  @Test
+  fun path1() = runBlocking {
+    createOrLoadProject(tempDir, useDefaultProjectSettings = false) { project ->
+      configure(project)
+      navigate(project.name, mapOf("path" to "A.java"))
+      assertThat(getCurrentElement(project).name).isEqualTo("A.java")
+    }
   }
 
   @Bombed(year = 2019, month = 7, day = 1, user = "dima")
   fun testFqn1() {
-    val project = configureProject()
-
-    navigate(project.name, mapOf("fqn" to "A"))
-
-    UIUtil.dispatchAllInvocationEvents()
-    TestCase.assertEquals(getCurrentElement(project).name, "A")
-    PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+    //val project = configureProject()
+    //
+    //navigate(project.name, mapOf("fqn" to "A"))
+    //
+    //UIUtil.dispatchAllInvocationEvents()
+    //TestCase.assertEquals(getCurrentElement(project).name, "A")
+    //PlatformTestUtil.forceCloseProjectWithoutSaving(project)
   }
 
   @Bombed(year = 2019, month = 7, day = 1, user = "dima")
   fun testFqnMethod() {
-    val project = configureProject()
-
-    navigate(project.name, mapOf("fqn" to "A#main"))
-
-    UIUtil.dispatchAllInvocationEvents()
-    TestCase.assertEquals(getCurrentElement(project).name, "main")
-    PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+    //val project = configureProject()
+    //
+    //navigate(project.name, mapOf("fqn" to "A#main"))
+    //
+    //UIUtil.dispatchAllInvocationEvents()
+    //TestCase.assertEquals(getCurrentElement(project).name, "main")
+    //PlatformTestUtil.forceCloseProjectWithoutSaving(project)
   }
 
   @Bombed(year = 2019, month = 7, day = 1, user = "dima")
   fun testFqnMultipleMethods() {
-    val project = configureProject()
-
-    navigate(project.name, mapOf("fqn1" to "A1#main1",
-                                 "fqn2" to "A2#main2"))
-
-    UIUtil.dispatchAllInvocationEvents()
-    val elements = getCurrentElements(project)
-    TestCase.assertEquals(elements[0].name, "main1")
-    TestCase.assertEquals(elements[1].name, "main2")
-    PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+    //val project = configureProject()
+    //
+    //navigate(project.name, mapOf("fqn1" to "A1#main1",
+    //                             "fqn2" to "A2#main2"))
+    //
+    //UIUtil.dispatchAllInvocationEvents()
+    //val elements = getCurrentElements(project)
+    //TestCase.assertEquals(elements[0].name, "main1")
+    //TestCase.assertEquals(elements[1].name, "main2")
+    //PlatformTestUtil.forceCloseProjectWithoutSaving(project)
   }
 
   @Bombed(year = 2019, month = 7, day = 1, user = "dima")
   fun testFqnConstant() {
-    val project = configureProject()
-
-    navigate(project.name, mapOf("fqn" to "A#RUN_CONFIGURATION_AD_TEXT"))
-
-    UIUtil.dispatchAllInvocationEvents()
-    TestCase.assertEquals(getCurrentElement(project).name, "RUN_CONFIGURATION_AD_TEXT")
-    PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+    //val project = configureProject()
+    //
+    //navigate(project.name, mapOf("fqn" to "A#RUN_CONFIGURATION_AD_TEXT"))
+    //
+    //UIUtil.dispatchAllInvocationEvents()
+    //TestCase.assertEquals(getCurrentElement(project).name, "RUN_CONFIGURATION_AD_TEXT")
+    //PlatformTestUtil.forceCloseProjectWithoutSaving(project)
   }
 
-  fun testPathOpenProject() {
-    val projectName = "navigationCommandProject"
-    val actualProjectName = actualProjectName(projectName)
-    //step 1: create and open a project
-    val project = createAndOpenProject(projectName)
-    configure(project)
-    //step 1: close project
-    PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+  @Test
+  fun pathOpenProject() = runBlocking {
+    var projectName: String? = null
+    createOrLoadProject(tempDir, useDefaultProjectSettings = false) { project ->
+      configure(project)
+      projectName = project.name
+    }
 
-    navigate(actualProjectName, mapOf("path" to "A.java"))
+    withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+      var recentProject: Project? = null
+      try {
+        navigate(projectName!!, mapOf("path" to "A.java"))
+        UIUtil.dispatchAllInvocationEvents()
 
-    UIUtil.dispatchAllInvocationEvents()
-    val recentProject = ProjectManager.getInstance().openProjects.find { it.name == actualProjectName }!!
-    TestCase.assertEquals(getCurrentElement(recentProject).name, "A.java")
-    PlatformTestUtil.forceCloseProjectWithoutSaving(recentProject)
-  }
-
-  private fun configureProject(): Project {
-    val project = createAndOpenProject()
-    configure(project)
-    return project
+        recentProject = ProjectManager.getInstance().openProjects.find { it.name == projectName }!!
+        assertThat(getCurrentElement(recentProject).name).isEqualTo("A.java")
+      }
+      finally {
+        PlatformTestUtil.forceCloseProjectWithoutSaving(recentProject ?: return@withContext)
+      }
+    }
   }
 
   private fun configure(project: Project) {
-    val basePath = project.basePath!!
-    val baseDir = LocalFileSystem.getInstance().findFileByPath(basePath)!!
+    val basePath = Paths.get(project.basePath!!)
+    val moduleManager = ModuleManager.getInstance(project)
+    val projectManager = ProjectRootManagerEx.getInstanceEx(project)
+    runWriteAction {
+      projectManager.mergeRootsChangesDuring {
+        val newModule = moduleManager.newModule(basePath.resolve("navigationCommandModule.uml").systemIndependentPath, EmptyModuleType.EMPTY_MODULE)
+        FileUtil.copyDir(Paths.get(getTestDataPath(), sanitizeFileName(testName.methodName)).toFile(), basePath.toFile())
 
-    WriteAction.run<RuntimeException> {
-      ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring {
-        WriteCommandAction.writeCommandAction(project).run<IOException> {
-          val newModule = createModuleAt("navigationCommandModule", project, EmptyModuleType.getInstance(), basePath)
+        val baseDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(basePath.systemIndependentPath)!!
+        val moduleModel = ModuleRootManager.getInstance(newModule).modifiableModel
+        moduleModel.addContentEntry(baseDir).addSourceFolder(baseDir, false)
+        moduleModel.commit()
 
-          val testFolder = LocalFileSystem.getInstance().findFileByPath("${getTestDataPath()}/${getTestName(true)}")!!
-          copyDirContentsTo(testFolder, baseDir)
-
-          val moduleModel = ModuleRootManager.getInstance(newModule).modifiableModel
-          moduleModel.addContentEntry(baseDir).addSourceFolder(baseDir, false)
-
-          ApplicationManager.getApplication().runWriteAction { moduleModel.commit() }
-
-          VfsTestUtil.createDir(baseDir, Project.DIRECTORY_STORE_FOLDER)
-        }
+        VfsTestUtil.createDir(baseDir, Project.DIRECTORY_STORE_FOLDER)
       }
     }
   }
@@ -162,16 +170,4 @@ class JBNavigateCommandTest : PlatformTestCase() {
     map.putAll(parameters)
     navigateCommand?.perform("reference", map)
   }
-
-  private fun createAndOpenProject(name: String = getTestName(true)): Project {
-    val path = createTempDir(name)
-    val manager = ProjectManagerEx.getInstanceEx()
-    var project: Project? = manager.createProject("navigateToProject", path.path)
-    project!!.save()
-    PlatformTestUtil.forceCloseProjectWithoutSaving(project)
-    project = manager.loadAndOpenProject(path)
-    return project!!
-  }
-
-  private fun actualProjectName(projectName: String) = "idea_test_$projectName"
 }

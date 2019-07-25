@@ -5,8 +5,10 @@ import com.amazon.ion.IonReader
 import com.amazon.ion.IonType
 import com.amazon.ion.system.IonReaderBuilder
 import com.intellij.util.containers.ObjectIntHashMap
-import java.lang.reflect.Constructor
 import java.lang.reflect.Type
+import kotlin.reflect.full.primaryConstructor
+import kotlin.reflect.jvm.isAccessible
+import kotlin.reflect.jvm.javaConstructor
 
 private val structReaderBuilder by lazy {
   IonReaderBuilder.standard().immutable()
@@ -83,9 +85,14 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
     writer.stepOut()
   }
 
-  private fun createUsingCustomConstructor(context: ReadContext): Any {
-    val constructorInfo = propertyMapping.value
-                          ?: throw SerializationException("Please annotate non-default constructor with PropertyMapping (beanClass=${beanClass.name})")
+  private fun createUsingCustomConstructor(context: ReadContext, hostObject: Any?): Any {
+    var constructorInfo = propertyMapping.value
+    if (constructorInfo == null) {
+      constructorInfo = context.configuration.resolvePropertyMapping?.invoke(beanClass)
+                        ?: getPropertyMappingIfDataClass()
+                        ?: throw SerializationException("Please annotate non-default constructor with PropertyMapping (beanClass=${beanClass.name})")
+    }
+
     val names = constructorInfo.names
     val initArgs = arrayOfNulls<Any?>(names.size)
 
@@ -122,7 +129,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
 
         val binding = bindings[bindingIndex]
         try {
-          initArgs[argIndex] = binding.deserialize(subReadContext)
+          initArgs[argIndex] = binding.deserialize(subReadContext, hostObject)
         }
         catch (e: Exception) {
           throw SerializationException("Cannot deserialize parameter value (fieldName=$fieldName, binding=$binding, valueType=${reader.type}, beanClass=${beanClass.name})", e)
@@ -155,7 +162,29 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
     return instance
   }
 
-  override fun deserialize(context: ReadContext): Any {
+  private fun getPropertyMappingIfDataClass(): NonDefaultConstructorInfo? {
+    try {
+      // primaryConstructor will be null for Java
+      // parameter names are available only via kotlin reflection, not via java reflection
+      val kFunction = beanClass.kotlin.primaryConstructor ?: return null
+      try {
+        kFunction.isAccessible = true
+      }
+      catch (ignored: SecurityException) {
+      }
+      val names = kFunction.parameters.mapNotNull { it.name }
+      if (names.isEmpty()) {
+        return null
+      }
+      return NonDefaultConstructorInfo(names, kFunction.javaConstructor!!)
+    }
+    catch (e: Exception) {
+      LOG.error(e)
+    }
+    return null
+  }
+
+  override fun deserialize(context: ReadContext, hostObject: Any?): Any {
     val reader = context.reader
 
     val ionType = reader.type
@@ -172,7 +201,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
     }
 
     if (propertyMapping.isInitialized()) {
-      return createUsingCustomConstructor(context)
+      return createUsingCustomConstructor(context, hostObject)
     }
 
     val instance = try {
@@ -182,7 +211,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
       beanClass.newInstance()
     }
     catch (e: NoSuchMethodException) {
-      return createUsingCustomConstructor(context)
+      return createUsingCustomConstructor(context, hostObject)
     }
 
     readIntoObject(instance, context)
@@ -243,8 +272,6 @@ private inline fun readStruct(reader: IonReader, read: (fieldName: String, type:
   reader.stepOut()
 }
 
-private class NonDefaultConstructorInfo(val names: Array<String>, val constructor: Constructor<*>)
-
 private fun computeNonDefaultConstructorInfo(beanClass: Class<*>): NonDefaultConstructorInfo? {
   for (constructor in beanClass.declaredConstructors) {
     val annotation = constructor.getAnnotation(PropertyMapping::class.java) ?: continue
@@ -258,7 +285,7 @@ private fun computeNonDefaultConstructorInfo(beanClass: Class<*>): NonDefaultCon
       throw SerializationException("PropertyMapping annotation specifies ${annotation.value.size} parameters, " +
                                    "but constructor accepts ${constructor.parameterCount}")
     }
-    return NonDefaultConstructorInfo(annotation.value, constructor)
+    return NonDefaultConstructorInfo(annotation.value.toList(), constructor)
   }
 
   return null

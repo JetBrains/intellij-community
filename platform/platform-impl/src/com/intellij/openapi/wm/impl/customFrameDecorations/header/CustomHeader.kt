@@ -26,7 +26,8 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     companion object {
         const val H_GAP = 7
         const val MIN_HEIGHT = 24
-        val HIT_TEST_RESIZE_GAP = JBUI.scale(3)
+
+        val WINDOWS_VERSION = WindowsRegistryUtil.readRegistryValue("HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "ReleaseId")
 
         fun create(window: Window): CustomHeader {
             return if (window is JFrame) {
@@ -223,8 +224,6 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         private val activeColor = Toolkit.getDefaultToolkit().getDesktopProperty("win.dwm.colorizationColor") as Color? ?:
          Toolkit.getDefaultToolkit().getDesktopProperty("win.frame.activeBorderColor") as Color? ?: menuBarBorderColor
 
-        private val windowsVersion = WindowsRegistryUtil.readRegistryValue("HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "ReleaseId")
-
         fun repaintBorder() {
             val borderInsets = getBorderInsets(this@CustomHeader)
 
@@ -246,9 +245,9 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         }
 
       private fun isAffectsBorder(): Boolean {
-        if(windowsVersion.isNullOrEmpty()) return true
+        if(WINDOWS_VERSION.isNullOrEmpty()) return true
 
-        val winVersion =  windowsVersion.toIntOrNull() ?: return affectsBorders
+        val winVersion = WINDOWS_VERSION.toIntOrNull() ?: return affectsBorders
         return if(winVersion >= 1809) affectsBorders else true
       }
 

@@ -36,4 +36,15 @@ public class MavenUtilTest extends MavenTestCase {
                                                                 "</settings>");
     assertEquals("mytestpath", MavenUtil.getRepositoryFromSettings(new File(file.getPath())));
   }
+
+  public void testSystemProperties() throws IOException {
+
+    System.setProperty("myRepoPath", "test");
+    VirtualFile file = createProjectSubFile("testsettings.xml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                                                                "<settings>" +
+                                                                "  <localRepository>${myRepoPath}/testpath</localRepository>" +
+                                                                "</settings>");
+    assertEquals("test/testpath", MavenUtil.getRepositoryFromSettings(new File(file.getPath())));
+
+  }
 }

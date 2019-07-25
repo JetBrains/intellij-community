@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
+ * @deprecated to be removed
  * @author konstantin.aleev
  */
 @Deprecated

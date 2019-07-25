@@ -19,12 +19,15 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitLocalBranch;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
+import git4idea.commands.GitCommandResult;
 import git4idea.rebase.GitRebaseUtils;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -73,10 +76,15 @@ public final class GitBranchWorker {
     new GitCreateBranchOperation(myProject, myGit, myUiHandler, name, startPoints).execute();
   }
 
-  public void createNewTag(@NotNull final String name, @NotNull final String reference, @NotNull final List<? extends GitRepository> repositories) {
+  public void createNewTag(@NotNull String name, @NotNull String reference, @NotNull List<? extends GitRepository> repositories) {
     for (GitRepository repository : repositories) {
-      myGit.createNewTag(repository, name, null, reference);
+      GitCommandResult result = myGit.createNewTag(repository, name, null, reference);
       repository.getRepositoryFiles().refreshTagsFiles();
+      if (!result.success()) {
+        VcsNotifier.getInstance(myProject).notifyError("Couldn't create tag " + name + GitUtil.mention(repository),
+                                                       result.getErrorOutputAsHtmlString());
+        break;
+      }
     }
   }
 

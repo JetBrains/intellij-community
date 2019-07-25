@@ -16,6 +16,7 @@
 
 package com.intellij.psi.impl.cache.impl.todo;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileTypeExtension;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -24,22 +25,37 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileContent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
 public class TodoIndexers extends FileTypeExtension<DataIndexer<TodoIndexEntry, Integer, FileContent>> {
   public static final TodoIndexers INSTANCE = new TodoIndexers();
+  private static final ExtensionPointName<ExtraPlaceChecker> EXTRA_TODO_PLACES = ExtensionPointName.create("com.intellij.todoExtraPlaces");
 
   private TodoIndexers() {
     super("com.intellij.todoIndexer");
   }
 
   public static boolean needsTodoIndex(@NotNull VirtualFile file) {
+    for (ExtraPlaceChecker checker : EXTRA_TODO_PLACES.getExtensionList()) {
+      if (checker.accept(null, file)) return true;
+    }
     if (!file.isInLocalFileSystem()) {
       return false;
     }
     if (!isInContentOfAnyProject(file)) {
+      return false;
+    }
+    return true;
+  }
+
+  public static boolean belongsToProject(@NotNull Project project, @NotNull VirtualFile file) {
+    for (ExtraPlaceChecker checker : EXTRA_TODO_PLACES.getExtensionList()) {
+      if (checker.accept(project, file)) return true;
+    }
+    if (!ProjectFileIndex.getInstance(project).isInContent(file)) {
       return false;
     }
     return true;
@@ -52,5 +68,9 @@ public class TodoIndexers extends FileTypeExtension<DataIndexer<TodoIndexEntry, 
       }
     }
     return false;
+  }
+
+  public interface ExtraPlaceChecker {
+    boolean accept(@Nullable Project project, @NotNull VirtualFile file);
   }
 }

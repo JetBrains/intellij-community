@@ -95,16 +95,16 @@ internal class MapBinding(keyType: Type, valueType: Type, context: BindingInitia
       result = THashMap()
       property.set(hostObject, result)
     }
-    readInto(result, context)
+    readInto(result, context, hostObject)
   }
 
-  override fun deserialize(context: ReadContext): Any {
+  override fun deserialize(context: ReadContext, hostObject: Any?): Any {
     val result = THashMap<Any?, Any?>()
-    readInto(result, context)
+    readInto(result, context, hostObject)
     return result
   }
 
-  private fun readInto(result: MutableMap<Any?, Any?>, context: ReadContext) {
+  private fun readInto(result: MutableMap<Any?, Any?>, context: ReadContext, hostObject: Any?) {
     val reader = context.reader
 
     if (reader.type == IonType.INT) {
@@ -118,22 +118,22 @@ internal class MapBinding(keyType: Type, valueType: Type, context: BindingInitia
       if (isStringKeys) {
         val type = reader.next() ?: break
         val key = reader.fieldName
-        val value = read(type, valueBinding, context)
+        val value = read(type, valueBinding, context, hostObject)
         result.put(key, value)
       }
       else {
-        val key = read(reader.next() ?: break, keyBinding, context)
-        val value = read(reader.next() ?: break, valueBinding, context)
+        val key = read(reader.next() ?: break, keyBinding, context, hostObject)
+        val value = read(reader.next() ?: break, valueBinding, context, hostObject)
         result.put(key, value)
       }
     }
     reader.stepOut()
   }
 
-  private fun read(type: IonType, binding: Binding, context: ReadContext): Any? {
+  private fun read(type: IonType, binding: Binding, context: ReadContext, hostObject: Any?): Any? {
     return when (type) {
       IonType.NULL -> null
-      else -> binding.deserialize(context)
+      else -> binding.deserialize(context, hostObject)
     }
   }
 }

@@ -423,17 +423,10 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   }
 
   /**
-   * @deprecated use {@link #showFrame(Runnable)}
+   * This method is called when there is some opened project (IDE will not open Welcome Frame, but project).
    */
-  @Deprecated
-  public void showFrame() {
-    showFrame(null);
-  }
-
-  /**
-   * This method is called when there is some opened project (IDE will not open Welcome Frame, but project)
-   */
-  public IdeFrame showFrame(@Nullable Runnable beforeSetVisible) {
+  @NotNull
+  public IdeFrameImpl showFrame() {
     final IdeFrameImpl frame = new IdeFrameImpl();
     myProjectToFrame.put(null, frame);
 
@@ -442,9 +435,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     // set bounds even if maximized because on unmaximize we must restore previous frame bounds
     frame.setBounds(frameBounds);
 
-    if (beforeSetVisible != null) {
-      beforeSetVisible.run();
-    }
     frame.setVisible(true);
     frame.setExtendedState(myDefaultFrameInfo.getExtendedState());
     addFrameStateListener(frame);
@@ -552,7 +542,10 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
       myProjectToFrame.put(null, frame);
     }
     else {
-      Disposer.dispose(frame.getStatusBar());
+      StatusBar statusBar = frame.getStatusBar();
+      if (statusBar != null) {
+        Disposer.dispose(statusBar);
+      }
       frame.dispose();
     }
   }

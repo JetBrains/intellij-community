@@ -24,7 +24,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
   private static final Logger LOG = Logger.getInstance(CodeStyleSettingsManager.class);
 
   /**
-   * Use {@link #setMainProjectCodeStyle(CodeStyleSettings)} or {@link #getMainProjectCodeStyle()} instead
+   * @deprecated Use {@link #setMainProjectCodeStyle(CodeStyleSettings)} or {@link #getMainProjectCodeStyle()} instead
    */
   @Deprecated
   @Nullable
@@ -137,6 +137,9 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
     return PER_PROJECT_SETTINGS;
   }
 
+  /**
+   * @deprecated unused
+   */
   @Deprecated
   public boolean isLoaded() {
     return true;

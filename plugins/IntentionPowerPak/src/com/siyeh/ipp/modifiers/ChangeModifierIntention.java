@@ -36,6 +36,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
@@ -53,6 +54,7 @@ import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.IntentionPowerPackBundle;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,6 +63,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
   private static final List<AccessModifier> ALL_MODIFIERS = ContainerUtil.immutableList(AccessModifier.values());
@@ -68,7 +71,18 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
   private static final List<AccessModifier> PUBLIC_PACKAGE =
     ContainerUtil.immutableList(AccessModifier.PUBLIC, AccessModifier.PACKAGE_LOCAL);
 
+  private final boolean myErrorFix;
   private AccessModifier myTarget;
+
+  // Necessary to register an extension
+  @SuppressWarnings("unused")
+  public ChangeModifierIntention() {
+    this(false);
+  }
+
+  public ChangeModifierIntention(boolean errorFix) {
+    myErrorFix = errorFix;
+  }
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
@@ -78,12 +92,13 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
     if (identifier == null || identifier.getTextRange().getEndOffset() <= element.getTextRange().getStartOffset()) return false;
     List<AccessModifier> modifiers = new ArrayList<>(getAvailableModifiers(member));
     if (modifiers.isEmpty()) return false;
+    if (!myErrorFix && modifiers.stream().noneMatch(mod -> mod.hasModifier(member))) return false;
     modifiers.removeIf(mod -> mod.hasModifier(member));
     AccessModifier target = null;
     if (modifiers.isEmpty()) return false;
     if (modifiers.size() == 1) {
       target = modifiers.get(0);
-      setText("Make " + getModifierPresentation(target));
+      setText("Make '" + identifier.getText() + "' " + target);
     }
     else {
       setText(getFamilyName());
@@ -104,11 +119,6 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
   }
 
   @NotNull
-  private static String getModifierPresentation(AccessModifier modifier) {
-    return modifier.equals(AccessModifier.PACKAGE_LOCAL) ? "package-private" : "'" + modifier + "'";
-  }
-
-  @NotNull
   private static List<AccessModifier> getAvailableModifiers(PsiMember member) {
     if (member == null) return Collections.emptyList();
     PsiClass containingClass = member.getContainingClass();
@@ -123,6 +133,10 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
           return PUBLIC_PRIVATE;
         }
       }
+      AccessModifier minAccess = getMinAccess((PsiMethod)member);
+      if (minAccess != AccessModifier.PRIVATE) {
+        return ContainerUtil.filter(ALL_MODIFIERS, mod -> mod.compareTo(minAccess) <= 0);
+      }
       return ALL_MODIFIERS;
     }
     if (member instanceof PsiClass) {
@@ -131,6 +145,25 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
       return ALL_MODIFIERS;
     }
     return Collections.emptyList();
+  }
+
+  @NotNull
+  private static AccessModifier getMinAccess(PsiMethod method) {
+    if (method.isConstructor() || method.hasModifierProperty(PsiModifier.STATIC)) return AccessModifier.PRIVATE;
+    HierarchicalMethodSignature signature = method.getHierarchicalMethodSignature();
+    AccessModifier lowest = AccessModifier.PRIVATE;
+    for (HierarchicalMethodSignature superSignature : signature.getSuperSignatures()) {
+      PsiMethod superMethod = superSignature.getMethod();
+      AccessModifier current = AccessModifier.fromModifierList(superMethod.getModifierList());
+      if (!current.isWeaker(lowest)) continue;
+      if (method.hasModifierProperty(PsiModifier.ABSTRACT) && !MethodSignatureUtil.isSuperMethod(superMethod, method)) continue;
+      if (!PsiUtil.isAccessible(method.getProject(), superMethod, method, null)) continue;
+      lowest = current;
+      if (lowest == AccessModifier.PUBLIC) {
+        break;
+      }
+    }
+    return lowest;
   }
 
   @Nullable

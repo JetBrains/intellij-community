@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
@@ -365,6 +366,13 @@ public class NullabilityProblemKind<T extends PsiElement> {
         PsiElement exitedElement = ((PsiBreakStatement)parent).findExitedElement();
         if (exitedElement instanceof PsiSwitchExpression) {
           context = (PsiExpression)exitedElement;
+          continue;
+        }
+      }
+      if (parent instanceof PsiYieldStatement) {
+        PsiSwitchExpression enclosing = ((PsiYieldStatement)parent).findEnclosingExpression();
+        if (enclosing != null) {
+          context = enclosing;
           continue;
         }
       }

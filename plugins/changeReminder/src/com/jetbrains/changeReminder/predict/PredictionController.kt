@@ -30,18 +30,20 @@ internal abstract class PredictionController(private val project: Project,
     val task: Task.Backgroundable = object : Task.Backgroundable(project, "ChangeReminder Prediction Calculating") {
       override fun run(indicator: ProgressIndicator) {
         inProgress = true
+        val result = mutableListOf<FilePath>()
         try {
-          val request = popRequest() ?: let {
-            complete(emptyList())
-            return
-          }
+          val request = popRequest() ?: return
           val (time, prediction) = measureSupplierTimeMillis { request.calculate() }
           logEvent(project, ChangeReminderEvent.PREDICTION_CALCULATED, ChangeReminderData.EXECUTION_TIME, time)
-          complete(prediction)
+          result.addAll(prediction)
         }
         catch (e: ProcessCanceledException) {
-          complete(emptyList())
           throw e
+        }
+        catch (_: Exception) {
+        }
+        finally {
+          complete(result)
         }
       }
     }

@@ -4,6 +4,7 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.highlighting.BraceHighlightingHandler;
 import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
+import com.intellij.codeInsight.highlighting.BraceMatchingUtil.BraceHighlightingAndNavigationContext;
 import com.intellij.codeInsight.highlighting.CodeBlockSupportHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -80,50 +81,26 @@ public class MatchBraceAction extends EditorAction {
      * @implNote this code partially duplicates {@link BraceHighlightingHandler#updateBraces()} and probably can be extracted.
      */
     private static int getOffsetFromBraceMatcher(@NotNull Editor editor, @NotNull PsiFile file) {
-      final Caret caret = editor.getCaretModel().getCurrentCaret();
-      final EditorHighlighter highlighter = BraceHighlightingHandler.getLazyParsableHighlighterIfAny(file.getProject(), editor, file);
-      final CharSequence text = editor.getDocument().getCharsSequence();
-      int offset = caret.getOffset();
-
-      final HighlighterIterator iterator = highlighter.createIterator(offset);
-      final FileType fileType = iterator.atEnd() ? null : getFileType(file, iterator.getStart());
-      final HighlighterIterator preOffsetIterator = offset > 0 ? highlighter.createIterator(offset - 1) : null;
-      final FileType preOffsetFileType = preOffsetIterator != null ? getFileType(file, preOffsetIterator.getStart()) : null;
-
-      boolean isAfterLeftBrace = preOffsetIterator != null &&
-                                 BraceMatchingUtil.isLBraceToken(preOffsetIterator, text, preOffsetFileType);
-      boolean isAfterRightBrace = !isAfterLeftBrace && preOffsetIterator != null &&
-                                  BraceMatchingUtil.isRBraceToken(preOffsetIterator, text, preOffsetFileType);
-      boolean isBeforeLeftBrace = fileType != null && BraceMatchingUtil.isLBraceToken(iterator, text, fileType);
-      boolean isBeforeRightBrace = !isBeforeLeftBrace && fileType != null && BraceMatchingUtil.isRBraceToken(iterator, text, fileType);
-
-      if (isAfterRightBrace && BraceMatchingUtil.matchBrace(text, preOffsetFileType, preOffsetIterator, false)) {
-        return preOffsetIterator.getStart();
-      }
-      else if (isBeforeLeftBrace && BraceMatchingUtil.matchBrace(text, fileType, iterator, true)) {
-        return iterator.getEnd();
-      }
-      else if (isAfterLeftBrace && BraceMatchingUtil.matchBrace(text, preOffsetFileType, preOffsetIterator, true)) {
-        return preOffsetIterator.getEnd();
-      }
-      else if (isBeforeRightBrace && BraceMatchingUtil.matchBrace(text, fileType, iterator, false)) {
-        return iterator.getStart();
-      }
-      return fileType == null ? -1 : tryFindPreviousUnclosedOpeningBraceOffset(text, iterator, fileType);
+      BraceHighlightingAndNavigationContext matchingContext = BraceMatchingUtil.computeHighlightingAndNavigationContext(editor, file);
+      return matchingContext != null ? matchingContext.navigationOffset : tryFindPreviousUnclosedOpeningBraceOffset(editor, file);
     }
 
     /**
-     * Retries {@code iterator} and counting closing and opening braces (in dumb way, no need to be same type or whatever). Stops if
+     * Moving back from the caret position closing and opening braces (in dumb way, no need to be same type or whatever). Stops if
      * encounters first opening brace which was not closed before.
      *
-     * @param text     we are iterating through
-     * @param iterator in starting position
-     * @param fileType for detecting braces for
      * @return start offset of the opening brace or -1 if non were found.
      */
-    private static int tryFindPreviousUnclosedOpeningBraceOffset(@NotNull CharSequence text,
-                                                                 @NotNull HighlighterIterator iterator,
-                                                                 @NotNull FileType fileType) {
+    private static int tryFindPreviousUnclosedOpeningBraceOffset(@NotNull Editor editor, @NotNull PsiFile file) {
+      final EditorHighlighter highlighter = BraceHighlightingHandler.getLazyParsableHighlighterIfAny(file.getProject(), editor, file);
+      final CharSequence text = editor.getDocument().getCharsSequence();
+      final HighlighterIterator iterator = highlighter.createIterator(editor.getCaretModel().getOffset());
+      final FileType fileType = iterator.atEnd() ? null : PsiUtilBase.getPsiFileAtOffset(file, iterator.getStart()).getFileType();
+
+      if (fileType == null) {
+        return -1;
+      }
+
       int unopenedBraces = 0;
       while (true) {
         if (BraceMatchingUtil.isRBraceToken(iterator, text, fileType)) {
@@ -142,11 +119,6 @@ public class MatchBraceAction extends EditorAction {
         iterator.retreat();
       }
     }
-  }
-
-  @NotNull
-  private static FileType getFileType(PsiFile file, int offset) {
-    return PsiUtilBase.getPsiFileAtOffset(file, offset).getFileType();
   }
 
   private static void moveCaret(Editor editor, Caret caret, int offset) {

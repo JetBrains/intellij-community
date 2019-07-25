@@ -90,15 +90,13 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
     override fun actionPerformed(e: ActionEvent) = fireDefaultExecutorCalled()
   }
   private val commitButton = object : JBOptionButton(defaultCommitAction, emptyArray()) {
-    private val focusManager = IdeFocusManager.getInstance(project)
-
     init {
       background = BACKGROUND_COLOR
       optionTooltipText = getDefaultTooltip()
       isOkToProcessDefaultMnemonics = false
     }
 
-    override fun isDefaultButton(): Boolean = focusManager.getFocusedDescendantFor(rootComponent) != null
+    override fun isDefaultButton(): Boolean = IdeFocusManager.getInstance(project).getFocusedDescendantFor(rootComponent) != null
   }
   private val commitLegendCalculator = ChangeInfoCalculator()
   private val commitLegend = CommitLegendPanel(commitLegendCalculator)

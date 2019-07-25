@@ -140,7 +140,7 @@ internal class IonObjectSerializer {
       else -> {
         val binding = bindingProducer.getRootBinding(objectClass, originalType ?: objectClass)
         @Suppress("UNCHECKED_CAST")
-        return binding.deserialize(context) as T
+        return binding.deserialize(context, hostObject = null) as T
       }
     }
   }

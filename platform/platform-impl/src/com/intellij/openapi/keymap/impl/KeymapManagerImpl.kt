@@ -33,7 +33,7 @@ private const val ACTIVE_KEYMAP = "active_keymap"
 private const val NAME_ATTRIBUTE = "name"
 
 @State(name = "KeymapManager", storages = [(Storage(value = "keymap.xml", roamingType = RoamingType.PER_OS))], additionalExportFile = KEYMAPS_DIR_PATH)
-class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFactory) : KeymapManagerEx(), PersistentStateComponent<Element> {
+class KeymapManagerImpl(factory: SchemeManagerFactory) : KeymapManagerEx(), PersistentStateComponent<Element> {
   private val listeners = ContainerUtil.createLockFreeCopyOnWriteList<KeymapManagerListener>()
   private val boundShortcuts = THashMap<String, String>()
   private val schemeManager: SchemeManager<Keymap>
@@ -45,6 +45,7 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
   }
 
   init {
+    val defaultKeymapManager = DefaultKeymap.instance
     schemeManager = factory.create(KEYMAPS_DIR_PATH, object : LazySchemeProcessor<Keymap, KeymapImpl>() {
       override fun createScheme(dataHolder: SchemeDataHolder<KeymapImpl>,
                                 name: String,
@@ -58,17 +59,17 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
         if (schemeManager.activeScheme == null) {
           // listeners expect that event will be fired in EDT
           AppUIUtil.invokeOnEdt {
-            schemeManager.setCurrentSchemeName(defaultKeymap.defaultKeymapName, true)
+            schemeManager.setCurrentSchemeName(defaultKeymapManager.defaultKeymapName, true)
           }
         }
       }
     })
 
-    val systemDefaultKeymap = if (WelcomeWizardUtil.getWizardMacKeymap() == null) defaultKeymap.defaultKeymapName else WelcomeWizardUtil.getWizardMacKeymap()
-    for (keymap in defaultKeymap.keymaps) {
+    val systemDefaultKeymap = if (WelcomeWizardUtil.getWizardMacKeymap() == null) defaultKeymapManager.defaultKeymapName else WelcomeWizardUtil.getWizardMacKeymap()
+    for (keymap in defaultKeymapManager.keymaps) {
       schemeManager.addScheme(keymap)
       if (keymap.name == systemDefaultKeymap) {
-        activeKeymap = keymap
+        schemeManager.setCurrent(keymap)
       }
     }
     schemeManager.loadSchemes()
@@ -95,9 +96,9 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
 
   override fun getKeymap(name: String): Keymap? = schemeManager.findSchemeByName(name)
 
-  override fun getActiveKeymap(): Keymap? = schemeManager.activeScheme
+  override fun getActiveKeymap(): Keymap = schemeManager.activeScheme ?: schemeManager.findSchemeByName(DefaultKeymap.instance.defaultKeymapName)!!
 
-  override fun setActiveKeymap(keymap: Keymap?): Unit = schemeManager.setCurrent(keymap)
+  override fun setActiveKeymap(keymap: Keymap): Unit = schemeManager.setCurrent(keymap)
 
   override fun bindShortcuts(sourceActionId: String, targetActionId: String) {
     boundShortcuts.put(targetActionId, sourceActionId)

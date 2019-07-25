@@ -15,6 +15,7 @@ public abstract class KeymapManager {
   public static final String KDE_KEYMAP = "Default for KDE";
   public static final String GNOME_KEYMAP = "Default for GNOME";
 
+  @NotNull
   public abstract Keymap getActiveKeymap();
 
   @Nullable

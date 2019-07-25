@@ -131,7 +131,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
       //System.out.println("Attempt #" + i);
       console.clear(); // 1-st clear
       CountDownLatch latch = new CountDownLatch(1);
-      Future<?> future = AppExecutorUtil.getAppExecutorService().submit(() -> {
+      Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
         console.clear(); // 2-nd clear
         console.print("Test", ConsoleViewContentType.NORMAL_OUTPUT);
         latch.countDown();

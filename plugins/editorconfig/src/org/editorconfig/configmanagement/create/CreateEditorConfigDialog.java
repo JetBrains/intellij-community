@@ -2,8 +2,10 @@
 package org.editorconfig.configmanagement.create;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.editorconfig.configmanagement.extended.EditorConfigPropertyKind;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -12,10 +14,12 @@ import java.util.List;
 
 public class CreateEditorConfigDialog extends DialogWrapper {
 
-  private CreateEditorConfigForm myForm;
+  private       CreateEditorConfigForm myForm;
+  private final Project                myProject;
 
-  protected CreateEditorConfigDialog() {
+  protected CreateEditorConfigDialog(@NotNull Project project) {
     super(false);
+    myProject = project;
     init();
     setTitle("New EditorConfig File");
   }
@@ -23,7 +27,7 @@ public class CreateEditorConfigDialog extends DialogWrapper {
   @Nullable
   @Override
   protected JComponent createCenterPanel() {
-    myForm = new CreateEditorConfigForm();
+    myForm = new CreateEditorConfigForm(myProject);
     return myForm.getTopPanel();
   }
 

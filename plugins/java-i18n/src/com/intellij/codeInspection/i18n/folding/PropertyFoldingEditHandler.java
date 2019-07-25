@@ -11,7 +11,6 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.uast.UCallExpression;
 import org.jetbrains.uast.ULiteralExpression;
 import org.jetbrains.uast.UastContextKt;
-import org.jetbrains.uast.UastUtils;
 
 import java.util.Iterator;
 import java.util.List;
@@ -20,12 +19,12 @@ public class PropertyFoldingEditHandler {
   private final UCallExpression myCallExpression;
   private final IProperty myProperty;
 
-  public PropertyFoldingEditHandler(PsiElement psiElement) {
+  public PropertyFoldingEditHandler(PsiElement foldedPsiElement) {
     ULiteralExpression literalExpression = null;
-    if (psiElement != null && psiElement.isValid()) {
-      myCallExpression = UastUtils.findContaining(psiElement, UCallExpression.class);
+    if (foldedPsiElement != null && foldedPsiElement.isValid()) {
+      myCallExpression = findCallExpression(foldedPsiElement);
       if (myCallExpression == null) {
-        literalExpression = UastContextKt.toUElementOfExpectedTypes(psiElement, ULiteralExpression.class);
+        literalExpression = UastContextKt.toUElementOfExpectedTypes(foldedPsiElement, ULiteralExpression.class);
       }
       else {
         literalExpression = ObjectUtils.tryCast(myCallExpression.getArgumentForParameter(0), ULiteralExpression.class);
@@ -35,6 +34,16 @@ public class PropertyFoldingEditHandler {
       myCallExpression = null;
     }
     myProperty = literalExpression == null ? null : PropertyFoldingBuilder.getI18nProperty(literalExpression);
+  }
+
+  private static UCallExpression findCallExpression(PsiElement foldedPsiElement) {
+    UCallExpression expression = UastContextKt.toUElement(foldedPsiElement, UCallExpression.class);
+    if (expression != null) return expression;
+    for (PsiElement child : foldedPsiElement.getChildren()) {
+      UCallExpression e = UastContextKt.toUElement(child, UCallExpression.class);
+      if (e != null) return e;
+    }
+    return null;
   }
 
   public boolean isValid() {

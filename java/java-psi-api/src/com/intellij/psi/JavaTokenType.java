@@ -141,4 +141,5 @@ public interface JavaTokenType extends TokenType {
   IElementType WITH_KEYWORD = new IJavaElementType("WITH");
 
   IElementType VAR_KEYWORD = new IJavaElementType("VAR");
+  IElementType YIELD_KEYWORD = new IJavaElementType("YIELD");
 }

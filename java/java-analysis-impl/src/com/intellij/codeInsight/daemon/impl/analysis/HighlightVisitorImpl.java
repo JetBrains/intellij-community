@@ -414,8 +414,15 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myHolder.add(HighlightUtil.checkBreakOutsideSwitchOrLoop(statement));
     }
     if (!myHolder.hasErrorResults() && Feature.ENHANCED_SWITCH.isAvailable(myFile)) {
-      myHolder.add(HighlightUtil.checkValueBreakExpression(statement, expression));
+      myHolder.add(HighlightUtil.checkValueBreakExpression(statement, expression, myLanguageLevel));
     }
+  }
+
+  @Override
+  public void visitYieldStatement(PsiYieldStatement statement) {
+    super.visitYieldStatement(statement);
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkYieldOutsideSwitchExpression(statement));
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkYieldExpressionType(statement));
   }
 
   @Override

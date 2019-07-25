@@ -120,7 +120,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
       else if (!m_ignoreImmediatelyReturnedVariables && isImmediatelyThrown(variable)) {
         registerVariableError(variable);
       }
-      else if (isImmediatelyUsedByBreak(variable)) {
+      else if (isImmediatelyUsedByBreak(variable) || isImmediatelyUsedByYield(variable)) {
         registerVariableError(variable);
       }
       else if (isImmediatelyAssigned(variable)) {
@@ -172,6 +172,20 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
       if (!(returnValue instanceof PsiReferenceExpression)) return false;
       if (!ExpressionUtils.isReferenceTo(returnValue, variable)) return false;
       return !isVariableUsedInFollowingDeclarations(variable, declarationStatement);
+    }
+
+    private boolean isImmediatelyUsedByYield(PsiVariable variable) {
+      PsiCodeBlock containingScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, true, PsiClass.class);
+      if (containingScope == null) return false;
+      PsiDeclarationStatement declarationStatement = tryCast(variable.getParent(), PsiDeclarationStatement.class);
+      if (declarationStatement == null) return false;
+      PsiYieldStatement yieldStatement =
+        tryCast(PsiTreeUtil.getNextSiblingOfType(declarationStatement, PsiStatement.class), PsiYieldStatement.class);
+      if (yieldStatement == null) return false;
+      PsiExpression returnValue = ParenthesesUtils.stripParentheses(yieldStatement.getExpression());
+      return returnValue instanceof PsiReferenceExpression &&
+             ExpressionUtils.isReferenceTo(returnValue, variable) &&
+             !isVariableUsedInFollowingDeclarations(variable, declarationStatement);
     }
 
     private boolean isImmediatelyThrown(PsiVariable variable) {

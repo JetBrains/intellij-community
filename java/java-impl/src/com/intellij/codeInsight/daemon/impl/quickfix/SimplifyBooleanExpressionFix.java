@@ -56,25 +56,25 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     if (subExpression == null) {
       return getFamilyName();
     }
-    return getIntentionText(subExpression, mySubExpressionValue) + (shouldExtractSideEffect() ? " extracting side effects" : "");
+    String suffix = "";
+    if (SideEffectChecker.mayHaveSideEffects(subExpression)) {
+      suffix = canExtractSideEffect(subExpression) ? " extracting side effects" : " (may change semantics)";
+    }
+    return getIntentionText(subExpression, mySubExpressionValue) + suffix;
   }
 
-  private boolean shouldExtractSideEffect() {
-    PsiExpression subExpression = getSubExpression();
-    if (subExpression != null &&
-        SideEffectChecker.mayHaveSideEffects(subExpression)) {
-      if (ControlFlowUtils.canExtractStatement(subExpression)) return true;
-      if (!mySubExpressionValue) {
-        PsiElement parent = PsiUtil.skipParenthesizedExprUp(subExpression.getParent());
-        if (parent instanceof PsiWhileStatement || parent instanceof PsiForStatement) return true;
-        // code like "if (foo || alwaysFalseWithSideEffects) {}"
-        if (parent instanceof PsiPolyadicExpression) {
-          PsiPolyadicExpression polyadic = (PsiPolyadicExpression)parent;
-          if (polyadic.getOperationTokenType().equals(JavaTokenType.OROR)
-              && PsiTreeUtil.isAncestor(ArrayUtil.getLastElement(polyadic.getOperands()), subExpression, false)
-              && PsiUtil.skipParenthesizedExprUp(parent.getParent()) instanceof PsiIfStatement) {
-            return true;
-          }
+  private boolean canExtractSideEffect(PsiExpression subExpression) {
+    if (ControlFlowUtils.canExtractStatement(subExpression)) return true;
+    if (!mySubExpressionValue) {
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(subExpression.getParent());
+      if (parent instanceof PsiWhileStatement || parent instanceof PsiForStatement) return true;
+      // code like "if (foo || alwaysFalseWithSideEffects) {}"
+      if (parent instanceof PsiPolyadicExpression) {
+        PsiPolyadicExpression polyadic = (PsiPolyadicExpression)parent;
+        if (polyadic.getOperationTokenType().equals(JavaTokenType.OROR)
+            && PsiTreeUtil.isAncestor(ArrayUtil.getLastElement(polyadic.getOperands()), subExpression, false)
+            && PsiUtil.skipParenthesizedExprUp(parent.getParent()) instanceof PsiIfStatement) {
+          return true;
         }
       }
     }
@@ -136,7 +136,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     PsiExpression subExpression = getSubExpression();
     if (subExpression == null) return;
     CommentTracker ct = new CommentTracker();
-    if (shouldExtractSideEffect()) {
+    if (SideEffectChecker.mayHaveSideEffects(subExpression) && canExtractSideEffect(subExpression)) {
       subExpression = ensureCodeBlock(project, subExpression);
       if (subExpression == null) {
         LOG.error("ensureCodeBlock returned null", new Attachment("subExpression.txt", getSubExpression().getText()));
@@ -479,7 +479,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
             if (expressions.size() > 1) {
               simplifiedText = "!(" + simplifiedText + ")";
             } else {
-              simplifiedText = "!" + simplifiedText;
+              simplifiedText = BoolUtils.getNegatedExpressionText(expressions.get(0));
             }
           }
           resultExpression = JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(simplifiedText, expression);

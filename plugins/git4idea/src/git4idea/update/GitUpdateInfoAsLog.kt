@@ -14,14 +14,13 @@ import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 import com.intellij.ui.GuiUtils
 import com.intellij.util.ContentUtilEx
 import com.intellij.util.text.DateFormatUtil
-import com.intellij.vcs.log.VcsLogFilterCollection.RANGE_FILTER
+import com.intellij.vcs.log.CommitId
+import com.intellij.vcs.log.VcsLogFilterCollection.*
 import com.intellij.vcs.log.VcsLogRangeFilter
 import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.graph.PermanentGraph
-import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
-import com.intellij.vcs.log.graph.utils.DfsWalk
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogContentUtil
 import com.intellij.vcs.log.impl.VcsLogManager
@@ -29,14 +28,15 @@ import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.vcs.log.ui.VcsLogUiImpl
 import com.intellij.vcs.log.util.VcsLogUtil
-import com.intellij.vcs.log.util.findBranch
+import com.intellij.vcs.log.util.containsAll
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl
 import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcs.log.visible.VisiblePackChangeListener
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
-import git4idea.changes.GitChangeUtils
+import git4idea.GitRevisionNumber
 import git4idea.history.GitHistoryUtils
+import git4idea.merge.MergeChangeCollector
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.CalledInAwt
 import java.util.*
@@ -53,20 +53,19 @@ class GitUpdateInfoAsLog(private val project: Project,
   @CalledInAwt
   fun buildAndShowNotification() {
     notificationShown = false
-    val currentBranches = ranges.mapValues { (repo, _) -> repo.currentBranchName }
     VcsLogUtil.runWhenLogIsReady(project) { log, logManager ->
       val listener = object : DataPackChangeListener {
         override fun onDataPackChange(dataPack: DataPack) {
-          showNotificationIfRangesAreReachable(log, dataPack, logManager, this, currentBranches)
+          showNotificationIfRangesAreReachable(log, dataPack, logManager, this)
         }
       }
 
       log.dataManager?.addDataPackChangeListener(listener)
 
       GuiUtils.invokeLaterIfNeeded({
-        // the log may be refreshed before we subscribe to the listener
-        showNotificationIfRangesAreReachable(log, logManager.dataManager.dataPack, logManager, listener, currentBranches)
-      }, ModalityState.defaultModalityState())
+                                     // the log may be refreshed before we subscribe to the listener
+                                     showNotificationIfRangesAreReachable(log, logManager.dataManager.dataPack, logManager, listener)
+                                   }, ModalityState.defaultModalityState())
     }
   }
 
@@ -74,45 +73,16 @@ class GitUpdateInfoAsLog(private val project: Project,
   private fun showNotificationIfRangesAreReachable(log: VcsProjectLog,
                                                    dataPack: DataPack,
                                                    logManager: VcsLogManager,
-                                                   listener: DataPackChangeListener,
-                                                   currentBranches: Map<GitRepository, String?>) {
-    if (!notificationShown && areRangesReachableFromCurrentHead(log, dataPack, currentBranches)) {
+                                                   listener: DataPackChangeListener) {
+    if (!notificationShown && areRangesInDataPack(log, dataPack)) {
       notificationShown = true
       log.dataManager?.removeDataPackChangeListener(listener)
       showTabAndNotificationAfterCalculations(logManager)
     }
   }
 
-  private fun areRangesReachableFromCurrentHead(log: VcsProjectLog,
-                                                dataPack: DataPack,
-                                                currentBranches: Map<GitRepository, String?>): Boolean {
-    return ranges.all { (repository, range) ->
-      val currentBranch = currentBranches[repository]
-      if (currentBranch == null) return@all false
-      val ref = dataPack.refsModel.findBranch(currentBranch, repository.root)
-      if (ref == null) return@all false
-      val endOfRange = range.end
-
-      val storage = log.dataManager!!.storage
-      val rangeIndex = storage.getCommitIndex(endOfRange, repository.root)
-      val headIndex = storage.getCommitIndex(ref.commitHash, ref.root)
-
-      val permanentGraph = dataPack.permanentGraph as PermanentGraphImpl<Int>
-      val headNodeId = permanentGraph.permanentCommitsInfo.getNodeId(headIndex)
-      val rangeNodeId = permanentGraph.permanentCommitsInfo.getNodeId(rangeIndex)
-
-      var found = false
-      DfsWalk(listOf(headNodeId), permanentGraph.linearGraph).walk(true) { node: Int ->
-        if (node == rangeNodeId) {
-          found = true
-          false
-        }
-        else {
-          true
-        }
-      }
-      found
-    }
+  private fun areRangesInDataPack(log: VcsProjectLog, dataPack: DataPack): Boolean {
+    return dataPack.containsAll(ranges.asIterable().map { CommitId(it.value.end, it.key.root) }, log.dataManager!!.storage)
   }
 
   private fun showTabAndNotificationAfterCalculations(logManager: VcsLogManager) {
@@ -135,9 +105,9 @@ class GitUpdateInfoAsLog(private val project: Project,
   }
 
   private inner class MyLogUiFactory(val logManager: VcsLogManager,
-                                      val rangeFilter: VcsLogRangeFilter,
-                                      val updatedFilesCount: Int,
-                                      val updateCommitsCount: Int) : VcsLogManager.VcsLogUiFactory<VcsLogUiImpl> {
+                                     val rangeFilter: VcsLogRangeFilter,
+                                     val updatedFilesCount: Int,
+                                     val updateCommitsCount: Int) : VcsLogManager.VcsLogUiFactory<VcsLogUiImpl> {
 
     override fun createLogUi(project: Project, logData: VcsLogData): VcsLogUiImpl {
       val logId = "git-update-project-info-" + UUID.randomUUID()
@@ -158,13 +128,18 @@ class GitUpdateInfoAsLog(private val project: Project,
   }
 
   private class MyPropertiesForRange(val rangeFilter: VcsLogRangeFilter,
-                                      val mainProperties: GitUpdateProjectInfoLogProperties) : MainVcsLogUiProperties by mainProperties {
+                                     val mainProperties: GitUpdateProjectInfoLogProperties) : MainVcsLogUiProperties by mainProperties {
     override fun getFilterValues(filterName: String): List<String>? {
-      if (filterName === RANGE_FILTER.name) {
-        return ArrayList(rangeFilter.getTextPresentation())
+      when {
+        filterName === RANGE_FILTER.name -> return ArrayList(rangeFilter.getTextPresentation())
+        filterName == BRANCH_FILTER.name || filterName == REVISION_FILTER.name -> return null
+        else -> return mainProperties.getFilterValues(filterName)
       }
-      else {
-        return mainProperties.getFilterValues(filterName)
+    }
+
+    override fun saveFilterValues(filterName: String, values: List<String>?) {
+      if (filterName !== RANGE_FILTER.name && filterName !== BRANCH_FILTER.name && filterName !== REVISION_FILTER.name) {
+        mainProperties.saveFilterValues(filterName, values)
       }
     }
 
@@ -183,7 +158,7 @@ class GitUpdateInfoAsLog(private val project: Project,
 
   private fun calcUpdatedFilesCount(): Int {
     return calcCount { repository, range ->
-      GitChangeUtils.getDiffWithWorkingDir(project, repository.root, range.start.asString(), null, false, false).size
+      MergeChangeCollector(project, repository.root, GitRevisionNumber(range.start.asString())).calcUpdatedFilesCount()
     }
   }
 

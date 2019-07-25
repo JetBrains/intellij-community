@@ -280,6 +280,7 @@
     <keyboard-shortcut first-keystroke="shift control F"/>
   </action>
   <action id="Refresh"/>
+  <action id="ForceRefresh"/>
   <action id="Unwrap">
     <keyboard-shortcut first-keystroke="alt R"/>
   </action>

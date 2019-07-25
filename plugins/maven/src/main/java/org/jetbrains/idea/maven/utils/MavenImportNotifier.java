@@ -83,7 +83,7 @@ public class MavenImportNotifier extends MavenSimpleProjectComponent implements 
       myNotification.addAction(new NotificationAction(ProjectBundle.message("maven.project.importChanged")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-          myMavenProjectsManager.scheduleImportAndResolve();
+          myMavenProjectsManager.scheduleImportAndResolve(false);
           notification.expire();
           myNotification = null;
         }

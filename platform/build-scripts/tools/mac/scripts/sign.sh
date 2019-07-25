@@ -72,7 +72,8 @@ for f in \
   "Contents/MacOS" "Contents/bin"; do
   if [ -d "$APP_DIRECTORY/$f" ]; then
     find "$APP_DIRECTORY/$f" \
-      -type f -exec codesign --timestamp \
+      -type f \( -name "*.jnilib" -o -name "*.dylib" -o -name "*.so" -o -perm +111 \) \
+      -exec codesign --timestamp \
       -v -s "$JB_CERT" --options=runtime \
       --entitlements entitlements.xml {} \;
   fi

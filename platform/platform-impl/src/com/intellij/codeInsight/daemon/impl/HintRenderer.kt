@@ -52,11 +52,19 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
     paintHint(g, editor, r, text, attributes, textAttributes, widthAdjustment)
   }
 
+  /**
+   * @deprecated
+   * @see calcHintTextWidth
+   */
+  protected fun doCalcWidth(text: String?, fontMetrics: FontMetrics): Int {
+    return calcHintTextWidth(text, fontMetrics)
+  }
+
   companion object {
     @JvmStatic
     fun calcWidthInPixels(editor: Editor, text: String?, widthAdjustment: HintWidthAdjustment?): Int {
       val fontMetrics = getFontMetrics(editor).metrics
-      return doCalcWidth(text, fontMetrics) + calcWidthAdjustment(text, editor, fontMetrics, widthAdjustment)
+      return calcHintTextWidth(text, fontMetrics) + calcWidthAdjustment(text, editor, fontMetrics, widthAdjustment)
     }
 
     @JvmStatic
@@ -161,7 +169,9 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
     private fun calcWidthAdjustment(text: String?, editor: Editor, fontMetrics: FontMetrics, widthAdjustment: HintWidthAdjustment?): Int {
       if (widthAdjustment == null || editor !is EditorImpl) return 0
       val editorTextWidth = editor.getFontMetrics(Font.PLAIN).stringWidth(widthAdjustment.editorTextToMatch)
-      return Math.max(0, editorTextWidth + doCalcWidth(widthAdjustment.hintTextToMatch, fontMetrics) - doCalcWidth(text, fontMetrics))
+      return Math.max(0, editorTextWidth
+                         + calcHintTextWidth(widthAdjustment.hintTextToMatch, fontMetrics)
+                         - calcHintTextWidth(text, fontMetrics))
     }
 
     protected class MyFontMetrics constructor(editor: Editor, familyName: String, size: Int) {
@@ -217,7 +227,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
     }
 
     @JvmStatic
-    protected fun doCalcWidth(text: String?, fontMetrics: FontMetrics): Int {
+    protected fun calcHintTextWidth(text: String?, fontMetrics: FontMetrics): Int {
       return if (text == null) 0 else fontMetrics.stringWidth(text) + 14
     }
 

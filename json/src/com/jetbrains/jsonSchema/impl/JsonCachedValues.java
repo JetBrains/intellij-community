@@ -143,7 +143,7 @@ public class JsonCachedValues {
     if (!catalog.isValid()) return null;
     VirtualFile virtualFile = catalog.getVirtualFile();
     if (virtualFile == null || !virtualFile.isValid()) return null;
-    JsonValue value = AstLoadingFilter.forceAllowTreeLoading(catalog, () -> ((JsonFile)catalog).getTopLevelValue());
+    JsonValue value = AstLoadingFilter.forceAllowTreeLoading(catalog, () -> catalog instanceof JsonFile ? ((JsonFile)catalog).getTopLevelValue() : null);
     if (!(value instanceof JsonObject)) return null;
 
     JsonProperty schemas = ((JsonObject)value).findProperty("schemas");

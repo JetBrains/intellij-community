@@ -105,7 +105,11 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
   }
 
   public void setUseDynamicClasspath(@Nullable Project project) {
-    setUseDynamicClasspath(JdkUtil.useDynamicClasspath(project));
+    Sdk jdk = getJdk();
+    ShortenCommandLine mode = myArgFile || myUseClasspathJar || myClasspathFile 
+                              ? ShortenCommandLine.getDefaultMethod(project, jdk != null ? jdk.getHomePath() : null) 
+                              : ShortenCommandLine.NONE; //explicitly disabled in UI
+    setShortenCommandLine(mode, project);
   }
 
   public boolean isDynamicVMOptions() {

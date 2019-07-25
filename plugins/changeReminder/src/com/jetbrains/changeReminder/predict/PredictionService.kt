@@ -100,7 +100,7 @@ class PredictionService(val project: Project,
     dataManager.addDataPackChangeListener(dataPackChangeListener)
     dataManager.index.addListener(indexingFinishedListener)
 
-    val filesHistoryProvider = dataManager.index.dataGetter?.let { FilesHistoryProvider(project, it) } ?: return
+    val filesHistoryProvider = dataManager.index.dataGetter?.let { FilesHistoryProvider(project, dataManager, it) } ?: return
     predictionRequirements = PredictionRequirements(dataManager, filesHistoryProvider)
     calculatePrediction()
   }

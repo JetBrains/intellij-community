@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.sun.jna.Native;
 import com.sun.jna.platform.win32.Kernel32;
@@ -288,7 +287,7 @@ public class ShowFilePathAction extends DumbAwareAction {
     }
     else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
       LOG.debug("opening " + dir + " via Desktop API");
-      AppExecutorUtil.getAppExecutorService().submit(() -> {
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
         try {
           Desktop.getDesktop().open(new File(dir));
         }
@@ -319,7 +318,7 @@ public class ShowFilePathAction extends DumbAwareAction {
   private static void spawn(String... command) {
     LOG.debug(Arrays.toString(command));
 
-    AppExecutorUtil.getAppExecutorService().submit(() -> {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         CapturingProcessHandler handler;
         if (SystemInfo.isWindows) {

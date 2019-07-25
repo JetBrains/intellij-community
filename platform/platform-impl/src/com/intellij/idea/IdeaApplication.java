@@ -17,10 +17,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogEarthquakeShaker;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryKeyBean;
 import com.intellij.openapi.util.text.StringUtil;
@@ -111,7 +108,7 @@ public final class IdeaApplication {
     if (!headless) {
       if (SystemInfo.isMac) {
         // ensure that TouchBarsManager is loaded before WelcomeFrame/project
-        futures.add(AppExecutorUtil.getAppExecutorService().submit(() -> {
+        futures.add(ApplicationManager.getApplication().executeOnPooledThread(() -> {
           Activity activity = ParallelActivity.PREPARE_APP_INIT.start("mac touchbar");
           //noinspection ResultOfMethodCallIgnored
           TouchBarsManager.isTouchBarAvailable();
@@ -145,7 +142,7 @@ public final class IdeaApplication {
       ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> starter.main(args));
 
       if (PluginManagerCore.isRunningFromSources()) {
-        AppExecutorUtil.getAppExecutorService().execute(() -> AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame()));
+        ApplicationManager.getApplication().executeOnPooledThread(() -> AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame()));
       }
     });
   }
@@ -156,6 +153,10 @@ public final class IdeaApplication {
     return pluginDescriptorsFuture
       .thenCompose(pluginDescriptors -> {
         CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+          Activity sysActivity = ParallelActivity.PREPARE_APP_INIT.start("init system properties");
+          SystemPropertyBean.initSystemProperties();
+          sysActivity.end();
+
           Activity activity = ParallelActivity.PREPARE_APP_INIT.start("add registry keys");
           RegistryKeyBean.addKeysFromPlugins();
           activity.end();
@@ -388,7 +389,7 @@ public final class IdeaApplication {
 
       frameInitActivity.end();
 
-      AppExecutorUtil.getAppExecutorService().execute(() -> LifecycleUsageTriggerCollector.onIdeStart());
+      app.executeOnPooledThread(() -> LifecycleUsageTriggerCollector.onIdeStart());
 
       TransactionGuard.submitTransaction(app, () -> {
         Project projectFromCommandLine = ourPerformProjectLoad ? loadProjectFromExternalCommandLine(commandLineArgs) : null;
@@ -397,7 +398,6 @@ public final class IdeaApplication {
           RecentProjectsManager.getInstance().reopenLastProjectOnStart();
         }
 
-        //noinspection SSBasedInspection
         EventQueue.invokeLater(PluginManager::reportPluginError);
       });
 
@@ -408,7 +408,7 @@ public final class IdeaApplication {
 
     private static void postOpenUiTasks(@NotNull Application app) {
       if (SystemInfo.isMac) {
-        AppExecutorUtil.getAppExecutorService().execute(() -> {
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
           TouchBarsManager.onApplicationInitialized();
           CustomActionsSchema customActionSchema = ServiceManager.getServiceIfCreated(CustomActionsSchema.class);
           if (customActionSchema != null) {

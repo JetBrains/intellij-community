@@ -3,6 +3,7 @@
 APP_DIRECTORY=$1
 APPL_USER=$2
 APPL_PASSWORD=$3
+APP_NAME=$4
 
 if [[ -z "$APP_DIRECTORY" ]] || [[ -z "$APPL_USER" ]] || [[ -z "$APPL_PASSWORD" ]]; then
   echo "Usage: $0 AppDirectory Username Password"
@@ -17,10 +18,16 @@ function log() {
   echo "$(date '+[%H:%M:%S]') $*"
 }
 
+function publish-log() {
+  id=$1
+  file=$2
+  curl -H "X-JFrog-Art-Api: $ARTIFACTORY_API_KEY" -T "$file" "$ARTIFACTORY_URL/$id"
+}
+
 #immediately exit script with an error if a command fails
 set -euo pipefail
 
-file="IntelliJ.app.zip"
+file="$APP_NAME.zip"
 
 log "Zipping $file..."
 rm -rf "$file"
@@ -52,13 +59,13 @@ spent=0
 while true; do
   # For some reason altool prints everything to stderr, not stdout
   xcrun altool --username "$APPL_USER" --notarization-info "$notarization_info" --password "$APPL_PASSWORD" >"altool.check.out" 2>&1 || true
-  status="$(grep -oe 'Status: .*' "altool.check.out" | cut -c 9-)"
+  status="$(grep -oe 'Status: .*' "altool.check.out" | cut -c 9- || true)"
   log "Current status: $status"
   if [ "$status" = "invalid" ]; then
     log "Notarization failed"
     ec=1
   elif [ "$status" = "success" ]; then
-    log "Notarization suceed"
+    log "Notarization succeeded"
     ec=0
   else
     if [ "$status" != "in progress" ]; then
@@ -74,11 +81,17 @@ while true; do
     ((spent += 1))
     continue
   fi
-  log "Fetching developer_log.json"
-  url="$(grep -oe 'LogFileURL: .*' "altool.check.out" | cut -c 12-)"
-  wget "$url" -O "developer_log.json" && cat "developer_log.json" || true
-  # TODO: publish developer_log.json
-
+  developer_log="developer_log.json"
+  log "Fetching $developer_log"
+  # TODO: Replace cut with trim or something better
+  url="$(grep -oe 'LogFileURL: .*' "altool.check.out" | cut -c 13-)"
+  # wget does url quoting by itself
+  # shellcheck disable=SC2086,SC2015
+  wget "$url" -O "$developer_log" && cat "$developer_log" || true
+  if [ $ec != 0 ]; then
+    log "Publishing $developer_log"
+    publish-log "$notarization_info" "$developer_log"
+  fi
   break
 done
 cat "altool.check.out"

@@ -83,6 +83,7 @@ public class CompareBranchesDiffPanel extends JPanel {
     myLabel.setEditable(false);
     myLabel.setBackground(null);
     myLabel.setOpaque(false);
+    myLabel.setFocusable(false);
     myLabel.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(HyperlinkEvent e) {

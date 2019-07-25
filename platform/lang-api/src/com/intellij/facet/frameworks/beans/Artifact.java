@@ -26,7 +26,6 @@ public class Artifact {
   @Attribute("name")
   public String myName;
 
-  @Deprecated
   @Attribute("group")
   public String myGroup;
 

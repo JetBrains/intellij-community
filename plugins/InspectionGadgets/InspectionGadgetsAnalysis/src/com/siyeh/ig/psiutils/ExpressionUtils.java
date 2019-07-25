@@ -1427,6 +1427,13 @@ public class ExpressionUtils {
           continue;
         }
       }
+      else if (parent instanceof PsiYieldStatement) {
+        PsiSwitchExpression enclosing = ((PsiYieldStatement)parent).findEnclosingExpression();
+        if (enclosing != null) {
+          expression = enclosing;
+          continue;
+        }
+      }
       return parent;
     }
   }

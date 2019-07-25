@@ -51,6 +51,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -516,7 +518,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     layeredPane.setLayer(myScrollPane, 0);
 
     DefaultActionGroup gearActions = new MyGearActionGroup();
-    gearActions.add(new ShowAsToolwindowAction());
+    ShowAsToolwindowAction showAsToolwindowAction = new ShowAsToolwindowAction();
+    gearActions.add(showAsToolwindowAction);
     gearActions.add(new MyShowSettingsAction(false));
     gearActions.add(new ShowToolbarAction());
     gearActions.add(new RestoreDefaultSizeAction());
@@ -525,8 +528,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     Presentation presentation = new Presentation();
     presentation.setIcon(AllIcons.Actions.More);
     presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
-    myCorner = new ActionButton(gearActions, presentation, ActionPlaces.UNKNOWN, new Dimension(20, 20));
+    myCorner = new ActionButton(gearActions, presentation, ActionPlaces.UNKNOWN, new Dimension(20, 20)) {
+      @Override
+      protected DataContext getDataContext() {
+        return DataManager.getInstance().getDataContext(myCorner);
+      }
+    };
     myCorner.setNoIconsInPopup(true);
+    showAsToolwindowAction.registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts("QuickJavaDoc"), myCorner);
     layeredPane.add(myCorner);
     layeredPane.setLayer(myCorner, JLayeredPane.POPUP_LAYER);
     add(layeredPane, BorderLayout.CENTER);
@@ -1024,7 +1033,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       return null;
     }
 
-    String title = StringUtil.escapeXmlEntities(manager.getTitle(element));
+    String title = manager.getTitle(element);
+    if (title != null) {
+      title = StringUtil.escapeXmlEntities(title);
+    }
     if (externalUrl == null) {
       List<String> urls = provider.getUrlFor(element, originalElement);
       if (urls != null) {
@@ -1051,7 +1063,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       if (link != null) return link;
     }
 
-    return "<a href='external_doc'>External documentation for `" + title + "`<icon src='AllIcons.Ide.External_link_arrow'></a></div>";
+    return "<a href='external_doc'>External documentation" +
+           (title == null ? "" : (" for `" + title + "`")) +
+           "<icon src='AllIcons.Ide.External_link_arrow'></a></div>";
   }
 
   private static String getLink(String title, String url) {
@@ -1061,11 +1075,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       return null;
     }
 
-    result.append("<a href='");
-    result.append(url);
-    result.append("'>`");
-    result.append(title).append("` on ").append(hostname);
-    result.append("</a>");
+    result.append("<a href='").append(url).append("'>");
+    if (title == null) {
+      result.append("Documentation");
+    }
+    else {
+      result.append("`").append(title).append("`");
+    }
+    result.append(" on ").append(hostname).append("</a>");
     return result.toString();
   }
 
@@ -1791,6 +1808,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     @Override
     public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setIcon(ToolWindowManagerEx.getInstanceEx(myManager.myProject).getLocationIcon(ToolWindowId.DOCUMENTATION, EmptyIcon.ICON_16));
       e.getPresentation().setEnabledAndVisible(myToolwindowCallback != null);
     }
 

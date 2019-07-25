@@ -5,6 +5,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -118,7 +119,7 @@ public interface ApplicationEx extends Application {
                                               boolean canBeCanceled,
                                               @Nullable Project project,
                                               JComponent parentComponent,
-                                              final String cancelText);
+                                              @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText);
 
   void assertIsDispatchThread(@Nullable JComponent component);
 

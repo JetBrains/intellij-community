@@ -1,10 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.parser;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.WhitespacesBinders;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
@@ -115,6 +117,11 @@ public class StatementParser {
     }
     else if (tokenType == JavaTokenType.BREAK_KEYWORD) {
       return parseBreakStatement(builder);
+    }
+    else if (tokenType == JavaTokenType.IDENTIFIER &&
+             PsiKeyword.YIELD.equals(builder.getTokenText()) &&
+             getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_13_PREVIEW)) {
+      return parseYieldStatement(builder);
     }
     else if (tokenType == JavaTokenType.CONTINUE_KEYWORD) {
       return parseContinueStatement(builder);
@@ -469,6 +476,23 @@ public class StatementParser {
     }
     semicolon(builder);
     done(statement, JavaElementType.BREAK_STATEMENT);
+    return statement;
+  }
+
+  @NotNull
+  private PsiBuilder.Marker parseYieldStatement(PsiBuilder builder) {
+    PsiBuilder.Marker statement = builder.mark();
+    builder.remapCurrentToken(JavaTokenType.YIELD_KEYWORD);
+    builder.advanceLexer();
+
+    if (myParser.getExpressionParser().parse(builder) == null) {
+      error(builder, JavaErrorMessages.message("expected.expression"));
+    }
+    else {
+      semicolon(builder);
+    }
+
+    done(statement, JavaElementType.YIELD_STATEMENT);
     return statement;
   }
 

@@ -382,7 +382,8 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     if (parent instanceof PsiStatement) return !(parent instanceof PsiReturnStatement);
     if (parent instanceof PsiPolyadicExpression) {
       IElementType tokenType = ((PsiPolyadicExpression)parent).getOperationTokenType();
-      return tokenType.equals(JavaTokenType.ANDAND) || tokenType.equals(JavaTokenType.OROR);
+      return tokenType.equals(JavaTokenType.ANDAND) || tokenType.equals(JavaTokenType.OROR) ||
+             tokenType.equals(JavaTokenType.AND) || tokenType.equals(JavaTokenType.OR);
     }
     if (parent instanceof PsiConditionalExpression) {
       return PsiTreeUtil.isAncestor(((PsiConditionalExpression)parent).getCondition(), expression, false);
@@ -395,7 +396,11 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     if (shouldBeSuppressed(ref) || constant == ConstantResult.UNKNOWN) return;
     List<LocalQuickFix> fixes = new SmartList<>();
     String presentableName = constant.toString();
-    fixes.add(new ReplaceWithConstantValueFix(presentableName, presentableName));
+    if (constant.value() instanceof Boolean) {
+      fixes.add(createSimplifyBooleanExpressionFix(ref, (Boolean)constant.value()));
+    } else {
+      fixes.add(new ReplaceWithConstantValueFix(presentableName, presentableName));
+    }
     Object value = constant.value();
     boolean isAssertion = isAssertionEffectively(ref, constant);
     if (isAssertion && DONT_REPORT_TRUE_ASSERT_STATEMENTS) return;

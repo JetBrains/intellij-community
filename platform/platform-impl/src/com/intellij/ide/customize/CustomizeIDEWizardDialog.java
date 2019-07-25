@@ -2,6 +2,7 @@
 package com.intellij.ide.customize;
 
 import com.intellij.ide.startup.StartupActionScriptManager;
+import com.intellij.idea.SplashManager;
 import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -40,7 +41,6 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
   private JPanel myContentPanel;
   private boolean myHideSkipButton;
 
-
   public CustomizeIDEWizardDialog(@NotNull CustomizeIDEWizardStepsProvider stepsProvider) {
     this(stepsProvider, null);
   }
@@ -74,6 +74,11 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     initCurrentStep(true);
     setSize(400, 300);
     System.setProperty(StartupActionScriptManager.STARTUP_WIZARD_MODE, "true");
+  }
+
+  @Override
+  public final void show() {
+    SplashManager.executeWithHiddenSplash(getWindow(), () -> super.show());
   }
 
   @Override

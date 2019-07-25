@@ -54,7 +54,7 @@ public class ControlFlowSubRange implements ControlFlow {
         }
         if (instruction instanceof ReturnInstruction) {
           final ReturnInstruction returnInstruction = (ReturnInstruction)instruction;
-          CallInstruction callInstruction = new CallInstruction(patchOffset(returnInstruction.getProcBegin()), patchOffset(returnInstruction.getProcEnd()), returnInstruction.getStack());
+          CallInstruction callInstruction = new CallInstruction(patchOffset(returnInstruction.getProcBegin()), patchOffset(returnInstruction.getProcEnd()));
           returnInstruction.setCallInstruction(callInstruction);
         }
         list.add(instruction);

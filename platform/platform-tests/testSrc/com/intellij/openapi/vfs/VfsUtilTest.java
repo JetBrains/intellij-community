@@ -31,6 +31,7 @@ import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Rule;
@@ -48,8 +49,10 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
-import static com.intellij.testFramework.UsefulTestCase.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.*;
 
 public class VfsUtilTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory myTempDir = new TempDirectory();
@@ -108,7 +111,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     VirtualFile child = vDir.findChild(" ");
     assertNull(child);
 
-    assertEmpty(vDir.getChildren());
+    assertThat(vDir.getChildren()).isEmpty();
   }
 
   @Test
@@ -357,7 +360,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
       LocalFileSystem.getInstance().refreshFiles(Collections.singletonList(vTemp), false, true, refreshed::countDown);
 
       while (refreshed.getCount() != 0) {
-        UIUtil.pump();
+        StartupUiUtil.pump();
       }
       getAllExcludedCalledChecker.accept(getAllExcludedCalled);
     }
@@ -370,32 +373,56 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     }
   }
 
-  @Test(timeout = 20_000)
-  public void olderRefreshWithLessSpecificTransactionDoesNotBlockNewerRefresh() {
+  @Test
+  public void asyncRefreshInModalTransactionCompletesWithinIt() {
     EdtTestUtil.runInEdtAndWait(() -> {
-      File tempDir = myTempDir.newFolder();
+      VirtualDirectoryImpl vTemp = (VirtualDirectoryImpl)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myTempDir.getRoot());
+      assertThat(vTemp.getChildren()).isEmpty();
 
-      File dir1 = new File(tempDir, "dir1");
-      assertTrue(dir1.mkdirs());
+      myTempDir.newFile("x.txt");
 
-      File dir2 = new File(tempDir, "dir2");
-      assertTrue(dir2.mkdirs());
+      TransactionGuard.getInstance().submitTransactionAndWait(() -> ProgressManager.getInstance().run(new Task.Modal(null, "", false) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          assertFalse(ApplicationManager.getApplication().isDispatchThread());
 
-      VirtualFile vDir = VfsUtil.findFileByIoFile(tempDir, true);
-      assertSize(2, vDir.getChildren());
+          Semaphore semaphore = new Semaphore(1);
+          vTemp.refresh(true, true, semaphore::up);
+          assertTrue(semaphore.waitFor(10_000));
+          assertThat(vTemp.getChildren()).hasSize(1);
+        }
+      }));
+
+    });
+  }
+
+  @Test(timeout = 20_000)
+  public void olderRefreshWithLessSpecificTransactionDoesNotBlockNewerRefresh_NoWaiting() {
+    checkNonModalThenModalRefresh(false);
+  }
+
+  @Test(timeout = 20_000)
+  public void olderRefreshWithLessSpecificTransactionDoesNotBlockNewerRefresh_WithWaiting() {
+    checkNonModalThenModalRefresh(true);
+  }
+
+  private void checkNonModalThenModalRefresh(boolean waitForDiskRefreshCompletionBeforeStartingModality) {
+    EdtTestUtil.runInEdtAndWait(() -> {
+      File dir1 = myTempDir.newFolder("dir1");
+      File dir2 = myTempDir.newFolder("dir2");
+      VirtualFile vDir = VfsUtil.findFileByIoFile(myTempDir.getRoot(), true);
+      assertThat(Stream.of(vDir.getChildren()).map(VirtualFile::getName)).containsExactly(dir1.getName(), dir2.getName());
       VirtualFile vDir1 = vDir.getChildren()[0];
       VirtualFile vDir2 = vDir.getChildren()[1];
-      assertEquals(dir1.getName(), vDir1.getName());
-
-      assertEmpty(vDir1.getChildren());
-      assertEmpty(vDir2.getChildren());
+      assertThat(vDir1.getChildren()).isEmpty();
+      assertThat(vDir2.getChildren()).isEmpty();
 
       assertTrue(new File(dir1, "a.txt").createNewFile());
       assertTrue(new File(dir2, "a.txt").createNewFile());
 
       List<String> log = new ArrayList<>();
-
       Semaphore semaphore = new Semaphore(1);
+
       RefreshSession nonModalSession = RefreshQueue.getInstance().createSession(true, true, () -> {
         log.add("non-modal finished");
         semaphore.up();
@@ -403,13 +430,23 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
       nonModalSession.addFile(vDir1);
       nonModalSession.launch();
 
+      if (waitForDiskRefreshCompletionBeforeStartingModality) {
+        TimeoutUtil.sleep(100); // hopefully that's enough for refresh thread to ee the disk changes
+        UIUtil.dispatchAllInvocationEvents();
+      }
+
       TransactionGuard.submitTransaction(getTestRootDisposable(), () -> ProgressManager.getInstance().run(new Task.Modal(null, "", false) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           assertFalse(ApplicationManager.getApplication().isDispatchThread());
 
-          vDir2.refresh(false, true, () -> log.add("modal finished"));
-          assertSize(1, vDir2.getChildren());
+          Semaphore local = new Semaphore(1);
+          vDir2.refresh(true, true, () -> {
+            log.add("modal finished");
+            local.up();
+          });
+          assertTrue(local.waitFor(10_000));
+          assertThat(vDir2.getChildren()).hasSize(1);
         }
       }));
 
@@ -418,9 +455,15 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
         UIUtil.dispatchAllInvocationEvents();
       }
 
-      assertSize(1, vDir1.getChildren());
-      assertSize(1, vDir2.getChildren());
-      assertOrderedEquals(log, "modal finished", "non-modal finished");
+      assertThat(vDir1.getChildren()).hasSize(1);
+      assertThat(vDir2.getChildren()).hasSize(1);
+
+      //todo order should be the same
+      if (waitForDiskRefreshCompletionBeforeStartingModality) {
+        assertThat(log).containsExactlyInAnyOrder("modal finished", "non-modal finished");
+      } else {
+        assertThat(log).containsExactly("modal finished", "non-modal finished");
+      }
     });
   }
 }

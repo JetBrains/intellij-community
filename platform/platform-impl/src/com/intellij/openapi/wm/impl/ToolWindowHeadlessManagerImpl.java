@@ -244,6 +244,12 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     return new ArrayList<>();
   }
 
+  @NotNull
+  @Override
+  public Icon getLocationIcon(@NotNull String id, @NotNull Icon fallbackIcon) {
+    return fallbackIcon;
+  }
+
   public static class MockToolWindow implements ToolWindowEx {
     final ContentManager myContentManager = new MockContentManager();
 

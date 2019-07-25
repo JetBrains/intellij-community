@@ -31,7 +31,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
@@ -617,8 +616,7 @@ public class StartupUtil {
     }
 
     appStarter.beforeStartupWizard();
-    CustomizeIDEWizardDialog dialog = new CustomizeIDEWizardDialog(provider, appStarter);
-    SplashManager.executeWithHiddenSplash(dialog.getWindow(), () -> dialog.show());
+    new CustomizeIDEWizardDialog(provider, appStarter).show();
 
     PluginManagerCore.invalidatePlugins();
     appStarter.startupWizardFinished();

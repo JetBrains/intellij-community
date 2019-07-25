@@ -123,6 +123,12 @@ public class LambdaUtil {
         return isValidLambdaContext(element.getParent());
       }
     }
+    if (context instanceof PsiYieldStatement) {
+      PsiSwitchExpression switchExpression = ((PsiYieldStatement)context).findEnclosingExpression();
+      if (switchExpression != null) {
+        return isValidLambdaContext(switchExpression.getParent());
+      }
+    }
     if (context instanceof PsiExpressionStatement) {
       PsiElement parent = context.getParent();
       if (parent instanceof PsiSwitchLabeledRuleStatement) {

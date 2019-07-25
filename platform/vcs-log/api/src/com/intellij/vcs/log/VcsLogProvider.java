@@ -150,6 +150,15 @@ public interface VcsLogProvider {
   }
 
   /**
+   * Checks that the given reference points to a valid commit in the given root, and returns the Hash of this commit.
+   * Otherwise, if the reference is invalid, returns null.
+   */
+  @Nullable
+  default Hash resolveReference(@NotNull String ref, @NotNull VirtualFile root) {
+    return null;
+  }
+
+  /**
    * Returns the VCS root which should be used by the file history instead of the root found by standard mechanism (through mappings).
    */
   @Nullable

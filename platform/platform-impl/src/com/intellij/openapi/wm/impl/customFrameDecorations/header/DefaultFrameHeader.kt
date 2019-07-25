@@ -3,8 +3,7 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.ui.awt.RelativeRectangle
 import net.miginfocom.swing.MigLayout
-import java.awt.Dimension
-import java.awt.Rectangle
+import java.beans.PropertyChangeListener
 import java.util.ArrayList
 import javax.swing.JFrame
 import javax.swing.JLabel
@@ -12,6 +11,9 @@ import javax.swing.UIManager
 
 class DefaultFrameHeader(frame: JFrame) : FrameHeader(frame){
   private val titleLabel = JLabel()
+  private val titleChangeListener = PropertyChangeListener{
+    titleLabel.text = frame.title
+  }
 
   init {
     layout = MigLayout("novisualpadding, ins 0, fillx, gap 0", "$H_GAP[min!]$H_GAP[][pref!]", "")
@@ -21,6 +23,16 @@ class DefaultFrameHeader(frame: JFrame) : FrameHeader(frame){
     add(titleLabel, "wmin 0, left, hmin $MIN_HEIGHT")
     add(buttonPanes.getView(), "top, wmin pref")
 
+  }
+
+  override fun installListeners() {
+    super.installListeners()
+    frame.addPropertyChangeListener("title", titleChangeListener)
+  }
+
+  override fun uninstallListeners() {
+    super.uninstallListeners()
+    frame.removePropertyChangeListener(titleChangeListener)
   }
 
   override fun updateActive() {

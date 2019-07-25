@@ -22,6 +22,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,7 +87,7 @@ class ProgressDialog implements Disposable {
 
   ProgressDialog(@NotNull ProgressWindow progressWindow,
                  boolean shouldShowBackground,
-                 @Nullable String cancelText,
+                 @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText,
                  @Nullable Window parentWindow) {
     myProgressWindow = progressWindow;
     myParentWindow = parentWindow;

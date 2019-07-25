@@ -4,36 +4,31 @@ package com.intellij.openapi.externalSystem.model
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.serialization.NonDefaultConstructorInfo
 import com.intellij.serialization.ReadConfiguration
 import com.intellij.serialization.WriteConfiguration
 
 // do not use SkipNullAndEmptySerializationFilter for now because can lead to issues
 fun createCacheWriteConfiguration() = WriteConfiguration(allowAnySubTypes = true)
 
-fun createCacheReadConfiguration(log: Logger): ReadConfiguration {
+private fun createDataClassResolver(log: Logger): (name: String, hostObject: DataNode<*>) -> Class<*>? {
   val projectDataManager = ProjectDataManager.getInstance()
-  val defaultClassLoader = DataNode::class.java.classLoader
-
-  val allManagers = ExternalSystemApiUtil.getAllManagers()
-  return createDataNodeReadConfiguration(fun(name: String, hostObject: Any): Class<*>? {
-    if (hostObject !is DataNode<*>) {
-      return defaultClassLoader.loadClass(name)
+  val managerClassLoaders = ExternalSystemApiUtil.getAllManagers().asSequence()
+    .map { it.javaClass.classLoader }
+    .toSet()
+  return fun(name: String, hostObject: DataNode<*>): Class<*>? {
+    var classLoadersToSearch = managerClassLoaders
+    val services = projectDataManager!!.findService(hostObject.key)
+    if (!services.isNullOrEmpty()) {
+      val set = LinkedHashSet<ClassLoader>(managerClassLoaders.size + services.size)
+      set.addAll(managerClassLoaders)
+      services.mapTo(set) { it.javaClass.classLoader }
+      classLoadersToSearch = set
     }
 
-    val services = projectDataManager.findService(hostObject.key)
-    if (services != null) {
-      for (dataService in services) {
-        try {
-          return dataService.javaClass.classLoader.loadClass(name)
-        }
-        catch (e: ClassNotFoundException) {
-        }
-      }
-    }
-
-    for (manager in allManagers) {
+    for (classLoader in classLoadersToSearch) {
       try {
-        return manager.javaClass.classLoader.loadClass(name)
+        return classLoader.loadClass(name)
       }
       catch (e: ClassNotFoundException) {
       }
@@ -41,11 +36,29 @@ fun createCacheReadConfiguration(log: Logger): ReadConfiguration {
 
     log.warn("Cannot find class `$name`")
     return null
+  }
+}
+
+@JvmOverloads
+fun createCacheReadConfiguration(log: Logger, testOnlyClassLoader: ClassLoader? = null): ReadConfiguration {
+  val dataNodeResolver = if (testOnlyClassLoader == null) createDataClassResolver(log) else null
+  return createDataNodeReadConfiguration(fun(name: String, hostObject: Any): Class<*>? {
+    return when {
+      hostObject !is DataNode<*> -> hostObject.javaClass.classLoader.loadClass(name)
+      dataNodeResolver == null -> testOnlyClassLoader!!.loadClass(name)
+      else -> dataNodeResolver(name, hostObject)
+    }
   })
 }
 
 fun createDataNodeReadConfiguration(loadClass: ((name: String, hostObject: Any) -> Class<*>?)): ReadConfiguration {
-  return ReadConfiguration(allowAnySubTypes = true, loadClass = loadClass, beanConstructed = {
+  return ReadConfiguration(allowAnySubTypes = true, resolvePropertyMapping = { beanClass ->
+    when (beanClass.name) {
+      "org.jetbrains.kotlin.idea.configuration.KotlinTargetData" -> NonDefaultConstructorInfo(listOf("externalName"), beanClass.getDeclaredConstructor(String::class.java))
+      "org.jetbrains.kotlin.idea.configuration.KotlinAndroidSourceSetData" -> NonDefaultConstructorInfo(listOf("sourceSetInfos"), beanClass.constructors.first())
+      else -> null
+    }
+  }, loadClass = loadClass, beanConstructed = {
     if (it is ProjectSystemId) {
       it.intern()
     }

@@ -121,7 +121,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
 
     if (ApplicationManager.getApplication().isHeadlessEnvironment() &&
         !ApplicationManager.getApplication().isUnitTestMode()) {
-      Promise<List<Module>> promise = manager.scheduleImportAndResolve();
+      Promise<List<Module>> promise = manager.scheduleImportAndResolve(true);
       manager.waitForResolvingCompletion();
       try {
         return promise.blockingGet(0);

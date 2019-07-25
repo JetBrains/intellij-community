@@ -285,8 +285,14 @@
   <action id="Refresh">
     <keyboard-shortcut first-keystroke="meta R"/>
   </action>
+  <action id="ForceRefresh">
+    <keyboard-shortcut first-keystroke="meta alt shift R"/>
+  </action>
   <!-- Android Studio: Switch default Rerun action from "Rerun" to "Android.CleanRun" -->
   <action id="Android.CleanRun">
+  <!-- Android Studio: removed by Change I886f2788 / commit f4e3c8e
+  <action id="Rerun">
+  Android Studio: removed by Change I886f2788 / commit f4e3c8e -->
     <keyboard-shortcut first-keystroke="meta R"/>
   </action>
   <action id="RerunTests">

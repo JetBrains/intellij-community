@@ -206,6 +206,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         }
       }
     }
+
+    // update for non-dumb-aware EditorTabTitleProviders
+    updateFileName(null);
   }
 
   public void initDockableContentFactory() {

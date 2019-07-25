@@ -1073,14 +1073,10 @@ public class EditorPainter implements TextDrawingCallback {
                                                    PeekableIterator<Caret> caretIterator) {
     boolean selection = false;
     while (caretIterator.hasNext() && caretIterator.peek().getSelectionEnd() < bottomVisualLineStartOffset) caretIterator.next();
-    while (caretIterator.hasNext()) {
+    if (caretIterator.hasNext()) {
       Caret caret = caretIterator.peek();
-      if (caret.getSelectionStart() > bottomVisualLineStartOffset) break;
-      if (caret.getSelectionStartPosition().line < bottomVisualLine && bottomVisualLine <= caret.getSelectionEndPosition().line) {
-        selection = true;
-        break;
-      }
-      caretIterator.next();
+      selection = caret.getSelectionStart() <= bottomVisualLineStartOffset &&
+                  caret.getSelectionStartPosition().line < bottomVisualLine && bottomVisualLine <= caret.getSelectionEndPosition().line;
     }
 
     class MyProcessor implements Processor<RangeHighlighterEx> {

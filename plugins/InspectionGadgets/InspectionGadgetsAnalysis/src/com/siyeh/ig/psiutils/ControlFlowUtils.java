@@ -60,7 +60,7 @@ public class ControlFlowUtils {
     if (statement == null) {
       return true;
     }
-    if (statement instanceof PsiBreakStatement || statement instanceof PsiContinueStatement ||
+    if (statement instanceof PsiBreakStatement || statement instanceof PsiContinueStatement || statement instanceof PsiYieldStatement ||
         statement instanceof PsiReturnStatement || statement instanceof PsiThrowStatement) {
       return false;
     }

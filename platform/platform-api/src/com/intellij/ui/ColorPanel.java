@@ -41,6 +41,7 @@ public class ColorPanel extends JComponent {
   private boolean myEditable;
   private ActionEvent myEvent;
   private Color myColor;
+  private boolean mySupportTransparency;
 
   public ColorPanel() {
     addImpl(myTextField, null, 0);
@@ -62,7 +63,7 @@ public class ColorPanel extends JComponent {
 
   public void onPressed() {
     if (myEditable && isEnabled()) {
-      Color color = ColorChooser.chooseColor(this, UIBundle.message("color.panel.select.color.dialog.description"), myColor);
+      Color color = ColorChooser.chooseColor(this, UIBundle.message("color.panel.select.color.dialog.description"), myColor, mySupportTransparency);
       if (color != null) {
         setSelectedColor(color);
         if (!myListeners.isEmpty() && (myEvent == null)) {
@@ -163,6 +164,10 @@ public class ColorPanel extends JComponent {
   public void setEnabled(boolean enabled) {
     super.setEnabled(enabled);
     updateSelectedColor();
+  }
+
+  public void setSupportTransparency(boolean supportTransparency) {
+    mySupportTransparency = supportTransparency;
   }
 
   private static class Painter implements Highlighter.HighlightPainter, PropertyChangeListener {

@@ -39,7 +39,10 @@ public class ChangeModifierIntentionTest extends IPPTestCase {
   public void testMethod2() { doTestWithChooser("package-private"); }
   public void testAnnotatedMember() { doTestWithChooser("private"); }
   public void testClass() { doTestWithChooser("protected"); }
-  public void testInDefaultPackage() { doTest("Make package-private"); }
+  public void testInDefaultPackage() { doTest("Make 'Test' package-private"); }
+  public void testInheritance() {
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest("Make 'foo' public"));
+  }
 
   public void testTypeParameter() {
     doTestWithChooser("protected");

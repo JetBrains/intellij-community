@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.template.TemplateBuilder;
@@ -137,8 +137,11 @@ public class CreateMissingSwitchBranchesFix extends BaseSwitchFix {
           }
         } else {
           PsiElement next = PsiTreeUtil.skipWhitespacesAndCommentsForward(label);
-          if(next instanceof PsiBreakStatement) {
+          if (next instanceof PsiBreakStatement) {
             ContainerUtil.addIfNotNull(elementsToReplace, ((PsiBreakStatement)next).getValueExpression());
+          }
+          if (next instanceof PsiYieldStatement) {
+            ContainerUtil.addIfNotNull(elementsToReplace, ((PsiYieldStatement)next).getExpression());
           }
         }
       }

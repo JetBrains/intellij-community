@@ -19,10 +19,10 @@ class GitUpdatedRanges private constructor(
   private val project: Project,
   private val sourceAndTargetBranches: Map<GitRepository, GitBranchPair>) {
 
-  private val initialPositions = calcPublishedTipPositions(sourceAndTargetBranches)
+  private val initialPositions = calcPublishedTipPositions()
 
   fun calcCurrentPositions(): Map<GitRepository, HashRange> {
-    val newPositions = calcPublishedTipPositions(sourceAndTargetBranches)
+    val newPositions = calcPublishedTipPositions()
     val result = LinkedHashMap<GitRepository, HashRange>()
     for ((repository, newHash) in newPositions.entries) {
       val before = initialPositions[repository]
@@ -33,9 +33,9 @@ class GitUpdatedRanges private constructor(
     return result
   }
 
-  private fun calcPublishedTipPositions(trackedBranches: Map<GitRepository, GitBranchPair>): Map<GitRepository, Hash> {
+  private fun calcPublishedTipPositions(): Map<GitRepository, Hash> {
     val result = LinkedHashMap<GitRepository, Hash>()
-    for ((repository, branchPair) in trackedBranches.entries) {
+    for ((repository, branchPair) in sourceAndTargetBranches.entries) {
       val (localBranch, trackedBranch) = branchPair
       val mergeBase = getMergeBase(repository.root, localBranch.fullName, trackedBranch.fullName)
       if (mergeBase != null) {

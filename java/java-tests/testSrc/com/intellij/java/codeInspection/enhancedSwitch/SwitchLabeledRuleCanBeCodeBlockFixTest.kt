@@ -14,7 +14,7 @@ class SwitchLabeledRuleCanBeCodeBlockFixTest : LightQuickFixParameterizedTestCas
 
   override fun configureLocalInspectionTools(): Array<LocalInspectionTool> = arrayOf(SwitchLabeledRuleCanBeCodeBlockInspection())
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = LightJavaCodeInsightFixtureTestCase.JAVA_12
+  override fun getProjectDescriptor(): LightProjectDescriptor = LightJavaCodeInsightFixtureTestCase.JAVA_13
 
   override fun getBasePath() = "/inspection/switchLabeledRuleCanBeCodeBlockFix"
 }

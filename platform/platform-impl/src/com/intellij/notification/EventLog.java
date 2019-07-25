@@ -155,7 +155,7 @@ public class EventLog {
         public String fun(AnAction action) {
           return "<a href=\"" + index++ + "\">" + action.getTemplatePresentation().getText() + "</a>";
         }
-      }, isLongLine(actions) ? "<br>" : "&nbsp;") + "</p>";
+      }, isLongLine(actions) ? "<br>" : "&nbsp;&nbsp;&nbsp;") + "</p>";
       Notification n = new Notification("", "", ".", NotificationType.INFORMATION, new NotificationListener() {
         @Override
         public void hyperlinkUpdate(@NotNull Notification n, @NotNull HyperlinkEvent event) {

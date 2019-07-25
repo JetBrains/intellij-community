@@ -801,6 +801,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
   private static class EditorSettingColorDescription extends ColorAndFontDescription {
     private final ColorKey myColorKey;
+    @NotNull
     private final ColorDescriptor.Kind myKind;
     private final Color myInitialColor;
 
@@ -870,24 +871,24 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
     @Override
     public Color getExternalForeground() {
-      return myKind == ColorDescriptor.Kind.FOREGROUND ? myColor : null;
+      return isForegroundEnabled() ? myColor : null;
     }
 
     @Override
     public void setExternalForeground(Color col) {
-      if (myKind != ColorDescriptor.Kind.FOREGROUND) return;
+      if (!myKind.isForeground()) return;
       if (myColor != null && myColor.equals(col)) return;
       myColor = col;
     }
 
     @Override
     public Color getExternalBackground() {
-      return myKind == ColorDescriptor.Kind.BACKGROUND ? myColor : null;
+      return isBackgroundEnabled() ? myColor : null;
     }
 
     @Override
     public void setExternalBackground(Color col) {
-      if (myKind != ColorDescriptor.Kind.BACKGROUND) return;
+      if (!myKind.isBackground()) return;
       if (myColor != null && myColor.equals(col)) return;
       myColor = col;
     }
@@ -908,12 +909,17 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
     @Override
     public boolean isForegroundEnabled() {
-      return myKind == ColorDescriptor.Kind.FOREGROUND;
+      return myKind.isForeground();
     }
 
     @Override
     public boolean isBackgroundEnabled() {
-      return myKind == ColorDescriptor.Kind.BACKGROUND;
+      return myKind.isBackground();
+    }
+
+    @Override
+    public boolean isTransparencyEnabled() {
+      return myKind.isWithTransparency();
     }
 
     @Override

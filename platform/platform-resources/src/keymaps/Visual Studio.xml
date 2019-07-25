@@ -197,6 +197,9 @@
   <action id="Refresh">
     <keyboard-shortcut first-keystroke="control alt R"/>
   </action>
+  <action id="ForceRefresh">
+    <keyboard-shortcut first-keystroke="control alt shift R"/>
+  </action>
   <action id="ExternalJavaDoc">
     <keyboard-shortcut first-keystroke="shift F1"/>
     <keyboard-shortcut first-keystroke="control F1"/>

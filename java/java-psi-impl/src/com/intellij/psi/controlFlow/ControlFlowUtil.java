@@ -1571,109 +1571,107 @@ public class ControlFlowUtil {
     final WalkThroughStack walkThroughStack = new WalkThroughStack(instructions.size() / 2);
     walkThroughStack.push(startOffset);
 
-    // we can change instruction internal state here (e.g. CallInstruction.stack)
-    synchronized (instructions) {
-      final IntArrayList currentProcedureReturnOffsets = new IntArrayList();
-      ControlFlowInstructionVisitor getNextOffsetVisitor = new ControlFlowInstructionVisitor() {
-        @Override
-        public void visitCallInstruction(CallInstruction instruction, int offset, int nextOffset) {
-          instruction.execute(offset + 1);
-          int newOffset = instruction.offset;
-          // 'procedure' pointed by call instruction should be processed regardless of whether it was already visited or not
-          // clear procedure text and return instructions afterwards
-          int i;
-          for (i = instruction.procBegin;
-               i < clientVisitor.processedInstructions.length &&
-               (i < instruction.procEnd || i < instructions.size() && instructions.get(i) instanceof ReturnInstruction); i++) {
-            clientVisitor.processedInstructions[i] = false;
-          }
-          clientVisitor.procedureEntered(instruction.procBegin, i);
-          walkThroughStack.push(offset, newOffset);
-          walkThroughStack.push(newOffset);
-
-          currentProcedureReturnOffsets.add(offset + 1);
+    ControlFlowInstructionVisitor getNextOffsetVisitor = new ControlFlowInstructionVisitor() {
+      @Override
+      public void visitCallInstruction(CallInstruction instruction, int offset, int nextOffset) {
+        int newOffset = instruction.offset;
+        // 'procedure' pointed by call instruction should be processed regardless of whether it was already visited or not
+        // clear procedure text and return instructions afterwards
+        int i;
+        for (i = instruction.procBegin;
+             i < clientVisitor.processedInstructions.length &&
+             (i < instruction.procEnd || i < instructions.size() && instructions.get(i) instanceof ReturnInstruction); i++) {
+          clientVisitor.processedInstructions[i] = false;
         }
-
-        @Override
-        public void visitReturnInstruction(ReturnInstruction instruction, int offset, int nextOffset) {
-          int newOffset = instruction.execute(false);
-          if (newOffset != -1) {
-            walkThroughStack.push(offset, newOffset);
-            walkThroughStack.push(newOffset);
-          }
-        }
-
-        @Override
-        public void visitBranchingInstruction(BranchingInstruction instruction, int offset, int nextOffset) {
-          int newOffset = instruction.offset;
-          walkThroughStack.push(offset, newOffset);
-          walkThroughStack.push(newOffset);
-        }
-
-        @Override
-        public void visitConditionalBranchingInstruction(ConditionalBranchingInstruction instruction, int offset, int nextOffset) {
-          int newOffset = instruction.offset;
-
-          walkThroughStack.push(offset, newOffset);
-          walkThroughStack.push(offset, offset + 1);
-          walkThroughStack.push(newOffset);
-          walkThroughStack.push(offset + 1);
-        }
-
-        @Override
-        public void visitInstruction(Instruction instruction, int offset, int nextOffset) {
-          int newOffset = offset + 1;
-          walkThroughStack.push(offset, newOffset);
-          walkThroughStack.push(newOffset);
-        }
-      };
-      while (!walkThroughStack.isEmpty()) {
-        final int offset = walkThroughStack.peekOldOffset();
-        final int newOffset = walkThroughStack.popNewOffset();
-
-        if (offset >= endOffset) {
-          continue;
-        }
-        Instruction instruction = instructions.get(offset);
-
-        if (clientVisitor.processedInstructions[offset]) {
-          if (newOffset != -1) {
-            instruction.accept(clientVisitor, offset, newOffset);
-          }
-          // when traversing call instruction, we have traversed all procedure control flows, so pop return address
-          if (!currentProcedureReturnOffsets.isEmpty() && currentProcedureReturnOffsets.get(currentProcedureReturnOffsets.size() - 1) - 1 == offset) {
-            currentProcedureReturnOffsets.remove(currentProcedureReturnOffsets.size() - 1);
-          }
-          continue;
-        }
-        if (!currentProcedureReturnOffsets.isEmpty()) {
-          int returnOffset = currentProcedureReturnOffsets.get(currentProcedureReturnOffsets.size() - 1);
-          CallInstruction callInstruction = (CallInstruction)instructions.get(returnOffset - 1);
-          // check if we inside procedure but 'return offset' stack is empty, so
-          // we should push back to 'return offset' stack
-          synchronized (callInstruction.stack) {
-            if (callInstruction.procBegin <= offset && offset < callInstruction.procEnd + 2
-                && (callInstruction.stack.size() == 0 || callInstruction.stack.peekReturnOffset() != returnOffset)) {
-              callInstruction.stack.push(returnOffset, callInstruction);
-            }
-          }
-        }
-
-        clientVisitor.processedInstructions[offset] = true;
-        instruction.accept(getNextOffsetVisitor, offset, newOffset);
+        clientVisitor.procedureEntered(instruction.procBegin, i);
+        walkThroughStack.currentStack = new CallStackItem(walkThroughStack.currentStack, offset + 1);
+        walkThroughStack.push(offset, newOffset);
+        walkThroughStack.push(newOffset);
       }
+
+      @Override
+      public void visitReturnInstruction(ReturnInstruction instruction, int offset, int nextOffset) {
+        int newOffset = -1;
+        if (walkThroughStack.currentStack != null) {
+          newOffset = walkThroughStack.currentStack.target;
+          walkThroughStack.currentStack = walkThroughStack.currentStack.next;
+        }
+        if (instruction.offset != 0) {
+          newOffset = instruction.offset;
+        }
+        if (newOffset != -1) {
+          walkThroughStack.push(offset, newOffset);
+          walkThroughStack.push(newOffset);
+        }
+      }
+
+      @Override
+      public void visitBranchingInstruction(BranchingInstruction instruction, int offset, int nextOffset) {
+        int newOffset = instruction.offset;
+        walkThroughStack.push(offset, newOffset);
+        walkThroughStack.push(newOffset);
+      }
+
+      @Override
+      public void visitConditionalBranchingInstruction(ConditionalBranchingInstruction instruction, int offset, int nextOffset) {
+        int newOffset = instruction.offset;
+
+        walkThroughStack.push(offset, newOffset);
+        walkThroughStack.push(offset, offset + 1);
+        walkThroughStack.push(newOffset);
+        walkThroughStack.push(offset + 1);
+      }
+
+      @Override
+      public void visitInstruction(Instruction instruction, int offset, int nextOffset) {
+        int newOffset = offset + 1;
+        walkThroughStack.push(offset, newOffset);
+        walkThroughStack.push(newOffset);
+      }
+    };
+    while (!walkThroughStack.isEmpty()) {
+      final int offset = walkThroughStack.peekOldOffset();
+      final int newOffset = walkThroughStack.popNewOffset();
+
+      if (offset >= endOffset) {
+        continue;
+      }
+      Instruction instruction = instructions.get(offset);
+
+      if (clientVisitor.processedInstructions[offset]) {
+        if (newOffset != -1) {
+          instruction.accept(clientVisitor, offset, newOffset);
+        }
+        continue;
+      }
+
+      clientVisitor.processedInstructions[offset] = true;
+      instruction.accept(getNextOffsetVisitor, offset, newOffset);
+    }
+  }
+
+  private static final class CallStackItem {
+    final CallStackItem next;
+    final int target;
+
+    private CallStackItem(CallStackItem next, int target) {
+      this.next = next;
+      this.target = target;
     }
   }
 
   private static class WalkThroughStack {
     private int[] oldOffsets;
     private int[] newOffsets;
+    private CallStackItem[] callStacks;
+    private CallStackItem currentStack;
     private int size;
 
     WalkThroughStack(int initialSize) {
       if (initialSize < 2) initialSize = 2;
       oldOffsets = new int[initialSize];
       newOffsets = new int[initialSize];
+      callStacks = new CallStackItem[initialSize];
     }
 
     /**
@@ -1682,11 +1680,14 @@ public class ControlFlowUtil {
     void push(int oldOffset, int newOffset) {
       LOG.assertTrue(oldOffset >= 0, "negative offset is pushed to walk-through stack");
       if (size >= newOffsets.length) {
-        oldOffsets = ArrayUtil.realloc(oldOffsets, size * 3 / 2);
-        newOffsets = ArrayUtil.realloc(newOffsets, size * 3 / 2);
+        int newSize = size * 3 / 2;
+        oldOffsets = Arrays.copyOf(oldOffsets, newSize);
+        newOffsets = Arrays.copyOf(newOffsets, newSize);
+        callStacks = Arrays.copyOf(callStacks, newSize);
       }
       oldOffsets[size] = oldOffset;
       newOffsets[size] = newOffset;
+      callStacks[size] = currentStack;
       size++;
     }
 
@@ -1708,7 +1709,8 @@ public class ControlFlowUtil {
      * Should be used in pair with {@link #peekOldOffset()}
      */
     int popNewOffset() {
-      return newOffsets[--size];
+      currentStack = callStacks[--size];
+      return newOffsets[size];
     }
 
     boolean isEmpty() {

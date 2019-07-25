@@ -92,7 +92,7 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
     createStatusBar(frame);
 
     IdeMenuBar menu = new IdeMenuBar(ActionManagerEx.getInstanceEx(), DataManager.getInstance());
-    myDecoratedMenu = IdeFrameDecorator.isCustomDecoration() && frame instanceof IdeFrameEx;
+    myDecoratedMenu = IdeFrameDecorator.isCustomDecorationActive() && frame instanceof IdeFrameEx;
 
     if (!isDecoratedMenu() && !WindowManagerImpl.isFloatingMenuBarSupported()) {
       setJMenuBar(menu);
@@ -487,6 +487,6 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
   }
 
   private boolean isDecoratedMenu() {
-    return IdeFrameDecorator.isCustomDecoration() && myDecoratedMenu;
+    return IdeFrameDecorator.isCustomDecorationActive() && myDecoratedMenu;
   }
 }

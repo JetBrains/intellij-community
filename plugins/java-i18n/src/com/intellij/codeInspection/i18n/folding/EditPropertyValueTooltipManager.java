@@ -11,10 +11,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.event.CaretEvent;
-import com.intellij.openapi.editor.event.CaretListener;
-import com.intellij.openapi.editor.event.EditorMouseEvent;
-import com.intellij.openapi.editor.event.EditorMouseListener;
+import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.impl.FoldingPopupManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Key;
@@ -62,7 +59,7 @@ public class EditPropertyValueTooltipManager implements EditorMouseListener, Car
   @Override
   public void mouseReleased(@NotNull EditorMouseEvent event) {
     Editor editor = event.getEditor();
-    if (shouldShowTooltip(editor)) {
+    if (event.getArea() == EditorMouseEventArea.EDITING_AREA && shouldShowTooltip(editor)) {
       event.consume();
       myAlarm.cancelAllRequests();
       showTooltip(editor);

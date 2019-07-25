@@ -337,11 +337,11 @@ public class GitPushOperation {
 
   private void collectUpdatedFiles(@NotNull UpdatedFiles updatedFiles, @NotNull GitRepository repository,
                                    @NotNull String preUpdatePosition) {
-    MergeChangeCollector collector = new MergeChangeCollector(myProject, repository.getRoot(), new GitRevisionNumber(preUpdatePosition));
-    ArrayList<VcsException> exceptions = new ArrayList<>();
-    collector.collect(updatedFiles, exceptions);
-    for (VcsException exception : exceptions) {
-      LOG.info(exception);
+    try {
+      new MergeChangeCollector(myProject, repository.getRoot(), new GitRevisionNumber(preUpdatePosition)).collect(updatedFiles);
+    }
+    catch (VcsException e) {
+      LOG.info(e);
     }
   }
 
