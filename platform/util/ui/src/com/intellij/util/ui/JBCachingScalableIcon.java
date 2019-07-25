@@ -13,7 +13,7 @@ import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
  * @author tav
  * @author Aleksey Pivovarov
  */
-public abstract class JBCachingScalableIcon<T extends JBCachingScalableIcon> extends JBScalableIcon implements CopyableIcon {
+public abstract class JBCachingScalableIcon<T extends JBCachingScalableIcon> extends JBUI.JBIcon implements CopyableIcon {
   private T myScaledIconCache;
 
   protected JBCachingScalableIcon() {}
