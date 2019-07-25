@@ -129,7 +129,7 @@ public class HashSet<E> extends AbstractSet<E> implements Set<E> {
 
     table[index] = e;
 
-    size = size + 1;
+    size++;
 
 
 
@@ -190,7 +190,7 @@ public class HashSet<E> extends AbstractSet<E> implements Set<E> {
 
     }
 
-    size = size - 1;
+    size--;
 
     return true;
 

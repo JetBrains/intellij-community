@@ -37,7 +37,7 @@ public class SplitBySeparatorPolicy extends FilePathSplittingPolicy {
       else {
         begin.add(s);
       }
-      currentIndex = currentIndex + i * mult;
+      currentIndex += i * mult;
       mult *= -1;
     }
 

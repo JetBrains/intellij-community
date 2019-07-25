@@ -229,7 +229,7 @@ public class BegMenuItemUI extends BasicMenuItemUI {
       if (j1 > 0){
         if (SystemInfo.isMac) {
           try {
-            Class appleLaf = Class.forName(AQUA_LOOK_AND_FEEL_CLASS_NAME);
+            Class<?> appleLaf = Class.forName(AQUA_LOOK_AND_FEEL_CLASS_NAME);
             Method getModifiers = appleLaf.getMethod(GET_KEY_MODIFIERS_TEXT, int.class, boolean.class);
             s1 = (String)getModifiers.invoke(appleLaf, new Object[] {new Integer(j1), Boolean.FALSE});
           }
@@ -247,7 +247,7 @@ public class BegMenuItemUI extends BasicMenuItemUI {
         }
 
       }
-      s1 = s1 + KeyEvent.getKeyText(keystroke.getKeyCode());
+      s1 += KeyEvent.getKeyText(keystroke.getKeyCode());
     }
     return s1;
   }
