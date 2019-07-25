@@ -259,6 +259,12 @@ public class ResizeableMappedFile implements Forceable {
   public void close() {
     try {
       force();
+      if (myLogicalSize < myStorage.length()) {
+        myStorage.resize(myLogicalSize);
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
     }
     finally {
       myStorage.close();
