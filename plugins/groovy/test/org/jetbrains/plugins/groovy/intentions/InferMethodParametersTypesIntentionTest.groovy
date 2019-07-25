@@ -281,6 +281,10 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testMutualDependency2() {
+    doTest(true)
+  }
+
   void testOverriddenMethod() {
     doTest(true)
   }

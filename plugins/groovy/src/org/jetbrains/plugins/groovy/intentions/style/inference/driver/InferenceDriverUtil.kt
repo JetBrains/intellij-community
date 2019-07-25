@@ -11,6 +11,7 @@ import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
 import org.jetbrains.plugins.groovy.intentions.style.inference.typeParameter
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
@@ -68,9 +69,9 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
   private fun addRequiredType(typeParameter: PsiTypeParameter, clazz: PsiClass) =
     requiredTypesCollector.computeIfAbsent(typeParameter) { mutableListOf() }.add(clazz)
 
-  override fun visitCallExpression(callExpression: GrCallExpression) {
-    val resolveResult = callExpression.advancedResolve() as? GroovyMethodResult
-    val candidate = resolveResult?.candidate
+  private fun processMethod(result: GroovyResolveResult) {
+    val methodResult = result as? GroovyMethodResult
+    val candidate = methodResult?.candidate
     val receiver = candidate?.receiver as? PsiClassType
     receiver?.run {
       val endpointClassType = extractEndpointType(receiver, typeParameters)
@@ -83,8 +84,13 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
       argumentTypeParameter?.run {
         addRequiredType(argumentTypeParameter, type.resolve() ?: return@run)
       }
-      resolveResult.contextSubstitutor.substitute(type)?.run { contravariantTypesCollector.add(this) }
+      methodResult.contextSubstitutor.substitute(type)?.run { contravariantTypesCollector.add(this) }
     }
+  }
+
+
+  override fun visitCallExpression(callExpression: GrCallExpression) {
+    processMethod(callExpression.advancedResolve())
     constraintsCollector.add(ExpressionConstraint(null, callExpression))
     super.visitCallExpression(callExpression)
   }
@@ -125,6 +131,9 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
 
   override fun visitExpression(expression: GrExpression) {
     if (expression is GrOperatorExpression) {
+      run {
+        processMethod(expression.reference?.advancedResolve() ?: return@run)
+      }
       constraintsCollector.add(OperatorExpressionConstraint(expression))
     }
     super.visitExpression(expression)
