@@ -20,8 +20,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -52,11 +50,10 @@ import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.execution.RunnerBundle;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
-import org.jetbrains.idea.maven.project.MavenConsole;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.server.security.TokenReader;
 import org.jetbrains.idea.maven.utils.MavenLog;
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenSettings;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.slf4j.Logger;
@@ -64,6 +61,9 @@ import org.slf4j.impl.Log4jLoggerFactory;
 
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
@@ -74,8 +74,8 @@ import java.util.jar.Attributes;
   name = "MavenVersion",
   storages = @Storage("mavenVersion.xml")
 )
-public class MavenServerManager extends RemoteObjectWrapper<MavenServer> implements PersistentStateComponent<MavenServerManager.State>,
-                                                                                    Disposable {
+public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> implements PersistentStateComponent<MavenServerManager.State>,
+                                                                                         Disposable {
 
   public static final String BUNDLED_MAVEN_2 = "Bundled (Maven 2)";
   public static final String BUNDLED_MAVEN_3 = "Bundled (Maven 3)";
@@ -83,7 +83,8 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   @NonNls private static final String MAIN_CLASS = "org.jetbrains.idea.maven.server.RemoteMavenServer";
   @NonNls private static final String MAIN_CLASS36 = "org.jetbrains.idea.maven.server.RemoteMavenServer36";
 
-  private static final String DEFAULT_VM_OPTIONS = "-Xmx768m";
+  private static final String DEFAULT_VM_OPTIONS =
+    "-Xmx768m";
 
   private static final String FORCE_MAVEN2_OPTION = "-Didea.force.maven2";
 
@@ -91,6 +92,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
 
   private final RemoteMavenServerLogger myLogger = new RemoteMavenServerLogger();
   private final RemoteMavenServerDownloadListener myDownloadListener = new RemoteMavenServerDownloadListener();
+
   private boolean myLoggerExported;
   private boolean myDownloadListenerExported;
   private State myState = new State();
@@ -170,9 +172,25 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
       protected RunProfileState getRunProfileState(@NotNull Object target, @NotNull Object configuration, @NotNull Executor executor) {
         return new MavenServerCMDState();
       }
+
+      @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+      @Override
+      protected void sendDataAfterStart(ProcessHandler handler) {
+        if(handler.getProcessInput() == null) {
+          return;
+        }
+        OutputStreamWriter writer = new OutputStreamWriter(handler.getProcessInput(), StandardCharsets.UTF_8);
+        try {
+          writer.write(TokenReader.PREFIX + ourToken);
+          writer.write(System.lineSeparator());
+          writer.flush();
+        }
+        catch (IOException e) {
+          MavenLog.LOG.warn("Cannot send token to maven server", e);
+        }
+      }
     };
   }
-
   @Override
   public void dispose() {
     shutdown(false);
@@ -184,21 +202,21 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     MavenServer result;
     try {
       result = mySupport.acquire(this, "");
+      myLoggerExported = doWrapAndExport(myLogger) != null;
+      if (!myLoggerExported) throw new RemoteException("Cannot export logger object");
+
+      myDownloadListenerExported = doWrapAndExport(myDownloadListener) != null;
+      if (!myDownloadListenerExported) throw new RemoteException("Cannot export download listener object");
+
+      result.set(myLogger, myDownloadListener, ourToken);
+
+      return result;
     }
     catch (Exception e) {
       throw new RemoteException("Cannot start maven service", e);
     }
-
-    myLoggerExported = UnicastRemoteObject.exportObject(myLogger, 0) != null;
-    if (!myLoggerExported) throw new RemoteException("Cannot export logger object");
-
-    myDownloadListenerExported = UnicastRemoteObject.exportObject(myDownloadListener, 0) != null;
-    if (!myDownloadListenerExported) throw new RemoteException("Cannot export download listener object");
-
-    result.set(myLogger, myDownloadListener);
-
-    return result;
   }
+
 
   public synchronized void shutdown(boolean wait) {
     mySupport.stopAll(wait);
@@ -376,11 +394,6 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
       }
     }
   }
-
-  public void createExternalSystemEmbedder(ExternalSystemTaskId id, ExternalSystemTaskNotificationListener listener) {
-
-  }
-
   public MavenEmbedderWrapper createEmbedder(final Project project,
                                              final boolean alwaysOnline,
                                              @Nullable String workingDirectory,
@@ -397,7 +410,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
 
         settings.setProjectJdk(MavenUtil.getSdkPath(ProjectRootManager.getInstance(project).getProjectSdk()));
         return MavenServerManager.this.getOrCreateWrappee()
-          .createEmbedder(new MavenEmbedderSettings(settings, workingDirectory, multiModuleProjectDirectory));
+          .createEmbedder(new MavenEmbedderSettings(settings, workingDirectory, multiModuleProjectDirectory), ourToken);
       }
     };
   }
@@ -407,25 +420,25 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
       @NotNull
       @Override
       protected MavenServerIndexer create() throws RemoteException {
-        return MavenServerManager.this.getOrCreateWrappee().createIndexer();
+        return MavenServerManager.this.getOrCreateWrappee().createIndexer(ourToken);
       }
     };
   }
 
   @NotNull
   public MavenModel interpolateAndAlignModel(final MavenModel model, final File basedir) {
-    return perform(() -> getOrCreateWrappee().interpolateAndAlignModel(model, basedir));
+    return perform(() -> getOrCreateWrappee().interpolateAndAlignModel(model, basedir, ourToken));
   }
 
   public MavenModel assembleInheritance(final MavenModel model, final MavenModel parentModel) {
-    return perform(() -> getOrCreateWrappee().assembleInheritance(model, parentModel));
+    return perform(() -> getOrCreateWrappee().assembleInheritance(model, parentModel, ourToken));
   }
 
   public ProfileApplicationResult applyProfiles(final MavenModel model,
                                                 final File basedir,
                                                 final MavenExplicitProfiles explicitProfiles,
                                                 final Collection<String> alwaysOnProfiles) {
-    return perform(() -> getOrCreateWrappee().applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles));
+    return perform(() -> getOrCreateWrappee().applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles, ourToken));
   }
 
   public void addDownloadListener(MavenServerDownloadListener listener) {
@@ -448,39 +461,6 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     result.setSnapshotUpdatePolicy(
       settings.isAlwaysUpdateSnapshots() ? MavenServerSettings.UpdatePolicy.ALWAYS_UPDATE : MavenServerSettings.UpdatePolicy.DO_NOT_UPDATE);
     return result;
-  }
-
-  public static MavenServerConsole wrapAndExport(final MavenConsole console) {
-    try {
-      RemoteMavenServerConsole result = new RemoteMavenServerConsole(console);
-      UnicastRemoteObject.exportObject(result, 0);
-      return result;
-    }
-    catch (RemoteException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public static MavenServerProgressIndicator wrapAndExport(final MavenProgressIndicator process) {
-    try {
-      RemoteMavenServerProgressIndicator result = new RemoteMavenServerProgressIndicator(process);
-      UnicastRemoteObject.exportObject(result, 0);
-      return result;
-    }
-    catch (RemoteException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public static MavenServerIndicesProcessor wrapAndExport(final MavenIndicesProcessor processor) {
-    try {
-      RemoteMavenServerIndicesProcessor result = new RemoteMavenServerIndicesProcessor(processor);
-      UnicastRemoteObject.exportObject(result, 0);
-      return result;
-    }
-    catch (RemoteException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   private static class UseMavenConverter extends Converter<Boolean> {
@@ -625,81 +605,6 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
       }
     }
   }
-
-  private static class RemoteMavenServerProgressIndicator extends MavenRemoteObject implements MavenServerProgressIndicator {
-    private final MavenProgressIndicator myProcess;
-
-    RemoteMavenServerProgressIndicator(MavenProgressIndicator process) {
-      myProcess = process;
-    }
-
-    @Override
-    public void setText(String text) {
-      myProcess.setText(text);
-    }
-
-    @Override
-    public void setText2(String text) {
-      myProcess.setText2(text);
-    }
-
-    @Override
-    public void startedDownload(ResolveType type, String dependencyId) {
-      myProcess.startedDownload(type, dependencyId);
-    }
-
-    @Override
-    public void completedDownload(ResolveType type, String dependencyId) {
-      myProcess.completedDownload(type, dependencyId);
-    }
-
-    @Override
-    public void failedDownload(ResolveType type, String dependencyId, String errorMessage, String stackTrace) {
-      myProcess.failedDownload(type, dependencyId, errorMessage, stackTrace);
-    }
-
-    @Override
-    public boolean isCanceled() {
-      return myProcess.isCanceled();
-    }
-
-    @Override
-    public void setIndeterminate(boolean value) {
-      myProcess.getIndicator().setIndeterminate(value);
-    }
-
-    @Override
-    public void setFraction(double fraction) {
-      myProcess.setFraction(fraction);
-    }
-  }
-
-  private static class RemoteMavenServerConsole extends MavenRemoteObject implements MavenServerConsole {
-    private final MavenConsole myConsole;
-
-    RemoteMavenServerConsole(MavenConsole console) {
-      myConsole = console;
-    }
-
-    @Override
-    public void printMessage(int level, String message, Throwable throwable) {
-      myConsole.printMessage(level, message, throwable);
-    }
-  }
-
-  private static class RemoteMavenServerIndicesProcessor extends MavenRemoteObject implements MavenServerIndicesProcessor {
-    private final MavenIndicesProcessor myProcessor;
-
-    private RemoteMavenServerIndicesProcessor(MavenIndicesProcessor processor) {
-      myProcessor = processor;
-    }
-
-    @Override
-    public void processArtifacts(Collection<IndexedMavenId> artifacts) {
-      myProcessor.processArtifacts(artifacts);
-    }
-  }
-
   public class MavenServerCMDState extends CommandLineState {
     public MavenServerCMDState() {super(null);}
 
@@ -729,7 +634,6 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
         params.getVMParametersList().defineProperty(each.getKey(), each.getValue());
       }
 
-      params.getVMParametersList().addProperty("idea.version=", MavenUtil.getIdeaVersionToPassToMavenProcess());
       params.getVMParametersList().addProperty("maven.defaultProjectBuilder.disableGlobalModelCache", "true");
 
       boolean xmxSet = false;

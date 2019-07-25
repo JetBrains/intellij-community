@@ -37,17 +37,29 @@ class AccessingProtectedMembersFromSubclass extends ProtectedMembers {
 
     new Runnable() {
       public void run() {
-        method();
-        staticMethod();
+        <warning descr="Method ProtectedMembers.method() is protected and used not through a subclass here, but declared in a different module 'dep'">method</warning>();
+        <warning descr="Method ProtectedMembers.staticMethod() is protected and used not through a subclass here, but declared in a different module 'dep'">staticMethod</warning>();
       }
     };
 
     class LocalClass {
       void baz() {
-        method();
-        staticMethod();
+        <warning descr="Method ProtectedMembers.method() is protected and used not through a subclass here, but declared in a different module 'dep'">method</warning>();
+        <warning descr="Method ProtectedMembers.staticMethod() is protected and used not through a subclass here, but declared in a different module 'dep'">staticMethod</warning>();
       }
     }
+
+    new StaticInner() {
+      protected void protectedMethod() {
+        super.protectedMethod();
+      }
+    };
+
+    new BaseClassWithArg(method()) {
+    };
+
+    new BaseClassWithArg(field) {
+    };
   }
 
   public static class StaticInnerImpl1 extends ProtectedMembers.StaticInner {
@@ -58,14 +70,20 @@ class AccessingProtectedMembersFromSubclass extends ProtectedMembers {
 
   public class OwnInner {
     void bar() {
-      method();
-      staticMethod();
+      <warning descr="Method ProtectedMembers.method() is protected and used not through a subclass here, but declared in a different module 'dep'">method</warning>();
+      <warning descr="Method ProtectedMembers.staticMethod() is protected and used not through a subclass here, but declared in a different module 'dep'">staticMethod</warning>();
     }
   }
 
   public static class OwnStaticInner {
     void bar() {
-      staticMethod();
+      <warning descr="Method ProtectedMembers.staticMethod() is protected and used not through a subclass here, but declared in a different module 'dep'">staticMethod</warning>();
+    }
+  }
+
+  private abstract static class BaseClassWithArg {
+    public BaseClassWithArg(String arg) {
+
     }
   }
 }

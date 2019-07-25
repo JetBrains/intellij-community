@@ -395,7 +395,7 @@ public class IconUtil {
     public void paintIcon(Component c, Graphics g, int x, int y) {
       g = g.create();
       try {
-        Rectangle iconClip = new Rectangle(x - myCrop.x, y - myCrop.y, myCrop.width, myCrop.height);
+        Rectangle iconClip = new Rectangle(x, y, myCrop.width, myCrop.height);
         Rectangle gClip = g.getClipBounds();
         if (gClip != null) {
           Rectangle2D.intersect(iconClip, gClip, iconClip);
@@ -406,6 +406,11 @@ public class IconUtil {
       finally {
         g.dispose();
       }
+    }
+
+    @Override
+    public String toString() {
+      return getClass().getSimpleName() + " (" + mySrc + " -> " + myCrop + ")";
     }
 
     @Override

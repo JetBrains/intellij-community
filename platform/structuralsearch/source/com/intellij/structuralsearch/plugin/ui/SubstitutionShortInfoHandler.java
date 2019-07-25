@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.MatchVariableConstraint;
@@ -24,7 +25,6 @@ import com.intellij.ui.HintHint;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,59 +63,62 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     if (configuration == null) {
       return;
     }
-    checkModelValidity();
-    final int offset = editor.logicalPositionToOffset(position);
     final Document document = editor.getDocument();
-    final int length = document.getTextLength();
-    final CharSequence elements = document.getCharsSequence();
+    final int lineCount = document.getLineCount();
+    if (position.line >= lineCount) {
+      return;
+    }
+    final int lineStart = document.getLineStartOffset(position.line);
+    final int lineEnd = document.getLineEndOffset(position.line);
+    final CharSequence patternText = document.getCharsSequence().subSequence(lineStart, lineEnd);
 
-    int start = offset-1;
-    while(start >=0 && Character.isJavaIdentifierPart(elements.charAt(start)) && elements.charAt(start)!='$') start--;
-
-    String text = "";
-    String variableName = null;
-    int end = -1;
-    if (start >= 0 && elements.charAt(start) == '$') {
-      end = offset;
-
-      while (end < length && Character.isJavaIdentifierPart(elements.charAt(end)) && elements.charAt(end) != '$') end++;
-      if (end < length && elements.charAt(end) == '$') {
-        variableName = elements.subSequence(start + 1, end).toString();
-
-        if (variables.contains(variableName)) {
-          final NamedScriptableDefinition variable = configuration.findVariable(variableName);
-          text = getShortParamString(variable, !editor.isViewer() && !variableName.equals(configuration.getCurrentVariableName()));
-          final boolean replacementVariable =
-            variable instanceof ReplacementVariableDefinition || variable == null && configuration instanceof ReplaceConfiguration;
-          final String currentVariableName = replacementVariable
-                              ? variableName + ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX
-                              : variableName;
-          if (myCurrentVariableCallback != null) {
-            if (caret) {
-              myCurrentVariableCallback.accept(currentVariableName);
-              caret = false;
-            }
-          }
-          else {
-            configuration.setCurrentVariableName(currentVariableName);
-          }
+    final TextRange variableRange = TemplateImplUtil.findVariableAtOffset(patternText, position.column);
+    if (variableRange == null) {
+      if (caret) {
+        if (myCurrentVariableCallback != null) {
+          myCurrentVariableCallback.accept(Configuration.CONTEXT_VAR_NAME);
         }
+        configuration.setCurrentVariableName(Configuration.CONTEXT_VAR_NAME);
       }
+      return;
     }
-    if (myCurrentVariableCallback != null && caret) {
-      myCurrentVariableCallback.accept(Configuration.CONTEXT_VAR_NAME);
+    final String variableName = variableRange.subSequence(patternText).toString();
+    final NamedScriptableDefinition variable = configuration.findVariable(variableName);
+    final boolean newDialog = Registry.is("ssr.use.new.search.dialog");
+    String filterText = StringUtil.escapeXmlEntities(getShortParamString(variable, !newDialog));
+    if (!editor.isViewer() && !variableName.equals(configuration.getCurrentVariableName()) && newDialog) {
+      filterText =  appendLinkText(filterText, variableName);
     }
+    final boolean replacementVariable =
+      variable instanceof ReplacementVariableDefinition || variable == null && configuration instanceof ReplaceConfiguration;
+    final String currentVariableName = replacementVariable
+                                       ? variableName + ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX
+                                       : variableName;
+    if (caret) {
+      if (myCurrentVariableCallback != null) {
+        myCurrentVariableCallback.accept(currentVariableName);
+      }
+      configuration.setCurrentVariableName(currentVariableName);
+    }
+    if (!filterText.isEmpty()) {
+      final LogicalPosition toolTipPosition =
+        new LogicalPosition(position.line, variableRange.getStartOffset() +
+                                           ((variableRange.getEndOffset() - variableRange.getStartOffset()) >> 1));
+      showTooltip(editor, toolTipPosition, filterText);
+    }
+  }
 
-    if (variableName != null && !text.isEmpty()) {
-        showTooltip(editor, start, end + 1, text);
-    }
+  @NotNull
+  static String appendLinkText(String text, String variableName) {
+    final String linkColor = ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.linkColor());
+    return text + "<br><a style=\"color:" + linkColor + "\" href=\"#ssr_edit_filters/" + variableName + "\">Edit filters</a>";
   }
 
   private void checkModelValidity() {
     final Document document = editor.getDocument();
     if (modificationTimeStamp != document.getModificationStamp()) {
       variables.clear();
-      variables.addAll(TemplateImplUtil.parseVariables(document.getCharsSequence()).keySet());
+      variables.addAll(TemplateImplUtil.parseVariableNames(document.getCharsSequence()));
       modificationTimeStamp = document.getModificationStamp();
       updateEditorInlays();
     }
@@ -140,16 +143,12 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
   }
 
   @NotNull
-  static String getShortParamString(NamedScriptableDefinition namedScriptableDefinition, boolean editLink) {
-    final boolean verbose = !Registry.is("ssr.use.new.search.dialog");
+  static String getShortParamString(NamedScriptableDefinition namedScriptableDefinition, boolean verbose) {
     if (namedScriptableDefinition == null) {
       return verbose ? SSRBundle.message("no.constraints.specified.tooltip.message") : "";
     }
 
     final StringBuilder buf = new StringBuilder();
-
-    final String inactiveTextColor = ColorUtil.toHtmlColor(UIUtil.getInactiveTextColor());
-    final String linkColor = ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.linkColor());
     if (namedScriptableDefinition instanceof MatchVariableConstraint) {
       final MatchVariableConstraint constraint = (MatchVariableConstraint)namedScriptableDefinition;
       final String name = constraint.getName();
@@ -166,38 +165,35 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
       if (!constraint.getRegExp().isEmpty()) {
         append(buf, SSRBundle.message("text.tooltip.message",
                                       constraint.isInvertRegExp() ? 1 : 0,
-                                      StringUtil.escapeXmlEntities(constraint.getRegExp()),
+                                      constraint.getRegExp(),
                                       constraint.isWholeWordsOnly() ? 1 : 0,
-                                      constraint.isWithinHierarchy() ? 1 : 0,
-                                      inactiveTextColor));
+                                      constraint.isWithinHierarchy() ? 1 : 0));
       }
       else if (constraint.isWithinHierarchy()) {
         append(buf, SSRBundle.message("hierarchy.tooltip.message"));
       }
       if (!StringUtil.isEmpty(constraint.getReferenceConstraint())) {
-        final String text = StringUtil.escapeXmlEntities(StringUtil.unquoteString(constraint.getReferenceConstraint()));
+        final String text = StringUtil.unquoteString(constraint.getReferenceConstraint());
         append(buf, SSRBundle.message("reference.target.tooltip.message", constraint.isInvertReference() ? 1 : 0, text));
       }
 
       if (!constraint.getNameOfExprType().isEmpty()) {
         append(buf, SSRBundle.message("exprtype.tooltip.message",
                                       constraint.isInvertExprType() ? 1 : 0,
-                                      StringUtil.escapeXmlEntities(constraint.getNameOfExprType()),
-                                      constraint.isExprTypeWithinHierarchy() ? 1 : 0,
-                                      inactiveTextColor));
+                                      constraint.getNameOfExprType(),
+                                      constraint.isExprTypeWithinHierarchy() ? 1 : 0));
       }
 
       constraint.getNameOfFormalArgType();
       if (!constraint.getNameOfFormalArgType().isEmpty()) {
         append(buf, SSRBundle.message("expected.type.tooltip.message",
                                       constraint.isInvertFormalType() ? 1 : 0,
-                                      StringUtil.escapeXmlEntities(constraint.getNameOfFormalArgType()),
-                                      constraint.isFormalArgTypeWithinHierarchy() ? 1 : 0,
-                                      inactiveTextColor));
+                                      constraint.getNameOfFormalArgType(),
+                                      constraint.isFormalArgTypeWithinHierarchy() ? 1 : 0));
       }
 
       if (StringUtil.isNotEmpty(constraint.getWithinConstraint())) {
-        final String text = StringUtil.escapeXmlEntities(StringUtil.unquoteString(constraint.getWithinConstraint()));
+        final String text = StringUtil.unquoteString(constraint.getWithinConstraint());
         append(buf, SSRBundle.message("within.constraints.tooltip.message", constraint.isInvertWithinConstraint() ? 1 : 0, text));
       }
     }
@@ -207,16 +203,8 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
       append(buf, SSRBundle.message("script.tooltip.message"));
     }
 
-    if (buf.length() == 0 && !editLink && verbose) {
+    if (buf.length() == 0 && verbose) {
       buf.append(SSRBundle.message("no.constraints.specified.tooltip.message"));
-    }
-    if (editLink && !verbose && !Registry.is("ssr.use.editor.inlays.instead.of.tool.tips")) {
-      if (buf.length() > 0) buf.append("<br>");
-      buf.append("<a style=\"color:")
-        .append(linkColor)
-        .append("\" href=\"#ssr_edit_filters/")
-        .append(namedScriptableDefinition.getName())
-        .append("\">Edit filters</a>");
     }
     return buf.toString();
   }
@@ -226,28 +214,17 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     buf.append(str);
   }
 
-  private static void showTooltip(@NotNull Editor editor, final int start, int end, @NotNull String text) {
+  private static void showTooltip(@NotNull Editor editor, LogicalPosition position, @NotNull String text) {
     if (Registry.is("ssr.use.editor.inlays.instead.of.tool.tips") && Registry.is("ssr.use.new.search.dialog")) {
       return;
     }
     final Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-    final Point left = editor.logicalPositionToXY(editor.offsetToLogicalPosition(start));
-    final int documentLength = editor.getDocument().getTextLength();
-    if (end >= documentLength) end = documentLength;
-    final Point right = editor.logicalPositionToXY(editor.offsetToLogicalPosition(end));
+    final Point point = editor.logicalPositionToXY(position);
+    point.y += editor.getLineHeight();
 
-    final Point bestPoint = new Point(left.x + (right.x - left.x) / 2, right.y + editor.getLineHeight() / 2);
-
-    if (visibleArea.x > bestPoint.x) {
-      bestPoint.x = visibleArea.x;
-    }
-    else if (visibleArea.x + visibleArea.width < bestPoint.x) {
-      bestPoint.x = visibleArea.x + visibleArea.width - 5;
-    }
-
-    final Point p = SwingUtilities.convertPoint(editor.getContentComponent(), bestPoint,
+    final Point p = SwingUtilities.convertPoint(editor.getContentComponent(), point,
                                                 editor.getComponent().getRootPane().getLayeredPane());
-    final HintHint hint = new HintHint(editor, bestPoint)
+    final HintHint hint = new HintHint(editor, point)
       .setAwtTooltip(true)
       .setShowImmediately(true);
     TooltipController.getInstance().showTooltip(editor, p, text, visibleArea.width, false, SS_INFO_TOOLTIP_GROUP, hint);

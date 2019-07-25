@@ -2,6 +2,8 @@
 package com.intellij.internal.statistic.eventLog.fus
 
 import com.intellij.concurrency.JobScheduler
+import com.intellij.internal.statistic.beans.MetricEvent
+import com.intellij.internal.statistic.beans.newMetric
 import com.intellij.internal.statistic.collectors.fus.os.OsVersionUsageCollector
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
@@ -13,7 +15,9 @@ import java.time.OffsetDateTime
 import java.util.concurrent.TimeUnit
 
 class SystemStateMonitor : FeatureUsageStateEventTracker {
-  private val OS_GROUP = EventLogGroup("system.os", 2)
+  private val OS_GROUP = EventLogGroup("system.os", 3)
+
+  @Deprecated("This group will be removed in 2019.3 because the same information is recorded in SystemRuntimeCollector")
   private val JAVA_GROUP = EventLogGroup("system.java", 1)
 
   private val INITIAL_DELAY = 0
@@ -31,18 +35,24 @@ class SystemStateMonitor : FeatureUsageStateEventTracker {
   }
 
   private fun logSystemEvent() {
-    FUStateUsagesLogger.logStateEvent(OS_GROUP, getOSName(), getOSVersion())
-
     val data = FeatureUsageData().addVersion(Version(1, JavaVersion.current().feature, 0))
     FUStateUsagesLogger.logStateEvent(JAVA_GROUP, getJavaVendor(), data)
+
+    val osEvents: MutableList<MetricEvent> = ArrayList()
+
+    /** Record OS name in both old and new format to have a smooth transition on the server **/
+    val dataOS = newDataWithOsVersion()
+    osEvents.add(newMetric(getOSName(), dataOS))
+    osEvents.add(newMetric("os.name", dataOS.copy().addData("name", getOSName())))
 
     /** writing current os timezone as os.timezone event_id **/
     val currentZoneOffset = OffsetDateTime.now().offset
     val currentZoneOffsetFeatureUsageData = FeatureUsageData().addData("value", currentZoneOffset.toString())
-    FUStateUsagesLogger.logStateEvent(OS_GROUP, "os.timezone" , currentZoneOffsetFeatureUsageData)
+    osEvents.add(newMetric("os.timezone" , currentZoneOffsetFeatureUsageData))
+    FUStateUsagesLogger.logStateEvents(OS_GROUP, osEvents)
   }
 
-  private fun getOSVersion(): FeatureUsageData {
+  private fun newDataWithOsVersion(): FeatureUsageData {
     val osData = FeatureUsageData()
     if (SystemInfo.isLinux) {
       val linuxRelease = OsVersionUsageCollector.getLinuxRelease()

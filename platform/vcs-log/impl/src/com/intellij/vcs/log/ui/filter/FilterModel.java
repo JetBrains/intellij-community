@@ -1,8 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.filter;
 
-import com.intellij.openapi.util.Computable;
-import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
@@ -18,15 +16,12 @@ import java.util.function.Function;
 
 abstract class FilterModel<Filter> {
   @NotNull protected final MainVcsLogUiProperties myUiProperties;
-  @NotNull private final Computable<? extends VcsLogDataPack> myDataPackProvider;
   @NotNull private final Collection<Runnable> mySetFilterListeners = new ArrayList<>();
 
   @Nullable protected Filter myFilter;
 
-  FilterModel(@NotNull Computable<? extends VcsLogDataPack> provider,
-              @NotNull MainVcsLogUiProperties uiProperties) {
+  FilterModel(@NotNull MainVcsLogUiProperties uiProperties) {
     myUiProperties = uiProperties;
-    myDataPackProvider = provider;
   }
 
   void setFilter(@Nullable Filter filter) {
@@ -54,11 +49,6 @@ abstract class FilterModel<Filter> {
   @Nullable
   protected abstract Filter getFilterFromProperties();
 
-  @NotNull
-  VcsLogDataPack getDataPack() {
-    return myDataPackProvider.compute();
-  }
-
   void addSetFilterListener(@NotNull Runnable runnable) {
     mySetFilterListeners.add(runnable);
   }
@@ -83,10 +73,9 @@ abstract class FilterModel<Filter> {
     @NotNull private final VcsLogFilterCollection.FilterKey<? extends Filter> myFilterKey;
 
     SingleFilterModel(@NotNull VcsLogFilterCollection.FilterKey<? extends Filter> filterKey,
-                      @NotNull Computable<? extends VcsLogDataPack> provider,
                       @NotNull MainVcsLogUiProperties uiProperties,
                       @Nullable VcsLogFilterCollection filters) {
-      super(provider, uiProperties);
+      super(uiProperties);
       myFilterKey = filterKey;
 
       if (filters != null) {
@@ -130,10 +119,9 @@ abstract class FilterModel<Filter> {
 
     PairFilterModel(@NotNull VcsLogFilterCollection.FilterKey<? extends Filter1> filterKey1,
                     @NotNull VcsLogFilterCollection.FilterKey<? extends Filter2> filterKey2,
-                    @NotNull Computable<? extends VcsLogDataPack> provider,
                     @NotNull MainVcsLogUiProperties uiProperties,
                     @Nullable VcsLogFilterCollection filters) {
-      super(provider, uiProperties);
+      super(uiProperties);
       myFilterKey1 = filterKey1;
       myFilterKey2 = filterKey2;
 

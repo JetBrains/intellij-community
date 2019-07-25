@@ -54,6 +54,7 @@ from asyncio.tasks import (
     wait_for as wait_for,
     Task as Task,
 )
+from asyncio.base_events import BaseEventLoop as BaseEventLoop
 from asyncio.events import (
     AbstractEventLoopPolicy as AbstractEventLoopPolicy,
     AbstractEventLoop as AbstractEventLoop,
@@ -114,10 +115,10 @@ if sys.version_info >= (3, 7):
 # TODO: It should be possible to instantiate these classes, but mypy
 # currently disallows this.
 # See https://github.com/python/mypy/issues/1843
-SelectorEventLoop = ...  # type: Type[AbstractEventLoop]
+SelectorEventLoop: Type[AbstractEventLoop]
 if sys.platform == 'win32':
-    ProactorEventLoop = ...  # type: Type[AbstractEventLoop]
-DefaultEventLoopPolicy = ...  # type: Type[AbstractEventLoopPolicy]
+    ProactorEventLoop: Type[AbstractEventLoop]
+DefaultEventLoopPolicy: Type[AbstractEventLoopPolicy]
 
 # TODO: AbstractChildWatcher (UNIX only)
 

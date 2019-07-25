@@ -21,11 +21,11 @@
 
 #include "targetver.h"
 
+#include <cstdint>
 #include <fstream>
 #include <string>
 #include <unordered_set>
 #include <unordered_map>
-#include <allocators>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>

@@ -110,6 +110,11 @@ public abstract class XDebuggerTreeNode implements TreeNode {
     return myIcon;
   }
 
+  @Nullable
+  public Object getIconTag() {
+    return null;
+  }
+
   protected void fireNodeChanged() {
     myTree.getTreeModel().nodeChanged(this);
   }

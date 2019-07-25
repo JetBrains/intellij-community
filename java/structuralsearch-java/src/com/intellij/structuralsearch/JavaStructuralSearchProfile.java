@@ -11,7 +11,6 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -19,8 +18,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.JavaDummyHolder;
-import com.intellij.psi.impl.source.PsiCodeFragmentImpl;
-import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -485,7 +482,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public boolean shouldShowProblem(HighlightInfo highlightInfo, PsiFile file) {
+  public boolean shouldShowProblem(HighlightInfo highlightInfo, PsiFile file, PatternContext context) {
     if (!Registry.is("ssr.in.editor.problem.highlighting")) {
       return false;
     }
@@ -515,7 +512,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       return false;
     }
     final List<PsiStatement> children = PsiTreeUtil.getChildrenOfTypeAsList(file, PsiStatement.class);
-    if (children.size() == 1 && ((PsiCodeFragmentImpl)file).getContentElementType() == JavaElementType.STATEMENTS) {
+    if (children.size() == 1 && context == DEFAULT_CONTEXT) {
       final PsiStatement child = children.get(0);
       if (child == parent && (child instanceof PsiExpressionStatement || child instanceof PsiDeclarationStatement)) {
         // search for expression, type, annotation or symbol
@@ -658,10 +655,6 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     @Override
     public void visitErrorElement(PsiErrorElement element) {
       super.visitErrorElement(element);
-      if (Registry.is("ssr.in.editor.problem.highlighting") && Registry.is("ssr.use.new.search.dialog") &&
-          !ApplicationManager.getApplication().isUnitTestMode()) {
-        return;
-      }
       final PsiElement parent = element.getParent();
       final String errorDescription = element.getErrorDescription();
       if (parent instanceof PsiClass && "Identifier expected".equals(errorDescription)) {
@@ -687,7 +680,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
           return;
         }
       }
-      throw new MalformedPatternException(errorDescription);
+      throw new MalformedPatternException(element);
     }
 
     void setCurrent(PsiElement current) {

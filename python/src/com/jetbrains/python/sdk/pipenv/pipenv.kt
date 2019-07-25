@@ -389,6 +389,7 @@ class PipEnvPipFileWatcherComponent(val project: Project) : ProjectComponent {
               }
             }
             finally {
+              PythonSdkType.getSitePackagesDirectory(sdk)?.refresh(true, true)
               sdk.associatedModule?.baseDir?.refresh(true, false)
             }
           }
@@ -454,7 +455,7 @@ private fun parsePipFileLock(virtualFile: VirtualFile): PipFileLock? {
   }
 }
 
-private val Sdk.pipFileLock: VirtualFile?
+val Sdk.pipFileLock: VirtualFile?
   get() =
     associatedModulePath?.let { StandardFileSystems.local().findFileByPath(it)?.findChild(PIP_FILE_LOCK) }
 

@@ -429,6 +429,32 @@ public final class PyClassRefactoringUtil {
   }
 
   /**
+   * Forces the use of 'import as' when restoring references (i.e. if there are name clashes)
+   * @param node with encoded import
+   * @param asName new alias for import
+   */
+  public static void forceAsName(@NotNull PyReferenceExpression node, @NotNull String asName) {
+    if (node.getCopyableUserData(ENCODED_IMPORT) == null) {
+      LOG.warn("As name is forced on the referenceExpression, that has no encoded import. Forcing it will likely be ignored.");
+    }
+    node.putCopyableUserData(ENCODED_IMPORT_AS, asName);
+  }
+
+  public static void transferEncodedImports(@NotNull PyReferenceExpression source, @NotNull PyReferenceExpression target) {
+    target.putCopyableUserData(ENCODED_IMPORT, source.getCopyableUserData(ENCODED_IMPORT));
+    target.putCopyableUserData(ENCODED_IMPORT_AS, source.getCopyableUserData(ENCODED_IMPORT_AS));
+    target.putCopyableUserData(ENCODED_USE_FROM_IMPORT, source.getCopyableUserData(ENCODED_USE_FROM_IMPORT));
+
+    source.putCopyableUserData(ENCODED_IMPORT, null);
+    source.putCopyableUserData(ENCODED_IMPORT_AS, null);
+    source.putCopyableUserData(ENCODED_USE_FROM_IMPORT, null);
+  }
+
+  public static boolean hasEncodedTarget(@NotNull PyReferenceExpression node) {
+    return node.getCopyableUserData(ENCODED_IMPORT) != null;
+  }
+
+  /**
    * Updates the import statement if the given PSI element <em>has the same name</em> as one of the import elements of that statement.
    * It means that you should be careful it you actually want to update the source part of a "from import" statement, because in cases
    * like {@code from foo import foo} this method may do not what you expect.

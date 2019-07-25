@@ -97,13 +97,15 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     if (stepData != null) {
       stepData.stepInto(stepData.myCurrentVariant);
     }
-    computeVariants(handler, position)
-      .onSuccess(variants -> UIUtil.invokeLaterIfNeeded(() -> {
-                                                          if (!handleSimpleCases(handler, variants, session)) {
-                                                            choose(handler, variants, position, session, editor);
-                                                          }
-                                                        }))
-      .onError(throwable -> session.stepInto());
+    else {
+      computeVariants(handler, position)
+        .onSuccess(variants -> UIUtil.invokeLaterIfNeeded(() -> {
+          if (!handleSimpleCases(handler, variants, session)) {
+            choose(handler, variants, position, session, editor);
+          }
+        }))
+        .onError(throwable -> session.stepInto());
+    }
   }
 
   protected <V extends XSmartStepIntoVariant> Promise<List<V>> computeVariants(XSmartStepIntoHandler<V> handler, XSourcePosition position) {

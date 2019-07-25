@@ -224,6 +224,7 @@ public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
       }
       return true;
     });
+    if (above) Collections.reverse(result); // matters for inlays with equal priority
     Collections.sort(result, BLOCK_ELEMENTS_COMPARATOR);
     //noinspection unchecked
     return (List)result;

@@ -133,6 +133,11 @@ public class CloudGitChooseAccountStepImpl extends CloudGitChooseAccountStepBase
     myProjectDescriptor.setModules(modules);
   }
 
+  @Override
+  public CloudGitDeploymentDetector getDeploymentDetector() {
+    return super.getDeploymentDetector();
+  }
+
   private abstract class RootIterator {
 
     public void iterate() {

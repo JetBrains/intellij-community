@@ -115,7 +115,9 @@ public class CloudLoggingHandlerImpl implements CloudAgentLoggingHandler {
 
       @Override
       public void close() {
-        terminalHandler.close();
+        if (terminalHandler != null) {
+          terminalHandler.close();
+        }
       }
     };
   }

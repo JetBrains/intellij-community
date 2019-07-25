@@ -57,7 +57,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
       public void saveUrl(String url) {
         if (myInheritCompilerOutput.isSelected()) return;  //do not override settings if any
         getCompilerExtension().setCompilerOutputPath(url);
-        fireConfigurationChanged();
+        fireModuleConfigurationChanged();
       }
     });
     myTestsOutputPathPanel = createOutputPathPanel(ProjectBundle.message("module.paths.test.output.title"), new CommitPathRunnable() {
@@ -65,7 +65,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
       public void saveUrl(String url) {
         if (myInheritCompilerOutput.isSelected()) return; //do not override settings if any
         getCompilerExtension().setCompilerOutputPathForTests(url);
-        fireConfigurationChanged();
+        fireModuleConfigurationChanged();
       }
     });
 
@@ -74,7 +74,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
       @Override
       public void actionPerformed(final ActionEvent e) {
         getCompilerExtension().setExcludeOutput(myCbExcludeOutput.isSelected());
-        fireConfigurationChanged();
+        fireModuleConfigurationChanged();
       }
     });
 
@@ -130,6 +130,10 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     return panel;
   }
 
+  private void fireModuleConfigurationChanged() {
+    fireConfigurationChanged();
+  }
+
   private void updateOutputPathPresentation() {
     if (getCompilerExtension().isCompilerOutputPathInherited()) {
       ProjectConfigurable projectConfig = ProjectStructureConfigurable.getInstance(myProject).getProjectConfig();
@@ -170,7 +174,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     myCbExcludeOutput.setEnabled(enabled);
     getCompilerExtension().inheritCompilerOutputPath(!enabled);
     updateOutputPathPresentation();
-    fireConfigurationChanged();
+    fireModuleConfigurationChanged();
   }
 
   private CommitableFieldPanel createOutputPathPanel(final String title, final CommitPathRunnable commitPathRunnable) {

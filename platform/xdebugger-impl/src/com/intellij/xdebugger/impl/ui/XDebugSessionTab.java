@@ -13,7 +13,6 @@ import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.execution.ui.layout.impl.ViewImpl;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.idea.ActionsBundle;
@@ -37,6 +36,7 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.*;
+import com.intellij.xdebugger.impl.frame.XThreadsFramesView;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -97,7 +97,9 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     super(session.getProject(), "Debug", session.getSessionName(), GlobalSearchScope.allScope(session.getProject()));
 
     setSession(session, environment, icon);
-    myUi.addContent(createFramesContent(), 0, PlaceInGrid.left, false);
+
+    Content framesContent = Registry.is("debugger.new.frames.view") ? createNewFramesContent() : createFramesContent();
+    myUi.addContent(framesContent, 0, PlaceInGrid.left, false);
 
     if (Registry.is("debugger.new.threads.view")) {
       myUi.addContent(createThreadsContent(), 0, PlaceInGrid.right, true);
@@ -212,6 +214,16 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     registerView(DebuggerContentInfo.FRAME_CONTENT, framesView);
     Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, framesView.getMainPanel(),
                                                XDebuggerBundle.message("debugger.session.tab.frames.title"), null, framesView.getDefaultFocusedComponent());
+    framesContent.setCloseable(false);
+    return framesContent;
+  }
+
+  @NotNull
+  private Content createNewFramesContent() {
+    XThreadsFramesView framesView = new XThreadsFramesView(myProject);
+    registerView(DebuggerContentInfo.FRAME_CONTENT, framesView);
+    Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, framesView.getMainPanel(),
+      XDebuggerBundle.message("debugger.session.tab.frames.title"), null, framesView.getDefaultFocusedComponent());
     framesContent.setCloseable(false);
     return framesContent;
   }

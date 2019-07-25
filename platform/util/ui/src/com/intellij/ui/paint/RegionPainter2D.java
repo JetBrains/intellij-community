@@ -2,6 +2,7 @@
 package com.intellij.ui.paint;
 
 import com.intellij.util.ui.RegionPainter;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -12,6 +13,7 @@ import java.awt.*;
  * @author tav
  * @see RegionPainter
  */
+@FunctionalInterface
 public interface RegionPainter2D<T> {
   /**
    * Paints on the given {@link Graphics2D} object.
@@ -23,5 +25,5 @@ public interface RegionPainter2D<T> {
    * @param height height of the area to paint
    * @param object an optional configuration parameter
    */
-  void paint(Graphics2D g, double x, double y, double width, double height, @Nullable T object);
+  void paint(@NotNull Graphics2D g, double x, double y, double width, double height, @Nullable T object);
 }

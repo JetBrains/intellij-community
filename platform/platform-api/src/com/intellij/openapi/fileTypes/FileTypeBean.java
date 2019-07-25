@@ -4,7 +4,7 @@ package com.intellij.openapi.fileTypes;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.RequiredElement;
+import com.intellij.openapi.extensions.RequiredElement;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.util.ArrayList;
@@ -46,6 +46,13 @@ public class FileTypeBean extends AbstractExtensionPointBean {
    */
   @Attribute("fileNames")
   public String fileNames;
+
+  /**
+   * Semicolon-separated list of patterns (strings containing ? and * characters) to be associated with the file type.
+   */
+  @Attribute("patterns")
+  public String patterns;
+
 
   /**
    * Semicolon-separated list of exact file names (case insensitive) to be associated with the file type.

@@ -189,23 +189,7 @@ public class RadPropertyTable extends PropertyTable implements DataProvider, Com
 
     @Override
     public void performCopy(@NotNull DataContext dataContext) {
-      try {
-        Property property = getSelectionProperty();
-        Object value = getValue(property);
-        Transferable transferable;
-
-        if (value == null) {
-          transferable = new TextTransferable("");
-        }
-        else {
-          transferable = property.doCopy(myContainers.get(0), value);
-        }
-
-        CopyPasteManager.getInstance().setContents(transferable);
-      }
-      catch (Throwable e) {
-        myDesigner.showError("Copy property error", e);
-      }
+      copySelectedProperty();
     }
 
     @Override
@@ -216,6 +200,26 @@ public class RadPropertyTable extends PropertyTable implements DataProvider, Com
     @Override
     public boolean isCopyVisible(@NotNull DataContext dataContext) {
       return true;
+    }
+  }
+
+  private void copySelectedProperty() {
+    try {
+      Property property = getSelectionProperty();
+      Object value = getValue(property);
+      Transferable transferable;
+
+      if (value == null) {
+        transferable = new TextTransferable("");
+      }
+      else {
+        transferable = property.doCopy(myContainers.get(0), value);
+      }
+
+      CopyPasteManager.getInstance().setContents(transferable);
+    }
+    catch (Throwable e) {
+      myDesigner.showError("Copy property error", e);
     }
   }
 }

@@ -64,6 +64,8 @@ public class PyKnownDecoratorUtil {
     TYPING_OVERLOAD("typing." + PyNames.OVERLOAD),
     TYPING_RUNTIME("typing.runtime"),
     TYPING_RUNTIME_EXT("typing_extensions.runtime"),
+    TYPING_RUNTIME_CHECKABLE("typing.runtime_checkable"),
+    TYPING_RUNTIME_CHECKABLE_EXT("typing_extensions.runtime_checkable"),
     TYPING_FINAL("typing.final"),
     TYPING_FINAL_EXT("typing_extensions.final"),
 

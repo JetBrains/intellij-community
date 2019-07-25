@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.FoldRegion;
+import org.jetbrains.annotations.NotNull;
 
 class DisplayedFoldingAnchor {
   enum Type {
@@ -30,12 +31,14 @@ class DisplayedFoldingAnchor {
     Type(boolean singleLine) {this.singleLine = singleLine;}
   }
 
-  public final FoldRegion foldRegion;
-  public final int visualLine;
-  public final int foldRegionVisualLines;
-  public final Type type;
+  @NotNull
+  final FoldRegion foldRegion;
+  final int visualLine;
+  final int foldRegionVisualLines;
+  @NotNull
+  final Type type;
 
-  DisplayedFoldingAnchor(FoldRegion foldRegion, int visualLine, int foldRegionVisualLines, Type type) {
+  DisplayedFoldingAnchor(@NotNull FoldRegion foldRegion, int visualLine, int foldRegionVisualLines, @NotNull Type type) {
     this.foldRegion = foldRegion;
     this.visualLine = visualLine;
     this.foldRegionVisualLines = foldRegionVisualLines;

@@ -21,6 +21,8 @@ import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.frame.XValueWithInlinePresentation;
 import com.intellij.xdebugger.impl.frame.XVariablesView;
+import com.intellij.xdebugger.impl.reveal.RevealMemberValue;
+import com.intellij.xdebugger.impl.reveal.actions.XDebuggerRevealAction;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
@@ -291,5 +293,24 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   @Override
   public String toString() {
     return getName();
+  }
+
+  @Nullable
+  @Override
+  public Object getIconTag() {
+    if (!(myValueContainer instanceof RevealMemberValue)) {
+      return null;
+    }
+
+    if (!((RevealMemberValue) myValueContainer).canBeRevealed()) {
+      return null;
+    }
+
+    return new XDebuggerTreeNodeHyperlink(XDebuggerRevealAction.REVEAL_NAME) {
+      @Override
+      public void onClick(MouseEvent event) {
+        XDebuggerRevealAction.Companion.revealField(event, XValueNodeImpl.this);
+      }
+    };
   }
 }

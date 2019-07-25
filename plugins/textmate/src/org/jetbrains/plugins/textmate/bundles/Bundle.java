@@ -105,7 +105,7 @@ public class Bundle {
   }
 
 
-  public List<String> getExtensions(File file, Plist plist) {
+  public Collection<String> getExtensions(File file, Plist plist) {
     return plist.getPlistValue(Constants.FILE_TYPES_KEY, emptyList()).getStringArray();
   }
 

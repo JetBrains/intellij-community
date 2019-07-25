@@ -1,7 +1,11 @@
-def attach(port, host):
+def attach(port, host, protocol=''):
     try:
+        if protocol:
+            from _pydevd_bundle import pydevd_defaults
+            pydevd_defaults.PydevdCustomization.DEFAULT_PROTOCOL = protocol
+
         import pydevd
-        pydevd.stoptrace() #I.e.: disconnect if already connected
+        pydevd.stoptrace()  # I.e.: disconnect if already connected
         # pydevd.DebugInfoHolder.DEBUG_RECORD_SOCKET_READS = True
         # pydevd.DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS = 3
         # pydevd.DebugInfoHolder.DEBUG_TRACE_LEVEL = 3
@@ -16,4 +20,5 @@ def attach(port, host):
             patch_multiprocessing=False,
         )
     except:
-        import traceback;traceback.print_exc()
+        import traceback
+        traceback.print_exc()

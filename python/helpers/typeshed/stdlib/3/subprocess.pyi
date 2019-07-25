@@ -32,11 +32,11 @@ _ENV = Union[Mapping[bytes, _TXT], Mapping[Text, _TXT]]
 if sys.version_info >= (3, 5):
     class CompletedProcess:
         # morally: _CMD
-        args = ...  # type: Any
-        returncode = ...  # type: int
+        args: Any
+        returncode: int
         # morally: Optional[_TXT]
-        stdout = ...  # type: Any
-        stderr = ...  # type: Any
+        stdout: Any
+        stderr: Any
         def __init__(self, args: _CMD,
                      returncode: int,
                      stdout: Optional[_TXT] = ...,
@@ -229,32 +229,32 @@ else:
                      ) -> Any: ...  # morally: -> _TXT
 
 
-PIPE = ...  # type: int
-STDOUT = ...  # type: int
-DEVNULL = ...  # type: int
+PIPE: int
+STDOUT: int
+DEVNULL: int
 class SubprocessError(Exception): ...
 class TimeoutExpired(SubprocessError):
     def __init__(self, cmd: _CMD, timeout: float, output: Optional[_TXT] = ..., stderr: Optional[_TXT] = ...) -> None: ...
     # morally: _CMD
-    cmd = ...  # type: Any
-    timeout = ...  # type: float
+    cmd: Any
+    timeout: float
     # morally: Optional[_TXT]
-    output = ...  # type: Any
-    stdout = ...  # type: Any
-    stderr = ...  # type: Any
+    output: Any
+    stdout: Any
+    stderr: Any
 
 
 class CalledProcessError(Exception):
     returncode = 0
     # morally: _CMD
-    cmd = ...  # type: Any
+    cmd: Any
     # morally: Optional[_TXT]
-    output = ...  # type: Any
+    output: Any
 
     if sys.version_info >= (3, 5):
         # morally: Optional[_TXT]
-        stdout = ...  # type: Any
-        stderr = ...  # type: Any
+        stdout: Any
+        stderr: Any
 
     def __init__(self,
                  returncode: int,
@@ -263,10 +263,10 @@ class CalledProcessError(Exception):
                  stderr: Optional[_TXT] = ...) -> None: ...
 
 class Popen:
-    args = ...  # type: _CMD
-    stdin = ...  # type: IO[Any]
-    stdout = ...  # type: IO[Any]
-    stderr = ...  # type: IO[Any]
+    args: _CMD
+    stdin: IO[Any]
+    stdout: IO[Any]
+    stderr: IO[Any]
     pid = 0
     returncode = 0
 

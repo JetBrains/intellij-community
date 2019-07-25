@@ -6,10 +6,8 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.RequiredElement;
+import com.intellij.openapi.extensions.RequiredElement;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.IOException;
 
 /**
  * @author Konstantin Bulenkov

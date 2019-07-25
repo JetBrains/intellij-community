@@ -126,7 +126,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     setLocationRelativeTo(null);
     setMinimumSize(new Dimension(340, getMinimumSize().height));
 
-    if (Registry.is("suppress.focus.stealing") &&
+    if (UIUtil.SUPPRESS_FOCUS_STEALING &&
         Registry.is("suppress.focus.stealing.auto.request.focus") &&
         !ApplicationManager.getApplication().isActive()) {
       setAutoRequestFocus(false);
@@ -395,10 +395,6 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
 
     try {
       ourUpdatingTitle = true;
-
-      if (IdeFrameDecorator.isCustomDecorationActive()) {
-        frame.getRootPane().putClientProperty("Window.CustomDecoration.documentFile", currentFile);
-      }
 
       if (Registry.is("ide.show.fileType.icon.in.titleBar")) {
         frame.getRootPane().putClientProperty("Window.documentFile", currentFile);

@@ -58,7 +58,7 @@ public class ScopeViewPaneTest extends TestSourceBasedTestCase {
     XmlSerializerUtil.copyBean(new ProjectViewSharedSettings(), ProjectViewSharedSettings.Companion.getInstance());
   }
 
-  @Bombed(user = "SAM", month = Calendar.JULY, day = 1)
+  @Bombed(user = "SAM", year = 2020, month = Calendar.JANUARY, day = 10)
   public void testStructure() {
     final Project project = getProject();
     final ProjectViewImpl view = (ProjectViewImpl)ProjectView.getInstance(project);
@@ -393,7 +393,7 @@ public class ScopeViewPaneTest extends TestSourceBasedTestCase {
      }
    }
 
-  @Bombed(user = "SAM", year = 2020, month = Calendar.JANUARY, day = 1)
+  @Bombed(user = "SAM", year = 2020, month = Calendar.JANUARY, day = 10)
   public void testCompactEmptyDirectories() {
     final Project project = getProject();
     final ProjectViewImpl view = (ProjectViewImpl)ProjectView.getInstance(project);
@@ -471,7 +471,7 @@ public class ScopeViewPaneTest extends TestSourceBasedTestCase {
     Disposer.dispose(pane);
   }
 
-  @Bombed(user = "SAM", year = 2020, month = Calendar.JANUARY, day = 1)
+  @Bombed(user = "SAM", year = 2020, month = Calendar.JANUARY, day = 10)
   public void testFlattenPackages() {
     final Project project = getProject();
     final ProjectViewImpl view = (ProjectViewImpl)ProjectView.getInstance(project);

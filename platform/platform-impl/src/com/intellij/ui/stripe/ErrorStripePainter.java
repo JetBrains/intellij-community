@@ -17,6 +17,8 @@ package com.intellij.ui.stripe;
 
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.RegionPainter;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.AlphaComposite;
 import java.awt.Composite;
@@ -45,12 +47,12 @@ public class ErrorStripePainter extends RegionPainter.Image {
     this(single, Alignment.CENTER);
   }
 
-  public ErrorStripePainter(boolean single, Alignment style) {
+  ErrorStripePainter(boolean single, @Nullable Alignment style) {
     mySingleValue = single;
     myAlignment = style;
   }
 
-  public int getMaximalThickness() {
+  int getMaximalThickness() {
     return myMax;
   }
 
@@ -61,7 +63,7 @@ public class ErrorStripePainter extends RegionPainter.Image {
     }
   }
 
-  public int getMinimalThickness() {
+  int getMinimalThickness() {
     return myMin;
   }
 
@@ -73,7 +75,7 @@ public class ErrorStripePainter extends RegionPainter.Image {
     }
   }
 
-  public int getErrorStripeGap() {
+  int getErrorStripeGap() {
     return myGap;
   }
 
@@ -93,7 +95,7 @@ public class ErrorStripePainter extends RegionPainter.Image {
     return -1;
   }
 
-  public int getErrorStripeCount() {
+  int getErrorStripeCount() {
     return myArraySize;
   }
 
@@ -133,12 +135,12 @@ public class ErrorStripePainter extends RegionPainter.Image {
     if (value != null) value.set(null);
   }
 
-  public ErrorStripe getErrorStripe(int index) {
+  ErrorStripe getErrorStripe(int index) {
     Value value = getValue(index, false);
     return value == null ? null : value.get();
   }
 
-  public void setErrorStripe(int index, ErrorStripe stripe) {
+  void setErrorStripe(int index, ErrorStripe stripe) {
     Value value = getValue(index, stripe != null);
     if (value != null) value.set(stripe);
   }
@@ -159,7 +161,7 @@ public class ErrorStripePainter extends RegionPainter.Image {
   private int getOffset(int height, int thickness) {
     if (height > thickness) {
       if (myAlignment == Alignment.CENTER) return (height - thickness) / 2;
-      if (myAlignment == Alignment.BOTTOM) return (height - thickness);
+      if (myAlignment == Alignment.BOTTOM) return height - thickness;
     }
     return 0;
   }
@@ -231,7 +233,7 @@ public class ErrorStripePainter extends RegionPainter.Image {
   }
 
   @Override
-  public void paint(Graphics2D g, int x, int y, int width, int height, Object object) {
+  public void paint(@NotNull Graphics2D g, int x, int y, int width, int height, Object object) {
     myImageY = y;
     super.paint(g, x, y, width, height, object);
   }

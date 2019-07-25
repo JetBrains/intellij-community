@@ -55,15 +55,15 @@ def check_output(args: _CMD,
                  startupinfo: Any = ...,
                  creationflags: int = ...) -> bytes: ...
 
-PIPE = ...  # type: int
-STDOUT = ...  # type: int
+PIPE: int
+STDOUT: int
 
 class CalledProcessError(Exception):
     returncode = 0
     # morally: _CMD
-    cmd = ...  # type: Any
+    cmd: Any
     # morally: Optional[bytes]
-    output = ...  # type: Any
+    output: Any
 
     def __init__(self,
                  returncode: int,
@@ -71,9 +71,9 @@ class CalledProcessError(Exception):
                  output: Optional[bytes] = ...) -> None: ...
 
 class Popen:
-    stdin = ...  # type: Optional[IO[Any]]
-    stdout = ...  # type: Optional[IO[Any]]
-    stderr = ...  # type: Optional[IO[Any]]
+    stdin: Optional[IO[Any]]
+    stdout: Optional[IO[Any]]
+    stderr: Optional[IO[Any]]
     pid = 0
     returncode = 0
 
@@ -103,13 +103,15 @@ class Popen:
     def __enter__(self) -> Popen: ...
     def __exit__(self, type, value, traceback) -> bool: ...
 
+def list2cmdline(seq: Sequence[str]) -> str: ...  # undocumented
+
 # Windows-only: STARTUPINFO etc.
 
-STD_INPUT_HANDLE = ...  # type: Any
-STD_OUTPUT_HANDLE = ...  # type: Any
-STD_ERROR_HANDLE = ...  # type: Any
-SW_HIDE = ...  # type: Any
-STARTF_USESTDHANDLES = ...  # type: Any
-STARTF_USESHOWWINDOW = ...  # type: Any
-CREATE_NEW_CONSOLE = ...  # type: Any
-CREATE_NEW_PROCESS_GROUP = ...  # type: Any
+STD_INPUT_HANDLE: Any
+STD_OUTPUT_HANDLE: Any
+STD_ERROR_HANDLE: Any
+SW_HIDE: Any
+STARTF_USESTDHANDLES: Any
+STARTF_USESHOWWINDOW: Any
+CREATE_NEW_CONSOLE: Any
+CREATE_NEW_PROCESS_GROUP: Any

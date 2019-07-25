@@ -24,12 +24,15 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.diff.DiffMixin;
 import com.intellij.openapi.vcs.history.VcsRevisionDescription;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -70,26 +73,31 @@ public class ShowBaseRevisionAction extends AbstractVcsAction {
 
     @Override
     public void onSuccess() {
-      if (myProject.isDisposed() || ! myProject.isOpen()) return;
+      if (myProject.isDisposed() || !myProject.isOpen()) return;
 
       if (myDescription != null) {
         NotificationPanel panel = new NotificationPanel();
-        panel.setText(createMessage(myDescription, selectedFile));
+        panel.setText(createMessage(myProject, myDescription, selectedFile));
         final JBPopup message = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, panel.getLabel()).createPopup();
         if (vcsContext.getEditor() != null) {
           message.showInBestPositionFor(vcsContext.getEditor());
-        } else {
-          message.showCenteredInCurrentWindow(vcsContext.getProject());
+        }
+        else {
+          message.showCenteredInCurrentWindow(myProject);
         }
       }
     }
   }
 
-  private static String createMessage(VcsRevisionDescription description, final VirtualFile vf) {
-    return "<html><head>" + UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) + "</head><body>" +
-           VcsBundle.message("current.version.text", description.getAuthor(),
-                             DateFormatUtil.formatPrettyDateTime(description.getRevisionDate()), description.getCommitMessage(),
-                             description.getRevisionNumber().asString(), vf.getName()) + "</body></html>";
+  private static String createMessage(@NotNull Project project, @NotNull VcsRevisionDescription description, @NotNull VirtualFile vf) {
+    String commitMessage = IssueLinkHtmlRenderer.formatTextWithLinks(project, StringUtil.notNullize(description.getCommitMessage()));
+    String message = VcsBundle.message("current.version.text",
+                                       description.getAuthor(),
+                                       DateFormatUtil.formatPrettyDateTime(description.getRevisionDate()),
+                                       commitMessage,
+                                       description.getRevisionNumber().asString(),
+                                       vf.getName());
+    return "<html><head>" + UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) + "</head><body>" + message + "</body></html>";
   }
 
   @Override
@@ -106,6 +114,7 @@ public class ShowBaseRevisionAction extends AbstractVcsAction {
       myLabel = new JEditorPane(UIUtil.HTML_MIME, "");
       myLabel.setEditable(false);
       myLabel.setFont(UIUtil.getToolTipFont());
+      myLabel.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
 
       setBorder(JBUI.Borders.empty(1, 15));
 

@@ -124,6 +124,12 @@ fun <T : UElement> PsiElement?.findContaining(clazz: Class<T>): T? {
   return null
 }
 
+fun isPsiAncestor(ancestor: UElement, child: UElement): Boolean {
+  val ancestorPsi = ancestor.sourcePsi ?: return false
+  val childPsi = child.sourcePsi ?: return false
+  return PsiTreeUtil.isAncestor(ancestorPsi, childPsi, false)
+}
+
 fun UElement.isUastChildOf(probablyParent: UElement?, strict: Boolean = false): Boolean {
   tailrec fun isChildOf(current: UElement?, probablyParent: UElement): Boolean {
     return when (current) {

@@ -183,6 +183,11 @@ public class PluginManagerCore {
     }
   }
 
+  // For use in headless environment only
+  public static void dontLoadDisabledPlugins() {
+    ourDisabledPlugins = Collections.emptySet();
+  }
+
   /**
    * @deprecated Bad API, sorry. Please use {@link #isDisabled(String)} to check plugin's state,
    * {@link #enablePlugin(String)}/{@link #disablePlugin(String)} for state management,

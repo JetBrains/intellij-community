@@ -31,6 +31,7 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.psiutils.ClassUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -81,6 +82,11 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
       PsiClass accessObjectType = getAccessObjectType(qualifier);
       if (target instanceof PsiJvmMember) {
         checkAccess(sourceNode, (PsiJvmMember)target, accessObjectType);
+        if (!(target instanceof PsiClass)) {
+          if (accessObjectType != null) {
+            checkAccess(sourceNode, accessObjectType, null);
+          }
+        }
       }
     }
 
@@ -155,43 +161,57 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
     PsiClass memberClass = member.getContainingClass();
     if (memberClass == null) return false;
 
-    PsiElement sourcePsi = sourceNode.getSourcePsi();
-    UClass sourceClass = UastUtils.findContaining(sourcePsi, UClass.class);
-    if (sourceClass == null) return false;
-    return canAccessProtectedMember(member, memberClass, accessObjectType, member.hasModifierProperty(PsiModifier.STATIC),
-                                    sourceClass);
+    PsiClass contextClass = getContextClass(sourceNode, member instanceof PsiClass);
+    if (contextClass == null) return false;
+
+    return canAccessProtectedMember(member, memberClass, accessObjectType, member.hasModifierProperty(PsiModifier.STATIC), contextClass);
   }
 
   /**
-   * The implementation was copied from {@link com.intellij.psi.impl.source.resolve.JavaResolveUtil#canAccessProtectedMember} but uses UAST
-   * to find outer class as a workaround for bugs in Kotlin Light PSI (KT-30759, KT-30752)
+   * Returns {@code true} if protected {@code member} can be accessed from {@code contextClass} at runtime if code compiles successfully.
    */
   private static boolean canAccessProtectedMember(@NotNull PsiMember member, @NotNull PsiClass memberClass,
-                                                  @Nullable PsiClass accessObjectClass, boolean isStatic, @Nullable UClass contextClass) {
-    while (contextClass != null) {
-      PsiClass javaPsiClass = contextClass.getJavaPsi();
-      if (InheritanceUtil.isInheritorOrSelf(javaPsiClass, memberClass, true)) {
-        if (member instanceof PsiClass || isStatic || accessObjectClass == null
-            || InheritanceUtil.isInheritorOrSelf(accessObjectClass, javaPsiClass, true)) {
-          return true;
-        }
-      }
+                                                  @Nullable PsiClass accessObjectClass, boolean isStatic, @NotNull PsiClass contextClass) {
+    if (!ClassUtils.inSamePackage(memberClass, contextClass)) {
+      //in this case if the code compiles ok javac will generate required bridge methods so there will be no problems at runtime
+      return true;
+    }
 
-      contextClass = getOuterClass(contextClass);
+    /*
+     since classes are located in the same package javac won't generate bridge methods for members inherited by enclosing class, so
+     local and inner classes won't have access to protected methods inherited by enclosing class and therefore we shouldn't check
+     enclosing classes here like JavaResolveUtil.canAccessProtectedMember does.
+    */
+    if (InheritanceUtil.isInheritorOrSelf(contextClass, memberClass, true)) {
+      if (member instanceof PsiClass || isStatic || accessObjectClass == null
+          || InheritanceUtil.isInheritorOrSelf(accessObjectClass, contextClass, true)) {
+        return true;
+      }
     }
     return false;
   }
 
-  private static UClass getOuterClass(@NotNull UClass aClass) {
-    UElement uastParent = aClass.getUastParent();
-    if (uastParent == null) return null;
-    PsiElement sourcePsi = uastParent.getSourcePsi();
-    while (sourcePsi == null) {
-      uastParent = uastParent.getUastParent();
-      if (uastParent == null) return null;
-      sourcePsi = uastParent.getSourcePsi();
+  @Nullable
+  private static PsiClass getContextClass(@NotNull UElement sourceNode, boolean forClassReference) {
+    PsiElement sourcePsi = sourceNode.getSourcePsi();
+    UClass sourceClass = UastUtils.findContaining(sourcePsi, UClass.class);
+    if (sourceClass == null) return null;
+    if (isReferenceBelongsToEnclosingClass(sourceNode, sourceClass, forClassReference)) {
+      UClass parentClass = UastUtils.getContainingUClass(sourceClass);
+      return parentClass != null ? parentClass.getJavaPsi() : null;
     }
-    return UastUtils.findContaining(sourcePsi, UClass.class);
+    return sourceClass.getJavaPsi();
+  }
+
+  private static boolean isReferenceBelongsToEnclosingClass(@NotNull UElement sourceNode, @NotNull UClass sourceClass,
+                                                            boolean forClassReference) {
+    UElement parent = sourceClass.getUastParent();
+    if (parent instanceof UObjectLiteralExpression) {
+      if (((UCallExpression)parent).getValueArguments().stream().anyMatch(it -> UastUtils.isPsiAncestor(it, sourceNode))) {
+        return true;
+      }
+    }
+    return forClassReference && sourceClass.getUastSuperTypes().stream().anyMatch(it -> UastUtils.isPsiAncestor(it, sourceNode));
   }
 
   @Tag("modules-set")

@@ -345,16 +345,14 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
     else if (index == DATE_COLUMN) {
       // all dates have nearly equal sizes
-      return getFontMetrics(getTableFont().deriveFont(Font.BOLD)).stringWidth(DateFormatUtil.formatDateTime(new Date())) +
+      String dateSample = DateFormatUtil.formatDateTime(new Date());
+      return getFontMetrics(getTableFont().deriveFont(Font.BOLD)).stringWidth(dateSample) +
              myStringCellRenderer.getHorizontalTextPadding();
     }
     else if (index == HASH_COLUMN) {
-      if (getModel().getRowCount() <= 0) {
-        return column.getPreferredWidth();
-      }
       // all hashes have nearly equal sizes
-      String hash = getModel().getValueAt(0, HASH_COLUMN).toString();
-      return getFontMetrics(getTableFont().deriveFont(Font.BOLD)).stringWidth(hash) +
+      String hashSample = StringUtil.repeat("e", VcsLogUtil.SHORT_HASH_LENGTH);
+      return getFontMetrics(getTableFont().deriveFont(Font.BOLD)).stringWidth(hashSample) +
              myStringCellRenderer.getHorizontalTextPadding();
     }
     LOG.error("Can only calculate author, hash or date columns width from data, yet given column " + index);

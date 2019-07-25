@@ -8,5 +8,5 @@ class B(A):
         print(2)
 
 
-b = B()
-b.meth<caret>od()
+a = A()
+a.meth<caret>od()

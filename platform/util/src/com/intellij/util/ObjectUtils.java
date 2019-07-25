@@ -158,6 +158,12 @@ public class ObjectUtils {
     return obj == null ? null : function.fun(obj);
   }
 
+  public static <T> void consumeIfNotNull(@Nullable T obj, @NotNull Consumer<? super T> consumer) {
+    if (obj != null) {
+      consumer.consume(obj);
+    }
+  }
+
   public static <T> void consumeIfCast(@Nullable Object obj, @NotNull Class<T> clazz, final Consumer<? super T> consumer) {
     if (clazz.isInstance(obj)) {
       //noinspection unchecked

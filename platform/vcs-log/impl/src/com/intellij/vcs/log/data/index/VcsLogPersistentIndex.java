@@ -1,25 +1,16 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data.index;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationAction;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.EmptyConsumer;
@@ -41,7 +32,6 @@ import com.intellij.vcs.log.impl.VcsIndexableLogProvider;
 import com.intellij.vcs.log.impl.VcsLogIndexer;
 import com.intellij.vcs.log.statistics.VcsLogIndexCollector;
 import com.intellij.vcs.log.util.*;
-import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -607,7 +597,6 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
                                                   Math.max(limit + getIndexingLimit(),
                                                            (int)((time / (getIndexingLimit() * 60000) + 1) * getIndexingLimit())));
         indicator.cancel();
-        showIndexingNotification(limit);
       }
     }
 
@@ -618,59 +607,6 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     @Override
     public String toString() {
       return "IndexingRequest of " + myCommits.size() + " commits in " + myRoot.getName() + (myFull ? " (full)" : "");
-    }
-
-    private void showIndexingNotification(int limitMinutes) {
-      myIndexCollector.reportIndexingTooLongNotification();
-      AbstractVcs vcs = VcsUtil.findVcsByKey(myProject, myIndexers.get(myRoot).getSupportedVcs());
-      String vcsName = vcs != null ? vcs.getDisplayName() : "Vcs";
-      Notification notification = VcsNotifier.createNotification(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION, "",
-                                                                 vcsName +
-                                                                 " Log indexing was paused for '" + myRoot.getName() + "'" +
-                                                                 " as it took more than " + formatTime(limitMinutes),
-                                                                 NotificationType.INFORMATION, null);
-      notification.addAction(NotificationAction.createSimple("Resume", () -> {
-        myIndexCollector.reportResumeClick();
-        LOG.info("Resuming indexing for " + myRoot.getName());
-        if (myBigRepositoriesList.removeRepository(myRoot)) scheduleIndex(false);
-      }));
-      notification.setContextHelpAction(new DumbAwareAction("Why is it helpful?",
-                                                            "Indexing speeds up search and other operations in " +
-                                                            vcsName + " Log and in File History." +
-                                                            " Old style File History is shown if no index is available.",
-                                                            null) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-        }
-      });
-      Disposable disposable = Disposer.newDisposable();
-      Disposer.register(VcsLogPersistentIndex.this, disposable);
-      myBigRepositoriesList.addListener(() -> {
-        if (!myBigRepositoriesList.isBig(myRoot)) {
-          notification.expire();
-          Disposer.dispose(disposable);
-        }
-      }, disposable);
-      notification.whenExpired(() -> Disposer.dispose(disposable));
-      // if our bg thread is cancelled, calling VcsNotifier.getInstance in it will throw PCE
-      // so using invokeLater here
-      ApplicationManager.getApplication().invokeLater(() -> VcsNotifier.getInstance(myProject).notify(notification));
-    }
-
-    @NotNull
-    private String formatTime(int timeMinutes) {
-      if (timeMinutes > 60) {
-        String hours = formatTime(timeMinutes / 60, "hour");
-        timeMinutes = timeMinutes % 60;
-        if (timeMinutes == 0) return hours;
-        return hours + " " + formatTime(timeMinutes, "minute");
-      }
-      return formatTime(timeMinutes, "minute");
-    }
-
-    @NotNull
-    private String formatTime(int time, String name) {
-      return time + " " + StringUtil.pluralize(name, time);
     }
   }
 }

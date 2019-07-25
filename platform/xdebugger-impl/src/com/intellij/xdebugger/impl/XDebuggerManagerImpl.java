@@ -57,6 +57,7 @@ import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
+import com.intellij.xdebugger.impl.reveal.XDebuggerRevealManager;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
@@ -86,6 +87,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
   private final Project myProject;
   private final XBreakpointManagerImpl myBreakpointManager;
   private final XDebuggerWatchesManager myWatchesManager;
+  private final XDebuggerRevealManager myRevealManager;
   private final ExecutionPointHighlighter myExecutionPointHighlighter;
   private final Map<ProcessHandler, XDebugSessionImpl> mySessions = Collections.synchronizedMap(new LinkedHashMap<>());
   private final AtomicReference<XDebugSessionImpl> myActiveSession = new AtomicReference<>();
@@ -96,6 +98,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
     myProject = project;
     myBreakpointManager = new XBreakpointManagerImpl(project, this);
     myWatchesManager = new XDebuggerWatchesManager();
+    myRevealManager = new XDebuggerRevealManager();
     myExecutionPointHighlighter = new ExecutionPointHighlighter(project);
 
     MessageBusConnection messageBusConnection = messageBus.connect();
@@ -183,6 +186,11 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
 
   public XDebuggerWatchesManager getWatchesManager() {
     return myWatchesManager;
+  }
+
+  @NotNull
+  public XDebuggerRevealManager getRevealManager() {
+    return myRevealManager;
   }
 
   public Project getProject() {
@@ -342,6 +350,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
     XDebuggerState state = myState;
     myBreakpointManager.saveState(state.getBreakpointManagerState());
     myWatchesManager.saveState(state.getWatchesManagerState());
+    myRevealManager.saveState(state.getRevealManagerState());
     return state;
   }
 
@@ -354,6 +363,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
     myState = state;
     myBreakpointManager.loadState(state.getBreakpointManagerState());
     myWatchesManager.loadState(state.getWatchesManagerState());
+    myRevealManager.loadState(state.getRevealManagerState());
   }
 
   public void showExecutionPosition() {

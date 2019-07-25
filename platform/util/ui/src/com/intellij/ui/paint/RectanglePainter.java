@@ -3,6 +3,7 @@ package com.intellij.ui.paint;
 
 import com.intellij.ui.paint.LinePainter2D.StrokeType;
 import com.intellij.util.ui.RegionPainter;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -13,13 +14,13 @@ import java.awt.*;
 public enum RectanglePainter implements RegionPainter<Integer> {
   DRAW {
     @Override
-    public void paint(Graphics2D g, int x, int y, int width, int height, @Nullable Integer round) {
+    public void paint(@NotNull Graphics2D g, int x, int y, int width, int height, @Nullable Integer round) {
       paint2D(RectanglePainter2D.DRAW, g, x, y, width, height, round);
     }
   },
   FILL {
     @Override
-    public void paint(Graphics2D g, int x, int y, int width, int height, @Nullable Integer round) {
+    public void paint(@NotNull Graphics2D g, int x, int y, int width, int height, @Nullable Integer round) {
       paint2D(RectanglePainter2D.FILL, g, x, y, width, height, round);
     }
   };

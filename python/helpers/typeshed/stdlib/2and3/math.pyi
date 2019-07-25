@@ -5,13 +5,13 @@ from typing import Tuple, Iterable, SupportsFloat, SupportsInt
 
 import sys
 
-e = ...  # type: float
-pi = ...  # type: float
+e: float
+pi: float
 if sys.version_info >= (3, 5):
-    inf = ...  # type: float
-    nan = ...  # type: float
+    inf: float
+    nan: float
 if sys.version_info >= (3, 6):
-    tau = ...  # type: float
+    tau: float
 
 def acos(x: SupportsFloat) -> float: ...
 def acosh(x: SupportsFloat) -> float: ...

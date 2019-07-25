@@ -155,7 +155,7 @@ public class PaintUtil {
 
     int devValue = devValue(usrValue, scale, pm != null && rm == ROUND ? FLOOR : rm);
     if (pm != null && ParityMode.of(devValue) != pm) {
-      devValue += (rm == FLOOR) ? -1 : 1;
+      devValue += rm == FLOOR ? -1 : 1;
     }
     return devValue / scale;
   }
@@ -263,7 +263,7 @@ public class PaintUtil {
   @Nullable
   public static Shape alignClipToInt(@NotNull Graphics2D g, boolean alignH, boolean alignV, RoundingMode xyRM, RoundingMode whRM) {
     Shape clip = g.getClip();
-    if ((clip instanceof Rectangle2D) && isFractionalScale(g.getTransform())) {
+    if (clip instanceof Rectangle2D && isFractionalScale(g.getTransform())) {
       Rectangle2D rect = (Rectangle2D)clip;
       double x = rect.getX();
       double y = rect.getY();

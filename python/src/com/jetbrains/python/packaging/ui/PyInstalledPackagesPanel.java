@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.ui.ToggleActionButton;
@@ -34,9 +35,11 @@ import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import icons.PythonIcons;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -194,7 +197,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
   @Override
   @NotNull
   protected ToggleActionButton[] getExtraActions() {
-    final ToggleActionButton useCondaButton = new ToggleActionButton("Use Conda Package Manager", PythonIcons.Python.Anaconda) {
+    final ToggleActionButton useCondaButton = new DumbAwareToggleActionButton("Use Conda Package Manager", PythonIcons.Python.Anaconda) {
       @Override
       public boolean isSelected(AnActionEvent e) {
         final Sdk sdk = getSelectedSdk();
@@ -220,7 +223,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
       }
     };
 
-    final ToggleActionButton showEarlyReleasesButton = new ToggleActionButton("Show early releases", AllIcons.Actions.Show) {
+    final ToggleActionButton showEarlyReleasesButton = new DumbAwareToggleActionButton("Show Early Releases", AllIcons.Actions.Show) {
         @Override
         public boolean isSelected(AnActionEvent e) {
           return PyPackagingSettings.getInstance(myProject).earlyReleasesAsUpgrades;
@@ -234,5 +237,12 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
       };
 
     return new ToggleActionButton[]{useCondaButton, showEarlyReleasesButton};
+  }
+
+  private abstract static class DumbAwareToggleActionButton extends ToggleActionButton implements DumbAware {
+    private DumbAwareToggleActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text,
+                                        Icon icon) {
+      super(text, icon);
+    }
   }
 }

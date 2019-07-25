@@ -22,6 +22,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
   ]
   protected static final List<String> BUNDLED_PLUGIN_MODULES = [
     "intellij.java.plugin",
+    "intellij.java.ide.customization",
     "intellij.copyright",
     "intellij.properties",
     "intellij.terminal",

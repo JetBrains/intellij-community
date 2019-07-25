@@ -40,14 +40,14 @@ class ExtractSuperclassDialog extends JavaExtractSuperBaseDialog {
   private final InterfaceContainmentVerifier myContainmentVerifier = new InterfaceContainmentVerifier() {
     @Override
     public boolean checkedInterfacesContain(PsiMethod psiMethod) {
-      return PullUpProcessor.checkedInterfacesContain(myMemberInfos, psiMethod);
+      return PullUpProcessor.checkedInterfacesContain(getMemberInfos(), psiMethod);
     }
   };
 
   public interface Callback {
+
     boolean checkConflicts(ExtractSuperclassDialog dialog);
   }
-
   private final Callback myCallback;
 
   ExtractSuperclassDialog(Project project, PsiClass sourceClass, List<MemberInfo> selectedMembers, Callback callback) {
@@ -58,6 +58,10 @@ class ExtractSuperclassDialog extends JavaExtractSuperBaseDialog {
 
   InterfaceContainmentVerifier getContainmentVerifier() {
     return myContainmentVerifier;
+  }
+
+  private List<MemberInfo> getMemberInfos() {
+    return myMemberInfos;
   }
 
   @Override

@@ -12,6 +12,7 @@ import com.intellij.xdebugger.impl.breakpoints.BreakpointState
 import com.intellij.xdebugger.impl.breakpoints.LineBreakpointState
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState
 import com.intellij.xdebugger.impl.breakpoints.XExpressionState
+import com.intellij.xdebugger.impl.reveal.RevealItemInfo
 
 @Tag("breakpoint-manager")
 class BreakpointManagerState : BaseState() {
@@ -66,10 +67,19 @@ class WatchState : XExpressionState {
   constructor(expression: XExpression) : super(expression)
 }
 
+@Tag("reveal-manager")
+class RevealManagerState : BaseState() {
+    @get:XCollection(propertyElementName = "revealed-members")
+    var revealedMembersList by list<RevealItemInfo>()
+}
+
 internal class XDebuggerState : BaseState() {
   @get:Property(surroundWithTag = false)
   var breakpointManagerState by property(BreakpointManagerState())
 
   @get:Property(surroundWithTag = false)
   var watchesManagerState by property(WatchesManagerState())
+
+  @get:Property(surroundWithTag = false)
+  var revealManagerState by property(RevealManagerState())
 }

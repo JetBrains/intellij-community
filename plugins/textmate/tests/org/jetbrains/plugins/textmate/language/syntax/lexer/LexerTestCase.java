@@ -23,10 +23,7 @@ import org.junit.runners.Parameterized;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.openapi.util.io.FileUtilRt.getExtension;
 
@@ -71,8 +68,8 @@ abstract public class LexerTestCase extends UsefulTestCase {
     for (File grammarFile : bundle.getGrammarFiles()) {
       Plist plist = TestUtil.PLIST_READER.read(grammarFile);
       final String rootScope = mySyntaxTable.loadSyntax(plist);
-      final List<String> extensions = bundle.getExtensions(grammarFile, plist);
-      for (final String extension : extensions) {
+      Collection<String> extensions = bundle.getExtensions(grammarFile, plist);
+      for (String extension : extensions) {
         myLanguageDescriptors.put(extension, rootScope);
       }
       if (scope == null) {

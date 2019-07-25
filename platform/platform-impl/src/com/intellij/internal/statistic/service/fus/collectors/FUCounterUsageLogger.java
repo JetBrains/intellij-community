@@ -27,7 +27,7 @@ public class FUCounterUsageLogger {
    */
   private static final String REGISTERED = "registered";
   private static final String[] GENERAL_GROUPS = new String[]{
-    "lifecycle", "performance", "actions", "ui.dialogs", "ui.settings",
+    "event.log", "lifecycle", "performance", "actions", "ui.dialogs", "ui.settings",
     "toolwindow", "intentions", "toolbar", "run.configuration.exec",
     "file.types.usage", "productivity", "live.templates", "completion.postfix"
   };

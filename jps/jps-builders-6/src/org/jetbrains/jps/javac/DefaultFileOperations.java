@@ -8,7 +8,7 @@ import gnu.trove.TObjectByteHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -105,13 +105,13 @@ class DefaultFileOperations implements FileOperations {
 
   // returns null if the file is not a supported archive format that can be opened or the file does not exist
   @Override
-  public Archive openArchive(File root, final String contentEncoding) throws IOException {
+  public Archive openArchive(File root, final String contentEncoding, @NotNull final JavaFileManager.Location location) throws IOException {
     FileOperations.Archive arch = myArchiveCache.get(root);
     if (arch != null) {
       return arch == NULL_ARCHIVE ? null : arch;
     }
     try {
-      arch = new ZipArchive(root, contentEncoding);
+      arch = new ZipArchive(root, contentEncoding, location);
       myArchiveCache.put(root, arch);
       return arch;
     }
@@ -167,7 +167,7 @@ class DefaultFileOperations implements FileOperations {
       }
     });
 
-    ZipArchive(final File root, final String encodingName) throws IOException {
+    ZipArchive(final File root, final String encodingName, final JavaFileManager.Location location) throws IOException {
       myZip = new ZipFile(root, ZipFile.OPEN_READ);
       final Enumeration<? extends ZipEntry> entries = myZip.entries();
       while (entries.hasMoreElements()) {
@@ -185,7 +185,7 @@ class DefaultFileOperations implements FileOperations {
       myToFileObjectConverter = new Function<ZipEntry, JavaFileObject>() {
         @Override
         public JavaFileObject fun(ZipEntry zipEntry) {
-          return new ZipFileObject(root, myZip, zipEntry, encodingName);
+          return new ZipFileObject(root, myZip, zipEntry, encodingName, location);
         }
       };
     }

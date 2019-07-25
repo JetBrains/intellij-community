@@ -153,7 +153,7 @@ service PythonConsoleBackendService {
    */
   void changeVariable(1: string evaluationExpression, 2: string value),
 
-  void connectToDebugger(1: i32 localPort, 2: map<string, bool> opts, 3: map<string, string> extraEnvs),
+  void connectToDebugger(1: i32 localPort, 2: string host, 3: map<string, bool> opts, 4: map<string, string> extraEnvs),
 
   void interrupt(),
 

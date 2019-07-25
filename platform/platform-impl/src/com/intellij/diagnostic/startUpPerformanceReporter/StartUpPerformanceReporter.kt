@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -168,7 +169,7 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
 
     lastReport = stringWriter.buffer.substring(logPrefix.length).toByteArray()
 
-    if (SystemProperties.getBooleanProperty("idea.log.perf.stats", true)) {
+    if (SystemProperties.getBooleanProperty("idea.log.perf.stats", ApplicationManager.getApplication().isInternal || ApplicationInfoEx.getInstanceEx().build.isSnapshot)) {
       stringWriter.write("\n=== Stop: StartUp Measurement ===")
       LOG.info(stringWriter.toString())
     }

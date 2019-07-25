@@ -1,15 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.ExpandableItemsHandler;
-import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.ImmediateFullValueEvaluator;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
+import com.intellij.xdebugger.impl.reveal.XDebuggerRevealManager;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -30,6 +29,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
   private boolean myHaveLink;
   private int myLinkOffset;
   private int myLinkWidth;
+  private Object myIconTag;
 
   private final MyLongTextHyperlink myLongTextLink = new MyLongTextHyperlink();
 
@@ -50,7 +50,8 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
     myLink.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
     XDebuggerTreeNode node = (XDebuggerTreeNode)value;
     node.appendToComponent(this);
-    setIcon(node.getIcon());
+    updateIcon(node);
+    myIconTag = node.getIconTag();
 
     Rectangle treeVisibleRect = tree.getParent() instanceof JViewport ? ((JViewport)tree.getParent()).getViewRect() : tree.getVisibleRect();
     int rowX = getNodeRowX(tree, row);
@@ -79,6 +80,12 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
       }
     }
     putClientProperty(ExpandableItemsHandler.RENDERER_DISABLED, myHaveLink);
+  }
+
+  private void updateIcon(XDebuggerTreeNode node) {
+    Icon icon = node instanceof XValueNodeImpl && node.getTree().getRevealManager().isItemRevealed((XValueNodeImpl)node) ?
+                AllIcons.Debugger.Reveal.RevealOn : node.getIcon();
+    setIcon(icon);
   }
 
   private void setupLinkDimensions(Rectangle treeVisibleRect, int rowX) {
@@ -131,9 +138,19 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
   @Override
   public Object getFragmentTagAt(int x) {
     if (myHaveLink) {
-      return myLink.getFragmentTagAt(x - myLinkOffset);
+      Object linkTag = myLink.getFragmentTagAt(x - myLinkOffset);
+      if (linkTag != null) {
+        return linkTag;
+      }
     }
-    return super.getFragmentTagAt(x);
+    Object baseFragment = super.getFragmentTagAt(x);
+    if (baseFragment != null) {
+      return baseFragment;
+    }
+    if (myIconTag != null && findFragmentAt(x) == FRAGMENT_ICON) {
+      return myIconTag;
+    }
+    return null;
   }
 
   private static class MyColoredTreeCellRenderer extends ColoredTreeCellRenderer {

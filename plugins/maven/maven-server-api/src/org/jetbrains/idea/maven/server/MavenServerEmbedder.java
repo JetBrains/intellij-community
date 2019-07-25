@@ -25,6 +25,7 @@ import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
+import org.jetbrains.idea.maven.server.security.MavenToken;
 
 public interface MavenServerEmbedder extends Remote {
   String MAVEN_EMBEDDER_VERSION = "idea.maven.embedder.version";
@@ -36,43 +37,43 @@ public interface MavenServerEmbedder extends Remote {
                  @NotNull MavenServerConsole console,
                  @NotNull MavenServerProgressIndicator indicator,
                  boolean alwaysUpdateSnapshots,
-                 @Nullable Properties userProperties) throws RemoteException;
+                 @Nullable Properties userProperties, MavenToken token) throws RemoteException;
 
-  void customizeComponents() throws RemoteException;
+  void customizeComponents(MavenToken token) throws RemoteException;
 
   @NotNull
   List<String> retrieveAvailableVersions(@NotNull String groupId,
                                          @NotNull String artifactId,
-                                         @NotNull List<MavenRemoteRepository> remoteRepositories)
+                                         @NotNull List<MavenRemoteRepository> remoteRepositories, MavenToken token)
     throws RemoteException;
 
 
   @NotNull
   Collection<MavenServerExecutionResult> resolveProject(@NotNull Collection<File> files,
                                                         @NotNull Collection<String> activeProfiles,
-                                                        @NotNull Collection<String> inactiveProfiles) throws RemoteException,
-                                                                                                 MavenServerProcessCanceledException;
+                                                        @NotNull Collection<String> inactiveProfiles, MavenToken token) throws RemoteException,
+                                                                                                                         MavenServerProcessCanceledException;
 
   @Nullable
   String evaluateEffectivePom(@NotNull File file,
                               @NotNull List<String> activeProfiles,
-                              @NotNull List<String> inactiveProfiles) throws RemoteException,
-                                                                             MavenServerProcessCanceledException;
+                              @NotNull List<String> inactiveProfiles, MavenToken token) throws RemoteException,
+                                                                                         MavenServerProcessCanceledException;
 
   @NotNull
   MavenArtifact resolve(@NotNull MavenArtifactInfo info,
-                        @NotNull List<MavenRemoteRepository> remoteRepositories) throws RemoteException,
-                                                                                        MavenServerProcessCanceledException;
+                        @NotNull List<MavenRemoteRepository> remoteRepositories, MavenToken token) throws RemoteException,
+                                                                                                    MavenServerProcessCanceledException;
 
   @NotNull
   List<MavenArtifact> resolveTransitively(@NotNull List<MavenArtifactInfo> artifacts,
-                                          @NotNull List<MavenRemoteRepository> remoteRepositories) throws RemoteException,
-                                                                                                          MavenServerProcessCanceledException;
+                                          @NotNull List<MavenRemoteRepository> remoteRepositories, MavenToken token) throws RemoteException,
+                                                                                                                      MavenServerProcessCanceledException;
 
   Collection<MavenArtifact> resolvePlugin(@NotNull MavenPlugin plugin,
                                           @NotNull List<MavenRemoteRepository> repositories,
                                           int nativeMavenProjectId,
-                                          boolean transitive) throws RemoteException, MavenServerProcessCanceledException;
+                                          boolean transitive, MavenToken token) throws RemoteException, MavenServerProcessCanceledException;
 
   @NotNull
   MavenServerExecutionResult execute(@NotNull File file,
@@ -81,16 +82,16 @@ public interface MavenServerEmbedder extends Remote {
                                      @NotNull List<String> goals,
                                      @NotNull final List<String> selectedProjects,
                                      boolean alsoMake,
-                                     boolean alsoMakeDependents) throws RemoteException, MavenServerProcessCanceledException;
+                                     boolean alsoMakeDependents, MavenToken token) throws RemoteException, MavenServerProcessCanceledException;
 
-  void reset() throws RemoteException;
+  void reset(MavenToken token) throws RemoteException;
 
-  void release() throws RemoteException;
+  void release(MavenToken token) throws RemoteException;
 
-  void clearCaches() throws RemoteException;
+  void clearCaches(MavenToken token) throws RemoteException;
 
-  void clearCachesFor(MavenId projectId) throws RemoteException;
+  void clearCachesFor(MavenId projectId, MavenToken token) throws RemoteException;
 
   @Nullable
-  MavenModel readModel(File file) throws RemoteException;
+  MavenModel readModel(File file, MavenToken token) throws RemoteException;
 }

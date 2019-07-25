@@ -4,10 +4,10 @@ from types import TracebackType
 
 _bytearray_like = Union[bytearray, mmap]
 
-DEFAULT_BUFFER_SIZE = ...  # type: int
+DEFAULT_BUFFER_SIZE: int
 
 class BlockingIOError(IOError):
-    characters_written = ...  # type: int
+    characters_written: int
 
 class UnsupportedOperation(ValueError, IOError): ...
 
@@ -59,25 +59,25 @@ class BufferedRWPair(_BufferedIOBase):
     def __enter__(self) -> BufferedRWPair: ...
 
 class BufferedRandom(_BufferedIOBase):
-    mode = ...  # type: str
-    name = ...  # type: str
-    raw = ...  # type: _IOBase
+    mode: str
+    name: str
+    raw: _IOBase
     def __init__(self, raw: _IOBase,
                  buffer_size: int = ...,
                  max_buffer_size: int = ...) -> None: ...
     def peek(self, n: int = ...) -> bytes: ...
 
 class BufferedReader(_BufferedIOBase):
-    mode = ...  # type: str
-    name = ...  # type: str
-    raw = ...  # type: _IOBase
+    mode: str
+    name: str
+    raw: _IOBase
     def __init__(self, raw: _IOBase, buffer_size: int = ...) -> None: ...
     def peek(self, n: int = ...) -> bytes: ...
 
 class BufferedWriter(_BufferedIOBase):
-    name = ...  # type: str
-    raw = ...  # type: _IOBase
-    mode = ...  # type: str
+    name: str
+    raw: _IOBase
+    mode: str
     def __init__(self, raw: _IOBase,
                  buffer_size: int = ...,
                  max_buffer_size: int = ...) -> None: ...
@@ -101,14 +101,14 @@ class _RawIOBase(_IOBase):
     def read(self, n: int = ...) -> str: ...
 
 class FileIO(_RawIOBase, BytesIO):
-    mode = ...  # type: str
-    closefd = ...  # type: bool
+    mode: str
+    closefd: bool
     def __init__(self, file: Union[str, int], mode: str = ..., closefd: bool = ...) -> None: ...
-    def readinto(self, buffer: _bytearray_like)-> int: ...
+    def readinto(self, buffer: _bytearray_like) -> int: ...
     def write(self, pbuf: str) -> int: ...
 
 class IncrementalNewlineDecoder(object):
-    newlines = ...  # type: Union[str, unicode]
+    newlines: Union[str, unicode]
     def __init__(self, decoder, translate, z=...) -> None: ...
     def decode(self, input, final) -> Any: ...
     def getstate(self) -> Tuple[Any, int]: ...
@@ -118,10 +118,10 @@ class IncrementalNewlineDecoder(object):
 
 # Note: In the actual _io.py, _TextIOBase inherits from _IOBase.
 class _TextIOBase(TextIO):
-    errors = ...  # type: Optional[str]
+    errors: Optional[str]
     # TODO: On _TextIOBase, this is always None. But it's unicode/bytes in subclasses.
-    newlines = ...  # type: Union[None, unicode, bytes]
-    encoding = ...  # type: str
+    newlines: Union[None, unicode, bytes]
+    encoding: str
     @property
     def closed(self) -> bool: ...
     def _checkClosed(self) -> None: ...
@@ -150,7 +150,7 @@ class _TextIOBase(TextIO):
     def __iter__(self: _T) -> _T: ...
 
 class StringIO(_TextIOBase):
-    line_buffering = ...  # type: bool
+    line_buffering: bool
     def __init__(self,
                  initial_value: Optional[unicode] = ...,
                  newline: Optional[unicode] = ...) -> None: ...
@@ -163,10 +163,10 @@ class StringIO(_TextIOBase):
     def getvalue(self) -> unicode: ...
 
 class TextIOWrapper(_TextIOBase):
-    name = ...  # type: str
-    line_buffering = ...  # type: bool
-    buffer = ...  # type: BinaryIO
-    _CHUNK_SIZE = ...  # type: int
+    name: str
+    line_buffering: bool
+    buffer: BinaryIO
+    _CHUNK_SIZE: int
     def __init__(self, buffer: IO,
                  encoding: Optional[Text] = ...,
                  errors: Optional[Text] = ...,

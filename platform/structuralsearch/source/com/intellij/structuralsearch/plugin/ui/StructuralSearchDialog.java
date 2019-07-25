@@ -10,6 +10,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -111,7 +112,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   @NonNls private static final String FILTERS_VISIBLE_STATE = "structural.search.filters.visible";
 
   public static final Key<StructuralSearchDialog> STRUCTURAL_SEARCH_DIALOG = Key.create("STRUCTURAL_SEARCH_DIALOG");
-  public static final Key<Boolean> STRUCTURAL_SEARCH = Key.create("STRUCTURAL_SEARCH");
+  public static final Key<String> STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID = Key.create("STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID");
   public static final String USER_DEFINED = SSRBundle.message("new.template.defaultname");
 
   private final SearchContext mySearchContext;
@@ -196,7 +197,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
     assert profile != null;
     final Document document = UIUtil.createDocument(getProject(), myFileType, myDialect, myPatternContext, "", profile);
-    document.putUserData(STRUCTURAL_SEARCH, Boolean.TRUE);
+    document.putUserData(STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID, (myPatternContext == null) ? "" : myPatternContext.getId());
 
     final EditorTextField textField = new EditorTextField(document, getProject(), myFileType, false, false) {
       @Override
@@ -542,11 +543,12 @@ public class StructuralSearchDialog extends DialogWrapper {
           final Document searchDocument =
             UIUtil.createDocument(getProject(), myFileType, myDialect, myPatternContext, mySearchCriteriaEdit.getText(), profile);
           mySearchCriteriaEdit.setNewDocumentAndFileType(myFileType, searchDocument);
-          searchDocument.putUserData(STRUCTURAL_SEARCH, Boolean.TRUE);
+          final String contextId = (myPatternContext == null) ? "" : myPatternContext.getId();
+          searchDocument.putUserData(STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID, contextId);
           final Document replaceDocument =
             UIUtil.createDocument(getProject(), myFileType, myDialect, myPatternContext, myReplaceCriteriaEdit.getText(), profile);
           myReplaceCriteriaEdit.setNewDocumentAndFileType(myFileType, replaceDocument);
-          replaceDocument.putUserData(STRUCTURAL_SEARCH, Boolean.TRUE);
+          replaceDocument.putUserData(STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID, contextId);
           myFilterPanel.setProfile(profile);
           initiateValidation();
         }
@@ -756,7 +758,9 @@ public class StructuralSearchDialog extends DialogWrapper {
           return null;
         }
         catch (MalformedPatternException ex) {
-          reportMessage(SSRBundle.message("malformed.replacement.pattern.message", ex.getMessage()), true, myReplaceCriteriaEdit);
+          if (!ex.isErrorElement || !Registry.is("ssr.in.editor.problem.highlighting")) {
+            reportMessage(SSRBundle.message("malformed.replacement.pattern.message", ex.getMessage()), true, myReplaceCriteriaEdit);
+          }
           return null;
         }
       }
@@ -768,7 +772,9 @@ public class StructuralSearchDialog extends DialogWrapper {
       final String message = isEmpty(matchOptions.getSearchPattern())
                              ? null
                              : SSRBundle.message("this.pattern.is.malformed.message", (e.getMessage() != null) ? e.getMessage() : "");
-      reportMessage(message, true, mySearchCriteriaEdit);
+      if (!e.isErrorElement || !Registry.is("ssr.in.editor.problem.highlighting")) {
+        reportMessage(message, true, mySearchCriteriaEdit);
+      }
       return null;
     }
     catch (UnsupportedPatternException e) {
@@ -906,26 +912,23 @@ public class StructuralSearchDialog extends DialogWrapper {
 
   void securityCheck() {
     final MatchOptions matchOptions = myConfiguration.getMatchOptions();
+    int scripts = 0;
     for (String name : matchOptions.getVariableConstraintNames()) {
       final MatchVariableConstraint constraint = matchOptions.getVariableConstraint(name);
-      if (showSecurityMessage(constraint)) return;
+      if (constraint.getScriptCodeConstraint().length() > 2) scripts++;
     }
     final ReplaceOptions replaceOptions = myConfiguration.getReplaceOptions();
     if (replaceOptions != null) {
       for (ReplacementVariableDefinition variableDefinition : replaceOptions.getVariableDefinitions()) {
-        if (showSecurityMessage(variableDefinition)) return;
+        if (variableDefinition.getScriptCodeConstraint().length() > 2) scripts++;
       }
     }
-  }
-
-  private boolean showSecurityMessage(NamedScriptableDefinition constraint) {
-    if (constraint.getScriptCodeConstraint().length() <= 2) {
-      return false;
+    if (scripts > 0) {
+      UIUtil.SSR_NOTIFICATION_GROUP.createNotification(NotificationType.WARNING)
+        .setTitle(SSRBundle.message("import.template.script.warning.title"))
+        .setContent(SSRBundle.message("import.template.script.warning", ApplicationNamesInfo.getInstance().getFullProductName(), scripts))
+        .notify(mySearchContext.getProject());
     }
-    EdtInvocationManager.getInstance().invokeLater(
-      () -> reportMessage(SSRBundle.message("import.template.script.warning", ApplicationNamesInfo.getInstance().getFullProductName()),
-                          false, myOptionsToolbar));
-    return true;
   }
 
   public void showFilterPanel(String variableName) {

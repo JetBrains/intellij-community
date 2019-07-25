@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.application.options.colors.fileStatus.FileStatusColorsConfigurable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.ConfigurationException;
@@ -103,7 +102,7 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
 
     result.add(myGeneralPanel);
     result.add(new VcsBackgroundOperationsConfigurable(myProject));
-    boolean ignoreSettingsAvailable = ApplicationManager.getApplication().isInternal() || Registry.is("vcs.ignorefile.generation", true);
+    boolean ignoreSettingsAvailable = Registry.is("vcs.ignorefile.generation", true);
     if (!myProject.isDefault() && ignoreSettingsAvailable) {
       result.add(new IgnoredSettingsPanel(myProject));
     }

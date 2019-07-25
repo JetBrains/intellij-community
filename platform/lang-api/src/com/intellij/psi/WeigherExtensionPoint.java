@@ -20,7 +20,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.RequiredElement;
+import com.intellij.openapi.extensions.RequiredElement;
 import org.jetbrains.annotations.NotNull;
 
 /**

@@ -7,6 +7,7 @@ import com.intellij.lang.refactoring.InlineActionHandler
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.util.PsiTreeUtil
@@ -17,9 +18,13 @@ import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
+import com.jetbrains.python.psi.search.PyOverridingMethodsSearch
 import com.jetbrains.python.psi.search.PySuperMethodsSearch
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiFile
+import com.jetbrains.python.pyi.PyiUtil
+import com.jetbrains.python.sdk.PySdkUtil
+import com.jetbrains.python.sdk.PythonSdkType
 
 /**
  * @author Aleksei.Kniazev
@@ -27,7 +32,13 @@ import com.jetbrains.python.pyi.PyiFile
 class PyInlineFunctionHandler : InlineActionHandler() {
   override fun isEnabledForLanguage(l: Language?) = l is PythonLanguage
 
-  override fun canInlineElement(element: PsiElement?) = element is PyFunction && element.containingFile !is PyiFile
+  override fun canInlineElement(element: PsiElement?): Boolean {
+    if (element is PyFunction) {
+      val containingFile = if (element.containingFile is PyiFile) PyiUtil.getOriginalElement(element)?.containingFile else element.containingFile
+      return containingFile is PyFile
+    }
+    return false
+  }
 
   override fun inlineElement(project: Project?, editor: Editor?, element: PsiElement?) {
     if (project == null || editor == null || element !is PyFunction) return
@@ -37,13 +48,16 @@ class PyInlineFunctionHandler : InlineActionHandler() {
       element.isGenerator -> "refactoring.inline.function.generator"
       PyNames.INIT == element.name -> "refactoring.inline.function.constructor"
       PyBuiltinCache.getInstance(element).isBuiltin(element) -> "refactoring.inline.function.builtin"
+      isSpecialMethod(element) -> "refactoring.inline.function.special.method"
+      isUnderSkeletonDir(element) -> "refactoring.inline.function.skeleton.only"
       hasDecorators(element) -> "refactoring.inline.function.decorator"
       hasReferencesToSelf(element) -> "refactoring.inline.function.self.referrent"
       hasStarArgs(element) -> "refactoring.inline.function.star"
-      isOverride(element, project) -> "refactoring.inline.function.overridden"
+      overridesMethod(element, project) -> "refactoring.inline.function.overrides.method"
+      isOverridden(element) -> "refactoring.inline.function.is.overridden"
       functionScope.hasGlobals() -> "refactoring.inline.function.global"
       functionScope.hasNonLocals() -> "refactoring.inline.function.nonlocal"
-      functionScope.hasNestedScopes() -> "refactoring.inline.function.nested"
+      hasNestedFunction(element) -> "refactoring.inline.function.nested"
       hasNonExhaustiveIfs(element) -> "refactoring.inline.function.interrupts.flow"
       else -> null
     }
@@ -55,6 +69,12 @@ class PyInlineFunctionHandler : InlineActionHandler() {
       PyInlineFunctionDialog(project, editor, element, TargetElementUtil.findReference(editor)).show()
     }
   }
+
+  private fun isSpecialMethod(function: PyFunction): Boolean {
+    return function.containingClass != null && PyNames.getBuiltinMethods(LanguageLevel.forElement(function)).contains(function.name)
+  }
+
+  private fun hasNestedFunction(function: PyFunction): Boolean = SyntaxTraverser.psiTraverser(function.statementList).traverse().any { it is PyFunction }
 
   private fun hasNonExhaustiveIfs(function: PyFunction): Boolean {
     val returns = mutableListOf<PyReturnStatement>()
@@ -101,9 +121,13 @@ class PyInlineFunctionHandler : InlineActionHandler() {
 
   private fun hasDecorators(function: PyFunction): Boolean = function.decoratorList?.decorators?.isNotEmpty() == true
 
-  private fun isOverride(function: PyFunction, project: Project): Boolean {
+  private fun overridesMethod(function: PyFunction, project: Project): Boolean {
     return function.containingClass != null
            && PySuperMethodsSearch.search(function, TypeEvalContext.codeAnalysis(project, function.containingFile)).any()
+  }
+
+  private fun isOverridden(function: PyFunction): Boolean {
+    return function.containingClass != null && PyOverridingMethodsSearch.search(function, true).any()
   }
 
   private fun hasStarArgs(function: PyFunction): Boolean {
@@ -114,6 +138,12 @@ class PyInlineFunctionHandler : InlineActionHandler() {
 
   private fun hasReferencesToSelf(function: PyFunction): Boolean = SyntaxTraverser.psiTraverser(function.statementList)
     .any { it is PyReferenceExpression && it.reference.isReferenceTo(function) }
+
+  private fun isUnderSkeletonDir(function: PyFunction): Boolean {
+    val sdk = PythonSdkType.findPythonSdk(function.containingFile) ?: return false
+    val skeletonsDir = PySdkUtil.findSkeletonsDir(sdk) ?: return false
+    return VfsUtil.isAncestor(skeletonsDir, function.containingFile.virtualFile, true)
+  }
 
   companion object {
     @JvmStatic

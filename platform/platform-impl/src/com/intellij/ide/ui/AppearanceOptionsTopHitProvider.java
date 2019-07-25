@@ -22,6 +22,7 @@ public final class AppearanceOptionsTopHitProvider implements OptionsTopHitProvi
   private static final Collection<OptionDescription> ourOptions = ContainerUtil.immutableList(
     appearance("UI: " + messageIde("checkboox.cyclic.scrolling.in.lists"), "cycleScrolling"),
     appearance("UI: " + messageIde("checkbox.show.icons.in.quick.navigation"), "showIconInQuickNavigation"),
+    appearance("UI: " + messageIde("checkbox.show.tree.indent.guides"), "showTreeIndentGuides"),
     appearance("UI: " + messageIde("checkbox.position.cursor.on.default.button"), "moveMouseOnDefaultButton"),
     appearance("UI: Hide navigation popups on focus loss", "hideNavigationOnFocusLoss"),
     appearance("UI: Drag-n-Drop with ALT pressed only", "dndWithPressedAltOnly"),

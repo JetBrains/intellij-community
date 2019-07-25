@@ -282,7 +282,12 @@ public final class TreeUtil {
     }
   }
 
+  /**
+   * @deprecated use TreePathUtil#findCommonAncestor(TreePath...) instead
+   */
   @NotNull
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public static TreePath findCommonPath(@NotNull final TreePath[] treePaths) {
     LOG.assertTrue(areComponentsEqual(treePaths, 0));
     TreePath result = new TreePath(treePaths[0].getPathComponent(0));

@@ -80,11 +80,11 @@ def uuid3(namespace: UUID, name: str) -> UUID: ...
 def uuid4() -> UUID: ...
 def uuid5(namespace: UUID, name: str) -> UUID: ...
 
-NAMESPACE_DNS = ...  # type: UUID
-NAMESPACE_URL = ...  # type: UUID
-NAMESPACE_OID = ...  # type: UUID
-NAMESPACE_X500 = ...  # type: UUID
-RESERVED_NCS = ...  # type: str
-RFC_4122 = ...  # type: str
-RESERVED_MICROSOFT = ...  # type: str
-RESERVED_FUTURE = ...  # type: str
+NAMESPACE_DNS: UUID
+NAMESPACE_URL: UUID
+NAMESPACE_OID: UUID
+NAMESPACE_X500: UUID
+RESERVED_NCS: str
+RFC_4122: str
+RESERVED_MICROSOFT: str
+RESERVED_FUTURE: str

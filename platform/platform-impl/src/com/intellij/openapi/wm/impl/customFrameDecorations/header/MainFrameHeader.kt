@@ -24,7 +24,7 @@ import javax.swing.border.Border
 import javax.swing.event.ChangeListener
 
 class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
-  private val mySelectedEditorFilePath: CustomDecorationPath
+  private var mySelectedEditorFilePath: CustomDecorationPath
   private val myIdeMenu: IdeMenuBar
   private var changeListener: ChangeListener
 
@@ -48,7 +48,7 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
     val pane = JPanel(MigLayout("fillx, ins 0, novisualpadding", "[pref!][]"))
     pane.isOpaque = false
     setCustomFrameTopBorder({ myState != Frame.MAXIMIZED_VERT && myState != Frame.MAXIMIZED_BOTH }, {true})
-    mySelectedEditorFilePath = CustomDecorationPath()
+    mySelectedEditorFilePath = CustomDecorationPath(frame)
     relayoutFrameHeader(pane, true)
 
     val mainMenuUpdater = UISettingsListener {
@@ -68,6 +68,10 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
     }
   }
 
+  fun setProject(project: Project) {
+    mySelectedEditorFilePath.setProject(project)
+  }
+
   private fun relayoutFrameHeader(pane: JPanel, showMainMenu: Boolean) {
     removeAll()
     add(productIcon)
@@ -78,10 +82,6 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
     pane.add(mySelectedEditorFilePath.getView(), "center, growx, wmin 0, gapbefore $H_GAP, gapafter $H_GAP, gapbottom 1")
     add(pane, "wmin 0, growx")
     add(buttonPanes.getView(), "top, wmin pref")
-  }
-
-  fun setProject(project: Project) {
-    mySelectedEditorFilePath.setProject(project)
   }
 
   override fun updateActive() {

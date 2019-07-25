@@ -6,7 +6,9 @@ import com.intellij.internal.statistic.beans.newMetric
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.Version
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.lang.JavaVersion
 import java.lang.management.ManagementFactory
 import java.util.*
 
@@ -14,6 +16,10 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
 
   override fun getGroupId(): String {
     return "system.runtime"
+  }
+
+  override fun getVersion(): Int {
+    return 2
   }
 
   override fun getMetrics(): Set<MetricEvent> {
@@ -26,7 +32,11 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
       result.add(newMetric("garbage.collector", FeatureUsageData().addData("name", gc.name)))
     }
 
-    result.add(newMetric("jvm.bit", if (SystemInfo.is32Bit) "32" else "64"))
+    val jvmData = FeatureUsageData().
+      addVersion(Version(1, JavaVersion.current().feature, 0)).
+      addData("bit", if (SystemInfo.is32Bit) "32" else "64").
+      addData("vendor", getJavaVendor())
+    result.add(newMetric("jvm", jvmData))
     for (argument in ManagementFactory.getRuntimeMXBean().inputArguments) {
       val data = convertOptionToData(argument)
       if (data != null) {
@@ -34,6 +44,18 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
       }
     }
     return result
+  }
+
+  private fun getJavaVendor() : String {
+    return when {
+      SystemInfo.isJetBrainsJvm -> "JetBrains"
+      SystemInfo.isAppleJvm -> "Apple"
+      SystemInfo.isOracleJvm -> "Oracle"
+      SystemInfo.isSunJvm -> "Sun"
+      SystemInfo.isIbmJvm -> "IBM"
+      SystemInfo.isAzulJvm -> "Azul"
+      else -> "Other"
+    }
   }
 
   companion object {

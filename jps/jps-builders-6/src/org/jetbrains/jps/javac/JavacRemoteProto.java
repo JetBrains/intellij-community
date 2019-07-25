@@ -1229,7 +1229,7 @@ public final class JavacRemoteProto {
       /**
        * <code>repeated .org.jetbrains.javac.Message.Request.OutputGroup output = 7;</code>
        */
-      java.util.List<org.jetbrains.jps.javac.JavacRemoteProto.Message.Request.OutputGroup>
+      java.util.List<org.jetbrains.jps.javac.JavacRemoteProto.Message.Request.OutputGroup> 
           getOutputList();
       /**
        * <code>repeated .org.jetbrains.javac.Message.Request.OutputGroup output = 7;</code>
@@ -2397,7 +2397,7 @@ public final class JavacRemoteProto {
       /**
        * <code>repeated .org.jetbrains.javac.Message.Request.OutputGroup output = 7;</code>
        */
-      public java.util.List<? extends org.jetbrains.jps.javac.JavacRemoteProto.Message.Request.OutputGroupOrBuilder>
+      public java.util.List<? extends org.jetbrains.jps.javac.JavacRemoteProto.Message.Request.OutputGroupOrBuilder> 
           getOutputOrBuilderList() {
         return output_;
       }
@@ -5091,6 +5091,20 @@ public final class JavacRemoteProto {
          * <code>optional bytes content = 7;</code>
          */
         com.google.protobuf.ByteString getContent();
+
+        /**
+         * <code>optional string location = 8;</code>
+         */
+        boolean hasLocation();
+        /**
+         * <code>optional string location = 8;</code>
+         */
+        java.lang.String getLocation();
+        /**
+         * <code>optional string location = 8;</code>
+         */
+        com.google.protobuf.ByteString
+            getLocationBytes();
       }
       /**
        * Protobuf type {@code org.jetbrains.javac.Message.Response.OutputObject}
@@ -5108,6 +5122,7 @@ public final class JavacRemoteProto {
           className_ = "";
           sourceUri_ = "";
           content_ = com.google.protobuf.ByteString.EMPTY;
+          location_ = "";
         }
         /**
          * Protobuf enum {@code org.jetbrains.javac.Message.Response.OutputObject.Kind}
@@ -5514,6 +5529,57 @@ public final class JavacRemoteProto {
           content_ = getDefaultInstance().getContent();
         }
 
+        public static final int LOCATION_FIELD_NUMBER = 8;
+        private java.lang.String location_;
+        /**
+         * <code>optional string location = 8;</code>
+         */
+        public boolean hasLocation() {
+          return ((bitField0_ & 0x00000080) == 0x00000080);
+        }
+        /**
+         * <code>optional string location = 8;</code>
+         */
+        public java.lang.String getLocation() {
+          return location_;
+        }
+        /**
+         * <code>optional string location = 8;</code>
+         */
+        public com.google.protobuf.ByteString
+            getLocationBytes() {
+          return com.google.protobuf.ByteString.copyFromUtf8(location_);
+        }
+        /**
+         * <code>optional string location = 8;</code>
+         */
+        private void setLocation(
+            java.lang.String value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000080;
+          location_ = value;
+        }
+        /**
+         * <code>optional string location = 8;</code>
+         */
+        private void clearLocation() {
+          bitField0_ = (bitField0_ & ~0x00000080);
+          location_ = getDefaultInstance().getLocation();
+        }
+        /**
+         * <code>optional string location = 8;</code>
+         */
+        private void setLocationBytes(
+            com.google.protobuf.ByteString value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000080;
+          location_ = value.toStringUtf8();
+        }
+
         public void writeTo(com.google.protobuf.CodedOutputStream output)
                             throws java.io.IOException {
           if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -5536,6 +5602,9 @@ public final class JavacRemoteProto {
           }
           if (((bitField0_ & 0x00000040) == 0x00000040)) {
             output.writeBytes(7, content_);
+          }
+          if (((bitField0_ & 0x00000080) == 0x00000080)) {
+            output.writeString(8, getLocation());
           }
           unknownFields.writeTo(output);
         }
@@ -5572,6 +5641,10 @@ public final class JavacRemoteProto {
           if (((bitField0_ & 0x00000040) == 0x00000040)) {
             size += com.google.protobuf.CodedOutputStream
               .computeBytesSize(7, content_);
+          }
+          if (((bitField0_ & 0x00000080) == 0x00000080)) {
+            size += com.google.protobuf.CodedOutputStream
+              .computeStringSize(8, getLocation());
           }
           size += unknownFields.getSerializedSize();
           memoizedSerializedSize = size;
@@ -5961,6 +6034,52 @@ public final class JavacRemoteProto {
             return this;
           }
 
+          /**
+           * <code>optional string location = 8;</code>
+           */
+          public boolean hasLocation() {
+            return instance.hasLocation();
+          }
+          /**
+           * <code>optional string location = 8;</code>
+           */
+          public java.lang.String getLocation() {
+            return instance.getLocation();
+          }
+          /**
+           * <code>optional string location = 8;</code>
+           */
+          public com.google.protobuf.ByteString
+              getLocationBytes() {
+            return instance.getLocationBytes();
+          }
+          /**
+           * <code>optional string location = 8;</code>
+           */
+          public Builder setLocation(
+              java.lang.String value) {
+            copyOnWrite();
+            instance.setLocation(value);
+            return this;
+          }
+          /**
+           * <code>optional string location = 8;</code>
+           */
+          public Builder clearLocation() {
+            copyOnWrite();
+            instance.clearLocation();
+            return this;
+          }
+          /**
+           * <code>optional string location = 8;</code>
+           */
+          public Builder setLocationBytes(
+              com.google.protobuf.ByteString value) {
+            copyOnWrite();
+            instance.setLocationBytes(value);
+            return this;
+          }
+
           // @@protoc_insertion_point(builder_scope:org.jetbrains.javac.Message.Response.OutputObject)
         }
         private byte memoizedIsInitialized = 2;
@@ -6016,6 +6135,9 @@ public final class JavacRemoteProto {
               content_ = visitor.visitByteString(
                   hasContent(), content_,
                   other.hasContent(), other.content_);
+              location_ = visitor.visitString(
+                  hasLocation(), location_,
+                  other.hasLocation(), other.location_);
               if (visitor == com.google.protobuf.GeneratedMessageLite.MergeFromVisitor
                   .INSTANCE) {
                 bitField0_ |= other.bitField0_;
@@ -6088,6 +6210,12 @@ public final class JavacRemoteProto {
                     case 58: {
                       bitField0_ |= 0x00000040;
                       content_ = input.readBytes();
+                      break;
+                    }
+                    case 66: {
+                      java.lang.String s = input.readString();
+                      bitField0_ |= 0x00000080;
+                      location_ = s;
                       break;
                     }
                   }

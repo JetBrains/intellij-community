@@ -5,9 +5,7 @@ import com.intellij.history.LocalHistory
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiReference
-import com.intellij.psi.SyntaxTraverser
+import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
@@ -17,13 +15,13 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.containers.MultiMap
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PyNames
+import com.jetbrains.python.codeInsight.PyDunderAllReference
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
-import com.jetbrains.python.codeInsight.imports.PyImportOptimizer
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
-import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -52,6 +50,7 @@ class PyInlineFunctionProcessor(project: Project,
     val usagesAndImports = refUsages.get()
     val (imports, usages) = usagesAndImports.partition { PsiTreeUtil.getParentOfType(it.element, PyImportStatementBase::class.java) != null }
     val filteredUsages = usages.filter { usage ->
+      if (usage.reference is PyDunderAllReference) return@filter true
       val element = usage.element!!
       if (element.parent is PyDecorator) {
         if (!handleUsageError(element, "refactoring.inline.function.is.decorator", conflicts)) return false
@@ -94,11 +93,16 @@ class PyInlineFunctionProcessor(project: Project,
   override fun findUsages(): Array<UsageInfo> {
     if (myInlineThis) {
       val element = myReference!!.element as PyReferenceExpression
-      val import = PyResolveUtil.resolveLocally(ScopeUtil.getScopeOwner(element)!!, element.name!!).firstOrNull { it is PyImportElement }
-      return if (import != null) arrayOf(UsageInfo(element), UsageInfo(import)) else arrayOf(UsageInfo(element))
+      val localImport = PyResolveUtil.resolveLocally(ScopeUtil.getScopeOwner(element)!!, element.name!!).firstOrNull { it is PyImportElement }
+      return if (localImport != null) arrayOf(UsageInfo(element), UsageInfo(localImport)) else arrayOf(UsageInfo(element))
     }
 
-    return ReferencesSearch.search(myFunction, myRefactoringScope).asSequence()
+    // TODO: replace with PyRefactoringUtil#findUsages after PY-26881 and PY-36493 are fixed
+    var references = ReferencesSearch.search(myFunction, myRefactoringScope).findAll().asSequence()
+    PyiUtil.getPythonStub(myFunction)?.let { stub ->
+      references += ReferencesSearch.search(stub, myRefactoringScope).asSequence()
+    }
+    return references
       .distinct()
       .map(PsiReference::getElement)
       .map(::UsageInfo)
@@ -118,10 +122,22 @@ class PyInlineFunctionProcessor(project: Project,
 
   private fun doRefactor(usages: Array<out UsageInfo>) {
     val (unsortedRefs, imports) = usages.partition { PsiTreeUtil.getParentOfType(it.element, PyImportStatementBase::class.java) == null }
+    val (callRefs, dunderAll) = unsortedRefs.partition { it.reference !is PyDunderAllReference }
 
-    val references = unsortedRefs.sortedByDescending { usage ->
+    val references = callRefs.sortedByDescending { usage ->
       SyntaxTraverser.psiApi().parents(usage.element).asSequence().filter { it is PyCallExpression }.count()
     }
+
+    val typeEvalContext = TypeEvalContext.userInitiated(myProject, null)
+    val resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(typeEvalContext)
+
+    val selfUsed = myFunction.parameterList.parameters.firstOrNull()?.let { firstParam ->
+      if (!firstParam.isSelf) return@let false
+      return@let SyntaxTraverser.psiTraverser(myFunction.statementList).traverse()
+        .filter(PyReferenceExpression::class.java)
+        .filter { !it.isQualified }
+        .any { it.reference.isReferenceTo(firstParam) }
+    } ?: false
 
     val functionScope = ControlFlowCache.getScope(myFunction)
     PyClassRefactoringUtil.rememberNamedReferences(myFunction)
@@ -136,26 +152,63 @@ class PyInlineFunctionProcessor(project: Project,
 
       val callSite = PsiTreeUtil.getParentOfType(reference, PyCallExpression::class.java) ?: error("Unable to find call expression for ${reference.name}")
       val containingStatement = PsiTreeUtil.getParentOfType(callSite, PyStatement::class.java) ?: error("Unable to find statement for ${reference.name}")
+      val scopeAnchor = if (containingStatement is PyFunction) containingStatement else reference
 
-      val replacementFunction = myFunction.statementList.copy() as PyStatementList
+      val functionCopy = myFunction.copy() as PyFunction
+      functionCopy.typeComment?.delete()
+      PsiTreeUtil.getParentOfType(functionCopy.docStringExpression, PyStatement::class.java)?.delete()
+
+      val replacement = functionCopy.statementList
       val namesInOuterScope = PyRefactoringUtil.collectUsedNames(refScopeOwner)
+      val builtinCache = PyBuiltinCache.getInstance(reference)
 
       val argumentReplacements = mutableMapOf<PyReferenceExpression, PyExpression>()
-      val nameClashes = MultiMap.create<String, PyExpression>()
+      val nameClashes = mutableSetOf<String>()
+      val importAsTargets = mutableSetOf<String>()
+      val nameClashRefs = MultiMap.create<String, PyExpression>()
+      val importAsRefs = MultiMap.create<String, PyReferenceExpression>()
       val returnStatements = mutableListOf<PyReturnStatement>()
 
-      val mappedArguments = prepareArguments(callSite, declarations, generatedNames, reference, languageLevel)
+      val mappedArguments = prepareArguments(callSite, declarations, generatedNames, scopeAnchor, reference, languageLevel, resolveContext, selfUsed)
 
-      val builtinCache = PyBuiltinCache.getInstance(reference)
-      replacementFunction.accept(object : PyRecursiveElementVisitor() {
+      myFunction.statementList.accept(object : PyRecursiveElementVisitor() {
         override fun visitPyReferenceExpression(node: PyReferenceExpression) {
-          if (node.qualifier == null) {
-            val name = node.name
-            if (name in mappedArguments) {
-              argumentReplacements[node] = mappedArguments[name]!!
+          if (!node.isQualified) {
+            val name = node.name!!
+            if (name in namesInOuterScope && name !in mappedArguments) {
+              val resolved = node.reference.resolve()
+              val target = if (resolved is PyFunction && resolved.containingClass != null && resolved.name == PyNames.INIT) resolved.containingClass else resolved
+              if (!builtinCache.isBuiltin(target) && target !in PyResolveUtil.resolveLocally(refScopeOwner, name)) {
+                if (PyClassRefactoringUtil.hasEncodedTarget(node)) importAsTargets.add(name)
+                else nameClashes.add(name)
+              }
             }
-            else if (name in namesInOuterScope && !builtinCache.isBuiltin(node.reference.resolve())) {
-              nameClashes.putValue(name!!, node)
+          }
+          super.visitPyReferenceExpression(node)
+        }
+
+        override fun visitPyTargetExpression(node: PyTargetExpression) {
+          if (!node.isQualified) {
+            val name = node.name!!
+            if (name in namesInOuterScope && name !in mappedArguments && functionScope.containsDeclaration(name)) {
+              nameClashes.add(name)
+            }
+          }
+          super.visitPyTargetExpression(node)
+        }
+      })
+
+
+      replacement.accept(object : PyRecursiveElementVisitor() {
+        override fun visitPyReferenceExpression(node: PyReferenceExpression) {
+          if (!node.isQualified) {
+            val parentLambda = PsiTreeUtil.getParentOfType(node, PyLambdaExpression::class.java)
+            if (parentLambda == null  || parentLambda.parameterList.parameters.none { it.name == node.name }) {
+              when (val name = node.name) {
+                in mappedArguments -> argumentReplacements[node] = mappedArguments[name]!!
+                in nameClashes -> nameClashRefs.putValue(name!!, node)
+                in importAsTargets -> importAsRefs.putValue(name!!, node)
+              }
             }
           }
           super.visitPyReferenceExpression(node)
@@ -167,11 +220,8 @@ class PyInlineFunctionProcessor(project: Project,
         }
 
         override fun visitPyTargetExpression(node: PyTargetExpression) {
-          if (node.qualifier == null) {
-            val name = node.name
-            if (name in namesInOuterScope && name !in mappedArguments && functionScope.containsDeclaration(name)) {
-              nameClashes.putValue(name!!, node)
-            }
+          if (!node.isQualified && node.name in nameClashes) {
+            nameClashRefs.putValue(node.name, node)
           }
           super.visitPyTargetExpression(node)
         }
@@ -179,8 +229,8 @@ class PyInlineFunctionProcessor(project: Project,
 
       // Replacing
       argumentReplacements.forEach { (old, new) -> old.replace(new) }
-      nameClashes.entrySet().forEach { (name, elements) ->
-        val generated = generateUniqueAssignment(languageLevel, name, generatedNames, reference)
+      nameClashRefs.entrySet().forEach { (name, elements) ->
+        val generated = generateUniqueAssignment(languageLevel, name, generatedNames, scopeAnchor)
         elements.forEach {
             when (it) {
               is PyTargetExpression -> it.replace(generated.targets[0])
@@ -189,15 +239,24 @@ class PyInlineFunctionProcessor(project: Project,
           }
       }
 
+      importAsRefs.entrySet().forEach { (name, elements) ->
+        val newRef = generateUniqueAssignment(languageLevel, name, generatedNames, scopeAnchor).assignedValue as PyReferenceExpression
+        elements.forEach {
+          PyClassRefactoringUtil.transferEncodedImports(it, newRef)
+          PyClassRefactoringUtil.forceAsName(newRef, newRef.name!!)
+          it.replace(newRef)
+        }
+      }
 
       if (returnStatements.size == 1 && returnStatements[0].expression !is PyTupleExpression) {
         // replace single return with expression itself
         val statement = returnStatements[0]
-        callSite.replace(statement.expression!!)
+        val replaced = callSite.replace(statement.expression!!)
+        PyClassRefactoringUtil.restoreNamedReferences(replaced)
         statement.delete()
       }
       else if (returnStatements.isNotEmpty())  {
-        val newReturn = generateUniqueAssignment(languageLevel, "result", generatedNames, reference)
+        val newReturn = generateUniqueAssignment(languageLevel, "result", generatedNames, scopeAnchor)
         returnStatements.forEach {
           val copy = newReturn.copy() as PyAssignmentStatement
           copy.assignedValue!!.replace(it.expression!!)
@@ -206,14 +265,20 @@ class PyInlineFunctionProcessor(project: Project,
         callSite.replace(newReturn.assignedValue!!)
       }
 
-      CodeStyleManager.getInstance(myProject).reformat(replacementFunction, true)
+      CodeStyleManager.getInstance(myProject).reformat(replacement, true)
 
-      declarations.forEach { containingStatement.parent.addBefore(it, containingStatement) }
-      if (replacementFunction.firstChild != null) {
-        val statements = replacementFunction.statements
-        statements.asSequence()
-          .map { containingStatement.parent.addBefore(it, containingStatement) }
-          .forEach { PyClassRefactoringUtil.restoreNamedReferences(it) }
+      val insertElement = { elem: PsiElement -> containingStatement.parent.addBefore(elem, containingStatement) }
+
+      declarations.forEach { insertElement(it) }
+      if (replacement.firstChild != null) {
+        val children = SyntaxTraverser.psiApi().children(replacement).filter { it !is PsiWhiteSpace }.toList()
+        val statements = children.filterIsInstance<PyStatement>()
+        if (statements.size > 1 || statements.firstOrNull() !is PyPassStatement) {
+          children.asSequence()
+            .map { insertElement(it) }
+            .filterIsInstance<PyStatement>()
+            .forEach { PyClassRefactoringUtil.restoreNamedReferences(it) }
+        }
       }
 
       if (returnStatements.isEmpty()) {
@@ -226,69 +291,73 @@ class PyInlineFunctionProcessor(project: Project,
       }
     }
 
-    imports.forEach { PyClassRefactoringUtil.optimizeImports(it.element!!.containingFile!!) }
+    imports.asSequence()
+      .mapNotNull { it.element?.containingFile }
+      .distinct()
+      .forEach { PyClassRefactoringUtil.optimizeImports(it) }
 
     if (myRemoveDeclaration) {
+      val file = myFunction.containingFile
       val stubFunction = PyiUtil.getPythonStub(myFunction)
       if (stubFunction != null && stubFunction.isWritable) {
         stubFunction.delete()
       }
+      val typingOverloads = PyiUtil.getOverloads(myFunction, typeEvalContext)
+      if (typingOverloads.isNotEmpty()) {
+        typingOverloads.forEach { it.delete() }
+      }
       myFunction.delete()
+      PyClassRefactoringUtil.optimizeImports(file)
+      dunderAll.forEach { it.element?.delete() }
     }
   }
 
-  private fun prepareArguments(callSite: PyCallExpression, declarations: MutableList<PyAssignmentStatement>, generatedNames: MutableSet<String>,
-                               reference: PyReferenceExpression, languageLevel: LanguageLevel): Map<String, PyExpression> {
-    val context = PyResolveContext.noImplicits().withTypeEvalContext(TypeEvalContext.userInitiated(myProject, reference.containingFile))
+  private fun prepareArguments(callSite: PyCallExpression, declarations: MutableList<PyAssignmentStatement>, generatedNames: MutableSet<String>, scopeAnchor: PsiElement,
+                               reference: PyReferenceExpression, languageLevel: LanguageLevel, context: PyResolveContext, selfUsed: Boolean): Map<String, PyExpression> {
     val mapping = PyCallExpressionHelper.mapArguments(callSite, context).firstOrNull() ?: error("Can't map arguments for ${reference.name}")
     val mappedParams = mapping.mappedParameters
+    val firstImplicit = mapping.implicitParameters.firstOrNull()
 
-
-    val self = mapping.implicitParameters.firstOrNull()?.let { first ->
-      val implicitName = first.name!!
-      val selfReplacement = reference.qualifier?.let { qualifier ->
-        myFunctionClass?.let {
-          when {
-            qualifier is PyReferenceExpression && !qualifier.isQualified -> qualifier
-            else ->  {
-              val qualifierDeclaration = generateUniqueAssignment(languageLevel, myFunctionClass.name!!, generatedNames, reference)
-              val newRef = qualifierDeclaration.assignedValue!!.copy() as PyExpression
-              qualifierDeclaration.assignedValue!!.replace(qualifier)
-              declarations.add(qualifierDeclaration)
-              newRef
-            }
-          }
-        }
+    val self = firstImplicit?.let { first ->
+      val qualifier = reference.qualifier ?: error("Function $myFunction has first implicit parameter, but no qualifier")
+      val selfReplacement = when {
+        !selfUsed -> qualifier
+        qualifier is PyReferenceExpression && !qualifier.isQualified -> qualifier
+        else -> extractDeclaration(myFunctionClass?.name!!, qualifier, declarations, generatedNames, scopeAnchor, languageLevel).second
       }
-      mapOf(implicitName to selfReplacement!!)
+      mapOf(first.name!! to selfReplacement)
     } ?: emptyMap()
 
     val passedArguments = mappedParams.asSequence()
       .map { (arg, param) ->
         val argValue = if (arg is PyKeywordArgument) arg.valueExpression!! else arg
-        tryExtractDeclaration(param.name!!, argValue, declarations, generatedNames, reference, languageLevel)
+        tryExtractDeclaration(param.name!!, argValue, declarations, generatedNames, scopeAnchor, languageLevel)
       }
       .toMap()
 
     val defaultValues = myFunction.parameterList.parameters.asSequence()
       .filter { it.name !in passedArguments }
       .filter { it.hasDefaultValue() }
-      .map { tryExtractDeclaration(it.name!!, it.defaultValue!!, declarations, generatedNames, reference, languageLevel) }
+      .map { tryExtractDeclaration(it.name!!, it.defaultValue!!, declarations, generatedNames, scopeAnchor, languageLevel) }
       .toMap()
 
     return self + passedArguments + defaultValues
   }
 
   private fun tryExtractDeclaration(paramName: String, arg: PyExpression, declarations: MutableList<PyAssignmentStatement>, generatedNames: MutableSet<String>,
-                                    reference: PyReferenceExpression, languageLevel: LanguageLevel): Pair<String, PyExpression> {
+                                    scopeAnchor: PsiElement, languageLevel: LanguageLevel): Pair<String, PyExpression> {
     if (arg !is PyReferenceExpression && arg !is PyLiteralExpression) {
-      val statement = generateUniqueAssignment(languageLevel, paramName, generatedNames, reference)
-      statement.assignedValue!!.replace(arg)
-      declarations.add(statement)
-      return paramName to statement.targets[0]
+      return extractDeclaration(paramName, arg, declarations, generatedNames, scopeAnchor, languageLevel)
     }
     return paramName to arg
+  }
 
+  private fun extractDeclaration(paramName: String, arg: PyExpression, declarations: MutableList<PyAssignmentStatement>, generatedNames: MutableSet<String>,
+                                 scopeAnchor: PsiElement, languageLevel: LanguageLevel): Pair<String, PyExpression> {
+    val statement = generateUniqueAssignment(languageLevel, paramName, generatedNames, scopeAnchor)
+    statement.assignedValue!!.replace(arg)
+    declarations.add(statement)
+    return paramName to statement.targets[0]
   }
 
   private fun generateUniqueAssignment(level: LanguageLevel, name: String, previouslyGeneratedNames: MutableSet<String>, scopeAnchor: PsiElement): PyAssignmentStatement {

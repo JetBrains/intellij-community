@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -77,6 +78,13 @@ public class FUStateUsagesLogger implements UsagesCollectorConsumer {
 
   public static void logStateEvent(@NotNull EventLogGroup group, @NotNull String event, @NotNull FeatureUsageData data) {
     FeatureUsageLogger.INSTANCE.logState(group, event, data.build());
+    FeatureUsageLogger.INSTANCE.logState(group, INVOKED);
+  }
+
+  public static void logStateEvents(@NotNull EventLogGroup group, @NotNull Collection<MetricEvent> events) {
+    for (MetricEvent event : events) {
+      FeatureUsageLogger.INSTANCE.logState(group, event.getEventId(), event.getData().build());
+    }
     FeatureUsageLogger.INSTANCE.logState(group, INVOKED);
   }
 }

@@ -44,6 +44,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.jetbrains.python.psi.impl.PyTypeDeclarationStatementNavigator.*;
+
 /**
  * Annotates declarations that unconditionally override others without these being used.
  *
@@ -81,7 +83,7 @@ public class PyRedeclarationInspection extends PyInspection {
 
     @Override
     public void visitPyTargetExpression(final PyTargetExpression node) {
-      if (node.isQualified() || PyNames.UNDERSCORE.equals(node.getText())) return;
+      if (node.isQualified() || PyNames.UNDERSCORE.equals(node.getText()) || isTypeDeclarationTarget(node)) return;
       final ScopeOwner owner = ScopeUtil.getScopeOwner(node);
       if (owner instanceof PyFile || owner instanceof PyClass) {
         processElement(node);
@@ -136,7 +138,7 @@ public class PyRedeclarationInspection extends PyInspection {
                   readElementRef.set(originalElement);
                 }
                 if (rwInstruction.getAccess().isWriteAccess() && originalElement != element) {
-                  if (PyiUtil.isOverload(originalElement, myTypeEvalContext)) {
+                  if (PyiUtil.isOverload(originalElement, myTypeEvalContext) || isTypeDeclarationTarget(originalElement)) {
                     return ControlFlowUtil.Operation.NEXT;
                   }
                   else if (!underPossiblyFalseCondition.get()) {

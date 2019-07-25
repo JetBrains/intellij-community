@@ -189,7 +189,11 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
   }
 
   public static Inlay addBlockInlay(int offset) {
-    return EditorTestUtil.addBlockInlay(myEditor, offset);
+    return addBlockInlay(offset, false);
+  }
+
+  public static Inlay addBlockInlay(int offset, boolean showAbove) {
+    return EditorTestUtil.addBlockInlay(myEditor, offset, showAbove);
   }
 
   protected static void runWriteCommand(ThrowableRunnable r) {

@@ -2,7 +2,7 @@ import traceback
 
 from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
 from _pydev_imps._pydev_saved_modules import threading
-from _pydevd_bundle.pydevd_constants import get_current_thread_id, IS_IRONPYTHON, NO_FTRACE
+from _pydevd_bundle.pydevd_constants import get_current_thread_id, IS_IRONPYTHON, NO_FTRACE, IS_WINDOWS
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
@@ -121,7 +121,12 @@ def fix_top_level_trace_and_get_trace_func(py_db, frame):
         if threading_get_ident is not None:
             thread = threading._active.get(threading_get_ident())
             if thread is None:
-                return None, False
+                if IS_WINDOWS and f_unhandled and not f_unhandled.f_code.co_filename.startswith('threading'):
+                    # When attaching to a process on Windows, its main thread ID may not be in `threading._active`
+                    # unless the module imports `threading` by its own.
+                    thread = threadingCurrentThread()
+                else:
+                    return None, False
         else:
             # Jython does not have threading.get_ident().
             thread = threadingCurrentThread()

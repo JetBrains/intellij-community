@@ -55,6 +55,7 @@ import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 import org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator2;
 import org.jetbrains.idea.maven.server.embedder.MavenExecutionResult;
+import org.jetbrains.idea.maven.server.security.MavenToken;
 
 import java.io.File;
 import java.io.IOException;
@@ -117,8 +118,9 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
   @Override
   public List<String> retrieveAvailableVersions(@NotNull String groupId,
                                                 @NotNull String artifactId,
-                                                @NotNull List<MavenRemoteRepository> remoteRepositories)
+                                                @NotNull List<MavenRemoteRepository> remoteRepositories, MavenToken token)
     throws RemoteException {
+    MavenServerUtil.checkToken(token);
     try {
       Artifact artifact =
         new DefaultArtifact(groupId, artifactId, "", Artifact.SCOPE_COMPILE, "pom", null, new DefaultArtifactHandler("pom"));
@@ -279,7 +281,8 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
 
   @Override
   @Nullable
-  public MavenModel readModel(File file) throws RemoteException {
+  public MavenModel readModel(File file, MavenToken token) throws RemoteException {
+    MavenServerUtil.checkToken(token);
     return null;
   }
 

@@ -15,8 +15,6 @@ import java.awt.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static com.intellij.ui.components.DefaultScrollBarUI.isOpaque;
-
 abstract class ScrollBarPainter implements RegionPainter<Float> {
   final Rectangle bounds = new Rectangle();
   final TwoWayAnimator animator;
@@ -61,7 +59,7 @@ abstract class ScrollBarPainter implements RegionPainter<Float> {
     = SystemInfo.isMac ? key(0x80000000, 0x8C808080, "ScrollBar.Mac.Transparent.hoverThumbColor")
                          : key(0x47737373, 0x59A6A6A6, "ScrollBar.Transparent.hoverThumbColor");
 
-  protected ScrollBarPainter(@NotNull Supplier<? extends Component> supplier) {
+  ScrollBarPainter(@NotNull Supplier<? extends Component> supplier) {
     animator = new TwoWayAnimator(getClass().getName(), 11, 150, 125, 300, 125) {
       @Override
       void onValueUpdate() {
@@ -77,7 +75,7 @@ abstract class ScrollBarPainter implements RegionPainter<Float> {
   }
 
   @NotNull
-  static Color getColor(@Nullable Component component, @NotNull ColorKey key) {
+  private static Color getColor(@Nullable Component component, @NotNull ColorKey key) {
     Function<ColorKey, Color> function = UIUtil.getClientProperty(component, ColorKey.FUNCTION_KEY);
     Color color = function == null ? null : function.apply(key);
     return color != null ? color : key.getDefaultColor();
@@ -90,7 +88,7 @@ abstract class ScrollBarPainter implements RegionPainter<Float> {
   static Color getColor(@NotNull Supplier<? extends Component> supplier, @NotNull ColorKey transparent, @NotNull ColorKey opaque) {
     return new JBColor(() -> {
       Component component = supplier.get();
-      return getColor(component, component != null && isOpaque(component) ? opaque : transparent);
+      return getColor(component, component != null && DefaultScrollBarUI.isOpaque(component) ? opaque : transparent);
     });
   }
 
@@ -109,7 +107,7 @@ abstract class ScrollBarPainter implements RegionPainter<Float> {
     }
 
     @Override
-    public void paint(Graphics2D g, int x, int y, int width, int height, @Nullable Float value) {
+    public void paint(@NotNull Graphics2D g, int x, int y, int width, int height, @Nullable Float value) {
       double mixer = value == null ? 0 : value.doubleValue();
       Color fill = fillProducer.produce(mixer);
       if (0 >= fill.getAlpha()) return; // optimization
@@ -138,7 +136,7 @@ abstract class ScrollBarPainter implements RegionPainter<Float> {
     }
 
     @Override
-    public void paint(Graphics2D g, int x, int y, int width, int height, @Nullable Float value) {
+    public void paint(@NotNull Graphics2D g, int x, int y, int width, int height, @Nullable Float value) {
       double mixer = value == null ? 0 : value.doubleValue();
       Color fill = fillProducer.produce(mixer);
       Color draw = drawProducer.produce(mixer);

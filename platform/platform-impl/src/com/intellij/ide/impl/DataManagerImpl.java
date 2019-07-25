@@ -197,7 +197,7 @@ public class DataManagerImpl extends DataManager {
   public Promise<DataContext> getDataContextFromFocusAsync() {
     AsyncPromise<DataContext> result = new AsyncPromise<>();
     IdeFocusManager.getGlobalInstance()
-                   .doWhenFocusSettlesDown(() -> result.setResult(getDataContext()), ModalityState.defaultModalityState());
+                   .doWhenFocusSettlesDown(() -> result.setResult(getDataContext()), ModalityState.any());
     return result;
   }
 

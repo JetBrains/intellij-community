@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.JavaModuleExternalPaths;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,6 +28,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -88,7 +90,7 @@ public class AnnotationsEditor extends ModuleElementsEditor {
         FileChooserDescriptor myDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
               myDescriptor.setTitle(ProjectBundle.message("add.external.annotations.path.title"));
               myDescriptor.setDescription(ProjectBundle.message("add.external.annotations.path.description"));
-        VirtualFile[] files = FileChooser.chooseFiles(myDescriptor, myTable, myProject, null);
+        VirtualFile[] files = FileChooser.chooseFiles(myDescriptor, myTable, getProject(), null);
         final MyTableModel tableModel = (MyTableModel)myTable.getModel();
         boolean changes = false;
         for (final VirtualFile file : files) {
@@ -119,6 +121,11 @@ public class AnnotationsEditor extends ModuleElementsEditor {
     mainPanel.add(new JBLabel(ProjectBundle.message("project.roots.external.annotations.description"), UIUtil.ComponentStyle.SMALL,
                               UIUtil.FontColor.BRIGHTER), BorderLayout.NORTH);
     return mainPanel;
+  }
+
+  @NotNull
+  private Project getProject() {
+    return myProject;
   }
 
   protected DefaultTableModel createModel() {

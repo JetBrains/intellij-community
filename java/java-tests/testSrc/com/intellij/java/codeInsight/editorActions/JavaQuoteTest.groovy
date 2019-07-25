@@ -30,6 +30,7 @@ class JavaQuoteTest extends LightJavaCodeInsightFixtureTestCase {
     doTest ' """."<caret>"" ', ' """.""<caret>" '
     doTest ' """.""<caret>" ', ' """."""<caret> '
   }
+  void testPrecedingTextBlock() { doTest 'f(""<caret> + """\n  .""")', 'f("""\n<caret>""" + """\n  .""")' }
 
   private void doTest(String before, String after, char c = '"') {
     myFixture.configureByText("a.java", "class C {{\n  ${before}\n}}")

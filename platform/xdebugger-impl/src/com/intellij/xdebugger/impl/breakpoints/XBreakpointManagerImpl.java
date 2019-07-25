@@ -26,8 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
-
-import static com.intellij.xdebugger.impl.breakpoints.BreakpointsStatisticsCollectorKt.getReportableTypeId;
+import java.util.stream.Collectors;
 
 /**
  * @author nik
@@ -36,9 +35,9 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
   private static final Logger LOG = Logger.getInstance(XBreakpointManagerImpl.class);
 
   private final MultiValuesMap<XBreakpointType, XBreakpointBase<?,?,?>> myBreakpoints = new MultiValuesMap<>(true);
-  private final Map<XBreakpointType, XBreakpointBase<?,?,?>> myDefaultBreakpoints = new LinkedHashMap<>();
+  private final Map<XBreakpointType, Set<XBreakpointBase<?,?,?>>> myDefaultBreakpoints = new LinkedHashMap<>();
   private final Map<XBreakpointType, BreakpointState<?,?,?>> myBreakpointsDefaults = new LinkedHashMap<>();
-  private final Set<XBreakpointBase<?,?,?>> myAllBreakpoints = new HashSet<>();
+  private final Set<XBreakpointBase<?,?,?>> myAllBreakpoints = new LinkedHashSet<>();
   private final Map<XBreakpointType, EventDispatcher<XBreakpointListener>> myDispatchers = new HashMap<>();
   private XBreakpointsDialogState myBreakpointsDialogSettings;
   private volatile EventDispatcher<XBreakpointListener> myAllBreakpointsDispatcher;
@@ -119,9 +118,19 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
   @Override
   @NotNull
   public <T extends XBreakpointProperties> XBreakpoint<T> addBreakpoint(final XBreakpointType<XBreakpoint<T>,T> type, @Nullable final T properties) {
+    return doAddBreakpoint(type, properties, false);
+  }
+
+  @NotNull
+  public <T extends XBreakpointProperties> XBreakpoint<T> addDefaultBreakpoint(final XBreakpointType<XBreakpoint<T>,T> type, @Nullable final T properties) {
+    return doAddBreakpoint(type, properties, true);
+  }
+
+  @NotNull
+  private <T extends XBreakpointProperties> XBreakpoint<T> doAddBreakpoint(XBreakpointType<XBreakpoint<T>, T> type, @Nullable T properties, boolean defaultBreakpoint) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    XBreakpointBase<?, T, ?> breakpoint = createBreakpoint(type, properties, true, false);
-    addBreakpoint(breakpoint, false, true);
+    XBreakpointBase<?, T, ?> breakpoint = createBreakpoint(type, properties, true, defaultBreakpoint);
+    addBreakpoint(breakpoint, defaultBreakpoint, true);
     return breakpoint;
   }
 
@@ -140,17 +149,13 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
                                                                boolean initUI) {
     XBreakpointType type = breakpoint.getType();
     if (defaultBreakpoint) {
-      LOG.assertTrue(!myDefaultBreakpoints.containsKey(type), "Cannot have more than one default breakpoint (type " + type.getId() + ")");
-      myDefaultBreakpoints.put(type, breakpoint);
+      Set<XBreakpointBase<?, ?, ?>> typeDefaultBreakpoints = myDefaultBreakpoints.computeIfAbsent(type, k -> new LinkedHashSet<>());
+      typeDefaultBreakpoints.add(breakpoint);
     }
     else {
       myBreakpoints.put(type, breakpoint);
       if (initUI) {
-        BreakpointsUsageCollector.reportUsage(breakpoint, "new.breakpoint");
-        BreakpointsUsageCollector.reportUsage(breakpoint, "new." + getReportableTypeId(type));
-        if (myDebuggerManager.getCurrentSession() != null) {
-          BreakpointsUsageCollector.reportUsage(breakpoint, "new.within.session");
-        }
+        BreakpointsUsageCollector.reportNewBreakpoint(breakpoint, type, getDebuggerManager().getCurrentSession() != null);
       }
     }
     myAllBreakpoints.add(breakpoint);
@@ -193,27 +198,39 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
     doRemoveBreakpoint(breakpoint);
   }
 
+  public void removeDefaultBreakpoint(@NotNull final XBreakpoint<?> breakpoint) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    if (!isDefaultBreakpoint(breakpoint)) {
+      throw new IllegalStateException("Trying to remove not default breakpoint " + breakpoint);
+    }
+    doRemoveBreakpointImpl(breakpoint);
+  }
+
   private void doRemoveBreakpoint(XBreakpoint<?> breakpoint) {
     if (isDefaultBreakpoint(breakpoint)) {
       // removing default breakpoint should just disable it
       breakpoint.setEnabled(false);
     }
     else {
-      XBreakpointType type = breakpoint.getType();
-      XBreakpointBase<?,?,?> breakpointBase = (XBreakpointBase<?,?,?>)breakpoint;
-      myBreakpoints.remove(type, breakpointBase);
-      myAllBreakpoints.remove(breakpointBase);
-      if (breakpointBase instanceof XLineBreakpointImpl) {
-        myLineBreakpointManager.unregisterBreakpoint((XLineBreakpointImpl)breakpointBase);
-      }
-      breakpointBase.dispose();
-      EventDispatcher<XBreakpointListener> dispatcher = myDispatchers.get(type);
-      if (dispatcher != null) {
-        //noinspection unchecked
-        dispatcher.getMulticaster().breakpointRemoved(breakpoint);
-      }
-      getBreakpointDispatcherMulticaster().breakpointRemoved(breakpoint);
+      doRemoveBreakpointImpl(breakpoint);
     }
+  }
+
+  private void doRemoveBreakpointImpl(XBreakpoint<?> breakpoint) {
+    XBreakpointType type = breakpoint.getType();
+    XBreakpointBase<?,?,?> breakpointBase = (XBreakpointBase<?,?,?>)breakpoint;
+    myBreakpoints.remove(type, breakpointBase);
+    myAllBreakpoints.remove(breakpointBase);
+    if (breakpointBase instanceof XLineBreakpointImpl) {
+      myLineBreakpointManager.unregisterBreakpoint((XLineBreakpointImpl)breakpointBase);
+    }
+    breakpointBase.dispose();
+    EventDispatcher<XBreakpointListener> dispatcher = myDispatchers.get(type);
+    if (dispatcher != null) {
+      //noinspection unchecked
+      dispatcher.getMulticaster().breakpointRemoved(breakpoint);
+    }
+    getBreakpointDispatcherMulticaster().breakpointRemoved(breakpoint);
   }
 
   @Override
@@ -255,11 +272,8 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
   @NotNull
   public <B extends XBreakpoint<?>> Collection<? extends B> getBreakpoints(@NotNull final XBreakpointType<B,?> type) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    List<B> result = new ArrayList<>();
-    B defaultBreakpoint = getDefaultBreakpoint(type);
-    if (defaultBreakpoint != null) {
-      result.add(defaultBreakpoint);
-    }
+    Set<B> defaultBreakpoints = getDefaultBreakpoints(type);
+    List<B> result = new ArrayList<>(defaultBreakpoints);
     Collection<XBreakpointBase<?, ?, ?>> breakpoints = myBreakpoints.get(type);
     if (breakpoints != null) {
       result.addAll((Collection<? extends B>)breakpoints);
@@ -278,8 +292,19 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
   @Override
   @Nullable
   public <B extends XBreakpoint<?>> B getDefaultBreakpoint(@NotNull XBreakpointType<B, ?> type) {
+    Set<B> defaultBreakpoints = getDefaultBreakpoints(type);
+    return ContainerUtil.getFirstItem(defaultBreakpoints);
+  }
+
+  @Override
+  @NotNull
+  public <B extends XBreakpoint<?>> Set<B> getDefaultBreakpoints(@NotNull XBreakpointType<B, ?> type) {
+    Set<XBreakpointBase<?, ?, ?>> breakpointsSet = myDefaultBreakpoints.get(type);
+    if (breakpointsSet == null) {
+      return Collections.emptySet();
+    }
     //noinspection unchecked
-    return (B)myDefaultBreakpoints.get(type);
+    return breakpointsSet.stream().map(breakpoint -> (B)breakpoint).collect(Collectors.toSet());
   }
 
   @Override
@@ -303,7 +328,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
   @Override
   public boolean isDefaultBreakpoint(@NotNull XBreakpoint<?> breakpoint) {
     //noinspection SuspiciousMethodCalls
-    return myDefaultBreakpoints.values().contains(breakpoint);
+    return myDefaultBreakpoints.values().stream().anyMatch(s -> s.contains(breakpoint));
   }
 
   private <T extends XBreakpointProperties> EventDispatcher<XBreakpointListener> getOrCreateDispatcher(final XBreakpointType<?,T> type) {
@@ -376,9 +401,12 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
     myDependentBreakpointManager.saveState();
 
     List<BreakpointState<?, ?, ?>> defaultBreakpoints = new SmartList<>();
-    for (XBreakpointBase<?, ?, ?> breakpoint : myDefaultBreakpoints.values()) {
-      final BreakpointState breakpointState = breakpoint.getState();
-      if (differsFromDefault(breakpoint.getType(), breakpointState)) {
+    for (Set<XBreakpointBase<?, ?, ?>> typeDefaultBreakpoints : myDefaultBreakpoints.values()) {
+      if (typeDefaultBreakpoints.stream().noneMatch(breakpoint -> differsFromDefault(breakpoint.getType(), breakpoint.getState()))) {
+        continue;
+      }
+      for (XBreakpointBase<?, ?, ?> breakpoint : typeDefaultBreakpoints) {
+        final BreakpointState breakpointState = breakpoint.getState();
         defaultBreakpoints.add(breakpointState);
       }
     }

@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * Use {@link com.intellij.xdebugger.XDebuggerManager#getBreakpointManager()} to obtain instance of this service
@@ -50,8 +51,15 @@ public interface XBreakpointManager {
 
   boolean isDefaultBreakpoint(@NotNull XBreakpoint<?> breakpoint);
 
+  /**
+   * @deprecated There could be more than one default breakpoint per type. Use {@link XBreakpointManager#getDefaultBreakpoints} instead
+   */
+  @Deprecated
   @Nullable
   <B extends XBreakpoint<?>> B getDefaultBreakpoint(@NotNull XBreakpointType<B, ?> type);
+
+  @NotNull
+  <B extends XBreakpoint<?>> Set<B> getDefaultBreakpoints(@NotNull XBreakpointType<B, ?> type);
 
   <B extends XBreakpoint<P>, P extends XBreakpointProperties> void addBreakpointListener(@NotNull XBreakpointType<B, P> type,
                                                                                          @NotNull XBreakpointListener<B> listener);

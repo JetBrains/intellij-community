@@ -10,11 +10,11 @@ from typing import TypeVar
 
 _bytearray_like = Union[bytearray, mmap]
 
-DEFAULT_BUFFER_SIZE = ...  # type: int
+DEFAULT_BUFFER_SIZE: int
 
-SEEK_SET = ...  # type: int
-SEEK_CUR = ...  # type: int
-SEEK_END = ...  # type: int
+SEEK_SET: int
+SEEK_CUR: int
+SEEK_END: int
 
 _T = TypeVar('_T', bound='IOBase')
 
@@ -63,8 +63,8 @@ class BufferedIOBase(IOBase):
 
 
 class FileIO(RawIOBase):
-    mode = ...  # type: str
-    name = ...  # type: Union[int, str]
+    mode: str
+    name: Union[int, str]
     def __init__(
         self,
         name: Union[str, bytes, int],
@@ -104,7 +104,7 @@ class BytesIO(BinaryIO):
     def writelines(self, lines: Any) -> None: ...
     def readline(self, size: int = ...) -> bytes: ...
     def __del__(self) -> None: ...
-    closed = ...  # type: bool
+    closed: bool
     # copied from BufferedIOBase
     def detach(self) -> RawIOBase: ...
     def readinto(self, b: _bytearray_like) -> int: ...
@@ -134,9 +134,9 @@ class BufferedRWPair(BufferedIOBase):
 
 
 class TextIOBase(IOBase):
-    encoding = ...  # type: str
-    errors = ...  # type: Optional[str]
-    newlines = ...  # type: Union[str, Tuple[str, ...], None]
+    encoding: str
+    errors: Optional[str]
+    newlines: Union[str, Tuple[str, ...], None]
     def __iter__(self) -> Iterator[str]: ...  # type: ignore
     def __next__(self) -> str: ...  # type: ignore
     def detach(self) -> IOBase: ...
@@ -150,7 +150,7 @@ class TextIOBase(IOBase):
 
 # TODO should extend from TextIOBase
 class TextIOWrapper(TextIO):
-    line_buffering = ...  # type: bool
+    line_buffering: bool
     # TODO uncomment after fixing mypy about using write_through
     # def __init__(self, buffer: IO[bytes], encoding: str = ...,
     #              errors: Optional[str] = ..., newline: Optional[str] = ...,
@@ -181,11 +181,11 @@ class TextIOWrapper(TextIO):
     # def writelines(self, lines: List[str]) -> None: ...
     def writelines(self, lines: Any) -> None: ...
     def __del__(self) -> None: ...
-    closed = ...  # type: bool
+    closed: bool
     # copied from TextIOBase
-    encoding = ...  # type: str
-    errors = ...  # type: Optional[str]
-    newlines = ...  # type: Union[str, Tuple[str, ...], None]
+    encoding: str
+    errors: Optional[str]
+    newlines: Union[str, Tuple[str, ...], None]
     def __iter__(self) -> Iterator[str]: ...
     def __next__(self) -> str: ...
     def __enter__(self) -> TextIO: ...

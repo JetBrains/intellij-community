@@ -376,9 +376,9 @@ public class TextMateServiceImpl extends TextMateService {
     Set<String> newExtensions = new THashSet<>();
     for (File grammarFile : bundle.getGrammarFiles()) {
       try {
-        final Plist plist = myPlistReader.read(grammarFile);
+        Plist plist = myPlistReader.read(grammarFile);
         String rootScopeName = mySyntaxTable.loadSyntax(plist);
-        final List<String> extensions = bundle.getExtensions(grammarFile, plist);
+        Collection<String> extensions = bundle.getExtensions(grammarFile, plist);
         for (final String extension : extensions) {
           myExtensionsMapping.put(extension, rootScopeName);
           newExtensions.add(extension);

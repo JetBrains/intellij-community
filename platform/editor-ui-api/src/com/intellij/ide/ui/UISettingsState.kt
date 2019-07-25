@@ -102,6 +102,7 @@ class UISettingsState : BaseState() {
   var hideKnownExtensionInTabs by property(false)
   @get:OptionTag("SHOW_ICONS_IN_QUICK_NAVIGATION")
   var showIconInQuickNavigation by property(true)
+  var showTreeIndentGuides by property(false)
 
   @get:OptionTag("SORT_TABS_ALPHABETICALLY")
   var sortTabsAlphabetically by property(false)
@@ -157,7 +158,7 @@ class UISettingsState : BaseState() {
   var languageFlags by property(false)  // Android Studio: used reflectively by FlagManager.showFlagsForLanguages
   @get:OptionTag("DEFAULT_AUTOSCROLL_TO_SOURCE")
   var defaultAutoScrollToSource by property(false)
-  @Transient
+  @get:Transient
   var presentationMode: Boolean = false
   @get:OptionTag("PRESENTATION_MODE_FONT_SIZE")
   var presentationModeFontSize by property(24)

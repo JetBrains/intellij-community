@@ -61,10 +61,24 @@ public class EditorHyperlinkSupport {
     myFilterRunner = new AsyncFilterRunner(this, myEditor);
 
     editor.addEditorMouseListener(new EditorMouseListener() {
+      private MouseEvent myInitialMouseEvent = null;
+
       @Override
-      public void mouseClicked(@NotNull EditorMouseEvent e) {
+      public void mousePressed(@NotNull EditorMouseEvent e) {
+        myInitialMouseEvent = e.getMouseEvent();
+      }
+
+      @Override
+      public void mouseReleased(@NotNull EditorMouseEvent e) {
+        MouseEvent initialMouseEvent = myInitialMouseEvent;
+        myInitialMouseEvent = null;
         final MouseEvent mouseEvent = e.getMouseEvent();
         if (mouseEvent.getButton() == MouseEvent.BUTTON1 && !mouseEvent.isPopupTrigger()) {
+          if (initialMouseEvent != null && (mouseEvent.getComponent() != initialMouseEvent.getComponent() ||
+                                       !mouseEvent.getPoint().equals(initialMouseEvent.getPoint()))) {
+            return;
+          }
+
           Runnable runnable = getLinkNavigationRunnable(myEditor.xyToLogicalPosition(e.getMouseEvent().getPoint()));
           if (runnable != null) {
             runnable.run();

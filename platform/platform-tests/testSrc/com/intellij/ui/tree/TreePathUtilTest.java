@@ -210,4 +210,42 @@ public class TreePathUtilTest {
   private static void makeDeepTreeFromNode(TreeNode node, int count) {
     while (1 < count) node = node(--count, node);
   }
+
+  @Test
+  public void findCommonAncestor() {
+    TreePath path = TreePathUtil.convertArrayToTreePath("root", "parent");
+    Assert.assertEquals(path, TreePathUtil.findCommonAncestor(
+      TreePathUtil.convertArrayToTreePath("root", "parent", "one", "child", "one"),
+      TreePathUtil.convertArrayToTreePath("root", "parent", "one", "child", "two"),
+      TreePathUtil.convertArrayToTreePath("root", "parent", "two", "child", "one"),
+      TreePathUtil.convertArrayToTreePath("root", "parent", "two", "child", "two")));
+  }
+
+  @Test
+  public void findCommonAncestorWithParent() {
+    TreePath path = TreePathUtil.convertArrayToTreePath("root", "parent", "child");
+    Assert.assertEquals(path, TreePathUtil.findCommonAncestor(
+      TreePathUtil.convertArrayToTreePath("root", "parent", "child", "one"),
+      TreePathUtil.convertArrayToTreePath("root", "parent", "child", "two"),
+      path));
+  }
+
+  @Test
+  public void findCommonAncestorSingle() {
+    TreePath path = TreePathUtil.convertArrayToTreePath("root", "parent", "child");
+    Assert.assertEquals(path, TreePathUtil.findCommonAncestor(path));
+  }
+
+  @Test
+  public void findCommonAncestorEmpty() {
+    Assert.assertNull(TreePathUtil.findCommonAncestor());
+    Assert.assertNull(TreePathUtil.findCommonAncestor((TreePath)null));
+  }
+
+  @Test
+  public void findCommonAncestorWrong() {
+    Assert.assertNull(TreePathUtil.findCommonAncestor(
+      TreePathUtil.convertArrayToTreePath("one", "root"),
+      TreePathUtil.convertArrayToTreePath("two", "root")));
+  }
 }

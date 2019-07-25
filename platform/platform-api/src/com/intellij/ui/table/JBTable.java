@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.MouseInputListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
@@ -832,6 +833,29 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
           }
         }
       });
+
+      DefaultTableCellRenderer renderer = (DefaultTableCellRenderer)getDefaultRenderer();
+      TableCellRenderer newRenderer = new TableCellRenderer() {
+        @Override
+        public Component getTableCellRendererComponent(JTable table,
+                                                       Object value,
+                                                       boolean isSelected,
+                                                       boolean hasFocus,
+                                                       int row,
+                                                       int column) {
+          Component delegate = renderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+          if (!(delegate instanceof JLabel)) return delegate;
+
+          JLabel cmp = (JLabel)delegate;
+          cmp.setHorizontalAlignment(SwingConstants.LEFT);
+          Border border = cmp.getBorder();
+          JBEmptyBorder indent = JBUI.Borders.emptyLeft(JBUI.scale(8));
+          border = JBUI.Borders.merge(border, indent, true);
+          cmp.setBorder(border);
+          return cmp;
+        }
+      };
+      setDefaultRenderer(newRenderer);
     }
 
     @Override

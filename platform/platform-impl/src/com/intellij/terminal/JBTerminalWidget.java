@@ -21,6 +21,8 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.DisposableWrapper;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
@@ -37,16 +39,15 @@ import com.intellij.util.ui.RegionPainter;
 import com.jediterm.terminal.SubstringFinder;
 import com.jediterm.terminal.TerminalStarter;
 import com.jediterm.terminal.TtyConnector;
-import com.jediterm.terminal.model.JediTerminal;
-import com.jediterm.terminal.model.StyleState;
-import com.jediterm.terminal.model.TerminalTextBuffer;
-import com.jediterm.terminal.model.hyperlinks.HyperlinkFilter;
+import com.jediterm.terminal.model.*;
 import com.jediterm.terminal.model.hyperlinks.LinkInfo;
 import com.jediterm.terminal.model.hyperlinks.LinkResult;
 import com.jediterm.terminal.model.hyperlinks.LinkResultItem;
 import com.jediterm.terminal.ui.JediTermWidget;
 import com.jediterm.terminal.ui.TerminalAction;
+import com.jediterm.terminal.ui.TerminalPanel;
 import com.jediterm.terminal.ui.settings.SettingsProvider;
+import com.jediterm.terminal.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +59,10 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.List;
 
-public class JBTerminalWidget extends JediTermWidget implements Disposable {
+public class JBTerminalWidget extends JediTermWidget implements Disposable, DataProvider {
+
+  public static final DataKey<String> SELECTED_TEXT_DATA_KEY = DataKey.create(JBTerminalWidget.class.getName() + " selected text");
+
   private final JBTerminalSystemSettingsProviderBase mySettingsProvider;
   private JBTerminalWidgetListener myListener;
 
@@ -123,21 +127,18 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
   protected JScrollBar createScrollBar() {
     JBScrollBar bar = new JBScrollBar();
     bar.putClientProperty(JBScrollPane.Alignment.class, JBScrollPane.Alignment.RIGHT);
-    bar.putClientProperty(JBScrollBar.TRACK, new RegionPainter<Object>() {
-      @Override
-      public void paint(Graphics2D g, int x, int y, int width, int height, Object object) {
-        SubstringFinder.FindResult result = myTerminalPanel.getFindResult();
-        if (result != null) {
-          int modelHeight = bar.getModel().getMaximum() - bar.getModel().getMinimum();
-          int anchorHeight = Math.max(2, height / modelHeight);
+    bar.putClientProperty(JBScrollBar.TRACK, (RegionPainter<Object>)(g, x, y, width, height, object) -> {
+      SubstringFinder.FindResult result = myTerminalPanel.getFindResult();
+      if (result != null) {
+        int modelHeight = bar.getModel().getMaximum() - bar.getModel().getMinimum();
 
-          Color color = mySettingsProvider.getTerminalColorPalette()
-            .getColor(mySettingsProvider.getFoundPatternColor().getBackground());
-          g.setColor(color);
-          for (SubstringFinder.FindResult.FindItem r : result.getItems()) {
-            int where = height * r.getStart().y / modelHeight;
-            g.fillRect(x, y + where, width, anchorHeight);
-          }
+        Color color = mySettingsProvider.getTerminalColorPalette()
+          .getColor(mySettingsProvider.getFoundPatternColor().getBackground());
+        g.setColor(color);
+        int anchorHeight = Math.max(2, height / modelHeight);
+        for (SubstringFinder.FindResult.FindItem r : result.getItems()) {
+          int where = height * r.getStart().y / modelHeight;
+          g.fillRect(x, y + where, width, anchorHeight);
         }
       }
     });
@@ -242,20 +243,14 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
   }
 
   public void addMessageFilter(Project project, Filter filter) {
-    addHyperlinkFilter(new HyperlinkFilter() {
-      @Override
-      public LinkResult apply(String line) {
-        Filter.Result r = filter.applyFilter(line, line.length());
-        if (r != null) {
-          return new LinkResult(ContainerUtil.map(r.getResultItems(),
-                                                  (item -> new LinkResultItem(item.getHighlightStartOffset(), item.getHighlightEndOffset(),
-                                                                              new LinkInfo(
-                                                                                () -> item.getHyperlinkInfo().navigate(project))))));
-        }
-        else {
-          return null;
-        }
+    addHyperlinkFilter(line -> {
+      Filter.Result r = filter.applyFilter(line, line.length());
+      if (r != null) {
+        return new LinkResult(ContainerUtil.map(r.getResultItems(),
+                                                item -> new LinkResultItem(item.getHighlightStartOffset(), item.getHighlightEndOffset(),
+                                                                            new LinkInfo(() -> item.getHyperlinkInfo().navigate(project)))));
       }
+      return null;
     });
   }
 
@@ -297,6 +292,35 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
 
   public void setCommandHistoryFilePath(@Nullable String commandHistoryFilePath) {
     myCommandHistoryFilePath = commandHistoryFilePath;
+  }
+
+  @Nullable
+  @Override
+  public Object getData(@NotNull String dataId) {
+    if (SELECTED_TEXT_DATA_KEY.is(dataId)) {
+      return getSelectedText();
+    }
+    return null;
+  }
+
+  @Nullable
+  private String getSelectedText() {
+    TerminalPanel terminalPanel = getTerminalPanel();
+    TerminalSelection selection = terminalPanel.getSelection();
+    if (selection != null) {
+      Pair<Point, Point> points = selection.pointsForRun(terminalPanel.getColumnCount());
+      if (points.first != null && points.second != null) {
+        TerminalTextBuffer buffer = terminalPanel.getTerminalTextBuffer();
+        buffer.lock();
+        try {
+          return SelectionUtil.getSelectionText(points.first, points.second, buffer);
+        }
+        finally {
+          buffer.unlock();
+        }
+      }
+    }
+    return null;
   }
 
   private static final class JBTerminalWidgetDisposableWrapper extends DisposableWrapper<JBTerminalWidget> {

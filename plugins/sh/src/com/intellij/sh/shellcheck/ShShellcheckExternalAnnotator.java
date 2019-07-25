@@ -9,6 +9,7 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -68,7 +69,7 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<PsiFile, Sh
     String shellcheckExecutable = ShSettings.getShellcheckPath();
     if (!ShShellcheckUtil.isExecutionValidPath(shellcheckExecutable)) return null;
 
-    String fileContent = file.getText();
+    String fileContent = ReadAction.compute(() -> file.getText());
     try {
       GeneralCommandLine commandLine = new GeneralCommandLine()
           .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
@@ -81,7 +82,7 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<PsiFile, Sh
         String output = StreamUtil.readText(process.getInputStream(), commandLine.getCharset());
         Type type = TypeToken.getParameterized(List.class, Result.class).getType();
         Collection<Result> results = new Gson().fromJson(output, type);
-        return new ShellcheckResponse(results, timestamp);
+        return results != null ? new ShellcheckResponse(results, timestamp) : null;
       }
       return null;
     }
@@ -146,13 +147,13 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<PsiFile, Sh
     return params;
   }
 
-  private static void writeFileContentToStdin(@NotNull Process process, @NotNull String content, @NotNull Charset charset) throws IOException {
+  private static void writeFileContentToStdin(@NotNull Process process, @NotNull String content, @NotNull Charset charset) {
     try (OutputStream stdin = ObjectUtils.assertNotNull(process.getOutputStream())) {
       stdin.write(content.getBytes(charset));
       stdin.flush();
     }
     catch (IOException e) {
-      throw new IOException("Failed to write file content to stdin\n\n" + content, e);
+      LOG.debug("Failed to write file content to stdin\n\n" + content, e);
     }
   }
 
@@ -176,7 +177,7 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<PsiFile, Sh
     final Collection<Result> results;
     final long timestamp;
 
-    ShellcheckResponse(Collection<Result> results, long timestamp) {
+    ShellcheckResponse(@NotNull Collection<Result> results, long timestamp) {
       this.results = results;
       this.timestamp = timestamp;
     }

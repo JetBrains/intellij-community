@@ -7,6 +7,19 @@ IS_JYTHON = sys.platform.find('java') != -1
 _cache = None
 
 
+def is_localhost(hostname):
+    # type: (str) -> bool
+    """
+    Literally checks that specified hostname means local host.
+    This function does not perform DNS lookup.
+    Use it in combination with `get_localhost`.
+
+    :param hostname: Domain name or IPv4/IPv6 address.
+    :return: True if specified host is a local host.
+    """
+    return hostname in ('localhost', 'localhost.localdomain', '127.0.0.1', '::1')
+
+
 def get_localhost():
     '''
     Should return 127.0.0.1 in ipv4 and ::1 in ipv6

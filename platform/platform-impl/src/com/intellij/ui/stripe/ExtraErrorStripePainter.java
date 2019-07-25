@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.stripe;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.awt.*;
 
 /**
@@ -19,7 +21,7 @@ public class ExtraErrorStripePainter extends ErrorStripePainter {
     return myGroupSwap;
   }
 
-  public void setGroupSwap(boolean swap) {
+  void setGroupSwap(boolean swap) {
     myGroupSwap = swap;
   }
 
@@ -60,7 +62,7 @@ public class ExtraErrorStripePainter extends ErrorStripePainter {
   }
 
   @Override
-  public void paint(Graphics2D g, int x, int y, int width, int height, Object object) {
+  public void paint(@NotNull Graphics2D g, int x, int y, int width, int height, Object object) {
     int min = getMinimalThickness();
     int gap = myGroupGap == null ? min : myGroupGap;
     int pos = x;

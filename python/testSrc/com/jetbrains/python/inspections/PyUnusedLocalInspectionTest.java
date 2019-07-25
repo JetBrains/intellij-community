@@ -165,6 +165,15 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
       "        print(x) #pass"
     );
   }
+  // PY-22204
+  public void testForwardTypeDeclaration() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-22204
+  public void testTypeDeclarationFollowsTargetBeforeItsFirstUsage() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
 
   @NotNull
   @Override

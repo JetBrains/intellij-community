@@ -65,6 +65,7 @@ typedef PyInterpreterState* (PyInterpreterState_Head)();
 typedef PyThreadState* (PyInterpreterState_ThreadHead)(PyInterpreterState* interp);
 typedef PyThreadState* (PyThreadState_Next)(PyThreadState *tstate);
 typedef PyThreadState* (PyThreadState_Swap)(PyThreadState *tstate);
+typedef PyThreadState* (_PyThreadState_UncheckedGet)();
 typedef int (PyRun_SimpleString)(const char *command);
 typedef PyObject* (PyDict_New)();
 typedef PyObject* (PyModule_New)(const char *name);
@@ -73,7 +74,6 @@ typedef PyObject* (Py_CompileString)(const char *str, const char *filename, int 
 typedef PyObject* (PyEval_EvalCode)(PyObject *co, PyObject *globals, PyObject *locals);
 typedef PyObject* (PyDict_GetItemString)(PyObject *p, const char *key);
 typedef PyObject* (PyObject_CallFunctionObjArgs)(PyObject *callable, ...);    // call w/ varargs, last arg should be NULL
-typedef void (PyErr_Fetch)(PyObject **, PyObject **, PyObject **);
 typedef PyObject* (PyEval_GetBuiltins)();
 typedef int (PyDict_SetItemString)(PyObject *dp, const char *key, PyObject *item);
 typedef int (PyEval_ThreadsInitialized)();
@@ -102,6 +102,8 @@ typedef PyGILState_STATE PyGILState_EnsureFunc(void);
 typedef void PyGILState_ReleaseFunc(PyGILState_STATE);
 typedef PyObject* PyInt_FromSize_t(size_t ival);
 typedef PyThreadState *PyThreadState_NewFunc(PyInterpreterState *interp);
+typedef PyObject* PyObject_Repr(PyObject*);
+typedef size_t PyUnicode_AsWideChar(PyObject *unicode, wchar_t *w, size_t size);
 
 class PyObjectHolder;
 PyObject* GetPyObjectPointerNoDebugInfo(bool isDebug, PyObject* object);
@@ -153,6 +155,7 @@ public:
     InterpreterInfo(HMODULE module, bool debug) :
         Interpreter(module),
         CurrentThread(nullptr),
+        CurrentThreadGetter(nullptr),
         NewThreadFunction(nullptr),
         PyGILState_Ensure(nullptr),
         Version(PythonVersion_Unknown),
@@ -171,6 +174,7 @@ public:
 
     PyObjectHolder* NewThreadFunction;
     PyThreadState** CurrentThread;
+    _PyThreadState_UncheckedGet *CurrentThreadGetter;
 
     HMODULE Interpreter;
     PyGILState_EnsureFunc* PyGILState_Ensure;
@@ -210,13 +214,16 @@ public:
     }
 
     bool EnsureCurrentThread() {
-        if (CurrentThread == nullptr) {
-            auto curPythonThread = (PyThreadState**)(void*)GetProcAddress(
-                Interpreter, "_PyThreadState_Current");
-            CurrentThread = curPythonThread;
+        if (CurrentThread == nullptr && CurrentThreadGetter == nullptr) {
+            CurrentThreadGetter = (_PyThreadState_UncheckedGet*)GetProcAddress(Interpreter, "_PyThreadState_UncheckedGet");
+            CurrentThread = (PyThreadState**)(void*)GetProcAddress(Interpreter, "_PyThreadState_Current");
         }
 
-        return CurrentThread != nullptr;
+        return CurrentThread != nullptr || CurrentThreadGetter != nullptr;
+    }
+
+    PyThreadState *GetCurrentThread() {
+        return CurrentThreadGetter ? CurrentThreadGetter() : *CurrentThread;
     }
 
 private:
@@ -478,6 +485,8 @@ public:
     PrivateHeapAllocator(PrivateHeapAllocator<U> const&) {}
 
     pointer allocate(size_type size, allocator<void>::const_pointer hint = 0) {
+        UNREFERENCED_PARAMETER(hint);
+
         if (g_heap == nullptr) {
             g_heap = HeapCreate(0, 0, 0);
         }
@@ -486,6 +495,8 @@ public:
     }
 
     void deallocate(pointer p, size_type n) {
+        UNREFERENCED_PARAMETER(n);
+
         HeapFree(g_heap, 0, p);
     }
 
@@ -607,14 +618,16 @@ public:
     }
 };
 
-long GetPythonThreadId(PythonVersion version, PyThreadState* curThread) {
-    long threadId = 0;
+DWORD GetPythonThreadId(PythonVersion version, PyThreadState* curThread) {
+    DWORD threadId = 0;
     if (PyThreadState_25_27::IsFor(version)) {
-        threadId = ((PyThreadState_25_27*)curThread)->thread_id;
+        threadId = (DWORD)((PyThreadState_25_27*)curThread)->thread_id;
     } else if (PyThreadState_30_33::IsFor(version)) {
-        threadId = ((PyThreadState_30_33*)curThread)->thread_id;
+        threadId = (DWORD)((PyThreadState_30_33*)curThread)->thread_id;
     } else if (PyThreadState_34_36::IsFor(version)) {
-        threadId = ((PyThreadState_34_36*)curThread)->thread_id;
+        threadId = (DWORD)((PyThreadState_34_36*)curThread)->thread_id;
+    } else if (PyThreadState_37::IsFor(version)) {
+        threadId = (DWORD)((PyThreadState_37*)curThread)->thread_id;
     }
     return threadId;
 }
@@ -654,7 +667,7 @@ bool LoadAndEvaluateCode(
 
     dictSetItem(globalsDict, "__builtins__", getBuiltins());
     auto size = WideCharToMultiByte(CP_UTF8, 0, filePath, (DWORD)wcslen(filePath), NULL, 0, NULL, NULL);
-    char* filenameBuffer = new char[size];
+    char* filenameBuffer = new char[size + 1];
     if (WideCharToMultiByte(CP_UTF8, 0, filePath, (DWORD)wcslen(filePath), filenameBuffer, size, NULL, NULL) != 0) {
         filenameBuffer[size] = 0;
         dictSetItem(globalsDict, "__file__", strFromString(filenameBuffer));
@@ -665,6 +678,8 @@ bool LoadAndEvaluateCode(
     if (*evalResult == nullptr) {
         pyErrPrint();
     }
+#else
+    UNREFERENCED_PARAMETER(pyErrPrint);
 #endif
 
     return true;
@@ -721,20 +736,16 @@ extern "C"
 
         // found initialized Python runtime, gather and check the APIs we need for a successful attach...
         auto addPendingCall = (Py_AddPendingCall*)GetProcAddress(module, "Py_AddPendingCall");
-        auto curPythonThread = (PyThreadState**)(void*)GetProcAddress(module, "_PyThreadState_Current");
         auto interpHead = (PyInterpreterState_Head*)GetProcAddress(module, "PyInterpreterState_Head");
         auto gilEnsure = (PyGILState_Ensure*)GetProcAddress(module, "PyGILState_Ensure");
         auto gilRelease = (PyGILState_Release*)GetProcAddress(module, "PyGILState_Release");
         auto threadHead = (PyInterpreterState_ThreadHead*)GetProcAddress(module, "PyInterpreterState_ThreadHead");
         auto initThreads = (PyEval_Lock*)GetProcAddress(module, "PyEval_InitThreads");
-        auto acquireLock = (PyEval_Lock*)GetProcAddress(module, "PyEval_AcquireLock");
         auto releaseLock = (PyEval_Lock*)GetProcAddress(module, "PyEval_ReleaseLock");
         auto threadsInited = (PyEval_ThreadsInitialized*)GetProcAddress(module, "PyEval_ThreadsInitialized");
         auto threadNext = (PyThreadState_Next*)GetProcAddress(module, "PyThreadState_Next");
         auto threadSwap = (PyThreadState_Swap*)GetProcAddress(module, "PyThreadState_Swap");
         auto pyDictNew = (PyDict_New*)GetProcAddress(module, "PyDict_New");
-        auto pyModuleNew = (PyModule_New*)GetProcAddress(module, "PyModule_New");
-        auto pyModuleGetDict = (PyModule_GetDict*)GetProcAddress(module, "PyModule_GetDict");
         auto pyCompileString = (Py_CompileString*)GetProcAddress(module, "Py_CompileString");
         auto pyEvalCode = (PyEval_EvalCode*)GetProcAddress(module, "PyEval_EvalCode");
         auto getDictItem = (PyDict_GetItemString*)GetProcAddress(module, "PyDict_GetItemString");
@@ -757,7 +768,6 @@ extern "C"
             strFromString = (PyString_FromString*)GetProcAddress(module, "PyString_FromString");
             intFromSizeT = (PyInt_FromSize_t*)GetProcAddress(module, "PyInt_FromSize_t");
         }
-        auto intervalCheck = (int*)GetProcAddress(module, "_Py_CheckInterval");
         auto errOccurred = (PyErr_Occurred*)GetProcAddress(module, "PyErr_Occurred");
         auto pyErrFetch = (PyErr_Fetch*)GetProcAddress(module, "PyErr_Fetch");
         auto pyErrRestore = (PyErr_Restore*)GetProcAddress(module, "PyErr_Restore");
@@ -766,24 +776,34 @@ extern "C"
         auto pyGetAttr = (PyObject_GetAttrString*)GetProcAddress(module, "PyObject_GetAttrString");
         auto pySetAttr = (PyObject_SetAttrString*)GetProcAddress(module, "PyObject_SetAttrString");
         auto pyNone = (PyObject*)GetProcAddress(module, "_Py_NoneStruct");
-        auto getSwitchInterval = (_PyEval_GetSwitchInterval*)GetProcAddress(module, "_PyEval_GetSwitchInterval");
-        auto setSwitchInterval = (_PyEval_SetSwitchInterval*)GetProcAddress(module, "_PyEval_SetSwitchInterval");
+
         auto boolFromLong = (PyBool_FromLong*)GetProcAddress(module, "PyBool_FromLong");
         auto getThreadTls = (PyThread_get_key_value*)GetProcAddress(module, "PyThread_get_key_value");
         auto setThreadTls = (PyThread_set_key_value*)GetProcAddress(module, "PyThread_set_key_value");
         auto delThreadTls = (PyThread_delete_key_value*)GetProcAddress(module, "PyThread_delete_key_value");
-        auto pyGilStateEnsure = (PyGILState_EnsureFunc*)GetProcAddress(module, "PyGILState_Ensure");
-        auto pyGilStateRelease = (PyGILState_ReleaseFunc*)GetProcAddress(module, "PyGILState_Release");
         auto PyCFrame_Type = (PyTypeObject*)GetProcAddress(module, "PyCFrame_Type");
         auto pyRun_SimpleString = (PyRun_SimpleString*)GetProcAddress(module, "PyRun_SimpleString");
+        auto pyObjectRepr = (PyObject_Repr*)GetProcAddress(module, "PyObject_Repr");
+        auto pyUnicodeAsWideChar = (PyUnicode_AsWideChar*)GetProcAddress(module,
+            version < PythonVersion_33 ? "PyUnicodeUCS2_AsWideChar" : "PyUnicode_AsWideChar");
 
-        if (addPendingCall == nullptr || curPythonThread == nullptr || interpHead == nullptr || gilEnsure == nullptr || gilRelease == nullptr || threadHead == nullptr ||
+        // Either _PyThreadState_Current or _PyThreadState_UncheckedGet are required
+        auto curPythonThread = (PyThreadState**)(void*)GetProcAddress(module, "_PyThreadState_Current");
+        auto getPythonThread = (_PyThreadState_UncheckedGet*)GetProcAddress(module, "_PyThreadState_UncheckedGet");
+
+        // Either _Py_CheckInterval or _PyEval_[GS]etSwitchInterval are useful, but not required
+        auto intervalCheck = (int*)GetProcAddress(module, "_Py_CheckInterval");
+        auto getSwitchInterval = (_PyEval_GetSwitchInterval*)GetProcAddress(module, "_PyEval_GetSwitchInterval");
+        auto setSwitchInterval = (_PyEval_SetSwitchInterval*)GetProcAddress(module, "_PyEval_SetSwitchInterval");
+
+        if (addPendingCall == nullptr || interpHead == nullptr || gilEnsure == nullptr || gilRelease == nullptr || threadHead == nullptr ||
             initThreads == nullptr || releaseLock == nullptr || threadsInited == nullptr || threadNext == nullptr || threadSwap == nullptr ||
             pyDictNew == nullptr || pyCompileString == nullptr || pyEvalCode == nullptr || getDictItem == nullptr || call == nullptr ||
             getBuiltins == nullptr || dictSetItem == nullptr || intFromLong == nullptr || pyErrRestore == nullptr || pyErrFetch == nullptr ||
             errOccurred == nullptr || pyImportMod == nullptr || pyGetAttr == nullptr || pyNone == nullptr || pySetAttr == nullptr || boolFromLong == nullptr ||
-            getThreadTls == nullptr || setThreadTls == nullptr || delThreadTls == nullptr || releaseLock == nullptr ||
-            pyGilStateEnsure == nullptr || pyGilStateRelease == nullptr || pyRun_SimpleString == nullptr) {
+            getThreadTls == nullptr || setThreadTls == nullptr || delThreadTls == nullptr || pyObjectRepr == nullptr || pyUnicodeAsWideChar == nullptr ||
+            pyRun_SimpleString == nullptr ||
+            (curPythonThread == nullptr && getPythonThread == nullptr)) {
                 // we're missing some APIs, we cannot attach.
                 if(showDebugInfo){
                     std::cout << "Error, missing Python API!! " << std::endl << std::flush;
@@ -818,54 +838,60 @@ extern "C"
 
 
         if (!threadsInited()) {
-             int saveIntervalCheck;
-             unsigned long saveLongIntervalCheck;
-             if (intervalCheck != nullptr) {
-                 // not available on 3.2
-                 saveIntervalCheck = *intervalCheck;
-                 *intervalCheck = -1;    // lower the interval check so pending calls are processed faster
-             } else if (getSwitchInterval != nullptr && setSwitchInterval != nullptr) {
-                 saveLongIntervalCheck = getSwitchInterval();
-                 setSwitchInterval(0);
-             }
+            int saveIntervalCheck;
+            unsigned long saveLongIntervalCheck;
+            if (intervalCheck != nullptr) {
+                // not available on 3.2
+                saveIntervalCheck = *intervalCheck;
+                *intervalCheck = -1;    // lower the interval check so pending calls are processed faster
+                saveLongIntervalCheck = 0; // prevent compiler warning
+            } else if (getSwitchInterval != nullptr && setSwitchInterval != nullptr) {
+                saveLongIntervalCheck = getSwitchInterval();
+                setSwitchInterval(0);
+                saveIntervalCheck = 0; // prevent compiler warning
+            }
+            else {
+                saveIntervalCheck = 0; // prevent compiler warning
+                saveLongIntervalCheck = 0; // prevent compiler warning
+            }
 
-             //
-             // Multiple thread support has not been initialized in the interpreter.   We need multi threading support
-             // to block any actively running threads and setup the debugger attach state.
-             //
-             // We need to initialize multiple threading support but we need to do so safely.  One option is to call
-             // Py_AddPendingCall and have our callback then initialize multi threading.  This is completely safe on 2.7
-             // and up.  Unfortunately that doesn't work if we're not actively running code on the main thread (blocked on a lock
-             // or reading input).  It's also not thread safe pre-2.7 so we need to make sure it's safe to call on down-level
-             // interpreters.
-             //
-             // Another option is to make sure no code is running - if there is no active thread then we can safely call
-             // PyEval_InitThreads and we're in business.  But to know this is safe we need to first suspend all the other
-             // threads in the process and then inspect if any code is running.
-             //
-             // Finally if code is running after we've suspended the threads then we can go ahead and do Py_AddPendingCall
-             // on down-level interpreters as long as we're sure no one else is making a call to Py_AddPendingCall at the same
-             // time.
-             //
-             // Therefore our strategy becomes: Make the Py_AddPendingCall on interpreters where it's thread safe.  Then suspend
-             // all threads - if a threads IP is in Py_AddPendingCall resume and try again.  Once we've got all of the threads
-             // stopped and not in Py_AddPendingCall (which calls no functions its self, you can see this and it's size in the
-             // debugger) then see if we have a current thread.   If not go ahead and initialize multiple threading (it's now safe,
-             // no Python code is running).  Otherwise add the pending call and repeat.  If at any point during this process
-             // threading becomes initialized (due to our pending call or the Python code creating a new thread)  then we're done
-             // and we just resume all of the presently suspended threads.
+            //
+            // Multiple thread support has not been initialized in the interpreter.   We need multi threading support
+            // to block any actively running threads and setup the debugger attach state.
+            //
+            // We need to initialize multiple threading support but we need to do so safely.  One option is to call
+            // Py_AddPendingCall and have our callback then initialize multi threading.  This is completely safe on 2.7
+            // and up.  Unfortunately that doesn't work if we're not actively running code on the main thread (blocked on a lock
+            // or reading input).  It's also not thread safe pre-2.7 so we need to make sure it's safe to call on down-level
+            // interpreters.
+            //
+            // Another option is to make sure no code is running - if there is no active thread then we can safely call
+            // PyEval_InitThreads and we're in business.  But to know this is safe we need to first suspend all the other
+            // threads in the process and then inspect if any code is running.
+            //
+            // Finally if code is running after we've suspended the threads then we can go ahead and do Py_AddPendingCall
+            // on down-level interpreters as long as we're sure no one else is making a call to Py_AddPendingCall at the same
+            // time.
+            //
+            // Therefore our strategy becomes: Make the Py_AddPendingCall on interpreters where it's thread safe.  Then suspend
+            // all threads - if a threads IP is in Py_AddPendingCall resume and try again.  Once we've got all of the threads
+            // stopped and not in Py_AddPendingCall (which calls no functions its self, you can see this and it's size in the
+            // debugger) then see if we have a current thread.   If not go ahead and initialize multiple threading (it's now safe,
+            // no Python code is running).  Otherwise add the pending call and repeat.  If at any point during this process
+            // threading becomes initialized (due to our pending call or the Python code creating a new thread)  then we're done
+            // and we just resume all of the presently suspended threads.
 
-             ThreadMap suspendedThreads;
+            ThreadMap suspendedThreads;
 
-             g_initedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-             HandleHolder holder(g_initedEvent);
+            g_initedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+            HandleHolder holder(g_initedEvent);
 
-             bool addedPendingCall = false;
-             if (addPendingCall != nullptr && threadSafeAddPendingCall) {
-                 // we're on a thread safe Python version, go ahead and pend our call to initialize threading.
-                 addPendingCall(&AttachCallback, initThreads);
-                 addedPendingCall = true;
-             }
+            bool addedPendingCall = false;
+            if (addPendingCall != nullptr && threadSafeAddPendingCall) {
+                // we're on a thread safe Python version, go ahead and pend our call to initialize threading.
+                addPendingCall(&AttachCallback, initThreads);
+                addedPendingCall = true;
+            }
 
  #define TICKS_DIFF(prev, cur) ((cur) >= (prev)) ? ((cur)-(prev)) : ((0xFFFFFFFF-(prev))+(cur))
              const DWORD ticksPerSecond = 1000;
@@ -875,7 +901,9 @@ extern "C"
                 SuspendThreads(suspendedThreads, addPendingCall, threadsInited);
 
                  if (!threadsInited()) {
-                    if (*curPythonThread == nullptr) {
+                    auto curPyThread = getPythonThread ? getPythonThread() : *curPythonThread;
+                    
+                    if (curPyThread == nullptr) {
                          // no threads are currently running, it is safe to initialize multi threading.
                          PyGILState_STATE gilState;
                          if (version >= PythonVersion_34) {
@@ -899,13 +927,17 @@ extern "C"
                              // Py_InitThreads to bring up multi-threading.
                              // Some context here: http://bugs.python.org/issue11329
                              // http://pytools.codeplex.com/workitem/834
-                             gilState = pyGilStateEnsure();
+                            gilState = gilEnsure();
+                        }
+                        else {
+                            gilState = PyGILState_LOCKED; // prevent compiler warning
                          }
+
                          initThreads();
 
                          if (version >= PythonVersion_32) {
                              // we will release the GIL here
-                             pyGilStateRelease(gilState);
+                            gilRelease(gilState);
                          } else {
                              releaseLock();
                          }
@@ -981,13 +1013,13 @@ extern "C"
             if(showDebugInfo){
                 std::cout << "Py_IsInitialized not found. " << std::endl << std::flush;
             }
-            return 1;
+            return 51;
         }
         if (!isInit()) {
             if(showDebugInfo){
                 std::cout << "Py_IsInitialized returned false. " << std::endl << std::flush;
             }
-            return 2;
+            return 52;
         }
 
         auto version = GetPythonVersion(module);
@@ -1000,14 +1032,11 @@ extern "C"
         auto gilRelease = (PyGILState_Release*)GetProcAddress(module, "PyGILState_Release");
         auto threadHead = (PyInterpreterState_ThreadHead*)GetProcAddress(module, "PyInterpreterState_ThreadHead");
         auto initThreads = (PyEval_Lock*)GetProcAddress(module, "PyEval_InitThreads");
-        auto acquireLock = (PyEval_Lock*)GetProcAddress(module, "PyEval_AcquireLock");
         auto releaseLock = (PyEval_Lock*)GetProcAddress(module, "PyEval_ReleaseLock");
         auto threadsInited = (PyEval_ThreadsInitialized*)GetProcAddress(module, "PyEval_ThreadsInitialized");
         auto threadNext = (PyThreadState_Next*)GetProcAddress(module, "PyThreadState_Next");
         auto threadSwap = (PyThreadState_Swap*)GetProcAddress(module, "PyThreadState_Swap");
         auto pyDictNew = (PyDict_New*)GetProcAddress(module, "PyDict_New");
-        auto pyModuleNew = (PyModule_New*)GetProcAddress(module, "PyModule_New");
-        auto pyModuleGetDict = (PyModule_GetDict*)GetProcAddress(module, "PyModule_GetDict");
         auto pyCompileString = (Py_CompileString*)GetProcAddress(module, "Py_CompileString");
         auto pyEvalCode = (PyEval_EvalCode*)GetProcAddress(module, "PyEval_EvalCode");
         auto getDictItem = (PyDict_GetItemString*)GetProcAddress(module, "PyDict_GetItemString");
@@ -1046,23 +1075,21 @@ extern "C"
         auto getThreadTls = (PyThread_get_key_value*)GetProcAddress(module, "PyThread_get_key_value");
         auto setThreadTls = (PyThread_set_key_value*)GetProcAddress(module, "PyThread_set_key_value");
         auto delThreadTls = (PyThread_delete_key_value*)GetProcAddress(module, "PyThread_delete_key_value");
-        auto pyGilStateEnsure = (PyGILState_EnsureFunc*)GetProcAddress(module, "PyGILState_Ensure");
-        auto pyGilStateRelease = (PyGILState_ReleaseFunc*)GetProcAddress(module, "PyGILState_Release");
         auto PyCFrame_Type = (PyTypeObject*)GetProcAddress(module, "PyCFrame_Type");
-        auto pyRun_SimpleString = (PyRun_SimpleString*)GetProcAddress(module, "PyRun_SimpleString");
+        auto getPythonThread = (_PyThreadState_UncheckedGet*)GetProcAddress(module, "_PyThreadState_UncheckedGet");
 
-        if (addPendingCall == nullptr || curPythonThread == nullptr || interpHead == nullptr || gilEnsure == nullptr || gilRelease == nullptr || threadHead == nullptr ||
+        if (addPendingCall == nullptr || interpHead == nullptr || gilEnsure == nullptr || gilRelease == nullptr || threadHead == nullptr ||
             initThreads == nullptr || releaseLock == nullptr || threadsInited == nullptr || threadNext == nullptr || threadSwap == nullptr ||
             pyDictNew == nullptr || pyCompileString == nullptr || pyEvalCode == nullptr || getDictItem == nullptr || call == nullptr ||
             getBuiltins == nullptr || dictSetItem == nullptr || intFromLong == nullptr || pyErrRestore == nullptr || pyErrFetch == nullptr ||
             errOccurred == nullptr || pyImportMod == nullptr || pyGetAttr == nullptr || pyNone == nullptr || pySetAttr == nullptr || boolFromLong == nullptr ||
             getThreadTls == nullptr || setThreadTls == nullptr || delThreadTls == nullptr || releaseLock == nullptr ||
-            pyGilStateEnsure == nullptr || pyGilStateRelease == nullptr || pyRun_SimpleString == nullptr) {
+            (curPythonThread == nullptr && getPythonThread == nullptr)) {
                 // we're missing some APIs, we cannot attach.
                 if(showDebugInfo){
                     std::cout << "Error, missing Python API!! " << std::endl << std::flush;
                 }
-                return 3;
+                return 53;
         }
         
         auto head = interpHead();
@@ -1071,7 +1098,7 @@ extern "C"
             if(showDebugInfo){
                 std::cout << "Interpreter not initialized! " << std::endl << std::flush;
             }
-            return 4;
+            return 54;
         }
 
         GilHolder gilLock(gilEnsure, gilRelease);   // acquire and hold the GIL until done...
@@ -1085,14 +1112,14 @@ extern "C"
             if(showDebugInfo){
                 std::cout << "pydevd_tracing module null! " << std::endl << std::flush;
             }
-            return 7;
+            return 57;
         }
 
         if(!pyHasAttr(pydevdTracingMod.ToPython(), "_original_settrace")){
             if(showDebugInfo){
                 std::cout << "pydevd_tracing module has no _original_settrace! " << std::endl << std::flush;
             }
-            return 8;
+            return 58;
         }
         
         auto settrace = PyObjectHolder(isDebug, pyGetAttr(pydevdTracingMod.ToPython(), "_original_settrace"));
@@ -1100,7 +1127,7 @@ extern "C"
             if(showDebugInfo){
                 std::cout << "pydevd_tracing._original_settrace null! " << std::endl << std::flush;
             }
-            return 9;
+            return 59;
         }
         
         auto pydevdMod = PyObjectHolder(isDebug, pyImportMod("pydevd"));
@@ -1108,38 +1135,38 @@ extern "C"
             if(showDebugInfo){
                 std::cout << "pydevd module null! " << std::endl << std::flush;
             }
-            return 10;
+            return 60;
         }
         
-        auto getGlobalDebugger = PyObjectHolder(isDebug, pyGetAttr(pydevdMod.ToPython(), "GetGlobalDebugger"));
+        auto getGlobalDebugger = PyObjectHolder(isDebug, pyGetAttr(pydevdMod.ToPython(), "get_global_debugger"));
         if (*getGlobalDebugger == nullptr) {
             if(showDebugInfo){
-                std::cout << "pydevd.GetGlobalDebugger null! " << std::endl << std::flush;
+                std::cout << "pydevd.get_global_debugger null! " << std::endl << std::flush;
             }
-            return 11;
+            return 61;
         }
         
         auto globalDbg = PyObjectHolder(isDebug, call(getGlobalDebugger.ToPython(), NULL));
         if (*globalDbg == nullptr) {
             if(showDebugInfo){
-                std::cout << "pydevd.GetGlobalDebugger() returned null! " << std::endl << std::flush;
+                std::cout << "pydevd.get_global_debugger() returned null! " << std::endl << std::flush;
             }
-            return 12;
+            return 62;
         }
         
         if(!pyHasAttr(globalDbg.ToPython(), "trace_dispatch")){
             if(showDebugInfo){
-                std::cout << "pydevd.GetGlobalDebugger() has no attribute trace_dispatch! " << std::endl << std::flush;
+                std::cout << "pydevd.get_global_debugger() has no attribute trace_dispatch! " << std::endl << std::flush;
             }
-            return 13;
+            return 63;
         }
         
         auto traceFunc = PyObjectHolder(isDebug, pyGetAttr(globalDbg.ToPython(), "trace_dispatch"));
         if (*traceFunc == nullptr) {
             if(showDebugInfo){
-                std::cout << "pydevd.GetGlobalDebugger().trace_dispatch returned null! " << std::endl << std::flush;
+                std::cout << "pydevd.get_global_debugger().trace_dispatch returned null! " << std::endl << std::flush;
             }
-            return 14;
+            return 64;
         }
 
 
@@ -1158,7 +1185,7 @@ extern "C"
         unordered_set<PyThreadState*> seenThreads;
         {
             // find what index is holding onto the thread state...
-            auto curPyThread = *curPythonThread;
+            auto curPyThread = getPythonThread ? getPythonThread() : *curPythonThread;
             int threadStateIndex = -1;
             for (int i = 0; i < 100000; i++) {
                 void* value = getThreadTls(i);
@@ -1180,7 +1207,7 @@ extern "C"
                     foundThread = true;
                     processedThreads++;
 
-                    long threadId = GetPythonThreadId(version, curThread);
+                    DWORD threadId = GetPythonThreadId(version, curThread);
                     // skip this thread - it doesn't really have any Python code on it...
                     if (threadId != GetCurrentThreadId()) {
                         // create new debugger Thread object on our injected thread
@@ -1193,11 +1220,13 @@ extern "C"
                             frame = ((PyThreadState_30_33*)curThread)->frame;
                         } else if (PyThreadState_34_36::IsFor(version)) {
                             frame = ((PyThreadState_34_36*)curThread)->frame;
+                        } else if (PyThreadState_37::IsFor(version)) {
+                            frame = ((PyThreadState_37*)curThread)->frame;
                         }else{
                             if(showDebugInfo){
                                 std::cout << "Python version not handled! " << version << std::endl << std::flush;
                             }
-                            retVal = 15;
+                            retVal = 65;
                             break;
                         }
 
@@ -1205,14 +1234,15 @@ extern "C"
                         // all of the work here needs to be minimal - in particular we shouldn't
                         // ever evaluate user defined code as we could end up switching to this
                         // thread on the main thread and corrupting state.
-                        auto prevThreadState = getThreadTls(threadStateIndex);
                         delThreadTls(threadStateIndex);
                         setThreadTls(threadStateIndex, curThread);
                         auto prevThread = threadSwap(curThread);
 
                         // save and restore the error in case something funky happens...
                         auto errOccured = errOccurred();
-                        PyObject *type, *value, *traceback;
+                        PyObject* type = nullptr;
+                        PyObject* value = nullptr;
+                        PyObject* traceback = nullptr;
                         if (errOccured) {
                             pyErrFetch(&type, &value, &traceback);
                         }

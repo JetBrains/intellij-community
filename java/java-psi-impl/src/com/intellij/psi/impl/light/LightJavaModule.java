@@ -75,13 +75,13 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (file.isDirectory() && !myJarRoot.equals(file)) {
-          PsiDirectory directory = myManager.findDirectory(file);
+          PsiDirectory directory = getManager().findDirectory(file);
           if (directory != null) {
             PsiPackage pkg = service.getPackage(directory);
             if (pkg != null) {
               String packageName = pkg.getQualifiedName();
               if (!packageName.isEmpty() && !PsiUtil.isPackageEmpty(new PsiDirectory[]{directory}, packageName)) {
-                exports.add(new LightPackageAccessibilityStatement(myManager, packageName));
+                exports.add(new LightPackageAccessibilityStatement(getManager(), packageName));
               }
             }
           }

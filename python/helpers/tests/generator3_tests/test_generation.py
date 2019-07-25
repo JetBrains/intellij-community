@@ -6,13 +6,14 @@ import unittest
 
 import generator3
 import six
+from generator3 import GenerationStatus
 from generator3_tests import GeneratorTestCase
 from pycharm_generator_utils.constants import (
+    CACHE_DIR_NAME,
+    ENV_REQUIRED_GEN_VERSION_FILE,
+    ENV_STANDALONE_MODE_FLAG,
     ENV_TEST_MODE_FLAG,
     ENV_VERSION,
-    ENV_REQUIRED_GEN_VERSION_FILE,
-    CACHE_DIR_NAME,
-    ENV_STANDALONE_MODE_FLAG,
 )
 
 # Such version implies that skeletons are always regenerated
@@ -76,25 +77,28 @@ class SkeletonCachingTest(GeneratorTestCase):
             process.stdout.close()
             sys.stderr.write(process.stderr.read().decode('utf-8'))
             process.stderr.close()
+            return process.returncode == 0
         else:
             os.environ.update(env)
             sys.path.append(extra_syspath_entry)
             try:
+                success = True
                 if builtins:
                     for mod_qname in sys.builtin_module_names:
-                        generator3.process_one(mod_qname, None, True, output_dir)
+                        result = generator3.process_one(mod_qname, None, True, output_dir)
+                        success &= (result != GenerationStatus.FAILED)
                 else:
-                    generator3.process_one(mod_qname, mod_path, mod_qname in sys.builtin_module_names, output_dir)
+                    builtins = mod_qname in sys.builtin_module_names
+                    return generator3.process_one(mod_qname, mod_path, builtins, output_dir) != GenerationStatus.FAILED
             except Exception:
                 self.log.error('Raised inside generator', exc_info=True)
+                return False
             finally:
                 if mod_qname != 'sys':
                     sys.modules.pop(mod_qname, None)
                 sys.path.pop()
                 for name in env:
                     del os.environ[name]
-
-        return mod_path
 
     @property
     def temp_skeletons_dir(self):
@@ -179,18 +183,18 @@ class SkeletonCachingTest(GeneratorTestCase):
         self.check_generator_output('mod', mod_path='mod.py', gen_version='0.2', custom_required_gen=True)
 
     def test_version_stamp_put_in_cache_directory_for_failed_module(self):
-        self.check_generator_output('failing', mod_path='failing.py', gen_version='0.1')
+        self.check_generator_output('failing', mod_path='failing.py', gen_version='0.1', success=False)
 
     def test_skeleton_regenerated_for_failed_module_on_generator_upgrade(self):
         self.check_generator_output('failing', mod_path='failing.py', gen_version='0.2')
 
     def test_skeleton_not_regenerated_for_failed_module_on_same_generator_version(self):
-        self.check_generator_output('failing', mod_path='failing.py', gen_version='0.1')
+        self.check_generator_output('failing', mod_path='failing.py', gen_version='0.1', success=False)
 
     @unittest.skipIf(not _run_generator_in_separate_process,
                      'Importing module causing SIGSEGV cannot be done in the same interpreter')
     def test_segmentation_fault_handling(self):
-        self.check_generator_output('sigsegv', mod_path='sigsegv.py', gen_version='0.1')
+        self.check_generator_output('sigsegv', mod_path='sigsegv.py', gen_version='0.1', success=False)
 
     def test_cache_not_updated_when_sdk_skeleton_is_up_to_date(self):
         # We can't safely updated cache from SDK skeletons (backwards) because of binaries declaring
@@ -216,24 +220,24 @@ class SkeletonCachingTest(GeneratorTestCase):
 
     def test_cache_skeleton_not_regenerated_when_sdk_skeleton_generation_failed_for_same_version_and_same_binary(self):
         self.check_generator_output('mod', mod_path='mod.py', gen_version='0.1', custom_required_gen=True,
-                                    standalone_mode=True)
+                                    standalone_mode=True, success=False)
 
     def test_cache_skeleton_regenerated_when_sdk_skeleton_generation_failed_for_modified_binary(self):
         self.check_generator_output('mod', mod_path='mod.py', gen_version='0.1', custom_required_gen=True)
 
     @unittest.skipUnless(six.PY3, "Python 3 version of the test")
     def test_inaccessible_class_attribute_py3(self):
-        self.check_generator_output('mod', mod_path='mod.py')
+        self.check_generator_output('mod', mod_path='mod.py', success=False)
 
     @unittest.skipUnless(six.PY2, "Python 2 version of the test")
     def test_inaccessible_class_attribute_py2(self):
-        self.check_generator_output('mod', mod_path='mod.py')
+        self.check_generator_output('mod', mod_path='mod.py', success=False)
 
     def test_binary_declares_multiple_modules(self):
         self.check_generator_output('mod', mod_path='mod.py')
 
     def test_binary_declares_extra_module_that_fails(self):
-        self.check_generator_output('mod', mod_path='mod.py')
+        self.check_generator_output('mod', mod_path='mod.py', success=False)
 
     def test_origin_stamp_in_skeleton_header_is_updated_on_copying(self):
         self.check_generator_output('mod', mod_path='mod.py')
@@ -257,7 +261,8 @@ class SkeletonCachingTest(GeneratorTestCase):
         self.assertTrue(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat', 'errors.py')))
 
     def check_generator_output(self, mod_name, mod_path=None, mod_root=None,
-                               custom_required_gen=False, standalone_mode=False, **kwargs):
+                               custom_required_gen=False, standalone_mode=False,
+                               success=True, **kwargs):
         if custom_required_gen:
             kwargs.setdefault('required_gen_version_file_path',
                               os.path.join(self.test_data_dir, 'required_gen_version'))
@@ -273,7 +278,8 @@ class SkeletonCachingTest(GeneratorTestCase):
             mod_path = os.path.join(mod_root, mod_path)
 
         with self.comparing_dirs(tmp_subdir=self.PYTHON_STUBS_DIR):
-            self.run_generator(mod_name, mod_path=mod_path, extra_syspath_entry=mod_root, **kwargs)
+            result = self.run_generator(mod_name, mod_path=mod_path, extra_syspath_entry=mod_root, **kwargs)
+            self.assertEqual(success, result)
 
     def assertDirLayoutEquals(self, dir_path, expected_layout):
         def format_dir(dir_path, indent=''):

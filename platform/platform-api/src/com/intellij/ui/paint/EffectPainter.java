@@ -16,6 +16,7 @@
 package com.intellij.ui.paint;
 
 import com.intellij.util.ui.RegionPainter;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -38,7 +39,7 @@ public enum EffectPainter implements RegionPainter<Font> {
      * @param font   optional font to calculate line metrics
      */
     @Override
-    public void paint(Graphics2D g, int x, int y, int width, int height, Font font) {
+    public void paint(@NotNull Graphics2D g, int x, int y, int width, int height, Font font) {
       EffectPainter2D.LINE_UNDERSCORE.paint(g, x, y, width, height, font);
     }
   },
@@ -57,7 +58,7 @@ public enum EffectPainter implements RegionPainter<Font> {
      * @param font   optional font to calculate line metrics
      */
     @Override
-    public void paint(Graphics2D g, int x, int y, int width, int height, Font font) {
+    public void paint(@NotNull Graphics2D g, int x, int y, int width, int height, Font font) {
       EffectPainter2D.BOLD_LINE_UNDERSCORE.paint(g, x, y, width, height, font);
     }
   },
@@ -76,7 +77,7 @@ public enum EffectPainter implements RegionPainter<Font> {
      * @param font   optional font to calculate line metrics
      */
     @Override
-    public void paint(Graphics2D g, int x, int y, int width, int height, Font font) {
+    public void paint(@NotNull Graphics2D g, int x, int y, int width, int height, Font font) {
       EffectPainter2D.BOLD_DOTTED_UNDERSCORE.paint(g, x, y, width, height, font);
     }
   },
@@ -95,7 +96,7 @@ public enum EffectPainter implements RegionPainter<Font> {
      * @param font   optional font to calculate line metrics
      */
     @Override
-    public void paint(Graphics2D g, int x, int y, int width, int height, Font font) {
+    public void paint(@NotNull Graphics2D g, int x, int y, int width, int height, Font font) {
       EffectPainter2D.WAVE_UNDERSCORE.paint(g, x, y, width, height, font);
     }
   },
@@ -114,7 +115,7 @@ public enum EffectPainter implements RegionPainter<Font> {
      * @param font   optional font to calculate line metrics
      */
     @Override
-    public void paint(Graphics2D g, int x, int y, int width, int height, Font font) {
+    public void paint(@NotNull Graphics2D g, int x, int y, int width, int height, Font font) {
       EffectPainter2D.STRIKE_THROUGH.paint(g, x, y, width, height, font);
     }
   }

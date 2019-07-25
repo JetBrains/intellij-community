@@ -281,6 +281,7 @@ class TestingTasksImpl extends TestingTasks {
       "-XX:ReservedCodeCacheSize=300m",
       "-XX:SoftRefLRUPolicyMSPerMB=50",
       "-XX:+UseConcMarkSweepGC",
+      "-XX:CICompilerCount=2",
       "-XX:-OmitStackTraceInFastThrow"
     ]
     jvmArgs.addAll(additionalJvmOptions)

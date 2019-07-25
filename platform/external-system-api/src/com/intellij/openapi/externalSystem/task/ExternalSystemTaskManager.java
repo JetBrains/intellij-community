@@ -42,7 +42,7 @@ public interface ExternalSystemTaskManager<S extends ExternalSystemExecutionSett
                             @Nullable S settings,
                             @NotNull List<String> vmOptions,
                             @NotNull List<String> scriptParameters,
-                            @Nullable String jvmAgentSetup,
+                            @Nullable String jvmParametersSetup,
                             @NotNull ExternalSystemTaskNotificationListener listener) throws ExternalSystemException {
   }
 
@@ -50,11 +50,11 @@ public interface ExternalSystemTaskManager<S extends ExternalSystemExecutionSett
                             @NotNull List<String> taskNames,
                             @NotNull String projectPath,
                             @Nullable S settings,
-                            @Nullable String jvmAgentSetup,
+                            @Nullable String jvmParametersSetup,
                             @NotNull ExternalSystemTaskNotificationListener listener) throws ExternalSystemException {
     List<String> vmOptions = settings == null ? ContainerUtil.emptyList() : settings.getJvmArguments();
     List<String> arguments = settings == null ? ContainerUtil.emptyList() : settings.getArguments();
-    executeTasks(id, taskNames, projectPath, settings, vmOptions, arguments, jvmAgentSetup, listener);
+    executeTasks(id, taskNames, projectPath, settings, vmOptions, arguments, jvmParametersSetup, listener);
   }
 
   boolean cancelTask(@NotNull ExternalSystemTaskId id,

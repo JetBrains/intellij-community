@@ -100,7 +100,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
       new ModuleJdkConfigurable(this, ProjectStructureConfigurable.getInstance(myProject).getProjectJdksModel()) {
         @Override
         protected ModifiableRootModel getRootModel() {
-          return getState().getRootModel();
+          return getModifiableModel();
         }
       };
     panel.add(jdkConfigurable.createComponent(), BorderLayout.NORTH);
@@ -114,6 +114,10 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
     }
 
     return panel;
+  }
+
+  private ModifiableRootModel getModifiableModel() {
+    return getState().getRootModel();
   }
 
   public void selectOrderEntry(@NotNull final OrderEntry entry) {

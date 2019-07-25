@@ -215,6 +215,11 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
     return true;
   }
 
+  @NotNull
+  XmlElementDescriptor getDelegate() {
+    return myDelegate;
+  }
+  
   @Override
   public String toString() {
     return myDelegate.toString();

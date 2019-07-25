@@ -6,8 +6,10 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil
 import com.intellij.codeInspection.apiUsage.ApiUsageProcessor
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.psi.*
-import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.util.PsiUtilCore
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
@@ -30,12 +32,6 @@ class NonExtendableApiUsageInspection : LocalInspectionTool() {
     private fun isLibraryElement(element: PsiElement): Boolean {
       val virtualFile = PsiUtilCore.getVirtualFile(element)
       return virtualFile != null && ProjectFileIndex.getInstance(element.project).isInLibraryClasses(virtualFile)
-    }
-
-    private fun isPsiAncestor(ancestor: UElement, child: UElement): Boolean {
-      val ancestorPsi = ancestor.sourcePsi ?: return false
-      val childPsi = child.sourcePsi ?: return false
-      return PsiTreeUtil.isAncestor(ancestorPsi, childPsi, false)
     }
 
     private fun isSuperClassReferenceInSubclassDeclaration(sourceNode: UElement, subclassDeclaration: UClass) =

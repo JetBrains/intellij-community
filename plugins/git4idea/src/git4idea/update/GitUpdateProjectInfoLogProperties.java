@@ -9,14 +9,11 @@ import com.intellij.vcs.log.impl.VcsLogApplicationSettings;
 import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties;
 import com.intellij.vcs.log.impl.VcsLogUiPropertiesImpl;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static com.intellij.vcs.log.VcsLogFilterCollection.*;
 
 @State(
   name = "Git.Update.Project.Info.Tabs.Properties",

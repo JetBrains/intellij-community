@@ -43,6 +43,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         }
 
         private fun createFrameHeader(frame: JFrame): DefaultFrameHeader = DefaultFrameHeader(frame)
+        @JvmStatic
         fun createMainFrameHeader(frame: JFrame): MainFrameHeader = MainFrameHeader(frame)
     }
 
@@ -82,8 +83,6 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     protected val buttonPanes: CustomFrameTitleButtons by lazy {
         createButtonsPane()
     }
-
-
 
     init {
         isOpaque = true

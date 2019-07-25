@@ -52,8 +52,9 @@ public class RelativePoint {
   }
 
   public RelativePoint(@NotNull Component aComponent, @NotNull Point aPointOnComponent) {
-    if (aComponent.isShowing()) {
-      myComponent = SwingUtilities.getRootPane(aComponent);
+    JRootPane rootPane = SwingUtilities.getRootPane(aComponent);
+    if (aComponent.isShowing() && rootPane != null) {
+      myComponent = rootPane;
       myPointOnComponent = SwingUtilities.convertPoint(aComponent, aPointOnComponent, myComponent);
     }
     else {

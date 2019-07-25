@@ -26,6 +26,7 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -40,7 +41,7 @@ public abstract class VcsLogPopupComponent extends JPanel {
   private static final int BORDER_SIZE = 2;
 
   @NotNull protected final String myName;
-  @NotNull private JLabel myNameLabel;
+  @Nullable private JLabel myNameLabel;
   @NotNull private JLabel myValueLabel;
 
   protected VcsLogPopupComponent(@NotNull String name) {
@@ -48,7 +49,7 @@ public abstract class VcsLogPopupComponent extends JPanel {
   }
 
   public JComponent initUi() {
-    myNameLabel = new JLabel(myName + ": ");
+    myNameLabel = shouldDrawLabel() ? new JLabel(myName + ": ") : null;
     myValueLabel = new JLabel() {
       @Override
       public String getText() {
@@ -60,7 +61,7 @@ public abstract class VcsLogPopupComponent extends JPanel {
     setBorder(createUnfocusedBorder());
 
     setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-    add(myNameLabel);
+    if (myNameLabel != null) add(myNameLabel);
     add(myValueLabel);
     add(Box.createHorizontalStrut(GAP_BEFORE_ARROW));
     add(new JLabel(AllIcons.Ide.Statusbar_arrows));
@@ -71,7 +72,9 @@ public abstract class VcsLogPopupComponent extends JPanel {
     });
     showPopupMenuOnClick();
     showPopupMenuFromKeyboard();
-    indicateHovering();
+    if (shouldIndicateHovering()) {
+      indicateHovering();
+    }
     indicateFocusing();
     return this;
   }
@@ -80,6 +83,19 @@ public abstract class VcsLogPopupComponent extends JPanel {
   public abstract String getCurrentText();
 
   public abstract void installChangeListener(@NotNull Runnable onChange);
+
+  @NotNull
+  protected Color getDefaultSelectorForeground() {
+    return UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getInactiveTextColor().darker().darker();
+  }
+
+  protected boolean shouldIndicateHovering() {
+    return true;
+  }
+
+  protected boolean shouldDrawLabel() {
+    return true;
+  }
 
   /**
    * Create popup actions available under this filter.
@@ -136,12 +152,16 @@ public abstract class VcsLogPopupComponent extends JPanel {
   }
 
   private void setDefaultForeground() {
-    myNameLabel.setForeground(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getInactiveTextColor());
-    myValueLabel.setForeground(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getInactiveTextColor().darker().darker());
+    if (myNameLabel != null) {
+      myNameLabel.setForeground(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getInactiveTextColor());
+    }
+    myValueLabel.setForeground(getDefaultSelectorForeground());
   }
 
   private void setOnHoverForeground() {
-    myNameLabel.setForeground(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getTextAreaForeground());
+    if (myNameLabel != null) {
+      myNameLabel.setForeground(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getTextAreaForeground());
+    }
     myValueLabel.setForeground(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getTextFieldForeground());
   }
 
