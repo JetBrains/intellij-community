@@ -237,6 +237,10 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testClosureSignatureFromInnerCalls() {
+    doTest(true)
+  }
+
   void testParametrizedArray() {
     doTest(true)
   }

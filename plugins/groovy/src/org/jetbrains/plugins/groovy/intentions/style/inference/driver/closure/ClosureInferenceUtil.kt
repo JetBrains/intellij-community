@@ -39,6 +39,19 @@ fun collectClosureParametersConstraints(collector: MutableList<ConstraintFormula
   }
 }
 
+fun GrMethod.forEachParameterUsage(action: (GrParameter, List<ReadWriteVariableInstruction>) -> Unit) {
+  val usages =
+    block
+      ?.controlFlow
+      ?.filterIsInstance<ReadWriteVariableInstruction>()
+      ?.groupBy { it.element?.reference?.resolve() } ?: return
+  parameters
+    .filter { usages.containsKey(it) }
+    .forEach {
+      val instructions = usages.getValue(it)
+      action(it, instructions)
+    }
+}
 
 fun collectClosureArguments(method: GrMethod, virtualMethod: GrMethod): Map<GrParameter, List<GrExpression>> {
   val allArgumentExpressions = extractArgumentExpressions(method,
