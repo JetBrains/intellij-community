@@ -5,7 +5,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate
-import org.jetbrains.plugins.groovy.intentions.style.inference.typeParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.util.ErrorUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
@@ -29,9 +28,7 @@ internal object ImplicitClosureCallPredicate : PsiElementPredicate {
   }
 
   private fun PsiType?.isClosureType(): Boolean {
-    return this != null &&
-           (equalsToText(GROOVY_LANG_CLOSURE) ||
-            typeParameter()?.extendsListTypes?.firstOrNull()?.equalsToText(GROOVY_LANG_CLOSURE) ?: false)
+    return this != null && equalsToText(GROOVY_LANG_CLOSURE)
   }
 
   private fun PsiElement?.isClosureCallMethod(): Boolean {
