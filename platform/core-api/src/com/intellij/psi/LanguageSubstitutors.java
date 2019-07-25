@@ -44,6 +44,10 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
     for (LanguageSubstitutor substitutor : forKey(originalLang)) {
       Language substitutedLang = substitutor.getLanguage(file, project);
       if (substitutedLang != null) {
+        if (substitutedLang == Language.ANY) {
+          LOG.error("For " + originalLang + " and " + file + ", " + substitutor.getClass().getName() + " returned Language.ANY, which is not allowed");
+          continue;
+        }
         if (LOG.isDebugEnabled()) {
           LOG.debug("For " + originalLang + " and " + file + ", " + substitutor.getClass().getName() + " returned '" + substitutedLang + "' of " + substitutedLang.getClass());
         }
