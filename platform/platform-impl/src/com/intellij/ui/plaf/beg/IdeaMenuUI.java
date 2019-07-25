@@ -32,9 +32,9 @@ public class IdeaMenuUI extends BasicMenuUI{
   private static final Rectangle ourIconRect = new Rectangle();
   private static final Rectangle ourViewRect = new Rectangle(32767, 32767);
 
-  private Border myAquaSelectedBackgroundPainter;
-  private Icon myAquaInvertedArrowIcon;
-  private Icon myAquaDisabledArrowIcon;
+  private Border mySelectedBackgroundPainter;
+  private Icon myInvertedArrowIcon;
+  private Icon myDisabledArrowIcon;
 
   /** invoked by reflection */
   public static ComponentUI createUI(JComponent component) {
@@ -44,10 +44,10 @@ public class IdeaMenuUI extends BasicMenuUI{
   public IdeaMenuUI() {
     myMaxGutterIconWidth = JBUIScale.scale(18);
 
-    if (UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderIntelliJLaF()) {
-      if (myAquaSelectedBackgroundPainter == null) myAquaSelectedBackgroundPainter = (Border) UIManager.get("MenuItem.selectedBackgroundPainter");
-      if (myAquaInvertedArrowIcon == null) myAquaInvertedArrowIcon = (Icon) UIManager.get("Menu.invertedArrowIcon");
-      if (myAquaDisabledArrowIcon == null) myAquaDisabledArrowIcon = (Icon) UIManager.get("Menu.disabledArrowIcon");
+    if (UIUtil.isUnderIntelliJLaF()) {
+      mySelectedBackgroundPainter = (Border) UIManager.get("MenuItem.selectedBackgroundPainter");
+      myInvertedArrowIcon = (Icon) UIManager.get("Menu.invertedArrowIcon");
+      myDisabledArrowIcon = (Icon) UIManager.get("Menu.disabledArrowIcon");
     }
   }
 
@@ -169,10 +169,10 @@ public class IdeaMenuUI extends BasicMenuUI{
       }
       if (useCheckAndArrow()){
         try {
-          if (SystemInfo.isMac && myAquaInvertedArrowIcon != null && (buttonmodel.isArmed() || buttonmodel.isSelected()) && (UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderIntelliJLaF())) {
-            myAquaInvertedArrowIcon.paintIcon(comp, g, ourArrowIconRect.x, ourArrowIconRect.y);
-          } else if (SystemInfo.isMac && myAquaDisabledArrowIcon != null && !buttonmodel.isEnabled() && (UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderIntelliJLaF())) {
-            myAquaDisabledArrowIcon.paintIcon(comp, g, ourArrowIconRect.x, ourArrowIconRect.y);
+          if (SystemInfo.isMac && myInvertedArrowIcon != null && (buttonmodel.isArmed() || buttonmodel.isSelected()) && UIUtil.isUnderIntelliJLaF()) {
+            myInvertedArrowIcon.paintIcon(comp, g, ourArrowIconRect.x, ourArrowIconRect.y);
+          } else if (SystemInfo.isMac && myDisabledArrowIcon != null && !buttonmodel.isEnabled() && UIUtil.isUnderIntelliJLaF()) {
+            myDisabledArrowIcon.paintIcon(comp, g, ourArrowIconRect.x, ourArrowIconRect.y);
           } else arrowIcon.paintIcon(comp, g, ourArrowIconRect.x, ourArrowIconRect.y);
         }
         catch (NullPointerException npe) {
@@ -204,16 +204,12 @@ public class IdeaMenuUI extends BasicMenuUI{
   }
 
   protected final void paintHover(Graphics g, JComponent comp, JMenu jMenu, Icon allowedIcon) {
-    if (UIUtil.isUnderAquaLookAndFeel()) {
-       myAquaSelectedBackgroundPainter.paintBorder(comp, g, 0, 0, jMenu.getWidth(), jMenu.getHeight());
-    } else {
-      g.setColor(selectionBackground);
-      if (allowedIcon != null && !(UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula())) {
-        g.fillRect(k, 0, jMenu.getWidth() - k, jMenu.getHeight());
-      }
-      else {
-        g.fillRect(0, 0, jMenu.getWidth(), jMenu.getHeight());
-      }
+    g.setColor(selectionBackground);
+    if (allowedIcon != null && !(UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula())) {
+      g.fillRect(k, 0, jMenu.getWidth() - k, jMenu.getHeight());
+    }
+    else {
+      g.fillRect(0, 0, jMenu.getWidth(), jMenu.getHeight());
     }
   }
 
