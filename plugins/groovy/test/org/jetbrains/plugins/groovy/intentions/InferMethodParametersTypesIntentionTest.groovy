@@ -293,6 +293,10 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testOverriddenMethodWithoutType() {
+    doTest(true)
+  }
+
 //  void testDeepCollectingOfCalls() {
 //    doTest(true)
 //  }

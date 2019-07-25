@@ -49,6 +49,10 @@ internal class InferMethodParametersTypesIntention : Intention() {
       method.modifierList.setModifierProperty(DEF, false)
     }
     val virtualMethod = runInferenceProcess(method)
+    if (!method.isConstructor) {
+      method.returnType = virtualMethod.returnType
+      GrReferenceAdjuster.shortenAllReferencesIn(method.returnTypeElementGroovy)
+    }
     if (virtualMethod.hasTypeParameters()) {
       when {
         method.hasTypeParameters() -> method.typeParameterList!!.replace(virtualMethod.typeParameterList!!)
