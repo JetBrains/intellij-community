@@ -119,7 +119,7 @@ public class CreateEditorConfigForm {
       return langOptions.INDENT_SIZE != commonIndentOptions.INDENT_SIZE ||
              langOptions.TAB_SIZE != commonIndentOptions.TAB_SIZE ||
              langOptions.USE_TAB_CHARACTER != commonIndentOptions.USE_TAB_CHARACTER ||
-             settings.getRightMargin(checkBoxRec.myLanguage) != settings.getRightMargin(checkBoxRec.myLanguage);
+             settings.getRightMargin(checkBoxRec.myLanguage) != settings.getRightMargin(null);
     }
     return true;
   }
