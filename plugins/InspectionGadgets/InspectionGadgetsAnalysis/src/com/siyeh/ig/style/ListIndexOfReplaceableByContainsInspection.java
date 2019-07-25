@@ -42,7 +42,7 @@ public class ListIndexOfReplaceableByContainsInspection
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
-      "indexof.replaceable.by.contains.display.name");
+      "list.indexof.replaceable.by.contains.display.name");
   }
 
   @Override

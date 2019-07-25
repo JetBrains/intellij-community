@@ -1318,7 +1318,7 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids"
                      enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.migration.IfCanBeSwitchInspection"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="IndexOfReplaceableByContains" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="indexof.replaceable.by.contains.display.name" groupBundle="messages.InspectionsBundle"
+                     key="string.indexof.replaceable.by.contains.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids5" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.migration.IndexOfReplaceableByContainsInspection"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="MethodCanBeVariableArityMethod" bundle="com.siyeh.InspectionGadgetsBundle"
@@ -2351,7 +2351,7 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues" enabledByDefault="false" runForWholeFile="true"
                      level="WARNING" implementationClass="com.siyeh.ig.style.ImplicitCallToSuperInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ListIndexOfReplaceableByContains" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="indexof.replaceable.by.contains.display.name" groupBundle="messages.InspectionsBundle"
+                     key="list.indexof.replaceable.by.contains.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.style.ListIndexOfReplaceableByContainsInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="LiteralAsArgToStringEquals" bundle="com.siyeh.InspectionGadgetsBundle"
