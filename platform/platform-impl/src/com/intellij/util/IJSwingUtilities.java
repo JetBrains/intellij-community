@@ -3,10 +3,9 @@ package com.intellij.util;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.ui.EditorTextField;
 import com.intellij.util.ui.JBSwingUtilities;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,24 +59,9 @@ public class IJSwingUtilities extends JBSwingUtilities {
     return SwingUtilities.isDescendingFrom(focusedComponent, component);
   }
 
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public static void adjustComponentsOnMac(@Nullable JLabel label, @Nullable JComponent component) {
-    if (component == null) return;
-    if (!UIUtil.isUnderAquaLookAndFeel()) return;
-
-    if (component instanceof JComboBox) {
-      UIUtil.addInsets(component, JBUI.insetsLeft(-2));
-      if (label != null) {
-        UIUtil.addInsets(label, JBUI.insetsLeft(2));
-      }
-    }
-    if (component instanceof JCheckBox) {
-      UIUtil.addInsets(component, JBUI.insetsLeft(-5));
-    }
-    if (component instanceof JTextField || component instanceof EditorTextField) {
-      if (label != null) {
-        UIUtil.addInsets(label, JBUI.insetsLeft(3));
-      }
-    }
   }
 
   public static HyperlinkEvent createHyperlinkEvent(@Nullable String href, @NotNull Object source) {

@@ -5,7 +5,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +56,6 @@ public abstract class JBTableRowEditor extends JPanel {
   public static JPanel createLabeledPanel(String labelText, JComponent component) {
     final JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
     final JBLabel label = new JBLabel(labelText, UIUtil.ComponentStyle.SMALL);
-    IJSwingUtilities.adjustComponentsOnMac(label, component);
     panel.add(label);
     panel.add(component);
     return panel;
