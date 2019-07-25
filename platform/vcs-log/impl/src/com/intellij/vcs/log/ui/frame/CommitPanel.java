@@ -39,7 +39,7 @@ import java.util.List;
 
 import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.EDITOR_PROP;
 import static com.intellij.util.ObjectUtils.notNull;
-import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.GO_TO_HASH;
+import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.isGoToHash;
 import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.isShowHideBranches;
 
 public class CommitPanel extends JBPanel {
@@ -163,7 +163,7 @@ public class CommitPanel extends JBPanel {
   private class MessagePanel extends HtmlPanel {
     @Override
     public void hyperlinkUpdate(@NotNull HyperlinkEvent e) {
-      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && e.getDescription().startsWith(GO_TO_HASH)) {
+      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && isGoToHash(e)) {
         CommitId commitId = notNull(myPresentation).parseTargetCommit(e);
         if (commitId != null) myNavigate.consume(commitId);
       }

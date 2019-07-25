@@ -38,7 +38,7 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 public class CommitPresentationUtil {
   @NotNull private static final Pattern HASH_PATTERN = Pattern.compile("[0-9a-f]{7,40}", Pattern.CASE_INSENSITIVE);
 
-  @NotNull static final String GO_TO_HASH = "go-to-hash:";
+  @NotNull private static final String GO_TO_HASH = "go-to-hash:";
   @NotNull private static final String SHOW_HIDE_BRANCHES = "show-hide-branches";
   private static final String ELLIPSIS = "...";
   private static final int BIG_CUT_SIZE = 10;
@@ -46,6 +46,10 @@ public class CommitPresentationUtil {
 
   public static boolean isShowHideBranches(@NotNull HyperlinkEvent e) {
     return SHOW_HIDE_BRANCHES.equals(e.getDescription());
+  }
+
+  public static boolean isGoToHash(@NotNull HyperlinkEvent e) {
+    return e.getDescription().startsWith(GO_TO_HASH);
   }
 
   @NotNull
