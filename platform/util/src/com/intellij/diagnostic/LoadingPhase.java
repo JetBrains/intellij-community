@@ -34,7 +34,7 @@ public enum LoadingPhase {
   public static void setCurrentPhase(@NotNull LoadingPhase phase) {
     LoadingPhase old = currentPhase.getAndSet(phase);
     if (old.ordinal() > phase.ordinal()) {
-      getLogger().error("New phase " + phase + " cannot be earlier then old " + old);
+      getLogger().error("New phase " + phase + " cannot be earlier than old " + old);
     }
     logPhaseSet(phase);
   }
@@ -70,7 +70,7 @@ public enum LoadingPhase {
 
   private static void logPhaseSet(@NotNull LoadingPhase phase) {
     if (phase.ordinal() >= CONFIGURATION_STORE_INITIALIZED.ordinal()) {
-      getLogger().info("Reached " + phase + " loading phase");
+      getLogger().info("Reached the loading phase " + phase);
     }
   }
 
@@ -84,7 +84,7 @@ public enum LoadingPhase {
     synchronized (stackTraces) {
       if (!stackTraces.add(t)) return;
 
-      getLogger().warn("Should be called at least at phase " + phase + ", the current phase is: " + currentPhase + "\n" +
+      getLogger().warn("Should be called at least at the phase " + phase + ", the current phase is: " + currentPhase + "\n" +
                        "Current violators count: " + stackTraces.size() + "\n\n",
                        t);
     }

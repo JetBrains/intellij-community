@@ -347,7 +347,7 @@ open class IdeStarter : ApplicationStarter {
     // must be after appFrameCreated because some listeners can mutate state of RecentProjectsManager
     val willOpenProject = commandLineArgs.isNotEmpty() || ourFilesToLoad.isNotEmpty() || RecentProjectsManager.getInstance().willReopenProjectOnStart()
 
-    // Temporary check until the jre implementation has been checked and bundled
+    // temporary check until the JRE implementation has been checked and bundled
     if (Registry.`is`("ide.popup.enablePopupType")) {
       @Suppress("SpellCheckingInspection")
       System.setProperty("jbre.popupwindow.settype", "true")
