@@ -107,11 +107,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private static final int myCachePreviewLines = 100;// Actually cache image has myCachePreviewLines * 2 + 1 lines (above + below + current one)
   @Nullable private LightweightHint myEditorPreviewHint;
   @NotNull private final EditorFragmentRenderer myEditorFragmentRenderer;
+  private final MouseMovementTracker myMouseMovementTracker = new MouseMovementTracker();
   private int myRowAdjuster;
   private int myWheelAccumulator;
   private int myLastVisualLine;
   private WeakReference<LightweightHint> myCurrentHint;
-  private Point myOriginalMouseLocation;
   private int myCurrentHintAnchorY;
   private boolean myKeepHint;
 
@@ -203,10 +203,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                                               e.isPopupTrigger());
 
     boolean newLook = Registry.is("editor.new.mouse.hover.popups");
-    Point currentPosition = e.getLocationOnScreen();
     LightweightHint currentHint = getCurrentHint();
     if (newLook && currentHint != null) {
-      if (myKeepHint || ScreenUtil.isMovementTowards(myOriginalMouseLocation, currentPosition, getBoundsOnScreen(currentHint))) {
+      if (myKeepHint || myMouseMovementTracker.isMovingTowards(e, getBoundsOnScreen(currentHint))) {
         return true;
       }
     }
@@ -238,9 +237,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       if (bigRenderer != null) {
         LightweightHint hint = showTooltip(bigRenderer, createHint(me).setForcePopup(newLook));
         myCurrentHint = new WeakReference<>(hint);
-        myOriginalMouseLocation = e.getLocationOnScreen();
         myCurrentHintAnchorY = y;
         myKeepHint = false;
+        myMouseMovementTracker.reset();
         return true;
       }
       return false;
