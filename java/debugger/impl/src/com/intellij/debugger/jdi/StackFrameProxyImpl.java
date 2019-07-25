@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author Eugene Zhuravlev
@@ -27,6 +27,7 @@ import java.util.Map;
 
 public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.jdi.StackFrameProxyImpl");
+  private static final int FRAMES_BATCH_MAX = 10;
   private final ThreadReferenceProxyImpl myThreadProxy;
   private final int myFrameFromBottomIndex; // 1-based
 
@@ -117,7 +118,15 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     if (myStackFrame == null) {
       try {
         final ThreadReference threadRef = myThreadProxy.getThreadReference();
-        myStackFrame = threadRef.frame(getFrameIndex());
+        int index = getFrameIndex();
+        // batch get frames from 1 to FRAMES_BATCH_MAX
+        // making this number very high does not help much because renderers invocation usually flush all caches
+        if (index > 0 && index < FRAMES_BATCH_MAX) {
+          myStackFrame = threadRef.frames(0, Math.min(myThreadProxy.frameCount(), FRAMES_BATCH_MAX)).get(index);
+        }
+        else {
+          myStackFrame = threadRef.frame(index);
+        }
       }
       catch (IndexOutOfBoundsException e) {
         throw new EvaluateException(e.getMessage(), e);
