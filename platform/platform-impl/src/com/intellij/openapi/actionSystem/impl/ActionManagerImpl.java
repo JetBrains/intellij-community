@@ -1110,8 +1110,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       if (!myId2Action.containsKey(actionId)) {
         if (LOG.isDebugEnabled()) {
           LOG.debug("action with ID " + actionId + " wasn't registered");
-          return;
         }
+        return;
       }
       AnAction oldValue = myId2Action.remove(actionId);
       myAction2Id.remove(oldValue);
