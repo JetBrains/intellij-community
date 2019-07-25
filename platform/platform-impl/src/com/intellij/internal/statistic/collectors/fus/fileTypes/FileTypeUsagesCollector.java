@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.project.ProjectKt;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -84,7 +85,8 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
     @Override
     protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       FileType fileType = FileTypeManager.getInstance().findFileTypeByName(data);
-      if (fileType != null && PluginInfoDetectorKt.getPluginInfo(fileType.getClass()).isDevelopedByJetBrains()) {
+      if (fileType != null && StringUtil.equals(fileType.getName(), data) &&
+          PluginInfoDetectorKt.getPluginInfo(fileType.getClass()).isDevelopedByJetBrains()) {
         return ValidationResultType.ACCEPTED;
       }
       return ValidationResultType.REJECTED;
