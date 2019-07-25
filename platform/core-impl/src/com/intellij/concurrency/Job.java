@@ -40,6 +40,11 @@ public interface Job<T> {
    */
   void waitForCompletion(int millis) throws InterruptedException, ExecutionException, TimeoutException;
 
+  @SuppressWarnings("unchecked")
+  static <T> Job<T> nullJob() {
+    return NULL_JOB;
+  }
+
   @NotNull
   Job NULL_JOB = new Job() {
     @Override
