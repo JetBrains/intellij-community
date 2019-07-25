@@ -99,7 +99,7 @@ public class CommitPanel extends JBPanel {
       myPresentation = presentation;
 
       myMessagePanel.update();
-      myHashAndAuthorPanel.update();
+      myHashAndAuthorPanel.updateHashAndAuthor(presentation);
       VirtualFile root = commit.getRoot();
       myRootPanel.setRoot(root, myColorManager.hasMultiplePaths() ? VcsLogGraphTable.getRootBackgroundColor(root, myColorManager) : null);
     }
@@ -201,11 +201,18 @@ public class CommitPanel extends JBPanel {
     }
   }
 
-  private class HashAndAuthorPanel extends HtmlPanel {
+  private static class HashAndAuthorPanel extends HtmlPanel {
+    @Nullable CommitPresentationUtil.CommitPresentation myPresentation;
+
     @NotNull
     @Override
     protected String getBody() {
       return myPresentation == null ? "" : myPresentation.getHashAndAuthor();
+    }
+
+    public void updateHashAndAuthor(@Nullable CommitPresentationUtil.CommitPresentation presentation) {
+      myPresentation = presentation;
+      update();
     }
 
     @NotNull
