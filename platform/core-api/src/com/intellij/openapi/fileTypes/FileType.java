@@ -34,6 +34,7 @@ import javax.swing.*;
  *
  * @see com.intellij.openapi.fileTypes.StdFileTypes
  * @see com.intellij.openapi.fileTypes.FileTypes
+ * @see INativeFileType
  */
 public interface FileType extends Scheme {
   FileType[] EMPTY_ARRAY = new FileType[0];
