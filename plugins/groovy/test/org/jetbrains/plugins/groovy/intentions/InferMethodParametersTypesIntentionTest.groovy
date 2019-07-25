@@ -241,6 +241,10 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testArrayOfPrimitiveTypes() {
+    doTest(true)
+  }
+
   void testParametrizedArray() {
     doTest(true)
   }

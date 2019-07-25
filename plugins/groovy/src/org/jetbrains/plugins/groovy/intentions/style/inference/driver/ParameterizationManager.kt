@@ -85,8 +85,15 @@ class ParameterizationManager(method: GrMethod) {
     val calculatedType =
       when {
         strict -> target.accept(visitor)
-        target is PsiArrayType -> target.componentType.accept(visitor).createArrayType()
-        target.isTypeParameter() -> registerTypeParameter(listOf(target as PsiClassType), createdTypeParameters)
+        target is PsiArrayType -> {
+          if (target.componentType is PsiPrimitiveType) {
+            target
+          }
+          else {
+            target.componentType.accept(visitor).createArrayType()
+          }
+        }
+        target.isTypeParameter() -> registerAction(listOf(target as PsiClassType))
         target is PsiIntersectionType -> target.accept(visitor)
         target == PsiType.getJavaLangObject(context.manager, context.resolveScope) -> registerAction(emptyList())
         else -> registerAction(listOf(target.accept(visitor)))
