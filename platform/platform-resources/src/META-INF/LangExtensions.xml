@@ -897,6 +897,10 @@
     <localInspection shortName="LongLine" bundle="messages.InspectionsBundle" key="long.line.display.name"
                      groupKey="inspection.general.tools.group.name" enabledByDefault="false"
                      level="WARNING" implementationClass="com.intellij.codeInspection.longLine.LongLineInspection"/>
+    <localInspection shortName="ProjectFingerprint" displayName="Project Fingerprint" bundle="messages.InspectionsBundle"
+                      groupKey="inspection.general.tools.group.name" enabledByDefault="true"
+                      level="WARNING" implementationClass="com.intellij.codeInspection.projectFingerprint.ProjectFingerprintInspection"
+                      presentation="com.intellij.codeInspection.projectFingerprint.ProjectFingerprintInspectionPresentation"/>
     <globalInspection shortName="RedundantSuppression" bundle="messages.InspectionsBundle" key="inspection.redundant.suppression.name"
                       groupKey="inspection.general.tools.group.name" enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.RedundantSuppressInspection"/>
