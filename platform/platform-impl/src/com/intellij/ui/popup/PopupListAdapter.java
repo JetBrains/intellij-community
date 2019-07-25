@@ -14,7 +14,6 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Consumer;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -138,7 +137,7 @@ class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
     private final JList myList;
 
     private MyListWrapper(final JList list) {
-      super(UIUtil.isUnderAquaLookAndFeel() ? 0 : -1);
+      super(-1);
       list.setVisibleRowCount(myBuilder.getVisibleRowCount());
       setViewportView(list);
 

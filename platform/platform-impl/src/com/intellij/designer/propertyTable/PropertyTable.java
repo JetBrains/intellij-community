@@ -1297,10 +1297,6 @@ public abstract class PropertyTable extends JBTable {
           component.setBackground(selected ? UIUtil.getTreeSelectionBackground(tableHasFocus) : background);
           component.setFont(table.getFont());
 
-          if (component instanceof JCheckBox) {
-            if (UIUtil.isUnderAquaLookAndFeel()) UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, component);
-          }
-
           return component;
         }
         catch (Exception e) {

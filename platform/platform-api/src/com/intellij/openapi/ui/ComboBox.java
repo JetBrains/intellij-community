@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.components.fields.ExtendableTextField;
-import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -280,7 +279,6 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     try {
       myPaintingNow = true;
       super.paint(g);
-      if (Boolean.TRUE != getClientProperty("JComboBox.isTableCellEditor") && isEditable) MacUIUtil.drawComboboxFocusRing(this, g);
     }
     finally {
       myPaintingNow = false;
