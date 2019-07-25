@@ -6,10 +6,7 @@ class A {
   }
 }
 
-class B{}
-class C{}
-
-def m(B b, C c) {
+def m() {
   new A(1, 1)
   new A('q', 'q')
 }

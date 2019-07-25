@@ -6,12 +6,16 @@ import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiType
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrder
 import org.jetbrains.plugins.groovy.intentions.style.inference.InferenceGraphNode
-import org.jetbrains.plugins.groovy.intentions.style.inference.isTypeParameter
 
 /**
  * Represents graph which is used for determining [InferenceUnitNode] dependencies.
  */
 data class InferenceUnitGraph(val units: List<InferenceUnitNode>) {
+
+  fun dependsOnNode(type: PsiType) : Boolean {
+    return type in units.map { it.core.type }
+  }
+
   /**
    * @return [units], sorted in topological order by [InferenceUnitNode.typeInstantiation]. Takes class parameters into consideration.
    */
@@ -207,7 +211,7 @@ private fun collapseTreeEdges(unitGraph: InferenceUnitGraph): InferenceUnitGraph
   val internalNodeMap = LinkedHashMap<InferenceUnitNode, InternalNode>()
   val collapsedNodesMap = mutableMapOf<InferenceUnit, InferenceUnit>()
   val propagatedTypes = unitGraph.units.filter { !it.direct }.mapNotNull {
-    if (it.typeInstantiation.isTypeParameter() || it.typeInstantiation == PsiType.NULL) {
+    if (unitGraph.dependsOnNode(it.typeInstantiation) || it.typeInstantiation == PsiType.NULL) {
       null
     }
     else {

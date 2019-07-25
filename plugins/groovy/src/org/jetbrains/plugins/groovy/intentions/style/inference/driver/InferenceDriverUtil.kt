@@ -80,9 +80,12 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
       }
     }
     candidate?.argumentMapping?.expectedTypes?.forEach { (type, argument) ->
-      val argumentTypeParameter = argument.type.typeParameter()
-      argumentTypeParameter?.run {
-        addRequiredType(argumentTypeParameter, type.resolve() ?: return@run)
+      run {
+        val argumentTypeParameter = extractEndpointType(argument.type as? PsiClassType ?: return@run, typeParameters)
+        if (argumentTypeParameter.isTypeParameter()) {
+          // todo: add bounds for type parameters instead of bare PsiClass
+          addRequiredType(argumentTypeParameter.typeParameter()!!, type.resolve() ?: return@run)
+        }
       }
       methodResult.contextSubstitutor.substitute(type)?.run { contravariantTypesCollector.add(this) }
     }

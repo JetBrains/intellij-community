@@ -27,19 +27,21 @@ fun createGraphFromInferenceVariables(session: GroovyInferenceSession,
   val constantNames = constantTypes.map { it.name }
   val flexibleTypes = virtualMethod.parameters.map { it.type }
   val variables = virtualMethod.typeParameters.mapNotNull { getInferenceVariable(session, it.type()) }
-
+  val anchorTypeParameters = (virtualMethod.containingClass?.typeParameters ?: emptyArray()).toSet()
   for (variable in variables) {
     val variableType = variable.parameter.type()
     val extendsTypes = variable.parameter.extendsList.referencedTypes
+    val requiredTypes = usageInformation.requiredClassTypes[variableType.typeParameter()]
+    val typeParameter = requiredTypes?.find { it is PsiTypeParameter }
     val residualExtendsTypes = when {
+      typeParameter != null && typeParameter in anchorTypeParameters -> listOf(typeParameter.type())
       extendsTypes.size <= 1 -> extendsTypes.toList()
-      else -> extendsTypes.filter { usageInformation.requiredClassTypes[variableType.typeParameter()]?.contains(it.resolve()) ?: false }
+      else -> extendsTypes.filter { requiredTypes?.contains(it.resolve()) ?: false }
     }
     val filteredType = when {
       residualExtendsTypes.size > 1 -> PsiIntersectionType.createIntersection(residualExtendsTypes.toList())
       residualExtendsTypes.isEmpty() && variable.instantiation is PsiIntersectionType -> PsiType.getJavaLangObject(session.manager,
                                                                                                                    session.scope)
-      // questionable conditions. I guess, we can allow LUB instead of Object if variable's inferred type is simple (not an intersection).
       else -> residualExtendsTypes.firstOrNull() ?: variable.instantiation!!.forceWildcardsAsTypeArguments()
     }
     val core = InferenceUnit(variable.parameter,
